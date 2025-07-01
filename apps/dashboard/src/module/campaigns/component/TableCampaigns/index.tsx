@@ -21,7 +21,7 @@ import {
 import type { ColumnDef } from "@tanstack/react-table";
 import { atom, useAtomValue } from "jotai";
 import { useSetAtom } from "jotai/index";
-import { Eye, Pencil, Trash2 } from "lucide-react";
+import { Eye, Pencil, Share, Trash2 } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -93,6 +93,31 @@ export function TableCampaigns() {
                     id: "state",
                     cell: ({ getValue }) => (
                         <CampaignStateTag state={getValue()} />
+                    ),
+                }),
+                columnHelper.accessor("scope.type", {
+                    enableSorting: true,
+                    header: () => "Scope",
+                    id: "scope",
+                    cell: ({ getValue }) => (
+                        <span
+                            style={{
+                                padding: "2px 8px",
+                                borderRadius: "4px",
+                                backgroundColor:
+                                    getValue() === "specific"
+                                        ? "#fef3c7"
+                                        : "#e5f3ff",
+                                color:
+                                    getValue() === "specific"
+                                        ? "#92400e"
+                                        : "#1e40af",
+                                fontSize: "0.75rem",
+                                fontWeight: "500",
+                            }}
+                        >
+                            {getValue() === "specific" ? "Specific" : "Global"}
+                        </span>
                     ),
                 }),
                 {
@@ -204,6 +229,10 @@ function CellActions({
                     <Pencil size={20} absoluteStrokeWidth={true} />
                 </button>
             )}
+            {row.original.scope?.type === "specific" &&
+                row.original.state.key === "created" && (
+                    <ShareButton row={row} />
+                )}
             {actions.canDelete && <ModalDelete row={row} />}
         </div>
     );
@@ -262,5 +291,58 @@ function ModalDelete({
                 </Button>
             }
         />
+    );
+}
+
+/**
+ * Component for sharing specific campaigns
+ * @param row
+ * @constructor
+ */
+function ShareButton({
+    row,
+}: Pick<CellContext<CampaignWithState, unknown>, "row">) {
+    const [copied, setCopied] = useState(false);
+
+    const handleShare = async () => {
+        const campaignId = row.original._id;
+        // Generate sharing link - this would typically include your domain
+        const shareUrl = `${window.location.origin}/campaign/share/${campaignId}`;
+
+        try {
+            await navigator.clipboard.writeText(shareUrl);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        } catch (err) {
+            console.error("Failed to copy:", err);
+            // Fallback for older browsers
+            const textArea = document.createElement("textarea");
+            textArea.value = shareUrl;
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            try {
+                document.execCommand("copy");
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+            } catch (fallbackErr) {
+                console.error("Fallback copy failed:", fallbackErr);
+            }
+            document.body.removeChild(textArea);
+        }
+    };
+
+    return (
+        <button
+            type="button"
+            onClick={handleShare}
+            title={copied ? "Link copied!" : "Copy sharing link"}
+            style={{
+                color: copied ? "#10b981" : "inherit",
+                transition: "color 0.2s ease",
+            }}
+        >
+            <Share size={20} absoluteStrokeWidth={true} />
+        </button>
     );
 }

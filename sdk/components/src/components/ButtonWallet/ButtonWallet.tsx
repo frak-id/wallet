@@ -1,12 +1,14 @@
 import { useClientReady } from "@/hooks/useClientReady";
 import { useReward } from "@/hooks/useReward";
+import { resolveI18nFromGlobalSetup } from "@/utils/i18nResolver";
+import { safeVibrate } from "@/utils/safeVibrate";
 import { trackEvent } from "@frak-labs/core-sdk";
+import { displayEmbeddedWallet } from "@frak-labs/core-sdk/actions";
 import { cx } from "class-variance-authority";
-import { useEffect, useMemo, useState } from "preact/hooks";
+import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
 import styles from "./ButtonWallet.module.css";
 import GiftIcon from "./assets/gift.svg";
 import type { ButtonWalletProps } from "./types";
-import { openWalletModal } from "./utils";
 
 /**
  * Button to open wallet modal
@@ -47,6 +49,8 @@ export function ButtonWallet({
     classname = "",
     useReward: rawUseReward,
     targetInteraction,
+    campaignId,
+    campaignI18n,
 }: ButtonWalletProps) {
     const shouldUseReward = useMemo(
         () => rawUseReward !== undefined,
@@ -68,6 +72,35 @@ export function ButtonWallet({
         setPosition(position ?? "right");
     }, []);
 
+    /**
+     * Open wallet modal with resolved i18n configuration
+     */
+    const openWalletModalWithI18n = useCallback(async () => {
+        if (!window.FrakSetup?.client) {
+            console.error("Frak client not found");
+            return;
+        }
+
+        safeVibrate();
+
+        // Resolve i18n configuration
+        const resolvedI18n = resolveI18nFromGlobalSetup({
+            campaignId,
+            campaignI18n,
+        });
+
+        // Create modal config with resolved i18n
+        const modalConfig = {
+            ...window.FrakSetup?.modalWalletConfig,
+            metadata: {
+                ...window.FrakSetup?.modalWalletConfig?.metadata,
+                ...(resolvedI18n && { i18n: resolvedI18n }),
+            },
+        };
+
+        await displayEmbeddedWallet(window.FrakSetup.client, modalConfig);
+    }, [campaignId, campaignI18n]);
+
     return (
         <button
             type={"button"}
@@ -83,7 +116,7 @@ export function ButtonWallet({
             disabled={!isClientReady}
             onClick={() => {
                 trackEvent(window.FrakSetup.client, "wallet_button_clicked");
-                openWalletModal();
+                openWalletModalWithI18n();
             }}
         >
             <GiftIcon />

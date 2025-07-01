@@ -1,4 +1,7 @@
-import type { FullInteractionTypesKey } from "@frak-labs/core-sdk";
+import type {
+    CampaignI18nConfig,
+    FullInteractionTypesKey,
+} from "@frak-labs/core-sdk";
 
 /**
  * The props type for {@link ButtonWallet}.
@@ -18,4 +21,12 @@ export type ButtonWalletProps = {
      * Target interaction behind this sharing action (will be used to get the right reward to display)
      */
     targetInteraction?: FullInteractionTypesKey;
+    /**
+     * Campaign ID for campaign-specific i18n configuration
+     */
+    campaignId?: string;
+    /**
+     * Campaign-specific i18n configuration (takes precedence over global config)
+     */
+    campaignI18n?: CampaignI18nConfig;
 };

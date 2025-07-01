@@ -15,6 +15,7 @@ import { FormBudget } from "@/module/campaigns/component/Creation/NewCampaign/Fo
 import { FormGoals } from "@/module/campaigns/component/Creation/NewCampaign/FormGoals";
 import { FormProduct } from "@/module/campaigns/component/Creation/NewCampaign/FormProduct";
 import { FormSchedule } from "@/module/campaigns/component/Creation/NewCampaign/FormSchedule";
+import { FormScope } from "@/module/campaigns/component/Creation/NewCampaign/FormScope";
 import { FormSpecialAdvertising } from "@/module/campaigns/component/Creation/NewCampaign/FormSpecialAdvertising";
 import { FormTerritory } from "@/module/campaigns/component/Creation/NewCampaign/FormTerritory";
 import { FormTitle } from "@/module/campaigns/component/Creation/NewCampaign/FormTitle";
@@ -75,6 +76,7 @@ export function NewCampaign({ title }: { title: string }) {
                     <FormProduct />
                     <FormBank />
                     <FormGoals {...form} />
+                    <FormScope {...form} />
                     <FormSpecialAdvertising {...form} />
                     <FormBudget />
                     <FormTerritory {...form} />

@@ -58,7 +58,7 @@ export type FrakWalletSdkConfig = {
         /**
          * Custom i18n configuration for the modal
          */
-        i18n?: I18nConfig;
+        i18n?: I18nConfig | EnhancedI18nConfig;
     };
     /**
      * The domain name of your application
@@ -109,3 +109,25 @@ export type I18nConfig =
  * @category Config
  */
 export type LocalizedI18nConfig = `${string}.css` | { [key: string]: string };
+
+/**
+ * Campaign-specific i18n configuration
+ * @category Config
+ */
+export type CampaignI18nConfig = I18nConfig;
+
+/**
+ * Enhanced i18n configuration that supports campaign-specific overrides
+ * @category Config
+ */
+export type EnhancedI18nConfig = {
+    /**
+     * Global i18n configuration (fallback)
+     */
+    global?: I18nConfig;
+    /**
+     * Campaign-specific i18n configurations
+     * Key is the campaign ID, value is the i18n config for that campaign
+     */
+    campaigns?: Record<string, CampaignI18nConfig>;
+};

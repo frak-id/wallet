@@ -1,4 +1,4 @@
-import type { Hex } from "viem";
+import type { Address, Hex } from "viem";
 
 /**
  * Represent a prepared user interaction, ready to be sent on-chain via the wallet
@@ -29,6 +29,13 @@ export type SendInteractionParamsType = {
      * @defaultValue undefined
      */
     validation?: Hex;
+    /**
+     * The campaign id for scoped campaign targeting
+     * If provided, the interaction will be associated with this specific campaign
+     *
+     * @defaultValue undefined
+     */
+    campaignId?: Address;
 };
 
 /**

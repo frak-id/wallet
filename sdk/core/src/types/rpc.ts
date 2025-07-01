@@ -1,4 +1,4 @@
-import type { Hex } from "viem";
+import type { Address, Hex } from "viem";
 import type { FrakWalletSdkConfig } from "./config";
 import type {
     ModalRpcMetadata,
@@ -36,7 +36,7 @@ import type { WalletStatusReturnType } from "./rpc/walletStatus";
  * - Returns: {@link ModalRpcStepsResultType}
  *
  * ### frak_sendInteraction
- *  - Params: [productId: Hex, interaction: {@link PreparedInteraction}, signature?: Hex]
+ *  - Params: [productId: Hex, interaction: {@link PreparedInteraction}, signature?: Hex, campaignId?: Address]
  *  - Returns: {@link SendInteractionReturnType}
  *
  * ### frak_sso
@@ -81,6 +81,7 @@ export type IFrameRpcSchema = [
             productId: Hex,
             interaction: PreparedInteraction,
             signature?: Hex,
+            campaignId?: Address,
         ];
         ReturnType: SendInteractionReturnType;
     },

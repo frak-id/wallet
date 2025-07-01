@@ -15,8 +15,24 @@ const contextKey = "fCtx";
 function compress(context?: Partial<FrakContext>): string | undefined {
     if (!context?.r) return;
     try {
-        const bytes = hexToBytes(context.r);
-        return base64urlEncode(bytes);
+        // Create buffer: 20 bytes for referrer + 20 bytes for campaign (if present)
+        const hasCampaign = !!context.c;
+        const bufferSize = hasCampaign ? 41 : 20; // 20 + 20 + 1 flag byte or just 20
+        const buffer = new Uint8Array(bufferSize);
+        
+        // Add referrer address
+        const referrerBytes = hexToBytes(context.r);
+        buffer.set(referrerBytes, 0);
+        
+        if (hasCampaign && context.c) {
+            // Add flag indicating campaign is present
+            buffer[20] = 1;
+            // Add campaign address
+            const campaignBytes = hexToBytes(context.c);
+            buffer.set(campaignBytes, 21);
+        }
+        
+        return base64urlEncode(buffer);
     } catch (e) {
         console.error("Error compressing Frak context", { e, context });
     }
@@ -32,7 +48,20 @@ function decompress(context?: string): FrakContext | undefined {
     if (!context || context.length === 0) return;
     try {
         const bytes = base64urlDecode(context);
-        return { r: bytesToHex(bytes, { size: 20 }) as Address };
+        
+        // Extract referrer address (first 20 bytes)
+        const referrerBytes = bytes.slice(0, 20);
+        const result: FrakContext = { 
+            r: bytesToHex(referrerBytes, { size: 20 }) as Address 
+        };
+        
+        // Check if campaign data is present (buffer size > 20 and flag byte is set)
+        if (bytes.length > 20 && bytes[20] === 1) {
+            const campaignBytes = bytes.slice(21, 41);
+            result.c = bytesToHex(campaignBytes, { size: 20 }) as Address;
+        }
+        
+        return result;
     } catch (e) {
         console.error("Error decompressing Frak context", { e, context });
     }
@@ -43,18 +72,36 @@ function decompress(context?: string): FrakContext | undefined {
  * Parse the current URL into a Frak Context
  * @param args
  * @param args.url - The url to parse
- * @returns The parsed Frak context
+ * @returns The parsed Frak context (partial if only campaignId is present)
  */
-function parse({ url }: { url: string }) {
+function parse({ url }: { url: string }): FrakContext | Partial<FrakContext> | null {
     if (!url) return null;
 
-    // Check if the url contain the frak context key
     const urlObj = new URL(url);
+    
+    // Check if the url contain the frak context key
     const frakContext = urlObj.searchParams.get(contextKey);
-    if (!frakContext) return null;
-
-    // Decompress and return it
-    return decompress(frakContext);
+    if (frakContext) {
+        // Decompress and return it
+        const decompressed = decompress(frakContext);
+        return decompressed || null;
+    }
+    
+    // Also check for direct campaignId parameter
+    const campaignId = urlObj.searchParams.get("campaignId");
+    if (campaignId) {
+        try {
+            // Validate that campaignId is a valid address
+            const campaignAddress = campaignId as Address;
+            // For now, return context with only campaign ID (no referrer)
+            // This may need adjustment based on business logic
+            return { c: campaignAddress } as Partial<FrakContext>;
+        } catch (e) {
+            console.error("Invalid campaignId parameter", { e, campaignId });
+        }
+    }
+    
+    return null;
 }
 
 /**
@@ -140,6 +187,34 @@ function replaceUrl({
 }
 
 /**
+ * Extract campaignId from FrakContext or URL parameters
+ * @param args
+ * @param args.context - The FrakContext to extract from
+ * @param args.url - Alternative URL to parse campaignId from
+ * @returns The campaign ID if found
+ */
+function extractCampaignId({ 
+    context, 
+    url 
+}: { 
+    context?: Partial<FrakContext>; 
+    url?: string; 
+}): Address | undefined {
+    // First check context
+    if (context?.c) {
+        return context.c;
+    }
+    
+    // Then check URL
+    if (url) {
+        const parsedContext = parse({ url });
+        return parsedContext?.c;
+    }
+    
+    return undefined;
+}
+
+/**
  * Export our frak context "class"
  */
 export const FrakContextManager = {
@@ -149,4 +224,5 @@ export const FrakContextManager = {
     update,
     remove,
     replaceUrl,
+    extractCampaignId,
 };

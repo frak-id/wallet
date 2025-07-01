@@ -78,6 +78,10 @@ export type Campaign = {
               minMultiplier: number; // Between 0.7 and 1.3
               maxMultiplier: number; // Between 1 and 5
           };
+    // The scope defines how the campaign is triggered
+    scope?: {
+        type: "global" | "specific"; // global = auto-triggered, specific = requires campaignId
+    };
     // Trigger for the campaign
     triggers: Partial<Record<InteractionTypesKey, CampaignTrigger>>;
     // The currency used to setup the campaign (if undefined, that's `eur`, if `raw` that's directly the token)

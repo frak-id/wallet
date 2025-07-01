@@ -38,6 +38,9 @@ const initialValues: Campaign = {
     rewardChaining: {
         userPercent: 0.1,
     },
+    scope: {
+        type: "global",
+    },
     triggers: Object.fromEntries(
         flattenedKeys.map((key) => [key, { cac: 0 }])
     ) as Record<InteractionTypesKey, { cac: number }>,

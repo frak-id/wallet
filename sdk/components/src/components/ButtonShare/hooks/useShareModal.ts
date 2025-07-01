@@ -1,5 +1,7 @@
+import { resolveI18nFromGlobalSetup } from "@/utils/i18nResolver";
 import { getModalBuilderSteps } from "@/utils/setup";
 import {
+    type CampaignI18nConfig,
     DebugInfoGatherer,
     FrakRpcError,
     type FullInteractionTypesKey,
@@ -14,7 +16,15 @@ import { useCallback, useState } from "preact/hooks";
  * @description
  * This function will open the share modal with the configuration provided in the `window.FrakSetup.modalShareConfig` object.
  */
-export function useShareModal(targetInteraction?: FullInteractionTypesKey) {
+export function useShareModal({
+    targetInteraction,
+    campaignId,
+    campaignI18n,
+}: {
+    targetInteraction?: FullInteractionTypesKey;
+    campaignId?: string;
+    campaignI18n?: CampaignI18nConfig;
+}) {
     const [debugInfo, setDebugInfo] = useState<string | undefined>(undefined);
     const [isError, setIsError] = useState(false);
 
@@ -37,11 +47,18 @@ export function useShareModal(targetInteraction?: FullInteractionTypesKey) {
         }
 
         try {
+            // Resolve i18n configuration
+            const resolvedI18n = resolveI18nFromGlobalSetup({
+                campaignId,
+                campaignI18n,
+            });
+
             await modalBuilderSteps
                 .sharing(window.FrakSetup?.modalShareConfig ?? {})
                 .display((metadata) => ({
                     ...metadata,
                     targetInteraction,
+                    ...(resolvedI18n && { i18n: resolvedI18n }),
                 }));
         } catch (e) {
             if (
@@ -68,7 +85,7 @@ export function useShareModal(targetInteraction?: FullInteractionTypesKey) {
             setIsError(true);
             console.error("Error while opening the modal", e);
         }
-    }, [targetInteraction]);
+    }, [targetInteraction, campaignId, campaignI18n]);
 
     return { handleShare, isError, debugInfo };
 }

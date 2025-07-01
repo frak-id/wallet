@@ -53,11 +53,13 @@ export class CampaignRewardsService {
     /**
      * Get all the rewards for a product
      * @param productId
+     * @param campaignId - Optional specific campaign ID to target
      * @private
      */
     async getActiveRewardsForProduct({
         productId,
-    }: { productId: Hex }): Promise<ActiveReward[] | undefined> {
+        campaignId,
+    }: { productId: Hex; campaignId?: Address }): Promise<ActiveReward[] | undefined> {
         // Query our indexer to fetch the campaigns for the given product
         const { campaigns, tokens } = await this.getCampaignData(productId);
         if (!campaigns.length) return undefined;
@@ -67,9 +69,15 @@ export class CampaignRewardsService {
             (campaign) => campaign.attached
         );
 
+        // Filter campaigns by scope and campaignId
+        const scopedCampaigns = this.filterCampaignsByScope({
+            campaigns: attachedCampaigns,
+            campaignId,
+        });
+
         // Filter out all the non-active campaigns
         const activeCampaigns = await this.filterActiveCampaigns({
-            campaigns: attachedCampaigns,
+            campaigns: scopedCampaigns,
         });
         if (!activeCampaigns.length) return undefined;
 
@@ -195,6 +203,34 @@ export class CampaignRewardsService {
             .json<GetCampaignResponseDto>();
         this.campaignsPerProductCache.set(productId, result);
         return result;
+    }
+
+    /**
+     * Filter campaigns based on scope and provided campaignId
+     * @param campaigns
+     * @param campaignId
+     * @private
+     */
+    private filterCampaignsByScope({
+        campaigns,
+        campaignId,
+    }: { 
+        campaigns: GetCampaignResponseDto["campaigns"]; 
+        campaignId?: Address;
+    }) {
+        return campaigns.filter(campaign => {
+            // If no scope info available, assume global (backward compatibility)
+            if (!campaign.scope || campaign.scope.type === "global") {
+                return true;
+            }
+            
+            // For specific campaigns, campaignId must be provided and match
+            if (campaign.scope.type === "specific") {
+                return campaignId === campaign.address;
+            }
+            
+            return false;
+        });
     }
 
     /**

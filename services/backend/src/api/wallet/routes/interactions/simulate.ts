@@ -15,7 +15,7 @@ export const simulateRoutes = new Elysia()
     .get(
         "/estimate",
         async ({
-            query: { productId, interactionKey },
+            query: { productId, interactionKey, campaignId },
             interactions: {
                 services: { campaignRewards },
             },
@@ -24,6 +24,7 @@ export const simulateRoutes = new Elysia()
             const activeRewards =
                 await campaignRewards.getActiveRewardsForProduct({
                     productId,
+                    campaignId,
                 });
             if (!activeRewards) return null;
 
@@ -60,6 +61,7 @@ export const simulateRoutes = new Elysia()
             query: t.Object({
                 productId: t.Hex(),
                 interactionKey: t.Optional(t.String()),
+                campaignId: t.Optional(t.Address()),
             }),
             response: t.Union([
                 t.Object({

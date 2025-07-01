@@ -12,6 +12,9 @@ export type GetCampaignResponseDto = {
         banking: Address;
         token: Address;
         lastUpdateBlock: string; // string representing a bigint
+        scope?: {
+            type: "global" | "specific"; // global = auto-triggered, specific = requires campaignId
+        };
     }[];
     tokens: IndexerToken[];
 };
