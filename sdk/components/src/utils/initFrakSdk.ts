@@ -1,8 +1,9 @@
 import { setupClient } from "@frak-labs/core-sdk";
+// @ts-ignore - Bundle module import
 import * as coreSdk from "@frak-labs/core-sdk/bundle";
 import { openWalletModal } from "../components/ButtonWallet/utils";
 import { dispatchClientReadyEvent } from "./clientReady";
-import { setupModalConfig, setupReferral } from "./setup";
+import { setupReferral } from "./setup";
 
 /**
  * Initializes the Frak SDK client and sets up necessary configurations.
@@ -47,9 +48,6 @@ export async function initFrakSdk(): Promise<void> {
 
     // Dispatch the event to let the rest of the app know that the Frak client is ready
     dispatchClientReadyEvent();
-
-    // Setup the modal config
-    setupModalConfig(client);
 
     // Setup the referral
     setupReferral(client);

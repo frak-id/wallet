@@ -5,7 +5,7 @@ import { safeVibrate } from "@/utils/safeVibrate";
 import { trackEvent } from "@frak-labs/core-sdk";
 import { displayEmbeddedWallet } from "@frak-labs/core-sdk/actions";
 import { cx } from "class-variance-authority";
-import { useCallback, useEffect, useMemo, useState } from "preact/hooks";
+import { useCallback, useMemo, useState } from "preact/hooks";
 import styles from "./ButtonWallet.module.css";
 import GiftIcon from "./assets/gift.svg";
 import type { ButtonWalletProps } from "./types";
@@ -60,16 +60,9 @@ export function ButtonWallet({
         shouldUseReward && isClientReady,
         targetInteraction
     );
-    const [position, setPosition] = useState<"left" | "right">("right");
-
-    /**
-     * Setup the position of the button
-     */
-    useEffect(() => {
-        const position =
-            window.FrakSetup?.modalWalletConfig?.metadata?.position;
-        setPosition(position ?? "right");
-    }, []);
+    const [position] = useState<"left" | "right">(
+        window.FrakSetup?.modalWalletConfig?.metadata?.position ?? "right"
+    );
 
     /**
      * Open wallet modal with resolved i18n configuration
@@ -87,17 +80,19 @@ export function ButtonWallet({
             campaignId,
         });
 
-        // Create modal config with resolved i18n
+        // Create modal config with resolved i18n and campaignId
         const modalConfig = {
             ...window.FrakSetup?.modalWalletConfig,
             metadata: {
                 ...window.FrakSetup?.modalWalletConfig?.metadata,
+                position,
                 ...(resolvedI18n && { i18n: resolvedI18n }),
+                ...(campaignId && { campaignId }),
             },
         };
 
         await displayEmbeddedWallet(window.FrakSetup.client, modalConfig);
-    }, [campaignId]);
+    }, [campaignId, position]);
 
     return (
         <button

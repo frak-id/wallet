@@ -7,15 +7,13 @@ import { displayEmbeddedWallet } from "@frak-labs/core-sdk/actions";
 import { cx } from "class-variance-authority";
 import { useCallback, useMemo } from "preact/hooks";
 import styles from "./ButtonShare.module.css";
-import { ErrorMessage } from "./components/ErrorMessage";
-import { useShareModal } from "./hooks/useShareModal";
 import type { ButtonShareProps } from "./types";
 
 /**
- * Open the embedded wallet modal
+ * Open the embedded wallet modal with campaign-specific configuration
  *
  * @description
- * This function will open the wallet modal with the configuration provided in the `window.FrakSetup.modalWalletConfig` object.
+ * This function will open the wallet modal with campaign-specific i18n and campaignId context
  */
 async function modalEmbeddedWallet({
     campaignId,
@@ -31,12 +29,13 @@ async function modalEmbeddedWallet({
         campaignId,
     });
 
-    // Create modal config with resolved i18n
+    // Create modal config with resolved i18n and campaignId
     const modalConfig = {
         ...window.FrakSetup?.modalWalletConfig,
         metadata: {
             ...window.FrakSetup?.modalWalletConfig?.metadata,
             ...(resolvedI18n && { i18n: resolvedI18n }),
+            ...(campaignId && { campaignId }),
         },
     };
 
@@ -90,26 +89,17 @@ export function ButtonShare({
     useReward: rawUseReward,
     noRewardText,
     targetInteraction,
-    showWallet: rawShowWallet,
     campaignId,
 }: ButtonShareProps) {
     const shouldUseReward = useMemo(
         () => rawUseReward !== undefined,
         [rawUseReward]
     );
-    const showWallet = useMemo(
-        () => rawShowWallet !== undefined,
-        [rawShowWallet]
-    );
     const { isClientReady } = useClientReady();
     const { reward } = useReward(
         shouldUseReward && isClientReady,
         targetInteraction
     );
-    const { handleShare, isError, debugInfo } = useShareModal({
-        targetInteraction,
-        campaignId,
-    });
 
     /**
      * Compute the text we will display
@@ -126,27 +116,20 @@ export function ButtonShare({
     }, [shouldUseReward, text, noRewardText, reward]);
 
     /**
-     * The action when the button is clicked
+     * The action when the button is clicked - always opens embedded wallet
      */
     const onClick = useCallback(async () => {
         trackEvent(window.FrakSetup.client, "share_button_clicked");
-        if (showWallet) {
-            await modalEmbeddedWallet({ campaignId });
-        } else {
-            await handleShare();
-        }
-    }, [showWallet, handleShare, campaignId]);
+        await modalEmbeddedWallet({ campaignId });
+    }, [campaignId]);
 
     return (
-        <>
-            <button
-                type={"button"}
-                className={cx(styles.buttonShare, classname, "override")}
-                onClick={onClick}
-            >
-                {!isClientReady && <Spinner />} {btnText}
-            </button>
-            {isError && <ErrorMessage debugInfo={debugInfo} />}
-        </>
+        <button
+            type={"button"}
+            className={cx(styles.buttonShare, classname, "override")}
+            onClick={onClick}
+        >
+            {!isClientReady && <Spinner />} {btnText}
+        </button>
     );
 }

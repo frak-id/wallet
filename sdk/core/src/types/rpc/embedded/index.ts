@@ -55,6 +55,10 @@ export type DisplayEmbeddedWalletParamsType = {
          * Some i18n override for the displayed modal (i.e. update the displayed text only for this modal)
          */
         i18n?: I18nConfig;
+        /**
+         * Campaign ID for scoped campaign targeting
+         */
+        campaignId?: string;
     };
 };
 

@@ -29,12 +29,7 @@ export type ButtonShareProps = {
      */
     targetInteraction?: FullInteractionTypesKey;
     /**
-     * Do we display the wallet modal instead of the share modal?
-     * @defaultValue `false`
-     */
-    showWallet?: boolean;
-    /**
-     * Campaign ID for campaign-specific i18n configuration
+     * Campaign ID for campaign-specific configuration
      */
     campaignId?: string;
 };

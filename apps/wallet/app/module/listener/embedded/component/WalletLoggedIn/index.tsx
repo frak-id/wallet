@@ -110,18 +110,21 @@ function ActionButtons({
     const { address } = useAccount();
     const {
         currentRequest: {
-            params: { loggedIn },
+            params: { loggedIn, metadata },
         },
     } = useEmbeddedListenerUI();
 
     const link = loggedIn?.action?.options?.link;
     const { sourceUrl } = useSafeResolvingContext();
 
-    // Ensure the sharing link contain the current frak wallet as referrer
+    // Ensure the sharing link contain the current frak wallet as referrer and campaignId if present
     const finalSharingLink = FrakContextManager.update({
         url: link ?? sourceUrl,
         context: {
             r: address,
+            ...(metadata?.campaignId && {
+                c: metadata.campaignId as `0x${string}`,
+            }),
         },
     });
 
