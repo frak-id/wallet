@@ -92,19 +92,17 @@ export class CampaignRewardsService {
             });
             if (!price) continue;
 
-            // Fetch the rewards
-            const rewards =
-                await this.campaignDataRepository.getRewardsFromStorage({
+            // Fetch the rewards and chaining config
+            const [rewards, chainingConfig] = await Promise.all([
+                this.campaignDataRepository.getRewardsFromStorage({
                     campaign: campaign.address,
                     lastUpdateBlock: BigInt(campaign.lastUpdateBlock),
-                });
-
-            // Fetch the chaining config
-            const chainingConfig =
-                await this.campaignDataRepository.getChainingConfig({
+                }),
+                this.campaignDataRepository.getChainingConfig({
                     campaign: campaign.address,
                     lastUpdateBlock: BigInt(campaign.lastUpdateBlock),
-                });
+                }),
+            ]);
 
             // Map all the rewards
             const mappedRewards = rewards.map((reward) => {
@@ -144,10 +142,10 @@ export class CampaignRewardsService {
         price,
     }: { amount: number; price: TokenPrice }) {
         return {
-            amount,
-            eurAmount: price.eur * amount,
-            usdAmount: price.usd * amount,
-            gbpAmount: price.gbp * amount,
+            amount: Math.floor(amount * 100) / 100,
+            eurAmount: Math.floor(price.eur * amount * 100) / 100,
+            usdAmount: Math.floor(price.usd * amount * 100) / 100,
+            gbpAmount: Math.floor(price.gbp * amount * 100) / 100,
         };
     }
 
