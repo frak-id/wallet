@@ -147,29 +147,3 @@ test.fail(
         await authPage.verifyLoginReady();
     }
 );
-
-// test("should support different authenticator types", async ({
-//     webAuthN,
-//     authPage,
-// }) => {
-//     // Test with USB authenticator simulation
-//     await webAuthN.enableVirtualAuthenticator({
-//         protocol: "ctap2",
-//         transport: "usb",
-//         hasResidentKey: false,
-//         hasUserVerification: true,
-//         isUserVerified: true,
-//     });
-
-//     await authPage.navigateToRegister();
-//     await authPage.verifyRegistrationReady();
-
-//     // Register wallet
-//     await authPage.clickRegister();
-
-//     await authPage.verifyWalletPage();
-
-//     // Verify credentials were created
-//     const credentials = await webAuthN.getCredentials();
-//     expect(credentials).toHaveLength(1);
-// });

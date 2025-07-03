@@ -79,14 +79,26 @@ export class AuthPage {
         await this.page.waitForURL("/login");
     }
 
+    async clickLogin() {
+        await this.page
+            .locator("button", { hasText: "Recover your wallet" })
+            .click();
+    }
+
     async verifyLoginReady() {
         await expect(this.page).toHaveURL("/login");
         // Verify the button is visible
         const hasButton = await this.page
             .locator("button", { hasText: "Recover your wallet" })
             .isVisible();
-        console.log(await this.page.locator("button").all());
         expect(hasButton).toBeTruthy();
+    }
+
+    async verifyLoginError() {
+        const hasError = await this.page
+            .locator("div", { hasText: "No wallet found" })
+            .isVisible();
+        expect(hasError).toBeTruthy();
     }
 
     /* -------------------------------------------------------------------------- */

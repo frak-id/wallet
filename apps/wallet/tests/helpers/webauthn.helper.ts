@@ -37,6 +37,9 @@ export class WebAuthNHelper {
                     hasResidentKey: true,
                     automaticPresenceSimulation: true,
                     isUserVerified: true,
+                    // Set backup options
+                    // defaultBackupEligibility: true,
+                    // defaultBackupState: true,
                 },
             }
         );
