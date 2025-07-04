@@ -3,10 +3,11 @@ import type { CDPSession, Page } from "@playwright/test";
 import { AUTHENTICATOR_STATE } from "../../playwright.config";
 
 /**
- * Helper for webauthn authentication
+ * Helper for semi-real webauthn authentication
  *
- *  todo: Should be worker scoped!
- * todo: we should have a way to backup authenticator and credentials, to ensure we don't create a multitude of passkey on the backend side
+ * Warning:
+ *  - Only work on chromium devices
+ *  - Create a new authenticator on each page (so not reusable between test + add a new authenticator in our db for each test run)
  */
 export class WebAuthNHelper {
     private cdpSession?: CDPSession = undefined;

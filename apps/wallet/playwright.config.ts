@@ -9,7 +9,7 @@ const configPerEnv = {
         baseURL: "https://wallet.frak.id",
     },
     local: {
-        baseURL: "http://127.0.0.1:3000",
+        baseURL: "https://localhost:3000",
     },
 };
 const targetEnv = (process.env.TARGET_ENV ??

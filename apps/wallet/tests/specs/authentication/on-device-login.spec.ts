@@ -3,7 +3,12 @@ import { expect, test } from "../../fixtures";
 // No storage state needed for the registration related tests
 test.use({ storageState: { cookies: [], origins: [] } });
 
-test("should login existing wallet with biometrics successfully", async ({
+test.beforeEach(async ({ mockedWebAuthN, webAuthN }) => {
+    await mockedWebAuthN.setup();
+    // await webAuthN.setup();
+});
+
+test.only("should login existing wallet with biometrics successfully", async ({
     authPage,
     settingsPage,
     analyticsApi,

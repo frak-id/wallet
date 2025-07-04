@@ -1,6 +1,7 @@
 import { test as base } from "@playwright/test";
 import { AnalyticsApi } from "./api/analytics.api";
 import { BackendApi } from "./api/backend.api";
+import { MockedWebAuthNHelper } from "./helpers/mockedWebauthn.helper";
 import { StorageHelper } from "./helpers/sotrage.helper";
 import { WebAuthNHelper } from "./helpers/webauthn.helper";
 import { AuthPage } from "./pages/auth.page";
@@ -9,6 +10,7 @@ import { SettingsPage } from "./pages/settings.page";
 type TestFixtures = {
     // Helpers
     webAuthN: WebAuthNHelper;
+    mockedWebAuthN: MockedWebAuthNHelper;
     storageHelper: StorageHelper;
     // APIs
     backendApi: BackendApi;
@@ -30,6 +32,10 @@ export const test = base.extend<TestFixtures, WorkerFixture>({
         await use(helper);
         // todo: when to trigger the cleanup?
         // await helper.cleanup();
+    },
+    mockedWebAuthN: async ({ page }, use) => {
+        const helper = new MockedWebAuthNHelper(page);
+        await use(helper);
     },
     storageHelper: async ({ page }, use) => {
         await use(new StorageHelper(page));
