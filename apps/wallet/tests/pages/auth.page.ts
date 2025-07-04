@@ -38,14 +38,6 @@ export class AuthPage {
         expect(hasButton).toBeTruthy();
     }
 
-    async verifyRegistrationInProgress() {
-        // Verify the button is visible
-        const hasButton = await this.page
-            .locator("button", { hasText: "Wallet creation in progress" })
-            .isVisible();
-        expect(hasButton).toBeTruthy();
-    }
-
     async verifyRegistrationError() {
         // Verify the error is visible
         const hasErrorInButton = await this.page
@@ -97,7 +89,7 @@ export class AuthPage {
     async verifyLoginError() {
         const hasError = await this.page
             .locator("div", { hasText: "No wallet found" })
-            .isVisible();
+            .isVisible({ timeout: 2_000 });
         expect(hasError).toBeTruthy();
     }
 

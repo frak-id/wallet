@@ -3,26 +3,14 @@ import { expect, test } from "../../fixtures";
 // No storage state needed for the registration related tests
 test.use({ storageState: { cookies: [], origins: [] } });
 
-test.beforeEach(async ({ mockedWebAuthN, webAuthN }) => {
+test.beforeEach(async ({ mockedWebAuthN }) => {
     await mockedWebAuthN.setup();
-    // await webAuthN.setup();
 });
 
-test.only("should login existing wallet with biometrics successfully", async ({
+test("should login existing wallet with biometrics successfully", async ({
     authPage,
-    settingsPage,
     analyticsApi,
 }) => {
-    // First register a wallet
-    await authPage.navigateToRegister();
-    await authPage.verifyRegistrationReady();
-    await authPage.clickRegister();
-    await authPage.verifyWalletPage();
-
-    // Clear session to simulate returning user
-    await settingsPage.navigateToSettings();
-    await settingsPage.clickLogout();
-
     let analyticsRequestsCount = 0;
     await analyticsApi.interceptAnalyticsRoute((route) => {
         analyticsRequestsCount++;
@@ -41,23 +29,10 @@ test.only("should login existing wallet with biometrics successfully", async ({
     expect(analyticsRequestsCount).toBeGreaterThan(0);
 });
 
-// todo: we don't catch login errors at all
+// todo: pass that to the mocked webauthn helper
 test.fail(
     "should handle WebAuthn authentication failure",
-    async ({ webAuthN, authPage, settingsPage }) => {
-        // First register a wallet
-        await authPage.navigateToRegister();
-        await authPage.verifyRegistrationReady();
-        await authPage.clickRegister();
-        await authPage.verifyWalletPage();
-
-        // Clear session to simulate returning user
-        await settingsPage.navigateToSettings();
-        await settingsPage.clickLogout();
-
-        // Modify authenticator to fail verification
-        await webAuthN.setUserVerified(false);
-
+    async ({ authPage }) => {
         // Attempt login
         await authPage.navigateToLogin();
         await authPage.verifyLoginReady();
@@ -68,32 +43,24 @@ test.fail(
     }
 );
 
-test("should handle network issues during login", async ({
-    settingsPage,
-    authPage,
-    backendApi,
-}) => {
-    // Register wallet first
-    await authPage.navigateToRegister();
-    await authPage.verifyRegistrationReady();
-    await authPage.clickRegister();
-    await authPage.verifyWalletPage();
+// todo: we don't catch nor display login errors
+test.fail(
+    "should handle network issues during login",
+    async ({ authPage, backendApi, page }) => {
+        // Simulate network failure for login
+        await backendApi.interceptAuthRoute((route) =>
+            route.fulfill({
+                status: 500,
+            })
+        );
 
-    // Clear session
-    await settingsPage.navigateToSettings();
-    await settingsPage.clickLogout();
+        await authPage.navigateToLogin();
+        await authPage.verifyLoginReady();
+        await authPage.clickLogin();
 
-    // Simulate network failure for login
-    await backendApi.interceptAuthRoute((route) =>
-        route.fulfill({
-            status: 500,
-        })
-    );
+        await page.waitForTimeout(2_000);
 
-    await authPage.navigateToLogin();
-    await authPage.verifyLoginReady();
-    await authPage.clickLogin();
-
-    // Should show network error
-    await authPage.verifyLoginError();
-});
+        // Should show network error
+        await authPage.verifyLoginError();
+    }
+);

@@ -129,7 +129,8 @@ export class MockedWebAuthNHelper {
                         credentialProps,
                         bufferToBase64URLString(
                             challenge as unknown as ArrayBuffer
-                        )
+                        ),
+                        window.location.origin
                     )) as CreateResponse;
                     if (!response) {
                         return null;
@@ -182,7 +183,8 @@ export class MockedWebAuthNHelper {
                         credentialProps,
                         bufferToBase64URLString(
                             challenge as unknown as ArrayBuffer
-                        )
+                        ),
+                        window.location.origin
                     )) as GetResponse;
                     if (!response) {
                         return null;
@@ -264,8 +266,8 @@ export class MockedWebAuthNHelper {
     private restoreCredentialProps() {
         // Check if the file exists
         if (!existsSync(AUTHENTICATOR_STATE)) {
-            console.log(
-                "No authenticator state file found, generating new ones"
+            console.warn(
+                "No authenticator state file found, will probably generate new ones"
             );
             return;
         }
@@ -278,7 +280,7 @@ export class MockedWebAuthNHelper {
             aaguid: string;
         };
         const parsedPrivateKey = Buffer.from(privateKey, "base64");
-        const publicKey = p256.getPublicKey(parsedPrivateKey);
+        const publicKey = p256.getPublicKey(parsedPrivateKey, false);
         this.credentialProps = {
             credentialId: Buffer.from(credentialId, "base64"),
             privateKey: parsedPrivateKey,
@@ -293,7 +295,7 @@ export class MockedWebAuthNHelper {
         // Convert to base64 and add platform-specific prefix
         const credentialId = `PLAYWRIGHT_${randomBytes(32).toString("base64")}`;
         const privateKey = p256.utils.randomPrivateKey();
-        const publicKey = p256.getPublicKey(privateKey);
+        const publicKey = p256.getPublicKey(privateKey, false);
         // Return the credential properties
         return {
             aaguid: Buffer.from(CHROMIUM_AAGUID.replace(/-/g, ""), "hex"),

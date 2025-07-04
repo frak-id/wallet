@@ -21,7 +21,8 @@ import {
 export async function getRegistrationResponse(
     creationsOptions: { publicKey: PublicKeyCredentialCreationOptions },
     credentialProps: CredentialPropsString,
-    challenge: string
+    challenge: string,
+    origin: string
 ): Promise<CreateResponse | null> {
     const cbor = await import("cbor");
     const encodeOne = cbor.default.encodeOne;
@@ -35,8 +36,8 @@ export async function getRegistrationResponse(
     // Credential data part
     const clientData = {
         type: "webauthn.create",
-        challenge: challenge,
-        origin: "https://localhost:3000",
+        challenge,
+        origin,
         crossOrigin: false,
     };
     const clientDataJSON = Buffer.from(JSON.stringify(clientData));
@@ -111,9 +112,10 @@ export async function getRegistrationResponse(
  * Get an authentication response for a public key credential.
  */
 export function getAuthenticationResponse(
-    requestOptions: PublicKeyCredentialRequestOptions,
+    requestOptions: CredentialRequestOptions,
     credentialProps: CredentialPropsString,
-    challenge: string
+    challenge: string,
+    origin: string
 ): AuthenticationCredential | null {
     const authenticator = fromStringCredentialProps(credentialProps);
     if (!authenticator) {
@@ -124,8 +126,8 @@ export function getAuthenticationResponse(
     // Client data part
     const clientData = {
         type: "webauthn.get",
-        challenge: challenge,
-        origin: requestOptions.rpId,
+        challenge,
+        origin,
         crossOrigin: false,
     };
     const clientDataJSON = Buffer.from(JSON.stringify(clientData));
@@ -142,7 +144,7 @@ export function getAuthenticationResponse(
 
     // RP ID hash
     const rpIdHash = createHash("sha256")
-        .update(requestOptions.rpId ?? "")
+        .update(requestOptions.publicKey?.rpId ?? "")
         .digest();
 
     // Authenticator data
