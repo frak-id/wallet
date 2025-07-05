@@ -13,7 +13,7 @@ const configPerEnv = {
     },
 };
 const targetEnv = (process.env.TARGET_ENV ??
-    "local") as keyof typeof configPerEnv;
+    "dev") as keyof typeof configPerEnv;
 
 const config = configPerEnv[targetEnv];
 

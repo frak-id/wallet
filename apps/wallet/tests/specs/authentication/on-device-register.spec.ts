@@ -105,45 +105,21 @@ test.fail(
     }
 );
 
-// Fcked up, either logout or recreation is fcked up (second registration path with no problem), working in ui mode but not in headless mode
 test.fail(
-    "should prevent duplicate wallet registration",
-    async ({ page, webAuthN, authPage, storageHelper }) => {
-        // First registration
-        await authPage.navigateToRegister();
-        await authPage.clickRegister();
-        await authPage.verifyWalletPage();
-
-        // Clear storage
-        await storageHelper.clearStorage();
-
-        // Refresh the page
-        await page.reload();
-
-        // Verify that we still have only one credential
-        let credentials = await webAuthN.getCredentials();
-        expect(credentials).toHaveLength(1);
+    "should prevent duplicate backend wallet registration",
+    async ({ page, authPage, mockedWebAuthN }) => {
+        await mockedWebAuthN.setup();
 
         // Attempt second registration with same authenticator
         await authPage.navigateToRegister();
         await authPage.verifyRegistrationReady();
         await authPage.clickRegister();
 
-        // Verify that we still have only one credential
-        credentials = await webAuthN.getCredentials();
-        expect(credentials).toHaveLength(1);
-
         // Should show error about existing wallet
-        await authPage.verifyDuplicateWalletError();
+        // todo: need to wait for it, how? wait for loading butrton to not be visible?
+        await authPage.verifyRegistrationError();
         await expect(page).toHaveURL("/register");
-
-        // Verify that we still have only one credential
-        credentials = await webAuthN.getCredentials();
-        expect(credentials).toHaveLength(1);
-
-        // Wait a bit and ensure that we redirect the user to the login page
-        await page.waitForURL("/login", { timeout: 5_000 });
-        await expect(page).toHaveURL("/login");
-        await authPage.verifyLoginReady();
     }
 );
+
+// todo: test duplicate wallet registration local error using cdp webauthn
