@@ -19,13 +19,13 @@ const config = configPerEnv[targetEnv];
 
 export const STORAGE_STATE = path
     .join(
-        path.dirname(import.meta.url),
+        path.dirname(import.meta.url.replace("C:", "")),
         `./playwright/.storage/state-${targetEnv}.json`
     )
     .replace("file:", "");
 export const AUTHENTICATOR_STATE = path
     .join(
-        path.dirname(import.meta.url),
+        path.dirname(import.meta.url.replace("C:", "")),
         `./playwright/.storage/authenticator-${targetEnv}.json`
     )
     .replace("file:", "");
