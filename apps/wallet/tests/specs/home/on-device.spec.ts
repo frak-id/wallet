@@ -1,7 +1,15 @@
 import { test } from "../../fixtures";
 
-//the wallet balance present in the top of the page
-test("should display wallet balance", async ({ homePage }) => {
+// the wallet basics informations are visible on the home page
+test("should display wallet basics informations", async ({ homePage }) => {
     await homePage.navigateToHome();
-    await homePage.verifyBalance();
+    await homePage.verifyBasicsInformations();
+});
+
+//the page change when click on received button clicked
+test("should display wallet token received page", async ({ homePage }) => {
+    await homePage.navigateToHome();
+    await homePage.verifyBasicsInformations();
+    await homePage.clickReveive();
+    await homePage.verifyDisplayReceivedPage();
 });
