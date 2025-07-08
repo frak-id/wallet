@@ -50,7 +50,11 @@ export default defineConfig({
         },
         {
             name: "chromium",
-            use: { ...devices["Desktop Chrome"], storageState: STORAGE_STATE },
+            use: {
+                ...devices["Desktop Chrome"],
+                storageState: STORAGE_STATE,
+                permissions: ["clipboard-read"],
+            },
             dependencies: ["setup"],
         },
     ],
