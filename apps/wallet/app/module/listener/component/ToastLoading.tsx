@@ -22,7 +22,7 @@ export function ToastLoading() {
         if (timerRef.current) clearTimeout(timerRef.current);
         timerRef.current = setTimeout(() => {
             setShowStuck(true);
-        }, 5000);
+        }, 10_000);
     }, []);
 
     /**
