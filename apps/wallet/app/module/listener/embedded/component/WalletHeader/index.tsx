@@ -17,7 +17,12 @@ export function ListenerWalletHeader() {
     } = useEmbeddedListenerUI();
 
     return (
-        <div className={styles.modalListenerWallet__header}>
+        <div
+            className={cx(
+                styles.modalListenerWallet__header,
+                prefixWalletCss("modalListenerWallet__header")
+            )}
+        >
             {session && (
                 <LogoFrakWithName
                     width={57}
@@ -32,7 +37,10 @@ export function ListenerWalletHeader() {
                 <h1>
                     <img
                         src={logoUrl}
-                        className={styles.modalListenerWallet__logo}
+                        className={cx(
+                            styles.modalListenerWallet__logo,
+                            prefixWalletCss("modalListenerWallet__logo")
+                        )}
                         alt=""
                     />
                 </h1>

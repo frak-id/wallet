@@ -24,7 +24,7 @@ export function InAppBrowserToast() {
 
     // Auto-redirect if this is the first time detecting in-app browser and no redirect has been attempted
     useEffect(() => {
-        if (isInIframe || !isInAppBrowser || hasAttemptedRedirect) return;
+        if (!isInAppBrowser || hasAttemptedRedirect) return;
 
         setHasAttemptedRedirect(true);
         handleRedirect();

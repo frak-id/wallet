@@ -1,9 +1,6 @@
 import { indexerApi, log, viemClient } from "@backend-common";
 import type { TokenAmount } from "@backend-utils";
-import type {
-    GetInteractionsResponseDto,
-    GetRewardHistoryResponseDto,
-} from "@frak-labs/app-essentials";
+import type { GetRewardHistoryResponseDto } from "@frak-labs/app-essentials";
 import type { Address } from "viem";
 import { getCode } from "viem/actions";
 
@@ -49,17 +46,10 @@ export class PendingBalanceRepository {
             let pendingBalance = 0.5;
 
             // Check if wallet is activated and if the user has shared a referral link
-            const [isActivated, hasSharedReferral] = await Promise.all([
-                this.isWalletActivated(address),
-                this.hasSharedReferral(address),
-            ]);
+            const isActivated = await this.isWalletActivated(address);
 
             if (isActivated) {
                 pendingBalance += 0.5;
-            }
-
-            if (hasSharedReferral) {
-                pendingBalance += 1;
             }
 
             // Cache the result
@@ -90,34 +80,6 @@ export class PendingBalanceRepository {
             log.error(
                 { error, address },
                 "[PendingBalanceRepository] Error checking wallet activation"
-            );
-            return false;
-        }
-    }
-
-    /**
-     * Check if the user has shared a referral link
-     * This method checks if the user has any referral-related interactions
-     * @param address The wallet address
-     * @returns True if the user has shared a referral link
-     */
-    private async hasSharedReferral(address: Address): Promise<boolean> {
-        try {
-            // Get all interactions for this address
-            const interactions = await indexerApi
-                .get(`interactions/${address}`)
-                .json<GetInteractionsResponseDto>();
-
-            // Check if there are any CREATE_REFERRAL_LINK or REFERRED interactions
-            return interactions.some(
-                (interaction) =>
-                    interaction.type === "CREATE_REFERRAL_LINK" ||
-                    interaction.type === "REFERRED"
-            );
-        } catch (error) {
-            log.error(
-                { error, address },
-                "[PendingBalanceRepository] Error checking referral sharing"
             );
             return false;
         }

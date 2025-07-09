@@ -6,6 +6,7 @@ import { getCampaignRepository } from "@/context/campaigns/repository/CampaignRe
 import { getRolesOnProduct } from "@/context/product/action/roles";
 import {
     addresses,
+    affiliationFixedCampaignAbi,
     productInteractionManagerAbi,
 } from "@frak-labs/app-essentials";
 import { ObjectId } from "mongodb";
@@ -59,15 +60,27 @@ export async function deleteCampaign({ campaignId }: { campaignId: string }) {
 
     // If it's active, return the call-data required to detach the campaign
     if (isActive) {
-        // Detach the campaign
-        const tx = {
-            to: addresses.productInteractionManager as Address,
-            data: encodeFunctionData({
-                abi: productInteractionManagerAbi,
-                functionName: "detachCampaigns",
-                args: [BigInt(productId), [campaignAddress]],
-            }),
-        };
+        const tx = [
+            // Set the campaign to not running
+            {
+                to: campaignAddress,
+                data: encodeFunctionData({
+                    abi: affiliationFixedCampaignAbi,
+                    functionName: "setRunningStatus",
+                    args: [false],
+                }),
+            },
+            // Detach the campaign
+            {
+                to: addresses.productInteractionManager as Address,
+                data: encodeFunctionData({
+                    abi: productInteractionManagerAbi,
+                    functionName: "detachCampaigns",
+                    args: [BigInt(productId), [campaignAddress]],
+                }),
+            },
+            // todo: update the campaign authorization on the banking contract
+        ];
 
         return {
             key: "require-onchain-delete",

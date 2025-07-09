@@ -6,6 +6,7 @@ import { LoggedOutComponent } from "@/module/listener/embedded/component/WalletL
 import { useEmbeddedListenerUI } from "@/module/listener/providers/ListenerUiProvider";
 import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { Overlay } from "@frak-labs/ui/component/Overlay";
+import { prefixWalletCss } from "@frak-labs/ui/utils/prefixWalletCss";
 import { cva, cx } from "class-variance-authority";
 import { Toaster } from "sonner";
 import { ToastLoading } from "../../../component/ToastLoading";
@@ -33,7 +34,12 @@ export function ListenerWallet() {
 
     return (
         <>
-            <div className={walletStyles({ position: metadata?.position })}>
+            <div
+                className={cx(
+                    walletStyles({ position: metadata?.position }),
+                    prefixWalletCss("modalListenerWallet")
+                )}
+            >
                 <CurrentEmbeddedViewComponent />
             </div>
             <Overlay
@@ -56,7 +62,8 @@ function CurrentEmbeddedViewComponent() {
         <div
             className={cx(
                 styles.modalListenerWallet__inner,
-                session && styles["modalListenerWallet__inner--loggedIn"]
+                session && styles["modalListenerWallet__inner--loggedIn"],
+                prefixWalletCss("modalListenerWallet__inner")
             )}
         >
             <Toaster position="top-center" />
