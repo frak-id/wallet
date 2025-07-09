@@ -142,10 +142,10 @@ export class CampaignRewardsService {
         price,
     }: { amount: number; price: TokenPrice }) {
         return {
-            amount: Math.floor(amount * 100) / 100,
-            eurAmount: Math.floor(price.eur * amount * 100) / 100,
-            usdAmount: Math.floor(price.usd * amount * 100) / 100,
-            gbpAmount: Math.floor(price.gbp * amount * 100) / 100,
+            amount: Math.round(amount * 100) / 100,
+            eurAmount: Math.round(price.eur * amount * 100) / 100,
+            usdAmount: Math.round(price.usd * amount * 100) / 100,
+            gbpAmount: Math.round(price.gbp * amount * 100) / 100,
         };
     }
 

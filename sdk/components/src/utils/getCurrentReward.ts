@@ -37,7 +37,7 @@ export async function getCurrentReward({
     );
 
     // Get the current reward
-    let currentReward = Math.ceil(maxReferrer[currencyAmountKey]);
+    let currentReward = Math.round(maxReferrer[currencyAmountKey]);
     if (targetInteraction) {
         // Find the max reward for the target interaction
         const targetReward = rewards
@@ -45,7 +45,7 @@ export async function getCurrentReward({
             .map((reward) => reward.referrer[currencyAmountKey])
             .reduce((acc, reward) => (reward > acc ? reward : acc), 0);
         if (targetReward > 0) {
-            currentReward = Math.ceil(targetReward);
+            currentReward = Math.round(targetReward);
         }
     }
 
