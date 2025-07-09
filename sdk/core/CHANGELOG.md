@@ -1,5 +1,11 @@
 # @frak-labs/core-sdk
 
+## 0.0.19
+
+### Patch Changes
+
+- [#108](https://github.com/frak-id/wallet/pull/108) [`ac15f08`](https://github.com/frak-id/wallet/commit/ac15f0807d63776520f9f954148da1ac87d7bd7b) Thanks [@KONFeature](https://github.com/KONFeature)! - Round reward amount instead of ceiling them in the UI
+
 ## 0.0.18
 
 ### Patch Changes

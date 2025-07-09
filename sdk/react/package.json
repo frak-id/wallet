@@ -11,7 +11,7 @@
       "url": "https://twitter.com/QNivelais"
     }
   ],
-  "version": "0.0.18",
+  "version": "0.0.19",
   "description": "React SDK of the Frak wallet, low level library to interact directly with the frak ecosystem.",
   "repository": {
     "url": "https://github.com/frak-id/wallet",
