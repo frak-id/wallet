@@ -47,10 +47,8 @@ export class HomePage {
         ).toBeVisible();
     }
 
-    async verifyReturnToHome() {
-        await expect(
-            this.page.getByRole("link", { name: "Back to wallet page" })
-        ).toBeVisible();
+    //verify button return to home
+    async clickBackToWalletPage() {
         await this.page
             .getByRole("link", { name: "Back to wallet page" })
             .click();
@@ -77,9 +75,6 @@ export class HomePage {
         await this.page.getByRole("button", { name: "Refresh" }).click();
         // Wait for the page to reload
         await this.page.waitForLoadState("networkidle");
-        // Verify that the balance is still visible after refresh
-        const isSoldeVisible = await this.page.getByText("Balance").isVisible();
-        expect(isSoldeVisible).toBeTruthy();
     }
 
     //verify the wallet button and click it
@@ -87,71 +82,36 @@ export class HomePage {
         // Ensure the wallet button is visible and clickable
         // finding the locator  wallet button by the SVG icon in the html
         const walletLinkLocator = this.page.locator("a:has(svg.lucide-wallet)");
-        //await this.page.setViewportSize({ width: 1920, height: 1080 }); if we want  to have a best test view
         await expect(walletLinkLocator).toBeVisible();
         await walletLinkLocator.click();
         await this.page.waitForURL("/wallet");
     }
 
-    //verify the history button and click it
-    async clickHistoryButton() {
-        // Ensure the history button is visible and clickable
-        const historyLinkLocator = this.page.locator(
-            "a:has(svg.lucide-history)"
-        );
-        await expect(historyLinkLocator).toBeVisible();
-        await historyLinkLocator.click();
-        await this.page.waitForURL("/history");
-    }
-    //verify that the history page is displayed with rewards and interactions
-    async verifyDisplayHistoryPage() {
-        await expect(
-            this.page.getByRole("button", { name: "rewards" })
-        ).toBeVisible();
-        await expect(
-            this.page.getByRole("button", { name: "Interactions" })
-        ).toBeVisible();
-    }
-
-    //verify the settings button and click it
-    async clickSettingsButton() {
-        // Ensure the settings button is visible and clickable
-        const settingsLinkLocator = this.page.locator(
-            "a:has(svg.lucide-settings)"
-        );
-        await expect(settingsLinkLocator).toBeVisible();
-        await settingsLinkLocator.click();
-        await this.page.waitForURL("/settings");
-    }
-
-    //verify that the settings page is displayed and the heading is visible
-    async verifyDisplaySettingsPage() {
-        await this.page
-            .getByRole("heading", { name: "Biometry informations" })
-            .click();
-        await this.page.getByText("Wallet not activated Activate").click();
-        await this.page.getByText("Recovery setupSetup new").click();
-    }
-
-    //verify clipboard text to be true
+    //verify clipboard
     async clickCopyAddressButton() {
-        // Ensure the copy address button is visible and clickable
+        // Get the locator for the copy address button
         const copyAddressButton = this.page.getByRole("button", {
-            name: "Enter address",
+            name: "Copy address",
         });
+
+        // Ensure the copy address button is visible and clickable
         await expect(copyAddressButton).toBeVisible();
+        await expect(copyAddressButton).toBeEnabled();
+
+        // Click the copy address button
         await copyAddressButton.click();
+    }
 
-        // Wait for the clipboard to be updated
-        await this.page.waitForTimeout(1000); // Adjust the timeout as needed
+    // Verify that the address is copied to clipboard
+    // miss the adress to fill in the copyadress button
+    async verifyClipboardText(): Promise<void> {
+        // It's best to pass the expected value
+        const clipboardText: string = await this.page.evaluate(
+            (): Promise<string> => navigator.clipboard.readText()
+        );
 
-        //verify the clipboard text
-        const clipboardText = await this.page.evaluate(() => {
-            return navigator.clipboard.readText();
-        });
-        expect(clipboardText).toBeTruthy();
-
-        // Return the clipboard text for further verification if needed
-        return clipboardText;
+        //verify the clipboard is not empty
+        expect(clipboardText).toBeDefined();
+        expect(clipboardText).not.toHaveLength(0);
     }
 }

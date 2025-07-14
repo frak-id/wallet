@@ -14,14 +14,14 @@ test("should display wallet token received page", async ({ homePage }) => {
     await homePage.verifyDisplayReceivedPage();
 });
 
-//return to the home-page on click on back to wallet page link
-test("should display wallet home page when back to wallet page link clicked", async ({
-    homePage,
-}) => {
+//return to the home-page on click on back from received page
+test("should handle back to wallet from receive page", async ({ homePage }) => {
     await homePage.navigateToHome();
     await homePage.verifyBasicsInformations();
     await homePage.clickReceive();
-    await homePage.verifyReturnToHome();
+    await homePage.verifyDisplayReceivedPage();
+    await homePage.clickBackToWalletPage();
+    await homePage.verifyBasicsInformations();
 });
 
 //display the token send page when the send button is clicked
@@ -32,6 +32,16 @@ test("should display token send after clicking on send button", async ({
     await homePage.verifyBasicsInformations();
     await homePage.clickSend();
     await homePage.verifyDisplaySendPage();
+});
+
+//return to the home-page on click on back to wallet from send page
+test("should handle back to wallet from send page", async ({ homePage }) => {
+    await homePage.navigateToHome();
+    await homePage.verifyBasicsInformations();
+    await homePage.clickSend();
+    await homePage.verifyDisplaySendPage();
+    await homePage.clickBackToWalletPage();
+    await homePage.verifyBasicsInformations();
 });
 
 //verify the refresh button and click it
@@ -57,34 +67,16 @@ test("should display wallet page when wallet button clicked", async ({
     // Verify that the wallet page is displayed
     await homePage.verifyBasicsInformations();
 });
-// verify the history button and click it
-test("should display history page when history button clicked", async ({
-    homePage,
-}) => {
-    await homePage.navigateToHome();
-    await homePage.verifyBasicsInformations();
-    // Click the history button
-    await homePage.clickHistoryButton();
-    // Verify that the history page is displayed
-    await homePage.verifyDisplayHistoryPage();
-});
-
-//verify the settings button click and display the settings page
-test("should display settings page when settings button clicked", async ({
-    homePage,
-}) => {
-    await homePage.navigateToHome();
-    await homePage.verifyBasicsInformations();
-    await homePage.clickSettingsButton();
-
-    // Verify that the settings page is displayed
-    await homePage.verifyDisplaySettingsPage();
-});
 
 //verify clipboard text to be true
-test.skip("should copy address to clipboard", async ({ homePage }) => {
+test("should copy address on receive page", async ({ homePage }) => {
     await homePage.navigateToHome();
     await homePage.verifyBasicsInformations();
+    await homePage.clickReceive();
+
     // Click the copy address button
     await homePage.clickCopyAddressButton();
+
+    // Verify that the address is copied to clipboard
+    await homePage.verifyClipboardText();
 });

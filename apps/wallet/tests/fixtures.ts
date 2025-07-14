@@ -5,6 +5,7 @@ import { MockedWebAuthNHelper } from "./helpers/mockedWebauthn.helper";
 import { StorageHelper } from "./helpers/sotrage.helper";
 import { WebAuthNHelper } from "./helpers/webauthn.helper";
 import { AuthPage } from "./pages/auth.page";
+import { HistoryPage } from "./pages/history.page";
 import { HomePage } from "./pages/home.page";
 import { SettingsPage } from "./pages/settings.page";
 
@@ -20,6 +21,7 @@ type TestFixtures = {
     authPage: AuthPage;
     settingsPage: SettingsPage;
     homePage: HomePage;
+    historyPage: HistoryPage;
 };
 
 // WebAuthN should switched to worker scope, with a pre existing authenticator + credentials so we can test login + pairing easily
@@ -63,6 +65,9 @@ export const test = base.extend<TestFixtures, WorkerFixture>({
     },
     homePage: async ({ page }, use) => {
         await use(new HomePage(page));
+    },
+    historyPage: async ({ page }, use) => {
+        await use(new HistoryPage(page));
     },
 });
 
