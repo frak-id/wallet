@@ -61,15 +61,13 @@
     "formatter": {
         "enabled": true,
         "indentStyle": "space",
-        "indentWidth": 4,
-        "lineEnding": "crlf"
+        "indentWidth": 4
     },
     "javascript": {
         "formatter": {
             "quoteStyle": "double",
             "semicolons": "always",
-            "trailingCommas": "es5",
-            "lineEnding": "crlf"
+            "trailingCommas": "es5"
         }
     },
     "css": {
@@ -82,8 +80,7 @@
         "formatter": {
             "enabled": true,
             "indentStyle": "space",
-            "indentWidth": 4,
-            "lineEnding": "crlf"
+            "indentWidth": 4
         }
     }
 }
