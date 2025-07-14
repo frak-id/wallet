@@ -21,7 +21,9 @@
             ".react-router/**",
             ".rslib/**",
             ".svelte-kit/**",
-            "**/*.svelte"
+            "**/*.svelte",
+            "playwright-report/**",
+            "test-results/**"
         ]
     },
     "organizeImports": {
@@ -59,13 +61,15 @@
     "formatter": {
         "enabled": true,
         "indentStyle": "space",
-        "indentWidth": 4
+        "indentWidth": 4,
+        "lineEnding": "crlf"
     },
     "javascript": {
         "formatter": {
             "quoteStyle": "double",
             "semicolons": "always",
-            "trailingCommas": "es5"
+            "trailingCommas": "es5",
+            "lineEnding": "crlf"
         }
     },
     "css": {
@@ -78,7 +82,8 @@
         "formatter": {
             "enabled": true,
             "indentStyle": "space",
-            "indentWidth": 4
+            "indentWidth": 4,
+            "lineEnding": "crlf"
         }
     }
 }
