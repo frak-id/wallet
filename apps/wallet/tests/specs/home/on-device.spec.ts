@@ -69,7 +69,10 @@ test("should display wallet page when wallet button clicked", async ({
 });
 
 //verify clipboard text to be true
-test("should copy address on receive page", async ({ homePage }) => {
+test("should copy address on receive page", async ({
+    homePage,
+    clipboardHelper,
+}) => {
     await homePage.navigateToHome();
     await homePage.verifyBasicsInformations();
     await homePage.clickReceive();
@@ -78,5 +81,5 @@ test("should copy address on receive page", async ({ homePage }) => {
     await homePage.clickCopyAddressButton();
 
     // Verify that the address is copied to clipboard
-    await homePage.verifyClipboardText();
+    await clipboardHelper.verifyClipboardNotEmpty();
 });

@@ -1,6 +1,7 @@
 import { test as base } from "@playwright/test";
 import { AnalyticsApi } from "./api/analytics.api";
 import { BackendApi } from "./api/backend.api";
+import { ClipboardHelper } from "./helpers/clipboard.helper";
 import { MockedWebAuthNHelper } from "./helpers/mockedWebauthn.helper";
 import { PairingTabHelper } from "./helpers/pairingTab.helper";
 import { StorageHelper } from "./helpers/sotrage.helper";
@@ -15,6 +16,7 @@ type TestFixtures = {
     webAuthN: WebAuthNHelper;
     mockedWebAuthN: MockedWebAuthNHelper;
     storageHelper: StorageHelper;
+    clipboardHelper: ClipboardHelper;
     // APIs
     backendApi: BackendApi;
     analyticsApi: AnalyticsApi;
@@ -62,6 +64,9 @@ export const test = base.extend<TestFixtures, WorkerFixture>({
     },
     storageHelper: async ({ page }, use) => {
         await use(new StorageHelper(page));
+    },
+    clipboardHelper: async ({ page }, use) => {
+        await use(new ClipboardHelper(page));
     },
     // APIs
     backendApi: async ({ page }, use) => {

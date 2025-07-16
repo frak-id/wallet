@@ -1,9 +1,6 @@
 import { type Page, expect } from "@playwright/test";
 
 export class HistoryPage {
-    authenticatorButtonVisible() {
-        throw new Error("Method not implemented.");
-    }
     constructor(private readonly page: Page) {}
 
     //verify the history button and click it
@@ -31,17 +28,12 @@ export class HistoryPage {
             this.page.getByRole("button", { name: "Interactions" })
         ).toBeVisible();
     }
+
     //check the notifications button visible
-    async NotificationsButtonVisible() {
+    async notificationsButtonVisible() {
         // try to find the notifications button using  selectoors
         const notificationsButton = this.page
-            .locator(
-                'button:has(svg title:text("Notifications")), ' +
-                    'a:has(svg title:text("Notifications")), ' +
-                    'svg title:text("Notifications"), ' +
-                    '[aria-label*="Notifications"], ' +
-                    '[title*="Notifications"]'
-            )
+            .locator('a:has(svg title:text("Notifications"))')
             .first();
 
         await expect(notificationsButton).toBeVisible();
@@ -50,16 +42,11 @@ export class HistoryPage {
     // Click the notifications button
     async clickNotificationsButton() {
         const notificationsButton = this.page
-            .locator(
-                'button:has(svg title:text("Notifications")), ' +
-                    'a:has(svg title:text("Notifications")), ' +
-                    'svg title:text("Notifications"), ' +
-                    '[aria-label*="Notifications"], ' +
-                    '[title*="Notifications"]'
-            )
+            .locator('a:has(svg title:text("Notifications"))')
             .first();
 
         await notificationsButton.click();
         await this.page.waitForURL("/notifications");
+        await this.page.waitForLoadState("networkidle");
     }
 }

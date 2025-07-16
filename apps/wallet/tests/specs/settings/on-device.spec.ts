@@ -1,4 +1,5 @@
 import { test } from "../../fixtures";
+
 test.beforeEach(async ({ mockedWebAuthN }) => {
     await mockedWebAuthN.setup();
 });
@@ -6,28 +7,30 @@ test.beforeEach(async ({ mockedWebAuthN }) => {
 //verify display the settings page
 test("should display settings", async ({ settingsPage }) => {
     await settingsPage.navigateToSettings();
-    await settingsPage.clickSettingsButton();
     await settingsPage.verifyDisplaySettingsPage();
 });
 
 //verify click recovery button
 test("should click recovery button", async ({ settingsPage }) => {
     await settingsPage.navigateToSettings();
-    await settingsPage.clickSettingsButton();
-    await settingsPage.clickRecoveryButton;
+    await settingsPage.verifyDisplaySettingsPage();
+
+    await settingsPage.clickRecoveryButton();
 });
 
 //verify the activate wallet button
-test("click activate wallet button", async ({ settingsPage }) => {
+// todo: mock the activation / deactivation of the wallet
+test.skip("click activate wallet button", async ({ settingsPage }) => {
     await settingsPage.navigateToSettings();
-    await settingsPage.clickSettingsButton();
+    await settingsPage.verifyDisplaySettingsPage();
     await settingsPage.clickActivateWalletButton();
 });
 
 //verify the desactivate wallet button
-test("click desactivate wallet button", async ({ settingsPage }) => {
+// todo: mock the activation / deactivation of the wallet
+test.skip("click desactivate wallet button", async ({ settingsPage }) => {
     await settingsPage.navigateToSettings();
-    await settingsPage.clickSettingsButton();
+    await settingsPage.verifyDisplaySettingsPage();
     await settingsPage.clickDesactivateWalletButton();
     // need to be locked at the wallet to verify the desactivate wallet button
 });
@@ -42,11 +45,16 @@ test("authenticator button visible", async ({ settingsPage }) => {
     await settingsPage.authenticatorButtonVisible();
 });
 //verify copy authenticator information in clipboard
-test("should copy authenticator information", async ({ settingsPage }) => {
+test("should copy authenticator information", async ({
+    settingsPage,
+    clipboardHelper,
+}) => {
     // Navigate to the settings page
     await settingsPage.navigateToSettings();
     // Verify that the history page is displayed with rewards and interactions
     await settingsPage.verifyDisplaySettingsPage();
     // Copy authenticator information
-    await settingsPage.copyAuthenticatorInformation();
+    await settingsPage.copyAuthenticatorInformations();
+    // Verify that the clipboard is not empty
+    await clipboardHelper.verifyClipboardNotEmpty();
 });

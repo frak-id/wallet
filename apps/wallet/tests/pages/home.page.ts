@@ -103,17 +103,4 @@ export class HomePage {
         // Click the copy address button
         await copyAddressButton.click();
     }
-
-    // Verify that the address is copied to clipboard
-    // miss the adress to fill in the copyadress button
-    async verifyClipboardText(): Promise<void> {
-        // It's best to pass the expected value
-        const clipboardText: string = await this.page.evaluate(
-            (): Promise<string> => navigator.clipboard.readText()
-        );
-
-        //verify the clipboard is not empty
-        expect(clipboardText).toBeDefined();
-        expect(clipboardText).not.toHaveLength(0);
-    }
 }
