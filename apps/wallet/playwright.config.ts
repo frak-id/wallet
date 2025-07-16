@@ -1,3 +1,5 @@
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { defineConfig, devices } from "@playwright/test";
 
 const configPerEnv = {
@@ -16,11 +18,13 @@ const targetEnv = (process.env.TARGET_ENV ??
 
 const config = configPerEnv[targetEnv];
 
-/*
- * TODO: Tmp quickfix for windows freelancer
- */
-export const STORAGE_STATE = `C:\\Users\\valer\\Desktop\\wallet\\apps\\wallet\\playwright\\.storage\\state-${targetEnv}.json`;
-export const AUTHENTICATOR_STATE = `C:\\Users\\valer\\Desktop\\wallet\\apps\\wallet\\playwright\\.storage\\authenticator-${targetEnv}.json`;
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const storagePath = join(__dirname, "playwright", ".storage");
+export const STORAGE_STATE = join(storagePath, `state-${targetEnv}.json`);
+export const AUTHENTICATOR_STATE = join(
+    storagePath,
+    `authenticator-${targetEnv}.json`
+);
 
 export default defineConfig({
     testDir: "./tests",
