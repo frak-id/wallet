@@ -1,194 +1,132 @@
 "use client";
 
-import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
+import { useCheckDomainName } from "@/module/dashboard/hooks/dnsRecordHooks";
 import { useMintMyProduct } from "@/module/dashboard/hooks/useMintMyProduct";
-import type { Currency, ProductTypesKey } from "@frak-labs/core-sdk";
-import { Button } from "@frak-labs/ui/component/Button";
-import { Checkbox } from "@frak-labs/ui/component/forms/Checkbox";
-import { Input } from "@frak-labs/ui/component/forms/Input";
+import type { ProductTypesKey } from "@frak-labs/core-sdk";
+import type { Currency } from "@frak-labs/core-sdk";
 import { useState } from "react";
-import styles from "./index.module.css";
+import { useForm } from "react-hook-form";
+import { ProductInformationPanel } from "./ProductInformationPanel";
+import { RegistrationPanel } from "./RegistrationPanel";
+import { ValidationPanel } from "./ValidationPanel";
+import { defaultProductTypes, getDefaultCurrency } from "./utils";
+
+type ProductNew = {
+    name: string;
+    domain: string;
+    productTypes: ProductTypesKey[];
+    setupCode: string;
+    currency: Currency;
+};
 
 export function MintProduct() {
-    const [formData, setFormData] = useState({
-        name: "",
-        domain: "",
-        currency: "usd" as Currency,
-        productTypes: [] as ProductTypesKey[],
+    const [step, setStep] = useState(1);
+    const [isDomainValid, setIsDomainValid] = useState(false);
+    const [domainError, setDomainError] = useState<string | undefined>();
+
+    const form = useForm<ProductNew>({
+        defaultValues: {
+            name: "",
+            domain: "",
+            productTypes: defaultProductTypes,
+            setupCode: "",
+            currency: getDefaultCurrency(),
+        },
     });
+    const domain = form.watch("domain");
+    const setupCode = form.watch("setupCode");
+
+    const { mutateAsync: checkDomainSetup } = useCheckDomainName();
 
     const {
-        mutation: { mutate: triggerMint, isPending, error },
+        mutation: {
+            mutate: triggerMint,
+            isPending,
+            error,
+            data: { mintTxHash } = {},
+        },
         infoTxt,
     } = useMintMyProduct({
         onSuccess: () => {
-            // Reset form on success
-            setFormData({
-                name: "",
-                domain: "",
-                currency: "usd",
-                productTypes: [],
-            });
+            setStep(3);
         },
     });
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (
-            !formData.name ||
-            !formData.domain ||
-            formData.productTypes.length === 0
-        ) {
+    // Verify the validity of a domain
+    async function verifyDomain() {
+        setDomainError(undefined);
+        setIsDomainValid(false);
+
+        const isFormValid = await form.trigger();
+        if (!isFormValid) return;
+
+        if (!domain) {
+            setDomainError("Invalid domain name");
             return;
         }
 
+        try {
+            const { isAlreadyMinted, isDomainValid } = await checkDomainSetup({
+                domain,
+                setupCode,
+            });
+
+            if (isAlreadyMinted) {
+                setDomainError(
+                    `A product already exists for the domain ${domain}`
+                );
+            } else if (!isDomainValid) {
+                setDomainError(
+                    "The DNS txt record is not set, or the setup code is invalid"
+                );
+            } else {
+                setIsDomainValid(true);
+            }
+        } catch (err) {
+            console.error("Domain verification failed:", err);
+            setDomainError("Failed to verify domain");
+        }
+    }
+
+    const handleSubmit = () => {
+        const formData = form.getValues();
         triggerMint({
             name: formData.name,
             domain: formData.domain,
             productTypes: formData.productTypes,
-            setupCode: "", // For manual minting, we might not need setup code
+            setupCode: formData.setupCode,
             currency: formData.currency,
         });
     };
 
-    const productTypeOptions = [
-        { value: "dapp", label: "DApp" },
-        { value: "press", label: "Press" },
-        { value: "webshop", label: "Web Shop" },
-        { value: "retail", label: "Retail" },
-        { value: "referral", label: "Referral" },
-        { value: "purchase", label: "Purchase" },
-    ];
-
-    const currencyOptions = [
-        { value: "usd", label: "USD" },
-        { value: "eur", label: "EUR" },
-        { value: "gbp", label: "GBP" },
-    ];
-
     return (
         <>
             <Title>Mint New Product</Title>
-            <Panel title="Product Information">
-                <form onSubmit={handleSubmit} className={styles.form}>
-                    <div className={styles.field}>
-                        <label htmlFor="name">Product Name</label>
-                        <Input
-                            id="name"
-                            type="text"
-                            value={formData.name}
-                            onChange={(e) =>
-                                setFormData({
-                                    ...formData,
-                                    name: e.target.value,
-                                })
-                            }
-                            placeholder="Enter product name"
-                            required
-                        />
-                    </div>
 
-                    <div className={styles.field}>
-                        <label htmlFor="domain">Domain</label>
-                        <Input
-                            id="domain"
-                            type="text"
-                            value={formData.domain}
-                            onChange={(e) =>
-                                setFormData({
-                                    ...formData,
-                                    domain: e.target.value,
-                                })
-                            }
-                            placeholder="example.com"
-                            required
-                        />
-                    </div>
+            <ProductInformationPanel
+                form={form}
+                step={step}
+                isDomainValid={isDomainValid}
+                domainError={domainError}
+                onVerifyDomain={verifyDomain}
+            />
 
-                    <div className={styles.field}>
-                        <label htmlFor="currency">Currency</label>
-                        <select
-                            id="currency"
-                            value={formData.currency}
-                            onChange={(e) =>
-                                setFormData({
-                                    ...formData,
-                                    currency: e.target.value as Currency,
-                                })
-                            }
-                            className={styles.select}
-                        >
-                            {currencyOptions.map((option) => (
-                                <option key={option.value} value={option.value}>
-                                    {option.label}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
+            <ValidationPanel
+                form={form}
+                step={step}
+                isDomainValid={isDomainValid}
+                onNext={() => setStep(2)}
+            />
 
-                    <div className={styles.field}>
-                        <p>Product Types</p>
-                        <div className={styles.checkboxGroup}>
-                            {productTypeOptions.map((option) => (
-                                <label
-                                    htmlFor={option.value}
-                                    key={option.value}
-                                    className={styles.checkbox}
-                                >
-                                    <Checkbox
-                                        id={option.value}
-                                        checked={formData.productTypes.includes(
-                                            option.value as ProductTypesKey
-                                        )}
-                                        onCheckedChange={(checked: boolean) => {
-                                            const productType =
-                                                option.value as ProductTypesKey;
-                                            if (checked) {
-                                                setFormData({
-                                                    ...formData,
-                                                    productTypes: [
-                                                        ...formData.productTypes,
-                                                        productType,
-                                                    ],
-                                                });
-                                            } else {
-                                                setFormData({
-                                                    ...formData,
-                                                    productTypes:
-                                                        formData.productTypes.filter(
-                                                            (type) =>
-                                                                type !==
-                                                                productType
-                                                        ),
-                                                });
-                                            }
-                                        }}
-                                    />
-                                    {option.label}
-                                </label>
-                            ))}
-                        </div>
-                    </div>
-
-                    <Button
-                        type="submit"
-                        variant="primary"
-                        size="medium"
-                        isLoading={isPending}
-                        disabled={
-                            isPending ||
-                            !formData.name ||
-                            !formData.domain ||
-                            formData.productTypes.length === 0
-                        }
-                    >
-                        {isPending ? infoTxt || "Minting..." : "Mint Product"}
-                    </Button>
-
-                    {error && <p className={styles.error}>{error.message}</p>}
-                </form>
-            </Panel>
+            <RegistrationPanel
+                step={step}
+                isPending={isPending}
+                error={error}
+                infoTxt={infoTxt}
+                mintTxHash={mintTxHash}
+                onSubmit={handleSubmit}
+            />
         </>
     );
 }

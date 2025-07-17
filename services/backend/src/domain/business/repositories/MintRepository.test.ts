@@ -217,51 +217,57 @@ describe("MintRepository", () => {
             }
         );
 
-        it.todo("should handle interaction contract deployment failure gracefully", async () => {
-            const expectedProductId = mintRepository.precomputeProductId(
-                mintParams.domain
-            );
+        it.todo(
+            "should handle interaction contract deployment failure gracefully",
+            async () => {
+                const expectedProductId = mintRepository.precomputeProductId(
+                    mintParams.domain
+                );
 
-            // Mock interaction contract deployment to fail
-            viemActionsMocks.simulateContract
-                .mockResolvedValueOnce({
-                    request: { to: "0xproductregistry" },
-                    result: expectedProductId,
-                })
-                .mockResolvedValueOnce({
-                    request: { to: "0xinteractionmanager" },
-                    result: "0x0000000000000000000000000000000000000000" as Address, // Zero address indicates failure
-                });
+                // Mock interaction contract deployment to fail
+                viemActionsMocks.simulateContract
+                    .mockResolvedValueOnce({
+                        request: { to: "0xproductregistry" },
+                        result: expectedProductId,
+                    })
+                    .mockResolvedValueOnce({
+                        request: { to: "0xinteractionmanager" },
+                        result: "0x0000000000000000000000000000000000000000" as Address, // Zero address indicates failure
+                    });
 
-            const result = await mintRepository.mintProduct(mintParams);
+                const result = await mintRepository.mintProduct(mintParams);
 
-            expect(result.interactionResult).toBeUndefined();
-        });
+                expect(result.interactionResult).toBeUndefined();
+            }
+        );
 
-        it.todo("should handle bank deployment failure gracefully", async () => {
-            const expectedProductId = mintRepository.precomputeProductId(
-                mintParams.domain
-            );
+        it.todo(
+            "should handle bank deployment failure gracefully",
+            async () => {
+                const expectedProductId = mintRepository.precomputeProductId(
+                    mintParams.domain
+                );
 
-            // Mock bank deployment to fail
-            viemActionsMocks.simulateContract
-                .mockResolvedValueOnce({
-                    request: { to: "0xproductregistry" },
-                    result: expectedProductId,
-                })
-                .mockResolvedValueOnce({
-                    request: { to: "0xinteractionmanager" },
-                    result: mockInteractionAddress,
-                })
-                .mockResolvedValueOnce({
-                    request: { to: "0xcampaignbankfactory" },
-                    result: "0x0000000000000000000000000000000000000000" as Address, // Zero address indicates failure
-                });
+                // Mock bank deployment to fail
+                viemActionsMocks.simulateContract
+                    .mockResolvedValueOnce({
+                        request: { to: "0xproductregistry" },
+                        result: expectedProductId,
+                    })
+                    .mockResolvedValueOnce({
+                        request: { to: "0xinteractionmanager" },
+                        result: mockInteractionAddress,
+                    })
+                    .mockResolvedValueOnce({
+                        request: { to: "0xcampaignbankfactory" },
+                        result: "0x0000000000000000000000000000000000000000" as Address, // Zero address indicates failure
+                    });
 
-            const result = await mintRepository.mintProduct(mintParams);
+                const result = await mintRepository.mintProduct(mintParams);
 
-            expect(result.bankResult).toBeUndefined();
-        });
+                expect(result.bankResult).toBeUndefined();
+            }
+        );
     });
 
     describe("mintProduct in production", () => {
