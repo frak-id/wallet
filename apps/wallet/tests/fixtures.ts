@@ -9,6 +9,7 @@ import { WebAuthNHelper } from "./helpers/webauthn.helper";
 import { AuthPage } from "./pages/auth.page";
 import { HistoryPage } from "./pages/history.page";
 import { HomePage } from "./pages/home.page";
+import { PairingPage } from "./pages/pairing.page";
 import { SettingsPage } from "./pages/settings.page";
 
 type TestFixtures = {
@@ -22,6 +23,7 @@ type TestFixtures = {
     analyticsApi: AnalyticsApi;
     // Pages
     authPage: AuthPage;
+    pairingPage: PairingPage;
     settingsPage: SettingsPage;
     homePage: HomePage;
     historyPage: HistoryPage;
@@ -83,6 +85,9 @@ export const test = base.extend<TestFixtures, WorkerFixture>({
     // Helpers
     authPage: async ({ page }, use) => {
         await use(new AuthPage(page));
+    },
+    pairingPage: async ({ page }, use) => {
+        await use(new PairingPage(page));
     },
     settingsPage: async ({ page }, use) => {
         await use(new SettingsPage(page));

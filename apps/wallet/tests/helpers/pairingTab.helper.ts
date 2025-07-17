@@ -3,14 +3,17 @@ import type {
     Page,
     PageScreenshotOptions,
 } from "@playwright/test";
+import { PairingPage } from "tests/pages/pairing.page";
 import { MockedWebAuthNHelper } from "./mockedWebauthn.helper";
+import { loadFrakStorageState } from "./utils";
 
 /**
  * Helper class for managing a pairing tab in tests
  * This provides a separate browser tab that can be used for pairing operations
  */
 export class PairingTabHelper {
-    private pairingPage: Page | null = null;
+    private rawPairingPage: Page | null = null;
+    private pairingPage: PairingPage | null = null;
     private mockedWebauthN: MockedWebAuthNHelper | null = null;
     private context: BrowserContext;
 
@@ -21,7 +24,7 @@ export class PairingTabHelper {
     /**
      * Get the pairing tab page
      */
-    get page(): Page {
+    get page(): PairingPage {
         if (!this.pairingPage) {
             throw new Error("Pairing tab not initialized. Call setup() first.");
         }
@@ -33,33 +36,28 @@ export class PairingTabHelper {
      */
     async setup(): Promise<void> {
         // Create a new page (tab) in the same context
-        this.pairingPage = await this.context.newPage();
+        this.rawPairingPage = await this.context.newPage();
 
         // Create a mocked WebAuthN helper for this tab
-        this.mockedWebauthN = new MockedWebAuthNHelper(this.pairingPage);
+        this.mockedWebauthN = new MockedWebAuthNHelper(this.rawPairingPage);
         await this.mockedWebauthN.setup();
 
-        // Navigate to the wallet base URL
-        await this.pairingPage.goto("/");
-    }
+        // Create a PairingPage instance for this tab
+        this.pairingPage = new PairingPage(this.rawPairingPage);
 
-    /**
-     * Navigate to the pairing page with a specific pairing ID
-     */
-    async navigateToPairing(pairingId: string): Promise<void> {
-        if (!this.pairingPage) {
-            throw new Error("Pairing tab not initialized. Call setup() first.");
-        }
+        this.rawPairingPage.goto("/");
+        await this.rawPairingPage.waitForLoadState("networkidle");
 
-        await this.pairingPage.goto(`/pairing?id=${pairingId}`);
+        // Load the storage state for the pairing tab
+        await loadFrakStorageState(this.rawPairingPage);
     }
 
     /**
      * Close the pairing tab
      */
     async close(): Promise<void> {
-        if (this.pairingPage) {
-            await this.pairingPage.close();
+        if (this.rawPairingPage) {
+            await this.rawPairingPage.close();
             this.pairingPage = null;
         }
     }
@@ -68,10 +66,48 @@ export class PairingTabHelper {
      * Take a screenshot of the pairing tab
      */
     async screenshot(options?: PageScreenshotOptions): Promise<Buffer> {
-        if (!this.pairingPage) {
+        if (!this.rawPairingPage) {
             throw new Error("Pairing tab not initialized. Call setup() first.");
         }
 
-        return await this.pairingPage.screenshot(options);
+        return await this.rawPairingPage.screenshot(options);
+    }
+
+    /**
+     * Method used to confirm pairing with a specific pairing ID
+     * @param pairingId
+     */
+    async confirmPairing(
+        pairingId: string,
+        pairingCode?: string
+    ): Promise<void> {
+        if (!this.pairingPage || !this.rawPairingPage) {
+            throw new Error(
+                "Pairing page not initialized. Call setup() first."
+            );
+        }
+
+        // Load the storage state for the pairing tab
+        await loadFrakStorageState(this.rawPairingPage);
+
+        await this.pairingPage.navigateToPairing(pairingId);
+        await this.pairingPage.verifyPairingReady(pairingCode);
+        await this.pairingPage.clickConfirm();
+    }
+
+    /**
+     * Method used to confirm pairing with a specific pairing ID
+     * @param pairingId
+     */
+    async rejectPairing(pairingId: string): Promise<void> {
+        if (!this.pairingPage) {
+            throw new Error(
+                "Pairing page not initialized. Call setup() first."
+            );
+        }
+
+        await this.pairingPage.navigateToPairing(pairingId);
+        await this.pairingPage.verifyPairingReady();
+        await this.pairingPage.clickCancel();
     }
 }
