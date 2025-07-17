@@ -129,9 +129,10 @@ export const mintRoutes = new Elysia({ prefix: "/mint" })
                 domain: t.String(),
                 setupCode: t.Optional(t.String()),
                 currency: t.Union([
-                    t.Literal("usd"),
-                    t.Literal("eur"),
-                    t.Literal("gbp"),
+                    t.Literal("usde"),
+                    t.Literal("eure"),
+                    t.Literal("gbpe"),
+                    t.Literal("usdc"),
                 ]),
                 productTypes: t.Array(
                     t.UnionEnum(

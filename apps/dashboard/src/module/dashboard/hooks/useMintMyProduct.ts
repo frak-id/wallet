@@ -1,6 +1,7 @@
 import { useGetAdminWallet } from "@/module/common/hook/useGetAdminWallet";
 import { useWaitForTxAndInvalidateQueries } from "@/module/common/utils/useWaitForTxAndInvalidateQueries";
 import {
+    type Stablecoin,
     addresses,
     campaignBankAbi,
     interactionValidatorRoles,
@@ -10,7 +11,6 @@ import {
 } from "@frak-labs/app-essentials/blockchain";
 import { backendApi, businessApi } from "@frak-labs/client/server";
 import type {
-    Currency,
     ProductTypesKey,
     SendTransactionModalStepType,
 } from "@frak-labs/core-sdk";
@@ -31,7 +31,7 @@ export function useMintMyProduct(
             domain: string;
             setupCode: string;
             productTypes: ProductTypesKey[];
-            currency?: Currency;
+            currency?: Stablecoin;
         }
     >
 ) {

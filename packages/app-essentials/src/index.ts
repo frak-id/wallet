@@ -4,6 +4,7 @@ export {
     usdcArbitrumAddress,
     stablecoins,
     currentStablecoins,
+    type Stablecoin,
     // Roles
     productRoles,
     interactionValidatorRoles,
@@ -47,8 +48,7 @@ export {
     isRunningLocally,
     stringToBytes32,
     bytesToString,
-    detectCurrencyFromToken,
-    getTokenAddressForCurrency,
+    getTokenAddressForStablecoin,
 } from "./utils";
 export { WebAuthN } from "./webauthn";
 export type {

@@ -3,21 +3,21 @@
 import { Title } from "@/module/common/component/Title";
 import { useCheckDomainName } from "@/module/dashboard/hooks/dnsRecordHooks";
 import { useMintMyProduct } from "@/module/dashboard/hooks/useMintMyProduct";
+import type { Stablecoin } from "@frak-labs/app-essentials";
 import type { ProductTypesKey } from "@frak-labs/core-sdk";
-import type { Currency } from "@frak-labs/core-sdk";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { ProductInformationPanel } from "./ProductInformationPanel";
 import { RegistrationPanel } from "./RegistrationPanel";
 import { ValidationPanel } from "./ValidationPanel";
-import { defaultProductTypes, getDefaultCurrency } from "./utils";
+import { defaultProductTypes, getDefaultStablecoin } from "./utils";
 
 type ProductNew = {
     name: string;
     domain: string;
     productTypes: ProductTypesKey[];
     setupCode: string;
-    currency: Currency;
+    currency: Stablecoin;
 };
 
 export function MintProduct() {
@@ -31,7 +31,7 @@ export function MintProduct() {
             domain: "",
             productTypes: defaultProductTypes,
             setupCode: "",
-            currency: getDefaultCurrency(),
+            currency: getDefaultStablecoin(),
         },
     });
     const domain = form.watch("domain");

@@ -1,13 +1,14 @@
-import type { Currency, ProductTypesKey } from "@frak-labs/core-sdk";
+import type { Stablecoin } from "@frak-labs/app-essentials";
+import type { ProductTypesKey } from "@frak-labs/core-sdk";
 
 // Get default currency based on browser language
-export function getDefaultCurrency(): Currency {
-    if (typeof navigator === "undefined") return "eur";
+export function getDefaultStablecoin(): Stablecoin {
+    if (typeof navigator === "undefined") return "eure";
 
     const language = navigator.language.toLowerCase();
-    if (language.startsWith("en-us")) return "usd";
-    if (language.startsWith("en-gb")) return "gbp";
-    return "eur"; // Default fallback
+    if (language.startsWith("en-us")) return "usde";
+    if (language.startsWith("en-gb")) return "gbpe";
+    return "eure"; // Default fallback
 }
 
 // Default selected product types
@@ -16,23 +17,6 @@ export const defaultProductTypes: ProductTypesKey[] = [
     "purchase",
     "webshop",
 ];
-
-export const currencyOptions = [
-    {
-        group: "Monerium",
-        description: "Best for easy IBAN transfer for end users",
-        options: [
-            { value: "eur", label: "EURe" },
-            { value: "gbp", label: "GBPe" },
-            { value: "usd", label: "USDe" },
-        ],
-    },
-    {
-        group: "Circle",
-        description: "Best for blockchain usage for end users",
-        options: [{ value: "usd", label: "USDC" }],
-    },
-] as const;
 
 // Product type descriptions with detailed explanations
 export const productTypeDescriptions: Record<

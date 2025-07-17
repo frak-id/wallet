@@ -9,6 +9,7 @@ import {
     FormMessage,
     FormValidMessage,
 } from "@/module/forms/Form";
+import { currencyOptions } from "@/module/product/utils/currencyOptions";
 import type { Currency, ProductTypesKey } from "@frak-labs/core-sdk";
 import { Button } from "@frak-labs/ui/component/Button";
 import { Spinner } from "@frak-labs/ui/component/Spinner";
@@ -18,7 +19,7 @@ import { Input } from "@frak-labs/ui/component/forms/Input";
 import { validateUrl } from "@frak-labs/ui/utils/validateUrl";
 import type { UseFormReturn } from "react-hook-form";
 import styles from "./index.module.css";
-import { currencyOptions, productTypeDescriptions } from "./utils";
+import { productTypeDescriptions } from "./utils";
 
 type ProductNew = {
     name: string;

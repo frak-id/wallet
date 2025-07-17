@@ -10,9 +10,9 @@ import {
     isRunningInProd,
     stringToBytes32,
 } from "@frak-labs/app-essentials";
-import { getTokenAddressForCurrency } from "@frak-labs/app-essentials";
-import { mintAbi } from "@frak-labs/app-essentials/blockchain";
-import type { Currency, ProductTypesKey } from "@frak-labs/core-sdk";
+import { getTokenAddressForStablecoin } from "@frak-labs/app-essentials";
+import { type Stablecoin, mintAbi } from "@frak-labs/app-essentials/blockchain";
+import type { ProductTypesKey } from "@frak-labs/core-sdk";
 import { productTypesMask } from "@frak-labs/core-sdk";
 import type { Mutex } from "async-mutex";
 import {
@@ -78,13 +78,13 @@ export class MintRepository {
         domain,
         productTypes,
         owner,
-        currency = "usd",
+        currency = "usdc",
     }: {
         name: string;
         domain: string;
         productTypes: ProductTypesKey[];
         owner: Address;
-        currency?: Currency;
+        currency?: Stablecoin;
     }) {
         const precomputedProductId = this.precomputeProductId(domain);
         // Ensure the product does not already exist
@@ -238,7 +238,7 @@ export class MintRepository {
         productId: bigint;
         minter: LocalAccount;
         lock: Mutex;
-        currency: Currency;
+        currency: Stablecoin;
     }) {
         try {
             return await lock.runExclusive(async () => {
@@ -307,11 +307,11 @@ export class MintRepository {
         productId: bigint;
         minter: LocalAccount;
         lock: Mutex;
-        currency: Currency;
+        currency: Stablecoin;
     }) {
         try {
             return await lock.runExclusive(async () => {
-                const tokenAddress = getTokenAddressForCurrency(currency);
+                const tokenAddress = getTokenAddressForStablecoin(currency);
 
                 // Prepare the deployment data
                 const { request, result } = await simulateContract(viemClient, {
