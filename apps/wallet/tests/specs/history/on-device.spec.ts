@@ -34,3 +34,15 @@ test("notifications button click", async ({ historyPage }) => {
     await historyPage.clickNotificationsButton();
     // todo: verify notification page is displayed
 });
+
+//verify the notifications page is displayed
+test("should display notifications page when notifications button clicked", async ({
+    historyPage,
+}) => {
+    // Navigate to the history page
+    await historyPage.navigateToHistory();
+    // Click the notifications button
+    await historyPage.clickNotificationsButton();
+    // Verify that the notifications page is displayed
+    await historyPage.verifyDisplayNotificationsPage();
+});

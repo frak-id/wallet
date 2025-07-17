@@ -27,10 +27,9 @@ export class SettingsPage {
         await expect(
             this.page.getByText("Biometry informations")
         ).toBeVisible();
-
-        await expect(
-            this.page.getByText("Recovery setupSetup new")
-        ).toBeVisible();
+        await expect(this.page.getByText('Wallet not activated Activate')).toBeVisible();
+        await expect(this.page.getByText("Recovery setup")).toBeVisible();
+        await expect(this.page.getByRole('link', { name: 'Setup new recovery' })).toBeVisible();
         await expect(this.page.getByText("Logout")).toBeVisible();
     }
 
@@ -38,7 +37,7 @@ export class SettingsPage {
      * Click on the recovery button
      */
     async clickRecoveryButton() {
-        const recoveryButton = this.page.getByText("Recovery setupSetup new");
+        const recoveryButton = this.page.getByText("Setup new recovery");
         await expect(recoveryButton).toBeVisible();
         await recoveryButton.click();
         await this.page.waitForURL("/settings/recovery");
@@ -66,9 +65,9 @@ export class SettingsPage {
 
     // chek the authenticator button is visible
     async authenticatorButtonVisible() {
-        const authenticatorButton = this.page
-            .locator("button._walletAddress_1ys0n_1")
-            .nth(0);
+        const authenticatorButton = this.page.getByText(
+            "Authenticator: 0x5545...565051"
+        );
         await expect(authenticatorButton).toBeVisible();
     }
 
@@ -79,8 +78,15 @@ export class SettingsPage {
             .nth(0);
         await expect(authenticatorButton).toBeVisible();
 
-        // click the authenticator button to copy its text
+        // click the authenticator button and copy the text
         await expect(authenticatorButton).toBeEnabled();
         await authenticatorButton.click();
+    }
+
+    async verifyWalletButton() {
+        // Verify that the "wallet:"" button is visible
+        await expect(
+            this.page.getByText(/Wallet: [A-Za-z0-9.]+$/i)
+        ).toBeVisible();
     }
 }

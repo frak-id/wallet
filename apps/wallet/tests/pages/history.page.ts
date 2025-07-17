@@ -49,4 +49,10 @@ export class HistoryPage {
         await this.page.waitForURL("/notifications");
         await this.page.waitForLoadState("networkidle");
     }
+    // Verify that the notifications page is displayed
+    async verifyDisplayNotificationsPage() {
+        await expect(
+            this.page.getByRole("heading", { name: "Notifications" })
+        ).toBeVisible();
+    }
 }

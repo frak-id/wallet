@@ -14,7 +14,6 @@ test("should display settings", async ({ settingsPage }) => {
 test("should click recovery button", async ({ settingsPage }) => {
     await settingsPage.navigateToSettings();
     await settingsPage.verifyDisplaySettingsPage();
-
     await settingsPage.clickRecoveryButton();
 });
 
@@ -35,6 +34,16 @@ test.skip("click desactivate wallet button", async ({ settingsPage }) => {
     // need to be locked at the wallet to verify the desactivate wallet button
 });
 
+// verify the "wallet:" button is visible
+test("wallet button visible", async ({ settingsPage }) => {
+    // Navigate to the settings page
+    await settingsPage.navigateToSettings();
+    // Verify that the history page is displayed with rewards and interactions
+    await settingsPage.verifyDisplaySettingsPage();
+    // Verify that the "wallet:" button is visible
+    await settingsPage.verifyWalletButton();
+});
+
 // verify the authenticator button is visible
 test("authenticator button visible", async ({ settingsPage }) => {
     // Navigate to the settings page
@@ -44,7 +53,8 @@ test("authenticator button visible", async ({ settingsPage }) => {
     // Verify that the authenticator button is visible
     await settingsPage.authenticatorButtonVisible();
 });
-//verify copy authenticator information in clipboard
+
+// verify copy authenticator information in clipboard
 test("should copy authenticator information", async ({
     settingsPage,
     clipboardHelper,
