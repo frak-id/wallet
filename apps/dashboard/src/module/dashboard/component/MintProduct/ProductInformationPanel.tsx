@@ -10,7 +10,8 @@ import {
     FormValidMessage,
 } from "@/module/forms/Form";
 import { currencyOptions } from "@/module/product/utils/currencyOptions";
-import type { Currency, ProductTypesKey } from "@frak-labs/core-sdk";
+import type { Stablecoin } from "@frak-labs/app-essentials";
+import type { ProductTypesKey } from "@frak-labs/core-sdk";
 import { Button } from "@frak-labs/ui/component/Button";
 import { Spinner } from "@frak-labs/ui/component/Spinner";
 import { TextWithCopy } from "@frak-labs/ui/component/TextWithCopy";
@@ -26,7 +27,7 @@ type ProductNew = {
     domain: string;
     productTypes: ProductTypesKey[];
     setupCode: string;
-    currency: Currency;
+    currency: Stablecoin;
 };
 
 interface ProductInformationPanelProps {
@@ -65,7 +66,7 @@ function ProductTypeCard({
         <label
             className={styles.productTypeCard}
             style={{ cursor: "pointer" }}
-            for={`checkbox-${info.name}`}
+            htmlFor={`checkbox-${info.name}`}
         >
             <div className={styles.productTypeLabel}>
                 <Checkbox

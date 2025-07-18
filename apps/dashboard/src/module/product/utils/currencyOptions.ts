@@ -11,6 +11,6 @@ export const currencyOptions = [
     {
         group: "Circle",
         description: "Best for blockchain usage for end users",
-        options: [{ value: "usde", label: "USDC" }],
+        options: [{ value: "usdc", label: "USDC" }],
     },
 ] as const;

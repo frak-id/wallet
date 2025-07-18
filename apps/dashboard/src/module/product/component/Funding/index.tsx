@@ -1,6 +1,7 @@
 "use client";
 
 import { viemClient } from "@/context/blockchain/provider";
+import { useAddProductBank } from "@/module/bank/hook/useAddProductBank";
 import { Badge } from "@/module/common/component/Badge";
 import { Panel } from "@/module/common/component/Panel";
 import { Row } from "@/module/common/component/Row";
@@ -16,8 +17,13 @@ import {
     useGetProductFunding,
 } from "@/module/product/hook/useGetProductFunding";
 import { useSetBankDistributionStatus } from "@/module/product/hook/useSetBankDistributionStatus";
+import { currencyOptions } from "@/module/product/utils/currencyOptions";
 import { addresses } from "@frak-labs/app-essentials";
-import { campaignBankAbi } from "@frak-labs/app-essentials/blockchain";
+import { detectStablecoinFromToken } from "@frak-labs/app-essentials";
+import {
+    type Stablecoin,
+    campaignBankAbi,
+} from "@frak-labs/app-essentials/blockchain";
 import { useSendTransactionAction } from "@frak-labs/react-sdk";
 import { Button } from "@frak-labs/ui/component/Button";
 import { Column, Columns } from "@frak-labs/ui/component/Columns";
@@ -27,9 +33,9 @@ import { Switch } from "@frak-labs/ui/component/Switch";
 import { Tooltip } from "@frak-labs/ui/component/Tooltip";
 import { useMutation } from "@tanstack/react-query";
 import { atom, useAtomValue, useSetAtom } from "jotai";
-import { CheckCircle, XCircle } from "lucide-react";
+import { CheckCircle, Plus, XCircle } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
     type Address,
     type Hex,
@@ -87,13 +93,18 @@ function ProductFundingBanks({
         return <div>No banks</div>;
     }
 
-    return banks.map((bank) => (
-        <ProductFundingBank
-            key={`bank-${bank.address}`}
-            bank={bank}
-            productId={productId}
-        />
-    ));
+    return (
+        <>
+            {banks.map((bank) => (
+                <ProductFundingBank
+                    key={`bank-${bank.address}`}
+                    bank={bank}
+                    productId={productId}
+                />
+            ))}
+            <AddNewBank banks={banks} productId={productId} />
+        </>
+    );
 }
 
 /**
@@ -110,20 +121,49 @@ function ProductFundingBank({
         [bank.token.address]
     );
 
+    const stablecoinInfo = useMemo(() => {
+        const symbol = bank.token.symbol.toLowerCase();
+        for (const group of currencyOptions) {
+            const option = group.options.find(
+                (opt) =>
+                    opt.label.toLowerCase() === symbol || opt.value === symbol
+            );
+            if (option) {
+                return {
+                    group: group.group,
+                    label: option.label,
+                    value: option.value,
+                };
+            }
+        }
+        return null;
+    }, [bank.token.symbol]);
+
+    const panelTitle = stablecoinInfo
+        ? `${stablecoinInfo.label} Bank`
+        : `${bank.token.symbol} Bank`;
+
     return (
-        <div className={styles.productFundingBank}>
-            <Columns>
-                <Column>
+        <Panel title={panelTitle} className={styles.bankPanel}>
+            <div className={styles.bankContent}>
+                <div className={styles.bankHeader}>
+                    {stablecoinInfo && (
+                        <Badge size={"small"} variant={"information"}>
+                            {stablecoinInfo.group}
+                        </Badge>
+                    )}
+                    {isTestBank && (
+                        <Badge size={"small"} variant={"warning"}>
+                            Test
+                        </Badge>
+                    )}
+                </div>
+                <div className={styles.bankSection}>
                     <Title
-                        as={"h3"}
+                        as={"h4"}
                         size={"small"}
-                        className={styles.productFundingBank__title}
+                        className={styles.bankSectionTitle}
                     >
-                        {isTestBank && (
-                            <Badge size={"small"} variant={"warning"}>
-                                Test
-                            </Badge>
-                        )}
                         Campaigns funding status
                     </Title>
                     <Row align={"center"}>
@@ -141,16 +181,15 @@ function ProductFundingBank({
                         </Badge>
                         <StatusTooltip />
                     </Row>
-                </Column>
-            </Columns>
-            <Columns>
-                <Column>
+                </div>
+
+                <div className={styles.bankSection}>
                     <Title
-                        as={"h3"}
+                        as={"h4"}
                         size={"small"}
-                        className={styles.productFundingBank__title}
+                        className={styles.bankSectionTitle}
                     >
-                        Balance informations
+                        Balance information
                     </Title>
                     <BankAmount
                         title="Balance:"
@@ -173,16 +212,18 @@ function ProductFundingBank({
                         decimals={bank.token.decimals}
                         token={bank.token.address}
                     />
-                </Column>
-            </Columns>
-            <FundBalance
-                bank={bank}
-                isTestBank={isTestBank}
-                productId={productId}
-            />
-            <br />
-            <WithdrawFunds bank={bank} />
-        </div>
+                </div>
+
+                <div className={styles.bankActions}>
+                    <FundBalance
+                        bank={bank}
+                        isTestBank={isTestBank}
+                        productId={productId}
+                    />
+                    <WithdrawFunds bank={bank} />
+                </div>
+            </div>
+        </Panel>
     );
 }
 
@@ -211,17 +252,33 @@ function BankAmount({
         decimals,
         token,
     });
-    if (converted === undefined) return null;
-    return (
-        <p>
-            {title} <strong>{converted}</strong> (
-            {formatPrice(formatUnits(balance, decimals))?.replace(
-                "$",
-                `${symbol} `
-            )}
-            )
-        </p>
-    );
+
+    // Format the raw balance
+    const formattedBalance = formatUnits(balance, decimals);
+    const formattedPrice = formatPrice(formattedBalance);
+
+    // If conversion failed but we have a balance, show the raw amount
+    if (converted === undefined && balance >= 0n) {
+        return (
+            <p>
+                {title}{" "}
+                <strong>{formattedPrice?.replace("$", `${symbol} `)}</strong>
+            </p>
+        );
+    }
+
+    // If we have a converted value, show both
+    if (converted !== undefined) {
+        return (
+            <p>
+                {title} <strong>{converted}</strong> (
+                {formattedPrice?.replace("$", `${symbol} `)})
+            </p>
+        );
+    }
+
+    // Otherwise don't show anything
+    return null;
 }
 
 /**
@@ -408,5 +465,128 @@ function WithdrawFunds({ bank }: { bank: ProductBank }) {
         >
             Withdraw funds
         </Button>
+    );
+}
+
+/**
+ * Add new bank component
+ */
+function AddNewBank({
+    banks,
+    productId,
+}: { banks: ProductBank[]; productId: Hex }) {
+    const [isAdding, setIsAdding] = useState(false);
+    const [selectedCurrency, setSelectedCurrency] = useState<string>("");
+    const { mutate: addBank, isPending } = useAddProductBank();
+
+    const usedCurrencies = useMemo(() => {
+        return banks
+            .map((bank) => detectStablecoinFromToken(bank.token.address))
+            .filter((value) => value !== undefined);
+    }, [banks]);
+
+    const availableCurrencies = useMemo(() => {
+        return currencyOptions
+            .reduce<
+                Array<{
+                    value: Stablecoin;
+                    label: string;
+                    group: string;
+                    description: string;
+                }>
+            >((acc, group) => {
+                acc.push(
+                    ...group.options.map((option) => ({
+                        ...option,
+                        group: group.group,
+                        description: group.description,
+                    }))
+                );
+                return acc;
+            }, [])
+            .filter((option) => !usedCurrencies.includes(option.value));
+    }, [usedCurrencies]);
+
+    const handleAddBank = () => {
+        if (!selectedCurrency || !productId) return;
+
+        addBank(
+            {
+                productId,
+                stablecoin: selectedCurrency as Stablecoin,
+            },
+            {
+                onSuccess: () => {
+                    setIsAdding(false);
+                    setSelectedCurrency("");
+                },
+            }
+        );
+    };
+
+    if (availableCurrencies.length === 0) {
+        return null;
+    }
+
+    if (!isAdding) {
+        return (
+            <Button
+                variant="outline"
+                onClick={() => setIsAdding(true)}
+                className={styles.addBankButton}
+            >
+                <Plus size={16} />
+                Add new bank
+            </Button>
+        );
+    }
+
+    return (
+        <Panel title="Add new bank" className={styles.bankPanel}>
+            <p>Select a stablecoin for the new bank:</p>
+            <div className={styles.currencySelection}>
+                {availableCurrencies.map((currency) => (
+                    <label
+                        key={currency.value}
+                        className={styles.currencyOption}
+                    >
+                        <input
+                            type="radio"
+                            name="currency"
+                            value={currency.value}
+                            checked={selectedCurrency === currency.value}
+                            onChange={(e) =>
+                                setSelectedCurrency(e.target.value)
+                            }
+                        />
+                        <div>
+                            <strong>
+                                {currency.label} ({currency.group})
+                            </strong>
+                            <p>{currency.description}</p>
+                        </div>
+                    </label>
+                ))}
+            </div>
+            <div className={styles.bankActions}>
+                <Button
+                    variant="submit"
+                    onClick={handleAddBank}
+                    disabled={!selectedCurrency || isPending}
+                    isLoading={isPending}
+                >
+                    Create bank
+                </Button>
+                <Button
+                    variant="outline"
+                    onClick={() => {
+                        setIsAdding(false);
+                        setSelectedCurrency("");
+                    }}
+                >
+                    Cancel
+                </Button>
+            </div>
+        </Panel>
     );
 }

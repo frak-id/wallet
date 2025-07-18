@@ -3,6 +3,7 @@
 import { Title } from "@/module/common/component/Title";
 import { useCheckDomainName } from "@/module/dashboard/hooks/dnsRecordHooks";
 import { useMintMyProduct } from "@/module/dashboard/hooks/useMintMyProduct";
+import { FormLayout } from "@/module/forms/Form";
 import type { Stablecoin } from "@frak-labs/app-essentials";
 import type { ProductTypesKey } from "@frak-labs/core-sdk";
 import { useState } from "react";
@@ -101,7 +102,7 @@ export function MintProduct() {
     };
 
     return (
-        <>
+        <FormLayout>
             <Title>Mint New Product</Title>
 
             <ProductInformationPanel
@@ -127,6 +128,6 @@ export function MintProduct() {
                 mintTxHash={mintTxHash}
                 onSubmit={handleSubmit}
             />
-        </>
+        </FormLayout>
     );
 }

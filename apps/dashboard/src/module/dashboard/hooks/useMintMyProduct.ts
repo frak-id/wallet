@@ -55,7 +55,7 @@ export function useMintMyProduct(
             domain,
             setupCode,
             productTypes,
-            currency = "usd",
+            currency = "usdc",
         }) {
             // Trigger the backend mint
             setInfoTxt("Registering your product");
