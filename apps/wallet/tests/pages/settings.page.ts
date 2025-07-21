@@ -44,6 +44,12 @@ export class SettingsPage {
         ).toBeVisible();
     }
 
+    async verifyRecoverySetupPage() {
+        // Verify the recovery setup page  is visible
+        await this.page.waitForURL("settings/recovery");
+        await expect(this.page.getByText("Warning")).toBeVisible();
+    }
+
     async verifyLogoutButton() {
         // Verify the logout button is visible
         await expect(this.page.getByText("Logout")).toBeVisible();
