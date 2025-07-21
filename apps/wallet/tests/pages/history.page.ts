@@ -29,8 +29,30 @@ export class HistoryPage {
         ).toBeVisible();
     }
 
+    //check the notifications button visible
+    async notificationsButtonVisible() {
+        // try to find the notifications button using  selectoors
+        const notificationsButton = this.page
+            .locator('a:has(svg title:text("Notifications"))')
+            .first();
+
+        await expect(notificationsButton).toBeVisible();
+    }
+
     // Click the notifications button
     async clickNotificationsButton() {
-        await this.page.locator("button", { hasText: "Notifications" }).click();
+        const notificationsButton = this.page
+            .locator('a:has(svg title:text("Notifications"))')
+            .first();
+
+        await notificationsButton.click();
+        await this.page.waitForURL("/notifications");
+        await this.page.waitForLoadState("networkidle");
+    }
+    // Verify that the notifications page is displayed
+    async verifyDisplayNotificationsPage() {
+        await expect(
+            this.page.getByRole("heading", { name: "Notifications" })
+        ).toBeVisible();
     }
 }

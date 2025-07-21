@@ -10,9 +10,6 @@ export class SettingsPage {
         await this.page.goto("/settings");
         await this.page.waitForLoadState("networkidle");
     }
-    async clickLogout() {
-        await this.page.locator("button", { hasText: "Logout" }).click();
-    }
 
     //verify the settings button and click it
     async clickSettingsButton() {
@@ -25,12 +22,87 @@ export class SettingsPage {
         await this.page.waitForURL("/settings");
     }
 
-    //verify that the settings page is displayed and the heading is visible
-    async verifyDisplaySettingsPage() {
-        await this.page
-            .getByRole("heading", { name: "Biometry informations" })
-            .click();
-        await this.page.getByText("Wallet not activated Activate").click();
-        await this.page.getByText("Recovery setupSetup new").click();
+    async verifyBiometryInformation() {
+        // the biometry block is visible
+        await expect(
+            this.page.getByText("Biometry informations")
+        ).toBeVisible();
+        const authenticatorButton = this.page.getByText(
+            /Authenticator: [A-Za-z0-9.]+$/i
+        );
+        await expect(authenticatorButton).toBeVisible();
+        await expect(
+            this.page.getByText(/Wallet: [A-Za-z0-9.]+$/i)
+        ).toBeVisible();
+    }
+
+    async verifyRecoverySetup() {
+        // Verify the recovery setup section is visible
+        await expect(this.page.getByText("Recovery setup")).toBeVisible();
+        await expect(
+            this.page.getByRole("link", { name: "Setup new recovery" })
+        ).toBeVisible();
+    }
+
+    async verifyLogoutButton() {
+        // Verify the logout button is visible
+        await expect(this.page.getByText("Logout")).toBeVisible();
+    }
+
+    //new test with false
+    async verifyUnsubscribeNotifications() {
+        await expect(this.page.getByText("unsubscribe")).toBeVisible();
+    }
+
+    async verifyUnsubscribeNotificationsNotVisible() {
+        await expect(this.page.getByText("unsubscribe")).not.toBeVisible();
+    }
+
+    async verifyPairedWallets() {}
+
+    // copy the authenticator button text
+    async clickCopyAuthenticatorInformations() {
+        const authenticatorButton = this.page.getByText(
+            /Authenticator: [A-Za-z0-9.]+$/i
+        );
+        await expect(authenticatorButton).toBeVisible();
+        // click the authenticator button and copy the text
+        await expect(authenticatorButton).toBeEnabled();
+        await authenticatorButton.click();
+    }
+
+    /**
+     * Click on the recovery button
+     */
+    async clickRecoveryButton() {
+        const recoveryButton = this.page.getByText("Setup new recovery");
+        await expect(recoveryButton).toBeVisible();
+        await recoveryButton.click();
+        await this.page.waitForURL("/settings/recovery");
+    }
+
+    // verify the activate wallet button
+    async clickActivateWalletButton() {
+        await this.page.getByRole("switch").click();
+        //verify the text after clicking activate wallet button
+        await expect(
+            this.page.getByText("Your wallet is activated")
+        ).toBeVisible();
+    }
+
+    // verify the desactivate wallet button
+    async clickDesactivateWalletButton() {
+        await this.page.getByRole("switch").click();
+        //verify the text after clicking desactivate wallet button
+        await expect(
+            this.page.getByText("Your wallet is non activated")
+        ).toBeVisible();
+    }
+
+    //verify logout button click
+    async clickLogoutButton() {
+        // Verify the logout button is visible
+        await expect(this.page.getByText("Logout")).toBeVisible();
+        await this.page.getByText("Logout").click();
     }
 }

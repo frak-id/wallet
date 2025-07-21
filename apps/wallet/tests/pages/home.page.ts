@@ -16,9 +16,9 @@ export class HomePage {
      * This includes the balance, receive and send buttons, and the refresh button.
      */
     async verifyBasicsInformations() {
-        const isSoldeVisible = await this.page.getByText("Balance").isVisible();
-        expect(isSoldeVisible).toBeTruthy();
-
+        await expect(this.page.getByText("Balance")).toBeVisible({
+            timeout: 500,
+        });
         await expect(
             this.page.getByRole("link", { name: "Receive" })
         ).toBeVisible();
@@ -33,6 +33,7 @@ export class HomePage {
     async clickReceive() {
         await this.page.getByRole("link", { name: "Receive" }).click();
         await this.page.waitForURL("/tokens/receive");
+        await this.page.waitForLoadState("networkidle");
     }
 
     async verifyDisplayReceivedPage() {
@@ -53,12 +54,14 @@ export class HomePage {
             .getByRole("link", { name: "Back to wallet page" })
             .click();
         await this.page.waitForURL("/wallet");
+        await this.page.waitForLoadState("networkidle");
     }
 
-    // Display the token send page when the send button is clicked
+    // Display the token send page when click the send button
     async clickSend() {
         await this.page.getByRole("link", { name: "Send" }).click();
         await this.page.waitForURL("/tokens/send");
+        await this.page.waitForLoadState("networkidle");
     }
 
     async verifyDisplaySendPage() {
@@ -73,7 +76,6 @@ export class HomePage {
     //refresh button click
     async clickRefresh() {
         await this.page.getByRole("button", { name: "Refresh" }).click();
-        // Wait for the page to reload
         await this.page.waitForLoadState("networkidle");
     }
 
@@ -89,7 +91,7 @@ export class HomePage {
 
     //verify clipboard
     async clickCopyAddressButton() {
-        // Get the locator for the copy address button
+        // Get the copy address button locator
         const copyAddressButton = this.page.getByRole("button", {
             name: "Copy address",
         });
@@ -100,18 +102,5 @@ export class HomePage {
 
         // Click the copy address button
         await copyAddressButton.click();
-    }
-
-    // Verify that the address is copied to clipboard
-    // miss the adress to fill in the copyadress button
-    async verifyClipboardText(): Promise<void> {
-        // It's best to pass the expected value
-        const clipboardText: string = await this.page.evaluate(
-            (): Promise<string> => navigator.clipboard.readText()
-        );
-
-        //verify the clipboard is not empty
-        expect(clipboardText).toBeDefined();
-        expect(clipboardText).not.toHaveLength(0);
     }
 }

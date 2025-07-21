@@ -97,10 +97,22 @@ export class AuthPage {
     /*                                   Pairing                                  */
     /* -------------------------------------------------------------------------- */
 
-    async launchPairing() {
+    async clickPairing() {
         await this.page
-            .locator("button", { hasText: "Use a QR Code to connect" })
+            .locator("button", { hasText: "Use QR Code to connect" })
             .click();
+    }
+
+    async verifyPairingReady() {
+        // Verify the confirmation code is displayed
+        await expect(
+            this.page.getByText("Check that the code is correct")
+        ).toBeVisible();
+        // Verify that the qr code is displayed
+        const qrCode = this.page
+            .locator('button:has(svg title:text("QR Code"))')
+            .first();
+        await expect(qrCode).toBeVisible();
     }
 
     /* -------------------------------------------------------------------------- */

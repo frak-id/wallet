@@ -1,4 +1,5 @@
-import path from "node:path";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { defineConfig, devices } from "@playwright/test";
 
 const configPerEnv = {
@@ -17,18 +18,13 @@ const targetEnv = (process.env.TARGET_ENV ??
 
 const config = configPerEnv[targetEnv];
 
-export const STORAGE_STATE = path
-    .join(
-        path.dirname(import.meta.url.replace("C:", "")),
-        `./playwright/.storage/state-${targetEnv}.json`
-    )
-    .replace("file:", "");
-export const AUTHENTICATOR_STATE = path
-    .join(
-        path.dirname(import.meta.url.replace("C:", "")),
-        `./playwright/.storage/authenticator-${targetEnv}.json`
-    )
-    .replace("file:", "");
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const storagePath = join(__dirname, "playwright", ".storage");
+export const STORAGE_STATE = join(storagePath, `state-${targetEnv}.json`);
+export const AUTHENTICATOR_STATE = join(
+    storagePath,
+    `authenticator-${targetEnv}.json`
+);
 
 export default defineConfig({
     testDir: "./tests",

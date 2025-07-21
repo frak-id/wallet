@@ -1,12 +1,15 @@
 import { test as base } from "@playwright/test";
 import { AnalyticsApi } from "./api/analytics.api";
 import { BackendApi } from "./api/backend.api";
+import { ClipboardHelper } from "./helpers/clipboard.helper";
 import { MockedWebAuthNHelper } from "./helpers/mockedWebauthn.helper";
+import { PairingTabHelper } from "./helpers/pairingTab.helper";
 import { StorageHelper } from "./helpers/sotrage.helper";
 import { WebAuthNHelper } from "./helpers/webauthn.helper";
 import { AuthPage } from "./pages/auth.page";
 import { HistoryPage } from "./pages/history.page";
 import { HomePage } from "./pages/home.page";
+import { PairingPage } from "./pages/pairing.page";
 import { SettingsPage } from "./pages/settings.page";
 
 type TestFixtures = {
@@ -14,21 +17,41 @@ type TestFixtures = {
     webAuthN: WebAuthNHelper;
     mockedWebAuthN: MockedWebAuthNHelper;
     storageHelper: StorageHelper;
+    clipboardHelper: ClipboardHelper;
     // APIs
     backendApi: BackendApi;
     analyticsApi: AnalyticsApi;
     // Pages
     authPage: AuthPage;
+    pairingPage: PairingPage;
     settingsPage: SettingsPage;
     homePage: HomePage;
     historyPage: HistoryPage;
 };
 
 // WebAuthN should switched to worker scope, with a pre existing authenticator + credentials so we can test login + pairing easily
-// biome-ignore lint/complexity/noBannedTypes: will be filled in the long run
-type WorkerFixture = {};
-
+type WorkerFixture = {
+    pairingTab: PairingTabHelper;
+};
 export const test = base.extend<TestFixtures, WorkerFixture>({
+    // Worker-level fixtures
+    pairingTab: [
+        async ({ browser }, use) => {
+            // Create a new context for the pairing tab
+            const context = await browser.newContext();
+            const pairingTab = new PairingTabHelper(context);
+
+            // Setup the pairing tab
+            await pairingTab.setup();
+
+            await use(pairingTab);
+
+            // Cleanup
+            await pairingTab.close();
+            await context.close();
+        },
+        { scope: "worker" },
+    ],
     // Helpers
     webAuthN: async ({ page }, use) => {
         const helper = new WebAuthNHelper(page);
@@ -43,6 +66,9 @@ export const test = base.extend<TestFixtures, WorkerFixture>({
     },
     storageHelper: async ({ page }, use) => {
         await use(new StorageHelper(page));
+    },
+    clipboardHelper: async ({ page }, use) => {
+        await use(new ClipboardHelper(page));
     },
     // APIs
     backendApi: async ({ page }, use) => {
@@ -59,6 +85,9 @@ export const test = base.extend<TestFixtures, WorkerFixture>({
     // Helpers
     authPage: async ({ page }, use) => {
         await use(new AuthPage(page));
+    },
+    pairingPage: async ({ page }, use) => {
+        await use(new PairingPage(page));
     },
     settingsPage: async ({ page }, use) => {
         await use(new SettingsPage(page));
