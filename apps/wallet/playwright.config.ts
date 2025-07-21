@@ -59,7 +59,7 @@ export default defineConfig({
                 permissions: ["clipboard-read"],
             },
             dependencies: ["setup"],
-            testMatch: "**/*on-device*.spec.ts",
+            testMatch: ["**/*on-device*.spec.ts", "**/*all*.spec.ts"],
         },
         {
             name: "chromium-paired",
@@ -69,7 +69,7 @@ export default defineConfig({
                 permissions: ["clipboard-read"],
             },
             dependencies: ["setup"],
-            testMatch: "**/*pairing*.spec.ts",
+            testMatch: ["**/*pairing*.spec.ts", "**/*all*.spec.ts"],
         },
     ],
     // We don't use the `webserver` since we rely on the sst multiplexer here

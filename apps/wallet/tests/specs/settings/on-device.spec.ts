@@ -87,13 +87,3 @@ test("should be able to click setting button", async ({ settingsPage }) => {
     await settingsPage.clickSettingsButton();
     await settingsPage.verifyBiometryInformation();
 });
-
-//verify logout button click
-test("should be able to click logout button", async ({
-    settingsPage,
-    authPage,
-}) => {
-    await settingsPage.navigateToSettings();
-    await settingsPage.clickLogoutButton();
-    await authPage.verifyRegistrationReady();
-});

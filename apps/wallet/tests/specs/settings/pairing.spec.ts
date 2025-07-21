@@ -10,7 +10,6 @@ test("should display settings page", async ({ settingsPage }) => {
     await settingsPage.verifyLogoutButton();
 });
 
-
 //verify the activate wallet button
 // todo: mock the activation / deactivation of the wallet
 test.skip("should be able to click activate the wallet button", async ({
