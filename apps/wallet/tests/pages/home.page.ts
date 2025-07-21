@@ -57,7 +57,7 @@ export class HomePage {
         await this.page.waitForLoadState("networkidle");
     }
 
-    // Display the token send page when the send button is clicked
+    // Display the token send page when click the send button
     async clickSend() {
         await this.page.getByRole("link", { name: "Send" }).click();
         await this.page.waitForURL("/tokens/send");
@@ -91,7 +91,7 @@ export class HomePage {
 
     //verify clipboard
     async clickCopyAddressButton() {
-        // Get the locator for the copy address button
+        // Get the copy address button locator
         const copyAddressButton = this.page.getByRole("button", {
             name: "Copy address",
         });

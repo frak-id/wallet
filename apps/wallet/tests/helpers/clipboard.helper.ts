@@ -9,7 +9,6 @@ export class ClipboardHelper {
         const clipboardText: string = await this.page.evaluate(() =>
             navigator.clipboard.readText()
         );
-
         //verify the clipboard is not empty
         expect(clipboardText).toBeDefined();
         expect(clipboardText).not.toHaveLength(0);

@@ -22,19 +22,17 @@ export class SettingsPage {
         await this.page.waitForURL("/settings");
     }
 
-    //verify the settings button and click it
-    async SettingsButton() {
-        // Ensure the settings button is visible and clickable
-        const settingsLinkLocator = this.page.locator(
-            "a:has(svg.lucide-settings)"
-        );
-        await expect(settingsLinkLocator).toBeVisible();
-    }
-
     async verifyBiometryInformation() {
         // the biometry block is visible
         await expect(
             this.page.getByText("Biometry informations")
+        ).toBeVisible();
+        const authenticatorButton = this.page.getByText(
+            /Authenticator: [A-Za-z0-9.]+$/i
+        );
+        await expect(authenticatorButton).toBeVisible();
+        await expect(
+            this.page.getByText(/Wallet: [A-Za-z0-9.]+$/i)
         ).toBeVisible();
     }
 
@@ -51,44 +49,19 @@ export class SettingsPage {
         await expect(this.page.getByText("Logout")).toBeVisible();
     }
 
-    async verifyActivateWalletButton() {
-        // Just check checkbox is present, not it's state
-        await expect(this.page.getByText("Wallet not activated")).toBeVisible();
-    }
-
-    async verifyNotificationsButton() {
-        await expect(
-            this.page.getByRole("link", { name: "Notifications" })
-        ).toBeVisible();
-    }
-    
-    async verifyNotificationsButtonClick() {
-        const notificationsButton = this.page.getByRole("link", {
-            name: "Notifications",
-        });
-        await expect(notificationsButton).toBeVisible();
-        await notificationsButton.click();
-        await this.page.waitForURL("/notifications");
-    }
-
+    //new test with false
     async verifyUnsubscribeNotifications() {
         await expect(this.page.getByText("unsubscribe")).toBeVisible();
     }
 
-    async verifyPairedWallets() {
-        // todo: for later
+    async verifyUnsubscribeNotificationsNotVisible() {
+        await expect(this.page.getByText("unsubscribe")).not.toBeVisible();
     }
 
-    // chek the authenticator button is visible
-    async verifyAuthenticatorButton() {
-        const authenticatorButton = this.page.getByText(
-            /Authenticator: [A-Za-z0-9.]+$/i
-        );
-        await expect(authenticatorButton).toBeVisible();
-    }
+    async verifyPairedWallets() {}
 
     // copy the authenticator button text
-    async copyAuthenticatorInformations() {
+    async clickCopyAuthenticatorInformations() {
         const authenticatorButton = this.page.getByText(
             /Authenticator: [A-Za-z0-9.]+$/i
         );
@@ -96,13 +69,6 @@ export class SettingsPage {
         // click the authenticator button and copy the text
         await expect(authenticatorButton).toBeEnabled();
         await authenticatorButton.click();
-    }
-
-    async verifyWalletButton() {
-        // Verify that the "wallet:"" button is visible
-        await expect(
-            this.page.getByText(/Wallet: [A-Za-z0-9.]+$/i)
-        ).toBeVisible();
     }
 
     /**
@@ -131,5 +97,12 @@ export class SettingsPage {
         await expect(
             this.page.getByText("Your wallet is non activated")
         ).toBeVisible();
+    }
+
+    //verify logout button click
+    async clickLogoutButton() {
+        // Verify the logout button is visible
+        await expect(this.page.getByText("Logout")).toBeVisible();
+        await this.page.getByText("Logout").click();
     }
 }

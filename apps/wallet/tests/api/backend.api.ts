@@ -7,6 +7,10 @@ export class BackendApi {
         await this.page.route("**/*/wallet/auth/*", handler);
     }
 
+    async interceptNotificationsRoute(handler: (route: Route) => void) {
+        await this.page.route("**/*/wallet/notifications/tokens/*", handler);
+    }
+
     async interceptWebSocketRoute(handler: (route: WebSocketRoute) => void) {
         await this.page.routeWebSocket("**/*/ws*", handler);
     }

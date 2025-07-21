@@ -17,7 +17,7 @@ test("should display history page when history button clicked", async ({
 });
 
 // verify display Notifications button
-test("notifications button visible", async ({ historyPage }) => {
+test("should display notifications button ", async ({ historyPage }) => {
     // Navigate to the history page
     await historyPage.navigateToHistory();
     // Verify that the history page is displayed with rewards and interactions
@@ -27,7 +27,7 @@ test("notifications button visible", async ({ historyPage }) => {
 });
 
 // Click the notifications button
-test("notifications button click", async ({ historyPage }) => {
+test("should click notifications button ", async ({ historyPage }) => {
     await historyPage.navigateToHistory();
     await historyPage.notificationsButtonVisible();
     //verify the notification button is visible and click it
