@@ -35,6 +35,8 @@ export class PairingTabHelper {
      * Setup the pairing tab
      */
     async setup(): Promise<void> {
+        if (this.rawPairingPage) return;
+
         // Create a new page (tab) in the same context
         this.rawPairingPage = await this.context.newPage();
 
