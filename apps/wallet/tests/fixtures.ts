@@ -1,6 +1,7 @@
 import { test as base } from "@playwright/test";
 import { AnalyticsApi } from "./api/analytics.api";
 import { BackendApi } from "./api/backend.api";
+import { IndexerApi } from "./api/indexer.api";
 import { ClipboardHelper } from "./helpers/clipboard.helper";
 import { MockedWebAuthNHelper } from "./helpers/mockedWebauthn.helper";
 import { PairingTabHelper } from "./helpers/pairingTab.helper";
@@ -21,6 +22,7 @@ type TestFixtures = {
     // APIs
     backendApi: BackendApi;
     analyticsApi: AnalyticsApi;
+    indexerApi: IndexerApi;
     // Pages
     authPage: AuthPage;
     pairingPage: PairingPage;
@@ -73,6 +75,9 @@ export const test = base.extend<TestFixtures, WorkerFixture>({
     // APIs
     backendApi: async ({ page }, use) => {
         await use(new BackendApi(page));
+    },
+    indexerApi: async ({ page }, use) => {
+        await use(new IndexerApi(page));
     },
     analyticsApi: [
         async ({ page }, use) => {

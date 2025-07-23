@@ -44,7 +44,7 @@ test("should handle back to wallet from send page", async ({ homePage }) => {
     await homePage.verifyBasicsInformations();
 });
 
-//verify the refresh button and click it
+// Verify the refresh button and click it
 test("should refresh the wallet page when refresh button clicked", async ({
     homePage,
 }) => {
@@ -56,7 +56,7 @@ test("should refresh the wallet page when refresh button clicked", async ({
     await homePage.verifyBasicsInformations();
 });
 
-//verify the wallet button and click it
+// Verify the wallet button and click it
 test("should display wallet page when wallet button clicked", async ({
     homePage,
 }) => {
@@ -68,7 +68,7 @@ test("should display wallet page when wallet button clicked", async ({
     await homePage.verifyBasicsInformations();
 });
 
-//verify clipboard text to be true
+// Verify clipboard text to be true
 test("should copy address on receive page", async ({
     homePage,
     clipboardHelper,

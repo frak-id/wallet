@@ -1,6 +1,6 @@
 import { test } from "../../fixtures";
 
-// verify the history button and click it
+// Verify the history button and click it
 test("should display history page when history button clicked", async ({
     homePage,
     historyPage,
@@ -9,14 +9,14 @@ test("should display history page when history button clicked", async ({
     await homePage.navigateToHome();
     // Verify that the wallet basics information is visible on the home page
 
-    //verify the historybutton is visible and click it
+    // Verify the historybutton is visible and click it
     await historyPage.clickHistoryButton();
 
     // Verify that the history page is displayed
     historyPage.verifyDisplayHistoryPage;
 });
 
-// verify display Notifications button
+// Verify display Notifications button
 test("should display notifications button ", async ({ historyPage }) => {
     // Navigate to the history page
     await historyPage.navigateToHistory();
@@ -35,7 +35,7 @@ test("should click notifications button ", async ({ historyPage }) => {
     // todo: verify notification page is displayed
 });
 
-//verify the notifications page is displayed
+// Verify the notifications page is displayed
 test("should display notifications page when notifications button clicked", async ({
     historyPage,
 }) => {
@@ -45,4 +45,25 @@ test("should display notifications page when notifications button clicked", asyn
     await historyPage.clickNotificationsButton();
     // Verify that the notifications page is displayed
     await historyPage.verifyDisplayNotificationsPage();
+});
+
+// Verify display history datas
+test("should display history rewards datas", async ({
+    historyPage,
+    indexerApi,
+}) => {
+    await indexerApi.mockRewardsHistoryDatas();
+    await historyPage.navigateToHistory();
+    await historyPage.clickRewardsButton();
+    await historyPage.verifyRewardsDataDisplayed();
+});
+
+test("should display history interactions datas", async ({
+    historyPage,
+    indexerApi,
+}) => {
+    await indexerApi.mockInteractionsHistoryDatas();
+    await historyPage.navigateToHistory();
+    await historyPage.clickInteractionsButton();
+    await historyPage.verifyInteractionsDataDisplayed();
 });
