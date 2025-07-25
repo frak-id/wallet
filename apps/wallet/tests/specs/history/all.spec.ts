@@ -58,6 +58,20 @@ test("should display history rewards datas", async ({
     await historyPage.verifyRewardsDataDisplayed();
 });
 
+test.fail(
+    "should display error message with rewards datas ",
+    async ({ historyPage, indexerApi }) => {
+        await indexerApi.interceptRewardHistoryRoute((route) =>
+            route.fulfill({
+                status: 500,
+            })
+        );
+        await historyPage.navigateToHistory();
+        await historyPage.clickRewardsButton();
+        await historyPage.verifyRewardsDataDisplayed();
+        // todo: should add error message
+    }
+);
 test("should display history interactions datas", async ({
     historyPage,
     indexerApi,
@@ -67,3 +81,18 @@ test("should display history interactions datas", async ({
     await historyPage.clickInteractionsButton();
     await historyPage.verifyInteractionsDataDisplayed();
 });
+
+test.fail(
+    "should display error message with interactions datas ",
+    async ({ historyPage, indexerApi }) => {
+        await indexerApi.interceptInteractionsHistoryRoute((route) =>
+            route.fulfill({
+                status: 500,
+            })
+        );
+        await historyPage.navigateToHistory();
+        await historyPage.clickInteractionsButton();
+        await historyPage.verifyInteractionsDataDisplayed();
+        // todo: should add error message
+    }
+);

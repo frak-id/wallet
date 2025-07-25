@@ -141,6 +141,20 @@ test("should refresh the balance on updated datas", async ({
     await homePage.verifyBalanceInformations(420);
 });
 
+test.fail("should handle balance error", async ({ homePage, backendApi }) => {
+    // Mock the  balance information
+    await backendApi.interceptBalanceRoute((route) =>
+        route.fulfill({
+            status: 500,
+        })
+    );
+
+    await homePage.navigateToHome();
+    await homePage.verifyBasicsInformations();
+    await homePage.verifyBalanceInformations(0);
+    // todo: should add error message
+});
+
 test("should display the correct claimable rewards on the home page", async ({
     homePage,
     backendApi,
@@ -164,6 +178,24 @@ test("should display the correct claimable rewards on the home page", async ({
     //verify the right value in the frontend
     await homePage.verifyClaimableBalanceInformations(420);
 });
+
+test.fail(
+    "should display claimable rewards error",
+    async ({ homePage, backendApi }) => {
+        // Mock the  balance information
+        await backendApi.interceptClaimableBalanceRoute((route) =>
+            route.fulfill({
+                status: 500,
+            })
+        );
+
+        await homePage.navigateToHome();
+        await homePage.verifyBasicsInformations();
+        //verify the right value in the frontend
+        await homePage.verifyClaimableBalanceInformations(0);
+        // todo: should add error message
+    }
+);
 
 test("should be able to claim pending rewards", async ({
     homePage,

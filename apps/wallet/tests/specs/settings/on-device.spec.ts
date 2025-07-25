@@ -66,6 +66,20 @@ test("should display unsubscribe notifications block if notifications tokens set
     await settingsPage.verifyUnsubscribeNotifications();
 });
 
+test.fail(
+    "should display error message on unsubscribe notifications ",
+    async ({ settingsPage, backendApi }) => {
+        await backendApi.interceptNotificationsRoute((route) =>
+            route.fulfill({
+                status: 500,
+            })
+        );
+        await settingsPage.navigateToSettings();
+        await settingsPage.verifyUnsubscribeNotifications();
+        // todo: should add error message
+    }
+);
+
 //verify the unsubscribe notifications block
 test("should not display unsubscribe notifications block if notifications tokens aren't set", async ({
     backendApi,
