@@ -77,99 +77,149 @@ export class RpcApi {
                 return route.continue();
             }
 
-            // Extract the body
-            const body = request.postDataJSON() as
-                | null
-                | RpcRequest
-                | RpcRequest[];
-            if (!body) {
+            // Extract requests from body
+            const requests = this.extractRequests(request);
+            if (!requests) {
                 return route.continue();
             }
 
-            // Check if that's an array or not
-            const requests: RpcRequest[] = [];
-            if (Array.isArray(body)) {
-                requests.push(...body);
-            } else {
-                requests.push(body);
-            }
-
-            // Transmit that to the handler
-            const result = await handler(requests, route);
-
-            // Handle backward compatibility - if result is an array, treat it as mocks only
-            let mocks: MockedRpcRequest[];
-            let transformers: ResponseTransformer[] = [];
-
-            if (Array.isArray(result)) {
-                mocks = result;
-            } else {
-                mocks = result.mocks || [];
-                transformers = result.transformers || [];
-            }
+            // Process handler and get mocks/transformers
+            const { mocks, transformers } = await this.processHandler(
+                handler,
+                requests,
+                route
+            );
 
             if (!mocks.length && !transformers.length) {
                 return route.continue();
             }
 
-            // Remove mocked payloads from the initial request
-            const filteredRequests = requests.filter(
-                (req) => !mocks.some((mock) => mock.request.id === req.id)
+            // Handle the intercepted response
+            return this.handleInterceptedResponse(
+                route,
+                requests,
+                mocks,
+                transformers
             );
+        });
+    }
 
-            // If the filtered request is empty and no transformers, just output the response
-            if (!filteredRequests.length && !transformers.length) {
-                return route.fulfill({
-                    status: 200,
-                    body: JSON.stringify(mocks.map((mock) => mock.response)),
-                });
-            }
+    private extractRequests(
+        request: ReturnType<Route["request"]>
+    ): RpcRequest[] | null {
+        const body = request.postDataJSON() as null | RpcRequest | RpcRequest[];
+        if (!body) {
+            return null;
+        }
 
-            // Otherwise, get the response from the RPC
-            const rpcResponse = await route.fetch({
-                postData: JSON.stringify(filteredRequests),
-            });
-            const responseBody = (await rpcResponse.json()) as
-                | null
-                | RpcResponse
-                | RpcResponse[];
+        return Array.isArray(body) ? body : [body];
+    }
 
-            // Build the response array
-            let allResponses = Array.isArray(responseBody)
-                ? responseBody
-                : responseBody
-                  ? [responseBody]
-                  : [];
+    private async processHandler(
+        handler: (
+            requests: RpcRequest[],
+            route: Route
+        ) =>
+            | Promise<InterceptResult | MockedRpcRequest[]>
+            | InterceptResult
+            | MockedRpcRequest[],
+        requests: RpcRequest[],
+        route: Route
+    ): Promise<{
+        mocks: MockedRpcRequest[];
+        transformers: ResponseTransformer[];
+    }> {
+        const result = await handler(requests, route);
 
-            // Apply transformers to matching responses
-            if (transformers.length > 0) {
-                allResponses = await Promise.all(
-                    allResponses.map(async (response) => {
-                        // Find transformer for this response
-                        const transformer = transformers.find((t) => {
-                            const originalReq = requests.find(
-                                (r) => r.id === response.id
-                            );
-                            return originalReq?.id === t?.request?.id;
-                        });
+        // Handle backward compatibility
+        if (Array.isArray(result)) {
+            return { mocks: result, transformers: [] };
+        }
 
-                        if (transformer) {
-                            return await transformer.transform(response);
-                        }
-                        return response;
-                    })
-                );
-            }
+        return {
+            mocks: result.mocks || [],
+            transformers: result.transformers || [],
+        };
+    }
 
-            // Add mocked responses
-            allResponses.push(...mocks.map((mock) => mock.response));
+    private async handleInterceptedResponse(
+        route: Route,
+        requests: RpcRequest[],
+        mocks: MockedRpcRequest[],
+        transformers: ResponseTransformer[]
+    ) {
+        // Remove mocked payloads from the initial request
+        const filteredRequests = requests.filter(
+            (req) => !mocks.some((mock) => mock.request.id === req.id)
+        );
 
-            // And fulfill the request
+        // If only mocks and no real requests, return mocked responses
+        if (!filteredRequests.length && !transformers.length) {
             return route.fulfill({
                 status: 200,
-                body: JSON.stringify(allResponses),
+                body: JSON.stringify(mocks.map((mock) => mock.response)),
             });
+        }
+
+        // Get the real RPC response
+        const rpcResponse = await route.fetch({
+            postData: JSON.stringify(filteredRequests),
         });
+        const responseBody = (await rpcResponse.json()) as
+            | null
+            | RpcResponse
+            | RpcResponse[];
+
+        // Build and transform responses
+        let allResponses = this.buildResponseArray(responseBody);
+
+        if (transformers.length > 0) {
+            allResponses = await this.applyTransformers(
+                allResponses,
+                transformers,
+                requests
+            );
+        }
+
+        // Add mocked responses
+        allResponses.push(...mocks.map((mock) => mock.response));
+
+        return route.fulfill({
+            status: 200,
+            body: JSON.stringify(allResponses),
+        });
+    }
+
+    private buildResponseArray(
+        responseBody: null | RpcResponse | RpcResponse[]
+    ): RpcResponse[] {
+        return Array.isArray(responseBody)
+            ? responseBody
+            : responseBody
+              ? [responseBody]
+              : [];
+    }
+
+    private async applyTransformers(
+        responses: RpcResponse[],
+        transformers: ResponseTransformer[],
+        originalRequests: RpcRequest[]
+    ): Promise<RpcResponse[]> {
+        return Promise.all(
+            responses.map(async (response) => {
+                const transformer = transformers.find((t) => {
+                    const originalReq = originalRequests.find(
+                        (r) => r.id === response.id
+                    );
+                    return originalReq?.id === t?.request?.id;
+                });
+
+                if (transformer) {
+                    return await transformer.transform(response);
+                }
+                return response;
+            })
+        );
     }
 
     async interceptEthCall(
@@ -190,51 +240,74 @@ export class RpcApi {
             const mocks: MockedRpcRequest[] = [];
             const transformers: ResponseTransformer[] = [];
 
-            // Iterate over each request
+            // Process each request
             for (const request of requests) {
-                if (request.method !== "eth_call") {
-                    continue;
-                }
-
-                const calldata = request.params[0]?.data;
-                if (!calldata) continue;
-
-                // Check if this is an aggregate3 call
-                if (calldata.startsWith("0x82ad56cb")) {
-                    // For aggregate3, we'll use a response transformer
-                    const transformer = await this.createAggregate3Transformer(
-                        request,
-                        handler
-                    );
-
-                    if (transformer) {
-                        transformers.push(transformer);
-                    }
-                } else {
-                    // Handle regular eth_call
-                    const result = await handler(
-                        request as Extract<
-                            EIP1193Parameters<PublicRpcSchema>,
-                            { method: "eth_call" }
-                        >
-                    );
-
-                    if (result) {
-                        mocks.push({
-                            request: request,
-                            response: {
-                                jsonrpc: "2.0",
-                                id: request.id?.toString(),
-                                result,
-                            },
-                        });
+                const result = await this.processEthCallRequest(
+                    request,
+                    handler
+                );
+                if (result) {
+                    if ("transform" in result) {
+                        transformers.push(result);
+                    } else {
+                        mocks.push(result);
                     }
                 }
             }
 
-            // Return the intercept result
             return { mocks, transformers };
         });
+    }
+
+    private async processEthCallRequest(
+        request: RpcRequest,
+        handler: (
+            callRequest: Extract<
+                EIP1193Parameters<PublicRpcSchema>,
+                { method: "eth_call" }
+            >
+        ) => Promise<
+            | Extract<
+                  PublicRpcSchema[number],
+                  { Method: "eth_call" }
+              >["ReturnType"]
+            | undefined
+        >
+    ): Promise<MockedRpcRequest | ResponseTransformer | null> {
+        if (request.method !== "eth_call") {
+            return null;
+        }
+
+        const calldata = request.params[0]?.data;
+        if (!calldata) return null;
+
+        // Check if this is an aggregate3 call
+        if (calldata.startsWith("0x82ad56cb")) {
+            const transformer = await this.createAggregate3Transformer(
+                request,
+                handler
+            );
+            return transformer || null;
+        }
+
+        // Handle regular eth_call
+        const result = await handler(
+            request as Extract<
+                EIP1193Parameters<PublicRpcSchema>,
+                { method: "eth_call" }
+            >
+        );
+
+        if (!result) return null;
+
+        return {
+            request: request,
+            response: {
+                jsonrpc: "2.0",
+                id: request.id?.toString(),
+                result,
+            },
+        };
     }
 
     private async createAggregate3Transformer(
