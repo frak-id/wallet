@@ -37,8 +37,18 @@ const CHROMIUM_AAGUID = "b5397666-4885-aa6b-cebf-e52262a439a2";
  */
 export class MockedWebAuthNHelper {
     private credentialProps?: CredentialProps;
+    private readonly authenticatorFile: string;
 
-    constructor(private readonly page: Page) {}
+    constructor(
+        private readonly page: Page,
+        options: { context?: string } = {}
+    ) {
+        if (options.context) {
+            this.authenticatorFile = `${AUTHENTICATOR_STATE.replace(".json", "")}-${options.context}.json`;
+        } else {
+            this.authenticatorFile = AUTHENTICATOR_STATE;
+        }
+    }
 
     async setup() {
         // Restore credentials
@@ -259,13 +269,16 @@ export class MockedWebAuthNHelper {
         };
 
         // Save the authenticator state to the file
-        writeFileSync(AUTHENTICATOR_STATE, JSON.stringify(jsonOutput, null, 2));
+        writeFileSync(
+            this.authenticatorFile,
+            JSON.stringify(jsonOutput, null, 2)
+        );
     }
 
     // Restore the credential props from the file
     private restoreCredentialProps() {
         // Check if the file exists
-        if (!existsSync(AUTHENTICATOR_STATE)) {
+        if (!existsSync(this.authenticatorFile)) {
             console.warn(
                 "No authenticator state file found, will probably generate new ones"
             );
@@ -273,7 +286,7 @@ export class MockedWebAuthNHelper {
         }
 
         // Read the file
-        const jsonInput = readFileSync(AUTHENTICATOR_STATE, "utf-8");
+        const jsonInput = readFileSync(this.authenticatorFile, "utf-8");
         const { credentialId, privateKey, aaguid } = JSON.parse(jsonInput) as {
             credentialId: string;
             privateKey: string;

@@ -41,7 +41,9 @@ export class PairingTabHelper {
         this.rawPairingPage = await this.context.newPage();
 
         // Create a mocked WebAuthN helper for this tab
-        this.mockedWebauthN = new MockedWebAuthNHelper(this.rawPairingPage);
+        this.mockedWebauthN = new MockedWebAuthNHelper(this.rawPairingPage, {
+            context: "pairing",
+        });
         await this.mockedWebauthN.setup();
 
         // Create a PairingPage instance for this tab

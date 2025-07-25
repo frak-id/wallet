@@ -30,6 +30,42 @@ export class HomePage {
         ).toBeVisible();
     }
 
+    /**
+     * Verify that the wallet basics informations are visible on the home page.
+     * This includes the balance, receive and send buttons, and the refresh button.
+     */
+    async verifyActivateToggleDisplayed() {
+        await expect(this.page.getByText("Activate your wallet")).toBeVisible();
+        await expect(
+            this.page.getByText("Activate your wallet").getByRole("switch")
+        ).toBeVisible();
+    }
+
+    /**
+     * Verify that the wallet basics informations are visible on the home page.
+     * This includes the balance, receive and send buttons, and the refresh button.
+     */
+    async clickActivateToggle() {
+        await this.page
+            .getByText("Activate your wallet")
+            .getByRole("switch")
+            .click();
+        await this.page.waitForLoadState("networkidle");
+    }
+
+    /**
+     * Verify that the wallet basics informations are visible on the home page.
+     * This includes the balance, receive and send buttons, and the refresh button.
+     */
+    async verifyActivateToggleHidden() {
+        await expect(
+            this.page.getByText("Activate your wallet")
+        ).not.toBeVisible();
+        await expect(
+            this.page.getByText("Activate your wallet").getByRole("switch")
+        ).not.toBeVisible();
+    }
+
     async clickReceive() {
         await this.page.getByRole("link", { name: "Receive" }).click();
         await this.page.waitForURL("/tokens/receive");
