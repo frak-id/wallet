@@ -48,7 +48,7 @@ export class HomePage {
         ).toBeVisible();
     }
 
-    //verify button return to home
+    // Verify button return to home
     async clickBackToWalletPage() {
         await this.page
             .getByRole("link", { name: "Back to wallet page" })
@@ -73,13 +73,13 @@ export class HomePage {
         ).toBeVisible();
     }
 
-    //refresh button click
+    // Refresh button click
     async clickRefresh() {
         await this.page.getByRole("button", { name: "Refresh" }).click();
         await this.page.waitForLoadState("networkidle");
     }
 
-    //verify the wallet button and click it
+    // Verify the wallet button and click it
     async clickWalletButton() {
         // Ensure the wallet button is visible and clickable
         // finding the locator  wallet button by the SVG icon in the html
@@ -89,7 +89,7 @@ export class HomePage {
         await this.page.waitForURL("/wallet");
     }
 
-    //verify clipboard
+    // Verify clipboard
     async clickCopyAddressButton() {
         // Get the copy address button locator
         const copyAddressButton = this.page.getByRole("button", {
@@ -102,5 +102,36 @@ export class HomePage {
 
         // Click the copy address button
         await copyAddressButton.click();
+    }
+
+    // Verify balance informations
+    async verifyBalanceInformations(amount: number) {
+        await expect(this.page.getByText(amount.toString())).toBeVisible();
+    }
+
+    // Verify claimable balance informations
+    async verifyClaimableBalanceInformations(amount: number) {
+        await expect(this.page.getByText(amount.toString())).toBeVisible();
+
+        await expect(
+            this.page.getByText("Pending referral reward")
+        ).toBeVisible();
+        await expect(this.page.getByText("You got")).toBeVisible();
+
+        // verify display claimable Button
+        const claimButton = this.page.getByRole("button", { name: "Claim" });
+        await expect(claimButton).toBeVisible();
+    }
+
+    // Click claim button
+    async clickClaim() {
+        await this.page.getByRole("button", { name: "Claim" }).click();
+    }
+
+    // Verify click claim button success
+    async verifyClaimSuccess() {
+        await expect(
+            this.page.getByText("You have claimed your reward successfully!")
+        ).toBeVisible();
     }
 }

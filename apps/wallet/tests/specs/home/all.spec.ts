@@ -1,5 +1,9 @@
 import { test } from "../../fixtures";
 
+test.beforeEach(async ({ mockedWebAuthN }) => {
+    await mockedWebAuthN.setup();
+});
+
 // the wallet basics informations are visible on the home page
 test("should display wallet basics informations", async ({ homePage }) => {
     await homePage.navigateToHome();
@@ -82,4 +86,108 @@ test("should copy address on receive page", async ({
 
     // Verify that the address is copied to clipboard
     await clipboardHelper.verifyClipboardNotEmpty();
+});
+
+test("should display the correct total balance on the home page", async ({
+    homePage,
+    backendApi,
+}) => {
+    // Mock the  balance information
+    await backendApi.interceptBalanceRoute((route) =>
+        route.fulfill({
+            status: 200,
+            body: JSON.stringify({
+                total: {
+                    amount: 420,
+                    eurAmount: 420,
+                    usdAmount: 420,
+                    gbpAmount: 420,
+                },
+                balances: [],
+            }),
+        })
+    );
+
+    await homePage.navigateToHome();
+    await homePage.verifyBasicsInformations();
+    await homePage.verifyBalanceInformations(420);
+});
+
+test("should refresh the balance on updated datas", async ({
+    homePage,
+    backendApi,
+}) => {
+    await homePage.navigateToHome();
+    await homePage.verifyBasicsInformations();
+    await homePage.verifyBalanceInformations(0);
+    // Mock the  balance information
+    await backendApi.interceptBalanceRoute((route) =>
+        route.fulfill({
+            status: 200,
+            body: JSON.stringify({
+                total: {
+                    amount: 420,
+                    eurAmount: 420,
+                    usdAmount: 420,
+                    gbpAmount: 420,
+                },
+                balances: [],
+            }),
+        })
+    );
+
+    await homePage.clickRefresh();
+    await homePage.verifyBasicsInformations();
+    await homePage.verifyBalanceInformations(420);
+});
+
+test("should display the correct claimable rewards on the home page", async ({
+    homePage,
+    backendApi,
+}) => {
+    await backendApi.interceptClaimableBalanceRoute((route) =>
+        route.fulfill({
+            status: 200,
+            body: JSON.stringify({
+                total: {
+                    amount: 420,
+                    eurAmount: 420,
+                    usdAmount: 420,
+                    gbpAmount: 420,
+                },
+                balances: [],
+            }),
+        })
+    );
+    await homePage.navigateToHome();
+    await homePage.verifyBasicsInformations();
+    //verify the right value in the frontend
+    await homePage.verifyClaimableBalanceInformations(420);
+});
+
+test("should be able to claim pending rewards", async ({
+    homePage,
+    backendApi,
+}) => {
+    await backendApi.interceptClaimableBalanceRoute((route) =>
+        route.fulfill({
+            status: 200,
+            body: JSON.stringify({
+                total: {
+                    amount: 420,
+                    eurAmount: 420,
+                    usdAmount: 420,
+                    gbpAmount: 420,
+                },
+                balances: [],
+            }),
+        })
+    );
+
+    await homePage.navigateToHome();
+    await homePage.verifyBasicsInformations();
+    await homePage.verifyClaimableBalanceInformations(420);
+
+    await homePage.clickClaim();
+    await homePage.verifyClaimSuccess();
 });
