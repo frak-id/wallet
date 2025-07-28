@@ -7,11 +7,13 @@ import { BlockchainHelper } from "./helpers/blockchain.helper";
 import { ClipboardHelper } from "./helpers/clipboard.helper";
 import { MockedWebAuthNHelper } from "./helpers/mockedWebauthn.helper";
 import { PairingTabHelper } from "./helpers/pairingTab.helper";
-import { StorageHelper } from "./helpers/sotrage.helper";
+import { SdkHelper } from "./helpers/sdk.helper";
+import { StorageHelper } from "./helpers/storage.helper";
 import { WebAuthNHelper } from "./helpers/webauthn.helper";
 import { AuthPage } from "./pages/auth.page";
 import { HistoryPage } from "./pages/history.page";
 import { HomePage } from "./pages/home.page";
+import { ModalPage } from "./pages/modal.page";
 import { PairingPage } from "./pages/pairing.page";
 import { SettingsPage } from "./pages/settings.page";
 
@@ -22,6 +24,7 @@ type TestFixtures = {
     storageHelper: StorageHelper;
     clipboardHelper: ClipboardHelper;
     blockchainHelper: BlockchainHelper;
+    sdkHelper: SdkHelper;
     // APIs
     backendApi: BackendApi;
     analyticsApi: AnalyticsApi;
@@ -33,6 +36,7 @@ type TestFixtures = {
     settingsPage: SettingsPage;
     homePage: HomePage;
     historyPage: HistoryPage;
+    modalPage: ModalPage;
 };
 
 // WebAuthN should switched to worker scope, with a pre existing authenticator + credentials so we can test login + pairing easily
@@ -79,6 +83,9 @@ export const test = base.extend<TestFixtures, WorkerFixture>({
     blockchainHelper: async ({ page }, use) => {
         await use(new BlockchainHelper(page));
     },
+    sdkHelper: async ({ page }, use) => {
+        await use(new SdkHelper(page));
+    },
     // APIs
     backendApi: async ({ page }, use) => {
         await use(new BackendApi(page));
@@ -112,6 +119,9 @@ export const test = base.extend<TestFixtures, WorkerFixture>({
     },
     historyPage: async ({ page }, use) => {
         await use(new HistoryPage(page));
+    },
+    modalPage: async ({ page }, use) => {
+        await use(new ModalPage(page));
     },
 });
 
