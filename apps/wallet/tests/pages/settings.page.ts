@@ -87,22 +87,40 @@ export class SettingsPage {
         await this.page.waitForURL("/settings/recovery");
     }
 
-    // verify the activate wallet button
-    async clickActivateWalletButton() {
-        await this.page.getByRole("switch").click();
-        //verify the text after clicking activate wallet button
+    // Verify the disable status display
+    async verifyDisplayDisableStatus() {
+        await expect(this.page.getByText("Activate your wallet")).toBeVisible();
+        await expect(this.page.getByText("Wallet not activated")).toBeVisible();
+    }
+
+    // Verify the enable status display
+    async verifyDisplayEnableStatus() {
         await expect(
             this.page.getByText("Your wallet is activated")
         ).toBeVisible();
+        await expect(
+            this.page.getByText("Wallet is activated").first()
+        ).toBeVisible();
     }
 
-    // verify the desactivate wallet button
+    /**
+     * Click the activate wallet button
+     */
+    async clickActivateWalletButton() {
+        await this.page
+            .getByText("Your wallet is activated")
+            .getByRole("switch")
+            .click();
+    }
+
+    /**
+     * Click the desactivate wallet button
+     */
     async clickDesactivateWalletButton() {
-        await this.page.getByRole("switch").click();
-        //verify the text after clicking desactivate wallet button
-        await expect(
-            this.page.getByText("Your wallet is non activated")
-        ).toBeVisible();
+        await this.page
+            .getByText("Activate your wallet")
+            .getByRole("switch")
+            .click();
     }
 
     //verify logout button click

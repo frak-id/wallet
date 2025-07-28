@@ -25,27 +25,48 @@ test("should copy authenticator informations", async ({
     await clipboardHelper.verifyClipboardNotEmpty();
 });
 
-//verify click recovery button
+// Verify click recovery button
 test("should be able to click recovery button ", async ({ settingsPage }) => {
     await settingsPage.navigateToSettings();
     await settingsPage.clickRecoveryButton();
     await settingsPage.verifyRecoverySetupPage();
 });
 
-//verify the activate wallet button
-// todo: mock the activation / deactivation of the wallet
-test.skip("should be able to click activate the wallet button", async ({
+// Verify the activating status toggle
+test("Should display activated wallet status", async ({
     settingsPage,
+    blockchainHelper,
 }) => {
+    await blockchainHelper.withEnabledSession();
+    await settingsPage.navigateToSettings();
+    await settingsPage.verifyDisplayEnableStatus();
+});
+
+// Verify the activating status display
+test("Should display desactivated wallet status", async ({
+    settingsPage,
+    blockchainHelper,
+}) => {
+    await blockchainHelper.withDisabledSession();
+    await settingsPage.navigateToSettings();
+    await settingsPage.verifyDisplayDisableStatus();
+});
+
+// Click the activate wallet button
+test("should be able to click activate the wallet button", async ({
+    settingsPage,
+    blockchainHelper,
+}) => {
+    await blockchainHelper.withEnabledSession();
     await settingsPage.navigateToSettings();
     await settingsPage.clickActivateWalletButton();
 });
 
-//verify the desactivate wallet button
-// todo: mock the activation / deactivation of the wallet
-test.skip("should be able to click desactivate wallet button", async ({
+test("should be able to click desactivate wallet button", async ({
     settingsPage,
+    blockchainHelper,
 }) => {
+    await blockchainHelper.withDisabledSession();
     await settingsPage.navigateToSettings();
     await settingsPage.clickDesactivateWalletButton();
     // need to be locked at the wallet to verify the desactivate wallet button
