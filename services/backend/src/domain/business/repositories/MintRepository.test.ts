@@ -23,10 +23,32 @@ describe("MintRepository", () => {
     beforeEach(() => {
         mockAll();
 
+        // Reset all mocks
+        viemActionsMocks.readContract.mockReset();
+        viemActionsMocks.simulateContract.mockReset();
+        viemActionsMocks.writeContract.mockReset();
+        viemActionsMocks.waitForTransactionReceipt.mockReset();
+        viemActionsMocks.getTransactionCount.mockReset();
+
+        // Mock app-essentials module
+        mock.module("@frak-labs/app-essentials", () => ({
+            addresses: {
+                productRegistry: "0xproductregistry" as Address,
+                productInteractionManager: "0xinteractionmanager" as Address,
+                campaignBankFactory: "0xcampaignbankfactory" as Address,
+                mUSDToken: "0xmusdtoken" as Address,
+            },
+            isRunningInProd: false,
+            stringToBytes32: mock((str: string) => `0x${str.padEnd(64, "0")}`),
+        }));
+
         // Change the admin wallet repository mock
         adminWalletsRepositoryMocks.getKeySpecificAccount.mockResolvedValue(
             mockMinter as LocalAccount
         );
+        adminWalletsRepositoryMocks.getMutexForAccount.mockReturnValue({
+            runExclusive: mock(async (fn: () => Promise<unknown>) => fn()),
+        });
 
         // Mock some default viem actions
         viemActionsMocks.getTransactionCount.mockResolvedValue(1);
@@ -131,12 +153,6 @@ describe("MintRepository", () => {
             );
 
             // Mock successful mint simulation
-            viemActionsMocks.simulateContract.mockResolvedValue({
-                request: { to: "0xproductregistry" },
-                result: expectedProductId,
-            });
-
-            // Mock successful interaction contract deployment
             viemActionsMocks.simulateContract
                 .mockResolvedValueOnce({
                     request: { to: "0xproductregistry" },
@@ -152,42 +168,36 @@ describe("MintRepository", () => {
                 });
         });
 
-        // todo: to fix
-        it.todo(
-            "should successfully mint a product with all deployments",
-            async () => {
-                const expectedProductId = mintRepository.precomputeProductId(
-                    mintParams.domain
-                );
-                const result = await mintRepository.mintProduct(mintParams);
+        it("should successfully mint a product with all deployments", async () => {
+            const expectedProductId = mintRepository.precomputeProductId(
+                mintParams.domain
+            );
+            const result = await mintRepository.mintProduct(mintParams);
 
-                expect(result).toEqual({
-                    productId: expectedProductId,
-                    mintTxHash: mockTxHash,
-                    interactionResult: {
-                        txHash: mockTxHash,
-                        interactionContract: mockInteractionAddress,
-                    },
-                    bankResult: {
-                        txHash: mockTxHash,
-                        bank: mockBankAddress,
-                    },
-                });
+            expect(result).toEqual({
+                productId: expectedProductId,
+                mintTxHash: mockTxHash,
+                interactionResult: {
+                    txHash: mockTxHash,
+                    interactionContract: mockInteractionAddress,
+                },
+                bankResult: {
+                    txHash: mockTxHash,
+                    bank: mockBankAddress,
+                },
+            });
 
-                expect(
-                    adminWalletsRepositoryMocks.getKeySpecificAccount
-                ).toHaveBeenCalledWith({
-                    key: "minter",
-                });
-                expect(viemActionsMocks.simulateContract).toHaveBeenCalledTimes(
-                    3
-                );
-                expect(viemActionsMocks.writeContract).toHaveBeenCalledTimes(4); // mint + interaction + bank + mint tokens
-                expect(
-                    viemActionsMocks.waitForTransactionReceipt
-                ).toHaveBeenCalledTimes(2); // mint + interaction
-            }
-        );
+            expect(
+                adminWalletsRepositoryMocks.getKeySpecificAccount
+            ).toHaveBeenCalledWith({
+                key: "minter",
+            });
+            expect(viemActionsMocks.simulateContract).toHaveBeenCalledTimes(3);
+            expect(viemActionsMocks.writeContract).toHaveBeenCalledTimes(4); // mint + interaction + bank + mint tokens
+            expect(
+                viemActionsMocks.waitForTransactionReceipt
+            ).toHaveBeenCalledTimes(2); // mint + interaction
+        });
 
         it("should throw error when product already exists", async () => {
             // Mock that product already exists
@@ -202,72 +212,166 @@ describe("MintRepository", () => {
             );
         });
 
-        // todo: The `simulateContract` override is not working as expected, we need to fix it
-        it.todo(
-            "should throw error when mint simulation returns wrong product ID",
-            async () => {
-                viemActionsMocks.simulateContract.mockResolvedValueOnce({
+        it("should throw error when mint simulation returns wrong product ID", async () => {
+            // Reset mocks for this specific test
+            viemActionsMocks.simulateContract.mockReset();
+
+            // Mock that product doesn't exist
+            viemActionsMocks.readContract.mockResolvedValue({
+                productTypes: 0n,
+            });
+
+            viemActionsMocks.simulateContract.mockResolvedValueOnce({
+                request: { to: "0xproductregistry" },
+                result: 999n, // Wrong product ID
+            });
+
+            await expect(
+                mintRepository.mintProduct(mintParams)
+            ).rejects.toThrow("Invalid product id");
+        });
+        it("should handle interaction contract deployment failure gracefully", async () => {
+            const expectedProductId = mintRepository.precomputeProductId(
+                mintParams.domain
+            );
+
+            // Reset mocks for this specific test
+            viemActionsMocks.simulateContract.mockReset();
+
+            // Mock successful product existence check
+            viemActionsMocks.readContract.mockResolvedValue({
+                productTypes: 0n,
+            });
+
+            // Mock interaction contract deployment to fail
+            viemActionsMocks.simulateContract
+                .mockResolvedValueOnce({
                     request: { to: "0xproductregistry" },
-                    result: 999n, // Wrong product ID
+                    result: expectedProductId,
+                })
+                .mockResolvedValueOnce({
+                    request: { to: "0xinteractionmanager" },
+                    result: "0x0000000000000000000000000000000000000000" as Address, // Zero address indicates failure
+                })
+                .mockResolvedValueOnce({
+                    request: { to: "0xcampaignbankfactory" },
+                    result: mockBankAddress,
                 });
 
-                expect(mintRepository.mintProduct(mintParams)).rejects.toThrow(
-                    "Invalid product id"
-                );
-            }
-        );
+            const result = await mintRepository.mintProduct(mintParams);
 
-        it.todo(
-            "should handle interaction contract deployment failure gracefully",
-            async () => {
-                const expectedProductId = mintRepository.precomputeProductId(
-                    mintParams.domain
-                );
+            expect(result.interactionResult).toBeUndefined();
+        });
+        it("should handle bank deployment failure gracefully", async () => {
+            const expectedProductId = mintRepository.precomputeProductId(
+                mintParams.domain
+            );
 
-                // Mock interaction contract deployment to fail
-                viemActionsMocks.simulateContract
-                    .mockResolvedValueOnce({
-                        request: { to: "0xproductregistry" },
-                        result: expectedProductId,
-                    })
-                    .mockResolvedValueOnce({
-                        request: { to: "0xinteractionmanager" },
-                        result: "0x0000000000000000000000000000000000000000" as Address, // Zero address indicates failure
-                    });
+            // Reset mocks for this specific test
+            viemActionsMocks.simulateContract.mockReset();
 
-                const result = await mintRepository.mintProduct(mintParams);
+            // Mock successful product existence check
+            viemActionsMocks.readContract.mockResolvedValue({
+                productTypes: 0n,
+            });
 
-                expect(result.interactionResult).toBeUndefined();
-            }
-        );
+            // Mock bank deployment to fail
+            viemActionsMocks.simulateContract
+                .mockResolvedValueOnce({
+                    request: { to: "0xproductregistry" },
+                    result: expectedProductId,
+                })
+                .mockResolvedValueOnce({
+                    request: { to: "0xinteractionmanager" },
+                    result: mockInteractionAddress,
+                })
+                .mockResolvedValueOnce({
+                    request: { to: "0xcampaignbankfactory" },
+                    result: "0x0000000000000000000000000000000000000000" as Address, // Zero address indicates failure
+                });
 
-        it.todo(
-            "should handle bank deployment failure gracefully",
-            async () => {
-                const expectedProductId = mintRepository.precomputeProductId(
-                    mintParams.domain
-                );
+            const result = await mintRepository.mintProduct(mintParams);
 
-                // Mock bank deployment to fail
-                viemActionsMocks.simulateContract
-                    .mockResolvedValueOnce({
-                        request: { to: "0xproductregistry" },
-                        result: expectedProductId,
-                    })
-                    .mockResolvedValueOnce({
-                        request: { to: "0xinteractionmanager" },
-                        result: mockInteractionAddress,
-                    })
-                    .mockResolvedValueOnce({
-                        request: { to: "0xcampaignbankfactory" },
-                        result: "0x0000000000000000000000000000000000000000" as Address, // Zero address indicates failure
-                    });
+            expect(result.bankResult).toBeUndefined();
+        });
 
-                const result = await mintRepository.mintProduct(mintParams);
+        it("should handle interaction contract deployment error gracefully", async () => {
+            const expectedProductId = mintRepository.precomputeProductId(
+                mintParams.domain
+            );
 
-                expect(result.bankResult).toBeUndefined();
-            }
-        );
+            // Reset mocks for this specific test
+            viemActionsMocks.simulateContract.mockReset();
+
+            // Mock successful product existence check
+            viemActionsMocks.readContract.mockResolvedValue({
+                productTypes: 0n,
+            });
+
+            // Mock interaction contract deployment to throw error
+            viemActionsMocks.simulateContract
+                .mockResolvedValueOnce({
+                    request: { to: "0xproductregistry" },
+                    result: expectedProductId,
+                })
+                .mockRejectedValueOnce(
+                    new Error("Interaction deployment failed")
+                )
+                .mockResolvedValueOnce({
+                    request: { to: "0xcampaignbankfactory" },
+                    result: mockBankAddress,
+                });
+
+            const result = await mintRepository.mintProduct(mintParams);
+
+            expect(result.interactionResult).toBeUndefined();
+            expect(result.bankResult).toBeDefined();
+        });
+
+        it("should handle mocked bank deployment error gracefully", async () => {
+            const expectedProductId = mintRepository.precomputeProductId(
+                mintParams.domain
+            );
+
+            // Reset mocks for this specific test
+            viemActionsMocks.simulateContract.mockReset();
+            viemActionsMocks.writeContract.mockReset();
+
+            // Mock successful product existence check
+            viemActionsMocks.readContract.mockResolvedValue({
+                productTypes: 0n,
+            });
+
+            // Set up default write contract behavior
+            viemActionsMocks.writeContract.mockResolvedValue(mockTxHash);
+
+            // Mock bank deployment to throw error after interaction succeeds
+            viemActionsMocks.simulateContract
+                .mockResolvedValueOnce({
+                    request: { to: "0xproductregistry" },
+                    result: expectedProductId,
+                })
+                .mockResolvedValueOnce({
+                    request: { to: "0xinteractionmanager" },
+                    result: mockInteractionAddress,
+                })
+                .mockResolvedValueOnce({
+                    request: { to: "0xcampaignbankfactory" },
+                    result: mockBankAddress,
+                });
+
+            // Make the bank deployment writeContract throw
+            viemActionsMocks.writeContract
+                .mockResolvedValueOnce(mockTxHash) // mint
+                .mockResolvedValueOnce(mockTxHash) // interaction
+                .mockResolvedValueOnce(mockTxHash) // bank deployment
+                .mockRejectedValueOnce(new Error("Mint tokens failed")); // mint tokens fails
+
+            const result = await mintRepository.mintProduct(mintParams);
+
+            expect(result.interactionResult).toBeDefined();
+            expect(result.bankResult).toBeUndefined();
+        });
     });
 
     describe("mintProduct in production", () => {
@@ -280,19 +384,20 @@ describe("MintRepository", () => {
                         "0xinteractionmanager" as Address,
                     campaignBankFactory: "0xcampaignbankfactory" as Address,
                     mUSDToken: "0xmusdtoken" as Address,
+                    usdcToken: "0xusdc" as Address,
                 },
                 isRunningInProd: true,
                 stringToBytes32: mock(
                     (str: string) => `0x${str.padEnd(64, "0")}`
                 ),
+                getTokenAddressForStablecoin: mock(() => "0xusdc" as Address),
             }));
 
             // Re-create repository to pick up new mocks
             mintRepository = new MintRepository();
         });
 
-        // todo: to fix
-        it.todo("should deploy USDC bank in production", async () => {
+        it("should deploy USDC bank in production", async () => {
             const mintParams = {
                 name: "Test Product",
                 domain: "example.com",
@@ -303,7 +408,6 @@ describe("MintRepository", () => {
             const expectedProductId = mintRepository.precomputeProductId(
                 mintParams.domain
             );
-            console.log("expectedProductId", expectedProductId);
 
             // Mock successful operations
             viemActionsMocks.readContract.mockResolvedValue({
@@ -337,8 +441,86 @@ describe("MintRepository", () => {
                 })
             );
         });
-    });
 
+        it("should handle production bank deployment simulation failure", async () => {
+            const mintParams = {
+                name: "Test Product",
+                domain: "example.com",
+                productTypes: ["press"] as ProductTypesKey[],
+                owner: mockOwner,
+            };
+
+            const expectedProductId = mintRepository.precomputeProductId(
+                mintParams.domain
+            );
+
+            // Reset mocks for this specific test
+            viemActionsMocks.simulateContract.mockReset();
+
+            // Mock successful product existence check
+            viemActionsMocks.readContract.mockResolvedValue({
+                productTypes: 0n,
+            });
+
+            // Mock bank deployment simulation to return zero address
+            viemActionsMocks.simulateContract
+                .mockResolvedValueOnce({
+                    request: { to: "0xproductregistry" },
+                    result: expectedProductId,
+                })
+                .mockResolvedValueOnce({
+                    request: { to: "0xinteractionmanager" },
+                    result: mockInteractionAddress,
+                })
+                .mockResolvedValueOnce({
+                    request: { to: "0xcampaignbankfactory" },
+                    result: "0x0000000000000000000000000000000000000000" as Address, // Zero address indicates failure
+                });
+
+            const result = await mintRepository.mintProduct(mintParams);
+
+            expect(result.interactionResult).toBeDefined();
+            expect(result.bankResult).toBeUndefined();
+        });
+
+        it("should handle production bank deployment error gracefully", async () => {
+            const mintParams = {
+                name: "Test Product",
+                domain: "example.com",
+                productTypes: ["press"] as ProductTypesKey[],
+                owner: mockOwner,
+            };
+
+            const expectedProductId = mintRepository.precomputeProductId(
+                mintParams.domain
+            );
+
+            // Reset mocks for this specific test
+            viemActionsMocks.simulateContract.mockReset();
+
+            // Mock successful product existence check
+            viemActionsMocks.readContract.mockResolvedValue({
+                productTypes: 0n,
+            });
+
+            // Mock bank deployment to throw error
+            viemActionsMocks.simulateContract
+                .mockResolvedValueOnce({
+                    request: { to: "0xproductregistry" },
+                    result: expectedProductId,
+                })
+                .mockResolvedValueOnce({
+                    request: { to: "0xinteractionmanager" },
+                    result: mockInteractionAddress,
+                })
+                .mockRejectedValueOnce(new Error("Bank deployment failed"));
+
+            const result = await mintRepository.mintProduct(mintParams);
+
+            expect(result.interactionResult).toBeDefined();
+            expect(result.bankResult).toBeUndefined();
+        });
+    });
     describe("encodeProductTypesMask", () => {
         it("should encode single product type", () => {
             // Access private method for testing
@@ -400,7 +582,25 @@ describe("MintRepository", () => {
                 result: expectedProductId,
             });
 
-            // Mock successful deployments
+            // Reset mocks for each test
+            viemActionsMocks.simulateContract.mockReset();
+            viemActionsMocks.writeContract.mockReset();
+            viemActionsMocks.waitForTransactionReceipt.mockReset();
+
+            // Set default mock values
+            viemActionsMocks.writeContract.mockResolvedValue(mockTxHash);
+            viemActionsMocks.waitForTransactionReceipt.mockResolvedValue({
+                hash: mockTxHash,
+                confirmations: 4,
+            });
+        });
+
+        it("should mint product with EUR currency", async () => {
+            const expectedProductId = mintRepository.precomputeProductId(
+                mintParamsWithCurrency.domain
+            );
+
+            // Mock successful operations
             viemActionsMocks.simulateContract
                 .mockResolvedValueOnce({
                     request: { to: "0xproductregistry" },
@@ -414,9 +614,7 @@ describe("MintRepository", () => {
                     request: { to: "0xcampaignbankfactory" },
                     result: mockBankAddress,
                 });
-        });
 
-        it.todo("should mint product with EUR currency", async () => {
             const result = await mintRepository.mintProduct(
                 mintParamsWithCurrency
             );
@@ -426,11 +624,31 @@ describe("MintRepository", () => {
             expect(result.bankResult?.bank).toBe(mockBankAddress);
         });
 
-        it.todo("should mint product with GBP currency", async () => {
+        it("should mint product with GBP currency", async () => {
             const gbpParams = {
                 ...mintParamsWithCurrency,
                 currency: "gbp" as const,
             };
+
+            const expectedProductId = mintRepository.precomputeProductId(
+                gbpParams.domain
+            );
+
+            // Mock successful operations
+            viemActionsMocks.simulateContract
+                .mockResolvedValueOnce({
+                    request: { to: "0xproductregistry" },
+                    result: expectedProductId,
+                })
+                .mockResolvedValueOnce({
+                    request: { to: "0xinteractionmanager" },
+                    result: mockInteractionAddress,
+                })
+                .mockResolvedValueOnce({
+                    request: { to: "0xcampaignbankfactory" },
+                    result: mockBankAddress,
+                });
+
             const result = await mintRepository.mintProduct(gbpParams);
 
             expect(result.productId).toBeDefined();
@@ -438,11 +656,31 @@ describe("MintRepository", () => {
             expect(result.bankResult?.bank).toBe(mockBankAddress);
         });
 
-        it.todo("should mint product with USD currency", async () => {
+        it("should mint product with USD currency", async () => {
             const usdParams = {
                 ...mintParamsWithCurrency,
                 currency: "usd" as const,
             };
+
+            const expectedProductId = mintRepository.precomputeProductId(
+                usdParams.domain
+            );
+
+            // Mock successful operations
+            viemActionsMocks.simulateContract
+                .mockResolvedValueOnce({
+                    request: { to: "0xproductregistry" },
+                    result: expectedProductId,
+                })
+                .mockResolvedValueOnce({
+                    request: { to: "0xinteractionmanager" },
+                    result: mockInteractionAddress,
+                })
+                .mockResolvedValueOnce({
+                    request: { to: "0xcampaignbankfactory" },
+                    result: mockBankAddress,
+                });
+
             const result = await mintRepository.mintProduct(usdParams);
 
             expect(result.productId).toBeDefined();

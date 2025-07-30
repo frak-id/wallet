@@ -1,7 +1,6 @@
 import { mock, spyOn } from "bun:test";
-import * as permissionlessActions from "permissionless/actions";
+import type { Address, Hex } from "viem";
 import * as viem from "viem";
-import * as viemActions from "viem/actions";
 
 /* -------------------------------------------------------------------------- */
 /*                                    Viem                                    */
@@ -21,58 +20,59 @@ export const viemMocks = {
     request: requestMock,
 };
 
-let multicallSpy = spyOn(viemActions, "multicall");
-let readContractSpy = spyOn(viemActions, "readContract");
-let simulateContractSpy = spyOn(viemActions, "simulateContract");
-let writeContractSpy = spyOn(viemActions, "writeContract");
-let waitForTransactionReceiptSpy = spyOn(
-    viemActions,
-    "waitForTransactionReceipt"
-);
-let getTransactionCountSpy = spyOn(viemActions, "getTransactionCount");
+// Create proper mock functions
+const multicallMock = mock(() => Promise.resolve([]));
+const readContractMock = mock(() => Promise.resolve());
+const simulateContractMock = mock(() => Promise.resolve({ request: {} }));
+const writeContractMock = mock(() => Promise.resolve("0x" as Hex));
+const waitForTransactionReceiptMock = mock(() => Promise.resolve({}));
+const getTransactionCountMock = mock(() => Promise.resolve(0));
+const verifyMessageMock = mock(() => Promise.resolve(true));
+const getCodeMock = mock(() => Promise.resolve("0x"));
+const getStorageAtMock = mock(() => Promise.resolve("0x" as Hex));
 
 export const viemActionsMocks = {
-    multicall: multicallSpy,
-    readContract: readContractSpy,
-    simulateContract: simulateContractSpy,
-    writeContract: writeContractSpy,
-    waitForTransactionReceipt: waitForTransactionReceiptSpy,
-    getTransactionCount: getTransactionCountSpy,
+    multicall: multicallMock,
+    readContract: readContractMock,
+    simulateContract: simulateContractMock,
+    writeContract: writeContractMock,
+    waitForTransactionReceipt: waitForTransactionReceiptMock,
+    getTransactionCount: getTransactionCountMock,
+    verifyMessage: verifyMessageMock,
+    getCode: getCodeMock,
+    getStorageAt: getStorageAtMock,
 };
 
 export function mockViemActions() {
-    multicallSpy = spyOn(viemActions, "multicall");
-    readContractSpy = spyOn(viemActions, "readContract");
-    simulateContractSpy = spyOn(viemActions, "simulateContract");
-    writeContractSpy = spyOn(viemActions, "writeContract");
-    waitForTransactionReceiptSpy = spyOn(
-        viemActions,
-        "waitForTransactionReceipt"
-    );
-    getTransactionCountSpy = spyOn(viemActions, "getTransactionCount");
-
-    viemActionsMocks.multicall = multicallSpy;
-    viemActionsMocks.readContract = readContractSpy;
-    viemActionsMocks.simulateContract = simulateContractSpy;
-    viemActionsMocks.writeContract = writeContractSpy;
-    viemActionsMocks.waitForTransactionReceipt = waitForTransactionReceiptSpy;
-    viemActionsMocks.getTransactionCount = getTransactionCountSpy;
+    // Mock the entire viem/actions module
+    mock.module("viem/actions", () => ({
+        multicall: multicallMock,
+        readContract: readContractMock,
+        simulateContract: simulateContractMock,
+        writeContract: writeContractMock,
+        waitForTransactionReceipt: waitForTransactionReceiptMock,
+        getTransactionCount: getTransactionCountMock,
+        verifyMessage: verifyMessageMock,
+        getCode: getCodeMock,
+        getStorageAt: getStorageAtMock,
+        prepareAuthorization: mock(() => Promise.resolve({})),
+    }));
 }
-
 /* -------------------------------------------------------------------------- */
 /*                               Permissionless                               */
 /* -------------------------------------------------------------------------- */
 
-let getSenderAddressSpy = spyOn(permissionlessActions, "getSenderAddress");
+const getSenderAddressMock = mock(() => Promise.resolve("0x" as Address));
 
 export const permissionlessActionsMocks = {
-    getSenderAddress: getSenderAddressSpy,
+    getSenderAddress: getSenderAddressMock,
 };
 
 /**
  * Mock the permissionless actions.
  */
 export function mockPermissionlessActions() {
-    getSenderAddressSpy = spyOn(permissionlessActions, "getSenderAddress");
-    permissionlessActionsMocks.getSenderAddress = getSenderAddressSpy;
+    mock.module("permissionless/actions", () => ({
+        getSenderAddress: getSenderAddressMock,
+    }));
 }
