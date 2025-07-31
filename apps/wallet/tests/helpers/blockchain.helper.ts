@@ -52,6 +52,7 @@ export class BlockchainHelper {
     /**
      * Mock an enabled user session for the duration of the test
      */
+
     async withDisabledSession() {
         await this.rpcApi.interceptEthCall(async (call) => {
             const callData = call.params[0].data;

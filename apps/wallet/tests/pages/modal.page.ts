@@ -17,4 +17,64 @@ export class ModalPage {
     async verifyModalNotDisplayed() {
         await expect(this.walletFrame.locator("body")).not.toBeVisible();
     }
+
+    async verifyActivatedButton() {
+        await expect(this.walletFrame.getByText("Activated")).toBeVisible();
+    }
+
+    async verifyDeactivatedButton() {
+        await expect(this.walletFrame.getByText("Disabled")).toBeVisible();
+    }
+
+    async clickActivatedButton() {
+        await this.walletFrame.getByRole("button", { name: "Power" }).click();
+    }
+
+    async verifyDisableCopyAndShareButton() {
+        await expect(
+            this.walletFrame.getByRole("button", { name: "Copy" })
+        ).toBeDisabled();
+        await expect(
+            this.walletFrame.getByRole("button", { name: "Share" })
+        ).toBeDisabled();
+    }
+
+    async verifyEnableCopyAndShareButton() {
+        await expect(
+            this.walletFrame.getByRole("button", { name: "Copy" })
+        ).toBeEnabled();
+        await expect(
+            this.walletFrame.getByRole("button", { name: "Share" })
+        ).toBeEnabled();
+    }
+
+    async clickShareButton() {
+        await expect(
+            this.walletFrame.getByRole("button", { name: "Share" })
+        ).toBeVisible();
+        await this.walletFrame.getByRole("button", { name: "Share" }).click();
+    }
+
+    async clickCopyButton() {
+        await expect(
+            this.walletFrame.getByRole("button", { name: "Copy" })
+        ).toBeVisible();
+        await this.walletFrame.getByRole("button", { name: "Copy" }).click();
+    }
+
+    // Verify balance informations
+    async verifyBalanceInformations(amount: number) {
+        await expect(this.walletFrame.getByText("Balance")).toBeVisible();
+        await expect(
+            this.walletFrame.getByText(amount.toString())
+        ).toBeVisible();
+    }
+
+    // VerifyPendingInformation
+    async verifyPendingInformation(amount: number) {
+        await expect(this.walletFrame.getByText("Pending")).toBeVisible();
+        await expect(
+            this.walletFrame.getByText(amount.toString())
+        ).toBeVisible();
+    }
 }
