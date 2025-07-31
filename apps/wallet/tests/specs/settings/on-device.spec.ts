@@ -56,20 +56,25 @@ test("Should display desactivated wallet status", async ({
 test("should be able to click activate the wallet button", async ({
     settingsPage,
     blockchainHelper,
+    mockedWebAuthN,
 }) => {
     await blockchainHelper.withEnabledSession();
     await settingsPage.navigateToSettings();
     await settingsPage.clickActivateWalletButton();
+
+    await mockedWebAuthN.verifySignature();
 });
 
 test("should be able to click desactivate wallet button", async ({
     settingsPage,
     blockchainHelper,
+    mockedWebAuthN,
 }) => {
     await blockchainHelper.withDisabledSession();
     await settingsPage.navigateToSettings();
     await settingsPage.clickDesactivateWalletButton();
-    // need to be locked at the wallet to verify the desactivate wallet button
+
+    await mockedWebAuthN.verifySignature();
 });
 
 //verify the unsubscribe notifications block

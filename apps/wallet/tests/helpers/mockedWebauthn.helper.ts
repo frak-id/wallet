@@ -27,6 +27,12 @@ import {
 // The chromium aaguid is used to identify the authenticator
 const CHROMIUM_AAGUID = "b5397666-4885-aa6b-cebf-e52262a439a2";
 
+declare global {
+    interface Window {
+        frak_mockedWebAuthNCounter: number | undefined;
+    }
+}
+
 /**
  * Helper for mocked webauthn authentication
  *
@@ -73,6 +79,11 @@ export class MockedWebAuthNHelper {
         // Add the init script
         await this.page.addInitScript(
             ({ credentialProps }) => {
+                function incrementCounter() {
+                    window.frak_mockedWebAuthNCounter =
+                        (window.frak_mockedWebAuthNCounter || 0) + 1;
+                }
+
                 // Helper to convert base64url to buffer
                 function base64URLStringToBuffer(
                     base64URLString: string
@@ -125,7 +136,6 @@ export class MockedWebAuthNHelper {
                         .replace(/=/g, "");
                 }
 
-                // testMeBis();
                 // Mock the webauthn credential creation
                 navigator.credentials.create = async (options) => {
                     const challenge = options?.publicKey?.challenge;
@@ -145,6 +155,8 @@ export class MockedWebAuthNHelper {
                     if (!response) {
                         return null;
                     }
+
+                    incrementCounter();
 
                     // Map it
                     return {
@@ -199,6 +211,9 @@ export class MockedWebAuthNHelper {
                     if (!response) {
                         return null;
                     }
+
+                    // Increment the counter
+                    incrementCounter();
 
                     // Map it
                     return {
@@ -317,5 +332,16 @@ export class MockedWebAuthNHelper {
             publicKey,
             cosePublicKey: this.cosePublicKeyCBOR(publicKey),
         };
+    }
+
+    getSignatureCounter() {
+        return this.page.evaluate(() => window.frak_mockedWebAuthNCounter);
+    }
+
+    async verifySignature() {
+        const initial = await this.getSignatureCounter();
+        return this.page.waitForFunction((target) => {
+            return (window.frak_mockedWebAuthNCounter || 0) > target;
+        }, initial ?? 0);
     }
 }

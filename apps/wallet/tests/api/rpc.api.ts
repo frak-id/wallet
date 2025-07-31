@@ -56,6 +56,10 @@ export class RpcApi {
         );
     }
 
+    async removeRpcRoute() {
+        await this.page.unroute("https://erpc.gcp*.frak.id/nexus-rpc/evm/**/*");
+    }
+
     /**
      * Helper to intercept an rpc request, even when requests are batched
      * @param handler
