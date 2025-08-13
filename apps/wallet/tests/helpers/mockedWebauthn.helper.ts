@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { p256 } from "@noble/curves/p256";
-import type { Page } from "@playwright/test";
+import type { Frame, Page } from "@playwright/test";
 import type {
     AuthenticationCredential,
     RegistrationCredential,
@@ -138,6 +138,8 @@ export class MockedWebAuthNHelper {
 
                 // Mock the webauthn credential creation
                 navigator.credentials.create = async (options) => {
+                    incrementCounter();
+
                     const challenge = options?.publicKey?.challenge;
                     if (!challenge) {
                         throw new Error("No challenge found");
@@ -155,8 +157,6 @@ export class MockedWebAuthNHelper {
                     if (!response) {
                         return null;
                     }
-
-                    incrementCounter();
 
                     // Map it
                     return {
@@ -194,6 +194,9 @@ export class MockedWebAuthNHelper {
 
                 // Mock webauthn credential get
                 navigator.credentials.get = async (options) => {
+                    // Increment the counter
+                    incrementCounter();
+
                     const challenge = options?.publicKey?.challenge;
                     if (!challenge) {
                         throw new Error("No challenge found");
@@ -211,9 +214,6 @@ export class MockedWebAuthNHelper {
                     if (!response) {
                         return null;
                     }
-
-                    // Increment the counter
-                    incrementCounter();
 
                     // Map it
                     return {
@@ -334,14 +334,22 @@ export class MockedWebAuthNHelper {
         };
     }
 
-    getSignatureCounter() {
-        return this.page.evaluate(() => window.frak_mockedWebAuthNCounter);
+    async getSignatureCounter(container?: Page | Frame) {
+        return (container ?? this.page).evaluate(
+            () => window.frak_mockedWebAuthNCounter
+        );
     }
 
-    async verifySignature() {
-        const initial = await this.getSignatureCounter();
-        return this.page.waitForFunction((target) => {
-            return (window.frak_mockedWebAuthNCounter || 0) > target;
-        }, initial ?? 0);
+    async verifySignature(container?: Page | Frame) {
+        const initial = await this.getSignatureCounter(container);
+        const target = (initial ?? 0) + 1;
+
+        await (container ?? this.page).waitForFunction(
+            (target) => {
+                return (window.frak_mockedWebAuthNCounter || 0) >= target;
+            },
+            target,
+            { timeout: 10_000 }
+        );
     }
 }

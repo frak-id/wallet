@@ -1,4 +1,9 @@
-import { type FrameLocator, type Page, expect } from "@playwright/test";
+import {
+    type Frame,
+    type FrameLocator,
+    type Page,
+    expect,
+} from "@playwright/test";
 
 export class ModalPage {
     constructor(private readonly page: Page) {}
@@ -8,6 +13,17 @@ export class ModalPage {
      */
     get walletFrame(): FrameLocator {
         return this.page.frameLocator("#frak-wallet");
+    }
+
+    /**
+     * Get the iframe of the Frak client
+     */
+    get frame(): Frame {
+        const frame = this.page.frame("frak-wallet");
+        if (!frame) {
+            throw new Error("Frak wallet frame not found");
+        }
+        return frame;
     }
 
     async verifyModalDisplayed() {
@@ -22,11 +38,14 @@ export class ModalPage {
         await expect(this.walletFrame.getByText("Activated")).toBeVisible();
     }
 
-    async verifyDeactivatedButton() {
+    async verifyDesactivatedButton() {
         await expect(this.walletFrame.getByText("Disabled")).toBeVisible();
     }
 
     async clickActivatedButton() {
+        await this.walletFrame.getByRole("button", { name: "Power" }).click();
+    }
+    async clickDesactivatedButton() {
         await this.walletFrame.getByRole("button", { name: "Power" }).click();
     }
 
@@ -71,7 +90,7 @@ export class ModalPage {
     }
 
     // VerifyPendingInformation
-    async verifyPendingInformation(amount: number) {
+    async verifyPendingInformations(amount: number) {
         await expect(this.walletFrame.getByText("Pending")).toBeVisible();
         await expect(
             this.walletFrame.getByText(amount.toString())

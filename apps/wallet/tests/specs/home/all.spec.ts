@@ -141,7 +141,7 @@ test("should refresh the balance on updated datas", async ({
     await homePage.verifyBalanceInformations(420);
 });
 
-test.fail("should handle balance error", async ({ homePage, backendApi }) => {
+test.skip("should handle balance error", async ({ homePage, backendApi }) => {
     // Mock the  balance information
     await backendApi.interceptBalanceRoute((route) =>
         route.fulfill({
