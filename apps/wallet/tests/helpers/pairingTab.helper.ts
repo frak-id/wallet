@@ -1,7 +1,8 @@
-import type {
-    BrowserContext,
-    Page,
-    PageScreenshotOptions,
+import {
+    type BrowserContext,
+    type Page,
+    type PageScreenshotOptions,
+    expect,
 } from "@playwright/test";
 import { PairingPage } from "tests/pages/pairing.page";
 import { MockedWebAuthNHelper } from "./mockedWebauthn.helper";
@@ -113,5 +114,43 @@ export class PairingTabHelper {
         await this.pairingPage.navigateToPairing(pairingId);
         await this.pairingPage.verifyPairingReady();
         await this.pairingPage.clickCancel();
+    }
+
+    async acceptSignatureRequest(): Promise<void> {
+        if (!this.rawPairingPage) {
+            throw new Error(
+                "Pairing page not initialized. Call setup() first."
+            );
+        }
+
+        await expect(
+            this.rawPairingPage
+                .getByText(
+                    "A device Chrome on Windows is requesting your signature"
+                )
+                .first()
+        ).toBeVisible();
+        await this.rawPairingPage
+            .getByRole("button", { name: "Sign" })
+            .first()
+            .click();
+    }
+
+    async rejectSignatureRequest(): Promise<void> {
+        if (!this.rawPairingPage) {
+            throw new Error(
+                "Pairing page not initialized. Call setup() first."
+            );
+        }
+
+        await expect(
+            this.rawPairingPage
+                .getByText(
+                    "A device Chrome on Windows is requesting your signature")
+                .first()
+        ).toBeVisible();
+        await this.rawPairingPage
+            .getByRole("button", { name: "Reject" }).first()
+            .click();
     }
 }
