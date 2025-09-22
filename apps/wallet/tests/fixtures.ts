@@ -1,14 +1,19 @@
 import { test as base } from "@playwright/test";
 import { AnalyticsApi } from "./api/analytics.api";
 import { BackendApi } from "./api/backend.api";
+import { IndexerApi } from "./api/indexer.api";
+import { RpcApi } from "./api/rpc.api";
+import { BlockchainHelper } from "./helpers/blockchain.helper";
 import { ClipboardHelper } from "./helpers/clipboard.helper";
 import { MockedWebAuthNHelper } from "./helpers/mockedWebauthn.helper";
 import { PairingTabHelper } from "./helpers/pairingTab.helper";
-import { StorageHelper } from "./helpers/sotrage.helper";
+import { SdkHelper } from "./helpers/sdk.helper";
+import { StorageHelper } from "./helpers/storage.helper";
 import { WebAuthNHelper } from "./helpers/webauthn.helper";
 import { AuthPage } from "./pages/auth.page";
 import { HistoryPage } from "./pages/history.page";
 import { HomePage } from "./pages/home.page";
+import { ModalPage } from "./pages/modal.page";
 import { PairingPage } from "./pages/pairing.page";
 import { SettingsPage } from "./pages/settings.page";
 
@@ -18,15 +23,20 @@ type TestFixtures = {
     mockedWebAuthN: MockedWebAuthNHelper;
     storageHelper: StorageHelper;
     clipboardHelper: ClipboardHelper;
+    blockchainHelper: BlockchainHelper;
+    sdkHelper: SdkHelper;
     // APIs
     backendApi: BackendApi;
     analyticsApi: AnalyticsApi;
+    indexerApi: IndexerApi;
+    rpcApi: RpcApi;
     // Pages
     authPage: AuthPage;
     pairingPage: PairingPage;
     settingsPage: SettingsPage;
     homePage: HomePage;
     historyPage: HistoryPage;
+    modalPage: ModalPage;
 };
 
 // WebAuthN should switched to worker scope, with a pre existing authenticator + credentials so we can test login + pairing easily
@@ -70,9 +80,21 @@ export const test = base.extend<TestFixtures, WorkerFixture>({
     clipboardHelper: async ({ page }, use) => {
         await use(new ClipboardHelper(page));
     },
+    blockchainHelper: async ({ page }, use) => {
+        await use(new BlockchainHelper(page));
+    },
+    sdkHelper: async ({ page }, use) => {
+        await use(new SdkHelper(page));
+    },
     // APIs
     backendApi: async ({ page }, use) => {
         await use(new BackendApi(page));
+    },
+    indexerApi: async ({ page }, use) => {
+        await use(new IndexerApi(page));
+    },
+    rpcApi: async ({ page }, use) => {
+        await use(new RpcApi(page));
     },
     analyticsApi: [
         async ({ page }, use) => {
@@ -97,6 +119,9 @@ export const test = base.extend<TestFixtures, WorkerFixture>({
     },
     historyPage: async ({ page }, use) => {
         await use(new HistoryPage(page));
+    },
+    modalPage: async ({ page }, use) => {
+        await use(new ModalPage(page));
     },
 });
 

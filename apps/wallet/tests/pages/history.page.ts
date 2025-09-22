@@ -3,7 +3,7 @@ import { type Page, expect } from "@playwright/test";
 export class HistoryPage {
     constructor(private readonly page: Page) {}
 
-    //verify the history button and click it
+    // Verify the history button and click it
     async clickHistoryButton() {
         // Ensure the history button is visible and clickable
         const historyLinkLocator = this.page.locator(
@@ -19,7 +19,7 @@ export class HistoryPage {
         await this.page.waitForLoadState("networkidle");
     }
 
-    //verify that the history page is displayed with rewards and interactions
+    // Verify that the history page is displayed with rewards and interactions
     async verifyDisplayHistoryPage() {
         await expect(
             this.page.getByRole("button", { name: "rewards" })
@@ -29,7 +29,7 @@ export class HistoryPage {
         ).toBeVisible();
     }
 
-    //check the notifications button visible
+    // Check the notifications button visible
     async notificationsButtonVisible() {
         // try to find the notifications button using  selectoors
         const notificationsButton = this.page
@@ -49,10 +49,58 @@ export class HistoryPage {
         await this.page.waitForURL("/notifications");
         await this.page.waitForLoadState("networkidle");
     }
+
     // Verify that the notifications page is displayed
     async verifyDisplayNotificationsPage() {
         await expect(
             this.page.getByRole("heading", { name: "Notifications" })
+        ).toBeVisible();
+    }
+
+    // Verify the Rewards button
+    async clickRewardsButton() {
+        const rewardsButtonLocator = this.page.getByRole("button", {
+            name: "Rewards",
+        });
+
+        await expect(rewardsButtonLocator).toBeVisible();
+        await rewardsButtonLocator.click();
+        await this.page.waitForLoadState("networkidle");
+    }
+
+    // Verify Rewards datas display
+    async verifyRewardsDataDisplayed() {
+        // Verify "added" rewards
+        await expect(
+            this.page.getByText("e2e Test - added").first()
+        ).toBeVisible();
+        await expect(
+            this.page.getByText("e2e Test - claimed").first()
+        ).toBeVisible();
+    }
+
+    // verify the Rewards button
+    async clickInteractionsButton() {
+        const interactionsButtonLocator = this.page.getByRole("button", {
+            name: "Interactions",
+        });
+
+        await expect(interactionsButtonLocator).toBeVisible();
+        await interactionsButtonLocator.click();
+        await this.page.waitForLoadState("networkidle");
+    }
+
+    // verify Rewards datas display
+    async verifyInteractionsDataDisplayed() {
+        // Verify "added" rewards
+        await expect(
+            this.page.getByText("e2e Test - Created share link").first()
+        ).toBeVisible();
+        await expect(
+            this.page.getByText("e2e Test - Appointment in store").first()
+        ).toBeVisible();
+        await expect(
+            this.page.getByText("e2e Test - Referred").first()
         ).toBeVisible();
     }
 }

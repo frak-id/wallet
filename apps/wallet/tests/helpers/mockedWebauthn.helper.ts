@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { p256 } from "@noble/curves/p256";
-import type { Page } from "@playwright/test";
+import type { Frame, Page } from "@playwright/test";
 import type {
     AuthenticationCredential,
     RegistrationCredential,
@@ -27,6 +27,12 @@ import {
 // The chromium aaguid is used to identify the authenticator
 const CHROMIUM_AAGUID = "b5397666-4885-aa6b-cebf-e52262a439a2";
 
+declare global {
+    interface Window {
+        frak_mockedWebAuthNCounter: number | undefined;
+    }
+}
+
 /**
  * Helper for mocked webauthn authentication
  *
@@ -37,8 +43,18 @@ const CHROMIUM_AAGUID = "b5397666-4885-aa6b-cebf-e52262a439a2";
  */
 export class MockedWebAuthNHelper {
     private credentialProps?: CredentialProps;
+    private readonly authenticatorFile: string;
 
-    constructor(private readonly page: Page) {}
+    constructor(
+        private readonly page: Page,
+        options: { context?: string } = {}
+    ) {
+        if (options.context) {
+            this.authenticatorFile = `${AUTHENTICATOR_STATE.replace(".json", "")}-${options.context}.json`;
+        } else {
+            this.authenticatorFile = AUTHENTICATOR_STATE;
+        }
+    }
 
     async setup() {
         // Restore credentials
@@ -63,6 +79,11 @@ export class MockedWebAuthNHelper {
         // Add the init script
         await this.page.addInitScript(
             ({ credentialProps }) => {
+                function incrementCounter() {
+                    window.frak_mockedWebAuthNCounter =
+                        (window.frak_mockedWebAuthNCounter || 0) + 1;
+                }
+
                 // Helper to convert base64url to buffer
                 function base64URLStringToBuffer(
                     base64URLString: string
@@ -115,9 +136,10 @@ export class MockedWebAuthNHelper {
                         .replace(/=/g, "");
                 }
 
-                // testMeBis();
                 // Mock the webauthn credential creation
                 navigator.credentials.create = async (options) => {
+                    incrementCounter();
+
                     const challenge = options?.publicKey?.challenge;
                     if (!challenge) {
                         throw new Error("No challenge found");
@@ -172,6 +194,9 @@ export class MockedWebAuthNHelper {
 
                 // Mock webauthn credential get
                 navigator.credentials.get = async (options) => {
+                    // Increment the counter
+                    incrementCounter();
+
                     const challenge = options?.publicKey?.challenge;
                     if (!challenge) {
                         throw new Error("No challenge found");
@@ -259,13 +284,16 @@ export class MockedWebAuthNHelper {
         };
 
         // Save the authenticator state to the file
-        writeFileSync(AUTHENTICATOR_STATE, JSON.stringify(jsonOutput, null, 2));
+        writeFileSync(
+            this.authenticatorFile,
+            JSON.stringify(jsonOutput, null, 2)
+        );
     }
 
     // Restore the credential props from the file
     private restoreCredentialProps() {
         // Check if the file exists
-        if (!existsSync(AUTHENTICATOR_STATE)) {
+        if (!existsSync(this.authenticatorFile)) {
             console.warn(
                 "No authenticator state file found, will probably generate new ones"
             );
@@ -273,7 +301,7 @@ export class MockedWebAuthNHelper {
         }
 
         // Read the file
-        const jsonInput = readFileSync(AUTHENTICATOR_STATE, "utf-8");
+        const jsonInput = readFileSync(this.authenticatorFile, "utf-8");
         const { credentialId, privateKey, aaguid } = JSON.parse(jsonInput) as {
             credentialId: string;
             privateKey: string;
@@ -304,5 +332,24 @@ export class MockedWebAuthNHelper {
             publicKey,
             cosePublicKey: this.cosePublicKeyCBOR(publicKey),
         };
+    }
+
+    async getSignatureCounter(container?: Page | Frame) {
+        return (container ?? this.page).evaluate(
+            () => window.frak_mockedWebAuthNCounter
+        );
+    }
+
+    async verifySignature(container?: Page | Frame) {
+        const initial = await this.getSignatureCounter(container);
+        const target = (initial ?? 0) + 1;
+
+        await (container ?? this.page).waitForFunction(
+            (target) => {
+                return (window.frak_mockedWebAuthNCounter || 0) >= target;
+            },
+            target,
+            { timeout: 10_000 }
+        );
     }
 }
