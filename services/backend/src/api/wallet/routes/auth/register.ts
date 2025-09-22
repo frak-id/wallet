@@ -7,7 +7,7 @@ import {
 } from "@simplewebauthn/server";
 import { Elysia, error } from "elysia";
 import { Binary } from "mongodb";
-import { sixDegreesContext } from "../../../../domain/6degrees/context";
+import { SixDegreesContext } from "../../../../domain/6degrees/context";
 import {
     type StaticWalletSdkTokenDto,
     WalletAuthResponseDto,
@@ -17,7 +17,6 @@ import {
 export const registerRoutes = new Elysia()
     .use(sessionContext)
     .use(authContext)
-    .use(sixDegreesContext)
     // Registration
     .post(
         "/register",
@@ -37,7 +36,6 @@ export const registerRoutes = new Elysia()
                 services: { walletSdkSession, walletSso, webAuthN },
                 repositories: { authenticator: authenticatorRepository },
             },
-            sixDegrees,
         }) => {
             // Decode the registration response
             const registrationResponse =
@@ -101,16 +99,15 @@ export const registerRoutes = new Elysia()
 
             // If that's a six degrees wallet, register it
             if (isSixDegrees) {
-                await sixDegrees.services.routing.registerRoutedWallet(
+                await SixDegreesContext.services.routing.registerRoutedWallet(
                     walletAddress
                 );
-                const token = await sixDegrees.services.authentication.register(
-                    {
+                const token =
+                    await SixDegreesContext.services.authentication.register({
                         publicKey: credential.publicKey,
                         challenge: expectedChallenge,
                         signature: rawRegistrationResponse,
-                    }
-                );
+                    });
                 if (token) {
                     additionalData.sixDegreesToken = token;
                 }

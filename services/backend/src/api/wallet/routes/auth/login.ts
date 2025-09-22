@@ -2,7 +2,7 @@ import { sessionContext, viemClient } from "@backend-common";
 import { t } from "@backend-utils";
 import { Elysia, error } from "elysia";
 import { verifyMessage } from "viem/actions";
-import { sixDegreesContext } from "../../../../domain/6degrees/context";
+import { SixDegreesContext } from "../../../../domain/6degrees/context";
 import {
     type StaticWalletSdkTokenDto,
     WalletAuthResponseDto,
@@ -12,7 +12,6 @@ import {
 export const loginRoutes = new Elysia()
     .use(sessionContext)
     .use(authContext)
-    .use(sixDegreesContext)
     // Ecdsa login
     .post(
         "/ecdsaLogin",
@@ -115,7 +114,6 @@ export const loginRoutes = new Elysia()
             auth: {
                 services: { walletSdkSession, walletSso, webAuthN },
             },
-            sixDegrees,
         }) => {
             // Check if that's a valid webauthn signature
             const verificationnResult = await webAuthN.isValidSignature({
@@ -141,13 +139,16 @@ export const loginRoutes = new Elysia()
 
             // Check if that's a six degrees wallet, and iuf yes, generate a token accordingly
             const isSixDegrees =
-                await sixDegrees.services.routing.isRoutedWallet(address);
+                await SixDegreesContext.services.routing.isRoutedWallet(
+                    address
+                );
             if (isSixDegrees) {
-                const token = await sixDegrees.services.authentication.login({
-                    publicKey: rawPublicKey,
-                    challenge: expectedChallenge,
-                    signature: rawAuthenticatorResponse,
-                });
+                const token =
+                    await SixDegreesContext.services.authentication.login({
+                        publicKey: rawPublicKey,
+                        challenge: expectedChallenge,
+                        signature: rawAuthenticatorResponse,
+                    });
                 if (token) {
                     additionalData.sixDegreesToken = token;
                 }

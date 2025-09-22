@@ -1,1 +1,1 @@
-export { walletContext } from "./context";
+export { WalletContext } from "./context";

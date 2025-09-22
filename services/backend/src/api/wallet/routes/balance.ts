@@ -7,26 +7,21 @@ import { t } from "@backend-utils";
 import type { GetRewardResponseDto } from "@frak-labs/app-essentials";
 import { Elysia, error } from "elysia";
 import { formatUnits, isAddressEqual, toHex } from "viem";
-import { walletContext } from "../../../domain/wallet";
+import { WalletContext } from "../../../domain/wallet";
 
 export const balanceRoutes = new Elysia({ prefix: "/balance" })
     .use(walletSessionContext)
-    .use(walletContext)
     // Get current user balance
     .get(
         "",
-        async ({
-            wallet: {
-                repositories: { balances: balancesRepository },
-            },
-            walletSession,
-        }) => {
+        async ({ walletSession }) => {
             if (!walletSession) return error(401, "Unauthorized");
 
             // Get all the user balances
-            const balances = await balancesRepository.getUserBalance({
-                address: walletSession.address,
-            });
+            const balances =
+                await WalletContext.repositories.balances.getUserBalance({
+                    address: walletSession.address,
+                });
 
             // For each balances, get the eur price
             const mappedBalances = (
@@ -205,15 +200,10 @@ export const balanceRoutes = new Elysia({ prefix: "/balance" })
     // Get pending balance
     .get(
         "/pending",
-        async ({
-            wallet: {
-                repositories: { pendingBalance: pendingBalanceRepository },
-            },
-            walletSession,
-        }) => {
+        async ({ walletSession }) => {
             if (!walletSession) return error(401, "Unauthorized");
 
-            return pendingBalanceRepository.getPendingBalance({
+            return WalletContext.repositories.pendingBalance.getPendingBalance({
                 address: walletSession.address,
             });
         },

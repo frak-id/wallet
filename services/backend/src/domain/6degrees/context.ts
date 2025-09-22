@@ -1,4 +1,3 @@
-import Elysia from "elysia";
 import ky from "ky";
 import { AuthenticatorRepository } from "../../domain/auth/repositories/AuthenticatorRepository";
 import { SixDegreesAuthenticationService } from "./service/SixDegreesAuthenticationService";
@@ -8,11 +7,9 @@ import { SixDegreesRoutingService } from "./service/SixDegreesRoutingService";
 /**
  * The whole 6degrees context
  */
-export const sixDegreesContext = new Elysia({
-    name: "Context.6degrees",
-}).decorate(() => {
+export namespace SixDegreesContext {
     // Build the ky api that will be used to interact with 6degrees
-    const sixDegreesApi = ky.create({
+    export const api = ky.create({
         prefixUrl: "https://prodbe-f2m.6degrees.co/",
     });
 
@@ -20,28 +17,22 @@ export const sixDegreesContext = new Elysia({
     const routingService = new SixDegreesRoutingService();
 
     // Create the authentication service
-    const authenticationService = new SixDegreesAuthenticationService(
-        sixDegreesApi
-    );
+    const authenticationService = new SixDegreesAuthenticationService(api);
 
     // Create the interaction service
     const authenticatorRepository = new AuthenticatorRepository();
     const interactionService = new SixDegreesInteractionService(
-        sixDegreesApi,
+        api,
         authenticatorRepository
     );
 
-    return {
-        sixDegrees: {
-            api: sixDegreesApi,
-            repositories: {
-                authenticator: authenticatorRepository,
-            },
-            services: {
-                authentication: authenticationService,
-                interaction: interactionService,
-                routing: routingService,
-            },
-        },
+    export const repositories = {
+        authenticator: authenticatorRepository,
     };
-});
+
+    export const services = {
+        authentication: authenticationService,
+        interaction: interactionService,
+        routing: routingService,
+    };
+}

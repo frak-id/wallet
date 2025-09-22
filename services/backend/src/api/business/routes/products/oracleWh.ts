@@ -5,14 +5,12 @@ import { count, eq, max, min } from "drizzle-orm";
 import { Elysia, error } from "elysia";
 import { db } from "infrastructure/db";
 import {
-    oracleContext,
     productOracleTable,
     purchaseStatusTable,
 } from "../../../../domain/oracle";
 import { businessSessionContext } from "../../middleware/session";
 
 export const oracleWhRoutes = new Elysia({ prefix: "/oracleWebhook" })
-    .use(oracleContext)
     .use(businessSessionContext)
     .guard({
         params: t.Object({

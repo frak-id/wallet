@@ -7,12 +7,11 @@ import { db } from "infrastructure/db";
 import { concatHex, keccak256, toHex } from "viem";
 import {
     type CustomWebhookDto,
-    oracleContext,
+    OracleContext,
     productOracleTable,
 } from "../../../../domain/oracle";
 
 export const customWebhook = new Elysia()
-    .use(oracleContext)
     .guard({
         headers: t.Partial(
             t.Object({
@@ -33,14 +32,7 @@ export const customWebhook = new Elysia()
     })
     .post(
         "/custom",
-        async ({
-            params: { productId },
-            body,
-            headers,
-            oracle: {
-                services: { webhook },
-            },
-        }) => {
+        async ({ params: { productId }, body, headers }) => {
             // Try to parse the body as a custom webhook type and ensure the type validity
             const webhookData = JSON.parse(body) as CustomWebhookDto;
             if (!webhookData?.id) {
@@ -82,7 +74,7 @@ export const customWebhook = new Elysia()
             );
 
             // Insert purchase and items
-            await webhook.upsertPurchase({
+            await OracleContext.services.webhook.upsertPurchase({
                 purchase: {
                     oracleId: oracle.id,
                     purchaseId,

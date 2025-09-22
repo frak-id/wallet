@@ -1,7 +1,6 @@
 import { log, sessionContext } from "@backend-common";
 import { t } from "@backend-utils";
 import { Elysia, error } from "elysia";
-import { sixDegreesContext } from "../../../../domain/6degrees/context";
 import { WalletAuthResponseDto, authContext } from "../../../../domain/auth";
 import { loginRoutes } from "./login";
 import { registerRoutes } from "./register";
@@ -20,8 +19,6 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
     .use(registerRoutes)
     // Routing (only for 6degrees)
     .use(routingRoutes)
-    // Six Degrees context
-    .use(sixDegreesContext)
     // Logout
     .post("/logout", async ({ cookie: { businessAuth } }) => {
         businessAuth.remove();

@@ -6,15 +6,14 @@ import { Elysia } from "elysia";
 import { db } from "infrastructure/db";
 import { concatHex, keccak256, toHex } from "viem";
 import {
+    OracleContext,
     type OrderFinancialStatus,
     type ShopifyOrderUpdateWebhookDto,
-    oracleContext,
     productOracleTable,
     type purchaseStatusEnum,
 } from "../../../../domain/oracle";
 
 export const shopifyWebhook = new Elysia()
-    .use(oracleContext)
     .guard({
         headers: t.Partial(
             t.Object({
@@ -61,14 +60,7 @@ export const shopifyWebhook = new Elysia()
     //   here we should just validate the request and save it
     .post(
         "/shopify",
-        async ({
-            params: { productId },
-            body,
-            headers,
-            oracle: {
-                services: { webhook },
-            },
-        }) => {
+        async ({ params: { productId }, body, headers }) => {
             // Try to parse the body as a shopify webhook type and ensure the type validity
             const webhookData = JSON.parse(
                 body
@@ -124,7 +116,7 @@ export const shopifyWebhook = new Elysia()
             );
 
             // Insert purchase and items
-            await webhook.upsertPurchase({
+            await OracleContext.services.webhook.upsertPurchase({
                 purchase: {
                     oracleId: oracle.id,
                     purchaseId,
