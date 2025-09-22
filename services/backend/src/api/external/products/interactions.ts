@@ -15,12 +15,10 @@ import { db } from "infrastructure/db";
 import { type Hex, isAddress, isHex, keccak256, toHex } from "viem";
 import {
     backendTrackerTable,
-    interactionsContext,
     pendingInteractionsTable,
 } from "../../../domain/interactions";
 
 export const interactionsApi = new Elysia({ prefix: "/interactions" })
-    .use(interactionsContext)
     .guard({
         params: t.Object({
             productId: t.Optional(t.Hex()),

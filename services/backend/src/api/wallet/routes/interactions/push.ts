@@ -11,12 +11,10 @@ import { isAddressEqual } from "viem";
 import { SixDegreesContext } from "../../../../domain/6degrees/context";
 import {
     InteractionRequestDto,
-    interactionsContext,
     pendingInteractionsTable,
 } from "../../../../domain/interactions";
 
 export const pushInteractionsRoutes = new Elysia()
-    .use(interactionsContext)
     .use(walletSdkSessionContext)
     .post(
         "/push",

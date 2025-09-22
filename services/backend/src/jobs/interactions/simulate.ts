@@ -3,40 +3,30 @@ import { mutexCron } from "@backend-utils";
 import type { pino } from "@bogeychan/elysia-logger";
 import { isRunningInProd } from "@frak-labs/app-essentials";
 import { eq } from "drizzle-orm";
+import { Elysia } from "elysia";
 import { db } from "infrastructure/db";
 import type { Address } from "viem";
 import {
-    type InteractionPackerRepository,
-    type InteractionsContextApp,
-    type WalletSessionRepository,
+    InteractionsContext,
     pendingInteractionsTable,
 } from "../../domain/interactions";
 
-export const simulateInteractionJob = (app: InteractionsContextApp) =>
-    app.use(
-        mutexCron({
-            name: "simulateInteraction",
-            triggerKeys: ["newInteractions"],
-            pattern: isRunningInProd
-                ? // Every minute on prod
-                  "*/1 * * * *"
-                : // Every 30sec on dev
-                  "*/30 * * * * *",
-            skipIfLocked: true,
-            coolDownInMs: 5_000,
-            run: async ({ context: { logger } }) => {
-                const {
-                    interactions: {
-                        repositories: {
-                            interactionPacker: interactionPackerRepository,
-                            walletSession: walletSessionRepository,
-                            pendingInteractions: pendingInteractionsRepository,
-                        },
-                    },
-                } = app.decorator;
-                // Get interactions to simulate
-                const interactions =
-                    await pendingInteractionsRepository.getAndLock({
+export const simulateInteractionJob = new Elysia().use(
+    mutexCron({
+        name: "simulateInteraction",
+        triggerKeys: ["newInteractions"],
+        pattern: isRunningInProd
+            ? // Every minute on prod
+              "*/1 * * * *"
+            : // Every 30sec on dev
+              "*/30 * * * * *",
+        skipIfLocked: true,
+        coolDownInMs: 5_000,
+        run: async ({ context: { logger } }) => {
+            // Get interactions to simulate
+            const interactions =
+                await InteractionsContext.repositories.pendingInteractions.getAndLock(
+                    {
                         status: "pending",
                         skipProcess: (interactions) => {
                             // Only execute if we got an interaction older than one min
@@ -49,46 +39,45 @@ export const simulateInteractionJob = (app: InteractionsContextApp) =>
                                 interactions.length < 2 && !hasOldInteractions
                             );
                         },
+                    }
+                );
+            if (interactions.length === 0) {
+                logger.debug("No interactions to simulate");
+                return;
+            }
+            logger.debug(`Got ${interactions.length} interactions to simulate`);
+
+            // todo: Base anti cheat system (for now just prevent unsafe purchase one)
+
+            try {
+                // Perform the simulation and update the interactions
+                const hasSuccessInteractions =
+                    await simulateAndUpdateInteractions({
+                        interactions,
+                        logger,
                     });
-                if (interactions.length === 0) {
-                    logger.debug("No interactions to simulate");
-                    return;
-                }
+
                 logger.debug(
-                    `Got ${interactions.length} interactions to simulate`
+                    {
+                        interactions: interactions.length,
+                        hasSuccessInteractions,
+                    },
+                    "Simulated interactions"
                 );
 
-                // todo: Base anti cheat system (for now just prevent unsafe purchase one)
-
-                try {
-                    // Perform the simulation and update the interactions
-                    const hasSuccessInteractions =
-                        await simulateAndUpdateInteractions({
-                            interactions,
-                            interactionPackerRepository,
-                            walletSessionRepository,
-                            logger,
-                        });
-
-                    logger.debug(
-                        {
-                            interactions: interactions.length,
-                            hasSuccessInteractions,
-                        },
-                        "Simulated interactions"
-                    );
-
-                    // Emit the event to trigger the interaction execution
-                    if (hasSuccessInteractions) {
-                        eventEmitter.emit("simulatedInteractions");
-                    }
-                } finally {
-                    // Unlock the interactions
-                    await pendingInteractionsRepository.unlock(interactions);
+                // Emit the event to trigger the interaction execution
+                if (hasSuccessInteractions) {
+                    eventEmitter.emit("simulatedInteractions");
                 }
-            },
-        })
-    );
+            } finally {
+                // Unlock the interactions
+                await InteractionsContext.repositories.pendingInteractions.unlock(
+                    interactions
+                );
+            }
+        },
+    })
+);
 
 /**
  * Simulate a list of transaction and update their state
@@ -100,13 +89,9 @@ export const simulateInteractionJob = (app: InteractionsContextApp) =>
  */
 async function simulateAndUpdateInteractions({
     interactions,
-    interactionPackerRepository,
-    walletSessionRepository,
     logger,
 }: {
     interactions: (typeof pendingInteractionsTable.$inferSelect)[];
-    interactionPackerRepository: InteractionPackerRepository;
-    walletSessionRepository: WalletSessionRepository;
     logger: pino.Logger;
 }) {
     // Get the unique wallets matching this interactions
@@ -119,7 +104,9 @@ async function simulateAndUpdateInteractions({
     const walletSessionsStatesAsync = Array.from(wallets).map(
         async (wallet) => {
             const isSessionValid =
-                await walletSessionRepository.isSessionValid(wallet);
+                await InteractionsContext.repositories.walletSession.isSessionValid(
+                    wallet
+                );
             return { wallet, isSessionValid };
         }
     );
@@ -138,14 +125,16 @@ async function simulateAndUpdateInteractions({
 
         // Then perform the simulation
         const { isSimulationSuccess } =
-            await interactionPackerRepository.simulateInteraction({
-                wallet: interaction.wallet,
-                productId: interaction.productId,
-                interactionData: {
-                    handlerTypeDenominator: interaction.typeDenominator,
-                    interactionData: interaction.interactionData,
-                },
-            });
+            await InteractionsContext.repositories.interactionPacker.simulateInteraction(
+                {
+                    wallet: interaction.wallet,
+                    productId: interaction.productId,
+                    interactionData: {
+                        handlerTypeDenominator: interaction.typeDenominator,
+                        interactionData: interaction.interactionData,
+                    },
+                }
+            );
         return {
             interaction,
             simulationStatus: isSimulationSuccess ? "succeeded" : "failed",

@@ -1,6 +1,6 @@
 import { t } from "@backend-utils";
 import { Elysia } from "elysia";
-import { interactionsContext } from "../../../../domain/interactions";
+import { InteractionsContext } from "../../../../domain/interactions";
 
 const emptyTokenAmount = {
     amount: 0,
@@ -10,21 +10,17 @@ const emptyTokenAmount = {
 };
 
 export const simulateRoutes = new Elysia()
-    .use(interactionsContext)
     // Estimate potential reward for an interaction
     .get(
         "/estimate",
-        async ({
-            query: { productId, interactionKey },
-            interactions: {
-                services: { campaignRewards },
-            },
-        }) => {
+        async ({ query: { productId, interactionKey } }) => {
             // Get all the active rewards
             const activeRewards =
-                await campaignRewards.getActiveRewardsForProduct({
-                    productId,
-                });
+                await InteractionsContext.services.campaignRewards.getActiveRewardsForProduct(
+                    {
+                        productId,
+                    }
+                );
             if (!activeRewards) return null;
 
             // Filter on a specific interaction key

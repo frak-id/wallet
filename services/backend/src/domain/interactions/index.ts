@@ -1,7 +1,4 @@
-export {
-    interactionsContext,
-    type InteractionsContextApp,
-} from "./context";
+export { InteractionsContext } from "./context";
 export {
     backendTrackerTable,
     pendingInteractionsTable,

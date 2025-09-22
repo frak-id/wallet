@@ -4,12 +4,12 @@ import { eq } from "drizzle-orm";
 import { Elysia } from "elysia";
 import { db } from "infrastructure/db";
 import {
-    notificationContext,
+    notificationMacro,
     pushTokensTable,
 } from "../../../../domain/notifications";
 
 export const tokensRoutes = new Elysia({ prefix: "/tokens" })
-    .use(notificationContext)
+    .use(notificationMacro)
     .use(walletSessionContext)
     .put(
         "",

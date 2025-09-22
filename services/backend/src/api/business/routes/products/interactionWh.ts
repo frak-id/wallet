@@ -4,17 +4,13 @@ import { productRoles } from "@frak-labs/app-essentials";
 import { eq } from "drizzle-orm";
 import { Elysia, error } from "elysia";
 import { db } from "infrastructure/db";
-import {
-    backendTrackerTable,
-    interactionsContext,
-} from "../../../../domain/interactions";
+import { backendTrackerTable } from "../../../../domain/interactions";
 import { businessSessionContext } from "../../middleware/session";
 
 export const interactionsWhRoutes = new Elysia({
     prefix: "/interactionsWebhook",
 })
     .use(businessSessionContext)
-    .use(interactionsContext)
     .guard({
         params: t.Object({
             productId: t.Optional(t.Hex()),
