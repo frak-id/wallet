@@ -1,6 +1,7 @@
 import { t } from "@backend-utils";
 import { eq } from "drizzle-orm";
 import { Elysia, error } from "elysia";
+import { db } from "infrastructure/db";
 import { isAddressEqual } from "viem";
 import { walletSessionContext } from "../../../../common";
 import { pairingContext, pairingTable } from "../../../../domain/pairing";
@@ -11,7 +12,7 @@ export const managementRoutes = new Elysia()
     // Get a pairing by id
     .get(
         "/:id",
-        async ({ pairing: { db }, params: { id } }) => {
+        async ({ params: { id } }) => {
             const pairing = await db.query.pairingTable.findFirst({
                 where: eq(pairingTable.pairingId, id),
             });
@@ -42,7 +43,7 @@ export const managementRoutes = new Elysia()
     // Get all pairings for a wallet
     .get(
         "/list",
-        async ({ pairing: { db }, walletSession }) => {
+        async ({ walletSession }) => {
             if (!walletSession) {
                 return error(401, "Unauthorized");
             }
@@ -75,31 +76,28 @@ export const managementRoutes = new Elysia()
         }
     )
     // Delete a pairing by id
-    .post(
-        "/:id/delete",
-        async ({ pairing: { db }, walletSession, params: { id } }) => {
-            if (!walletSession) {
-                return error(401, "Unauthorized");
-            }
-
-            // Get the pairing
-            const pairing = await db.query.pairingTable.findFirst({
-                where: eq(pairingTable.pairingId, id),
-            });
-            if (!pairing) {
-                return error(404, "Pairing not found");
-            }
-
-            if (!pairing.wallet) {
-                return error(404, "Pairing not yet resolved");
-            }
-
-            // Check if the wallet is the owner of the pairing
-            if (!isAddressEqual(pairing.wallet, walletSession.address)) {
-                return error(403, "Forbidden");
-            }
-
-            // Delete the pairing
-            await db.delete(pairingTable).where(eq(pairingTable.pairingId, id));
+    .post("/:id/delete", async ({ walletSession, params: { id } }) => {
+        if (!walletSession) {
+            return error(401, "Unauthorized");
         }
-    );
+
+        // Get the pairing
+        const pairing = await db.query.pairingTable.findFirst({
+            where: eq(pairingTable.pairingId, id),
+        });
+        if (!pairing) {
+            return error(404, "Pairing not found");
+        }
+
+        if (!pairing.wallet) {
+            return error(404, "Pairing not yet resolved");
+        }
+
+        // Check if the wallet is the owner of the pairing
+        if (!isAddressEqual(pairing.wallet, walletSession.address)) {
+            return error(403, "Forbidden");
+        }
+
+        // Delete the pairing
+        await db.delete(pairingTable).where(eq(pairingTable.pairingId, id));
+    });

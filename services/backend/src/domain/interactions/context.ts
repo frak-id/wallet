@@ -1,13 +1,4 @@
-import { postgresDb } from "@backend-common";
-import { type PostgresJsDatabase, drizzle } from "drizzle-orm/postgres-js";
 import { Elysia } from "elysia";
-import {
-    backendTrackerTable,
-    interactionSimulationStatus,
-    interactionsPurchaseTrackerTable,
-    pendingInteractionsTable,
-    pushedInteractionsTable,
-} from "./db/schema";
 import { CampaignDataRepository } from "./repositories/CampaignDataRepository";
 import { InteractionPackerRepository } from "./repositories/InteractionPackerRepository";
 import { InteractionSignerRepository } from "./repositories/InteractionSignerRepository";
@@ -22,22 +13,9 @@ export const interactionsContext = new Elysia({
     name: "Context.interactions",
 })
     .decorate((decorators) => {
-        // Build our drizzle DB
-        const interactionsDb = drizzle({
-            client: postgresDb,
-            schema: {
-                pendingInteractionsTable,
-                interactionSimulationStatus,
-                pushedInteractionsTable,
-                interactionsPurchaseTrackerTable,
-                backendTrackerTable,
-            },
-        });
-
         // Build our db repositories
-        const pendingInteractionsRepository = new PendingInteractionsRepository(
-            interactionsDb
-        );
+        const pendingInteractionsRepository =
+            new PendingInteractionsRepository();
 
         // Build our blockchain repositories
         const interactionPackerRepository = new InteractionPackerRepository();
@@ -53,7 +31,6 @@ export const interactionsContext = new Elysia({
         return {
             ...decorators,
             interactions: {
-                db: interactionsDb,
                 repositories: {
                     pendingInteractions: pendingInteractionsRepository,
                     interactionPacker: interactionPackerRepository,
@@ -70,11 +47,3 @@ export const interactionsContext = new Elysia({
     .as("scoped");
 
 export type InteractionsContextApp = typeof interactionsContext;
-
-export type InteractionsDb = PostgresJsDatabase<{
-    pendingInteractionsTable: typeof pendingInteractionsTable;
-    interactionSimulationStatus: typeof interactionSimulationStatus;
-    pushedInteractionsTable: typeof pushedInteractionsTable;
-    interactionsPurchaseTrackerTable: typeof interactionsPurchaseTrackerTable;
-    backendTrackerTable: typeof backendTrackerTable;
-}>;

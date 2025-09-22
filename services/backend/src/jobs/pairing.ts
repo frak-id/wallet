@@ -1,22 +1,22 @@
 import { mutexCron } from "@backend-utils";
 import { and, isNull, lt, or } from "drizzle-orm";
 import Elysia from "elysia";
-import type { PairingContextApp } from "../domain/pairing";
+import { db } from "infrastructure/db";
 import {
     pairingContext,
     pairingSignatureRequestTable,
     pairingTable,
 } from "../domain/pairing";
 
-// Job cleanup up everything
-const cleanupCron = (app: PairingContextApp) =>
-    app.use(
+// Pairing related jobs
+export const pairingJobs = new Elysia({ name: "Jobs.pairing" })
+    .use(pairingContext)
+    .use(
         mutexCron({
             name: "cleanupPairings",
             pattern: "0 0-23/6 * * *", // Every 30minutes
             run: async ({ context: { logger } }) => {
                 logger.debug("Cleaning up pairings");
-                const db = app.decorator.pairing.db;
 
                 // Cleanup threshold
                 const creationUnusedThreshold = new Date(
@@ -65,8 +65,3 @@ const cleanupCron = (app: PairingContextApp) =>
             },
         })
     );
-
-// Pairing related jobs
-export const pairingJobs = new Elysia({ name: "Jobs.pairing" })
-    .use(pairingContext)
-    .use(cleanupCron);

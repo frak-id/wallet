@@ -1,11 +1,11 @@
 import { mutexCron } from "@backend-utils";
 import type { pino } from "@bogeychan/elysia-logger";
 import { inArray } from "drizzle-orm";
+import { db } from "infrastructure/db";
 import {
     type InteractionPackerRepository,
     type InteractionSignerRepository,
     type InteractionsContextApp,
-    type InteractionsDb,
     type PreparedInteraction,
     pendingInteractionsTable,
     pushedInteractionsTable,
@@ -20,7 +20,6 @@ export const executeInteractionJob = (app: InteractionsContextApp) =>
             coolDownInMs: 2_000,
             run: async ({ context: { logger } }) => {
                 const {
-                    interactions: { db: interactionsDb },
                     interactions: {
                         repositories: {
                             interactionPacker: interactionPackerRepository,
@@ -47,7 +46,6 @@ export const executeInteractionJob = (app: InteractionsContextApp) =>
                     // Execute them
                     await executeInteractions({
                         interactions,
-                        interactionsDb,
                         interactionPackerRepository,
                         interactionSignerRepository,
                         logger,
@@ -65,13 +63,11 @@ export const executeInteractionJob = (app: InteractionsContextApp) =>
  */
 async function executeInteractions({
     interactions,
-    interactionsDb,
     interactionPackerRepository,
     interactionSignerRepository,
     logger,
 }: {
     interactions: (typeof pendingInteractionsTable.$inferSelect)[];
-    interactionsDb: InteractionsDb;
     interactionPackerRepository: InteractionPackerRepository;
     interactionSignerRepository: InteractionSignerRepository;
     logger: pino.Logger;
@@ -142,7 +138,7 @@ async function executeInteractions({
     logger.info({ txHash }, "Pushed all the interactions on txs");
 
     // Update the db
-    await interactionsDb.transaction(async (trx) => {
+    await db.transaction(async (trx) => {
         // Insert all the pushed one in the pushed table
         for (const { interaction, signature } of preparedInteractions) {
             await trx.insert(pushedInteractionsTable).values({

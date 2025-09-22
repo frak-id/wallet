@@ -1,12 +1,10 @@
 import { and, eq, inArray } from "drizzle-orm";
-import type { InteractionsDb } from "../context";
+import { db } from "infrastructure/db";
 import { pendingInteractionsTable } from "../db/schema";
 
 type SelectedInteraction = typeof pendingInteractionsTable.$inferSelect;
 
 export class PendingInteractionsRepository {
-    constructor(private interactionsDb: InteractionsDb) {}
-
     /**
      * Get and lock interactions to simulate depending on their status
      */
@@ -19,7 +17,7 @@ export class PendingInteractionsRepository {
         limit?: number;
         skipProcess?: (interactions: SelectedInteraction[]) => boolean;
     }) {
-        return this.interactionsDb.transaction(async (trx) => {
+        return db.transaction(async (trx) => {
             // Get all the interactions to simulate
             const interactions = await trx
                 .select()
@@ -57,7 +55,7 @@ export class PendingInteractionsRepository {
      * Unlock interactions post shenanigans
      */
     async unlock(interactions: SelectedInteraction[]) {
-        return this.interactionsDb
+        return db
             .update(pendingInteractionsTable)
             .set({
                 locked: false,

@@ -1,7 +1,5 @@
-import { postgresDb, sessionContext } from "@backend-common";
-import { drizzle } from "drizzle-orm/postgres-js";
+import { sessionContext } from "@backend-common";
 import { Elysia } from "elysia";
-import { ssoTable } from "./db/schema";
 import { AuthenticatorRepository } from "./repositories/AuthenticatorRepository";
 import { WalletSdkSessionService } from "./services/WalletSdkSessionService";
 import { WalletSsoService } from "./services/WalletSsoService";
@@ -16,19 +14,12 @@ export const authContext = new Elysia({
 })
     .use(sessionContext)
     .decorate((decorators) => {
-        // Create the db instance
-        const db = drizzle({
-            client: postgresDb,
-            schema: { ssoTable },
-        });
-
         // Only repositories are created as instances
         const authenticatorRepository = new AuthenticatorRepository();
 
         return {
             ...decorators,
             auth: {
-                db,
                 repositories: {
                     authenticator: authenticatorRepository,
                 },
@@ -37,7 +28,7 @@ export const authContext = new Elysia({
                     walletSdkSession: new WalletSdkSessionService(
                         decorators.walletSdkJwt
                     ),
-                    walletSso: new WalletSsoService(db),
+                    walletSso: new WalletSsoService(),
                     webAuthN: new WebAuthNService(authenticatorRepository),
                 },
             },

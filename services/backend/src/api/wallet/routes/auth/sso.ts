@@ -3,6 +3,7 @@ import { isRunningInProd, isRunningLocally } from "@frak-labs/app-essentials";
 import { compressJsonToB64 } from "@frak-labs/core-sdk";
 import { and, eq } from "drizzle-orm";
 import { Elysia, error } from "elysia";
+import { db } from "infrastructure/db";
 import { concatHex, keccak256, toHex } from "viem";
 import { generatePrivateKey } from "viem/accounts";
 import {
@@ -21,7 +22,7 @@ export const walletSsoRoutes = new Elysia({
     // Route to create a new sso session
     .post(
         "/create",
-        async ({ body: { productId, consumeKey, params }, auth: { db } }) => {
+        async ({ body: { productId, consumeKey, params } }) => {
             // Generate the sso id
             const paramHash = keccak256(toHex(JSON.stringify(params)));
             const ssoId = keccak256(
@@ -82,7 +83,6 @@ export const walletSsoRoutes = new Elysia({
             body: { id, productId, consumeKey },
             // Context
             auth: {
-                db,
                 services: { walletSdkSession },
                 repositories: { authenticator: authenticatorRepository },
             },

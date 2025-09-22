@@ -1,6 +1,5 @@
 export {
     interactionsContext,
-    type InteractionsDb,
     type InteractionsContextApp,
 } from "./context";
 export {

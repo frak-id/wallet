@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { and, eq, inArray, isNull } from "drizzle-orm";
 import type { ElysiaWS } from "elysia/ws";
+import { db } from "infrastructure/db";
 import { UAParser } from "ua-parser-js";
 import type { Hex } from "viem";
 import { log } from "../../../common";
@@ -12,7 +13,6 @@ import type {
 } from "../../auth/models/WalletSessionDto";
 import type { WalletSdkSessionService } from "../../auth/services/WalletSdkSessionService";
 import type { WalletSsoService } from "../../auth/services/WalletSsoService";
-import type { PairingDb } from "../context";
 import { pairingSignatureRequestTable, pairingTable } from "../db/schema";
 import { WsCloseCode } from "../dto/WebSocketCloseCode";
 import {
@@ -31,13 +31,12 @@ import {
  */
 export class PairingConnectionRepository extends PairingRepository {
     constructor(
-        pairingDb: PairingDb,
         // Helpers to generate the auth tokens
         private readonly walletJwtService: JwtService<typeof WalletTokenDto>,
         private readonly ssoService: WalletSsoService,
         private readonly walletSdkSession: WalletSdkSessionService
     ) {
-        super(pairingDb);
+        super();
     }
 
     /**
@@ -118,7 +117,7 @@ export class PairingConnectionRepository extends PairingRepository {
         const ssoId = rawSsoId?.startsWith("0x") ? rawSsoId : undefined;
 
         // Insert the pairing into the database
-        await this.pairingDb.insert(pairingTable).values({
+        await db.insert(pairingTable).values({
             pairingId,
             pairingCode,
             originUserAgent: userAgent ?? "Unknown",
@@ -158,7 +157,7 @@ export class PairingConnectionRepository extends PairingRepository {
         ws: ElysiaWS;
     }) {
         // Find the right pairing
-        const pairing = await this.pairingDb.query.pairingTable.findFirst({
+        const pairing = await db.query.pairingTable.findFirst({
             where: eq(pairingTable.pairingId, id),
         });
         if (!pairing) {
@@ -188,7 +187,7 @@ export class PairingConnectionRepository extends PairingRepository {
 
         // Update the pairing with the wallet address and everything
         const targetName = this.uaToDeviceName(userAgent);
-        await this.pairingDb
+        await db
             .update(pairingTable)
             .set({
                 wallet: wallet.address,
@@ -304,7 +303,7 @@ export class PairingConnectionRepository extends PairingRepository {
         ws: ElysiaWS;
     }) {
         // Get all the pairing ids
-        const pairings = await this.pairingDb
+        const pairings = await db
             .select({
                 pairingId: pairingTable.pairingId,
                 originName: pairingTable.originName,
@@ -344,7 +343,7 @@ export class PairingConnectionRepository extends PairingRepository {
 
         // Get all the pending signatures for each pairings
         const pendingSignatures =
-            await this.pairingDb.query.pairingSignatureRequestTable.findMany({
+            await db.query.pairingSignatureRequestTable.findMany({
                 where: and(
                     inArray(pairingSignatureRequestTable.pairingId, pairingIds),
                     isNull(pairingSignatureRequestTable.processedAt)

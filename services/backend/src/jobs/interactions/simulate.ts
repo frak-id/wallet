@@ -3,11 +3,11 @@ import { mutexCron } from "@backend-utils";
 import type { pino } from "@bogeychan/elysia-logger";
 import { isRunningInProd } from "@frak-labs/app-essentials";
 import { eq } from "drizzle-orm";
+import { db } from "infrastructure/db";
 import type { Address } from "viem";
 import {
     type InteractionPackerRepository,
     type InteractionsContextApp,
-    type InteractionsDb,
     type WalletSessionRepository,
     pendingInteractionsTable,
 } from "../../domain/interactions";
@@ -26,7 +26,6 @@ export const simulateInteractionJob = (app: InteractionsContextApp) =>
             coolDownInMs: 5_000,
             run: async ({ context: { logger } }) => {
                 const {
-                    interactions: { db: interactionsDb },
                     interactions: {
                         repositories: {
                             interactionPacker: interactionPackerRepository,
@@ -66,7 +65,6 @@ export const simulateInteractionJob = (app: InteractionsContextApp) =>
                     const hasSuccessInteractions =
                         await simulateAndUpdateInteractions({
                             interactions,
-                            interactionsDb,
                             interactionPackerRepository,
                             walletSessionRepository,
                             logger,
@@ -102,13 +100,11 @@ export const simulateInteractionJob = (app: InteractionsContextApp) =>
  */
 async function simulateAndUpdateInteractions({
     interactions,
-    interactionsDb,
     interactionPackerRepository,
     walletSessionRepository,
     logger,
 }: {
     interactions: (typeof pendingInteractionsTable.$inferSelect)[];
-    interactionsDb: InteractionsDb;
     interactionPackerRepository: InteractionPackerRepository;
     walletSessionRepository: WalletSessionRepository;
     logger: pino.Logger;
@@ -159,7 +155,7 @@ async function simulateAndUpdateInteractions({
 
     // Then perform the db update accordingly to the simulation results
     try {
-        await interactionsDb.transaction(async (trx) => {
+        await db.transaction(async (trx) => {
             for (const { interaction, simulationStatus } of simulationResults) {
                 await trx
                     .update(pendingInteractionsTable)

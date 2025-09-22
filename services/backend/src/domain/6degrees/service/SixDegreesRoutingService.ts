@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
+import { db } from "infrastructure/db";
 import { LRUCache } from "lru-cache";
 import type { Hex } from "viem";
-import type { SixDegreesDb } from "../context";
 import { fixedRoutingTable, walletRoutingTable } from "../db/schema";
 
 /**
@@ -19,8 +19,6 @@ export class SixDegreesRoutingService {
         ttl: 60_000 * 5,
     });
 
-    constructor(private readonly db: SixDegreesDb) {}
-
     /**
      * Check if a domain is routed for 6degrees
      */
@@ -29,7 +27,7 @@ export class SixDegreesRoutingService {
         if (cached) {
             return cached;
         }
-        const existing = await this.db
+        const existing = await db
             .select()
             .from(fixedRoutingTable)
             .where(eq(fixedRoutingTable.domain, domain));
@@ -48,7 +46,7 @@ export class SixDegreesRoutingService {
             return cached;
         }
 
-        const existing = await this.db
+        const existing = await db
             .select()
             .from(walletRoutingTable)
             .where(eq(walletRoutingTable.walletPubKey, pubKey));
@@ -63,7 +61,7 @@ export class SixDegreesRoutingService {
      */
     async registerRoutedWallet(pubKey: Hex) {
         try {
-            await this.db.insert(walletRoutingTable).values({
+            await db.insert(walletRoutingTable).values({
                 walletPubKey: pubKey,
             });
             // Then invalidate the cache for this key if any

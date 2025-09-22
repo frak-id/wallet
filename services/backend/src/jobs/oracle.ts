@@ -2,6 +2,7 @@ import { eventEmitter } from "@backend-common";
 import { mutexCron } from "@backend-utils";
 import { and, eq, isNotNull } from "drizzle-orm";
 import Elysia from "elysia";
+import { db } from "infrastructure/db";
 import {
     type OracleContextApp,
     oracleContext,
@@ -17,13 +18,12 @@ const updateMerkleRootJob = (app: OracleContextApp) =>
             run: async ({ context: { logger } }) => {
                 const {
                     oracle: {
-                        db: oracleDb,
                         services: { update: updateService },
                     },
                 } = app.decorator;
 
                 // Get some unsynced products
-                const notSyncedProductIds = await oracleDb
+                const notSyncedProductIds = await db
                     .select({
                         productId: productOracleTable.productId,
                     })

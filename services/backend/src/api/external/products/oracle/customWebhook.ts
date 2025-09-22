@@ -3,6 +3,7 @@ import { t, validateBodyHmac } from "@backend-utils";
 import { isRunningInProd } from "@frak-labs/app-essentials";
 import { eq } from "drizzle-orm";
 import { Elysia } from "elysia";
+import { db } from "infrastructure/db";
 import { concatHex, keccak256, toHex } from "viem";
 import {
     type CustomWebhookDto,
@@ -37,7 +38,6 @@ export const customWebhook = new Elysia()
             body,
             headers,
             oracle: {
-                db: oracleDb,
                 services: { webhook },
             },
         }) => {
@@ -51,7 +51,7 @@ export const customWebhook = new Elysia()
             if (!productId) {
                 throw new Error("Missing product id");
             }
-            const oracle = await oracleDb.query.productOracleTable.findFirst({
+            const oracle = await db.query.productOracleTable.findFirst({
                 where: eq(productOracleTable.productId, productId),
             });
             if (!oracle) {

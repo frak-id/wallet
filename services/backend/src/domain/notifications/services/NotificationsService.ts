@@ -1,16 +1,14 @@
 import { inArray, lt } from "drizzle-orm";
+import { db } from "infrastructure/db";
 import type { Address } from "viem";
 import { sendNotification, setVapidDetails } from "web-push";
 import { log } from "../../../common";
-import type { NotificationDb } from "../context";
 import { pushTokensTable } from "../db/schema";
 import type { SendNotificationPayload } from "../dto/SendNotificationDto";
 
 type PushToken = typeof pushTokensTable.$inferSelect;
 
 export class NotificationsService {
-    constructor(private readonly notificationDb: NotificationDb) {}
-
     /**
      * Send a notification to a list of wallets
      * @param wallets - The wallets to send the notification to
@@ -24,11 +22,9 @@ export class NotificationsService {
         wallets: Address[];
         payload: SendNotificationPayload;
     }) {
-        const tokens = await this.notificationDb.query.pushTokensTable.findMany(
-            {
-                where: inArray(pushTokensTable.wallet, wallets),
-            }
-        );
+        const tokens = await db.query.pushTokensTable.findMany({
+            where: inArray(pushTokensTable.wallet, wallets),
+        });
         if (tokens.length === 0) {
             log.debug(
                 "[NotificationsService] No push tokens found for the given wallets"
@@ -102,7 +98,7 @@ export class NotificationsService {
      * Cleanup expired notification tokens
      */
     async cleanupExpiredTokens() {
-        await this.notificationDb
+        await db
             .delete(pushTokensTable)
             .where(lt(pushTokensTable.expireAt, new Date()))
             .execute();

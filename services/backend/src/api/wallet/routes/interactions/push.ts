@@ -6,6 +6,7 @@ import {
 } from "@backend-common";
 import { t } from "@backend-utils";
 import { Elysia, error } from "elysia";
+import { db } from "infrastructure/db";
 import { isAddressEqual } from "viem";
 import { sixDegreesContext } from "../../../../domain/6degrees/context";
 import {
@@ -20,12 +21,7 @@ export const pushInteractionsRoutes = new Elysia()
     .use(sixDegreesContext)
     .post(
         "/push",
-        async ({
-            body: { interactions },
-            walletSdkSession,
-            interactions: { db: interactionsDb },
-            sixDegrees,
-        }) => {
+        async ({ body: { interactions }, walletSdkSession, sixDegrees }) => {
             if (!walletSdkSession) return error(403, "Invalid wallet address");
             if (!interactions.length) {
                 return [];
@@ -95,7 +91,7 @@ export const pushInteractionsRoutes = new Elysia()
             }
 
             // Insert it in the pending state
-            const results = await interactionsDb
+            const results = await db
                 .insert(pendingInteractionsTable)
                 .values(interactionsForInsert)
                 .onConflictDoNothing()

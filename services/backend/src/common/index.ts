@@ -16,4 +16,4 @@ export {
 export { indexerApi } from "./services/indexerApi";
 export { eventEmitter } from "./services/events";
 export { viemClient } from "./services/blockchain";
-export { postgresDb, getMongoDb, type GetMongoDb } from "./services/db";
+export { getMongoDb, type GetMongoDb } from "./services/db";

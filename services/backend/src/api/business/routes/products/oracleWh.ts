@@ -3,6 +3,7 @@ import { t } from "@backend-utils";
 import { productRoles } from "@frak-labs/app-essentials";
 import { count, eq, max, min } from "drizzle-orm";
 import { Elysia, error } from "elysia";
+import { db } from "infrastructure/db";
 import {
     oracleContext,
     productOracleTable,
@@ -28,9 +29,9 @@ export const oracleWhRoutes = new Elysia({ prefix: "/oracleWebhook" })
     // Status of the oracle around a product
     .get(
         "/status",
-        async ({ productId, oracle: { db: oracleDb }, businessSession }) => {
+        async ({ productId, businessSession }) => {
             // Get the current oracle
-            const currentOracles = await oracleDb
+            const currentOracles = await db
                 .select()
                 .from(productOracleTable)
                 .where(eq(productOracleTable.productId, productId))
@@ -41,7 +42,7 @@ export const oracleWhRoutes = new Elysia({ prefix: "/oracleWebhook" })
             }
 
             // Get some stats about the oracle
-            const stats = await oracleDb
+            const stats = await db
                 .select({
                     firstPurchase: min(purchaseStatusTable.createdAt),
                     lastPurchase: max(purchaseStatusTable.createdAt),
@@ -100,12 +101,7 @@ export const oracleWhRoutes = new Elysia({ prefix: "/oracleWebhook" })
     // Setup of an oracle for a product
     .post(
         "/setup",
-        async ({
-            body,
-            oracle: { db: oracleDb },
-            productId,
-            businessSession,
-        }) => {
+        async ({ body, productId, businessSession }) => {
             if (!productId) {
                 return error(400, "Invalid product id");
             }
@@ -125,7 +121,7 @@ export const oracleWhRoutes = new Elysia({ prefix: "/oracleWebhook" })
             const { hookSignatureKey, platform } = body;
 
             // Insert or update it
-            await oracleDb
+            await db
                 .insert(productOracleTable)
                 .values({
                     productId,
@@ -153,37 +149,33 @@ export const oracleWhRoutes = new Elysia({ prefix: "/oracleWebhook" })
             }),
         }
     )
-    .post(
-        "/delete",
-        async ({ productId, oracle: { db: oracleDb }, businessSession }) => {
-            if (!businessSession) {
-                return error(401, "Unauthorized");
-            }
-            const isAllowed = await rolesRepository.hasRoleOrAdminOnProduct({
-                wallet: businessSession.wallet,
-                productId: BigInt(productId),
-                role: productRoles.interactionManager,
-            });
-            if (!isAllowed) {
-                return error(401, "Unauthorized");
-            }
-
-            // Check if we already got a setup for this product (we could only have one)
-            const existingOracle =
-                await oracleDb.query.productOracleTable.findFirst({
-                    with: { productId },
-                });
-            if (!existingOracle) {
-                return error(
-                    404,
-                    `Product ${productId} have no current oracle setup`
-                );
-            }
-
-            // Remove it
-            await oracleDb
-                .delete(productOracleTable)
-                .where(eq(productOracleTable.productId, productId))
-                .execute();
+    .post("/delete", async ({ productId, businessSession }) => {
+        if (!businessSession) {
+            return error(401, "Unauthorized");
         }
-    );
+        const isAllowed = await rolesRepository.hasRoleOrAdminOnProduct({
+            wallet: businessSession.wallet,
+            productId: BigInt(productId),
+            role: productRoles.interactionManager,
+        });
+        if (!isAllowed) {
+            return error(401, "Unauthorized");
+        }
+
+        // Check if we already got a setup for this product (we could only have one)
+        const existingOracle = await db.query.productOracleTable.findFirst({
+            with: { productId },
+        });
+        if (!existingOracle) {
+            return error(
+                404,
+                `Product ${productId} have no current oracle setup`
+            );
+        }
+
+        // Remove it
+        await db
+            .delete(productOracleTable)
+            .where(eq(productOracleTable.productId, productId))
+            .execute();
+    });

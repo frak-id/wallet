@@ -1,6 +1,7 @@
 import { eventEmitter, log, sessionContext } from "@backend-common";
 import { t } from "@backend-utils";
 import { Elysia, error } from "elysia";
+import { db } from "infrastructure/db";
 import { type Address, isHex } from "viem";
 import {
     interactionsContext,
@@ -15,7 +16,6 @@ export const purchaseInteractionsRoutes = new Elysia()
         async ({
             body,
             headers: { "x-wallet-sdk-auth": walletSdkAuth },
-            interactions: { db: interactionsDb },
             walletSdkJwt,
         }) => {
             if (!walletSdkAuth) return error(401, "Missing wallet SDK JWT");
@@ -34,7 +34,7 @@ export const purchaseInteractionsRoutes = new Elysia()
             log.debug(`Received purchase from ${body.customerId} - ${address}`);
 
             // Insert the purchase tracker
-            await interactionsDb
+            await db
                 .insert(interactionsPurchaseTrackerTable)
                 .values({
                     wallet: address,

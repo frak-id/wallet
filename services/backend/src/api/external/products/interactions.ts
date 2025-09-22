@@ -11,6 +11,7 @@ import {
 } from "@frak-labs/core-sdk/interactions";
 import { eq } from "drizzle-orm";
 import { Elysia, error } from "elysia";
+import { db } from "infrastructure/db";
 import { type Hex, isAddress, isHex, keccak256, toHex } from "viem";
 import {
     backendTrackerTable,
@@ -40,11 +41,9 @@ export const interactionsApi = new Elysia({ prefix: "/interactions" })
 
         return { productId, hmac: headers["x-hmac-sha256"] };
     })
-    .decorate(({ interactions: { db }, ...other }) => ({
-        interactionsDb: db,
-        ...other,
-
-        saveInteractions: async (
+    .decorate(
+        "saveInteractions",
+        async (
             interactions: (typeof pendingInteractionsTable.$inferInsert)[]
         ) => {
             await db
@@ -53,8 +52,8 @@ export const interactionsApi = new Elysia({ prefix: "/interactions" })
                 .onConflictDoNothing();
             // Trigger the simulation job (and don't wait for it)
             eventEmitter.emit("newInteractions");
-        },
-    }))
+        }
+    )
     // Direct push an interaction
     .post(
         "/push",
@@ -65,7 +64,6 @@ export const interactionsApi = new Elysia({ prefix: "/interactions" })
             body: rawBody,
             // Context
             saveInteractions,
-            interactionsDb,
         }) => {
             // Validate the body received
             const body = JSON.parse(rawBody);
@@ -76,10 +74,9 @@ export const interactionsApi = new Elysia({ prefix: "/interactions" })
             }
 
             // Find the product backend tracker for this product id
-            const tracker =
-                await interactionsDb.query.backendTrackerTable.findFirst({
-                    where: eq(backendTrackerTable.productId, productId),
-                });
+            const tracker = await db.query.backendTrackerTable.findFirst({
+                where: eq(backendTrackerTable.productId, productId),
+            });
             if (!tracker) {
                 return error(404, "Product backend tracker not found");
             }
@@ -130,7 +127,6 @@ export const interactionsApi = new Elysia({ prefix: "/interactions" })
             body: rawBody,
             // Context
             saveInteractions,
-            interactionsDb,
         }) => {
             // Validate the body received
             const body = JSON.parse(rawBody);
@@ -141,10 +137,9 @@ export const interactionsApi = new Elysia({ prefix: "/interactions" })
             }
 
             // Find the product backend tracker for this product id
-            const tracker =
-                await interactionsDb.query.backendTrackerTable.findFirst({
-                    where: eq(backendTrackerTable.productId, productId),
-                });
+            const tracker = await db.query.backendTrackerTable.findFirst({
+                where: eq(backendTrackerTable.productId, productId),
+            });
             if (!tracker) {
                 return error(404, "Product backend tracker not found");
             }

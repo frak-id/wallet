@@ -3,6 +3,7 @@ import { mutexCron } from "@backend-utils";
 import { PurchaseInteractionEncoder } from "@frak-labs/core-sdk/interactions";
 import { eq } from "drizzle-orm";
 import { Elysia } from "elysia";
+import { db } from "infrastructure/db";
 import {
     interactionsContext,
     interactionsPurchaseTrackerTable,
@@ -22,13 +23,12 @@ const innerPurchaseTrackerJob = (
             coolDownInMs: 3_000,
             run: async ({ context: { logger } }) => {
                 const {
-                    interactions: { db: interactionsDb },
                     oracle: {
                         services: { proof },
                     },
                 } = app.decorator;
                 // Get all the currents tracker (max 50 at the time)
-                const trackers = await interactionsDb
+                const trackers = await db
                     .select()
                     .from(interactionsPurchaseTrackerTable)
                     .where(eq(interactionsPurchaseTrackerTable.pushed, false))
@@ -63,7 +63,7 @@ const innerPurchaseTrackerJob = (
                         });
 
                     // Insert it and mark this interaction as pushed
-                    await interactionsDb
+                    await db
                         .insert(pendingInteractionsTable)
                         .values({
                             wallet: tracker.wallet,
@@ -73,7 +73,7 @@ const innerPurchaseTrackerJob = (
                             status: "pending",
                         })
                         .onConflictDoNothing();
-                    await interactionsDb
+                    await db
                         .update(interactionsPurchaseTrackerTable)
                         .set({ pushed: true })
                         .where(

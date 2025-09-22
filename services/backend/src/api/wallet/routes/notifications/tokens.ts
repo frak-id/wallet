@@ -2,6 +2,7 @@ import { walletSessionContext } from "@backend-common";
 import { t } from "@backend-utils";
 import { eq } from "drizzle-orm";
 import { Elysia } from "elysia";
+import { db } from "infrastructure/db";
 import {
     notificationContext,
     pushTokensTable,
@@ -12,7 +13,7 @@ export const tokensRoutes = new Elysia({ prefix: "/tokens" })
     .use(walletSessionContext)
     .put(
         "",
-        async ({ body, notifications: { db }, walletSession }) => {
+        async ({ body, walletSession }) => {
             if (!walletSession) return;
             // Insert our push token
             await db
@@ -50,7 +51,7 @@ export const tokensRoutes = new Elysia({ prefix: "/tokens" })
     )
     .delete(
         "",
-        async ({ notifications: { db }, walletSession }) => {
+        async ({ walletSession }) => {
             if (!walletSession) return;
 
             // Remove all the push tokens for this wallet
@@ -66,7 +67,7 @@ export const tokensRoutes = new Elysia({ prefix: "/tokens" })
     )
     .get(
         "/hasAny",
-        async ({ notifications: { db }, walletSession }) => {
+        async ({ walletSession }) => {
             if (!walletSession) return false;
 
             // Try to find the first push token

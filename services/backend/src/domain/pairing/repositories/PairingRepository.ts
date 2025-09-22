@@ -1,14 +1,12 @@
 import { eq } from "drizzle-orm";
 import type { ElysiaWS } from "elysia/ws";
+import { db } from "infrastructure/db";
 import { log } from "../../../common";
-import type { PairingDb } from "../context";
 import { pairingTable } from "../db/schema";
 import type { WsDirectMessageResponse } from "../dto/WebsocketDirectMessage";
 import type { WsTopicMessage } from "../dto/WebsocketTopicMessage";
 
 export abstract class PairingRepository {
-    constructor(protected readonly pairingDb: PairingDb) {}
-
     /**
      * Send a direct msg to the websocket client
      * @internal
@@ -69,7 +67,7 @@ export abstract class PairingRepository {
     }: {
         pairingId: string;
     }) {
-        await this.pairingDb
+        await db
             .update(pairingTable)
             .set({
                 lastActiveAt: new Date(),
