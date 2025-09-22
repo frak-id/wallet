@@ -39,6 +39,4 @@ test("should be able to disable the session when activated", async ({
     await modalPage.verifyDisableCopyAndShareButton();
     await modalPage.clickActivatedButton();
     await pairingTab.acceptSignatureRequest();
-
 });
-

@@ -146,11 +146,13 @@ export class PairingTabHelper {
         await expect(
             this.rawPairingPage
                 .getByText(
-                    "A device Chrome on Windows is requesting your signature")
+                    "A device Chrome on Windows is requesting your signature"
+                )
                 .first()
         ).toBeVisible();
         await this.rawPairingPage
-            .getByRole("button", { name: "Reject" }).first()
+            .getByRole("button", { name: "Reject" })
+            .first()
             .click();
     }
 }
