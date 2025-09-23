@@ -1,7 +1,7 @@
 import { log, sessionContext } from "@backend-common";
+import { JwtContext } from "@backend-common";
 import { t } from "@backend-utils";
 import { Elysia, error } from "elysia";
-import { JwtContext } from "infrastructure/jwt";
 import { WalletAuthResponseDto } from "../../../../domain/auth";
 import { loginRoutes } from "./login";
 import { registerRoutes } from "./register";

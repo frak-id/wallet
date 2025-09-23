@@ -1,4 +1,5 @@
 import { log, sessionContext } from "@backend-common";
+import { JwtContext } from "@backend-common";
 import { t } from "@backend-utils";
 import { WebAuthN } from "@frak-labs/app-essentials";
 import {
@@ -6,7 +7,6 @@ import {
     verifyRegistrationResponse,
 } from "@simplewebauthn/server";
 import { Elysia, error } from "elysia";
-import { JwtContext } from "infrastructure/jwt";
 import { Binary } from "mongodb";
 import { SixDegreesContext } from "../../../../domain/6degrees/context";
 import {

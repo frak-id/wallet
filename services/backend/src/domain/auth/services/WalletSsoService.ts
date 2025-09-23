@@ -1,6 +1,6 @@
 import { log } from "@backend-common";
+import { db } from "@backend-common";
 import { and, eq } from "drizzle-orm";
-import { db } from "infrastructure/db";
 import type { Address, Hex } from "viem";
 import { ssoTable } from "../db/schema";
 import type { StaticWalletSdkTokenDto } from "../models/WalletSessionDto";

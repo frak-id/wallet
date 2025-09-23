@@ -1,11 +1,11 @@
+import { db } from "@backend-common";
 import { mutexCron } from "@backend-utils";
 import { and, isNull, lt, or } from "drizzle-orm";
 import Elysia from "elysia";
-import { db } from "infrastructure/db";
 import { pairingSignatureRequestTable, pairingTable } from "../domain/pairing";
 
 // Pairing related jobs
-export const pairingJobs = new Elysia({ name: "Jobs.pairing" }).use(
+export const pairingJobs = new Elysia({ name: "Job.pairing" }).use(
     mutexCron({
         name: "cleanupPairings",
         pattern: "0 0-23/6 * * *", // Every 30minutes

@@ -1,5 +1,5 @@
+import { db } from "@backend-common";
 import { and, eq, isNotNull } from "drizzle-orm";
-import { db } from "infrastructure/db";
 import { LRUCache } from "lru-cache";
 import { MerkleTree } from "merkletreejs";
 import { type Hex, hexToBytes, keccak256 } from "viem";

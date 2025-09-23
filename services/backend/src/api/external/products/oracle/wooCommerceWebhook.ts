@@ -1,7 +1,7 @@
+import { db } from "@backend-common";
 import { t, validateBodyHmac } from "@backend-utils";
 import { eq } from "drizzle-orm";
 import { Elysia } from "elysia";
-import { db } from "infrastructure/db";
 import { concatHex, keccak256, toHex } from "viem";
 import { log } from "../../../../common";
 import {

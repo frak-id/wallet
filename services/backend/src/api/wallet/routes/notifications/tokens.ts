@@ -1,8 +1,8 @@
 import { walletSessionContext } from "@backend-common";
+import { db } from "@backend-common";
 import { t } from "@backend-utils";
 import { eq } from "drizzle-orm";
 import { Elysia } from "elysia";
-import { db } from "infrastructure/db";
 import {
     notificationMacro,
     pushTokensTable,

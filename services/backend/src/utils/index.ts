@@ -3,7 +3,6 @@ export {
     type TokenAmount,
 } from "./typebox/typeSystem";
 export { mutexCron } from "./elysia/mutexCron";
-export { buildJwtContext } from "./elysia/jwt";
 export type { FrakEvents } from "./events";
 export { validateBodyHmac } from "./bodyHmac";
 

@@ -1,9 +1,9 @@
 import { log } from "@backend-common";
+import { db } from "@backend-common";
 import { t, validateBodyHmac } from "@backend-utils";
 import { isRunningInProd } from "@frak-labs/app-essentials";
 import { eq } from "drizzle-orm";
 import { Elysia } from "elysia";
-import { db } from "infrastructure/db";
 import { concatHex, keccak256, toHex } from "viem";
 import {
     type CustomWebhookDto,

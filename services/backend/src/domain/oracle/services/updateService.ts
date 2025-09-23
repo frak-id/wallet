@@ -1,7 +1,7 @@
 import { adminWalletsRepository, log, viemClient } from "@backend-common";
+import { db } from "@backend-common";
 import { addresses } from "@frak-labs/app-essentials";
 import { eq, inArray, isNull } from "drizzle-orm";
-import { db } from "infrastructure/db";
 import { type Hex, type LocalAccount, encodePacked } from "viem";
 import {
     readContract,

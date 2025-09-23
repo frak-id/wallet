@@ -1,25 +1,28 @@
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
 import {
     fixedRoutingTable,
     walletRoutingTable,
-} from "domain/6degrees/db/schema";
-import { ssoTable } from "domain/auth";
-import { pendingInteractionsTable } from "domain/interactions";
+} from "../../domain/6degrees/db/schema";
+import { ssoTable } from "../../domain/auth";
+import { pendingInteractionsTable } from "../../domain/interactions";
 import {
     backendTrackerTable,
     interactionSimulationStatus,
     interactionsPurchaseTrackerTable,
     pushedInteractionsTable,
-} from "domain/interactions/db/schema";
-import { pushTokensTable } from "domain/notifications";
+} from "../../domain/interactions/db/schema";
+import { pushTokensTable } from "../../domain/notifications";
 import {
     productOracleTable,
     purchaseStatusEnum,
     purchaseStatusTable,
-} from "domain/oracle";
-import { purchaseItemTable } from "domain/oracle/db/schema";
-import { pairingSignatureRequestTable, pairingTable } from "domain/pairing";
-import { drizzle } from "drizzle-orm/postgres-js";
-import postgres from "postgres";
+} from "../../domain/oracle";
+import { purchaseItemTable } from "../../domain/oracle/db/schema";
+import {
+    pairingSignatureRequestTable,
+    pairingTable,
+} from "../../domain/pairing";
 
 /**
  * Postgres master client

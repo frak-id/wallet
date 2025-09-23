@@ -1,5 +1,5 @@
+import { db } from "@backend-common";
 import { eq } from "drizzle-orm";
-import { db } from "infrastructure/db";
 import { LRUCache } from "lru-cache";
 import type { Hex } from "viem";
 import { fixedRoutingTable, walletRoutingTable } from "../db/schema";

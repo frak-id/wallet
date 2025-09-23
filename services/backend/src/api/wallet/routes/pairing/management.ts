@@ -1,7 +1,7 @@
+import { db } from "@backend-common";
 import { t } from "@backend-utils";
 import { eq } from "drizzle-orm";
 import { Elysia, error } from "elysia";
-import { db } from "infrastructure/db";
 import { isAddressEqual } from "viem";
 import { walletSessionContext } from "../../../../common";
 import { pairingTable } from "../../../../domain/pairing";

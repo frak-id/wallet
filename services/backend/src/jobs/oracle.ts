@@ -1,11 +1,11 @@
 import { eventEmitter } from "@backend-common";
+import { db } from "@backend-common";
 import { mutexCron } from "@backend-utils";
 import { and, eq, isNotNull } from "drizzle-orm";
 import Elysia from "elysia";
-import { db } from "infrastructure/db";
 import { OracleContext, productOracleTable } from "../domain/oracle";
 
-export const oracleJobs = new Elysia({ name: "Jobs.oracle" }).use(
+export const oracleJobs = new Elysia({ name: "Job.oracle" }).use(
     mutexCron({
         name: "updateMerkleRoot",
         pattern: "0 */5 * * * *", // Every 5 minutes

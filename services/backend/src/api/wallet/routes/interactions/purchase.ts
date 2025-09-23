@@ -1,8 +1,8 @@
 import { eventEmitter, log, sessionContext } from "@backend-common";
+import { db } from "@backend-common";
+import { JwtContext } from "@backend-common";
 import { t } from "@backend-utils";
 import { Elysia, error } from "elysia";
-import { db } from "infrastructure/db";
-import { JwtContext } from "infrastructure/jwt";
 import { type Address, isHex } from "viem";
 import { interactionsPurchaseTrackerTable } from "../../../../domain/interactions";
 

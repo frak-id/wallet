@@ -1,5 +1,5 @@
+import { db } from "@backend-common";
 import { and, eq } from "drizzle-orm";
-import { db } from "infrastructure/db";
 import { type Hex, isHex } from "viem";
 import { productOracleTable, purchaseStatusTable } from "../db/schema";
 import type { MerkleTreeRepository } from "../repositories/MerkleTreeRepository";

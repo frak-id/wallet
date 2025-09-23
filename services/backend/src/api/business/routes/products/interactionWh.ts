@@ -1,9 +1,9 @@
 import { rolesRepository } from "@backend-common";
+import { db } from "@backend-common";
 import { t } from "@backend-utils";
 import { productRoles } from "@frak-labs/app-essentials";
 import { eq } from "drizzle-orm";
 import { Elysia, error } from "elysia";
-import { db } from "infrastructure/db";
 import { backendTrackerTable } from "../../../../domain/interactions";
 import { businessSessionContext } from "../../middleware/session";
 

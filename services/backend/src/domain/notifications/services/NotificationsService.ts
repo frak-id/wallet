@@ -1,5 +1,5 @@
+import { db } from "@backend-common";
 import { inArray, lt } from "drizzle-orm";
-import { db } from "infrastructure/db";
 import type { Address } from "viem";
 import { sendNotification, setVapidDetails } from "web-push";
 import { log } from "../../../common";

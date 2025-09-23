@@ -4,9 +4,9 @@ import {
     log,
     walletSdkSessionContext,
 } from "@backend-common";
+import { db } from "@backend-common";
 import { t } from "@backend-utils";
 import { Elysia, error } from "elysia";
-import { db } from "infrastructure/db";
 import { isAddressEqual } from "viem";
 import { SixDegreesContext } from "../../../../domain/6degrees/context";
 import {

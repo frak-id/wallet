@@ -1,5 +1,5 @@
+import { db } from "@backend-common";
 import { and, eq, inArray } from "drizzle-orm";
-import { db } from "infrastructure/db";
 import { pendingInteractionsTable } from "../db/schema";
 
 type SelectedInteraction = typeof pendingInteractionsTable.$inferSelect;

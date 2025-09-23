@@ -1,6 +1,6 @@
+import { db } from "@backend-common";
 import { and, eq } from "drizzle-orm";
 import type { ElysiaWS } from "elysia/ws";
-import { db } from "infrastructure/db";
 import type { StaticWalletTokenDto } from "../../auth/models/WalletSessionDto";
 import type { NotificationsService } from "../../notifications/services/NotificationsService";
 import { pairingSignatureRequestTable, pairingTable } from "../db/schema";

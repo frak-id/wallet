@@ -1,8 +1,8 @@
+import { db } from "@backend-common";
 import { mutexCron } from "@backend-utils";
 import type { pino } from "@bogeychan/elysia-logger";
 import { inArray } from "drizzle-orm";
 import { Elysia } from "elysia";
-import { db } from "infrastructure/db";
 import {
     InteractionsContext,
     type PreparedInteraction,
@@ -10,7 +10,9 @@ import {
     pushedInteractionsTable,
 } from "../../domain/interactions";
 
-export const executeInteractionJob = new Elysia().use(
+export const executeInteractionJob = new Elysia({
+    name: "Job.interactions.execute",
+}).use(
     mutexCron({
         name: "executeInteraction",
         pattern: "0 */3 * * * *", // Every 3 minutes

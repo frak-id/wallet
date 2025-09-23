@@ -3,6 +3,7 @@ import {
     interactionDiamondRepository,
     log,
 } from "@backend-common";
+import { db } from "@backend-common";
 import { t, validateBodyHmac } from "@backend-utils";
 import { interactionTypes } from "@frak-labs/core-sdk";
 import {
@@ -11,7 +12,6 @@ import {
 } from "@frak-labs/core-sdk/interactions";
 import { eq } from "drizzle-orm";
 import { Elysia, error } from "elysia";
-import { db } from "infrastructure/db";
 import { type Hex, isAddress, isHex, keccak256, toHex } from "viem";
 import {
     backendTrackerTable,

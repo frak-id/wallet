@@ -1,5 +1,5 @@
 import { log } from "@backend-common";
-import { db } from "infrastructure/db";
+import { db } from "@backend-common";
 import { purchaseItemTable, purchaseStatusTable } from "../db/schema";
 
 export class OracleWebhookService {

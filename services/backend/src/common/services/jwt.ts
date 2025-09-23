@@ -11,13 +11,34 @@ import {
     SignJWT,
     jwtVerify,
 } from "jose";
+import {
+    WalletSdkTokenDto,
+    WalletTokenDto,
+} from "../../domain/auth/models/WalletSessionDto";
+
+export namespace JwtContext {
+    export const wallet = buildJwtContext({
+        secret: process.env.JWT_SECRET as string,
+        schema: WalletTokenDto,
+        // Default jwt payload
+        iss: "frak.id",
+    });
+    export const walletSdk = buildJwtContext({
+        secret: process.env.JWT_SDK_SECRET as string,
+        schema: WalletSdkTokenDto,
+        // One week
+        expirationDelayInSecond: 60 * 60 * 24 * 7,
+        // Default jwt payload
+        iss: "frak.id",
+    });
+}
 
 type UnwrapSchema<
     Schema extends TSchema | undefined,
     Fallback = unknown,
 > = Schema extends TSchema ? Static<NonNullable<Schema>> : Fallback;
 
-export interface JWTPayloadSpec {
+interface JWTPayloadSpec {
     iss?: string;
     sub?: string;
     aud?: string | string[];
@@ -27,7 +48,7 @@ export interface JWTPayloadSpec {
     iat?: number;
 }
 
-export interface JWTOption<Schema extends TSchema | undefined = undefined>
+interface JWTOption<Schema extends TSchema | undefined = undefined>
     extends JWSHeaderParameters,
         Omit<JWTPayload, "nbf" | "exp"> {
     /**
@@ -58,17 +79,10 @@ export interface JWTOption<Schema extends TSchema | undefined = undefined>
     exp?: string | number;
 }
 
-export type JwtService<Schema extends TSchema | undefined = undefined> = {
-    sign: (payload: UnwrapSchema<Schema>) => Promise<string>;
-    verify: (jwt: string) => Promise<UnwrapSchema<Schema> | false>;
-};
-
 /**
- * JCreate a JWT Context
+ * Create a JWT Context
  */
-export function buildJwtContext<
-    const Schema extends TSchema | undefined = undefined,
->({
+function buildJwtContext<const Schema extends TSchema | undefined = undefined>({
     secret,
     expirationDelayInSecond,
     // Start JWT Header

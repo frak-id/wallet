@@ -1,7 +1,7 @@
 import { sessionContext, viemClient } from "@backend-common";
+import { JwtContext } from "@backend-common";
 import { t } from "@backend-utils";
 import { Elysia, error } from "elysia";
-import { JwtContext } from "infrastructure/jwt";
 import { verifyMessage } from "viem/actions";
 import { SixDegreesContext } from "../../../../domain/6degrees/context";
 import {

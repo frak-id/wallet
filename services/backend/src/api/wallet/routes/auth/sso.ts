@@ -1,10 +1,10 @@
+import { db } from "@backend-common";
+import { JwtContext } from "@backend-common";
 import { t } from "@backend-utils";
 import { isRunningInProd, isRunningLocally } from "@frak-labs/app-essentials";
 import { compressJsonToB64 } from "@frak-labs/core-sdk";
 import { and, eq } from "drizzle-orm";
 import { Elysia, error } from "elysia";
-import { db } from "infrastructure/db";
-import { JwtContext } from "infrastructure/jwt";
 import { concatHex, keccak256, toHex } from "viem";
 import { generatePrivateKey } from "viem/accounts";
 import {

@@ -1,6 +1,6 @@
+import { JwtContext } from "@backend-common";
 import { isRunningLocally } from "@frak-labs/app-essentials";
 import { Elysia, error } from "elysia";
-import { JwtContext } from "infrastructure/jwt";
 
 /**
  * Some default auth cookies props
@@ -13,7 +13,7 @@ const defaultCookiesProps = {
 } as const;
 
 export const sessionContext = new Elysia({
-    name: "Context.session",
+    name: "Macro.session",
     cookie: defaultCookiesProps,
 })
     .macro({
@@ -64,7 +64,7 @@ export const sessionContext = new Elysia({
     .as("scoped");
 
 export const walletSessionContext = new Elysia({
-    name: "Context.walletSession",
+    name: "Macro.walletSession",
 })
     .use(sessionContext)
     .resolve(async ({ headers: { "x-wallet-auth": walletAuth } }) => {
@@ -76,7 +76,7 @@ export const walletSessionContext = new Elysia({
     .as("scoped");
 
 export const walletSdkSessionContext = new Elysia({
-    name: "Context.walletSdkSession",
+    name: "Macro.walletSdkSession",
 })
     .use(sessionContext)
     .resolve(async ({ headers: { "x-wallet-sdk-auth": walletSdkAuth } }) => {

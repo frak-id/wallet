@@ -1,9 +1,9 @@
 import { eventEmitter } from "@backend-common";
+import { db } from "@backend-common";
 import { mutexCron } from "@backend-utils";
 import { PurchaseInteractionEncoder } from "@frak-labs/core-sdk/interactions";
 import { eq } from "drizzle-orm";
 import { Elysia } from "elysia";
-import { db } from "infrastructure/db";
 import {
     interactionsPurchaseTrackerTable,
     pendingInteractionsTable,
@@ -14,7 +14,7 @@ import { OracleContext } from "../../domain/oracle";
  * Export our complete purchase tracker job
  */
 export const purchaseTrackerJob = new Elysia({
-    name: "Jobs.interactions.purchaseTracker",
+    name: "Job.interactions.purchaseTracker",
 }).use(
     mutexCron({
         name: "purchaseTracker",

@@ -1,17 +1,19 @@
 import { eventEmitter } from "@backend-common";
+import { db } from "@backend-common";
 import { mutexCron } from "@backend-utils";
 import type { pino } from "@bogeychan/elysia-logger";
 import { isRunningInProd } from "@frak-labs/app-essentials";
 import { eq } from "drizzle-orm";
 import { Elysia } from "elysia";
-import { db } from "infrastructure/db";
 import type { Address } from "viem";
 import {
     InteractionsContext,
     pendingInteractionsTable,
 } from "../../domain/interactions";
 
-export const simulateInteractionJob = new Elysia().use(
+export const simulateInteractionJob = new Elysia({
+    name: "Job.interactions.simulate",
+}).use(
     mutexCron({
         name: "simulateInteraction",
         triggerKeys: ["newInteractions"],

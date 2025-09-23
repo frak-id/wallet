@@ -1,4 +1,4 @@
-import { JwtContext } from "infrastructure/jwt";
+import { JwtContext } from "@backend-common";
 import type { Address } from "viem";
 import type { StaticWalletSdkTokenDto } from "../models/WalletSessionDto";
 
