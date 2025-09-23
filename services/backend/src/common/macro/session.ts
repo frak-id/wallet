@@ -1,6 +1,6 @@
 import { JwtContext } from "@backend-common";
 import { isRunningLocally } from "@frak-labs/app-essentials";
-import { Elysia, status } from "elysia";
+import { Elysia, status, t } from "elysia";
 
 /**
  * Some default auth cookies props
@@ -16,6 +16,12 @@ export const sessionContext = new Elysia({
     name: "Macro.session",
     cookie: defaultCookiesProps,
 })
+    .guard({
+        headers: t.Object({
+            "x-wallet-auth": t.Optional(t.String()),
+            "x-wallet-sdk-auth": t.Optional(t.String()),
+        }),
+    })
     .macro({
         withWalletAuthent: {
             async resolve({ headers }) {
