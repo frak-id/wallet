@@ -1,10 +1,6 @@
-import { jwt } from "@backend-utils";
 import { isRunningLocally } from "@frak-labs/app-essentials";
 import { Elysia, error } from "elysia";
-import {
-    WalletSdkTokenDto,
-    WalletTokenDto,
-} from "../../domain/auth/models/WalletSessionDto";
+import { JwtContext } from "infrastructure/jwt";
 
 /**
  * Some default auth cookies props
@@ -20,28 +16,6 @@ export const sessionContext = new Elysia({
     name: "Context.session",
     cookie: defaultCookiesProps,
 })
-    // Wallet JWT
-    .use(
-        jwt({
-            name: "walletJwt",
-            secret: process.env.JWT_SECRET as string,
-            schema: WalletTokenDto,
-            // Default jwt payload
-            iss: "frak.id",
-        })
-    )
-    // Wallet SDK JWT
-    .use(
-        jwt({
-            name: "walletSdkJwt",
-            secret: process.env.JWT_SDK_SECRET as string,
-            schema: WalletSdkTokenDto,
-            // One week
-            expirationDelayInSecond: 60 * 60 * 24 * 7,
-            // Default jwt payload
-            iss: "frak.id",
-        })
-    )
     .macro({
         authenticated(target?: true | "wallet" | "wallet-sdk") {
             if (!target) return;
@@ -51,7 +25,6 @@ export const sessionContext = new Elysia({
                 return {
                     beforeHandle: async ({
                         headers: { "x-wallet-sdk-auth": walletSdkAuth },
-                        walletSdkJwt,
                     }) => {
                         if (!walletSdkAuth) {
                             return error(
@@ -59,7 +32,8 @@ export const sessionContext = new Elysia({
                                 "Missing wallet SDK JWT"
                             );
                         }
-                        const auth = await walletSdkJwt.verify(walletSdkAuth);
+                        const auth =
+                            await JwtContext.walletSdk.verify(walletSdkAuth);
                         if (!auth) {
                             return error(
                                 "Unauthorized",
@@ -74,12 +48,11 @@ export const sessionContext = new Elysia({
             return {
                 beforeHandle: async ({
                     headers: { "x-wallet-auth": walletAuth },
-                    walletJwt,
                 }) => {
                     if (!walletAuth) {
                         return error(401, "Missing wallet JWT");
                     }
-                    const auth = await walletJwt.verify(walletAuth);
+                    const auth = await JwtContext.wallet.verify(walletAuth);
                     // Throw an error and remove the token
                     if (!auth) {
                         return error(401, "Invalid wallet JWT");
@@ -90,34 +63,25 @@ export const sessionContext = new Elysia({
     })
     .as("scoped");
 
-export type SessionContextType = typeof sessionContext;
-
 export const walletSessionContext = new Elysia({
     name: "Context.walletSession",
 })
     .use(sessionContext)
-    .resolve(
-        async ({ headers: { "x-wallet-auth": walletAuth }, walletJwt }) => {
-            if (!walletAuth) return {};
-            return {
-                walletSession: await walletJwt.verify(walletAuth),
-            };
-        }
-    )
+    .resolve(async ({ headers: { "x-wallet-auth": walletAuth } }) => {
+        if (!walletAuth) return {};
+        return {
+            walletSession: await JwtContext.wallet.verify(walletAuth),
+        };
+    })
     .as("scoped");
 
 export const walletSdkSessionContext = new Elysia({
     name: "Context.walletSdkSession",
 })
     .use(sessionContext)
-    .resolve(
-        async ({
-            headers: { "x-wallet-sdk-auth": walletSdkAuth },
-            walletSdkJwt,
-        }) => {
-            return {
-                walletSdkSession: await walletSdkJwt.verify(walletSdkAuth),
-            };
-        }
-    )
+    .resolve(async ({ headers: { "x-wallet-sdk-auth": walletSdkAuth } }) => {
+        return {
+            walletSdkSession: await JwtContext.walletSdk.verify(walletSdkAuth),
+        };
+    })
     .as("scoped");

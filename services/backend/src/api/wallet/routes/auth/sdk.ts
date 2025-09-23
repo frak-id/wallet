@@ -2,24 +2,18 @@ import { walletSdkSessionContext, walletSessionContext } from "@backend-common";
 import { t } from "@backend-utils";
 import { Elysia, error } from "elysia";
 import { isAddressEqual } from "viem";
-import { authContext } from "../../../../domain/auth";
+import { AuthContext } from "../../../../domain/auth";
 
 export const walletSdkRoutes = new Elysia({ prefix: "/sdk" })
     .use(walletSessionContext)
-    .use(authContext)
     // Generate a new token
     .get(
         "/generate",
-        async ({
-            walletSession,
-            auth: {
-                services: { walletSdkSession },
-            },
-        }) => {
+        async ({ walletSession }) => {
             if (!walletSession) {
                 return error(401, "Unauthorized");
             }
-            return await walletSdkSession.generateSdkJwt({
+            return await AuthContext.services.walletSdkSession.generateSdkJwt({
                 wallet: walletSession.address,
             });
         },
@@ -37,17 +31,13 @@ export const walletSdkRoutes = new Elysia({ prefix: "/sdk" })
     // Generate a new token from a previous webauthn signature
     .post(
         "/fromWebAuthNSignature",
-        async ({
-            body: { signature, msg, wallet },
-            auth: {
-                services: { webAuthN, walletSdkSession },
-            },
-        }) => {
+        async ({ body: { signature, msg, wallet } }) => {
             // Check the validity of the webauthn signature
-            const verificationnResult = await webAuthN.isValidSignature({
-                compressedSignature: signature,
-                msg,
-            });
+            const verificationnResult =
+                await AuthContext.services.webAuthN.isValidSignature({
+                    compressedSignature: signature,
+                    msg,
+                });
 
             // If not valid, return an error
             if (!verificationnResult) {
@@ -60,7 +50,7 @@ export const walletSdkRoutes = new Elysia({ prefix: "/sdk" })
             }
 
             // Otherwise generate a new token
-            return await walletSdkSession.generateSdkJwt({
+            return await AuthContext.services.walletSdkSession.generateSdkJwt({
                 wallet: verificationnResult.address,
             });
         },

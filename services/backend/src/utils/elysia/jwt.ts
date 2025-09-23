@@ -1,6 +1,5 @@
 import { t } from "@backend-utils";
 import {
-    Elysia,
     type Static,
     type TSchema,
     ValidationError,
@@ -28,30 +27,9 @@ export interface JWTPayloadSpec {
     iat?: number;
 }
 
-export interface JWTOption<
-    Name extends string | undefined = "jwt",
-    Schema extends TSchema | undefined = undefined,
-> extends JWSHeaderParameters,
+export interface JWTOption<Schema extends TSchema | undefined = undefined>
+    extends JWSHeaderParameters,
         Omit<JWTPayload, "nbf" | "exp"> {
-    /**
-     * Name to decorate method as
-     *
-     * ---
-     * @example
-     * For example, `jwt` will decorate Context with `Context.jwt`
-     *
-     * ```typescript
-     * app
-     *     .decorate({
-     *         name: 'myJWTNamespace',
-     *         secret: process.env.JWT_SECRETS
-     *     })
-     *     .get('/sign/:name', ({ myJWTNamespace, params }) => {
-     *         return myJWTNamespace.sign(params)
-     *     })
-     * ```
-     */
-    name?: Name;
     /**
      * JWT Secret
      */
@@ -86,14 +64,11 @@ export type JwtService<Schema extends TSchema | undefined = undefined> = {
 };
 
 /**
- * JWT plugin for elysia
- *  - Simple port of https://github.com/elysiajs/elysia-jwt, using latest version of jose
+ * JCreate a JWT Context
  */
-export const jwt = <
-    const Name extends string = "jwt",
+export function buildJwtContext<
     const Schema extends TSchema | undefined = undefined,
 >({
-    name = "jwt" as Name,
     secret,
     expirationDelayInSecond,
     // Start JWT Header
@@ -106,7 +81,7 @@ export const jwt = <
     exp,
     ...payload
     // End JWT Payload
-}: JWTOption<Name, Schema>) => {
+}: JWTOption<Schema>) {
     if (!secret) throw new Error("Secret can't be empty");
 
     // Get the key for the given secret
@@ -137,20 +112,10 @@ export const jwt = <
     type JwtPayload = UnwrapSchema<Schema, Record<string, string | number>> &
         JWTPayloadSpec;
 
-    // Return the Elysia instance
-    return new Elysia({
-        name: "@frak-labs/jwt",
-        seed: {
-            name,
-            secret,
-            alg,
-            crit,
-            schema,
-            nbf,
-            exp,
-            ...payload,
-        },
-    }).decorate(name as Name extends string ? Name : "jwt", {
+    return {
+        /**
+         * Sign a JWT token
+         */
         sign(morePayload: JwtPayload) {
             let jwt = new SignJWT({
                 ...payload,
@@ -176,6 +141,10 @@ export const jwt = <
 
             return jwt.sign(key);
         },
+
+        /**
+         * Verify a JWT token
+         */
         async verify(jwt?: string): Promise<JwtPayload | false> {
             if (!jwt) return false;
 
@@ -190,5 +159,5 @@ export const jwt = <
                 return false;
             }
         },
-    });
-};
+    };
+}

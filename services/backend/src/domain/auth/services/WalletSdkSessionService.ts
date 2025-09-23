@@ -1,12 +1,8 @@
-import type { SessionContextType } from "@backend-common";
+import { JwtContext } from "infrastructure/jwt";
 import type { Address } from "viem";
 import type { StaticWalletSdkTokenDto } from "../models/WalletSessionDto";
 
 export class WalletSdkSessionService {
-    constructor(
-        private readonly walletSdkJwt: SessionContextType["decorator"]["walletSdkJwt"]
-    ) {}
-
     /**
      * Generate a JWT token for the SDK
      */
@@ -18,7 +14,7 @@ export class WalletSdkSessionService {
         additionalData?: StaticWalletSdkTokenDto["additionalData"];
     }) {
         // Generate a JWT token for the SDK
-        const jwtToken = await this.walletSdkJwt.sign({
+        const jwtToken = await JwtContext.walletSdk.sign({
             // Global payload
             address: wallet,
             scopes: ["interaction"],

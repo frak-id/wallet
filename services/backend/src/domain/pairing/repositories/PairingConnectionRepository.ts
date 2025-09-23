@@ -2,14 +2,13 @@ import { randomUUID } from "node:crypto";
 import { and, eq, inArray, isNull } from "drizzle-orm";
 import type { ElysiaWS } from "elysia/ws";
 import { db } from "infrastructure/db";
+import { JwtContext } from "infrastructure/jwt";
 import { UAParser } from "ua-parser-js";
 import type { Hex } from "viem";
 import { log } from "../../../common";
-import type { JwtService } from "../../../utils/elysia/jwt";
 import type {
     StaticWalletTokenDto,
     StaticWalletWebauthnTokenDto,
-    WalletTokenDto,
 } from "../../auth/models/WalletSessionDto";
 import type { WalletSdkSessionService } from "../../auth/services/WalletSdkSessionService";
 import type { WalletSsoService } from "../../auth/services/WalletSsoService";
@@ -32,7 +31,6 @@ import {
 export class PairingConnectionRepository extends PairingRepository {
     constructor(
         // Helpers to generate the auth tokens
-        private readonly walletJwtService: JwtService<typeof WalletTokenDto>,
         private readonly ssoService: WalletSsoService,
         private readonly walletSdkSession: WalletSdkSessionService
     ) {
@@ -216,7 +214,7 @@ export class PairingConnectionRepository extends PairingRepository {
         };
 
         const [walletToken, sdkJwt] = await Promise.all([
-            this.walletJwtService.sign(walletPayload),
+            JwtContext.wallet.sign(walletPayload),
             this.walletSdkSession.generateSdkJwt({ wallet: wallet.address }),
         ]);
 

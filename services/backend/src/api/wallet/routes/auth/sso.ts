@@ -4,21 +4,20 @@ import { compressJsonToB64 } from "@frak-labs/core-sdk";
 import { and, eq } from "drizzle-orm";
 import { Elysia, error } from "elysia";
 import { db } from "infrastructure/db";
+import { JwtContext } from "infrastructure/jwt";
 import { concatHex, keccak256, toHex } from "viem";
 import { generatePrivateKey } from "viem/accounts";
 import {
+    AuthContext,
     type StaticWalletSdkTokenDto,
     type StaticWalletTokenDto,
     WalletAuthResponseDto,
-    authContext,
     ssoTable,
 } from "../../../../domain/auth";
 
 export const walletSsoRoutes = new Elysia({
     prefix: "/sso",
 })
-    // Add the SSO db to the context
-    .use(authContext)
     // Route to create a new sso session
     .post(
         "/create",
@@ -79,15 +78,7 @@ export const walletSsoRoutes = new Elysia({
     // Route to consume a current sso session
     .post(
         "/consume",
-        async ({
-            body: { id, productId, consumeKey },
-            // Context
-            auth: {
-                services: { walletSdkSession },
-                repositories: { authenticator: authenticatorRepository },
-            },
-            walletJwt,
-        }) => {
+        async ({ body: { id, productId, consumeKey } }) => {
             // Get the sso session
             const ssoSessions = await db
                 .select()
@@ -119,7 +110,7 @@ export const walletSsoRoutes = new Elysia({
 
             // Get the authenticator db and resolve it
             const authenticator =
-                await authenticatorRepository.getByCredentialId(
+                await AuthContext.repositories.authenticator.getByCredentialId(
                     ssoSession.authenticatorId
                 );
 
@@ -160,19 +151,20 @@ export const walletSsoRoutes = new Elysia({
                 .execute();
 
             // Create the token and set the cookie
-            const token = await walletJwt.sign({
+            const token = await JwtContext.wallet.sign({
                 ...walletReference,
                 sub: ssoSession.wallet,
                 iat: Date.now(),
             });
 
             // Finally, generate a JWT token for the SDK
-            const sdkJwt = await walletSdkSession.generateSdkJwt({
-                wallet: ssoSession.wallet,
-                additionalData: ssoSession.sdkTokenAdditionalData as
-                    | StaticWalletSdkTokenDto["additionalData"]
-                    | undefined,
-            });
+            const sdkJwt =
+                await AuthContext.services.walletSdkSession.generateSdkJwt({
+                    wallet: ssoSession.wallet,
+                    additionalData: ssoSession.sdkTokenAdditionalData as
+                        | StaticWalletSdkTokenDto["additionalData"]
+                        | undefined,
+                });
 
             // And delete the sso session
             await db.delete(ssoTable).where(eq(ssoTable.ssoId, id)).execute();

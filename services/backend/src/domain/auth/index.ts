@@ -1,4 +1,4 @@
-export { authContext, type AuthContext } from "./context";
+export { AuthContext } from "./context";
 export { ssoTable } from "./db/schema";
 
 export {

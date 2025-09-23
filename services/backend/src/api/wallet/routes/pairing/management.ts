@@ -4,10 +4,9 @@ import { Elysia, error } from "elysia";
 import { db } from "infrastructure/db";
 import { isAddressEqual } from "viem";
 import { walletSessionContext } from "../../../../common";
-import { pairingContext, pairingTable } from "../../../../domain/pairing";
+import { pairingTable } from "../../../../domain/pairing";
 
 export const managementRoutes = new Elysia()
-    .use(pairingContext)
     .use(walletSessionContext)
     // Get a pairing by id
     .get(

@@ -6,17 +6,17 @@ import {
     verifyRegistrationResponse,
 } from "@simplewebauthn/server";
 import { Elysia, error } from "elysia";
+import { JwtContext } from "infrastructure/jwt";
 import { Binary } from "mongodb";
 import { SixDegreesContext } from "../../../../domain/6degrees/context";
 import {
+    AuthContext,
     type StaticWalletSdkTokenDto,
     WalletAuthResponseDto,
-    authContext,
 } from "../../../../domain/auth";
 
 export const registerRoutes = new Elysia()
     .use(sessionContext)
-    .use(authContext)
     // Registration
     .post(
         "/register",
@@ -30,16 +30,10 @@ export const registerRoutes = new Elysia()
                 ssoId,
                 isSixDegrees,
             },
-            // Context
-            walletJwt,
-            auth: {
-                services: { walletSdkSession, walletSso, webAuthN },
-                repositories: { authenticator: authenticatorRepository },
-            },
         }) => {
             // Decode the registration response
             const registrationResponse =
-                webAuthN.parseCompressedResponse<RegistrationResponseJSON>(
+                AuthContext.services.webAuthN.parseCompressedResponse<RegistrationResponseJSON>(
                     rawRegistrationResponse
                 );
 
@@ -65,7 +59,7 @@ export const registerRoutes = new Elysia()
             }
 
             // Get the public key
-            const publicKey = webAuthN.decodePublicKey({
+            const publicKey = AuthContext.services.webAuthN.decodePublicKey({
                 credentialPubKey:
                     verification.registrationInfo.credential.publicKey,
             });
@@ -77,11 +71,11 @@ export const registerRoutes = new Elysia()
             // Get the wallet address
             const walletAddress =
                 previousWallet ??
-                (await webAuthN.getWalletAddress({
+                (await AuthContext.services.webAuthN.getWalletAddress({
                     authenticatorId: credential.id,
                     pubKey: publicKey,
                 }));
-            await authenticatorRepository.createAuthenticator({
+            await AuthContext.repositories.authenticator.createAuthenticator({
                 _id: credential.id,
                 smartWalletAddress: walletAddress,
                 userAgent,
@@ -114,14 +108,15 @@ export const registerRoutes = new Elysia()
             }
 
             // Finally, generate a JWT token for the SDK
-            const sdkJwt = await walletSdkSession.generateSdkJwt({
-                wallet: walletAddress,
-                additionalData,
-            });
+            const sdkJwt =
+                await AuthContext.services.walletSdkSession.generateSdkJwt({
+                    wallet: walletAddress,
+                    additionalData,
+                });
 
             // If all good, mark the sso as done
             if (ssoId) {
-                await walletSso.resolveSession({
+                await AuthContext.services.walletSso.resolveSession({
                     id: ssoId,
                     wallet: walletAddress,
                     authenticatorId: credential.id,
@@ -130,7 +125,7 @@ export const registerRoutes = new Elysia()
             }
 
             // Create the token and set the cookie
-            const token = await walletJwt.sign({
+            const token = await JwtContext.wallet.sign({
                 address: walletAddress,
                 type: "webauthn",
                 authenticatorId: credential.id,

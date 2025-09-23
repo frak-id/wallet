@@ -2,16 +2,13 @@ import { eventEmitter, log, sessionContext } from "@backend-common";
 import { t } from "@backend-utils";
 import { Elysia, error } from "elysia";
 import { db } from "infrastructure/db";
+import { JwtContext } from "infrastructure/jwt";
 import { type Address, isHex } from "viem";
 import { interactionsPurchaseTrackerTable } from "../../../../domain/interactions";
 
 export const purchaseInteractionsRoutes = new Elysia().use(sessionContext).post(
     "/listenForPurchase",
-    async ({
-        body,
-        headers: { "x-wallet-sdk-auth": walletSdkAuth },
-        walletSdkJwt,
-    }) => {
+    async ({ body, headers: { "x-wallet-sdk-auth": walletSdkAuth } }) => {
         if (!walletSdkAuth) return error(401, "Missing wallet SDK JWT");
 
         // Get the right address
@@ -20,7 +17,7 @@ export const purchaseInteractionsRoutes = new Elysia().use(sessionContext).post(
             // Condition required for initial implementation, should be updated in a later stage to enforce wallet session
             address = walletSdkAuth;
         } else {
-            const session = await walletSdkJwt.verify(walletSdkAuth);
+            const session = await JwtContext.walletSdk.verify(walletSdkAuth);
             if (!session) return error(401, "Invalid wallet SDK JWT");
             address = session.address;
         }
