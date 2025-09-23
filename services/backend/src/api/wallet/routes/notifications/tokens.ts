@@ -1,4 +1,4 @@
-import { walletSessionContext } from "@backend-common";
+import { sessionContext } from "@backend-common";
 import { db } from "@backend-common";
 import { t } from "@backend-utils";
 import { eq } from "drizzle-orm";
@@ -10,11 +10,10 @@ import {
 
 export const tokensRoutes = new Elysia({ prefix: "/tokens" })
     .use(notificationMacro)
-    .use(walletSessionContext)
+    .use(sessionContext)
     .put(
         "",
         async ({ body, walletSession }) => {
-            if (!walletSession) return;
             // Insert our push token
             await db
                 .insert(pushTokensTable)
@@ -30,8 +29,8 @@ export const tokensRoutes = new Elysia({ prefix: "/tokens" })
                 .onConflictDoNothing();
         },
         {
-            // Enforce nexus authentication
-            authenticated: "wallet",
+            // Enforce wallet authentication
+            withWalletAuthent: true,
 
             // Cleanup expired tokens
             cleanupTokens: true,
@@ -52,8 +51,6 @@ export const tokensRoutes = new Elysia({ prefix: "/tokens" })
     .delete(
         "",
         async ({ walletSession }) => {
-            if (!walletSession) return;
-
             // Remove all the push tokens for this wallet
             await db
                 .delete(pushTokensTable)
@@ -61,15 +58,13 @@ export const tokensRoutes = new Elysia({ prefix: "/tokens" })
                 .execute();
         },
         {
-            authenticated: "wallet",
+            withWalletAuthent: true,
             cleanupTokens: true,
         }
     )
     .get(
         "/hasAny",
         async ({ walletSession }) => {
-            if (!walletSession) return false;
-
             // Try to find the first push token
             const item = await db.query.pushTokensTable.findFirst({
                 where: eq(pushTokensTable.wallet, walletSession.address),
@@ -78,7 +73,7 @@ export const tokensRoutes = new Elysia({ prefix: "/tokens" })
             return !!item;
         },
         {
-            authenticated: "wallet",
+            withWalletAuthent: true,
             response: t.Boolean(),
         }
     );

@@ -13,10 +13,9 @@ export function usePairingInfo({ id }: { id?: string }) {
                 return null;
             }
 
-            const { data } = await authenticatedWalletApi
-                .pairings({ id })
+            const { data } = await authenticatedWalletApi.pairings
+                .find({ id })
                 .get();
-            console.log("data", data);
 
             if (!data) {
                 throw new Error("Failed to fetch pairing info");

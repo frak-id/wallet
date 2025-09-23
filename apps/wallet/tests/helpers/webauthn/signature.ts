@@ -1,9 +1,6 @@
 import { createHash } from "node:crypto";
 import { p256 } from "@noble/curves/p256";
-import {
-    type AuthenticationCredential,
-    bufferToBase64URLString,
-} from "@simplewebauthn/browser";
+import { bufferToBase64URLString } from "@simplewebauthn/browser";
 import type {
     CreateResponse,
     CredentialPropsString,
@@ -116,7 +113,7 @@ export function getAuthenticationResponse(
     credentialProps: CredentialPropsString,
     challenge: string,
     origin: string
-): AuthenticationCredential | null {
+): GetResponse | null {
     const authenticator = fromStringCredentialProps(credentialProps);
     if (!authenticator) {
         console.error("No credential props to get registration response");

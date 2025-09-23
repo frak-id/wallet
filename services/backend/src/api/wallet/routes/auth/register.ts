@@ -1,4 +1,4 @@
-import { log, sessionContext } from "@backend-common";
+import { log } from "@backend-common";
 import { JwtContext } from "@backend-common";
 import { t } from "@backend-utils";
 import { WebAuthN } from "@frak-labs/app-essentials";
@@ -6,7 +6,7 @@ import {
     type RegistrationResponseJSON,
     verifyRegistrationResponse,
 } from "@simplewebauthn/server";
-import { Elysia, error } from "elysia";
+import { Elysia, status } from "elysia";
 import { Binary } from "mongodb";
 import { SixDegreesContext } from "../../../../domain/6degrees/context";
 import {
@@ -16,7 +16,6 @@ import {
 } from "../../../../domain/auth";
 
 export const registerRoutes = new Elysia()
-    .use(sessionContext)
     // Registration
     .post(
         "/register",
@@ -55,7 +54,7 @@ export const registerRoutes = new Elysia()
                     },
                     "Registration of a new authenticator failed"
                 );
-                return error(400, "Registration failed");
+                return status(400, "Registration failed");
             }
 
             // Get the public key

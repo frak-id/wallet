@@ -3,7 +3,7 @@ import { db } from "@backend-common";
 import { t } from "@backend-utils";
 import { productRoles } from "@frak-labs/app-essentials";
 import { eq } from "drizzle-orm";
-import { Elysia, error } from "elysia";
+import { Elysia, status } from "elysia";
 import { backendTrackerTable } from "../../../../domain/interactions";
 import { businessSessionContext } from "../../middleware/session";
 
@@ -18,7 +18,7 @@ export const interactionsWhRoutes = new Elysia({
     })
     .resolve(({ params: { productId } }) => {
         if (!productId) {
-            return error(400, "Invalid product id");
+            return status(400, "Invalid product id");
         }
 
         return { productId };
@@ -63,10 +63,10 @@ export const interactionsWhRoutes = new Elysia({
         "/setup",
         async ({ body, productId, businessSession }) => {
             if (!businessSession) {
-                return error(401, "Unauthorized");
+                return status(401, "Unauthorized");
             }
             if (!productId) {
-                return error(400, "Invalid product id");
+                return status(400, "Invalid product id");
             }
 
             const isAllowed = await rolesRepository.hasRoleOrAdminOnProduct({
@@ -75,7 +75,7 @@ export const interactionsWhRoutes = new Elysia({
                 role: productRoles.interactionManager,
             });
             if (!isAllowed) {
-                return error(401, "Unauthorized");
+                return status(401, "Unauthorized");
             }
 
             const { hookSignatureKey, source } = body;
@@ -106,7 +106,7 @@ export const interactionsWhRoutes = new Elysia({
     )
     .post("/delete", async ({ productId, businessSession }) => {
         if (!businessSession) {
-            return error(401, "Unauthorized");
+            return status(401, "Unauthorized");
         }
         const isAllowed = await rolesRepository.hasRoleOrAdminOnProduct({
             wallet: businessSession.wallet,
@@ -114,7 +114,7 @@ export const interactionsWhRoutes = new Elysia({
             role: productRoles.interactionManager,
         });
         if (!isAllowed) {
-            return error(401, "Unauthorized");
+            return status(401, "Unauthorized");
         }
 
         // Check if we already got a setup for this product (we could only have one)
@@ -123,7 +123,7 @@ export const interactionsWhRoutes = new Elysia({
             .from(backendTrackerTable)
             .where(eq(backendTrackerTable.productId, productId));
         if (!existingTrackers.length) {
-            return error(
+            return status(
                 404,
                 `Product ${productId} have no current tracker setup`
             );

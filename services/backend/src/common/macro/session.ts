@@ -1,6 +1,6 @@
 import { JwtContext } from "@backend-common";
 import { isRunningLocally } from "@frak-labs/app-essentials";
-import { Elysia, error } from "elysia";
+import { Elysia, status } from "elysia";
 
 /**
  * Some default auth cookies props
@@ -17,71 +17,33 @@ export const sessionContext = new Elysia({
     cookie: defaultCookiesProps,
 })
     .macro({
-        authenticated(target?: true | "wallet" | "wallet-sdk") {
-            if (!target) return;
-
-            // Wallet SDK case
-            if (target === "wallet-sdk") {
-                return {
-                    beforeHandle: async ({
-                        headers: { "x-wallet-sdk-auth": walletSdkAuth },
-                    }) => {
-                        if (!walletSdkAuth) {
-                            return error(
-                                "Unauthorized",
-                                "Missing wallet SDK JWT"
-                            );
-                        }
-                        const auth =
-                            await JwtContext.walletSdk.verify(walletSdkAuth);
-                        if (!auth) {
-                            return error(
-                                "Unauthorized",
-                                "Invalid wallet SDK JWT"
-                            );
-                        }
-                    },
-                };
-            }
-
-            // True or "wallet" case
-            return {
-                beforeHandle: async ({
-                    headers: { "x-wallet-auth": walletAuth },
-                }) => {
-                    if (!walletAuth) {
-                        return error(401, "Missing wallet JWT");
-                    }
-                    const auth = await JwtContext.wallet.verify(walletAuth);
-                    // Throw an error and remove the token
-                    if (!auth) {
-                        return error(401, "Invalid wallet JWT");
-                    }
-                },
-            };
+        withWalletAuthent: {
+            async resolve({ headers }) {
+                const walletAuth = headers["x-wallet-auth"];
+                if (!walletAuth) {
+                    return status(401, "Unauthorized");
+                }
+                const auth = await JwtContext.wallet.verify(walletAuth);
+                if (!auth) {
+                    return status(401, "Unauthorized");
+                }
+                // Return the auth
+                return { walletSession: auth };
+            },
         },
-    })
-    .as("scoped");
-
-export const walletSessionContext = new Elysia({
-    name: "Macro.walletSession",
-})
-    .use(sessionContext)
-    .resolve(async ({ headers: { "x-wallet-auth": walletAuth } }) => {
-        if (!walletAuth) return {};
-        return {
-            walletSession: await JwtContext.wallet.verify(walletAuth),
-        };
-    })
-    .as("scoped");
-
-export const walletSdkSessionContext = new Elysia({
-    name: "Macro.walletSdkSession",
-})
-    .use(sessionContext)
-    .resolve(async ({ headers: { "x-wallet-sdk-auth": walletSdkAuth } }) => {
-        return {
-            walletSdkSession: await JwtContext.walletSdk.verify(walletSdkAuth),
-        };
+        withWalletSdkAuthent: {
+            async resolve({ headers }) {
+                const walletSdkAuth = headers["x-wallet-sdk-auth"];
+                if (!walletSdkAuth) {
+                    return status(401, "Unauthorized");
+                }
+                const auth = await JwtContext.walletSdk.verify(walletSdkAuth);
+                if (!auth) {
+                    return status(401, "Unauthorized");
+                }
+                // Return the auth
+                return { walletSdkSession: auth };
+            },
+        },
     })
     .as("scoped");

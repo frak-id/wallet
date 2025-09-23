@@ -4,7 +4,7 @@ import { t } from "@backend-utils";
 import { isRunningInProd, isRunningLocally } from "@frak-labs/app-essentials";
 import { compressJsonToB64 } from "@frak-labs/core-sdk";
 import { and, eq } from "drizzle-orm";
-import { Elysia, error } from "elysia";
+import { Elysia, status } from "elysia";
 import { concatHex, keccak256, toHex } from "viem";
 import { generatePrivateKey } from "viem/accounts";
 import {
@@ -96,7 +96,7 @@ export const walletSsoRoutes = new Elysia({
 
             // Ensure the consuming key match
             if (BigInt(ssoSession.consumeKey) !== BigInt(consumeKey)) {
-                return error(403, "Invalid consume key");
+                return status(403, "Invalid consume key");
             }
 
             // If not resolved yet, early exit

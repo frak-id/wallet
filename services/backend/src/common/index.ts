@@ -1,8 +1,4 @@
-export {
-    sessionContext,
-    walletSessionContext,
-    walletSdkSessionContext,
-} from "./macro";
+export { sessionContext } from "./macro";
 export { log } from "./logger";
 // Repositories singleton
 export {

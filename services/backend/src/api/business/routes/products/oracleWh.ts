@@ -3,7 +3,7 @@ import { db } from "@backend-common";
 import { t } from "@backend-utils";
 import { productRoles } from "@frak-labs/app-essentials";
 import { count, eq, max, min } from "drizzle-orm";
-import { Elysia, error } from "elysia";
+import { Elysia, status } from "elysia";
 import {
     productOracleTable,
     purchaseStatusTable,
@@ -19,7 +19,7 @@ export const oracleWhRoutes = new Elysia({ prefix: "/oracleWebhook" })
     })
     .resolve(({ params: { productId } }) => {
         if (!productId) {
-            return error(400, "Invalid product id");
+            return status(400, "Invalid product id");
         }
 
         return { productId };
@@ -101,11 +101,11 @@ export const oracleWhRoutes = new Elysia({ prefix: "/oracleWebhook" })
         "/setup",
         async ({ body, productId, businessSession }) => {
             if (!productId) {
-                return error(400, "Invalid product id");
+                return status(400, "Invalid product id");
             }
 
             if (!businessSession) {
-                return error(401, "Unauthorized");
+                return status(401, "Unauthorized");
             }
             const isAllowed = await rolesRepository.hasRoleOrAdminOnProduct({
                 wallet: businessSession.wallet,
@@ -113,7 +113,7 @@ export const oracleWhRoutes = new Elysia({ prefix: "/oracleWebhook" })
                 role: productRoles.interactionManager,
             });
             if (!isAllowed) {
-                return error(401, "Unauthorized");
+                return status(401, "Unauthorized");
             }
 
             const { hookSignatureKey, platform } = body;
@@ -149,7 +149,7 @@ export const oracleWhRoutes = new Elysia({ prefix: "/oracleWebhook" })
     )
     .post("/delete", async ({ productId, businessSession }) => {
         if (!businessSession) {
-            return error(401, "Unauthorized");
+            return status(401, "Unauthorized");
         }
         const isAllowed = await rolesRepository.hasRoleOrAdminOnProduct({
             wallet: businessSession.wallet,
@@ -157,7 +157,7 @@ export const oracleWhRoutes = new Elysia({ prefix: "/oracleWebhook" })
             role: productRoles.interactionManager,
         });
         if (!isAllowed) {
-            return error(401, "Unauthorized");
+            return status(401, "Unauthorized");
         }
 
         // Check if we already got a setup for this product (we could only have one)
@@ -165,7 +165,7 @@ export const oracleWhRoutes = new Elysia({ prefix: "/oracleWebhook" })
             with: { productId },
         });
         if (!existingOracle) {
-            return error(
+            return status(
                 404,
                 `Product ${productId} have no current oracle setup`
             );

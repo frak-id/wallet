@@ -1,22 +1,16 @@
-import {
-    indexerApi,
-    pricingRepository,
-    walletSessionContext,
-} from "@backend-common";
+import { indexerApi, pricingRepository, sessionContext } from "@backend-common";
 import { t } from "@backend-utils";
 import type { GetRewardResponseDto } from "@frak-labs/app-essentials";
-import { Elysia, error } from "elysia";
+import { Elysia, status } from "elysia";
 import { formatUnits, isAddressEqual, toHex } from "viem";
 import { WalletContext } from "../../../domain/wallet";
 
 export const balanceRoutes = new Elysia({ prefix: "/balance" })
-    .use(walletSessionContext)
+    .use(sessionContext)
     // Get current user balance
     .get(
         "",
         async ({ walletSession }) => {
-            if (!walletSession) return error(401, "Unauthorized");
-
             // Get all the user balances
             const balances =
                 await WalletContext.repositories.balances.getUserBalance({
@@ -72,7 +66,7 @@ export const balanceRoutes = new Elysia({ prefix: "/balance" })
             };
         },
         {
-            authenticated: "wallet",
+            withWalletAuthent: true,
             response: {
                 401: t.String(),
                 200: t.Object({
@@ -99,8 +93,6 @@ export const balanceRoutes = new Elysia({ prefix: "/balance" })
     .get(
         "/claimable",
         async ({ walletSession }) => {
-            if (!walletSession) return error(401, "Unauthorized");
-
             // Fetch the pending rewards for this user
             const { rewards, tokens } = await indexerApi
                 .get(`rewards/${walletSession.address}`)
@@ -173,7 +165,7 @@ export const balanceRoutes = new Elysia({ prefix: "/balance" })
             };
         },
         {
-            authenticated: "wallet",
+            withWalletAuthent: true,
             response: {
                 401: t.String(),
                 200: t.Object({
@@ -201,14 +193,14 @@ export const balanceRoutes = new Elysia({ prefix: "/balance" })
     .get(
         "/pending",
         async ({ walletSession }) => {
-            if (!walletSession) return error(401, "Unauthorized");
+            if (!walletSession) return status(401, "Unauthorized");
 
             return WalletContext.repositories.pendingBalance.getPendingBalance({
                 address: walletSession.address,
             });
         },
         {
-            authenticated: "wallet",
+            withWalletAuthent: true,
             response: {
                 401: t.String(),
                 200: t.TokenAmount,

@@ -1,7 +1,7 @@
-import { sessionContext, viemClient } from "@backend-common";
+import { viemClient } from "@backend-common";
 import { JwtContext } from "@backend-common";
 import { t } from "@backend-utils";
-import { Elysia, error } from "elysia";
+import { Elysia, status } from "elysia";
 import { verifyMessage } from "viem/actions";
 import { SixDegreesContext } from "../../../../domain/6degrees/context";
 import {
@@ -11,7 +11,6 @@ import {
 } from "../../../../domain/auth";
 
 export const loginRoutes = new Elysia()
-    .use(sessionContext)
     // Ecdsa login
     .post(
         "/ecdsaLogin",
@@ -29,7 +28,7 @@ export const loginRoutes = new Elysia()
                 address: wallet,
             });
             if (!isValidSignature) {
-                return error(404, "Invalid signature");
+                return status(404, "Invalid signature");
             }
 
             const authenticatorId = `ecdsa-${wallet}` as const;
@@ -114,7 +113,7 @@ export const loginRoutes = new Elysia()
                     msg: expectedChallenge,
                 });
             if (!verificationnResult) {
-                return error(404, "Invalid signature");
+                return status(404, "Invalid signature");
             }
 
             // Otherwise all good, extract a few info

@@ -1,5 +1,1 @@
-export {
-    sessionContext,
-    walletSessionContext,
-    walletSdkSessionContext,
-} from "./session";
+export { sessionContext } from "./session";
