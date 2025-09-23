@@ -1,6 +1,6 @@
 import type { BodyInit } from "bun";
 import type Elysia from "elysia";
-import { error } from "elysia";
+import { status } from "elysia";
 import { log } from "./common";
 
 /**
@@ -13,7 +13,7 @@ export const legacyRouteMapper = (app: Elysia) =>
             // Redirect previous domain based routes to the new ones
             const newPath = pathMapper(path);
             if (!newPath) {
-                return error(404, "Not found");
+                return status(404, "Not found");
             }
 
             // Construct the new path for the webhook handler
@@ -40,6 +40,7 @@ export const legacyRouteMapper = (app: Elysia) =>
             });
 
             // Let the external api handle the request
+            console.log("Calliiiiiing");
             const response = await app.handle(newRequest);
 
             // Strip down CORS related headers from the response since it would clash with the existing CORS handler
@@ -92,5 +93,5 @@ function pathMapper(path: string) {
         return `/ext/products/${productId}/webhook/oracle/${type}`;
     }
 
-    throw null;
+    return null;
 }

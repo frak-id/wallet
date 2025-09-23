@@ -2,29 +2,22 @@ import { log } from "@backend-common";
 import { t } from "@backend-utils";
 import type { ProductTypesKey } from "@frak-labs/core-sdk";
 import { productTypes } from "@frak-labs/core-sdk";
-import { Elysia, error } from "elysia";
+import { Elysia, status } from "elysia";
 import { toHex } from "viem";
-import { businessContext } from "../../../../domain/business";
+import { BusinessContext } from "../../../../domain/business";
 import { businessSessionContext } from "../../middleware/session";
 
 export const mintRoutes = new Elysia({ prefix: "/mint" })
     .use(businessSessionContext)
-    .use(businessContext)
     // Get the dns txt record to set for a domain
     .get(
         "/dnsTxt",
-        async ({
-            business: {
-                repositories: { dnsCheck: dnsCheckRepository },
-            },
-            query: { domain },
-            businessSession,
-        }) => {
+        async ({ query: { domain }, businessSession }) => {
             if (!businessSession) {
                 return "";
             }
 
-            return dnsCheckRepository.getDnsTxtString({
+            return BusinessContext.repositories.dnsCheck.getDnsTxtString({
                 domain,
                 owner: businessSession.wallet,
             });
@@ -39,32 +32,29 @@ export const mintRoutes = new Elysia({ prefix: "/mint" })
     // Verify a product mint setup
     .get(
         "/verify",
-        async ({
-            business: {
-                repositories: {
-                    mint: mintRepository,
-                    dnsCheck: dnsCheckRepository,
-                },
-            },
-            query: { domain, setupCode },
-            businessSession,
-        }) => {
+        async ({ query: { domain, setupCode }, businessSession }) => {
             if (!businessSession) {
                 return { isDomainValid: false, isAlreadyMinted: false };
             }
             // Normalise the domain
             const normalisedDomain =
-                dnsCheckRepository.getNormalizedDomain(domain);
+                BusinessContext.repositories.dnsCheck.getNormalizedDomain(
+                    domain
+                );
             // Check if the dns txt is set
-            const isDomainValid = await dnsCheckRepository.isValidDomain({
-                domain: normalisedDomain,
-                owner: businessSession.wallet,
-                setupCode,
-            });
+            const isDomainValid =
+                await BusinessContext.repositories.dnsCheck.isValidDomain({
+                    domain: normalisedDomain,
+                    owner: businessSession.wallet,
+                    setupCode,
+                });
             // Check if the product is already minted
-            const isAlreadyMinted = await mintRepository.isExistingProduct(
-                mintRepository.precomputeProductId(normalisedDomain)
-            );
+            const isAlreadyMinted =
+                await BusinessContext.repositories.mint.isExistingProduct(
+                    BusinessContext.repositories.mint.precomputeProductId(
+                        normalisedDomain
+                    )
+                );
             return { isDomainValid, isAlreadyMinted };
         },
         {
@@ -84,28 +74,25 @@ export const mintRoutes = new Elysia({ prefix: "/mint" })
         async ({
             businessSession,
             body: { name, domain, productTypes, setupCode },
-            business: {
-                repositories: {
-                    mint: mintRepository,
-                    dnsCheck: dnsCheckRepository,
-                },
-            },
         }) => {
             // Ensure the session matches
             if (!businessSession) {
-                return error(401, "Invalid session");
+                return status(401, "Invalid session");
             }
             // Normalize the domain
             const normalizedDomain =
-                dnsCheckRepository.getNormalizedDomain(domain);
+                BusinessContext.repositories.dnsCheck.getNormalizedDomain(
+                    domain
+                );
             // Check if the dns txt is set
-            const isValidDomain = await dnsCheckRepository.isValidDomain({
-                domain: normalizedDomain,
-                owner: businessSession.wallet,
-                setupCode,
-            });
+            const isValidDomain =
+                await BusinessContext.repositories.dnsCheck.isValidDomain({
+                    domain: normalizedDomain,
+                    owner: businessSession.wallet,
+                    setupCode,
+                });
             if (!isValidDomain) {
-                return error(
+                return status(
                     400,
                     "The domain is invalid (either DNS TXT or invalid setup code)"
                 );
@@ -114,7 +101,7 @@ export const mintRoutes = new Elysia({ prefix: "/mint" })
             // Mint a product
             try {
                 const { mintTxHash, productId, bankResult, interactionResult } =
-                    await mintRepository.mintProduct({
+                    await BusinessContext.repositories.mint.mintProduct({
                         name,
                         domain: normalizedDomain,
                         productTypes,
@@ -129,7 +116,10 @@ export const mintRoutes = new Elysia({ prefix: "/mint" })
                 };
             } catch (e) {
                 log.error({ error: e }, "Failed to mint product");
-                return error(400, (e as Error)?.message ?? "An error occurred");
+                return status(
+                    400,
+                    (e as Error)?.message ?? "An error occurred"
+                );
             }
         },
         {

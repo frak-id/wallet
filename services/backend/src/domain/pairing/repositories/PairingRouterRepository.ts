@@ -1,8 +1,8 @@
+import { db } from "@backend-common";
 import { and, eq } from "drizzle-orm";
 import type { ElysiaWS } from "elysia/ws";
 import type { StaticWalletTokenDto } from "../../auth/models/WalletSessionDto";
 import type { NotificationsService } from "../../notifications/services/NotificationsService";
-import type { PairingDb } from "../context";
 import { pairingSignatureRequestTable, pairingTable } from "../db/schema";
 import { WsCloseCode } from "../dto/WebSocketCloseCode";
 import type {
@@ -16,11 +16,8 @@ import type {
 import { PairingRepository } from "./PairingRepository";
 
 export class PairingRouterRepository extends PairingRepository {
-    constructor(
-        pairingDb: PairingDb,
-        private readonly notificationsService: NotificationsService
-    ) {
-        super(pairingDb);
+    constructor(private readonly notificationsService: NotificationsService) {
+        super();
     }
 
     /**
@@ -143,7 +140,7 @@ export class PairingRouterRepository extends PairingRepository {
         }
 
         // Find the pairing name
-        const pairing = await this.pairingDb.query.pairingTable.findFirst({
+        const pairing = await db.query.pairingTable.findFirst({
             where: eq(pairingTable.pairingId, wallet.pairingId),
         });
 
@@ -152,7 +149,7 @@ export class PairingRouterRepository extends PairingRepository {
             return;
         }
         // Save the request
-        await this.pairingDb.insert(pairingSignatureRequestTable).values({
+        await db.insert(pairingSignatureRequestTable).values({
             pairingId: wallet.pairingId,
             requestId: message.payload.id,
             request: message.payload.request,
@@ -243,7 +240,7 @@ export class PairingRouterRepository extends PairingRepository {
         }
 
         // Mark the signature request as processed
-        await this.pairingDb
+        await db
             .update(pairingSignatureRequestTable)
             .set({
                 processedAt: new Date(),
@@ -299,7 +296,7 @@ export class PairingRouterRepository extends PairingRepository {
         }
 
         // Delete the signature
-        await this.pairingDb
+        await db
             .delete(pairingSignatureRequestTable)
             .where(
                 and(

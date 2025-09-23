@@ -5,4 +5,5 @@ export {
     SendNotificationTargetsDto,
     type SendNotificationPayload,
 } from "./dto/SendNotificationDto";
-export { notificationContext } from "./context";
+export { NotificationContext } from "./context";
+export { notificationMacro } from "./macro";

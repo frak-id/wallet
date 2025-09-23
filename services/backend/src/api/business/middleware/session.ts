@@ -1,4 +1,4 @@
-import { Elysia, error, t } from "elysia";
+import { Elysia, status, t } from "elysia";
 import { unsealData } from "iron-session";
 import type { Address, Hex } from "viem";
 
@@ -60,7 +60,7 @@ export const businessSessionContext = new Elysia({
 
                     // If none is found, throw an error
                     if (!(businessSession && resolvedSession)) {
-                        return error(401, "Missing business auth cookie");
+                        return status(401, "Missing business auth cookie");
                     }
                 },
             };

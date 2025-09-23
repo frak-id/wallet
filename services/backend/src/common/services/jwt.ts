@@ -1,6 +1,5 @@
 import { t } from "@backend-utils";
 import {
-    Elysia,
     type Static,
     type TSchema,
     ValidationError,
@@ -12,13 +11,34 @@ import {
     SignJWT,
     jwtVerify,
 } from "jose";
+import {
+    WalletSdkTokenDto,
+    WalletTokenDto,
+} from "../../domain/auth/models/WalletSessionDto";
+
+export namespace JwtContext {
+    export const wallet = buildJwtContext({
+        secret: process.env.JWT_SECRET as string,
+        schema: WalletTokenDto,
+        // Default jwt payload
+        iss: "frak.id",
+    });
+    export const walletSdk = buildJwtContext({
+        secret: process.env.JWT_SDK_SECRET as string,
+        schema: WalletSdkTokenDto,
+        // One week
+        expirationDelayInSecond: 60 * 60 * 24 * 7,
+        // Default jwt payload
+        iss: "frak.id",
+    });
+}
 
 type UnwrapSchema<
     Schema extends TSchema | undefined,
     Fallback = unknown,
 > = Schema extends TSchema ? Static<NonNullable<Schema>> : Fallback;
 
-export interface JWTPayloadSpec {
+interface JWTPayloadSpec {
     iss?: string;
     sub?: string;
     aud?: string | string[];
@@ -28,30 +48,9 @@ export interface JWTPayloadSpec {
     iat?: number;
 }
 
-export interface JWTOption<
-    Name extends string | undefined = "jwt",
-    Schema extends TSchema | undefined = undefined,
-> extends JWSHeaderParameters,
+interface JWTOption<Schema extends TSchema | undefined = undefined>
+    extends JWSHeaderParameters,
         Omit<JWTPayload, "nbf" | "exp"> {
-    /**
-     * Name to decorate method as
-     *
-     * ---
-     * @example
-     * For example, `jwt` will decorate Context with `Context.jwt`
-     *
-     * ```typescript
-     * app
-     *     .decorate({
-     *         name: 'myJWTNamespace',
-     *         secret: process.env.JWT_SECRETS
-     *     })
-     *     .get('/sign/:name', ({ myJWTNamespace, params }) => {
-     *         return myJWTNamespace.sign(params)
-     *     })
-     * ```
-     */
-    name?: Name;
     /**
      * JWT Secret
      */
@@ -80,20 +79,10 @@ export interface JWTOption<
     exp?: string | number;
 }
 
-export type JwtService<Schema extends TSchema | undefined = undefined> = {
-    sign: (payload: UnwrapSchema<Schema>) => Promise<string>;
-    verify: (jwt: string) => Promise<UnwrapSchema<Schema> | false>;
-};
-
 /**
- * JWT plugin for elysia
- *  - Simple port of https://github.com/elysiajs/elysia-jwt, using latest version of jose
+ * Create a JWT Context
  */
-export const jwt = <
-    const Name extends string = "jwt",
-    const Schema extends TSchema | undefined = undefined,
->({
-    name = "jwt" as Name,
+function buildJwtContext<const Schema extends TSchema | undefined = undefined>({
     secret,
     expirationDelayInSecond,
     // Start JWT Header
@@ -106,7 +95,7 @@ export const jwt = <
     exp,
     ...payload
     // End JWT Payload
-}: JWTOption<Name, Schema>) => {
+}: JWTOption<Schema>) {
     if (!secret) throw new Error("Secret can't be empty");
 
     // Get the key for the given secret
@@ -137,20 +126,10 @@ export const jwt = <
     type JwtPayload = UnwrapSchema<Schema, Record<string, string | number>> &
         JWTPayloadSpec;
 
-    // Return the Elysia instance
-    return new Elysia({
-        name: "@frak-labs/jwt",
-        seed: {
-            name,
-            secret,
-            alg,
-            crit,
-            schema,
-            nbf,
-            exp,
-            ...payload,
-        },
-    }).decorate(name as Name extends string ? Name : "jwt", {
+    return {
+        /**
+         * Sign a JWT token
+         */
         sign(morePayload: JwtPayload) {
             let jwt = new SignJWT({
                 ...payload,
@@ -176,6 +155,10 @@ export const jwt = <
 
             return jwt.sign(key);
         },
+
+        /**
+         * Verify a JWT token
+         */
         async verify(jwt?: string): Promise<JwtPayload | false> {
             if (!jwt) return false;
 
@@ -190,5 +173,5 @@ export const jwt = <
                 return false;
             }
         },
-    });
-};
+    };
+}

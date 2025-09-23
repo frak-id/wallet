@@ -1,32 +1,21 @@
-import {
-    indexerApi,
-    pricingRepository,
-    walletSessionContext,
-} from "@backend-common";
+import { indexerApi, pricingRepository, sessionContext } from "@backend-common";
 import { t } from "@backend-utils";
 import type { GetRewardResponseDto } from "@frak-labs/app-essentials";
-import { Elysia, error } from "elysia";
+import { Elysia, status } from "elysia";
 import { formatUnits, isAddressEqual, toHex } from "viem";
-import { walletContext } from "../../../domain/wallet";
+import { WalletContext } from "../../../domain/wallet";
 
 export const balanceRoutes = new Elysia({ prefix: "/balance" })
-    .use(walletSessionContext)
-    .use(walletContext)
+    .use(sessionContext)
     // Get current user balance
     .get(
         "",
-        async ({
-            wallet: {
-                repositories: { balances: balancesRepository },
-            },
-            walletSession,
-        }) => {
-            if (!walletSession) return error(401, "Unauthorized");
-
+        async ({ walletSession }) => {
             // Get all the user balances
-            const balances = await balancesRepository.getUserBalance({
-                address: walletSession.address,
-            });
+            const balances =
+                await WalletContext.repositories.balances.getUserBalance({
+                    address: walletSession.address,
+                });
 
             // For each balances, get the eur price
             const mappedBalances = (
@@ -77,7 +66,7 @@ export const balanceRoutes = new Elysia({ prefix: "/balance" })
             };
         },
         {
-            authenticated: "wallet",
+            withWalletAuthent: true,
             response: {
                 401: t.String(),
                 200: t.Object({
@@ -104,8 +93,6 @@ export const balanceRoutes = new Elysia({ prefix: "/balance" })
     .get(
         "/claimable",
         async ({ walletSession }) => {
-            if (!walletSession) return error(401, "Unauthorized");
-
             // Fetch the pending rewards for this user
             const { rewards, tokens } = await indexerApi
                 .get(`rewards/${walletSession.address}`)
@@ -178,7 +165,7 @@ export const balanceRoutes = new Elysia({ prefix: "/balance" })
             };
         },
         {
-            authenticated: "wallet",
+            withWalletAuthent: true,
             response: {
                 401: t.String(),
                 200: t.Object({
@@ -205,20 +192,15 @@ export const balanceRoutes = new Elysia({ prefix: "/balance" })
     // Get pending balance
     .get(
         "/pending",
-        async ({
-            wallet: {
-                repositories: { pendingBalance: pendingBalanceRepository },
-            },
-            walletSession,
-        }) => {
-            if (!walletSession) return error(401, "Unauthorized");
+        async ({ walletSession }) => {
+            if (!walletSession) return status(401, "Unauthorized");
 
-            return pendingBalanceRepository.getPendingBalance({
+            return WalletContext.repositories.pendingBalance.getPendingBalance({
                 address: walletSession.address,
             });
         },
         {
-            authenticated: "wallet",
+            withWalletAuthent: true,
             response: {
                 401: t.String(),
                 200: t.TokenAmount,

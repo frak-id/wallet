@@ -1,9 +1,4 @@
-export {
-    sessionContext,
-    walletSessionContext,
-    walletSdkSessionContext,
-    type SessionContextType,
-} from "./context";
+export { sessionContext } from "./macro";
 export { log } from "./logger";
 // Repositories singleton
 export {
@@ -16,4 +11,6 @@ export {
 export { indexerApi } from "./services/indexerApi";
 export { eventEmitter } from "./services/events";
 export { viemClient } from "./services/blockchain";
-export { postgresDb, getMongoDb, type GetMongoDb } from "./services/db";
+export { getMongoDb, type GetMongoDb } from "./services/db";
+export { db } from "./services/postgres";
+export { JwtContext } from "./services/jwt";

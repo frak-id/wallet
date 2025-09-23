@@ -1,4 +1,4 @@
-export { oracleContext, type OracleContextApp } from "./context";
+export { OracleContext } from "./context";
 export {
     productOracleTable,
     purchaseStatusTable,

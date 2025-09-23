@@ -1,29 +1,22 @@
-import { sessionContext, viemClient } from "@backend-common";
+import { viemClient } from "@backend-common";
+import { JwtContext } from "@backend-common";
 import { t } from "@backend-utils";
-import { Elysia, error } from "elysia";
+import { Elysia, status } from "elysia";
 import { verifyMessage } from "viem/actions";
-import { sixDegreesContext } from "../../../../domain/6degrees/context";
+import { SixDegreesContext } from "../../../../domain/6degrees/context";
 import {
+    AuthContext,
     type StaticWalletSdkTokenDto,
     WalletAuthResponseDto,
-    authContext,
 } from "../../../../domain/auth";
 
 export const loginRoutes = new Elysia()
-    .use(sessionContext)
-    .use(authContext)
-    .use(sixDegreesContext)
     // Ecdsa login
     .post(
         "/ecdsaLogin",
         async ({
             // Request
             body: { expectedChallenge, signature, wallet, ssoId, demoPkey },
-            // Context
-            walletJwt,
-            auth: {
-                services: { walletSdkSession, walletSso, webAuthN },
-            },
         }) => {
             // Rebuild the message that have been signed
             const message = `I want to connect to Frak and I accept the CGU.\n Verification code:${expectedChallenge}`;
@@ -35,18 +28,19 @@ export const loginRoutes = new Elysia()
                 address: wallet,
             });
             if (!isValidSignature) {
-                return error(404, "Invalid signature");
+                return status(404, "Invalid signature");
             }
 
             const authenticatorId = `ecdsa-${wallet}` as const;
 
             // Get the wallet address
-            const walletAddress = await webAuthN.getEcdsaWalletAddress({
-                ecdsaAddress: wallet,
-            });
+            const walletAddress =
+                await AuthContext.services.webAuthN.getEcdsaWalletAddress({
+                    ecdsaAddress: wallet,
+                });
 
             // Create the token and set the cookie
-            const token = await walletJwt.sign({
+            const token = await JwtContext.wallet.sign({
                 type: "ecdsa",
                 address: walletAddress,
                 authenticatorId,
@@ -57,14 +51,15 @@ export const loginRoutes = new Elysia()
             });
 
             // Finally, generate a JWT token for the SDK
-            const sdkJwt = await walletSdkSession.generateSdkJwt({
-                wallet: walletAddress,
-                additionalData: { demoPkey },
-            });
+            const sdkJwt =
+                await AuthContext.services.walletSdkSession.generateSdkJwt({
+                    wallet: walletAddress,
+                    additionalData: { demoPkey },
+                });
 
             // If all good, mark the sso as done
             if (ssoId) {
-                await walletSso.resolveSession({
+                await AuthContext.services.walletSso.resolveSession({
                     id: ssoId,
                     wallet: walletAddress,
                     authenticatorId,
@@ -110,20 +105,15 @@ export const loginRoutes = new Elysia()
                 expectedChallenge,
                 ssoId,
             },
-            // Context
-            walletJwt,
-            auth: {
-                services: { walletSdkSession, walletSso, webAuthN },
-            },
-            sixDegrees,
         }) => {
             // Check if that's a valid webauthn signature
-            const verificationnResult = await webAuthN.isValidSignature({
-                compressedSignature: rawAuthenticatorResponse,
-                msg: expectedChallenge,
-            });
+            const verificationnResult =
+                await AuthContext.services.webAuthN.isValidSignature({
+                    compressedSignature: rawAuthenticatorResponse,
+                    msg: expectedChallenge,
+                });
             if (!verificationnResult) {
-                return error(404, "Invalid signature");
+                return status(404, "Invalid signature");
             }
 
             // Otherwise all good, extract a few info
@@ -141,20 +131,23 @@ export const loginRoutes = new Elysia()
 
             // Check if that's a six degrees wallet, and iuf yes, generate a token accordingly
             const isSixDegrees =
-                await sixDegrees.services.routing.isRoutedWallet(address);
+                await SixDegreesContext.services.routing.isRoutedWallet(
+                    address
+                );
             if (isSixDegrees) {
-                const token = await sixDegrees.services.authentication.login({
-                    publicKey: rawPublicKey,
-                    challenge: expectedChallenge,
-                    signature: rawAuthenticatorResponse,
-                });
+                const token =
+                    await SixDegreesContext.services.authentication.login({
+                        publicKey: rawPublicKey,
+                        challenge: expectedChallenge,
+                        signature: rawAuthenticatorResponse,
+                    });
                 if (token) {
                     additionalData.sixDegreesToken = token;
                 }
             }
 
             // Create the token and set the cookie
-            const token = await walletJwt.sign({
+            const token = await JwtContext.wallet.sign({
                 type: "webauthn",
                 address,
                 authenticatorId,
@@ -165,14 +158,15 @@ export const loginRoutes = new Elysia()
             });
 
             // Finally, generate a JWT token for the SDK
-            const sdkJwt = await walletSdkSession.generateSdkJwt({
-                wallet: address,
-                additionalData,
-            });
+            const sdkJwt =
+                await AuthContext.services.walletSdkSession.generateSdkJwt({
+                    wallet: address,
+                    additionalData,
+                });
 
             // If all good, mark the sso as done
             if (ssoId) {
-                await walletSso.resolveSession({
+                await AuthContext.services.walletSso.resolveSession({
                     id: ssoId,
                     wallet: address,
                     authenticatorId,

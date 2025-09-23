@@ -1,6 +1,6 @@
+import { db } from "@backend-common";
 import { and, eq } from "drizzle-orm";
 import { type Hex, isHex } from "viem";
-import type { OracleDb } from "../context";
 import { productOracleTable, purchaseStatusTable } from "../db/schema";
 import type { MerkleTreeRepository } from "../repositories/MerkleTreeRepository";
 
@@ -15,10 +15,7 @@ type PurchaseSelector =
       };
 
 export class OracleProofService {
-    constructor(
-        private readonly oracleDb: OracleDb,
-        private readonly merkleRepository: MerkleTreeRepository
-    ) {}
+    constructor(private readonly merkleRepository: MerkleTreeRepository) {}
 
     /**
      * Get a purchase proof
@@ -38,7 +35,7 @@ export class OracleProofService {
         }
 
         // Then get the oracle for this purchase
-        const oracles = await this.oracleDb
+        const oracles = await db
             .select()
             .from(productOracleTable)
             .where(eq(productOracleTable.id, purchase.oracleId))
@@ -82,7 +79,7 @@ export class OracleProofService {
         let purchases: (typeof purchaseStatusTable.$inferSelect)[];
         if ("token" in selector) {
             // Case when it's a token
-            purchases = await this.oracleDb
+            purchases = await db
                 .select()
                 .from(purchaseStatusTable)
                 .where(
@@ -96,14 +93,14 @@ export class OracleProofService {
             const { productId, purchaseId } = selector;
             if (isHex(purchaseId)) {
                 // Case when it's a pre computed purchase id
-                purchases = await this.oracleDb
+                purchases = await db
                     .select()
                     .from(purchaseStatusTable)
                     .where(eq(purchaseStatusTable.purchaseId, purchaseId))
                     .limit(1);
             } else {
                 // Case when it's an external purchase id
-                const tmp = await this.oracleDb
+                const tmp = await db
                     .select()
                     .from(purchaseStatusTable)
                     .innerJoin(

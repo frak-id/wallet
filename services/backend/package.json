@@ -27,7 +27,7 @@
   },
   "dependencies": {
     "@bogeychan/elysia-logger": "^0.1.8",
-    "@elysiajs/cors": "^1.2.0",
+    "@elysiajs/cors": "^1.4.0",
     "@frak-labs/app-essentials": "workspace:*",
     "@frak-labs/core-sdk": "workspace:*",
     "@simplewebauthn/server": "^13.1.1",
@@ -36,7 +36,7 @@
     "async-mutex": "^0.5.0",
     "croner": "^9.0.0",
     "drizzle-orm": "^0.41.0",
-    "elysia": "1.2.25",
+    "elysia": "1.4.7",
     "iron-session": "^8.0.4",
     "jose": "^6.0.10",
     "ky": "^1.8.1",

@@ -1,4 +1,5 @@
 import { adminWalletsRepository, log, viemClient } from "@backend-common";
+import { db } from "@backend-common";
 import { addresses } from "@frak-labs/app-essentials";
 import { eq, inArray, isNull } from "drizzle-orm";
 import { type Hex, type LocalAccount, encodePacked } from "viem";
@@ -12,25 +13,20 @@ import {
     purchaseOracle_getMerkleRoot,
     purchaseOracle_updateMerkleRoot,
 } from "../../../utils";
-import type { OracleDb } from "../context";
 import { productOracleTable, purchaseStatusTable } from "../db/schema";
 import type { MerkleTreeRepository } from "../repositories/MerkleTreeRepository";
 
 export class UpdateOracleService {
-    constructor(
-        private readonly oracleDb: OracleDb,
-        private readonly merkleRepository: MerkleTreeRepository
-    ) {}
+    constructor(private readonly merkleRepository: MerkleTreeRepository) {}
 
     /**
      * Update all the empty leafs if needed
      */
     async updateEmptyLeafs(): Promise<Set<number>> {
         // Get all purchase with empty leafs
-        const purchases =
-            await this.oracleDb.query.purchaseStatusTable.findMany({
-                where: isNull(purchaseStatusTable.leaf),
-            });
+        const purchases = await db.query.purchaseStatusTable.findMany({
+            where: isNull(purchaseStatusTable.leaf),
+        });
 
         // Set of oracle ids updated
         const oracleIds = new Set<number>();
@@ -76,7 +72,7 @@ export class UpdateOracleService {
         }
 
         // Execute our leaf updates
-        await this.oracleDb.transaction(async (trx) => {
+        await db.transaction(async (trx) => {
             for (const input of purchaseWithLeafs) {
                 await trx
                     .update(purchaseStatusTable)
@@ -101,7 +97,7 @@ export class UpdateOracleService {
             return [];
         }
         // Get the product id from the oracle ids
-        const productIdsFromDb = await this.oracleDb
+        const productIdsFromDb = await db
             .select({
                 productId: productOracleTable.productId,
             })
@@ -137,7 +133,7 @@ export class UpdateOracleService {
                 productId,
             });
             // Update it in the database (and tell it's not synced yet)
-            await this.oracleDb
+            await db
                 .update(productOracleTable)
                 .set({ merkleRoot: root, synced: false })
                 .where(eq(productOracleTable.productId, productId));
@@ -153,7 +149,7 @@ export class UpdateOracleService {
 
             // Update the synced status if it's a success
             if (isSuccess) {
-                await this.oracleDb
+                await db
                     .update(productOracleTable)
                     .set(
                         txHash

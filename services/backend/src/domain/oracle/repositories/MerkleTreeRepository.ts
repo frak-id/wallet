@@ -1,8 +1,8 @@
+import { db } from "@backend-common";
 import { and, eq, isNotNull } from "drizzle-orm";
 import { LRUCache } from "lru-cache";
 import { MerkleTree } from "merkletreejs";
 import { type Hex, hexToBytes, keccak256 } from "viem";
-import type { OracleDb } from "../context";
 import { productOracleTable, purchaseStatusTable } from "../db/schema";
 
 /**
@@ -14,8 +14,6 @@ export class MerkleTreeRepository {
         max: 32,
     });
 
-    constructor(private readonly oracleDb: OracleDb) {}
-
     /**
      * Build the merkle tree for a product
      * @param productId
@@ -23,7 +21,7 @@ export class MerkleTreeRepository {
      */
     private async buildMerkleTreeForProduct(productId: Hex) {
         // Fetch every leaf from the databases
-        const leavesFromDb = await this.oracleDb
+        const leavesFromDb = await db
             .select({
                 leaf: purchaseStatusTable.leaf,
             })

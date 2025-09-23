@@ -1,12 +1,12 @@
-import { log } from "@backend-common";
+import { JwtContext, log } from "@backend-common";
 import { Elysia } from "elysia";
 import type { StaticWalletTokenDto } from "../../../../domain/auth";
-import { pairingContext } from "../../../../domain/pairing";
+import { PairingContext } from "../../../../domain/pairing";
 
 /**
  * The websocket route for pairing
  */
-export const wsRoute = new Elysia().use(pairingContext).ws("/ws", {
+export const wsRoute = new Elysia().ws("/ws", {
     // When we open a new websocket connection
     open: async (ws) => {
         log.debug(`[Pairing] websocket opened: ${ws.id}`);
@@ -16,7 +16,7 @@ export const wsRoute = new Elysia().use(pairingContext).ws("/ws", {
 
         // Parse the wallet JWT
         let wallet = walletJwt
-            ? ((await ws.data.walletJwt.verify(walletJwt)) as
+            ? ((await JwtContext.wallet.verify(walletJwt)) as
                   | StaticWalletTokenDto
                   | false)
             : undefined;
@@ -25,7 +25,7 @@ export const wsRoute = new Elysia().use(pairingContext).ws("/ws", {
         }
 
         // Handle the pairing open
-        await ws.data.pairing.repositories.connection.handlePairingOpen({
+        await PairingContext.repositories.connection.handlePairingOpen({
             query: ws.data.query,
             userAgent,
             wallet,
@@ -45,7 +45,7 @@ export const wsRoute = new Elysia().use(pairingContext).ws("/ws", {
         // Parse the wallet JWT
         const walletJwt = ws.data.query?.wallet;
         const wallet = walletJwt
-            ? ((await ws.data.walletJwt.verify(walletJwt)) as
+            ? ((await JwtContext.wallet.verify(walletJwt)) as
                   | StaticWalletTokenDto
                   | false)
             : undefined;
@@ -57,7 +57,7 @@ export const wsRoute = new Elysia().use(pairingContext).ws("/ws", {
         }
 
         // Handle the message
-        await ws.data.pairing.repositories.router.handleMessage({
+        await PairingContext.repositories.router.handleMessage({
             message,
             ws,
             wallet,

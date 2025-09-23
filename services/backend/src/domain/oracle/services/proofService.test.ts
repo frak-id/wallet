@@ -31,7 +31,7 @@ describe("OracleProofService", () => {
     beforeAll(() => {
         mockAll();
 
-        service = new OracleProofService(db, mockMerkleTreeRepository);
+        service = new OracleProofService(mockMerkleTreeRepository);
     });
 
     afterAll(() => {

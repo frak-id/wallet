@@ -2,31 +2,23 @@ import { indexerApi, log } from "@backend-common";
 import { t } from "@backend-utils";
 import type { GetMembersWalletResponseDto } from "@frak-labs/app-essentials";
 import { Elysia } from "elysia";
-import type { KyInstance } from "ky";
 import type { Address } from "viem";
 import {
+    NotificationContext,
     SendNotificationPayloadDto,
     SendNotificationTargetsDto,
-    notificationContext,
 } from "../../../../domain/notifications";
 import { businessSessionContext } from "../../middleware/session";
 
 export const sendRoutes = new Elysia()
-    .use(notificationContext)
     .use(businessSessionContext)
     // External endpoint to send notification to a list of wallets
     .post(
         "/send",
-        async ({
-            body: { targets, payload },
-            notifications: {
-                services: { notifications },
-            },
-            businessSession,
-        }) => {
+        async ({ body: { targets, payload }, businessSession }) => {
             if (!businessSession) return;
 
-            await notifications.cleanupExpiredTokens();
+            await NotificationContext.services.notifications.cleanupExpiredTokens();
 
             // todo: Notification tracking (send, received, clicked)
 
@@ -34,11 +26,10 @@ export const sendRoutes = new Elysia()
             const wallets = await getWalletsTargets({
                 targets: targets,
                 wallet: businessSession.wallet,
-                indexerApi,
             });
 
             // Send the notification
-            await notifications.sendNotification({
+            await NotificationContext.services.notifications.sendNotification({
                 wallets,
                 payload,
             });
@@ -56,11 +47,9 @@ export const sendRoutes = new Elysia()
  */
 async function getWalletsTargets({
     targets,
-    indexerApi,
     wallet,
 }: {
     targets: typeof SendNotificationTargetsDto.static;
-    indexerApi: KyInstance;
     wallet: Address;
 }): Promise<Address[]> {
     if ("wallets" in targets) {

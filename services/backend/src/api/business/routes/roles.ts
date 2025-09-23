@@ -1,7 +1,7 @@
 import { rolesRepository } from "@backend-common";
 import { t } from "@backend-utils";
 import { productRoles } from "@frak-labs/app-essentials";
-import { Elysia, error } from "elysia";
+import { Elysia, status } from "elysia";
 import { toHex } from "viem";
 import { businessSessionContext } from "../middleware/session";
 
@@ -14,15 +14,15 @@ export const rolesRoutes = new Elysia({ prefix: "/roles" })
             businessSession,
         }) => {
             if (!productId) {
-                return error(400, "Invalid product id");
+                return status(400, "Invalid product id");
             }
             if (!businessSession) {
-                return error(401, "Unauthorized");
+                return status(401, "Unauthorized");
             }
 
             const wallet = initialWallet ?? businessSession.wallet;
             if (!wallet) {
-                return error(400, "Invalid wallet");
+                return status(400, "Invalid wallet");
             }
 
             // Fetch the roles
