@@ -1,16 +1,8 @@
 import { Panel } from "@/module/common/component/Panel";
-import type { ProductTypesKey } from "@frak-labs/core-sdk";
+import type { ProductNew } from "@/types/Product";
 import { Button } from "@frak-labs/ui/component/Button";
 import type { UseFormReturn } from "react-hook-form";
 import styles from "./index.module.css";
-
-type ProductNew = {
-    name: string;
-    domain: string;
-    productTypes: ProductTypesKey[];
-    setupCode: string;
-    currency: string;
-};
 
 interface ValidationPanelProps {
     form: UseFormReturn<ProductNew>;

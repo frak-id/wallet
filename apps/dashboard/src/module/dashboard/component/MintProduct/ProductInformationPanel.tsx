@@ -10,7 +10,7 @@ import {
     FormValidMessage,
 } from "@/module/forms/Form";
 import { currencyOptions } from "@/module/product/utils/currencyOptions";
-import type { Stablecoin } from "@frak-labs/app-essentials";
+import type { ProductNew } from "@/types/Product";
 import type { ProductTypesKey } from "@frak-labs/core-sdk";
 import { Button } from "@frak-labs/ui/component/Button";
 import { Spinner } from "@frak-labs/ui/component/Spinner";
@@ -21,14 +21,6 @@ import { validateUrl } from "@frak-labs/ui/utils/validateUrl";
 import type { UseFormReturn } from "react-hook-form";
 import styles from "./index.module.css";
 import { productTypeDescriptions } from "./utils";
-
-type ProductNew = {
-    name: string;
-    domain: string;
-    productTypes: ProductTypesKey[];
-    setupCode: string;
-    currency: Stablecoin;
-};
 
 interface ProductInformationPanelProps {
     form: UseFormReturn<ProductNew>;

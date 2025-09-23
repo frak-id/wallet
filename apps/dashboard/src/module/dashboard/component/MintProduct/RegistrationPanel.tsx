@@ -6,7 +6,7 @@ import styles from "./index.module.css";
 interface RegistrationPanelProps {
     step: number;
     isPending: boolean;
-    error?: Error;
+    error?: Error | null;
     infoTxt?: string;
     mintTxHash?: Hex;
     onSubmit: () => void;
