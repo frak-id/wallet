@@ -1,5 +1,8 @@
-import { Panel } from "@/module/common/component/Panel";
+"use client";
+
+import { PanelAccordion } from "@/module/common/component/PanelAccordion";
 import { useDnsTxtRecordToSet } from "@/module/dashboard/hooks/dnsRecordHooks";
+import { CurrencySelector } from "@/module/forms/CurrencySelector";
 import {
     Form,
     FormControl,
@@ -7,9 +10,7 @@ import {
     FormItem,
     FormLabel,
     FormMessage,
-    FormValidMessage,
 } from "@/module/forms/Form";
-import { currencyOptions } from "@/module/product/utils/currencyOptions";
 import type { ProductNew } from "@/types/Product";
 import type { ProductTypesKey } from "@frak-labs/core-sdk";
 import { Button } from "@frak-labs/ui/component/Button";
@@ -25,44 +26,31 @@ import { productTypeDescriptions } from "./utils";
 interface ProductInformationPanelProps {
     form: UseFormReturn<ProductNew>;
     step: number;
-    isDomainValid: boolean;
     domainError?: string;
     onVerifyDomain: () => void;
-}
-
-interface CompletedProductInfoProps {
-    values: ProductNew;
-}
-
-function CompletedProductInfo({ values }: CompletedProductInfoProps) {
-    return (
-        <div className={styles.lockedContent}>
-            <p>Product information completed for {values.name}</p>
-            <p>Domain: {values.domain}</p>
-            <p>Currency: {values.currency.toUpperCase()}</p>
-            <p>Product Types: {values.productTypes.join(", ")}</p>
-        </div>
-    );
 }
 
 function ProductTypeCard({
     info,
     isChecked,
+    disabled,
     onChange,
 }: {
     info: { name: string; description: string; useCase: string };
     isChecked: boolean;
+    disabled?: boolean;
     onChange: (checked: boolean) => void;
 }) {
     return (
         <label
             className={styles.productTypeCard}
-            style={{ cursor: "pointer" }}
+            style={{ cursor: disabled ? "not-allowed" : "pointer" }}
             htmlFor={`checkbox-${info.name}`}
         >
             <div className={styles.productTypeLabel}>
                 <Checkbox
                     checked={isChecked}
+                    disabled={disabled}
                     onCheckedChange={onChange}
                     id={`checkbox-${info.name}`}
                 />
@@ -81,7 +69,6 @@ function ProductTypeCard({
 export function ProductInformationPanel({
     form,
     step,
-    isDomainValid,
     domainError,
     onVerifyDomain,
 }: ProductInformationPanelProps) {
@@ -92,95 +79,66 @@ export function ProductInformationPanel({
         enabled: !!domain,
     });
 
-    if (step > 1) {
-        return (
-            <Panel
-                title="Product Information"
-                className={`${styles.panel} ${styles.panelLocked}`}
-            >
-                <CompletedProductInfo values={form.getValues()} />
-            </Panel>
-        );
-    }
-
     return (
-        <Panel title="Product Information" className={styles.panel}>
+        <PanelAccordion
+            title="Product Information"
+            className={styles.panel}
+            withBadge={step > 1}
+            value={step === 1 ? "item-1" : undefined}
+        >
             <Form {...form}>
                 <form className={styles.form}>
-                    {/* Product Name and Currency */}
-                    <div className={styles.nameAndCurrencyRow}>
-                        <FormField
-                            control={form.control}
-                            name="name"
-                            rules={{
-                                required: "Product name is required",
-                                minLength: {
-                                    value: 2,
-                                    message:
-                                        "Product name must be at least 2 characters",
-                                },
-                            }}
-                            render={({ field }) => (
-                                <FormItem className={styles.nameField}>
-                                    <FormLabel weight="medium">
-                                        Enter a Product Name
-                                    </FormLabel>
-                                    <FormControl>
-                                        <Input
-                                            length="medium"
-                                            placeholder="Product Name..."
-                                            {...field}
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
+                    {/* Product Name */}
+                    <FormField
+                        control={form.control}
+                        name="name"
+                        rules={{
+                            required: "Product name is required",
+                            minLength: {
+                                value: 2,
+                                message:
+                                    "Product name must be at least 2 characters",
+                            },
+                        }}
+                        render={({ field }) => (
+                            <FormItem className={styles.nameField}>
+                                <FormLabel weight="medium">
+                                    Enter a Product Name
+                                </FormLabel>
+                                <FormControl>
+                                    <Input
+                                        length="medium"
+                                        placeholder="Product Name..."
+                                        disabled={step > 1}
+                                        {...field}
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
 
-                        <FormField
-                            control={form.control}
-                            name="currency"
-                            render={({ field }) => (
-                                <FormItem className={styles.currencyField}>
-                                    <FormLabel weight="medium">
-                                        Currency
-                                    </FormLabel>
-                                    <p className={styles.currencyDescription}>
-                                        The default currency for your campaigns
-                                    </p>
-                                    <FormControl>
-                                        <select
-                                            {...field}
-                                            className={styles.select}
-                                        >
-                                            {currencyOptions.map((group) => (
-                                                <optgroup
-                                                    key={group.group}
-                                                    label={`${group.group} - ${group.description}`}
-                                                >
-                                                    {group.options.map(
-                                                        (option) => (
-                                                            <option
-                                                                key={
-                                                                    option.value
-                                                                }
-                                                                value={
-                                                                    option.value
-                                                                }
-                                                            >
-                                                                {option.label}
-                                                            </option>
-                                                        )
-                                                    )}
-                                                </optgroup>
-                                            ))}
-                                        </select>
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                    </div>
+                    {/* Currency */}
+                    <FormField
+                        control={form.control}
+                        name="currency"
+                        render={({ field }) => (
+                            <FormItem className={styles.currencyField}>
+                                <FormLabel weight="medium">Currency</FormLabel>
+                                <p className={styles.currencyDescription}>
+                                    The default currency for your campaigns
+                                </p>
+                                <FormControl>
+                                    <CurrencySelector
+                                        value={field.value}
+                                        onChange={field.onChange}
+                                        disabled={step > 1}
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
 
                     {/* Product Types */}
                     <FormField
@@ -211,6 +169,7 @@ export function ProductInformationPanel({
                                                 key={key}
                                                 info={info}
                                                 isChecked={isChecked}
+                                                disabled={step > 1}
                                                 onChange={(checked) => {
                                                     if (checked) {
                                                         field.onChange([
@@ -261,6 +220,7 @@ export function ProductInformationPanel({
                                             <Input
                                                 length="medium"
                                                 placeholder="example.com"
+                                                disabled={step > 1}
                                                 {...field}
                                             />
                                         </FormControl>
@@ -281,6 +241,7 @@ export function ProductInformationPanel({
                                             <Input
                                                 length="medium"
                                                 placeholder="Setup code..."
+                                                disabled={step > 1}
                                                 {...field}
                                             />
                                         </FormControl>
@@ -290,11 +251,6 @@ export function ProductInformationPanel({
                             />
                         </div>
 
-                        {isDomainValid && (
-                            <FormValidMessage>
-                                Your domain name was successfully verified
-                            </FormValidMessage>
-                        )}
                         {domainError && (
                             <FormMessage>{domainError}</FormMessage>
                         )}
@@ -326,13 +282,14 @@ export function ProductInformationPanel({
                             variant="information"
                             onClick={onVerifyDomain}
                             type="button"
+                            disabled={step > 1}
                             className={styles.continueButton}
                         >
-                            {isDomainValid ? "Continue" : "Verify Information"}
+                            Continue
                         </Button>
                     </div>
                 </form>
             </Form>
-        </Panel>
+        </PanelAccordion>
     );
 }

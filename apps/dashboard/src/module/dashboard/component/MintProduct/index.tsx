@@ -23,7 +23,6 @@ type ProductNew = {
 
 export function MintProduct() {
     const [step, setStep] = useState(1);
-    const [isDomainValid, setIsDomainValid] = useState(false);
     const [domainError, setDomainError] = useState<string | undefined>();
 
     const form = useForm<ProductNew>({
@@ -56,11 +55,10 @@ export function MintProduct() {
 
     // Verify the validity of a domain
     async function verifyDomain() {
-        setDomainError(undefined);
-        setIsDomainValid(false);
-
         const isFormValid = await form.trigger();
         if (!isFormValid) return;
+
+        setDomainError(undefined);
 
         if (!domain) {
             setDomainError("Invalid domain name");
@@ -82,7 +80,8 @@ export function MintProduct() {
                     "The DNS txt record is not set, or the setup code is invalid"
                 );
             } else {
-                setIsDomainValid(true);
+                // Directly shit to step 2
+                setStep(2);
             }
         } catch (err) {
             console.error("Domain verification failed:", err);
@@ -108,7 +107,6 @@ export function MintProduct() {
             <ProductInformationPanel
                 form={form}
                 step={step}
-                isDomainValid={isDomainValid}
                 domainError={domainError}
                 onVerifyDomain={verifyDomain}
             />
@@ -116,8 +114,8 @@ export function MintProduct() {
             <ValidationPanel
                 form={form}
                 step={step}
-                isDomainValid={isDomainValid}
-                onNext={() => setStep(2)}
+                onPrevious={() => setStep(1)}
+                onNext={() => setStep(3)}
             />
 
             <RegistrationPanel

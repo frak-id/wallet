@@ -18,17 +18,26 @@ export type PanelProps = ComponentPropsWithRef<typeof Panel> &
         title?: string;
         withBadge?: boolean;
         className?: string;
+        value?: string;
+        defaultValue?: string;
     };
 
 export const PanelAccordion = ({
     ref,
     children,
     title,
+    value,
+    defaultValue,
     ...props
 }: PanelProps) => {
     return (
         <Panel ref={ref} {...props}>
-            <Accordion type={"single"} collapsible>
+            <Accordion
+                type={"single"}
+                collapsible
+                value={value}
+                defaultValue={defaultValue}
+            >
                 <AccordionItem value={"item-1"}>
                     <AccordionTrigger
                         className={styles.panelAccordion__trigger}

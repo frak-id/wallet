@@ -102,14 +102,6 @@
     font-weight: bold;
 }
 
-/* Name and Currency Row */
-.nameAndCurrencyRow {
-    display: grid;
-    grid-template-columns: 2fr 1fr;
-    gap: 1.5rem;
-    margin-bottom: 1rem;
-}
-
 .nameField,
 .currencyField {
     margin: 0;
@@ -202,6 +194,10 @@
     border-top: 1px solid var(--color-border, #dee2e6);
 }
 
+.continueSection > button {
+    margin-left: 24px;
+}
+
 .dnsSection {
     margin-top: 1.5rem;
     padding-top: 1rem;
@@ -227,11 +223,6 @@
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
-    .nameAndCurrencyRow {
-        grid-template-columns: 1fr;
-        gap: 1rem;
-    }
-
     .productTypesGrid {
         grid-template-columns: 1fr;
     }

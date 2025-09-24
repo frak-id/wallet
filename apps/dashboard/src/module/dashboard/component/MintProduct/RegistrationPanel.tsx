@@ -1,4 +1,6 @@
-import { Panel } from "@/module/common/component/Panel";
+"use client";
+
+import { PanelAccordion } from "@/module/common/component/PanelAccordion";
 import { ButtonAuth } from "@frak-labs/ui/component/ButtonAuth";
 import type { Hex } from "viem";
 import styles from "./index.module.css";
@@ -21,17 +23,17 @@ export function RegistrationPanel({
     onSubmit,
 }: RegistrationPanelProps) {
     return (
-        <Panel
+        <PanelAccordion
             title="Product Registration"
-            className={`${styles.panel} ${step < 2 ? styles.panelDisabled : ""} ${
-                step > 2 ? styles.panelLocked : ""
-            }`}
+            className={styles.panel}
+            withBadge={step > 2}
+            value={step === 3 ? "item-1" : undefined}
         >
-            {step < 2 ? (
+            {step < 3 ? (
                 <div className={styles.disabledContent}>
                     <p>Complete validation in the previous step to continue</p>
                 </div>
-            ) : step === 2 ? (
+            ) : step === 3 ? (
                 <div className={styles.registrationSection}>
                     <ButtonAuth onClick={onSubmit} disabled={isPending}>
                         Validate your product
@@ -54,6 +56,6 @@ export function RegistrationPanel({
                     {mintTxHash && <p>Transaction hash: {mintTxHash}</p>}
                 </div>
             )}
-        </Panel>
+        </PanelAccordion>
     );
 }
