@@ -33,7 +33,7 @@ import { Switch } from "@frak-labs/ui/component/Switch";
 import { Tooltip } from "@frak-labs/ui/component/Tooltip";
 import { useMutation } from "@tanstack/react-query";
 import { atom, useAtomValue, useSetAtom } from "jotai";
-import { CheckCircle, Plus, XCircle } from "lucide-react";
+import { BadgeCheck, CheckCircle, Plus, XCircle } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -66,16 +66,11 @@ export function ProductFunding({ productId }: { productId: Hex }) {
     return (
         <FormLayout>
             <ProductHead productId={productId} />
-            <Panel title={"Manage the product balance"}>
-                {isLoading || isPending ? (
-                    <Spinner />
-                ) : (
-                    <ProductFundingBanks
-                        banks={data ?? []}
-                        productId={productId}
-                    />
-                )}
-            </Panel>
+            {isLoading || isPending ? (
+                <Spinner />
+            ) : (
+                <ProductFundingBanks banks={data ?? []} productId={productId} />
+            )}
         </FormLayout>
     );
 }
@@ -104,6 +99,58 @@ function ProductFundingBanks({
             ))}
             <AddNewBank banks={banks} productId={productId} />
         </>
+    );
+}
+
+/**
+ * Inline fund action for the actions row
+ * @returns
+ */
+function FundAction({
+    bank,
+    isTestBank,
+    productId,
+}: { bank: ProductBank; isTestBank: boolean; productId: Hex }) {
+    const { mutate: fundTestBank, isPending } = useFundTestBank();
+    const { data: productMetadata, isLoading: isLoadingProductMetadata } =
+        useProductMetadata({ productId });
+    const isShopify = useMemo(
+        () => productMetadata?.domain?.includes("myshopify") ?? false,
+        [productMetadata]
+    );
+
+    if (isLoadingProductMetadata) {
+        return <Spinner />;
+    }
+
+    if (isShopify) {
+        return (
+            <Link
+                href={`https://admin.shopify.com/store/${productMetadata?.domain?.replace(".myshopify.com", "")}/apps/frak/app/status`}
+                target="_blank"
+            >
+                Add funds
+            </Link>
+        );
+    }
+
+    if (isTestBank) {
+        return (
+            <Button
+                variant={"submit"}
+                disabled={isPending}
+                isLoading={isPending}
+                onClick={() => fundTestBank({ bank: bank.address })}
+            >
+                Add funds
+            </Button>
+        );
+    }
+
+    return (
+        <Link href={process.env.FUNDING_ON_RAMP_URL ?? ""} target={"_blank"}>
+            Add funds
+        </Link>
     );
 }
 
@@ -144,83 +191,111 @@ function ProductFundingBank({
         : `${bank.token.symbol} Bank`;
 
     return (
-        <Panel title={panelTitle} className={styles.bankPanel}>
+        <Panel className={styles.bankPanel}>
             <div className={styles.bankContent}>
-                <div className={styles.bankHeader}>
-                    {stablecoinInfo && (
-                        <Badge size={"small"} variant={"information"}>
-                            {stablecoinInfo.group}
-                        </Badge>
-                    )}
-                    {isTestBank && (
-                        <Badge size={"small"} variant={"warning"}>
-                            Test
-                        </Badge>
-                    )}
-                </div>
-                <div className={styles.bankSection}>
+                {/* Row 1: Title and badges */}
+                <div className={styles.bankRow}>
                     <Title
-                        as={"h4"}
+                        as={"h3"}
                         size={"small"}
-                        className={styles.bankSectionTitle}
+                        icon={<BadgeCheck color={"#0DDB84"} />}
                     >
-                        Campaigns funding status
+                        {panelTitle}
                     </Title>
-                    <Row align={"center"}>
-                        <ToggleFundingStatus bank={bank} />
-                        <Badge
-                            size={"small"}
-                            variant={bank.isDistributing ? "success" : "danger"}
-                        >
-                            {bank.isDistributing ? (
-                                <CheckCircle size={16} />
-                            ) : (
-                                <XCircle size={16} />
-                            )}
-                            {bank.isDistributing ? "Active" : "Inactive"}
-                        </Badge>
-                        <StatusTooltip />
-                    </Row>
+                    <div className={styles.bankHeader}>
+                        {stablecoinInfo && (
+                            <Badge size={"small"} variant={"information"}>
+                                {stablecoinInfo.group}
+                            </Badge>
+                        )}
+                        {isTestBank && (
+                            <Badge size={"small"} variant={"warning"}>
+                                Test
+                            </Badge>
+                        )}
+                    </div>
                 </div>
 
-                <div className={styles.bankSection}>
-                    <Title
-                        as={"h4"}
-                        size={"small"}
-                        className={styles.bankSectionTitle}
-                    >
-                        Balance information
-                    </Title>
-                    <BankAmount
-                        title="Balance:"
-                        balance={bank.balance}
-                        symbol={bank.token.symbol}
-                        decimals={bank.token.decimals}
-                        token={bank.token.address}
-                    />
-                    <BankAmount
-                        title="Total distributed:"
-                        balance={bank.totalDistributed}
-                        symbol={bank.token.symbol}
-                        decimals={bank.token.decimals}
-                        token={bank.token.address}
-                    />
-                    <BankAmount
-                        title="Total claimed:"
-                        balance={bank.totalClaimed}
-                        symbol={bank.token.symbol}
-                        decimals={bank.token.decimals}
-                        token={bank.token.address}
-                    />
+                {/* Row 2: Balance and Status columns */}
+                <div className={styles.bankRow}>
+                    <Columns align="start">
+                        <Column className={styles.balanceColumn}>
+                            <div className={styles.bankSection}>
+                                <Title
+                                    as={"h4"}
+                                    size={"small"}
+                                    className={styles.bankSectionTitle}
+                                >
+                                    Balance information
+                                </Title>
+                                <BankAmount
+                                    title="Balance:"
+                                    balance={bank.balance}
+                                    symbol={bank.token.symbol}
+                                    decimals={bank.token.decimals}
+                                    token={bank.token.address}
+                                />
+                                <BankAmount
+                                    title="Total distributed:"
+                                    balance={bank.totalDistributed}
+                                    symbol={bank.token.symbol}
+                                    decimals={bank.token.decimals}
+                                    token={bank.token.address}
+                                />
+                                <BankAmount
+                                    title="Total claimed:"
+                                    balance={bank.totalClaimed}
+                                    symbol={bank.token.symbol}
+                                    decimals={bank.token.decimals}
+                                    token={bank.token.address}
+                                />
+                            </div>
+                        </Column>
+                        <Column justify={"start"}>
+                            <div className={styles.bankSection}>
+                                <Title
+                                    as={"h4"}
+                                    size={"small"}
+                                    className={styles.bankSectionTitle}
+                                >
+                                    Campaigns funding status
+                                </Title>
+                                <Row align={"center"}>
+                                    <ToggleFundingStatus bank={bank} />
+                                    <Badge
+                                        size={"small"}
+                                        variant={
+                                            bank.isDistributing
+                                                ? "success"
+                                                : "danger"
+                                        }
+                                    >
+                                        {bank.isDistributing ? (
+                                            <CheckCircle size={16} />
+                                        ) : (
+                                            <XCircle size={16} />
+                                        )}
+                                        {bank.isDistributing
+                                            ? "Active"
+                                            : "Inactive"}
+                                    </Badge>
+                                    <StatusTooltip />
+                                </Row>
+                            </div>
+                        </Column>
+                    </Columns>
                 </div>
 
-                <div className={styles.bankActions}>
-                    <FundBalance
-                        bank={bank}
-                        isTestBank={isTestBank}
-                        productId={productId}
-                    />
-                    <WithdrawFunds bank={bank} />
+                {/* Row 3: Actions */}
+                <div className={styles.bankRow}>
+                    <div className={styles.bankActions}>
+                        <FundAction
+                            bank={bank}
+                            isTestBank={isTestBank}
+                            productId={productId}
+                        />
+                        <WithdrawFunds bank={bank} />
+                    </div>
                 </div>
             </div>
         </Panel>
@@ -306,81 +381,6 @@ function ToggleFundingStatus({ bank }: { bank: ProductBank }) {
             />
             {isSettingDistributionStatus && <Spinner />}
         </>
-    );
-}
-
-/**
- * Fund the balance of the bank
- * @returns
- */
-function FundBalance({
-    bank,
-    isTestBank,
-    productId,
-}: { bank: ProductBank; isTestBank: boolean; productId: Hex }) {
-    const { mutate: fundTestBank, isPending } = useFundTestBank();
-    const { data: productMetadata, isLoading: isLoadingProductMetadata } =
-        useProductMetadata({ productId });
-    const isShopify = useMemo(
-        () => productMetadata?.domain?.includes("myshopify") ?? false,
-        [productMetadata]
-    );
-
-    if (isLoadingProductMetadata) {
-        return <Spinner />;
-    }
-
-    if (isShopify) {
-        return (
-            <Columns>
-                <Column>
-                    <p>
-                        You can fund your banks using the Frak shopify
-                        application <pre>apps - Frak - Status - Add funds</pre>{" "}
-                        <Link
-                            href={`https://admin.shopify.com/store/${productMetadata?.domain?.replace(".myshopify.com", "")}/apps/frak/app/status`}
-                            target="_blank"
-                        >
-                            Shopify dashboard
-                        </Link>{" "}
-                    </p>
-                </Column>
-            </Columns>
-        );
-    }
-
-    if (isTestBank) {
-        return (
-            <Columns>
-                <Column>
-                    <p>
-                        <Button
-                            variant={"submit"}
-                            disabled={isPending}
-                            isLoading={isPending}
-                            onClick={() => fundTestBank({ bank: bank.address })}
-                        >
-                            Add funds
-                        </Button>
-                    </p>
-                </Column>
-            </Columns>
-        );
-    }
-
-    return (
-        <Columns>
-            <Column>
-                <p>
-                    <Link
-                        href={process.env.FUNDING_ON_RAMP_URL ?? ""}
-                        target={"_blank"}
-                    >
-                        Add funds
-                    </Link>
-                </p>
-            </Column>
-        </Columns>
     );
 }
 

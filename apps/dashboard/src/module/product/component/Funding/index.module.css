@@ -11,13 +11,19 @@
 .bankContent {
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    gap: 16px;
+}
+
+.bankRow {
+    display: flex;
+    align-items: center;
+    /* justify-content: space-between; */
+    gap: 12px;
 }
 
 .bankHeader {
     display: flex;
     gap: 8px;
-    margin-bottom: -12px;
 }
 
 .bankSection {
@@ -37,6 +43,8 @@
     gap: 12px;
     flex-wrap: wrap;
     align-items: center;
+    justify-content: end;
+    flex-grow: 1;
 }
 
 .addBankButton {
