@@ -1,21 +1,19 @@
 import { sessionAtom } from "@/module/common/atoms/session";
 import { useListenerUI } from "@/module/listener/providers/ListenerUiProvider";
-import type { IFrameRequestResolver } from "@/module/sdk/utils/iFrameRequestResolver";
+import type { WalletRpcContext } from "@/module/listener/types/context";
 import { useInteractionSessionStatus } from "@/module/wallet/hook/useInteractionSessionStatus";
-import type {
-    ExtractedParametersFromRpc,
-    IFrameRpcSchema,
-} from "@frak-labs/core-sdk";
+import { Deferred, type IFrameRpcSchema } from "@frak-labs/core-sdk";
+import type { RpcPromiseHandler } from "@frak-labs/rpc";
 import { useAtomValue } from "jotai";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
+import type { Hex } from "viem";
 import { useAccount } from "wagmi";
 import { trackGenericEvent } from "../../common/analytics";
 
-type OnDisplayEmbeddedWalletRequest = IFrameRequestResolver<
-    Extract<
-        ExtractedParametersFromRpc<IFrameRpcSchema>,
-        { method: "frak_displayEmbeddedWallet" }
-    >
+type OnDisplayEmbeddedWalletRequest = RpcPromiseHandler<
+    IFrameRpcSchema,
+    "frak_displayEmbeddedWallet",
+    WalletRpcContext
 >;
 
 /**
@@ -23,7 +21,7 @@ type OnDisplayEmbeddedWalletRequest = IFrameRequestResolver<
  */
 export function useDisplayEmbeddedWallet(): OnDisplayEmbeddedWalletRequest {
     // Hook used to set the requested listener UI
-    const { setRequest, currentRequest } = useListenerUI();
+    const { setRequest } = useListenerUI();
 
     // Get the session
     const session = useAtomValue(sessionAtom);
@@ -34,54 +32,104 @@ export function useDisplayEmbeddedWallet(): OnDisplayEmbeddedWalletRequest {
         address,
     });
 
+    // Store the current deferred promise for completion
+    const currentDeferredRef = useRef<Deferred<{ wallet: Hex }> | null>(null);
+
     /**
-     * Method when user is logged in and has an active session
+     * Watch for user login and active session
+     * - Resolves the deferred when user is logged in and has an active session
+     * - This handles the completion flow for embedded wallet
      */
     useEffect(() => {
-        if (!session?.address || !sessionStatus) return;
+        const deferred = currentDeferredRef.current;
+        if (!deferred) return;
 
-        if (currentRequest?.type === "embedded") {
-            // Emit the result and exit
-            currentRequest?.emitter({
-                result: {
-                    wallet: session?.address,
-                },
+        // Check if user is logged in and has an active session
+        if (session?.address && sessionStatus) {
+            // Resolve the deferred with the wallet address
+            deferred.resolve({
+                wallet: session.address,
             });
+            currentDeferredRef.current = null;
         }
-    }, [
-        currentRequest?.emitter,
-        currentRequest?.type,
-        session?.address,
-        sessionStatus,
-    ]);
+    }, [session?.address, sessionStatus]);
+
+    /**
+     * Cleanup on component unmount
+     * - Rejects any pending deferred to prevent memory leaks
+     */
+    useEffect(() => {
+        return () => {
+            if (currentDeferredRef.current) {
+                currentDeferredRef.current.reject({
+                    code: -32004, // clientAborted
+                    message: "Embedded wallet handler component unmounted",
+                });
+                currentDeferredRef.current = null;
+            }
+        };
+    }, []);
 
     return useCallback(
-        async (request, _context, emitter) => {
-            const configMetadata = request.params[1];
+        async (params) => {
+            const configMetadata = params[1];
+
+            // Clean up any existing deferred
+            if (currentDeferredRef.current) {
+                currentDeferredRef.current.reject({
+                    code: -1,
+                    message: "New embedded wallet request superseded previous request",
+                });
+                currentDeferredRef.current = null;
+            }
+
+            // Check if user already has a valid session - immediate resolution
+            if (session?.address && sessionStatus) {
+                return { wallet: session.address };
+            }
+
+            // Create a new deferred for this embedded wallet request
+            const deferred = new Deferred<{ wallet: Hex }>();
+            currentDeferredRef.current = deferred;
+
+            // Create emitter that resolves the deferred
+            // This maintains backward compatibility with any legacy code
+            const emitter = async (response: {
+                result?: { wallet: Hex };
+                error?: { code: number; message: string; data?: unknown };
+            }) => {
+                if (response.error) {
+                    deferred.reject(response.error);
+                } else if (response.result) {
+                    deferred.resolve(response.result);
+                }
+            };
 
             setRequest({
                 // Embedded ui specific
                 type: "embedded",
-                params: request.params[0],
+                params: params[0],
                 emitter,
                 // Generic ui
                 appName: configMetadata.name,
-                logoUrl:
-                    request.params[0].metadata?.logo ?? configMetadata.logoUrl,
+                logoUrl: params[0].metadata?.logo ?? configMetadata.logoUrl,
                 homepageLink:
-                    request.params[0].metadata?.homepageLink ??
+                    params[0].metadata?.homepageLink ??
                     configMetadata.homepageLink,
-                targetInteraction:
-                    request.params[0].metadata?.targetInteraction,
+                targetInteraction: params[0].metadata?.targetInteraction,
                 i18n: {
                     lang: configMetadata.lang,
-                    context: request.params[0].loggedIn?.action?.key,
+                    context: params[0].loggedIn?.action?.key,
                 },
                 configMetadata,
             });
 
-            trackGenericEvent("open-embedded-wallet", request.params[0]);
+            trackGenericEvent("open-embedded-wallet", params[0]);
+
+            // Wait for user login via deferred promise
+            // This will resolve when session + sessionStatus are available
+            return await deferred.promise;
         },
-        [setRequest]
+        [setRequest, session?.address, sessionStatus]
     );
 }

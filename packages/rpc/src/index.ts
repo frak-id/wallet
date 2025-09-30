@@ -1,16 +1,19 @@
 /**
  * @frak-labs/rpc
  *
- * Modern RPC communication layer for Frak Wallet SDK
+ * Generic, type-safe RPC communication layer
  *
- * This package provides a type-safe, backward-compatible RPC system for
- * communication between the Frak Wallet and SDK clients.
+ * This package provides a framework-agnostic, generic RPC system for
+ * bidirectional communication over postMessage. It's designed to be
+ * completely generic over the RPC schema type - consumers provide their
+ * own schema definitions.
  *
- * @example Client-side (SDK)
+ * @example Client-side usage
  * ```ts
  * import { createRpcClient } from '@frak-labs/rpc'
+ * import type { IFrameRpcSchema } from '@frak-labs/core-sdk'
  *
- * const client = createRpcClient({
+ * const client = createRpcClient<IFrameRpcSchema>({
  *   transport: window,
  *   targetOrigin: 'https://wallet.frak.id'
  * })
@@ -18,7 +21,7 @@
  * await client.connect()
  *
  * // One-shot request
- * const result = await client.request('frak_sendInteraction', productId, interaction)
+ * const result = await client.request('frak_sendInteraction', [productId, interaction])
  *
  * // Streaming request
  * for await (const status of client.stream('frak_listenToWalletStatus')) {
@@ -26,11 +29,12 @@
  * }
  * ```
  *
- * @example Wallet-side (Listener)
+ * @example Server-side usage
  * ```ts
  * import { createRpcListener } from '@frak-labs/rpc'
+ * import type { IFrameRpcSchema } from '@frak-labs/core-sdk'
  *
- * const listener = createRpcListener({
+ * const listener = createRpcListener<IFrameRpcSchema>({
  *   transport: window,
  *   allowedOrigins: ['https://example.com']
  * })
@@ -56,48 +60,43 @@ export type { RpcClient, RpcClientConfig } from "./client";
 export { createRpcListener } from "./listener";
 export type { RpcListener, RpcListenerConfig } from "./listener";
 
-// RPC Schema
+// Generic RPC Schema types
 export type {
-	IFrameRpcSchema,
-	RpcMethod,
-	RpcSchemaByMethod,
-	RpcParameters,
-	RpcReturnType,
-	RpcResponseType,
-	IsStreamMethod,
-	StreamMethods,
-	PromiseMethods,
-	// Return types
-	WalletStatusReturnType,
-	SendInteractionReturnType,
-	GetProductInformationReturnType,
-	OpenSsoReturnType,
-	TrackSsoReturnType,
-	ModalRpcStepsResultType,
-	DisplayEmbeddedWalletResultType,
-	// Parameter types
-	PreparedInteraction,
-	OpenSsoParamsType,
-	TrackSsoParamsType,
-	ModalRpcStepsInput,
-	ModalRpcMetadata,
-	DisplayEmbeddedWalletParamsType,
-	FrakWalletSdkConfigMetadata,
+    RpcSchema,
+    RpcSchemaEntry,
+    RpcResponseKind,
+    ExtractMethod,
+    ExtractSchemaEntry,
+    ExtractParams,
+    ExtractReturnType,
+    ExtractResponseType,
+    IsStreamMethod,
+    ExtractMethodsByKind,
 } from "./rpc-schema";
 
-// Types
+// Transport and messaging types
 export type {
-	RpcTransport,
-	RpcMessage,
-	RpcResponse,
-	RpcError,
-	RpcRequestContext,
-	TypedRpcRequest,
-	StreamEmitter,
-	PromiseHandler,
-	StreamHandler,
-	ConnectionState,
-	HandshakeConfig,
+    RpcTransport,
+    RpcMessage,
+    RpcResponse,
+    RpcError,
+    RpcRequestContext,
+    RpcMiddlewareContext,
+    RpcMiddleware,
+    TypedRpcRequest,
+    StreamEmitter,
+    RpcPromiseHandler,
+    RpcStreamHandler,
+    ConnectionState,
+    HandshakeConfig,
 } from "./types";
 
 export { FrakRpcError, RpcErrorCodes } from "./types";
+
+// Built-in middleware
+export {
+    createCompressionMiddleware,
+    createLoggingMiddleware,
+    type CompressionMiddlewareConfig,
+    type LoggingMiddlewareConfig,
+} from "./middleware";

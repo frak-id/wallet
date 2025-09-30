@@ -7,9 +7,7 @@
 	"license": "GNU GPL 3.0",
 	"module": "src/index.ts",
 	"main": "./src/index.ts",
-	"dependencies": {
-		"viem": "^2.31.2"
-	},
+	"dependencies": {},
 	"devDependencies": {
 		"@types/bun": "latest"
 	},

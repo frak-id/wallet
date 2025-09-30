@@ -1,254 +1,193 @@
-import type { Hex } from "viem";
-
 /**
- * Wallet status return type
- * Indicates the current state of the wallet connection
- */
-export type WalletStatusReturnType =
-	| { key: "connecting" }
-	| { key: "connected"; wallet: Hex }
-	| { key: "not-connected" };
-
-/**
- * Modal RPC step types
- */
-export type ModalRpcStepsInput = unknown;
-export type ModalRpcStepsResultType = unknown;
-export type ModalRpcMetadata = unknown;
-
-/**
- * Embedded wallet types
- */
-export type DisplayEmbeddedWalletParamsType = unknown;
-export type DisplayEmbeddedWalletResultType = unknown;
-
-/**
- * Interaction types
- */
-export type PreparedInteraction = unknown;
-export type SendInteractionReturnType = {
-	hash?: Hex;
-	status: "success" | "error";
-};
-
-/**
- * Product information types
- */
-export type GetProductInformationReturnType = {
-	productId?: Hex;
-	hasActiveCampaign?: boolean;
-};
-
-/**
- * SSO types
- */
-export type OpenSsoParamsType = {
-	redirectUrl?: string;
-};
-export type OpenSsoReturnType = {
-	token?: string;
-};
-
-export type TrackSsoParamsType = {
-	ssoId: string;
-};
-export type TrackSsoReturnType = {
-	status: "pending" | "success" | "error";
-};
-
-/**
- * Config metadata type
- */
-export type FrakWalletSdkConfigMetadata = {
-	name: string;
-	css?: {
-		primaryColor?: string;
-	};
-};
-
-/**
- * RPC interface that's used for the iframe communication
+ * Generic RPC Schema Types
  *
- * Define all the methods available within the iFrame RPC client with response type annotations
+ * This module defines the shape and structure of RPC schemas without any
+ * domain-specific types. Consumers (like @frak-labs/core-sdk) provide their
+ * own concrete schema types that conform to these generic structures.
  *
- * @group RPC Schema
- *
- * @remarks
- * Each method in the schema now includes a ResponseType field that indicates:
+ * @module rpc-schema
+ */
+
+/**
+ * Response type discriminator for RPC methods
  * - "promise": One-shot request that resolves once
  * - "stream": Streaming request that can emit multiple values
- *
- * ### Methods:
- *
- * #### frak_listenToWalletStatus
- *  - Params: None
- *  - Returns: {@link WalletStatusReturnType}
- *  - Response Type: stream (emits updates when wallet status changes)
- *
- * #### frak_displayModal
- * - Params: [requests: {@link ModalRpcStepsInput}, metadata?: {@link ModalRpcMetadata}, configMetadata: {@link FrakWalletSdkConfigMetadata}]
- * - Returns: {@link ModalRpcStepsResultType}
- * - Response Type: promise (one-shot)
- *
- * #### frak_sendInteraction
- *  - Params: [productId: Hex, interaction: {@link PreparedInteraction}, signature?: Hex]
- *  - Returns: {@link SendInteractionReturnType}
- *  - Response Type: promise (one-shot)
- *
- * #### frak_sso
- *  - Params: [params: {@link OpenSsoParamsType}, name: string, customCss?: string]
- *  - Returns: {@link OpenSsoReturnType}
- *  - Response Type: promise (one-shot)
- *
- * #### frak_trackSso
- *  - Params: [params: {@link TrackSsoParamsType}]
- *  - Returns: {@link TrackSsoReturnType}
- *  - Response Type: promise (one-shot)
- *
- * #### frak_getProductInformation
- *  - Params: None
- *  - Returns: {@link GetProductInformationReturnType}
- *  - Response Type: promise (one-shot)
- *
- * #### frak_displayEmbeddedWallet
- * - Params: [request: {@link DisplayEmbeddedWalletParamsType}, metadata: {@link FrakWalletSdkConfigMetadata}]
- * - Returns: {@link DisplayEmbeddedWalletResultType}
- * - Response Type: promise (one-shot)
  */
-export type IFrameRpcSchema = [
-	/**
-	 * Method used to listen to the wallet status
-	 * This is a streaming method that emits updates when wallet status changes
-	 */
-	{
-		Method: "frak_listenToWalletStatus";
-		Parameters?: undefined;
-		ReturnType: WalletStatusReturnType;
-		ResponseType: "stream";
-	},
-	/**
-	 * Method to display a modal with the provided steps
-	 * This is a one-shot request
-	 */
-	{
-		Method: "frak_displayModal";
-		Parameters: [
-			requests: ModalRpcStepsInput,
-			metadata: ModalRpcMetadata | undefined,
-			configMetadata: FrakWalletSdkConfigMetadata,
-		];
-		ReturnType: ModalRpcStepsResultType;
-		ResponseType: "promise";
-	},
-	/**
-	 * Method to transmit a user interaction
-	 * This is a one-shot request
-	 */
-	{
-		Method: "frak_sendInteraction";
-		Parameters: [
-			productId: Hex,
-			interaction: PreparedInteraction,
-			signature?: Hex,
-		];
-		ReturnType: SendInteractionReturnType;
-		ResponseType: "promise";
-	},
-	/**
-	 * Method to start a SSO
-	 * This is a one-shot request
-	 */
-	{
-		Method: "frak_sso";
-		Parameters: [params: OpenSsoParamsType, name: string, customCss?: string];
-		ReturnType: OpenSsoReturnType;
-		ResponseType: "promise";
-	},
-	/**
-	 * Method to track an SSO session
-	 * This is a one-shot request
-	 */
-	{
-		Method: "frak_trackSso";
-		Parameters: [params: TrackSsoParamsType];
-		ReturnType: TrackSsoReturnType;
-		ResponseType: "promise";
-	},
-	/**
-	 * Method to get current product information's
-	 *  - Is product minted?
-	 *  - Does it have running campaign?
-	 *  - Estimated reward on actions
-	 * This is a one-shot request
-	 */
-	{
-		Method: "frak_getProductInformation";
-		Parameters?: undefined;
-		ReturnType: GetProductInformationReturnType;
-		ResponseType: "promise";
-	},
-	/**
-	 * Method to show the embedded wallet, with potential customization
-	 * This is a one-shot request
-	 */
-	{
-		Method: "frak_displayEmbeddedWallet";
-		Parameters: [
-			request: DisplayEmbeddedWalletParamsType,
-			metadata: FrakWalletSdkConfigMetadata,
-		];
-		ReturnType: DisplayEmbeddedWalletResultType;
-		ResponseType: "promise";
-	},
-];
+export type RpcResponseKind = "promise" | "stream";
 
 /**
- * Extract method names from the schema
+ * Generic shape of a single RPC schema entry
+ *
+ * Each entry defines a method with its parameters, return type, and response kind
+ *
+ * @typeParam TMethod - The method name (string literal)
+ * @typeParam TParams - The parameters type (can be undefined for no parameters)
+ * @typeParam TReturn - The return type
+ * @typeParam TResponseKind - Either "promise" or "stream"
  */
-export type RpcMethod = IFrameRpcSchema[number]["Method"];
+export type RpcSchemaEntry<
+    TMethod extends string = string,
+    TParams = unknown,
+    TReturn = unknown,
+    TResponseKind extends RpcResponseKind = RpcResponseKind,
+> = {
+    /**
+     * The method name (e.g., "frak_sendInteraction")
+     */
+    Method: TMethod;
+    /**
+     * The parameters type (undefined if no parameters)
+     */
+    Parameters?: TParams;
+    /**
+     * The return type
+     */
+    ReturnType: TReturn;
+    /**
+     * The response type ("promise" or "stream")
+     */
+    ResponseType: TResponseKind;
+};
 
 /**
- * Extract schema entry by method name
+ * An RPC schema is a readonly array of schema entries
+ *
+ * @example
+ * ```ts
+ * type MySchema = [
+ *   {
+ *     Method: "greet";
+ *     Parameters: [name: string];
+ *     ReturnType: string;
+ *     ResponseType: "promise";
+ *   },
+ *   {
+ *     Method: "watchTime";
+ *     Parameters?: undefined;
+ *     ReturnType: number;
+ *     ResponseType: "stream";
+ *   }
+ * ]
+ * ```
  */
-export type RpcSchemaByMethod<TMethod extends RpcMethod> = Extract<
-	IFrameRpcSchema[number],
-	{ Method: TMethod }
->;
+export type RpcSchema = readonly RpcSchemaEntry[];
 
 /**
- * Extract parameters for a specific method
+ * Extract method names from a schema
+ *
+ * @typeParam TSchema - The RPC schema type
+ *
+ * @example
+ * ```ts
+ * type Methods = ExtractMethod<MySchema>
+ * // "greet" | "watchTime"
+ * ```
  */
-export type RpcParameters<TMethod extends RpcMethod> =
-	RpcSchemaByMethod<TMethod>["Parameters"];
+export type ExtractMethod<TSchema extends RpcSchema> =
+    TSchema[number]["Method"];
+
+/**
+ * Extract a specific schema entry by method name
+ *
+ * @typeParam TSchema - The RPC schema type
+ * @typeParam TMethod - The method name to extract
+ *
+ * @example
+ * ```ts
+ * type GreetEntry = ExtractSchemaEntry<MySchema, "greet">
+ * // { Method: "greet"; Parameters: [name: string]; ReturnType: string; ResponseType: "promise" }
+ * ```
+ */
+export type ExtractSchemaEntry<
+    TSchema extends RpcSchema,
+    TMethod extends ExtractMethod<TSchema>,
+> = Extract<TSchema[number], { Method: TMethod }>;
+
+/**
+ * Extract parameters type for a specific method
+ *
+ * @typeParam TSchema - The RPC schema type
+ * @typeParam TMethod - The method name
+ *
+ * @example
+ * ```ts
+ * type GreetParams = ExtractParams<MySchema, "greet">
+ * // [name: string]
+ * ```
+ */
+export type ExtractParams<
+    TSchema extends RpcSchema,
+    TMethod extends ExtractMethod<TSchema>,
+> = ExtractSchemaEntry<TSchema, TMethod>["Parameters"];
 
 /**
  * Extract return type for a specific method
+ *
+ * @typeParam TSchema - The RPC schema type
+ * @typeParam TMethod - The method name
+ *
+ * @example
+ * ```ts
+ * type GreetReturn = ExtractReturnType<MySchema, "greet">
+ * // string
+ * ```
  */
-export type RpcReturnType<TMethod extends RpcMethod> =
-	RpcSchemaByMethod<TMethod>["ReturnType"];
+export type ExtractReturnType<
+    TSchema extends RpcSchema,
+    TMethod extends ExtractMethod<TSchema>,
+> = ExtractSchemaEntry<TSchema, TMethod>["ReturnType"];
 
 /**
  * Extract response type for a specific method
+ *
+ * @typeParam TSchema - The RPC schema type
+ * @typeParam TMethod - The method name
+ *
+ * @example
+ * ```ts
+ * type GreetResponseType = ExtractResponseType<MySchema, "greet">
+ * // "promise"
+ * ```
  */
-export type RpcResponseType<TMethod extends RpcMethod> =
-	RpcSchemaByMethod<TMethod>["ResponseType"];
+export type ExtractResponseType<
+    TSchema extends RpcSchema,
+    TMethod extends ExtractMethod<TSchema>,
+> = ExtractSchemaEntry<TSchema, TMethod>["ResponseType"];
 
 /**
  * Check if a method is a stream method
+ *
+ * @typeParam TSchema - The RPC schema type
+ * @typeParam TMethod - The method name
  */
-export type IsStreamMethod<TMethod extends RpcMethod> =
-	RpcResponseType<TMethod> extends "stream" ? true : false;
+export type IsStreamMethod<
+    TSchema extends RpcSchema,
+    TMethod extends ExtractMethod<TSchema>,
+> = ExtractResponseType<TSchema, TMethod> extends "stream" ? true : false;
 
 /**
- * Get all stream methods
+ * Extract all stream methods from a schema
+ *
+ * @typeParam TSchema - The RPC schema type
+ * @typeParam TResponseKind - Filter by response kind ("promise" or "stream")
+ *
+ * @example
+ * ```ts
+ * type StreamMethods = ExtractMethodsByKind<MySchema, "stream">
+ * // "watchTime"
+ *
+ * type PromiseMethods = ExtractMethodsByKind<MySchema, "promise">
+ * // "greet"
+ * ```
  */
-export type StreamMethods = {
-	[K in RpcMethod]: IsStreamMethod<K> extends true ? K : never;
-}[RpcMethod];
-
-/**
- * Get all promise methods
- */
-export type PromiseMethods = {
-	[K in RpcMethod]: IsStreamMethod<K> extends false ? K : never;
-}[RpcMethod];
+export type ExtractMethodsByKind<
+    TSchema extends RpcSchema,
+    TResponseKind extends RpcResponseKind,
+> = {
+    [K in ExtractMethod<TSchema>]: ExtractResponseType<
+        TSchema,
+        K
+    > extends TResponseKind
+        ? K
+        : never;
+}[ExtractMethod<TSchema>];

@@ -1,30 +1,22 @@
+import { createRpcClient } from "@frak-labs/rpc";
 import { OpenPanel } from "@openpanel/web";
 import { type ExtractedParametersFromRpc, FrakRpcError } from "../types";
 import type { FrakClient } from "../types/client";
 import type { FrakWalletSdkConfig } from "../types/config";
 import type { IFrameRpcSchema } from "../types/rpc";
-import { InternalError, RpcErrorCodes } from "../types/rpc/error";
-import type {
-    ListenerRequestFn,
-    RequestFn,
-    RpcResponse,
-} from "../types/transport";
-import { Deferred } from "../utils/Deferred";
-import {
-    decompressDataAndCheckHash,
-    hashAndCompressData,
-} from "../utils/compression";
+import { RpcErrorCodes } from "../types/rpc/error";
+import type { ListenerRequestFn, RequestFn } from "../types/transport";
 import { BACKUP_KEY } from "../utils/constants";
 import { DebugInfoGatherer } from "./DebugInfo";
-import { createIFrameChannelManager } from "./transports/iframeChannelManager";
+import { createCompressionTransport } from "./transports/compressionTransport";
 import {
     type IframeLifecycleManager,
     createIFrameLifecycleManager,
 } from "./transports/iframeLifecycleManager";
 import {
-    type IFrameMessageHandler,
-    createIFrameMessageHandler,
-} from "./transports/iframeMessageHandler";
+    type LifecycleMessageHandler,
+    createLifecycleMessageHandler,
+} from "./transports/lifecycleMessageHandler";
 
 /**
  * Create a new iframe Frak client
@@ -49,27 +41,50 @@ export function createIFrameFrakClient({
     config: FrakWalletSdkConfig;
     iframe: HTMLIFrameElement;
 }): FrakClient {
-    // Build our channel manager
-    const channelManager = createIFrameChannelManager();
+    const frakWalletUrl = config?.walletUrl ?? "https://wallet.frak.id";
+
+    // Create lifecycle manager
     const lifecycleManager = createIFrameLifecycleManager({ iframe });
 
     // Create our debug info gatherer
     const debugInfo = new DebugInfoGatherer(config, iframe);
 
-    // Build our message handler
-    const messageHandler = createIFrameMessageHandler({
-        frakWalletUrl: config?.walletUrl ?? "https://wallet.frak.id",
+    // Create lifecycle message handler (for non-RPC messages)
+    const lifecycleHandler = createLifecycleMessageHandler({
+        frakWalletUrl,
         iframe,
-        channelManager,
-        iframeLifecycleManager: lifecycleManager,
+        lifecycleManager,
         debugInfo,
     });
 
-    // Build our request function
+    // Validate iframe
+    if (!iframe.contentWindow) {
+        throw new FrakRpcError(
+            RpcErrorCodes.configError,
+            "The iframe does not have a content window"
+        );
+    }
+
+    // Create compression transport wrapper
+    const compressionTransport = createCompressionTransport({
+        transport: iframe.contentWindow,
+        targetOrigin: frakWalletUrl,
+    });
+
+    // Create RPC client with schema type
+    const rpcClient = createRpcClient<IFrameRpcSchema>({
+        transport: compressionTransport,
+        targetOrigin: frakWalletUrl,
+    });
+
+    // Connect the RPC client (no handshake for now, maintains backward compatibility)
+    rpcClient.connect();
+
+    // Build our request function that wraps the RPC client
     const request: RequestFn<IFrameRpcSchema> = async <_, TResult>(
         args: ExtractedParametersFromRpc<IFrameRpcSchema>
     ) => {
-        // Ensure the iframe is init
+        // Ensure the iframe is connected
         const isConnected = await lifecycleManager.isConnected;
         if (!isConnected) {
             throw new FrakRpcError(
@@ -78,46 +93,14 @@ export function createIFrameFrakClient({
             );
         }
 
-        // Create the deferrable result
-        const result = new Deferred<TResult>();
-
-        // Create the channel
-        const channelId = channelManager.createChannel((message) => {
-            // Decompress the message
-            const decompressed = decompressDataAndCheckHash<
-                RpcResponse<IFrameRpcSchema>
-            >(message.data);
-            // If it contains an error, reject it
-            if (decompressed.error) {
-                result.reject(
-                    new FrakRpcError(
-                        decompressed.error.code,
-                        decompressed.error.message,
-                        decompressed.error?.data
-                    )
-                );
-            } else {
-                // Otherwise, resolve with the right status
-                result.resolve(decompressed.result as TResult);
-            }
-            // Then close the channel
-            channelManager.removeChannel(channelId);
-        });
-
-        // Compress the message to send
-        const compressedMessage = hashAndCompressData(args);
-
-        // Send the message to the iframe
-        messageHandler.sendEvent({
-            id: channelId,
-            topic: args.method,
-            data: compressedMessage,
-        });
-
-        return result.promise;
+        // Use the RPC client to make the request
+        // The RPC client expects (method, ...params) where params is variadic
+        // args.params is already a tuple or undefined, so we can spread it
+        // @ts-expect-error - Type gymnastics between tuple spreading and variadic args
+        return rpcClient.request(args.method, args.params) as Promise<TResult>;
     };
 
-    // Build our listener function
+    // Build our listener function that wraps the RPC client stream
     const listenerRequest: ListenerRequestFn<IFrameRpcSchema> = async <
         _,
         TResult,
@@ -125,7 +108,7 @@ export function createIFrameFrakClient({
         args: ExtractedParametersFromRpc<IFrameRpcSchema>,
         callback: (result: TResult) => void
     ) => {
-        // Ensure the iframe is init
+        // Ensure the iframe is connected
         const isConnected = await lifecycleManager.isConnected;
         if (!isConnected) {
             throw new FrakRpcError(
@@ -134,42 +117,36 @@ export function createIFrameFrakClient({
             );
         }
 
-        // Create the channel
-        const channelId = channelManager.createChannel((message) => {
-            // Decompress the message
-            const decompressed = decompressDataAndCheckHash<
-                RpcResponse<IFrameRpcSchema>
-            >(message.data);
-            // Transmit the result if it's a success
-            if (decompressed.result) {
-                callback(decompressed.result as TResult);
-            } else {
-                throw new InternalError("No valid result in the response");
+        // Use the RPC client stream and convert to callback pattern
+        // args.params is already a tuple or undefined
+        // @ts-expect-error - Type gymnastics between tuple spreading and variadic args
+        const stream = rpcClient.stream(args.method, args.params);
+
+        // Consume the stream and call the callback for each result
+        // Run this in the background, don't await
+        (async () => {
+            try {
+                for await (const result of stream) {
+                    callback(result as TResult);
+                }
+            } catch (error) {
+                console.error("[Frak Client] Stream error:", error);
+                // Stream errors are logged but not propagated since this runs in background
             }
-        });
-
-        // Compress the message to send
-        const compressedMessage = hashAndCompressData(args);
-
-        // Send the message to the iframe
-        messageHandler.sendEvent({
-            id: channelId,
-            topic: args.method,
-            data: compressedMessage,
-        });
+        })();
     };
 
     // Setup heartbeat
-    const stopHeartbeat = setupHeartbeat(messageHandler, lifecycleManager);
+    const stopHeartbeat = setupHeartbeat(lifecycleHandler, lifecycleManager);
 
     // Build our destroy function
     const destroy = async () => {
         // Stop heartbeat
         stopHeartbeat();
-        // Destroy the channel manager
-        channelManager.destroy();
-        // Cleanup the message handler
-        messageHandler.cleanup();
+        // Cleanup the RPC client
+        rpcClient.cleanup();
+        // Cleanup the lifecycle handler
+        lifecycleHandler.cleanup();
         // Remove the iframe
         iframe.remove();
     };
@@ -213,7 +190,7 @@ export function createIFrameFrakClient({
     // Perform the post connection setup
     const waitForSetup = postConnectionSetup({
         config,
-        messageHandler,
+        lifecycleHandler,
         lifecycleManager,
     }).then(() => debugInfo.updateSetupStatus(true));
 
@@ -231,11 +208,11 @@ export function createIFrameFrakClient({
 
 /**
  * Setup the heartbeat
- * @param messageHandler
+ * @param lifecycleHandler
  * @param lifecycleManager
  */
 function setupHeartbeat(
-    messageHandler: IFrameMessageHandler,
+    lifecycleHandler: LifecycleMessageHandler,
     lifecycleManager: IframeLifecycleManager
 ) {
     const HEARTBEAT_INTERVAL = 100; // Send heartbeat every 100ms until we are connected
@@ -244,7 +221,7 @@ function setupHeartbeat(
     let timeoutId: NodeJS.Timeout;
 
     const sendHeartbeat = () =>
-        messageHandler.sendEvent({
+        lifecycleHandler.sendLifecycleEvent({
             clientLifecycle: "heartbeat",
         });
 
@@ -285,17 +262,17 @@ function setupHeartbeat(
 /**
  * Perform the post connection setup
  * @param config
- * @param messageHandler
+ * @param lifecycleHandler
  * @param lifecycleManager
  */
 async function postConnectionSetup({
     config,
-    messageHandler,
+    lifecycleHandler,
     lifecycleManager,
 }: {
     config: FrakWalletSdkConfig;
     lifecycleManager: IframeLifecycleManager;
-    messageHandler: IFrameMessageHandler;
+    lifecycleHandler: LifecycleMessageHandler;
 }): Promise<void> {
     // Wait for the handler to be connected
     await lifecycleManager.isConnected;
@@ -305,7 +282,7 @@ async function postConnectionSetup({
         const cssLink = config.customizations?.css;
         if (!cssLink) return;
 
-        messageHandler.sendEvent({
+        lifecycleHandler.sendLifecycleEvent({
             clientLifecycle: "modal-css",
             data: { cssLink },
         });
@@ -317,7 +294,7 @@ async function postConnectionSetup({
         if (!i18n) return;
 
         // Push the i18n for each language
-        messageHandler.sendEvent({
+        lifecycleHandler.sendLifecycleEvent({
             clientLifecycle: "modal-i18n",
             data: { i18n },
         });
@@ -330,7 +307,7 @@ async function postConnectionSetup({
         const backup = window.localStorage.getItem(BACKUP_KEY);
         if (!backup) return;
 
-        messageHandler.sendEvent({
+        lifecycleHandler.sendLifecycleEvent({
             clientLifecycle: "restore-backup",
             data: { backup },
         });

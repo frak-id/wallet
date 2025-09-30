@@ -8,8 +8,16 @@ import { useOnTrackSso } from "@/module/listener/hooks/useOnTrackSso";
 import { useSendInteractionListener } from "@/module/listener/hooks/useSendInteractionListener";
 import { useSendPing } from "@/module/listener/hooks/useSendPing";
 import { useWalletStatusListener } from "@/module/listener/hooks/useWalletStatusListener";
+import {
+    compressionMiddleware,
+    loggingMiddleware,
+    walletContextMiddleware,
+} from "@/module/listener/middleware";
 import { ListenerUiProvider } from "@/module/listener/providers/ListenerUiProvider";
-import { createIFrameRequestResolver } from "@/module/sdk/utils/iFrameRequestResolver";
+import type { WalletRpcContext } from "@/module/listener/types/context";
+import { setupLifecycleHandlers } from "@/module/sdk/utils/lifecycleHandlers";
+import type { IFrameRpcSchema } from "@frak-labs/core-sdk";
+import { createRpcListener } from "@frak-labs/rpc";
 import { loadPolyfills } from "@frak-labs/ui/utils/polyfills";
 import { useEffect, useState } from "react";
 
@@ -32,8 +40,11 @@ export default function Listener() {
  * @constructor
  */
 function ListenerContent() {
-    const [resolver, setResolver] = useState<
-        ReturnType<typeof createIFrameRequestResolver> | undefined
+    const [listener, setListener] = useState<
+        | ReturnType<
+              typeof createRpcListener<IFrameRpcSchema, WalletRpcContext>
+          >
+        | undefined
     >(undefined);
 
     // Hook used when a wallet status is requested
@@ -57,51 +68,59 @@ function ListenerContent() {
     // Hook when the product information are asked
     const onGetProductInformation = useOnGetProductInformation();
 
-    // Create the resolver
+    // Create the RPC listener
     useEffect(() => {
-        const newResolver = createIFrameRequestResolver({
-            /**
-             * Listen request on the wallet status
-             */
-            frak_listenToWalletStatus: onWalletListenRequest,
+        if (typeof window === "undefined") {
+            return;
+        }
 
-            /**
-             * Listen request for the send interaction request
-             */
-            frak_sendInteraction: onInteractionRequest,
-
-            /**
-             * Listen request for the modal display request
-             */
-            frak_displayModal: onDisplayModalRequest,
-
-            /**
-             * Listen request for the open sso request
-             */
-            frak_sso: onOpenSso,
-
-            /**
-             * Listen request for the track sso request
-             */
-            frak_trackSso: onTrackSso,
-
-            /**
-             * Listen request for the product information
-             */
-            frak_getProductInformation: onGetProductInformation,
-
-            /**
-             * When the display of the embedded wallet is requested
-             */
-            frak_displayEmbeddedWallet: onDisplayEmbeddedWallet,
+        // Create the listener with schema type and wallet context
+        // Note: We accept all origins with "*" because the actual security validation
+        // happens in walletContextMiddleware (matching computed productId from origin
+        // against stored iframeResolvingContext)
+        //
+        // Middleware stack order:
+        // 1. compressionMiddleware - Decompresses incoming CBOR data with hash validation
+        // 2. loggingMiddleware - Logs requests/responses (development only)
+        // 3. walletContextMiddleware - Augments context with productId, sourceUrl, etc.
+        const newListener = createRpcListener<
+            IFrameRpcSchema,
+            WalletRpcContext
+        >({
+            transport: window,
+            allowedOrigins: "*",
+            middleware: [
+                compressionMiddleware,
+                loggingMiddleware,
+                walletContextMiddleware,
+            ],
         });
 
-        // Set our new resolver
-        setResolver(newResolver);
+        // Register promise-based handlers
+        newListener.handle("frak_sendInteraction", onInteractionRequest);
+        newListener.handle("frak_displayModal", onDisplayModalRequest);
+        newListener.handle("frak_sso", onOpenSso);
+        newListener.handle(
+            "frak_getProductInformation",
+            onGetProductInformation
+        );
+        newListener.handle(
+            "frak_displayEmbeddedWallet",
+            onDisplayEmbeddedWallet
+        );
 
-        // On cleanup, destroy the resolver
+        // Register streaming handlers
+        newListener.handleStream(
+            "frak_listenToWalletStatus",
+            onWalletListenRequest
+        );
+        newListener.handleStream("frak_trackSso", onTrackSso);
+
+        setListener(newListener);
+
+        // On cleanup, destroy the listener
         return () => {
-            newResolver.destroy();
+            newListener.cleanup();
         };
     }, [
         onWalletListenRequest,
@@ -114,13 +133,21 @@ function ListenerContent() {
     ]);
 
     /**
-     * Once all the required state are set, we can start handling the request
+     * Setup lifecycle handlers and emit ready when context is available
      */
     useEffect(() => {
-        if (resolver && typeof onWalletListenRequest === "function") {
-            resolver.setReadyToHandleRequest();
+        if (!listener) {
+            return;
         }
-    }, [resolver, onWalletListenRequest]);
+
+        // Setup lifecycle handlers (handshake, heartbeat, etc.)
+        const cleanupLifecycle = setupLifecycleHandlers(() => {
+            // This callback is called when we're ready to handle requests
+            // The lifecycle handlers already emit the "connected" event
+        });
+
+        return cleanupLifecycle;
+    }, [listener]);
 
     /**
      * Add a data attribute to the root element to style the layout

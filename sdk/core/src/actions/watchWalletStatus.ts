@@ -6,7 +6,7 @@ import { Deferred } from "../utils";
  * Function used to watch the current frak wallet status
  * @param client - The current Frak Client
  * @param callback - The callback that will receive any wallet status change
- * @returns A rpomise resolving with the initial wallet status
+ * @returns A promise resolving with the initial wallet status
  *
  * @description This function will return the current wallet status, and will listen to any change in the wallet status.
  *

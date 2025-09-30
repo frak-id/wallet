@@ -3,40 +3,39 @@ import {
     ssoPopupName,
     useGetOpenSsoLink,
 } from "@/module/authentication/hook/useGetOpenSsoLink";
-import type { IFrameRequestResolver } from "@/module/sdk/utils/iFrameRequestResolver";
-import {
-    type ExtractedParametersFromRpc,
-    type IFrameRpcSchema,
-    RpcErrorCodes,
-} from "@frak-labs/core-sdk";
+import type { WalletRpcContext } from "@/module/listener/types/context";
+import type { IFrameRpcSchema } from "@frak-labs/core-sdk";
+import { RpcErrorCodes } from "@frak-labs/core-sdk";
+import type { RpcPromiseHandler } from "@frak-labs/rpc";
 import { useCallback } from "react";
 
-type OnOpenSso = IFrameRequestResolver<
-    Extract<ExtractedParametersFromRpc<IFrameRpcSchema>, { method: "frak_sso" }>
+type OnOpenSso = RpcPromiseHandler<
+    IFrameRpcSchema,
+    "frak_sso",
+    WalletRpcContext
 >;
 
 /**
  * Hook use to listen to the wallet status
+ *
+ * Note: Context is augmented by middleware with productId, sourceUrl, etc.
  */
 export function useOnOpenSso(): OnOpenSso {
     const getOpenSsoLink = useGetOpenSsoLink();
 
     return useCallback(
-        async (request, context, emitter) => {
+        async (params, context) => {
             // Extract request infos
-            const ssoInfo = request.params[0];
-            const name = request.params[1];
-            const css = request.params[2];
+            const ssoInfo = params[0];
+            const name = params[1];
+            const css = params[2];
 
             // If we are on the server side directly exit with an error
-            if (window === undefined) {
-                await emitter({
-                    error: {
-                        code: RpcErrorCodes.internalError,
-                        message: "Server side not supported",
-                    },
-                });
-                return;
+            if (typeof window === "undefined") {
+                throw {
+                    code: RpcErrorCodes.internalError,
+                    message: "Server side not supported",
+                };
             }
 
             // Determine if we should open in same window
@@ -61,11 +60,8 @@ export function useOnOpenSso(): OnOpenSso {
                 if (openInSameWindow) {
                     // Open in same window
                     window.location.href = ssoLink;
-                    // Emit result with consumeKey if generated
-                    await emitter({
-                        result: { trackingId },
-                    });
-                    return;
+                    // Return result with trackingId
+                    return { trackingId };
                 }
 
                 // Open the popup
@@ -76,23 +72,18 @@ export function useOnOpenSso(): OnOpenSso {
                 );
                 if (openedWindow) {
                     openedWindow.focus();
-                    // Emit result with consumeKey if generated
-                    await emitter({
-                        result: { trackingId },
-                    });
-                    return;
+                    // Return result with trackingId
+                    return { trackingId };
                 }
             } catch (error) {
                 console.warn("Unable to open the SSO page", error);
             }
 
             // If we reach here, opening failed
-            await emitter({
-                error: {
-                    code: RpcErrorCodes.internalError,
-                    message: "Failed to open the SSO",
-                },
-            });
+            throw {
+                code: RpcErrorCodes.internalError,
+                message: "Failed to open the SSO",
+            };
         },
         [getOpenSsoLink]
     );

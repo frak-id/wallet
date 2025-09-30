@@ -1,43 +1,42 @@
 import { addLastAuthenticationAtom } from "@/module/authentication/atoms/lastAuthenticator";
 import { authenticatedWalletApi } from "@/module/common/api/backendClient";
 import { sdkSessionAtom, sessionAtom } from "@/module/common/atoms/session";
+import type { WalletRpcContext } from "@/module/listener/types/context";
 import { pushBackupData } from "@/module/sdk/utils/backup";
-import type { IFrameRequestResolver } from "@/module/sdk/utils/iFrameRequestResolver";
 import type { Session } from "@/types/Session";
-import type {
-    ExtractedParametersFromRpc,
-    IFrameRpcSchema,
-} from "@frak-labs/core-sdk";
+import type { IFrameRpcSchema } from "@frak-labs/core-sdk";
+import { RpcErrorCodes } from "@frak-labs/core-sdk";
+import type { RpcStreamHandler } from "@frak-labs/rpc";
 import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { useCallback } from "react";
 import { trackAuthCompleted, trackAuthFailed } from "../../common/analytics";
 
-type OnTrackSso = IFrameRequestResolver<
-    Extract<
-        ExtractedParametersFromRpc<IFrameRpcSchema>,
-        { method: "frak_trackSso" }
-    >
+type OnTrackSso = RpcStreamHandler<
+    IFrameRpcSchema,
+    "frak_trackSso",
+    WalletRpcContext
 >;
 
 /**
- * Hook to track SSO status via polling
+ * Hook to track SSO status via streaming
+ * Replaces the old polling mechanism with a more efficient streaming approach
+ *
+ * Note: Context is augmented by middleware with productId, sourceUrl, etc.
  */
 export function useOnTrackSso(): OnTrackSso {
-    return useCallback(async (request, context, emitter) => {
+    return useCallback(async (params, emitter, context) => {
         // Extract request infos
-        const { consumeKey, trackingId } = request.params[0];
+        const { consumeKey, trackingId } = params[0];
         const { productId } = context;
 
-        const abortController = new AbortController();
-        let pollInterval: NodeJS.Timeout | undefined;
+        // Emit initial pending status
+        emitter({
+            key: "not-connected",
+        });
 
-        // Function to check SSO status and emit updates
-        // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Will be refacto
-        const checkSsoStatus = async () => {
-            if (abortController.signal.aborted) {
-                return;
-            }
-
+        // Polling mechanism (to be replaced with backend streaming in Phase 3)
+        // For now, we keep polling but with better cleanup support
+        const pollInterval = setInterval(async () => {
             try {
                 const { data, error } =
                     await authenticatedWalletApi.auth.sso.consume.post({
@@ -60,20 +59,15 @@ export function useOnTrackSso(): OnTrackSso {
                 }
 
                 // Stop polling for non-pending statuses
-                if (pollInterval) {
-                    clearInterval(pollInterval);
-                    pollInterval = undefined;
-                }
+                clearInterval(pollInterval);
 
                 // If not found, emit not-connected status
                 if (data.status === "not-found") {
                     await trackAuthFailed("sso", "sso-not-found", {
                         ssoId: trackingId,
                     });
-                    await emitter({
-                        result: {
-                            key: "not-connected",
-                        },
+                    emitter({
+                        key: "not-connected",
                     });
                     return;
                 }
@@ -97,12 +91,10 @@ export function useOnTrackSso(): OnTrackSso {
                     });
 
                     // Emit connected status
-                    await emitter({
-                        result: {
-                            key: "connected",
-                            wallet: session.address,
-                            interactionToken: sdkJwt.token,
-                        },
+                    emitter({
+                        key: "connected",
+                        wallet: session.address,
+                        interactionToken: sdkJwt.token,
                     });
 
                     // Push backup data
@@ -110,18 +102,16 @@ export function useOnTrackSso(): OnTrackSso {
                 }
             } catch (error) {
                 console.error("Error checking SSO status", error);
+                // On error, emit error and stop polling
+                clearInterval(pollInterval);
+                throw {
+                    code: RpcErrorCodes.internalError,
+                    message: "Failed to track SSO status",
+                };
             }
-        };
-
-        // Start polling immediately
-        await checkSsoStatus();
-
-        // Set up polling interval (500ms for frequent checks)
-        pollInterval = setInterval(() => {
-            checkSsoStatus();
         }, 500);
 
-        // Cleanup function (though we can't easily hook into request cancellation)
-        // The interval will continue until a final status is reached
+        // Note: In Phase 3, this will be replaced with a single backend request
+        // that streams status updates, eliminating the polling altogether
     }, []);
 }

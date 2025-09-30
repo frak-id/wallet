@@ -1,68 +1,140 @@
 import { sessionAtom } from "@/module/common/atoms/session";
 import {
     type DisplayedModalStep,
+    displayedRpcModalStepsAtom,
+    modalRpcResultsAtom,
     setNewModalAtom,
 } from "@/module/listener/modal/atoms/modalEvents";
-import { clearRpcModalAtom } from "@/module/listener/modal/atoms/modalUtils";
+import {
+    clearRpcModalAtom,
+    onFinishResultAtom,
+} from "@/module/listener/modal/atoms/modalUtils";
 import { useListenerUI } from "@/module/listener/providers/ListenerUiProvider";
-import type { IFrameRequestResolver } from "@/module/sdk/utils/iFrameRequestResolver";
+import type { WalletRpcContext } from "@/module/listener/types/context";
 import { interactionSessionAtom } from "@/module/wallet/atoms/interactionSession";
 import {
-    type ExtractedParametersFromRpc,
+    Deferred,
     type IFrameRpcSchema,
     type ModalRpcStepsInput,
     type ModalRpcStepsResultType,
     type ModalStepTypes,
     RpcErrorCodes,
 } from "@frak-labs/core-sdk";
+import type { RpcPromiseHandler } from "@frak-labs/rpc";
 import { jotaiStore } from "@frak-labs/ui/atoms/store";
-import { useCallback } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { trackGenericEvent } from "../../common/analytics";
 
-type OnDisplayModalRequest = IFrameRequestResolver<
-    Extract<
-        ExtractedParametersFromRpc<IFrameRpcSchema>,
-        { method: "frak_displayModal" }
-    >
+type OnDisplayModalRequest = RpcPromiseHandler<
+    IFrameRpcSchema,
+    "frak_displayModal",
+    WalletRpcContext
 >;
 
 /**
  * Hook used to listen to the display modal action
+ *
+ * Note: Context is augmented by middleware with productId, sourceUrl, etc.
+ * No need to read from Jotai store.
  */
 export function useDisplayModalListener(): OnDisplayModalRequest {
     // Hook used to set the requested listener UI
     const { setRequest } = useListenerUI();
 
-    return useCallback(
-        async (request, context, emitter) => {
-            // If no modal to display, early exit
-            const steps = request.params[0];
-            if (Object.keys(steps).length === 0) {
-                await emitter({
-                    error: {
-                        code: RpcErrorCodes.invalidRequest,
-                        message: "No modals to display",
-                    },
+    // Store the current deferred promise for completion
+    const currentDeferredRef = useRef<Deferred<ModalRpcStepsResultType> | null>(
+        null
+    );
+
+    /**
+     * Watch for modal completion or dismissal
+     * - Resolves the deferred when all steps are completed
+     * - Rejects the deferred if modal is dismissed
+     * - Cleans up on component unmount
+     */
+    useEffect(() => {
+        // Subscribe to modal state changes
+        const unsubscribe = jotaiStore.sub(displayedRpcModalStepsAtom, () => {
+            const deferred = currentDeferredRef.current;
+            if (!deferred) return;
+
+            // Check if modal is dismissed
+            const modalState = jotaiStore.get(displayedRpcModalStepsAtom);
+            if (modalState?.dismissed) {
+                // User cancelled the modal
+                deferred.reject({
+                    code: RpcErrorCodes.clientAborted,
+                    message: "User dismissed the modal",
                 });
-                jotaiStore.set(clearRpcModalAtom);
+                currentDeferredRef.current = null;
                 return;
             }
+        });
 
-            // Format the steps for our step manager, from { key1: params1, key2 : params2 } to [{key, param}]
-            const stepsPrepared = prepareInputStepsArray(
-                {
-                    appName: request.params[2]?.name,
-                    context,
-                    steps,
-                    metadata: request.params[1],
-                    emitter,
-                }.steps
-            );
+        // Subscribe to completion state
+        const unsubscribeFinish = jotaiStore.sub(onFinishResultAtom, () => {
+            const deferred = currentDeferredRef.current;
+            if (!deferred) return;
+
+            // Check if modal is complete
+            const finishResult = jotaiStore.get(onFinishResultAtom);
+            if (finishResult) {
+                // All steps completed successfully
+                deferred.resolve(finishResult);
+                currentDeferredRef.current = null;
+            }
+        });
+
+        // Cleanup on unmount: reject any pending deferred
+        return () => {
+            unsubscribe();
+            unsubscribeFinish();
+
+            // Reject any pending deferred on unmount
+            if (currentDeferredRef.current) {
+                currentDeferredRef.current.reject({
+                    code: RpcErrorCodes.clientAborted,
+                    message: "Modal handler component unmounted",
+                });
+                currentDeferredRef.current = null;
+            }
+        };
+    }, []);
+
+    return useCallback(
+        async (params, _context) => {
+            // Context is augmented by middleware - no need to read from store
+
+            // Clean up any existing deferred
+            if (currentDeferredRef.current) {
+                currentDeferredRef.current.reject({
+                    code: RpcErrorCodes.internalError,
+                    message: "New modal request superseded previous request",
+                });
+                currentDeferredRef.current = null;
+            }
+
+            // If no modal to display, early exit
+            const steps = params[0];
+            if (Object.keys(steps).length === 0) {
+                jotaiStore.set(clearRpcModalAtom);
+                throw {
+                    code: RpcErrorCodes.invalidRequest,
+                    message: "No modals to display",
+                };
+            }
+
+            // Format the steps for our step manager
+            const stepsPrepared = prepareInputStepsArray(steps);
 
             // Build our initial result array
             const { currentResult, currentStep } = filterStepsToDo({
                 stepsPrepared,
             });
+
+            // Create a new deferred for this modal request
+            const deferred = new Deferred<ModalRpcStepsResultType>();
+            currentDeferredRef.current = deferred;
 
             // Save the new modal
             jotaiStore.set(setNewModalAtom, {
@@ -73,8 +145,21 @@ export function useDisplayModalListener(): OnDisplayModalRequest {
                 initialResult: currentResult as ModalRpcStepsResultType,
             });
 
-            const metadata = request.params[1] ?? {};
-            const configMetadata = request.params[2] ?? {};
+            const metadata = params[1] ?? {};
+            const configMetadata = params[2] ?? {};
+
+            // Create emitter that resolves the deferred
+            // This maintains backward compatibility with any legacy code
+            const emitter = async (response: {
+                result?: ModalRpcStepsResultType;
+                error?: { code: number; message: string; data?: unknown };
+            }) => {
+                if (response.error) {
+                    deferred.reject(response.error);
+                } else if (response.result) {
+                    deferred.resolve(response.result);
+                }
+            };
 
             // Save it on the listener UI provider
             setRequest({
@@ -87,7 +172,7 @@ export function useDisplayModalListener(): OnDisplayModalRequest {
                 appName: configMetadata?.name,
                 logoUrl: metadata?.header?.icon ?? configMetadata?.logoUrl,
                 homepageLink: configMetadata?.homepageLink,
-                targetInteraction: request.params[1]?.targetInteraction,
+                targetInteraction: params[1]?.targetInteraction,
                 configMetadata,
                 i18n: {
                     lang: configMetadata?.lang,
@@ -96,6 +181,10 @@ export function useDisplayModalListener(): OnDisplayModalRequest {
             });
 
             trackModalDisplay(stepsPrepared, currentStep);
+
+            // Wait for modal completion via deferred promise
+            // This will either resolve when all steps complete or reject on dismissal
+            return await deferred.promise;
         },
         [setRequest]
     );
