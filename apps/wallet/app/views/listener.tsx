@@ -4,6 +4,7 @@ import { useDisplayModalListener } from "@/module/listener/hooks/useDisplayModal
 import { useListenerDataPreload } from "@/module/listener/hooks/useListenerDataPreload";
 import { useOnGetProductInformation } from "@/module/listener/hooks/useOnGetProductInformation";
 import { useOnOpenSso } from "@/module/listener/hooks/useOnOpenSso";
+import { useOnTrackSso } from "@/module/listener/hooks/useOnTrackSso";
 import { useSendInteractionListener } from "@/module/listener/hooks/useSendInteractionListener";
 import { useSendPing } from "@/module/listener/hooks/useSendPing";
 import { useWalletStatusListener } from "@/module/listener/hooks/useWalletStatusListener";
@@ -50,6 +51,9 @@ function ListenerContent() {
     // Hook when a modal display is asked
     const onOpenSso = useOnOpenSso();
 
+    // Hook when the client want to track the sso status
+    const onTrackSso = useOnTrackSso();
+
     // Hook when the product information are asked
     const onGetProductInformation = useOnGetProductInformation();
 
@@ -77,6 +81,11 @@ function ListenerContent() {
             frak_sso: onOpenSso,
 
             /**
+             * Listen request for the track sso request
+             */
+            frak_trackSso: onTrackSso,
+
+            /**
              * Listen request for the product information
              */
             frak_getProductInformation: onGetProductInformation,
@@ -99,6 +108,7 @@ function ListenerContent() {
         onInteractionRequest,
         onDisplayModalRequest,
         onOpenSso,
+        onTrackSso,
         onGetProductInformation,
         onDisplayEmbeddedWallet,
     ]);

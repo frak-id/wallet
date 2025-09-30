@@ -50,6 +50,8 @@ export type {
     SsoMetadata,
     OpenSsoParamsType,
     OpenSsoReturnType,
+    TrackSsoParamsType,
+    TrackSsoReturnType,
     Currency,
     Language,
     I18nConfig,

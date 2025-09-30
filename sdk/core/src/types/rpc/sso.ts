@@ -1,4 +1,5 @@
 import type { Hex } from "viem";
+import type { WalletStatusReturnType } from "./walletStatus";
 
 /**
  * SSO Metadata
@@ -57,3 +58,25 @@ export type OpenSsoReturnType = {
      */
     trackingId?: Hex;
 };
+
+/**
+ * Params to track an SSO status
+ * @group RPC Schema
+ */
+export type TrackSsoParamsType = {
+    /**
+     * The consume key needed to track this sso
+     */
+    consumeKey: Hex;
+
+    /**
+     * The tracking key to track for
+     */
+    trackingId: Hex;
+};
+
+/**
+ * Return type when tracking an SSO
+ * @group RPC Schema
+ */
+export type TrackSsoReturnType = WalletStatusReturnType;

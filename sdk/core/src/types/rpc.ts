@@ -14,7 +14,12 @@ import type {
     SendInteractionReturnType,
 } from "./rpc/interaction";
 import type { GetProductInformationReturnType } from "./rpc/productInformation";
-import type { OpenSsoParamsType, OpenSsoReturnType } from "./rpc/sso";
+import type {
+    OpenSsoParamsType,
+    OpenSsoReturnType,
+    TrackSsoParamsType,
+    TrackSsoReturnType,
+} from "./rpc/sso";
 import type { WalletStatusReturnType } from "./rpc/walletStatus";
 
 /**
@@ -95,6 +100,14 @@ export type IFrameRpcSchema = [
             customCss?: string,
         ];
         ReturnType: OpenSsoReturnType;
+    },
+    /**
+     * Method to track an SSO session
+     */
+    {
+        Method: "frak_trackSso";
+        Parameters: [params: TrackSsoParamsType];
+        ReturnType: TrackSsoReturnType;
     },
     /**
      * Method to get current product information's
