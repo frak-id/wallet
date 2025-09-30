@@ -39,7 +39,12 @@ export function useOnOpenSso(): OnOpenSso {
                 return;
             }
 
-            const { url: ssoLink } = await getOpenSsoLink({
+            // Determine if we should open in same window
+            // Default to true if redirectUrl is provided, unless explicitly overridden
+            const openInSameWindow =
+                ssoInfo.openInSameWindow ?? ssoInfo.redirectUrl;
+
+            const { url: ssoLink, trackingId } = await getOpenSsoLink({
                 productId: context.productId,
                 metadata: {
                     ...ssoInfo.metadata,
@@ -48,10 +53,21 @@ export function useOnOpenSso(): OnOpenSso {
                 },
                 directExit: ssoInfo.directExit,
                 redirectUrl: ssoInfo.redirectUrl,
+                consumeKey: ssoInfo.consumeKey,
                 lang: ssoInfo.lang,
             });
 
             try {
+                if (openInSameWindow) {
+                    // Open in same window
+                    window.location.href = ssoLink;
+                    // Emit result with consumeKey if generated
+                    await emitter({
+                        result: { trackingId },
+                    });
+                    return;
+                }
+
                 // Open the popup
                 const openedWindow = window.open(
                     ssoLink,
@@ -60,21 +76,23 @@ export function useOnOpenSso(): OnOpenSso {
                 );
                 if (openedWindow) {
                     openedWindow.focus();
-                    // Emit the end
+                    // Emit result with consumeKey if generated
                     await emitter({
-                        result: undefined,
+                        result: { trackingId },
                     });
                     return;
                 }
-            } finally {
-                // Otherwise, emit an error
-                await emitter({
-                    error: {
-                        code: RpcErrorCodes.internalError,
-                        message: "Failed to open the SSO",
-                    },
-                });
+            } catch (error) {
+                console.warn("Unable to open the SSO page", error);
             }
+
+            // If we reach here, opening failed
+            await emitter({
+                error: {
+                    code: RpcErrorCodes.internalError,
+                    message: "Failed to open the SSO",
+                },
+            });
         },
         [getOpenSsoLink]
     );

@@ -14,7 +14,7 @@ import type {
     SendInteractionReturnType,
 } from "./rpc/interaction";
 import type { GetProductInformationReturnType } from "./rpc/productInformation";
-import type { OpenSsoParamsType } from "./rpc/sso";
+import type { OpenSsoParamsType, OpenSsoReturnType } from "./rpc/sso";
 import type { WalletStatusReturnType } from "./rpc/walletStatus";
 
 /**
@@ -86,7 +86,6 @@ export type IFrameRpcSchema = [
     },
     /**
      * Method to start a SSO
-     *  todo: Should also support direct tracking via a consumeKey
      */
     {
         Method: "frak_sso";
@@ -95,7 +94,7 @@ export type IFrameRpcSchema = [
             name: string,
             customCss?: string,
         ];
-        ReturnType: undefined;
+        ReturnType: OpenSsoReturnType;
     },
     /**
      * Method to get current product information's

@@ -12,7 +12,10 @@ import {
     type CompressedSsoData,
     compressedSsoToParams,
 } from "@/module/authentication/utils/ssoDataCompression";
-import { demoPrivateKeyAtom } from "@/module/common/atoms/session";
+import {
+    demoPrivateKeyAtom,
+    sdkSessionAtom,
+} from "@/module/common/atoms/session";
 import { Grid } from "@/module/common/component/Grid";
 import { Notice } from "@/module/common/component/Notice";
 import type { Session } from "@/types/Session";
@@ -45,6 +48,12 @@ export default function Sso() {
      * The current metadata
      */
     const currentMetadata = useAtomValue(currentSsoMetadataAtom);
+
+    /**
+     * Check if we have a redirectUrl
+     */
+    const ssoContext = useAtomValue(ssoContextAtom);
+    const hasRedirectUrl = !!ssoContext?.redirectUrl;
 
     /**
      * The success state after login or register
@@ -132,15 +141,41 @@ export default function Sso() {
     const redirectOrClose = useCallback(() => {
         // Check the current atom context
         const ssoContext = jotaiStore.get(ssoContextAtom);
-        // If we got a redirect, redirect to the page directly
+        // If we got a redirect, redirect to the page directly with success status
         if (ssoContext?.redirectUrl) {
-            window.location.href = decodeURIComponent(ssoContext.redirectUrl);
+            const redirectUrl = new URL(
+                decodeURIComponent(ssoContext.redirectUrl)
+            );
+            redirectUrl.searchParams.set("status", "success");
+
+            // Get the SDK JWT from the atom
+            // todo: send session + sdk sesison, bb64 encoded, and provide a method in the sdk to set that in the backup storage, to ensure we can use that output in the connection
+            const sdkSession = jotaiStore.get(sdkSessionAtom);
+            if (sdkSession?.token) {
+                redirectUrl.searchParams.set("sdkJwt", sdkSession.token);
+            }
+
+            window.location.href = redirectUrl.toString();
             return;
         }
         // If we got a direct exit, close this window
         if (ssoContext?.directExit) {
             window.close();
             return;
+        }
+    }, []);
+
+    /**
+     * Cancel SSO and redirect back
+     */
+    const cancelAndRedirect = useCallback(() => {
+        const ssoContext = jotaiStore.get(ssoContextAtom);
+        if (ssoContext?.redirectUrl) {
+            const redirectUrl = new URL(
+                decodeURIComponent(ssoContext.redirectUrl)
+            );
+            redirectUrl.searchParams.set("status", "cancel");
+            window.location.href = redirectUrl.toString();
         }
     }, []);
 
@@ -163,13 +198,23 @@ export default function Sso() {
                                 }}
                             />
                         </Notice>
-                        <Link
-                            to={"/recovery"}
-                            className={styles.sso__recover}
-                            viewTransition
-                        >
-                            <CloudUpload /> {t("authent.sso.recover")}
-                        </Link>
+                        {hasRedirectUrl ? (
+                            <button
+                                onClick={cancelAndRedirect}
+                                className={styles.sso__recover}
+                                type={"button"}
+                            >
+                                {t("authent.sso.cancel")}
+                            </button>
+                        ) : (
+                            <Link
+                                to={"/recovery"}
+                                className={styles.sso__recover}
+                                viewTransition
+                            >
+                                <CloudUpload /> {t("authent.sso.recover")}
+                            </Link>
+                        )}
                     </>
                 }
             >

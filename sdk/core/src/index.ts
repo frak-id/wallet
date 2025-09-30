@@ -49,6 +49,7 @@ export type {
     SendInteractionReturnType,
     SsoMetadata,
     OpenSsoParamsType,
+    OpenSsoReturnType,
     Currency,
     Language,
     I18nConfig,

@@ -11,6 +11,7 @@ export type {
 export type {
     SsoMetadata,
     OpenSsoParamsType,
+    OpenSsoReturnType,
 } from "./rpc/sso";
 export type {
     TokenAmountType,

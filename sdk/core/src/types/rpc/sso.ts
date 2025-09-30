@@ -1,3 +1,5 @@
+import type { Hex } from "viem";
+
 /**
  * SSO Metadata
  */
@@ -27,6 +29,15 @@ export type OpenSsoParamsType = {
      */
     directExit?: boolean;
     /**
+     * If true, opens SSO in same window instead of popup
+     * Defaults to true when redirectUrl is provided, false otherwise
+     */
+    openInSameWindow?: boolean;
+    /**
+     * An optional consumeKey if the website want to do SSO status polling
+     */
+    consumeKey?: Hex;
+    /**
      * Language of the SSO page (optional)
      * It will default to the current user language (or "en" if unsupported language)
      */
@@ -35,4 +46,14 @@ export type OpenSsoParamsType = {
      * Custom SSO metadata
      */
     metadata: SsoMetadata;
+};
+
+/**
+ * Response after an SSO has been openned
+ */
+export type OpenSsoReturnType = {
+    /**
+     * Optionnal tracking id, if a consumeKey where provided in the input
+     */
+    trackingId?: Hex;
 };
