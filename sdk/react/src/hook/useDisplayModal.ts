@@ -1,11 +1,10 @@
-import {
-    ClientNotFound,
-    type DisplayModalParamsType,
-    type FrakRpcError,
-    type ModalRpcStepsResultType,
-    type ModalStepTypes,
+import type {
+    DisplayModalParamsType,
+    ModalRpcStepsResultType,
+    ModalStepTypes,
 } from "@frak-labs/core-sdk";
 import { displayModal } from "@frak-labs/core-sdk/actions";
+import { ClientNotFound, type FrakRpcError } from "@frak-labs/rpc";
 import { type UseMutationOptions, useMutation } from "@tanstack/react-query";
 import { useFrakClient } from "./useFrakClient";
 

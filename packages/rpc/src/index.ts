@@ -64,14 +64,11 @@ export type { RpcListener, RpcListenerConfig } from "./listener";
 export type {
     RpcSchema,
     RpcSchemaEntry,
-    RpcResponseKind,
     ExtractMethod,
     ExtractSchemaEntry,
     ExtractParams,
     ExtractReturnType,
-    ExtractResponseType,
-    IsStreamMethod,
-    ExtractMethodsByKind,
+    ExtractedParametersFromRpc,
 } from "./rpc-schema";
 
 // Transport and messaging types
@@ -87,24 +84,35 @@ export type {
     StreamEmitter,
     RpcPromiseHandler,
     RpcStreamHandler,
-    ConnectionState,
-    HandshakeConfig,
     // New message types
     LifecycleMessage,
     ClientLifecycleMessage,
     IFrameLifecycleMessage,
-    CustomMessage,
     AnyMessage,
     LifecycleHandler,
-    CustomMessageHandler,
 } from "./types";
 
-export { FrakRpcError, RpcErrorCodes } from "./types";
+export {
+    FrakRpcError,
+    MethodNotFoundError,
+    InternalError,
+    ClientNotFound,
+    RpcErrorCodes,
+} from "./error";
 
 // Built-in middleware
 export {
-    createCompressionMiddleware,
-    createLoggingMiddleware,
-    type CompressionMiddlewareConfig,
-    type LoggingMiddlewareConfig,
+    clientCompressionMiddleware,
+    listenerCompressionMiddleware,
 } from "./middleware";
+
+// Utils helpers
+export { Deferred } from "./utils/deferred";
+export {
+    compressJson,
+    decompressJson,
+    decompressDataAndCheckHash,
+    hashAndCompressData,
+    type CompressedData,
+    type HashProtectedData,
+} from "./utils/compression";

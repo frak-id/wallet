@@ -1,8 +1,11 @@
 import type { WalletRpcContext } from "@/module/listener/types/context";
 import { usePushInteraction } from "@/module/wallet/hook/usePushInteraction";
 import type { IFrameRpcSchema } from "@frak-labs/core-sdk";
-import { RpcErrorCodes } from "@frak-labs/core-sdk";
-import type { RpcPromiseHandler } from "@frak-labs/rpc";
+import {
+    FrakRpcError,
+    RpcErrorCodes,
+    type RpcPromiseHandler,
+} from "@frak-labs/rpc";
 import { useCallback } from "react";
 
 type OnInteractionRequest = RpcPromiseHandler<
@@ -46,10 +49,10 @@ export function useSendInteractionListener(): OnInteractionRequest {
                         contextProductId: context.productId,
                     }
                 );
-                throw {
-                    code: RpcErrorCodes.configError,
-                    message: "Product ID mismatch",
-                };
+                throw new FrakRpcError(
+                    RpcErrorCodes.configError,
+                    "Product ID mismatch"
+                );
             }
 
             // Push the interaction
@@ -62,20 +65,20 @@ export function useSendInteractionListener(): OnInteractionRequest {
             // Depending on the status, return different things
             switch (status) {
                 case "pending-wallet":
-                    throw {
-                        code: RpcErrorCodes.walletNotConnected,
-                        message: "User isn't connected",
-                    };
+                    throw new FrakRpcError(
+                        RpcErrorCodes.walletNotConnected,
+                        "User isn't connected"
+                    );
                 case "no-sdk-session":
-                    throw {
-                        code: RpcErrorCodes.serverErrorForInteractionDelegation,
-                        message: "Unable to get a safe token",
-                    };
+                    throw new FrakRpcError(
+                        RpcErrorCodes.serverErrorForInteractionDelegation,
+                        "Unable to get a safe token"
+                    );
                 case "push-error":
-                    throw {
-                        code: RpcErrorCodes.serverErrorForInteractionDelegation,
-                        message: "Unable to push the interaction",
-                    };
+                    throw new FrakRpcError(
+                        RpcErrorCodes.serverErrorForInteractionDelegation,
+                        "Unable to push the interaction"
+                    );
                 case "success":
                     return { delegationId };
             }

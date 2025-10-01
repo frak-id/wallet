@@ -44,14 +44,13 @@ export function SsoButton({
     } = useListenerWithRequestUI();
 
     // Get the link to use with the SSO
-    const { link, trackingId } = useSsoLink({
+    const { link } = useSsoLink({
         productId,
         metadata: {
             name: appName,
             ...ssoMetadata,
         },
         directExit: true,
-        useConsumeKey: true,
         lang,
     });
 
@@ -59,26 +58,17 @@ export function SsoButton({
         return null;
     }
 
-    return (
-        <RegularSsoButton
-            link={link}
-            text={text}
-            className={className}
-            trackingId={trackingId}
-        />
-    );
+    return <RegularSsoButton link={link} text={text} className={className} />;
 }
 
 function RegularSsoButton({
     link,
     text,
     className,
-    trackingId,
 }: {
     link: string;
     text: ReactNode;
     className?: string;
-    trackingId?: string;
 }) {
     const [failToOpen, setFailToOpen] = useState(false);
 
@@ -86,12 +76,7 @@ function RegularSsoButton({
     if (failToOpen) {
         return (
             <>
-                <LinkSsoButton
-                    link={link}
-                    text={text}
-                    className={className}
-                    trackingId={trackingId}
-                />
+                <LinkSsoButton link={link} text={text} className={className} />
             </>
         );
     }
@@ -110,9 +95,7 @@ function RegularSsoButton({
                 // If we got a window, focus it and save the clicked state
                 if (openedWindow) {
                     openedWindow.focus();
-                    trackAuthInitiated("sso", {
-                        ssoId: trackingId,
-                    });
+                    trackAuthInitiated("sso");
                 } else {
                     // Otherwise, mark that we fail to open it
                     setFailToOpen(true);
@@ -132,12 +115,10 @@ function LinkSsoButton({
     link,
     text,
     className,
-    trackingId,
 }: {
     link: string;
     text: ReactNode;
     className?: string;
-    trackingId?: string;
 }) {
     return (
         <a
@@ -146,9 +127,7 @@ function LinkSsoButton({
             target="frak-sso"
             rel="noreferrer"
             onClick={() => {
-                trackAuthInitiated("sso", {
-                    ssoId: trackingId,
-                });
+                trackAuthInitiated("sso");
             }}
         >
             {text}

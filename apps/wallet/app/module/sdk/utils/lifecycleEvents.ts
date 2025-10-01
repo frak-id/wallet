@@ -5,5 +5,9 @@ import type { IFrameLifecycleEvent } from "@frak-labs/core-sdk";
  * @param event
  */
 export function emitLifecycleEvent(event: IFrameLifecycleEvent) {
-    window.parent?.postMessage(event, "*");
+    try {
+        window.parent?.postMessage(event, "*");
+    } catch (e) {
+        console.warn("Unable to post lifecycle event", e);
+    }
 }

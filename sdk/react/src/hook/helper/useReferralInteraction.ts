@@ -1,11 +1,9 @@
-import {
-    ClientNotFound,
-    type DisplayEmbeddedWalletParamsType,
-} from "@frak-labs/core-sdk";
+import type { DisplayEmbeddedWalletParamsType } from "@frak-labs/core-sdk";
 import {
     type ProcessReferralOptions,
     processReferral,
 } from "@frak-labs/core-sdk/actions";
+import { ClientNotFound } from "@frak-labs/rpc";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import type { Hex } from "viem";

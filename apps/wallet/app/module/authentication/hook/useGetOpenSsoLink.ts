@@ -1,20 +1,10 @@
-import {
-    type AppSpecificSsoMetadata,
-    ssoConsumeKey,
-} from "@/module/authentication/atoms/sso";
+import type { AppSpecificSsoMetadata } from "@/module/authentication/atoms/sso";
 import { ssoKey } from "@/module/authentication/queryKeys/sso";
 import { ssoParamsToCompressed } from "@/module/authentication/utils/ssoDataCompression";
-import { authenticatedWalletApi } from "@/module/common/api/backendClient";
-import {
-    getFromLocalStorage,
-    getSafeSession,
-} from "@/module/listener/utils/localStorage";
 import { compressJsonToB64 } from "@frak-labs/core-sdk";
-import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { useQuery } from "@tanstack/react-query";
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 import type { Hex } from "viem";
-import { generatePrivateKey } from "viem/accounts";
 
 /**
  * Feature for the sso popup
@@ -28,12 +18,11 @@ export const ssoPopupName = "frak-sso";
  */
 export function useGetOpenSsoLink() {
     return useCallback(
-        async ({
+        ({
             productId,
             metadata,
             directExit,
             redirectUrl,
-            consumeKey,
             lang,
         }: {
             productId: Hex;
@@ -52,22 +41,6 @@ export function useGetOpenSsoLink() {
                 lang,
             });
 
-            // If we got a consumption key, we want sso tracking, thus we need to call the backend to obtain a trackable link
-            if (consumeKey) {
-                const { data } =
-                    await authenticatedWalletApi.auth.sso.create.post({
-                        productId,
-                        consumeKey,
-                        params: compressedParam,
-                    });
-                if (data) {
-                    return {
-                        url: data.link,
-                        trackingId: data.trackingId,
-                    };
-                }
-            }
-
             // Otherwise, just compress the params and send them
             const compressedString = compressJsonToB64(compressedParam);
 
@@ -77,7 +50,7 @@ export function useGetOpenSsoLink() {
             ssoUrl.searchParams.set("p", compressedString);
 
             // Return the link
-            return { url: ssoUrl.toString() };
+            return ssoUrl.toString();
         },
         []
     );
@@ -91,50 +64,15 @@ export function useSsoLink({
     metadata,
     directExit,
     redirectUrl,
-    useConsumeKey,
     lang,
 }: {
     productId: Hex;
     metadata: AppSpecificSsoMetadata;
     directExit?: boolean;
     redirectUrl?: string;
-    useConsumeKey?: boolean;
     lang?: "en" | "fr";
 }) {
     const getLink = useGetOpenSsoLink();
-
-    // Get the current consuming key if needed
-    const safeConsumeKey = useMemo(() => {
-        if (!useConsumeKey) return undefined;
-
-        const consumeKey =
-            jotaiStore.get(ssoConsumeKey) ??
-            getFromLocalStorage<{
-                key: Hex;
-                generatedAt: number;
-            }>("frak_ssoConsumeKey");
-
-        // If we don't have a current consume key, generate a new one
-        if (!consumeKey) {
-            console.log("Generating new consume key cause of null", {
-                consumeKey,
-            });
-            const key = generatePrivateKey();
-            jotaiStore.set(ssoConsumeKey, { key, generatedAt: Date.now() });
-            return key;
-        }
-        getSafeSession();
-
-        // If we don't have a current consume key, generate a new one
-        if (Date.now() - consumeKey.generatedAt > 3600000) {
-            console.log("Generating new consume key cause of exp");
-            const key = generatePrivateKey();
-            jotaiStore.set(ssoConsumeKey, { key, generatedAt: Date.now() });
-            return key;
-        }
-
-        return consumeKey.key;
-    }, [useConsumeKey]);
 
     const { data, ...query } = useQuery({
         queryKey: ssoKey.link.full({
@@ -143,7 +81,6 @@ export function useSsoLink({
             directExit,
             redirectUrl,
             lang,
-            consumeKey: safeConsumeKey,
         }),
         queryFn: async () => {
             // Return the link
@@ -153,7 +90,6 @@ export function useSsoLink({
                 directExit,
                 redirectUrl,
                 lang,
-                consumeKey: safeConsumeKey,
             });
         },
         // Try to refetch the link the least possible (to keep the sso opened)
@@ -163,8 +99,7 @@ export function useSsoLink({
     });
 
     return {
-        link: data?.url,
-        trackingId: data?.trackingId,
+        link: data,
         ...query,
     };
 }

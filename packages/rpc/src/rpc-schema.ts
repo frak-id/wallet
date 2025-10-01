@@ -8,12 +8,7 @@
  * @module rpc-schema
  */
 
-/**
- * Response type discriminator for RPC methods
- * - "promise": One-shot request that resolves once
- * - "stream": Streaming request that can emit multiple values
- */
-export type RpcResponseKind = "promise" | "stream";
+import type { Prettify } from "viem";
 
 /**
  * Generic shape of a single RPC schema entry
@@ -29,7 +24,6 @@ export type RpcSchemaEntry<
     TMethod extends string = string,
     TParams = unknown,
     TReturn = unknown,
-    TResponseKind extends RpcResponseKind = RpcResponseKind,
 > = {
     /**
      * The method name (e.g., "frak_sendInteraction")
@@ -43,10 +37,6 @@ export type RpcSchemaEntry<
      * The return type
      */
     ReturnType: TReturn;
-    /**
-     * The response type ("promise" or "stream")
-     */
-    ResponseType: TResponseKind;
 };
 
 /**
@@ -121,6 +111,33 @@ export type ExtractParams<
 > = ExtractSchemaEntry<TSchema, TMethod>["Parameters"];
 
 /**
+ * Type that extract the possible parameters from a RPC Schema
+ * @ignore
+ */
+export type ExtractedParametersFromRpc<TRpcSchema extends RpcSchema> = {
+    [K in keyof TRpcSchema]: Prettify<
+        {
+            method: TRpcSchema[K] extends TRpcSchema[number]
+                ? TRpcSchema[K]["Method"]
+                : string;
+        } & (TRpcSchema[K] extends TRpcSchema[number]
+            ? TRpcSchema[K]["Parameters"] extends undefined
+                ? { params?: never }
+                : { params: TRpcSchema[K]["Parameters"] }
+            : never)
+    >;
+}[number];
+
+/**
+ * Type that extract the possible parameters from a RPC Schema
+ * @ignore
+ */
+export type ExtractedSpecificParametersFromRpc<
+    TRpcSchema extends RpcSchema,
+    TMethod extends ExtractMethod<TRpcSchema>,
+> = Extract<ExtractedParametersFromRpc<TRpcSchema>, { method: TMethod }>;
+
+/**
  * Extract return type for a specific method
  *
  * @typeParam TSchema - The RPC schema type
@@ -136,58 +153,3 @@ export type ExtractReturnType<
     TSchema extends RpcSchema,
     TMethod extends ExtractMethod<TSchema>,
 > = ExtractSchemaEntry<TSchema, TMethod>["ReturnType"];
-
-/**
- * Extract response type for a specific method
- *
- * @typeParam TSchema - The RPC schema type
- * @typeParam TMethod - The method name
- *
- * @example
- * ```ts
- * type GreetResponseType = ExtractResponseType<MySchema, "greet">
- * // "promise"
- * ```
- */
-export type ExtractResponseType<
-    TSchema extends RpcSchema,
-    TMethod extends ExtractMethod<TSchema>,
-> = ExtractSchemaEntry<TSchema, TMethod>["ResponseType"];
-
-/**
- * Check if a method is a stream method
- *
- * @typeParam TSchema - The RPC schema type
- * @typeParam TMethod - The method name
- */
-export type IsStreamMethod<
-    TSchema extends RpcSchema,
-    TMethod extends ExtractMethod<TSchema>,
-> = ExtractResponseType<TSchema, TMethod> extends "stream" ? true : false;
-
-/**
- * Extract all stream methods from a schema
- *
- * @typeParam TSchema - The RPC schema type
- * @typeParam TResponseKind - Filter by response kind ("promise" or "stream")
- *
- * @example
- * ```ts
- * type StreamMethods = ExtractMethodsByKind<MySchema, "stream">
- * // "watchTime"
- *
- * type PromiseMethods = ExtractMethodsByKind<MySchema, "promise">
- * // "greet"
- * ```
- */
-export type ExtractMethodsByKind<
-    TSchema extends RpcSchema,
-    TResponseKind extends RpcResponseKind,
-> = {
-    [K in ExtractMethod<TSchema>]: ExtractResponseType<
-        TSchema,
-        K
-    > extends TResponseKind
-        ? K
-        : never;
-}[ExtractMethod<TSchema>];

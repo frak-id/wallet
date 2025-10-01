@@ -79,6 +79,9 @@ export default defineConfig(({ mode, isSsrBuild }: ConfigEnv): UserConfig => {
     return {
         ...baseConfig,
         plugins: [reactRouter(), mkcert(), tsconfigPaths()],
+        resolve: {
+            conditions: ["development"],
+        },
         server: {
             port: 3000,
             proxy: {},

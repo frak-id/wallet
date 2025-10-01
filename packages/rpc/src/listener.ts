@@ -1,11 +1,6 @@
+import { FrakRpcError, RpcErrorCodes } from "./error";
+import type { ExtractMethod, RpcSchema } from "./rpc-schema";
 import type {
-    ExtractMethod,
-    ExtractMethodsByKind,
-    RpcSchema,
-} from "./rpc-schema";
-import type {
-    CustomMessage,
-    CustomMessageHandler,
     LifecycleHandler,
     LifecycleMessage,
     RpcMessage,
@@ -18,7 +13,6 @@ import type {
     RpcTransport,
     StreamEmitter,
 } from "./types";
-import { FrakRpcError, RpcErrorCodes } from "./types";
 
 /**
  * RPC Listener configuration
@@ -70,20 +64,6 @@ export type RpcListenerConfig<TContext = Record<string, never>> = {
         clientLifecycle?: LifecycleHandler;
         iframeLifecycle?: LifecycleHandler;
     };
-    /**
-     * Custom message handler
-     * Handles messages with a "type" field (e.g., SSO completion)
-     *
-     * @example
-     * ```ts
-     * customMessageHandler: (message, context) => {
-     *   if (message.type === 'sso-complete') {
-     *     handleSsoCompletion(message.payload)
-     *   }
-     * }
-     * ```
-     */
-    customMessageHandler?: CustomMessageHandler;
 };
 
 /**
@@ -100,7 +80,7 @@ export type RpcListener<
     /**
      * Register a handler for a promise-based method
      */
-    handle: <TMethod extends ExtractMethodsByKind<TSchema, "promise">>(
+    handle: <TMethod extends ExtractMethod<TSchema>>(
         method: TMethod,
         handler: RpcPromiseHandler<TSchema, TMethod, TContext>
     ) => void;
@@ -108,7 +88,7 @@ export type RpcListener<
     /**
      * Register a handler for a streaming method
      */
-    handleStream: <TMethod extends ExtractMethodsByKind<TSchema, "stream">>(
+    handleStream: <TMethod extends ExtractMethod<TSchema>>(
         method: TMethod,
         handler: RpcStreamHandler<TSchema, TMethod, TContext>
     ) => void;
@@ -127,45 +107,41 @@ export type RpcListener<
 /**
  * Create an RPC listener for Wallet-side communication
  *
- * @typeParam TSchema - The RPC schema type
+ * Supports multiple schemas via union types, enabling a single listener to handle
+ * different RPC protocols (e.g., IFrameRpcSchema | SsoRpcSchema).
+ *
+ * @typeParam TSchema - The RPC schema type (can be a union of multiple schemas)
  * @typeParam TContext - Custom context type augmented by middleware
  * @param config - Listener configuration
  * @returns RPC listener instance
  *
  * @example
  * ```ts
- * import type { IFrameRpcSchema } from '@frak-labs/core-sdk'
+ * import type { IFrameRpcSchema, SsoRpcSchema } from '@frak-labs/core-sdk'
  *
- * // Basic usage without middleware
+ * // Single schema
  * const listener = createRpcListener<IFrameRpcSchema>({
  *   transport: window,
- *   allowedOrigins: ['https://example.com', 'https://app.example.com']
+ *   allowedOrigins: ['https://example.com']
  * })
  *
- * // With middleware for context augmentation
- * type WalletContext = { productId: string, sourceUrl: string }
- * const listener = createRpcListener<IFrameRpcSchema, WalletContext>({
+ * // Multiple schemas (union type)
+ * type CombinedSchema = IFrameRpcSchema | SsoRpcSchema
+ * const listener = createRpcListener<CombinedSchema, WalletContext>({
  *   transport: window,
- *   allowedOrigins: ['https://example.com'],
- *   middleware: [
- *     contextAugmentationMiddleware,
- *     loggingMiddleware
- *   ]
+ *   allowedOrigins: '*',
+ *   middleware: [compressionMiddleware, contextMiddleware]
  * })
  *
- * // Register a promise handler (context now includes custom fields)
+ * // Register handlers for IFrame methods
  * listener.handle('frak_sendInteraction', async (params, context) => {
- *   const [productId, interaction, signature] = params
- *   // context.productId and context.sourceUrl are available
  *   return { status: 'success', hash: '0x...' }
  * })
  *
- * // Register a stream handler
- * listener.handleStream('frak_listenToWalletStatus', (params, emit, context) => {
- *   emit({ key: 'connecting' })
- *   setTimeout(() => {
- *     emit({ key: 'connected', wallet: '0x...' })
- *   }, 1000)
+ * // Register handlers for SSO methods
+ * listener.handle('sso_complete', async (params, context) => {
+ *   const [session, sdkJwt, ssoId] = params
+ *   return { success: true }
  * })
  * ```
  */
@@ -178,7 +154,6 @@ export function createRpcListener<
         allowedOrigins,
         middleware = [],
         lifecycleHandlers,
-        customMessageHandler,
     } = config;
 
     // Normalize allowed origins to an array
@@ -188,20 +163,12 @@ export function createRpcListener<
 
     // Handler registries
     const promiseHandlers = new Map<
-        ExtractMethodsByKind<TSchema, "promise">,
-        RpcPromiseHandler<
-            TSchema,
-            ExtractMethodsByKind<TSchema, "promise">,
-            TContext
-        >
+        ExtractMethod<TSchema>,
+        RpcPromiseHandler<TSchema, ExtractMethod<TSchema>, TContext>
     >();
     const streamHandlers = new Map<
-        ExtractMethodsByKind<TSchema, "stream">,
-        RpcStreamHandler<
-            TSchema,
-            ExtractMethodsByKind<TSchema, "stream">,
-            TContext
-        >
+        ExtractMethod<TSchema>,
+        RpcStreamHandler<TSchema, ExtractMethod<TSchema>, TContext>
     >();
 
     /**
@@ -233,16 +200,6 @@ export function createRpcListener<
             return false;
         }
         return "clientLifecycle" in data || "iframeLifecycle" in data;
-    }
-
-    /**
-     * Check if a message is a custom message
-     */
-    function isCustomMessage(data: unknown): data is CustomMessage {
-        if (typeof data !== "object" || !data) {
-            return false;
-        }
-        return "type" in data && !("id" in data || "topic" in data);
     }
 
     /**
@@ -384,28 +341,6 @@ export function createRpcListener<
     }
 
     /**
-     * Handle custom messages
-     * These bypass middleware and compression
-     */
-    async function handleCustomMessageInternal(
-        message: CustomMessage,
-        context: RpcRequestContext
-    ) {
-        if (!customMessageHandler) {
-            return;
-        }
-
-        try {
-            await customMessageHandler(message, context);
-        } catch (error) {
-            console.error(
-                "[RPC Listener] Custom message handler error:",
-                error
-            );
-        }
-    }
-
-    /**
      * Handle incoming messages
      * Routes messages to appropriate handlers based on message type
      */
@@ -431,19 +366,10 @@ export function createRpcListener<
             return;
         }
 
-        // Route custom messages (no middleware, no compression)
-        if (isCustomMessage(event.data)) {
-            await handleCustomMessageInternal(event.data, baseContext);
-            return;
-        }
-
         // Must be an RPC message - validate format
         if (!isRpcMessage(event.data)) {
             return;
         }
-
-        // Handle RPC message with middleware
-        const { id, topic, data } = event.data;
 
         // Execute onRequest middleware to augment context
         let augmentedContext: RpcMiddlewareContext<TContext>;
@@ -457,102 +383,93 @@ export function createRpcListener<
             sendError(
                 event.source,
                 event.origin,
-                id,
-                topic,
+                event.data.id,
+                event.data.topic,
                 error instanceof Error ? error : new Error(String(error))
             );
             return;
         }
 
+        // Try to handle the rpc message
+        try {
+            await handleRpcMessage(event, augmentedContext);
+        } catch (error) {
+            sendError(
+                event.source,
+                event.origin,
+                event.data.id,
+                event.data.topic,
+                error instanceof Error ? error : new Error(String(error))
+            );
+        }
+    }
+
+    /**
+     * Inner function to directly handle an rpc message
+     */
+    async function handleRpcMessage(
+        event: MessageEvent<RpcMessage>,
+        context: RpcMiddlewareContext<TContext>
+    ) {
+        // Refetch the id, topic and data after middleware passes
+        const { id, topic, data } = event.data;
+
         // Check for promise handler
         const promiseHandler = promiseHandlers.get(
-            topic as ExtractMethodsByKind<TSchema, "promise">
+            topic as ExtractMethod<TSchema>
         );
         if (promiseHandler) {
-            try {
-                // Use type assertion since we know the handler matches the method (can fail)
-                const result = await (
-                    promiseHandler as (
-                        params: unknown,
-                        context: RpcMiddlewareContext<TContext>
-                    ) => Promise<unknown>
-                )(data, augmentedContext);
+            // Use type assertion since we know the handler matches the method (can fail)
+            const result = await promiseHandler(data, context);
 
-                // Execute middlware on the response (can fail)
-                const response = await executeOnResponseMiddleware(
-                    event.data,
-                    { result },
-                    augmentedContext
-                );
+            // Execute middlware on the response (can fail)
+            const response = await executeOnResponseMiddleware(
+                event.data,
+                { result },
+                context
+            );
 
-                sendResponse(event.source, event.origin, id, topic, response);
-            } catch (error) {
-                sendError(
-                    event.source,
-                    event.origin,
-                    id,
-                    topic,
-                    error instanceof Error ? error : new Error(String(error))
-                );
-            }
+            sendResponse(event.source, event.origin, id, topic, response);
             return;
         }
 
         // Check for stream handler
         const streamHandler = streamHandlers.get(
-            topic as ExtractMethodsByKind<TSchema, "stream">
+            topic as ExtractMethod<TSchema>
         );
         if (streamHandler) {
-            try {
-                // Create an emitter function for the handler
-                // Note: For streams, we apply onResponse middleware to each chunk
-                const emitter: StreamEmitter<unknown> = async (chunk) => {
-                    let response: RpcResponse = { result: chunk };
-                    try {
-                        response = await executeOnResponseMiddleware(
-                            event.data,
-                            response,
-                            augmentedContext
-                        );
-                    } catch (error) {
-                        // Log but don't fail the stream - just skip this chunk
-                        console.error(
-                            "[RPC Listener] Middleware failed on stream chunk:",
-                            error
-                        );
-                        return;
-                    }
-                    sendResponse(
-                        event.source,
-                        event.origin,
-                        id,
-                        topic,
-                        response
+            // Create an emitter function for the handler
+            // Note: For streams, we apply onResponse middleware to each chunk
+            const emitter: StreamEmitter<unknown> = async (chunk) => {
+                let response: RpcResponse;
+                try {
+                    response = await executeOnResponseMiddleware(
+                        event.data,
+                        { result: chunk },
+                        context
                     );
-                };
+                } catch (error) {
+                    // Log but don't fail the stream - just skip this chunk
+                    console.error(
+                        "[RPC Listener] Middleware failed on stream chunk:",
+                        error
+                    );
+                    return;
+                }
+                sendResponse(event.source, event.origin, id, topic, response);
+            };
 
-                // Call the stream handler with type assertion
-                await (
-                    streamHandler as (
-                        params: unknown,
-                        emitter: StreamEmitter<unknown>,
-                        context: RpcMiddlewareContext<TContext>
-                    ) => Promise<void> | void
-                )(data, emitter, augmentedContext);
-            } catch (error) {
-                sendError(
-                    event.source,
-                    event.origin,
-                    id,
-                    topic,
-                    error instanceof Error ? error : new Error(String(error))
-                );
-            }
+            // Call the stream handler with type assertion
+            await streamHandler(data, emitter, context);
             return;
         }
 
         // No handler found
-        console.error("[RPC Listener] No handler found for method:", topic);
+        console.error("[RPC Listener] No handler found for method:", {
+            topic,
+            handlers: streamHandlers.keys(),
+            promiseHandler: promiseHandlers.keys(),
+        });
         sendError(
             event.source,
             event.origin,
@@ -571,7 +488,7 @@ export function createRpcListener<
     /**
      * Register a promise handler
      */
-    function handle<TMethod extends ExtractMethodsByKind<TSchema, "promise">>(
+    function handle<TMethod extends ExtractMethod<TSchema>>(
         method: TMethod,
         handler: RpcPromiseHandler<TSchema, TMethod, TContext>
     ): void {
@@ -580,7 +497,7 @@ export function createRpcListener<
             method,
             handler as RpcPromiseHandler<
                 TSchema,
-                ExtractMethodsByKind<TSchema, "promise">,
+                ExtractMethod<TSchema>,
                 TContext
             >
         );
@@ -589,9 +506,7 @@ export function createRpcListener<
     /**
      * Register a stream handler
      */
-    function handleStream<
-        TMethod extends ExtractMethodsByKind<TSchema, "stream">,
-    >(
+    function handleStream<TMethod extends ExtractMethod<TSchema>>(
         method: TMethod,
         handler: RpcStreamHandler<TSchema, TMethod, TContext>
     ): void {
@@ -600,7 +515,7 @@ export function createRpcListener<
             method,
             handler as RpcStreamHandler<
                 TSchema,
-                ExtractMethodsByKind<TSchema, "stream">,
+                ExtractMethod<TSchema>,
                 TContext
             >
         );
@@ -610,12 +525,8 @@ export function createRpcListener<
      * Unregister a handler
      */
     function unregister(method: ExtractMethod<TSchema>): void {
-        promiseHandlers.delete(
-            method as ExtractMethodsByKind<TSchema, "promise">
-        );
-        streamHandlers.delete(
-            method as ExtractMethodsByKind<TSchema, "stream">
-        );
+        promiseHandlers.delete(method as ExtractMethod<TSchema>);
+        streamHandlers.delete(method as ExtractMethod<TSchema>);
     }
 
     /**

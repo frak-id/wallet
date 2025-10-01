@@ -1,5 +1,4 @@
 import { sessionAtom } from "@/module/common/atoms/session";
-import type { IFrameResolvingContext } from "@/module/sdk/utils/iFrameRequestResolver";
 import { emitLifecycleEvent } from "@/module/sdk/utils/lifecycleEvents";
 import {
     type ClientLifecycleEvent,
@@ -9,6 +8,9 @@ import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { atom, useAtomValue } from "jotai";
 import { type Address, isAddressEqual, keccak256, toHex } from "viem";
 import { updateGlobalProperties } from "../../common/analytics";
+import type { WalletRpcContext } from "../types/context";
+
+type IFrameResolvingContext = Omit<WalletRpcContext, "source">;
 
 /**
  * The atom storing the current iframe resolving context

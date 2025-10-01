@@ -1,36 +1,74 @@
+import { FrakRpcError } from "./error";
 import type {
     ExtractMethod,
-    ExtractMethodsByKind,
-    ExtractParams,
     ExtractReturnType,
+    ExtractedParametersFromRpc,
+    ExtractedSpecificParametersFromRpc,
     RpcSchema,
 } from "./rpc-schema";
 import type {
-    ConnectionState,
-    HandshakeConfig,
+    LifecycleHandler,
+    LifecycleMessage,
     RpcMessage,
+    RpcMiddleware,
+    RpcMiddlewareContext,
+    RpcRequestContext,
     RpcResponse,
     RpcTransport,
 } from "./types";
+import { Deferred } from "./utils/deferred";
 
 /**
  * RPC Client configuration
  *
  * @typeParam TSchema - The RPC schema type
  */
-export type RpcClientConfig = {
+export type RpcClientConfig<TSchema extends RpcSchema> = {
     /**
-     * The transport to use for communication (e.g., window or iframe.contentWindow)
+     * The transport to use for emitting events (e.g., window or iframe.contentWindow)
      */
-    transport: RpcTransport;
+    emittingTransport: RpcTransport;
+    /**
+     * The transport to use for listening to events (e.g., window or iframe.contentWindow)
+     */
+    listeningTransport: RpcTransport;
     /**
      * The target origin for postMessage
      */
     targetOrigin: string;
     /**
-     * Optional handshake configuration
+     * Middleware stack (executed in order)
+     * Middleware can transform outgoing requests and incoming responses
+     * Client-side middleware uses empty context {}
+     *
+     * @example
+     * ```ts
+     * middleware: [
+     *   compressionMiddleware,  // Compress outgoing, decompress incoming
+     *   loggingMiddleware,      // Log RPC calls
+     * ]
+     * ```
      */
-    handshake?: HandshakeConfig;
+    middleware?: RpcMiddleware<TSchema>[];
+    /**
+     * Lifecycle event handlers
+     * Handles incoming lifecycle events from the server
+     *
+     * @example
+     * ```ts
+     * lifecycleHandlers: {
+     *   iframeLifecycle: (event, data) => {
+     *     if (event === 'connected') {
+     *       console.log('Wallet ready')
+     *     }
+     *   }
+     * }
+     * ```
+     */
+    lifecycleHandlers?: {
+        clientLifecycle?: LifecycleHandler;
+        iframeLifecycle?: LifecycleHandler;
+    };
 };
 
 /**
@@ -41,37 +79,44 @@ export type RpcClientConfig = {
  */
 export type RpcClient<TSchema extends RpcSchema> = {
     /**
-     * Connect and establish communication with the wallet
-     * Should be called before making requests
-     */
-    connect: () => Promise<void>;
-
-    /**
      * Make a one-shot request that returns a promise
      * Used for methods with ResponseType: "promise"
      */
-    request: <TMethod extends ExtractMethodsByKind<TSchema, "promise">>(
-        method: TMethod,
-        ...params: ExtractParams<TSchema, TMethod> extends undefined
-            ? []
-            : [ExtractParams<TSchema, TMethod>]
+    request: <TMethod extends ExtractMethod<TSchema>>(
+        args: ExtractedSpecificParametersFromRpc<TSchema, TMethod>
     ) => Promise<ExtractReturnType<TSchema, TMethod>>;
 
     /**
-     * Make a streaming request that returns an async iterator
+     * Subscribe to a listener method with a callback
      * Used for methods with ResponseType: "stream"
+     * Returns an unsubscribe function
+     *
+     * @example
+     * ```ts
+     * const unsubscribe = client.listen('frak_listenToWalletStatus', (status) => {
+     *   console.log('Status:', status)
+     * })
+     *
+     * // Later, unsubscribe
+     * unsubscribe()
+     * ```
      */
-    stream: <TMethod extends ExtractMethodsByKind<TSchema, "stream">>(
-        method: TMethod,
-        ...params: ExtractParams<TSchema, TMethod> extends undefined
-            ? []
-            : [ExtractParams<TSchema, TMethod>]
-    ) => AsyncIterableIterator<ExtractReturnType<TSchema, TMethod>>;
+    listen: <TMethod extends ExtractMethod<TSchema>>(
+        args: ExtractedSpecificParametersFromRpc<TSchema, TMethod>,
+        callback: (result: ExtractReturnType<TSchema, TMethod>) => void
+    ) => () => void;
 
     /**
-     * Get the current connection state
+     * Send a lifecycle event to the server
+     * Bypasses middleware and is used for connection management
+     *
+     * @example
+     * ```ts
+     * client.sendLifecycle({ clientLifecycle: 'heartbeat' })
+     * client.sendLifecycle({ clientLifecycle: 'modal-css', data: { cssLink: '...' } })
+     * ```
      */
-    getState: () => ConnectionState;
+    sendLifecycle: (message: LifecycleMessage) => void;
 
     /**
      * Clean up resources and close connections
@@ -80,21 +125,9 @@ export type RpcClient<TSchema extends RpcSchema> = {
 };
 
 /**
- * Pending request tracking
+ * Channel callback function type
  */
-type PendingRequest<T = unknown> = {
-    resolve: (value: T) => void;
-    reject: (error: Error) => void;
-};
-
-/**
- * Stream controller for managing async iteration
- */
-type StreamController<T> = {
-    push: (value: T) => void;
-    error: (err: Error) => void;
-    end: () => void;
-};
+type ChannelCallback = (response: RpcResponse) => void;
 
 /**
  * Create an RPC client for SDK-side communication
@@ -108,7 +141,8 @@ type StreamController<T> = {
  * import type { IFrameRpcSchema } from '@frak-labs/core-sdk'
  *
  * const client = createRpcClient<IFrameRpcSchema>({
- *   transport: window,
+ *   emittingTransport: window,
+ *   listeningTransport: window,
  *   targetOrigin: 'https://wallet.frak.id'
  * })
  *
@@ -117,28 +151,128 @@ type StreamController<T> = {
  * // One-shot request
  * const result = await client.request('frak_sendInteraction', [productId, interaction])
  *
- * // Streaming request
- * for await (const status of client.stream('frak_listenToWalletStatus')) {
+ * // Listener
+ * const unsubscribe = client.listen('frak_listenToWalletStatus', (status) => {
  *   console.log('Wallet status:', status)
- * }
+ * })
  * ```
  */
 export function createRpcClient<TSchema extends RpcSchema>(
-    config: RpcClientConfig
+    config: RpcClientConfig<TSchema>
 ): RpcClient<TSchema> {
-    const { transport, targetOrigin, handshake } = config;
+    const {
+        emittingTransport,
+        listeningTransport,
+        targetOrigin,
+        middleware = [],
+        lifecycleHandlers,
+    } = config;
 
-    // Connection state
-    let state: ConnectionState = "disconnected";
+    // Active channels map (stores callbacks for both requests and listeners)
+    const activeChannels = new Map<string, ChannelCallback>();
 
-    // Pending requests (for promise-based methods)
-    const pendingRequests = new Map<string, PendingRequest<unknown>>();
+    /**
+     * Check if a message is a lifecycle message
+     */
+    function isLifecycleMessage(data: unknown): data is LifecycleMessage {
+        if (typeof data !== "object" || !data) {
+            return false;
+        }
+        return "clientLifecycle" in data || "iframeLifecycle" in data;
+    }
 
-    // Active streams (for streaming methods)
-    const activeStreams = new Map<string, StreamController<unknown>>();
+    /**
+     * Check if a message is an RPC message
+     */
+    function isRpcMessage(data: unknown): data is RpcMessage {
+        if (typeof data !== "object" || !data) {
+            return false;
+        }
+        return "id" in data && "topic" in data && "data" in data;
+    }
 
-    // Message handler
-    function handleMessage(
+    /**
+     * Handle incoming lifecycle messages
+     */
+    async function handleLifecycleMessage(message: LifecycleMessage) {
+        try {
+            if (
+                "clientLifecycle" in message &&
+                lifecycleHandlers?.clientLifecycle
+            ) {
+                await lifecycleHandlers.clientLifecycle(
+                    message.clientLifecycle,
+                    message.data,
+                    { origin: targetOrigin, source: null }
+                );
+            } else if (
+                "iframeLifecycle" in message &&
+                lifecycleHandlers?.iframeLifecycle
+            ) {
+                await lifecycleHandlers.iframeLifecycle(
+                    message.iframeLifecycle,
+                    message.data,
+                    { origin: targetOrigin, source: null }
+                );
+            }
+        } catch (error) {
+            console.error("[RPC Client] Lifecycle handler error:", error);
+        }
+    }
+
+    /**
+     * Execute middleware onRequest hooks in sequence
+     */
+    async function executeOnRequestMiddleware(
+        message: RpcMessage<ExtractMethod<TSchema>>
+    ): Promise<RpcMessage<ExtractMethod<TSchema>>> {
+        const clientContext = {
+            origin: targetOrigin,
+            source: null,
+        } as RpcRequestContext;
+
+        for (const mw of middleware) {
+            if (mw.onRequest) {
+                await mw.onRequest(
+                    message,
+                    clientContext as RpcMiddlewareContext<Record<string, never>>
+                );
+            }
+        }
+
+        return message;
+    }
+
+    /**
+     * Execute middleware onResponse hooks in sequence
+     */
+    async function executeOnResponseMiddleware(
+        message: RpcMessage<ExtractMethod<TSchema>>,
+        response: RpcResponse
+    ): Promise<RpcResponse> {
+        const clientContext = {
+            origin: targetOrigin,
+            source: null,
+        } as RpcRequestContext;
+
+        let finalResponse = response;
+        for (const mw of middleware) {
+            if (mw.onResponse) {
+                finalResponse = await mw.onResponse(
+                    message,
+                    finalResponse,
+                    clientContext as RpcMiddlewareContext<Record<string, never>>
+                );
+            }
+        }
+
+        return finalResponse;
+    }
+
+    /**
+     * Handle incoming RPC messages
+     */
+    async function handleMessage(
         event: MessageEvent<RpcMessage<ExtractMethod<TSchema>>>
     ) {
         // Validate origin
@@ -146,6 +280,11 @@ export function createRpcClient<TSchema extends RpcSchema>(
             const messageOrigin = new URL(event.origin).origin.toLowerCase();
             const expectedOrigin = new URL(targetOrigin).origin.toLowerCase();
             if (messageOrigin !== expectedOrigin) {
+                console.log(
+                    "Not expected origin",
+                    messageOrigin,
+                    expectedOrigin
+                );
                 return;
             }
         } catch (e) {
@@ -153,271 +292,159 @@ export function createRpcClient<TSchema extends RpcSchema>(
             return;
         }
 
-        // Validate message format
-        if (
-            typeof event.data !== "object" ||
-            !event.data ||
-            !("id" in event.data) ||
-            !("topic" in event.data) ||
-            !("data" in event.data)
-        ) {
+        // Route lifecycle messages (no middleware)
+        if (isLifecycleMessage(event.data)) {
+            await handleLifecycleMessage(event.data);
             return;
         }
 
-        const { id, data } = event.data;
-
-        // Check if this is a response to a pending request
-        const pending = pendingRequests.get(id);
-        if (pending) {
-            handlePromiseResponse(id, data, pending);
+        // Must be an RPC message
+        if (!isRpcMessage(event.data)) {
             return;
         }
 
-        // Check if this is a stream update
-        const stream = activeStreams.get(id);
-        if (stream) {
-            handleStreamResponse(id, data, stream);
+        // Apply middleware to incoming response
+        let processedResponse: RpcResponse;
+        try {
+            processedResponse = await executeOnResponseMiddleware(
+                event.data,
+                event.data.data as RpcResponse
+            );
+        } catch (error) {
+            console.error("[RPC Client] Middleware error on response:", error);
             return;
         }
-    }
 
-    /**
-     * Handle response for promise-based requests
-     */
-    function handlePromiseResponse(
-        id: string,
-        data: unknown,
-        pending: PendingRequest<unknown>
-    ) {
-        const response = data as RpcResponse;
-
-        if (response.error) {
-            const error = new Error(response.error.message) as Error & {
-                code: number;
-                data?: unknown;
-            };
-            error.name = "FrakRpcError";
-            error.code = response.error.code;
-            error.data = response.error.data;
-            pending.reject(error);
-        } else {
-            pending.resolve(response.result);
-        }
-
-        // Clean up
-        pendingRequests.delete(id);
-    }
-
-    /**
-     * Handle response for streaming requests
-     */
-    function handleStreamResponse(
-        id: string,
-        data: unknown,
-        stream: StreamController<unknown>
-    ) {
-        const response = data as RpcResponse;
-
-        if (response.error) {
-            const error = new Error(response.error.message) as Error & {
-                code: number;
-                data?: unknown;
-            };
-            error.name = "FrakRpcError";
-            error.code = response.error.code;
-            error.data = response.error.data;
-            stream.error(error);
-            activeStreams.delete(id);
-        } else {
-            // Push the result to the stream
-            stream.push(response.result);
+        // Find and call the callback for this channel
+        const callback = activeChannels.get(event.data.id);
+        if (callback) {
+            callback(processedResponse);
         }
     }
 
     /**
-     * Send a message through the transport
+     * Send a message through the transport with middleware
      */
-    function sendMessage(message: RpcMessage<ExtractMethod<TSchema>>) {
-        transport.postMessage(message, targetOrigin);
+    async function sendMessage(message: RpcMessage<ExtractMethod<TSchema>>) {
+        let processedMessage = message;
+        try {
+            processedMessage = await executeOnRequestMiddleware(message);
+        } catch (error) {
+            console.error("[RPC Client] Middleware error on request:", error);
+            throw error;
+        }
+
+        emittingTransport.postMessage(processedMessage, targetOrigin);
     }
 
     /**
-     * Generate a unique request ID
+     * Send a lifecycle event (bypasses middleware)
+     */
+    function sendLifecycle(message: LifecycleMessage) {
+        emittingTransport.postMessage(
+            message as unknown as RpcMessage,
+            targetOrigin
+        );
+    }
+
+    /**
+     * Generate a unique channel ID
      */
     function generateId(): string {
         return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
     }
 
     // Set up message listener
-    transport.addEventListener("message", handleMessage);
+    listeningTransport.addEventListener("message", handleMessage);
 
     /**
-     * Connect and establish communication
+     * Make a one-shot request that returns a promise
      */
-    async function connect(): Promise<void> {
-        if (state === "connected") {
-            return;
-        }
-
-        state = "connecting";
-
-        // For now, we consider connected immediately
-        // In Phase 2, we can add handshake logic here
-        if (handshake?.required) {
-            // TODO: Implement handshake protocol
-            // This would involve sending a handshake request and waiting for response
-        }
-
-        state = "connected";
-    }
-
-    /**
-     * Make a one-shot request
-     */
-    function request<TMethod extends ExtractMethodsByKind<TSchema, "promise">>(
-        method: TMethod,
-        ...params: ExtractParams<TSchema, TMethod> extends undefined
-            ? []
-            : [ExtractParams<TSchema, TMethod>]
+    function request<TMethod extends ExtractMethod<TSchema>>(
+        args: ExtractedParametersFromRpc<TSchema>
     ): Promise<ExtractReturnType<TSchema, TMethod>> {
-        if (state !== "connected") {
-            return Promise.reject(
-                new Error(
-                    `[RPC Client] Not connected. Call connect() first. Current state: ${state}`
-                )
-            );
-        }
-
-        return new Promise<ExtractReturnType<TSchema, TMethod>>(
-            (resolve, reject) => {
-                const id = generateId();
-
-                // Store the pending request
-                pendingRequests.set(id, {
-                    resolve: resolve as (value: unknown) => void,
-                    reject,
-                });
-
-                // Send the message (maintaining backward compatible format)
-                sendMessage({
-                    id,
-                    topic: method,
-                    data: params[0],
-                });
-            }
-        );
-    }
-
-    /**
-     * Make a streaming request
-     */
-    async function* stream<
-        TMethod extends ExtractMethodsByKind<TSchema, "stream">,
-    >(
-        method: TMethod,
-        ...params: ExtractParams<TSchema, TMethod> extends undefined
-            ? []
-            : [ExtractParams<TSchema, TMethod>]
-    ): AsyncIterableIterator<ExtractReturnType<TSchema, TMethod>> {
-        if (state !== "connected") {
-            throw new Error(
-                `[RPC Client] Not connected. Call connect() first. Current state: ${state}`
-            );
-        }
-
         const id = generateId();
+        const deferred = new Deferred<ExtractReturnType<TSchema, TMethod>>();
 
-        // Create a queue for buffering stream values
-        const queue: ExtractReturnType<TSchema, TMethod>[] = [];
-        let resolveNext:
-            | ((
-                  value: IteratorResult<ExtractReturnType<TSchema, TMethod>>
-              ) => void)
-            | null = null;
-        let streamEnded = false;
-        let streamError: Error | null = null;
+        // Create callback that resolves/rejects the deferred and closes the channel
+        const callback = (response: RpcResponse) => {
+            if (response.error) {
+                deferred.reject(
+                    new FrakRpcError(
+                        response.error.code,
+                        response.error.message,
+                        response.error.data
+                    )
+                );
+            } else {
+                deferred.resolve(
+                    response.result as ExtractReturnType<TSchema, TMethod>
+                );
+            }
 
-        // Create stream controller
-        const controller: StreamController<
-            ExtractReturnType<TSchema, TMethod>
-        > = {
-            push: (value: ExtractReturnType<TSchema, TMethod>) => {
-                if (resolveNext) {
-                    // If there's a pending read, resolve it immediately
-                    resolveNext({ value, done: false });
-                    resolveNext = null;
-                } else {
-                    // Otherwise, buffer the value
-                    queue.push(value);
-                }
-            },
-            error: (err: Error) => {
-                streamError = err;
-                streamEnded = true;
-                if (resolveNext) {
-                    resolveNext({ value: undefined, done: true });
-                    resolveNext = null;
-                }
-            },
-            end: () => {
-                streamEnded = true;
-                if (resolveNext) {
-                    resolveNext({ value: undefined, done: true });
-                    resolveNext = null;
-                }
-            },
+            // Close channel after response
+            activeChannels.delete(id);
         };
 
-        // Register the stream
-        activeStreams.set(id, controller as StreamController<unknown>);
+        // Store callback
+        activeChannels.set(id, callback);
 
-        // Send the initial request
+        // Send message
         sendMessage({
             id,
-            topic: method,
-            data: params[0],
+            topic: args.method,
+            data: { method: args.method, params: args.params },
+        }).catch((error) => {
+            activeChannels.delete(id);
+            deferred.reject(error);
         });
 
-        // Yield values from the stream
-        try {
-            while (!streamEnded || queue.length > 0) {
-                // If there's an error, throw it
-                if (streamError) {
-                    throw streamError;
-                }
-
-                // If there are queued values, yield them
-                if (queue.length > 0) {
-                    const value = queue.shift();
-                    if (value !== undefined) {
-                        yield value;
-                    }
-                    continue;
-                }
-
-                // If stream has ended and queue is empty, we're done
-                if (streamEnded) {
-                    break;
-                }
-
-                // Wait for the next value
-                await new Promise<
-                    IteratorResult<ExtractReturnType<TSchema, TMethod>>
-                >((resolve) => {
-                    resolveNext = resolve;
-                });
-            }
-        } finally {
-            // Clean up the stream
-            activeStreams.delete(id);
-        }
+        return deferred.promise;
     }
 
     /**
-     * Get current connection state
+     * Subscribe to a listener method with a callback
      */
-    function getState(): ConnectionState {
-        return state;
+    function listen<TMethod extends ExtractMethod<TSchema>>(
+        args: ExtractedParametersFromRpc<TSchema>,
+        callback: (result: ExtractReturnType<TSchema, TMethod>) => void
+    ): () => void {
+        const id = generateId();
+
+        // Create callback that calls user's callback for each response
+        const channelCallback = (response: RpcResponse) => {
+            if (response.error) {
+                console.error("[RPC Client] Listener error:", response.error);
+                // Close channel on error
+                activeChannels.delete(id);
+            } else {
+                // Call user's callback with the result
+                callback(
+                    response.result as ExtractReturnType<TSchema, TMethod>
+                );
+            }
+        };
+
+        // Store callback
+        activeChannels.set(id, channelCallback);
+
+        // Send message
+        sendMessage({
+            id,
+            topic: args.method,
+            data: { method: args.method, params: args.params },
+        }).catch((error) => {
+            console.error(
+                "[RPC Client] Failed to send listener request:",
+                error
+            );
+            activeChannels.delete(id);
+        });
+
+        // Return unsubscribe function that closes the channel
+        return () => {
+            activeChannels.delete(id);
+        };
     }
 
     /**
@@ -425,28 +452,16 @@ export function createRpcClient<TSchema extends RpcSchema>(
      */
     function cleanup() {
         // Remove message listener
-        transport.removeEventListener("message", handleMessage);
+        listeningTransport.removeEventListener("message", handleMessage);
 
-        // Reject all pending requests
-        for (const [id, pending] of pendingRequests.entries()) {
-            pending.reject(new Error("[RPC Client] Client cleanup"));
-            pendingRequests.delete(id);
-        }
-
-        // End all active streams
-        for (const [id, stream] of activeStreams.entries()) {
-            stream.end();
-            activeStreams.delete(id);
-        }
-
-        state = "disconnected";
+        // Clear all active channels
+        activeChannels.clear();
     }
 
     return {
-        connect,
         request,
-        stream,
-        getState,
+        listen,
+        sendLifecycle,
         cleanup,
     };
 }

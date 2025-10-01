@@ -41,15 +41,10 @@ export class OriginPairingClient extends BasePairingClient<
     /**
      * Initiate a new pairing
      */
-    async initiatePairing({
-        ssoId,
-    }: {
-        ssoId?: Hex;
-    } = {}) {
+    async initiatePairing() {
         this.forceConnect(() =>
             this.connect({
                 action: "initiate",
-                ssoId,
             })
         );
     }

@@ -356,6 +356,7 @@
       "version": "0.0.21",
       "dependencies": {
         "@frak-labs/core-sdk": "workspace:*",
+        "@frak-labs/rpc": "workspace:*",
         "class-variance-authority": "^0.7.1",
         "preact": "^10.26.9",
         "preact-custom-element": "^4.3.0",
@@ -406,6 +407,7 @@
       "version": "0.0.18",
       "dependencies": {
         "@frak-labs/core-sdk": "workspace:*",
+        "@frak-labs/rpc": "workspace:*",
       },
       "devDependencies": {
         "@arethetypeswrong/cli": "^0.18.2",

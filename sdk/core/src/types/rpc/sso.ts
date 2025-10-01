@@ -34,11 +34,6 @@ export type OpenSsoParamsType = {
      */
     openInSameWindow?: boolean;
     /**
-     * An optional consumeKey for SSO session resolution via backend
-     * Note: Used for direct SSO page ↔ wallet communication, not for RPC polling
-     */
-    consumeKey?: Hex;
-    /**
      * Language of the SSO page (optional)
      * It will default to the current user language (or "en" if unsupported language)
      */
@@ -53,11 +48,6 @@ export type OpenSsoParamsType = {
  * Response after an SSO has been openned
  */
 export type OpenSsoReturnType = {
-    /**
-     * Optional tracking id, if a consumeKey was provided in the input
-     * Note: This is used for backend SSO session tracking, not for RPC polling
-     */
-    trackingId?: Hex;
     /**
      * Optional wallet address, returned when SSO completes via postMessage
      * Note: Only present when SSO flow completes (not immediately on open)

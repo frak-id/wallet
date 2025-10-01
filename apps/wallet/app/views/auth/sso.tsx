@@ -41,6 +41,8 @@ import "./sso.global.css";
 import { ua } from "@/module/common/lib/ua";
 import { HandleErrors } from "@/module/listener/component/HandleErrors";
 import { AuthenticateWithPhone } from "@/module/listener/modal/component/AuthenticateWithPhone";
+import type { SsoRpcSchema } from "@/types/sso-rpc";
+import { clientCompressionMiddleware, createRpcClient } from "@frak-labs/rpc";
 
 export default function Sso() {
     const { i18n, t } = useTranslation();
@@ -93,7 +95,6 @@ export default function Sso() {
 
             // Save the current sso context
             jotaiStore.set(ssoContextAtom, {
-                id: compressedParam.id ?? undefined,
                 productId: productId ?? undefined,
                 redirectUrl: redirectUrl ?? undefined,
                 directExit: directExit ?? undefined,
@@ -127,41 +128,42 @@ export default function Sso() {
 
     /**
      * The on success callback
-     * After successful auth, send postMessage to wallet iframe (window.opener)
+     * After successful auth, send RPC message to wallet iframe (window.opener)
      */
-    const onSuccess = useCallback(() => {
+    const onSuccess = useCallback(async () => {
         // Get the current SSO context
-        const ssoContext = jotaiStore.get(ssoContextAtom);
         const session = jotaiStore.get(sessionAtom);
         const sdkSession = jotaiStore.get(sdkSessionAtom);
 
-        // Send postMessage to wallet iframe if opened from window.open
+        // Send RPC message to wallet iframe if opened from window.open
         if (window.opener && !window.opener.closed && session && sdkSession) {
             try {
-                window.opener.postMessage(
-                    {
-                        type: "sso-complete",
-                        payload: {
-                            session: {
-                                address: session.address,
-                                publicKey: session.publicKey,
-                                authenticatorId: session.authenticatorId,
-                                transports: session.transports,
-                                type: session.type,
-                            },
-                            sdkJwt: sdkSession.token,
-                            ssoId: ssoContext?.id,
-                        },
-                    },
-                    window.location.origin
-                );
-                console.log("[SSO] Sent completion message to wallet iframe", {
-                    address: session.address,
-                    ssoId: ssoContext?.id,
+                // Create RPC client targeting window.opener (wallet iframe)
+                const ssoClient = createRpcClient<SsoRpcSchema>({
+                    emittingTransport: window.opener,
+                    listeningTransport: window,
+                    targetOrigin: window.location.origin,
+                    middleware: [clientCompressionMiddleware],
                 });
+
+                // Send SSO completion via RPC
+                await ssoClient.request({
+                    method: "sso_complete",
+                    params: [session, sdkSession],
+                });
+
+                console.log(
+                    "[SSO] Sent completion message to wallet iframe via RPC",
+                    {
+                        address: session.address,
+                    }
+                );
+
+                // Cleanup the client
+                ssoClient.cleanup();
             } catch (error) {
                 console.error(
-                    "[SSO] Failed to send completion message:",
+                    "[SSO] Failed to send completion message via RPC:",
                     error
                 );
             }
@@ -208,11 +210,9 @@ export default function Sso() {
      * Cancel SSO and redirect back
      */
     const cancelAndRedirect = useCallback(() => {
-        const ssoContext = jotaiStore.get(ssoContextAtom);
-        if (ssoContext?.redirectUrl) {
-            const redirectUrl = new URL(
-                decodeURIComponent(ssoContext.redirectUrl)
-            );
+        const initialRedirectUrl = jotaiStore.get(ssoContextAtom)?.redirectUrl;
+        if (initialRedirectUrl) {
+            const redirectUrl = new URL(decodeURIComponent(initialRedirectUrl));
             redirectUrl.searchParams.set("status", "cancel");
             window.location.href = redirectUrl.toString();
         }
@@ -429,10 +429,9 @@ function Actions({
 
 function PhonePairingAction() {
     const { t } = useTranslation();
-    const ssoId = useAtomValue(ssoContextAtom)?.id;
 
     // Don't show the phone pairing action if we don't have an sso id or if we are on a mobile device
-    if (!ssoId || ua.isMobile) {
+    if (ua.isMobile) {
         return null;
     }
 
@@ -441,7 +440,6 @@ function PhonePairingAction() {
             <AuthenticateWithPhone
                 text={t("authent.sso.btn.new.phone")}
                 className={styles.sso__buttonLink}
-                ssoId={ssoId}
             />
         </div>
     );
@@ -468,11 +466,8 @@ function useLoginDemo(options?: UseMutationOptions<Session>) {
                 throw new Error("No private key found");
             }
 
-            // Get the SSO ID
-            const ssoId = jotaiStore.get(ssoContextAtom)?.id;
-
             // Launch the login process
-            return demoLogin({ pkey, ssoId: ssoId });
+            return demoLogin({ pkey });
         },
     });
 

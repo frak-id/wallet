@@ -1,206 +1,163 @@
 import type { RpcSchema } from "../rpc-schema";
 import type { RpcMiddleware } from "../types";
+import {
+    type CompressedData,
+    decompressDataAndCheckHash,
+    hashAndCompressData,
+} from "../utils/compression";
 
 /**
- * Compression middleware configuration
- */
-export type CompressionMiddlewareConfig = {
-    /**
-     * Minimum size in bytes to apply compression
-     * @default 1024 (1KB)
-     */
-    threshold?: number;
-    /**
-     * Compression algorithm to use
-     * @default "gzip"
-     */
-    algorithm?: "gzip" | "deflate";
-};
-
-/**
- * Checks if data is compressed (base64 encoded)
- */
-function isCompressed(data: unknown): boolean {
-    if (typeof data !== "string") return false;
-    // Simple heuristic: compressed data is usually base64 encoded and longer
-    return /^[A-Za-z0-9+/=]+$/.test(data) && data.length > 100;
-}
-
-/**
- * Decompresses base64-encoded compressed data
- * Uses browser's native CompressionStream API
- */
-async function decompress(
-    compressedData: string,
-    algorithm: "gzip" | "deflate"
-): Promise<unknown> {
-    try {
-        // Decode base64 to Uint8Array
-        const binaryString = atob(compressedData);
-        const bytes = new Uint8Array(binaryString.length);
-        for (let i = 0; i < binaryString.length; i++) {
-            bytes[i] = binaryString.charCodeAt(i);
-        }
-
-        // Decompress using DecompressionStream
-        const stream = new ReadableStream({
-            start(controller) {
-                controller.enqueue(bytes);
-                controller.close();
-            },
-        });
-
-        const decompressedStream = stream.pipeThrough(
-            new DecompressionStream(algorithm)
-        );
-        const reader = decompressedStream.getReader();
-        const chunks: Uint8Array[] = [];
-
-        while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            if (value) chunks.push(value);
-        }
-
-        // Combine chunks and decode as JSON
-        const allChunks = new Uint8Array(
-            chunks.reduce((acc, chunk) => acc + chunk.length, 0)
-        );
-        let offset = 0;
-        for (const chunk of chunks) {
-            allChunks.set(chunk, offset);
-            offset += chunk.length;
-        }
-
-        const jsonString = new TextDecoder().decode(allChunks);
-        return JSON.parse(jsonString);
-    } catch (error) {
-        console.error("[Compression Middleware] Decompression failed:", error);
-        // Return original data if decompression fails
-        return compressedData;
-    }
-}
-
-/**
- * Compresses data and returns base64-encoded string
- * Uses browser's native CompressionStream API
- */
-async function compress(
-    data: unknown,
-    algorithm: "gzip" | "deflate"
-): Promise<string> {
-    try {
-        // Convert to JSON string and then to Uint8Array
-        const jsonString = JSON.stringify(data);
-        const bytes = new TextEncoder().encode(jsonString);
-
-        // Compress using CompressionStream
-        const stream = new ReadableStream({
-            start(controller) {
-                controller.enqueue(bytes);
-                controller.close();
-            },
-        });
-
-        const compressedStream = stream.pipeThrough(
-            new CompressionStream(algorithm)
-        );
-        const reader = compressedStream.getReader();
-        const chunks: Uint8Array[] = [];
-
-        while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            if (value) chunks.push(value);
-        }
-
-        // Combine chunks and encode as base64
-        const allChunks = new Uint8Array(
-            chunks.reduce((acc, chunk) => acc + chunk.length, 0)
-        );
-        let offset = 0;
-        for (const chunk of chunks) {
-            allChunks.set(chunk, offset);
-            offset += chunk.length;
-        }
-
-        // Convert to base64
-        let binaryString = "";
-        for (let i = 0; i < allChunks.length; i++) {
-            binaryString += String.fromCharCode(allChunks[i]);
-        }
-
-        return btoa(binaryString);
-    } catch (error) {
-        console.error("[Compression Middleware] Compression failed:", error);
-        // Return original data if compression fails
-        return JSON.stringify(data);
-    }
-}
-
-/**
- * Creates a compression/decompression middleware for RPC messages
- * Handles automatic decompression of incoming requests and compression of responses
+ * Client-side compression middleware
  *
- * Note: This middleware should be placed early in the stack to handle
- * compression/decompression before other middleware processes the data
+ * Compresses outgoing requests and decompresses incoming responses.
+ * Always uses the format: {method: string, params: unknown}
  *
- * @param config - Compression configuration
- * @returns Compression middleware instance
+ * @example Client side
+ * ```ts
+ * const client = createRpcClient({
+ *   transport: iframe.contentWindow,
+ *   targetOrigin: 'https://wallet.frak.id',
+ *   middleware: [clientCompressionMiddleware]
+ * })
+ * ```
+ */
+export const clientCompressionMiddleware = {
+    onRequest: (message, context) => {
+        // Check if data is already compressed
+        const isCompressed =
+            message.data instanceof Uint8Array ||
+            ArrayBuffer.isView(message.data);
+
+        if (isCompressed) return context;
+
+        try {
+            // Compress the data: {method, params} → Uint8Array
+            message.data = hashAndCompressData(message.data);
+        } catch (error) {
+            console.error(
+                "[Compression Middleware] Failed to compress request",
+                error
+            );
+        }
+
+        return context;
+    },
+
+    onResponse: (_message, response, _context) => {
+        if (response.error) {
+            return response;
+        }
+
+        // Check if result is compressed
+        const isCompressed =
+            response.result instanceof Uint8Array ||
+            ArrayBuffer.isView(response.result);
+
+        if (!isCompressed) return response;
+
+        try {
+            // Decompress the response: Uint8Array → {method, params}
+            const decompressed = decompressDataAndCheckHash(
+                response.result as CompressedData
+            );
+            const { validationHash: _, ...cleanData } = decompressed;
+
+            // Extract just the params from {method, params}
+            if (
+                typeof cleanData === "object" &&
+                cleanData !== null &&
+                "params" in cleanData
+            ) {
+                response.result = (cleanData as { params: unknown }).params;
+            } else {
+                response.result = cleanData;
+            }
+        } catch (error) {
+            console.error(
+                "[Compression Middleware] Failed to decompress response",
+                error
+            );
+        }
+
+        return response;
+    },
+} satisfies RpcMiddleware<RpcSchema>;
+
+/**
+ * Listener-side compression middleware
  *
- * @example
+ * Decompresses incoming requests and compresses outgoing responses.
+ * Always uses the format: {method: string, params: unknown}
+ *
+ * @example Listener side
  * ```ts
  * const listener = createRpcListener({
  *   transport: window,
  *   allowedOrigins: ['https://example.com'],
- *   middleware: [
- *     createCompressionMiddleware({ threshold: 2048, algorithm: 'gzip' }),
- *     loggingMiddleware
- *   ]
+ *   middleware: [listenerCompressionMiddleware]
  * })
  * ```
  */
-export function createCompressionMiddleware<TSchema extends RpcSchema>(
-    config: CompressionMiddlewareConfig = {}
-): RpcMiddleware<TSchema> {
-    const { threshold = 1024, algorithm = "gzip" } = config;
+export const listenerCompressionMiddleware = {
+    onRequest: (message, context) => {
+        // Check if data is compressed
+        const isCompressed =
+            message.data instanceof Uint8Array ||
+            ArrayBuffer.isView(message.data);
 
-    return {
-        onRequest: async (message, context) => {
-            // Check if data is compressed and decompress it
-            if (isCompressed(message.data)) {
-                const decompressed = await decompress(
-                    message.data as string,
-                    algorithm
-                );
-                // Mutate message.data with decompressed data
-                // This allows subsequent middleware and handlers to work with decompressed data
-                (message as { data: unknown }).data = decompressed;
+        // If data not compressed, early exit
+        if (!isCompressed) return context;
+
+        try {
+            // Decompress the request: Uint8Array → {method, params}
+            const decompressed = decompressDataAndCheckHash(
+                message.data as CompressedData
+            );
+            const { validationHash: _, ...cleanData } = decompressed;
+
+            // Extract just the params from {method, params}
+            if (typeof cleanData === "object" && "params" in cleanData) {
+                message.data = cleanData.params;
+            } else {
+                message.data = cleanData;
             }
+        } catch (error) {
+            console.error(
+                "[Compression Middleware] Failed to decompress request",
+                error
+            );
+            throw error;
+        }
 
-            return context;
-        },
+        return context;
+    },
 
-        onResponse: async (_message, response) => {
-            // Only compress responses with results (not errors)
-            if (!response.result) {
-                return response;
-            }
+    onResponse: (message, response, _context) => {
+        if (response.error) {
+            return response;
+        }
 
-            // Calculate approximate size
-            const jsonSize = JSON.stringify(response.result).length;
+        // Check if result is already compressed
+        const isCompressed =
+            response.result instanceof Uint8Array ||
+            ArrayBuffer.isView(response.result);
 
-            // Only compress if above threshold
-            if (jsonSize < threshold) {
-                return response;
-            }
+        if (isCompressed) return response;
 
-            // Compress the result
-            const compressed = await compress(response.result, algorithm);
-
-            return {
-                result: compressed,
+        try {
+            // Compress the response: params → {method, params} → Uint8Array
+            const dataToCompress = {
+                method: message.topic,
+                params: response.result,
             };
-        },
-    };
-}
+            response.result = hashAndCompressData(dataToCompress);
+        } catch (error) {
+            console.error(
+                "[Compression Middleware] Failed to compress response",
+                error
+            );
+        }
+
+        return response;
+    },
+} satisfies RpcMiddleware<RpcSchema>;

@@ -11,15 +11,20 @@ import {
 import { useListenerUI } from "@/module/listener/providers/ListenerUiProvider";
 import type { WalletRpcContext } from "@/module/listener/types/context";
 import { interactionSessionAtom } from "@/module/wallet/atoms/interactionSession";
+import type {
+    IFrameRpcSchema,
+    ModalRpcStepsInput,
+    ModalRpcStepsResultType,
+    ModalStepTypes,
+} from "@frak-labs/core-sdk";
 import {
     Deferred,
-    type IFrameRpcSchema,
-    type ModalRpcStepsInput,
-    type ModalRpcStepsResultType,
-    type ModalStepTypes,
+    type ExtractReturnType,
+    FrakRpcError,
     RpcErrorCodes,
-} from "@frak-labs/core-sdk";
-import type { RpcPromiseHandler } from "@frak-labs/rpc";
+    type RpcPromiseHandler,
+    type RpcResponse,
+} from "@frak-labs/rpc";
 import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { useCallback, useEffect, useRef } from "react";
 import { trackGenericEvent } from "../../common/analytics";
@@ -61,10 +66,12 @@ export function useDisplayModalListener(): OnDisplayModalRequest {
             const modalState = jotaiStore.get(displayedRpcModalStepsAtom);
             if (modalState?.dismissed) {
                 // User cancelled the modal
-                deferred.reject({
-                    code: RpcErrorCodes.clientAborted,
-                    message: "User dismissed the modal",
-                });
+                deferred.reject(
+                    new FrakRpcError(
+                        RpcErrorCodes.clientAborted,
+                        "User dismissed the modal"
+                    )
+                );
                 currentDeferredRef.current = null;
                 return;
             }
@@ -91,10 +98,12 @@ export function useDisplayModalListener(): OnDisplayModalRequest {
 
             // Reject any pending deferred on unmount
             if (currentDeferredRef.current) {
-                currentDeferredRef.current.reject({
-                    code: RpcErrorCodes.clientAborted,
-                    message: "Modal handler component unmounted",
-                });
+                currentDeferredRef.current.reject(
+                    new FrakRpcError(
+                        RpcErrorCodes.clientAborted,
+                        "Modal handler component unmounted"
+                    )
+                );
                 currentDeferredRef.current = null;
             }
         };
@@ -106,10 +115,12 @@ export function useDisplayModalListener(): OnDisplayModalRequest {
 
             // Clean up any existing deferred
             if (currentDeferredRef.current) {
-                currentDeferredRef.current.reject({
-                    code: RpcErrorCodes.internalError,
-                    message: "New modal request superseded previous request",
-                });
+                currentDeferredRef.current.reject(
+                    new FrakRpcError(
+                        RpcErrorCodes.internalError,
+                        "New modal request superseded previous request"
+                    )
+                );
                 currentDeferredRef.current = null;
             }
 
@@ -117,10 +128,10 @@ export function useDisplayModalListener(): OnDisplayModalRequest {
             const steps = params[0];
             if (Object.keys(steps).length === 0) {
                 jotaiStore.set(clearRpcModalAtom);
-                throw {
-                    code: RpcErrorCodes.invalidRequest,
-                    message: "No modals to display",
-                };
+                throw new FrakRpcError(
+                    RpcErrorCodes.invalidRequest,
+                    "No modals to display"
+                );
             }
 
             // Format the steps for our step manager
@@ -149,12 +160,19 @@ export function useDisplayModalListener(): OnDisplayModalRequest {
 
             // Create emitter that resolves the deferred
             // This maintains backward compatibility with any legacy code
-            const emitter = async (response: {
-                result?: ModalRpcStepsResultType;
-                error?: { code: number; message: string; data?: unknown };
-            }) => {
+            const emitter = async (
+                response: RpcResponse<
+                    ExtractReturnType<IFrameRpcSchema, "frak_displayModal">
+                >
+            ) => {
                 if (response.error) {
-                    deferred.reject(response.error);
+                    deferred.reject(
+                        new FrakRpcError(
+                            response.error.code,
+                            response.error.message,
+                            response.error.data
+                        )
+                    );
                 } else if (response.result) {
                     deferred.resolve(response.result);
                 }

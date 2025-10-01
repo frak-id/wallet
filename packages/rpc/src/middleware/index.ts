@@ -1,18 +1,13 @@
 /**
- * Built-in middleware for RPC listener
+ * Built-in middleware for RPC communication
  *
  * This module provides commonly used middleware that can be composed
- * to add functionality to the RPC listener without modifying handlers.
+ * to add functionality to both RPC client and listener.
  *
  * @module middleware
  */
 
 export {
-    createCompressionMiddleware,
-    type CompressionMiddlewareConfig,
+    clientCompressionMiddleware,
+    listenerCompressionMiddleware,
 } from "./compression";
-
-export {
-    createLoggingMiddleware,
-    type LoggingMiddlewareConfig,
-} from "./logging";

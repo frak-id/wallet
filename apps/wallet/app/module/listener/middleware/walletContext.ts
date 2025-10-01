@@ -1,8 +1,7 @@
 import { iframeResolvingContextAtom } from "@/module/listener/atoms/resolvingContext";
 import type { WalletRpcContext } from "@/module/listener/types/context";
 import { isRunningLocally } from "@frak-labs/app-essentials";
-import { RpcErrorCodes } from "@frak-labs/core-sdk";
-import { FrakRpcError } from "@frak-labs/rpc";
+import { FrakRpcError, RpcErrorCodes } from "@frak-labs/rpc";
 import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { keccak256, toHex } from "viem";
 
@@ -51,6 +50,20 @@ export const walletContextMiddleware = {
                 RpcErrorCodes.configError,
                 "No resolving context available - handshake may be required"
             );
+        }
+
+        if (context.origin === window.origin) {
+            console.debug(
+                "Received message from another wallet window, skipping context check",
+                message,
+                context
+            );
+            return {
+                ...context,
+                productId: "0x",
+                sourceUrl: context.origin,
+                isAutoContext: false,
+            };
         }
 
         // Compute productId from message origin for validation

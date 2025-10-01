@@ -1,11 +1,10 @@
 import { getModalBuilderSteps } from "@/utils/setup";
 import {
     DebugInfoGatherer,
-    FrakRpcError,
     type FullInteractionTypesKey,
-    RpcErrorCodes,
     trackEvent,
 } from "@frak-labs/core-sdk";
+import { FrakRpcError, RpcErrorCodes } from "@frak-labs/rpc";
 import { useCallback, useState } from "preact/hooks";
 
 /**

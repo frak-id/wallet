@@ -3,22 +3,18 @@ import { usePreviousAuthenticators } from "@/module/authentication/hook/usePrevi
 import { authKey } from "@/module/authentication/queryKeys/auth";
 import { authenticatedWalletApi } from "@/module/common/api/backendClient";
 import { sdkSessionAtom, sessionAtom } from "@/module/common/atoms/session";
-import { iframeResolvingContextAtom } from "@/module/listener/atoms/resolvingContext";
 import { getRegisterOptions } from "@/module/wallet/action/registerOptions";
 import type { Session } from "@/types/Session";
 import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { startRegistration } from "@simplewebauthn/browser";
 import { useMutation } from "@tanstack/react-query";
 import type { UseMutationOptions } from "@tanstack/react-query";
-import type { Hex } from "viem";
 import { trackAuthCompleted, trackAuthInitiated } from "../../common/analytics";
 
 /**
  * Hook that handle the registration process
  */
-export function useRegister(
-    options?: UseMutationOptions<Session> & { ssoId?: Hex }
-) {
+export function useRegister(options?: UseMutationOptions<Session>) {
     // Setter for the last authentication
     const { data: previousAuthenticators } = usePreviousAuthenticators();
 
@@ -36,11 +32,7 @@ export function useRegister(
         mutationKey: authKey.register,
         mutationFn: async () => {
             // Identify the user and track the event
-            const events = [
-                trackAuthInitiated("register", {
-                    ssoId: options?.ssoId,
-                }),
-            ];
+            const events = [trackAuthInitiated("register")];
 
             // Build the credentials to exclude
             const excludeCredentials = previousAuthenticators?.map(
@@ -61,9 +53,6 @@ export function useRegister(
                 optionsJSON: registrationOptions,
             });
 
-            // Check if the user is in a six degrees context
-            const isSixDegrees = await isSixDegreesContext();
-
             // Verify it
             const encodedResponse = btoa(JSON.stringify(registrationResponse));
             const { data, error } =
@@ -71,8 +60,6 @@ export function useRegister(
                     userAgent: navigator.userAgent,
                     expectedChallenge: registrationOptions.challenge,
                     registrationResponse: encodedResponse,
-                    ssoId: options?.ssoId,
-                    isSixDegrees,
                 });
             if (error) {
                 throw error;
@@ -90,11 +77,7 @@ export function useRegister(
             jotaiStore.set(sdkSessionAtom, sdkJwt);
 
             // Track the event
-            events.push(
-                trackAuthCompleted("register", session, {
-                    ssoId: options?.ssoId,
-                })
-            );
+            events.push(trackAuthCompleted("register", session));
             await Promise.allSettled(events);
 
             return session;
@@ -108,23 +91,4 @@ export function useRegister(
         error,
         register,
     };
-}
-
-/**
- * Is the current context a six degrees context
- */
-async function isSixDegreesContext() {
-    const currentContext = jotaiStore.get(iframeResolvingContextAtom);
-
-    if (!currentContext?.origin) {
-        return false;
-    }
-
-    const getSixDegrees = await authenticatedWalletApi.auth.routing.get({
-        query: {
-            origin: currentContext.origin,
-        },
-    });
-
-    return getSixDegrees.data === "sui";
 }

@@ -11,9 +11,9 @@ import { sdkSessionAtom, sessionAtom } from "../../common/atoms/session";
 export function useDemoLogin() {
     return useMutation({
         mutationKey: authKey.demo.login,
-        async mutationFn({ pkey, ssoId }: { pkey: Hex; ssoId?: Hex }) {
+        async mutationFn({ pkey }: { pkey: Hex }) {
             // Identify the user and track the event
-            const events = [trackAuthInitiated("demo", { ssoId })];
+            const events = [trackAuthInitiated("demo")];
 
             const account = privateKeyToAccount(pkey);
 
@@ -32,7 +32,6 @@ export function useDemoLogin() {
                     expectedChallenge: challenge,
                     signature,
                     wallet: account.address as Address,
-                    ssoId,
                     demoPkey: pkey,
                 });
             if (error) {
@@ -52,7 +51,7 @@ export function useDemoLogin() {
             jotaiStore.set(sdkSessionAtom, sdkJwt);
 
             // Identify the user and track the event
-            events.push(trackAuthCompleted("demo", session, { ssoId }));
+            events.push(trackAuthCompleted("demo", session));
             await Promise.allSettled(events);
 
             return session;

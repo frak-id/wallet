@@ -2,8 +2,13 @@ import { sessionAtom } from "@/module/common/atoms/session";
 import { useListenerUI } from "@/module/listener/providers/ListenerUiProvider";
 import type { WalletRpcContext } from "@/module/listener/types/context";
 import { useInteractionSessionStatus } from "@/module/wallet/hook/useInteractionSessionStatus";
-import { Deferred, type IFrameRpcSchema } from "@frak-labs/core-sdk";
-import type { RpcPromiseHandler } from "@frak-labs/rpc";
+import type { IFrameRpcSchema } from "@frak-labs/core-sdk";
+import { Deferred, FrakRpcError, RpcErrorCodes } from "@frak-labs/rpc";
+import type {
+    ExtractReturnType,
+    RpcPromiseHandler,
+    RpcResponse,
+} from "@frak-labs/rpc";
 import { useAtomValue } from "jotai";
 import { useCallback, useEffect, useRef } from "react";
 import type { Hex } from "viem";
@@ -61,10 +66,12 @@ export function useDisplayEmbeddedWallet(): OnDisplayEmbeddedWalletRequest {
     useEffect(() => {
         return () => {
             if (currentDeferredRef.current) {
-                currentDeferredRef.current.reject({
-                    code: -32004, // clientAborted
-                    message: "Embedded wallet handler component unmounted",
-                });
+                currentDeferredRef.current.reject(
+                    new FrakRpcError(
+                        RpcErrorCodes.clientAborted,
+                        "User dismissed the modal"
+                    )
+                );
                 currentDeferredRef.current = null;
             }
         };
@@ -72,21 +79,19 @@ export function useDisplayEmbeddedWallet(): OnDisplayEmbeddedWalletRequest {
 
     return useCallback(
         async (params) => {
+            console.log("Received display embed request", params);
             const configMetadata = params[1];
 
             // Clean up any existing deferred
             if (currentDeferredRef.current) {
-                currentDeferredRef.current.reject({
-                    code: -1,
-                    message:
-                        "New embedded wallet request superseded previous request",
-                });
+                console.log("arleady got one");
+                currentDeferredRef.current.reject(
+                    new FrakRpcError(
+                        RpcErrorCodes.internalError,
+                        "New modal request superseded previous request"
+                    )
+                );
                 currentDeferredRef.current = null;
-            }
-
-            // Check if user already has a valid session - immediate resolution
-            if (session?.address && sessionStatus) {
-                return { wallet: session.address };
             }
 
             // Create a new deferred for this embedded wallet request
@@ -95,12 +100,22 @@ export function useDisplayEmbeddedWallet(): OnDisplayEmbeddedWalletRequest {
 
             // Create emitter that resolves the deferred
             // This maintains backward compatibility with any legacy code
-            const emitter = async (response: {
-                result?: { wallet: Hex };
-                error?: { code: number; message: string; data?: unknown };
-            }) => {
+            const emitter = async (
+                response: RpcResponse<
+                    ExtractReturnType<
+                        IFrameRpcSchema,
+                        "frak_displayEmbeddedWallet"
+                    >
+                >
+            ) => {
                 if (response.error) {
-                    deferred.reject(response.error);
+                    deferred.reject(
+                        new FrakRpcError(
+                            response.error.code,
+                            response.error.message,
+                            response.error.data
+                        )
+                    );
                 } else if (response.result) {
                     deferred.resolve(response.result);
                 }
@@ -131,6 +146,6 @@ export function useDisplayEmbeddedWallet(): OnDisplayEmbeddedWalletRequest {
             // This will resolve when session + sessionStatus are available
             return await deferred.promise;
         },
-        [setRequest, session?.address, sessionStatus]
+        [setRequest]
     );
 }

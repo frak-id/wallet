@@ -3,6 +3,7 @@ import {
     CborEncoder,
 } from "@jsonjoy.com/json-pack/lib/cbor/index.js";
 import { sha256 } from "viem";
+import { FrakRpcError, RpcErrorCodes } from "../error";
 
 /**
  * The received encoded data from a client
@@ -47,7 +48,7 @@ export function hashAndCompressData<T>(data: T): CompressedData {
     // Create a hash of the main params
     const hashProtectedData: HashProtectedData<T> = {
         ...data,
-        validationHash: hashJson(data),
+        validationHash: hashJson(data ?? {}),
     };
 
     // Encode the full data
@@ -77,25 +78,44 @@ export function decompressDataAndCheckHash<T>(
 ): HashProtectedData<T> {
     // Ensure we got the required params first
     if (!compressedData.length) {
-        throw new Error("Missing compressed data");
+        throw new FrakRpcError(
+            RpcErrorCodes.corruptedResponse,
+            "Missing compressed data"
+        );
     }
 
     // Decompress and parse the data
     const parsedData = decompressJson<HashProtectedData<T>>(compressedData);
     if (!parsedData) {
-        throw new Error("Invalid compressed data");
+        throw new FrakRpcError(
+            RpcErrorCodes.corruptedResponse,
+            "Invalid compressed data"
+        );
     }
 
     // Ensure the validation hash is present
     if (!parsedData?.validationHash) {
-        throw new Error("Missing validation hash");
+        throw new FrakRpcError(
+            RpcErrorCodes.corruptedResponse,
+            "Missing validation hash"
+        );
     }
 
     // And check the validation hash
     const { validationHash: _, ...rawResultData } = parsedData;
-    const expectedValidationHash = hashJson(rawResultData);
-    if (expectedValidationHash !== parsedData.validationHash) {
-        throw new Error("Invalid data validation hash");
+    const expectedValidationHashes = hashJson(rawResultData);
+    if (expectedValidationHashes !== parsedData.validationHash) {
+        console.warn("Validation error", {
+            validationHash: _,
+            rawResultData,
+            parsedData,
+            expectedValidationHashes,
+            recomputedHash: hashJson(undefined),
+        });
+        throw new FrakRpcError(
+            RpcErrorCodes.corruptedResponse,
+            "Invalid validation hash"
+        );
     }
 
     // If everything is fine, return the parsed data

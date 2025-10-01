@@ -2,7 +2,7 @@ import type { KnipConfig } from "knip";
 
 const config: KnipConfig = {
     // Exclude types analysis for now
-    exclude: ["types"],
+    // exclude: ["types"],
     ignore: ["**/*.d.ts"],
     // Include all the workspaces
     workspaces: {
@@ -18,6 +18,9 @@ const config: KnipConfig = {
         "packages/ui": {
             entry: "**/*.{ts,tsx}",
         },
+        "packages/rpc": {
+            entry: "**/*.ts",
+        },
         "apps/wallet": {
             entry: ["app/*.{ts,tsx}", "app/views/**/*.tsx"],
             project: ["app/**/*.{ts,tsx}"],
@@ -31,7 +34,7 @@ const config: KnipConfig = {
             project: "src/**/*.ts",
         },
         "sdk/core": {
-            entry: ["src/**/index.ts", "src/bundle.ts"],
+            entry: ["src/**/index.ts"],
             project: "src/**/*.ts",
         },
         "sdk/react": {

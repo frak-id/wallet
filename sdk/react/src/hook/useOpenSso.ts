@@ -1,10 +1,6 @@
-import {
-    ClientNotFound,
-    type FrakRpcError,
-    type OpenSsoParamsType,
-    type OpenSsoReturnType,
-} from "@frak-labs/core-sdk";
+import type { OpenSsoParamsType, OpenSsoReturnType } from "@frak-labs/core-sdk";
 import { openSso } from "@frak-labs/core-sdk/actions";
+import { ClientNotFound, type FrakRpcError } from "@frak-labs/rpc";
 import { type UseMutationOptions, useMutation } from "@tanstack/react-query";
 import { useFrakClient } from "./useFrakClient";
 

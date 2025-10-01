@@ -70,7 +70,6 @@ export type IFrameRpcSchema = [
         Method: "frak_listenToWalletStatus";
         Parameters?: undefined;
         ReturnType: WalletStatusReturnType;
-        ResponseType: "stream";
     },
     /**
      * Method to display a modal with the provided steps
@@ -84,7 +83,6 @@ export type IFrameRpcSchema = [
             configMetadata: FrakWalletSdkConfig["metadata"],
         ];
         ReturnType: ModalRpcStepsResultType;
-        ResponseType: "promise";
     },
     /**
      * Method to transmit a user interaction
@@ -98,7 +96,6 @@ export type IFrameRpcSchema = [
             signature?: Hex,
         ];
         ReturnType: SendInteractionReturnType;
-        ResponseType: "promise";
     },
     /**
      * Method to start a SSO
@@ -112,7 +109,6 @@ export type IFrameRpcSchema = [
             customCss?: string,
         ];
         ReturnType: OpenSsoReturnType;
-        ResponseType: "promise";
     },
     /**
      * Method to get current product information's
@@ -125,7 +121,6 @@ export type IFrameRpcSchema = [
         Method: "frak_getProductInformation";
         Parameters?: undefined;
         ReturnType: GetProductInformationReturnType;
-        ResponseType: "promise";
     },
     /**
      * Method to show the embedded wallet, with potential customization
@@ -138,6 +133,5 @@ export type IFrameRpcSchema = [
             metadata: FrakWalletSdkConfig["metadata"],
         ];
         ReturnType: DisplayEmbeddedWalletResultType;
-        ResponseType: "promise";
     },
 ];

@@ -22,19 +22,10 @@ export type {
     SendInteractionParamsType,
     SendInteractionReturnType,
 } from "./rpc/interaction";
-export { FrakRpcError, RpcErrorCodes, ClientNotFound } from "./rpc/error";
 export type { IFrameRpcSchema } from "./rpc";
 // Client related
 export type { FrakClient } from "./client";
-export type {
-    IFrameTransport,
-    IFrameRpcEvent,
-    IFrameEvent,
-    ExtractedParametersFromRpc,
-    ExtractedReturnTypeFromRpc,
-    ExtractedMethodFromRpc,
-    RpcResponse,
-} from "./transport";
+export type { IFrameTransport } from "./transport";
 export type {
     IFrameLifecycleEvent,
     ClientLifecycleEvent,

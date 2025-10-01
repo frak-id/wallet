@@ -3,16 +3,19 @@ import {
     ssoPopupName,
     useGetOpenSsoLink,
 } from "@/module/authentication/hook/useGetOpenSsoLink";
-import {
-    registerPendingSsoRequest,
-    unregisterPendingSsoRequest,
-} from "@/module/listener/handlers/customMessageHandler";
 import type { WalletRpcContext } from "@/module/listener/types/context";
-import { Deferred, type IFrameRpcSchema } from "@frak-labs/core-sdk";
-import { RpcErrorCodes } from "@frak-labs/core-sdk";
-import type { RpcPromiseHandler } from "@frak-labs/rpc";
-import { useCallback, useEffect, useRef } from "react";
-import type { Hex } from "viem";
+import type { IFrameRpcSchema } from "@frak-labs/core-sdk";
+import {
+    FrakRpcError,
+    RpcErrorCodes,
+    type RpcPromiseHandler,
+} from "@frak-labs/rpc";
+import { useCallback } from "react";
+import {
+    cleanupPendingSsoRequest,
+    newPendingSsoRequest,
+    pendingSsoRequest,
+} from "../handlers/ssoHandler";
 
 type OnOpenSso = RpcPromiseHandler<
     IFrameRpcSchema,
@@ -43,22 +46,6 @@ type OnOpenSso = RpcPromiseHandler<
 export function useOnOpenSso(): OnOpenSso {
     const getOpenSsoLink = useGetOpenSsoLink();
 
-    // Track pending requests for cleanup
-    const pendingRequestsRef = useRef<Set<string>>(new Set());
-
-    /**
-     * Cleanup on unmount: reject all pending SSO requests
-     * This prevents memory leaks if component unmounts during SSO flow
-     */
-    useEffect(() => {
-        return () => {
-            for (const ssoId of pendingRequestsRef.current) {
-                unregisterPendingSsoRequest(ssoId);
-            }
-            pendingRequestsRef.current.clear();
-        };
-    }, []);
-
     return useCallback(
         async (params, context) => {
             // Extract request infos
@@ -68,10 +55,10 @@ export function useOnOpenSso(): OnOpenSso {
 
             // If we are on the server side directly exit with an error
             if (typeof window === "undefined") {
-                throw {
-                    code: RpcErrorCodes.internalError,
-                    message: "Server side not supported",
-                };
+                throw new FrakRpcError(
+                    RpcErrorCodes.internalError,
+                    "Server side not supported"
+                );
             }
 
             // Determine if we should open in same window
@@ -79,7 +66,7 @@ export function useOnOpenSso(): OnOpenSso {
             const openInSameWindow =
                 ssoInfo.openInSameWindow ?? ssoInfo.redirectUrl;
 
-            const { url: ssoLink, trackingId } = await getOpenSsoLink({
+            const ssoLink = getOpenSsoLink({
                 productId: context.productId,
                 metadata: {
                     ...ssoInfo.metadata,
@@ -88,7 +75,6 @@ export function useOnOpenSso(): OnOpenSso {
                 },
                 directExit: ssoInfo.directExit,
                 redirectUrl: ssoInfo.redirectUrl,
-                consumeKey: ssoInfo.consumeKey,
                 lang: ssoInfo.lang,
             });
 
@@ -98,7 +84,7 @@ export function useOnOpenSso(): OnOpenSso {
                     // This is used for redirectUrl flows
                     window.location.href = ssoLink;
                     // Return result with trackingId (wallet will be set later via redirect)
-                    return { trackingId, wallet: undefined };
+                    return { wallet: undefined };
                 }
 
                 // Open the popup
@@ -109,18 +95,13 @@ export function useOnOpenSso(): OnOpenSso {
                 );
 
                 if (!openedWindow) {
-                    throw {
-                        code: RpcErrorCodes.internalError,
-                        message: "Failed to open the SSO window",
-                    };
+                    throw new FrakRpcError(
+                        RpcErrorCodes.internalError,
+                        "Failed to open the SSO window"
+                    );
                 }
 
                 openedWindow.focus();
-
-                // If no trackingId, return immediately (backward compatibility)
-                if (!trackingId) {
-                    return { trackingId, wallet: undefined };
-                }
 
                 /**
                  * Create Deferred promise that will be resolved by useSsoMessageListener
@@ -130,20 +111,7 @@ export function useOnOpenSso(): OnOpenSso {
                  * - Old: Poll backend every 500ms-2s until session available
                  * - New: Wait for direct postMessage from SSO window
                  */
-                const deferred = new Deferred<{
-                    wallet: Hex;
-                    trackingId?: Hex;
-                }>();
-
-                // Register this deferred globally so useSsoMessageListener can resolve it
-                registerPendingSsoRequest(trackingId, {
-                    resolve: (value: { wallet: Hex }) =>
-                        deferred.resolve({ ...value, trackingId }),
-                    reject: deferred.reject.bind(deferred),
-                });
-
-                // Track for cleanup
-                pendingRequestsRef.current.add(trackingId);
+                const deferred = newPendingSsoRequest();
 
                 /**
                  * Monitor window closure
@@ -159,14 +127,12 @@ export function useOnOpenSso(): OnOpenSso {
                         clearInterval(windowClosedInterval);
 
                         // Check if deferred is still pending
-                        if (pendingRequestsRef.current.has(trackingId)) {
-                            deferred.reject({
-                                code: RpcErrorCodes.clientAborted,
-                                message: "SSO window was closed by user",
-                            });
-                            unregisterPendingSsoRequest(trackingId);
-                            pendingRequestsRef.current.delete(trackingId);
-                        }
+                        pendingSsoRequest?.reject(
+                            new FrakRpcError(
+                                RpcErrorCodes.clientAborted,
+                                "SSO window was closed by user"
+                            )
+                        );
                     }
                 }, 500);
 
@@ -176,14 +142,13 @@ export function useOnOpenSso(): OnOpenSso {
 
                     // Cleanup
                     clearInterval(windowClosedInterval);
-                    pendingRequestsRef.current.delete(trackingId);
+                    cleanupPendingSsoRequest();
 
                     return result;
                 } catch (error) {
                     // Cleanup on error
                     clearInterval(windowClosedInterval);
-                    unregisterPendingSsoRequest(trackingId);
-                    pendingRequestsRef.current.delete(trackingId);
+                    cleanupPendingSsoRequest();
 
                     throw error;
                 }
@@ -191,15 +156,15 @@ export function useOnOpenSso(): OnOpenSso {
                 console.warn("Unable to open the SSO page", error);
 
                 // If error has code property, throw as-is (already formatted)
-                if (error && typeof error === "object" && "code" in error) {
+                if (error && error instanceof FrakRpcError) {
                     throw error;
                 }
 
                 // Otherwise wrap in RPC error
-                throw {
-                    code: RpcErrorCodes.internalError,
-                    message: "Failed to open the SSO",
-                };
+                throw new FrakRpcError(
+                    RpcErrorCodes.internalError,
+                    "Failed to open the SSO"
+                );
             }
         },
         [getOpenSsoLink]

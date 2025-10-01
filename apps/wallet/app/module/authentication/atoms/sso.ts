@@ -1,6 +1,5 @@
 import type { SsoMetadata } from "@frak-labs/core-sdk";
 import { atom } from "jotai";
-import { atomWithStorage } from "jotai/utils";
 import type { Hex } from "viem";
 
 type SsoContext = {
@@ -27,8 +26,3 @@ export type AppSpecificSsoMetadata = SsoMetadata & {
 export const currentSsoMetadataAtom = atom(
     (get) => get(ssoContextAtom)?.metadata
 );
-
-export const ssoConsumeKey = atomWithStorage<{
-    key: Hex;
-    generatedAt: number;
-} | null>("frak_ssoConsumeKey", null);

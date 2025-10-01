@@ -46,7 +46,7 @@ export type RpcMessage<TMethod extends string = string> = {
      */
     topic: TMethod;
     /**
-     * The message payload (compressed data)
+     * The message payload (compressed data) or raw params
      */
     data: unknown;
 };
@@ -74,18 +74,9 @@ export type IFrameLifecycleMessage = {
 export type LifecycleMessage = ClientLifecycleMessage | IFrameLifecycleMessage;
 
 /**
- * Custom message format for non-RPC, non-lifecycle messages
- * Used for SSO completion, error notifications, etc.
- */
-export type CustomMessage = {
-    type: string;
-    payload?: unknown;
-};
-
-/**
  * Union of all message types that can be received
  */
-export type AnyMessage = RpcMessage | LifecycleMessage | CustomMessage;
+export type AnyMessage = RpcMessage | LifecycleMessage;
 
 /**
  * RPC response wrapper
@@ -109,42 +100,6 @@ export type RpcError = {
     message: string;
     data?: unknown;
 };
-
-/**
- * RPC error codes
- */
-export const RpcErrorCodes = {
-    configError: -32001,
-    clientNotConnected: -32002,
-    userRejected: -32003,
-    invalidRequest: -32600,
-    methodNotFound: -32601,
-    invalidParams: -32602,
-    internalError: -32603,
-    serverError: -32000,
-} as const;
-
-/**
- * Custom RPC error class
- */
-export class FrakRpcError extends Error {
-    constructor(
-        public code: number,
-        message: string,
-        public data?: unknown
-    ) {
-        super(message);
-        this.name = "FrakRpcError";
-    }
-
-    toJSON(): RpcError {
-        return {
-            code: this.code,
-            message: this.message,
-            data: this.data,
-        };
-    }
-}
 
 /**
  * Request context for handlers
@@ -215,38 +170,20 @@ export type LifecycleHandler = (
 ) => void | Promise<void>;
 
 /**
- * Custom message handler function
- * Handles custom messages (SSO completion, etc.)
+ * Unified middleware function for RPC requests (both listener and client)
+ * Works on both listener-side (with context augmentation) and client-side (empty context)
  *
- * @param message - The custom message
- * @param context - Request context with origin and source
- */
-export type CustomMessageHandler = (
-    message: CustomMessage,
-    context: RpcRequestContext
-) => void | Promise<void>;
-
-/**
- * Middleware function for RPC requests
- * Allows transformation of context and validation/modification of requests and responses
+ * Key features:
+ * - Can mutate message.data directly for efficiency (compression, validation)
+ * - Can mutate response.result directly for transformation
+ * - Listener-side: Can augment context by returning modified context
+ * - Client-side: Uses TContext = {} (empty context), always returns unchanged
  *
  * @typeParam TSchema - The RPC schema type
- * @typeParam TContext - Custom context type to augment base context
+ * @typeParam TContext - Custom context type to augment base context (empty {} for client-side)
  *
- * @example
+ * @example Listener-side with context augmentation
  * ```ts
- * const loggingMiddleware: RpcMiddleware<MySchema> = {
- *   onRequest: async (message, context) => {
- *     console.log(`[RPC] ${message.topic} from ${context.origin}`)
- *     return context
- *   },
- *   onResponse: async (message, response, context) => {
- *     console.log(`[RPC] ${message.topic} completed`)
- *     return response
- *   }
- * }
- *
- * // Context augmentation example
  * type WalletContext = { productId: string, sourceUrl: string }
  * const contextMiddleware: RpcMiddleware<MySchema, WalletContext> = {
  *   onRequest: async (message, context) => {
@@ -256,18 +193,50 @@ export type CustomMessageHandler = (
  *   }
  * }
  * ```
+ *
+ * @example Client-side (empty context)
+ * ```ts
+ * const compressionMiddleware: RpcMiddleware<MySchema> = {
+ *   onRequest: async (message, context) => {
+ *     // Mutate message.data directly
+ *     message.data = compress(message.data)
+ *     return context  // Empty context, unchanged
+ *   },
+ *   onResponse: async (message, response, context) => {
+ *     // Mutate response.result directly
+ *     response.result = decompress(response.result)
+ *     return response
+ *   }
+ * }
+ * ```
+ *
+ * @example Shared middleware (works on both sides)
+ * ```ts
+ * const loggingMiddleware: RpcMiddleware<MySchema> = {
+ *   onRequest: async (message, context) => {
+ *     console.log(`[RPC] ${message.topic}`, context.origin || 'client')
+ *     return context
+ *   },
+ *   onResponse: async (message, response, context) => {
+ *     console.log(`[RPC] ${message.topic} completed`)
+ *     return response
+ *   }
+ * }
+ * ```
  */
 export type RpcMiddleware<
     TSchema extends RpcSchema,
     TContext = Record<string, never>,
 > = {
     /**
-     * Called before handler execution
-     * Can augment context with custom fields, validate requests, or reject by throwing
+     * Called before handler execution (listener) or before sending (client)
      *
-     * @param message - The incoming RPC message
-     * @param context - Current request context (augmented by previous middleware)
-     * @returns Augmented context to pass to handler
+     * For listener: Can augment context and mutate message
+     * For client: Can mutate message, context is empty {}
+     *
+     * @param message - The RPC message (can be mutated)
+     * @param context - Request context (listener-side) or empty (client-side)
+     * @returns Updated context (listener mutates this, client returns unchanged)
      * @throws FrakRpcError to reject the request with a specific error code
      */
     onRequest?: (
@@ -278,13 +247,12 @@ export type RpcMiddleware<
         | RpcMiddlewareContext<TContext>;
 
     /**
-     * Called after handler execution, before sending response
-     * Can transform the response (e.g., compression), log, or perform cleanup
+     * Called after handler execution (listener) or after receiving (client)
      *
      * @param message - The original RPC message
-     * @param response - The handler's response
-     * @param context - The augmented context from onRequest
-     * @returns Transformed response to send to client
+     * @param response - The response (can be mutated)
+     * @param context - Request context (listener-side) or empty (client-side)
+     * @returns Transformed response
      * @throws Error to send an error response instead
      */
     onResponse?: (
@@ -328,22 +296,3 @@ export type RpcStreamHandler<
     emitter: StreamEmitter<ExtractReturnType<TSchema, TMethod>>,
     context: RpcMiddlewareContext<TContext>
 ) => Promise<void> | void;
-
-/**
- * Connection state
- */
-export type ConnectionState = "disconnected" | "connecting" | "connected";
-
-/**
- * Handshake configuration
- */
-export type HandshakeConfig = {
-    /**
-     * Timeout for the handshake in milliseconds
-     */
-    timeout?: number;
-    /**
-     * Whether to require a handshake before sending requests
-     */
-    required?: boolean;
-};

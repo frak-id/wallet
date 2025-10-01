@@ -1,10 +1,10 @@
 import { ListenerUiRenderer } from "@/module/listener/component/ListerUiRenderer";
-import { createCustomMessageHandler } from "@/module/listener/handlers/customMessageHandler";
 import {
     checkContextAndEmitReady,
     createClientLifecycleHandler,
     initializeResolvingContext,
 } from "@/module/listener/handlers/lifecycleHandler";
+import { handleSsoComplete } from "@/module/listener/handlers/ssoHandler";
 import { useDisplayEmbeddedWallet } from "@/module/listener/hooks/useDisplayEmbeddedWallet";
 import { useDisplayModalListener } from "@/module/listener/hooks/useDisplayModalListener";
 import { useListenerDataPreload } from "@/module/listener/hooks/useListenerDataPreload";
@@ -14,16 +14,19 @@ import { useSendInteractionListener } from "@/module/listener/hooks/useSendInter
 import { useSendPing } from "@/module/listener/hooks/useSendPing";
 import { useWalletStatusListener } from "@/module/listener/hooks/useWalletStatusListener";
 import {
-    compressionMiddleware,
     loggingMiddleware,
     walletContextMiddleware,
 } from "@/module/listener/middleware";
 import { ListenerUiProvider } from "@/module/listener/providers/ListenerUiProvider";
 import type { WalletRpcContext } from "@/module/listener/types/context";
+import type { SsoRpcSchema } from "@/types/sso-rpc";
 import type { IFrameRpcSchema } from "@frak-labs/core-sdk";
-import { createRpcListener } from "@frak-labs/rpc";
+import {
+    createRpcListener,
+    listenerCompressionMiddleware,
+} from "@frak-labs/rpc";
 import { loadPolyfills } from "@frak-labs/ui/utils/polyfills";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 loadPolyfills();
 
@@ -43,14 +46,12 @@ export default function Listener() {
  *  - It's goal is to answer every request from the iFrame windows parent
  * @constructor
  */
-function ListenerContent() {
-    const [listener, setListener] = useState<
-        | ReturnType<
-              typeof createRpcListener<IFrameRpcSchema, WalletRpcContext>
-          >
-        | undefined
-    >(undefined);
+/**
+ * Combined schema type for handling both IFrame RPC and SSO RPC
+ */
+type CombinedRpcSchema = IFrameRpcSchema | SsoRpcSchema;
 
+function ListenerContent() {
     // Hook used when a wallet status is requested
     const onWalletListenRequest = useWalletStatusListener();
 
@@ -87,66 +88,62 @@ function ListenerContent() {
         const clientLifecycleHandler = createClientLifecycleHandler(
             setReadyToHandleRequest
         );
-        const customMessageHandler = createCustomMessageHandler();
 
-        // Create the listener with schema type and wallet context
+        // Create the listener with combined schema (IFrame + SSO)
+        // This listener handles both:
+        // - IFrameRpcSchema: SDK iframe -> wallet communication
+        // - SsoRpcSchema: SSO window -> wallet communication
+        //
         // Note: We accept all origins with "*" because the actual security validation
         // happens in walletContextMiddleware (matching computed productId from origin
         // against stored iframeResolvingContext)
         //
         // Message routing:
         // 1. Lifecycle messages -> clientLifecycleHandler (no middleware, no compression)
-        // 2. Custom messages -> customMessageHandler (no middleware, no compression)
+        // 2. Custom messages -> customMessageHandler (no middleware, no compression, backward compat)
         // 3. RPC messages -> middleware stack -> handlers
         //
         // Middleware stack order (RPC messages only):
         // 1. compressionMiddleware - Decompresses incoming CBOR data with hash validation
         // 2. loggingMiddleware - Logs requests/responses (development only)
         // 3. walletContextMiddleware - Augments context with productId, sourceUrl, etc.
-        const newListener = createRpcListener<
-            IFrameRpcSchema,
-            WalletRpcContext
-        >({
-            transport: window,
-            allowedOrigins: "*",
-            middleware: [
-                compressionMiddleware,
-                loggingMiddleware,
-                walletContextMiddleware,
-            ],
-            lifecycleHandlers: {
-                clientLifecycle: clientLifecycleHandler,
-            },
-            customMessageHandler,
-        });
-
-        // Register promise-based handlers
-        newListener.handle("frak_sendInteraction", onInteractionRequest);
-        newListener.handle("frak_displayModal", onDisplayModalRequest);
-        newListener.handle("frak_sso", onOpenSso);
-        newListener.handle(
-            "frak_getProductInformation",
-            onGetProductInformation
-        );
-        newListener.handle(
-            "frak_displayEmbeddedWallet",
-            onDisplayEmbeddedWallet
+        const listener = createRpcListener<CombinedRpcSchema, WalletRpcContext>(
+            {
+                transport: window,
+                allowedOrigins: "*",
+                middleware: [
+                    listenerCompressionMiddleware,
+                    loggingMiddleware,
+                    walletContextMiddleware,
+                ],
+                lifecycleHandlers: {
+                    clientLifecycle: clientLifecycleHandler,
+                },
+            }
         );
 
-        // Register streaming handlers
-        newListener.handleStream(
+        // Register promise-based handlers (IFrameRpcSchema)
+        listener.handle("frak_sendInteraction", onInteractionRequest);
+        listener.handle("frak_displayModal", onDisplayModalRequest);
+        listener.handle("frak_sso", onOpenSso);
+        listener.handle("frak_getProductInformation", onGetProductInformation);
+        listener.handle("frak_displayEmbeddedWallet", onDisplayEmbeddedWallet);
+
+        // Register streaming handlers (IFrameRpcSchema)
+        listener.handleStream(
             "frak_listenToWalletStatus",
             onWalletListenRequest
         );
 
-        setListener(newListener);
+        // Register SSO handlers (SsoRpcSchema)
+        listener.handle("sso_complete", handleSsoComplete);
 
         // Initialize resolving context (starts handshake if needed)
         initializeResolvingContext();
 
         // On cleanup, destroy the listener
         return () => {
-            newListener.cleanup();
+            listener.cleanup();
         };
     }, [
         onWalletListenRequest,

@@ -20,6 +20,11 @@
 			"import": "./src/index.ts",
 			"default": "./src/index.ts"
 		},
+		"./middleware": {
+			"types": "./src/middleware/index.ts",
+			"import": "./src/middleware/index.ts",
+			"default": "./src/middleware/index.ts"
+		},
 		"./utils/compression": {
 			"types": "./src/utils/compression.ts",
 			"import": "./src/utils/compression.ts",

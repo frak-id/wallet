@@ -2,8 +2,11 @@ import { estimatedInteractionRewardQuery } from "@/module/listener/hooks/useEsti
 import { getProductMetadataQuery } from "@/module/listener/hooks/useGetProductMetadata";
 import type { WalletRpcContext } from "@/module/listener/types/context";
 import type { IFrameRpcSchema } from "@frak-labs/core-sdk";
-import { RpcErrorCodes } from "@frak-labs/core-sdk";
-import type { RpcPromiseHandler } from "@frak-labs/rpc";
+import {
+    FrakRpcError,
+    RpcErrorCodes,
+    type RpcPromiseHandler,
+} from "@frak-labs/rpc";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 
@@ -34,11 +37,10 @@ export function useOnGetProductInformation(): OnGetProductInformation {
             ]);
 
             if (!(productId && productMetadata)) {
-                throw {
-                    code: RpcErrorCodes.configError,
-                    message:
-                        "The current product doesn't exist within the Frak ecosystem",
-                };
+                throw new FrakRpcError(
+                    RpcErrorCodes.configError,
+                    "The current product doesn't exist within the Frak ecosystem"
+                );
             }
 
             return {

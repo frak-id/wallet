@@ -39,6 +39,7 @@
   "browser": "./cdn/bundle.js",
   "exports": {
     ".": {
+			"development": "./src/index.ts",
       "import": {
         "types": "./dist/index.d.ts",
         "default": "./dist/index.js"
@@ -49,6 +50,7 @@
       }
     },
     "./actions": {
+			"development": "./src/actions/index.ts",
       "import": {
         "types": "./dist/actions.d.ts",
         "default": "./dist/actions.js"
@@ -59,6 +61,7 @@
       }
     },
     "./interactions": {
+			"development": "./src/interactions/index.ts",
       "import": {
         "types": "./dist/interactions.d.ts",
         "default": "./dist/interactions.js"

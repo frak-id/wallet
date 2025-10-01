@@ -9,7 +9,5 @@
  * 2. loggingMiddleware - Log decompressed data (development only)
  * 3. walletContextMiddleware - Augment context with wallet-specific fields
  */
-
-export { compressionMiddleware } from "./compression";
 export { loggingMiddleware } from "./logging";
 export { walletContextMiddleware } from "./walletContext";

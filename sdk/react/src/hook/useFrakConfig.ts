@@ -1,4 +1,4 @@
-import { FrakRpcError, RpcErrorCodes } from "@frak-labs/core-sdk";
+import { FrakRpcError, RpcErrorCodes } from "@frak-labs/rpc";
 import { useContext } from "react";
 import { FrakConfigContext } from "../provider";
 

@@ -42,7 +42,7 @@ export const loggingMiddleware = {
             origin: ctx.origin,
             id: msg.id,
             // Don't log full data to avoid noise
-            hasData: !!msg.data,
+            hasData: msg.data,
         });
 
         return context;

@@ -92,7 +92,6 @@ export async function trackAuthInitiated(
     event: AnalyticsAuthenticationType,
     args?: {
         method?: "global" | "specific";
-        ssoId?: string;
     }
 ) {
     if (!openPanel) return;
