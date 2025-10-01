@@ -52,6 +52,42 @@ export type RpcMessage<TMethod extends string = string> = {
 };
 
 /**
+ * Lifecycle message format for client-to-iframe communication
+ * These messages handle connection lifecycle events (handshake, heartbeat, etc.)
+ */
+export type ClientLifecycleMessage = {
+    clientLifecycle: string;
+    data?: unknown;
+};
+
+/**
+ * Lifecycle message format for iframe-to-client communication
+ */
+export type IFrameLifecycleMessage = {
+    iframeLifecycle: string;
+    data?: unknown;
+};
+
+/**
+ * Union of all lifecycle message types
+ */
+export type LifecycleMessage = ClientLifecycleMessage | IFrameLifecycleMessage;
+
+/**
+ * Custom message format for non-RPC, non-lifecycle messages
+ * Used for SSO completion, error notifications, etc.
+ */
+export type CustomMessage = {
+    type: string;
+    payload?: unknown;
+};
+
+/**
+ * Union of all message types that can be received
+ */
+export type AnyMessage = RpcMessage | LifecycleMessage | CustomMessage;
+
+/**
  * RPC response wrapper
  * Contains either a successful result or an error
  */
@@ -163,6 +199,32 @@ export type TypedRpcRequest<
  * Used by stream handlers to emit multiple values
  */
 export type StreamEmitter<TResult> = (chunk: TResult) => void;
+
+/**
+ * Lifecycle handler function
+ * Handles lifecycle events (handshake, heartbeat, etc.)
+ *
+ * @param event - The lifecycle event name
+ * @param data - Optional event data
+ * @param context - Request context with origin and source
+ */
+export type LifecycleHandler = (
+    event: string,
+    data: unknown,
+    context: RpcRequestContext
+) => void | Promise<void>;
+
+/**
+ * Custom message handler function
+ * Handles custom messages (SSO completion, etc.)
+ *
+ * @param message - The custom message
+ * @param context - Request context with origin and source
+ */
+export type CustomMessageHandler = (
+    message: CustomMessage,
+    context: RpcRequestContext
+) => void | Promise<void>;
 
 /**
  * Middleware function for RPC requests

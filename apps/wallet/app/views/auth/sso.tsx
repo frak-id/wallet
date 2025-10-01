@@ -15,6 +15,7 @@ import {
 import {
     demoPrivateKeyAtom,
     sdkSessionAtom,
+    sessionAtom,
 } from "@/module/common/atoms/session";
 import { Grid } from "@/module/common/component/Grid";
 import { Notice } from "@/module/common/component/Notice";
@@ -126,8 +127,46 @@ export default function Sso() {
 
     /**
      * The on success callback
+     * After successful auth, send postMessage to wallet iframe (window.opener)
      */
     const onSuccess = useCallback(() => {
+        // Get the current SSO context
+        const ssoContext = jotaiStore.get(ssoContextAtom);
+        const session = jotaiStore.get(sessionAtom);
+        const sdkSession = jotaiStore.get(sdkSessionAtom);
+
+        // Send postMessage to wallet iframe if opened from window.open
+        if (window.opener && !window.opener.closed && session && sdkSession) {
+            try {
+                window.opener.postMessage(
+                    {
+                        type: "sso-complete",
+                        payload: {
+                            session: {
+                                address: session.address,
+                                publicKey: session.publicKey,
+                                authenticatorId: session.authenticatorId,
+                                transports: session.transports,
+                                type: session.type,
+                            },
+                            sdkJwt: sdkSession.token,
+                            ssoId: ssoContext?.id,
+                        },
+                    },
+                    window.location.origin
+                );
+                console.log("[SSO] Sent completion message to wallet iframe", {
+                    address: session.address,
+                    ssoId: ssoContext?.id,
+                });
+            } catch (error) {
+                console.error(
+                    "[SSO] Failed to send completion message:",
+                    error
+                );
+            }
+        }
+
         // Redirect the user in 2seconds
         setSuccess(true);
         setTimeout(() => {

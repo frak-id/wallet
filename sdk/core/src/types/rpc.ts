@@ -14,12 +14,7 @@ import type {
     SendInteractionReturnType,
 } from "./rpc/interaction";
 import type { GetProductInformationReturnType } from "./rpc/productInformation";
-import type {
-    OpenSsoParamsType,
-    OpenSsoReturnType,
-    TrackSsoParamsType,
-    TrackSsoReturnType,
-} from "./rpc/sso";
+import type { OpenSsoParamsType, OpenSsoReturnType } from "./rpc/sso";
 import type { WalletStatusReturnType } from "./rpc/walletStatus";
 
 /**
@@ -55,11 +50,6 @@ import type { WalletStatusReturnType } from "./rpc/walletStatus";
  *  - Params: [params: {@link OpenSsoParamsType}, name: string, customCss?: string]
  *  - Returns: {@link OpenSsoReturnType}
  *  - Response Type: promise (one-shot)
- *
- * #### frak_trackSso
- *  - Params: [params: {@link TrackSsoParamsType}]
- *  - Returns: {@link TrackSsoReturnType}
- *  - Response Type: stream (emits status updates)
  *
  * #### frak_getProductInformation
  *  - Params: None
@@ -123,16 +113,6 @@ export type IFrameRpcSchema = [
         ];
         ReturnType: OpenSsoReturnType;
         ResponseType: "promise";
-    },
-    /**
-     * Method to track an SSO session
-     * This is a streaming request that emits status updates
-     */
-    {
-        Method: "frak_trackSso";
-        Parameters: [params: TrackSsoParamsType];
-        ReturnType: TrackSsoReturnType;
-        ResponseType: "stream";
     },
     /**
      * Method to get current product information's

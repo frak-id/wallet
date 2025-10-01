@@ -2,7 +2,7 @@ import type { RpcMessage, RpcTransport } from "@frak-labs/rpc";
 import {
     decompressDataAndCheckHash,
     hashAndCompressData,
-} from "../../utils/compression";
+} from "@frak-labs/rpc/utils/compression";
 
 /**
  * Configuration for the compression transport wrapper

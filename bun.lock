@@ -312,8 +312,8 @@
       "name": "@frak-labs/rpc",
       "version": "0.0.0",
       "dependencies": {
-        "@frak-labs/core-sdk": "workspace:*",
-        "viem": "^2.31.2",
+        "@jsonjoy.com/json-pack": "^1.2.0",
+        "viem": "^2.23.14",
       },
       "devDependencies": {
         "@types/bun": "latest",

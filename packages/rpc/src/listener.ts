@@ -4,6 +4,10 @@ import type {
     RpcSchema,
 } from "./rpc-schema";
 import type {
+    CustomMessage,
+    CustomMessageHandler,
+    LifecycleHandler,
+    LifecycleMessage,
     RpcMessage,
     RpcMiddleware,
     RpcMiddlewareContext,
@@ -35,6 +39,8 @@ export type RpcListenerConfig<TContext = Record<string, never>> = {
      * Middleware stack (executed in order)
      * Middleware can augment context, validate requests, and transform responses
      *
+     * Note: Middleware only applies to RPC messages, not lifecycle or custom messages
+     *
      * @example
      * ```ts
      * middleware: [
@@ -45,6 +51,39 @@ export type RpcListenerConfig<TContext = Record<string, never>> = {
      * ```
      */
     middleware?: RpcMiddleware<RpcSchema, TContext>[];
+    /**
+     * Lifecycle event handlers
+     * Handles client-to-iframe and iframe-to-client lifecycle events
+     *
+     * @example
+     * ```ts
+     * lifecycleHandlers: {
+     *   clientLifecycle: (event, data, context) => {
+     *     if (event === 'heartbeat') {
+     *       console.log('Client heartbeat received')
+     *     }
+     *   }
+     * }
+     * ```
+     */
+    lifecycleHandlers?: {
+        clientLifecycle?: LifecycleHandler;
+        iframeLifecycle?: LifecycleHandler;
+    };
+    /**
+     * Custom message handler
+     * Handles messages with a "type" field (e.g., SSO completion)
+     *
+     * @example
+     * ```ts
+     * customMessageHandler: (message, context) => {
+     *   if (message.type === 'sso-complete') {
+     *     handleSsoCompletion(message.payload)
+     *   }
+     * }
+     * ```
+     */
+    customMessageHandler?: CustomMessageHandler;
 };
 
 /**
@@ -134,7 +173,13 @@ export function createRpcListener<
     TSchema extends RpcSchema,
     TContext = Record<string, never>,
 >(config: RpcListenerConfig<TContext>): RpcListener<TSchema, TContext> {
-    const { transport, allowedOrigins, middleware = [] } = config;
+    const {
+        transport,
+        allowedOrigins,
+        middleware = [],
+        lifecycleHandlers,
+        customMessageHandler,
+    } = config;
 
     // Normalize allowed origins to an array
     const allowedOriginsList = Array.isArray(allowedOrigins)
@@ -178,6 +223,36 @@ export function createRpcListener<
             console.error("[RPC Listener] Invalid origin", e);
             return false;
         }
+    }
+
+    /**
+     * Check if a message is a lifecycle message
+     */
+    function isLifecycleMessage(data: unknown): data is LifecycleMessage {
+        if (typeof data !== "object" || !data) {
+            return false;
+        }
+        return "clientLifecycle" in data || "iframeLifecycle" in data;
+    }
+
+    /**
+     * Check if a message is a custom message
+     */
+    function isCustomMessage(data: unknown): data is CustomMessage {
+        if (typeof data !== "object" || !data) {
+            return false;
+        }
+        return "type" in data && !("id" in data || "topic" in data);
+    }
+
+    /**
+     * Check if a message is an RPC message
+     */
+    function isRpcMessage(data: unknown): data is RpcMessage {
+        if (typeof data !== "object" || !data) {
+            return false;
+        }
+        return "id" in data && "topic" in data && "data" in data;
     }
 
     /**
@@ -276,11 +351,65 @@ export function createRpcListener<
     }
 
     /**
-     * Handle incoming messages
+     * Handle lifecycle messages
+     * These bypass middleware and compression
      */
-    async function handleMessage(
-        event: MessageEvent<RpcMessage<ExtractMethod<TSchema>>>
+    async function handleLifecycleMessage(
+        message: LifecycleMessage,
+        context: RpcRequestContext
     ) {
+        try {
+            if (
+                "clientLifecycle" in message &&
+                lifecycleHandlers?.clientLifecycle
+            ) {
+                await lifecycleHandlers.clientLifecycle(
+                    message.clientLifecycle,
+                    message.data,
+                    context
+                );
+            } else if (
+                "iframeLifecycle" in message &&
+                lifecycleHandlers?.iframeLifecycle
+            ) {
+                await lifecycleHandlers.iframeLifecycle(
+                    message.iframeLifecycle,
+                    message.data,
+                    context
+                );
+            }
+        } catch (error) {
+            console.error("[RPC Listener] Lifecycle handler error:", error);
+        }
+    }
+
+    /**
+     * Handle custom messages
+     * These bypass middleware and compression
+     */
+    async function handleCustomMessageInternal(
+        message: CustomMessage,
+        context: RpcRequestContext
+    ) {
+        if (!customMessageHandler) {
+            return;
+        }
+
+        try {
+            await customMessageHandler(message, context);
+        } catch (error) {
+            console.error(
+                "[RPC Listener] Custom message handler error:",
+                error
+            );
+        }
+    }
+
+    /**
+     * Handle incoming messages
+     * Routes messages to appropriate handlers based on message type
+     */
+    async function handleMessage(event: MessageEvent) {
         // Validate origin
         if (!isOriginAllowed(event.origin)) {
             console.warn(
@@ -290,24 +419,31 @@ export function createRpcListener<
             return;
         }
 
-        // Validate message format
-        if (
-            typeof event.data !== "object" ||
-            !event.data ||
-            !("id" in event.data) ||
-            !("topic" in event.data) ||
-            !("data" in event.data)
-        ) {
-            return;
-        }
-
-        const { id, topic, data } = event.data;
-
-        // Build base request context
+        // Build base request context (used by all message types)
         const baseContext: RpcRequestContext = {
             origin: event.origin,
             source: event.source,
         };
+
+        // Route lifecycle messages (no middleware, no compression)
+        if (isLifecycleMessage(event.data)) {
+            await handleLifecycleMessage(event.data, baseContext);
+            return;
+        }
+
+        // Route custom messages (no middleware, no compression)
+        if (isCustomMessage(event.data)) {
+            await handleCustomMessageInternal(event.data, baseContext);
+            return;
+        }
+
+        // Must be an RPC message - validate format
+        if (!isRpcMessage(event.data)) {
+            return;
+        }
+
+        // Handle RPC message with middleware
+        const { id, topic, data } = event.data;
 
         // Execute onRequest middleware to augment context
         let augmentedContext: RpcMiddlewareContext<TContext>;

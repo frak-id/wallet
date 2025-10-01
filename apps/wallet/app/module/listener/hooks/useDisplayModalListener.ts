@@ -2,7 +2,6 @@ import { sessionAtom } from "@/module/common/atoms/session";
 import {
     type DisplayedModalStep,
     displayedRpcModalStepsAtom,
-    modalRpcResultsAtom,
     setNewModalAtom,
 } from "@/module/listener/modal/atoms/modalEvents";
 import {

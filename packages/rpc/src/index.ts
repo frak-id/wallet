@@ -89,6 +89,14 @@ export type {
     RpcStreamHandler,
     ConnectionState,
     HandshakeConfig,
+    // New message types
+    LifecycleMessage,
+    ClientLifecycleMessage,
+    IFrameLifecycleMessage,
+    CustomMessage,
+    AnyMessage,
+    LifecycleHandler,
+    CustomMessageHandler,
 } from "./types";
 
 export { FrakRpcError, RpcErrorCodes } from "./types";

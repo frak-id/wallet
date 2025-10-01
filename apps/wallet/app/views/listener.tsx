@@ -1,10 +1,15 @@
 import { ListenerUiRenderer } from "@/module/listener/component/ListerUiRenderer";
+import { createCustomMessageHandler } from "@/module/listener/handlers/customMessageHandler";
+import {
+    checkContextAndEmitReady,
+    createClientLifecycleHandler,
+    initializeResolvingContext,
+} from "@/module/listener/handlers/lifecycleHandler";
 import { useDisplayEmbeddedWallet } from "@/module/listener/hooks/useDisplayEmbeddedWallet";
 import { useDisplayModalListener } from "@/module/listener/hooks/useDisplayModalListener";
 import { useListenerDataPreload } from "@/module/listener/hooks/useListenerDataPreload";
 import { useOnGetProductInformation } from "@/module/listener/hooks/useOnGetProductInformation";
 import { useOnOpenSso } from "@/module/listener/hooks/useOnOpenSso";
-import { useOnTrackSso } from "@/module/listener/hooks/useOnTrackSso";
 import { useSendInteractionListener } from "@/module/listener/hooks/useSendInteractionListener";
 import { useSendPing } from "@/module/listener/hooks/useSendPing";
 import { useWalletStatusListener } from "@/module/listener/hooks/useWalletStatusListener";
@@ -15,7 +20,6 @@ import {
 } from "@/module/listener/middleware";
 import { ListenerUiProvider } from "@/module/listener/providers/ListenerUiProvider";
 import type { WalletRpcContext } from "@/module/listener/types/context";
-import { setupLifecycleHandlers } from "@/module/sdk/utils/lifecycleHandlers";
 import type { IFrameRpcSchema } from "@frak-labs/core-sdk";
 import { createRpcListener } from "@frak-labs/rpc";
 import { loadPolyfills } from "@frak-labs/ui/utils/polyfills";
@@ -62,24 +66,40 @@ function ListenerContent() {
     // Hook when a modal display is asked
     const onOpenSso = useOnOpenSso();
 
-    // Hook when the client want to track the sso status
-    const onTrackSso = useOnTrackSso();
-
     // Hook when the product information are asked
     const onGetProductInformation = useOnGetProductInformation();
 
-    // Create the RPC listener
+    // Create the RPC listener with centralized message handling
     useEffect(() => {
         if (typeof window === "undefined") {
             return;
         }
+
+        // Track if we're ready to handle requests
+        let isReady = false;
+        const setReadyToHandleRequest = () => {
+            if (isReady) return;
+            isReady = true;
+            checkContextAndEmitReady();
+        };
+
+        // Create lifecycle and custom message handlers
+        const clientLifecycleHandler = createClientLifecycleHandler(
+            setReadyToHandleRequest
+        );
+        const customMessageHandler = createCustomMessageHandler();
 
         // Create the listener with schema type and wallet context
         // Note: We accept all origins with "*" because the actual security validation
         // happens in walletContextMiddleware (matching computed productId from origin
         // against stored iframeResolvingContext)
         //
-        // Middleware stack order:
+        // Message routing:
+        // 1. Lifecycle messages -> clientLifecycleHandler (no middleware, no compression)
+        // 2. Custom messages -> customMessageHandler (no middleware, no compression)
+        // 3. RPC messages -> middleware stack -> handlers
+        //
+        // Middleware stack order (RPC messages only):
         // 1. compressionMiddleware - Decompresses incoming CBOR data with hash validation
         // 2. loggingMiddleware - Logs requests/responses (development only)
         // 3. walletContextMiddleware - Augments context with productId, sourceUrl, etc.
@@ -94,6 +114,10 @@ function ListenerContent() {
                 loggingMiddleware,
                 walletContextMiddleware,
             ],
+            lifecycleHandlers: {
+                clientLifecycle: clientLifecycleHandler,
+            },
+            customMessageHandler,
         });
 
         // Register promise-based handlers
@@ -114,9 +138,11 @@ function ListenerContent() {
             "frak_listenToWalletStatus",
             onWalletListenRequest
         );
-        newListener.handleStream("frak_trackSso", onTrackSso);
 
         setListener(newListener);
+
+        // Initialize resolving context (starts handshake if needed)
+        initializeResolvingContext();
 
         // On cleanup, destroy the listener
         return () => {
@@ -127,27 +153,9 @@ function ListenerContent() {
         onInteractionRequest,
         onDisplayModalRequest,
         onOpenSso,
-        onTrackSso,
         onGetProductInformation,
         onDisplayEmbeddedWallet,
     ]);
-
-    /**
-     * Setup lifecycle handlers and emit ready when context is available
-     */
-    useEffect(() => {
-        if (!listener) {
-            return;
-        }
-
-        // Setup lifecycle handlers (handshake, heartbeat, etc.)
-        const cleanupLifecycle = setupLifecycleHandlers(() => {
-            // This callback is called when we're ready to handle requests
-            // The lifecycle handlers already emit the "connected" event
-        });
-
-        return cleanupLifecycle;
-    }, [listener]);
 
     /**
      * Add a data attribute to the root element to style the layout

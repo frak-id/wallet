@@ -1,9 +1,9 @@
+import type { RpcResponse } from "@frak-labs/rpc";
 import {
     type CompressedData,
     decompressDataAndCheckHash,
     hashAndCompressData,
-} from "@frak-labs/core-sdk";
-import type { RpcResponse } from "@frak-labs/rpc";
+} from "@frak-labs/rpc/utils/compression";
 
 /**
  * Compression middleware for wallet RPC communication

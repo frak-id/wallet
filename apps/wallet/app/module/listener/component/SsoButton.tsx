@@ -1,4 +1,3 @@
-import { useConsumePendingSso } from "@/module/authentication/hook/useConsumePendingSso";
 import {
     ssoPopupFeatures,
     ssoPopupName,
@@ -12,6 +11,12 @@ import { trackAuthFailed, trackAuthInitiated } from "../../common/analytics";
 
 /**
  * Button used to launch an SSO registration
+ *
+ * Performance note:
+ * - Removed useConsumePendingSso hook (backend polling eliminated)
+ * - SSO completion now handled via direct window postMessage
+ * - Session updates trigger via sessionAtom changes
+ *
  * @param appName
  * @param productId
  * @param ssoMetadata
@@ -48,12 +53,6 @@ export function SsoButton({
         directExit: true,
         useConsumeKey: true,
         lang,
-    });
-
-    // Consume the pending sso if possible (maybe some hook to early exit here? Already working since we have the session listener)
-    useConsumePendingSso({
-        trackingId,
-        productId,
     });
 
     if (!link) {

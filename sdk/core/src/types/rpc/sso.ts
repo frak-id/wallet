@@ -1,5 +1,4 @@
 import type { Hex } from "viem";
-import type { WalletStatusReturnType } from "./walletStatus";
 
 /**
  * SSO Metadata
@@ -35,7 +34,8 @@ export type OpenSsoParamsType = {
      */
     openInSameWindow?: boolean;
     /**
-     * An optional consumeKey if the website want to do SSO status polling
+     * An optional consumeKey for SSO session resolution via backend
+     * Note: Used for direct SSO page ↔ wallet communication, not for RPC polling
      */
     consumeKey?: Hex;
     /**
@@ -54,29 +54,13 @@ export type OpenSsoParamsType = {
  */
 export type OpenSsoReturnType = {
     /**
-     * Optionnal tracking id, if a consumeKey where provided in the input
+     * Optional tracking id, if a consumeKey was provided in the input
+     * Note: This is used for backend SSO session tracking, not for RPC polling
      */
     trackingId?: Hex;
-};
-
-/**
- * Params to track an SSO status
- * @group RPC Schema
- */
-export type TrackSsoParamsType = {
     /**
-     * The consume key needed to track this sso
+     * Optional wallet address, returned when SSO completes via postMessage
+     * Note: Only present when SSO flow completes (not immediately on open)
      */
-    consumeKey: Hex;
-
-    /**
-     * The tracking key to track for
-     */
-    trackingId: Hex;
+    wallet?: Hex;
 };
-
-/**
- * Return type when tracking an SSO
- * @group RPC Schema
- */
-export type TrackSsoReturnType = WalletStatusReturnType;

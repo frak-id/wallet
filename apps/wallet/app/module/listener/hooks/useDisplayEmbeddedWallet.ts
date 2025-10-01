@@ -78,7 +78,8 @@ export function useDisplayEmbeddedWallet(): OnDisplayEmbeddedWalletRequest {
             if (currentDeferredRef.current) {
                 currentDeferredRef.current.reject({
                     code: -1,
-                    message: "New embedded wallet request superseded previous request",
+                    message:
+                        "New embedded wallet request superseded previous request",
                 });
                 currentDeferredRef.current = null;
             }
