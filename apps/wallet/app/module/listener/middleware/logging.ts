@@ -73,7 +73,7 @@ export const loggingMiddleware = {
                 origin: ctx.origin,
                 id: msg.id,
                 // Don't log full result to avoid noise
-                hasResult: !!response.result,
+                hasResult: response.result,
             });
         }
 

@@ -56,19 +56,19 @@ export const clientCompressionMiddleware = {
         if (!isCompressed) return response;
 
         try {
-            // Decompress the response: Uint8Array → {method, params}
+            // Decompress the response: Uint8Array → original data
             const decompressed = decompressDataAndCheckHash(
                 response.result as CompressedData
             );
             const { validationHash: _, ...cleanData } = decompressed;
 
-            // Extract just the params from {method, params}
+            // Extract just the result from {method, result}
             if (
                 typeof cleanData === "object" &&
                 cleanData !== null &&
-                "params" in cleanData
+                "result" in cleanData
             ) {
-                response.result = (cleanData as { params: unknown }).params;
+                response.result = cleanData.result;
             } else {
                 response.result = cleanData;
             }
@@ -148,7 +148,7 @@ export const listenerCompressionMiddleware = {
             // Compress the response: params → {method, params} → Uint8Array
             const dataToCompress = {
                 method: message.topic,
-                params: response.result,
+                result: response.result,
             };
             response.result = hashAndCompressData(dataToCompress);
         } catch (error) {

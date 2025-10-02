@@ -79,7 +79,6 @@ export function useDisplayEmbeddedWallet(): OnDisplayEmbeddedWalletRequest {
 
     return useCallback(
         async (params) => {
-            console.log("Received display embed request", params);
             const configMetadata = params[1];
 
             // Clean up any existing deferred

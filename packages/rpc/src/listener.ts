@@ -271,10 +271,18 @@ export function createRpcListener<
             return;
         }
 
+        // For backward compatibility with old compression format:
+        // If response.result is compressed (Uint8Array), send it directly as message.data
+        // instead of wrapping it in {result: CompressedData}
+        const isCompressedResponse =
+            !response.error &&
+            (response.result instanceof Uint8Array ||
+                ArrayBuffer.isView(response.result));
+
         const message: RpcMessage<ExtractMethod<TSchema>> = {
             id,
             topic,
-            data: response,
+            data: isCompressedResponse ? response.result : response,
         };
 
         // Check if source has postMessage method

@@ -306,9 +306,21 @@ export function createRpcClient<TSchema extends RpcSchema>(
         // Apply middleware to incoming response
         let processedResponse: RpcResponse;
         try {
+            // For backward compatibility with old compression format:
+            // If message.data is compressed (Uint8Array), wrap it as {result: CompressedData}
+            // so middleware can decompress it properly
+            const messageData = event.data.data;
+            const isCompressedData =
+                messageData instanceof Uint8Array ||
+                ArrayBuffer.isView(messageData);
+
+            const responseToProcess: RpcResponse = isCompressedData
+                ? { result: messageData }
+                : (messageData as RpcResponse);
+
             processedResponse = await executeOnResponseMiddleware(
                 event.data,
-                event.data.data as RpcResponse
+                responseToProcess
             );
         } catch (error) {
             console.error("[RPC Client] Middleware error on response:", error);
