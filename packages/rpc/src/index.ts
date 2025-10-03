@@ -107,7 +107,7 @@ export {
 } from "./middleware";
 
 // Utils helpers
-export { Deferred } from "./utils/deferred";
+export { Deferred } from "./utils/deferred-promise";
 export {
     compressJson,
     decompressJson,

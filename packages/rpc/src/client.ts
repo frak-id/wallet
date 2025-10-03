@@ -16,7 +16,7 @@ import type {
     RpcResponse,
     RpcTransport,
 } from "./types";
-import { Deferred } from "./utils/deferred";
+import { Deferred } from "./utils/deferred-promise";
 
 /**
  * RPC Client configuration
