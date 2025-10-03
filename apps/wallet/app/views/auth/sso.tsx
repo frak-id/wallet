@@ -190,7 +190,6 @@ export default function Sso() {
             const redirectUrl = new URL(
                 decodeURIComponent(ssoContext.redirectUrl)
             );
-            redirectUrl.searchParams.set("status", "success");
 
             // Get the full SSO params and compress them for URL passthrough
             const session = jotaiStore.get(sessionAtom);

@@ -4,12 +4,14 @@ import {
     createClientLifecycleHandler,
     initializeResolvingContext,
 } from "@/module/listener/handlers/lifecycleHandler";
-import { handleSsoComplete } from "@/module/listener/handlers/ssoHandler";
+import {
+    handleOpenSso,
+    handleSsoComplete,
+} from "@/module/listener/handlers/ssoHandler";
 import { useDisplayEmbeddedWallet } from "@/module/listener/hooks/useDisplayEmbeddedWallet";
 import { useDisplayModalListener } from "@/module/listener/hooks/useDisplayModalListener";
 import { useListenerDataPreload } from "@/module/listener/hooks/useListenerDataPreload";
 import { useOnGetProductInformation } from "@/module/listener/hooks/useOnGetProductInformation";
-import { useOnOpenSso } from "@/module/listener/hooks/useOnOpenSso";
 import { useSendInteractionListener } from "@/module/listener/hooks/useSendInteractionListener";
 import { useSendPing } from "@/module/listener/hooks/useSendPing";
 import { useWalletStatusListener } from "@/module/listener/hooks/useWalletStatusListener";
@@ -60,9 +62,6 @@ function ListenerContent() {
 
     // Hook when a embedded wallet display is asked
     const onDisplayEmbeddedWallet = useDisplayEmbeddedWallet();
-
-    // Hook when a modal display is asked
-    const onOpenSso = useOnOpenSso();
 
     // Hook when the product information are asked
     const onGetProductInformation = useOnGetProductInformation();
@@ -124,7 +123,7 @@ function ListenerContent() {
         // Register promise-based handlers (IFrameRpcSchema)
         listener.handle("frak_sendInteraction", onInteractionRequest);
         listener.handle("frak_displayModal", onDisplayModalRequest);
-        listener.handle("frak_sso", onOpenSso);
+        listener.handle("frak_sso", handleOpenSso);
         listener.handle("frak_getProductInformation", onGetProductInformation);
         listener.handle("frak_displayEmbeddedWallet", onDisplayEmbeddedWallet);
 
@@ -148,7 +147,6 @@ function ListenerContent() {
         onWalletListenRequest,
         onInteractionRequest,
         onDisplayModalRequest,
-        onOpenSso,
         onGetProductInformation,
         onDisplayEmbeddedWallet,
     ]);

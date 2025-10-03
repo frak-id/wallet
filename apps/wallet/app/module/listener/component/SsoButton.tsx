@@ -1,8 +1,8 @@
+import { useSsoLink } from "@/module/authentication/hook/useGetOpenSsoLink";
 import {
     ssoPopupFeatures,
     ssoPopupName,
-    useSsoLink,
-} from "@/module/authentication/hook/useGetOpenSsoLink";
+} from "@/module/authentication/utils/ssoLink";
 import { useListenerWithRequestUI } from "@/module/listener/providers/ListenerUiProvider";
 import type { SsoMetadata } from "@frak-labs/core-sdk";
 import { type ReactNode, useState } from "react";

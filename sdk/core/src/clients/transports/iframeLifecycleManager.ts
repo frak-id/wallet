@@ -66,7 +66,16 @@ export function createIFrameLifecycleManager({
             }
             // Redirect handling
             case "redirect": {
-                window.location.href = `${data.baseRedirectUrl}${encodeURIComponent(window.location.href)}`;
+                const redirectUrl = new URL(data.baseRedirectUrl);
+
+                // If we got a u append the current location dynamicly
+                if (redirectUrl.searchParams.has("u")) {
+                    redirectUrl.searchParams.delete("u");
+                    redirectUrl.searchParams.append("u", window.location.href);
+                    window.location.href = redirectUrl.toString();
+                } else {
+                    window.location.href = data.baseRedirectUrl;
+                }
                 break;
             }
         }

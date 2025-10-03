@@ -27,7 +27,8 @@ type RedirectRequestEvent = {
     iframeLifecycle: "redirect";
     data: {
         /**
-         * The base url to redirect to (contain a query param `u`, the client need to suffix the current url to the base url)
+         * The base url to redirect to
+         *  If it contain a query param `u`, the client need will suffix the current url to the base url
          */
         baseRedirectUrl: string;
     };
