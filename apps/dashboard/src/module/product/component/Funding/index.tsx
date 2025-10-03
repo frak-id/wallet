@@ -18,7 +18,7 @@ import {
 } from "@/module/product/hook/useGetProductFunding";
 import { useSetBankDistributionStatus } from "@/module/product/hook/useSetBankDistributionStatus";
 import { currencyOptions } from "@/module/product/utils/currencyOptions";
-import { addresses } from "@frak-labs/app-essentials";
+import { addresses, isRunningInProd } from "@frak-labs/app-essentials";
 import { detectStablecoinFromToken } from "@frak-labs/app-essentials";
 import {
     type Stablecoin,
@@ -119,6 +119,10 @@ function FundAction({
         [productMetadata]
     );
 
+    const stablecoin = useMemo(() => {
+        return detectStablecoinFromToken(bank.token.address);
+    }, [bank.token.address]);
+
     if (isLoadingProductMetadata) {
         return <Spinner />;
     }
@@ -141,6 +145,20 @@ function FundAction({
                 disabled={isPending}
                 isLoading={isPending}
                 onClick={() => fundTestBank({ bank: bank.address })}
+            >
+                Add funds
+            </Button>
+        );
+    }
+
+    // For Monerium stablecoins in dev/testnet only, use the test funding
+    if (!isRunningInProd && stablecoin && stablecoin !== "usdc") {
+        return (
+            <Button
+                variant={"submit"}
+                disabled={isPending}
+                isLoading={isPending}
+                onClick={() => fundTestBank({ bank: bank.address, stablecoin })}
             >
                 Add funds
             </Button>
