@@ -140,7 +140,7 @@ function replaceUrl({
 }
 
 /**
- * Export our frak context "class"
+ * Export our frak context
  */
 export const FrakContextManager = {
     compress,
