@@ -1,11 +1,12 @@
 import { FrakRpcError, RpcErrorCodes, createRpcClient } from "@frak-labs/rpc";
-import { clientCompressionMiddleware } from "@frak-labs/rpc/middleware";
+import { createClientCompressionMiddleware } from "@frak-labs/rpc/middleware";
 import { OpenPanel } from "@openpanel/web";
 import type { FrakClient } from "../types/client";
 import type { FrakWalletSdkConfig } from "../types/config";
 import type { IFrameLifecycleEvent } from "../types/lifecycle";
 import type { IFrameRpcSchema } from "../types/rpc";
 import { BACKUP_KEY } from "../utils/constants";
+import { setupSsoUrlListener } from "../utils/ssoUrlListener";
 import { DebugInfoGatherer } from "./DebugInfo";
 import {
     type IframeLifecycleManager,
@@ -72,7 +73,7 @@ export function createIFrameFrakClient({
                     return ctx;
                 },
             },
-            clientCompressionMiddleware,
+            createClientCompressionMiddleware(),
             // Save debug info
             {
                 onRequest(message, ctx) {
@@ -228,7 +229,6 @@ function setupHeartbeat(
  * @param config - SDK configuration
  * @param rpcClient - RPC client to send lifecycle events
  * @param lifecycleManager - Lifecycle manager to track connection
- * @param debugInfo - Debug info gatherer
  */
 async function postConnectionSetup({
     config,
@@ -241,6 +241,10 @@ async function postConnectionSetup({
 }): Promise<void> {
     // Wait for the handler to be connected
     await lifecycleManager.isConnected;
+
+    // Setup SSO URL listener to detect and forward SSO redirects
+    // This checks for ?sso= parameter and forwards compressed data to iframe
+    setupSsoUrlListener(rpcClient, lifecycleManager.isConnected);
 
     // Push raw CSS if needed
     async function pushCss() {

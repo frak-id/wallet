@@ -8,6 +8,6 @@
  */
 
 export {
-    clientCompressionMiddleware,
-    listenerCompressionMiddleware,
+    createClientCompressionMiddleware,
+    createListenerCompressionMiddleware,
 } from "./compression";

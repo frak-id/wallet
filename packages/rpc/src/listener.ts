@@ -19,7 +19,10 @@ import type {
  *
  * @typeParam TContext - Custom context type to augment base context
  */
-export type RpcListenerConfig<TContext = Record<string, never>> = {
+export type RpcListenerConfig<
+    TSchema extends RpcSchema,
+    TContext = Record<string, never>,
+> = {
     /**
      * The transport to use for communication (e.g., window)
      */
@@ -44,7 +47,7 @@ export type RpcListenerConfig<TContext = Record<string, never>> = {
      * ]
      * ```
      */
-    middleware?: RpcMiddleware<RpcSchema, TContext>[];
+    middleware?: RpcMiddleware<TSchema, TContext>[];
     /**
      * Lifecycle event handlers
      * Handles client-to-iframe and iframe-to-client lifecycle events
@@ -148,7 +151,9 @@ export type RpcListener<
 export function createRpcListener<
     TSchema extends RpcSchema,
     TContext = Record<string, never>,
->(config: RpcListenerConfig<TContext>): RpcListener<TSchema, TContext> {
+>(
+    config: RpcListenerConfig<TSchema, TContext>
+): RpcListener<TSchema, TContext> {
     const {
         transport,
         allowedOrigins,

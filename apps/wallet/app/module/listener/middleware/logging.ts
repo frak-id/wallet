@@ -1,6 +1,13 @@
-import type { WalletRpcContext } from "@/module/listener/types/context";
+import type {
+    CombinedRpcSchema,
+    WalletRpcContext,
+} from "@/module/listener/types/context";
 import { isRunningLocally } from "@frak-labs/app-essentials";
-import type { RpcResponse } from "@frak-labs/rpc";
+import type {
+    RpcMiddleware,
+    RpcMiddlewareContext,
+    RpcResponse,
+} from "@frak-labs/rpc";
 
 /**
  * Logging middleware for wallet RPC communication
@@ -25,13 +32,12 @@ import type { RpcResponse } from "@frak-labs/rpc";
  * })
  * ```
  */
-export const loggingMiddleware = {
-    onRequest: <TContext extends WalletRpcContext>(
-        message: unknown,
-        context: TContext
-    ): TContext => {
+export const loggingMiddleware: RpcMiddleware<
+    CombinedRpcSchema,
+    WalletRpcContext
+> = {
+    onRequest: (message, context): RpcMiddlewareContext<WalletRpcContext> => {
         const msg = message as { id: string; topic: string; data: unknown };
-        const ctx = context as { origin: string };
         // Only log in local development
         if (!isRunningLocally) {
             return context;
@@ -39,7 +45,7 @@ export const loggingMiddleware = {
 
         console.log("[Wallet RPC] Request:", {
             topic: msg.topic,
-            origin: ctx.origin,
+            origin: context.origin,
             id: msg.id,
             // Don't log full data to avoid noise
             hasData: msg.data,
@@ -48,13 +54,8 @@ export const loggingMiddleware = {
         return context;
     },
 
-    onResponse: <TContext extends WalletRpcContext>(
-        message: unknown,
-        response: RpcResponse,
-        context: TContext
-    ): RpcResponse => {
+    onResponse: (message, response, _context): RpcResponse => {
         const msg = message as { id: string; topic: string };
-        const ctx = context as { origin: string };
         // Only log in local development
         if (!isRunningLocally) {
             return response;
@@ -63,14 +64,14 @@ export const loggingMiddleware = {
         if (response.error) {
             console.error("[Wallet RPC] Error response:", {
                 topic: msg.topic,
-                origin: ctx.origin,
+                origin: _context.origin,
                 id: msg.id,
                 error: response.error,
             });
         } else {
             console.log("[Wallet RPC] Success response:", {
                 topic: msg.topic,
-                origin: ctx.origin,
+                origin: _context.origin,
                 id: msg.id,
                 // Don't log full result to avoid noise
                 hasResult: response.result,
@@ -79,4 +80,4 @@ export const loggingMiddleware = {
 
         return response;
     },
-} as const;
+};

@@ -1,7 +1,14 @@
 import { iframeResolvingContextAtom } from "@/module/listener/atoms/resolvingContext";
-import type { WalletRpcContext } from "@/module/listener/types/context";
+import type {
+    CombinedRpcSchema,
+    WalletRpcContext,
+} from "@/module/listener/types/context";
 import { isRunningLocally } from "@frak-labs/app-essentials";
-import { FrakRpcError, RpcErrorCodes } from "@frak-labs/rpc";
+import {
+    FrakRpcError,
+    RpcErrorCodes,
+    type RpcMiddleware,
+} from "@frak-labs/rpc";
 import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { keccak256, toHex } from "viem";
 
@@ -33,13 +40,11 @@ import { keccak256, toHex } from "viem";
  * })
  * ```
  */
-export const walletContextMiddleware = {
-    onRequest: <
-        TContext extends { origin: string; source: MessageEventSource | null },
-    >(
-        message: unknown,
-        context: TContext
-    ): TContext & WalletRpcContext => {
+export const walletContextMiddleware: RpcMiddleware<
+    CombinedRpcSchema,
+    WalletRpcContext
+> = {
+    onRequest: (message, context) => {
         const msg = message as { topic: string };
         // Read resolving context from Jotai store (only once per request)
         const resolvingContext = jotaiStore.get(iframeResolvingContextAtom);

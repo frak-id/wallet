@@ -9,7 +9,8 @@ export type ClientLifecycleEvent =
     | CustomI18nEvent
     | RestoreBackupEvent
     | HearbeatEvent
-    | HandshakeResponse;
+    | HandshakeResponse
+    | SsoRedirectCompleteEvent;
 
 type CustomCssEvent = {
     clientLifecycle: "modal-css";
@@ -36,4 +37,9 @@ type HandshakeResponse = {
         token: string;
         currentUrl: string;
     };
+};
+
+type SsoRedirectCompleteEvent = {
+    clientLifecycle: "sso-redirect-complete";
+    data: { compressed: string };
 };

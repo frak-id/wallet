@@ -2,7 +2,7 @@ import { addLastAuthenticationAtom } from "@/module/authentication/atoms/lastAut
 import { trackAuthCompleted } from "@/module/common/analytics";
 import { sdkSessionAtom, sessionAtom } from "@/module/common/atoms/session";
 import type { WalletRpcContext } from "@/module/listener/types/context";
-import type { Session } from "@/types/Session";
+import type { SdkSession, Session } from "@/types/Session";
 import type { SsoRpcSchema } from "@/types/sso-rpc";
 import {
     Deferred,
@@ -30,21 +30,16 @@ export function cleanupPendingSsoRequest() {
 }
 
 /**
- * Handle sso_complete RPC method
+ * Process SSO completion - shared logic for both RPC and lifecycle handlers
+ * Stores session and resolves pending requests
  *
- * This is called by the SSO window via RPC instead of custom postMessage.
- * It stores the session and resolves any pending deferred promises.
- *
- * @param params - [session, sdkJwt, ssoId]
- * @param _context - Request context (unused)
- * @returns Promise resolving to { success: true }
+ * @param sessionData - Session data from SSO
+ * @param sdkSession - SDK session data
  */
-export const handleSsoComplete: SsoCompleteHandler = async (
-    params,
-    _context
-) => {
-    const [sessionData, sdkSession] = params;
-
+export async function processSsoCompletion(
+    sessionData: Session,
+    sdkSession: SdkSession
+): Promise<void> {
     // Construct full session object
     const session: Session = {
         ...sessionData,
@@ -66,13 +61,11 @@ export const handleSsoComplete: SsoCompleteHandler = async (
         pendingSsoRequest?.resolve({ wallet: session.address });
         cleanupPendingSsoRequest();
 
-        console.log("[SSO RPC] Authentication completed successfully", {
+        console.log("[SSO] Authentication completed successfully", {
             address: session.address,
         });
-
-        return { success: true };
     } catch (error) {
-        console.error("[SSO RPC] Error handling completion:", error);
+        console.error("[SSO] Error handling completion:", error);
 
         // Reject pending RPC call on error
         pendingSsoRequest?.reject(
@@ -85,4 +78,25 @@ export const handleSsoComplete: SsoCompleteHandler = async (
 
         throw error;
     }
+}
+
+/**
+ * Handle sso_complete RPC method
+ *
+ * This is called by the SSO window via RPC instead of custom postMessage.
+ * It stores the session and resolves any pending deferred promises.
+ *
+ * @param params - [session, sdkJwt, ssoId]
+ * @param _context - Request context (unused)
+ * @returns Promise resolving to { success: true }
+ */
+export const handleSsoComplete: SsoCompleteHandler = async (
+    params,
+    _context
+) => {
+    const [sessionData, sdkSession] = params;
+
+    await processSsoCompletion(sessionData, sdkSession);
+
+    return { success: true };
 };

@@ -18,12 +18,13 @@ import {
     walletContextMiddleware,
 } from "@/module/listener/middleware";
 import { ListenerUiProvider } from "@/module/listener/providers/ListenerUiProvider";
-import type { WalletRpcContext } from "@/module/listener/types/context";
-import type { SsoRpcSchema } from "@/types/sso-rpc";
-import type { IFrameRpcSchema } from "@frak-labs/core-sdk";
+import type {
+    CombinedRpcSchema,
+    WalletRpcContext,
+} from "@/module/listener/types/context";
 import {
+    createListenerCompressionMiddleware,
     createRpcListener,
-    listenerCompressionMiddleware,
 } from "@frak-labs/rpc";
 import { loadPolyfills } from "@frak-labs/ui/utils/polyfills";
 import { useEffect } from "react";
@@ -46,11 +47,6 @@ export default function Listener() {
  *  - It's goal is to answer every request from the iFrame windows parent
  * @constructor
  */
-/**
- * Combined schema type for handling both IFrame RPC and SSO RPC
- */
-type CombinedRpcSchema = IFrameRpcSchema | SsoRpcSchema;
-
 function ListenerContent() {
     // Hook used when a wallet status is requested
     const onWalletListenRequest = useWalletStatusListener();
@@ -112,7 +108,7 @@ function ListenerContent() {
                 transport: window,
                 allowedOrigins: "*",
                 middleware: [
-                    listenerCompressionMiddleware,
+                    createListenerCompressionMiddleware(),
                     loggingMiddleware,
                     walletContextMiddleware,
                 ],

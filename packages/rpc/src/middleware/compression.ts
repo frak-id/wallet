@@ -17,11 +17,14 @@ import {
  * const client = createRpcClient({
  *   transport: iframe.contentWindow,
  *   targetOrigin: 'https://wallet.frak.id',
- *   middleware: [clientCompressionMiddleware]
+ *   middleware: [createClientCompressionMiddleware()]
  * })
  * ```
  */
-export const clientCompressionMiddleware = {
+export const createClientCompressionMiddleware = <
+    TSchema extends RpcSchema,
+    TContext,
+>(): RpcMiddleware<TSchema, TContext> => ({
     onRequest: (message, context) => {
         // Check if data is already compressed
         const isCompressed =
@@ -81,7 +84,7 @@ export const clientCompressionMiddleware = {
 
         return response;
     },
-} satisfies RpcMiddleware<RpcSchema>;
+});
 
 /**
  * Listener-side compression middleware
@@ -94,11 +97,14 @@ export const clientCompressionMiddleware = {
  * const listener = createRpcListener({
  *   transport: window,
  *   allowedOrigins: ['https://example.com'],
- *   middleware: [listenerCompressionMiddleware]
+ *   middleware: [createListenerCompressionMiddleware()]
  * })
  * ```
  */
-export const listenerCompressionMiddleware = {
+export const createListenerCompressionMiddleware = <
+    TSchema extends RpcSchema,
+    TContext,
+>(): RpcMiddleware<TSchema, TContext> => ({
     onRequest: (message, context) => {
         // Check if data is compressed
         const isCompressed =
@@ -160,4 +166,4 @@ export const listenerCompressionMiddleware = {
 
         return response;
     },
-} satisfies RpcMiddleware<RpcSchema>;
+});

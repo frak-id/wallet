@@ -1,3 +1,5 @@
+import type { SsoRpcSchema } from "@/types/sso-rpc";
+import type { IFrameRpcSchema } from "@frak-labs/core-sdk";
 import type { Address, Hex } from "viem";
 
 /**
@@ -39,3 +41,8 @@ export type WalletRpcContext = {
      */
     walletReferrer?: Address;
 };
+
+/**
+ * Combined schema type for handling both IFrame RPC and SSO RPC
+ */
+export type CombinedRpcSchema = IFrameRpcSchema | SsoRpcSchema;

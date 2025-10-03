@@ -102,8 +102,8 @@ export {
 
 // Built-in middleware
 export {
-    clientCompressionMiddleware,
-    listenerCompressionMiddleware,
+    createClientCompressionMiddleware,
+    createListenerCompressionMiddleware,
 } from "./middleware";
 
 // Utils helpers

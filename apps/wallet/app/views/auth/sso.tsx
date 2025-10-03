@@ -20,7 +20,7 @@ import {
 import { Grid } from "@/module/common/component/Grid";
 import { Notice } from "@/module/common/component/Notice";
 import type { Session } from "@/types/Session";
-import { decompressJsonFromB64 } from "@frak-labs/core-sdk";
+import { compressJsonToB64, decompressJsonFromB64 } from "@frak-labs/core-sdk";
 import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { ButtonAuth } from "@frak-labs/ui/component/ButtonAuth";
 import { formatHash } from "@frak-labs/ui/component/HashDisplay";
@@ -42,7 +42,10 @@ import { ua } from "@/module/common/lib/ua";
 import { HandleErrors } from "@/module/listener/component/HandleErrors";
 import { AuthenticateWithPhone } from "@/module/listener/modal/component/AuthenticateWithPhone";
 import type { SsoRpcSchema } from "@/types/sso-rpc";
-import { clientCompressionMiddleware, createRpcClient } from "@frak-labs/rpc";
+import {
+    createClientCompressionMiddleware,
+    createRpcClient,
+} from "@frak-labs/rpc";
 
 export default function Sso() {
     const { i18n, t } = useTranslation();
@@ -143,7 +146,7 @@ export default function Sso() {
                     emittingTransport: window.opener,
                     listeningTransport: window,
                     targetOrigin: window.location.origin,
-                    middleware: [clientCompressionMiddleware],
+                    middleware: [createClientCompressionMiddleware()],
                 });
 
                 // Send SSO completion via RPC
@@ -189,11 +192,13 @@ export default function Sso() {
             );
             redirectUrl.searchParams.set("status", "success");
 
-            // Get the SDK JWT from the atom
-            // todo: send session + sdk sesison, bb64 encoded, and provide a method in the sdk to set that in the backup storage, to ensure we can use that output in the connection
+            // Get the full SSO params and compress them for URL passthrough
+            const session = jotaiStore.get(sessionAtom);
             const sdkSession = jotaiStore.get(sdkSessionAtom);
-            if (sdkSession?.token) {
-                redirectUrl.searchParams.set("sdkJwt", sdkSession.token);
+            if (session && sdkSession) {
+                // Compress to base64url for URL parameter
+                const compressed = compressJsonToB64([session, sdkSession]);
+                redirectUrl.searchParams.set("sso", compressed);
             }
 
             window.location.href = redirectUrl.toString();
