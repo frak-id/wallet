@@ -7,15 +7,10 @@ export {
 
 // Utils
 export {
-    hashAndCompressData,
-    decompressDataAndCheckHash,
-    compressJson,
-    decompressJson,
     compressJsonToB64,
     decompressJsonFromB64,
     createIframe,
     FrakContextManager,
-    Deferred,
     baseIframeProps,
     getSupportedCurrency,
     getSupportedLocale,
@@ -49,6 +44,7 @@ export type {
     SendInteractionReturnType,
     SsoMetadata,
     OpenSsoParamsType,
+    OpenSsoReturnType,
     Currency,
     Language,
     I18nConfig,
@@ -84,14 +80,10 @@ export type {
     // Client
     FrakClient,
     // Transport
-    RpcResponse,
     IFrameTransport,
-    IFrameRpcEvent,
-    IFrameEvent,
     IFrameLifecycleEvent,
     ClientLifecycleEvent,
-    ExtractedParametersFromRpc,
-    ExtractedReturnTypeFromRpc,
+    FrakLifecycleEvent,
     // Config
     FrakWalletSdkConfig,
     // Compression
@@ -101,4 +93,3 @@ export type {
     // Utils
     FrakContext,
 } from "./types";
-export { FrakRpcError, RpcErrorCodes, ClientNotFound } from "./types";

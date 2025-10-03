@@ -30,7 +30,7 @@ function InnerStatus({
 }: {
     info?: Readonly<GetProductInformationReturnType>;
 }) {
-    if (!info) {
+    if (!info?.onChainMetadata) {
         return null;
     }
 

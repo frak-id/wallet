@@ -1,12 +1,12 @@
+import { Deferred } from "@frak-labs/rpc";
 import type { FrakClient } from "../types/client";
 import type { WalletStatusReturnType } from "../types/rpc/walletStatus";
-import { Deferred } from "../utils";
 
 /**
  * Function used to watch the current frak wallet status
  * @param client - The current Frak Client
  * @param callback - The callback that will receive any wallet status change
- * @returns A rpomise resolving with the initial wallet status
+ * @returns A promise resolving with the initial wallet status
  *
  * @description This function will return the current wallet status, and will listen to any change in the wallet status.
  *
@@ -42,26 +42,26 @@ export function watchWalletStatus(
     let hasResolved = false;
 
     // Start the listening request, and return the first result
-    return client
-        .listenerRequest(
-            {
-                method: "frak_listenToWalletStatus",
-            },
-            (status) => {
-                // Handle side effects of this request
-                walletStatusSideEffect(client, status);
+    client.listenerRequest(
+        {
+            method: "frak_listenToWalletStatus",
+        },
+        (status) => {
+            // Handle side effects of this request
+            walletStatusSideEffect(client, status);
 
-                // Transmit the status to the callback
-                callback(status);
+            // Transmit the status to the callback
+            callback(status);
 
-                // If the promise hasn't resolved yet, resolve it
-                if (!hasResolved) {
-                    firstResult.resolve(status);
-                    hasResolved = true;
-                }
+            // If the promise hasn't resolved yet, resolve it
+            if (!hasResolved) {
+                firstResult.resolve(status);
+                hasResolved = true;
             }
-        )
-        .then(() => firstResult.promise);
+        }
+    );
+
+    return firstResult.promise;
 }
 
 /**

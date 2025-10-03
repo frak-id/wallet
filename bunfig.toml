@@ -1,2 +1,5 @@
 # Disable bun telemetry metrics
 telemetry = false
+
+[install]
+conditions = ["development", "import"]

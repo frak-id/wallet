@@ -1,0 +1,84 @@
+name: Beta Release
+
+on:
+  push:
+    branches:
+      - dev
+    paths:
+      - 'sdk/**/*.ts'
+      - 'sdk/**/*.tsx'
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+jobs:
+  beta-release:
+    name: Beta Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: "🔨 Install dependencies"
+        run: bun install --frozen-lockfile
+
+      - name: "📦 Build SDK packages"
+        run: bun run build:sdk
+
+      - name: "🏷️ Generate beta version with content hash"
+        id: version
+        run: |
+          # Generate hash from SDK file contents (4 bytes = 8 hex chars)
+          HASH=$(find sdk -type f \( -name "*.ts" -o -name "*.tsx" \) -exec cat {} \; | sha256sum | cut -c1-8)
+          echo "hash=${HASH}" >> $GITHUB_OUTPUT
+          echo "Beta version suffix: -beta.${HASH}"
+
+      - name: "🔄 Update package versions to beta"
+        run: |
+          HASH="${{ steps.version.outputs.hash }}"
+          SDK_DIRS=(core legacy react components)
+
+          for dir in "${SDK_DIRS[@]}"; do
+            PKG_PATH="sdk/${dir}/package.json"
+            if [ -f "$PKG_PATH" ]; then
+              # Read current version
+              CURRENT_VERSION=$(node -p "require('./${PKG_PATH}').version")
+              BETA_VERSION="${CURRENT_VERSION}-beta.${HASH}"
+
+              # Update package.json with beta version
+              node -e "
+                const fs = require('fs');
+                const pkg = JSON.parse(fs.readFileSync('${PKG_PATH}', 'utf8'));
+                pkg.version = '${BETA_VERSION}';
+                fs.writeFileSync('${PKG_PATH}', JSON.stringify(pkg, null, 2) + '\n');
+              "
+
+              echo "Updated ${dir}: ${CURRENT_VERSION} -> ${BETA_VERSION}"
+            fi
+          done
+
+      - name: "🚀 Publish beta packages to npm"
+        run: |
+          SDK_DIRS=(core legacy react components)
+
+          # Configure npm token
+          echo "//registry.npmjs.org/:_authToken=${NPM_CONFIG_TOKEN}" > ~/.npmrc
+
+          for dir in "${SDK_DIRS[@]}"; do
+            PKG_PATH="sdk/${dir}"
+            if [ -d "$PKG_PATH" ]; then
+              cd "$PKG_PATH"
+
+              # Publish with beta tag
+              bun publish --tag beta --access public
+
+              echo "✅ Published ${dir} as beta"
+              cd ../..
+            fi
+          done
+        env:
+          NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}

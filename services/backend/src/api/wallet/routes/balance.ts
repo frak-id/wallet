@@ -74,7 +74,7 @@ export const balanceRoutes = new Elysia({ prefix: "/balance" })
                     total: t.TokenAmount,
                     // Details about the balances
                     balances: t.Array(
-                        t.Intersect([
+                        t.Composite([
                             t.TokenAmount,
                             t.Object({
                                 token: t.Address(),
@@ -173,7 +173,7 @@ export const balanceRoutes = new Elysia({ prefix: "/balance" })
                     total: t.TokenAmount,
                     // Details about the claimable rewards
                     claimables: t.Array(
-                        t.Intersect([
+                        t.Composite([
                             t.TokenAmount,
                             t.Object({
                                 contract: t.Address(),

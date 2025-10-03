@@ -2,14 +2,12 @@ import { ua } from "@/module/common/lib/ua";
 import { LaunchPairing } from "@/module/pairing/component/LaunchPairing";
 import type { ButtonProps } from "@frak-labs/ui/component/Button";
 import { type ElementType, useState } from "react";
-import type { Hex } from "viem";
 import styles from "./index.module.css";
 
 type AuthenticateWithPhoneProps = {
     as?: ElementType;
     text: string;
     className?: string;
-    ssoId?: Hex;
     width?: ButtonProps["width"];
 };
 
@@ -23,7 +21,6 @@ export function AuthenticateWithPhone({
     as: Component = "button",
     text,
     className,
-    ssoId,
     width,
 }: AuthenticateWithPhoneProps) {
     const [isPhoneAuthenticated, setIsPhoneAuthenticated] = useState(false);
@@ -46,7 +43,7 @@ export function AuthenticateWithPhone({
             </Component>
             {isPhoneAuthenticated && (
                 <div className={styles.authenticateWithPhone__fadeIn}>
-                    <LaunchPairing ssoId={ssoId} />
+                    <LaunchPairing />
                 </div>
             )}
         </div>

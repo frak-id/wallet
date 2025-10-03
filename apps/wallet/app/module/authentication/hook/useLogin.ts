@@ -12,7 +12,6 @@ import { startAuthentication } from "@simplewebauthn/browser";
 import { generateAuthenticationOptions } from "@simplewebauthn/server";
 import { useMutation } from "@tanstack/react-query";
 import type { UseMutationOptions } from "@tanstack/react-query";
-import type { Hex } from "viem";
 import { trackAuthCompleted, trackAuthInitiated } from "../../common/analytics";
 
 /**
@@ -23,7 +22,7 @@ export function useLogin(
         Session,
         Error,
         { lastAuthentication?: PreviousAuthenticatorModel } | undefined
-    > & { ssoId?: Hex }
+    >
 ) {
     // The mutation that will be used to perform the registration process
     const {
@@ -42,7 +41,6 @@ export function useLogin(
             const events = [
                 trackAuthInitiated("login", {
                     method: args?.lastAuthentication ? "specific" : "global",
-                    ssoId: options?.ssoId,
                 }),
             ];
 
@@ -78,7 +76,6 @@ export function useLogin(
                 await authenticatedWalletApi.auth.login.post({
                     expectedChallenge: authenticationOptions.challenge,
                     authenticatorResponse: encodedResponse,
-                    ssoId: options?.ssoId,
                 });
             if (error) {
                 throw error;
@@ -110,11 +107,7 @@ export function useLogin(
             });
 
             // Track the event
-            events.push(
-                trackAuthCompleted("login", session, {
-                    ssoId: options?.ssoId,
-                })
-            );
+            events.push(trackAuthCompleted("login", session));
 
             await Promise.allSettled(events);
 
