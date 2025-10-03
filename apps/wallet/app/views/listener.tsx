@@ -28,7 +28,7 @@ import type { FrakLifecycleEvent } from "@frak-labs/core-sdk";
 import {
     createListenerCompressionMiddleware,
     createRpcListener,
-} from "@frak-labs/rpc";
+} from "@frak-labs/frame-connector";
 import { loadPolyfills } from "@frak-labs/ui/utils/polyfills";
 import { useEffect } from "react";
 

@@ -5,7 +5,7 @@ import {
     FrakRpcError,
     RpcErrorCodes,
     type RpcPromiseHandler,
-} from "@frak-labs/rpc";
+} from "@frak-labs/frame-connector";
 import { useCallback } from "react";
 
 type OnInteractionRequest = RpcPromiseHandler<

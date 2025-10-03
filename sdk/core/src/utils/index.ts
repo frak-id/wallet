@@ -9,4 +9,4 @@ export { getSupportedLocale } from "./getSupportedLocale";
 export { getCurrencyAmountKey } from "./getCurrencyAmountKey";
 export { formatAmount } from "./formatAmount";
 export { trackEvent } from "./trackEvent";
-export { Deferred } from "@frak-labs/rpc";
+export { Deferred } from "@frak-labs/frame-connector";

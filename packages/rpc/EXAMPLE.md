@@ -1,13 +1,13 @@
 # RPC Usage Examples
 
-This document provides concrete examples of how to use the `@frak-labs/rpc` package.
+This document provides concrete examples of how to use the `@frak-labs/frame-connector` package.
 
 ## Client-Side (SDK) Examples
 
 ### Basic Setup
 
 ```typescript
-import { createRpcClient } from '@frak-labs/rpc'
+import { createRpcClient } from '@frak-labs/frame-connector'
 
 // Create the client (assuming iframe communication)
 const iframe = document.getElementById('frak-wallet-iframe') as HTMLIFrameElement
@@ -75,7 +75,7 @@ console.log('Stream ended')
 ### Error Handling
 
 ```typescript
-import { RpcErrorCodes } from '@frak-labs/rpc'
+import { RpcErrorCodes } from '@frak-labs/frame-connector'
 
 try {
   const result = await client.request(
@@ -119,7 +119,7 @@ client.cleanup()
 ### Basic Setup
 
 ```typescript
-import { createRpcListener } from '@frak-labs/rpc'
+import { createRpcListener } from '@frak-labs/frame-connector'
 
 const listener = createRpcListener({
   transport: window,
@@ -217,7 +217,7 @@ listener.handleStream('frak_listenToWalletStatus', (params, emit, context) => {
 ### Error Handling in Handlers
 
 ```typescript
-import { FrakRpcError, RpcErrorCodes } from '@frak-labs/rpc'
+import { FrakRpcError, RpcErrorCodes } from '@frak-labs/frame-connector'
 
 listener.handle('frak_sendInteraction', async (params, context) => {
   const [productId, interaction, signature] = params
@@ -283,8 +283,8 @@ listener.cleanup()
 
 ```typescript
 import { useEffect, useState } from 'react'
-import { createRpcClient } from '@frak-labs/rpc'
-import type { WalletStatusReturnType } from '@frak-labs/rpc'
+import { createRpcClient } from '@frak-labs/frame-connector'
+import type { WalletStatusReturnType } from '@frak-labs/frame-connector'
 
 function useWalletStatus() {
   const [status, setStatus] = useState<WalletStatusReturnType>({ key: 'connecting' })

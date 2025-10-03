@@ -1,4 +1,4 @@
-import { Deferred } from "@frak-labs/rpc";
+import { Deferred } from "@frak-labs/frame-connector";
 import type { FrakLifecycleEvent } from "../../types";
 import { BACKUP_KEY } from "../../utils/constants";
 import { changeIframeVisibility } from "../../utils/iframeHelper";

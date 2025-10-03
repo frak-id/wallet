@@ -3,7 +3,7 @@
     "changelog": ["@changesets/changelog-github", { "repo": "frak-id/wallet" }],
     "commit": false,
     "fixed": [],
-    "linked": [["@frak-labs/core-sdk", "@frak-labs/react-sdk"]],
+    "linked": [["@frak-labs/frame-connector", "@frak-labs/core-sdk", "@frak-labs/react-sdk"]],
     "access": "public",
     "baseBranch": "main",
     "updateInternalDependencies": "patch",

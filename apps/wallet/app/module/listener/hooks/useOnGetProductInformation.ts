@@ -6,7 +6,7 @@ import {
     FrakRpcError,
     RpcErrorCodes,
     type RpcPromiseHandler,
-} from "@frak-labs/rpc";
+} from "@frak-labs/frame-connector";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 

@@ -10,7 +10,7 @@ import type {
     IFrameRpcSchema,
     WalletStatusReturnType,
 } from "@frak-labs/core-sdk";
-import type { RpcStreamHandler, StreamEmitter } from "@frak-labs/rpc";
+import type { RpcStreamHandler, StreamEmitter } from "@frak-labs/frame-connector";
 import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { useQueryClient } from "@tanstack/react-query";
 import { atom, useAtomValue } from "jotai";

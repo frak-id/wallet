@@ -16,7 +16,7 @@ import {
     getCurrencyAmountKey,
     getSupportedCurrency,
 } from "@frak-labs/core-sdk";
-import type { ExtractReturnType, RpcResponse } from "@frak-labs/rpc";
+import type { ExtractReturnType, RpcResponse } from "@frak-labs/frame-connector";
 import type { TOptions, i18n } from "i18next";
 import { useAtomValue } from "jotai";
 import {

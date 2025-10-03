@@ -2,7 +2,7 @@ import {
     FrakRpcError,
     type RpcMessage,
     type RpcResponse,
-} from "@frak-labs/rpc";
+} from "@frak-labs/frame-connector";
 import type { FrakWalletSdkConfig } from "../types";
 
 type IframeStatus = {

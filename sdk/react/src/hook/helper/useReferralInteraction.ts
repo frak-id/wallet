@@ -3,7 +3,7 @@ import {
     type ProcessReferralOptions,
     processReferral,
 } from "@frak-labs/core-sdk/actions";
-import { ClientNotFound } from "@frak-labs/rpc";
+import { ClientNotFound } from "@frak-labs/frame-connector";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import type { Hex } from "viem";

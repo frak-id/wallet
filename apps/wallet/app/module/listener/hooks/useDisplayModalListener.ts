@@ -24,7 +24,7 @@ import {
     RpcErrorCodes,
     type RpcPromiseHandler,
     type RpcResponse,
-} from "@frak-labs/rpc";
+} from "@frak-labs/frame-connector";
 import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { useCallback, useEffect, useRef } from "react";
 import { trackGenericEvent } from "../../common/analytics";

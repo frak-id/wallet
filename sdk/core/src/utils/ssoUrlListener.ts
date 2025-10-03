@@ -1,4 +1,4 @@
-import type { RpcClient } from "@frak-labs/rpc";
+import type { RpcClient } from "@frak-labs/frame-connector";
 import type { FrakLifecycleEvent } from "../types";
 import type { IFrameRpcSchema } from "../types/rpc";
 

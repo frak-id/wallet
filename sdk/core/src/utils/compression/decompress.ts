@@ -1,4 +1,4 @@
-import { decompressJson } from "@frak-labs/rpc";
+import { decompressJson } from "@frak-labs/frame-connector";
 import { base64urlDecode } from "./b64";
 
 /**

@@ -11,7 +11,7 @@ import { base64urlDecode, base64urlEncode } from "@frak-labs/core-sdk";
 import {
     decompressDataAndCheckHash,
     hashAndCompressData,
-} from "@frak-labs/rpc";
+} from "@frak-labs/frame-connector";
 import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { atom } from "jotai";
 import type { Hex } from "viem";

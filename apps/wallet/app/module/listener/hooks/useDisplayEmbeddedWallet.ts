@@ -3,12 +3,12 @@ import { useListenerUI } from "@/module/listener/providers/ListenerUiProvider";
 import type { WalletRpcContext } from "@/module/listener/types/context";
 import { useInteractionSessionStatus } from "@/module/wallet/hook/useInteractionSessionStatus";
 import type { IFrameRpcSchema } from "@frak-labs/core-sdk";
-import { Deferred, FrakRpcError, RpcErrorCodes } from "@frak-labs/rpc";
+import { Deferred, FrakRpcError, RpcErrorCodes } from "@frak-labs/frame-connector";
 import type {
     ExtractReturnType,
     RpcPromiseHandler,
     RpcResponse,
-} from "@frak-labs/rpc";
+} from "@frak-labs/frame-connector";
 import { useAtomValue } from "jotai";
 import { useCallback, useEffect, useRef } from "react";
 import type { Hex } from "viem";

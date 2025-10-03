@@ -23,7 +23,7 @@ import {
     useListenerUI,
 } from "@/module/listener/providers/ListenerUiProvider";
 import { OriginPairingState } from "@/module/pairing/component/OriginPairingState";
-import { RpcErrorCodes } from "@frak-labs/rpc";
+import { RpcErrorCodes } from "@frak-labs/frame-connector";
 import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { useMediaQuery } from "@frak-labs/ui/hook/useMediaQuery";
 import { LogoFrakWithName } from "@frak-labs/ui/icons/LogoFrakWithName";

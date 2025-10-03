@@ -1,6 +1,6 @@
 import type { GetProductInformationReturnType } from "@frak-labs/core-sdk";
 import { getProductInformation } from "@frak-labs/core-sdk/actions";
-import { ClientNotFound, type FrakRpcError } from "@frak-labs/rpc";
+import { ClientNotFound, type FrakRpcError } from "@frak-labs/frame-connector";
 import { type UseQueryOptions, useQuery } from "@tanstack/react-query";
 import { useFrakClient } from "./useFrakClient";
 

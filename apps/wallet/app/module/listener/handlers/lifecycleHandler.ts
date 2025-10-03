@@ -12,7 +12,7 @@ import type {
     FrakLifecycleEvent,
 } from "@frak-labs/core-sdk";
 import { decompressJsonFromB64 } from "@frak-labs/core-sdk";
-import type { LifecycleHandler } from "@frak-labs/rpc";
+import type { LifecycleHandler } from "@frak-labs/frame-connector";
 import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { getI18n } from "react-i18next";
 import { processSsoCompletion } from "./ssoHandler";

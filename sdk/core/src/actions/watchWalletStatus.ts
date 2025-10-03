@@ -1,4 +1,4 @@
-import { Deferred } from "@frak-labs/rpc";
+import { Deferred } from "@frak-labs/frame-connector";
 import type { FrakClient } from "../types/client";
 import type { WalletStatusReturnType } from "../types/rpc/walletStatus";
 

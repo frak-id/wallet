@@ -3,8 +3,8 @@ import {
     type RpcClient,
     RpcErrorCodes,
     createRpcClient,
-} from "@frak-labs/rpc";
-import { createClientCompressionMiddleware } from "@frak-labs/rpc/middleware";
+} from "@frak-labs/frame-connector";
+import { createClientCompressionMiddleware } from "@frak-labs/frame-connector/middleware";
 import { OpenPanel } from "@openpanel/web";
 import type { FrakLifecycleEvent } from "../types";
 import type { FrakClient } from "../types/client";

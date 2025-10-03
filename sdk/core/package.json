@@ -98,7 +98,7 @@
     "viem": "^2.23.14"
   },
   "dependencies": {
-    "@frak-labs/rpc": "workspace:*",
+    "@frak-labs/frame-connector": "workspace:*",
     "@jsonjoy.com/json-pack": "^1.2.0",
     "@openpanel/web": "^1.0.1"
   },

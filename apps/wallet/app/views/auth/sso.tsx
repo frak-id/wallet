@@ -45,7 +45,7 @@ import type { SsoRpcSchema } from "@/types/sso-rpc";
 import {
     createClientCompressionMiddleware,
     createRpcClient,
-} from "@frak-labs/rpc";
+} from "@frak-labs/frame-connector";
 
 export default function Sso() {
     const { i18n, t } = useTranslation();

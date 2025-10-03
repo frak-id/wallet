@@ -151,7 +151,7 @@ export const compressionMiddleware: RpcMiddleware = {
 ### Client-Side (SDK)
 
 ```typescript
-import { compressionMiddleware, createRpcClient } from "@frak-labs/rpc";
+import { compressionMiddleware, createRpcClient } from "@frak-labs/frame-connector";
 
 const client = createRpcClient<IFrameRpcSchema>({
     transport: iframe.contentWindow,
@@ -170,7 +170,7 @@ const client = createRpcClient<IFrameRpcSchema>({
 ### Listener-Side (Wallet)
 
 ```typescript
-import { compressionMiddleware, createRpcListener } from "@frak-labs/rpc";
+import { compressionMiddleware, createRpcListener } from "@frak-labs/frame-connector";
 import { loggingMiddleware, walletContextMiddleware } from "./middleware";
 
 const listener = createRpcListener<IFrameRpcSchema, WalletContext>({
@@ -322,7 +322,7 @@ if (isCompressed) {
 2. `packages/rpc/src/client.ts` - Use unified `RpcMiddleware`, pass context
 3. `packages/rpc/src/index.ts` - Export compression middleware
 4. `packages/rpc/package.json` - Added `./middleware` export
-5. `sdk/core/src/clients/createIFrameFrakClient.ts` - Import from `@frak-labs/rpc`
+5. `sdk/core/src/clients/createIFrameFrakClient.ts` - Import from `@frak-labs/frame-connector`
 6. `apps/wallet/app/module/listener/middleware/compression.ts` - Re-export from RPC package
 
 **Net change**: -1 file, -180 lines of code ✅
@@ -407,12 +407,12 @@ export const compressionMiddleware: RpcMiddleware = {
 
 **SDK Usage**:
 ```typescript
-import { compressionMiddleware } from "@frak-labs/rpc";  // ← Shared!
+import { compressionMiddleware } from "@frak-labs/frame-connector";  // ← Shared!
 ```
 
 **Wallet Usage**:
 ```typescript
-import { compressionMiddleware } from "@frak-labs/rpc";  // ← Same import!
+import { compressionMiddleware } from "@frak-labs/frame-connector";  // ← Same import!
 // Or re-export from local middleware/compression.ts
 ```
 
@@ -503,7 +503,7 @@ const isCompressed = data instanceof Uint8Array || ArrayBuffer.isView(data);
 ### SDK Client
 
 ```typescript
-import { compressionMiddleware, createRpcClient } from "@frak-labs/rpc";
+import { compressionMiddleware, createRpcClient } from "@frak-labs/frame-connector";
 
 const client = createRpcClient<IFrameRpcSchema>({
     transport: iframe.contentWindow,
@@ -531,7 +531,7 @@ Incoming response:
 ### Wallet Listener
 
 ```typescript
-import { compressionMiddleware, createRpcListener } from "@frak-labs/rpc";
+import { compressionMiddleware, createRpcListener } from "@frak-labs/frame-connector";
 import { loggingMiddleware, walletContextMiddleware } from "./middleware";
 
 const listener = createRpcListener<IFrameRpcSchema, WalletContext>({
@@ -637,7 +637,7 @@ const walletContextMiddleware: RpcMiddleware<IFrameRpcSchema, WalletContext> = {
 - `src/middleware/` directory
 
 **Modified**:
-- `src/clients/createIFrameFrakClient.ts` - Import from `@frak-labs/rpc` (~1 line changed)
+- `src/clients/createIFrameFrakClient.ts` - Import from `@frak-labs/frame-connector` (~1 line changed)
 
 ### Wallet App
 
@@ -860,7 +860,7 @@ apps/wallet/app/module/listener/middleware/
 ### SDK-Specific Middleware (if needed)
 ```
 sdk/core/src/middleware/
-└── (none needed - uses shared from @frak-labs/rpc)
+└── (none needed - uses shared from @frak-labs/frame-connector)
 ```
 
 ---
@@ -892,10 +892,10 @@ export const metricsMiddleware: RpcMiddleware = {
 };
 
 // Use in SDK
-import { metricsMiddleware } from "@frak-labs/rpc/middleware";
+import { metricsMiddleware } from "@frak-labs/frame-connector/middleware";
 
 // Use in Wallet
-import { metricsMiddleware } from "@frak-labs/rpc/middleware";
+import { metricsMiddleware } from "@frak-labs/frame-connector/middleware";
 ```
 
 ### 2. Consistent Developer Experience

@@ -1,4 +1,4 @@
-import { FrakRpcError, RpcErrorCodes } from "@frak-labs/rpc";
+import { FrakRpcError, RpcErrorCodes } from "@frak-labs/frame-connector";
 import { type Address, type Hex, isAddressEqual } from "viem";
 import { ReferralInteractionEncoder } from "../../interactions";
 import type {

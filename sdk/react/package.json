@@ -62,7 +62,7 @@
     "publish": "echo 'Publishing react...'"
   },
   "dependencies": {
-    "@frak-labs/rpc": "workspace:*",
+    "@frak-labs/frame-connector": "workspace:*",
     "@frak-labs/core-sdk": "workspace:*"
   },
   "peerDependencies": {

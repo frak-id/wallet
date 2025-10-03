@@ -8,7 +8,7 @@ import {
     FrakRpcError,
     RpcErrorCodes,
     type RpcMiddleware,
-} from "@frak-labs/rpc";
+} from "@frak-labs/frame-connector";
 import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { keccak256, toHex } from "viem";
 

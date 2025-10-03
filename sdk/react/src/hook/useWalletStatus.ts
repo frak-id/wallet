@@ -1,6 +1,6 @@
 import type { WalletStatusReturnType } from "@frak-labs/core-sdk";
 import { watchWalletStatus } from "@frak-labs/core-sdk/actions";
-import { ClientNotFound } from "@frak-labs/rpc";
+import { ClientNotFound } from "@frak-labs/frame-connector";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { useFrakClient } from "./useFrakClient";

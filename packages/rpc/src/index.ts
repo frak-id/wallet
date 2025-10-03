@@ -1,7 +1,7 @@
 /**
- * @frak-labs/rpc
+ * @frak-labs/frame-connector
  *
- * Generic, type-safe RPC communication layer
+ * Type-safe RPC communication layer for cross-window postMessage
  *
  * This package provides a framework-agnostic, generic RPC system for
  * bidirectional communication over postMessage. It's designed to be
@@ -10,7 +10,7 @@
  *
  * @example Client-side usage
  * ```ts
- * import { createRpcClient } from '@frak-labs/rpc'
+ * import { createRpcClient } from '@frak-labs/frame-connector'
  * import type { IFrameRpcSchema } from '@frak-labs/core-sdk'
  *
  * const client = createRpcClient<IFrameRpcSchema>({
@@ -31,7 +31,7 @@
  *
  * @example Server-side usage
  * ```ts
- * import { createRpcListener } from '@frak-labs/rpc'
+ * import { createRpcListener } from '@frak-labs/frame-connector'
  * import type { IFrameRpcSchema } from '@frak-labs/core-sdk'
  *
  * const listener = createRpcListener<IFrameRpcSchema>({
@@ -50,7 +50,7 @@
  * })
  * ```
  *
- * @module @frak-labs/rpc
+ * @module @frak-labs/frame-connector
  */
 
 // Core client and listener

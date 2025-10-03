@@ -4,7 +4,7 @@ import {
     type FullInteractionTypesKey,
     trackEvent,
 } from "@frak-labs/core-sdk";
-import { FrakRpcError, RpcErrorCodes } from "@frak-labs/rpc";
+import { FrakRpcError, RpcErrorCodes } from "@frak-labs/frame-connector";
 import { useCallback, useState } from "preact/hooks";
 
 /**

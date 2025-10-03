@@ -1,4 +1,4 @@
-import type { LifecycleMessage, RpcClient } from "@frak-labs/rpc";
+import type { LifecycleMessage, RpcClient } from "@frak-labs/frame-connector";
 import type { ClientLifecycleEvent, IFrameLifecycleEvent } from "./lifecycle";
 import type { IFrameRpcSchema } from "./rpc";
 

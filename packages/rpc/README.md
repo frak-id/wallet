@@ -1,6 +1,6 @@
-# @frak-labs/rpc
+# @frak-labs/frame-connector
 
-Modern, type-safe RPC communication layer for Frak Wallet SDK.
+Modern, type-safe RPC communication layer for cross-window postMessage communication.
 
 ## Overview
 
@@ -41,7 +41,7 @@ Each RPC method in the schema is annotated with a `ResponseType`:
 ### Client-Side (SDK)
 
 ```typescript
-import { createRpcClient } from '@frak-labs/rpc'
+import { createRpcClient } from '@frak-labs/frame-connector'
 
 // Create the client
 const client = createRpcClient({
@@ -76,7 +76,7 @@ client.cleanup()
 ### Wallet-Side (Listener)
 
 ```typescript
-import { createRpcListener } from '@frak-labs/rpc'
+import { createRpcListener } from '@frak-labs/frame-connector'
 
 // Create the listener
 const listener = createRpcListener({
@@ -178,7 +178,7 @@ const result = await client.request('frak_sendInteraction', ...)
 Errors are thrown as `FrakRpcError` with standard error codes:
 
 ```typescript
-import { RpcErrorCodes } from '@frak-labs/rpc'
+import { RpcErrorCodes } from '@frak-labs/frame-connector'
 
 try {
   const result = await client.request('frak_sendInteraction', ...)

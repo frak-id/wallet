@@ -32,7 +32,7 @@
     "@frak-labs/app-essentials": "workspace:*",
     "@frak-labs/client": "workspace:*",
     "@frak-labs/core-sdk": "workspace:*",
-    "@frak-labs/rpc": "workspace:*",
+    "@frak-labs/frame-connector": "workspace:*",
     "@frak-labs/ui": "workspace:*",
     "@khmyznikov/pwa-install": "^0.5.6",
     "@openpanel/web": "^1.0.1",

@@ -16,7 +16,7 @@ import {
     FrakRpcError,
     RpcErrorCodes,
     type RpcPromiseHandler,
-} from "@frak-labs/rpc";
+} from "@frak-labs/frame-connector";
 import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import type { Hex } from "viem";
 

@@ -7,7 +7,7 @@ import type {
     RpcMiddleware,
     RpcMiddlewareContext,
     RpcResponse,
-} from "@frak-labs/rpc";
+} from "@frak-labs/frame-connector";
 
 /**
  * Logging middleware for wallet RPC communication
