@@ -22,8 +22,12 @@ import { Deferred } from "./utils/deferred";
  * RPC Client configuration
  *
  * @typeParam TSchema - The RPC schema type
+ * @typeParam TLifecycleEvent - Lifecycle event union type (e.g., ClientLifecycleEvent | IFrameLifecycleEvent)
  */
-export type RpcClientConfig<TSchema extends RpcSchema> = {
+export type RpcClientConfig<
+    TSchema extends RpcSchema,
+    TLifecycleEvent = unknown,
+> = {
     /**
      * The transport to use for emitting events (e.g., window or iframe.contentWindow)
      */
@@ -66,8 +70,12 @@ export type RpcClientConfig<TSchema extends RpcSchema> = {
      * ```
      */
     lifecycleHandlers?: {
-        clientLifecycle?: LifecycleHandler;
-        iframeLifecycle?: LifecycleHandler;
+        clientLifecycle?: LifecycleHandler<
+            Extract<TLifecycleEvent, { clientLifecycle: string }>
+        >;
+        iframeLifecycle?: LifecycleHandler<
+            Extract<TLifecycleEvent, { iframeLifecycle: string }>
+        >;
     };
 };
 
@@ -77,7 +85,10 @@ export type RpcClientConfig<TSchema extends RpcSchema> = {
  *
  * @typeParam TSchema - The RPC schema type
  */
-export type RpcClient<TSchema extends RpcSchema> = {
+export type RpcClient<
+    TSchema extends RpcSchema,
+    TLifecycleEvent extends LifecycleMessage,
+> = {
     /**
      * Make a one-shot request that returns a promise
      * Used for methods with ResponseType: "promise"
@@ -116,7 +127,7 @@ export type RpcClient<TSchema extends RpcSchema> = {
      * client.sendLifecycle({ clientLifecycle: 'modal-css', data: { cssLink: '...' } })
      * ```
      */
-    sendLifecycle: (message: LifecycleMessage) => void;
+    sendLifecycle: (message: TLifecycleEvent) => void;
 
     /**
      * Clean up resources and close connections
@@ -133,20 +144,24 @@ type ChannelCallback = (response: RpcResponse) => void;
  * Create an RPC client for SDK-side communication
  *
  * @typeParam TSchema - The RPC schema type
+ * @typeParam TLifecycleEvent - Lifecycle event union type (e.g., ClientLifecycleEvent | IFrameLifecycleEvent)
  * @param config - Client configuration
  * @returns RPC client instance
  *
  * @example
  * ```ts
- * import type { IFrameRpcSchema } from '@frak-labs/core-sdk'
+ * import type { IFrameRpcSchema, ClientLifecycleEvent, IFrameLifecycleEvent } from '@frak-labs/core-sdk'
  *
- * const client = createRpcClient<IFrameRpcSchema>({
+ * const client = createRpcClient<IFrameRpcSchema, ClientLifecycleEvent | IFrameLifecycleEvent>({
  *   emittingTransport: window,
  *   listeningTransport: window,
- *   targetOrigin: 'https://wallet.frak.id'
+ *   targetOrigin: 'https://wallet.frak.id',
+ *   lifecycleHandlers: {
+ *     iframeLifecycle: (event, data) => {
+ *       // event and data are now strongly typed!
+ *     }
+ *   }
  * })
- *
- * await client.connect()
  *
  * // One-shot request
  * const result = await client.request('frak_sendInteraction', [productId, interaction])
@@ -157,9 +172,12 @@ type ChannelCallback = (response: RpcResponse) => void;
  * })
  * ```
  */
-export function createRpcClient<TSchema extends RpcSchema>(
-    config: RpcClientConfig<TSchema>
-): RpcClient<TSchema> {
+export function createRpcClient<
+    TSchema extends RpcSchema,
+    TLifecycleEvent extends LifecycleMessage = LifecycleMessage,
+>(
+    config: RpcClientConfig<TSchema, TLifecycleEvent>
+): RpcClient<TSchema, TLifecycleEvent> {
     const {
         emittingTransport,
         listeningTransport,
@@ -174,7 +192,7 @@ export function createRpcClient<TSchema extends RpcSchema>(
     /**
      * Check if a message is a lifecycle message
      */
-    function isLifecycleMessage(data: unknown): data is LifecycleMessage {
+    function isLifecycleMessage(data: unknown): data is TLifecycleEvent {
         if (typeof data !== "object" || !data) {
             return false;
         }
@@ -194,25 +212,35 @@ export function createRpcClient<TSchema extends RpcSchema>(
     /**
      * Handle incoming lifecycle messages
      */
-    async function handleLifecycleMessage(message: LifecycleMessage) {
+    async function handleLifecycleMessage(message: TLifecycleEvent) {
         try {
             if (
                 "clientLifecycle" in message &&
                 lifecycleHandlers?.clientLifecycle
             ) {
                 await lifecycleHandlers.clientLifecycle(
-                    message.clientLifecycle,
-                    message.data,
-                    { origin: targetOrigin, source: null }
+                    message as Extract<
+                        TLifecycleEvent,
+                        { clientLifecycle: string }
+                    >,
+                    {
+                        origin: targetOrigin,
+                        source: null,
+                    }
                 );
             } else if (
                 "iframeLifecycle" in message &&
                 lifecycleHandlers?.iframeLifecycle
             ) {
                 await lifecycleHandlers.iframeLifecycle(
-                    message.iframeLifecycle,
-                    message.data,
-                    { origin: targetOrigin, source: null }
+                    message as Extract<
+                        TLifecycleEvent,
+                        { iframeLifecycle: string }
+                    >,
+                    {
+                        origin: targetOrigin,
+                        source: null,
+                    }
                 );
             }
         } catch (error) {
@@ -352,7 +380,7 @@ export function createRpcClient<TSchema extends RpcSchema>(
     /**
      * Send a lifecycle event (bypasses middleware)
      */
-    function sendLifecycle(message: LifecycleMessage) {
+    function sendLifecycle(message: TLifecycleEvent) {
         emittingTransport.postMessage(
             message as unknown as RpcMessage,
             targetOrigin

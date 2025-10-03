@@ -29,6 +29,7 @@ type RestoreBackupEvent = {
 
 type HearbeatEvent = {
     clientLifecycle: "heartbeat";
+    data?: never;
 };
 
 type HandshakeResponse = {

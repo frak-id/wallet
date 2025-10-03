@@ -157,15 +157,25 @@ export type StreamEmitter<TResult> = (chunk: TResult) => void;
 
 /**
  * Lifecycle handler function
- * Handles lifecycle events (handshake, heartbeat, etc.)
+ * Handles lifecycle events using discriminated unions for automatic type narrowing
  *
- * @param event - The lifecycle event name
- * @param data - Optional event data
+ * @typeParam TLifecycleEvent - The lifecycle event union type (e.g., ClientLifecycleEvent | IFrameLifecycleEvent)
+ *
+ * @param event - The full lifecycle event object with discriminated union
  * @param context - Request context with origin and source
+ *
+ * @example
+ * ```ts
+ * const handler: LifecycleHandler<ClientLifecycleEvent> = (event, context) => {
+ *   if (event.clientLifecycle === "modal-css") {
+ *     // event.data is automatically typed as { cssLink: string }
+ *     console.log(event.data.cssLink)
+ *   }
+ * }
+ * ```
  */
-export type LifecycleHandler = (
-    event: string,
-    data: unknown,
+export type LifecycleHandler<TLifecycleEvent = unknown> = (
+    event: TLifecycleEvent,
     context: RpcRequestContext
 ) => void | Promise<void>;
 

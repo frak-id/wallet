@@ -7,7 +7,10 @@ import { restoreBackupData } from "@/module/sdk/utils/backup";
 import { mapI18nConfig } from "@/module/sdk/utils/i18nMapper";
 import { emitLifecycleEvent } from "@/module/sdk/utils/lifecycleEvents";
 import type { SdkSession, Session } from "@/types/Session";
-import type { ClientLifecycleEvent } from "@frak-labs/core-sdk";
+import type {
+    ClientLifecycleEvent,
+    FrakLifecycleEvent,
+} from "@frak-labs/core-sdk";
 import { decompressJsonFromB64 } from "@frak-labs/core-sdk";
 import type { LifecycleHandler } from "@frak-labs/rpc";
 import { jotaiStore } from "@frak-labs/ui/atoms/store";
@@ -27,23 +30,25 @@ import { processSsoCompletion } from "./ssoHandler";
  * @param setReadyToHandleRequest - Callback to signal wallet is ready
  * @returns Lifecycle handler function
  */
-export function createClientLifecycleHandler(
-    setReadyToHandleRequest: () => void
-): LifecycleHandler {
-    return async (event: string, data: unknown) => {
+export const createClientLifecycleHandler =
+    (
+        setReadyToHandleRequest: () => void
+    ): LifecycleHandler<FrakLifecycleEvent> =>
+    async (messageEvent, _context) => {
+        if (!("clientLifecycle" in messageEvent)) return;
+        const { clientLifecycle: event, data } = messageEvent;
+
         switch (event) {
             case "modal-css": {
-                const cssData = data as { cssLink: string };
                 const style = document.createElement("link");
                 style.rel = "stylesheet";
-                style.href = cssData.cssLink;
+                style.href = data.cssLink;
                 document.head.appendChild(style);
                 return;
             }
 
             case "modal-i18n": {
-                const i18nData = data as { i18n: unknown };
-                const override = i18nData.i18n;
+                const override = data.i18n;
                 if (
                     !override ||
                     typeof override !== "object" ||
@@ -54,23 +59,24 @@ export function createClientLifecycleHandler(
                 // Get the current i18n instance
                 const i18n = getI18n();
                 // Type assertion is safe here because we validate it's an object above
-                await mapI18nConfig(override as never, i18n);
+                await mapI18nConfig(override, i18n);
                 return;
             }
 
             case "restore-backup": {
-                const backupData = data as { backup: string };
-                const context = jotaiStore.get(iframeResolvingContextAtom);
-                if (!context) {
+                const resolveContext = jotaiStore.get(
+                    iframeResolvingContextAtom
+                );
+                if (!resolveContext) {
                     console.warn(
-                        "Can't restore a backend until we are sure of the context"
+                        "Can't restore a backup until we are sure of the context"
                     );
                     return;
                 }
                 // Restore the backup
                 await restoreBackupData({
-                    backup: backupData.backup,
-                    productId: context.productId,
+                    backup: data.backup,
+                    productId: resolveContext.productId,
                 });
                 return;
             }
@@ -87,7 +93,7 @@ export function createClientLifecycleHandler(
                 const messageEvent = {
                     data: {
                         clientLifecycle: "handshake-response",
-                        data,
+                        data: data,
                     },
                 } as MessageEvent<ClientLifecycleEvent>;
 
@@ -105,21 +111,11 @@ export function createClientLifecycleHandler(
             case "sso-redirect-complete": {
                 // Handle SSO redirect with compressed data from URL
                 // Data arrives compressed from SDK, decompress and process here
-                await handleSsoRedirectComplete(data as { compressed: string });
+                await handleSsoRedirectComplete(data);
                 return;
-            }
-
-            // Legacy heartbeat handling
-            // TODO: Remove once SDK is updated everywhere
-            default: {
-                console.warn(
-                    "[Lifecycle] Unknown client lifecycle event:",
-                    event
-                );
             }
         }
     };
-}
 
 /**
  * Initialize the resolving context

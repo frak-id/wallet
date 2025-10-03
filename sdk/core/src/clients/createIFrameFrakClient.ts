@@ -1,9 +1,14 @@
-import { FrakRpcError, RpcErrorCodes, createRpcClient } from "@frak-labs/rpc";
+import {
+    FrakRpcError,
+    type RpcClient,
+    RpcErrorCodes,
+    createRpcClient,
+} from "@frak-labs/rpc";
 import { createClientCompressionMiddleware } from "@frak-labs/rpc/middleware";
 import { OpenPanel } from "@openpanel/web";
+import type { FrakLifecycleEvent } from "../types";
 import type { FrakClient } from "../types/client";
 import type { FrakWalletSdkConfig } from "../types/config";
-import type { IFrameLifecycleEvent } from "../types/lifecycle";
 import type { IFrameRpcSchema } from "../types/rpc";
 import { BACKUP_KEY } from "../utils/constants";
 import { setupSsoUrlListener } from "../utils/ssoUrlListener";
@@ -12,6 +17,8 @@ import {
     type IframeLifecycleManager,
     createIFrameLifecycleManager,
 } from "./transports/iframeLifecycleManager";
+
+type SdkRpcClient = RpcClient<IFrameRpcSchema, FrakLifecycleEvent>;
 
 /**
  * Create a new iframe Frak client
@@ -53,7 +60,7 @@ export function createIFrameFrakClient({
     }
 
     // Create RPC client with middleware and lifecycle handlers
-    const rpcClient = createRpcClient<IFrameRpcSchema>({
+    const rpcClient = createRpcClient<IFrameRpcSchema, FrakLifecycleEvent>({
         emittingTransport: iframe.contentWindow,
         listeningTransport: window,
         targetOrigin: frakWalletUrl,
@@ -88,17 +95,9 @@ export function createIFrameFrakClient({
         ],
         // Add lifecycle handlers to process iframe lifecycle events
         lifecycleHandlers: {
-            iframeLifecycle: async (event, data) => {
-                // Build the lifecycle event object
-                const lifecycleEvent = {
-                    iframeLifecycle: event,
-                    data: data,
-                };
-
+            iframeLifecycle: async (event, _context) => {
                 // Delegate to lifecycle manager  (cast for type compatibility)
-                await lifecycleManager.handleEvent(
-                    lifecycleEvent as IFrameLifecycleEvent
-                );
+                await lifecycleManager.handleEvent(event);
             },
         },
     });
@@ -177,7 +176,7 @@ export function createIFrameFrakClient({
  * @param lifecycleManager - Lifecycle manager to track connection
  */
 function setupHeartbeat(
-    rpcClient: ReturnType<typeof createRpcClient<IFrameRpcSchema>>,
+    rpcClient: SdkRpcClient,
     lifecycleManager: IframeLifecycleManager
 ) {
     const HEARTBEAT_INTERVAL = 1_000; // Send heartbeat every 100ms until we are connected
@@ -236,7 +235,7 @@ async function postConnectionSetup({
     lifecycleManager,
 }: {
     config: FrakWalletSdkConfig;
-    rpcClient: ReturnType<typeof createRpcClient<IFrameRpcSchema>>;
+    rpcClient: SdkRpcClient;
     lifecycleManager: IframeLifecycleManager;
 }): Promise<void> {
     // Wait for the handler to be connected

@@ -83,6 +83,7 @@ export type {
     IFrameTransport,
     IFrameLifecycleEvent,
     ClientLifecycleEvent,
+    FrakLifecycleEvent,
     // Config
     FrakWalletSdkConfig,
     // Compression

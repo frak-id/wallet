@@ -4,21 +4,16 @@
  */
 export type IFrameLifecycleEvent =
     | {
-          iframeLifecycle: "connected" | "show" | "hide";
+          iframeLifecycle: "connected" | "show" | "hide" | "remove-backup";
           data?: never;
       }
     | DoBackupEvent
-    | RemoveBackupEvent
     | HandshakeRequestEvent
     | RedirectRequestEvent;
 
 type DoBackupEvent = {
     iframeLifecycle: "do-backup";
     data: { backup?: string };
-};
-
-type RemoveBackupEvent = {
-    iframeLifecycle: "remove-backup";
 };
 
 type HandshakeRequestEvent = {

@@ -1,12 +1,12 @@
 import { Deferred } from "@frak-labs/rpc";
-import type { IFrameLifecycleEvent } from "../../types";
+import type { FrakLifecycleEvent } from "../../types";
 import { BACKUP_KEY } from "../../utils/constants";
 import { changeIframeVisibility } from "../../utils/iframeHelper";
 
 /** @ignore */
 export type IframeLifecycleManager = {
     isConnected: Promise<boolean>;
-    handleEvent: (messageEvent: IFrameLifecycleEvent) => Promise<void>;
+    handleEvent: (messageEvent: FrakLifecycleEvent) => Promise<void>;
 };
 
 /**
@@ -20,16 +20,20 @@ export function createIFrameLifecycleManager({
     const isConnectedDeferred = new Deferred<boolean>();
 
     // Build the handler itself
-    const handler = async (messageEvent: IFrameLifecycleEvent) => {
-        switch (messageEvent.iframeLifecycle) {
+    const handler = async (messageEvent: FrakLifecycleEvent) => {
+        if (!("iframeLifecycle" in messageEvent)) return;
+
+        const { iframeLifecycle: event, data } = messageEvent;
+
+        switch (event) {
             // Resolve the isConnected promise
             case "connected":
                 isConnectedDeferred.resolve(true);
                 break;
             // Perform a frak backup
             case "do-backup":
-                if (messageEvent.data.backup) {
-                    localStorage.setItem(BACKUP_KEY, messageEvent.data.backup);
+                if (data.backup) {
+                    localStorage.setItem(BACKUP_KEY, data.backup);
                 } else {
                     localStorage.removeItem(BACKUP_KEY);
                 }
@@ -43,7 +47,7 @@ export function createIFrameLifecycleManager({
             case "hide":
                 changeIframeVisibility({
                     iframe,
-                    isVisible: messageEvent.iframeLifecycle === "show",
+                    isVisible: event === "show",
                 });
                 break;
             // Handshake handling
@@ -52,7 +56,7 @@ export function createIFrameLifecycleManager({
                     {
                         clientLifecycle: "handshake-response",
                         data: {
-                            token: messageEvent.data.token,
+                            token: data.token,
                             currentUrl: window.location.href,
                         },
                     },
@@ -62,7 +66,7 @@ export function createIFrameLifecycleManager({
             }
             // Redirect handling
             case "redirect": {
-                window.location.href = `${messageEvent.data.baseRedirectUrl}${encodeURIComponent(window.location.href)}`;
+                window.location.href = `${data.baseRedirectUrl}${encodeURIComponent(window.location.href)}`;
                 break;
             }
         }

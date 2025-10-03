@@ -1,4 +1,5 @@
-import type { createRpcClient } from "@frak-labs/rpc";
+import type { RpcClient } from "@frak-labs/rpc";
+import type { FrakLifecycleEvent } from "../types";
 import type { IFrameRpcSchema } from "../types/rpc";
 
 /**
@@ -12,7 +13,7 @@ import type { IFrameRpcSchema } from "../types/rpc";
  * @param waitForConnection - Promise that resolves when iframe is connected
  */
 export function setupSsoUrlListener(
-    rpcClient: ReturnType<typeof createRpcClient<IFrameRpcSchema>>,
+    rpcClient: RpcClient<IFrameRpcSchema, FrakLifecycleEvent>,
     waitForConnection: Promise<boolean>
 ): void {
     if (typeof window === "undefined") {

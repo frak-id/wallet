@@ -25,7 +25,7 @@ export type {
 export type { IFrameRpcSchema } from "./rpc";
 // Client related
 export type { FrakClient } from "./client";
-export type { IFrameTransport } from "./transport";
+export type { IFrameTransport, FrakLifecycleEvent } from "./transport";
 export type {
     IFrameLifecycleEvent,
     ClientLifecycleEvent,

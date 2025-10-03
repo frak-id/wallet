@@ -17,11 +17,14 @@ import type {
 /**
  * RPC Listener configuration
  *
+ * @typeParam TSchema - The RPC schema type
  * @typeParam TContext - Custom context type to augment base context
+ * @typeParam TLifecycleEvent - Lifecycle event union type (e.g., ClientLifecycleEvent | IFrameLifecycleEvent)
  */
 export type RpcListenerConfig<
     TSchema extends RpcSchema,
     TContext = Record<string, never>,
+    TLifecycleEvent extends LifecycleMessage = LifecycleMessage,
 > = {
     /**
      * The transport to use for communication (e.g., window)
@@ -64,8 +67,12 @@ export type RpcListenerConfig<
      * ```
      */
     lifecycleHandlers?: {
-        clientLifecycle?: LifecycleHandler;
-        iframeLifecycle?: LifecycleHandler;
+        clientLifecycle?: LifecycleHandler<
+            Extract<TLifecycleEvent, { clientLifecycle: string }>
+        >;
+        iframeLifecycle?: LifecycleHandler<
+            Extract<TLifecycleEvent, { iframeLifecycle: string }>
+        >;
     };
 };
 
@@ -115,12 +122,13 @@ export type RpcListener<
  *
  * @typeParam TSchema - The RPC schema type (can be a union of multiple schemas)
  * @typeParam TContext - Custom context type augmented by middleware
+ * @typeParam TLifecycleEvent - Lifecycle event union type (e.g., ClientLifecycleEvent | IFrameLifecycleEvent)
  * @param config - Listener configuration
  * @returns RPC listener instance
  *
  * @example
  * ```ts
- * import type { IFrameRpcSchema, SsoRpcSchema } from '@frak-labs/core-sdk'
+ * import type { IFrameRpcSchema, SsoRpcSchema, ClientLifecycleEvent, IFrameLifecycleEvent } from '@frak-labs/core-sdk'
  *
  * // Single schema
  * const listener = createRpcListener<IFrameRpcSchema>({
@@ -128,12 +136,17 @@ export type RpcListener<
  *   allowedOrigins: ['https://example.com']
  * })
  *
- * // Multiple schemas (union type)
+ * // Multiple schemas (union type) with lifecycle events
  * type CombinedSchema = IFrameRpcSchema | SsoRpcSchema
- * const listener = createRpcListener<CombinedSchema, WalletContext>({
+ * const listener = createRpcListener<CombinedSchema, WalletContext, ClientLifecycleEvent | IFrameLifecycleEvent>({
  *   transport: window,
  *   allowedOrigins: '*',
- *   middleware: [compressionMiddleware, contextMiddleware]
+ *   middleware: [compressionMiddleware, contextMiddleware],
+ *   lifecycleHandlers: {
+ *     clientLifecycle: (event, data, context) => {
+ *       // event and data are now strongly typed!
+ *     }
+ *   }
  * })
  *
  * // Register handlers for IFrame methods
@@ -151,8 +164,9 @@ export type RpcListener<
 export function createRpcListener<
     TSchema extends RpcSchema,
     TContext = Record<string, never>,
+    TLifecycleEvent extends LifecycleMessage = LifecycleMessage,
 >(
-    config: RpcListenerConfig<TSchema, TContext>
+    config: RpcListenerConfig<TSchema, TContext, TLifecycleEvent>
 ): RpcListener<TSchema, TContext> {
     const {
         transport,
@@ -200,7 +214,7 @@ export function createRpcListener<
     /**
      * Check if a message is a lifecycle message
      */
-    function isLifecycleMessage(data: unknown): data is LifecycleMessage {
+    function isLifecycleMessage(data: unknown): data is TLifecycleEvent {
         if (typeof data !== "object" || !data) {
             return false;
         }
@@ -325,7 +339,7 @@ export function createRpcListener<
      * These bypass middleware and compression
      */
     async function handleLifecycleMessage(
-        message: LifecycleMessage,
+        message: TLifecycleEvent,
         context: RpcRequestContext
     ) {
         try {
@@ -334,8 +348,10 @@ export function createRpcListener<
                 lifecycleHandlers?.clientLifecycle
             ) {
                 await lifecycleHandlers.clientLifecycle(
-                    message.clientLifecycle,
-                    message.data,
+                    message as Extract<
+                        TLifecycleEvent,
+                        { clientLifecycle: string }
+                    >,
                     context
                 );
             } else if (
@@ -343,8 +359,10 @@ export function createRpcListener<
                 lifecycleHandlers?.iframeLifecycle
             ) {
                 await lifecycleHandlers.iframeLifecycle(
-                    message.iframeLifecycle,
-                    message.data,
+                    message as Extract<
+                        TLifecycleEvent,
+                        { iframeLifecycle: string }
+                    >,
                     context
                 );
             }

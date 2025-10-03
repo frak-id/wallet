@@ -22,6 +22,7 @@ import type {
     CombinedRpcSchema,
     WalletRpcContext,
 } from "@/module/listener/types/context";
+import type { FrakLifecycleEvent } from "@frak-labs/core-sdk";
 import {
     createListenerCompressionMiddleware,
     createRpcListener,
@@ -103,20 +104,22 @@ function ListenerContent() {
         // 1. compressionMiddleware - Decompresses incoming CBOR data with hash validation
         // 2. loggingMiddleware - Logs requests/responses (development only)
         // 3. walletContextMiddleware - Augments context with productId, sourceUrl, etc.
-        const listener = createRpcListener<CombinedRpcSchema, WalletRpcContext>(
-            {
-                transport: window,
-                allowedOrigins: "*",
-                middleware: [
-                    createListenerCompressionMiddleware(),
-                    loggingMiddleware,
-                    walletContextMiddleware,
-                ],
-                lifecycleHandlers: {
-                    clientLifecycle: clientLifecycleHandler,
-                },
-            }
-        );
+        const listener = createRpcListener<
+            CombinedRpcSchema,
+            WalletRpcContext,
+            FrakLifecycleEvent
+        >({
+            transport: window,
+            allowedOrigins: "*",
+            middleware: [
+                createListenerCompressionMiddleware(),
+                loggingMiddleware,
+                walletContextMiddleware,
+            ],
+            lifecycleHandlers: {
+                clientLifecycle: clientLifecycleHandler,
+            },
+        });
 
         // Register promise-based handlers (IFrameRpcSchema)
         listener.handle("frak_sendInteraction", onInteractionRequest);
