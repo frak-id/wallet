@@ -1,6 +1,5 @@
 "use client";
-
-import { Title } from "@/module/common/component/Title";
+import { Head } from "@/module/common/component/Head";
 import { useCheckDomainName } from "@/module/dashboard/hooks/dnsRecordHooks";
 import { useMintMyProduct } from "@/module/dashboard/hooks/useMintMyProduct";
 import { FormLayout } from "@/module/forms/Form";
@@ -49,7 +48,7 @@ export function MintProduct() {
         infoTxt,
     } = useMintMyProduct({
         onSuccess: () => {
-            setStep(3);
+            setStep(4);
         },
     });
 
@@ -102,7 +101,12 @@ export function MintProduct() {
 
     return (
         <FormLayout>
-            <Title>Mint New Product</Title>
+            <Head
+                title={{
+                    content: "Mint New Product",
+                    size: "small",
+                }}
+            />
 
             <ProductInformationPanel
                 form={form}

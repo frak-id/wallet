@@ -44,16 +44,17 @@ function ProductTypeCard({
     return (
         <label
             className={styles.productTypeCard}
-            style={{ cursor: disabled ? "not-allowed" : "pointer" }}
             htmlFor={`checkbox-${info.name}`}
         >
             <div className={styles.productTypeLabel}>
-                <Checkbox
-                    checked={isChecked}
-                    disabled={disabled}
-                    onCheckedChange={onChange}
-                    id={`checkbox-${info.name}`}
-                />
+                <div>
+                    <Checkbox
+                        checked={isChecked}
+                        disabled={disabled}
+                        onCheckedChange={onChange}
+                        id={`checkbox-${info.name}`}
+                    />
+                </div>
                 <div className={styles.productTypeInfo}>
                     <h4>{info.name}</h4>
                     <p className={styles.productTypeDescription}>

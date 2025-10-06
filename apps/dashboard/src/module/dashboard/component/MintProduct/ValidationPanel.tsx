@@ -37,18 +37,32 @@ export function ValidationPanel({
                 </div>
             ) : step === 2 ? (
                 <div className={styles.verifySection}>
-                    <p>
-                        <strong>Verify your information</strong>
+                    <h3 className={styles.sectionHeading}>
+                        Review Your Product
+                    </h3>
+                    <p className={styles.description}>
+                        Please review the information below before proceeding.
+                        You'll be able to launch your product in the next step.
                     </p>
-                    <p>
-                        I confirm that I want to list "{values.name}" on the
-                        following domain:
-                        <br />
-                        <strong>{values.domain}</strong>
-                    </p>
+                    <div className={styles.productSummary}>
+                        <div className={styles.summaryItem}>
+                            <span className={styles.summaryLabel}>
+                                Product Name:
+                            </span>
+                            <span className={styles.summaryValue}>
+                                {values.name}
+                            </span>
+                        </div>
+                        <div className={styles.summaryItem}>
+                            <span className={styles.summaryLabel}>Domain:</span>
+                            <span className={styles.summaryValue}>
+                                {values.domain}
+                            </span>
+                        </div>
+                    </div>
                     <div className={styles.continueSection}>
                         <Button
-                            variant="outline"
+                            variant={"informationOutline"}
                             onClick={onPrevious}
                             disabled={!form.formState.isValid}
                         >
@@ -65,10 +79,7 @@ export function ValidationPanel({
                 </div>
             ) : (
                 <div className={styles.lockedContent}>
-                    <p>
-                        Information validated for "{values.name}" on{" "}
-                        {values.domain}
-                    </p>
+                    Information validated for "{values.name}" on {values.domain}
                 </div>
             )}
         </PanelAccordion>

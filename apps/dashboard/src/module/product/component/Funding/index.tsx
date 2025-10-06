@@ -550,7 +550,6 @@ function AddNewBank({
     if (!isAdding) {
         return (
             <Button
-                variant="outline"
                 onClick={() => setIsAdding(true)}
                 className={styles.addBankButton}
             >
