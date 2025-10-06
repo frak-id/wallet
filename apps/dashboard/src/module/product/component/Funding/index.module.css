@@ -75,10 +75,6 @@
     background-color: var(--color-background-secondary);
 }
 
-.currencyOption input[type="radio"] {
-    margin-top: 2px;
-}
-
 .currencyOption div {
     flex: 1;
 }

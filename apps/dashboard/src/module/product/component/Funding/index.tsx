@@ -10,6 +10,7 @@ import { useConvertToPreferredCurrency } from "@/module/common/hook/useConversio
 import { formatPrice } from "@/module/common/utils/formatPrice";
 import { useWaitForTxAndInvalidateQueries } from "@/module/common/utils/useWaitForTxAndInvalidateQueries";
 import { FormLayout } from "@/module/forms/Form";
+import { RadioGroup, RadioGroupItem } from "@/module/forms/RadioGroup";
 import { ProductHead } from "@/module/product/component/ProductHead";
 import { useFundTestBank } from "@/module/product/hook/useFundTestBank";
 import {
@@ -562,20 +563,20 @@ function AddNewBank({
     return (
         <Panel title="Add new bank" className={styles.bankPanel}>
             <p>Select a stablecoin for the new bank:</p>
-            <div className={styles.currencySelection}>
+            <RadioGroup
+                value={selectedCurrency}
+                onValueChange={setSelectedCurrency}
+                className={styles.currencySelection}
+            >
                 {availableCurrencies.map((currency) => (
                     <label
                         key={currency.value}
+                        htmlFor={`currency-${currency.value}`}
                         className={styles.currencyOption}
                     >
-                        <input
-                            type="radio"
-                            name="currency"
+                        <RadioGroupItem
+                            id={`currency-${currency.value}`}
                             value={currency.value}
-                            checked={selectedCurrency === currency.value}
-                            onChange={(e) =>
-                                setSelectedCurrency(e.target.value)
-                            }
                         />
                         <div>
                             <strong>
@@ -585,7 +586,7 @@ function AddNewBank({
                         </div>
                     </label>
                 ))}
-            </div>
+            </RadioGroup>
             <div className={styles.bankActions}>
                 <Button
                     variant="submit"
