@@ -12,6 +12,8 @@ interface RegistrationPanelProps {
     infoTxt?: string;
     mintTxHash?: Hex;
     onSubmit: () => void;
+    isOpen: boolean;
+    onOpenChange: (isOpen: boolean) => void;
 }
 
 export function RegistrationPanel({
@@ -21,13 +23,16 @@ export function RegistrationPanel({
     infoTxt,
     mintTxHash,
     onSubmit,
+    isOpen,
+    onOpenChange,
 }: RegistrationPanelProps) {
     return (
         <PanelAccordion
             title="Product Registration"
             className={styles.panel}
             withBadge={step > 2}
-            value={step >= 3 ? "item-1" : undefined}
+            value={isOpen ? "item-1" : ""}
+            onValueChange={(value) => onOpenChange(value === "item-1")}
         >
             {step < 3 ? (
                 <div className={styles.disabledContent}>

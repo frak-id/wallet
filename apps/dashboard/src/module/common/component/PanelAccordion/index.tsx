@@ -20,6 +20,7 @@ export type PanelProps = ComponentPropsWithRef<typeof Panel> &
         className?: string;
         value?: string;
         defaultValue?: string;
+        onValueChange?: (value: string) => void;
     };
 
 export const PanelAccordion = ({
@@ -28,6 +29,7 @@ export const PanelAccordion = ({
     title,
     value,
     defaultValue,
+    onValueChange,
     ...props
 }: PanelProps) => {
     return (
@@ -37,6 +39,7 @@ export const PanelAccordion = ({
                 collapsible
                 value={value}
                 defaultValue={defaultValue}
+                onValueChange={onValueChange}
             >
                 <AccordionItem value={"item-1"}>
                     <AccordionTrigger

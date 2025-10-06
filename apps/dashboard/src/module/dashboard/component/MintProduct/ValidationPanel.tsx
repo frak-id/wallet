@@ -11,6 +11,8 @@ interface ValidationPanelProps {
     step: number;
     onPrevious: () => void;
     onNext: () => void;
+    isOpen: boolean;
+    onOpenChange: (isOpen: boolean) => void;
 }
 
 export function ValidationPanel({
@@ -18,6 +20,8 @@ export function ValidationPanel({
     step,
     onNext,
     onPrevious,
+    isOpen,
+    onOpenChange,
 }: ValidationPanelProps) {
     const values = form.getValues();
 
@@ -26,7 +30,8 @@ export function ValidationPanel({
             title="Validate and Launch"
             className={styles.panel}
             withBadge={step > 2}
-            value={step === 2 ? "item-1" : undefined}
+            value={isOpen ? "item-1" : ""}
+            onValueChange={(value) => onOpenChange(value === "item-1")}
         >
             {step === 1 ? (
                 <div className={styles.disabledContent}>

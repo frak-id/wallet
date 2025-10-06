@@ -28,6 +28,8 @@ interface ProductInformationPanelProps {
     step: number;
     domainError?: string;
     onVerifyDomain: () => void;
+    isOpen: boolean;
+    onOpenChange: (isOpen: boolean) => void;
 }
 
 function ProductTypeCard({
@@ -72,6 +74,8 @@ export function ProductInformationPanel({
     step,
     domainError,
     onVerifyDomain,
+    isOpen,
+    onOpenChange,
 }: ProductInformationPanelProps) {
     const domain = form.watch("domain");
 
@@ -85,7 +89,8 @@ export function ProductInformationPanel({
             title="Product Information"
             className={styles.panel}
             withBadge={step > 1}
-            value={step === 1 ? "item-1" : undefined}
+            value={isOpen ? "item-1" : ""}
+            onValueChange={(value) => onOpenChange(value === "item-1")}
         >
             <Form {...form}>
                 <form className={styles.form}>

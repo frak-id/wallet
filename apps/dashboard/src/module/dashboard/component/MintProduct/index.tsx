@@ -23,6 +23,7 @@ type ProductNew = {
 export function MintProduct() {
     const [step, setStep] = useState(1);
     const [domainError, setDomainError] = useState<string | undefined>();
+    const [openAccordion, setOpenAccordion] = useState<string>("product-info");
 
     const form = useForm<ProductNew>({
         defaultValues: {
@@ -49,6 +50,7 @@ export function MintProduct() {
     } = useMintMyProduct({
         onSuccess: () => {
             setStep(4);
+            setOpenAccordion("registration");
         },
     });
 
@@ -69,6 +71,7 @@ export function MintProduct() {
                 domain,
                 setupCode,
             });
+            setOpenAccordion("validation");
 
             if (isAlreadyMinted) {
                 setDomainError(
@@ -79,7 +82,7 @@ export function MintProduct() {
                     "The DNS txt record is not set, or the setup code is invalid"
                 );
             } else {
-                // Directly shit to step 2
+                // Directly shift to step 2
                 setStep(2);
             }
         } catch (err) {
@@ -113,13 +116,27 @@ export function MintProduct() {
                 step={step}
                 domainError={domainError}
                 onVerifyDomain={verifyDomain}
+                isOpen={openAccordion === "product-info"}
+                onOpenChange={(value: boolean) =>
+                    setOpenAccordion(value ? "product-info" : "")
+                }
             />
 
             <ValidationPanel
                 form={form}
                 step={step}
-                onPrevious={() => setStep(1)}
-                onNext={() => setStep(3)}
+                onPrevious={() => {
+                    setStep(1);
+                    setOpenAccordion("product-info");
+                }}
+                onNext={() => {
+                    setStep(3);
+                    setOpenAccordion("registration");
+                }}
+                isOpen={openAccordion === "validation"}
+                onOpenChange={(value: boolean) =>
+                    setOpenAccordion(value ? "validation" : "")
+                }
             />
 
             <RegistrationPanel
@@ -129,6 +146,10 @@ export function MintProduct() {
                 infoTxt={infoTxt}
                 mintTxHash={mintTxHash}
                 onSubmit={handleSubmit}
+                isOpen={openAccordion === "registration"}
+                onOpenChange={(value: boolean) =>
+                    setOpenAccordion(value ? "registration" : "")
+                }
             />
         </FormLayout>
     );
