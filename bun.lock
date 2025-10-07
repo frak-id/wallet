@@ -361,7 +361,7 @@
     },
     "sdk/components": {
       "name": "@frak-labs/components",
-      "version": "0.0.21",
+      "version": "0.0.22",
       "dependencies": {
         "@frak-labs/core-sdk": "workspace:*",
         "@frak-labs/frame-connector": "workspace:*",
@@ -381,7 +381,7 @@
     },
     "sdk/core": {
       "name": "@frak-labs/core-sdk",
-      "version": "0.0.18",
+      "version": "0.0.19",
       "dependencies": {
         "@frak-labs/frame-connector": "workspace:*",
         "@jsonjoy.com/json-pack": "^1.2.0",
@@ -412,7 +412,7 @@
     },
     "sdk/react": {
       "name": "@frak-labs/react-sdk",
-      "version": "0.0.18",
+      "version": "0.0.19",
       "dependencies": {
         "@frak-labs/core-sdk": "workspace:*",
         "@frak-labs/frame-connector": "workspace:*",
