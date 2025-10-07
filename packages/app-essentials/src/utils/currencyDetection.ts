@@ -1,10 +1,6 @@
 import type { Address } from "viem";
 import { isAddressEqual } from "viem";
-import {
-    type Stablecoin,
-    currentStablecoins,
-    usdcArbitrumAddress,
-} from "../blockchain/addresses";
+import { type Stablecoin, currentStablecoins } from "../blockchain/addresses";
 
 /**
  * Get token address for currency
@@ -12,16 +8,9 @@ import {
  * @returns The token address
  */
 export function getTokenAddressForStablecoin(currency: Stablecoin): Address {
-    switch (currency) {
-        case "eure":
-            return currentStablecoins.eure;
-        case "gbpe":
-            return currentStablecoins.gbpe;
-        case "usde":
-            return currentStablecoins.usde;
-        case "usdc":
-            return usdcArbitrumAddress;
-    }
+    const address = currentStablecoins[currency];
+    if (!address) throw new Error("Stablecoin address not found");
+    return address;
 }
 
 /**

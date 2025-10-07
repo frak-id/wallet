@@ -17,6 +17,7 @@ export function ProductItem({
     id,
     name,
     domain,
+
     showActions = true,
     isLink = true,
     children,
@@ -72,48 +73,3 @@ function ProductActions({ id }: { id?: Hex }) {
         </ul>
     );
 }
-
-// function ProductStatus({ id }: { id?: Hex }) {
-//     if (!id) return null;
-//
-//     return (
-//         <span className={styles.productItem__status}>
-//             <ProductStatusInner id={id} />
-//         </span>
-//     );
-// }
-
-// function ProductStatusInner({ id }: { id: Hex }) {
-//     const { data } = useProductSetupStatus({ productId: id });
-//     const { navigateWithTransition } = useAnimatedRouter();
-//
-//     if (!data) return <Spinner />;
-//
-//     if (data.hasWarning) {
-//         return (
-//             <Tooltip
-//                 content={
-//                     "Finish your product configuration to provide your customer the best experience."
-//                 }
-//             >
-//                 <AlertCircle
-//                     color={"#ff7a00"}
-//                     onClick={() =>
-//                         navigateWithTransition(`/product/${id}/setup-status`)
-//                     }
-//                 />
-//             </Tooltip>
-//         );
-//     }
-//
-//     return (
-//         <Tooltip content={"Product functional."}>
-//             <BadgeCheck
-//                 color={"#0ddb84"}
-//                 onClick={() =>
-//                     navigateWithTransition(`/product/${id}/setup-status`)
-//                 }
-//             />
-//         </Tooltip>
-//     );
-// }

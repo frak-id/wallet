@@ -5,23 +5,17 @@ import {
     productRegistry_getMetadata,
     productRegistry_mint,
 } from "@backend-utils";
-import {
-    addresses,
-    isRunningInProd,
-    stringToBytes32,
-} from "@frak-labs/app-essentials";
+import { addresses, stringToBytes32 } from "@frak-labs/app-essentials";
 import { getTokenAddressForStablecoin } from "@frak-labs/app-essentials";
-import { type Stablecoin, mintAbi } from "@frak-labs/app-essentials/blockchain";
+import type { Stablecoin } from "@frak-labs/app-essentials/blockchain";
 import type { ProductTypesKey } from "@frak-labs/core-sdk";
 import { productTypesMask } from "@frak-labs/core-sdk";
 import type { Mutex } from "async-mutex";
 import {
     type Address,
-    type Hex,
     type LocalAccount,
     isAddressEqual,
     keccak256,
-    parseEther,
     toHex,
     zeroAddress,
 } from "viem";
@@ -142,22 +136,12 @@ export class MintRepository {
         });
 
         // Then deploy a bank for this product with the specified currency
-        let bankResult: { txHash: Hex; bank: Address } | undefined;
-        if (isRunningInProd) {
-            bankResult = await this.deployBank({
-                productId: precomputedProductId,
-                minter,
-                lock,
-                currency,
-            });
-        } else {
-            bankResult = await this.deployMockedBank({
-                productId: precomputedProductId,
-                minter,
-                lock,
-                currency,
-            });
-        }
+        const bankResult = await this.deployBank({
+            productId: precomputedProductId,
+            minter,
+            lock,
+            currency,
+        });
 
         return {
             productId: precomputedProductId,
@@ -209,7 +193,7 @@ export class MintRepository {
             // Ensure it's included before proceeding
             await waitForTransactionReceipt(viemClient, {
                 hash: result.txHash,
-                confirmations: 1,
+                confirmations: 4,
             });
             // And return everything
             return result;
@@ -217,75 +201,6 @@ export class MintRepository {
             log.warn(
                 { productId, error },
                 "[MintRepository] Failed to deploy the interaction contract"
-            );
-        }
-    }
-
-    /**
-     * Automatically deploy a mocked bank for the given product with specified currency
-     * @param productId
-     * @param minter
-     * @param lock
-     * @param currency
-     * @private
-     */
-    private async deployMockedBank({
-        productId,
-        minter,
-        lock,
-        currency,
-    }: {
-        productId: bigint;
-        minter: LocalAccount;
-        lock: Mutex;
-        currency: Stablecoin;
-    }) {
-        try {
-            return await lock.runExclusive(async () => {
-                // Get the current nonce
-                const nonce = await getTransactionCount(viemClient, minter);
-
-                // Prepare the deployment data
-                const { request, result } = await simulateContract(viemClient, {
-                    account: minter,
-                    abi: [campaignBankFactory_deployCampaignBank],
-                    address: addresses.campaignBankFactory,
-                    functionName: "deployCampaignBank",
-                    args: [productId, addresses.mUSDToken],
-                    nonce,
-                });
-                if (!result || isAddressEqual(result, zeroAddress)) {
-                    log.warn(
-                        { productId, result, currency },
-                        "[MintRepository] Failed to simulate the mocked bank deployment"
-                    );
-                    return;
-                }
-
-                // Trigger the deployment
-                const txHash = await writeContract(viemClient, request);
-                log.debug(
-                    { productId, txHash, currency },
-                    "[MintRepository] Deployed mocked bank"
-                );
-
-                // Then mint a few test tokens to this bank
-                await writeContract(viemClient, {
-                    account: minter,
-                    address: addresses.mUSDToken,
-                    abi: [mintAbi],
-                    functionName: "mint",
-                    args: [result, parseEther("500")],
-                    nonce: nonce + 1,
-                });
-
-                // Then return the hash + contract
-                return { txHash, bank: result };
-            });
-        } catch (error) {
-            log.warn(
-                { productId, error, currency },
-                "[MintRepository] Failed to deploy the mocked bank"
             );
         }
     }
@@ -323,7 +238,7 @@ export class MintRepository {
                 });
                 if (!result || isAddressEqual(result, zeroAddress)) {
                     log.warn(
-                        { productId, result, currency },
+                        { productId, result, currency, tokenAddress },
                         "[MintRepository] Failed to simulate the bank deployment"
                     );
                     return;

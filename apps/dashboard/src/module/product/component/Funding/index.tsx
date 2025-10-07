@@ -85,10 +85,6 @@ function ProductFundingBanks({
     banks,
     productId,
 }: { banks: ProductBank[]; productId: Hex }) {
-    if (banks.length === 0 || !productId) {
-        return <div>No banks</div>;
-    }
-
     return (
         <>
             {banks.map((bank) => (
