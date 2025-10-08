@@ -11,6 +11,8 @@ import type {
 } from "../types";
 import { BasePairingClient } from "./base";
 
+export type OnPairingSuccessCallback = () => void | Promise<void>;
+
 /**
  * A pairing client for an origin device (likely desktop, the one responsible to create a pairing)
  *
@@ -25,6 +27,8 @@ export class OriginPairingClient extends BasePairingClient<
     OriginPairingState
 > {
     private pendingPings = 0;
+
+    private onPairingSuccess: OnPairingSuccessCallback | null = null;
 
     /**
      * Get the initial state for the client
@@ -41,7 +45,9 @@ export class OriginPairingClient extends BasePairingClient<
     /**
      * Initiate a new pairing
      */
-    async initiatePairing() {
+    async initiatePairing(onSuccess?: OnPairingSuccessCallback) {
+        this.onPairingSuccess = onSuccess ?? null;
+
         this.forceConnect(() =>
             this.connect({
                 action: "initiate",
@@ -171,6 +177,9 @@ export class OriginPairingClient extends BasePairingClient<
 
             // And trigger a reconnection
             this.forceConnect(() => this.reconnect());
+
+            // Trigger the success callback if any
+            this.onPairingSuccess?.();
         }
     }
 

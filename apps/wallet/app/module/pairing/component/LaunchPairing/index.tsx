@@ -4,6 +4,7 @@ import { cx } from "class-variance-authority";
 import { Cuer } from "cuer";
 import { atom, useAtom, useAtomValue } from "jotai";
 import { useEffect, useMemo, useRef, useState } from "react";
+import type { OnPairingSuccessCallback } from "../../clients/origin";
 import { getOriginPairingClient } from "../../clients/store";
 import type { OriginPairingState } from "../../types";
 import { PairingCode } from "../PairingCode";
@@ -16,7 +17,9 @@ const showBrighterQRCodeAtom = atom(false);
  * Launch a pairing session
  * @returns A QR code to scan to pair with the wallet
  */
-export function LaunchPairing() {
+export function LaunchPairing({
+    onSuccess,
+}: { onSuccess?: OnPairingSuccessCallback }) {
     const [showBrighterQRCode, setShowBrighterQRCode] = useAtom(
         showBrighterQRCodeAtom
     );
@@ -51,9 +54,9 @@ export function LaunchPairing() {
     }, [setShowBrighterQRCode]);
 
     useEffect(() => {
-        client.initiatePairing();
+        client.initiatePairing(onSuccess);
         trackAuthInitiated("pairing");
-    }, [client]);
+    }, [client, onSuccess]);
 
     const pairingContent = useMemo(
         () => <PairingContent clientState={clientState} />,

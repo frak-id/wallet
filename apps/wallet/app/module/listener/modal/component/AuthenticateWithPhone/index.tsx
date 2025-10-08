@@ -1,4 +1,5 @@
 import { ua } from "@/module/common/lib/ua";
+import type { OnPairingSuccessCallback } from "@/module/pairing/clients/origin";
 import { LaunchPairing } from "@/module/pairing/component/LaunchPairing";
 import type { ButtonProps } from "@frak-labs/ui/component/Button";
 import { type ElementType, useState } from "react";
@@ -9,6 +10,7 @@ type AuthenticateWithPhoneProps = {
     text: string;
     className?: string;
     width?: ButtonProps["width"];
+    onSuccess?: OnPairingSuccessCallback;
 };
 
 /**
@@ -22,6 +24,7 @@ export function AuthenticateWithPhone({
     text,
     className,
     width,
+    onSuccess,
 }: AuthenticateWithPhoneProps) {
     const [isPhoneAuthenticated, setIsPhoneAuthenticated] = useState(false);
 
@@ -43,7 +46,7 @@ export function AuthenticateWithPhone({
             </Component>
             {isPhoneAuthenticated && (
                 <div className={styles.authenticateWithPhone__fadeIn}>
-                    <LaunchPairing />
+                    <LaunchPairing onSuccess={onSuccess} />
                 </div>
             )}
         </div>
