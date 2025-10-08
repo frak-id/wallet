@@ -1,8 +1,10 @@
 import { Panel } from "@/module/common/component/Panel";
-import { ButtonAddProduct } from "@/module/dashboard/component/ButtonAddProduct";
 import { ProductItem } from "@/module/dashboard/component/ProductItem";
 import { useMyProducts } from "@/module/dashboard/hooks/useMyProducts";
+import { Button } from "@frak-labs/ui/component/Button";
 import { Spinner } from "@frak-labs/ui/component/Spinner";
+import { Plus } from "lucide-react";
+import { useRouter } from "next/navigation";
 import type { Hex } from "viem";
 import styles from "./index.module.css";
 
@@ -32,12 +34,32 @@ export function MyProducts() {
 function ProductListSection({
     products,
 }: { products: { id: Hex; name: string; domain: string }[] }) {
+    const router = useRouter();
     return (
         <div className={styles.contentListSection}>
             {products.map((content) => (
                 <ProductListItem key={content.id} product={content} />
             ))}
-            <ButtonAddProduct />
+
+            <Button
+                size={"none"}
+                variant={"ghost"}
+                onClick={() => {
+                    router.push("/mint");
+                }}
+            >
+                <ProductItem
+                    name={
+                        <>
+                            <Plus />
+                            List a Product
+                        </>
+                    }
+                    domain={"domain.com"}
+                    showActions={false}
+                    isLink={false}
+                />
+            </Button>
         </div>
     );
 }

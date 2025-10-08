@@ -8,6 +8,7 @@ type AccountPredefinedKeys =
     | "interaction-executor"
     | "oracle-updater"
     | "minter"
+    | "monerium-dev"
     | (string & {});
 
 /**

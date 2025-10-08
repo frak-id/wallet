@@ -73,7 +73,7 @@ export const mintRoutes = new Elysia({ prefix: "/mint" })
         "",
         async ({
             businessSession,
-            body: { name, domain, productTypes, setupCode },
+            body: { name, domain, productTypes, setupCode, currency },
         }) => {
             // Ensure the session matches
             if (!businessSession) {
@@ -106,6 +106,7 @@ export const mintRoutes = new Elysia({ prefix: "/mint" })
                         domain: normalizedDomain,
                         productTypes,
                         owner: businessSession.wallet,
+                        currency,
                     });
 
                 return {
@@ -127,6 +128,12 @@ export const mintRoutes = new Elysia({ prefix: "/mint" })
                 name: t.String(),
                 domain: t.String(),
                 setupCode: t.Optional(t.String()),
+                currency: t.Union([
+                    t.Literal("usde"),
+                    t.Literal("eure"),
+                    t.Literal("gbpe"),
+                    t.Literal("usdc"),
+                ]),
                 productTypes: t.Array(
                     t.UnionEnum(
                         Object.keys(productTypes) as [

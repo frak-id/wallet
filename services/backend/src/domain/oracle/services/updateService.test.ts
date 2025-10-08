@@ -1,7 +1,7 @@
 import {
     afterAll,
-    afterEach,
     beforeAll,
+    beforeEach,
     describe,
     expect,
     it,
@@ -12,13 +12,17 @@ import type { Hex, LocalAccount } from "viem";
 import { mockAll } from "../../../../test/mock";
 import { adminWalletsRepositoryMocks } from "../../../../test/mock/common";
 import { viemActionsMocks } from "../../../../test/mock/viem";
-import { productOracleTable, purchaseStatusTable } from "../db/schema";
+import {
+    productOracleTable,
+    purchaseItemTable,
+    purchaseStatusTable,
+} from "../db/schema";
 import type { MerkleTreeRepository } from "../repositories/MerkleTreeRepository";
 import { UpdateOracleService } from "./updateService";
 
 describe("UpdateOracleService", () => {
     const db = drizzle.mock({
-        schema: { purchaseStatusTable, productOracleTable },
+        schema: { purchaseStatusTable, productOracleTable, purchaseItemTable },
     });
     let service: UpdateOracleService;
 
@@ -31,6 +35,12 @@ describe("UpdateOracleService", () => {
     const mockProductId = "0x1234567890abcdef1234567890abcdef" as Hex;
     const mockOracleUpdater = {
         address: "0xoracleupdater" as const,
+        signMessage: mock(() => Promise.resolve("0x" as Hex)),
+        signTransaction: mock(() => Promise.resolve("0x" as Hex)),
+        signTypedData: mock(() => Promise.resolve("0x" as Hex)),
+        publicKey: "0x" as Hex,
+        source: "privateKey",
+        type: "local",
     } as LocalAccount;
 
     beforeAll(() => {
@@ -48,11 +58,12 @@ describe("UpdateOracleService", () => {
         mock.restore();
     });
 
-    afterEach(() => {
-        viemActionsMocks.simulateContract.mockRestore();
-        // viemActionsMocks.writeContract.mockRestore();
-        // viemActionsMocks.waitForTransactionReceipt.mockRestore();
-        // viemActionsMocks.readContract.mockRestore();
+    beforeEach(() => {
+        // Reset all mocks before each test
+        viemActionsMocks.simulateContract.mockReset();
+        viemActionsMocks.writeContract.mockReset();
+        viemActionsMocks.waitForTransactionReceipt.mockReset();
+        viemActionsMocks.readContract.mockReset();
     });
 
     describe("updateEmptyLeafs", () => {
@@ -255,34 +266,30 @@ describe("UpdateOracleService", () => {
             expect(viemActionsMocks.simulateContract).not.toHaveBeenCalled();
         });
 
-        // todo: the `simulateContract` mock is fcked up, blockchain error is not being caught
-        it.todo(
-            "should handle blockchain update failure gracefully",
-            async () => {
-                const productIds = [mockProductId];
+        it("should handle blockchain update failure gracefully", async () => {
+            const productIds = [mockProductId];
 
-                // Mock database update
-                const mockUpdate = mock(() => ({
-                    set: mock(() => ({
-                        where: mock(() => Promise.resolve()),
-                    })),
-                }));
-                Object.assign(db, {
-                    update: mock(() => mockUpdate()),
-                });
+            // Mock database update
+            const mockUpdate = mock(() => ({
+                set: mock(() => ({
+                    where: mock(() => Promise.resolve()),
+                })),
+            }));
+            Object.assign(db, {
+                update: mock(() => mockUpdate()),
+            });
 
-                // Mock blockchain calls to fail
-                viemActionsMocks.readContract.mockResolvedValue("0xoldroot");
-                viemActionsMocks.simulateContract.mockRejectedValue(
-                    new Error("Blockchain error")
-                );
+            // Mock blockchain calls to fail
+            viemActionsMocks.readContract.mockResolvedValue("0xoldroot");
+            viemActionsMocks.simulateContract.mockRejectedValue(
+                new Error("Blockchain error")
+            );
 
-                await service.updateProductsMerkleRoot({ productIds });
+            await service.updateProductsMerkleRoot({ productIds });
 
-                // Should still update database even if blockchain fails
-                expect(db.update).toHaveBeenCalled();
-            }
-        );
+            // Should still update database even if blockchain fails
+            expect(db.update).toHaveBeenCalled();
+        });
     });
 
     describe("safeMerkleeRootBlockchainUpdate", () => {
@@ -299,37 +306,28 @@ describe("UpdateOracleService", () => {
             expect(viemActionsMocks.simulateContract).not.toHaveBeenCalled();
         });
 
-        // todo: the `simulateContract` mock is fcked up
-        it.todo(
-            "should successfully update merkle root on blockchain",
-            async () => {
-                viemActionsMocks.readContract.mockResolvedValue("0xoldroot");
-                viemActionsMocks.simulateContract.mockResolvedValue({
-                    request: {},
-                });
-                viemActionsMocks.writeContract.mockResolvedValue(
-                    "0xtxhash" as Hex
-                );
-                viemActionsMocks.waitForTransactionReceipt.mockResolvedValue(
-                    {}
-                );
+        it("should successfully update merkle root on blockchain", async () => {
+            viemActionsMocks.readContract.mockResolvedValue("0xoldroot");
+            viemActionsMocks.simulateContract.mockResolvedValue({
+                request: {},
+            });
+            viemActionsMocks.writeContract.mockResolvedValue("0xtxhash" as Hex);
+            viemActionsMocks.waitForTransactionReceipt.mockResolvedValue({});
 
-                const result = await service.safeMerkleeRootBlockchainUpdate({
-                    productId: mockProductId,
-                    merkleRoot: "0xnewroot" as Hex,
-                    oracleUpdater: mockOracleUpdater,
-                });
+            const result = await service.safeMerkleeRootBlockchainUpdate({
+                productId: mockProductId,
+                merkleRoot: "0xnewroot" as Hex,
+                oracleUpdater: mockOracleUpdater,
+            });
 
-                expect(result).toEqual({ isSuccess: true, txHash: "0xtxhash" });
-                expect(viemActionsMocks.writeContract).toHaveBeenCalled();
-                expect(
-                    viemActionsMocks.waitForTransactionReceipt
-                ).toHaveBeenCalled();
-            }
-        );
+            expect(result).toEqual({ isSuccess: true, txHash: "0xtxhash" });
+            expect(viemActionsMocks.writeContract).toHaveBeenCalled();
+            expect(
+                viemActionsMocks.waitForTransactionReceipt
+            ).toHaveBeenCalled();
+        });
 
-        // todo: the  `new Error("Transaction failed")` directly throws, like if it's directly evaluated
-        it.todo("should handle blockchain transaction failure", async () => {
+        it("should handle blockchain transaction failure", async () => {
             viemActionsMocks.readContract.mockResolvedValue("0xoldroot");
             viemActionsMocks.simulateContract.mockRejectedValue(
                 new Error("Transaction failed")

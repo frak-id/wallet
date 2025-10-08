@@ -2,6 +2,9 @@ export {
     addresses,
     kernelAddresses,
     usdcArbitrumAddress,
+    stablecoins,
+    currentStablecoins,
+    type Stablecoin,
     // Roles
     productRoles,
     interactionValidatorRoles,
@@ -45,6 +48,8 @@ export {
     isRunningLocally,
     stringToBytes32,
     bytesToString,
+    detectStablecoinFromToken,
+    getTokenAddressForStablecoin,
 } from "./utils";
 export { WebAuthN } from "./webauthn";
 export type {

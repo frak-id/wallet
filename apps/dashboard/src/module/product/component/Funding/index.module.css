@@ -1,8 +1,91 @@
-.productFundingBank + .productFundingBank {
-    margin-top: 20px;
+.bankPanel {
+    margin-bottom: 20px;
 }
 
-.productFundingBank__title {
-    margin-bottom: 8px;
-    font-weight: 700;
+.bankPanelTitle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.bankContent {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.bankRow {
+    display: flex;
+    align-items: center;
+    /* justify-content: space-between; */
+    gap: 12px;
+}
+
+.bankHeader {
+    display: flex;
+    gap: 8px;
+}
+
+.bankSection {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.bankSectionTitle {
+    margin: 0;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+}
+
+.bankActions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: end;
+    flex-grow: 1;
+}
+
+.addBankButton {
+    width: 100%;
+    justify-content: center;
+}
+
+.currencySelection {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: 16px 0;
+}
+
+.currencyOption {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.currencyOption:hover {
+    border-color: var(--color-primary);
+    background-color: var(--color-background-secondary);
+}
+
+.currencyOption div {
+    flex: 1;
+}
+
+.currencyOption strong {
+    display: block;
+    margin-bottom: 4px;
+}
+
+.currencyOption p {
+    margin: 0;
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
 }
