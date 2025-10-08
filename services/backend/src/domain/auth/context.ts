@@ -1,6 +1,5 @@
 import { AuthenticatorRepository } from "./repositories/AuthenticatorRepository";
 import { WalletSdkSessionService } from "./services/WalletSdkSessionService";
-import { WalletSsoService } from "./services/WalletSsoService";
 import { WebAuthNService } from "./services/WebAuthNService";
 
 /**
@@ -16,7 +15,6 @@ export namespace AuthContext {
     // Services are provided by the Elysia extensions above
     export const services = {
         walletSdkSession: new WalletSdkSessionService(),
-        walletSso: new WalletSsoService(),
         webAuthN: new WebAuthNService(authenticatorRepository),
     };
 }

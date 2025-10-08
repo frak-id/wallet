@@ -4,14 +4,12 @@ import { JwtContext } from "@backend-common";
 import { and, eq, inArray, isNull } from "drizzle-orm";
 import type { ElysiaWS } from "elysia/ws";
 import { UAParser } from "ua-parser-js";
-import type { Hex } from "viem";
 import { log } from "../../../common";
 import type {
     StaticWalletTokenDto,
     StaticWalletWebauthnTokenDto,
 } from "../../auth/models/WalletSessionDto";
 import type { WalletSdkSessionService } from "../../auth/services/WalletSdkSessionService";
-import type { WalletSsoService } from "../../auth/services/WalletSsoService";
 import { pairingSignatureRequestTable, pairingTable } from "../db/schema";
 import { WsCloseCode } from "../dto/WebSocketCloseCode";
 import {
@@ -31,7 +29,6 @@ import {
 export class PairingConnectionRepository extends PairingRepository {
     constructor(
         // Helpers to generate the auth tokens
-        private readonly ssoService: WalletSsoService,
         private readonly walletSdkSession: WalletSdkSessionService
     ) {
         super();
@@ -51,7 +48,7 @@ export class PairingConnectionRepository extends PairingRepository {
         wallet?: StaticWalletTokenDto;
         ws: ElysiaWS;
     }) {
-        const { action, pairingCode, ssoId, id } = query;
+        const { action, pairingCode, id } = query;
         if (!action && !wallet) {
             log.debug("No action or wallet token");
             ws.close(
@@ -63,7 +60,7 @@ export class PairingConnectionRepository extends PairingRepository {
 
         // If that's an initiate request
         if (action === "initiate" && !wallet) {
-            await this.handleInitiateRequest({ userAgent, ws, ssoId });
+            await this.handleInitiateRequest({ userAgent, ws });
             return;
         }
 
@@ -99,8 +96,7 @@ export class PairingConnectionRepository extends PairingRepository {
     private async handleInitiateRequest({
         userAgent,
         ws,
-        ssoId: rawSsoId,
-    }: { userAgent?: string; ws: ElysiaWS; ssoId?: string }) {
+    }: { userAgent?: string; ws: ElysiaWS }) {
         const deviceName = this.uaToDeviceName(userAgent);
 
         // Create a new pairing
@@ -111,16 +107,12 @@ export class PairingConnectionRepository extends PairingRepository {
             100000 + Math.random() * 900000
         ).toString();
 
-        // Parse the sso id (non blocking, if not provided, we will resolve it later)
-        const ssoId = rawSsoId?.startsWith("0x") ? rawSsoId : undefined;
-
         // Insert the pairing into the database
         await db.insert(pairingTable).values({
             pairingId,
             pairingCode,
             originUserAgent: userAgent ?? "Unknown",
             originName: deviceName,
-            ssoId: ssoId as Hex | undefined,
         });
         // Subscribe the client to the pairing topic
         ws.subscribe(originTopic(pairingId));
@@ -217,16 +209,6 @@ export class PairingConnectionRepository extends PairingRepository {
             JwtContext.wallet.sign(walletPayload),
             this.walletSdkSession.generateSdkJwt({ wallet: wallet.address }),
         ]);
-
-        // If we got a sso id, resolve the sso session
-        if (pairing.ssoId) {
-            await this.ssoService.resolveSession({
-                id: pairing.ssoId,
-                wallet: wallet.address,
-                authenticatorId: wallet.authenticatorId,
-                pairingId: pairing.pairingId,
-            });
-        }
 
         // Send the authenticated message to the origin
         await this.sendTopicMessage({

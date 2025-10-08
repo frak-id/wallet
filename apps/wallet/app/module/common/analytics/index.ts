@@ -103,10 +103,7 @@ export async function trackAuthInitiated(
  */
 export async function trackAuthCompleted(
     event: AnalyticsAuthenticationType,
-    wallet: Omit<Session, "token">,
-    args?: {
-        ssoId?: string;
-    }
+    wallet: Omit<Session, "token">
 ) {
     if (!openPanel) return;
     updateGlobalProperties({
@@ -122,7 +119,7 @@ export async function trackAuthCompleted(
             },
         }),
         // Track the auth related event
-        openPanel.track(`${event}_completed`, args),
+        openPanel.track(`${event}_completed`),
         // Track another event to tell that the user is logged in
         openPanel.track("user_logged_in"),
     ]);
@@ -133,14 +130,10 @@ export async function trackAuthCompleted(
  */
 export async function trackAuthFailed(
     event: AnalyticsAuthenticationType,
-    reason: string,
-    args?: {
-        ssoId?: string;
-    }
+    reason: string
 ) {
     if (!openPanel) return;
     openPanel.track(`${event}_failed`, {
-        ...args,
         reason,
     });
 }

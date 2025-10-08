@@ -99,7 +99,7 @@ export async function processSsoCompletion(
  * This is called by the SSO window via RPC instead of custom postMessage.
  * It stores the session and resolves any pending deferred promises.
  *
- * @param params - [session, sdkJwt, ssoId]
+ * @param params - [session, sdkJwt]
  * @param _context - Request context (unused)
  * @returns Promise resolving to { success: true }
  */

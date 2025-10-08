@@ -6,7 +6,6 @@ import {
     type WritableAtom,
     atom,
 } from "jotai/vanilla";
-import type { Hex } from "viem";
 import { authenticatedWalletApi } from "../../common/api/backendClient";
 import {
     type BasePairingState,
@@ -28,7 +27,6 @@ export type PairingWsEventListener = (
 type ConnectionParams =
     | {
           action: "initiate";
-          ssoId?: Hex;
       }
     | {
           action: "join";

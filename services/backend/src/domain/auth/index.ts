@@ -1,5 +1,4 @@
 export { AuthContext } from "./context";
-export { ssoTable } from "./db/schema";
 
 export {
     WalletAuthResponseDto,

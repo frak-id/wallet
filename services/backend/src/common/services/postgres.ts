@@ -4,7 +4,6 @@ import {
     fixedRoutingTable,
     walletRoutingTable,
 } from "../../domain/6degrees/db/schema";
-import { ssoTable } from "../../domain/auth";
 import { pendingInteractionsTable } from "../../domain/interactions";
 import {
     backendTrackerTable,
@@ -41,8 +40,6 @@ const postgresDb = postgres({
 export const db = drizzle({
     client: postgresDb,
     schema: {
-        // Auth domain
-        ssoTable,
         // 6 degrees domain
         fixedRoutingTable,
         walletRoutingTable,
