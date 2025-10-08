@@ -41,6 +41,7 @@ import "./sso.global.css";
 import { ua } from "@/module/common/lib/ua";
 import { HandleErrors } from "@/module/listener/component/HandleErrors";
 import { AuthenticateWithPhone } from "@/module/listener/modal/component/AuthenticateWithPhone";
+import type { OnPairingSuccessCallback } from "@/module/pairing/clients/origin";
 import type { SsoRpcSchema } from "@/types/sso-rpc";
 import {
     createClientCompressionMiddleware,
@@ -265,7 +266,7 @@ export default function Sso() {
                 {!success && (
                     <>
                         <Actions onSuccess={onSuccess} onError={setError} />
-                        <PhonePairingAction />
+                        <PhonePairingAction onSuccess={onSuccess} />
                     </>
                 )}
 
@@ -431,7 +432,9 @@ function Actions({
     );
 }
 
-function PhonePairingAction() {
+function PhonePairingAction({
+    onSuccess,
+}: { onSuccess: OnPairingSuccessCallback }) {
     const { t } = useTranslation();
 
     // Don't show the phone pairing action if we don't have an sso id or if we are on a mobile device
@@ -444,6 +447,7 @@ function PhonePairingAction() {
             <AuthenticateWithPhone
                 text={t("authent.sso.btn.new.phone")}
                 className={styles.sso__buttonLink}
+                onSuccess={onSuccess}
             />
         </div>
     );
