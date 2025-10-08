@@ -3,7 +3,11 @@ import { useListenerUI } from "@/module/listener/providers/ListenerUiProvider";
 import type { WalletRpcContext } from "@/module/listener/types/context";
 import { useInteractionSessionStatus } from "@/module/wallet/hook/useInteractionSessionStatus";
 import type { IFrameRpcSchema } from "@frak-labs/core-sdk";
-import { Deferred, FrakRpcError, RpcErrorCodes } from "@frak-labs/frame-connector";
+import {
+    Deferred,
+    FrakRpcError,
+    RpcErrorCodes,
+} from "@frak-labs/frame-connector";
 import type {
     ExtractReturnType,
     RpcPromiseHandler,

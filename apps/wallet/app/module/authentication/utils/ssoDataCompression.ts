@@ -1,5 +1,4 @@
 import type { AppSpecificSsoMetadata } from "@/module/authentication/atoms/sso";
-import type { SdkSession, Session } from "@/types/Session";
 import type { OpenSsoParamsType } from "@frak-labs/core-sdk";
 import type { Hex } from "viem";
 
@@ -55,33 +54,6 @@ export type CompressedSsoData = {
     id?: Hex;
     // redirect url
     r?: string;
-    // direct exit
-    d?: boolean;
-    // language
-    l?: "en" | "fr";
-    // product id
-    p: Hex;
-    // metadata
-    m: {
-        // product name
-        n: string;
-        // custom css
-        css?: string;
-        // logo
-        l?: string;
-        // home page link
-        h?: string;
-    };
-};
-
-/**
- * Type of compressed the sso data
- */
-export type CompressedSsoResponse = {
-    // User session
-    s?: Session;
-    // redirect url
-    sdk: SdkSession;
     // direct exit
     d?: boolean;
     // language
