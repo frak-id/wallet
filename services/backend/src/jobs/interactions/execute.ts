@@ -1,79 +1,62 @@
+import { db } from "@backend-common";
 import { mutexCron } from "@backend-utils";
 import type { pino } from "@bogeychan/elysia-logger";
 import { inArray } from "drizzle-orm";
+import { Elysia } from "elysia";
 import {
-    type InteractionPackerRepository,
-    type InteractionSignerRepository,
-    type InteractionsContextApp,
-    type InteractionsDb,
+    InteractionsContext,
     type PreparedInteraction,
     pendingInteractionsTable,
     pushedInteractionsTable,
 } from "../../domain/interactions";
 
-export const executeInteractionJob = (app: InteractionsContextApp) =>
-    app.use(
-        mutexCron({
-            name: "executeInteraction",
-            pattern: "0 */3 * * * *", // Every 3 minutes
-            skipIfLocked: true,
-            coolDownInMs: 2_000,
-            run: async ({ context: { logger } }) => {
-                const {
-                    interactions: { db: interactionsDb },
-                    interactions: {
-                        repositories: {
-                            interactionPacker: interactionPackerRepository,
-                            interactionSigner: interactionSignerRepository,
-                            pendingInteractions: pendingInteractionsRepository,
-                        },
-                    },
-                } = app.decorator;
-                // Get interactions to simulate
-                const interactions =
-                    await pendingInteractionsRepository.getAndLock({
+export const executeInteractionJob = new Elysia({
+    name: "Job.interactions.execute",
+}).use(
+    mutexCron({
+        name: "executeInteraction",
+        pattern: "0 */3 * * * *", // Every 3 minutes
+        skipIfLocked: true,
+        coolDownInMs: 2_000,
+        run: async ({ context: { logger } }) => {
+            // Get interactions to simulate
+            const interactions =
+                await InteractionsContext.repositories.pendingInteractions.getAndLock(
+                    {
                         status: "succeeded",
                         limit: 200,
-                    });
-                if (interactions.length === 0) {
-                    logger.debug("No interactions to execute");
-                    return;
-                }
-                logger.debug(
-                    `Will execute ${interactions.length} interactions`
+                    }
                 );
+            if (interactions.length === 0) {
+                logger.debug("No interactions to execute");
+                return;
+            }
+            logger.debug(`Will execute ${interactions.length} interactions`);
 
-                try {
-                    // Execute them
-                    await executeInteractions({
-                        interactions,
-                        interactionsDb,
-                        interactionPackerRepository,
-                        interactionSignerRepository,
-                        logger,
-                    });
-                } finally {
-                    // Unlock them
-                    await pendingInteractionsRepository.unlock(interactions);
-                }
-            },
-        })
-    );
+            try {
+                // Execute them
+                await executeInteractions({
+                    interactions,
+                    logger,
+                });
+            } finally {
+                // Unlock them
+                await InteractionsContext.repositories.pendingInteractions.unlock(
+                    interactions
+                );
+            }
+        },
+    })
+);
 
 /**
  * Execute a list of interactions
  */
 async function executeInteractions({
     interactions,
-    interactionsDb,
-    interactionPackerRepository,
-    interactionSignerRepository,
     logger,
 }: {
     interactions: (typeof pendingInteractionsTable.$inferSelect)[];
-    interactionsDb: InteractionsDb;
-    interactionPackerRepository: InteractionPackerRepository;
-    interactionSignerRepository: InteractionSignerRepository;
     logger: pino.Logger;
 }) {
     // Prepare and pack every interaction
@@ -81,11 +64,13 @@ async function executeInteractions({
         // Get the signature
         const signature =
             interaction.signature ??
-            (await interactionSignerRepository.signInteraction({
-                user: interaction.wallet,
-                facetData: interaction.interactionData,
-                productId: interaction.productId,
-            }));
+            (await InteractionsContext.repositories.interactionSigner.signInteraction(
+                {
+                    user: interaction.wallet,
+                    facetData: interaction.interactionData,
+                    productId: interaction.productId,
+                }
+            ));
         if (!signature) {
             logger.warn(
                 {
@@ -98,13 +83,15 @@ async function executeInteractions({
 
         // Pack it for execution
         const packedInteraction =
-            interactionPackerRepository.packageInteractionData({
-                interactionData: {
-                    handlerTypeDenominator: interaction.typeDenominator,
-                    interactionData: interaction.interactionData,
-                },
-                signature,
-            });
+            InteractionsContext.repositories.interactionPacker.packageInteractionData(
+                {
+                    interactionData: {
+                        handlerTypeDenominator: interaction.typeDenominator,
+                        interactionData: interaction.interactionData,
+                    },
+                    signature,
+                }
+            );
         return {
             interaction,
             signature,
@@ -127,7 +114,7 @@ async function executeInteractions({
 
     // Once all prepared, send them
     const txHash =
-        await interactionSignerRepository.pushPreparedInteractions(
+        await InteractionsContext.repositories.interactionSigner.pushPreparedInteractions(
             preparedInteractions
         );
     if (!txHash) {
@@ -142,7 +129,7 @@ async function executeInteractions({
     logger.info({ txHash }, "Pushed all the interactions on txs");
 
     // Update the db
-    await interactionsDb.transaction(async (trx) => {
+    await db.transaction(async (trx) => {
         // Insert all the pushed one in the pushed table
         for (const { interaction, signature } of preparedInteractions) {
             await trx.insert(pushedInteractionsTable).values({

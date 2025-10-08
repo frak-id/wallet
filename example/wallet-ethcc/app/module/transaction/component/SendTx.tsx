@@ -101,6 +101,7 @@ function SendTxError({ error }: { error: Error }) {
             <h4>Send transaction error</h4>
 
             <p>{error.message}</p>
+            <p>{JSON.stringify(error)}</p>
         </div>
     );
 }

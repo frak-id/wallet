@@ -1,18 +1,18 @@
+import { db } from "@backend-common";
 import { t, validateBodyHmac } from "@backend-utils";
 import { eq } from "drizzle-orm";
 import { Elysia } from "elysia";
 import { concatHex, keccak256, toHex } from "viem";
 import { log } from "../../../../common";
 import {
+    OracleContext,
     type WooCommerceOrderStatus,
     type WooCommerceOrderUpdateWebhookDto,
-    oracleContext,
     productOracleTable,
     type purchaseStatusEnum,
 } from "../../../../domain/oracle";
 
 export const wooCommerceWebhook = new Elysia()
-    .use(oracleContext)
     .guard({
         headers: t.Partial(
             t.Object({
@@ -47,11 +47,6 @@ export const wooCommerceWebhook = new Elysia()
             params: { productId },
             body,
             headers,
-            // Context
-            oracle: {
-                db: oracleDb,
-                services: { webhook },
-            },
         }) => {
             // Try to parse the body as a shopify webhook type and ensure the type validity
             const webhookData = JSON.parse(
@@ -62,7 +57,7 @@ export const wooCommerceWebhook = new Elysia()
             if (!productId) {
                 throw new Error("Missing product id");
             }
-            const oracle = await oracleDb.query.productOracleTable.findFirst({
+            const oracle = await db.query.productOracleTable.findFirst({
                 where: eq(productOracleTable.productId, productId),
             });
             if (!oracle) {
@@ -84,7 +79,7 @@ export const wooCommerceWebhook = new Elysia()
             );
 
             // Insert purchase and items
-            await webhook.upsertPurchase({
+            await OracleContext.services.webhook.upsertPurchase({
                 purchase: {
                     oracleId: oracle.id,
                     purchaseId,

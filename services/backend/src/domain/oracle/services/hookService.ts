@@ -1,10 +1,8 @@
 import { log } from "@backend-common";
-import type { OracleDb } from "../context";
+import { db } from "@backend-common";
 import { purchaseItemTable, purchaseStatusTable } from "../db/schema";
 
 export class OracleWebhookService {
-    constructor(private readonly oracleDb: OracleDb) {}
-
     async upsertPurchase({
         purchase,
         purchaseItems,
@@ -12,7 +10,7 @@ export class OracleWebhookService {
         purchase: typeof purchaseStatusTable.$inferInsert;
         purchaseItems: (typeof purchaseItemTable.$inferInsert)[];
     }) {
-        const dbId = await this.oracleDb.transaction(async (trx) => {
+        const dbId = await db.transaction(async (trx) => {
             // Insert the purchase first
             const insertedId = await trx
                 .insert(purchaseStatusTable)

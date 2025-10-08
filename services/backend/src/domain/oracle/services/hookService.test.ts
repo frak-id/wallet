@@ -2,7 +2,6 @@ import { afterAll, beforeAll, describe, expect, it, mock } from "bun:test";
 import { drizzle } from "drizzle-orm/postgres-js";
 import type { Hex } from "viem";
 import { mockAll } from "../../../../test/mock";
-import type { OracleDb } from "../context";
 import { purchaseItemTable, purchaseStatusTable } from "../db/schema";
 import { OracleWebhookService } from "./hookService";
 
@@ -70,7 +69,7 @@ describe("OracleWebhookService", () => {
             transaction: mockTransaction,
         });
 
-        service = new OracleWebhookService(db as unknown as OracleDb);
+        service = new OracleWebhookService();
     });
 
     afterAll(() => {

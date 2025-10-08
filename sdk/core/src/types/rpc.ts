@@ -14,46 +14,57 @@ import type {
     SendInteractionReturnType,
 } from "./rpc/interaction";
 import type { GetProductInformationReturnType } from "./rpc/productInformation";
-import type { OpenSsoParamsType } from "./rpc/sso";
+import type { OpenSsoParamsType, OpenSsoReturnType } from "./rpc/sso";
 import type { WalletStatusReturnType } from "./rpc/walletStatus";
 
 /**
  * RPC interface that's used for the iframe communication
  *
- * Define all the methods available within the iFrame RPC client
+ * Define all the methods available within the iFrame RPC client with response type annotations
  *
  * @group RPC Schema
  *
  * @remarks
- * Here is the list of methods available:
+ * Each method in the schema now includes a ResponseType field that indicates:
+ * - "promise": One-shot request that resolves once
+ * - "stream": Streaming request that can emit multiple values
  *
- * ### frak_listenToWalletStatus
+ * ### Methods:
+ *
+ * #### frak_listenToWalletStatus
  *  - Params: None
  *  - Returns: {@link WalletStatusReturnType}
+ *  - Response Type: stream (emits updates when wallet status changes)
  *
- * ### frak_displayModal
- * - Params: [{@link ModalRpcStepsInput}, name: string, metadata?: {@link ModalRpcMetadata}]
+ * #### frak_displayModal
+ * - Params: [requests: {@link ModalRpcStepsInput}, metadata?: {@link ModalRpcMetadata}, configMetadata: {@link FrakWalletSdkConfig}["metadata"]]
  * - Returns: {@link ModalRpcStepsResultType}
+ * - Response Type: promise (one-shot)
  *
- * ### frak_sendInteraction
+ * #### frak_sendInteraction
  *  - Params: [productId: Hex, interaction: {@link PreparedInteraction}, signature?: Hex]
  *  - Returns: {@link SendInteractionReturnType}
+ *  - Response Type: promise (one-shot)
  *
- * ### frak_sso
- *  - Params [params: {@link OpenSsoParamsType}, name: string, customCss?: string]
- *  - Returns: undefined
+ * #### frak_sso
+ *  - Params: [params: {@link OpenSsoParamsType}, name: string, customCss?: string]
+ *  - Returns: {@link OpenSsoReturnType}
+ *  - Response Type: promise (one-shot)
  *
- *  ### frak_getProductInformation
+ * #### frak_getProductInformation
  *  - Params: None
  *  - Returns: {@link GetProductInformationReturnType}
+ *  - Response Type: promise (one-shot)
  *
- * ### frak_displayEmbeddedWallet
- * - Params: [{@link DisplayEmbeddedWalletParamsType}]
+ * #### frak_displayEmbeddedWallet
+ * - Params: [request: {@link DisplayEmbeddedWalletParamsType}, metadata: {@link FrakWalletSdkConfig}["metadata"]]
  * - Returns: {@link DisplayEmbeddedWalletResultType}
+ * - Response Type: promise (one-shot)
  */
 export type IFrameRpcSchema = [
     /**
      * Method used to listen to the wallet status
+     * This is a streaming method that emits updates when wallet status changes
      */
     {
         Method: "frak_listenToWalletStatus";
@@ -62,6 +73,7 @@ export type IFrameRpcSchema = [
     },
     /**
      * Method to display a modal with the provided steps
+     * This is a one-shot request
      */
     {
         Method: "frak_displayModal";
@@ -74,6 +86,7 @@ export type IFrameRpcSchema = [
     },
     /**
      * Method to transmit a user interaction
+     * This is a one-shot request
      */
     {
         Method: "frak_sendInteraction";
@@ -86,7 +99,7 @@ export type IFrameRpcSchema = [
     },
     /**
      * Method to start a SSO
-     *  todo: Should also support direct tracking via a consumeKey
+     * This is a one-shot request
      */
     {
         Method: "frak_sso";
@@ -95,13 +108,14 @@ export type IFrameRpcSchema = [
             name: string,
             customCss?: string,
         ];
-        ReturnType: undefined;
+        ReturnType: OpenSsoReturnType;
     },
     /**
      * Method to get current product information's
      *  - Is product minted?
      *  - Does it have running campaign?
      *  - Estimated reward on actions
+     * This is a one-shot request
      */
     {
         Method: "frak_getProductInformation";
@@ -110,6 +124,7 @@ export type IFrameRpcSchema = [
     },
     /**
      * Method to show the embedded wallet, with potential customization
+     * This is a one-shot request
      */
     {
         Method: "frak_displayEmbeddedWallet";

@@ -38,7 +38,7 @@ export const WalletTokenDto = t.Union([
     DistantWebAuthNWalletTokenDto,
 ]);
 
-export const WalletAuthResponseDto = t.Intersect([
+export const WalletAuthResponseDto = t.Composite([
     t.Object({
         token: t.String(),
         sdkJwt: t.Object({

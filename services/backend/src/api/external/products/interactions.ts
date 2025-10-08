@@ -3,6 +3,7 @@ import {
     interactionDiamondRepository,
     log,
 } from "@backend-common";
+import { db } from "@backend-common";
 import { t, validateBodyHmac } from "@backend-utils";
 import { interactionTypes } from "@frak-labs/core-sdk";
 import {
@@ -10,16 +11,14 @@ import {
     RetailInteractionEncoder,
 } from "@frak-labs/core-sdk/interactions";
 import { eq } from "drizzle-orm";
-import { Elysia, error } from "elysia";
+import { Elysia, status } from "elysia";
 import { type Hex, isAddress, isHex, keccak256, toHex } from "viem";
 import {
     backendTrackerTable,
-    interactionsContext,
     pendingInteractionsTable,
 } from "../../../domain/interactions";
 
 export const interactionsApi = new Elysia({ prefix: "/interactions" })
-    .use(interactionsContext)
     .guard({
         params: t.Object({
             productId: t.Optional(t.Hex()),
@@ -32,19 +31,17 @@ export const interactionsApi = new Elysia({ prefix: "/interactions" })
     })
     .resolve(({ params: { productId }, headers }) => {
         if (!productId) {
-            return error(400, "Invalid product id");
+            return status(400, "Invalid product id");
         }
         if (!headers["x-hmac-sha256"]) {
-            return error(400, "Missing hmac");
+            return status(400, "Missing hmac");
         }
 
         return { productId, hmac: headers["x-hmac-sha256"] };
     })
-    .decorate(({ interactions: { db }, ...other }) => ({
-        interactionsDb: db,
-        ...other,
-
-        saveInteractions: async (
+    .decorate(
+        "saveInteractions",
+        async (
             interactions: (typeof pendingInteractionsTable.$inferInsert)[]
         ) => {
             await db
@@ -53,8 +50,8 @@ export const interactionsApi = new Elysia({ prefix: "/interactions" })
                 .onConflictDoNothing();
             // Trigger the simulation job (and don't wait for it)
             eventEmitter.emit("newInteractions");
-        },
-    }))
+        }
+    )
     // Direct push an interaction
     .post(
         "/push",
@@ -65,23 +62,21 @@ export const interactionsApi = new Elysia({ prefix: "/interactions" })
             body: rawBody,
             // Context
             saveInteractions,
-            interactionsDb,
         }) => {
             // Validate the body received
             const body = JSON.parse(rawBody);
             const isValidBody =
                 body.wallet && body.interaction && isAddress(body.wallet);
             if (!isValidBody) {
-                return error(400, "Invalid body");
+                return status(400, "Invalid body");
             }
 
             // Find the product backend tracker for this product id
-            const tracker =
-                await interactionsDb.query.backendTrackerTable.findFirst({
-                    where: eq(backendTrackerTable.productId, productId),
-                });
+            const tracker = await db.query.backendTrackerTable.findFirst({
+                where: eq(backendTrackerTable.productId, productId),
+            });
             if (!tracker) {
-                return error(404, "Product backend tracker not found");
+                return status(404, "Product backend tracker not found");
             }
 
             // Validate the body hmac
@@ -97,7 +92,7 @@ export const interactionsApi = new Elysia({ prefix: "/interactions" })
                     productId
                 );
             if (!diamond) {
-                return error(400, "No diamond found for the product");
+                return status(400, "No diamond found for the product");
             }
 
             // Insert the interaction in the pending state
@@ -130,23 +125,21 @@ export const interactionsApi = new Elysia({ prefix: "/interactions" })
             body: rawBody,
             // Context
             saveInteractions,
-            interactionsDb,
         }) => {
             // Validate the body received
             const body = JSON.parse(rawBody);
             const isValidBody =
                 body.wallet && body.key && body.data && isAddress(body.wallet);
             if (!isValidBody) {
-                return error(400, "Invalid body");
+                return status(400, "Invalid body");
             }
 
             // Find the product backend tracker for this product id
-            const tracker =
-                await interactionsDb.query.backendTrackerTable.findFirst({
-                    where: eq(backendTrackerTable.productId, productId),
-                });
+            const tracker = await db.query.backendTrackerTable.findFirst({
+                where: eq(backendTrackerTable.productId, productId),
+            });
             if (!tracker) {
-                return error(404, "Product backend tracker not found");
+                return status(404, "Product backend tracker not found");
             }
 
             // Validate the body hmac
@@ -159,7 +152,7 @@ export const interactionsApi = new Elysia({ prefix: "/interactions" })
             // Ensure it's an allowed raw push interaction
             const interaction = mapRawInteraction(body);
             if (!interaction) {
-                return error(400, "Invalid raw interaction");
+                return status(400, "Invalid raw interaction");
             }
 
             // Get the diamond contract for this product
@@ -168,7 +161,7 @@ export const interactionsApi = new Elysia({ prefix: "/interactions" })
                     productId
                 );
             if (!diamond) {
-                return error(400, "No diamond found for the product");
+                return status(400, "No diamond found for the product");
             }
 
             // Insert the interaction in the pending state

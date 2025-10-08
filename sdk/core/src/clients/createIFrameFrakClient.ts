@@ -1,30 +1,24 @@
+import {
+    FrakRpcError,
+    type RpcClient,
+    RpcErrorCodes,
+    createRpcClient,
+} from "@frak-labs/frame-connector";
+import { createClientCompressionMiddleware } from "@frak-labs/frame-connector/middleware";
 import { OpenPanel } from "@openpanel/web";
-import { type ExtractedParametersFromRpc, FrakRpcError } from "../types";
+import type { FrakLifecycleEvent } from "../types";
 import type { FrakClient } from "../types/client";
 import type { FrakWalletSdkConfig } from "../types/config";
 import type { IFrameRpcSchema } from "../types/rpc";
-import { InternalError, RpcErrorCodes } from "../types/rpc/error";
-import type {
-    ListenerRequestFn,
-    RequestFn,
-    RpcResponse,
-} from "../types/transport";
-import { Deferred } from "../utils/Deferred";
-import {
-    decompressDataAndCheckHash,
-    hashAndCompressData,
-} from "../utils/compression";
 import { BACKUP_KEY } from "../utils/constants";
+import { setupSsoUrlListener } from "../utils/ssoUrlListener";
 import { DebugInfoGatherer } from "./DebugInfo";
-import { createIFrameChannelManager } from "./transports/iframeChannelManager";
 import {
     type IframeLifecycleManager,
     createIFrameLifecycleManager,
 } from "./transports/iframeLifecycleManager";
-import {
-    type IFrameMessageHandler,
-    createIFrameMessageHandler,
-} from "./transports/iframeMessageHandler";
+
+type SdkRpcClient = RpcClient<IFrameRpcSchema, FrakLifecycleEvent>;
 
 /**
  * Create a new iframe Frak client
@@ -49,127 +43,74 @@ export function createIFrameFrakClient({
     config: FrakWalletSdkConfig;
     iframe: HTMLIFrameElement;
 }): FrakClient {
-    // Build our channel manager
-    const channelManager = createIFrameChannelManager();
+    const frakWalletUrl = config?.walletUrl ?? "https://wallet.frak.id";
+
+    // Create lifecycle manager
     const lifecycleManager = createIFrameLifecycleManager({ iframe });
 
     // Create our debug info gatherer
     const debugInfo = new DebugInfoGatherer(config, iframe);
 
-    // Build our message handler
-    const messageHandler = createIFrameMessageHandler({
-        frakWalletUrl: config?.walletUrl ?? "https://wallet.frak.id",
-        iframe,
-        channelManager,
-        iframeLifecycleManager: lifecycleManager,
-        debugInfo,
+    // Validate iframe
+    if (!iframe.contentWindow) {
+        throw new FrakRpcError(
+            RpcErrorCodes.configError,
+            "The iframe does not have a content window"
+        );
+    }
+
+    // Create RPC client with middleware and lifecycle handlers
+    const rpcClient = createRpcClient<IFrameRpcSchema, FrakLifecycleEvent>({
+        emittingTransport: iframe.contentWindow,
+        listeningTransport: window,
+        targetOrigin: frakWalletUrl,
+        // Add compression middleware to handle request/response compression
+        middleware: [
+            // Ensure we are connected before sending request
+            {
+                async onRequest(_message, ctx) {
+                    // Ensure the iframe is connected
+                    const isConnected = await lifecycleManager.isConnected;
+                    if (!isConnected) {
+                        throw new FrakRpcError(
+                            RpcErrorCodes.clientNotConnected,
+                            "The iframe provider isn't connected yet"
+                        );
+                    }
+                    return ctx;
+                },
+            },
+            createClientCompressionMiddleware(),
+            // Save debug info
+            {
+                onRequest(message, ctx) {
+                    debugInfo.setLastRequest(message);
+                    return ctx;
+                },
+                onResponse(message, response) {
+                    debugInfo.setLastResponse(message, response);
+                    return response;
+                },
+            },
+        ],
+        // Add lifecycle handlers to process iframe lifecycle events
+        lifecycleHandlers: {
+            iframeLifecycle: async (event, _context) => {
+                // Delegate to lifecycle manager  (cast for type compatibility)
+                await lifecycleManager.handleEvent(event);
+            },
+        },
     });
 
-    // Build our request function
-    const request: RequestFn<IFrameRpcSchema> = async <_, TResult>(
-        args: ExtractedParametersFromRpc<IFrameRpcSchema>
-    ) => {
-        // Ensure the iframe is init
-        const isConnected = await lifecycleManager.isConnected;
-        if (!isConnected) {
-            throw new FrakRpcError(
-                RpcErrorCodes.clientNotConnected,
-                "The iframe provider isn't connected yet"
-            );
-        }
-
-        // Create the deferrable result
-        const result = new Deferred<TResult>();
-
-        // Create the channel
-        const channelId = channelManager.createChannel((message) => {
-            // Decompress the message
-            const decompressed = decompressDataAndCheckHash<
-                RpcResponse<IFrameRpcSchema>
-            >(message.data);
-            // If it contains an error, reject it
-            if (decompressed.error) {
-                result.reject(
-                    new FrakRpcError(
-                        decompressed.error.code,
-                        decompressed.error.message,
-                        decompressed.error?.data
-                    )
-                );
-            } else {
-                // Otherwise, resolve with the right status
-                result.resolve(decompressed.result as TResult);
-            }
-            // Then close the channel
-            channelManager.removeChannel(channelId);
-        });
-
-        // Compress the message to send
-        const compressedMessage = hashAndCompressData(args);
-
-        // Send the message to the iframe
-        messageHandler.sendEvent({
-            id: channelId,
-            topic: args.method,
-            data: compressedMessage,
-        });
-
-        return result.promise;
-    };
-
-    // Build our listener function
-    const listenerRequest: ListenerRequestFn<IFrameRpcSchema> = async <
-        _,
-        TResult,
-    >(
-        args: ExtractedParametersFromRpc<IFrameRpcSchema>,
-        callback: (result: TResult) => void
-    ) => {
-        // Ensure the iframe is init
-        const isConnected = await lifecycleManager.isConnected;
-        if (!isConnected) {
-            throw new FrakRpcError(
-                RpcErrorCodes.clientNotConnected,
-                "The iframe provider isn't connected yet"
-            );
-        }
-
-        // Create the channel
-        const channelId = channelManager.createChannel((message) => {
-            // Decompress the message
-            const decompressed = decompressDataAndCheckHash<
-                RpcResponse<IFrameRpcSchema>
-            >(message.data);
-            // Transmit the result if it's a success
-            if (decompressed.result) {
-                callback(decompressed.result as TResult);
-            } else {
-                throw new InternalError("No valid result in the response");
-            }
-        });
-
-        // Compress the message to send
-        const compressedMessage = hashAndCompressData(args);
-
-        // Send the message to the iframe
-        messageHandler.sendEvent({
-            id: channelId,
-            topic: args.method,
-            data: compressedMessage,
-        });
-    };
-
     // Setup heartbeat
-    const stopHeartbeat = setupHeartbeat(messageHandler, lifecycleManager);
+    const stopHeartbeat = setupHeartbeat(rpcClient, lifecycleManager);
 
     // Build our destroy function
     const destroy = async () => {
         // Stop heartbeat
         stopHeartbeat();
-        // Destroy the channel manager
-        channelManager.destroy();
-        // Cleanup the message handler
-        messageHandler.cleanup();
+        // Cleanup the RPC client
+        rpcClient.cleanup();
         // Remove the iframe
         iframe.remove();
     };
@@ -213,7 +154,7 @@ export function createIFrameFrakClient({
     // Perform the post connection setup
     const waitForSetup = postConnectionSetup({
         config,
-        messageHandler,
+        rpcClient,
         lifecycleManager,
     }).then(() => debugInfo.updateSetupStatus(true));
 
@@ -222,8 +163,8 @@ export function createIFrameFrakClient({
         debugInfo,
         waitForConnection: lifecycleManager.isConnected,
         waitForSetup,
-        request,
-        listenerRequest,
+        request: rpcClient.request,
+        listenerRequest: rpcClient.listen,
         destroy,
         openPanel,
     };
@@ -231,20 +172,20 @@ export function createIFrameFrakClient({
 
 /**
  * Setup the heartbeat
- * @param messageHandler
- * @param lifecycleManager
+ * @param rpcClient - RPC client to send lifecycle events
+ * @param lifecycleManager - Lifecycle manager to track connection
  */
 function setupHeartbeat(
-    messageHandler: IFrameMessageHandler,
+    rpcClient: SdkRpcClient,
     lifecycleManager: IframeLifecycleManager
 ) {
-    const HEARTBEAT_INTERVAL = 100; // Send heartbeat every 100ms until we are connected
+    const HEARTBEAT_INTERVAL = 1_000; // Send heartbeat every 100ms until we are connected
     const HEARTBEAT_TIMEOUT = 30_000; // 30 seconds timeout
     let heartbeatInterval: NodeJS.Timeout;
     let timeoutId: NodeJS.Timeout;
 
     const sendHeartbeat = () =>
-        messageHandler.sendEvent({
+        rpcClient.sendLifecycle({
             clientLifecycle: "heartbeat",
         });
 
@@ -284,31 +225,36 @@ function setupHeartbeat(
 
 /**
  * Perform the post connection setup
- * @param config
- * @param messageHandler
- * @param lifecycleManager
+ * @param config - SDK configuration
+ * @param rpcClient - RPC client to send lifecycle events
+ * @param lifecycleManager - Lifecycle manager to track connection
  */
 async function postConnectionSetup({
     config,
-    messageHandler,
+    rpcClient,
     lifecycleManager,
 }: {
     config: FrakWalletSdkConfig;
+    rpcClient: SdkRpcClient;
     lifecycleManager: IframeLifecycleManager;
-    messageHandler: IFrameMessageHandler;
 }): Promise<void> {
     // Wait for the handler to be connected
     await lifecycleManager.isConnected;
+
+    // Setup SSO URL listener to detect and forward SSO redirects
+    // This checks for ?sso= parameter and forwards compressed data to iframe
+    setupSsoUrlListener(rpcClient, lifecycleManager.isConnected);
 
     // Push raw CSS if needed
     async function pushCss() {
         const cssLink = config.customizations?.css;
         if (!cssLink) return;
 
-        messageHandler.sendEvent({
-            clientLifecycle: "modal-css",
+        const message = {
+            clientLifecycle: "modal-css" as const,
             data: { cssLink },
-        });
+        };
+        rpcClient.sendLifecycle(message);
     }
 
     // Push i18n if needed
@@ -316,11 +262,11 @@ async function postConnectionSetup({
         const i18n = config.customizations?.i18n;
         if (!i18n) return;
 
-        // Push the i18n for each language
-        messageHandler.sendEvent({
-            clientLifecycle: "modal-i18n",
+        const message = {
+            clientLifecycle: "modal-i18n" as const,
             data: { i18n },
-        });
+        };
+        rpcClient.sendLifecycle(message);
     }
 
     // Push local backup if needed
@@ -330,10 +276,11 @@ async function postConnectionSetup({
         const backup = window.localStorage.getItem(BACKUP_KEY);
         if (!backup) return;
 
-        messageHandler.sendEvent({
-            clientLifecycle: "restore-backup",
+        const message = {
+            clientLifecycle: "restore-backup" as const,
             data: { backup },
-        });
+        };
+        rpcClient.sendLifecycle(message);
     }
 
     await Promise.allSettled([pushCss(), pushI18n(), pushBackup()]);

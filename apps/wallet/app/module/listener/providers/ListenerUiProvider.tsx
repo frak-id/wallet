@@ -10,13 +10,16 @@ import type {
     Language,
     ModalRpcMetadata,
     ModalRpcStepsInput,
-    RpcResponse,
 } from "@frak-labs/core-sdk";
 import {
     formatAmount,
     getCurrencyAmountKey,
     getSupportedCurrency,
 } from "@frak-labs/core-sdk";
+import type {
+    ExtractReturnType,
+    RpcResponse,
+} from "@frak-labs/frame-connector";
 import type { TOptions, i18n } from "i18next";
 import { useAtomValue } from "jotai";
 import {
@@ -54,7 +57,9 @@ type EmbeddedWalletUiType = {
     type: "embedded";
     params: DisplayEmbeddedWalletParamsType;
     emitter: (
-        response: RpcResponse<IFrameRpcSchema, "frak_displayEmbeddedWallet">
+        response: RpcResponse<
+            ExtractReturnType<IFrameRpcSchema, "frak_displayEmbeddedWallet">
+        >
     ) => Promise<void>;
 };
 
@@ -67,7 +72,9 @@ export type ModalUiType = {
     metadata: ModalRpcMetadata;
     steps: ModalRpcStepsInput;
     emitter: (
-        response: RpcResponse<IFrameRpcSchema, "frak_displayModal">
+        response: RpcResponse<
+            ExtractReturnType<IFrameRpcSchema, "frak_displayModal">
+        >
     ) => Promise<void>;
 };
 

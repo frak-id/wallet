@@ -1,29 +1,28 @@
 import { sdkSessionAtom, sessionAtom } from "@/module/common/atoms/session";
+import type { WalletRpcContext } from "@/module/listener/types/context";
 import {
     getSafeSdkSession,
     getSafeSession,
 } from "@/module/listener/utils/localStorage";
 import { pushBackupData } from "@/module/sdk/utils/backup";
-import type {
-    IFrameRequestResolver,
-    IFrameResolvingContext,
-    IFrameResponseEmitter,
-} from "@/module/sdk/utils/iFrameRequestResolver";
 import { interactionSessionStatusQuery } from "@/module/wallet/hook/useInteractionSessionStatus";
 import type {
-    ExtractedParametersFromRpc,
     IFrameRpcSchema,
+    WalletStatusReturnType,
 } from "@frak-labs/core-sdk";
+import type {
+    RpcStreamHandler,
+    StreamEmitter,
+} from "@frak-labs/frame-connector";
 import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { useQueryClient } from "@tanstack/react-query";
 import { atom, useAtomValue } from "jotai";
 import { useCallback, useEffect, useRef } from "react";
 
-type OnListenToWallet = IFrameRequestResolver<
-    Extract<
-        ExtractedParametersFromRpc<IFrameRpcSchema>,
-        { method: "frak_listenToWalletStatus" }
-    >
+type OnListenToWallet = RpcStreamHandler<
+    IFrameRpcSchema,
+    "frak_listenToWalletStatus",
+    WalletRpcContext
 >;
 
 const bothSessionsAtom = atom((get) => ({
@@ -51,13 +50,13 @@ export function useWalletStatusListener(): OnListenToWallet {
     /**
      * Emit the current wallet status
      * @param emitter
+     * @param productId - From augmented context (Hex type)
+     * @param signal
      */
     const emitCurrentStatus = useCallback(
         async (
-            { productId }: IFrameResolvingContext,
-            emitter: IFrameResponseEmitter<{
-                method: "frak_listenToWalletStatus";
-            }>,
+            emitter: StreamEmitter<WalletStatusReturnType>,
+            productId: `0x${string}`,
             signal?: AbortSignal
         ) => {
             // Check if the operation has been aborted
@@ -77,10 +76,8 @@ export function useWalletStatusListener(): OnListenToWallet {
 
             // If no wallet present, just return the not logged in status
             if (!wallet?.address) {
-                await emitter({
-                    result: {
-                        key: "not-connected",
-                    },
+                emitter({
+                    key: "not-connected",
                 });
                 // And push fresh backup data with no session
                 await pushBackupData({ productId });
@@ -107,13 +104,11 @@ export function useWalletStatusListener(): OnListenToWallet {
             }
 
             // Emit the event
-            await emitter({
-                result: {
-                    key: "connected",
-                    wallet: wallet.address,
-                    interactionToken: sdk?.token,
-                    interactionSession,
-                },
+            emitter({
+                key: "connected",
+                wallet: wallet.address,
+                interactionToken: sdk?.token,
+                interactionSession,
             });
 
             // Check again if aborted before pushing backup data
@@ -138,30 +133,41 @@ export function useWalletStatusListener(): OnListenToWallet {
 
     /**
      * The function that will be called when a wallet status is requested
-     * @param _
-     * @param emitter
+     * Context is augmented by middleware with productId, sourceUrl, etc.
      */
     return useCallback(
-        async (_, context, emitter) => {
+        async (_params, emitter, context) => {
             // Clean up previous subscription if it exists
             unsubscribeSessionRef.current?.();
             unsubscribeSdkRef.current?.();
 
             let abortController = new AbortController();
 
-            // Emit the first status
-            await emitCurrentStatus(context, emitter, abortController.signal);
+            // Emit the first status (using productId from context)
+            await emitCurrentStatus(
+                emitter,
+                context.productId,
+                abortController.signal
+            );
 
             // Listen to jotai store update
             unsubscribeSessionRef.current = jotaiStore.sub(sessionAtom, () => {
                 abortController.abort();
                 abortController = new AbortController();
-                emitCurrentStatus(context, emitter, abortController.signal);
+                emitCurrentStatus(
+                    emitter,
+                    context.productId,
+                    abortController.signal
+                );
             });
             unsubscribeSdkRef.current = jotaiStore.sub(sdkSessionAtom, () => {
                 abortController.abort();
                 abortController = new AbortController();
-                emitCurrentStatus(context, emitter, abortController.signal);
+                emitCurrentStatus(
+                    emitter,
+                    context.productId,
+                    abortController.signal
+                );
             });
         },
         [emitCurrentStatus]

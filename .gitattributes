@@ -1,2 +1,10 @@
 # Remove the dumped html from the language stats
 example/news/public/_articles/* linguist-vendored
+
+# Specify line endings for text files
+* text=auto eol=lf
+*.js text eol=lf
+*.ts text eol=lf
+*.tsx text eol=lf
+*.json text eol=lf
+*.md text eol=lf

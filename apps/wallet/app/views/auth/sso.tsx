@@ -12,11 +12,15 @@ import {
     type CompressedSsoData,
     compressedSsoToParams,
 } from "@/module/authentication/utils/ssoDataCompression";
-import { demoPrivateKeyAtom } from "@/module/common/atoms/session";
+import {
+    demoPrivateKeyAtom,
+    sdkSessionAtom,
+    sessionAtom,
+} from "@/module/common/atoms/session";
 import { Grid } from "@/module/common/component/Grid";
 import { Notice } from "@/module/common/component/Notice";
 import type { Session } from "@/types/Session";
-import { decompressJsonFromB64 } from "@frak-labs/core-sdk";
+import { compressJsonToB64, decompressJsonFromB64 } from "@frak-labs/core-sdk";
 import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { ButtonAuth } from "@frak-labs/ui/component/ButtonAuth";
 import { formatHash } from "@frak-labs/ui/component/HashDisplay";
@@ -37,6 +41,11 @@ import "./sso.global.css";
 import { ua } from "@/module/common/lib/ua";
 import { HandleErrors } from "@/module/listener/component/HandleErrors";
 import { AuthenticateWithPhone } from "@/module/listener/modal/component/AuthenticateWithPhone";
+import type { SsoRpcSchema } from "@/types/sso-rpc";
+import {
+    createClientCompressionMiddleware,
+    createRpcClient,
+} from "@frak-labs/frame-connector";
 
 export default function Sso() {
     const { i18n, t } = useTranslation();
@@ -45,6 +54,12 @@ export default function Sso() {
      * The current metadata
      */
     const currentMetadata = useAtomValue(currentSsoMetadataAtom);
+
+    /**
+     * Check if we have a redirectUrl
+     */
+    const ssoContext = useAtomValue(ssoContextAtom);
+    const hasRedirectUrl = !!ssoContext?.redirectUrl;
 
     /**
      * The success state after login or register
@@ -83,7 +98,6 @@ export default function Sso() {
 
             // Save the current sso context
             jotaiStore.set(ssoContextAtom, {
-                id: compressedParam.id ?? undefined,
                 productId: productId ?? undefined,
                 redirectUrl: redirectUrl ?? undefined,
                 directExit: directExit ?? undefined,
@@ -117,8 +131,47 @@ export default function Sso() {
 
     /**
      * The on success callback
+     * After successful auth, send RPC message to wallet iframe (window.opener)
      */
-    const onSuccess = useCallback(() => {
+    const onSuccess = useCallback(async () => {
+        // Get the current SSO context
+        const session = jotaiStore.get(sessionAtom);
+        const sdkSession = jotaiStore.get(sdkSessionAtom);
+
+        // Send RPC message to wallet iframe if opened from window.open
+        if (window.opener && !window.opener.closed && session && sdkSession) {
+            try {
+                // Create RPC client targeting window.opener (wallet iframe)
+                const ssoClient = createRpcClient<SsoRpcSchema>({
+                    emittingTransport: window.opener,
+                    listeningTransport: window,
+                    targetOrigin: window.location.origin,
+                    middleware: [createClientCompressionMiddleware()],
+                });
+
+                // Send SSO completion via RPC
+                await ssoClient.request({
+                    method: "sso_complete",
+                    params: [session, sdkSession],
+                });
+
+                console.log(
+                    "[SSO] Sent completion message to wallet iframe via RPC",
+                    {
+                        address: session.address,
+                    }
+                );
+
+                // Cleanup the client
+                ssoClient.cleanup();
+            } catch (error) {
+                console.error(
+                    "[SSO] Failed to send completion message via RPC:",
+                    error
+                );
+            }
+        }
+
         // Redirect the user in 2seconds
         setSuccess(true);
         setTimeout(() => {
@@ -132,15 +185,40 @@ export default function Sso() {
     const redirectOrClose = useCallback(() => {
         // Check the current atom context
         const ssoContext = jotaiStore.get(ssoContextAtom);
-        // If we got a redirect, redirect to the page directly
+        // If we got a redirect, redirect to the page directly with success status
         if (ssoContext?.redirectUrl) {
-            window.location.href = decodeURIComponent(ssoContext.redirectUrl);
+            const redirectUrl = new URL(
+                decodeURIComponent(ssoContext.redirectUrl)
+            );
+
+            // Get the full SSO params and compress them for URL passthrough
+            const session = jotaiStore.get(sessionAtom);
+            const sdkSession = jotaiStore.get(sdkSessionAtom);
+            if (session && sdkSession) {
+                // Compress to base64url for URL parameter
+                const compressed = compressJsonToB64([session, sdkSession]);
+                redirectUrl.searchParams.set("sso", compressed);
+            }
+
+            window.location.href = redirectUrl.toString();
             return;
         }
         // If we got a direct exit, close this window
         if (ssoContext?.directExit) {
             window.close();
             return;
+        }
+    }, []);
+
+    /**
+     * Cancel SSO and redirect back
+     */
+    const cancelAndRedirect = useCallback(() => {
+        const initialRedirectUrl = jotaiStore.get(ssoContextAtom)?.redirectUrl;
+        if (initialRedirectUrl) {
+            const redirectUrl = new URL(decodeURIComponent(initialRedirectUrl));
+            redirectUrl.searchParams.set("status", "cancel");
+            window.location.href = redirectUrl.toString();
         }
     }, []);
 
@@ -163,13 +241,23 @@ export default function Sso() {
                                 }}
                             />
                         </Notice>
-                        <Link
-                            to={"/recovery"}
-                            className={styles.sso__recover}
-                            viewTransition
-                        >
-                            <CloudUpload /> {t("authent.sso.recover")}
-                        </Link>
+                        {hasRedirectUrl ? (
+                            <button
+                                onClick={cancelAndRedirect}
+                                className={styles.sso__recover}
+                                type={"button"}
+                            >
+                                {t("authent.sso.cancel")}
+                            </button>
+                        ) : (
+                            <Link
+                                to={"/recovery"}
+                                className={styles.sso__recover}
+                                viewTransition
+                            >
+                                <CloudUpload /> {t("authent.sso.recover")}
+                            </Link>
+                        )}
                     </>
                 }
             >
@@ -345,10 +433,9 @@ function Actions({
 
 function PhonePairingAction() {
     const { t } = useTranslation();
-    const ssoId = useAtomValue(ssoContextAtom)?.id;
 
     // Don't show the phone pairing action if we don't have an sso id or if we are on a mobile device
-    if (!ssoId || ua.isMobile) {
+    if (ua.isMobile) {
         return null;
     }
 
@@ -357,7 +444,6 @@ function PhonePairingAction() {
             <AuthenticateWithPhone
                 text={t("authent.sso.btn.new.phone")}
                 className={styles.sso__buttonLink}
-                ssoId={ssoId}
             />
         </div>
     );
@@ -384,11 +470,8 @@ function useLoginDemo(options?: UseMutationOptions<Session>) {
                 throw new Error("No private key found");
             }
 
-            // Get the SSO ID
-            const ssoId = jotaiStore.get(ssoContextAtom)?.id;
-
             // Launch the login process
-            return demoLogin({ pkey, ssoId: ssoId });
+            return demoLogin({ pkey });
         },
     });
 

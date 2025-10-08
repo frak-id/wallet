@@ -1,57 +1,58 @@
-import type { IFrameRequestResolver } from "@/module/sdk/utils/iFrameRequestResolver";
+import type { WalletRpcContext } from "@/module/listener/types/context";
 import { usePushInteraction } from "@/module/wallet/hook/usePushInteraction";
-import { isRunningLocally } from "@frak-labs/app-essentials";
+import type { IFrameRpcSchema } from "@frak-labs/core-sdk";
 import {
-    type ExtractedParametersFromRpc,
-    type IFrameRpcSchema,
+    FrakRpcError,
     RpcErrorCodes,
-} from "@frak-labs/core-sdk";
+    type RpcPromiseHandler,
+} from "@frak-labs/frame-connector";
 import { useCallback } from "react";
 
-type OnInteractionRequest = IFrameRequestResolver<
-    Extract<
-        ExtractedParametersFromRpc<IFrameRpcSchema>,
-        { method: "frak_sendInteraction" }
-    >
+type OnInteractionRequest = RpcPromiseHandler<
+    IFrameRpcSchema,
+    "frak_sendInteraction",
+    WalletRpcContext
 >;
 
 /**
  * Hook use to listen to the user interactions
+ *
+ * Note: ProductId validation now happens in walletContextMiddleware.
+ * Context parameter contains validated productId, sourceUrl, etc.
  */
 export function useSendInteractionListener(): OnInteractionRequest {
     const pushInteraction = usePushInteraction();
 
     /**
      * The function that will be called when a user referred is requested
-     * @param request
-     * @param emitter
+     * Context is augmented by middleware with productId, sourceUrl, etc.
      */
     return useCallback(
-        async (request, context, emitter) => {
+        async (params, context) => {
             // Extract the productId and walletAddress
-            const productId = request.params[0];
-            const interaction = request.params[1];
-            const signature = request.params[2];
+            const productId = params[0];
+            const interaction = params[1];
+            const signature = params[2];
 
-            // If no productId or interaction, return
+            // If no productId or interaction, throw error
             if (!(productId && interaction)) {
-                return;
+                throw new Error("Missing productId or interaction");
             }
 
+            // Additional validation: ensure the productId in params matches the context
+            // (context.productId is already validated against origin by middleware)
             if (BigInt(productId) !== BigInt(context.productId)) {
                 console.error(
-                    "Mismatching product id, aborting the user op reception",
-                    { productId, context: context }
+                    "Product ID in params doesn't match validated context",
+                    {
+                        paramsProductId: productId,
+                        contextProductId: context.productId,
+                    }
                 );
-                if (!isRunningLocally) {
-                    await emitter({
-                        error: {
-                            code: RpcErrorCodes.configError,
-                            message: "Mismatching product id",
-                        },
-                    });
-                    return;
-                }
+                throw new FrakRpcError(
+                    RpcErrorCodes.configError,
+                    "Product ID mismatch"
+                );
             }
 
             // Push the interaction
@@ -64,34 +65,22 @@ export function useSendInteractionListener(): OnInteractionRequest {
             // Depending on the status, return different things
             switch (status) {
                 case "pending-wallet":
-                    await emitter({
-                        error: {
-                            code: RpcErrorCodes.walletNotConnected,
-                            message: "User isn't connected",
-                        },
-                    });
-                    return;
+                    throw new FrakRpcError(
+                        RpcErrorCodes.walletNotConnected,
+                        "User isn't connected"
+                    );
                 case "no-sdk-session":
-                    await emitter({
-                        error: {
-                            code: RpcErrorCodes.serverErrorForInteractionDelegation,
-                            message: "Unable to get a safe token",
-                        },
-                    });
-                    return;
+                    throw new FrakRpcError(
+                        RpcErrorCodes.serverErrorForInteractionDelegation,
+                        "Unable to get a safe token"
+                    );
                 case "push-error":
-                    await emitter({
-                        error: {
-                            code: RpcErrorCodes.serverErrorForInteractionDelegation,
-                            message: "Unable to push the interaction",
-                        },
-                    });
-                    return;
+                    throw new FrakRpcError(
+                        RpcErrorCodes.serverErrorForInteractionDelegation,
+                        "Unable to push the interaction"
+                    );
                 case "success":
-                    await emitter({
-                        result: { delegationId },
-                    });
-                    return;
+                    return { delegationId };
             }
         },
         [pushInteraction]

@@ -1,17 +1,5 @@
 import { Mutex } from "async-mutex";
 import { MongoClient } from "mongodb";
-import postgres from "postgres";
-
-/**
- * Postgres master client
- */
-export const postgresDb = postgres({
-    host: process.env.POSTGRES_HOST,
-    port: Number.parseInt(process.env.POSTGRES_PORT ?? "5432"),
-    database: process.env.POSTGRES_DB,
-    username: process.env.POSTGRES_USER,
-    password: process.env.POSTGRES_PASSWORD,
-});
 
 // The mutex we will use init new clients (and ensure no duplicates)
 const monoInitMutex = new Mutex();

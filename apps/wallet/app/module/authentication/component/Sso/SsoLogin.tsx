@@ -1,8 +1,6 @@
-import { ssoContextAtom } from "@/module/authentication/atoms/sso";
 import { useLogin } from "@/module/authentication/hook/useLogin";
 import type { PreviousAuthenticatorModel } from "@/module/common/storage/dexie/PreviousAuthenticatorModel";
 import { ButtonAuth } from "@frak-labs/ui/component/ButtonAuth";
-import { useAtomValue } from "jotai";
 import { useTranslation } from "react-i18next";
 import styles from "./index.module.css";
 
@@ -21,12 +19,10 @@ export function SsoLoginComponent({
     onError: (error: Error | null) => void;
     lastAuthentication?: PreviousAuthenticatorModel;
 }) {
-    const ssoId = useAtomValue(ssoContextAtom)?.id;
     const { t } = useTranslation();
     const { login, isLoading } = useLogin({
         onSuccess: () => onSuccess(),
         onError: (error: Error) => onError(error),
-        ssoId,
     });
 
     if (isPrimary) {

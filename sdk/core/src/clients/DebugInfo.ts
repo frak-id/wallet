@@ -1,8 +1,9 @@
 import {
     FrakRpcError,
-    type FrakWalletSdkConfig,
-    type IFrameEvent,
-} from "../types";
+    type RpcMessage,
+    type RpcResponse,
+} from "@frak-labs/frame-connector";
+import type { FrakWalletSdkConfig } from "../types";
 
 type IframeStatus = {
     loading: boolean;
@@ -39,13 +40,12 @@ export class DebugInfoGatherer {
     private iframe?: HTMLIFrameElement;
     private isSetupDone = false;
     private lastResponse: null | {
-        event: IFrameEvent;
-        origin: string;
+        message: RpcMessage;
+        response: RpcResponse;
         timestamp: number;
     } = null;
     private lastRequest: null | {
-        event: IFrameEvent;
-        target: string;
+        event: RpcMessage;
         timestamp: number;
     } = null;
 
@@ -57,15 +57,15 @@ export class DebugInfoGatherer {
     }
 
     // Update communication logs
-    public setLastResponse(event: MessageEvent<IFrameEvent>) {
+    public setLastResponse(message: RpcMessage, response: RpcResponse) {
         this.lastResponse = {
-            event: event.data,
-            origin: event.origin,
+            message,
+            response,
             timestamp: Date.now(),
         };
     }
-    public setLastRequest(event: IFrameEvent, target: string) {
-        this.lastRequest = { event, target, timestamp: Date.now() };
+    public setLastRequest(event: RpcMessage) {
+        this.lastRequest = { event, timestamp: Date.now() };
     }
 
     // Update connection status

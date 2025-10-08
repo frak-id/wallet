@@ -7,12 +7,11 @@ import {
 } from "@/module/wallet/atoms/pendingInteraction";
 import type { PendingInteraction } from "@/types/Interaction";
 import type { SdkSession, Session } from "@/types/Session";
+import { base64urlDecode, base64urlEncode } from "@frak-labs/core-sdk";
 import {
-    base64urlDecode,
-    base64urlEncode,
     decompressDataAndCheckHash,
     hashAndCompressData,
-} from "@frak-labs/core-sdk";
+} from "@frak-labs/frame-connector";
 import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { atom } from "jotai";
 import type { Hex } from "viem";

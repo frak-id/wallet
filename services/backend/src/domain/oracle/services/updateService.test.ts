@@ -41,7 +41,7 @@ describe("UpdateOracleService", () => {
             mockOracleUpdater
         );
 
-        service = new UpdateOracleService(db, mockMerkleTreeRepository);
+        service = new UpdateOracleService(mockMerkleTreeRepository);
     });
 
     afterAll(() => {

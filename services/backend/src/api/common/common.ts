@@ -1,6 +1,6 @@
 import { adminWalletsRepository, pricingRepository } from "@backend-common";
 import { t } from "@backend-utils";
-import { Elysia, error } from "elysia";
+import { Elysia, status } from "elysia";
 import { isAddress, isHex } from "viem";
 
 /**
@@ -14,7 +14,7 @@ export const commonRoutes = new Elysia({ name: "Routes.common" })
             // Case of a product id
             if (query.productId) {
                 if (!isHex(query.productId)) {
-                    return error(400, "Invalid productId");
+                    return status(400, "Invalid productId");
                 }
 
                 const account =
@@ -33,7 +33,7 @@ export const commonRoutes = new Elysia({ name: "Routes.common" })
                 return { pubKey: account.address };
             }
 
-            return error(400, "Invalid query");
+            return status(400, "Invalid query");
         },
         {
             query: t.Partial(
@@ -54,12 +54,12 @@ export const commonRoutes = new Elysia({ name: "Routes.common" })
         "/rate",
         async ({ query: { token } }) => {
             if (!isAddress(token)) {
-                return error(400, "Invalid token");
+                return status(400, "Invalid token");
             }
 
             const rate = await pricingRepository.getTokenPrice({ token });
             if (!rate) {
-                return error(400, "Invalid token");
+                return status(400, "Invalid token");
             }
 
             return rate;

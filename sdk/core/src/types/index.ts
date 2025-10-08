@@ -11,6 +11,7 @@ export type {
 export type {
     SsoMetadata,
     OpenSsoParamsType,
+    OpenSsoReturnType,
 } from "./rpc/sso";
 export type {
     TokenAmountType,
@@ -21,19 +22,10 @@ export type {
     SendInteractionParamsType,
     SendInteractionReturnType,
 } from "./rpc/interaction";
-export { FrakRpcError, RpcErrorCodes, ClientNotFound } from "./rpc/error";
 export type { IFrameRpcSchema } from "./rpc";
 // Client related
 export type { FrakClient } from "./client";
-export type {
-    IFrameTransport,
-    IFrameRpcEvent,
-    IFrameEvent,
-    ExtractedParametersFromRpc,
-    ExtractedReturnTypeFromRpc,
-    ExtractedMethodFromRpc,
-    RpcResponse,
-} from "./transport";
+export type { IFrameTransport, FrakLifecycleEvent } from "./transport";
 export type {
     IFrameLifecycleEvent,
     ClientLifecycleEvent,

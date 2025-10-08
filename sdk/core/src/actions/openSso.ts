@@ -1,4 +1,8 @@
-import type { FrakClient, OpenSsoParamsType } from "../types";
+import type {
+    FrakClient,
+    OpenSsoParamsType,
+    OpenSsoReturnType,
+} from "../types";
 
 /**
  * Function used to open the SSO
@@ -33,15 +37,25 @@ import type { FrakClient, OpenSsoParamsType } from "../types";
  *     metadata,
  * });
  * ```
+ * ```ts [With tracking]
+ * // Trigger an sso with consumeKey for tracking
+ * const result = await openSso(frakConfig, {
+ *     directExit: true,
+ *     generateConsumeKey: true,
+ *     metadata,
+ * });
+ * console.log(result.consumeKey); // Use this to track SSO status
+ * ```
  * :::
  */
 export async function openSso(
     client: FrakClient,
     args: OpenSsoParamsType
-): Promise<void> {
+): Promise<OpenSsoReturnType> {
     const { metadata, customizations } = client.config;
-    await client.request({
+    const result = await client.request({
         method: "frak_sso",
         params: [args, metadata.name, customizations?.css],
     });
+    return result ?? {};
 }

@@ -4,7 +4,6 @@ import { cx } from "class-variance-authority";
 import { Cuer } from "cuer";
 import { atom, useAtom, useAtomValue } from "jotai";
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { Hex } from "viem";
 import { getOriginPairingClient } from "../../clients/store";
 import type { OriginPairingState } from "../../types";
 import { PairingCode } from "../PairingCode";
@@ -17,7 +16,7 @@ const showBrighterQRCodeAtom = atom(false);
  * Launch a pairing session
  * @returns A QR code to scan to pair with the wallet
  */
-export function LaunchPairing({ ssoId }: { ssoId?: Hex }) {
+export function LaunchPairing() {
     const [showBrighterQRCode, setShowBrighterQRCode] = useAtom(
         showBrighterQRCodeAtom
     );
@@ -52,11 +51,9 @@ export function LaunchPairing({ ssoId }: { ssoId?: Hex }) {
     }, [setShowBrighterQRCode]);
 
     useEffect(() => {
-        client.initiatePairing({ ssoId });
-        trackAuthInitiated("pairing", {
-            ssoId,
-        });
-    }, [client, ssoId]);
+        client.initiatePairing();
+        trackAuthInitiated("pairing");
+    }, [client]);
 
     const pairingContent = useMemo(
         () => <PairingContent clientState={clientState} />,

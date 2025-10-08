@@ -1,12 +1,9 @@
-import {
-    ClientNotFound,
-    type FrakRpcError,
-    type SendTransactionReturnType,
-} from "@frak-labs/core-sdk";
+import type { SendTransactionReturnType } from "@frak-labs/core-sdk";
 import {
     type SendTransactionParams,
     sendTransaction,
 } from "@frak-labs/core-sdk/actions";
+import { ClientNotFound, type FrakRpcError } from "@frak-labs/frame-connector";
 import { type UseMutationOptions, useMutation } from "@tanstack/react-query";
 import { useFrakClient } from "./useFrakClient";
 

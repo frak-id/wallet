@@ -16,7 +16,7 @@ describe("WalletSsoService", () => {
     const mockPairingId = "pairing-456";
 
     beforeAll(() => {
-        service = new WalletSsoService(db);
+        service = new WalletSsoService();
     });
 
     afterAll(() => {
@@ -150,13 +150,6 @@ describe("WalletSsoService", () => {
                     })
                 );
             }
-        });
-    });
-
-    describe("database getter", () => {
-        it("should return the database instance", () => {
-            const dbInstance = service.database;
-            expect(dbInstance).toBe(db);
         });
     });
 });

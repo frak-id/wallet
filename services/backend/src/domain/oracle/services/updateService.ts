@@ -1,6 +1,7 @@
 import { adminWalletsRepository, log, viemClient } from "@backend-common";
+import { db } from "@backend-common";
 import { addresses } from "@frak-labs/app-essentials";
-import { eq, inArray, isNull } from "drizzle-orm";
+import { and, eq, inArray, isNull, sql } from "drizzle-orm";
 import { type Hex, type LocalAccount, encodePacked } from "viem";
 import {
     readContract,
@@ -12,25 +13,131 @@ import {
     purchaseOracle_getMerkleRoot,
     purchaseOracle_updateMerkleRoot,
 } from "../../../utils";
-import type { OracleDb } from "../context";
+import { interactionsPurchaseTrackerTable } from "../../interactions/db/schema";
 import { productOracleTable, purchaseStatusTable } from "../db/schema";
 import type { MerkleTreeRepository } from "../repositories/MerkleTreeRepository";
 
+// 50 items waiting for update
+const ORACLE_UPDATE_THRESHOLD = Number.parseInt(
+    process.env.ORACLE_UPDATE_THRESHOLD ?? "50"
+);
+
+// 24hr
+const ORACLE_UPDATE_MAX_AGE_MINUTES = Number.parseInt(
+    process.env.ORACLE_UPDATE_MAX_AGE_MINUTES ?? "1440"
+);
+
 export class UpdateOracleService {
-    constructor(
-        private readonly oracleDb: OracleDb,
-        private readonly merkleRepository: MerkleTreeRepository
-    ) {}
+    constructor(private readonly merkleRepository: MerkleTreeRepository) {}
+
+    /**
+     * Get oracle IDs that need updates based on threshold criteria
+     * Returns oracles with either:
+     * - Has pending interaction trackers waiting for proof (user actively waiting)
+     * - Pending leaf count >= threshold
+     * - Oldest pending leaf older than max age
+     */
+    async getOracleIdsNeedingUpdate(): Promise<Set<number>> {
+        // First, get oracle IDs that have interaction trackers waiting (user actively waiting for proof)
+        const oraclesWithTrackers = await db
+            .selectDistinct({
+                oracleId: purchaseStatusTable.oracleId,
+            })
+            .from(interactionsPurchaseTrackerTable)
+            .innerJoin(
+                purchaseStatusTable,
+                and(
+                    eq(
+                        interactionsPurchaseTrackerTable.externalPurchaseId,
+                        purchaseStatusTable.externalId
+                    ),
+                    eq(
+                        interactionsPurchaseTrackerTable.externalCustomerId,
+                        purchaseStatusTable.externalCustomerId
+                    )
+                )
+            )
+            .where(
+                and(
+                    eq(interactionsPurchaseTrackerTable.pushed, false),
+                    isNull(purchaseStatusTable.leaf) // Only count if leaf not yet generated
+                )
+            );
+
+        const oracleIds = new Set<number>();
+
+        // Priority: oracles with user trackers (immediate processing)
+        for (const { oracleId } of oraclesWithTrackers) {
+            oracleIds.add(oracleId);
+            log.debug(
+                { oracleId, reason: "interaction-tracker" },
+                "Oracle needs immediate update (user waiting for proof)"
+            );
+        }
+
+        // Query to get pending leaf counts and oldest leaf timestamp per oracle
+        const oraclePendingStats = await db
+            .select({
+                oracleId: purchaseStatusTable.oracleId,
+                pendingCount: sql<number>`count(*)::int`,
+                oldestPending: sql<Date>`min(${purchaseStatusTable.updatedAt})`,
+            })
+            .from(purchaseStatusTable)
+            .where(isNull(purchaseStatusTable.leaf))
+            .groupBy(purchaseStatusTable.oracleId);
+
+        const now = new Date();
+        const maxAgeMs = ORACLE_UPDATE_MAX_AGE_MINUTES * 60 * 1000;
+
+        // Fallback criteria: threshold or age
+        for (const stats of oraclePendingStats) {
+            // Skip if already added due to tracker
+            if (oracleIds.has(stats.oracleId)) {
+                continue;
+            }
+
+            const ageSinceOldest =
+                now.getTime() - new Date(stats.oldestPending).getTime();
+            const shouldUpdate =
+                stats.pendingCount >= ORACLE_UPDATE_THRESHOLD ||
+                ageSinceOldest >= maxAgeMs;
+
+            if (shouldUpdate) {
+                oracleIds.add(stats.oracleId);
+                log.debug(
+                    {
+                        oracleId: stats.oracleId,
+                        pendingCount: stats.pendingCount,
+                        ageMinutes: Math.floor(ageSinceOldest / 60000),
+                        reason:
+                            stats.pendingCount >= ORACLE_UPDATE_THRESHOLD
+                                ? "threshold"
+                                : "age",
+                    },
+                    "Oracle needs update"
+                );
+            }
+        }
+
+        return oracleIds;
+    }
 
     /**
      * Update all the empty leafs if needed
+     * @param filterOracleIds - Optional set of oracle IDs to filter updates to
      */
-    async updateEmptyLeafs(): Promise<Set<number>> {
+    async updateEmptyLeafs(
+        filterOracleIds?: Set<number>
+    ): Promise<Set<number>> {
         // Get all purchase with empty leafs
-        const purchases =
-            await this.oracleDb.query.purchaseStatusTable.findMany({
-                where: isNull(purchaseStatusTable.leaf),
-            });
+        const allPurchases = await db.query.purchaseStatusTable.findMany({
+            where: isNull(purchaseStatusTable.leaf),
+        });
+
+        // Filter to only specified oracles if provided
+        const purchases = filterOracleIds
+            ? allPurchases.filter((p) => filterOracleIds.has(p.oracleId))
+            : allPurchases;
 
         // Set of oracle ids updated
         const oracleIds = new Set<number>();
@@ -76,7 +183,7 @@ export class UpdateOracleService {
         }
 
         // Execute our leaf updates
-        await this.oracleDb.transaction(async (trx) => {
+        await db.transaction(async (trx) => {
             for (const input of purchaseWithLeafs) {
                 await trx
                     .update(purchaseStatusTable)
@@ -101,7 +208,7 @@ export class UpdateOracleService {
             return [];
         }
         // Get the product id from the oracle ids
-        const productIdsFromDb = await this.oracleDb
+        const productIdsFromDb = await db
             .select({
                 productId: productOracleTable.productId,
             })
@@ -137,7 +244,7 @@ export class UpdateOracleService {
                 productId,
             });
             // Update it in the database (and tell it's not synced yet)
-            await this.oracleDb
+            await db
                 .update(productOracleTable)
                 .set({ merkleRoot: root, synced: false })
                 .where(eq(productOracleTable.productId, productId));
@@ -153,7 +260,7 @@ export class UpdateOracleService {
 
             // Update the synced status if it's a success
             if (isSuccess) {
-                await this.oracleDb
+                await db
                     .update(productOracleTable)
                     .set(
                         txHash

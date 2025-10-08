@@ -1,12 +1,11 @@
+import { FrakRpcError, RpcErrorCodes } from "@frak-labs/frame-connector";
 import { type Address, type Hex, isAddressEqual } from "viem";
 import { ReferralInteractionEncoder } from "../../interactions";
-import {
-    type DisplayEmbeddedWalletParamsType,
-    type FrakClient,
-    type FrakContext,
-    FrakRpcError,
-    RpcErrorCodes,
-    type WalletStatusReturnType,
+import type {
+    DisplayEmbeddedWalletParamsType,
+    FrakClient,
+    FrakContext,
+    WalletStatusReturnType,
 } from "../../types";
 import { FrakContextManager, trackEvent } from "../../utils";
 import { displayEmbeddedWallet, sendInteraction } from "../index";

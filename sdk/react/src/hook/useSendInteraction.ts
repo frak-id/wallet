@@ -1,10 +1,9 @@
-import {
-    ClientNotFound,
-    type FrakRpcError,
-    type SendInteractionParamsType,
-    type SendInteractionReturnType,
+import type {
+    SendInteractionParamsType,
+    SendInteractionReturnType,
 } from "@frak-labs/core-sdk";
 import { sendInteraction } from "@frak-labs/core-sdk/actions";
+import { ClientNotFound, type FrakRpcError } from "@frak-labs/frame-connector";
 import { type UseMutationOptions, useMutation } from "@tanstack/react-query";
 import { useFrakClient } from "./useFrakClient";
 

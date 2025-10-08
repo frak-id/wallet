@@ -1,9 +1,8 @@
-import { useConsumePendingSso } from "@/module/authentication/hook/useConsumePendingSso";
+import { useSsoLink } from "@/module/authentication/hook/useGetOpenSsoLink";
 import {
     ssoPopupFeatures,
     ssoPopupName,
-    useSsoLink,
-} from "@/module/authentication/hook/useGetOpenSsoLink";
+} from "@/module/authentication/utils/ssoLink";
 import { useListenerWithRequestUI } from "@/module/listener/providers/ListenerUiProvider";
 import type { SsoMetadata } from "@frak-labs/core-sdk";
 import { type ReactNode, useState } from "react";
@@ -12,6 +11,12 @@ import { trackAuthFailed, trackAuthInitiated } from "../../common/analytics";
 
 /**
  * Button used to launch an SSO registration
+ *
+ * Performance note:
+ * - Removed useConsumePendingSso hook (backend polling eliminated)
+ * - SSO completion now handled via direct window postMessage
+ * - Session updates trigger via sessionAtom changes
+ *
  * @param appName
  * @param productId
  * @param ssoMetadata
@@ -39,47 +44,31 @@ export function SsoButton({
     } = useListenerWithRequestUI();
 
     // Get the link to use with the SSO
-    const { link, trackingId } = useSsoLink({
+    const { link } = useSsoLink({
         productId,
         metadata: {
             name: appName,
             ...ssoMetadata,
         },
         directExit: true,
-        useConsumeKey: true,
         lang,
-    });
-
-    // Consume the pending sso if possible (maybe some hook to early exit here? Already working since we have the session listener)
-    useConsumePendingSso({
-        trackingId,
-        productId,
     });
 
     if (!link) {
         return null;
     }
 
-    return (
-        <RegularSsoButton
-            link={link}
-            text={text}
-            className={className}
-            trackingId={trackingId}
-        />
-    );
+    return <RegularSsoButton link={link} text={text} className={className} />;
 }
 
 function RegularSsoButton({
     link,
     text,
     className,
-    trackingId,
 }: {
     link: string;
     text: ReactNode;
     className?: string;
-    trackingId?: string;
 }) {
     const [failToOpen, setFailToOpen] = useState(false);
 
@@ -87,12 +76,7 @@ function RegularSsoButton({
     if (failToOpen) {
         return (
             <>
-                <LinkSsoButton
-                    link={link}
-                    text={text}
-                    className={className}
-                    trackingId={trackingId}
-                />
+                <LinkSsoButton link={link} text={text} className={className} />
             </>
         );
     }
@@ -111,9 +95,7 @@ function RegularSsoButton({
                 // If we got a window, focus it and save the clicked state
                 if (openedWindow) {
                     openedWindow.focus();
-                    trackAuthInitiated("sso", {
-                        ssoId: trackingId,
-                    });
+                    trackAuthInitiated("sso");
                 } else {
                     // Otherwise, mark that we fail to open it
                     setFailToOpen(true);
@@ -133,12 +115,10 @@ function LinkSsoButton({
     link,
     text,
     className,
-    trackingId,
 }: {
     link: string;
     text: ReactNode;
     className?: string;
-    trackingId?: string;
 }) {
     return (
         <a
@@ -147,9 +127,7 @@ function LinkSsoButton({
             target="frak-sso"
             rel="noreferrer"
             onClick={() => {
-                trackAuthInitiated("sso", {
-                    ssoId: trackingId,
-                });
+                trackAuthInitiated("sso");
             }}
         >
             {text}

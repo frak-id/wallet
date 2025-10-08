@@ -3,9 +3,9 @@ export {
     type TokenAmount,
 } from "./typebox/typeSystem";
 export { mutexCron } from "./elysia/mutexCron";
-export { jwt } from "./elysia/jwt";
 export type { FrakEvents } from "./events";
 export { validateBodyHmac } from "./bodyHmac";
+
 /*
  * Re-export some truncated ABI's to reduce final server size
  */

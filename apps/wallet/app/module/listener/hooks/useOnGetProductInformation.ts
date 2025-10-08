@@ -1,29 +1,34 @@
 import { estimatedInteractionRewardQuery } from "@/module/listener/hooks/useEstimatedInteractionReward";
 import { getProductMetadataQuery } from "@/module/listener/hooks/useGetProductMetadata";
-import type { IFrameRequestResolver } from "@/module/sdk/utils/iFrameRequestResolver";
+import type { WalletRpcContext } from "@/module/listener/types/context";
+import type { IFrameRpcSchema } from "@frak-labs/core-sdk";
 import {
-    type ExtractedParametersFromRpc,
-    type IFrameRpcSchema,
+    FrakRpcError,
     RpcErrorCodes,
-} from "@frak-labs/core-sdk";
+    type RpcPromiseHandler,
+} from "@frak-labs/frame-connector";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 
-type OnGetProductInformation = IFrameRequestResolver<
-    Extract<
-        ExtractedParametersFromRpc<IFrameRpcSchema>,
-        { method: "frak_getProductInformation" }
-    >
+type OnGetProductInformation = RpcPromiseHandler<
+    IFrameRpcSchema,
+    "frak_getProductInformation",
+    WalletRpcContext
 >;
 
 /**
  * Get the current product information
+ *
+ * Note: Context is augmented by middleware with productId, sourceUrl, etc.
  */
 export function useOnGetProductInformation(): OnGetProductInformation {
     const queryClient = useQueryClient();
 
     return useCallback(
-        async (_request, { productId }, emitter) => {
+        async (_params, context) => {
+            // ProductId is available directly from context (augmented by middleware)
+            const { productId } = context;
+
             const [estimatedReward, productMetadata] = await Promise.all([
                 queryClient.fetchQuery(
                     estimatedInteractionRewardQuery({ productId })
@@ -32,25 +37,19 @@ export function useOnGetProductInformation(): OnGetProductInformation {
             ]);
 
             if (!(productId && productMetadata)) {
-                await emitter({
-                    error: {
-                        code: RpcErrorCodes.configError,
-                        message:
-                            "The current product doesn't exist within the Frak ecosystem",
-                    },
-                });
-                return;
+                throw new FrakRpcError(
+                    RpcErrorCodes.configError,
+                    "The current product doesn't exist within the Frak ecosystem"
+                );
             }
 
-            await emitter({
-                result: {
-                    id: productId,
-                    maxReferrer: estimatedReward?.maxReferrer,
-                    maxReferee: estimatedReward?.maxReferee,
-                    rewards: estimatedReward?.rewards ?? [],
-                    onChainMetadata: productMetadata,
-                },
-            });
+            return {
+                id: productId,
+                maxReferrer: estimatedReward?.maxReferrer,
+                maxReferee: estimatedReward?.maxReferee,
+                rewards: estimatedReward?.rewards ?? [],
+                onChainMetadata: productMetadata,
+            };
         },
         [queryClient]
     );
