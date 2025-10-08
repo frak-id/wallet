@@ -1,5 +1,11 @@
 # @frak-labs/nexus-sdk
 
+## 0.0.41
+
+### Patch Changes
+
+- [#113](https://github.com/frak-id/wallet/pull/113) [`3b111c4`](https://github.com/frak-id/wallet/commit/3b111c44109e7bd23e2b7fbe4056b8c153af101d) Thanks [@KONFeature](https://github.com/KONFeature)! - Review inter frame communication (sso <> wallet | sdk <> wallet)
+
 ## 0.0.40
 
 ### Patch Changes
