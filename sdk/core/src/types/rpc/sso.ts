@@ -37,7 +37,7 @@ export type PrepareSsoParamsType = {
     /**
      * Custom SSO metadata
      */
-    metadata: SsoMetadata;
+    metadata?: SsoMetadata;
 };
 
 /**
@@ -66,22 +66,15 @@ export type OpenSsoReturnType = {
  * Params to start a SSO
  * @group RPC Schema
  */
-export type OpenSsoParamsType =
-    | ({
-          /**
-           * When openning the SSO flow in the same window, we doesn't have any constraint of generating the url before hand.
-           */
-          openInSameWindow: true;
-      } & PrepareSsoParamsType)
-    | {
-          /**
-           * When we are requesting a popup flow, we need to have the sso url generated beforehand
-           */
-          openInSameWindow?: false;
+export type OpenSsoParamsType = PrepareSsoParamsType & {
+    /**
+     * Indicate whether we want todo the flow within the same window context, or if we want to do it with an external popup window openned
+     * Note: Default true if redirectUrl is present, otherwise, false
+     */
+    openInSameWindow?: boolean;
 
-          /**
-           * The link for the SSO popup url
-           *  - Can be oobtained via a `frak_prepareSso` call
-           */
-          ssoPopupUrl: string;
-      };
+    /**
+     * Custom SSO popup url if user want additionnal customisation
+     */
+    ssoPopupUrl?: string;
+};

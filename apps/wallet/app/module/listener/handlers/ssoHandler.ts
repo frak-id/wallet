@@ -1,12 +1,11 @@
 import { addLastAuthenticationAtom } from "@/module/authentication/atoms/lastAuthenticator";
-import { getOpenSsoLink } from "@/module/authentication/utils/ssoLink";
 import { trackAuthCompleted } from "@/module/common/analytics";
 import { sdkSessionAtom, sessionAtom } from "@/module/common/atoms/session";
 import type { WalletRpcContext } from "@/module/listener/types/context";
 import { emitLifecycleEvent } from "@/module/sdk/utils/lifecycleEvents";
 import type { SdkSession, Session } from "@/types/Session";
 import type { SsoRpcSchema } from "@/types/sso-rpc";
-import type { IFrameRpcSchema } from "@frak-labs/core-sdk";
+import { type IFrameRpcSchema, generateSsoUrl } from "@frak-labs/core-sdk";
 import {
     Deferred,
     FrakRpcError,
@@ -114,12 +113,20 @@ export const handleSsoComplete: SsoCompleteHandler = async (
 /**
  * Handle frak_prepareSso RPC method
  *
- * Generates SSO URL for popup opening
- * Only called for popup flows (not redirect flows)
+ * Generates SSO URL server-side (wallet iframe)
+ * This is now primarily for backward compatibility or edge cases where
+ * client-side generation isn't suitable. Most popup flows use SDK-side generation.
  *
- * @param params - PrepareSsoParamsType (no openInSameWindow)
+ * @param params - PrepareSsoParamsType
  * @param context
  * @returns {ssoUrl: string}
+ *
+ * @remarks
+ * As of the new architecture, SDK's prepareSso() generates URLs client-side
+ * without calling this RPC handler. This handler remains for:
+ * - Backward compatibility
+ * - Custom wallet-side URL generation logic if needed
+ * - Testing/debugging purposes
  */
 export const handlePrepareSso: PrepareSsoHandler = (params, context) => {
     // Extract request infos
@@ -127,32 +134,37 @@ export const handlePrepareSso: PrepareSsoHandler = (params, context) => {
     const name = params[1];
     const css = params[2];
 
-    // Generate SSO URL
-    const ssoUrl = getOpenSsoLink({
-        productId: context.productId,
-        metadata: {
-            ...ssoInfo.metadata,
-            name,
-            css,
-        },
-        directExit: ssoInfo.directExit,
-        redirectUrl: ssoInfo.redirectUrl,
-        lang: ssoInfo.lang,
-    });
+    // Generate SSO URL (same logic as SDK-side generation
+    const ssoUrl = generateSsoUrl(
+        window.location.origin,
+        ssoInfo,
+        context.productId,
+        name,
+        css
+    );
 
-    // Return URL for SDK to open in popup
+    // Return URL
     return Promise.resolve({ ssoUrl });
 };
 
 /**
  * Handle frak_openSso RPC method
  *
- * Handles BOTH redirect and popup flows:
- * - Redirect mode: Generates URL and triggers redirect via lifecycle event
- * - Popup mode: Waits for popup completion via sso_complete
+ * Two execution modes based on openInSameWindow:
  *
- * @param params - Full OpenSsoParamsType (with openInSameWindow)
- * @param context
+ * **Redirect Mode** (openInSameWindow: true):
+ * - Wallet generates SSO URL
+ * - Triggers redirect via lifecycle event to SDK iframe
+ * - Returns immediately with undefined wallet
+ * - Wallet address set after redirect completes
+ *
+ * **Popup Mode** (openInSameWindow: false/omitted):
+ * - SDK already opened popup with generated URL (synchronous)
+ * - This handler just waits for SSO completion
+ * - Returns when popup sends sso_complete message
+ *
+ * @param params - Full OpenSsoParamsType
+ * @param context - Wallet RPC context with productId
  * @returns Promise<{wallet: Hex | undefined}>
  */
 export const handleOpenSso: OpenSsoHandler = async (params, context) => {
@@ -169,57 +181,61 @@ export const handleOpenSso: OpenSsoHandler = async (params, context) => {
     const name = params[1];
     const css = params[2];
 
-    // Check if redirect mode
-    const openInSameWindow = ssoInfo.openInSameWindow;
+    // Check if redirect mode (default to true if redirectUrl present)
+    const openInSameWindow = ssoInfo.openInSameWindow ?? !!ssoInfo.redirectUrl;
+
     if (openInSameWindow) {
-        // Generate SSO URL (needed for both modes)
-        const ssoUrl = getOpenSsoLink({
-            productId: context.productId,
-            metadata: {
-                ...ssoInfo.metadata,
-                name,
-                css,
-            },
-            directExit: ssoInfo.directExit,
-            redirectUrl: ssoInfo.redirectUrl,
-            lang: ssoInfo.lang,
-        });
+        // Redirect mode: Generate URL and trigger redirect
+        // URL generation must happen wallet-side because only the iframe can trigger redirect
+        const ssoUrl = generateSsoUrl(
+            window.location.origin,
+            ssoInfo,
+            context.productId,
+            name,
+            css
+        );
+
         // Trigger redirect via lifecycle event
-        // This causes: wallet iframe -> SDK iframe -> redirect to SSO page
+        // Flow: wallet iframe -> SDK iframe -> window.location.href = ssoUrl
         emitLifecycleEvent({
             iframeLifecycle: "redirect",
             data: { baseRedirectUrl: ssoUrl },
         });
-        // Return with undefined wallet (will be set after redirect completes)
+
+        // Return immediately (wallet will be set after redirect completes)
         return { wallet: undefined };
     }
 
-    // Popup mode: wait for SSO completion
+    // Popup mode: SDK already opened popup, just wait for completion
+    // Note: URL was generated client-side by SDK using generateSsoUrl()
+    // Popup is already open at this point (SDK called window.open() before this RPC)
+
     pendingSsoRequest = new Deferred<{ wallet: Hex }>();
 
-    // Set timeout for SSO completion
+    // Set timeout for SSO completion (120s to account for slow auth flows)
     const timeout = setTimeout(() => {
         if (pendingSsoRequest) {
             pendingSsoRequest.reject(
                 new FrakRpcError(
                     RpcErrorCodes.internalError,
-                    "SSO timeout - no completion received within 60 seconds"
+                    "SSO timeout - no completion received within 120 seconds"
                 )
             );
             pendingSsoRequest = undefined;
         }
-    }, 120_000); // 120 second timeout
+    }, 120_000);
 
     try {
-        // Wait for SSO completion (resolved by processSsoCompletion when popup sends sso_complete)
+        // Wait for SSO completion
+        // Resolved by processSsoCompletion() when SSO page sends sso_complete message
         const result = await pendingSsoRequest.promise;
         clearTimeout(timeout);
         return result;
     } catch (error) {
         clearTimeout(timeout);
 
-        // If error has code property, throw as-is (already formatted)
-        if (error && error instanceof FrakRpcError) {
+        // If error is already formatted, throw as-is
+        if (error instanceof FrakRpcError) {
             throw error;
         }
 

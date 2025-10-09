@@ -5,21 +5,40 @@ import { useQuery } from "@tanstack/react-query";
 import { useFrakClient } from "./useFrakClient";
 
 /**
- * Hook that return a mutation helping to open the SSO page
+ * Hook that generates SSO URL for popup flow
  *
- * It's a {@link @tanstack/react-query!home | `tanstack`} wrapper around the {@link @frak-labs/core-sdk!actions.openSso | `openSso()`} action
+ * This is a **synchronous** hook (no async calls) that generates the SSO URL
+ * client-side without communicating with the wallet iframe.
  *
- * @param args
+ * @param params - SSO parameters for URL generation
  *
  * @group hooks
  *
  * @returns
- * The mutation hook wrapping the `openSso()` action
- * The `mutate` and `mutateAsync` argument is of type {@link @frak-labs/core-sdk!index.OpenSsoParamsType | `OpenSsoParamsType`}
- * The mutation doesn't output any value
+ * Object containing:
+ * - `ssoUrl`: Generated SSO URL (or undefined if client not ready)
+ * - `isReady`: Boolean indicating if URL is available
  *
- * @see {@link @frak-labs/core-sdk!actions.openSso | `openSso()`} for more info about the underlying action
- * @see {@link @tanstack/react-query!useMutation | `useMutation()`} for more info about the mutation options and response
+ * @example
+ * ```tsx
+ * function MyComponent() {
+ *   const { data } = usePrepareSso({
+ *     metadata: { logoUrl: "..." },
+ *     directExit: true
+ *   });
+ *
+ *   const handleClick = () => {
+ *     if (ssoUrl) {
+ *       window.open(data?.ssoUrl, "_blank");
+ *     }
+ *   };
+ *
+ *   return <button onClick={handleClick} disabled={!isReady}>Login</button>;
+ * }
+ * ```
+ *
+ * @see {@link @frak-labs/core-sdk!actions.prepareSso | `prepareSso()`} for the underlying action
+ * @see {@link @frak-labs/core-sdk!actions.openSso | `openSso()`} for the recommended high-level API
  */
 export function usePrepareSso(params: PrepareSsoParamsType) {
     const client = useFrakClient();
