@@ -1,9 +1,5 @@
 import { addLastAuthenticationAtom } from "@/module/authentication/atoms/lastAuthenticator";
-import {
-    getOpenSsoLink,
-    ssoPopupFeatures,
-    ssoPopupName,
-} from "@/module/authentication/utils/ssoLink";
+import { getOpenSsoLink } from "@/module/authentication/utils/ssoLink";
 import { trackAuthCompleted } from "@/module/common/analytics";
 import { sdkSessionAtom, sessionAtom } from "@/module/common/atoms/session";
 import type { WalletRpcContext } from "@/module/listener/types/context";
@@ -33,13 +29,46 @@ type SsoCompleteHandler = RpcPromiseHandler<
 >;
 
 export let pendingSsoRequest: Deferred<{ wallet: Hex }> | undefined = undefined;
+let ssoPopupWindow: Window | null = null;
 
 export function newPendingSsoRequest(): Deferred<{ wallet: Hex }> {
     pendingSsoRequest = new Deferred();
     return pendingSsoRequest;
 }
+
 export function cleanupPendingSsoRequest() {
     pendingSsoRequest = undefined;
+}
+
+export function setSsoPopupWindow(popup: Window | null) {
+    ssoPopupWindow = popup;
+}
+
+export function getSsoPopupWindow(): Window | null {
+    return ssoPopupWindow;
+}
+
+/**
+ * Handle postMessage from SSO popup window
+ * This is called by the global message listener in listener.tsx
+ */
+export function handleSsoPopupMessage(event: MessageEvent): void {
+    if (event.data?.type === "sso_popup_ready") {
+        setSsoPopupWindow(event.source as Window);
+    } else if (event.data?.type === "sso_popup_closed") {
+        setSsoPopupWindow(null);
+
+        // Reject pending request if exists
+        if (pendingSsoRequest) {
+            pendingSsoRequest.reject(
+                new FrakRpcError(
+                    RpcErrorCodes.clientAborted,
+                    "SSO window was closed by user"
+                )
+            );
+            cleanupPendingSsoRequest();
+        }
+    }
 }
 
 /**
@@ -165,69 +194,60 @@ export const handleOpenSso: OpenSsoHandler = async (params, context) => {
             return { wallet: undefined };
         }
 
-        // Open the popup
-        const openedWindow = window.open(
-            ssoLink,
-            ssoPopupName,
-            ssoPopupFeatures
-        );
-
-        if (!openedWindow) {
-            throw new FrakRpcError(
-                RpcErrorCodes.internalError,
-                "Failed to open the SSO window"
-            );
-        }
-
-        openedWindow.focus();
-
-        /**
-         * Create Deferred promise that will be resolved by useSsoMessageListener
-         * when the SSO window sends postMessage after authentication
-         *
-         * This eliminates backend polling:
-         * - Old: Poll backend every 500ms-2s until session available
-         * - New: Wait for direct postMessage from SSO window
-         */
         const deferred = newPendingSsoRequest();
+        let checkInterval: NodeJS.Timeout | undefined = undefined;
+        let timeout: NodeJS.Timeout | undefined = undefined;
 
-        /**
-         * Monitor window closure
-         * If user closes SSO window without completing, reject the promise
-         *
-         * Performance note: setInterval is acceptable here as:
-         * - Only runs during active SSO flow (short-lived)
-         * - 500ms interval is low frequency
-         * - Cleaned up immediately on window close or completion
-         */
-        const windowClosedInterval = setInterval(() => {
-            if (openedWindow.closed) {
-                clearInterval(windowClosedInterval);
+        const cleanup = () => {
+            if (checkInterval) clearInterval(checkInterval);
+            if (timeout) clearTimeout(timeout);
+            setSsoPopupWindow(null);
+            cleanupPendingSsoRequest();
+        };
 
-                // Check if deferred is still pending
+        const sendUrlWhenReady = () => {
+            if (ssoPopupWindow) {
+                ssoPopupWindow.postMessage(
+                    { type: "sso_url", url: ssoLink },
+                    window.location.origin
+                );
+                // Clear polling/timeout after sending URL
+                if (checkInterval) clearInterval(checkInterval);
+                if (timeout) clearTimeout(timeout);
+                checkInterval = undefined;
+                timeout = undefined;
+                // Clear popup reference since it will navigate away
+                setSsoPopupWindow(null);
+            }
+        };
+
+        // Try to send immediately if popup is already ready
+        if (ssoPopupWindow) {
+            sendUrlWhenReady();
+        } else {
+            // Poll for popup reference (set by global listener)
+            checkInterval = setInterval(sendUrlWhenReady, 200);
+
+            // Timeout if popup never becomes ready
+            // Note: Error is thrown to SDK caller - integrators can implement retry logic if needed
+            timeout = setTimeout(() => {
+                cleanup();
                 pendingSsoRequest?.reject(
                     new FrakRpcError(
-                        RpcErrorCodes.clientAborted,
-                        "SSO window was closed by user"
+                        RpcErrorCodes.internalError,
+                        "SSO popup failed to establish communication"
                     )
                 );
-            }
-        }, 500);
+            }, 10000);
+        }
 
-        // Wait for SSO completion via postMessage
+        // Wait for SSO completion
         try {
             const result = await deferred.promise;
-
-            // Cleanup
-            clearInterval(windowClosedInterval);
-            cleanupPendingSsoRequest();
-
+            cleanup();
             return result;
         } catch (error) {
-            // Cleanup on error
-            clearInterval(windowClosedInterval);
-            cleanupPendingSsoRequest();
-
+            cleanup();
             throw error;
         }
     } catch (error) {

@@ -6,6 +6,9 @@ import {
 } from "@react-router/dev/routes";
 
 export default [
+    // SSO Popup Route
+    route("/sso-popup", "./root.sso-popup.tsx"),
+
     // Landing Routes
     index("./views/landings/home.tsx"),
 

@@ -7,6 +7,7 @@ import {
 import {
     handleOpenSso,
     handleSsoComplete,
+    handleSsoPopupMessage,
 } from "@/module/listener/handlers/ssoHandler";
 import { useDisplayEmbeddedWallet } from "@/module/listener/hooks/useDisplayEmbeddedWallet";
 import { useDisplayModalListener } from "@/module/listener/hooks/useDisplayModalListener";
@@ -136,11 +137,30 @@ function ListenerContent() {
         // Register SSO handlers (SsoRpcSchema)
         listener.handle("sso_complete", handleSsoComplete);
 
+        // Add global message listener for SSO popup communication
+        // This needs to be separate from RPC because the popup sends plain postMessage
+        const ssoPopupMessageHandler = (event: MessageEvent) => {
+            // Only handle messages from our origin
+            if (event.origin !== window.location.origin) {
+                return;
+            }
+
+            // Handle SSO popup messages
+            if (
+                event.data?.type === "sso_popup_ready" ||
+                event.data?.type === "sso_popup_closed"
+            ) {
+                handleSsoPopupMessage(event);
+            }
+        };
+        window.addEventListener("message", ssoPopupMessageHandler);
+
         // Initialize resolving context (starts handshake if needed)
         initializeResolvingContext();
 
         // On cleanup, destroy the listener
         return () => {
+            window.removeEventListener("message", ssoPopupMessageHandler);
             listener.cleanup();
         };
     }, [
