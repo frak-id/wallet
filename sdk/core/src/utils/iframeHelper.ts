@@ -114,7 +114,16 @@ export function findIframeInOpener(pathname = "/listener"): Window | null {
             frame.location.pathname === pathname
         );
     };
-    if (frameCheck(window.opener)) return window.opener;
+
+    try {
+        if (frameCheck(window.opener)) return window.opener;
+    } catch (error) {
+        console.error(
+            "[findIframeInOpener] Error finding iframe with pathname window.opener:",
+            error
+        );
+        return null;
+    }
 
     // Search through frames in window.opener
     try {
