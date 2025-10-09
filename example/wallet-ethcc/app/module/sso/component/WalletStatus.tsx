@@ -1,7 +1,8 @@
 import { Panel } from "@/module/common/component/Panel";
-import { useOpenSso } from "@frak-labs/react-sdk";
+import { useOpenSso, usePrepareSso } from "@frak-labs/react-sdk";
 
 export function Sso() {
+    const { data: ssoLink } = usePrepareSso({ metadata: {}, directExit: true });
     const { data, status, error, mutate } = useOpenSso();
 
     return (
@@ -38,9 +39,8 @@ export function Sso() {
                 type="button"
                 onClick={() => {
                     mutate({
-                        directExit: true,
                         openInSameWindow: false,
-                        metadata: {},
+                        ssoPopupUrl: ssoLink?.ssoUrl ?? "",
                     });
                 }}
             >

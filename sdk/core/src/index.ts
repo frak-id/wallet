@@ -45,6 +45,8 @@ export type {
     SendInteractionParamsType,
     SendInteractionReturnType,
     SsoMetadata,
+    PrepareSsoParamsType,
+    PrepareSsoReturnType,
     OpenSsoParamsType,
     OpenSsoReturnType,
     Currency,

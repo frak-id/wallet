@@ -14,7 +14,10 @@ export const ssoPopupName = "frak-sso";
  * @param client - The current Frak Client
  * @param args - The SSO parameters
  *
- * @description This function will open the SSO with the provided parameters.
+ * @description This function uses a two-step flow to open SSO:
+ * 1. Prepare SSO URL via RPC (frak_prepareSso)
+ * 2. Open popup with URL (in same tick - no popup blocker!)
+ * 3. Trigger SSO via RPC (frak_triggerSso) - returns when complete
  *
  * @example
  * First we build the sso metadata
@@ -57,23 +60,34 @@ export async function openSso(
     client: FrakClient,
     args: OpenSsoParamsType
 ): Promise<OpenSsoReturnType> {
-    const { metadata, customizations, walletUrl } = client.config;
+    const { metadata, customizations } = client.config;
 
-    // Build the popup url and open it
-    const url = new URL(walletUrl ?? "https://wallet.frak.id");
-    const popupUrl = `${url.origin}/sso-popup`;
-    const openedWindow = window.open(popupUrl, ssoPopupName, ssoPopupFeatures);
-    if (!openedWindow) {
+    // Check if redirect mode
+    if (args.openInSameWindow) {
+        // Redirect flow: Single RPC call handles everything
+        // This will generate URL and trigger redirect via lifecycle event
+        return await client.request({
+            method: "frak_openSso",
+            params: [args, metadata.name, customizations?.css],
+        });
+    }
+
+    // Popup flow: Two-step process
+    // Step 1: Open popup with URL (same tick = no popup blocker!)
+    const popup = window.open(args.ssoPopupUrl, ssoPopupName, ssoPopupFeatures);
+    if (!popup) {
         throw new Error(
             "Popup was blocked. Please allow popups for this site."
         );
     }
-    openedWindow.focus();
+    popup.focus();
 
-    // Make RPC request - the wallet handler will wait for popup to be ready
+    // Step 2: Wait for SSO completion
+    // This returns when the SSO page sends sso_complete to wallet iframe
     const result = await client.request({
-        method: "frak_sso",
+        method: "frak_openSso",
         params: [args, metadata.name, customizations?.css],
     });
+
     return result ?? {};
 }

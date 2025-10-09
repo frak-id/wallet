@@ -21,5 +21,6 @@ export {
     useReferralInteraction,
     useDisplayModal,
     useOpenSso,
+    usePrepareSso,
     useGetProductInformation,
 } from "./hook";

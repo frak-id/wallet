@@ -110,9 +110,10 @@ export function findIframeInOpener(pathname = "/listener"): Window | null {
 
     try {
         const frames = window.opener.frames;
-        return Array.from({ length: frames.length }, (_, i) => i).reduce<
-            Window | null
-        >((foundFrame, i) => {
+        return Array.from(
+            { length: frames.length },
+            (_, i) => i
+        ).reduce<Window | null>((foundFrame, i) => {
             if (foundFrame) return foundFrame;
             try {
                 const frame = frames[i];

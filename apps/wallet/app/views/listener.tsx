@@ -6,8 +6,8 @@ import {
 } from "@/module/listener/handlers/lifecycleHandler";
 import {
     handleOpenSso,
+    handlePrepareSso,
     handleSsoComplete,
-    handleSsoPopupMessage,
 } from "@/module/listener/handlers/ssoHandler";
 import { useDisplayEmbeddedWallet } from "@/module/listener/hooks/useDisplayEmbeddedWallet";
 import { useDisplayModalListener } from "@/module/listener/hooks/useDisplayModalListener";
@@ -81,13 +81,13 @@ function ListenerContent() {
             checkContextAndEmitReady();
         };
 
-        // Create lifecycle and custom message handlers
+        // Create lifecycle handler
         const clientLifecycleHandler = createClientLifecycleHandler(
             setReadyToHandleRequest
         );
 
         // Create the listener with combined schema (IFrame + SSO)
-        // This listener handles both:
+        // This listener handles:
         // - IFrameRpcSchema: SDK iframe -> wallet communication
         // - SsoRpcSchema: SSO window -> wallet communication
         //
@@ -97,8 +97,7 @@ function ListenerContent() {
         //
         // Message routing:
         // 1. Lifecycle messages -> clientLifecycleHandler (no middleware, no compression)
-        // 2. Custom messages -> customMessageHandler (no middleware, no compression, backward compat)
-        // 3. RPC messages -> middleware stack -> handlers
+        // 2. RPC messages -> middleware stack -> handlers
         //
         // Middleware stack order (RPC messages only):
         // 1. compressionMiddleware - Decompresses incoming CBOR data with hash validation
@@ -124,7 +123,8 @@ function ListenerContent() {
         // Register promise-based handlers (IFrameRpcSchema)
         listener.handle("frak_sendInteraction", onInteractionRequest);
         listener.handle("frak_displayModal", onDisplayModalRequest);
-        listener.handle("frak_sso", handleOpenSso);
+        listener.handle("frak_prepareSso", handlePrepareSso);
+        listener.handle("frak_openSso", handleOpenSso);
         listener.handle("frak_getProductInformation", onGetProductInformation);
         listener.handle("frak_displayEmbeddedWallet", onDisplayEmbeddedWallet);
 
@@ -137,30 +137,11 @@ function ListenerContent() {
         // Register SSO handlers (SsoRpcSchema)
         listener.handle("sso_complete", handleSsoComplete);
 
-        // Add global message listener for SSO popup communication
-        // This needs to be separate from RPC because the popup sends plain postMessage
-        const ssoPopupMessageHandler = (event: MessageEvent) => {
-            // Only handle messages from our origin
-            if (event.origin !== window.location.origin) {
-                return;
-            }
-
-            // Handle SSO popup messages
-            if (
-                event.data?.type === "sso_popup_ready" ||
-                event.data?.type === "sso_popup_closed"
-            ) {
-                handleSsoPopupMessage(event);
-            }
-        };
-        window.addEventListener("message", ssoPopupMessageHandler);
-
         // Initialize resolving context (starts handshake if needed)
         initializeResolvingContext();
 
         // On cleanup, destroy the listener
         return () => {
-            window.removeEventListener("message", ssoPopupMessageHandler);
             listener.cleanup();
         };
     }, [
