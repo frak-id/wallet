@@ -8,9 +8,7 @@ import { SsoLoginComponent } from "@/module/authentication/component/Sso/SsoLogi
 import { SsoRegisterComponent } from "@/module/authentication/component/Sso/SsoRegister";
 import styles from "@/module/authentication/component/Sso/index.module.css";
 import { ssoKey } from "@/module/authentication/queryKeys/sso";
-import {
-    compressedSsoToParams,
-} from "@/module/authentication/utils/ssoDataCompression";
+import { compressedSsoToParams } from "@/module/authentication/utils/ssoDataCompression";
 import {
     demoPrivateKeyAtom,
     sdkSessionAtom,
@@ -19,7 +17,11 @@ import {
 import { Grid } from "@/module/common/component/Grid";
 import { Notice } from "@/module/common/component/Notice";
 import type { Session } from "@/types/Session";
-import { CompressedSsoData, compressJsonToB64, decompressJsonFromB64 } from "@frak-labs/core-sdk";
+import {
+    type CompressedSsoData,
+    compressJsonToB64,
+    decompressJsonFromB64,
+} from "@frak-labs/core-sdk";
 import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { ButtonAuth } from "@frak-labs/ui/component/ButtonAuth";
 import { formatHash } from "@frak-labs/ui/component/HashDisplay";

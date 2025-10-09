@@ -108,26 +108,27 @@ export function changeIframeVisibility({
 export function findIframeInOpener(pathname = "/listener"): Window | null {
     if (!window.opener) return null;
 
+    const frameCheck = (frame: Window) => {
+        return (
+            frame.location.origin === window.location.origin &&
+            frame.location.pathname === pathname
+        );
+    };
+    if (frameCheck(window.opener)) return window.opener;
+
+    // Search through frames in window.opener
     try {
         const frames = window.opener.frames;
-        return Array.from(
-            { length: frames.length },
-            (_, i) => i
-        ).reduce<Window | null>((foundFrame, i) => {
-            if (foundFrame) return foundFrame;
+        for (let i = 0; i < frames.length; i++) {
             try {
-                const frame = frames[i];
-                if (
-                    frame.location.origin === window.location.origin &&
-                    frame.location.pathname === pathname
-                ) {
-                    return frame;
+                if (frameCheck(frames[i])) {
+                    return frames[i];
                 }
             } catch {
                 // Cross-origin frame, skip
             }
-            return foundFrame;
-        }, null);
+        }
+        return null;
     } catch (error) {
         console.error(
             `[findIframeInOpener] Error finding iframe with pathname ${pathname}:`,
