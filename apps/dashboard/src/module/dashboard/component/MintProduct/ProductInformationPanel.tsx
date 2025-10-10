@@ -45,7 +45,12 @@ function ProductTypeCard({
     disabled,
     onChange,
 }: {
-    info: { name: string; description: string; useCase: string };
+    info: {
+        name: string;
+        description: string;
+        useCase: string;
+        events: string[];
+    };
     isChecked: boolean;
     disabled?: boolean;
     onChange: (checked: boolean) => void;
@@ -70,6 +75,18 @@ function ProductTypeCard({
                         {info.description}
                     </p>
                     <p className={styles.productTypeUseCase}>{info.useCase}</p>
+                    {info.events.length > 0 && (
+                        <div className={styles.productTypeEvents}>
+                            <span className={styles.productTypeEventsLabel}>
+                                Trackable events:
+                            </span>
+                            <ul className={styles.productTypeEventsList}>
+                                {info.events.map((event) => (
+                                    <li key={event}>{event}</li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
                 </div>
             </div>
         </label>
@@ -181,6 +198,20 @@ export function ProductInformationPanel({
                                     reward distribution. This is the foundation
                                     of all campaigns on Frak.
                                 </p>
+                                <div className={styles.mandatoryEvents}>
+                                    <span
+                                        className={styles.mandatoryEventsLabel}
+                                    >
+                                        Trackable events:
+                                    </span>
+                                    <ul className={styles.mandatoryEventsList}>
+                                        {productTypeDescriptions.referral.events.map(
+                                            (event) => (
+                                                <li key={event}>{event}</li>
+                                            )
+                                        )}
+                                    </ul>
+                                </div>
                             </div>
                             <div className={styles.mandatoryBadge}>
                                 Always Active
