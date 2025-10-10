@@ -34,7 +34,8 @@
   "type": "module",
   "files": [
     "/dist",
-    "/cdn"
+    "/cdn",
+    "/src"
   ],
   "browser": "./cdn/bundle.js",
   "exports": {
