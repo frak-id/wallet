@@ -13,12 +13,19 @@ import {
 } from "@/module/forms/Form";
 import type { ProductNew } from "@/types/Product";
 import type { ProductTypesKey } from "@frak-labs/core-sdk";
+import {
+    Accordion,
+    AccordionContent,
+    AccordionItem,
+    AccordionTrigger,
+} from "@frak-labs/ui/component/Accordion";
 import { Button } from "@frak-labs/ui/component/Button";
 import { Spinner } from "@frak-labs/ui/component/Spinner";
 import { TextWithCopy } from "@frak-labs/ui/component/TextWithCopy";
 import { Checkbox } from "@frak-labs/ui/component/forms/Checkbox";
 import { Input } from "@frak-labs/ui/component/forms/Input";
 import { validateUrl } from "@frak-labs/ui/utils/validateUrl";
+import { CheckCircle2, ExternalLink, XCircle } from "lucide-react";
 import type { UseFormReturn } from "react-hook-form";
 import styles from "./index.module.css";
 import { productTypeDescriptions } from "./utils";
@@ -78,6 +85,17 @@ export function ProductInformationPanel({
     onOpenChange,
 }: ProductInformationPanelProps) {
     const domain = form.watch("domain");
+    const domainFieldState = form.getFieldState("domain");
+
+    const isDomainValid =
+        domain &&
+        validateUrl(domain) &&
+        !domainError &&
+        !domainFieldState.invalid;
+    const isDomainInvalid =
+        (domain && !validateUrl(domain)) ||
+        !!domainError ||
+        domainFieldState.invalid;
 
     const { data: dnsRecord, isLoading: isDnsLoading } = useDnsTxtRecordToSet({
         domain,
@@ -146,6 +164,30 @@ export function ProductInformationPanel({
                         )}
                     />
 
+                    {/* Mandatory Configuration */}
+                    <div className={styles.mandatorySection}>
+                        <FormLabel weight="medium">
+                            Mandatory Configuration
+                        </FormLabel>
+                        <p className={styles.mandatorySectionDescription}>
+                            The following feature is always enabled as it's
+                            required for reward distribution:
+                        </p>
+                        <div className={styles.mandatoryCard}>
+                            <div className={styles.mandatoryCardContent}>
+                                <h4>Referral Tracking</h4>
+                                <p className={styles.mandatoryCardDescription}>
+                                    Tracks user referral activities and enables
+                                    reward distribution. This is the foundation
+                                    of all campaigns on Frak.
+                                </p>
+                            </div>
+                            <div className={styles.mandatoryBadge}>
+                                Always Active
+                            </div>
+                        </div>
+                    </div>
+
                     {/* Product Types */}
                     <FormField
                         control={form.control}
@@ -161,40 +203,50 @@ export function ProductInformationPanel({
                                 <FormLabel weight="medium">
                                     Product Types
                                 </FormLabel>
+                                <p className={styles.productTypesDescription}>
+                                    Select the events you want to track on your
+                                    platform. These determine what user actions
+                                    you can reward through your campaigns. For
+                                    example, selecting "Purchase" allows you to
+                                    track purchases and create campaigns that
+                                    reward users based on purchase activity.
+                                </p>
                                 <div className={styles.productTypesGrid}>
-                                    {Object.entries(
-                                        productTypeDescriptions
-                                    ).map(([key, info]) => {
-                                        const productType =
-                                            key as ProductTypesKey;
-                                        const isChecked =
-                                            field.value.includes(productType);
+                                    {Object.entries(productTypeDescriptions)
+                                        .filter(([key]) => key !== "referral")
+                                        .map(([key, info]) => {
+                                            const productType =
+                                                key as ProductTypesKey;
+                                            const isChecked =
+                                                field.value.includes(
+                                                    productType
+                                                );
 
-                                        return (
-                                            <ProductTypeCard
-                                                key={key}
-                                                info={info}
-                                                isChecked={isChecked}
-                                                disabled={step > 1}
-                                                onChange={(checked) => {
-                                                    if (checked) {
-                                                        field.onChange([
-                                                            ...field.value,
-                                                            productType,
-                                                        ]);
-                                                    } else {
-                                                        field.onChange(
-                                                            field.value.filter(
-                                                                (type) =>
-                                                                    type !==
-                                                                    productType
-                                                            )
-                                                        );
-                                                    }
-                                                }}
-                                            />
-                                        );
-                                    })}
+                                            return (
+                                                <ProductTypeCard
+                                                    key={key}
+                                                    info={info}
+                                                    isChecked={isChecked}
+                                                    disabled={step > 1}
+                                                    onChange={(checked) => {
+                                                        if (checked) {
+                                                            field.onChange([
+                                                                ...field.value,
+                                                                productType,
+                                                            ]);
+                                                        } else {
+                                                            field.onChange(
+                                                                field.value.filter(
+                                                                    (type) =>
+                                                                        type !==
+                                                                        productType
+                                                                )
+                                                            );
+                                                        }
+                                                    }}
+                                                />
+                                            );
+                                        })}
                                 </div>
                                 <FormMessage />
                             </FormItem>
@@ -223,12 +275,36 @@ export function ProductInformationPanel({
                                             Domain Name
                                         </FormLabel>
                                         <FormControl>
-                                            <Input
-                                                length="medium"
-                                                placeholder="example.com"
-                                                disabled={step > 1}
-                                                {...field}
-                                            />
+                                            <div
+                                                className={
+                                                    styles.domainInputWrapper
+                                                }
+                                            >
+                                                <Input
+                                                    length="medium"
+                                                    placeholder="example.com"
+                                                    disabled={step > 1}
+                                                    {...field}
+                                                />
+                                                {isDomainValid &&
+                                                    step === 1 && (
+                                                        <CheckCircle2
+                                                            className={
+                                                                styles.domainValidIcon
+                                                            }
+                                                            size={20}
+                                                        />
+                                                    )}
+                                                {isDomainInvalid &&
+                                                    step === 1 && (
+                                                        <XCircle
+                                                            className={
+                                                                styles.domainInvalidIcon
+                                                            }
+                                                            size={20}
+                                                        />
+                                                    )}
+                                            </div>
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -279,6 +355,46 @@ export function ProductInformationPanel({
                                         </pre>
                                     </TextWithCopy>
                                 )}
+
+                                <Accordion
+                                    type="single"
+                                    collapsible
+                                    className={styles.dnsHelpAccordion}
+                                >
+                                    <AccordionItem value="dns-help">
+                                        <AccordionTrigger
+                                            className={styles.dnsHelpTrigger}
+                                        >
+                                            How to add a DNS TXT record in my
+                                            DNS settings?
+                                        </AccordionTrigger>
+                                        <AccordionContent
+                                            className={styles.dnsHelpContent}
+                                        >
+                                            <p>
+                                                Adding a DNS TXT record verifies
+                                                that you own this domain. The
+                                                process varies depending on your
+                                                DNS provider (e.g., Cloudflare,
+                                                GoDaddy, Namecheap).
+                                            </p>
+                                            <p>
+                                                For detailed step-by-step
+                                                instructions, please visit our
+                                                documentation:
+                                            </p>
+                                            <a
+                                                href="https://docs.frak.id/business/product/verify"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className={styles.dnsHelpLink}
+                                            >
+                                                View DNS Setup Guide
+                                                <ExternalLink size={14} />
+                                            </a>
+                                        </AccordionContent>
+                                    </AccordionItem>
+                                </Accordion>
                             </div>
                         )}
                     </div>

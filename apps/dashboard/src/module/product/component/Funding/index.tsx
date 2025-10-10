@@ -9,8 +9,8 @@ import { Title } from "@/module/common/component/Title";
 import { useConvertToPreferredCurrency } from "@/module/common/hook/useConversionRate";
 import { formatPrice } from "@/module/common/utils/formatPrice";
 import { useWaitForTxAndInvalidateQueries } from "@/module/common/utils/useWaitForTxAndInvalidateQueries";
+import { CurrencySelector } from "@/module/forms/CurrencySelector";
 import { FormLayout } from "@/module/forms/Form";
-import { RadioGroup, RadioGroupItem } from "@/module/forms/RadioGroup";
 import { ProductHead } from "@/module/product/component/ProductHead";
 import { useFundTestBank } from "@/module/product/hook/useFundTestBank";
 import {
@@ -500,27 +500,15 @@ function AddNewBank({
             .filter((value) => value !== undefined);
     }, [banks]);
 
-    const availableCurrencies = useMemo(() => {
-        return currencyOptions
-            .reduce<
-                Array<{
-                    value: Stablecoin;
-                    label: string;
-                    group: string;
-                    description: string;
-                }>
-            >((acc, group) => {
-                acc.push(
-                    ...group.options.map((option) => ({
-                        ...option,
-                        group: group.group,
-                        description: group.description,
-                    }))
-                );
-                return acc;
-            }, [])
-            .filter((option) => !usedCurrencies.includes(option.value));
-    }, [usedCurrencies]);
+    const totalAvailableCurrencies = useMemo(() => {
+        return currencyOptions.reduce(
+            (count, group) => count + group.options.length,
+            0
+        );
+    }, []);
+
+    const hasAvailableCurrencies =
+        usedCurrencies.length < totalAvailableCurrencies;
 
     const handleAddBank = () => {
         if (!selectedCurrency || !productId) return;
@@ -539,7 +527,7 @@ function AddNewBank({
         );
     };
 
-    if (availableCurrencies.length === 0) {
+    if (!hasAvailableCurrencies) {
         return null;
     }
 
@@ -558,30 +546,11 @@ function AddNewBank({
     return (
         <Panel title="Add new bank" className={styles.bankPanel}>
             <p>Select a stablecoin for the new bank:</p>
-            <RadioGroup
+            <CurrencySelector
                 value={selectedCurrency}
-                onValueChange={setSelectedCurrency}
-                className={styles.currencySelection}
-            >
-                {availableCurrencies.map((currency) => (
-                    <label
-                        key={currency.value}
-                        htmlFor={`currency-${currency.value}`}
-                        className={styles.currencyOption}
-                    >
-                        <RadioGroupItem
-                            id={`currency-${currency.value}`}
-                            value={currency.value}
-                        />
-                        <div>
-                            <strong>
-                                {currency.label} ({currency.group})
-                            </strong>
-                            <p>{currency.description}</p>
-                        </div>
-                    </label>
-                ))}
-            </RadioGroup>
+                onChange={setSelectedCurrency}
+                excludeCurrencies={usedCurrencies}
+            />
             <div className={styles.bankActions}>
                 <Button
                     variant="submit"
