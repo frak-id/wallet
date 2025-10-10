@@ -7,8 +7,10 @@ on:
       - dev
     paths:
       - 'packages/rpc/**/*.ts'
+      - 'packages/rpc/**/package.json'
       - 'sdk/**/*.ts'
       - 'sdk/**/*.tsx'
+      - 'sdk/**/package.json'
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
@@ -35,7 +37,7 @@ jobs:
         id: version
         run: |
           # Generate hash from SDK and RPC file contents (4 bytes = 8 hex chars)
-          HASH=$(find sdk packages/rpc -type f \( -name "*.ts" -o -name "*.tsx" \) -exec cat {} \; | sha256sum | cut -c1-8)
+          HASH=$(find sdk packages/rpc -type f \( -name "*.ts" -o -name "*.tsx" -o -name "package.json" \) -exec cat {} \; | sha256sum | cut -c1-8)
           echo "hash=${HASH}" >> $GITHUB_OUTPUT
           echo "Beta version suffix: -beta.${HASH}"
 
