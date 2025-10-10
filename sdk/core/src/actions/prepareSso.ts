@@ -4,11 +4,6 @@ import type {
     PrepareSsoReturnType,
 } from "../types";
 
-// SSO popup configuration
-export const ssoPopupFeatures =
-    "menubar=no,status=no,scrollbars=no,fullscreen=no,width=500, height=800";
-export const ssoPopupName = "frak-sso";
-
 /**
  * Generate SSO URL without opening popup
  *
