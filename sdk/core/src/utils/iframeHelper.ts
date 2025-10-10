@@ -120,6 +120,9 @@ export function findIframeInOpener(pathname = "/listener"): Window | null {
         }
     };
 
+    // Check if the openner window is the right one
+    if (frameCheck(window.opener)) return window.opener;
+
     // Search through frames in window.opener
     try {
         const frames = window.opener.frames;
