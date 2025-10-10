@@ -109,32 +109,23 @@ export function findIframeInOpener(pathname = "/listener"): Window | null {
     if (!window.opener) return null;
 
     const frameCheck = (frame: Window) => {
-        return (
-            frame.location.origin === window.location.origin &&
-            frame.location.pathname === pathname
-        );
+        try {
+            return (
+                frame.location.origin === window.location.origin &&
+                frame.location.pathname === pathname
+            );
+        } catch {
+            // Cross-origin frame, skip
+            return false;
+        }
     };
-
-    try {
-        if (frameCheck(window.opener)) return window.opener;
-    } catch (error) {
-        console.error(
-            "[findIframeInOpener] Error finding iframe with pathname window.opener:",
-            error
-        );
-        return null;
-    }
 
     // Search through frames in window.opener
     try {
         const frames = window.opener.frames;
         for (let i = 0; i < frames.length; i++) {
-            try {
-                if (frameCheck(frames[i])) {
-                    return frames[i];
-                }
-            } catch {
-                // Cross-origin frame, skip
+            if (frameCheck(frames[i])) {
+                return frames[i];
             }
         }
         return null;
