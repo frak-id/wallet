@@ -112,6 +112,11 @@ export const backendInstance = new KubernetesService(
                         timeoutSeconds: 3,
                         failureThreshold: 2,
                     },
+                    // Ressources requests/limits
+                    resources: {
+                        requests: { cpu: "50m", memory: "256Mi" },
+                        limits: { cpu: "200m", memory: "512Mi" },
+                    },
                 },
             ],
         },

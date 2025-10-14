@@ -6,7 +6,6 @@ import {
     type Input,
     type Output,
 } from "@pulumi/pulumi";
-import { normalizedStageName } from "../utils";
 
 /**
  * Arguments used to create a Kubernetes Job
@@ -88,18 +87,6 @@ export class KubernetesJob extends ComponentResource {
                         spec: {
                             restartPolicy: "OnFailure",
                             containers: [this.args.job.container],
-                            // We are always deploying on arm64
-                            nodeSelector: {
-                                "kubernetes.io/arch": "arm64",
-                                // "cloud.google.com/gke-nodepool": "application",
-                            },
-                            tolerations: [
-                                {
-                                    key: "dedicated",
-                                    value: `app-${normalizedStageName}`,
-                                    effect: "NoSchedule",
-                                },
-                            ],
                         },
                     },
                 },

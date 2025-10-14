@@ -163,18 +163,6 @@ export class KubernetesService extends ComponentResource {
                         metadata: { labels: this.labels },
                         spec: {
                             containers: this.args.pod.containers,
-                            // We are always deploying on arm64
-                            nodeSelector: {
-                                "kubernetes.io/arch": "arm64",
-                                // "cloud.google.com/gke-nodepool": "application",
-                            },
-                            tolerations: [
-                                {
-                                    key: "dedicated",
-                                    value: `app-${normalizedStageName}`,
-                                    effect: "NoSchedule",
-                                },
-                            ],
                         },
                     },
                 },
