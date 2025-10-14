@@ -38,6 +38,7 @@
     "viem": "^2.31.2"
   },
   "devDependencies": {
+    "@frak-labs/browserslist-config": "workspace:*",
     "@react-router/dev": "^7.9.4",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",

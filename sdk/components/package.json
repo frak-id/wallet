@@ -59,13 +59,15 @@
     "preact-custom-element": "^4.3.0"
   },
   "devDependencies": {
+    "@frak-labs/browserslist-config": "workspace:*",
+    "@frak-labs/dev-tooling": "workspace:*",
+    "@frak-labs/ui": "workspace:*",
     "@rsbuild/plugin-preact": "^1.4.0",
     "@rsbuild/plugin-svgr": "^1.2.0",
     "@rslib/core": "^0.9.2",
     "@types/node": "^24",
     "@types/preact-custom-element": "^4.0.4",
-    "typescript": "^5",
-    "@frak-labs/dev-tooling": "workspace:*"
+    "typescript": "^5"
   },
   "browserslist": [
     "extends @frak-labs/browserslist-config"

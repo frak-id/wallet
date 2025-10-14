@@ -82,6 +82,7 @@
   },
   "devDependencies": {
     "@frak-labs/backend-elysia": "workspace:*",
+    "@frak-labs/browserslist-config": "workspace:*",
     "@noble/curves": "^1.9.2",
     "@playwright/test": "^1.53.1",
     "@react-router/dev": "^7.9.4",
@@ -90,7 +91,9 @@
     "@types/react": "^19.1.8",
     "@types/react-avatar-editor": "^13.0.4",
     "@types/react-dom": "^19.1.6",
+    "bun-types": "latest",
     "cbor": "^10.0.9",
+    "esbuild": "^0.24.2",
     "i18next-resources-for-ts": "^1.6.0",
     "postcss": "^8.5.5",
     "postcss-preset-env": "^10.2.3",
