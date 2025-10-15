@@ -57,7 +57,7 @@
   "devDependencies": {
     "@frak-labs/browserslist-config": "workspace:*",
     "@frak-labs/dev-tooling": "workspace:*",
-    "@microsoft/api-extractor": "^7.52.8",
+    "@microsoft/api-extractor": "^7.53.1",
     "@rslib/core": "^0.15.1",
     "typescript": "catalog:"
   }

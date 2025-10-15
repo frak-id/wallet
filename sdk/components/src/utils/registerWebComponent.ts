@@ -14,7 +14,7 @@ import { initFrakSdk } from "./initFrakSdk";
 export function registerWebComponent<P>(
     component: ComponentType<P>,
     tagName: string,
-    observedAttributes: string[] = [],
+    observedAttributes: (keyof P)[] = [],
     options: { shadow: boolean } = { shadow: false }
 ): void {
     if (typeof window !== "undefined") {

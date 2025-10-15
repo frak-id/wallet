@@ -73,7 +73,7 @@
         "publish": "echo 'Publishing rpc...'"
     },
     "dependencies": {
-        "@jsonjoy.com/json-pack": "^1.2.0"
+        "@jsonjoy.com/json-pack": "^1.21.0"
     },
     "peerDependencies": {
         "viem": "^2.x"
