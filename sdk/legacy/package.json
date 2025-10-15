@@ -59,6 +59,6 @@
     "@frak-labs/dev-tooling": "workspace:*",
     "@microsoft/api-extractor": "^7.52.8",
     "@rslib/core": "^0.15.1",
-    "typescript": "^5.8.3"
+    "typescript": "catalog:"
   }
 }

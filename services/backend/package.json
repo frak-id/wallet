@@ -58,7 +58,7 @@
     "bun-types": "latest",
     "drizzle-kit": "^0.30.5",
     "pino-pretty": "^13.0.0",
-    "typescript": "^5.8.3"
+    "typescript": "catalog:"
   },
   "module": "src/index.ts",
   "main": "./src/index.ts"

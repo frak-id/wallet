@@ -84,7 +84,7 @@
         "@frak-labs/dev-tooling": "workspace:*",
         "@microsoft/api-extractor": "^7.53.1",
         "@rslib/core": "0.15.1",
-        "@types/node": "^24.7.2",
+        "@types/node": "catalog:",
         "typescript": "^5",
         "viem": "catalog:"
     },
