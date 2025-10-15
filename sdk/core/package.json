@@ -100,7 +100,7 @@
   },
   "dependencies": {
     "@frak-labs/frame-connector": "workspace:*",
-    "@jsonjoy.com/json-pack": "^1.2.0",
+    "@jsonjoy.com/json-pack": "^1.21.0",
     "@openpanel/web": "^1.0.1"
   },
   "devDependencies": {
