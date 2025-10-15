@@ -49,7 +49,6 @@ export const slugifyAnchor = (str) =>
     str
         .normalize("NFKD")
         // Remove accents
-        // biome-ignore lint/suspicious/noMisleadingCharacterClass: False positive
         .replace(/[\u0300-\u036F]/g, "")
         // Remove control characters
         // biome-ignore lint/suspicious/noControlCharactersInRegex: Exactly what we want to do, remove control char from the text

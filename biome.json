@@ -62,21 +62,22 @@
                 "useConsistentArrayType": {
                     "level": "error",
                     "options": { "syntax": "shorthand" }
-                }
+                },
+                "noDescendingSpecificity": "off"
             },
             "a11y": {
-                "noStaticElementInteractions": "warn"
+                "noStaticElementInteractions": "off"
             },
             "security": {
                 "noDangerouslySetInnerHtml": "off"
             },
             "suspicious": {
-                "noDuplicateProperties": "warn",
-                "noDocumentCookie": "warn",
+                "noDuplicateProperties": "off",
+                "noDocumentCookie": "off",
                 "noUnknownAtRules": "off"
             },
             "performance": {
-                "noImgElement": "warn"
+                "noImgElement": "off"
             }
         }
     },

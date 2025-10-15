@@ -28,7 +28,6 @@ export const pwaInstallRefAtom = atom<RefObject<PWAInstallElement | null>>(
 export function PwaInstallScript() {
     return (
         <script
-            // biome-ignore lint/security/noDangerouslySetInnerHtml: Required for PWA install prompt script
             dangerouslySetInnerHTML={{
                 __html: `
                     window.addEventListener("beforeinstallprompt", (e) => {
