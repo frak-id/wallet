@@ -1,6 +1,9 @@
 {
     "root": false,
     "$schema": "https://biomejs.dev/schemas/2.2.6/schema.json",
+    "files": {
+        "includes": ["**", "!dist"]
+    },
     "assist": { "actions": { "source": { "organizeImports": "on" } } },
     "linter": {
         "enabled": true,

@@ -4,8 +4,9 @@
     background: linear-gradient(135deg, #425dad 0%, #2d3561 100%);
     border: none;
     border-radius: var(--frak-button-border-radius);
-    box-shadow: 0 25px 50px -12px rgba(76, 99, 210, 0.25), 0 0 0 1px
-        rgba(255, 255, 255, 0.1);
+    box-shadow:
+        0 25px 50px -12px rgba(76, 99, 210, 0.25),
+        0 0 0 1px rgba(255, 255, 255, 0.1);
     transition: all 0.3s ease;
     cursor: pointer;
     color: var(--frak-color-white);
@@ -38,15 +39,17 @@
 
 .buttonAuth:hover {
     background: linear-gradient(135deg, #5a70d8 0%, #3a4270 100%);
-    box-shadow: 0 32px 64px -12px rgba(76, 99, 210, 0.4), 0 0 0 1px
-        rgba(255, 255, 255, 0.15);
+    box-shadow:
+        0 32px 64px -12px rgba(76, 99, 210, 0.4),
+        0 0 0 1px rgba(255, 255, 255, 0.15);
     transform: translateY(-2px);
 }
 
 .buttonAuth:active {
     transform: translateY(1px);
-    box-shadow: 0 20px 40px -12px rgba(76, 99, 210, 0.3), 0 0 0 1px
-        rgba(255, 255, 255, 0.1);
+    box-shadow:
+        0 20px 40px -12px rgba(76, 99, 210, 0.3),
+        0 0 0 1px rgba(255, 255, 255, 0.1);
     transition: all 0.1s ease;
 }
 

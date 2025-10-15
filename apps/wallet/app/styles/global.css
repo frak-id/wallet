@@ -10,7 +10,7 @@ html {
     color: var(--frak-text-color);
     scroll-behavior: smooth;
     height: 100dvh;
-    transition: background .3s;
+    transition: background 0.3s;
     overflow: hidden;
     background: var(--frak-contrast-background-color);
 
@@ -41,7 +41,7 @@ html {
                 height: 805px;
                 min-height: auto;
                 overflow: hidden;
-                transition: background .3s;
+                transition: background 0.3s;
                 background: var(--frak-contrast-background-color);
             }
         }

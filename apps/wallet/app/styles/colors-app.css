@@ -12,7 +12,9 @@
     --frak-input-border-color: var(--frak-color-white);
     --frak-input-text-color: var(--frak-color-white);
     --frak-input-placeholder-color: var(--frak-color-silver-chalice);
-    --frak-accordion-content-background-color: var(--frak-color-blue-background);
+    --frak-accordion-content-background-color: var(
+        --frak-color-blue-background
+    );
     --frak-accordion-trigger-color: var(--frak-color-white);
     --frak-notice-text-color: var(--frak-color-grayText);
     --frak-alertDialog-background-color: rgba(0, 0, 0, 0.5);

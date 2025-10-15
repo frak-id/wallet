@@ -1,5 +1,6 @@
 :root {
-    --frak-sso-background: radial-gradient(
+    --frak-sso-background:
+        radial-gradient(
             274.97% 95.91% at -5.51% 94.08%,
             rgba(0, 36, 106, 0.55) 0%,
             rgba(67, 109, 196, 0.55) 15.2%,
