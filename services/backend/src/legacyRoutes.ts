@@ -1,4 +1,3 @@
-import type { BodyInit } from "bun";
 import type Elysia from "elysia";
 import { status } from "elysia";
 import { log } from "./common";
@@ -31,8 +30,8 @@ export const legacyRouteMapper = (app: Elysia) =>
             const newRequest = new Request(newUrl.toString(), {
                 method: request.method,
                 headers: request.headers,
-                // @ts-expect-error: idk why but dashboard isn't happy with that during typecheck
-                body: body as BodyInit | undefined,
+                // TypeScript 5.9 buffer type fix: Cast to string since parse: "text" guarantees string body
+                body: (body as string | null) || null,
                 mode: request.mode,
                 referrer: request.referrer,
                 referrerPolicy: request.referrerPolicy,
