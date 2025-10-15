@@ -1,5 +1,5 @@
-import { browser } from "$app/environment";
 import { init, register } from "svelte-i18n";
+import { browser } from "$app/environment";
 
 const defaultLocale = "en";
 

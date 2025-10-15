@@ -1,6 +1,6 @@
-import { subscriptionAtom } from "@/module/notification/atom/subscriptionAtom";
 import { useAtomValue } from "jotai";
 import { useCallback, useMemo } from "react";
+import { subscriptionAtom } from "@/module/notification/atom/subscriptionAtom";
 
 /**
  * Get the notification setup status

@@ -1,6 +1,6 @@
-import { NavigationTop } from "@/module/common/component/NavigationTop";
 import { LogoFrak } from "@frak-labs/ui/icons/LogoFrak";
 import Link from "next/link";
+import { NavigationTop } from "@/module/common/component/NavigationTop";
 import styles from "./index.module.css";
 
 export function Header() {

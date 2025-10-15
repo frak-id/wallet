@@ -1,6 +1,6 @@
-import { Grid } from "@/module/common/component/Grid";
 import { Button } from "@frak-labs/ui/component/Button";
 import { atom, useAtomValue, useSetAtom } from "jotai";
+import { Grid } from "@/module/common/component/Grid";
 import styles from "./membrs-fanclub.module.css";
 
 const localStepAtom = atom<"step1" | "step2">("step2");

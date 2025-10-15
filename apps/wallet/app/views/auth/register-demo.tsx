@@ -1,7 +1,3 @@
-import { authKey } from "@/module/authentication/queryKeys/auth";
-import { demoPrivateKeyAtom } from "@/module/common/atoms/session";
-import { Grid } from "@/module/common/component/Grid";
-import type { Session } from "@/types/Session";
 import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { ButtonAuth } from "@frak-labs/ui/component/ButtonAuth";
 import { type UseMutationOptions, useMutation } from "@tanstack/react-query";
@@ -9,6 +5,10 @@ import { useEffect, useMemo, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import { generatePrivateKey } from "viem/accounts";
+import { authKey } from "@/module/authentication/queryKeys/auth";
+import { demoPrivateKeyAtom } from "@/module/common/atoms/session";
+import { Grid } from "@/module/common/component/Grid";
+import type { Session } from "@/types/Session";
 import { useDemoLogin } from "../../module/authentication/hook/useDemoLogin";
 import styles from "./register.module.css";
 

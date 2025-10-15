@@ -7,7 +7,10 @@ import { viemClient } from "../../common/lib/blockchain";
 export function useCanDistributeFromCampaign({
     bank,
     campaign,
-}: { bank: Address; campaign: Address }) {
+}: {
+    bank: Address;
+    campaign: Address;
+}) {
     const { data, isLoading } = useQuery({
         queryKey: ["bank", "canDistribute", bank, campaign],
         queryFn: () =>

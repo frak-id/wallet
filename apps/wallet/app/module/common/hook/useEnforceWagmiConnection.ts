@@ -1,17 +1,17 @@
-import {
-    type FrakWalletConnector,
-    smartAccountConnector,
-} from "@/module/wallet/smartWallet/connector";
 import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { decodeJwt } from "jose";
 import { useEffect, useMemo } from "react";
 import { type Address, type Hex, isAddressEqual } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { useConfig, useConnect } from "wagmi";
+import {
+    type FrakWalletConnector,
+    smartAccountConnector,
+} from "@/module/wallet/smartWallet/connector";
 import { getFromLocalStorage } from "../../listener/utils/localStorage";
 import {
-    type SdkSessionPayload,
     demoPrivateKeyAtom,
+    type SdkSessionPayload,
     sdkSessionAtom,
 } from "../atoms/session";
 

@@ -1,11 +1,4 @@
-import { addLastAuthenticationAtom } from "@/module/authentication/atoms/lastAuthenticator";
-import { trackAuthCompleted } from "@/module/common/analytics";
-import { sdkSessionAtom, sessionAtom } from "@/module/common/atoms/session";
-import type { WalletRpcContext } from "@/module/listener/types/context";
-import { emitLifecycleEvent } from "@/module/sdk/utils/lifecycleEvents";
-import type { SdkSession, Session } from "@/types/Session";
-import type { SsoRpcSchema } from "@/types/sso-rpc";
-import { type IFrameRpcSchema, generateSsoUrl } from "@frak-labs/core-sdk";
+import { generateSsoUrl, type IFrameRpcSchema } from "@frak-labs/core-sdk";
 import {
     Deferred,
     FrakRpcError,
@@ -14,6 +7,13 @@ import {
 } from "@frak-labs/frame-connector";
 import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import type { Hex } from "viem";
+import { addLastAuthenticationAtom } from "@/module/authentication/atoms/lastAuthenticator";
+import { trackAuthCompleted } from "@/module/common/analytics";
+import { sdkSessionAtom, sessionAtom } from "@/module/common/atoms/session";
+import type { WalletRpcContext } from "@/module/listener/types/context";
+import { emitLifecycleEvent } from "@/module/sdk/utils/lifecycleEvents";
+import type { SdkSession, Session } from "@/types/Session";
+import type { SsoRpcSchema } from "@/types/sso-rpc";
 
 type PrepareSsoHandler = RpcPromiseHandler<
     IFrameRpcSchema,

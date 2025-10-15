@@ -1,8 +1,8 @@
-import { useWaitForTxAndInvalidateQueries } from "@/module/common/utils/useWaitForTxAndInvalidateQueries";
 import { campaignBankAbi } from "@frak-labs/app-essentials/blockchain";
 import { useSendTransactionAction } from "@frak-labs/react-sdk";
 import { useMutation } from "@tanstack/react-query";
-import { type Address, type Hex, encodeFunctionData } from "viem";
+import { type Address, encodeFunctionData, type Hex } from "viem";
+import { useWaitForTxAndInvalidateQueries } from "@/module/common/utils/useWaitForTxAndInvalidateQueries";
 
 /**
  * Hook to toggle the distribution status of a bank
@@ -12,7 +12,10 @@ import { type Address, type Hex, encodeFunctionData } from "viem";
 export function useSetBankDistributionStatus({
     productId,
     bank,
-}: { productId: Hex; bank: Address }) {
+}: {
+    productId: Hex;
+    bank: Address;
+}) {
     const waitForTxAndInvalidateQueries = useWaitForTxAndInvalidateQueries();
     const { mutateAsync: sendTx } = useSendTransactionAction();
 

@@ -1,9 +1,5 @@
 "use client";
 
-import { CallOut } from "@/module/common/component/CallOut";
-import { Panel } from "@/module/common/component/Panel";
-import { Title } from "@/module/common/component/Title";
-import { useOracleSetupData } from "@/module/product/hook/useOracleSetupData";
 import { businessApi } from "@frak-labs/client/server";
 import { Button } from "@frak-labs/ui/component/Button";
 import { Spinner } from "@frak-labs/ui/component/Spinner";
@@ -11,6 +7,10 @@ import { useMutation } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo } from "react";
 import type { Hex } from "viem";
+import { CallOut } from "@/module/common/component/CallOut";
+import { Panel } from "@/module/common/component/Panel";
+import { Title } from "@/module/common/component/Title";
+import { useOracleSetupData } from "@/module/product/hook/useOracleSetupData";
 import styles from "../Mint/index.module.css";
 
 export function EmbeddedPurchaseTracker() {

@@ -26,7 +26,9 @@ import { useOnChainCampaignInfo } from "../hook/useOnChainCampaignInfo";
 
 export function ProductCampaigns({
     campaigns,
-}: { campaigns: GetProductInfoResponseDto["campaigns"] }) {
+}: {
+    campaigns: GetProductInfoResponseDto["campaigns"];
+}) {
     if (campaigns.length === 0) {
         return (
             <Card>
@@ -210,7 +212,9 @@ export function ProductCampaigns({
 
 function CampaignRow({
     campaign,
-}: { campaign: GetProductInfoResponseDto["campaigns"][number] }) {
+}: {
+    campaign: GetProductInfoResponseDto["campaigns"][number];
+}) {
     const { info } = useOnChainCampaignInfo(campaign.id);
     const { canDistribute, isLoading } = useCanDistributeFromCampaign({
         bank: campaign.bankingContractId,

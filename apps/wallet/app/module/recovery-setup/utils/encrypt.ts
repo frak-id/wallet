@@ -2,9 +2,9 @@ import { bufferToBase64URLString } from "@simplewebauthn/browser";
 import { random } from "radash";
 import {
     type Address,
-    type Hex,
     concat,
     concatBytes,
+    type Hex,
     keccak256,
     stringToBytes,
     toBytes,
@@ -18,7 +18,10 @@ import {
 export async function passToKey({
     pass,
     salt,
-}: { pass: string; salt: Uint8Array }) {
+}: {
+    pass: string;
+    salt: Uint8Array;
+}) {
     const baseKey = await window.crypto.subtle.importKey(
         "raw",
         stringToBytes(pass),
@@ -51,7 +54,11 @@ export async function encryptPrivateKey({
     privateKey,
     initialAddress,
     pass,
-}: { privateKey: Hex; initialAddress: Address; pass: string }) {
+}: {
+    privateKey: Hex;
+    initialAddress: Address;
+    pass: string;
+}) {
     if (typeof window === "undefined") {
         throw new Error("This function should only be used in the browser");
     }

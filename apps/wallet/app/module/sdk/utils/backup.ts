@@ -1,3 +1,11 @@
+import { base64urlDecode, base64urlEncode } from "@frak-labs/core-sdk";
+import {
+    decompressDataAndCheckHash,
+    hashAndCompressData,
+} from "@frak-labs/frame-connector";
+import { jotaiStore } from "@frak-labs/ui/atoms/store";
+import { atom } from "jotai";
+import type { Hex } from "viem";
 import { sdkSessionAtom, sessionAtom } from "@/module/common/atoms/session";
 import { iframeResolvingContextAtom } from "@/module/listener/atoms/resolvingContext";
 import { emitLifecycleEvent } from "@/module/sdk/utils/lifecycleEvents";
@@ -7,14 +15,6 @@ import {
 } from "@/module/wallet/atoms/pendingInteraction";
 import type { PendingInteraction } from "@/types/Interaction";
 import type { SdkSession, Session } from "@/types/Session";
-import { base64urlDecode, base64urlEncode } from "@frak-labs/core-sdk";
-import {
-    decompressDataAndCheckHash,
-    hashAndCompressData,
-} from "@frak-labs/frame-connector";
-import { jotaiStore } from "@frak-labs/ui/atoms/store";
-import { atom } from "jotai";
-import type { Hex } from "viem";
 
 /**
  * Represent backed up data
@@ -35,7 +35,10 @@ type BackupData = {
 export async function restoreBackupData({
     backup,
     productId,
-}: { backup: string; productId: Hex }) {
+}: {
+    backup: string;
+    productId: Hex;
+}) {
     // Decompress the backup data and
     let data: BackupData | undefined;
     try {

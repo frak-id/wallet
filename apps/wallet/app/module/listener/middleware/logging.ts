@@ -1,13 +1,13 @@
-import type {
-    CombinedRpcSchema,
-    WalletRpcContext,
-} from "@/module/listener/types/context";
 import { isRunningLocally } from "@frak-labs/app-essentials";
 import type {
     RpcMiddleware,
     RpcMiddlewareContext,
     RpcResponse,
 } from "@frak-labs/frame-connector";
+import type {
+    CombinedRpcSchema,
+    WalletRpcContext,
+} from "@/module/listener/types/context";
 
 /**
  * Logging middleware for wallet RPC communication

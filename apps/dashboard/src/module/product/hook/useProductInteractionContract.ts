@@ -1,4 +1,3 @@
-import { viemClient } from "@/context/blockchain/provider";
 import {
     addresses,
     productInteractionManagerAbi,
@@ -7,10 +6,13 @@ import { useQuery } from "@tanstack/react-query";
 import { tryit } from "radash";
 import type { Hex } from "viem";
 import { readContract } from "viem/actions";
+import { viemClient } from "@/context/blockchain/provider";
 
 export function useProductInteractionContract({
     productId,
-}: { productId: Hex }) {
+}: {
+    productId: Hex;
+}) {
     return useQuery({
         enabled: !!productId,
         queryKey: ["product", "interaction-contract", productId],

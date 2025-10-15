@@ -1,26 +1,26 @@
 // Providers export
+
+// Hooks export
+export {
+    useDisplayModal,
+    useFrakClient,
+    useFrakConfig,
+    useGetProductInformation,
+    useOpenSso,
+    usePrepareSso,
+    useReferralInteraction,
+    useSendInteraction,
+    useSendTransactionAction,
+    useSiweAuthenticate,
+    useWalletStatus,
+} from "./hook";
+export type {
+    FrakConfigProviderProps,
+    FrakIFrameClientProps,
+} from "./provider";
 export {
     FrakConfigContext,
     FrakConfigProvider,
     FrakIFrameClientContext,
     FrakIFrameClientProvider,
 } from "./provider";
-export type {
-    FrakConfigProviderProps,
-    FrakIFrameClientProps,
-} from "./provider";
-
-// Hooks export
-export {
-    useFrakConfig,
-    useFrakClient,
-    useWalletStatus,
-    useSendTransactionAction,
-    useSendInteraction,
-    useSiweAuthenticate,
-    useReferralInteraction,
-    useDisplayModal,
-    useOpenSso,
-    usePrepareSso,
-    useGetProductInformation,
-} from "./hook";

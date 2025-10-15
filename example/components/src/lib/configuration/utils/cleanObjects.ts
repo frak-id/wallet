@@ -20,7 +20,7 @@ export function cleanObjects<T extends object>(obj: T): T | undefined {
     let isEmpty = true;
 
     for (const key in obj) {
-        if (Object.prototype.hasOwnProperty.call(obj, key)) {
+        if (Object.hasOwn(obj, key)) {
             const value = cleanObjects(obj[key] as object);
 
             if (value !== undefined) {

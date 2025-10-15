@@ -1,3 +1,6 @@
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { AccordionRecoveryItem } from "@/module/common/component/AccordionRecoveryItem";
 import { Password } from "@/module/common/component/Password";
 import { useRecoveryLocalAccount } from "@/module/recovery/hook/useRecoveryLocalAccount";
@@ -8,9 +11,6 @@ import {
     recoveryStepAtom,
 } from "@/module/settings/atoms/recovery";
 import type { RecoveryFileContent } from "@/types/Recovery";
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import { useMemo, useState } from "react";
-import { useTranslation } from "react-i18next";
 
 const ACTUAL_STEP = 3;
 
@@ -44,7 +44,9 @@ export function Step3() {
 
 function TriggerPasswordVerification({
     recoveryFileContent,
-}: { recoveryFileContent: RecoveryFileContent }) {
+}: {
+    recoveryFileContent: RecoveryFileContent;
+}) {
     const { t } = useTranslation();
     // Set the current step
     const setStep = useSetAtom(recoveryStepAtom);

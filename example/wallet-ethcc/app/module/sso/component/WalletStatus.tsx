@@ -1,5 +1,5 @@
-import { Panel } from "@/module/common/component/Panel";
 import { useOpenSso, usePrepareSso } from "@frak-labs/react-sdk";
+import { Panel } from "@/module/common/component/Panel";
 
 export function Sso() {
     const { data: ssoLink } = usePrepareSso({ metadata: {}, directExit: true });

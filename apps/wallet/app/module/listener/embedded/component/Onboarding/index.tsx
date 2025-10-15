@@ -1,6 +1,3 @@
-import { Arrow } from "@/module/listener/embedded/component/Onboarding/assets/Arrow";
-import { useListenerTranslation } from "@/module/listener/providers/ListenerUiProvider";
-import { useInteractionSessionStatus } from "@/module/wallet/hook/useInteractionSessionStatus";
 import { cx } from "class-variance-authority";
 import {
     type CSSProperties,
@@ -10,6 +7,9 @@ import {
     useState,
 } from "react";
 import { Trans } from "react-i18next";
+import { Arrow } from "@/module/listener/embedded/component/Onboarding/assets/Arrow";
+import { useListenerTranslation } from "@/module/listener/providers/ListenerUiProvider";
+import { useInteractionSessionStatus } from "@/module/wallet/hook/useInteractionSessionStatus";
 import styles from "./index.module.css";
 
 function Onboarding({
@@ -100,7 +100,10 @@ export function OnboardingWelcome() {
 export function OnboardingActivate({
     isReverse,
     isHidden = true,
-}: { isReverse?: boolean; isHidden?: boolean }) {
+}: {
+    isReverse?: boolean;
+    isHidden?: boolean;
+}) {
     const { lang, i18n } = useListenerTranslation();
     const DELAY_MS = 1_500;
 

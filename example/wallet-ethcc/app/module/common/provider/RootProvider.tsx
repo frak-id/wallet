@@ -1,4 +1,3 @@
-import { FrakProvider } from "@/module/common/provider/FrakProvider";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
@@ -7,6 +6,7 @@ import {
     type PersistQueryClientProviderProps,
 } from "@tanstack/react-query-persist-client";
 import { type PropsWithChildren, useState } from "react";
+import { FrakProvider } from "@/module/common/provider/FrakProvider";
 
 /**
  * The storage persister to cache our query data's

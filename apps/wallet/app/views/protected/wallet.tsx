@@ -1,3 +1,5 @@
+import { memo } from "react";
+import { useHydrated } from "remix-utils/use-hydrated";
 import { Grid } from "@/module/common/component/Grid";
 import { EnableNotification } from "@/module/notification/component/EnableNotification";
 import { Balance } from "@/module/tokens/component/Balance";
@@ -7,8 +9,6 @@ import { InstallApp } from "@/module/wallet/component/InstallApp";
 import { OpenSession } from "@/module/wallet/component/OpenSession";
 import { PendingReferral } from "@/module/wallet/component/PendingReferral";
 import { Welcome } from "@/module/wallet/component/Welcome";
-import { memo } from "react";
-import { useHydrated } from "remix-utils/use-hydrated";
 
 /**
  * HydratedComponents

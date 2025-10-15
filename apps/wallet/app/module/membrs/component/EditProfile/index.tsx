@@ -1,8 +1,8 @@
-import { Panel } from "@/module/common/component/Panel";
 import { Button } from "@frak-labs/ui/component/Button";
 import { UserPen } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
+import { Panel } from "@/module/common/component/Panel";
 
 /**
  * Edit the current profile

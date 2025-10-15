@@ -1,3 +1,8 @@
+import { Button } from "@frak-labs/ui/component/Button";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { Check, X } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { memo, useCallback, useEffect } from "react";
 import {
     campaignActionAtom,
     campaignAtom,
@@ -8,16 +13,13 @@ import {
     campaignSuccessAtom,
 } from "@/module/campaigns/atoms/steps";
 import { ActionsWrapper } from "@/module/common/component/ActionsWrapper";
-import { Button } from "@frak-labs/ui/component/Button";
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import { Check, X } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { memo, useCallback, useEffect } from "react";
 import styles from "./index.module.css";
 
 export const Actions = memo(function Actions({
     isLoading = false,
-}: { isLoading?: boolean }) {
+}: {
+    isLoading?: boolean;
+}) {
     const router = useRouter();
     const [step, setStep] = useAtom(campaignStepAtom);
     const campaignSuccess = useAtomValue(campaignSuccessAtom);
@@ -50,7 +52,7 @@ export const Actions = memo(function Actions({
     useEffect(() => {
         if (!pages) return;
         router.push(pages[step - 1]);
-    }, [step, router.push, pages]);
+    }, [step, router.push, pages, router]);
 
     return (
         <ActionsWrapper
@@ -88,7 +90,10 @@ export const Actions = memo(function Actions({
 function ButtonNext({
     isLoading = false,
     isLastStep = false,
-}: { isLoading: boolean; isLastStep: boolean }) {
+}: {
+    isLoading: boolean;
+    isLastStep: boolean;
+}) {
     const setCampaignIsClosing = useSetAtom(campaignIsClosingAtom);
     return isLastStep ? (
         <Button

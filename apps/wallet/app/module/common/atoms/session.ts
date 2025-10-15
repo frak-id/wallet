@@ -1,7 +1,7 @@
-import type { SdkSession, Session } from "@/types/Session";
 import { atom } from "jotai";
 import { atomWithStorage } from "jotai/utils";
 import type { Address, Hex } from "viem";
+import type { SdkSession, Session } from "@/types/Session";
 import type { WebAuthNWallet } from "../../../types/WebAuthN";
 
 export const sessionAtom = atomWithStorage<Session | null>(

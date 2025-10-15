@@ -1,5 +1,3 @@
-import { useSsoLink } from "@/module/authentication/hook/useGetOpenSsoLink";
-import { useListenerWithRequestUI } from "@/module/listener/providers/ListenerUiProvider";
 import {
     type SsoMetadata,
     ssoPopupFeatures,
@@ -7,6 +5,8 @@ import {
 } from "@frak-labs/core-sdk";
 import { type ReactNode, useState } from "react";
 import type { Hex } from "viem";
+import { useSsoLink } from "@/module/authentication/hook/useGetOpenSsoLink";
+import { useListenerWithRequestUI } from "@/module/listener/providers/ListenerUiProvider";
 import { trackAuthFailed, trackAuthInitiated } from "../../common/analytics";
 
 /**
@@ -74,11 +74,7 @@ function RegularSsoButton({
 
     // If we failed to open the SSO modal, fallback to a link
     if (failToOpen) {
-        return (
-            <>
-                <LinkSsoButton link={link} text={text} className={className} />
-            </>
-        );
+        return <LinkSsoButton link={link} text={text} className={className} />;
     }
 
     return (

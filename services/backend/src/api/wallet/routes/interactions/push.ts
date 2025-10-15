@@ -1,10 +1,10 @@
 import {
+    db,
     eventEmitter,
     interactionDiamondRepository,
     log,
     sessionContext,
 } from "@backend-common";
-import { db } from "@backend-common";
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import { isAddressEqual } from "viem";

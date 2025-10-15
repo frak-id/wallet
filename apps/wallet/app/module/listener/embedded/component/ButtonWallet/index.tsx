@@ -1,5 +1,5 @@
 import { Spinner } from "@frak-labs/ui/component/Spinner";
-import { type VariantProps, cva, cx } from "class-variance-authority";
+import { cva, cx, type VariantProps } from "class-variance-authority";
 import type { ComponentPropsWithRef, ReactNode } from "react";
 import styles from "./index.module.css";
 

@@ -6,7 +6,10 @@ import styles from "./index.module.css";
 export function formatHash({
     hash,
     format = { start: 2, end: 3 },
-}: { hash: Hex; format?: { start: number; end: number } }) {
+}: {
+    hash: Hex;
+    format?: { start: number; end: number };
+}) {
     if (!hash) return undefined;
     const start = slice(hash, 0, format.start);
     const end = slice(hash, -format.end).replace("0x", "");
@@ -17,7 +20,10 @@ export function formatHash({
 export function WalletAddress({
     wallet,
     copiedText,
-}: { wallet: Address; copiedText?: string }) {
+}: {
+    wallet: Address;
+    copiedText?: string;
+}) {
     const { copied, copy } = useCopyToClipboardWithState();
 
     const hashedAddress = useMemo(
@@ -41,7 +47,10 @@ export function WalletAddress({
 export function TransactionHash({
     hash,
     copiedText,
-}: { hash: Hex; copiedText?: string }) {
+}: {
+    hash: Hex;
+    copiedText?: string;
+}) {
     const { copied, copy } = useCopyToClipboardWithState();
 
     const hashedAddress = useMemo(

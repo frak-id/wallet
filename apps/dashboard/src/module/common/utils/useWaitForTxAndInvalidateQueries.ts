@@ -1,9 +1,9 @@
-import { viemClient } from "@/context/blockchain/provider";
 import { useQueryClient } from "@tanstack/react-query";
 import { guard } from "radash";
 import { useCallback } from "react";
 import type { Hex } from "viem";
 import { waitForTransactionReceipt } from "viem/actions";
+import { viemClient } from "@/context/blockchain/provider";
 
 /**
  * wait for a transaction confirmations and invalide some queries
@@ -16,7 +16,11 @@ export function useWaitForTxAndInvalidateQueries() {
             hash,
             queryKey,
             confirmations = 16,
-        }: { hash: Hex; queryKey: string[]; confirmations?: number }) => {
+        }: {
+            hash: Hex;
+            queryKey: string[];
+            confirmations?: number;
+        }) => {
             // Wait a bit for the tx to be confirmed
             await guard(() =>
                 waitForTransactionReceipt(viemClient, {

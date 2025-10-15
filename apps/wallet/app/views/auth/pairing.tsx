@@ -1,10 +1,3 @@
-import { Grid } from "@/module/common/component/Grid";
-import { Title } from "@/module/common/component/Title";
-import { getTargetPairingClient } from "@/module/pairing/clients/store";
-import { PairingCode } from "@/module/pairing/component/PairingCode";
-import { PairingHeader } from "@/module/pairing/component/PairingHeader";
-import { PairingInfo } from "@/module/pairing/component/PairingInfo";
-import { usePendingPairingInfo } from "@/module/pairing/hook/usePendingPairingInfo";
 import { Button } from "@frak-labs/ui/component/Button";
 import { Skeleton } from "@frak-labs/ui/component/Skeleton";
 import { useAtomValue } from "jotai";
@@ -12,6 +5,13 @@ import { AlertCircle } from "lucide-react";
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
+import { Grid } from "@/module/common/component/Grid";
+import { Title } from "@/module/common/component/Title";
+import { getTargetPairingClient } from "@/module/pairing/clients/store";
+import { PairingCode } from "@/module/pairing/component/PairingCode";
+import { PairingHeader } from "@/module/pairing/component/PairingHeader";
+import { PairingInfo } from "@/module/pairing/component/PairingInfo";
+import { usePendingPairingInfo } from "@/module/pairing/hook/usePendingPairingInfo";
 import { usePairingInfo } from "../../module/pairing/hook/usePairingInfo";
 import styles from "./pairing.module.css";
 
@@ -66,38 +66,34 @@ export default function Pairing() {
     if (!pairingInfo) {
         return (
             <Grid>
-                <>
-                    <PairingHeader />
-                    <Skeleton />
-                </>
+                <PairingHeader />
+                <Skeleton />
             </Grid>
         );
     }
 
     return (
         <Grid>
-            <>
-                <PairingHeader />
-                <PairingInfo state={pairingState} id={pendingPairingInfo.id} />
-                <PairingCode code={pairingInfo.pairingCode} />
-                <div className={styles.pairing__buttons}>
-                    <Button
-                        variant="secondary"
-                        onClick={() => {
-                            actionPairing("cancel");
-                        }}
-                    >
-                        {t("wallet.pairing.cancel")}
-                    </Button>
-                    <Button
-                        onClick={() => {
-                            actionPairing("join");
-                        }}
-                    >
-                        {t("wallet.pairing.confirm")}
-                    </Button>
-                </div>
-            </>
+            <PairingHeader />
+            <PairingInfo state={pairingState} id={pendingPairingInfo.id} />
+            <PairingCode code={pairingInfo.pairingCode} />
+            <div className={styles.pairing__buttons}>
+                <Button
+                    variant="secondary"
+                    onClick={() => {
+                        actionPairing("cancel");
+                    }}
+                >
+                    {t("wallet.pairing.cancel")}
+                </Button>
+                <Button
+                    onClick={() => {
+                        actionPairing("join");
+                    }}
+                >
+                    {t("wallet.pairing.confirm")}
+                </Button>
+            </div>
         </Grid>
     );
 }

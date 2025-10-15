@@ -1,8 +1,8 @@
-export { AirtableRepository } from "./repository";
 export {
     AIRTABLE_CONFIG,
+    type AirtableRequestBody,
     AirtableRequestBodyType,
     type TableType,
-    type AirtableRequestBody,
 } from "./config";
+export { AirtableRepository } from "./repository";
 export { mapToAirtableFields } from "./utils";

@@ -13,7 +13,11 @@ export async function getSignOptions({
     authenticatorId,
     toSign,
     transports,
-}: { authenticatorId: string; toSign: Hex; transports?: string[] }) {
+}: {
+    authenticatorId: string;
+    toSign: Hex;
+    transports?: string[];
+}) {
     // Build the options
     return await generateAuthenticationOptions({
         rpID: WebAuthN.rpId,

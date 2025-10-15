@@ -1,3 +1,6 @@
+import { Checkbox } from "@frak-labs/ui/component/forms/Checkbox";
+import { useEffect, useState } from "react";
+import { useFormContext, useWatch } from "react-hook-form";
 import { InputAmount } from "@/module/common/component/InputAmount";
 import { Row } from "@/module/common/component/Row";
 import {
@@ -7,15 +10,15 @@ import {
     FormMessage,
 } from "@/module/forms/Form";
 import type { FormMembersFiltering } from "@/module/members/component/MembersFiltering";
-import { Checkbox } from "@frak-labs/ui/component/forms/Checkbox";
-import { useEffect, useState } from "react";
-import { useFormContext, useWatch } from "react-hook-form";
 import styles from "./index.module.css";
 
 export function RewardFiltering({
     disabled,
     onSubmit,
-}: { disabled?: boolean; onSubmit: (data: FormMembersFiltering) => void }) {
+}: {
+    disabled?: boolean;
+    onSubmit: (data: FormMembersFiltering) => void;
+}) {
     const { control, handleSubmit, setValue } =
         useFormContext<FormMembersFiltering>();
     const currentRewards = useWatch({ control, name: "rewards" });

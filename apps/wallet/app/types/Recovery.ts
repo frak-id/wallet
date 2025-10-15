@@ -1,5 +1,5 @@
-import type { WebAuthNWallet } from "@/types/WebAuthN";
 import type { Address, Hex } from "viem";
+import type { WebAuthNWallet } from "@/types/WebAuthN";
 
 export type CurrentRecovery = {
     executor: Address;

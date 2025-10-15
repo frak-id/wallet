@@ -1,8 +1,8 @@
-import { viemClient } from "@/context/blockchain/provider";
 import { campaignBankAbi } from "@frak-labs/app-essentials/blockchain";
 import { useQuery } from "@tanstack/react-query";
 import { type Address, erc20Abi, isAddress } from "viem";
 import { readContract } from "viem/actions";
+import { viemClient } from "@/context/blockchain/provider";
 
 /**
  * Get the bank information

@@ -1,5 +1,14 @@
 "use client";
 
+import { Skeleton } from "@frak-labs/ui/component/Skeleton";
+import { useAtomValue } from "jotai";
+import { useMemo } from "react";
+import {
+    type ResolverResult,
+    type UseFormReturn,
+    useForm,
+} from "react-hook-form";
+import { toHex } from "viem";
 import { campaignAtom } from "@/module/campaigns/atoms/campaign";
 import { Actions } from "@/module/campaigns/component/Actions";
 import { ButtonCancel } from "@/module/campaigns/component/Creation/NewCampaign/ButtonCancel";
@@ -19,15 +28,6 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/module/forms/RadioGroup";
 import { useProductMetadata } from "@/module/product/hook/useProductMetadata";
 import type { Campaign } from "@/types/Campaign";
-import { Skeleton } from "@frak-labs/ui/component/Skeleton";
-import { useAtomValue } from "jotai";
-import { useMemo } from "react";
-import {
-    type ResolverResult,
-    type UseFormReturn,
-    useForm,
-} from "react-hook-form";
-import { toHex } from "viem";
 import { DistributionConfiguration } from "./DistributionConfig";
 import { FormTriggersCac } from "./FormTriggersCac";
 import styles from "./index.module.css";

@@ -1,15 +1,15 @@
 import { viemClient } from "@backend-common";
 import {
     KernelWallet,
-    WebAuthN,
     kernelAddresses,
+    WebAuthN,
 } from "@frak-labs/app-essentials";
 import {
     type AuthenticationResponseJSON,
     verifyAuthenticationResponse,
 } from "@simplewebauthn/server";
 import { getSenderAddress } from "permissionless/actions";
-import { type Address, type Hex, concatHex, keccak256, toHex } from "viem";
+import { type Address, concatHex, type Hex, keccak256, toHex } from "viem";
 import { entryPoint06Address } from "viem/account-abstraction";
 import type { AuthenticatorRepository } from "../repositories/AuthenticatorRepository";
 import { decodePublicKey } from "../utils/webauthnDecode";
@@ -32,7 +32,10 @@ export class WebAuthNService {
     async getWalletAddress({
         authenticatorId,
         pubKey,
-    }: { authenticatorId: string; pubKey: { x: Hex; y: Hex } }) {
+    }: {
+        authenticatorId: string;
+        pubKey: { x: Hex; y: Hex };
+    }) {
         // Compute base stuff to fetch the smart wallet address
         const authenticatorIdHash = keccak256(toHex(authenticatorId));
         const initCode = KernelWallet.getWebAuthNSmartWalletInitCode({

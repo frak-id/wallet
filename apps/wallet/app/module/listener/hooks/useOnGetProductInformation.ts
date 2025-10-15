@@ -1,6 +1,3 @@
-import { estimatedInteractionRewardQuery } from "@/module/listener/hooks/useEstimatedInteractionReward";
-import { getProductMetadataQuery } from "@/module/listener/hooks/useGetProductMetadata";
-import type { WalletRpcContext } from "@/module/listener/types/context";
 import type { IFrameRpcSchema } from "@frak-labs/core-sdk";
 import {
     FrakRpcError,
@@ -9,6 +6,9 @@ import {
 } from "@frak-labs/frame-connector";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
+import { estimatedInteractionRewardQuery } from "@/module/listener/hooks/useEstimatedInteractionReward";
+import { getProductMetadataQuery } from "@/module/listener/hooks/useGetProductMetadata";
+import type { WalletRpcContext } from "@/module/listener/types/context";
 
 type OnGetProductInformation = RpcPromiseHandler<
     IFrameRpcSchema,

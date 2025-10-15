@@ -1,4 +1,3 @@
-import type { P256Signature, WebAuthNSignature } from "@/types/WebAuthN";
 import { ECDSASigValue } from "@peculiar/asn1-ecc";
 import { AsnParser } from "@peculiar/asn1-schema";
 import {
@@ -6,15 +5,16 @@ import {
     base64URLStringToBuffer,
 } from "@simplewebauthn/browser";
 import {
-    type Hex,
     boolToHex,
     concatHex,
+    type Hex,
     maxUint256,
     numberToHex,
     pad,
     size,
     toHex,
 } from "viem";
+import type { P256Signature, WebAuthNSignature } from "@/types/WebAuthN";
 
 /**
  * Verify a webauthn signature internally, and format it for blockchain transaction

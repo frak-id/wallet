@@ -1,3 +1,17 @@
+import type { ProductRolesKey } from "@frak-labs/app-essentials";
+import { Button } from "@frak-labs/ui/component/Button";
+import { Checkbox } from "@frak-labs/ui/component/forms/Checkbox";
+import { Input } from "@frak-labs/ui/component/forms/Input";
+import { Tooltip } from "@frak-labs/ui/component/Tooltip";
+import { BadgeCheck } from "lucide-react";
+import {
+    type PropsWithChildren,
+    useCallback,
+    useEffect,
+    useState,
+} from "react";
+import { useForm, useFormContext } from "react-hook-form";
+import { type Address, type Hex, isAddress } from "viem";
 import { AlertDialog } from "@/module/common/component/AlertDialog";
 import { Row } from "@/module/common/component/Row";
 import {
@@ -12,20 +26,6 @@ import {
 } from "@/module/forms/Form";
 import { useAddProductMember } from "@/module/product/hook/useAddProductMember";
 import { permissionLabelsArray } from "@/module/product/utils/permissions";
-import type { ProductRolesKey } from "@frak-labs/app-essentials";
-import { Button } from "@frak-labs/ui/component/Button";
-import { Tooltip } from "@frak-labs/ui/component/Tooltip";
-import { Checkbox } from "@frak-labs/ui/component/forms/Checkbox";
-import { Input } from "@frak-labs/ui/component/forms/Input";
-import { BadgeCheck } from "lucide-react";
-import {
-    type PropsWithChildren,
-    useCallback,
-    useEffect,
-    useState,
-} from "react";
-import { useForm, useFormContext } from "react-hook-form";
-import { type Address, type Hex, isAddress } from "viem";
 import styles from "./index.module.css";
 
 type FormAddTeamMembers = {
@@ -56,7 +56,7 @@ export function ButtonAddTeam({
     useEffect(() => {
         if (isModalOpen) return;
         form.reset();
-    }, [isModalOpen, form.reset]);
+    }, [isModalOpen, form.reset, form]);
 
     const onSubmit = useCallback(
         async (data: FormAddTeamMembers) => {
@@ -136,50 +136,47 @@ function FormWallet({ disabled }: { disabled: boolean }) {
     }, [trigger]);
 
     return (
-        <>
-            <FormField
-                control={control}
-                name="wallet"
-                rules={{
-                    required: "Wallet address required",
-                    validate: {
-                        required: (value) =>
-                            (value && isAddress(value)) ||
-                            "Invalid wallet address",
-                    },
-                }}
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel weight={"medium"}>
-                            Enter your Member Wallet
-                        </FormLabel>
-                        <FormControl>
-                            <Row>
-                                <Input
-                                    length={"medium"}
-                                    placeholder={"Wallet Address...."}
-                                    {...field}
-                                    value={field.value ?? ""}
-                                />
-                                <Button
-                                    variant={"submit"}
-                                    disabled={disabled}
-                                    onClick={() => {
-                                        trigger("wallet");
-                                    }}
-                                >
-                                    Verify
-                                </Button>
-                            </Row>
-                        </FormControl>
-                        <FormMessage />
-                        <FormValidMessage>
-                            The new member is ready to be added
-                        </FormValidMessage>
-                    </FormItem>
-                )}
-            />
-        </>
+        <FormField
+            control={control}
+            name="wallet"
+            rules={{
+                required: "Wallet address required",
+                validate: {
+                    required: (value) =>
+                        (value && isAddress(value)) || "Invalid wallet address",
+                },
+            }}
+            render={({ field }) => (
+                <FormItem>
+                    <FormLabel weight={"medium"}>
+                        Enter your Member Wallet
+                    </FormLabel>
+                    <FormControl>
+                        <Row>
+                            <Input
+                                length={"medium"}
+                                placeholder={"Wallet Address...."}
+                                {...field}
+                                value={field.value ?? ""}
+                            />
+                            <Button
+                                variant={"submit"}
+                                disabled={disabled}
+                                onClick={() => {
+                                    trigger("wallet");
+                                }}
+                            >
+                                Verify
+                            </Button>
+                        </Row>
+                    </FormControl>
+                    <FormMessage />
+                    <FormValidMessage>
+                        The new member is ready to be added
+                    </FormValidMessage>
+                </FormItem>
+            )}
+        />
     );
 }
 
@@ -191,76 +188,65 @@ function FormPermissions({ disabled }: { disabled: boolean }) {
     const { control } = useFormContext<FormAddTeamMembers>();
 
     return (
-        <>
-            <FormField
-                control={control}
-                name="permissions"
-                rules={{
-                    required: "Select a permission",
-                    validate: {
-                        required: (value) =>
-                            value?.length > 0 || "Select a permission",
-                    },
-                }}
-                render={({ field }) => (
-                    <FormItem>
-                        <FormDescription
-                            label={"Permissions"}
-                            className={styles.formPermission__description}
-                            classNameTitle={
-                                styles.formPermission__descriptionTitle
-                            }
-                        >
-                            Choose the permission for the new operator.
-                        </FormDescription>
-                        {permissionLabelsArray.map(
-                            ({ id, label, description }) => {
-                                return (
-                                    <FormItem variant={"checkbox"} key={id}>
-                                        <FormControl>
-                                            <Checkbox
-                                                checked={field?.value?.includes(
-                                                    id
-                                                )}
-                                                disabled={disabled}
-                                                onCheckedChange={(checked) => {
-                                                    return checked
-                                                        ? field.onChange([
-                                                              ...field.value,
-                                                              id,
-                                                          ])
-                                                        : field.onChange(
-                                                              field?.value?.filter(
-                                                                  (value) =>
-                                                                      value !==
-                                                                      id
-                                                              )
-                                                          );
-                                                }}
-                                                {...field}
-                                            />
-                                        </FormControl>
-                                        <Tooltip
-                                            content={description}
-                                            className={"tooltipPermissions"}
-                                        >
-                                            <FormLabel
-                                                variant={"checkbox"}
-                                                selected={field?.value?.includes(
-                                                    id
-                                                )}
-                                            >
-                                                {label}
-                                            </FormLabel>
-                                        </Tooltip>
-                                    </FormItem>
-                                );
-                            }
-                        )}
-                        <FormMessage />
-                    </FormItem>
-                )}
-            />
-        </>
+        <FormField
+            control={control}
+            name="permissions"
+            rules={{
+                required: "Select a permission",
+                validate: {
+                    required: (value) =>
+                        value?.length > 0 || "Select a permission",
+                },
+            }}
+            render={({ field }) => (
+                <FormItem>
+                    <FormDescription
+                        label={"Permissions"}
+                        className={styles.formPermission__description}
+                        classNameTitle={styles.formPermission__descriptionTitle}
+                    >
+                        Choose the permission for the new operator.
+                    </FormDescription>
+                    {permissionLabelsArray.map(({ id, label, description }) => {
+                        return (
+                            <FormItem variant={"checkbox"} key={id}>
+                                <FormControl>
+                                    <Checkbox
+                                        checked={field?.value?.includes(id)}
+                                        disabled={disabled}
+                                        onCheckedChange={(checked) => {
+                                            return checked
+                                                ? field.onChange([
+                                                      ...field.value,
+                                                      id,
+                                                  ])
+                                                : field.onChange(
+                                                      field?.value?.filter(
+                                                          (value) =>
+                                                              value !== id
+                                                      )
+                                                  );
+                                        }}
+                                        {...field}
+                                    />
+                                </FormControl>
+                                <Tooltip
+                                    content={description}
+                                    className={"tooltipPermissions"}
+                                >
+                                    <FormLabel
+                                        variant={"checkbox"}
+                                        selected={field?.value?.includes(id)}
+                                    >
+                                        {label}
+                                    </FormLabel>
+                                </Tooltip>
+                            </FormItem>
+                        );
+                    })}
+                    <FormMessage />
+                </FormItem>
+            )}
+        />
     );
 }

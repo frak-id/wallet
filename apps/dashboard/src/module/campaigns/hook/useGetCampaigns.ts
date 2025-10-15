@@ -1,7 +1,7 @@
 "use client";
 
-import { getMyCampaigns } from "@/context/campaigns/action/getCampaigns";
 import { useQuery } from "@tanstack/react-query";
+import { getMyCampaigns } from "@/context/campaigns/action/getCampaigns";
 
 /**
  * Hook used to fetch all the campaigns for the current user

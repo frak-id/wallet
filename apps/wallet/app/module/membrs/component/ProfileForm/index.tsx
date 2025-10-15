@@ -1,5 +1,3 @@
-import { sessionAtom } from "@/module/common/atoms/session";
-import type { User } from "@/types/User";
 import { Button } from "@frak-labs/ui/component/Button";
 import { Input } from "@frak-labs/ui/component/forms/Input";
 import { useCopyToClipboardWithState } from "@frak-labs/ui/hook/useCopyToClipboardWithState";
@@ -15,6 +13,8 @@ import {
 } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
+import { sessionAtom } from "@/module/common/atoms/session";
+import type { User } from "@/types/User";
 import { uploadProfilePhotoAtom } from "../../atoms/uploadProfilePhoto";
 import { userAtom, userSetupLaterAtom } from "../../atoms/user";
 import styles from "./index.module.css";

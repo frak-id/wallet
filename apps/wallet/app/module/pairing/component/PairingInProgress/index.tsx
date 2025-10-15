@@ -1,5 +1,5 @@
-import { Warning } from "@/module/common/component/Warning";
 import { useTranslation } from "react-i18next";
+import { Warning } from "@/module/common/component/Warning";
 import { usePendingPairingInfo } from "../../hook/usePendingPairingInfo";
 
 export function PairingInProgress() {

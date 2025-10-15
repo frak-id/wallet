@@ -1,3 +1,6 @@
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { webauthnSessionAtom } from "@/module/common/atoms/session";
 import { AccordionRecoveryItem } from "@/module/common/component/AccordionRecoveryItem";
 import { useGenerateRecoveryOptions } from "@/module/recovery-setup/hook/useGenerateRecoveryOptions";
@@ -6,9 +9,6 @@ import {
     recoveryPasswordAtom,
     recoveryStepAtom,
 } from "@/module/settings/atoms/recovery";
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import { useEffect } from "react";
-import { useTranslation } from "react-i18next";
 
 const ACTUAL_STEP = 2;
 
@@ -56,16 +56,14 @@ export function Step2() {
     ]);
 
     return (
-        <>
-            <AccordionRecoveryItem
-                actualStep={ACTUAL_STEP}
-                title={t("wallet.recoverySetup.step2")}
-            >
-                <p>
-                    {t("wallet.recoverySetup.generating")}
-                    <span className={"dotsLoading"}>...</span>
-                </p>
-            </AccordionRecoveryItem>
-        </>
+        <AccordionRecoveryItem
+            actualStep={ACTUAL_STEP}
+            title={t("wallet.recoverySetup.step2")}
+        >
+            <p>
+                {t("wallet.recoverySetup.generating")}
+                <span className={"dotsLoading"}>...</span>
+            </p>
+        </AccordionRecoveryItem>
     );
 }

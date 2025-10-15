@@ -1,5 +1,5 @@
-import type { Goal } from "@/types/Campaign";
 import type { InteractionTypesKey } from "@frak-labs/core-sdk";
+import type { Goal } from "@/types/Campaign";
 
 /**
  * The keys for each interaction types

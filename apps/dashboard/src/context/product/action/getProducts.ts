@@ -1,8 +1,8 @@
 "use server";
 
-import { getSafeSession } from "@/context/auth/actions/session";
 import { indexerApi } from "@frak-labs/client/server";
 import { type Address, type Hex, toHex } from "viem";
+import { getSafeSession } from "@/context/auth/actions/session";
 
 type ApiResult = {
     id: string; // bigint

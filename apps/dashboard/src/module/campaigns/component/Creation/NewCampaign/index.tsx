@@ -1,5 +1,8 @@
 "use client";
 
+import { useAtomValue, useSetAtom } from "jotai";
+import { useEffect, useMemo } from "react";
+import { useForm } from "react-hook-form";
 import {
     campaignAtom,
     campaignResetAtom,
@@ -22,9 +25,6 @@ import { useSaveCampaign } from "@/module/campaigns/hook/useSaveCampaign";
 import { Head } from "@/module/common/component/Head";
 import { Form, FormLayout } from "@/module/forms/Form";
 import type { Campaign } from "@/types/Campaign";
-import { useAtomValue, useSetAtom } from "jotai";
-import { useEffect, useMemo } from "react";
-import { useForm } from "react-hook-form";
 
 export function NewCampaign({ title }: { title: string }) {
     const campaignSuccess = useAtomValue(campaignSuccessAtom);
@@ -52,7 +52,7 @@ export function NewCampaign({ title }: { title: string }) {
      */
     useEffect(() => {
         form.reset(campaign);
-    }, [campaign, form.reset]);
+    }, [campaign, form.reset, form]);
 
     async function onSubmit(values: Campaign) {
         await saveCampaign(values);

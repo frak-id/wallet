@@ -4,9 +4,9 @@ import { tryit } from "radash";
 import {
     type Address,
     type Client,
-    type Hex,
     concatHex,
     domainSeparator,
+    type Hex,
     keccak256,
     toHex,
 } from "viem";
@@ -93,7 +93,10 @@ function getMetadataDefaults(client: Client, accountAddress: Address) {
 export function wrapMessageForSignature({
     message,
     metadata,
-}: { message: Hex; metadata: AccountMetadata }) {
+}: {
+    message: Hex;
+    metadata: AccountMetadata;
+}) {
     // Build the domain separator
     const accountDomainSeparator = domainSeparator({
         domain: {
@@ -112,7 +115,10 @@ export function wrapMessageForSignature({
 export async function signHashViaWebAuthN({
     hash,
     wallet,
-}: { hash: Hex; wallet: WebAuthNWallet }) {
+}: {
+    hash: Hex;
+    wallet: WebAuthNWallet;
+}) {
     // Get the signature options from server
     const options = await getSignOptions({
         authenticatorId: wallet.authenticatorId,

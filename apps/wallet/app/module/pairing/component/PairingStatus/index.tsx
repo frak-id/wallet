@@ -6,7 +6,9 @@ import styles from "./index.module.css";
 
 export function PairingStatus({
     status,
-}: { status: BasePairingState["status"] }) {
+}: {
+    status: BasePairingState["status"];
+}) {
     const statusDetails = getStatusDetails(status);
 
     return <span className={styles.pairingStatus}>{statusDetails}</span>;

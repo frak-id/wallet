@@ -1,6 +1,5 @@
 "use client";
 
-import { frakWalletSdkConfig } from "@/context/frak-wallet/config";
 import {
     FrakConfigProvider,
     FrakIFrameClientProvider,
@@ -15,6 +14,7 @@ import {
 } from "@tanstack/react-query-persist-client";
 import { Provider } from "jotai";
 import { type PropsWithChildren, useEffect } from "react";
+import { frakWalletSdkConfig } from "@/context/frak-wallet/config";
 import { openPanel } from "../utils/openPanel";
 
 /**

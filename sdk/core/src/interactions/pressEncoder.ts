@@ -1,4 +1,4 @@
-import { type Hex, concatHex, pad, toHex } from "viem";
+import { concatHex, type Hex, pad, toHex } from "viem";
 import { interactionTypes } from "../constants/interactionTypes";
 import { productTypes } from "../constants/productTypes";
 import type { PreparedInteraction } from "../types";

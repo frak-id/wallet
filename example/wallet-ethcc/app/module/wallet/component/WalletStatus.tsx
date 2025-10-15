@@ -1,7 +1,7 @@
-import { Panel } from "@/module/common/component/Panel";
 import type { WalletStatusReturnType } from "@frak-labs/core-sdk";
 import { useWalletStatus } from "@frak-labs/react-sdk";
 import { Link } from "react-router";
+import { Panel } from "@/module/common/component/Panel";
 
 export function WalletStatus() {
     const { data: walletStatus } = useWalletStatus();

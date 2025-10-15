@@ -1,9 +1,9 @@
-import { useGetOnChainCampaignDetails } from "@/module/campaigns/hook/useGetOnChainDetails";
-import { Row } from "@/module/common/component/Row";
-import { Title } from "@/module/common/component/Title";
 import { format } from "date-fns";
 import { useMemo } from "react";
 import type { Address } from "viem";
+import { useGetOnChainCampaignDetails } from "@/module/campaigns/hook/useGetOnChainDetails";
+import { Row } from "@/module/common/component/Row";
+import { Title } from "@/module/common/component/Title";
 
 /**
  * Display the campaign dates

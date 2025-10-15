@@ -1,3 +1,7 @@
+import { Button } from "@frak-labs/ui/component/Button";
+import { useAtomValue, useSetAtom } from "jotai";
+import { useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { AccordionRecoveryItem } from "@/module/common/component/AccordionRecoveryItem";
 import { useCreateRecoveryPasskey } from "@/module/recovery/hook/useCreateRecoveryPasskey";
 import {
@@ -6,10 +10,6 @@ import {
     recoveryStepAtom,
 } from "@/module/settings/atoms/recovery";
 import type { WebAuthNWallet } from "@/types/WebAuthN";
-import { Button } from "@frak-labs/ui/component/Button";
-import { useAtomValue, useSetAtom } from "jotai";
-import { useCallback } from "react";
-import { useTranslation } from "react-i18next";
 import styles from "./Step4.module.css";
 
 const ACTUAL_STEP = 4;

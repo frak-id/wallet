@@ -1,6 +1,6 @@
+import type { UseFormReturn } from "react-hook-form";
 import { FormDescription, FormItem } from "@/module/forms/Form";
 import type { Campaign } from "@/types/Campaign";
-import type { UseFormReturn } from "react-hook-form";
 
 /**
  * Display the campaign special advertising category

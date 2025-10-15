@@ -1,15 +1,14 @@
-import { FormDescription, FormItem } from "@/module/forms/Form";
-import { Form } from "@/module/forms/Form";
+import { Input } from "@frak-labs/ui/component/forms/Input";
+import { useMemo } from "react";
+import { useForm } from "react-hook-form";
+import type { Address } from "viem";
+import { Form, FormDescription, FormItem } from "@/module/forms/Form";
 import type { FormCreatePushNotification } from "@/module/members/component/CreatePush";
 import { PushPreviewNotification } from "@/module/members/component/CreatePush/PushPreview";
 import {
     type FormMembersFiltering,
     MembersFiltering,
 } from "@/module/members/component/MembersFiltering";
-import { Input } from "@frak-labs/ui/component/forms/Input";
-import { useMemo } from "react";
-import { useForm } from "react-hook-form";
-import type { Address } from "viem";
 import styles from "./PushRecap.module.css";
 
 /**
@@ -18,7 +17,9 @@ import styles from "./PushRecap.module.css";
  */
 export function PushRecap({
     pushForm,
-}: { pushForm: FormCreatePushNotification }) {
+}: {
+    pushForm: FormCreatePushNotification;
+}) {
     const form = useForm<FormCreatePushNotification>({
         values: useMemo(() => pushForm, [pushForm]),
     });

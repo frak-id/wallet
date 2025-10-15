@@ -1,3 +1,10 @@
+import type { FrakLifecycleEvent } from "@frak-labs/core-sdk";
+import {
+    createListenerCompressionMiddleware,
+    createRpcListener,
+} from "@frak-labs/frame-connector";
+import { loadPolyfills } from "@frak-labs/ui/utils/polyfills";
+import { useEffect } from "react";
 import { ListenerUiRenderer } from "@/module/listener/component/ListerUiRenderer";
 import {
     checkContextAndEmitReady,
@@ -25,13 +32,6 @@ import type {
     CombinedRpcSchema,
     WalletRpcContext,
 } from "@/module/listener/types/context";
-import type { FrakLifecycleEvent } from "@frak-labs/core-sdk";
-import {
-    createListenerCompressionMiddleware,
-    createRpcListener,
-} from "@frak-labs/frame-connector";
-import { loadPolyfills } from "@frak-labs/ui/utils/polyfills";
-import { useEffect } from "react";
 
 loadPolyfills();
 

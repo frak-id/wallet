@@ -67,7 +67,10 @@ function parse({ url }: { url: string }) {
 function update({
     url,
     context,
-}: { url?: string; context: Partial<FrakContext> }) {
+}: {
+    url?: string;
+    context: Partial<FrakContext>;
+}) {
     if (!url) return null;
 
     // Parse the current context
@@ -111,7 +114,10 @@ function remove(url: string) {
 function replaceUrl({
     url: baseUrl,
     context,
-}: { url?: string; context: Partial<FrakContext> | null }) {
+}: {
+    url?: string;
+    context: Partial<FrakContext> | null;
+}) {
     // If no window here early exit
     if (!window.location?.href || typeof window === "undefined") {
         console.error("No window found, can't update context");

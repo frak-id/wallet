@@ -1,5 +1,3 @@
-import { Panel } from "@/module/common/component/Panel";
-import { recoveryStepAtom } from "@/module/settings/atoms/recovery";
 import {
     AccordionContent,
     AccordionItem,
@@ -8,6 +6,8 @@ import {
 import { useAtomValue } from "jotai";
 import { BadgeCheck } from "lucide-react";
 import type { PropsWithChildren } from "react";
+import { Panel } from "@/module/common/component/Panel";
+import { recoveryStepAtom } from "@/module/settings/atoms/recovery";
 import styles from "./index.module.css";
 
 export function AccordionRecoveryItem({

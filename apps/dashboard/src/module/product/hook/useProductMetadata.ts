@@ -1,5 +1,3 @@
-import { viemClient } from "@/context/blockchain/provider";
-import { decodeProductTypesMask } from "@/module/product/utils/productTypes";
 import {
     addresses,
     bytesToString,
@@ -8,6 +6,8 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import type { Hex } from "viem";
 import { readContract } from "viem/actions";
+import { viemClient } from "@/context/blockchain/provider";
+import { decodeProductTypesMask } from "@/module/product/utils/productTypes";
 
 /**
  * Hook to get the product metadata

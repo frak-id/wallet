@@ -1,3 +1,5 @@
+import { prefixWalletCss } from "@frak-labs/ui/utils/prefixWalletCss";
+import { cx } from "class-variance-authority";
 import { Markdown } from "@/module/common/component/Markdown";
 import { useSafeResolvingContext } from "@/module/listener/atoms/resolvingContext";
 import { SsoButton } from "@/module/listener/component/SsoButton";
@@ -6,8 +8,6 @@ import {
     useEmbeddedListenerUI,
     useListenerTranslation,
 } from "@/module/listener/providers/ListenerUiProvider";
-import { prefixWalletCss } from "@frak-labs/ui/utils/prefixWalletCss";
-import { cx } from "class-variance-authority";
 import styles from "./index.module.css";
 
 /**

@@ -63,7 +63,9 @@ export class MerkleTreeRepository {
      */
     public async getMerkleRoot({
         productId,
-    }: { productId: Hex }): Promise<Hex> {
+    }: {
+        productId: Hex;
+    }): Promise<Hex> {
         const tree = await this.getMerkleTreeFromCacheOrBuild(productId);
         return tree.getHexRoot() as Hex;
     }
@@ -74,7 +76,10 @@ export class MerkleTreeRepository {
     public async getMerkleProof({
         productId,
         purchaseLeaf,
-    }: { productId: Hex; purchaseLeaf: Hex }): Promise<Hex[] | undefined> {
+    }: {
+        productId: Hex;
+        purchaseLeaf: Hex;
+    }): Promise<Hex[] | undefined> {
         const tree = await this.getMerkleTreeFromCacheOrBuild(productId);
         const hashedLeaf = keccak256(purchaseLeaf);
         const index = tree.getLeafIndex(hexToBytes(hashedLeaf) as Buffer);

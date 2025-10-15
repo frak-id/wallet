@@ -1,10 +1,10 @@
-import { useClientReady } from "@/hooks/useClientReady";
-import { useReward } from "@/hooks/useReward";
 import { trackEvent } from "@frak-labs/core-sdk";
 import { cx } from "class-variance-authority";
 import { useEffect, useMemo, useState } from "preact/hooks";
-import styles from "./ButtonWallet.module.css";
+import { useClientReady } from "@/hooks/useClientReady";
+import { useReward } from "@/hooks/useReward";
 import GiftIcon from "./assets/gift.svg";
+import styles from "./ButtonWallet.module.css";
 import type { ButtonWalletProps } from "./types";
 import { openWalletModal } from "./utils";
 

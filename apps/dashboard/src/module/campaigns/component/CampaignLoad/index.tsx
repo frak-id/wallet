@@ -1,5 +1,10 @@
 "use client";
 
+import { Spinner } from "@frak-labs/ui/component/Spinner";
+import { useQuery } from "@tanstack/react-query";
+import { useAtom, useSetAtom } from "jotai";
+import { usePathname, useRouter } from "next/navigation";
+import { type PropsWithChildren, useEffect } from "react";
 import { getCampaignDetails } from "@/context/campaigns/action/getDetails";
 import {
     campaignActionAtom,
@@ -7,11 +12,6 @@ import {
     isFetchedCampaignAtom,
 } from "@/module/campaigns/atoms/campaign";
 import type { Campaign } from "@/types/Campaign";
-import { Spinner } from "@frak-labs/ui/component/Spinner";
-import { useQuery } from "@tanstack/react-query";
-import { useAtom, useSetAtom } from "jotai";
-import { usePathname, useRouter } from "next/navigation";
-import { type PropsWithChildren, useEffect } from "react";
 
 /**
  * Campaign load component

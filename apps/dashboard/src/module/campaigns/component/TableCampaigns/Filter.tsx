@@ -1,12 +1,5 @@
 "use client";
 
-import { tableCampaignFiltersAtom } from "@/module/campaigns/component/TableCampaigns/index";
-import { Calendar } from "@/module/common/component/Calendar";
-import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-} from "@/module/common/component/Popover";
 import { Button } from "@frak-labs/ui/component/Button";
 import { InputSearch } from "@frak-labs/ui/component/forms/InputSearch";
 import { format } from "date-fns";
@@ -14,6 +7,13 @@ import { atom, useAtom } from "jotai";
 import { useSetAtom } from "jotai/index";
 import { CalendarIcon, SlidersHorizontal } from "lucide-react";
 import { useState } from "react";
+import { tableCampaignFiltersAtom } from "@/module/campaigns/component/TableCampaigns/index";
+import { Calendar } from "@/module/common/component/Calendar";
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/module/common/component/Popover";
 import styles from "./index.module.css";
 
 /**

@@ -1,7 +1,7 @@
-import { TablePagination } from "@/module/common/component/TablePagination";
-import { tableMembersFiltersAtom } from "@/module/members/atoms/tableMembers";
 import { useAtom } from "jotai";
 import { useCallback } from "react";
+import { TablePagination } from "@/module/common/component/TablePagination";
+import { tableMembersFiltersAtom } from "@/module/members/atoms/tableMembers";
 
 export function Pagination({ totalResult }: { totalResult: number }) {
     const [filters, setFilters] = useAtom(tableMembersFiltersAtom);

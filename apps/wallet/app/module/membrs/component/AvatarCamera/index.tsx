@@ -1,4 +1,3 @@
-import { isConnectedVideoDevices } from "@/module/membrs/utils/isConnectedVideoDevices";
 import { Button } from "@frak-labs/ui/component/Button";
 import {
     type Dispatch,
@@ -11,6 +10,7 @@ import {
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import Webcam from "react-webcam";
+import { isConnectedVideoDevices } from "@/module/membrs/utils/isConnectedVideoDevices";
 import styles from "./index.module.css";
 
 type AvatarCameraProps = {

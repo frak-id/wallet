@@ -1,14 +1,14 @@
 "use client";
 
-import { Panel } from "@/module/common/component/Panel";
-import { Title } from "@/module/common/component/Title";
-import { useListenToDomainNameSetup } from "@/module/dashboard/hooks/dnsRecordHooks";
-import { useMintMyProduct } from "@/module/dashboard/hooks/useMintMyProduct";
 import type { Stablecoin } from "@frak-labs/app-essentials";
 import { Button } from "@frak-labs/ui/component/Button";
 import { Spinner } from "@frak-labs/ui/component/Spinner";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useMemo } from "react";
+import { Panel } from "@/module/common/component/Panel";
+import { Title } from "@/module/common/component/Title";
+import { useListenToDomainNameSetup } from "@/module/dashboard/hooks/dnsRecordHooks";
+import { useMintMyProduct } from "@/module/dashboard/hooks/useMintMyProduct";
 import styles from "./index.module.css";
 
 export function EmbeddedMint() {

@@ -1,11 +1,11 @@
+import { useSetAtom } from "jotai";
+import { useTranslation } from "react-i18next";
 import { AccordionRecoveryItem } from "@/module/common/component/AccordionRecoveryItem";
 import { Password } from "@/module/common/component/Password";
 import {
     recoveryPasswordAtom,
     recoveryStepAtom,
 } from "@/module/settings/atoms/recovery";
-import { useSetAtom } from "jotai";
-import { useTranslation } from "react-i18next";
 
 const ACTUAL_STEP = 1;
 

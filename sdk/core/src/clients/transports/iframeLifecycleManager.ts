@@ -15,7 +15,9 @@ export type IframeLifecycleManager = {
  */
 export function createIFrameLifecycleManager({
     iframe,
-}: { iframe: HTMLIFrameElement }): IframeLifecycleManager {
+}: {
+    iframe: HTMLIFrameElement;
+}): IframeLifecycleManager {
     // Create the isConnected listener
     const isConnectedDeferred = new Deferred<boolean>();
 

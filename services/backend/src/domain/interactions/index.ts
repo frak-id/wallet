@@ -1,8 +1,8 @@
 export { InteractionsContext } from "./context";
 export {
     backendTrackerTable,
-    pendingInteractionsTable,
     interactionsPurchaseTrackerTable,
+    pendingInteractionsTable,
     pushedInteractionsTable,
 } from "./db/schema";
 export { InteractionRequestDto } from "./dto/InteractionDto";

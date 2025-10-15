@@ -1,4 +1,3 @@
-import { Panel } from "@/module/common/component/Panel";
 import type { SendInteractionReturnType } from "@frak-labs/core-sdk";
 import { ReferralInteractionEncoder } from "@frak-labs/core-sdk/interactions";
 import { useSendInteraction } from "@frak-labs/react-sdk";
@@ -6,6 +5,7 @@ import { Button } from "@frak-labs/ui/component/Button";
 import { BadgeCheck } from "lucide-react";
 import { useMemo, useState } from "react";
 import { isAddress } from "viem";
+import { Panel } from "@/module/common/component/Panel";
 
 export function SendReferralInteraction() {
     const {

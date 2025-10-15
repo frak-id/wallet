@@ -1,9 +1,9 @@
 import { FrakRpcError } from "./error";
 import type {
-    ExtractMethod,
-    ExtractReturnType,
     ExtractedParametersFromRpc,
     ExtractedSpecificParametersFromRpc,
+    ExtractMethod,
+    ExtractReturnType,
     RpcSchema,
 } from "./rpc-schema";
 import type {

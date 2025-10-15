@@ -1,8 +1,8 @@
 import {
+    createRpcClient,
     FrakRpcError,
     type RpcClient,
     RpcErrorCodes,
-    createRpcClient,
 } from "@frak-labs/frame-connector";
 import { createClientCompressionMiddleware } from "@frak-labs/frame-connector/middleware";
 import { OpenPanel } from "@openpanel/web";
@@ -14,8 +14,8 @@ import { BACKUP_KEY } from "../utils/constants";
 import { setupSsoUrlListener } from "../utils/ssoUrlListener";
 import { DebugInfoGatherer } from "./DebugInfo";
 import {
-    type IframeLifecycleManager,
     createIFrameLifecycleManager,
+    type IframeLifecycleManager,
 } from "./transports/iframeLifecycleManager";
 
 type SdkRpcClient = RpcClient<IFrameRpcSchema, FrakLifecycleEvent>;

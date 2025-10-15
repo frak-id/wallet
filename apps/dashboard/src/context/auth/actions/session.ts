@@ -1,10 +1,8 @@
 "use server";
 
-import { viemClient } from "@/context/blockchain/provider";
-import type { AuthSession, AuthSessionClient } from "@/types/AuthSession";
 import { isRunningLocally } from "@frak-labs/app-essentials";
-import { getIronSession } from "iron-session";
 import type { SessionOptions } from "iron-session";
+import { getIronSession } from "iron-session";
 import { cookies, headers } from "next/headers";
 import { guard } from "radash";
 import { type Hex, keccak256, toHex } from "viem";
@@ -13,6 +11,8 @@ import {
     validateSiweMessage,
     verifySiweMessage,
 } from "viem/siwe";
+import { viemClient } from "@/context/blockchain/provider";
+import type { AuthSession, AuthSessionClient } from "@/types/AuthSession";
 
 /**
  * Options used to store the session in the cookies
@@ -42,7 +42,10 @@ async function getFullSession() {
 export async function setSession({
     message,
     signature,
-}: { message: string; signature: Hex }) {
+}: {
+    message: string;
+    signature: Hex;
+}) {
     // Parse the siwe message
     const siweMessage = parseSiweMessage(message);
     if (!siweMessage?.address) {

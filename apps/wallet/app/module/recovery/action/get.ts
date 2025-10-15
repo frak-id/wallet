@@ -1,13 +1,7 @@
-import { currentViemClient } from "@/module/blockchain/provider";
-import {
-    doAddPassKeyFnAbi,
-    ecdsaValidatorStorageAbi,
-} from "@/module/recovery/utils/abi";
-import type { CurrentRecovery } from "@/types/Recovery";
-import { kernelAddresses } from "@frak-labs/app-essentials";
 import {
     addresses,
     getExecutionAbi,
+    kernelAddresses,
     multiWebAuthNValidatorV2Abi,
 } from "@frak-labs/app-essentials";
 import { tryit } from "radash";
@@ -20,6 +14,12 @@ import {
     zeroAddress,
 } from "viem";
 import { readContract } from "viem/actions";
+import { currentViemClient } from "@/module/blockchain/provider";
+import {
+    doAddPassKeyFnAbi,
+    ecdsaValidatorStorageAbi,
+} from "@/module/recovery/utils/abi";
+import type { CurrentRecovery } from "@/types/Recovery";
 
 /**
  * Get the current recovery options for the given wallet
@@ -28,7 +28,9 @@ import { readContract } from "viem/actions";
  */
 export async function getCurrentRecoveryOption({
     wallet,
-}: { wallet: Address }): Promise<CurrentRecovery | null> {
+}: {
+    wallet: Address;
+}): Promise<CurrentRecovery | null> {
     // Get the recovery selector
     const addPasskeySelector = toFunctionSelector(doAddPassKeyFnAbi);
 

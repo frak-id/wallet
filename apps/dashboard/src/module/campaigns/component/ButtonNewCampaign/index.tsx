@@ -1,10 +1,10 @@
 "use client";
 
-import { campaignResetAtom } from "@/module/campaigns/atoms/campaign";
 import { Button } from "@frak-labs/ui/component/Button";
 import { useSetAtom } from "jotai/index";
 import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { campaignResetAtom } from "@/module/campaigns/atoms/campaign";
 
 export function ButtonNewCampaign() {
     const router = useRouter();

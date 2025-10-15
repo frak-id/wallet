@@ -8,7 +8,9 @@ import type { Hex } from "viem";
  */
 export async function getRolesOnProduct({
     productId,
-}: { productId?: Hex | "" }) {
+}: {
+    productId?: Hex | "";
+}) {
     if (!productId) return undefined;
 
     const stringCookie = (await cookies()).toString();

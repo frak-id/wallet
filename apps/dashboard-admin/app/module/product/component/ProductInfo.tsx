@@ -145,7 +145,9 @@ function GeneralInfo({
 
 function InteractionContractsList({
     contracts,
-}: { contracts: GetProductInfoResponseDto["interactionContracts"] }) {
+}: {
+    contracts: GetProductInfoResponseDto["interactionContracts"];
+}) {
     if (contracts.length === 0) {
         return (
             <Card>
@@ -243,7 +245,9 @@ function InteractionContractsList({
 
 function AdministratorsList({
     administrators,
-}: { administrators: GetProductInfoResponseDto["administrators"] }) {
+}: {
+    administrators: GetProductInfoResponseDto["administrators"];
+}) {
     if (administrators.length === 0) {
         return (
             <Card>

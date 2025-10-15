@@ -1,5 +1,4 @@
-import { mockViemActions } from "./viem";
-import { mockPermissionlessActions } from "./viem";
+import { mockPermissionlessActions, mockViemActions } from "./viem";
 import { mockWebauthn } from "./webauthn";
 
 export function mockAll() {

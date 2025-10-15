@@ -1,19 +1,19 @@
 "use client";
 
-import { campaignAtom } from "@/module/campaigns/atoms/campaign";
-import { campaignStepAtom } from "@/module/campaigns/atoms/steps";
-import { Panel } from "@/module/common/component/Panel";
-import { FormDescription } from "@/module/forms/Form";
-import { interactionTypesInfo } from "@/module/product/utils/interactionTypes";
 import {
     type InteractionTypesKey,
-    type ProductTypesKey,
     interactionTypes,
+    type ProductTypesKey,
 } from "@frak-labs/core-sdk";
 import { Button } from "@frak-labs/ui/component/Button";
 import { useAtomValue, useSetAtom } from "jotai";
 import { useMemo } from "react";
 import { useFormContext } from "react-hook-form";
+import { campaignAtom } from "@/module/campaigns/atoms/campaign";
+import { campaignStepAtom } from "@/module/campaigns/atoms/steps";
+import { Panel } from "@/module/common/component/Panel";
+import { FormDescription } from "@/module/forms/Form";
+import { interactionTypesInfo } from "@/module/product/utils/interactionTypes";
 import { FormTrigger } from "../Generic/FormTrigger";
 import styles from "./FormTriggersCac.module.css";
 

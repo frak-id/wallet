@@ -1,6 +1,6 @@
-import { getSession } from "@/context/auth/actions/session";
-import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
+import { getSession } from "@/context/auth/actions/session";
 
 const RESTRICTED_ROUTES = [
     "/campaigns",

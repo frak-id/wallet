@@ -1,10 +1,10 @@
 import {
-    type Mock,
     afterAll,
     beforeAll,
     describe,
     expect,
     it,
+    type Mock,
     mock,
     spyOn,
 } from "bun:test";

@@ -1,5 +1,5 @@
 import { KernelExecuteAbi } from "@frak-labs/app-essentials";
-import { type Address, type Hex, encodeFunctionData } from "viem";
+import { type Address, encodeFunctionData, type Hex } from "viem";
 
 /**
  * Encode a multicall for a wallet

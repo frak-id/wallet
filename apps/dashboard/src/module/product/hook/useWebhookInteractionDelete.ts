@@ -1,7 +1,7 @@
-import { useWebhookInteractionStatus } from "@/module/product/hook/useWebhookInteractionStatus";
 import { businessApi } from "@frak-labs/client/server";
 import { useMutation } from "@tanstack/react-query";
 import type { Hex } from "viem";
+import { useWebhookInteractionStatus } from "@/module/product/hook/useWebhookInteractionStatus";
 
 /**
  * Hook to delete the webhook interaction

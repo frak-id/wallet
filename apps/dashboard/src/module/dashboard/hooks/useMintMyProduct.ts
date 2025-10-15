@@ -1,13 +1,11 @@
-import { useGetAdminWallet } from "@/module/common/hook/useGetAdminWallet";
-import { useWaitForTxAndInvalidateQueries } from "@/module/common/utils/useWaitForTxAndInvalidateQueries";
 import {
-    type Stablecoin,
     addresses,
     campaignBankAbi,
     interactionValidatorRoles,
     productAdministratorRegistryAbi,
     productInteractionManagerAbi,
     productRoles,
+    type Stablecoin,
 } from "@frak-labs/app-essentials/blockchain";
 import { backendApi, businessApi } from "@frak-labs/client/server";
 import type {
@@ -17,7 +15,9 @@ import type {
 import { useSendTransactionAction } from "@frak-labs/react-sdk";
 import { type UseMutationOptions, useMutation } from "@tanstack/react-query";
 import { useState } from "react";
-import { type Hex, encodeFunctionData } from "viem";
+import { encodeFunctionData, type Hex } from "viem";
+import { useGetAdminWallet } from "@/module/common/hook/useGetAdminWallet";
+import { useWaitForTxAndInvalidateQueries } from "@/module/common/utils/useWaitForTxAndInvalidateQueries";
 
 /**
  * Hook to mint the user product

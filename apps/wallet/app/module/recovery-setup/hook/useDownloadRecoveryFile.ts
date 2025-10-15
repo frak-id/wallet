@@ -1,6 +1,6 @@
+import { useMutation } from "@tanstack/react-query";
 import { recoverySetupKey } from "@/module/recovery-setup/queryKeys/recovery-setup";
 import type { RecoveryFileContent } from "@/types/Recovery";
-import { useMutation } from "@tanstack/react-query";
 
 /**
  * Hook used to trigger the download of the recovery file

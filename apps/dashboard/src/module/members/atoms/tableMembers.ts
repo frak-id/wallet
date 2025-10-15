@@ -1,5 +1,5 @@
-import type { GetMembersParam } from "@/context/members/action/getProductMembers";
 import { atom } from "jotai";
+import type { GetMembersParam } from "@/context/members/action/getProductMembers";
 
 /**
  * Atom to store the table members filters

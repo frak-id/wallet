@@ -1,7 +1,7 @@
-import { isModalDismissedAtom } from "@/module/listener/modal/atoms/modalUtils";
-import { FinalModalActionComponent } from "@/module/listener/modal/component/Final/Action";
 import type { FinalModalStepType } from "@frak-labs/core-sdk";
 import { useAtomValue } from "jotai";
+import { isModalDismissedAtom } from "@/module/listener/modal/atoms/modalUtils";
+import { FinalModalActionComponent } from "@/module/listener/modal/component/Final/Action";
 
 /**
  * The component for the final step of a modal

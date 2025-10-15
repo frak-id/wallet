@@ -1,12 +1,12 @@
+import { useQueries } from "@tanstack/react-query";
+import { useAtomValue } from "jotai";
+import { useMemo } from "react";
+import { useAccount } from "wagmi";
 import { useGetSafeSdkSession } from "@/module/common/hook/useGetSafeSdkSession";
 import { iframeResolvingContextAtom } from "@/module/listener/atoms/resolvingContext";
 import { estimatedInteractionRewardQuery } from "@/module/listener/hooks/useEstimatedInteractionReward";
 import { getProductMetadataQuery } from "@/module/listener/hooks/useGetProductMetadata";
 import { interactionSessionStatusQuery } from "@/module/wallet/hook/useInteractionSessionStatus";
-import { useQueries } from "@tanstack/react-query";
-import { useAtomValue } from "jotai";
-import { useMemo } from "react";
-import { useAccount } from "wagmi";
 
 /**
  * Small hook to preload some listener queries

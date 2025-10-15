@@ -1,5 +1,5 @@
-import { ProductFunding } from "@/module/product/component/Funding";
 import type { Hex } from "viem";
+import { ProductFunding } from "@/module/product/component/Funding";
 
 export default async function ProductFundingPage(props: {
     params: Promise<{ productId: Hex }>;

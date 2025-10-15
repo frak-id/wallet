@@ -1,9 +1,9 @@
-import { trackAuthInitiated } from "@/module/common/analytics";
 import { Spinner } from "@frak-labs/ui/component/Spinner";
 import { cx } from "class-variance-authority";
 import { Cuer } from "cuer";
 import { atom, useAtom, useAtomValue } from "jotai";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { trackAuthInitiated } from "@/module/common/analytics";
 import type { OnPairingSuccessCallback } from "../../clients/origin";
 import { getOriginPairingClient } from "../../clients/store";
 import type { OriginPairingState } from "../../types";
@@ -19,7 +19,9 @@ const showBrighterQRCodeAtom = atom(false);
  */
 export function LaunchPairing({
     onSuccess,
-}: { onSuccess?: OnPairingSuccessCallback }) {
+}: {
+    onSuccess?: OnPairingSuccessCallback;
+}) {
     const [showBrighterQRCode, setShowBrighterQRCode] = useAtom(
         showBrighterQRCodeAtom
     );
@@ -84,11 +86,7 @@ export function LaunchPairing({
     );
 }
 
-function PairingContent({
-    clientState,
-}: {
-    clientState: OriginPairingState;
-}) {
+function PairingContent({ clientState }: { clientState: OriginPairingState }) {
     const pairingInfo = clientState.pairing;
     const [showBrighterQRCode, setShowBrighterQRCode] = useAtom(
         showBrighterQRCodeAtom

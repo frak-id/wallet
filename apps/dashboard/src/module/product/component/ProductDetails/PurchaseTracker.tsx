@@ -1,7 +1,3 @@
-import { Badge } from "@/module/common/component/Badge";
-import { PanelAccordion } from "@/module/common/component/PanelAccordion";
-import { Title } from "@/module/common/component/Title";
-import { useHasRoleOnProduct } from "@/module/common/hook/useHasRoleOnProduct";
 import {
     addresses,
     productAdministratorRegistryAbi,
@@ -11,7 +7,11 @@ import { useSendTransactionAction } from "@frak-labs/react-sdk";
 import { Button } from "@frak-labs/ui/component/Button";
 import { Column, Columns } from "@frak-labs/ui/component/Columns";
 import { Spinner } from "@frak-labs/ui/component/Spinner";
-import { type Address, type Hex, encodeFunctionData } from "viem";
+import { type Address, encodeFunctionData, type Hex } from "viem";
+import { Badge } from "@/module/common/component/Badge";
+import { PanelAccordion } from "@/module/common/component/PanelAccordion";
+import { Title } from "@/module/common/component/Title";
+import { useHasRoleOnProduct } from "@/module/common/hook/useHasRoleOnProduct";
 import { useOracleSetupData } from "../../hook/useOracleSetupData";
 import { useProductMetadata } from "../../hook/useProductMetadata";
 import styles from "./PurchaseTracker.module.css";

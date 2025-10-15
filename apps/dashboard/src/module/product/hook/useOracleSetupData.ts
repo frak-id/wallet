@@ -1,5 +1,3 @@
-import { viemClient } from "@/context/blockchain/provider";
-import { useGetAdminWallet } from "@/module/common/hook/useGetAdminWallet";
 import {
     addresses,
     productAdministratorRegistryAbi,
@@ -9,6 +7,8 @@ import { businessApi } from "@frak-labs/client/server";
 import { useQuery } from "@tanstack/react-query";
 import type { Hex } from "viem";
 import { readContract } from "viem/actions";
+import { viemClient } from "@/context/blockchain/provider";
+import { useGetAdminWallet } from "@/module/common/hook/useGetAdminWallet";
 
 /**
  * Hook to fetch the oracle setup data

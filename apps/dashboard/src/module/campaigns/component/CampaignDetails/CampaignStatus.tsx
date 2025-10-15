@@ -1,3 +1,11 @@
+import {
+    TransactionHash,
+    WalletAddress,
+} from "@frak-labs/ui/component/HashDisplay";
+import type { VariantProps } from "class-variance-authority";
+import { cva } from "class-variance-authority";
+import { useMemo } from "react";
+import type { Address, Hex } from "viem";
 import type { CampaignDocument } from "@/context/campaigns/dto/CampaignDocument";
 import { CampaignBank } from "@/module/campaigns/component/CampaignDetails/CampaignBank";
 import { CampaignDates } from "@/module/campaigns/component/CampaignDetails/CampaignDates";
@@ -5,14 +13,6 @@ import { useGetOnChainCampaignDetails } from "@/module/campaigns/hook/useGetOnCh
 import { Column } from "@/module/common/component/Column";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
-import {
-    TransactionHash,
-    WalletAddress,
-} from "@frak-labs/ui/component/HashDisplay";
-import { cva } from "class-variance-authority";
-import type { VariantProps } from "class-variance-authority";
-import { useMemo } from "react";
-import type { Address, Hex } from "viem";
 import styles from "./CampaignStatus.module.css";
 
 const statusVariants = cva(undefined, {
@@ -32,11 +32,7 @@ type StatusVariantProps = VariantProps<typeof statusVariants>["variant"];
  * @param campaign
  * @constructor
  */
-export function CampaignStatus({
-    campaign,
-}: {
-    campaign: CampaignDocument;
-}) {
+export function CampaignStatus({ campaign }: { campaign: CampaignDocument }) {
     return (
         <Panel title={campaign.title ?? "Campaign information's"}>
             {campaign.state.key !== "created" && (
@@ -54,7 +50,9 @@ export function CampaignStatus({
 
 function OffChainCampaignStatus({
     state,
-}: { state: "draft" | "creationFailed" }) {
+}: {
+    state: "draft" | "creationFailed";
+}) {
     const status = useMemo<{
         label: string;
         variant: StatusVariantProps;
@@ -83,7 +81,10 @@ function OffChainCampaignStatus({
 function OnChainCampaignStatus({
     campaignAddress,
     deploymentTxHash,
-}: { campaignAddress: Address; deploymentTxHash: Hex }) {
+}: {
+    campaignAddress: Address;
+    deploymentTxHash: Hex;
+}) {
     const { data: onChainInfos, isLoading } = useGetOnChainCampaignDetails({
         campaignAddress,
     });

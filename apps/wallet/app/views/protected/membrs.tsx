@@ -1,12 +1,12 @@
-import { Grid } from "@/module/common/component/Grid";
-import { Title } from "@/module/common/component/Title";
-import { Membrs } from "@/module/membrs/assets/Membrs";
-import { userAtom, userSetupLaterAtom } from "@/module/membrs/atoms/user";
 import { Button } from "@frak-labs/ui/component/Button";
 import { useAtomValue } from "jotai";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
+import { Grid } from "@/module/common/component/Grid";
+import { Title } from "@/module/common/component/Title";
+import { Membrs } from "@/module/membrs/assets/Membrs";
+import { userAtom, userSetupLaterAtom } from "@/module/membrs/atoms/user";
 import styles from "./membrs.module.css";
 
 export default function Members() {

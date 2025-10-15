@@ -1,5 +1,10 @@
 "use client";
 
+import { mergeElement } from "@frak-labs/ui/utils/mergeElement";
+import { cx } from "class-variance-authority";
+import dynamic from "next/dynamic";
+import { usePathname, useRouter } from "next/navigation";
+import type { PropsWithChildren, ReactNode } from "react";
 import { Cash } from "@/assets/icons/Cash";
 import { Gear } from "@/assets/icons/Gear";
 import { Home } from "@/assets/icons/Home";
@@ -8,11 +13,6 @@ import { Laptop } from "@/assets/icons/Laptop";
 import { Message } from "@/assets/icons/Message";
 import { Users } from "@/assets/icons/Users";
 import { Wallet } from "@/assets/icons/Wallet";
-import { mergeElement } from "@frak-labs/ui/utils/mergeElement";
-import { cx } from "class-variance-authority";
-import dynamic from "next/dynamic";
-import { usePathname, useRouter } from "next/navigation";
-import type { PropsWithChildren, ReactNode } from "react";
 import styles from "./index.module.css";
 
 /**

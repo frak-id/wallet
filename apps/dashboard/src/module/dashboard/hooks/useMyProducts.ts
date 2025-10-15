@@ -1,6 +1,6 @@
-import { getMyProducts } from "@/context/product/action/getProducts";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
+import { getMyProducts } from "@/context/product/action/getProducts";
 
 /**
  * Hook to get all the current user products

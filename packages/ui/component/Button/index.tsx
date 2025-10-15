@@ -1,5 +1,5 @@
 import { Slot } from "@radix-ui/react-slot";
-import { type VariantProps, cva } from "class-variance-authority";
+import { cva, type VariantProps } from "class-variance-authority";
 import type { ComponentPropsWithRef, ReactNode, RefObject } from "react";
 import { mergeElement } from "../../utils/mergeElement";
 import { Spinner } from "../Spinner";
@@ -98,20 +98,18 @@ export const Button = ({
             type={type}
             {...props}
         >
-            <>
-                {isLoading && <Spinner />}
-                {leftIcon}
-                {asChild
-                    ? mergeElement(children, {
-                          className: buttonVariants({
-                              variant,
-                              size,
-                              className,
-                          }),
-                      })
-                    : children}
-                {rightIcon}
-            </>
+            {isLoading && <Spinner />}
+            {leftIcon}
+            {asChild
+                ? mergeElement(children, {
+                      className: buttonVariants({
+                          variant,
+                          size,
+                          className,
+                      }),
+                  })
+                : children}
+            {rightIcon}
         </Comp>
     );
 };

@@ -1,9 +1,9 @@
-import { Head } from "@/module/common/component/Head";
-import { useProductMetadata } from "@/module/product/hook/useProductMetadata";
 import { Button } from "@frak-labs/ui/component/Button";
 import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { Hex } from "viem";
+import { Head } from "@/module/common/component/Head";
+import { useProductMetadata } from "@/module/product/hook/useProductMetadata";
 
 export function ProductHead({ productId }: { productId: Hex }) {
     const router = useRouter();

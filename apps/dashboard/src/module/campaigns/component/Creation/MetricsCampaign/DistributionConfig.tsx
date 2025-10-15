@@ -1,5 +1,7 @@
 "use client";
 
+import { Slider } from "@frak-labs/ui/component/Slider";
+import type { UseFormReturn } from "react-hook-form";
 import { Badge } from "@/module/common/component/Badge";
 import { Head } from "@/module/common/component/Head";
 import { Panel } from "@/module/common/component/Panel";
@@ -7,13 +9,11 @@ import {
     FormControl,
     FormDescription,
     FormField,
+    FormItem,
     FormLabel,
+    FormMessage,
 } from "@/module/forms/Form";
-import { FormItem } from "@/module/forms/Form";
-import { FormMessage } from "@/module/forms/Form";
 import type { Campaign } from "@/types/Campaign";
-import { Slider } from "@frak-labs/ui/component/Slider";
-import type { UseFormReturn } from "react-hook-form";
 import { Row } from "../../../../common/component/Row";
 import { TriggerConfigurationDetails } from "../Generic/TriggerConfigurationDetails";
 
@@ -25,71 +25,69 @@ export function DistributionConfiguration({
     form: UseFormReturn<Campaign>;
 }) {
     return (
-        <>
-            <Panel title="Set reward amounts">
-                <Head
-                    title={{
-                        content: `Set ${
-                            distributionType === "range" ? "variable" : "fixed"
-                        } reward amounts`,
-                        size: "small",
-                    }}
-                />
-                <FormField
-                    control={form.control}
-                    name="rewardChaining.userPercent"
-                    render={({ field }) => (
-                        <FormItem>
-                            {distributionType === "range" && (
-                                <FormDescription>
-                                    Variable rewards allow you to offer more
-                                    attractive reward amounts to your customers.
-                                    Frak guarantees compliance with your CPA at
-                                    the end of your acquisition campaign. Define
-                                    the reward range and its distribution.
-                                </FormDescription>
-                            )}
-                            {distributionType === "fixed" && (
-                                <FormDescription>
-                                    When your goal is reached, the rewards are
-                                    distributed instantly and automatically to
-                                    the business introducer and the new
-                                    customer, directly into their wallets, in
-                                    the set proportions.
-                                </FormDescription>
-                            )}
-                            <FormLabel>
-                                Repartition{" "}
-                                <Badge variant="primary" size="small">
-                                    {Math.round((field.value ?? 0.1) * 100)}%
-                                </Badge>
-                            </FormLabel>
-                            <FormControl>
-                                <Row>
-                                    <span>Referee</span>
-                                    <Slider
-                                        defaultValue={[0.1]}
-                                        min={0.1}
-                                        max={0.9}
-                                        step={0.05}
-                                        onValueChange={field.onChange}
-                                        value={[field.value ?? 0.1]}
-                                        label="User Percent"
-                                    />
-                                    <span>Referrer</span>
-                                </Row>
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <RangeBudgetMultiplierSlider
-                    distributionType={distributionType}
-                    form={form}
-                />
-                <TriggerConfigurationDetails />
-            </Panel>
-        </>
+        <Panel title="Set reward amounts">
+            <Head
+                title={{
+                    content: `Set ${
+                        distributionType === "range" ? "variable" : "fixed"
+                    } reward amounts`,
+                    size: "small",
+                }}
+            />
+            <FormField
+                control={form.control}
+                name="rewardChaining.userPercent"
+                render={({ field }) => (
+                    <FormItem>
+                        {distributionType === "range" && (
+                            <FormDescription>
+                                Variable rewards allow you to offer more
+                                attractive reward amounts to your customers.
+                                Frak guarantees compliance with your CPA at the
+                                end of your acquisition campaign. Define the
+                                reward range and its distribution.
+                            </FormDescription>
+                        )}
+                        {distributionType === "fixed" && (
+                            <FormDescription>
+                                When your goal is reached, the rewards are
+                                distributed instantly and automatically to the
+                                business introducer and the new customer,
+                                directly into their wallets, in the set
+                                proportions.
+                            </FormDescription>
+                        )}
+                        <FormLabel>
+                            Repartition{" "}
+                            <Badge variant="primary" size="small">
+                                {Math.round((field.value ?? 0.1) * 100)}%
+                            </Badge>
+                        </FormLabel>
+                        <FormControl>
+                            <Row>
+                                <span>Referee</span>
+                                <Slider
+                                    defaultValue={[0.1]}
+                                    min={0.1}
+                                    max={0.9}
+                                    step={0.05}
+                                    onValueChange={field.onChange}
+                                    value={[field.value ?? 0.1]}
+                                    label="User Percent"
+                                />
+                                <span>Referrer</span>
+                            </Row>
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+            <RangeBudgetMultiplierSlider
+                distributionType={distributionType}
+                form={form}
+            />
+            <TriggerConfigurationDetails />
+        </Panel>
     );
 }
 

@@ -1,4 +1,3 @@
-import { Panel } from "@/module/common/component/Panel";
 import type {
     LoginModalStepType,
     ModalRpcStepsResultType,
@@ -9,6 +8,7 @@ import { Button } from "@frak-labs/ui/component/Button";
 import { BadgeCheck } from "lucide-react";
 import { useMemo } from "react";
 import { parseSiweMessage } from "viem/siwe";
+import { Panel } from "@/module/common/component/Panel";
 
 export function WalletLogin() {
     const {

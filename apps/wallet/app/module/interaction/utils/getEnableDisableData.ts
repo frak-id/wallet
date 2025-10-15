@@ -1,11 +1,11 @@
-import { setExecutionAbi } from "@/module/recovery/utils/abi";
-import { encodeWalletMulticall } from "@/module/wallet/utils/multicall";
 import {
     addresses,
     sendInteractionSelector,
     sendInteractionsSelector,
 } from "@frak-labs/app-essentials";
-import { type Address, type Hex, encodeFunctionData, zeroAddress } from "viem";
+import { type Address, encodeFunctionData, type Hex, zeroAddress } from "viem";
+import { setExecutionAbi } from "@/module/recovery/utils/abi";
+import { encodeWalletMulticall } from "@/module/wallet/utils/multicall";
 
 /**
  * Get an interaction session enable data
@@ -14,7 +14,10 @@ import { type Address, type Hex, encodeFunctionData, zeroAddress } from "viem";
 export function getEnableSessionData({
     sessionEnd,
     wallet,
-}: { sessionEnd: Date; wallet: Address }): Hex {
+}: {
+    sessionEnd: Date;
+    wallet: Address;
+}): Hex {
     // Get allowed after (date.now / 1000) and  until
     const start = Math.floor(Date.now() / 1000);
     const end = Math.floor(sessionEnd.getTime() / 1000);

@@ -1,8 +1,8 @@
 "use client";
 
-import { PanelAccordion } from "@/module/common/component/PanelAccordion";
 import { ButtonAuth } from "@frak-labs/ui/component/ButtonAuth";
 import type { Hex } from "viem";
+import { PanelAccordion } from "@/module/common/component/PanelAccordion";
 import styles from "./index.module.css";
 
 interface RegistrationPanelProps {

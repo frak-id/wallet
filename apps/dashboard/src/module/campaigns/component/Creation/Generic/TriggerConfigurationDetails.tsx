@@ -1,14 +1,14 @@
 "use client";
 
+import type { InteractionTypesKey } from "@frak-labs/core-sdk";
+import { useMemo } from "react";
+import { useFormContext } from "react-hook-form";
 import { Info } from "@/assets/icons/Info";
 import { Badge } from "@/module/common/component/Badge";
 import { Panel } from "@/module/common/component/Panel";
 import { Row } from "@/module/common/component/Row";
 import { interactionTypesInfo } from "@/module/product/utils/interactionTypes";
 import type { Campaign, CampaignTrigger } from "@/types/Campaign";
-import type { InteractionTypesKey } from "@frak-labs/core-sdk";
-import { useMemo } from "react";
-import { useFormContext } from "react-hook-form";
 import styles from "./TriggerConfigurationDetails.module.css";
 
 type TriggerDetails = {
@@ -279,7 +279,10 @@ function computeRewards({
 function extractConversions({
     budget,
     cac,
-}: { budget: Campaign["budget"]; cac: number }) {
+}: {
+    budget: Campaign["budget"];
+    cac: number;
+}) {
     if (!budget?.type) {
         return [];
     }

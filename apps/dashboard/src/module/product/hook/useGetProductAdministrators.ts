@@ -1,7 +1,7 @@
-import { getProductAdministrators } from "@/context/product/action/getAdministrators";
 import { useWalletStatus } from "@frak-labs/react-sdk";
 import { useQuery } from "@tanstack/react-query";
 import { type Hex, isAddressEqual, toHex } from "viem";
+import { getProductAdministrators } from "@/context/product/action/getAdministrators";
 
 export function useGetProductAdministrators({ productId }: { productId: Hex }) {
     const { data: walletStatus } = useWalletStatus();

@@ -1,8 +1,8 @@
 "use client";
 
-import { campaignActionAtom } from "@/module/campaigns/atoms/campaign";
 import { useSetAtom } from "jotai";
 import { type PropsWithChildren, useEffect } from "react";
+import { campaignActionAtom } from "@/module/campaigns/atoms/campaign";
 
 /**
  * Campaign create component

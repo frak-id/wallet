@@ -1,5 +1,3 @@
-import { preferredCurrencyAtom } from "@/module/common/atoms/currency";
-import type { Campaign } from "@/types/Campaign";
 import {
     InputNumber,
     type InputNumberProps,
@@ -7,6 +5,8 @@ import {
 import { useAtomValue } from "jotai";
 import { useMemo } from "react";
 import { useFormContext } from "react-hook-form";
+import { preferredCurrencyAtom } from "@/module/common/atoms/currency";
+import type { Campaign } from "@/types/Campaign";
 
 export function InputAmount({ ...props }: InputNumberProps) {
     const preferredCurrency = useAtomValue(preferredCurrencyAtom);

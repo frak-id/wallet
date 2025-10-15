@@ -5,7 +5,10 @@ import styles from "./index.module.css";
 export function TokenLogo({
     token,
     size = 24,
-}: { token?: BalanceItem; size?: number }) {
+}: {
+    token?: BalanceItem;
+    size?: number;
+}) {
     return (
         token && (
             <span className={styles.tokenLogo}>

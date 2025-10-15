@@ -1,11 +1,11 @@
-import { recoverySetupKey } from "@/module/recovery-setup/queryKeys/recovery-setup";
-import { encryptPrivateKey } from "@/module/recovery-setup/utils/encrypt";
-import { generateRecoveryData } from "@/module/recovery/action/generate";
-import type { RecoveryFileContent } from "@/types/Recovery";
-import type { WebAuthNWallet } from "@/types/WebAuthN";
 import { useMutation } from "@tanstack/react-query";
 import { type Hex, isAddressEqual } from "viem";
 import { generatePrivateKey, privateKeyToAddress } from "viem/accounts";
+import { generateRecoveryData } from "@/module/recovery/action/generate";
+import { recoverySetupKey } from "@/module/recovery-setup/queryKeys/recovery-setup";
+import { encryptPrivateKey } from "@/module/recovery-setup/utils/encrypt";
+import type { RecoveryFileContent } from "@/types/Recovery";
+import type { WebAuthNWallet } from "@/types/WebAuthN";
 
 /**
  * Generate the recovery file

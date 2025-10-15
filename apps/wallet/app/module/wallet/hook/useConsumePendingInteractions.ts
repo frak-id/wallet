@@ -1,3 +1,6 @@
+import { useMutation } from "@tanstack/react-query";
+import { useAtomValue, useSetAtom } from "jotai";
+import { useAccount } from "wagmi";
 import { authenticatedWalletApi } from "@/module/common/api/backendClient";
 import { useGetSafeSdkSession } from "@/module/common/hook/useGetSafeSdkSession";
 import { pushBackupData } from "@/module/sdk/utils/backup";
@@ -6,9 +9,6 @@ import {
     pendingInteractionAtom,
 } from "@/module/wallet/atoms/pendingInteraction";
 import { interactionsKey } from "@/module/wallet/queryKeys/interactions";
-import { useMutation } from "@tanstack/react-query";
-import { useAtomValue, useSetAtom } from "jotai";
-import { useAccount } from "wagmi";
 
 /**
  * Hook used to consume the pending interactions

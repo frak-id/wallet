@@ -1,3 +1,9 @@
+import { WebAuthN } from "@frak-labs/app-essentials";
+import { jotaiStore } from "@frak-labs/ui/atoms/store";
+import { startAuthentication } from "@simplewebauthn/browser";
+import { generateAuthenticationOptions } from "@simplewebauthn/server";
+import type { UseMutationOptions } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { addLastAuthenticationAtom } from "@/module/authentication/atoms/lastAuthenticator";
 import { authKey } from "@/module/authentication/queryKeys/auth";
 import { authenticatedWalletApi } from "@/module/common/api/backendClient";
@@ -6,12 +12,6 @@ import { lastWebAuthNActionAtom } from "@/module/common/atoms/webauthn";
 import type { PreviousAuthenticatorModel } from "@/module/common/storage/dexie/PreviousAuthenticatorModel";
 import { userAtom } from "@/module/membrs/atoms/user";
 import type { Session } from "@/types/Session";
-import { WebAuthN } from "@frak-labs/app-essentials";
-import { jotaiStore } from "@frak-labs/ui/atoms/store";
-import { startAuthentication } from "@simplewebauthn/browser";
-import { generateAuthenticationOptions } from "@simplewebauthn/server";
-import { useMutation } from "@tanstack/react-query";
-import type { UseMutationOptions } from "@tanstack/react-query";
 import { trackAuthCompleted, trackAuthInitiated } from "../../common/analytics";
 
 /**

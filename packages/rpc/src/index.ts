@@ -53,66 +53,60 @@
  * @module @frak-labs/frame-connector
  */
 
+export type { RpcClient, RpcClientConfig } from "./client";
 // Core client and listener
 export { createRpcClient } from "./client";
-export type { RpcClient, RpcClientConfig } from "./client";
-
-export { createRpcListener } from "./listener";
-export type { RpcListener, RpcListenerConfig } from "./listener";
-
-// Generic RPC Schema types
-export type {
-    RpcSchema,
-    RpcSchemaEntry,
-    ExtractMethod,
-    ExtractSchemaEntry,
-    ExtractParams,
-    ExtractReturnType,
-    ExtractedParametersFromRpc,
-} from "./rpc-schema";
-
-// Transport and messaging types
-export type {
-    RpcTransport,
-    RpcMessage,
-    RpcResponse,
-    RpcError,
-    RpcRequestContext,
-    RpcMiddlewareContext,
-    RpcMiddleware,
-    TypedRpcRequest,
-    StreamEmitter,
-    RpcPromiseHandler,
-    RpcStreamHandler,
-    // New message types
-    LifecycleMessage,
-    ClientLifecycleMessage,
-    IFrameLifecycleMessage,
-    AnyMessage,
-    LifecycleHandler,
-} from "./types";
-
 export {
-    FrakRpcError,
-    MethodNotFoundError,
-    InternalError,
     ClientNotFound,
+    FrakRpcError,
+    InternalError,
+    MethodNotFoundError,
     RpcErrorCodes,
 } from "./error";
-
+export type { RpcListener, RpcListenerConfig } from "./listener";
+export { createRpcListener } from "./listener";
 // Built-in middleware
 export {
     createClientCompressionMiddleware,
     createListenerCompressionMiddleware,
 } from "./middleware";
-
+// Generic RPC Schema types
+export type {
+    ExtractedParametersFromRpc,
+    ExtractMethod,
+    ExtractParams,
+    ExtractReturnType,
+    ExtractSchemaEntry,
+    RpcSchema,
+    RpcSchemaEntry,
+} from "./rpc-schema";
+// Transport and messaging types
+export type {
+    AnyMessage,
+    ClientLifecycleMessage,
+    IFrameLifecycleMessage,
+    LifecycleHandler,
+    // New message types
+    LifecycleMessage,
+    RpcError,
+    RpcMessage,
+    RpcMiddleware,
+    RpcMiddlewareContext,
+    RpcPromiseHandler,
+    RpcRequestContext,
+    RpcResponse,
+    RpcStreamHandler,
+    RpcTransport,
+    StreamEmitter,
+    TypedRpcRequest,
+} from "./types";
+export {
+    type CompressedData,
+    compressJson,
+    decompressDataAndCheckHash,
+    decompressJson,
+    type HashProtectedData,
+    hashAndCompressData,
+} from "./utils/compression";
 // Utils helpers
 export { Deferred } from "./utils/deferred-promise";
-export {
-    compressJson,
-    decompressJson,
-    decompressDataAndCheckHash,
-    hashAndCompressData,
-    type CompressedData,
-    type HashProtectedData,
-} from "./utils/compression";

@@ -1,19 +1,19 @@
-import { currentChain } from "@/module/blockchain/provider";
-import { authenticatedWalletApi } from "@/module/common/api/backendClient";
-import { useEnforceWagmiConnection } from "@/module/common/hook/useEnforceWagmiConnection";
-import { subscriptionAtom } from "@/module/notification/atom/subscriptionAtom";
-import { smartAccountConnector } from "@/module/wallet/smartWallet/connector";
 import { getTransport } from "@frak-labs/app-essentials/blockchain";
 import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import type { PersistQueryClientProviderProps } from "@tanstack/react-query-persist-client";
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { Provider } from "jotai";
 import { type PropsWithChildren, useEffect, useMemo } from "react";
 import { createClient } from "viem";
-import { WagmiProvider, createConfig, useAccount } from "wagmi";
+import { createConfig, useAccount, WagmiProvider } from "wagmi";
+import { currentChain } from "@/module/blockchain/provider";
+import { authenticatedWalletApi } from "@/module/common/api/backendClient";
+import { useEnforceWagmiConnection } from "@/module/common/hook/useEnforceWagmiConnection";
+import { subscriptionAtom } from "@/module/notification/atom/subscriptionAtom";
+import { smartAccountConnector } from "@/module/wallet/smartWallet/connector";
 import { usePersistentPairingClient } from "../../pairing/hook/usePersistentPairingClient";
 import { setProfileId } from "../analytics";
 
@@ -55,23 +55,21 @@ const persistOptions: PersistQueryClientProviderProps["persistOptions"] = {
 
 export function RootProvider({ children }: PropsWithChildren) {
     return (
-        <>
-            <Provider store={jotaiStore}>
-                <PersistQueryClientProvider
-                    client={queryClient}
-                    persistOptions={persistOptions}
-                >
-                    <SetupServiceWorker />
-                    <WagmiProviderWithDynamicConfig>
-                        {children}
-                    </WagmiProviderWithDynamicConfig>
-                    <ReactQueryDevtools
-                        initialIsOpen={false}
-                        buttonPosition={"top-right"}
-                    />
-                </PersistQueryClientProvider>
-            </Provider>
-        </>
+        <Provider store={jotaiStore}>
+            <PersistQueryClientProvider
+                client={queryClient}
+                persistOptions={persistOptions}
+            >
+                <SetupServiceWorker />
+                <WagmiProviderWithDynamicConfig>
+                    {children}
+                </WagmiProviderWithDynamicConfig>
+                <ReactQueryDevtools
+                    initialIsOpen={false}
+                    buttonPosition={"top-right"}
+                />
+            </PersistQueryClientProvider>
+        </Provider>
     );
 }
 

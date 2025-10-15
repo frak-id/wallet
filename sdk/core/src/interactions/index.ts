@@ -1,5 +1,5 @@
 export { PressInteractionEncoder } from "./pressEncoder";
-export { ReferralInteractionEncoder } from "./referralEncoder";
 export { PurchaseInteractionEncoder } from "./purchaseEncoder";
-export { WebShopInteractionEncoder } from "./webshopEncoder";
+export { ReferralInteractionEncoder } from "./referralEncoder";
 export { RetailInteractionEncoder } from "./retailEncoder";
+export { WebShopInteractionEncoder } from "./webshopEncoder";

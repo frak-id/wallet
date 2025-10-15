@@ -1,5 +1,13 @@
 "use client";
 
+import { type ProductTypesKey, productTypesMask } from "@frak-labs/core-sdk";
+import { Button } from "@frak-labs/ui/component/Button";
+import { Column, Columns } from "@frak-labs/ui/component/Columns";
+import { Input, type InputProps } from "@frak-labs/ui/component/forms/Input";
+import { Pencil } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
+import type { Hex } from "viem";
 import { ActionsMessageSuccess } from "@/module/campaigns/component/Actions";
 import { Panel } from "@/module/common/component/Panel";
 import { Row } from "@/module/common/component/Row";
@@ -20,14 +28,6 @@ import { ProductHead } from "@/module/product/component/ProductHead";
 import { useEditProduct } from "@/module/product/hook/useEditProduct";
 import { useProductMetadata } from "@/module/product/hook/useProductMetadata";
 import { productTypesLabel } from "@/module/product/utils/productTypes";
-import { type ProductTypesKey, productTypesMask } from "@frak-labs/core-sdk";
-import { Button } from "@frak-labs/ui/component/Button";
-import { Column, Columns } from "@frak-labs/ui/component/Columns";
-import { Input, type InputProps } from "@frak-labs/ui/component/forms/Input";
-import { Pencil } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
-import type { Hex } from "viem";
 import styles from "./index.module.css";
 
 type FormProduct = {
@@ -65,7 +65,7 @@ export function ProductDetails({ productId }: { productId: Hex }) {
     useEffect(() => {
         if (!editProductSuccess) return;
         form.reset(form.getValues());
-    }, [editProductSuccess, form.reset, form.getValues]);
+    }, [editProductSuccess, form.reset, form.getValues, form]);
 
     /**
      * Launch the mutation to edit the product

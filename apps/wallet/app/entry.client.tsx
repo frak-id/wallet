@@ -1,10 +1,3 @@
-import {
-    defaultNS,
-    fallbackLng,
-    interpolation,
-    resources,
-    supportedLngs,
-} from "@/i18n/config";
 import { isRunningLocally } from "@frak-labs/app-essentials";
 import i18next from "i18next";
 import I18nextBrowserLanguageDetector from "i18next-browser-languagedetector";
@@ -12,6 +5,13 @@ import { StrictMode, startTransition } from "react";
 import { hydrateRoot } from "react-dom/client";
 import { I18nextProvider, initReactI18next } from "react-i18next";
 import { HydratedRouter } from "react-router/dom";
+import {
+    defaultNS,
+    fallbackLng,
+    interpolation,
+    resources,
+    supportedLngs,
+} from "@/i18n/config";
 
 async function main() {
     await i18next

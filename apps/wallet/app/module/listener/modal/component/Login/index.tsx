@@ -1,3 +1,8 @@
+import type { LoginModalStepType } from "@frak-labs/core-sdk";
+import { Spinner } from "@frak-labs/ui/component/Spinner";
+import { prefixModalCss } from "@frak-labs/ui/utils/prefixModalCss";
+import { useAtomValue } from "jotai";
+import { useEffect, useMemo } from "react";
 import { useLogin } from "@/module/authentication/hook/useLogin";
 import { sessionAtom } from "@/module/common/atoms/session";
 import { isWebAuthNSupported } from "@/module/common/lib/webauthn";
@@ -10,11 +15,6 @@ import {
     useListenerTranslation,
     useModalListenerUI,
 } from "@/module/listener/providers/ListenerUiProvider";
-import type { LoginModalStepType } from "@frak-labs/core-sdk";
-import { Spinner } from "@frak-labs/ui/component/Spinner";
-import { prefixModalCss } from "@frak-labs/ui/utils/prefixModalCss";
-import { useAtomValue } from "jotai";
-import { useEffect, useMemo } from "react";
 import { AuthenticateWithPhone } from "../AuthenticateWithPhone";
 
 /**

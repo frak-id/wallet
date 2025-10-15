@@ -1,3 +1,11 @@
+import { jotaiStore } from "@frak-labs/ui/atoms/store";
+import {
+    createSmartAccountClient,
+    type SmartAccountClient,
+} from "permissionless";
+import { getUserOperationGasPrice } from "permissionless/actions/pimlico";
+import type { Address, Hex, Transport } from "viem";
+import type { SmartAccount } from "viem/account-abstraction";
 import {
     getPimlicoClient,
     getPimlicoTransport,
@@ -9,16 +17,8 @@ import { frakEcdsaWalletSmartAccount } from "@/module/wallet/smartWallet/FrakEcd
 import { frakWalletSmartAccount } from "@/module/wallet/smartWallet/FrakSmartWallet";
 import type { DistantWebAuthnWallet, EcdsaWallet } from "@/types/Session";
 import type { WebAuthNWallet } from "@/types/WebAuthN";
-import { jotaiStore } from "@frak-labs/ui/atoms/store";
-import {
-    type SmartAccountClient,
-    createSmartAccountClient,
-} from "permissionless";
-import { getUserOperationGasPrice } from "permissionless/actions/pimlico";
-import type { Address, Hex, Transport } from "viem";
-import type { SmartAccount } from "viem/account-abstraction";
-import { frakPairedWalletSmartAccount } from "./FrakPairedSmartWallet";
 import type { BaseFrakSmartAccount } from "./baseFrakWallet";
+import { frakPairedWalletSmartAccount } from "./FrakPairedSmartWallet";
 import { signHashViaWebAuthN } from "./signature";
 
 /**

@@ -1,3 +1,6 @@
+import { useEffect, useMemo } from "react";
+import { useFormContext } from "react-hook-form";
+import { toHex } from "viem";
 import { Badge } from "@/module/common/component/Badge";
 import { Panel } from "@/module/common/component/Panel";
 import { useConvertToPreferredCurrency } from "@/module/common/hook/useConversionRate";
@@ -20,9 +23,6 @@ import {
 } from "@/module/product/hook/useGetProductFunding";
 import { currencyOptions } from "@/module/product/utils/currencyOptions";
 import type { Campaign } from "@/types/Campaign";
-import { useEffect, useMemo } from "react";
-import { useFormContext } from "react-hook-form";
-import { toHex } from "viem";
 
 export function FormBank() {
     const { watch, setValue, control } = useFormContext<Campaign>();

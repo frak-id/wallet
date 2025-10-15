@@ -5,17 +5,20 @@ import {
     productRegistry_getMetadata,
     productRegistry_mint,
 } from "@backend-utils";
-import { addresses, stringToBytes32 } from "@frak-labs/app-essentials";
-import { getTokenAddressForStablecoin } from "@frak-labs/app-essentials";
+import {
+    addresses,
+    getTokenAddressForStablecoin,
+    stringToBytes32,
+} from "@frak-labs/app-essentials";
 import type { Stablecoin } from "@frak-labs/app-essentials/blockchain";
 import type { ProductTypesKey } from "@frak-labs/core-sdk";
 import { productTypesMask } from "@frak-labs/core-sdk";
 import type { Mutex } from "async-mutex";
 import {
     type Address,
-    type LocalAccount,
     isAddressEqual,
     keccak256,
+    type LocalAccount,
     toHex,
     zeroAddress,
 } from "viem";
@@ -162,7 +165,11 @@ export class MintRepository {
         productId,
         minter,
         lock,
-    }: { productId: bigint; minter: LocalAccount; lock: Mutex }) {
+    }: {
+        productId: bigint;
+        minter: LocalAccount;
+        lock: Mutex;
+    }) {
         try {
             const result = await lock.runExclusive(async () => {
                 // Prepare the deployment data

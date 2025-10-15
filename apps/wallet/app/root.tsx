@@ -1,18 +1,18 @@
-import { TopLoader } from "@/module/common/component/TopLoader";
-import { RootProvider } from "@/module/common/provider/RootProvider";
-import { ReactScanWrapper } from "@/module/root/component/ReactScanWrapper";
-import { rootConfig } from "@/module/root/config";
-import { DetectPWA } from "@/module/wallet/component/DetectPWA";
 import { Spinner } from "@frak-labs/ui/component/Spinner";
 import type { ReactNode } from "react";
 import {
+    isRouteErrorResponse,
     Links,
     Meta,
     Outlet,
     Scripts,
     ScrollRestoration,
-    isRouteErrorResponse,
 } from "react-router";
+import { TopLoader } from "@/module/common/component/TopLoader";
+import { RootProvider } from "@/module/common/provider/RootProvider";
+import { ReactScanWrapper } from "@/module/root/component/ReactScanWrapper";
+import { rootConfig } from "@/module/root/config";
+import { DetectPWA } from "@/module/wallet/component/DetectPWA";
 import type { Route } from "./+types/root";
 import {
     PwaInstall,

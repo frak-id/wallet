@@ -15,7 +15,9 @@ type ApiResult = {
  */
 export async function getProductAdministrators({
     productId,
-}: { productId: Hex }) {
+}: {
+    productId: Hex;
+}) {
     console.log(productId);
     // Get our api results
     const json = await indexerApi

@@ -1,3 +1,7 @@
+import { useMediaQuery } from "@frak-labs/ui/hook/useMediaQuery";
+import { ChevronDown, ChevronUp } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import { Laptop } from "@/assets/icons/Laptop";
 import {
     Collapsible,
@@ -9,10 +13,6 @@ import {
     NavigationLabel,
     SubNavigationItem,
 } from "@/module/common/component/Navigation";
-import { useMediaQuery } from "@frak-labs/ui/hook/useMediaQuery";
-import { ChevronDown, ChevronUp } from "lucide-react";
-import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
 
 export function NavigationCampaignsSwitcher() {
     const isMobile = useMediaQuery("(max-width : 768px)");

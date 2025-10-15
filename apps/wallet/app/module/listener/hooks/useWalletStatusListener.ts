@@ -1,11 +1,3 @@
-import { sdkSessionAtom, sessionAtom } from "@/module/common/atoms/session";
-import type { WalletRpcContext } from "@/module/listener/types/context";
-import {
-    getSafeSdkSession,
-    getSafeSession,
-} from "@/module/listener/utils/localStorage";
-import { pushBackupData } from "@/module/sdk/utils/backup";
-import { interactionSessionStatusQuery } from "@/module/wallet/hook/useInteractionSessionStatus";
 import type {
     IFrameRpcSchema,
     WalletStatusReturnType,
@@ -18,6 +10,14 @@ import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { useQueryClient } from "@tanstack/react-query";
 import { atom, useAtomValue } from "jotai";
 import { useCallback, useEffect, useRef } from "react";
+import { sdkSessionAtom, sessionAtom } from "@/module/common/atoms/session";
+import type { WalletRpcContext } from "@/module/listener/types/context";
+import {
+    getSafeSdkSession,
+    getSafeSession,
+} from "@/module/listener/utils/localStorage";
+import { pushBackupData } from "@/module/sdk/utils/backup";
+import { interactionSessionStatusQuery } from "@/module/wallet/hook/useInteractionSessionStatus";
 
 type OnListenToWallet = RpcStreamHandler<
     IFrameRpcSchema,

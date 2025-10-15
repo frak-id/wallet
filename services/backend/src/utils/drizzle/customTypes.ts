@@ -1,5 +1,5 @@
 import { customType } from "drizzle-orm/pg-core";
-import { type Hex, bytesToHex, hexToBytes } from "viem";
+import { bytesToHex, type Hex, hexToBytes } from "viem";
 
 /**
  * Custom fierld used to store hex values

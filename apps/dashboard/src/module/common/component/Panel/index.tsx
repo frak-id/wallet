@@ -1,8 +1,8 @@
-import { Title } from "@/module/common/component/Title";
-import { cva } from "class-variance-authority";
 import type { VariantProps } from "class-variance-authority";
+import { cva } from "class-variance-authority";
 import { BadgeCheck } from "lucide-react";
 import type { ComponentPropsWithRef } from "react";
+import { Title } from "@/module/common/component/Title";
 import styles from "./index.module.css";
 
 export type PanelProps = ComponentPropsWithRef<"div"> &
@@ -49,7 +49,10 @@ export const Panel = ({
 export function PanelTitle({
     withBadge = true,
     title,
-}: { withBadge?: boolean; title?: string }) {
+}: {
+    withBadge?: boolean;
+    title?: string;
+}) {
     return (
         title && (
             <Title

@@ -2,9 +2,9 @@ import type { Treaty } from "@elysiajs/eden";
 import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import {
     type Atom,
+    atom,
     type SetStateAction,
     type WritableAtom,
-    atom,
 } from "jotai/vanilla";
 import { authenticatedWalletApi } from "../../common/api/backendClient";
 import {

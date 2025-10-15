@@ -82,7 +82,9 @@ export class AdminWalletsRepository {
      */
     public async getProductSpecificAccount({
         productId,
-    }: { productId: bigint }) {
+    }: {
+        productId: bigint;
+    }) {
         const pkey = await this.getDerivedKey(toHex(productId));
         return privateKeyToAccount(pkey);
     }
@@ -102,11 +104,7 @@ export class AdminWalletsRepository {
     /**
      * Get an account specific to a key
      */
-    public getMutexForAccount({
-        key,
-    }: {
-        key: AccountPredefinedKeys;
-    }) {
+    public getMutexForAccount({ key }: { key: AccountPredefinedKeys }) {
         const lock = this.mutexLocks.get(key);
         if (lock) {
             return lock;

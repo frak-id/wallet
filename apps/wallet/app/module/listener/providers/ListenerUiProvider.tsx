@@ -1,6 +1,3 @@
-import { iframeResolvingContextAtom } from "@/module/listener/atoms/resolvingContext";
-import { useEstimatedInteractionReward } from "@/module/listener/hooks/useEstimatedInteractionReward";
-import { emitLifecycleEvent } from "@/module/sdk/utils/lifecycleEvents";
 import type {
     Currency,
     DisplayEmbeddedWalletParamsType,
@@ -20,17 +17,20 @@ import type {
     ExtractReturnType,
     RpcResponse,
 } from "@frak-labs/frame-connector";
-import type { TOptions, i18n } from "i18next";
+import type { i18n, TOptions } from "i18next";
 import { useAtomValue } from "jotai";
 import {
-    type PropsWithChildren,
     createContext,
+    type PropsWithChildren,
     useCallback,
     useContext,
     useMemo,
     useState,
 } from "react";
 import { useTranslation } from "react-i18next";
+import { iframeResolvingContextAtom } from "@/module/listener/atoms/resolvingContext";
+import { useEstimatedInteractionReward } from "@/module/listener/hooks/useEstimatedInteractionReward";
+import { emitLifecycleEvent } from "@/module/sdk/utils/lifecycleEvents";
 import {
     mapI18nConfig,
     translationKeyPathToObject,

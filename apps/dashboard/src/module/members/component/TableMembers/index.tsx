@@ -1,5 +1,20 @@
 "use client";
 
+import type { GetMembersPageItem } from "@frak-labs/app-essentials";
+import { Button } from "@frak-labs/ui/component/Button";
+import { Checkbox } from "@frak-labs/ui/component/forms/Checkbox";
+import { WalletAddress } from "@frak-labs/ui/component/HashDisplay";
+import { Skeleton } from "@frak-labs/ui/component/Skeleton";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import {
+    type ColumnDef,
+    createColumnHelper,
+    type SortingState,
+} from "@tanstack/react-table";
+import { useAtom, useSetAtom } from "jotai";
+import dynamic from "next/dynamic";
+import { useEffect, useMemo, useState } from "react";
+import { formatEther, isAddressEqual } from "viem";
 import {
     type GetMembersParam,
     getProductMembers,
@@ -14,21 +29,6 @@ import {
 import { tableMembersFiltersAtom } from "@/module/members/atoms/tableMembers";
 import { TableMembersFilters } from "@/module/members/component/TableMembers/Filters";
 import { Pagination } from "@/module/members/component/TableMembers/Pagination";
-import type { GetMembersPageItem } from "@frak-labs/app-essentials";
-import { Button } from "@frak-labs/ui/component/Button";
-import { WalletAddress } from "@frak-labs/ui/component/HashDisplay";
-import { Skeleton } from "@frak-labs/ui/component/Skeleton";
-import { Checkbox } from "@frak-labs/ui/component/forms/Checkbox";
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import {
-    type ColumnDef,
-    type SortingState,
-    createColumnHelper,
-} from "@tanstack/react-table";
-import { useAtom, useSetAtom } from "jotai";
-import dynamic from "next/dynamic";
-import { useEffect, useMemo, useState } from "react";
-import { formatEther, isAddressEqual } from "viem";
 import styles from "./index.module.css";
 
 const Table = dynamic<ReactTableProps<GetMembersPageItem>>(
@@ -149,7 +149,7 @@ export function TableMembers() {
                     header: () => "Member from",
                     cell: ({ getValue }) =>
                         new Date(
-                            Number.parseInt(getValue()) * 1000
+                            Number.parseInt(getValue(), 10) * 1000
                         ).toLocaleDateString(),
                 }),
                 columnHelper.accessor("totalInteractions", {

@@ -1,3 +1,7 @@
+import { Checkbox } from "@frak-labs/ui/component/forms/Checkbox";
+import { format, startOfDay } from "date-fns";
+import { memo, useEffect, useState } from "react";
+import { useFormContext, useWatch } from "react-hook-form";
 import { ButtonCalendar } from "@/module/common/component/ButtonCalendar";
 import { Calendar } from "@/module/common/component/Calendar";
 import {
@@ -15,16 +19,15 @@ import {
     FormMessage,
 } from "@/module/forms/Form";
 import type { FormMembersFiltering } from "@/module/members/component/MembersFiltering";
-import { Checkbox } from "@frak-labs/ui/component/forms/Checkbox";
-import { format, startOfDay } from "date-fns";
-import { memo, useEffect, useState } from "react";
-import { useFormContext, useWatch } from "react-hook-form";
 import styles from "./index.module.css";
 
 export const MembershipDateFiltering = memo(function MembershipDateFiltering({
     disabled,
     onSubmit,
-}: { disabled?: boolean; onSubmit: (data: FormMembersFiltering) => void }) {
+}: {
+    disabled?: boolean;
+    onSubmit: (data: FormMembersFiltering) => void;
+}) {
     const { control, handleSubmit, setValue } =
         useFormContext<FormMembersFiltering>();
     const currentFirstInteractionTimestamp = useWatch({
@@ -61,7 +64,7 @@ export const MembershipDateFiltering = memo(function MembershipDateFiltering({
                             "firstInteractionTimestamp",
                             checked
                                 ? {
-                                      min: new Date().getTime() / 1000,
+                                      min: Date.now() / 1000,
                                       max: undefined,
                                   }
                                 : undefined

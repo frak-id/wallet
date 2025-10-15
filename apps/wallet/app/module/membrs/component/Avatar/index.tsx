@@ -1,7 +1,7 @@
+import { useAtomValue } from "jotai";
 import { uploadProfilePhotoAtom } from "@/module/membrs/atoms/uploadProfilePhoto";
 import { userAtom } from "@/module/membrs/atoms/user";
 import { AvatarModal } from "@/module/membrs/component/AvatarModal";
-import { useAtomValue } from "jotai";
 import defaultAvatar from "./assets/avatar.png?url";
 import styles from "./index.module.css";
 

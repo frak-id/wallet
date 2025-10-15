@@ -145,7 +145,7 @@ export class MockedWebAuthNHelper {
                         throw new Error("No challenge found");
                     }
                     // Get the initial credential response via browser call
-                    // @ts-ignore
+                    // @ts-expect-error
                     const response = (await window.credentialsCreate(
                         options,
                         credentialProps,
@@ -202,7 +202,7 @@ export class MockedWebAuthNHelper {
                         throw new Error("No challenge found");
                     }
                     // Get the initial credential response via browser call
-                    // @ts-ignore
+                    // @ts-expect-error
                     const response = (await window.credentialsGet(
                         options,
                         credentialProps,

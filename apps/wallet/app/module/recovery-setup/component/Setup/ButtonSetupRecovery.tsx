@@ -1,15 +1,18 @@
-import { currentChain } from "@/module/blockchain/provider";
-import { useSetupRecovery } from "@/module/recovery-setup/hook/useSetupRecovery";
-import { recoveryOptionsAtom } from "@/module/settings/atoms/recovery";
 import { Button } from "@frak-labs/ui/component/Button";
 import { useAtomValue } from "jotai";
 import { Check, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { currentChain } from "@/module/blockchain/provider";
+import { useSetupRecovery } from "@/module/recovery-setup/hook/useSetupRecovery";
+import { recoveryOptionsAtom } from "@/module/settings/atoms/recovery";
 
 export function ButtonSetupRecovery({
     className = "",
     onSuccess,
-}: { className?: string; onSuccess: () => void }) {
+}: {
+    className?: string;
+    onSuccess: () => void;
+}) {
     const { t } = useTranslation();
     // Get the recovery options
     const recoveryOptions = useAtomValue(recoveryOptionsAtom);

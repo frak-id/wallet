@@ -1,3 +1,9 @@
+import { useAtomValue, useSetAtom } from "jotai";
+import { SendHorizontal } from "lucide-react";
+import { sleep } from "radash";
+import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
+import type { Hex } from "viem";
 import { AccordionRecoveryItem } from "@/module/common/component/AccordionRecoveryItem";
 import { usePerformRecovery } from "@/module/recovery/hook/usePerformRecovery";
 import { useRecoveryAvailability } from "@/module/recovery/hook/useRecoveryAvailability";
@@ -9,12 +15,6 @@ import {
 } from "@/module/settings/atoms/recovery";
 import { ExplorerTxLink } from "@/module/wallet/component/ExplorerLink";
 import type { RecoveryFileContent } from "@/types/Recovery";
-import { useAtomValue, useSetAtom } from "jotai";
-import { SendHorizontal } from "lucide-react";
-import { sleep } from "radash";
-import { useMemo } from "react";
-import { useTranslation } from "react-i18next";
-import type { Hex } from "viem";
 import styles from "./Step5.module.css";
 
 const ACTUAL_STEP = 5;
@@ -38,7 +38,9 @@ export function Step5() {
 
 function TriggerRecovery({
     recoveryFileContent,
-}: { recoveryFileContent: RecoveryFileContent }) {
+}: {
+    recoveryFileContent: RecoveryFileContent;
+}) {
     const { t } = useTranslation();
     // Set the current step
     const setStep = useSetAtom(recoveryStepAtom);

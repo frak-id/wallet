@@ -1,5 +1,4 @@
 "use client";
-import { setSession } from "@/context/auth/actions/session";
 import { useSiweAuthenticate } from "@frak-labs/react-sdk";
 import { ClientOnly } from "@frak-labs/ui/component/ClientOnly";
 import { Spinner } from "@frak-labs/ui/component/Spinner";
@@ -7,6 +6,7 @@ import { useMediaQuery } from "@frak-labs/ui/hook/useMediaQuery";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
+import { setSession } from "@/context/auth/actions/session";
 import styles from "./index.module.css";
 import logo from "./logo-frak.svg";
 

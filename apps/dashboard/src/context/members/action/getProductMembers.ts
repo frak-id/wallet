@@ -1,12 +1,12 @@
 "use server";
 
-import { getSafeSession } from "@/context/auth/actions/session";
 import type {
     GetMembersCountResponseDto,
     GetMembersRequestDto,
     GetMembersResponseDto,
 } from "@frak-labs/app-essentials";
 import { indexerApi } from "@frak-labs/client/server";
+import { getSafeSession } from "@/context/auth/actions/session";
 
 export type GetMembersParam = Omit<
     GetMembersRequestDto,

@@ -1,7 +1,7 @@
-import { currentChain } from "@/module/blockchain/provider";
-import { getSmartAccountProvider } from "@/module/wallet/smartWallet/provider";
 import type { Address, Hex, Transport } from "viem";
 import { createConnector } from "wagmi";
+import { currentChain } from "@/module/blockchain/provider";
+import { getSmartAccountProvider } from "@/module/wallet/smartWallet/provider";
 
 smartAccountConnector.type = "frakSmartAccountConnector" as const;
 
@@ -28,7 +28,7 @@ export function smartAccountConnector<
     // The current ecdsa signer
     let ecdsaSigner:
         | ((args: { hash: Hex; address: Address }) => Promise<Hex>)
-        | undefined = undefined;
+        | undefined;
 
     // Create the wagmi connector itself
     return createConnector<

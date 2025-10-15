@@ -1,70 +1,71 @@
 // Rpc related
-export type { WalletStatusReturnType } from "./rpc/walletStatus";
-export type {
-    DisplayEmbeddedWalletParamsType,
-    DisplayEmbeddedWalletResultType,
-    LoggedOutEmbeddedView,
-    LoggedInEmbeddedView,
-    EmbeddedViewActionReferred,
-    EmbeddedViewActionSharing,
-} from "./rpc/embedded";
-export type {
-    SsoMetadata,
-    OpenSsoParamsType,
-    OpenSsoReturnType,
-    PrepareSsoParamsType,
-    PrepareSsoReturnType,
-} from "./rpc/sso";
-export type {
-    TokenAmountType,
-    GetProductInformationReturnType,
-} from "./rpc/productInformation";
-export type {
-    PreparedInteraction,
-    SendInteractionParamsType,
-    SendInteractionReturnType,
-} from "./rpc/interaction";
-export type { IFrameRpcSchema } from "./rpc";
+
 // Client related
 export type { FrakClient } from "./client";
-export type { IFrameTransport, FrakLifecycleEvent } from "./transport";
-export type {
-    IFrameLifecycleEvent,
-    ClientLifecycleEvent,
-} from "./lifecycle";
-export type {
-    FrakWalletSdkConfig,
-    Currency,
-    Language,
-    I18nConfig,
-    LocalizedI18nConfig,
-} from "./config";
 export type {
     CompressedData,
     HashProtectedData,
     KeyProvider,
 } from "./compression";
-// Modal related
 export type {
-    ModalStepTypes,
-    ModalRpcStepsInput,
-    ModalRpcStepsResultType,
-    DisplayModalParamsType,
-    ModalRpcMetadata,
-} from "./rpc/displayModal";
-export type {
-    ModalStepMetadata,
-    LoginModalStepType,
-    SiweAuthenticateModalStepType,
-    SiweAuthenticationParams,
-    SiweAuthenticateReturnType,
-    SendTransactionTxType,
-    SendTransactionModalStepType,
-    SendTransactionReturnType,
-    OpenInteractionSessionReturnType,
-    OpenInteractionSessionModalStepType,
-    FinalModalStepType,
-    FinalActionType,
-} from "./rpc/modal";
+    Currency,
+    FrakWalletSdkConfig,
+    I18nConfig,
+    Language,
+    LocalizedI18nConfig,
+} from "./config";
 // Utils
 export type { FrakContext } from "./context";
+export type {
+    ClientLifecycleEvent,
+    IFrameLifecycleEvent,
+} from "./lifecycle";
+export type { IFrameRpcSchema } from "./rpc";
+// Modal related
+export type {
+    DisplayModalParamsType,
+    ModalRpcMetadata,
+    ModalRpcStepsInput,
+    ModalRpcStepsResultType,
+    ModalStepTypes,
+} from "./rpc/displayModal";
+export type {
+    DisplayEmbeddedWalletParamsType,
+    DisplayEmbeddedWalletResultType,
+    EmbeddedViewActionReferred,
+    EmbeddedViewActionSharing,
+    LoggedInEmbeddedView,
+    LoggedOutEmbeddedView,
+} from "./rpc/embedded";
+export type {
+    PreparedInteraction,
+    SendInteractionParamsType,
+    SendInteractionReturnType,
+} from "./rpc/interaction";
+export type {
+    FinalActionType,
+    FinalModalStepType,
+    LoginModalStepType,
+    ModalStepMetadata,
+    OpenInteractionSessionModalStepType,
+    OpenInteractionSessionReturnType,
+    SendTransactionModalStepType,
+    SendTransactionReturnType,
+    SendTransactionTxType,
+    SiweAuthenticateModalStepType,
+    SiweAuthenticateReturnType,
+    SiweAuthenticationParams,
+} from "./rpc/modal";
+export type {
+    GetProductInformationReturnType,
+    TokenAmountType,
+} from "./rpc/productInformation";
+export type {
+    OpenSsoParamsType,
+    OpenSsoReturnType,
+    PrepareSsoParamsType,
+    PrepareSsoReturnType,
+    SsoMetadata,
+} from "./rpc/sso";
+export type { WalletStatusReturnType } from "./rpc/walletStatus";
+export type { FrakLifecycleEvent, IFrameTransport } from "./transport";

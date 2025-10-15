@@ -1,9 +1,9 @@
 import {
+    db,
     eventEmitter,
     interactionDiamondRepository,
     log,
 } from "@backend-common";
-import { db } from "@backend-common";
 import { t, validateBodyHmac } from "@backend-utils";
 import { interactionTypes } from "@frak-labs/core-sdk";
 import {
@@ -190,9 +190,10 @@ export const interactionsApi = new Elysia({ prefix: "/interactions" })
 function mapRawInteraction({
     key,
     data,
-}: { key: Hex; data: unknown[] }):
-    | { handlerTypeDenominator: Hex; interactionData: Hex }
-    | undefined {
+}: {
+    key: Hex;
+    data: unknown[];
+}): { handlerTypeDenominator: Hex; interactionData: Hex } | undefined {
     switch (key) {
         // Case of a customer meeting interaction
         case interactionTypes.retail.customerMeeting: {

@@ -1,6 +1,6 @@
+import { useTranslation } from "react-i18next";
 import { Title } from "@/module/common/component/Title";
 import { PairingDevices } from "@/module/pairing/component/PairingDevices";
-import { useTranslation } from "react-i18next";
 import styles from "./index.module.css";
 
 export function PairingHeader() {

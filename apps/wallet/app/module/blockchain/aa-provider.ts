@@ -1,7 +1,7 @@
-import { currentChain } from "@/module/blockchain/provider";
 import { getErpcTransport } from "@frak-labs/app-essentials/blockchain";
 import { memo } from "radash";
-import { http, createClient, fallback } from "viem";
+import { createClient, fallback, http } from "viem";
+import { currentChain } from "@/module/blockchain/provider";
 
 export const getPimlicoTransport = memo(
     () => {
@@ -31,7 +31,7 @@ export const getPimlicoClient = memo(
 );
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore: Unreachable code error
+// @ts-expect-error: Unreachable code error
 BigInt.prototype.toJSON = function (): string {
     return this.toString();
 };

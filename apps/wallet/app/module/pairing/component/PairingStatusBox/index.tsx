@@ -1,10 +1,10 @@
-import { getTargetPairingClient } from "@/module/pairing/clients/store";
 import { Button } from "@frak-labs/ui/component/Button";
 import { Spinner } from "@frak-labs/ui/component/Spinner";
 import { useAtomValue } from "jotai";
 import { RefreshCcw } from "lucide-react";
 import { type PropsWithChildren, useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { getTargetPairingClient } from "@/module/pairing/clients/store";
 import styles from "./index.module.css";
 
 type Status = "success" | "waiting" | "loading" | "error";
@@ -132,13 +132,7 @@ function StatusBoxRetry() {
     );
 }
 
-function InnerStatusBox({
-    status,
-    title,
-}: {
-    status: Status;
-    title: string;
-}) {
+function InnerStatusBox({ status, title }: { status: Status; title: string }) {
     const icon = getIcon(status);
 
     return (

@@ -1,4 +1,3 @@
-import { Panel } from "@/module/common/component/Panel";
 import {
     addresses,
     productInteractionManagerAbi,
@@ -12,6 +11,7 @@ import { Button } from "@frak-labs/ui/component/Button";
 import { BadgeCheck } from "lucide-react";
 import { Link } from "react-router";
 import { encodeFunctionData } from "viem";
+import { Panel } from "@/module/common/component/Panel";
 
 export function SendTransaction() {
     const {
@@ -76,7 +76,9 @@ export function SendTransaction() {
 // Display the authentication result well formatted
 function SendTxResult({
     data,
-}: { data: ModalRpcStepsResultType<[SendTransactionModalStepType]> }) {
+}: {
+    data: ModalRpcStepsResultType<[SendTransactionModalStepType]>;
+}) {
     return (
         <div>
             <h4>

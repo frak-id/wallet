@@ -1,8 +1,8 @@
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { useAtom } from "jotai";
 import { authenticatedWalletApi } from "@/module/common/api/backendClient";
 import { subscriptionAtom } from "@/module/notification/atom/subscriptionAtom";
 import { notificationKey } from "@/module/notification/queryKeys/notification";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { useAtom } from "jotai";
 
 /**
  * Unsubscribe from the push notification

@@ -1,5 +1,5 @@
-import { useListenerUI } from "@/module/listener/providers/ListenerUiProvider";
 import { lazy, useEffect } from "react";
+import { useListenerUI } from "@/module/listener/providers/ListenerUiProvider";
 
 /**
  * Lazy import of the modal UI

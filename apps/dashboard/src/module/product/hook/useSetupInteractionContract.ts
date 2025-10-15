@@ -1,5 +1,3 @@
-import { viemClient } from "@/context/blockchain/provider";
-import { useWaitForTxAndInvalidateQueries } from "@/module/common/utils/useWaitForTxAndInvalidateQueries";
 import {
     addresses,
     interactionValidatorRoles,
@@ -12,8 +10,10 @@ import {
     useWalletStatus,
 } from "@frak-labs/react-sdk";
 import { useMutation } from "@tanstack/react-query";
-import { type Address, type Hex, encodeFunctionData } from "viem";
+import { type Address, encodeFunctionData, type Hex } from "viem";
 import { readContract, simulateContract } from "viem/actions";
+import { viemClient } from "@/context/blockchain/provider";
+import { useWaitForTxAndInvalidateQueries } from "@/module/common/utils/useWaitForTxAndInvalidateQueries";
 
 /**
  * Hook used to setup the interaction contract on the given productId
@@ -28,7 +28,10 @@ export function useSetupInteractionContract() {
         mutationFn: async ({
             productId,
             salt,
-        }: { productId: Hex; salt?: Hex }) => {
+        }: {
+            productId: Hex;
+            salt?: Hex;
+        }) => {
             // early exit if user not logged in
             if (!walletStatus?.wallet) return;
 
@@ -121,7 +124,11 @@ async function getFutureInteractionContract({
     wallet,
     productId,
     salt,
-}: { wallet: Address; productId: Hex; salt?: Hex }) {
+}: {
+    wallet: Address;
+    productId: Hex;
+    salt?: Hex;
+}) {
     try {
         const interactionContract = await readContract(viemClient, {
             address: addresses.productInteractionManager,

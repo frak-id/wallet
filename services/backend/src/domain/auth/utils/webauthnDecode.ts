@@ -7,7 +7,9 @@ import { toHex } from "viem";
  */
 export function decodePublicKey({
     credentialPubKey,
-}: { credentialPubKey: Uint8Array }) {
+}: {
+    credentialPubKey: Uint8Array;
+}) {
     const publicKey = decodeCredentialPublicKey(
         credentialPubKey as Uint8Array<ArrayBuffer>
     ) as unknown as {
