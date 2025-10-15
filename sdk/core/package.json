@@ -96,7 +96,7 @@
     "publish": "echo 'Publishing core...'"
   },
   "peerDependencies": {
-    "viem": "^2.23.14"
+    "viem": "^2.x"
   },
   "dependencies": {
     "@frak-labs/frame-connector": "workspace:*",
@@ -111,7 +111,8 @@
     "@rsbuild/plugin-node-polyfill": "^1.4.2",
     "@rslib/core": "0.15.1",
     "@types/node": "^24.7.2",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "viem": "catalog:"
   },
   "browserslist": [
     "extends @frak-labs/browserslist-config"

@@ -80,7 +80,8 @@
     "@types/node": "^24.7.2",
     "@types/react": "catalog:",
     "react": "catalog:",
-    "typescript": "^5"
+    "typescript": "^5",
+    "viem": "catalog:"
   },
   "browserslist": [
     "extends @frak-labs/browserslist-config"

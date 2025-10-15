@@ -24,7 +24,7 @@ export async function passToKey({
 }) {
     const baseKey = await window.crypto.subtle.importKey(
         "raw",
-        stringToBytes(pass),
+        new Uint8Array(stringToBytes(pass)),
         { name: "PBKDF2" },
         false,
         ["deriveBits", "deriveKey"]
@@ -34,7 +34,7 @@ export async function passToKey({
     return await window.crypto.subtle.deriveKey(
         {
             name: "PBKDF2",
-            salt,
+            salt: new Uint8Array(salt),
             iterations: 300_000,
             hash: "SHA-512",
         },
@@ -84,7 +84,7 @@ export async function encryptPrivateKey({
             iv: iv,
         },
         key,
-        stringToBytes(privateKey)
+        new Uint8Array(stringToBytes(privateKey))
     );
 
     // Concat all the data and return them

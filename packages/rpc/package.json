@@ -76,7 +76,7 @@
         "@jsonjoy.com/json-pack": "^1.2.0"
     },
     "peerDependencies": {
-        "viem": "^2.23.14"
+        "viem": "^2.x"
     },
     "devDependencies": {
         "@arethetypeswrong/cli": "^0.18.2",
@@ -86,7 +86,7 @@
         "@rslib/core": "0.15.1",
         "@types/node": "^24.7.2",
         "typescript": "^5",
-        "viem": "^2.23.14"
+        "viem": "catalog:"
     },
     "browserslist": [
         "extends @frak-labs/browserslist-config"
