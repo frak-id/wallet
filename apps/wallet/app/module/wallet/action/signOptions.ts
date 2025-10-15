@@ -26,7 +26,7 @@ export async function getSignOptions({
             },
         ],
         userVerification: "required",
-        challenge: hexToBytes(toSign),
+        challenge: hexToBytes(toSign) as Uint8Array<ArrayBuffer>,
         // timeout in ms (3min, can be useful for mobile phone linking)
         timeout: 180_000,
     });

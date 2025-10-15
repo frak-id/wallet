@@ -35,7 +35,7 @@ export async function getRegisterOptions({
     return await generateRegistrationOptions({
         rpName: WebAuthN.rpName,
         rpID: WebAuthN.rpId,
-        userID: fromHex(userId, "bytes"),
+        userID: fromHex(userId, "bytes") as Uint8Array<ArrayBuffer>,
         userName: username,
         userDisplayName: username,
         // timeout in ms (3min, can be useful for mobile phone linking)

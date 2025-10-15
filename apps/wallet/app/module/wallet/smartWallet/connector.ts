@@ -5,9 +5,13 @@ import { createConnector } from "wagmi";
 
 smartAccountConnector.type = "frakSmartAccountConnector" as const;
 
-export type FrakWalletConnector = ReturnType<
-    ReturnType<typeof smartAccountConnector>
->;
+export type FrakWalletConnector = ReturnType<typeof smartAccountConnector> & {
+    setEcdsaSigner: (
+        signer:
+            | ((args: { hash: Hex; address: Address }) => Promise<Hex>)
+            | undefined
+    ) => void;
+};
 
 /**
  * Create a connector for the smart account
@@ -51,7 +55,7 @@ export function smartAccountConnector<
          */
         async connect({ chainId } = {}) {
             // Fetch the provider
-            const provider: Provider = await this.getProvider();
+            const provider = await this.getProvider();
 
             // If the chain id is not provided, use the current chain
             if (chainId && chainId !== currentChain.id) {
@@ -89,7 +93,7 @@ export function smartAccountConnector<
          * Fetch the current accounts
          */
         async getAccounts() {
-            const provider: Provider = await this.getProvider();
+            const provider = await this.getProvider();
             if (provider.currentSmartAccountClient) {
                 return [provider.currentSmartAccountClient.account.address];
             }
@@ -112,7 +116,7 @@ export function smartAccountConnector<
         },
 
         async getClient(parameters?: { chainId?: number }) {
-            const provider: Provider = await this.getProvider();
+            const provider = await this.getProvider();
 
             if (
                 parameters?.chainId &&
