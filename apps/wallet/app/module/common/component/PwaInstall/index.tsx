@@ -60,7 +60,6 @@ export function PwaInstall() {
         const pwaInstall = pwaInstallRef?.current;
         if (!pwaInstall) return;
 
-        // @ts-expect-error
         pwaInstall.externalPromptEvent = window.promptEvent;
     }, [pwaInstallRef]);
 
