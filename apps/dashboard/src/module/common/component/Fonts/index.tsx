@@ -15,7 +15,6 @@ export function Fonts() {
     useServerInsertedHTML(() => {
         return (
             <style
-                // biome-ignore lint/security/noDangerouslySetInnerHtml: Required for injecting font CSS variables
                 dangerouslySetInnerHTML={{
                     __html: `
                       :root {
