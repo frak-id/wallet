@@ -5,7 +5,7 @@ import {
 import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { decodeJwt } from "jose";
 import { useEffect, useMemo } from "react";
-import { type Hex, isAddressEqual } from "viem";
+import { type Address, type Hex, isAddressEqual } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { useConfig, useConnect } from "wagmi";
 import { getFromLocalStorage } from "../../listener/utils/localStorage";
@@ -76,7 +76,7 @@ export function useEnforceWagmiConnection() {
         }
 
         (frakConnector as unknown as FrakWalletConnector).setEcdsaSigner(
-            ({ hash, address }) => {
+            ({ hash, address }: { hash: Hex; address: Address }) => {
                 const sdkSession = jotaiStore.get(sdkSessionAtom);
                 const parsedSession = sdkSession
                     ? decodeJwt<SdkSessionPayload>(sdkSession.token)
