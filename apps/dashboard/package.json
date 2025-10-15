@@ -58,7 +58,7 @@
   },
   "devDependencies": {
     "@frak-labs/browserslist-config": "workspace:*",
-    "@types/node": "^24.7.2",
+    "@types/node": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "bun-types": "latest",

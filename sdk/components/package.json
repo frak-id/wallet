@@ -65,7 +65,7 @@
     "@rsbuild/plugin-preact": "^1.4.0",
     "@rsbuild/plugin-svgr": "^1.2.0",
     "@rslib/core": "^0.15.1",
-    "@types/node": "^24",
+    "@types/node": "catalog:",
     "@types/preact-custom-element": "^4.0.4",
     "typescript": "^5"
   },

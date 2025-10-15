@@ -12,7 +12,7 @@
   },
   "devDependencies": {
     "bun-types": "latest",
-    "typescript": "^5.8.3"
+    "typescript": "catalog:"
   },
   "exports": {
     ".": {

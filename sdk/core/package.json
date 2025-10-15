@@ -110,8 +110,8 @@
     "@microsoft/api-extractor": "^7.53.1",
     "@rsbuild/plugin-node-polyfill": "^1.4.2",
     "@rslib/core": "0.15.1",
-    "@types/node": "^24.7.2",
-    "typescript": "^5.8.3",
+    "@types/node": "catalog:",
+    "typescript": "catalog:",
     "viem": "catalog:"
   },
   "browserslist": [
