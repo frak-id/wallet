@@ -1,6 +1,6 @@
+import { useTranslation } from "react-i18next";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
-import { useTranslation } from "react-i18next";
 import styles from "./index.module.css";
 
 export function Invite() {

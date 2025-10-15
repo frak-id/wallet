@@ -1,103 +1,101 @@
 // Clients
+
+export { ssoPopupFeatures, ssoPopupName } from "./actions/openSso";
 export {
     createIFrameFrakClient,
-    setupClient,
     DebugInfoGatherer,
+    setupClient,
 } from "./clients";
-
-// Utils
 export {
-    compressJsonToB64,
-    decompressJsonFromB64,
-    createIframe,
-    FrakContextManager,
-    baseIframeProps,
-    findIframeInOpener,
-    getSupportedCurrency,
-    getSupportedLocale,
-    getCurrencyAmountKey,
-    formatAmount,
-    base64urlDecode,
-    base64urlEncode,
-    trackEvent,
-    generateSsoUrl,
-    type CompressedSsoData,
-    type FullSsoParams,
-    type AppSpecificSsoMetadata,
-} from "./utils";
-
+    type FullInteractionTypesKey,
+    type InteractionTypesKey,
+    interactionTypes,
+} from "./constants/interactionTypes";
+export { type LocalesKey, locales } from "./constants/locales";
 // Constants
 export {
     type ProductTypesKey,
     productTypes,
     productTypesMask,
 } from "./constants/productTypes";
-export {
-    interactionTypes,
-    type InteractionTypesKey,
-    type FullInteractionTypesKey,
-} from "./constants/interactionTypes";
-export { locales, type LocalesKey } from "./constants/locales";
-export { ssoPopupFeatures, ssoPopupName } from "./actions/openSso";
-
 // Types
 export type {
-    // Rpc
-    WalletStatusReturnType,
-    IFrameRpcSchema,
-    PreparedInteraction,
-    SendInteractionParamsType,
-    SendInteractionReturnType,
-    SsoMetadata,
-    PrepareSsoParamsType,
-    PrepareSsoReturnType,
-    OpenSsoParamsType,
-    OpenSsoReturnType,
+    ClientLifecycleEvent,
+    CompressedData,
     Currency,
-    Language,
-    I18nConfig,
-    LocalizedI18nConfig,
-    TokenAmountType,
-    GetProductInformationReturnType,
     // RPC Embedded wallet
     DisplayEmbeddedWalletParamsType,
     DisplayEmbeddedWalletResultType,
-    LoggedOutEmbeddedView,
-    LoggedInEmbeddedView,
+    DisplayModalParamsType,
     EmbeddedViewActionReferred,
     EmbeddedViewActionSharing,
-    // RPC Modal generics
-    ModalStepTypes,
+    FinalActionType,
+    FinalModalStepType,
+    // Client
+    FrakClient,
+    // Utils
+    FrakContext,
+    FrakLifecycleEvent,
+    // Config
+    FrakWalletSdkConfig,
+    GetProductInformationReturnType,
+    HashProtectedData,
+    I18nConfig,
+    IFrameLifecycleEvent,
+    IFrameRpcSchema,
+    // Transport
+    IFrameTransport,
+    // Compression
+    KeyProvider,
+    Language,
+    LocalizedI18nConfig,
+    LoggedInEmbeddedView,
+    LoggedOutEmbeddedView,
+    LoginModalStepType,
     ModalRpcMetadata,
-    DisplayModalParamsType,
     ModalRpcStepsInput,
     ModalRpcStepsResultType,
     // RPC Modal types
     ModalStepMetadata,
-    LoginModalStepType,
-    SiweAuthenticateModalStepType,
-    SiweAuthenticationParams,
-    SiweAuthenticateReturnType,
-    SendTransactionTxType,
+    // RPC Modal generics
+    ModalStepTypes,
+    OpenInteractionSessionModalStepType,
+    OpenInteractionSessionReturnType,
+    OpenSsoParamsType,
+    OpenSsoReturnType,
+    PreparedInteraction,
+    PrepareSsoParamsType,
+    PrepareSsoReturnType,
+    SendInteractionParamsType,
+    SendInteractionReturnType,
     SendTransactionModalStepType,
     SendTransactionReturnType,
-    OpenInteractionSessionReturnType,
-    OpenInteractionSessionModalStepType,
-    FinalModalStepType,
-    FinalActionType,
-    // Client
-    FrakClient,
-    // Transport
-    IFrameTransport,
-    IFrameLifecycleEvent,
-    ClientLifecycleEvent,
-    FrakLifecycleEvent,
-    // Config
-    FrakWalletSdkConfig,
-    // Compression
-    KeyProvider,
-    CompressedData,
-    HashProtectedData,
-    // Utils
-    FrakContext,
+    SendTransactionTxType,
+    SiweAuthenticateModalStepType,
+    SiweAuthenticateReturnType,
+    SiweAuthenticationParams,
+    SsoMetadata,
+    TokenAmountType,
+    // Rpc
+    WalletStatusReturnType,
 } from "./types";
+// Utils
+export {
+    type AppSpecificSsoMetadata,
+    base64urlDecode,
+    base64urlEncode,
+    baseIframeProps,
+    type CompressedSsoData,
+    compressJsonToB64,
+    createIframe,
+    decompressJsonFromB64,
+    FrakContextManager,
+    type FullSsoParams,
+    findIframeInOpener,
+    formatAmount,
+    generateSsoUrl,
+    getCurrencyAmountKey,
+    getSupportedCurrency,
+    getSupportedLocale,
+    trackEvent,
+} from "./utils";

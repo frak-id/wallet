@@ -1,4 +1,20 @@
 "use client";
+import { Button } from "@frak-labs/ui/component/Button";
+import { Skeleton } from "@frak-labs/ui/component/Skeleton";
+import type { ColumnDef } from "@tanstack/react-table";
+import {
+    type CellContext,
+    type ColumnFiltersState,
+    createColumnHelper,
+} from "@tanstack/react-table";
+import { atom, useAtomValue } from "jotai";
+import { useSetAtom } from "jotai/index";
+import { Eye, Pencil, Trash2 } from "lucide-react";
+import dynamic from "next/dynamic";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { capitalize } from "radash";
+import { useMemo, useState } from "react";
 import { campaignResetAtom } from "@/module/campaigns/atoms/campaign";
 import { CampaignStateTag } from "@/module/campaigns/component/TableCampaigns/CampaignStateTag";
 import { TableCampaignFilters } from "@/module/campaigns/component/TableCampaigns/Filter";
@@ -11,22 +27,6 @@ import { formatDate } from "@/module/common/utils/formatDate";
 import { formatPrice } from "@/module/common/utils/formatPrice";
 import { Switch } from "@/module/forms/Switch";
 import type { CampaignWithState } from "@/types/Campaign";
-import { Button } from "@frak-labs/ui/component/Button";
-import { Skeleton } from "@frak-labs/ui/component/Skeleton";
-import {
-    type CellContext,
-    type ColumnFiltersState,
-    createColumnHelper,
-} from "@tanstack/react-table";
-import type { ColumnDef } from "@tanstack/react-table";
-import { atom, useAtomValue } from "jotai";
-import { useSetAtom } from "jotai/index";
-import { Eye, Pencil, Trash2 } from "lucide-react";
-import dynamic from "next/dynamic";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { capitalize } from "radash";
-import { useMemo, useState } from "react";
 import styles from "./index.module.css";
 
 const Table = dynamic<ReactTableProps<CampaignWithState>>(

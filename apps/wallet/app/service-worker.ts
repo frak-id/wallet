@@ -81,7 +81,7 @@ self.addEventListener("notificationclick", (event) => {
     // Get the url to open
     const url = event.notification.data?.url || "https://wallet.frak.id/";
     event.waitUntil(
-        // @ts-ignore
+        // @ts-expect-error
         self.clients
             .matchAll({
                 type: "window",

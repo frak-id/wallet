@@ -17,7 +17,10 @@ const defaultRoles = {
 export function useHasRoleOnProduct({
     productId,
     wallet,
-}: { productId: Hex; wallet?: Address }) {
+}: {
+    productId: Hex;
+    wallet?: Address;
+}) {
     const { data: walletStatus } = useWalletStatus();
 
     // Query fetching all the roles of a user

@@ -1,5 +1,5 @@
-import type { FormCreatePushNotification } from "@/module/members/component/CreatePush";
 import { atomWithStorage } from "jotai/utils";
+import type { FormCreatePushNotification } from "@/module/members/component/CreatePush";
 
 /**
  * The current push creation form (post close or next actions on the form)

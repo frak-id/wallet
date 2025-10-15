@@ -1,15 +1,15 @@
 import { t } from "@backend-utils";
 import {
+    getSchemaValidator,
     type Static,
     type TSchema,
     ValidationError,
-    getSchemaValidator,
 } from "elysia";
 import {
     type JWSHeaderParameters,
     type JWTPayload,
-    SignJWT,
     jwtVerify,
+    SignJWT,
 } from "jose";
 import {
     WalletSdkTokenDto,

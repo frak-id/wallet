@@ -1,6 +1,6 @@
 import type { Address } from "viem";
 import { isAddressEqual } from "viem";
-import { type Stablecoin, currentStablecoins } from "../blockchain/addresses";
+import { currentStablecoins, type Stablecoin } from "../blockchain/addresses";
 
 /**
  * Get token address for currency

@@ -1,6 +1,6 @@
+import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { sdkSessionAtom, sessionAtom } from "@/module/common/atoms/session";
 import type { SdkSession, Session } from "@/types/Session";
-import { jotaiStore } from "@frak-labs/ui/atoms/store";
 
 /**
  * Get an item from the local storage

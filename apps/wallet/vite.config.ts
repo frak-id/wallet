@@ -1,8 +1,8 @@
 import * as process from "node:process";
 import { reactRouter } from "@react-router/dev/vite";
 import type { Drop } from "esbuild";
-import { defineConfig } from "vite";
 import type { ConfigEnv, UserConfig } from "vite";
+import { defineConfig } from "vite";
 import mkcert from "vite-plugin-mkcert";
 import tsconfigPaths from "vite-tsconfig-paths";
 import { manualChunks, onwarn } from "../../packages/dev-tooling";

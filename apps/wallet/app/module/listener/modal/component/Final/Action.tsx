@@ -1,8 +1,3 @@
-import { useSafeResolvingContext } from "@/module/listener/atoms/resolvingContext";
-import { useTriggerPushInterraction } from "@/module/listener/hooks/useTriggerPushInterraction";
-import { ButtonAction } from "@/module/listener/modal/component/ButtonAction";
-import styles from "@/module/listener/modal/component/Modal/index.module.css";
-import { useListenerTranslation } from "@/module/listener/providers/ListenerUiProvider";
 import { type FinalActionType, FrakContextManager } from "@frak-labs/core-sdk";
 import { useCopyToClipboardWithState } from "@frak-labs/ui/hook/useCopyToClipboardWithState";
 import { prefixModalCss } from "@frak-labs/ui/utils/prefixModalCss";
@@ -10,6 +5,11 @@ import { Copy, Share } from "lucide-react";
 import { useMemo } from "react";
 import { toast } from "sonner";
 import { useAccount } from "wagmi";
+import { useSafeResolvingContext } from "@/module/listener/atoms/resolvingContext";
+import { useTriggerPushInterraction } from "@/module/listener/hooks/useTriggerPushInterraction";
+import { ButtonAction } from "@/module/listener/modal/component/ButtonAction";
+import styles from "@/module/listener/modal/component/Modal/index.module.css";
+import { useListenerTranslation } from "@/module/listener/providers/ListenerUiProvider";
 import { trackGenericEvent } from "../../../../common/analytics";
 import { useShareLink } from "../../../hooks/useShareLink";
 

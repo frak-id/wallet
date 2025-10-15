@@ -1,10 +1,10 @@
 "use server";
 
+import { indexerApi } from "@frak-labs/client/server";
+import { type Address, type Hex, toHex } from "viem";
 import { getSafeSession } from "@/context/auth/actions/session";
 import { getMyProductsMock } from "@/context/product/action/mock";
 import { isDemoModeActive } from "@/module/common/utils/isDemoMode";
-import { indexerApi } from "@frak-labs/client/server";
-import { type Address, type Hex, toHex } from "viem";
 
 type ApiResult = {
     id: string; // bigint

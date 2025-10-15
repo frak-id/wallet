@@ -1,17 +1,17 @@
 "use server";
 
-import { getSafeSession } from "@/context/auth/actions/session";
-import {
-    getProductMembersMock,
-    getProductsMembersCountMock,
-} from "@/context/members/action/mock";
-import { isDemoModeActive } from "@/module/common/utils/isDemoMode";
 import type {
     GetMembersCountResponseDto,
     GetMembersRequestDto,
     GetMembersResponseDto,
 } from "@frak-labs/app-essentials";
 import { indexerApi } from "@frak-labs/client/server";
+import { getSafeSession } from "@/context/auth/actions/session";
+import {
+    getProductMembersMock,
+    getProductsMembersCountMock,
+} from "@/context/members/action/mock";
+import { isDemoModeActive } from "@/module/common/utils/isDemoMode";
 
 export type GetMembersParam = Omit<
     GetMembersRequestDto,

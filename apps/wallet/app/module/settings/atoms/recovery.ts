@@ -1,7 +1,7 @@
-import type { RecoveryFileContent } from "@/types/Recovery";
-import type { WebAuthNWallet } from "@/types/WebAuthN";
 import { atom } from "jotai";
 import type { Hex, LocalAccount } from "viem";
+import type { RecoveryFileContent } from "@/types/Recovery";
+import type { WebAuthNWallet } from "@/types/WebAuthN";
 
 /**
  * Atom to keep track of the current recovery step

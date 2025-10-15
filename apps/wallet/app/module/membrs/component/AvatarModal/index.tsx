@@ -1,5 +1,3 @@
-import { AlertDialog } from "@/module/common/component/AlertDialog";
-import { uploadProfilePhotoAtom } from "@/module/membrs/atoms/uploadProfilePhoto";
 import { Button } from "@frak-labs/ui/component/Button";
 import { Slider } from "@frak-labs/ui/component/Slider";
 import { Uploader } from "@frak-labs/ui/component/Uploader";
@@ -8,6 +6,8 @@ import { atom, useAtom, useSetAtom } from "jotai";
 import { useCallback, useEffect, useRef, useState } from "react";
 import ReactAvatarEditor from "react-avatar-editor";
 import { useTranslation } from "react-i18next";
+import { AlertDialog } from "@/module/common/component/AlertDialog";
+import { uploadProfilePhotoAtom } from "@/module/membrs/atoms/uploadProfilePhoto";
 import { AvatarCamera } from "../AvatarCamera";
 import styles from "./index.module.css";
 

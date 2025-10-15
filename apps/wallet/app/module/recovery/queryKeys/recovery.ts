@@ -14,10 +14,7 @@ export namespace recoveryKey {
      */
     const availableChainsBase = "get-available-chains" as const;
     export const availableChains = {
-        full: (params: {
-            walletAddress: Hex;
-            guardianAddress: Hex;
-        }) =>
+        full: (params: { walletAddress: Hex; guardianAddress: Hex }) =>
             [
                 base,
                 availableChainsBase,

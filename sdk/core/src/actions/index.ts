@@ -1,29 +1,29 @@
-export { watchWalletStatus } from "./watchWalletStatus";
-export { sendInteraction } from "./sendInteraction";
-export { displayModal } from "./displayModal";
 export { displayEmbeddedWallet } from "./displayEmbeddedWallet";
+export { displayModal } from "./displayModal";
+export { getProductInformation } from "./getProductInformation";
 export { openSso } from "./openSso";
 export { prepareSso } from "./prepareSso";
-export { getProductInformation } from "./getProductInformation";
-// Helper to track the purchase status
-export { trackPurchaseStatus } from "./trackPurchaseStatus";
-// Modal wrappers
 export {
-    siweAuthenticate,
-    type SiweAuthenticateModalParams,
-} from "./wrapper/siweAuthenticate";
-export {
-    sendTransaction,
-    type SendTransactionParams,
-} from "./wrapper/sendTransaction";
-export {
-    modalBuilder,
-    type ModalStepBuilder,
-    type ModalBuilder,
-} from "./wrapper/modalBuilder";
+    type ProcessReferralOptions,
+    processReferral,
+} from "./referral/processReferral";
 // Referral interaction
 export { referralInteraction } from "./referral/referralInteraction";
+export { sendInteraction } from "./sendInteraction";
+// Helper to track the purchase status
+export { trackPurchaseStatus } from "./trackPurchaseStatus";
+export { watchWalletStatus } from "./watchWalletStatus";
 export {
-    processReferral,
-    type ProcessReferralOptions,
-} from "./referral/processReferral";
+    type ModalBuilder,
+    type ModalStepBuilder,
+    modalBuilder,
+} from "./wrapper/modalBuilder";
+export {
+    type SendTransactionParams,
+    sendTransaction,
+} from "./wrapper/sendTransaction";
+// Modal wrappers
+export {
+    type SiweAuthenticateModalParams,
+    siweAuthenticate,
+} from "./wrapper/siweAuthenticate";

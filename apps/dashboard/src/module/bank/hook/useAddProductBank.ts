@@ -1,13 +1,11 @@
-import { viemClient } from "@/context/blockchain/provider";
-import { useWaitForTxAndInvalidateQueries } from "@/module/common/utils/useWaitForTxAndInvalidateQueries";
 import {
     addresses,
     getTokenAddressForStablecoin,
 } from "@frak-labs/app-essentials";
 import {
-    type Stablecoin,
     campaignBankAbi,
     campaignBankFactoryAbi,
+    type Stablecoin,
 } from "@frak-labs/app-essentials/blockchain";
 import {
     useSendTransactionAction,
@@ -21,6 +19,8 @@ import {
     zeroAddress,
 } from "viem";
 import { simulateContract } from "viem/actions";
+import { viemClient } from "@/context/blockchain/provider";
+import { useWaitForTxAndInvalidateQueries } from "@/module/common/utils/useWaitForTxAndInvalidateQueries";
 
 export type AddProductBankParams = {
     productId: Address;

@@ -1,22 +1,22 @@
-import { sessionAtom } from "@/module/common/atoms/session";
-import { useListenerUI } from "@/module/listener/providers/ListenerUiProvider";
-import type { WalletRpcContext } from "@/module/listener/types/context";
-import { useInteractionSessionStatus } from "@/module/wallet/hook/useInteractionSessionStatus";
 import type { IFrameRpcSchema } from "@frak-labs/core-sdk";
-import {
-    Deferred,
-    FrakRpcError,
-    RpcErrorCodes,
-} from "@frak-labs/frame-connector";
 import type {
     ExtractReturnType,
     RpcPromiseHandler,
     RpcResponse,
 } from "@frak-labs/frame-connector";
+import {
+    Deferred,
+    FrakRpcError,
+    RpcErrorCodes,
+} from "@frak-labs/frame-connector";
 import { useAtomValue } from "jotai";
 import { useCallback, useEffect, useRef } from "react";
 import type { Hex } from "viem";
 import { useAccount } from "wagmi";
+import { sessionAtom } from "@/module/common/atoms/session";
+import { useListenerUI } from "@/module/listener/providers/ListenerUiProvider";
+import type { WalletRpcContext } from "@/module/listener/types/context";
+import { useInteractionSessionStatus } from "@/module/wallet/hook/useInteractionSessionStatus";
 import { trackGenericEvent } from "../../common/analytics";
 
 type OnDisplayEmbeddedWalletRequest = RpcPromiseHandler<

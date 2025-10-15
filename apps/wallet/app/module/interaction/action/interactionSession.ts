@@ -1,5 +1,3 @@
-import { currentViemClient } from "@/module/blockchain/provider";
-import type { InteractionSession } from "@/types/Session";
 import {
     addresses,
     getExecutionAbi,
@@ -8,6 +6,8 @@ import {
 import { tryit } from "radash";
 import { type Address, isAddressEqual } from "viem";
 import { readContract } from "viem/actions";
+import { currentViemClient } from "@/module/blockchain/provider";
+import type { InteractionSession } from "@/types/Session";
 
 /**
  * Get the current session status
@@ -15,7 +15,9 @@ import { readContract } from "viem/actions";
  */
 export async function getSessionStatus({
     wallet,
-}: { wallet: Address }): Promise<InteractionSession | null> {
+}: {
+    wallet: Address;
+}): Promise<InteractionSession | null> {
     // Read all the prices from the blockchain
     const [, status] = await tryit(() =>
         readContract(currentViemClient, {

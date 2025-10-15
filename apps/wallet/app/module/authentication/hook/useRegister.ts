@@ -1,3 +1,7 @@
+import { jotaiStore } from "@frak-labs/ui/atoms/store";
+import { startRegistration } from "@simplewebauthn/browser";
+import type { UseMutationOptions } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { addLastAuthenticationAtom } from "@/module/authentication/atoms/lastAuthenticator";
 import { usePreviousAuthenticators } from "@/module/authentication/hook/usePreviousAuthenticators";
 import { authKey } from "@/module/authentication/queryKeys/auth";
@@ -5,10 +9,6 @@ import { authenticatedWalletApi } from "@/module/common/api/backendClient";
 import { sdkSessionAtom, sessionAtom } from "@/module/common/atoms/session";
 import { getRegisterOptions } from "@/module/wallet/action/registerOptions";
 import type { Session } from "@/types/Session";
-import { jotaiStore } from "@frak-labs/ui/atoms/store";
-import { startRegistration } from "@simplewebauthn/browser";
-import { useMutation } from "@tanstack/react-query";
-import type { UseMutationOptions } from "@tanstack/react-query";
 import { trackAuthCompleted, trackAuthInitiated } from "../../common/analytics";
 
 /**

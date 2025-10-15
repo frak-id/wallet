@@ -1,7 +1,7 @@
-import { Title } from "@/module/common/component/Title";
-import { useGetUserBalance } from "@/module/tokens/hook/useGetUserBalance";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { Title } from "@/module/common/component/Title";
+import { useGetUserBalance } from "@/module/tokens/hook/useGetUserBalance";
 import styles from "./index.module.css";
 
 export function Balance() {

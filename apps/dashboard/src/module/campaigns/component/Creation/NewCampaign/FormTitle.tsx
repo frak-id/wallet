@@ -1,3 +1,5 @@
+import { Input } from "@frak-labs/ui/component/forms/Input";
+import type { UseFormReturn } from "react-hook-form";
 import { Panel } from "@/module/common/component/Panel";
 import {
     FormControl,
@@ -6,8 +8,6 @@ import {
     FormMessage,
 } from "@/module/forms/Form";
 import type { Campaign } from "@/types/Campaign";
-import { Input } from "@frak-labs/ui/component/forms/Input";
-import type { UseFormReturn } from "react-hook-form";
 
 export function FormTitle(form: UseFormReturn<Campaign>) {
     return (

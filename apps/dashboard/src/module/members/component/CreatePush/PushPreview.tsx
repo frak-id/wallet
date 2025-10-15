@@ -1,7 +1,7 @@
 import { cx } from "class-variance-authority";
 import Image from "next/image";
-import styles from "./PushPreview.module.css";
 import iPhone from "./assets/iPhone.png";
+import styles from "./PushPreview.module.css";
 
 type PushPreviewProps = {
     title?: string;

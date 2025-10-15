@@ -1,3 +1,6 @@
+import { prefixModalCss } from "@frak-labs/ui/utils/prefixModalCss";
+import { useAtom } from "jotai";
+import { useMemo } from "react";
 import { Markdown } from "@/module/common/component/Markdown";
 import { displayedRpcModalStepsAtom } from "@/module/listener/modal/atoms/modalEvents";
 import styles from "@/module/listener/modal/component/Modal/index.module.css";
@@ -5,16 +8,9 @@ import {
     useListenerTranslation,
     useModalListenerUI,
 } from "@/module/listener/providers/ListenerUiProvider";
-import { prefixModalCss } from "@frak-labs/ui/utils/prefixModalCss";
-import { useAtom } from "jotai";
-import { useMemo } from "react";
 import { trackGenericEvent } from "../../../../common/analytics";
 
-export function MetadataInfo({
-    description,
-}: {
-    description?: string;
-}) {
+export function MetadataInfo({ description }: { description?: string }) {
     if (description) {
         return (
             <div

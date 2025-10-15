@@ -1,11 +1,5 @@
 "use server";
 
-import { getSafeSession } from "@/context/auth/actions/session";
-import { viemClient } from "@/context/blockchain/provider";
-import { getMyCampaignsMock } from "@/context/campaigns/action/mock";
-import { getCampaignRepository } from "@/context/campaigns/repository/CampaignRepository";
-import { isDemoModeActive } from "@/module/common/utils/isDemoMode";
-import type { CampaignWithState } from "@/types/Campaign";
 import {
     addresses,
     interactionCampaignAbi,
@@ -16,6 +10,12 @@ import { indexerApi } from "@frak-labs/client/server";
 import { all, sift, unique } from "radash";
 import { type Address, getAddress, isAddress, isAddressEqual } from "viem";
 import { multicall } from "viem/actions";
+import { getSafeSession } from "@/context/auth/actions/session";
+import { viemClient } from "@/context/blockchain/provider";
+import { getMyCampaignsMock } from "@/context/campaigns/action/mock";
+import { getCampaignRepository } from "@/context/campaigns/repository/CampaignRepository";
+import { isDemoModeActive } from "@/module/common/utils/isDemoMode";
+import type { CampaignWithState } from "@/types/Campaign";
 
 type ApiResult = {
     productId: string;

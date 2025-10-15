@@ -1,3 +1,11 @@
+import { AlertDialog } from "@frak-labs/ui/component/AlertDialog";
+import { Button } from "@frak-labs/ui/component/Button";
+import { Column, Columns } from "@frak-labs/ui/component/Columns";
+import { Spinner } from "@frak-labs/ui/component/Spinner";
+import { TextWithCopy } from "@frak-labs/ui/component/TextWithCopy";
+import { useMemo, useState } from "react";
+import type { Hex } from "viem";
+import { generatePrivateKey } from "viem/accounts";
 import {
     ActionsMessageError,
     ActionsMessageSuccess,
@@ -8,14 +16,6 @@ import { Title } from "@/module/common/component/Title";
 import { useWebhookInteractionDelete } from "@/module/product/hook/useWebhookInteractionDelete";
 import { useWebhookInteractionSetup } from "@/module/product/hook/useWebhookInteractionSetup";
 import { useWebhookInteractionStatus } from "@/module/product/hook/useWebhookInteractionStatus";
-import { AlertDialog } from "@frak-labs/ui/component/AlertDialog";
-import { Button } from "@frak-labs/ui/component/Button";
-import { Column, Columns } from "@frak-labs/ui/component/Columns";
-import { Spinner } from "@frak-labs/ui/component/Spinner";
-import { TextWithCopy } from "@frak-labs/ui/component/TextWithCopy";
-import { useMemo, useState } from "react";
-import type { Hex } from "viem";
-import { generatePrivateKey } from "viem/accounts";
 import styles from "./WebhookInteraction.module.css";
 
 /**
@@ -152,7 +152,10 @@ function WebhookInteraction({ productId }: { productId: Hex }) {
 function ModalDelete({
     productId,
     resetWebhookInteraction,
-}: { productId: Hex; resetWebhookInteraction: () => void }) {
+}: {
+    productId: Hex;
+    resetWebhookInteraction: () => void;
+}) {
     const {
         mutateAsync: deleteWebhook,
         isPending: isDeleting,

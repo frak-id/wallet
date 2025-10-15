@@ -1,5 +1,4 @@
-import { log } from "@backend-common";
-import { JwtContext } from "@backend-common";
+import { JwtContext, log } from "@backend-common";
 import { t } from "@backend-utils";
 import { WebAuthN } from "@frak-labs/app-essentials";
 import {

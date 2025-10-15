@@ -1,5 +1,5 @@
-export { sessionContext } from "./macro";
 export { log } from "./logger";
+export { sessionContext } from "./macro";
 // Repositories singleton
 export {
     adminWalletsRepository,
@@ -7,10 +7,10 @@ export {
     pricingRepository,
     rolesRepository,
 } from "./repositories";
+export { viemClient } from "./services/blockchain";
+export { type GetMongoDb, getMongoDb } from "./services/db";
+export { eventEmitter } from "./services/events";
 // Services
 export { indexerApi } from "./services/indexerApi";
-export { eventEmitter } from "./services/events";
-export { viemClient } from "./services/blockchain";
-export { getMongoDb, type GetMongoDb } from "./services/db";
-export { db } from "./services/postgres";
 export { JwtContext } from "./services/jwt";
+export { db } from "./services/postgres";

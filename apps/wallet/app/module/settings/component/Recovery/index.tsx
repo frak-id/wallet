@@ -1,11 +1,11 @@
-import { webauthnSessionAtom } from "@/module/common/atoms/session";
-import { Panel } from "@/module/common/component/Panel";
-import { Title } from "@/module/common/component/Title";
-import { CurrentRecoverySetupStatus } from "@/module/recovery-setup/component/CurrentSetupStatus";
 import { useAtomValue } from "jotai";
 import { Shield } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
+import { webauthnSessionAtom } from "@/module/common/atoms/session";
+import { Panel } from "@/module/common/component/Panel";
+import { Title } from "@/module/common/component/Title";
+import { CurrentRecoverySetupStatus } from "@/module/recovery-setup/component/CurrentSetupStatus";
 
 /**
  * Component for the settings with the recovery link

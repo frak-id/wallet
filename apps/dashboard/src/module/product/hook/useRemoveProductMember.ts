@@ -1,13 +1,13 @@
-import { useWaitForTxAndInvalidateQueries } from "@/module/common/utils/useWaitForTxAndInvalidateQueries";
 import {
-    type ProductRolesKey,
     addresses,
+    type ProductRolesKey,
     productAdministratorRegistryAbi,
     productRoles,
 } from "@frak-labs/app-essentials";
 import { useSendTransactionAction } from "@frak-labs/react-sdk";
 import { useMutation } from "@tanstack/react-query";
-import { type Address, type Hex, encodeFunctionData } from "viem";
+import { type Address, encodeFunctionData, type Hex } from "viem";
+import { useWaitForTxAndInvalidateQueries } from "@/module/common/utils/useWaitForTxAndInvalidateQueries";
 
 type RemoveProductMemberArg = {
     productId: Hex;

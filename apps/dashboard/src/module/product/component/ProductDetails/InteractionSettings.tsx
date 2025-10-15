@@ -1,13 +1,3 @@
-import { viemClient } from "@/context/blockchain/provider";
-import { Badge } from "@/module/common/component/Badge";
-import { CallOut } from "@/module/common/component/CallOut";
-import { Panel } from "@/module/common/component/Panel";
-import { PanelAccordion } from "@/module/common/component/PanelAccordion";
-import { Title } from "@/module/common/component/Title";
-import { useGetAdminWallet } from "@/module/common/hook/useGetAdminWallet";
-import { useHasRoleOnProduct } from "@/module/common/hook/useHasRoleOnProduct";
-import { useProductInteractionContract } from "@/module/product/hook/useProductInteractionContract";
-import { useSetupInteractionContract } from "@/module/product/hook/useSetupInteractionContract";
 import {
     addresses,
     interactionValidatorRoles,
@@ -23,9 +13,19 @@ import { Spinner } from "@frak-labs/ui/component/Spinner";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useState } from "react";
-import { type Address, type Hex, encodeFunctionData } from "viem";
+import { type Address, encodeFunctionData, type Hex } from "viem";
 import { generatePrivateKey } from "viem/accounts";
 import { readContract } from "viem/actions";
+import { viemClient } from "@/context/blockchain/provider";
+import { Badge } from "@/module/common/component/Badge";
+import { CallOut } from "@/module/common/component/CallOut";
+import { Panel } from "@/module/common/component/Panel";
+import { PanelAccordion } from "@/module/common/component/PanelAccordion";
+import { Title } from "@/module/common/component/Title";
+import { useGetAdminWallet } from "@/module/common/hook/useGetAdminWallet";
+import { useHasRoleOnProduct } from "@/module/common/hook/useHasRoleOnProduct";
+import { useProductInteractionContract } from "@/module/product/hook/useProductInteractionContract";
+import { useSetupInteractionContract } from "@/module/product/hook/useSetupInteractionContract";
 import styles from "./InteractionSettings.module.css";
 
 /**
@@ -59,91 +59,87 @@ export function InteractionSettings({ productId }: { productId: Hex }) {
             id={"interactionSettings"}
             className={styles.interactionSettings}
         >
-            <>
-                <Columns>
-                    <Column size={"full"}>
-                        <Title as={"h3"}>Interaction Contract</Title>
-                        <p>
-                            <strong>Status: </strong>{" "}
-                            {detailsData?.interactionContract ? (
-                                <Badge variant={"success"}>Deployed</Badge>
-                            ) : (
-                                <Badge variant={"warning"}>Not Deployed</Badge>
-                            )}
-                        </p>
-
-                        {detailsData?.interactionContract && (
-                            <p>
-                                <strong>Address: </strong>{" "}
-                                <WalletAddress
-                                    wallet={detailsData.interactionContract}
-                                />
-                            </p>
+            <Columns>
+                <Column size={"full"}>
+                    <Title as={"h3"}>Interaction Contract</Title>
+                    <p>
+                        <strong>Status: </strong>{" "}
+                        {detailsData?.interactionContract ? (
+                            <Badge variant={"success"}>Deployed</Badge>
+                        ) : (
+                            <Badge variant={"warning"}>Not Deployed</Badge>
                         )}
+                    </p>
 
-                        {detailsData?.interactionContract &&
-                            isInteractionManager && (
-                                <ModalDelete
-                                    productId={productId}
-                                    refreshDetails={async () => {
-                                        await refreshDetails();
-                                    }}
-                                />
-                            )}
+                    {detailsData?.interactionContract && (
+                        <p>
+                            <strong>Address: </strong>{" "}
+                            <WalletAddress
+                                wallet={detailsData.interactionContract}
+                            />
+                        </p>
+                    )}
 
-                        {!detailsData?.interactionContract &&
-                            isInteractionManager && (
-                                <Button
-                                    variant={"submit"}
-                                    onClick={() =>
-                                        setupInteractionContract({
-                                            productId,
-                                            salt: generatePrivateKey(),
-                                        })
-                                    }
-                                    className={
-                                        styles.interactionSettings__button
-                                    }
-                                >
-                                    Deploy contract
-                                </Button>
-                            )}
-
-                        <CallOut variant={"secondary"}>
-                            The Interaction Contract receives user interactions
-                            and triggers campaigns after validation.
-                            <br />
-                            It's essential for enabling blockchain-based user
-                            engagement with your product.
-                        </CallOut>
-                    </Column>
-                </Columns>
-
-                <Columns>
-                    <Column size={"full"}>
-                        {detailsData?.interactionContract && (
-                            <ManagedInteractionValidator
+                    {detailsData?.interactionContract &&
+                        isInteractionManager && (
+                            <ModalDelete
                                 productId={productId}
-                                interactionContract={
-                                    detailsData.interactionContract
-                                }
+                                refreshDetails={async () => {
+                                    await refreshDetails();
+                                }}
                             />
                         )}
-                        <CallOut variant={"secondary"}>
-                            For more information on using the Managed
-                            Interaction Validator with the SDK, see our{" "}
-                            <Link
-                                href={
-                                    "https://docs.frak.id/wallet-sdk/api/react/hooks/useWalletStatus"
+
+                    {!detailsData?.interactionContract &&
+                        isInteractionManager && (
+                            <Button
+                                variant={"submit"}
+                                onClick={() =>
+                                    setupInteractionContract({
+                                        productId,
+                                        salt: generatePrivateKey(),
+                                    })
                                 }
+                                className={styles.interactionSettings__button}
                             >
-                                documentation
-                            </Link>
-                            .
-                        </CallOut>
-                    </Column>
-                </Columns>
-            </>
+                                Deploy contract
+                            </Button>
+                        )}
+
+                    <CallOut variant={"secondary"}>
+                        The Interaction Contract receives user interactions and
+                        triggers campaigns after validation.
+                        <br />
+                        It's essential for enabling blockchain-based user
+                        engagement with your product.
+                    </CallOut>
+                </Column>
+            </Columns>
+
+            <Columns>
+                <Column size={"full"}>
+                    {detailsData?.interactionContract && (
+                        <ManagedInteractionValidator
+                            productId={productId}
+                            interactionContract={
+                                detailsData.interactionContract
+                            }
+                        />
+                    )}
+                    <CallOut variant={"secondary"}>
+                        For more information on using the Managed Interaction
+                        Validator with the SDK, see our{" "}
+                        <Link
+                            href={
+                                "https://docs.frak.id/wallet-sdk/api/react/hooks/useWalletStatus"
+                            }
+                        >
+                            documentation
+                        </Link>
+                        .
+                    </CallOut>
+                </Column>
+            </Columns>
         </PanelAccordion>
     );
 }
@@ -151,7 +147,10 @@ export function InteractionSettings({ productId }: { productId: Hex }) {
 function ManagedInteractionValidator({
     productId,
     interactionContract,
-}: { productId: Hex; interactionContract: Address }) {
+}: {
+    productId: Hex;
+    interactionContract: Address;
+}) {
     const { mutateAsync: sendTransaction } = useSendTransactionAction();
     const { data: productValidator } = useGetAdminWallet({ productId });
     const { data: interactionExecutor } = useGetAdminWallet({
@@ -291,7 +290,10 @@ function ManagedInteractionValidator({
 function ModalDelete({
     productId,
     refreshDetails,
-}: { productId: Hex; refreshDetails: () => Promise<void> }) {
+}: {
+    productId: Hex;
+    refreshDetails: () => Promise<void>;
+}) {
     const { mutateAsync: sendTransaction } = useSendTransactionAction();
     const [open, setOpen] = useState(false);
 

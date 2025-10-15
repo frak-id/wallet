@@ -1,5 +1,11 @@
 "use client";
 
+import { Button } from "@frak-labs/ui/component/Button";
+import { useMutation } from "@tanstack/react-query";
+import { useAtomValue, useSetAtom } from "jotai";
+import { useEffect } from "react";
+import { useFormContext } from "react-hook-form";
+import type { Address } from "viem";
 import {
     type GetMembersParam,
     getProductsMembersCount,
@@ -9,12 +15,6 @@ import { FormField, FormItem, FormMessage } from "@/module/forms/Form";
 import { selectedMembersAtom } from "@/module/members/atoms/selectedMembers";
 import type { FormCreatePushNotification } from "@/module/members/component/CreatePush";
 import { MembersFiltering } from "@/module/members/component/MembersFiltering";
-import { Button } from "@frak-labs/ui/component/Button";
-import { useMutation } from "@tanstack/react-query";
-import { useAtomValue, useSetAtom } from "jotai";
-import { useEffect } from "react";
-import { useFormContext } from "react-hook-form";
-import type { Address } from "viem";
 
 /**
  * Audience panel

@@ -1,7 +1,7 @@
 import { tools } from "@frak-labs/dev-tooling";
 import { pluginPreact } from "@rsbuild/plugin-preact";
 import { pluginSvgr } from "@rsbuild/plugin-svgr";
-import { type LibConfig, defineConfig } from "@rslib/core";
+import { defineConfig, type LibConfig } from "@rslib/core";
 
 /**
  * Create the lib config for NPM distribution

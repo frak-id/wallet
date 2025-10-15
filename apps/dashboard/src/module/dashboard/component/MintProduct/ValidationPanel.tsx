@@ -1,9 +1,9 @@
 "use client";
 
-import { PanelAccordion } from "@/module/common/component/PanelAccordion";
-import type { ProductNew } from "@/types/Product";
 import { Button } from "@frak-labs/ui/component/Button";
 import type { UseFormReturn } from "react-hook-form";
+import { PanelAccordion } from "@/module/common/component/PanelAccordion";
+import type { ProductNew } from "@/types/Product";
 import styles from "./index.module.css";
 
 interface ValidationPanelProps {

@@ -1,5 +1,4 @@
-import { rolesRepository } from "@backend-common";
-import { db } from "@backend-common";
+import { db, rolesRepository } from "@backend-common";
 import { t } from "@backend-utils";
 import { productRoles } from "@frak-labs/app-essentials";
 import { count, eq, max, min } from "drizzle-orm";

@@ -1,7 +1,7 @@
-import { getInteractionHistory } from "@/module/history/action/interactionHistory";
-import { historyKey } from "@/module/history/queryKeys/history";
 import { useQuery } from "@tanstack/react-query";
 import { useAccount } from "wagmi";
+import { getInteractionHistory } from "@/module/history/action/interactionHistory";
+import { historyKey } from "@/module/history/queryKeys/history";
 
 // Fetch the current wallet history
 export function useGetInteractionHistory() {

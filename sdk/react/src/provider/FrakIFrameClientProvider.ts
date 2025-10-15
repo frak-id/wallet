@@ -1,15 +1,15 @@
 import {
-    type FrakClient,
-    type FrakWalletSdkConfig,
     baseIframeProps,
     createIFrameFrakClient,
+    type FrakClient,
+    type FrakWalletSdkConfig,
 } from "@frak-labs/core-sdk";
 import {
     type CSSProperties,
-    Fragment,
-    type ReactNode,
     createContext,
     createElement,
+    Fragment,
+    type ReactNode,
     useState,
 } from "react";
 import { useFrakConfig } from "../hook";

@@ -1,8 +1,8 @@
-import { iframeResolvingContextAtom } from "@/module/listener/atoms/resolvingContext";
-import { usePushInteraction } from "@/module/wallet/hook/usePushInteraction";
 import { ReferralInteractionEncoder } from "@frak-labs/core-sdk/interactions";
 import { useAtomValue } from "jotai";
 import { useEffect, useRef } from "react";
+import { iframeResolvingContextAtom } from "@/module/listener/atoms/resolvingContext";
+import { usePushInteraction } from "@/module/wallet/hook/usePushInteraction";
 
 const globalInteractionState = {
     isInteractionPushed: false,
@@ -14,7 +14,9 @@ const globalInteractionState = {
  */
 export function useTriggerPushInterraction({
     conditionToTrigger,
-}: { conditionToTrigger: boolean }) {
+}: {
+    conditionToTrigger: boolean;
+}) {
     const pushInteraction = usePushInteraction();
     const resolvingContext = useAtomValue(iframeResolvingContextAtom);
     const isMounted = useRef(false);

@@ -1,16 +1,3 @@
-import { sessionAtom } from "@/module/common/atoms/session";
-import {
-    type DisplayedModalStep,
-    displayedRpcModalStepsAtom,
-    setNewModalAtom,
-} from "@/module/listener/modal/atoms/modalEvents";
-import {
-    clearRpcModalAtom,
-    onFinishResultAtom,
-} from "@/module/listener/modal/atoms/modalUtils";
-import { useListenerUI } from "@/module/listener/providers/ListenerUiProvider";
-import type { WalletRpcContext } from "@/module/listener/types/context";
-import { interactionSessionAtom } from "@/module/wallet/atoms/interactionSession";
 import type {
     IFrameRpcSchema,
     ModalRpcStepsInput,
@@ -27,6 +14,19 @@ import {
 } from "@frak-labs/frame-connector";
 import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { useCallback, useEffect, useRef } from "react";
+import { sessionAtom } from "@/module/common/atoms/session";
+import {
+    type DisplayedModalStep,
+    displayedRpcModalStepsAtom,
+    setNewModalAtom,
+} from "@/module/listener/modal/atoms/modalEvents";
+import {
+    clearRpcModalAtom,
+    onFinishResultAtom,
+} from "@/module/listener/modal/atoms/modalUtils";
+import { useListenerUI } from "@/module/listener/providers/ListenerUiProvider";
+import type { WalletRpcContext } from "@/module/listener/types/context";
+import { interactionSessionAtom } from "@/module/wallet/atoms/interactionSession";
 import { trackGenericEvent } from "../../common/analytics";
 
 type OnDisplayModalRequest = RpcPromiseHandler<

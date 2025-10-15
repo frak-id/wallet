@@ -1,6 +1,6 @@
-import type { SsoRpcSchema } from "@/types/sso-rpc";
 import type { IFrameRpcSchema } from "@frak-labs/core-sdk";
 import type { Address, Hex } from "viem";
+import type { SsoRpcSchema } from "@/types/sso-rpc";
 
 /**
  * Augmented context for wallet RPC handlers

@@ -1,3 +1,13 @@
+import { useWalletStatus } from "@frak-labs/react-sdk";
+import { Button } from "@frak-labs/ui/component/Button";
+import { WalletAddress } from "@frak-labs/ui/component/HashDisplay";
+import { Skeleton } from "@frak-labs/ui/component/Skeleton";
+import { Tooltip } from "@frak-labs/ui/component/Tooltip";
+import type { ColumnDef } from "@tanstack/react-table";
+import { type CellContext, createColumnHelper } from "@tanstack/react-table";
+import dynamic from "next/dynamic";
+import { useMemo } from "react";
+import { type Hex, isAddressEqual, zeroAddress } from "viem";
 import type { getProductAdministrators } from "@/context/product/action/getAdministrators";
 import { Badge } from "@/module/common/component/Badge";
 import type { ReactTableProps } from "@/module/common/component/Table";
@@ -9,16 +19,6 @@ import {
 } from "@/module/product/component/TableTeam/Modal";
 import { useGetProductAdministrators } from "@/module/product/hook/useGetProductAdministrators";
 import { permissionLabels } from "@/module/product/utils/permissions";
-import { useWalletStatus } from "@frak-labs/react-sdk";
-import { Button } from "@frak-labs/ui/component/Button";
-import { WalletAddress } from "@frak-labs/ui/component/HashDisplay";
-import { Skeleton } from "@frak-labs/ui/component/Skeleton";
-import { Tooltip } from "@frak-labs/ui/component/Tooltip";
-import { type CellContext, createColumnHelper } from "@tanstack/react-table";
-import type { ColumnDef } from "@tanstack/react-table";
-import dynamic from "next/dynamic";
-import { useMemo } from "react";
-import { type Hex, isAddressEqual, zeroAddress } from "viem";
 import styles from "./index.module.css";
 
 const Table = dynamic<ReactTableProps<ManageTeamTableData>>(
@@ -76,19 +76,17 @@ export function TableTeam({ productId }: { productId: Hex }) {
     }
 
     return (
-        <>
-            <Table
-                data={administrators}
-                columns={columns}
-                preTable={
-                    isAdministrator && (
-                        <ButtonAddTeam productId={productId}>
-                            <Button variant={"submit"}>Add Team Member</Button>
-                        </ButtonAddTeam>
-                    )
-                }
-            />
-        </>
+        <Table
+            data={administrators}
+            columns={columns}
+            preTable={
+                isAdministrator && (
+                    <ButtonAddTeam productId={productId}>
+                        <Button variant={"submit"}>Add Team Member</Button>
+                    </ButtonAddTeam>
+                )
+            }
+        />
     );
 }
 
@@ -156,7 +154,9 @@ function CellActions({
 
 function PermissionsBadge({
     roleDetails,
-}: { roleDetails: ManageTeamTableData["roleDetails"] }) {
+}: {
+    roleDetails: ManageTeamTableData["roleDetails"];
+}) {
     if (roleDetails.admin) {
         return <Badge variant={"success"}>Owner</Badge>;
     }

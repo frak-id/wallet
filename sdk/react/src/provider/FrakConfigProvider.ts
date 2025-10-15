@@ -1,5 +1,5 @@
 import type { FrakWalletSdkConfig } from "@frak-labs/core-sdk";
-import { type PropsWithChildren, createContext, createElement } from "react";
+import { createContext, createElement, type PropsWithChildren } from "react";
 
 /**
  * The context that will keep the Frak Wallet SDK configuration

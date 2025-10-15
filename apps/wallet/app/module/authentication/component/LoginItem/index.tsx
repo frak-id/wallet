@@ -1,5 +1,3 @@
-import { useLogin } from "@/module/authentication/hook/useLogin";
-import type { PreviousAuthenticatorModel } from "@/module/common/storage/dexie/PreviousAuthenticatorModel";
 import { Button } from "@frak-labs/ui/component/Button";
 import { formatHash } from "@frak-labs/ui/component/HashDisplay";
 import { FingerprintFrak } from "@frak-labs/ui/icons/FingerprintFrak";
@@ -8,11 +6,15 @@ import { useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import { toHex } from "viem";
+import { useLogin } from "@/module/authentication/hook/useLogin";
+import type { PreviousAuthenticatorModel } from "@/module/common/storage/dexie/PreviousAuthenticatorModel";
 import styles from "./index.module.css";
 
 export function LoginItem({
     lastAuthentication,
-}: { lastAuthentication: PreviousAuthenticatorModel }) {
+}: {
+    lastAuthentication: PreviousAuthenticatorModel;
+}) {
     const navigate = useNavigate();
     const { t } = useTranslation();
     const [, startTransition] = useTransition();

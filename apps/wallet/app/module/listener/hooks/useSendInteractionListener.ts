@@ -1,5 +1,3 @@
-import type { WalletRpcContext } from "@/module/listener/types/context";
-import { usePushInteraction } from "@/module/wallet/hook/usePushInteraction";
 import type { IFrameRpcSchema } from "@frak-labs/core-sdk";
 import {
     FrakRpcError,
@@ -7,6 +5,8 @@ import {
     type RpcPromiseHandler,
 } from "@frak-labs/frame-connector";
 import { useCallback } from "react";
+import type { WalletRpcContext } from "@/module/listener/types/context";
+import { usePushInteraction } from "@/module/wallet/hook/usePushInteraction";
 
 type OnInteractionRequest = RpcPromiseHandler<
     IFrameRpcSchema,

@@ -1,11 +1,4 @@
-import type { currentViemClient } from "@/module/blockchain/provider";
-import {
-    fetchAccountMetadata,
-    wrapMessageForSignature,
-} from "@/module/wallet/smartWallet/signature";
-import { encodeWalletMulticall } from "@/module/wallet/utils/multicall";
-import { KernelExecuteAbi } from "@frak-labs/app-essentials";
-import { kernelAddresses } from "@frak-labs/app-essentials";
+import { KernelExecuteAbi, kernelAddresses } from "@frak-labs/app-essentials";
 import { isSmartAccountDeployed } from "permissionless";
 import { getAccountNonce, getSenderAddress } from "permissionless/actions";
 import { memo, tryit } from "radash";
@@ -13,27 +6,33 @@ import {
     type Address,
     type Chain,
     type Client,
-    type Hex,
-    type Transport,
     concatHex,
     encodeFunctionData,
+    type Hex,
     hashMessage,
     hashTypedData,
     isAddressEqual,
     slice,
+    type Transport,
     toFunctionSelector,
 } from "viem";
 import {
-    type SmartAccount,
-    type SmartAccountImplementation,
-    type UserOperation,
     entryPoint06Abi,
     entryPoint06Address,
     estimateUserOperationGas,
     getUserOperationHash,
+    type SmartAccount,
+    type SmartAccountImplementation,
     toSmartAccount,
+    type UserOperation,
 } from "viem/account-abstraction";
 import { formatAbiItem } from "viem/utils";
+import type { currentViemClient } from "@/module/blockchain/provider";
+import {
+    fetchAccountMetadata,
+    wrapMessageForSignature,
+} from "@/module/wallet/smartWallet/signature";
+import { encodeWalletMulticall } from "@/module/wallet/utils/multicall";
 
 export type BaseFrakSmartAccount = SmartAccount<
     SmartAccountImplementation<typeof entryPoint06Abi, "0.6", object, false>
@@ -49,7 +48,11 @@ function isAlreadyFormattedCall({
     wallet,
     to,
     data,
-}: { wallet: Address; to: Address; data: Hex }) {
+}: {
+    wallet: Address;
+    to: Address;
+    data: Hex;
+}) {
     if (!isAddressEqual(to, wallet)) {
         return false;
     }
@@ -266,7 +269,7 @@ export async function baseFrakWallet<
                 const [, userOpEstimation] = await tryit(() =>
                     estimateUserOperationGas(
                         client as unknown as typeof currentViemClient,
-                        // @ts-ignore
+                        // @ts-expect-error
                         userOperation as unknown as UserOperation
                     )
                 )();

@@ -1,7 +1,7 @@
 import "@khmyznikov/pwa-install";
 import type { PWAInstallElement } from "@khmyznikov/pwa-install";
 import { atom, useAtomValue } from "jotai";
-import { type RefObject, createRef, useEffect } from "react";
+import { createRef, type RefObject, useEffect } from "react";
 
 /**
  * @description Keep the pwa-install element to be used elsewhere.
@@ -28,7 +28,7 @@ export const pwaInstallRefAtom = atom<RefObject<PWAInstallElement | null>>(
 export function PwaInstallScript() {
     return (
         <script
-            // biome-ignore lint/security/noDangerouslySetInnerHtml:
+            // biome-ignore lint/security/noDangerouslySetInnerHtml: Required for PWA install prompt script
             dangerouslySetInnerHTML={{
                 __html: `
                     window.addEventListener("beforeinstallprompt", (e) => {
@@ -61,12 +61,12 @@ export function PwaInstall() {
         const pwaInstall = pwaInstallRef?.current;
         if (!pwaInstall) return;
 
-        // @ts-ignore
+        // @ts-expect-error
         pwaInstall.externalPromptEvent = window.promptEvent;
     }, [pwaInstallRef]);
 
     return (
-        // @ts-ignore
+        // @ts-expect-error
         <pwa-install
             ref={pwaInstallRef}
             manifest-url="/manifest.json"

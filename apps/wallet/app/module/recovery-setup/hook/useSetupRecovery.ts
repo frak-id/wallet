@@ -1,4 +1,3 @@
-import { recoverySetupKey } from "@/module/recovery-setup/queryKeys/recovery-setup";
 import {
     type DefaultError,
     type UseMutationOptions,
@@ -7,6 +6,7 @@ import {
 } from "@tanstack/react-query";
 import type { Hex } from "viem";
 import { useAccount, useSendTransaction } from "wagmi";
+import { recoverySetupKey } from "@/module/recovery-setup/queryKeys/recovery-setup";
 
 type MutationParams = {
     setupTxData: Hex;

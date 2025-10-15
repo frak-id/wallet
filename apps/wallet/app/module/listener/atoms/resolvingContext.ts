@@ -1,5 +1,3 @@
-import { sessionAtom } from "@/module/common/atoms/session";
-import { emitLifecycleEvent } from "@/module/sdk/utils/lifecycleEvents";
 import {
     type ClientLifecycleEvent,
     FrakContextManager,
@@ -7,6 +5,8 @@ import {
 import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { atom, useAtomValue } from "jotai";
 import { type Address, isAddressEqual, keccak256, toHex } from "viem";
+import { sessionAtom } from "@/module/common/atoms/session";
+import { emitLifecycleEvent } from "@/module/sdk/utils/lifecycleEvents";
 import { updateGlobalProperties } from "../../common/analytics";
 import type { WalletRpcContext } from "../types/context";
 

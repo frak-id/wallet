@@ -12,7 +12,9 @@ import styles from "./index.module.css";
 
 export function AccordionTransactions({
     txs,
-}: { txs: SendTransactionTxType[] }) {
+}: {
+    txs: SendTransactionTxType[];
+}) {
     const { t } = useTranslation();
     return (
         <Accordion

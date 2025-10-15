@@ -1,9 +1,9 @@
 "use server";
-import { getAdministratorsMock } from "@/context/product/action/mock";
-import { isDemoModeActive } from "@/module/common/utils/isDemoMode";
 import { type ProductRolesKey, productRoles } from "@frak-labs/app-essentials";
 import { indexerApi } from "@frak-labs/client/server";
 import { type Address, type Hex, toHex } from "viem";
+import { getAdministratorsMock } from "@/context/product/action/mock";
+import { isDemoModeActive } from "@/module/common/utils/isDemoMode";
 
 type ApiResult = {
     wallet: Address;
@@ -17,7 +17,9 @@ type ApiResult = {
  */
 export async function getProductAdministrators({
     productId,
-}: { productId: Hex }) {
+}: {
+    productId: Hex;
+}) {
     // Check if demo mode is active
     if (await isDemoModeActive()) {
         return getAdministratorsMock();

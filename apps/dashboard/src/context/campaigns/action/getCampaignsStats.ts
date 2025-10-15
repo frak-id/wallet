@@ -1,12 +1,12 @@
 "use server";
 
+import { indexerApi } from "@frak-labs/client/server";
+import { type Address, formatUnits, getAddress, isAddressEqual } from "viem";
 import { getSafeSession } from "@/context/auth/actions/session";
 import { getBankTokenInfo } from "@/context/campaigns/action/getBankInfo";
 import { getMyCampaignsStatsMock } from "@/context/campaigns/action/mock";
 import { getCampaignRepository } from "@/context/campaigns/repository/CampaignRepository";
 import { isDemoModeActive } from "@/module/common/utils/isDemoMode";
-import { indexerApi } from "@frak-labs/client/server";
-import { type Address, formatUnits, getAddress, isAddressEqual } from "viem";
 
 type CampaignStats = {
     productId: string;

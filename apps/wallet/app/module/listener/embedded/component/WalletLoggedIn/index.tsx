@@ -1,3 +1,17 @@
+import {
+    type Currency,
+    FrakContextManager,
+    formatAmount,
+    getCurrencyAmountKey,
+} from "@frak-labs/core-sdk";
+import { useCopyToClipboardWithState } from "@frak-labs/ui/hook/useCopyToClipboardWithState";
+import { Copy } from "@frak-labs/ui/icons/Copy";
+import { Power } from "@frak-labs/ui/icons/Power";
+import { Share } from "@frak-labs/ui/icons/Share";
+import { prefixWalletCss } from "@frak-labs/ui/utils/prefixWalletCss";
+import { cx } from "class-variance-authority";
+import { toast } from "sonner";
+import { useAccount } from "wagmi";
 import { useSafeResolvingContext } from "@/module/listener/atoms/resolvingContext";
 import { ButtonWallet } from "@/module/listener/embedded/component/ButtonWallet";
 import {
@@ -16,20 +30,6 @@ import { useGetUserPendingBalance } from "@/module/tokens/hook/useGetUserPending
 import { useCloseSession } from "@/module/wallet/hook/useCloseSession";
 import { useInteractionSessionStatus } from "@/module/wallet/hook/useInteractionSessionStatus";
 import { useOpenSession } from "@/module/wallet/hook/useOpenSession";
-import {
-    type Currency,
-    FrakContextManager,
-    formatAmount,
-    getCurrencyAmountKey,
-} from "@frak-labs/core-sdk";
-import { useCopyToClipboardWithState } from "@frak-labs/ui/hook/useCopyToClipboardWithState";
-import { Copy } from "@frak-labs/ui/icons/Copy";
-import { Power } from "@frak-labs/ui/icons/Power";
-import { Share } from "@frak-labs/ui/icons/Share";
-import { prefixWalletCss } from "@frak-labs/ui/utils/prefixWalletCss";
-import { cx } from "class-variance-authority";
-import { toast } from "sonner";
-import { useAccount } from "wagmi";
 import { trackGenericEvent } from "../../../../common/analytics";
 import { useShareLink } from "../../../hooks/useShareLink";
 import styles from "./index.module.css";
@@ -83,7 +83,11 @@ function Balance({
     amount,
     isPending,
     currency,
-}: { amount: number; isPending: boolean; currency: Currency }) {
+}: {
+    amount: number;
+    isPending: boolean;
+    currency: Currency;
+}) {
     const { t } = useListenerTranslation();
 
     return (
@@ -106,7 +110,9 @@ function Balance({
 
 function ActionButtons({
     refetchPendingBalance,
-}: { refetchPendingBalance: () => void }) {
+}: {
+    refetchPendingBalance: () => void;
+}) {
     const { address } = useAccount();
     const {
         currentRequest: {
@@ -147,7 +153,9 @@ function ActionButtons({
 
 function ButtonOpenSession({
     refetchPendingBalance,
-}: { refetchPendingBalance: () => void }) {
+}: {
+    refetchPendingBalance: () => void;
+}) {
     const { data: currentSession } = useInteractionSessionStatus();
     const { t } = useListenerTranslation();
     const { mutateAsync: openSession, isPending: isOpeningSession } =

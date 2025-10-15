@@ -1,8 +1,8 @@
 export { AuthContext } from "./context";
 
 export {
-    WalletAuthResponseDto,
+    type StaticWalletSdkTokenDto,
     type StaticWalletTokenDto,
     type StaticWalletWebauthnTokenDto,
-    type StaticWalletSdkTokenDto,
+    WalletAuthResponseDto,
 } from "./models/WalletSessionDto";

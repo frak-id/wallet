@@ -1,12 +1,12 @@
 import type { Page, Route } from "@playwright/test";
 import {
-    type EIP1193Parameters,
-    type Hex,
-    type PublicRpcSchema,
     decodeFunctionData,
     decodeFunctionResult,
+    type EIP1193Parameters,
     encodeFunctionResult,
+    type Hex,
     multicall3Abi,
+    type PublicRpcSchema,
 } from "viem";
 
 type RpcRequest = {

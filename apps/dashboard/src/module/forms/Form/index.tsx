@@ -1,11 +1,11 @@
-import { Label } from "@/module/forms/Label";
 import type * as LabelPrimitive from "@radix-ui/react-label";
 import { Slot } from "@radix-ui/react-slot";
-import { type VariantProps, cva, cx } from "class-variance-authority";
-import { createContext, useContext, useId } from "react";
+import { cva, cx, type VariantProps } from "class-variance-authority";
 import type { ComponentPropsWithRef, ReactNode } from "react";
-import { Controller, FormProvider, useFormContext } from "react-hook-form";
+import { createContext, useContext, useId } from "react";
 import type { ControllerProps, FieldPath, FieldValues } from "react-hook-form";
+import { Controller, FormProvider, useFormContext } from "react-hook-form";
+import { Label } from "@/module/forms/Label";
 import styles from "./index.module.css";
 
 const Form = FormProvider;
@@ -13,7 +13,10 @@ const Form = FormProvider;
 function FormLayout({
     children,
     className,
-}: { children: ReactNode; className?: string }) {
+}: {
+    children: ReactNode;
+    className?: string;
+}) {
     return <div className={cx(styles.form__layout, className)}>{children}</div>;
 }
 

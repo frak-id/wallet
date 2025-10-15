@@ -1,8 +1,8 @@
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import type { PersistQueryClientProviderProps } from "@tanstack/react-query-persist-client";
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import type { PropsWithChildren } from "react";
 import { ThemeProvider } from "./ThemeProvider";
 
@@ -43,19 +43,17 @@ const persistOptions: PersistQueryClientProviderProps["persistOptions"] = {
 };
 export function RootProvider({ children }: PropsWithChildren) {
     return (
-        <>
-            <ThemeProvider>
-                <PersistQueryClientProvider
-                    client={queryClient}
-                    persistOptions={persistOptions}
-                >
-                    {children}
-                    <ReactQueryDevtools
-                        initialIsOpen={false}
-                        buttonPosition={"top-right"}
-                    />
-                </PersistQueryClientProvider>
-            </ThemeProvider>
-        </>
+        <ThemeProvider>
+            <PersistQueryClientProvider
+                client={queryClient}
+                persistOptions={persistOptions}
+            >
+                {children}
+                <ReactQueryDevtools
+                    initialIsOpen={false}
+                    buttonPosition={"top-right"}
+                />
+            </PersistQueryClientProvider>
+        </ThemeProvider>
     );
 }

@@ -48,10 +48,8 @@ export const Tooltip = ({
                         ref={ref}
                         {...props}
                     >
-                        <>
-                            {content}
-                            <Arrow className={styles.tooltip__arrow} />
-                        </>
+                        {content}
+                        <Arrow className={styles.tooltip__arrow} />
                     </Content>
                 </Portal>
             </Root>

@@ -1,22 +1,25 @@
-import { getMyCampaignsStats } from "@/context/campaigns/action/getCampaignsStats";
-import { TablePerformanceFilters } from "@/module/campaigns/component/TableCampaignPerformance/Filter";
-import type { ReactTableProps } from "@/module/common/component/Table";
-import { TooltipTable } from "@/module/common/component/TooltipTable";
-import { useConvertToPreferredCurrency } from "@/module/common/hook/useConversionRate";
 import { Skeleton } from "@frak-labs/ui/component/Skeleton";
 import { computeWithPrecision } from "@frak-labs/ui/utils/computeWithPrecision";
 import { useQuery } from "@tanstack/react-query";
+import type {
+    CellContext,
+    ColumnDef,
+    Table as TableReact,
+} from "@tanstack/react-table";
 import {
     type ColumnFiltersState,
     createColumnHelper,
 } from "@tanstack/react-table";
-import type { CellContext, ColumnDef } from "@tanstack/react-table";
-import type { Table as TableReact } from "@tanstack/react-table";
 import { atom } from "jotai";
 import { useAtomValue } from "jotai/index";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useMemo } from "react";
+import { getMyCampaignsStats } from "@/context/campaigns/action/getCampaignsStats";
+import { TablePerformanceFilters } from "@/module/campaigns/component/TableCampaignPerformance/Filter";
+import type { ReactTableProps } from "@/module/common/component/Table";
+import { TooltipTable } from "@/module/common/component/TooltipTable";
+import { useConvertToPreferredCurrency } from "@/module/common/hook/useConversionRate";
 
 const Table = dynamic<ReactTableProps<TableData>>(
     () => import("@/module/common/component/Table").then((mod) => mod.Table),

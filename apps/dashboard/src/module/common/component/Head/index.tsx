@@ -1,5 +1,5 @@
-import { Title, type TitleProps } from "@/module/common/component/Title";
 import type { ReactNode } from "react";
+import { Title, type TitleProps } from "@/module/common/component/Title";
 import styles from "./index.module.css";
 
 type HeadProps = {

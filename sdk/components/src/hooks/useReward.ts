@@ -1,6 +1,6 @@
-import { getCurrentReward } from "@/utils/getCurrentReward";
 import type { FullInteractionTypesKey } from "@frak-labs/core-sdk";
 import { useEffect, useState } from "preact/hooks";
+import { getCurrentReward } from "@/utils/getCurrentReward";
 
 /**
  * Hook to fetch and format the current reward value for a given interaction

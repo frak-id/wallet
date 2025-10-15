@@ -1,5 +1,4 @@
-import { eventEmitter } from "@backend-common";
-import { db } from "@backend-common";
+import { db, eventEmitter } from "@backend-common";
 import { mutexCron } from "@backend-utils";
 import type { pino } from "@bogeychan/elysia-logger";
 import { isRunningInProd } from "@frak-labs/app-essentials";

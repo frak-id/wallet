@@ -1,8 +1,8 @@
-import { authKey } from "@/module/authentication/queryKeys/auth";
 import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { useMutation } from "@tanstack/react-query";
 import { type Address, type Hex, stringToHex } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
+import { authKey } from "@/module/authentication/queryKeys/auth";
 import type { Session } from "../../../types/Session";
 import { trackAuthCompleted, trackAuthInitiated } from "../../common/analytics";
 import { authenticatedWalletApi } from "../../common/api/backendClient";

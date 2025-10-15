@@ -1,3 +1,12 @@
+import type { ProductRolesKey } from "@frak-labs/app-essentials";
+import { Button } from "@frak-labs/ui/component/Button";
+import { Checkbox } from "@frak-labs/ui/component/forms/Checkbox";
+import { WalletAddress } from "@frak-labs/ui/component/HashDisplay";
+import { Tooltip } from "@frak-labs/ui/component/Tooltip";
+import type { CellContext } from "@tanstack/react-table";
+import { Pencil, Trash2 } from "lucide-react";
+import { useMemo, useState } from "react";
+import type { Hex } from "viem";
 import { AlertDialog } from "@/module/common/component/AlertDialog";
 import {
     formDescriptionVariants,
@@ -8,15 +17,6 @@ import { Label } from "@/module/forms/Label";
 import type { ManageTeamTableData } from "@/module/product/component/TableTeam/index";
 import { useRemoveProductMember } from "@/module/product/hook/useRemoveProductMember";
 import { permissionLabelsArray } from "@/module/product/utils/permissions";
-import type { ProductRolesKey } from "@frak-labs/app-essentials";
-import { Button } from "@frak-labs/ui/component/Button";
-import { WalletAddress } from "@frak-labs/ui/component/HashDisplay";
-import { Tooltip } from "@frak-labs/ui/component/Tooltip";
-import { Checkbox } from "@frak-labs/ui/component/forms/Checkbox";
-import type { CellContext } from "@tanstack/react-table";
-import { Pencil, Trash2 } from "lucide-react";
-import { useMemo, useState } from "react";
-import type { Hex } from "viem";
 
 /**
  * Component representing the delete modal
@@ -152,14 +152,11 @@ export function UpdateRoleTeamMemberModal({
                             product
                         </p>
                     ) : (
-                        <>
-                            <p className={formDescriptionVariants()}>
-                                Pick the permissions you want to remove to the
-                                user
-                                <br />
-                                <WalletAddress wallet={row.original.wallet} />
-                            </p>
-                        </>
+                        <p className={formDescriptionVariants()}>
+                            Pick the permissions you want to remove to the user
+                            <br />
+                            <WalletAddress wallet={row.original.wallet} />
+                        </p>
                     )}
                     <br />
                     {permissionLabelsArray.map(({ id, label, description }) => (

@@ -1,8 +1,3 @@
-import { iframeResolvingContextAtom } from "@/module/listener/atoms/resolvingContext";
-import type {
-    CombinedRpcSchema,
-    WalletRpcContext,
-} from "@/module/listener/types/context";
 import { isRunningLocally } from "@frak-labs/app-essentials";
 import {
     FrakRpcError,
@@ -11,6 +6,11 @@ import {
 } from "@frak-labs/frame-connector";
 import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { keccak256, toHex } from "viem";
+import { iframeResolvingContextAtom } from "@/module/listener/atoms/resolvingContext";
+import type {
+    CombinedRpcSchema,
+    WalletRpcContext,
+} from "@/module/listener/types/context";
 
 /**
  * Wallet context augmentation middleware

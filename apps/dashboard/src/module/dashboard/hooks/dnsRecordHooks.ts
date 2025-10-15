@@ -11,7 +11,10 @@ import { sleep } from "radash";
 export function useDnsTxtRecordToSet({
     domain,
     enabled,
-}: { domain?: string; enabled: boolean }) {
+}: {
+    domain?: string;
+    enabled: boolean;
+}) {
     return useQuery({
         queryKey: ["mint", "dns-record", domain],
         queryFn: async ({ signal }) => {
@@ -42,7 +45,10 @@ export function useCheckDomainName() {
         mutationFn: async ({
             domain,
             setupCode,
-        }: { domain: string; setupCode?: string }) => {
+        }: {
+            domain: string;
+            setupCode?: string;
+        }) => {
             const { data, error } = await businessApi.product.mint.verify.get({
                 query: { domain, setupCode },
             });
@@ -61,7 +67,10 @@ export function useCheckDomainName() {
 export function useListenToDomainNameSetup({
     domain,
     setupCode,
-}: { domain: string; setupCode: string }) {
+}: {
+    domain: string;
+    setupCode: string;
+}) {
     return useQuery({
         queryKey: ["mint", "listen-to-domain-name-setup", domain, setupCode],
         queryFn: async () => {

@@ -1,5 +1,5 @@
-import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { useState } from "preact/hooks";
+import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 
 // Styles object for component styling
 const styles = {

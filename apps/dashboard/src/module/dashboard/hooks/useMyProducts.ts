@@ -1,7 +1,6 @@
+import { useMemo } from "react";
 import { getMyProducts } from "@/context/product/action/getProducts";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
-import { useQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
 
 /**
  * Hook to get all the current user products

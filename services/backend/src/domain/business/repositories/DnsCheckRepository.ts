@@ -40,7 +40,11 @@ export class DnsCheckRepository {
         domain,
         owner,
         setupCode,
-    }: { domain: string; owner: Address; setupCode?: string }) {
+    }: {
+        domain: string;
+        owner: Address;
+        setupCode?: string;
+    }) {
         // If we got a setup code
         if (setupCode && isHex(setupCode)) {
             // Rebuild the hash
@@ -68,7 +72,10 @@ export class DnsCheckRepository {
     private async isDnsTxtRecordSet({
         domain,
         owner,
-    }: { domain: string; owner: Address }) {
+    }: {
+        domain: string;
+        owner: Address;
+    }) {
         // If not running in prod, return true
         if (!isRunningInProd) return true;
         // Get the waited txt record

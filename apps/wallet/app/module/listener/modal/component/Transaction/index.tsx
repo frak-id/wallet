@@ -1,11 +1,11 @@
-import { HandleErrors } from "@/module/listener/component/HandleErrors";
-import { AccordionTransactions } from "@/module/listener/modal/component/Transaction/AccordionTransactions";
-import { useListenerTranslation } from "@/module/listener/providers/ListenerUiProvider";
-import { encodeWalletMulticall } from "@/module/wallet/utils/multicall";
 import type { SendTransactionModalStepType } from "@frak-labs/core-sdk";
 import { ButtonAuth } from "@frak-labs/ui/component/ButtonAuth";
 import { useMemo } from "react";
 import { useAccount, useSendTransaction } from "wagmi";
+import { HandleErrors } from "@/module/listener/component/HandleErrors";
+import { AccordionTransactions } from "@/module/listener/modal/component/Transaction/AccordionTransactions";
+import { useListenerTranslation } from "@/module/listener/providers/ListenerUiProvider";
+import { encodeWalletMulticall } from "@/module/wallet/utils/multicall";
 
 /**
  * The component for the transaction step of a modal
@@ -60,7 +60,9 @@ export function TransactionModalStep({
 
 function useMappedTx({
     tx,
-}: { tx: SendTransactionModalStepType["params"]["tx"] }) {
+}: {
+    tx: SendTransactionModalStepType["params"]["tx"];
+}) {
     const { address } = useAccount();
 
     return useMemo(() => {

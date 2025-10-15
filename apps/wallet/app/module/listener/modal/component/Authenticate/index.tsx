@@ -1,13 +1,13 @@
-import { TextData } from "@/module/common/component/TextData";
-import { HandleErrors } from "@/module/listener/component/HandleErrors";
-import styles from "@/module/listener/modal/component/Modal/index.module.css";
-import { useListenerTranslation } from "@/module/listener/providers/ListenerUiProvider";
 import type { SiweAuthenticateModalStepType } from "@frak-labs/core-sdk";
 import { Spinner } from "@frak-labs/ui/component/Spinner";
 import { prefixModalCss } from "@frak-labs/ui/utils/prefixModalCss";
 import { useMemo } from "react";
-import { type SiweMessage, createSiweMessage } from "viem/siwe";
+import { createSiweMessage, type SiweMessage } from "viem/siwe";
 import { useAccount, useSignMessage } from "wagmi";
+import { TextData } from "@/module/common/component/TextData";
+import { HandleErrors } from "@/module/listener/component/HandleErrors";
+import styles from "@/module/listener/modal/component/Modal/index.module.css";
+import { useListenerTranslation } from "@/module/listener/providers/ListenerUiProvider";
 
 /**
  * The component for the siwe authentication step of a modal

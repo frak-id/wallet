@@ -1,8 +1,8 @@
-import { Toast } from "@/module/common/component/Toast";
 import { useIsMutating } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { Link } from "react-router";
+import { Toast } from "@/module/common/component/Toast";
 import { useSdkCleanup } from "../hooks/useSdkCleanup";
 import styles from "./ToastLoading.module.css";
 

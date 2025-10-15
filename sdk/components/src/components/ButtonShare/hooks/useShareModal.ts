@@ -1,4 +1,3 @@
-import { getModalBuilderSteps } from "@/utils/setup";
 import {
     DebugInfoGatherer,
     type FullInteractionTypesKey,
@@ -6,6 +5,7 @@ import {
 } from "@frak-labs/core-sdk";
 import { FrakRpcError, RpcErrorCodes } from "@frak-labs/frame-connector";
 import { useCallback, useState } from "preact/hooks";
+import { getModalBuilderSteps } from "@/utils/setup";
 
 /**
  * Open the share modal

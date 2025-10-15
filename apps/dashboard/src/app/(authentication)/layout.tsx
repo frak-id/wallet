@@ -1,5 +1,5 @@
-import { AuthLayout } from "@/module/common/component/AuthLayout";
 import type { ReactNode } from "react";
+import { AuthLayout } from "@/module/common/component/AuthLayout";
 import "./layout.css";
 
 export default function AuthenticationLayout({

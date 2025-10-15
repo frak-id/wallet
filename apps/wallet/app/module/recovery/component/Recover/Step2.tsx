@@ -1,9 +1,3 @@
-import { useLogin } from "@/module/authentication/hook/useLogin";
-import { AccordionRecoveryItem } from "@/module/common/component/AccordionRecoveryItem";
-import {
-    recoveryFileContentAtom,
-    recoveryStepAtom,
-} from "@/module/settings/atoms/recovery";
 import { Button } from "@frak-labs/ui/component/Button";
 import { WalletAddress } from "@frak-labs/ui/component/HashDisplay";
 import { useAtomValue, useSetAtom } from "jotai";
@@ -11,6 +5,12 @@ import { useCallback, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import { toHex } from "viem";
+import { useLogin } from "@/module/authentication/hook/useLogin";
+import { AccordionRecoveryItem } from "@/module/common/component/AccordionRecoveryItem";
+import {
+    recoveryFileContentAtom,
+    recoveryStepAtom,
+} from "@/module/settings/atoms/recovery";
 import styles from "./Step2.module.css";
 
 const ACTUAL_STEP = 2;

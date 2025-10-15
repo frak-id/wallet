@@ -43,7 +43,7 @@ const app = new Elysia({
     .use(legacyRouteMapper)
     // Setup bun serve options
     .listen({
-        port: Number.parseInt(process.env.PORT ?? "3030"),
+        port: Number.parseInt(process.env.PORT ?? "3030", 10),
     });
 
 log.info(`Running at ${app.server?.hostname}:${app.server?.port}`);

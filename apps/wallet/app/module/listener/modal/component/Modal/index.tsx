@@ -1,3 +1,19 @@
+import { RpcErrorCodes } from "@frak-labs/frame-connector";
+import { jotaiStore } from "@frak-labs/ui/atoms/store";
+import { useMediaQuery } from "@frak-labs/ui/hook/useMediaQuery";
+import { LogoFrakWithName } from "@frak-labs/ui/icons/LogoFrakWithName";
+import { prefixModalCss } from "@frak-labs/ui/utils/prefixModalCss";
+import { cx } from "class-variance-authority";
+import { useAtomValue } from "jotai";
+import {
+    type Dispatch,
+    type PropsWithChildren,
+    type ReactNode,
+    useCallback,
+    useEffect,
+    useMemo,
+} from "react";
+import { Toaster } from "sonner";
 import { AlertDialog } from "@/module/common/component/AlertDialog";
 import { Drawer, DrawerContent } from "@/module/common/component/Drawer";
 import { InAppBrowserToast } from "@/module/common/component/InAppBrowserToast";
@@ -23,25 +39,9 @@ import {
     useListenerUI,
 } from "@/module/listener/providers/ListenerUiProvider";
 import { OriginPairingState } from "@/module/pairing/component/OriginPairingState";
-import { RpcErrorCodes } from "@frak-labs/frame-connector";
-import { jotaiStore } from "@frak-labs/ui/atoms/store";
-import { useMediaQuery } from "@frak-labs/ui/hook/useMediaQuery";
-import { LogoFrakWithName } from "@frak-labs/ui/icons/LogoFrakWithName";
-import { prefixModalCss } from "@frak-labs/ui/utils/prefixModalCss";
-import { cx } from "class-variance-authority";
-import { useAtomValue } from "jotai";
-import {
-    type Dispatch,
-    type PropsWithChildren,
-    type ReactNode,
-    useCallback,
-    useEffect,
-    useMemo,
-} from "react";
-import { Toaster } from "sonner";
 import { ToastLoading } from "../../../component/ToastLoading";
-import { ModalStepIndicator } from "./Step";
 import styles from "./index.module.css";
+import { ModalStepIndicator } from "./Step";
 
 /**
  * Display the given request in a modal
@@ -135,7 +135,7 @@ export function ListenerModal({
     const { titleComponent, icon, footer } = useMemo(() => {
         // Build the title component we will display
         const titleComponent = metadata?.header?.title ? (
-            <>{metadata.header.title}</>
+            metadata.header.title
         ) : (
             <div />
         );
@@ -189,13 +189,12 @@ export function ListenerModal({
             <Toaster position="top-center" />
             <InAppBrowserToast />
             <ToastLoading />
-            <>
-                {icon}
-                <CurrentModalMetadataInfo />
-                <ModalStepIndicator />
-                <CurrentModalStepComponent onError={onError} />
-                {footer}
-            </>
+
+            {icon}
+            <CurrentModalMetadataInfo />
+            <ModalStepIndicator />
+            <CurrentModalStepComponent onError={onError} />
+            {footer}
         </ModalComponent>
     );
 }

@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import { tools } from "@frak-labs/dev-tooling";
 import { pluginNodePolyfill } from "@rsbuild/plugin-node-polyfill";
-import { type LibConfig, defineConfig } from "@rslib/core";
+import { defineConfig, type LibConfig } from "@rslib/core";
 
 const openPanelClientId = {
     dev: "6eacc8d7-49ac-4936-95e9-81ef29449570",

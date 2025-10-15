@@ -1,3 +1,8 @@
+import { Accordion } from "@frak-labs/ui/component/Accordion";
+import { useAtomValue, useSetAtom } from "jotai";
+import { TriangleAlert } from "lucide-react";
+import { useEffect } from "react";
+import { Trans } from "react-i18next";
 import { Grid } from "@/module/common/component/Grid";
 import { Step1 } from "@/module/recovery-setup/component/Setup/Step1";
 import { Step2 } from "@/module/recovery-setup/component/Setup/Step2";
@@ -7,11 +12,6 @@ import {
     recoveryResetAtom,
     recoveryStepAtom,
 } from "@/module/settings/atoms/recovery";
-import { Accordion } from "@frak-labs/ui/component/Accordion";
-import { useAtomValue, useSetAtom } from "jotai";
-import { TriangleAlert } from "lucide-react";
-import { useEffect } from "react";
-import { Trans } from "react-i18next";
 import styles from "./settings-recovery.module.css";
 
 const MAX_STEPS = 5;

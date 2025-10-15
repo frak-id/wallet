@@ -1,8 +1,8 @@
+import { HardDrive } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { AccordionLogin } from "@/module/authentication/component/AccordionLogin";
 import { LoginItem } from "@/module/authentication/component/LoginItem";
 import { usePreviousAuthenticators } from "@/module/authentication/hook/usePreviousAuthenticators";
-import { HardDrive } from "lucide-react";
-import { useTranslation } from "react-i18next";
 
 export function LoginList() {
     const { t } = useTranslation();

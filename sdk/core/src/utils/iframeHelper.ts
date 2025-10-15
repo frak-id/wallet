@@ -30,9 +30,10 @@ export const baseIframeProps = {
 export function createIframe({
     walletBaseUrl,
     config,
-}: { walletBaseUrl?: string; config?: FrakWalletSdkConfig }): Promise<
-    HTMLIFrameElement | undefined
-> {
+}: {
+    walletBaseUrl?: string;
+    config?: FrakWalletSdkConfig;
+}): Promise<HTMLIFrameElement | undefined> {
     // Check if the iframe is already created
     const alreadyCreatedIFrame = document.querySelector("#frak-wallet");
 

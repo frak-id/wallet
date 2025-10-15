@@ -1,11 +1,3 @@
-import {
-    type AnyModalKey,
-    type DisplayedModalStep,
-    displayedRpcModalStepsAtom,
-} from "@/module/listener/modal/atoms/modalEvents";
-import { activeStepAtom } from "@/module/listener/modal/atoms/modalUtils";
-import styles from "@/module/listener/modal/component/Modal/index.module.css";
-import { useListenerTranslation } from "@/module/listener/providers/ListenerUiProvider";
 import { prefixModalCss } from "@frak-labs/ui/utils/prefixModalCss";
 import { useAtomValue } from "jotai";
 import {
@@ -16,6 +8,14 @@ import {
     WalletMinimal,
 } from "lucide-react";
 import { type PropsWithChildren, useMemo } from "react";
+import {
+    type AnyModalKey,
+    type DisplayedModalStep,
+    displayedRpcModalStepsAtom,
+} from "@/module/listener/modal/atoms/modalEvents";
+import { activeStepAtom } from "@/module/listener/modal/atoms/modalUtils";
+import styles from "@/module/listener/modal/component/Modal/index.module.css";
+import { useListenerTranslation } from "@/module/listener/providers/ListenerUiProvider";
 
 /**
  * Get the right icon for the given step

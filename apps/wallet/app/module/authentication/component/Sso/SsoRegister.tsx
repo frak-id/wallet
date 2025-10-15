@@ -1,8 +1,8 @@
-import { useRegister } from "@/module/authentication/hook/useRegister";
-import { Notice } from "@/module/common/component/Notice";
 import { ButtonAuth } from "@frak-labs/ui/component/ButtonAuth";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { useRegister } from "@/module/authentication/hook/useRegister";
+import { Notice } from "@/module/common/component/Notice";
 import styles from "./index.module.css";
 
 /**

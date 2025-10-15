@@ -1,11 +1,11 @@
-import { Panel } from "@/module/common/component/Panel";
-import { ToggleSession } from "@/module/common/component/ToggleSession";
-import { Warning } from "@/module/common/component/Warning";
-import { useInteractionSessionStatus } from "@/module/wallet/hook/useInteractionSessionStatus";
 import { X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAccount } from "wagmi";
+import { Panel } from "@/module/common/component/Panel";
+import { ToggleSession } from "@/module/common/component/ToggleSession";
+import { Warning } from "@/module/common/component/Warning";
+import { useInteractionSessionStatus } from "@/module/wallet/hook/useInteractionSessionStatus";
 import styles from "./index.module.css";
 
 export function OpenSession() {

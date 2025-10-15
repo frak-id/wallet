@@ -1,8 +1,8 @@
+import { useTranslation } from "react-i18next";
 import { Grid } from "@/module/common/component/Grid";
 import { Title } from "@/module/common/component/Title";
 import { Avatar } from "@/module/membrs/component/Avatar";
 import { ProfileForm } from "@/module/membrs/component/ProfileForm";
-import { useTranslation } from "react-i18next";
 import styles from "./membrs-profile.module.css";
 
 export default function MembersProfile() {

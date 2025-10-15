@@ -1,15 +1,15 @@
 "use client";
 
+import { useWalletStatus } from "@frak-labs/react-sdk";
+import { Button } from "@frak-labs/ui/component/Button";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { deleteSession } from "@/context/auth/actions/session";
 import { useDemoMode } from "@/module/common/atoms/demoMode";
 import { Head } from "@/module/common/component/Head";
 import { Panel } from "@/module/common/component/Panel";
 import { DemoModeSwitch } from "@/module/settings/DemoModeSwitch";
 import { SelectCurrency } from "@/module/settings/SelectCurrency";
-import { useWalletStatus } from "@frak-labs/react-sdk";
-import { Button } from "@frak-labs/ui/component/Button";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
 import styles from "./page.module.css";
 
 export default function SettingsPage() {

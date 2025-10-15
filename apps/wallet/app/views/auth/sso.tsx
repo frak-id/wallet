@@ -1,22 +1,3 @@
-import { lastAuthenticatorAtom } from "@/module/authentication/atoms/lastAuthenticator";
-import {
-    currentSsoMetadataAtom,
-    ssoContextAtom,
-} from "@/module/authentication/atoms/sso";
-import { SsoHeader } from "@/module/authentication/component/Sso/SsoHeader";
-import { SsoLoginComponent } from "@/module/authentication/component/Sso/SsoLogin";
-import { SsoRegisterComponent } from "@/module/authentication/component/Sso/SsoRegister";
-import styles from "@/module/authentication/component/Sso/index.module.css";
-import { ssoKey } from "@/module/authentication/queryKeys/sso";
-import { compressedSsoToParams } from "@/module/authentication/utils/ssoDataCompression";
-import {
-    demoPrivateKeyAtom,
-    sdkSessionAtom,
-    sessionAtom,
-} from "@/module/common/atoms/session";
-import { Grid } from "@/module/common/component/Grid";
-import { Notice } from "@/module/common/component/Notice";
-import type { Session } from "@/types/Session";
 import {
     type CompressedSsoData,
     compressJsonToB64,
@@ -37,18 +18,37 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { Link, useSearchParams } from "react-router";
 import type { Hex } from "viem";
+import { lastAuthenticatorAtom } from "@/module/authentication/atoms/lastAuthenticator";
+import {
+    currentSsoMetadataAtom,
+    ssoContextAtom,
+} from "@/module/authentication/atoms/sso";
+import styles from "@/module/authentication/component/Sso/index.module.css";
+import { SsoHeader } from "@/module/authentication/component/Sso/SsoHeader";
+import { SsoLoginComponent } from "@/module/authentication/component/Sso/SsoLogin";
+import { SsoRegisterComponent } from "@/module/authentication/component/Sso/SsoRegister";
+import { ssoKey } from "@/module/authentication/queryKeys/sso";
+import { compressedSsoToParams } from "@/module/authentication/utils/ssoDataCompression";
+import {
+    demoPrivateKeyAtom,
+    sdkSessionAtom,
+    sessionAtom,
+} from "@/module/common/atoms/session";
+import { Grid } from "@/module/common/component/Grid";
+import { Notice } from "@/module/common/component/Notice";
+import type { Session } from "@/types/Session";
 import { useDemoLogin } from "../../module/authentication/hook/useDemoLogin";
 import "./sso.global.css";
-import { ua } from "@/module/common/lib/ua";
-import { HandleErrors } from "@/module/listener/component/HandleErrors";
-import { AuthenticateWithPhone } from "@/module/listener/modal/component/AuthenticateWithPhone";
-import type { OnPairingSuccessCallback } from "@/module/pairing/clients/origin";
-import type { SsoRpcSchema } from "@/types/sso-rpc";
 import { findIframeInOpener } from "@frak-labs/core-sdk";
 import {
     createClientCompressionMiddleware,
     createRpcClient,
 } from "@frak-labs/frame-connector";
+import { ua } from "@/module/common/lib/ua";
+import { HandleErrors } from "@/module/listener/component/HandleErrors";
+import { AuthenticateWithPhone } from "@/module/listener/modal/component/AuthenticateWithPhone";
+import type { OnPairingSuccessCallback } from "@/module/pairing/clients/origin";
+import type { SsoRpcSchema } from "@/types/sso-rpc";
 
 export default function Sso() {
     const { i18n, t } = useTranslation();
@@ -308,7 +308,7 @@ function Header() {
     const lastAuthenticator = useAtomValue(lastAuthenticatorAtom);
     const title = useMemo(
         () =>
-            // @ts-ignore
+            // @ts-expect-error
             t("authent.sso.title", {
                 context: lastAuthenticator ? "existing" : "new",
             }),
@@ -440,7 +440,9 @@ function Actions({
 
 function PhonePairingAction({
     onSuccess,
-}: { onSuccess: OnPairingSuccessCallback }) {
+}: {
+    onSuccess: OnPairingSuccessCallback;
+}) {
     const { t } = useTranslation();
 
     // Don't show the phone pairing action if we don't have an sso id or if we are on a mobile device

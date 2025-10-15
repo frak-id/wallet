@@ -1,8 +1,8 @@
 import {
+    expect,
     type Frame,
     type FrameLocator,
     type Page,
-    expect,
 } from "@playwright/test";
 
 export class ModalPage {

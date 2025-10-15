@@ -1,6 +1,3 @@
-import { viemClient } from "@/context/blockchain/provider";
-import { useIsDemoMode } from "@/module/common/atoms/demoMode";
-import { decodeProductTypesMask } from "@/module/product/utils/productTypes";
 import {
     addresses,
     bytesToString,
@@ -10,6 +7,9 @@ import type { ProductTypesKey } from "@frak-labs/core-sdk";
 import { useQuery } from "@tanstack/react-query";
 import type { Hex } from "viem";
 import { readContract } from "viem/actions";
+import { viemClient } from "@/context/blockchain/provider";
+import { useIsDemoMode } from "@/module/common/atoms/demoMode";
+import { decodeProductTypesMask } from "@/module/product/utils/productTypes";
 
 /**
  * Mock product metadata for demo mode

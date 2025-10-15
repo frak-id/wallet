@@ -1,12 +1,12 @@
 import { log, viemClient } from "@backend-common";
 import {
-    type CampaignType,
     baseCampaignTriggerPtr,
+    type CampaignType,
     campaignAbiForType,
     interactionCampaignAbi,
 } from "@frak-labs/app-essentials";
-import { interactionTypes } from "@frak-labs/core-sdk";
 import type { FullInteractionTypesKey } from "@frak-labs/core-sdk";
+import { interactionTypes } from "@frak-labs/core-sdk";
 import { LRUCache } from "lru-cache";
 import {
     type Address,

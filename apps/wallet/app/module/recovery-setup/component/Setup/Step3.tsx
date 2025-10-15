@@ -1,12 +1,12 @@
+import { Button } from "@frak-labs/ui/component/Button";
+import { useAtomValue, useSetAtom } from "jotai";
+import { useTranslation } from "react-i18next";
 import { AccordionRecoveryItem } from "@/module/common/component/AccordionRecoveryItem";
 import { useDownloadRecoveryFile } from "@/module/recovery-setup/hook/useDownloadRecoveryFile";
 import {
     recoveryOptionsAtom,
     recoveryStepAtom,
 } from "@/module/settings/atoms/recovery";
-import { Button } from "@frak-labs/ui/component/Button";
-import { useAtomValue, useSetAtom } from "jotai";
-import { useTranslation } from "react-i18next";
 
 const ACTUAL_STEP = 3;
 

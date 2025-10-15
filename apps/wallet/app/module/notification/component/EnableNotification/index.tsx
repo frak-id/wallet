@@ -1,10 +1,10 @@
+import { Button } from "@frak-labs/ui/component/Button";
+import { NotificationsMobile } from "@frak-labs/ui/icons/NotificationsMobile";
+import { Trans } from "react-i18next";
 import { ButtonLabel } from "@/module/common/component/ButtonLabel";
 import { Panel } from "@/module/common/component/Panel";
 import { useNotificationSetupStatus } from "@/module/notification/hook/useNotificationSetupStatus";
 import { useSubscribeToPushNotification } from "@/module/notification/hook/useSubscribeToPushNotification";
-import { Button } from "@frak-labs/ui/component/Button";
-import { NotificationsMobile } from "@frak-labs/ui/icons/NotificationsMobile";
-import { Trans } from "react-i18next";
 
 export function EnableNotification() {
     const { isSupported, subscription } = useNotificationSetupStatus();

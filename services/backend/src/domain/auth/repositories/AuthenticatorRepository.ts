@@ -63,7 +63,10 @@ export class AuthenticatorRepository {
     public async updateCounter({
         credentialId,
         counter,
-    }: { credentialId: string; counter: number }): Promise<void> {
+    }: {
+        credentialId: string;
+        counter: number;
+    }): Promise<void> {
         const collection = await this.getCollection();
         await collection.updateOne(
             { _id: credentialId },
@@ -78,7 +81,9 @@ export class AuthenticatorRepository {
      */
     public async getByWallet({
         wallet,
-    }: { wallet: Address }): Promise<AuthenticatorDocument | null> {
+    }: {
+        wallet: Address;
+    }): Promise<AuthenticatorDocument | null> {
         const collection = await this.getCollection();
         return collection.findOne({ smartWalletAddress: wallet });
     }

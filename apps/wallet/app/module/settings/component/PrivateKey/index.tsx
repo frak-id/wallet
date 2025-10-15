@@ -1,11 +1,11 @@
-import { demoPrivateKeyAtom } from "@/module/common/atoms/session";
-import { Panel } from "@/module/common/component/Panel";
-import { Title } from "@/module/common/component/Title";
 import { Button } from "@frak-labs/ui/component/Button";
 import { useAtomValue, useSetAtom } from "jotai";
 import { KeyRound } from "lucide-react";
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
+import { demoPrivateKeyAtom } from "@/module/common/atoms/session";
+import { Panel } from "@/module/common/component/Panel";
+import { Title } from "@/module/common/component/Title";
 
 export function PrivateKey() {
     const { t } = useTranslation();

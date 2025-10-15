@@ -1,6 +1,6 @@
-import { NavigationItem } from "@/module/common/component/NavigationItem";
 // import { Community } from "@/module/membrs/assets/Community";
 import { History, Settings, Wallet } from "lucide-react";
+import { NavigationItem } from "@/module/common/component/NavigationItem";
 import styles from "./index.module.css";
 
 export function Navigation() {

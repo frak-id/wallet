@@ -1,13 +1,13 @@
 import { indexerApi, pricingRepository, viemClient } from "@backend-common";
 import type { TokenPrice } from "@backend-common/repositories/PricingRepository";
-import { type TokenAmount, referralCampaign_isActive } from "@backend-utils";
+import { referralCampaign_isActive, type TokenAmount } from "@backend-utils";
 import type { GetCampaignResponseDto } from "@frak-labs/app-essentials";
 import { LRUCache } from "lru-cache";
 import {
     type Address,
-    type Hex,
     concatHex,
     formatUnits,
+    type Hex,
     keccak256,
 } from "viem";
 import { multicall } from "viem/actions";
@@ -57,7 +57,9 @@ export class CampaignRewardsService {
      */
     async getActiveRewardsForProduct({
         productId,
-    }: { productId: Hex }): Promise<ActiveReward[] | undefined> {
+    }: {
+        productId: Hex;
+    }): Promise<ActiveReward[] | undefined> {
         // Query our indexer to fetch the campaigns for the given product
         const { campaigns, tokens } = await this.getCampaignData(productId);
         if (!campaigns.length) return undefined;
@@ -140,7 +142,10 @@ export class CampaignRewardsService {
     private mapAmount({
         amount,
         price,
-    }: { amount: number; price: TokenPrice }) {
+    }: {
+        amount: number;
+        price: TokenPrice;
+    }) {
         return {
             amount: Math.round(amount * 100) / 100,
             eurAmount: Math.round(price.eur * amount * 100) / 100,
@@ -204,7 +209,9 @@ export class CampaignRewardsService {
      */
     private async filterActiveCampaigns({
         campaigns,
-    }: { campaigns: GetCampaignResponseDto["campaigns"] }) {
+    }: {
+        campaigns: GetCampaignResponseDto["campaigns"];
+    }) {
         // Get initial potential value from cache
         const cacheKey = keccak256(concatHex(campaigns.map((c) => c.address)));
         const cached = this.activeCampaignsCache.get(cacheKey);

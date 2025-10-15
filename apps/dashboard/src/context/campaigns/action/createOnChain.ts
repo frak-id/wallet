@@ -1,16 +1,5 @@
 "use server";
 
-import { getSafeSession } from "@/context/auth/actions/session";
-import { viemClient } from "@/context/blockchain/provider";
-import { getBankTokenInfo } from "@/context/campaigns/action/getBankInfo";
-import { getCapPeriod } from "@/context/campaigns/utils/capPeriods";
-import {
-    affiliationFixedCampaignConfigStruct,
-    affiliationFixedCampaignId,
-    affiliationRangeCampaignConfigStruct,
-    affiliationRangeCampaignId,
-} from "@/context/campaigns/utils/constants";
-import type { Campaign } from "@/types/Campaign";
 import {
     addresses,
     productInteractionManagerAbi,
@@ -24,14 +13,25 @@ import {
 import ky from "ky";
 import {
     type Address,
-    type Hex,
     concatHex,
     encodeAbiParameters,
     encodeFunctionData,
+    type Hex,
     isAddress,
     parseUnits,
 } from "viem";
 import { simulateContract } from "viem/actions";
+import { getSafeSession } from "@/context/auth/actions/session";
+import { viemClient } from "@/context/blockchain/provider";
+import { getBankTokenInfo } from "@/context/campaigns/action/getBankInfo";
+import { getCapPeriod } from "@/context/campaigns/utils/capPeriods";
+import {
+    affiliationFixedCampaignConfigStruct,
+    affiliationFixedCampaignId,
+    affiliationRangeCampaignConfigStruct,
+    affiliationRangeCampaignId,
+} from "@/context/campaigns/utils/constants";
+import type { Campaign } from "@/types/Campaign";
 
 /**
  * Function to create a new campaign

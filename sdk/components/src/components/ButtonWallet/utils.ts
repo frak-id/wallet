@@ -1,5 +1,5 @@
-import { safeVibrate } from "@/utils/safeVibrate";
 import { displayEmbeddedWallet } from "@frak-labs/core-sdk/actions";
+import { safeVibrate } from "@/utils/safeVibrate";
 
 /**
  * Open the wallet modal

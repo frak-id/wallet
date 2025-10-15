@@ -1,4 +1,4 @@
-import { type Static, ValidationError, t as elysiaTypes } from "elysia";
+import { t as elysiaTypes, type Static, ValidationError } from "elysia";
 import { type Address, type Hex, isAddress, isHex } from "viem";
 
 type TElysiaString = ReturnType<typeof elysiaTypes.String>;

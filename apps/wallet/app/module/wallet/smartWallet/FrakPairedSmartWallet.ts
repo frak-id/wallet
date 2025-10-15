@@ -1,18 +1,18 @@
-import {
-    type BaseFrakSmartAccount,
-    baseFrakWallet,
-} from "@/module/wallet/smartWallet/baseFrakWallet";
-import type { P256PubKey } from "@/types/WebAuthN";
 import { KernelWallet } from "@frak-labs/app-essentials";
 import {
     type Address,
     type Chain,
     type Client,
     type Hex,
-    type Transport,
     keccak256,
+    type Transport,
     toHex,
 } from "viem";
+import {
+    type BaseFrakSmartAccount,
+    baseFrakWallet,
+} from "@/module/wallet/smartWallet/baseFrakWallet";
+import type { P256PubKey } from "@/types/WebAuthN";
 import { getOriginPairingClient } from "../../pairing/clients/store";
 import { getStubSignature } from "./webAuthN";
 

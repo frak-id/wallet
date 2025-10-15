@@ -1,9 +1,9 @@
+import { type MutationOptions, useMutation } from "@tanstack/react-query";
+import { useSetAtom } from "jotai";
 import { authenticatedWalletApi } from "@/module/common/api/backendClient";
 import { subscriptionAtom } from "@/module/notification/atom/subscriptionAtom";
 import { useNotificationSetupStatus } from "@/module/notification/hook/useNotificationSetupStatus";
 import { notificationKey } from "@/module/notification/queryKeys/notification";
-import { type MutationOptions, useMutation } from "@tanstack/react-query";
-import { useSetAtom } from "jotai";
 
 /**
  * Register the push notification handler

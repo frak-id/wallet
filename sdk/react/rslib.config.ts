@@ -1,6 +1,6 @@
 import { tools } from "@frak-labs/dev-tooling";
 import { pluginReact } from "@rsbuild/plugin-react";
-import { type LibConfig, defineConfig } from "@rslib/core";
+import { defineConfig, type LibConfig } from "@rslib/core";
 
 function createLibConfig(config: LibConfig = {}): LibConfig {
     const basicConfig: LibConfig = {

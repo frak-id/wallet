@@ -7,7 +7,9 @@ import { getErpcTransport } from "./transport/erpc-transport";
  */
 export function getTransport<TChain extends Chain>({
     chain,
-}: { chain: TChain }) {
+}: {
+    chain: TChain;
+}) {
     const erpcTransport = getErpcTransport({ chain });
     const drpcTransport = getDrpcTransport({ chain });
     if (!erpcTransport) {
@@ -21,7 +23,9 @@ export function getTransport<TChain extends Chain>({
  */
 export function getViemClientFromChain<TChain extends Chain>({
     chain,
-}: { chain: TChain }) {
+}: {
+    chain: TChain;
+}) {
     return createClient({
         chain,
         transport: getTransport({ chain }),

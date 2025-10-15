@@ -1,4 +1,4 @@
-import { http, type Chain } from "viem";
+import { type Chain, http } from "viem";
 
 const drpcNetworkName: Record<number, string> = {
     // Testnet's

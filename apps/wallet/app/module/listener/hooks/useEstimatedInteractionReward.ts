@@ -1,6 +1,3 @@
-import { authenticatedWalletApi } from "@/module/common/api/backendClient";
-import { iframeResolvingContextAtom } from "@/module/listener/atoms/resolvingContext";
-import { listenerInteractionsKey } from "@/module/listener/queryKeys/interactions";
 import type {
     FullInteractionTypesKey,
     GetProductInformationReturnType,
@@ -9,6 +6,9 @@ import { useQuery } from "@tanstack/react-query";
 import { useAtomValue } from "jotai";
 import { useMemo } from "react";
 import type { Hex } from "viem";
+import { authenticatedWalletApi } from "@/module/common/api/backendClient";
+import { iframeResolvingContextAtom } from "@/module/listener/atoms/resolvingContext";
+import { listenerInteractionsKey } from "@/module/listener/queryKeys/interactions";
 
 /**
  * The query data to fetch the estimated interaction reward
@@ -18,7 +18,10 @@ import type { Hex } from "viem";
 export const estimatedInteractionRewardQuery = ({
     productId,
     interaction,
-}: { productId?: Hex; interaction?: FullInteractionTypesKey }) => ({
+}: {
+    productId?: Hex;
+    interaction?: FullInteractionTypesKey;
+}) => ({
     enabled: !!productId,
     queryKey: listenerInteractionsKey.estimatedReward.byProduct(
         productId,

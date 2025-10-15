@@ -1,5 +1,10 @@
 "use client";
 
+import { Button } from "@frak-labs/ui/component/Button";
+import { useSetAtom } from "jotai";
+import { useCallback, useMemo } from "react";
+import { useForm } from "react-hook-form";
+import { formatEther, type Hex, parseEther, toHex } from "viem";
 import type { GetMembersParam } from "@/context/members/action/getProductMembers";
 import { Row } from "@/module/common/component/Row";
 import { Form } from "@/module/forms/Form";
@@ -8,11 +13,6 @@ import { InteractionsFiltering } from "@/module/members/component/MembersFilteri
 import { MembershipDateFiltering } from "@/module/members/component/MembersFiltering/MembershipDateFiltering";
 import { ProductFiltering } from "@/module/members/component/MembersFiltering/ProductFiltering";
 import { RewardFiltering } from "@/module/members/component/MembersFiltering/RewardFiltering";
-import { Button } from "@frak-labs/ui/component/Button";
-import { useSetAtom } from "jotai";
-import { useCallback, useMemo } from "react";
-import { useForm } from "react-hook-form";
-import { type Hex, formatEther, parseEther, toHex } from "viem";
 
 /**
  * Filter for the members fetching process

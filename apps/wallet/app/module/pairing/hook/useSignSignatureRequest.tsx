@@ -12,7 +12,9 @@ import type { TargetPairingPendingSignature } from "../types";
  */
 export function useSignSignatureRequest({
     client,
-}: { client: TargetPairingClient }) {
+}: {
+    client: TargetPairingClient;
+}) {
     const session = useAtomValue(webauthnSessionAtom);
 
     return useMutation({
@@ -51,7 +53,9 @@ export function useSignSignatureRequest({
  */
 export function useDeclineSignatureRequest({
     client,
-}: { client: TargetPairingClient }) {
+}: {
+    client: TargetPairingClient;
+}) {
     return useCallback(
         (request: TargetPairingPendingSignature) => {
             client.sendSignatureResponse(request.id, {

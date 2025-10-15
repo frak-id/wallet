@@ -14,7 +14,10 @@ export function useFundTestBank() {
         mutationFn: async ({
             bank,
             stablecoin,
-        }: { bank: Hex; stablecoin?: Stablecoin }) => {
+        }: {
+            bank: Hex;
+            stablecoin?: Stablecoin;
+        }) => {
             await businessApi.funding.getTestToken.post({
                 bank,
                 stablecoin,

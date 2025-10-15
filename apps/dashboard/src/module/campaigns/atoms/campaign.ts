@@ -1,15 +1,15 @@
 import {
-    campaignIsClosingAtom,
-    campaignStepAtom,
-    campaignSuccessAtom,
-} from "@/module/campaigns/atoms/steps";
-import type { Campaign } from "@/types/Campaign";
-import {
     type InteractionTypesKey,
     interactionTypes,
 } from "@frak-labs/core-sdk";
 import { atom } from "jotai";
 import { atomWithStorage } from "jotai/utils";
+import {
+    campaignIsClosingAtom,
+    campaignStepAtom,
+    campaignSuccessAtom,
+} from "@/module/campaigns/atoms/steps";
+import type { Campaign } from "@/types/Campaign";
 
 /**
  * Get all the keys from the interaction types

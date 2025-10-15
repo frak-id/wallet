@@ -1,3 +1,5 @@
+import type { Currency } from "@frak-labs/core-sdk";
+import { useAtom } from "jotai";
 import { preferredCurrencyAtom } from "@/module/common/atoms/currency";
 import {
     Select,
@@ -6,8 +8,6 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/module/forms/Select";
-import type { Currency } from "@frak-labs/core-sdk";
-import { useAtom } from "jotai";
 import styles from "./index.module.css";
 
 export function SelectCurrency() {

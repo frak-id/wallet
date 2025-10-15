@@ -1,34 +1,33 @@
 {
     "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
     "files": {
-        "ignore": [
-            "_cjs",
-            "_esm",
-            "_types",
-            "dist",
-            "build",
-            "cdn",
-            "node_modules/**",
-            ".sst/**",
-            ".open-next/**",
-            ".next/**",
-            "tsconfig.json",
-            "tsconfig.*.json",
-            "package.json",
-            "sw.js",
-            "bundle.js",
-            "sst-env.d.ts",
-            ".react-router/**",
-            ".rslib/**",
-            ".svelte-kit/**",
-            "**/*.svelte",
-            "playwright-report/**",
-            "test-results/**"
+        "includes": [
+            "**",
+            "!**/_cjs",
+            "!**/_esm",
+            "!**/_types",
+            "!**/dist",
+            "!**/build",
+            "!**/cdn",
+            "!**/node_modules",
+            "!**/.sst",
+            "!**/.open-next",
+            "!**/.next",
+            "!**/tsconfig.json",
+            "!**/tsconfig.*.json",
+            "!**/package.json",
+            "!**/sw.js",
+            "!**/bundle.js",
+            "!**/sst-env.d.ts",
+            "!**/.react-router",
+            "!**/.rslib",
+            "!**/.svelte-kit",
+            "!**/*.svelte",
+            "!**/playwright-report",
+            "!**/test-results"
         ]
     },
-    "organizeImports": {
-        "enabled": true
-    },
+    "assist": { "actions": { "source": { "organizeImports": "on" } } },
     "linter": {
         "enabled": true,
         "rules": {
@@ -40,21 +39,44 @@
                         "maxAllowedComplexity": 16
                     }
                 },
-                "noUselessTernary": "error"
+                "noUselessTernary": "error",
+                "noImportantStyles": "off"
             },
             "correctness": {
                 "useHookAtTopLevel": "error",
-                "noUnusedVariables": "error",
+                "noUnusedVariables": {
+                    "level": "error",
+                    "options": {
+                        "ignoreRestSiblings": true
+                    }
+                },
                 "noUnusedImports": "error",
                 "noUndeclaredVariables": "off",
                 "noUnusedPrivateClassMembers": "error"
             },
             "style": {
                 "useFragmentSyntax": "error",
-                "useShorthandArrayType": "error",
                 "useShorthandAssign": "error",
                 "useImportType": "error",
-                "useExportType": "error"
+                "useExportType": "error",
+                "useConsistentArrayType": {
+                    "level": "error",
+                    "options": { "syntax": "shorthand" }
+                }
+            },
+            "a11y": {
+                "noStaticElementInteractions": "warn"
+            },
+            "security": {
+                "noDangerouslySetInnerHtml": "off"
+            },
+            "suspicious": {
+                "noDuplicateProperties": "warn",
+                "noDocumentCookie": "warn",
+                "noUnknownAtRules": "off"
+            },
+            "performance": {
+                "noImgElement": "warn"
             }
         }
     },

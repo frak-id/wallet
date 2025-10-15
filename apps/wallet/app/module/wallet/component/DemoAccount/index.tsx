@@ -1,11 +1,11 @@
+import { decodeJwt } from "jose";
+import { atom, useAtomValue } from "jotai";
 import {
-    type SdkSessionPayload,
     demoPrivateKeyAtom,
+    type SdkSessionPayload,
     sdkSessionAtom,
 } from "@/module/common/atoms/session";
 import { Panel } from "@/module/common/component/Panel";
-import { decodeJwt } from "jose";
-import { atom, useAtomValue } from "jotai";
 import styles from "./index.module.css";
 
 const isDemoAccountAtom = atom((get) => {
