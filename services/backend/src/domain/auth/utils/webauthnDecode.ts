@@ -9,7 +9,7 @@ export function decodePublicKey({
     credentialPubKey,
 }: { credentialPubKey: Uint8Array }) {
     const publicKey = decodeCredentialPublicKey(
-        credentialPubKey
+        credentialPubKey as Uint8Array<ArrayBuffer>
     ) as unknown as {
         get(key: DecodedPubKeyIndexes.kty): number | undefined;
         get(key: DecodedPubKeyIndexes.alg): number | undefined;

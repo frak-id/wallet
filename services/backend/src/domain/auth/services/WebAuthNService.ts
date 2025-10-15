@@ -100,7 +100,8 @@ export class WebAuthNService {
             credential: {
                 counter: authenticator.counter,
                 id: authenticator._id,
-                publicKey: authenticator.credentialPublicKey.buffer,
+                publicKey: authenticator.credentialPublicKey
+                    .buffer as Uint8Array<ArrayBuffer>,
             },
             expectedChallenge: msg,
         });
