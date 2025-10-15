@@ -58,7 +58,7 @@
     "@frak-labs/browserslist-config": "workspace:*",
     "@frak-labs/dev-tooling": "workspace:*",
     "@microsoft/api-extractor": "^7.52.8",
-    "@rslib/core": "^0.9.2",
+    "@rslib/core": "^0.15.1",
     "typescript": "^5.8.3"
   }
 }
