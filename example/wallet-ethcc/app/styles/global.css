@@ -1,6 +1,7 @@
 :root {
-    --font-family-sans: "-apple-system", "BlinkMacSystemFont", "system-ui",
-        "Segoe UI", "Roboto", "Ubuntu", "sans-serif";
+    --font-family-sans:
+        "-apple-system", "BlinkMacSystemFont", "system-ui", "Segoe UI", "Roboto",
+        "Ubuntu", "sans-serif";
     --font-family: "Inter", sans-serif;
 }
 

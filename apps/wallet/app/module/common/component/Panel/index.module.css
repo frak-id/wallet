@@ -1,6 +1,6 @@
 .panel {
     border-radius: 18px;
-    transition: background .3s;
+    transition: background 0.3s;
     background-size: cover;
     background-position: -100%;
     border: 1px solid var(--frak-panel-border-color);

@@ -1,12 +1,12 @@
 :root {
-    --animation-duration-width: .3s;
-    --animation-duration-height: .3s;
+    --animation-duration-width: 0.3s;
+    --animation-duration-height: 0.3s;
 }
 
 @media (min-width: 431px) {
     /* Slower animation for larger screens */
     :root {
-        --animation-duration-width: .55s;
+        --animation-duration-width: 0.55s;
     }
 }
 
@@ -17,7 +17,8 @@
     border-radius: 25px;
     border: 2px solid #fff;
     text-align: center;
-    animation: resize-width var(--animation-duration-width) ease-in-out forwards,
+    animation:
+        resize-width var(--animation-duration-width) ease-in-out forwards,
         resize-height var(--animation-duration-height) ease-in-out forwards;
     min-height: 48px;
     max-width: 430px;
@@ -76,7 +77,7 @@
     padding: 40px;
     height: 100%;
     overflow: hidden;
-    animation: opacity .3s .2s forwards;
+    animation: opacity 0.3s 0.2s forwards;
     /* Create a new stacking context for the toaster to be inside our modal */
     transform: translateZ(0);
 }

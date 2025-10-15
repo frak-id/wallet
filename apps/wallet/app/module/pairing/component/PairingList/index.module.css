@@ -59,5 +59,7 @@
 .pairing__deleteButton {
     width: 100%;
     color: #f56565;
-    transition: color 0.3s, background-color 0.3s;
+    transition:
+        color 0.3s,
+        background-color 0.3s;
 }
