@@ -47,19 +47,21 @@
     "typecheck": "bun run --filter '*' typecheck"
   },
   "type": "module",
-  "workspaces": [
-    "apps/*",
-    "packages/*",
-    "sdk/*",
-    "example/*",
-    "services/*"
-  ],
+  "workspaces": {
+    "packages": [
+      "apps/*",
+      "packages/*",
+      "sdk/*",
+      "example/*",
+      "services/*"
+    ]
+  },
   "catalog": {
-    "viem": "^2.28.1",
-    "react": "^19.1.8",
-    "react-dom": "^19.1.6",
-    "@types/react": "^19.1.8",
-    "@types/react-dom": "^19.1.6"
+    "viem": "^2.38.2",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "@types/react": "19.2.2",
+    "@types/react-dom": "19.2.2"
   },
   "dependencies": {
     "caniuse-lite": "^1.0.30001749"

@@ -50,17 +50,17 @@
     "next": "15.3.3",
     "normalize.css": "^8.0.1",
     "radash": "^12.1.1",
-    "react": "^19.2.0",
+    "react": "catalog:",
     "react-day-picker": "^9.11.1",
-    "react-dom": "^19.2.0",
+    "react-dom": "catalog:",
     "react-hook-form": "^7.65.0",
     "viem": "^2.38.2"
   },
   "devDependencies": {
     "@frak-labs/browserslist-config": "workspace:*",
     "@types/node": "^24.7.2",
-    "@types/react": "^19.2.2",
-    "@types/react-dom": "^19.2.2",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
     "bun-types": "latest",
     "sst": "3.17.5",
     "typescript": "^5"
