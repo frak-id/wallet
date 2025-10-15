@@ -35,7 +35,7 @@
     "react-dom": "catalog:",
     "react-router": "^7.9.4",
     "react-router-dom": "^7.9.4",
-    "viem": "^2.31.2"
+    "viem": "catalog:"
   },
   "devDependencies": {
     "@frak-labs/browserslist-config": "workspace:*",

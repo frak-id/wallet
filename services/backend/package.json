@@ -48,7 +48,7 @@
     "solady": "^0.1.19",
     "sst": "3.17.5",
     "ua-parser-js": "^2.0.3",
-    "viem": "^2.31.2",
+    "viem": "catalog:",
     "web-push": "^3.6.7",
     "whatwg-url": "^14.2.0"
   },

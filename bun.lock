@@ -70,7 +70,7 @@
         "react-day-picker": "^9.11.1",
         "react-dom": "catalog:",
         "react-hook-form": "^7.65.0",
-        "viem": "^2.38.2",
+        "viem": "catalog:",
       },
       "devDependencies": {
         "@frak-labs/browserslist-config": "workspace:*",
@@ -107,7 +107,7 @@
         "react-dom": "catalog:",
         "react-router": "^7.9.4",
         "tailwind-merge": "^3.3.1",
-        "viem": "^2.38.2",
+        "viem": "catalog:",
       },
       "devDependencies": {
         "@react-router/dev": "^7.9.4",
@@ -176,7 +176,7 @@
         "sonner": "^2.0.7",
         "ua-parser-js": "^2.0.6",
         "vaul": "^1.1.2",
-        "viem": "^2.38.2",
+        "viem": "catalog:",
         "wagmi": "^2.15.6",
       },
       "devDependencies": {
@@ -271,7 +271,7 @@
         "react-dom": "catalog:",
         "react-router": "^7.9.4",
         "react-router-dom": "^7.9.4",
-        "viem": "^2.31.2",
+        "viem": "catalog:",
       },
       "devDependencies": {
         "@frak-labs/browserslist-config": "workspace:*",
@@ -287,7 +287,7 @@
       "name": "@frak-labs/app-essentials",
       "version": "0.0.0",
       "dependencies": {
-        "viem": "^2.38.2",
+        "viem": "catalog:",
       },
       "devDependencies": {
         "bun-types": "latest",
@@ -334,10 +334,10 @@
         "@rslib/core": "0.15.1",
         "@types/node": "^24.7.2",
         "typescript": "^5",
-        "viem": "^2.23.14",
+        "viem": "catalog:",
       },
       "peerDependencies": {
-        "viem": "^2.23.14",
+        "viem": "^2.x",
       },
     },
     "packages/ui": {
@@ -362,7 +362,7 @@
         "react-hook-form": "^7.65.0",
         "react-loading-skeleton": "^3.5.0",
         "react-scan": "^0.4.3",
-        "viem": "2.38.2",
+        "viem": "catalog:",
       },
       "devDependencies": {
         "@frak-labs/app-essentials": "workspace:*",
@@ -411,9 +411,10 @@
         "@rslib/core": "0.15.1",
         "@types/node": "^24.7.2",
         "typescript": "^5.8.3",
+        "viem": "catalog:",
       },
       "peerDependencies": {
-        "viem": "^2.23.14",
+        "viem": "^2.x",
       },
     },
     "sdk/legacy": {
@@ -449,6 +450,7 @@
         "@types/react": "catalog:",
         "react": "catalog:",
         "typescript": "^5",
+        "viem": "catalog:",
       },
       "peerDependencies": {
         "@tanstack/react-query": ">=5.0.0",
@@ -482,7 +484,7 @@
         "solady": "^0.1.19",
         "sst": "3.17.5",
         "ua-parser-js": "^2.0.3",
-        "viem": "^2.31.2",
+        "viem": "catalog:",
         "web-push": "^3.6.7",
         "whatwg-url": "^14.2.0",
       },
@@ -3865,7 +3867,9 @@
 
     "@esbuild-kit/core-utils/esbuild": ["esbuild@0.18.20", "", { "optionalDependencies": { "@esbuild/android-arm": "0.18.20", "@esbuild/android-arm64": "0.18.20", "@esbuild/android-x64": "0.18.20", "@esbuild/darwin-arm64": "0.18.20", "@esbuild/darwin-x64": "0.18.20", "@esbuild/freebsd-arm64": "0.18.20", "@esbuild/freebsd-x64": "0.18.20", "@esbuild/linux-arm": "0.18.20", "@esbuild/linux-arm64": "0.18.20", "@esbuild/linux-ia32": "0.18.20", "@esbuild/linux-loong64": "0.18.20", "@esbuild/linux-mips64el": "0.18.20", "@esbuild/linux-ppc64": "0.18.20", "@esbuild/linux-riscv64": "0.18.20", "@esbuild/linux-s390x": "0.18.20", "@esbuild/linux-x64": "0.18.20", "@esbuild/netbsd-x64": "0.18.20", "@esbuild/openbsd-x64": "0.18.20", "@esbuild/sunos-x64": "0.18.20", "@esbuild/win32-arm64": "0.18.20", "@esbuild/win32-ia32": "0.18.20", "@esbuild/win32-x64": "0.18.20" }, "bin": { "esbuild": "bin/esbuild" } }, "sha512-ceqxoedUrcayh7Y7ZX6NdbbDzGROiyVBgC4PriJThBKSVPWnnFHZAkfI1lJT8QFkOwH4qOS2SJkS4wvpGl8BpA=="],
 
-    "@finom/zod-to-json-schema/zod": ["zod@4.1.12", "", {}, "sha512-JInaHOamG8pt5+Ey8kGmdcAcg3OL9reK8ltczgHTAwNhMys/6ThXHityHxVV2p3fkw/c+MAvBHFVYHFZDmjMCQ=="],
+    "@floating-ui/react-dom/@floating-ui/dom": ["@floating-ui/dom@1.6.13", "", { "dependencies": { "@floating-ui/core": "^1.6.0", "@floating-ui/utils": "^0.2.9" } }, "sha512-umqzocjDgNRGTuO7Q8CU32dkHkECqI8ZdMZ5Swb6QAM0t5rnlrN3lGo1hdpscRd3WS8T6DKYK4ephgIH9iRh3w=="],
+
+    "@frak-labs-example/vanilla-js/typescript": ["typescript@5.8.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-p1diW6TqL9L07nNxvRMM7hMMw4c5XOo/1ibL4aAIGmSAt9slTE1Xgw5KWuof2uTOvCg9BY7ZRi+GaF+7sfgPeQ=="],
 
     "@frak-labs/dashboard-admin/lucide-react": ["lucide-react@0.545.0", "", { "peerDependencies": { "react": "^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0" } }, "sha512-7r1/yUuflQDSt4f1bpn5ZAocyIxcTyVyBBChSVtBKn5M+392cPmI5YJMWOJKk/HUWGm5wg83chlAZtCcGbEZtw=="],
 

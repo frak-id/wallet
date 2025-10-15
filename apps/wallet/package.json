@@ -77,7 +77,7 @@
     "sonner": "^2.0.7",
     "ua-parser-js": "^2.0.6",
     "vaul": "^1.1.2",
-    "viem": "^2.38.2",
+    "viem": "catalog:",
     "wagmi": "^2.15.6"
   },
   "devDependencies": {
