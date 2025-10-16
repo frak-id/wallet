@@ -1,0 +1,27 @@
+.tokens__buttons {
+    display: flex;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 2px solid var(--frak-color-grayText);
+}
+
+.tokens__button {
+    all: unset;
+    cursor: pointer;
+    position: relative;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+}
+
+.tokens__button:last-child:before {
+    content: "";
+    position: absolute;
+    left: 0;
+    height: 80%;
+    margin-top: 5%;
+    border-left: 2px solid var(--frak-color-grayText);
+}

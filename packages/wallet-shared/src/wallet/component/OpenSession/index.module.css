@@ -1,0 +1,8 @@
+.sessionClosed__button {
+    all: unset;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto;
+    cursor: pointer;
+}

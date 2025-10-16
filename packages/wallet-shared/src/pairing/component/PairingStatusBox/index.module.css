@@ -1,0 +1,69 @@
+.statusBoxWalletContainer {
+    margin: 10px;
+    border: 1px solid #e5e7eb;
+    border-radius: 18px;
+    padding: 10px 16px;
+}
+
+.statusBox {
+    display: flex;
+    gap: 5px;
+}
+
+.statusBoxModalContainer,
+.statusBoxWalletEmbeddedContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+    margin-left: 8px;
+}
+
+.statusBoxWalletEmbeddedContainer {
+    color: #fff;
+}
+
+.statusBox__indicator {
+    margin-top: 4px;
+    width: 10px;
+    height: 10px;
+    border-radius: 9999px;
+}
+
+.statusBox__indicator--green {
+    background-color: #22c55e;
+}
+
+.statusBox__indicator--amber {
+    background-color: #f59e0b;
+}
+
+.statusBox__indicator--red {
+    background-color: #dc2626;
+}
+
+.statusBox__content {
+    display: flex;
+    flex-direction: column;
+}
+
+.statusBox__title {
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.statusBox__retry {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+}
+
+.statusBox__retryText {
+    font-size: 12px;
+}
+
+.statusBox__retryTextItem {
+    display: block;
+    text-align: left;
+}

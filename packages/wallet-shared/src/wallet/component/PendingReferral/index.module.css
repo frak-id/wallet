@@ -1,0 +1,7 @@
+.pendingReferral__button {
+    margin-top: 10px;
+}
+
+.pendingReferral__success {
+    color: var(--frak-color-green);
+}

@@ -1,0 +1,7 @@
+.invite {
+    display: flex;
+}
+
+.invite__text {
+    color: #c6c7c8;
+}

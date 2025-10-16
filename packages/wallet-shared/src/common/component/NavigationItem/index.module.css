@@ -1,0 +1,14 @@
+.navigation__button {
+    all: unset;
+    display: flex;
+    cursor: pointer;
+}
+
+.navigation__button > svg {
+    stroke: var(--frak-navigation-color);
+    opacity: 0.5;
+}
+
+.navigation__button--active > svg {
+    opacity: 1;
+}
