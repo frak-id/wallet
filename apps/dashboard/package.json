@@ -8,7 +8,7 @@
   "scripts": {
     "next-dev-https": "next dev --experimental-https --port 3001",
     "dev": "sst dev bun run next-dev-https",
-    "build": "next build",
+    "build": "sst dev next build",
     "start": "next start",
     "lint": "biome lint .",
     "format:check": "biome check .",
@@ -50,24 +50,20 @@
     "next": "15.3.3",
     "normalize.css": "^8.0.1",
     "radash": "^12.1.0",
-    "react": "^19.1.8",
+    "react": "catalog:",
     "react-day-picker": "^9.7.0",
-    "react-dom": "^19.1.6",
+    "react-dom": "catalog:",
     "react-hook-form": "^7.57.0",
     "viem": "^2.31.2"
   },
   "devDependencies": {
     "@frak-labs/browserslist-config": "workspace:*",
     "@types/node": "^24",
-    "@types/react": "^19.1.8",
-    "@types/react-dom": "^19.1.6",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
     "bun-types": "latest",
     "sst": "3.17.5",
     "typescript": "^5"
-  },
-  "overrides": {
-    "@types/react": "^19.1.8",
-    "@types/react-dom": "^19.1.6"
   },
   "browserslist": [
     "extends @frak-labs/browserslist-config"
