@@ -32,9 +32,9 @@
   },
   "devDependencies": {
     "@frak-labs/app-essentials": "workspace:*",
-    "@types/react": "^19.1.8",
-    "@types/react-dom": "^19.1.6",
-    "react": "^19.1.8",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "react": "catalog:",
     "typescript": "^5"
   }
 }
