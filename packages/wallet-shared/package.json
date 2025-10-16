@@ -7,6 +7,18 @@
   "scripts": {
     "typecheck": "tsc --noEmit"
   },
+  "main": "./src/index.ts",
+  "module": "./src/index.ts",
+  "exports": {
+    "./common/*": "./src/common/*",
+    "./authentication/*": "./src/authentication/*",
+    "./blockchain/*": "./src/blockchain/*",
+    "./pairing/*": "./src/pairing/*",
+    "./sdk/*": "./src/sdk/*",
+    "./tokens/*": "./src/tokens/*",
+    "./types/*": "./src/types/*",
+    "./wallet/*": "./src/wallet/*"
+  },
   "dependencies": {
     "@elysiajs/eden": "^1.4.1",
     "@frak-labs/app-essentials": "workspace:*",
