@@ -1,6 +1,6 @@
-import type { Session } from "@frak-labs/wallet-shared/types/Session";
 import { OpenPanel } from "@openpanel/web";
 import { isStandalonePWA } from "ua-parser-js/helpers";
+import type { Session } from "@/types/Session";
 import { isInIframe } from "../lib/inApp";
 import type {
     AnalyticsAuthenticationType,

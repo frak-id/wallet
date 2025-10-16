@@ -1,11 +1,11 @@
-import {
-    inAppBrowserToastDismissedAtom,
-    socialRedirectAttemptedAtom,
-} from "@frak-labs/wallet-shared/common/atoms/inAppBrowser";
-import { Toast } from "@frak-labs/wallet-shared/common/component/Toast";
 import { useAtom } from "jotai";
 import { useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import {
+    inAppBrowserToastDismissedAtom,
+    socialRedirectAttemptedAtom,
+} from "@/common/atoms/inAppBrowser";
+import { Toast } from "@/common/component/Toast";
 import { emitLifecycleEvent } from "../../../sdk/utils/lifecycleEvents";
 import { trackGenericEvent } from "../../analytics";
 import { inAppRedirectUrl, isInAppBrowser, isInIframe } from "../../lib/inApp";

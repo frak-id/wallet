@@ -1,7 +1,7 @@
 import { generateSsoUrl } from "@frak-labs/core-sdk";
-import type { AppSpecificSsoMetadata } from "@frak-labs/wallet-shared/authentication/atoms/sso";
 import { useMemo } from "react";
 import type { Hex } from "viem";
+import type { AppSpecificSsoMetadata } from "@/authentication/atoms/sso";
 
 /**
  * Hook used to get the sso link

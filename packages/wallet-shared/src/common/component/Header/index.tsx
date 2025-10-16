@@ -1,9 +1,9 @@
 import { LogoFrakWithName } from "@frak-labs/ui/icons/LogoFrakWithName";
 import { Notifications } from "@frak-labs/ui/icons/Notifications";
-import { sessionAtom } from "@frak-labs/wallet-shared/common/atoms/session";
 import { useAtomValue } from "jotai";
 import { Link } from "react-router";
 import { useHydrated } from "remix-utils/use-hydrated";
+import { sessionAtom } from "@/common/atoms/session";
 import styles from "./index.module.css";
 
 export function Header() {

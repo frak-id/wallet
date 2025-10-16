@@ -1,11 +1,11 @@
+import { decodeJwt } from "jose";
+import { atom, useAtomValue } from "jotai";
 import {
     demoPrivateKeyAtom,
     type SdkSessionPayload,
     sdkSessionAtom,
-} from "@frak-labs/wallet-shared/common/atoms/session";
-import { Panel } from "@frak-labs/wallet-shared/common/component/Panel";
-import { decodeJwt } from "jose";
-import { atom, useAtomValue } from "jotai";
+} from "@/common/atoms/session";
+import { Panel } from "@/common/component/Panel";
 import styles from "./index.module.css";
 
 const isDemoAccountAtom = atom((get) => {

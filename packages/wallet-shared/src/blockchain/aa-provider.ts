@@ -1,7 +1,7 @@
 import { getErpcTransport } from "@frak-labs/app-essentials/blockchain";
-import { currentChain } from "@frak-labs/wallet-shared/blockchain/provider";
 import { memo } from "radash";
 import { createClient, fallback, http } from "viem";
+import { currentChain } from "@/blockchain/provider";
 
 export const getPimlicoTransport = memo(
     () => {

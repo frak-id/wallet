@@ -1,4 +1,4 @@
-import type { BalanceItem } from "@frak-labs/wallet-shared/types/Balance";
+import type { BalanceItem } from "@/types/Balance";
 import { FrakToken } from "./FrakToken";
 import styles from "./index.module.css";
 

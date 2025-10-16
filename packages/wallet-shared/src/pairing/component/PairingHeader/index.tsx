@@ -1,6 +1,6 @@
-import { Title } from "@frak-labs/wallet-shared/common/component/Title";
-import { PairingDevices } from "@frak-labs/wallet-shared/pairing/component/PairingDevices";
 import { useTranslation } from "react-i18next";
+import { Title } from "@/common/component/Title";
+import { PairingDevices } from "@/pairing/component/PairingDevices";
 import styles from "./index.module.css";
 
 export function PairingHeader() {

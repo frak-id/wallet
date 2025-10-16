@@ -1,8 +1,5 @@
-import type {
-    P256PubKey,
-    WebAuthNWallet,
-} from "@frak-labs/wallet-shared/types/WebAuthN";
 import type { Address, Hex } from "viem";
+import type { P256PubKey, WebAuthNWallet } from "@/types/WebAuthN";
 
 export type Session = {
     token: string;

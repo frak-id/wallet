@@ -1,7 +1,7 @@
-import type { NotificationModel } from "@frak-labs/wallet-shared/common/storage/dexie/NotificationModel";
-import type { PreviousAuthenticatorModel } from "@frak-labs/wallet-shared/common/storage/dexie/PreviousAuthenticatorModel";
 import type { Table } from "dexie";
 import { Dexie } from "dexie";
+import type { NotificationModel } from "@/common/storage/dexie/NotificationModel";
+import type { PreviousAuthenticatorModel } from "@/common/storage/dexie/PreviousAuthenticatorModel";
 
 class WalletDB extends Dexie {
     // This table will be used to store all the authenticator a user as used on his device
