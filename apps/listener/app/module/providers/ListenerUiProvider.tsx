@@ -17,6 +17,11 @@ import type {
     ExtractReturnType,
     RpcResponse,
 } from "@frak-labs/frame-connector";
+import {
+    mapI18nConfig,
+    translationKeyPathToObject,
+} from "@frak-labs/wallet-shared/sdk/utils/i18nMapper";
+import { emitLifecycleEvent } from "@frak-labs/wallet-shared/sdk/utils/lifecycleEvents";
 import type { i18n, TOptions } from "i18next";
 import { useAtomValue } from "jotai";
 import {
@@ -30,11 +35,6 @@ import {
 import { useTranslation } from "react-i18next";
 import { iframeResolvingContextAtom } from "@/module/atoms/resolvingContext";
 import { useEstimatedInteractionReward } from "@/module/hooks/useEstimatedInteractionReward";
-import { emitLifecycleEvent } from "@frak-labs/wallet-shared/sdk/utils/lifecycleEvents";
-import {
-    mapI18nConfig,
-    translationKeyPathToObject,
-} from "../../sdk/utils/i18nMapper";
 import { mapDeprecatedModalMetadata } from "../utils/deprecatedModalMetadataMapper";
 
 export type GenericWalletUiType = {

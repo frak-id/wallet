@@ -1,5 +1,5 @@
-import { type MutationOptions, useMutation } from "@tanstack/react-query";
 import { trackGenericEvent } from "@frak-labs/wallet-shared/common/analytics";
+import { type MutationOptions, useMutation } from "@tanstack/react-query";
 import { useListenerTranslation } from "../providers/ListenerUiProvider";
 import { listenerSharingKey } from "../queryKeys/sharing";
 

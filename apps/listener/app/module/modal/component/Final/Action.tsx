@@ -1,6 +1,7 @@
 import { type FinalActionType, FrakContextManager } from "@frak-labs/core-sdk";
 import { useCopyToClipboardWithState } from "@frak-labs/ui/hook/useCopyToClipboardWithState";
 import { prefixModalCss } from "@frak-labs/ui/utils/prefixModalCss";
+import { trackGenericEvent } from "@frak-labs/wallet-shared/common/analytics";
 import { Copy, Share } from "lucide-react";
 import { useMemo } from "react";
 import { toast } from "sonner";
@@ -10,7 +11,6 @@ import { useTriggerPushInterraction } from "@/module/hooks/useTriggerPushInterra
 import { ButtonAction } from "@/module/modal/component/ButtonAction";
 import styles from "@/module/modal/component/Modal/index.module.css";
 import { useListenerTranslation } from "@/module/providers/ListenerUiProvider";
-import { trackGenericEvent } from "@frak-labs/wallet-shared/common/analytics";
 import { useShareLink } from "../../../hooks/useShareLink";
 
 export function FinalModalActionComponent({

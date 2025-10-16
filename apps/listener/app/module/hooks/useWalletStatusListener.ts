@@ -7,17 +7,17 @@ import type {
     StreamEmitter,
 } from "@frak-labs/frame-connector";
 import { jotaiStore } from "@frak-labs/ui/atoms/store";
+import {
+    sdkSessionAtom,
+    sessionAtom,
+} from "@frak-labs/wallet-shared/common/atoms/session";
+import { pushBackupData } from "@frak-labs/wallet-shared/sdk/utils/backup";
+import { interactionSessionStatusQuery } from "@frak-labs/wallet-shared/wallet/hook/useInteractionSessionStatus";
 import { useQueryClient } from "@tanstack/react-query";
 import { atom, useAtomValue } from "jotai";
 import { useCallback, useEffect, useRef } from "react";
-import { sdkSessionAtom, sessionAtom } from "@frak-labs/wallet-shared/common/atoms/session";
 import type { WalletRpcContext } from "@/module/types/context";
-import {
-    getSafeSdkSession,
-    getSafeSession,
-} from "@/module/utils/localStorage";
-import { pushBackupData } from "@frak-labs/wallet-shared/sdk/utils/backup";
-import { interactionSessionStatusQuery } from "@frak-labs/wallet-shared/wallet/hook/useInteractionSessionStatus";
+import { getSafeSdkSession, getSafeSession } from "@/module/utils/localStorage";
 
 type OnListenToWallet = RpcStreamHandler<
     IFrameRpcSchema,

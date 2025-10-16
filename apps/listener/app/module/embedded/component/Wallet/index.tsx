@@ -1,10 +1,10 @@
 import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { Overlay } from "@frak-labs/ui/component/Overlay";
 import { prefixWalletCss } from "@frak-labs/ui/utils/prefixWalletCss";
-import { cva, cx } from "class-variance-authority";
-import { Toaster } from "sonner";
 import { sessionAtom } from "@frak-labs/wallet-shared/common/atoms/session";
 import { InAppBrowserToast } from "@frak-labs/wallet-shared/common/component/InAppBrowserToast";
+import { cva, cx } from "class-variance-authority";
+import { Toaster } from "sonner";
 import { ListenerWalletHeader } from "@/module/embedded/component/WalletHeader";
 import { LoggedInComponent } from "@/module/embedded/component/WalletLoggedIn";
 import { LoggedOutComponent } from "@/module/embedded/component/WalletLoggedOut";

@@ -1,12 +1,12 @@
+import { useGetSafeSdkSession } from "@frak-labs/wallet-shared/common/hook/useGetSafeSdkSession";
+import { interactionSessionStatusQuery } from "@frak-labs/wallet-shared/wallet/hook/useInteractionSessionStatus";
 import { useQueries } from "@tanstack/react-query";
 import { useAtomValue } from "jotai";
 import { useMemo } from "react";
 import { useAccount } from "wagmi";
-import { useGetSafeSdkSession } from "@frak-labs/wallet-shared/common/hook/useGetSafeSdkSession";
 import { iframeResolvingContextAtom } from "@/module/atoms/resolvingContext";
 import { estimatedInteractionRewardQuery } from "@/module/hooks/useEstimatedInteractionReward";
 import { getProductMetadataQuery } from "@/module/hooks/useGetProductMetadata";
-import { interactionSessionStatusQuery } from "@frak-labs/wallet-shared/wallet/hook/useInteractionSessionStatus";
 
 /**
  * Small hook to preload some listener queries

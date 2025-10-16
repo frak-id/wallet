@@ -1,11 +1,11 @@
 import type { SendTransactionModalStepType } from "@frak-labs/core-sdk";
 import { ButtonAuth } from "@frak-labs/ui/component/ButtonAuth";
+import { encodeWalletMulticall } from "@frak-labs/wallet-shared/wallet/utils/multicall";
 import { useMemo } from "react";
 import { useAccount, useSendTransaction } from "wagmi";
 import { HandleErrors } from "@/module/component/HandleErrors";
 import { AccordionTransactions } from "@/module/modal/component/Transaction/AccordionTransactions";
 import { useListenerTranslation } from "@/module/providers/ListenerUiProvider";
-import { encodeWalletMulticall } from "@frak-labs/wallet-shared/wallet/utils/multicall";
 
 /**
  * The component for the transaction step of a modal

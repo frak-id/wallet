@@ -1,8 +1,8 @@
 import type { ButtonProps } from "@frak-labs/ui/component/Button";
-import { type ElementType, useState } from "react";
 import { ua } from "@frak-labs/wallet-shared/common/lib/ua";
 import type { OnPairingSuccessCallback } from "@frak-labs/wallet-shared/pairing/clients/origin";
 import { LaunchPairing } from "@frak-labs/wallet-shared/pairing/component/LaunchPairing";
+import { type ElementType, useState } from "react";
 import styles from "./index.module.css";
 
 type AuthenticateWithPhoneProps = {

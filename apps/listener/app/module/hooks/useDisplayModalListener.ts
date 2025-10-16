@@ -13,8 +13,10 @@ import {
     type RpcResponse,
 } from "@frak-labs/frame-connector";
 import { jotaiStore } from "@frak-labs/ui/atoms/store";
-import { useCallback, useEffect, useRef } from "react";
+import { trackGenericEvent } from "@frak-labs/wallet-shared/common/analytics";
 import { sessionAtom } from "@frak-labs/wallet-shared/common/atoms/session";
+import { interactionSessionAtom } from "@frak-labs/wallet-shared/wallet/atoms/interactionSession";
+import { useCallback, useEffect, useRef } from "react";
 import {
     type DisplayedModalStep,
     displayedRpcModalStepsAtom,
@@ -26,8 +28,6 @@ import {
 } from "@/module/modal/atoms/modalUtils";
 import { useListenerUI } from "@/module/providers/ListenerUiProvider";
 import type { WalletRpcContext } from "@/module/types/context";
-import { interactionSessionAtom } from "@frak-labs/wallet-shared/wallet/atoms/interactionSession";
-import { trackGenericEvent } from "@frak-labs/wallet-shared/common/analytics";
 
 type OnDisplayModalRequest = RpcPromiseHandler<
     IFrameRpcSchema,

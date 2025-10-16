@@ -5,16 +5,19 @@ import type {
 import { decompressJsonFromB64 } from "@frak-labs/core-sdk";
 import type { LifecycleHandler } from "@frak-labs/frame-connector";
 import { jotaiStore } from "@frak-labs/ui/atoms/store";
+import { restoreBackupData } from "@frak-labs/wallet-shared/sdk/utils/backup";
+import { mapI18nConfig } from "@frak-labs/wallet-shared/sdk/utils/i18nMapper";
+import { emitLifecycleEvent } from "@frak-labs/wallet-shared/sdk/utils/lifecycleEvents";
+import type {
+    SdkSession,
+    Session,
+} from "@frak-labs/wallet-shared/types/Session";
 import { getI18n } from "react-i18next";
 import {
     handleHandshakeResponse,
     iframeResolvingContextAtom,
     startFetchResolvingContextViaHandshake,
 } from "@/module/atoms/resolvingContext";
-import { restoreBackupData } from "@frak-labs/wallet-shared/sdk/utils/backup";
-import { mapI18nConfig } from "@frak-labs/wallet-shared/sdk/utils/i18nMapper";
-import { emitLifecycleEvent } from "@frak-labs/wallet-shared/sdk/utils/lifecycleEvents";
-import type { SdkSession, Session } from "@frak-labs/wallet-shared/types/Session";
 import { processSsoCompletion } from "./ssoHandler";
 
 /**

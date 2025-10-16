@@ -6,14 +6,20 @@ import {
     type RpcPromiseHandler,
 } from "@frak-labs/frame-connector";
 import { jotaiStore } from "@frak-labs/ui/atoms/store";
-import type { Hex } from "viem";
 import { addLastAuthenticationAtom } from "@frak-labs/wallet-shared/authentication/atoms/lastAuthenticator";
 import { trackAuthCompleted } from "@frak-labs/wallet-shared/common/analytics";
-import { sdkSessionAtom, sessionAtom } from "@frak-labs/wallet-shared/common/atoms/session";
-import type { WalletRpcContext } from "@/module/types/context";
+import {
+    sdkSessionAtom,
+    sessionAtom,
+} from "@frak-labs/wallet-shared/common/atoms/session";
 import { emitLifecycleEvent } from "@frak-labs/wallet-shared/sdk/utils/lifecycleEvents";
-import type { SdkSession, Session } from "@frak-labs/wallet-shared/types/Session";
+import type {
+    SdkSession,
+    Session,
+} from "@frak-labs/wallet-shared/types/Session";
 import type { SsoRpcSchema } from "@frak-labs/wallet-shared/types/sso-rpc";
+import type { Hex } from "viem";
+import type { WalletRpcContext } from "@/module/types/context";
 
 type PrepareSsoHandler = RpcPromiseHandler<
     IFrameRpcSchema,

@@ -1,11 +1,11 @@
 import type { LoginModalStepType } from "@frak-labs/core-sdk";
 import { Spinner } from "@frak-labs/ui/component/Spinner";
 import { prefixModalCss } from "@frak-labs/ui/utils/prefixModalCss";
-import { useAtomValue } from "jotai";
-import { useEffect, useMemo } from "react";
 import { useLogin } from "@frak-labs/wallet-shared/authentication/hook/useLogin";
 import { sessionAtom } from "@frak-labs/wallet-shared/common/atoms/session";
 import { isWebAuthNSupported } from "@frak-labs/wallet-shared/common/lib/webauthn";
+import { useAtomValue } from "jotai";
+import { useEffect, useMemo } from "react";
 import { iframeResolvingContextAtom } from "@/module/atoms/resolvingContext";
 import { HandleErrors } from "@/module/component/HandleErrors";
 import { SsoButton } from "@/module/component/SsoButton";

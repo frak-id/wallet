@@ -1,14 +1,14 @@
 import { prefixModalCss } from "@frak-labs/ui/utils/prefixModalCss";
+import { trackGenericEvent } from "@frak-labs/wallet-shared/common/analytics";
+import { Markdown } from "@frak-labs/wallet-shared/common/component/Markdown";
 import { useAtom } from "jotai";
 import { useMemo } from "react";
-import { Markdown } from "@frak-labs/wallet-shared/common/component/Markdown";
 import { displayedRpcModalStepsAtom } from "@/module/modal/atoms/modalEvents";
 import styles from "@/module/modal/component/Modal/index.module.css";
 import {
     useListenerTranslation,
     useModalListenerUI,
 } from "@/module/providers/ListenerUiProvider";
-import { trackGenericEvent } from "@frak-labs/wallet-shared/common/analytics";
 
 export function MetadataInfo({ description }: { description?: string }) {
     if (description) {
