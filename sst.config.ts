@@ -42,8 +42,20 @@ export default $config({
             // Gcp dev stuff
             await import("./infra/gcp/dev.ts");
             await import("./infra/wallet.ts");
+            // await import("./infra/listener.ts"); // TODO: Uncomment when merged to main
             await import("./infra/dashboard.ts");
             await import("./infra/example.ts");
+
+            // Run listener dev server (infrastructure not deployed yet)
+            new sst.x.DevCommand("Listener", {
+                dev: {
+                    title: "Listener",
+                    autostart: true,
+                    command: "react-router dev",
+                    directory: "apps/listener",
+                },
+            });
+
             return;
         }
 
@@ -66,8 +78,9 @@ export default $config({
             await import("./infra/gcp/dev.ts");
         }
 
-        // Add wallet + dashboard
+        // Add wallet, listener + dashboard
         await import("./infra/wallet.ts");
+        // await import("./infra/listener.ts"); // TODO: Uncomment when merged to main
         await import("./infra/dashboard.ts");
     },
 });
