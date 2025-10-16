@@ -1,0 +1,53 @@
+.drawer__overlay {
+    background: rgba(0, 0, 0, 0.2);
+    position: fixed;
+    z-index: 10;
+    inset: 0;
+    animation: overlayShow 250ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.drawer__contentWrapper {
+    /* Create a new stacking context for the toaster to be inside our modal */
+    transform: translateZ(0);
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 10;
+    max-height: 100dvh;
+    margin-top: 24px;
+    display: flex;
+    flex-direction: column;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    background-color: var(--frak-drawer-background-color);
+}
+
+.drawer__content {
+    padding: 20px;
+}
+
+.drawer__content > section {
+    overflow: auto;
+    max-height: 91dvh;
+}
+
+.drawer__handle {
+    margin: 16px auto 0 auto;
+    height: 8px;
+    width: 100px;
+    border-radius: 9999px;
+    background-color: var(--frak-drawer-handle-background-color);
+}
+
+.drawer__header {
+    display: grid;
+    gap: 6px;
+}
+
+.drawer__footer {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}

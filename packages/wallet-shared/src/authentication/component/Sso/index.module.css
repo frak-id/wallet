@@ -1,0 +1,65 @@
+.sso__grid {
+    margin-top: 0 !important;
+}
+
+.sso__logo {
+    margin: 0 auto 24px auto;
+    display: block;
+    max-width: 70%;
+}
+
+.sso__title {
+    font-size: 29px;
+    font-weight: 400;
+    color: #575757;
+}
+
+.sso__ahead {
+    font-size: 10px;
+}
+
+.sso__previousWallet {
+    font-size: 12px;
+    max-width: 70%;
+    margin: 18px auto 0;
+    text-align: center;
+}
+
+.sso__link {
+    color: #0171ec;
+}
+
+.sso__buttonLink {
+    all: unset;
+    cursor: pointer;
+    text-decoration: underline;
+    font-size: 13px;
+}
+
+.sso__notice {
+    color: #4d4d4d !important;
+    font-size: 11px !important;
+}
+
+.sso__primaryButtonWrapper {
+    margin-top: 23px;
+    text-align: center;
+}
+
+.sso__secondaryButtonWrapper {
+    margin-top: 18px;
+    text-align: center;
+}
+
+.sso__recover {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 10px;
+    color: #4d4d4d;
+    font-size: 11px;
+}
+
+.sso__redirect {
+    margin-top: 20px;
+}

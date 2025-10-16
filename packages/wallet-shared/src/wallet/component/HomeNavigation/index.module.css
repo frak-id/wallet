@@ -1,0 +1,29 @@
+.homeNavigation {
+    display: flex;
+    justify-content: space-between;
+    margin: 0 8px 10px 8px;
+}
+
+.button {
+    display: flex;
+    flex-direction: column;
+    text-decoration: none;
+    gap: 4px;
+    text-align: center;
+    width: 55px;
+}
+
+.button__lines {
+    line-height: 13px;
+}
+
+.button__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 55px;
+    height: 55px;
+    border-radius: 35px;
+    background: rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(14px);
+}

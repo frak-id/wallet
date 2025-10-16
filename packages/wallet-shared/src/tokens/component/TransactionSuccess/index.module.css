@@ -1,0 +1,9 @@
+.transactionSuccess {
+    display: block;
+    text-align: center;
+    font-size: 12px;
+}
+
+.transactionSuccess__polygonLink {
+    display: inline;
+}
