@@ -15,10 +15,11 @@ export type SsoMetadata = {
 };
 
 /**
- * Params to start a SSO
+ * Params for preparing SSO (generating URL)
+ * Same as OpenSsoParamsType but without openInSameWindow (popup-only operation)
  * @group RPC Schema
  */
-export type OpenSsoParamsType = {
+export type PrepareSsoParamsType = {
     /**
      * Redirect URL after the SSO (optional)
      */
@@ -29,11 +30,6 @@ export type OpenSsoParamsType = {
      */
     directExit?: boolean;
     /**
-     * If true, opens SSO in same window instead of popup
-     * Defaults to true when redirectUrl is provided, false otherwise
-     */
-    openInSameWindow?: boolean;
-    /**
      * Language of the SSO page (optional)
      * It will default to the current user language (or "en" if unsupported language)
      */
@@ -41,7 +37,18 @@ export type OpenSsoParamsType = {
     /**
      * Custom SSO metadata
      */
-    metadata: SsoMetadata;
+    metadata?: SsoMetadata;
+};
+
+/**
+ * Response after preparing SSO
+ * @group RPC Schema
+ */
+export type PrepareSsoReturnType = {
+    /**
+     * The SSO URL that should be opened in a popup
+     */
+    ssoUrl: string;
 };
 
 /**
@@ -53,4 +60,21 @@ export type OpenSsoReturnType = {
      * Note: Only present when SSO flow completes (not immediately on open)
      */
     wallet?: Hex;
+};
+
+/**
+ * Params to start a SSO
+ * @group RPC Schema
+ */
+export type OpenSsoParamsType = PrepareSsoParamsType & {
+    /**
+     * Indicate whether we want todo the flow within the same window context, or if we want to do it with an external popup window openned
+     * Note: Default true if redirectUrl is present, otherwise, false
+     */
+    openInSameWindow?: boolean;
+
+    /**
+     * Custom SSO popup url if user want additionnal customisation
+     */
+    ssoPopupUrl?: string;
 };

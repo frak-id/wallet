@@ -5,7 +5,6 @@ import { PairingRouterRepository } from "./repositories/PairingRouterRepository"
 
 export namespace PairingContext {
     const connectionRepository = new PairingConnectionRepository(
-        AuthContext.services.walletSso,
         AuthContext.services.walletSdkSession
     );
     const routerRepository = new PairingRouterRepository(

@@ -1,16 +1,11 @@
 import { addLastAuthenticationAtom } from "@/module/authentication/atoms/lastAuthenticator";
-import {
-    getOpenSsoLink,
-    ssoPopupFeatures,
-    ssoPopupName,
-} from "@/module/authentication/utils/ssoLink";
 import { trackAuthCompleted } from "@/module/common/analytics";
 import { sdkSessionAtom, sessionAtom } from "@/module/common/atoms/session";
 import type { WalletRpcContext } from "@/module/listener/types/context";
 import { emitLifecycleEvent } from "@/module/sdk/utils/lifecycleEvents";
 import type { SdkSession, Session } from "@/types/Session";
 import type { SsoRpcSchema } from "@/types/sso-rpc";
-import type { IFrameRpcSchema } from "@frak-labs/core-sdk";
+import { type IFrameRpcSchema, generateSsoUrl } from "@frak-labs/core-sdk";
 import {
     Deferred,
     FrakRpcError,
@@ -20,9 +15,15 @@ import {
 import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import type { Hex } from "viem";
 
+type PrepareSsoHandler = RpcPromiseHandler<
+    IFrameRpcSchema,
+    "frak_prepareSso",
+    WalletRpcContext
+>;
+
 type OpenSsoHandler = RpcPromiseHandler<
     IFrameRpcSchema,
-    "frak_sso",
+    "frak_openSso",
     WalletRpcContext
 >;
 
@@ -32,15 +33,10 @@ type SsoCompleteHandler = RpcPromiseHandler<
     WalletRpcContext
 >;
 
+/**
+ * Pending SSO request - stores deferred promise waiting for completion
+ */
 export let pendingSsoRequest: Deferred<{ wallet: Hex }> | undefined = undefined;
-
-export function newPendingSsoRequest(): Deferred<{ wallet: Hex }> {
-    pendingSsoRequest = new Deferred();
-    return pendingSsoRequest;
-}
-export function cleanupPendingSsoRequest() {
-    pendingSsoRequest = undefined;
-}
 
 /**
  * Process SSO completion - shared logic for both RPC and lifecycle handlers
@@ -72,7 +68,7 @@ export async function processSsoCompletion(
 
         // Resolve pending RPC call if exists
         pendingSsoRequest?.resolve({ wallet: session.address });
-        cleanupPendingSsoRequest();
+        pendingSsoRequest = undefined;
 
         console.log("[SSO] Authentication completed successfully", {
             address: session.address,
@@ -87,7 +83,7 @@ export async function processSsoCompletion(
                 "Failed to store session after SSO"
             )
         );
-        cleanupPendingSsoRequest();
+        pendingSsoRequest = undefined;
 
         throw error;
     }
@@ -99,7 +95,7 @@ export async function processSsoCompletion(
  * This is called by the SSO window via RPC instead of custom postMessage.
  * It stores the session and resolves any pending deferred promises.
  *
- * @param params - [session, sdkJwt, ssoId]
+ * @param params - [session, sdkJwt]
  * @param _context - Request context (unused)
  * @returns Promise resolving to { success: true }
  */
@@ -115,20 +111,63 @@ export const handleSsoComplete: SsoCompleteHandler = async (
 };
 
 /**
- * Handle frak_sso RPC method
+ * Handle frak_prepareSso RPC method
  *
- * This is called by the SDK to open a SSO window
+ * Generates SSO URL server-side (wallet iframe)
+ * This is now primarily for backward compatibility or edge cases where
+ * client-side generation isn't suitable. Most popup flows use SDK-side generation.
  *
- * @param params
+ * @param params - PrepareSsoParamsType
  * @param context
- * @returns
+ * @returns {ssoUrl: string}
+ *
+ * @remarks
+ * As of the new architecture, SDK's prepareSso() generates URLs client-side
+ * without calling this RPC handler. This handler remains for:
+ * - Backward compatibility
+ * - Custom wallet-side URL generation logic if needed
+ * - Testing/debugging purposes
  */
-export const handleOpenSso: OpenSsoHandler = async (params, context) => {
+export const handlePrepareSso: PrepareSsoHandler = (params, context) => {
     // Extract request infos
     const ssoInfo = params[0];
     const name = params[1];
     const css = params[2];
 
+    // Generate SSO URL (same logic as SDK-side generation
+    const ssoUrl = generateSsoUrl(
+        window.location.origin,
+        ssoInfo,
+        context.productId,
+        name,
+        css
+    );
+
+    // Return URL
+    return Promise.resolve({ ssoUrl });
+};
+
+/**
+ * Handle frak_openSso RPC method
+ *
+ * Two execution modes based on openInSameWindow:
+ *
+ * **Redirect Mode** (openInSameWindow: true):
+ * - Wallet generates SSO URL
+ * - Triggers redirect via lifecycle event to SDK iframe
+ * - Returns immediately with undefined wallet
+ * - Wallet address set after redirect completes
+ *
+ * **Popup Mode** (openInSameWindow: false/omitted):
+ * - SDK already opened popup with generated URL (synchronous)
+ * - This handler just waits for SSO completion
+ * - Returns when popup sends sso_complete message
+ *
+ * @param params - Full OpenSsoParamsType
+ * @param context - Wallet RPC context with productId
+ * @returns Promise<{wallet: Hex | undefined}>
+ */
+export const handleOpenSso: OpenSsoHandler = async (params, context) => {
     // If we are on the server side directly exit with an error
     if (typeof window === "undefined") {
         throw new FrakRpcError(
@@ -137,111 +176,70 @@ export const handleOpenSso: OpenSsoHandler = async (params, context) => {
         );
     }
 
-    // Determine if we should open in same window
-    // Default to true if redirectUrl is provided, unless explicitly overridden
-    const openInSameWindow = ssoInfo.openInSameWindow ?? ssoInfo.redirectUrl;
+    // Extract request infos
+    const ssoInfo = params[0];
+    const name = params[1];
+    const css = params[2];
 
-    const ssoLink = getOpenSsoLink({
-        productId: context.productId,
-        metadata: {
-            ...ssoInfo.metadata,
+    // Check if redirect mode (default to true if redirectUrl present)
+    const openInSameWindow = ssoInfo.openInSameWindow ?? !!ssoInfo.redirectUrl;
+
+    if (openInSameWindow) {
+        // Redirect mode: Generate URL and trigger redirect
+        // URL generation must happen wallet-side because only the iframe can trigger redirect
+        const ssoUrl = generateSsoUrl(
+            window.location.origin,
+            ssoInfo,
+            context.productId,
             name,
-            css,
-        },
-        directExit: ssoInfo.directExit,
-        redirectUrl: ssoInfo.redirectUrl,
-        lang: ssoInfo.lang,
-    });
-
-    try {
-        if (openInSameWindow) {
-            // Open in same window - no postMessage flow possible
-            // This is used for redirectUrl flows
-            emitLifecycleEvent({
-                iframeLifecycle: "redirect",
-                data: { baseRedirectUrl: ssoLink },
-            });
-            // Return result with trackingId (wallet will be set later via redirect)
-            return { wallet: undefined };
-        }
-
-        // Open the popup
-        const openedWindow = window.open(
-            ssoLink,
-            ssoPopupName,
-            ssoPopupFeatures
+            css
         );
 
-        if (!openedWindow) {
-            throw new FrakRpcError(
-                RpcErrorCodes.internalError,
-                "Failed to open the SSO window"
+        // Trigger redirect via lifecycle event
+        // Flow: wallet iframe -> SDK iframe -> window.location.href = ssoUrl
+        emitLifecycleEvent({
+            iframeLifecycle: "redirect",
+            data: { baseRedirectUrl: ssoUrl },
+        });
+
+        // Return immediately (wallet will be set after redirect completes)
+        return { wallet: undefined };
+    }
+
+    // Popup mode: SDK already opened popup, just wait for completion
+    // Note: URL was generated client-side by SDK using generateSsoUrl()
+    // Popup is already open at this point (SDK called window.open() before this RPC)
+
+    pendingSsoRequest = new Deferred<{ wallet: Hex }>();
+
+    // Set timeout for SSO completion (120s to account for slow auth flows)
+    const timeout = setTimeout(() => {
+        if (pendingSsoRequest) {
+            pendingSsoRequest.reject(
+                new FrakRpcError(
+                    RpcErrorCodes.internalError,
+                    "SSO timeout - no completion received within 120 seconds"
+                )
             );
+            pendingSsoRequest = undefined;
         }
+    }, 120_000);
 
-        openedWindow.focus();
-
-        /**
-         * Create Deferred promise that will be resolved by useSsoMessageListener
-         * when the SSO window sends postMessage after authentication
-         *
-         * This eliminates backend polling:
-         * - Old: Poll backend every 500ms-2s until session available
-         * - New: Wait for direct postMessage from SSO window
-         */
-        const deferred = newPendingSsoRequest();
-
-        /**
-         * Monitor window closure
-         * If user closes SSO window without completing, reject the promise
-         *
-         * Performance note: setInterval is acceptable here as:
-         * - Only runs during active SSO flow (short-lived)
-         * - 500ms interval is low frequency
-         * - Cleaned up immediately on window close or completion
-         */
-        const windowClosedInterval = setInterval(() => {
-            if (openedWindow.closed) {
-                clearInterval(windowClosedInterval);
-
-                // Check if deferred is still pending
-                pendingSsoRequest?.reject(
-                    new FrakRpcError(
-                        RpcErrorCodes.clientAborted,
-                        "SSO window was closed by user"
-                    )
-                );
-            }
-        }, 500);
-
-        // Wait for SSO completion via postMessage
-        try {
-            const result = await deferred.promise;
-
-            // Cleanup
-            clearInterval(windowClosedInterval);
-            cleanupPendingSsoRequest();
-
-            return result;
-        } catch (error) {
-            // Cleanup on error
-            clearInterval(windowClosedInterval);
-            cleanupPendingSsoRequest();
-
-            throw error;
-        }
+    try {
+        // Wait for SSO completion
+        // Resolved by processSsoCompletion() when SSO page sends sso_complete message
+        const result = await pendingSsoRequest.promise;
+        clearTimeout(timeout);
+        return result;
     } catch (error) {
-        console.warn("Unable to open the SSO page", error);
+        clearTimeout(timeout);
 
-        // If error has code property, throw as-is (already formatted)
-        if (error && error instanceof FrakRpcError) {
+        // If error is already formatted, throw as-is
+        if (error instanceof FrakRpcError) {
             throw error;
         }
 
         // Otherwise wrap in RPC error
-        throw new FrakRpcError(
-            RpcErrorCodes.internalError,
-            "Failed to open the SSO"
-        );
+        throw new FrakRpcError(RpcErrorCodes.internalError, "SSO failed");
     }
 };

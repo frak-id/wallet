@@ -12,6 +12,7 @@ export {
     createIframe,
     FrakContextManager,
     baseIframeProps,
+    findIframeInOpener,
     getSupportedCurrency,
     getSupportedLocale,
     getCurrencyAmountKey,
@@ -19,6 +20,10 @@ export {
     base64urlDecode,
     base64urlEncode,
     trackEvent,
+    generateSsoUrl,
+    type CompressedSsoData,
+    type FullSsoParams,
+    type AppSpecificSsoMetadata,
 } from "./utils";
 
 // Constants
@@ -33,6 +38,7 @@ export {
     type FullInteractionTypesKey,
 } from "./constants/interactionTypes";
 export { locales, type LocalesKey } from "./constants/locales";
+export { ssoPopupFeatures, ssoPopupName } from "./actions/openSso";
 
 // Types
 export type {
@@ -43,6 +49,8 @@ export type {
     SendInteractionParamsType,
     SendInteractionReturnType,
     SsoMetadata,
+    PrepareSsoParamsType,
+    PrepareSsoReturnType,
     OpenSsoParamsType,
     OpenSsoReturnType,
     Currency,

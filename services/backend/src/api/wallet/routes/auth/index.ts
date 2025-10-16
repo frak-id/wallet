@@ -7,11 +7,9 @@ import { loginRoutes } from "./login";
 import { registerRoutes } from "./register";
 import { routingRoutes } from "./routing";
 import { walletSdkRoutes } from "./sdk";
-import { walletSsoRoutes } from "./sso";
 
 export const authRoutes = new Elysia({ prefix: "/auth" })
     // SSO + sdk sub routes
-    .use(walletSsoRoutes)
     .use(walletSdkRoutes)
     // Login + register routes
     .use(loginRoutes)

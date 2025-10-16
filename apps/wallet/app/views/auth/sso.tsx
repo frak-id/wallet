@@ -8,10 +8,7 @@ import { SsoLoginComponent } from "@/module/authentication/component/Sso/SsoLogi
 import { SsoRegisterComponent } from "@/module/authentication/component/Sso/SsoRegister";
 import styles from "@/module/authentication/component/Sso/index.module.css";
 import { ssoKey } from "@/module/authentication/queryKeys/sso";
-import {
-    type CompressedSsoData,
-    compressedSsoToParams,
-} from "@/module/authentication/utils/ssoDataCompression";
+import { compressedSsoToParams } from "@/module/authentication/utils/ssoDataCompression";
 import {
     demoPrivateKeyAtom,
     sdkSessionAtom,
@@ -20,7 +17,11 @@ import {
 import { Grid } from "@/module/common/component/Grid";
 import { Notice } from "@/module/common/component/Notice";
 import type { Session } from "@/types/Session";
-import { compressJsonToB64, decompressJsonFromB64 } from "@frak-labs/core-sdk";
+import {
+    type CompressedSsoData,
+    compressJsonToB64,
+    decompressJsonFromB64,
+} from "@frak-labs/core-sdk";
 import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { ButtonAuth } from "@frak-labs/ui/component/ButtonAuth";
 import { formatHash } from "@frak-labs/ui/component/HashDisplay";
@@ -43,6 +44,7 @@ import { HandleErrors } from "@/module/listener/component/HandleErrors";
 import { AuthenticateWithPhone } from "@/module/listener/modal/component/AuthenticateWithPhone";
 import type { OnPairingSuccessCallback } from "@/module/pairing/clients/origin";
 import type { SsoRpcSchema } from "@/types/sso-rpc";
+import { findIframeInOpener } from "@frak-labs/core-sdk";
 import {
     createClientCompressionMiddleware,
     createRpcClient,
@@ -132,44 +134,48 @@ export default function Sso() {
 
     /**
      * The on success callback
-     * After successful auth, send RPC message to wallet iframe (window.opener)
+     * After successful auth, send RPC message to wallet listener iframe
      */
     const onSuccess = useCallback(async () => {
         // Get the current SSO context
         const session = jotaiStore.get(sessionAtom);
         const sdkSession = jotaiStore.get(sdkSessionAtom);
 
-        // Send RPC message to wallet iframe if opened from window.open
-        if (window.opener && !window.opener.closed && session && sdkSession) {
-            try {
-                // Create RPC client targeting window.opener (wallet iframe)
-                const ssoClient = createRpcClient<SsoRpcSchema>({
-                    emittingTransport: window.opener,
-                    listeningTransport: window,
-                    targetOrigin: window.location.origin,
-                    middleware: [createClientCompressionMiddleware()],
-                });
+        // Find the listener iframe and send RPC message if available
+        if (session && sdkSession) {
+            const listenerIframe = findIframeInOpener();
 
-                // Send SSO completion via RPC
-                await ssoClient.request({
-                    method: "sso_complete",
-                    params: [session, sdkSession],
-                });
+            if (listenerIframe) {
+                try {
+                    // Create RPC client targeting the listener iframe
+                    const ssoClient = createRpcClient<SsoRpcSchema>({
+                        emittingTransport: listenerIframe,
+                        listeningTransport: window,
+                        targetOrigin: window.location.origin,
+                        middleware: [createClientCompressionMiddleware()],
+                    });
 
-                console.log(
-                    "[SSO] Sent completion message to wallet iframe via RPC",
-                    {
-                        address: session.address,
-                    }
-                );
+                    console.log(
+                        "[SSO] Sent completion message to listener iframe via RPC",
+                        {
+                            address: session.address,
+                        }
+                    );
 
-                // Cleanup the client
-                ssoClient.cleanup();
-            } catch (error) {
-                console.error(
-                    "[SSO] Failed to send completion message via RPC:",
-                    error
-                );
+                    // Send SSO completion via RPC
+                    await ssoClient.request({
+                        method: "sso_complete",
+                        params: [session, sdkSession],
+                    });
+
+                    // Cleanup the client
+                    ssoClient.cleanup();
+                } catch (error) {
+                    console.error(
+                        "[SSO] Failed to send completion message via RPC:",
+                        error
+                    );
+                }
             }
         }
 

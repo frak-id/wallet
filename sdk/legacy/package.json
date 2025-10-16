@@ -47,12 +47,18 @@
     "prepublish": "bun run lint && bun run build",
     "publish": "echo 'Publishing legacy...'"
   },
+  "dependencies": {
+    "@frak-labs/core-sdk": "workspace:*",
+    "@frak-labs/ui": "workspace:*"
+  },
   "browserslist": [
     "extends @frak-labs/browserslist-config"
   ],
   "devDependencies": {
+    "@frak-labs/browserslist-config": "workspace:*",
+    "@frak-labs/dev-tooling": "workspace:*",
     "@microsoft/api-extractor": "^7.52.8",
     "@rslib/core": "^0.9.2",
-    "@frak-labs/dev-tooling": "workspace:*"
+    "typescript": "^5.8.3"
   }
 }

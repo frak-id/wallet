@@ -1,6 +1,7 @@
 import { useGetAdminWallet } from "@/module/common/hook/useGetAdminWallet";
 import { useWaitForTxAndInvalidateQueries } from "@/module/common/utils/useWaitForTxAndInvalidateQueries";
 import {
+    type Stablecoin,
     addresses,
     campaignBankAbi,
     interactionValidatorRoles,
@@ -30,6 +31,7 @@ export function useMintMyProduct(
             domain: string;
             setupCode: string;
             productTypes: ProductTypesKey[];
+            currency?: Stablecoin;
         }
     >
 ) {
@@ -48,7 +50,13 @@ export function useMintMyProduct(
             // Clear info post mutation
             setInfoTxt(undefined);
         },
-        async mutationFn({ name, domain, setupCode, productTypes }) {
+        async mutationFn({
+            name,
+            domain,
+            setupCode,
+            productTypes,
+            currency = "usdc",
+        }) {
             // Trigger the backend mint
             setInfoTxt("Registering your product");
             const { data, error } = await businessApi.product.mint.put({
@@ -56,6 +64,7 @@ export function useMintMyProduct(
                 domain,
                 setupCode,
                 productTypes,
+                currency,
             });
             if (error) throw error;
 

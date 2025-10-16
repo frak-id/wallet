@@ -34,7 +34,8 @@
   "type": "module",
   "files": [
     "/dist",
-    "/cdn"
+    "/cdn",
+    "/src"
   ],
   "browser": "./cdn/bundle.js",
   "exports": {
@@ -104,6 +105,7 @@
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.2",
+    "@frak-labs/browserslist-config": "workspace:*",
     "@frak-labs/dev-tooling": "workspace:*",
     "@microsoft/api-extractor": "^7.52.8",
     "@rsbuild/plugin-node-polyfill": "^1.3.0",

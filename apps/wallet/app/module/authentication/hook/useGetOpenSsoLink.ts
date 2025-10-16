@@ -1,7 +1,7 @@
 import type { AppSpecificSsoMetadata } from "@/module/authentication/atoms/sso";
+import { generateSsoUrl } from "@frak-labs/core-sdk";
 import { useMemo } from "react";
 import type { Hex } from "viem";
-import { getOpenSsoLink } from "../utils/ssoLink";
 
 /**
  * Hook used to get the sso link
@@ -20,13 +20,12 @@ export function useSsoLink({
     lang?: "en" | "fr";
 }) {
     const link = useMemo(() => {
-        return getOpenSsoLink({
+        return generateSsoUrl(
+            window.location.origin,
+            { directExit, redirectUrl, metadata, lang },
             productId,
-            metadata,
-            directExit,
-            redirectUrl,
-            lang,
-        });
+            metadata.name
+        );
     }, [productId, metadata, directExit, redirectUrl, lang]);
 
     return {

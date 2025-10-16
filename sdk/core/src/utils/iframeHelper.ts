@@ -85,3 +85,58 @@ export function changeIframeVisibility({
     iframe.style.height = "100%";
     iframe.style.pointerEvents = "auto";
 }
+
+/**
+ * Find an iframe within window.opener by pathname
+ *
+ * When a popup is opened via window.open from an iframe, window.opener points to
+ * the parent window, not the iframe itself. This utility searches through all frames
+ * in window.opener to find an iframe matching the specified pathname.
+ *
+ * @param pathname - The pathname to search for (default: "/listener")
+ * @returns The matching iframe window, or null if not found
+ *
+ * @example
+ * ```typescript
+ * // Find the default /listener iframe
+ * const listenerIframe = findIframeInOpener();
+ *
+ * // Find a custom iframe
+ * const customIframe = findIframeInOpener("/my-custom-iframe");
+ * ```
+ */
+export function findIframeInOpener(pathname = "/listener"): Window | null {
+    if (!window.opener) return null;
+
+    const frameCheck = (frame: Window) => {
+        try {
+            return (
+                frame.location.origin === window.location.origin &&
+                frame.location.pathname === pathname
+            );
+        } catch {
+            // Cross-origin frame, skip
+            return false;
+        }
+    };
+
+    // Check if the openner window is the right one
+    if (frameCheck(window.opener)) return window.opener;
+
+    // Search through frames in window.opener
+    try {
+        const frames = window.opener.frames;
+        for (let i = 0; i < frames.length; i++) {
+            if (frameCheck(frames[i])) {
+                return frames[i];
+            }
+        }
+        return null;
+    } catch (error) {
+        console.error(
+            `[findIframeInOpener] Error finding iframe with pathname ${pathname}:`,
+            error
+        );
+        return null;
+    }
+}

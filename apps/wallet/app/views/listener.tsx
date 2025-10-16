@@ -6,6 +6,7 @@ import {
 } from "@/module/listener/handlers/lifecycleHandler";
 import {
     handleOpenSso,
+    handlePrepareSso,
     handleSsoComplete,
 } from "@/module/listener/handlers/ssoHandler";
 import { useDisplayEmbeddedWallet } from "@/module/listener/hooks/useDisplayEmbeddedWallet";
@@ -80,13 +81,13 @@ function ListenerContent() {
             checkContextAndEmitReady();
         };
 
-        // Create lifecycle and custom message handlers
+        // Create lifecycle handler
         const clientLifecycleHandler = createClientLifecycleHandler(
             setReadyToHandleRequest
         );
 
         // Create the listener with combined schema (IFrame + SSO)
-        // This listener handles both:
+        // This listener handles:
         // - IFrameRpcSchema: SDK iframe -> wallet communication
         // - SsoRpcSchema: SSO window -> wallet communication
         //
@@ -96,8 +97,7 @@ function ListenerContent() {
         //
         // Message routing:
         // 1. Lifecycle messages -> clientLifecycleHandler (no middleware, no compression)
-        // 2. Custom messages -> customMessageHandler (no middleware, no compression, backward compat)
-        // 3. RPC messages -> middleware stack -> handlers
+        // 2. RPC messages -> middleware stack -> handlers
         //
         // Middleware stack order (RPC messages only):
         // 1. compressionMiddleware - Decompresses incoming CBOR data with hash validation
@@ -123,7 +123,8 @@ function ListenerContent() {
         // Register promise-based handlers (IFrameRpcSchema)
         listener.handle("frak_sendInteraction", onInteractionRequest);
         listener.handle("frak_displayModal", onDisplayModalRequest);
-        listener.handle("frak_sso", handleOpenSso);
+        listener.handle("frak_prepareSso", handlePrepareSso);
+        listener.handle("frak_openSso", handleOpenSso);
         listener.handle("frak_getProductInformation", onGetProductInformation);
         listener.handle("frak_displayEmbeddedWallet", onDisplayEmbeddedWallet);
 

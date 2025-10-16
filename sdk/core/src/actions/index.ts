@@ -3,6 +3,7 @@ export { sendInteraction } from "./sendInteraction";
 export { displayModal } from "./displayModal";
 export { displayEmbeddedWallet } from "./displayEmbeddedWallet";
 export { openSso } from "./openSso";
+export { prepareSso } from "./prepareSso";
 export { getProductInformation } from "./getProductInformation";
 // Helper to track the purchase status
 export { trackPurchaseStatus } from "./trackPurchaseStatus";

@@ -43,6 +43,13 @@
             "when": 1747068137600,
             "tag": "0005_robust_korg",
             "breakpoints": true
+        },
+        {
+            "idx": 6,
+            "version": "7",
+            "when": 1759916190365,
+            "tag": "0006_red_shooting_star",
+            "breakpoints": true
         }
     ]
 }

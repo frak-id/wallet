@@ -14,7 +14,12 @@ import type {
     SendInteractionReturnType,
 } from "./rpc/interaction";
 import type { GetProductInformationReturnType } from "./rpc/productInformation";
-import type { OpenSsoParamsType, OpenSsoReturnType } from "./rpc/sso";
+import type {
+    OpenSsoParamsType,
+    OpenSsoReturnType,
+    PrepareSsoParamsType,
+    PrepareSsoReturnType,
+} from "./rpc/sso";
 import type { WalletStatusReturnType } from "./rpc/walletStatus";
 
 /**
@@ -98,11 +103,27 @@ export type IFrameRpcSchema = [
         ReturnType: SendInteractionReturnType;
     },
     /**
-     * Method to start a SSO
-     * This is a one-shot request
+     * Method to prepare SSO (generate URL for popup)
+     * Returns the SSO URL that should be opened in a popup
+     * Only used for popup flows (not redirect flows)
      */
     {
-        Method: "frak_sso";
+        Method: "frak_prepareSso";
+        Parameters: [
+            params: PrepareSsoParamsType,
+            name: string,
+            customCss?: string,
+        ];
+        ReturnType: PrepareSsoReturnType;
+    },
+    /**
+     * Method to open/trigger SSO
+     * Either triggers redirect (if openInSameWindow/redirectUrl)
+     * Or waits for popup completion (if popup mode)
+     * This method handles BOTH redirect and popup flows
+     */
+    {
+        Method: "frak_openSso";
         Parameters: [
             params: OpenSsoParamsType,
             name: string,

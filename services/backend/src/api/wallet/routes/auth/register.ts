@@ -26,7 +26,6 @@ export const registerRoutes = new Elysia()
                 expectedChallenge,
                 userAgent,
                 previousWallet,
-                ssoId,
                 isSixDegrees,
             },
         }) => {
@@ -113,16 +112,6 @@ export const registerRoutes = new Elysia()
                     additionalData,
                 });
 
-            // If all good, mark the sso as done
-            if (ssoId) {
-                await AuthContext.services.walletSso.resolveSession({
-                    id: ssoId,
-                    wallet: walletAddress,
-                    authenticatorId: credential.id,
-                    additionalData,
-                });
-            }
-
             // Create the token and set the cookie
             const token = await JwtContext.wallet.sign({
                 address: walletAddress,
@@ -152,8 +141,6 @@ export const registerRoutes = new Elysia()
                 userAgent: t.String(),
                 previousWallet: t.Optional(t.Address()),
                 setSessionCookie: t.Optional(t.Boolean()),
-                // potential sso id
-                ssoId: t.Optional(t.Hex()),
                 // potential routing request
                 isSixDegrees: t.Optional(t.Boolean()),
             }),

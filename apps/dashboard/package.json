@@ -57,9 +57,11 @@
     "viem": "^2.31.2"
   },
   "devDependencies": {
+    "@frak-labs/browserslist-config": "workspace:*",
     "@types/node": "^24",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
+    "bun-types": "latest",
     "sst": "3.17.5",
     "typescript": "^5"
   },

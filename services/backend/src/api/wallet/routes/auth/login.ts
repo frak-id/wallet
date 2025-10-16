@@ -16,7 +16,7 @@ export const loginRoutes = new Elysia()
         "/ecdsaLogin",
         async ({
             // Request
-            body: { expectedChallenge, signature, wallet, ssoId, demoPkey },
+            body: { expectedChallenge, signature, wallet, demoPkey },
         }) => {
             // Rebuild the message that have been signed
             const message = `I want to connect to Frak and I accept the CGU.\n Verification code:${expectedChallenge}`;
@@ -57,18 +57,6 @@ export const loginRoutes = new Elysia()
                     additionalData: { demoPkey },
                 });
 
-            // If all good, mark the sso as done
-            if (ssoId) {
-                await AuthContext.services.walletSso.resolveSession({
-                    id: ssoId,
-                    wallet: walletAddress,
-                    authenticatorId,
-                    additionalData: {
-                        demoPkey: demoPkey,
-                    },
-                });
-            }
-
             return {
                 token,
                 type: "ecdsa",
@@ -84,8 +72,6 @@ export const loginRoutes = new Elysia()
                 expectedChallenge: t.String(),
                 wallet: t.Address(),
                 signature: t.Hex(),
-                // potential sso id
-                ssoId: t.Optional(t.Hex()),
                 // potential demo pkey
                 demoPkey: t.Optional(t.Hex()),
             }),
@@ -103,7 +89,6 @@ export const loginRoutes = new Elysia()
             body: {
                 authenticatorResponse: rawAuthenticatorResponse,
                 expectedChallenge,
-                ssoId,
             },
         }) => {
             // Check if that's a valid webauthn signature
@@ -164,16 +149,6 @@ export const loginRoutes = new Elysia()
                     additionalData,
                 });
 
-            // If all good, mark the sso as done
-            if (ssoId) {
-                await AuthContext.services.walletSso.resolveSession({
-                    id: ssoId,
-                    wallet: address,
-                    authenticatorId,
-                    additionalData,
-                });
-            }
-
             return {
                 token,
                 type: "webauthn",
@@ -190,8 +165,6 @@ export const loginRoutes = new Elysia()
                 expectedChallenge: t.String(),
                 // b64 + stringified version of the authenticator response
                 authenticatorResponse: t.String(),
-                // potential sso id
-                ssoId: t.Optional(t.Hex()),
             }),
             response: {
                 404: t.String(),

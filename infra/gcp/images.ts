@@ -30,7 +30,7 @@ export const elysiaImage = new dockerbuild.Image(
         dockerfile: {
             location: path.join($cli.paths.root, "services/backend/Dockerfile"),
         },
-        platforms: ["linux/arm64"],
+        platforms: ["linux/amd64"],
         buildArgs: {
             NODE_ENV: "production",
             STAGE: normalizedStageName,
@@ -61,7 +61,7 @@ export const migrationImage = new dockerbuild.Image(
                 "services/backend/MigrationDockerfile"
             ),
         },
-        platforms: ["linux/arm64"],
+        platforms: ["linux/amd64"],
         buildArgs: {
             NODE_ENV: "production",
             STAGE: normalizedStageName,

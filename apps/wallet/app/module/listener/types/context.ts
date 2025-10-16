@@ -43,6 +43,6 @@ export type WalletRpcContext = {
 };
 
 /**
- * Combined schema type for handling both IFrame RPC and SSO RPC
+ * Combined schema type for handling IFrame RPC and SSO RPC
  */
 export type CombinedRpcSchema = IFrameRpcSchema | SsoRpcSchema;

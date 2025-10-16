@@ -1,10 +1,10 @@
 import { useSsoLink } from "@/module/authentication/hook/useGetOpenSsoLink";
+import { useListenerWithRequestUI } from "@/module/listener/providers/ListenerUiProvider";
 import {
+    type SsoMetadata,
     ssoPopupFeatures,
     ssoPopupName,
-} from "@/module/authentication/utils/ssoLink";
-import { useListenerWithRequestUI } from "@/module/listener/providers/ListenerUiProvider";
-import type { SsoMetadata } from "@frak-labs/core-sdk";
+} from "@frak-labs/core-sdk";
 import { type ReactNode, useState } from "react";
 import type { Hex } from "viem";
 import { trackAuthFailed, trackAuthInitiated } from "../../common/analytics";

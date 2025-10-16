@@ -4,6 +4,7 @@ import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
 import { useListenToDomainNameSetup } from "@/module/dashboard/hooks/dnsRecordHooks";
 import { useMintMyProduct } from "@/module/dashboard/hooks/useMintMyProduct";
+import type { Stablecoin } from "@frak-labs/app-essentials";
 import { Button } from "@frak-labs/ui/component/Button";
 import { Spinner } from "@frak-labs/ui/component/Spinner";
 import { useSearchParams } from "next/navigation";
@@ -13,11 +14,12 @@ import styles from "./index.module.css";
 export function EmbeddedMint() {
     const searchParams = useSearchParams();
 
-    const { name, domain, setupCode, productTypes } = useMemo(() => {
+    const { name, domain, setupCode, productTypes, currency } = useMemo(() => {
         const name = searchParams?.get("n");
         const domain = searchParams?.get("d");
         const setupCode = searchParams?.get("sc");
         const productTypes = searchParams?.get("pt");
+        const currency = searchParams?.get("c") as Stablecoin | null;
 
         if (!domain || !setupCode || !productTypes) {
             throw new Error("Missing required parameters");
@@ -28,6 +30,7 @@ export function EmbeddedMint() {
             domain,
             setupCode,
             productTypes,
+            currency: currency ?? ("usde" as Stablecoin),
         };
     }, [searchParams]);
 
@@ -57,6 +60,7 @@ export function EmbeddedMint() {
                         domain={domain}
                         setupCode={setupCode}
                         productTypes={productTypes}
+                        currency={currency}
                     />
                 ) : (
                     <>
@@ -95,11 +99,13 @@ function DoMintComponent({
     domain,
     setupCode,
     productTypes,
+    currency,
 }: {
     name?: string;
     domain: string;
     setupCode: string;
     productTypes: string;
+    currency: Stablecoin;
 }) {
     // Mint hook
     const {
@@ -134,6 +140,7 @@ function DoMintComponent({
                         domain,
                         setupCode,
                         productTypes: productTypesArray,
+                        currency,
                     })
                 }
                 isLoading={isPending}

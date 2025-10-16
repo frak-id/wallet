@@ -7,6 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Frak Wallet is a Web3 infrastructure monorepo for seamless referral tracking and reward systems, enabling corporations to build mouth-to-mouth acquisition campaigns using blockchain technology.
 
 **Package Manager**: Bun (required - do not use npm, pnpm, or yarn)
+**Formatting**: Biome with 4-space indent, double quotes, semicolons, ES5 trailing commas
 
 ## Common Development Commands
 
@@ -41,17 +42,27 @@ bun run typecheck
 
 # Dead code elimination
 bun run knip
+
+# E2E tests with Playwright (wallet app)
+cd apps/wallet
+bun run test:e2e              # Run tests against local
+bun run test:e2e:dev          # Run tests against dev environment
+bun run test:e2e:prod         # Run tests against prod environment
+bun run test:e2e:ui           # Run with Playwright UI
 ```
 
 ### Deployment
 ```bash
-# Deploy to development
+# Deploy to development (AWS)
 bun run deploy
 
-# Deploy to production
+# Deploy to production (AWS)
 bun run deploy:prod
 
-# Deploy to GCP staging/production
+# Deploy example stack
+bun run deploy:example
+
+# Deploy to GCP staging/production (backend only)
 bun run deploy-gcp:staging
 bun run deploy-gcp:prod
 ```
@@ -72,83 +83,106 @@ bun run changeset:release
 
 ### Monorepo Structure
 - **`apps/`** - Frontend applications
-  - `wallet/` - React Router v7 (SSR) user wallet
-  - `dashboard/` - Next.js 15 business dashboard  
+  - `wallet/` - React Router v7 user wallet (SSR disabled, module-based architecture)
+  - `dashboard/` - Next.js 15 business dashboard (standalone output)
   - `dashboard-admin/` - React Router admin interface
-- **`packages/`** - Shared libraries (recently refactored)
+- **`packages/`** - Shared internal libraries (workspace-only)
   - `ui/` - Radix UI-based component library
   - `app-essentials/` - Core blockchain utilities and WebAuthn
   - `client/` - API client abstractions
-  - `dev-tooling/` - Build configurations
-- **`sdk/`** - Client integration SDKs
-  - `core/` - Core SDK functionality
+  - `dev-tooling/` - Build configurations (manualChunks, onwarn)
+  - `rpc/` - RPC utilities
+- **`sdk/`** - Public SDK packages (published to npm, linked via Changesets)
+  - `core/` - Core SDK functionality (rslib build with CDN bundle)
   - `react/` - React hooks and providers
   - `components/` - Web Components for integration
-  - `legacy/` - Backward compatibility
-- **`services/backend/`** - Elysia.js backend with PostgreSQL/MongoDB
-- **`infra/`** - SST v3 and Pulumi infrastructure
+  - `legacy/` - Backward compatibility (ignored by Knip)
+- **`services/backend/`** - Elysia.js backend with domain-driven structure
+- **`infra/`** - SST v3 (AWS) and Pulumi (GCP) infrastructure
 - **`example/`** - Integration examples
 
 ### Key Technologies
-- **Frontend**: React 19, TanStack Query, Viem, Wagmi, CSS Modules
+- **Frontend**: React 19, TanStack Query, Viem, Wagmi, CSS Modules, React Router v7, Next.js 15
 - **Backend**: Elysia.js, PostgreSQL (Drizzle ORM), MongoDB
-- **Blockchain**: Account Abstraction (ERC-4337), WebAuthn, Multi-chain support
-- **Infrastructure**: SST v3, Pulumi, AWS + GCP hybrid
-- **Tooling**: Biome (linting/formatting), Changesets (versioning), Knip (dead code)
+- **Blockchain**: Account Abstraction (ERC-4337), WebAuthn, Multi-chain support, Pimlico, ZeroDev
+- **Infrastructure**: SST v3 (AWS), Pulumi (GCP), hybrid multi-cloud deployment
+- **Tooling**: Biome (4-space, double quotes), Changesets (linked packages), Knip, rslib, Playwright
 
 ### Development Principles
 - Use TypeScript for all code; prefer types over interfaces
 - Functional and declarative programming patterns; avoid classes
-- Use absolute imports with `@/...` paths
+- Use absolute imports with `@/...` paths (configured via tsconfig paths)
 - CSS Modules for styling (no Tailwind)
 - Early returns for readability
-- Performance is critical across all components
-- WebAuthn-first authentication approach
+- Performance is critical - high workload optimization mandatory
+- WebAuthn-first authentication approach with Account Abstraction
+- Wallet app uses module-based architecture (`app/module/` structure)
+- Backend follows domain-driven design (`src/domain/*/` structure)
 
 ### Package-Specific Commands
 
 **Wallet App (`apps/wallet/`)**:
 ```bash
 cd apps/wallet
-bun run dev          # Development with service worker build
-bun run build        # Production build
-bun run typecheck    # Type checking with React Router typegen
-bun run i18n:types   # Generate i18n types
+bun run dev          # Development (builds service worker first, then starts SST dev)
+bun run build        # Production build (builds service worker, then React Router)
+bun run build:sw     # Build service worker separately (vite --mode sw)
+bun run typecheck    # Type checking with React Router typegen (run typegen first)
+bun run i18n:types   # Generate i18n types from locales
+bun run bundle:check # Analyze bundle with vite-bundle-visualizer
 ```
 
 **Dashboard (`apps/dashboard/`)**:
 ```bash
 cd apps/dashboard
-bun run dev          # Next.js development with HTTPS
-bun run build        # Next.js production build
+bun run dev          # Next.js development with HTTPS (via SST dev)
+bun run build        # Next.js production build (standalone output)
 ```
 
 **Backend (`services/backend/`)**:
 ```bash
 cd services/backend
-bun run dev          # Development with SST
-bun run dev:env      # Setup environment variables
-bun db:studio        # Drizzle Studio
-bun db:generate      # Generate migrations
+bun run dev          # Development with SST (runs dev:watch)
+bun run dev:env      # Setup environment variables (uses SST shell)
+bun run test         # Run tests
+bun run test:watch   # Run tests in watch mode
+bun db:studio        # Open Drizzle Studio
+bun db:generate      # Generate migrations from schema
 bun db:migrate       # Run migrations
 ```
 
 **SDK Development**:
 ```bash
-# Build all SDK packages
+# Build all SDK packages (rpc → core → legacy → react → components)
 bun run build:sdk
 
 # Work on specific SDK package
-cd sdk/core && bun run build
+cd sdk/core
+bun run build         # Build with rslib (creates dist/ and cdn/ bundle)
+bun run build:watch   # Build in watch mode
+bun run check-exports # Verify package exports with @arethetypeswrong/cli
+
 cd sdk/react && bun run dev
 ```
 
 ## Important Notes
 
-- Always use `bun` as the package manager
+### Critical Workflows
+- **Always use `bun`** as the package manager (never npm, pnpm, or yarn)
+- **Service Worker**: Wallet app requires service worker build before dev/build (`bun run build:sw`)
+- **React Router**: Run `react-router typegen` before typechecking wallet app
+- **Drizzle ORM**: Database schemas located in `src/domain/*/db/schema.ts` pattern
+
+### Code Quality
 - Run `bun run typecheck` before committing changes
-- Use Biome for formatting: `bun run format`
-- The codebase handles very high workloads - performance is mandatory
-- Recent refactoring split shared packages into focused libraries (`ui`, `app-essentials`, `client`, `dev-tooling`)
-- WebAuthn and Account Abstraction are core to the authentication flow
-- Multi-chain blockchain support via Viem abstractions
+- Use Biome for formatting: `bun run format` (4-space indent, double quotes, semicolons)
+- Performance is mandatory - codebase handles very high workloads
+- Cognitive complexity limit: 16 (enforced by Biome)
+
+### Architecture Details
+- **Workspace Exports**: Packages use `development` condition to point to source (`src/index.ts`) in monorepo, `import`/`require` for built files
+- **Linked Packages**: Changesets links `@frak-labs/frame-connector`, `@frak-labs/core-sdk`, `@frak-labs/react-sdk` for synchronized versioning
+- **SST Stages**: Development uses `$dev` flag, production deploys to `dev`/`prod` (AWS) or `gcp-staging`/`gcp-production` (GCP backend only)
+- **Module Architecture**: Wallet app organizes code by feature modules in `app/module/`, backend by domains in `src/domain/`
+- **WebAuthn + ERC-4337**: Core authentication flow combines WebAuthn passkeys with Account Abstraction smart wallets
+- **Multi-chain Support**: Viem abstractions enable seamless blockchain interactions across multiple networks
