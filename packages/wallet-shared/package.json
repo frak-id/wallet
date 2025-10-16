@@ -7,16 +7,6 @@
   "scripts": {
     "typecheck": "tsc --noEmit"
   },
-  "exports": {
-    "./common/*": "./src/common/*",
-    "./blockchain/*": "./src/blockchain/*",
-    "./authentication/*": "./src/authentication/*",
-    "./wallet/*": "./src/wallet/*",
-    "./sdk/*": "./src/sdk/*",
-    "./pairing/*": "./src/pairing/*",
-    "./tokens/*": "./src/tokens/*",
-    "./types/*": "./src/types/*"
-  },
   "dependencies": {
     "@elysiajs/eden": "^1.4.1",
     "@frak-labs/app-essentials": "workspace:*",
@@ -68,6 +58,7 @@
     "@types/nprogress": "^0.2.3",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
+    "bun-types": "latest",
     "typescript": "catalog:",
     "vite": "^7.1.10"
   }

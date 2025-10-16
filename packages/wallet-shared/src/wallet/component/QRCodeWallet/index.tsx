@@ -1,11 +1,11 @@
 import { Button } from "@frak-labs/ui/component/Button";
 import { useCopyToClipboardWithState } from "@frak-labs/ui/hook/useCopyToClipboardWithState";
-import { Panel } from "@frak-labs/wallet-shared/common/component/Panel";
-import { Title } from "@frak-labs/wallet-shared/common/component/Title";
 import { Cuer } from "cuer";
 import { ArrowDownToLine, Copy } from "lucide-react";
 import { Trans, useTranslation } from "react-i18next";
 import { useAccount } from "wagmi";
+import { Panel } from "@/common/component/Panel";
+import { Title } from "@/common/component/Title";
 import styles from "./index.module.css";
 
 export function QRCodeWallet() {

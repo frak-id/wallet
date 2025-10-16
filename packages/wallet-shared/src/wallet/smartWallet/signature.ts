@@ -1,5 +1,4 @@
 import { jotaiStore } from "@frak-labs/ui/atoms/store";
-import type { WebAuthNWallet } from "@frak-labs/wallet-shared/types/WebAuthN";
 import { startAuthentication } from "@simplewebauthn/browser";
 import { tryit } from "radash";
 import {
@@ -12,7 +11,8 @@ import {
     toHex,
 } from "viem";
 import { readContract } from "viem/actions";
-import { lastWebAuthNActionAtom } from "../../common/atoms/webauthn";
+import { lastWebAuthNActionAtom } from "@/common/atoms/webauthn";
+import type { WebAuthNWallet } from "@/types/WebAuthN";
 import { getSignOptions } from "../action/signOptions";
 import { formatSignature, parseWebAuthNAuthentication } from "./webAuthN";
 

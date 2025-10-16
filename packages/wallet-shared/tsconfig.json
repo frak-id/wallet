@@ -1,19 +1,28 @@
 {
-  "extends": "../../tsconfig.json",
-  "compilerOptions": {
-    "jsx": "react-jsx",
-    "lib": ["DOM", "DOM.Iterable", "ES2022"],
-    "target": "ES2022",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "outDir": "./dist",
-    "rootDir": "./src",
-    "baseUrl": ".",
-    "paths": {
-      "@frak-labs/wallet-shared/*": ["./src/*"]
+    "compilerOptions": {
+        "target": "esnext",
+        "lib": ["es2023", "esnext", "dom", "dom.iterable"],
+        "allowJs": true,
+        "skipLibCheck": true,
+        "strict": true,
+        "noEmit": true,
+        "esModuleInterop": true,
+        "module": "esnext",
+        "moduleResolution": "bundler",
+        "resolveJsonModule": true,
+        "isolatedModules": true,
+        "jsx": "preserve",
+        "incremental": true,
+        "verbatimModuleSyntax": true,
+        "types": ["bun-types"],
+        "baseUrl": ".",
+        "paths": {
+            "@/*": ["./src/*"],
+            "@backend-utils": ["../../services/backend/src/utils/index.ts"],
+            "@backend-common": ["../../services/backend/src/common/index.ts"],
+            "@backend-common/*": ["../../services/backend/src/common/*"]
+        },
     },
-    "types": ["vite/client", "node"]
-  },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
+    "include": ["**/*.d.ts", "**/*.ts", "**/*.tsx", "../../packages/ui/types/*.d.ts"],
+    "exclude": ["node_modules"]
 }

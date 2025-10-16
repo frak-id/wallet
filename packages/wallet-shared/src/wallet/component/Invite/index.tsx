@@ -1,6 +1,6 @@
-import { Panel } from "@frak-labs/wallet-shared/common/component/Panel";
-import { Title } from "@frak-labs/wallet-shared/common/component/Title";
 import { useTranslation } from "react-i18next";
+import { Panel } from "@/common/component/Panel";
+import { Title } from "@/common/component/Title";
 import styles from "./index.module.css";
 
 export function Invite() {

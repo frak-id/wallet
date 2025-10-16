@@ -1,8 +1,8 @@
-import { dexieDb } from "@frak-labs/wallet-shared/common/storage/dexie/dexieDb";
-import type { Session } from "@frak-labs/wallet-shared/types/Session";
-import type { WebAuthNWallet } from "@frak-labs/wallet-shared/types/WebAuthN";
 import { atom } from "jotai";
 import { atomWithStorage } from "jotai/utils";
+import { dexieDb } from "@/common/storage/dexie/dexieDb";
+import type { Session } from "@/types/Session";
+import type { WebAuthNWallet } from "@/types/WebAuthN";
 
 export type LastAuthentication = WebAuthNWallet;
 

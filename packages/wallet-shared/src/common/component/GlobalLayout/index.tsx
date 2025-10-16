@@ -1,8 +1,8 @@
-import { Header } from "@frak-labs/wallet-shared/common/component/Header";
-import { InAppBrowserToast } from "@frak-labs/wallet-shared/common/component/InAppBrowserToast";
-import { Navigation } from "@frak-labs/wallet-shared/common/component/Navigation";
 import { cx } from "class-variance-authority";
 import type { ReactNode } from "react";
+import { Header } from "@/common/component/Header";
+import { InAppBrowserToast } from "@/common/component/InAppBrowserToast";
+import { Navigation } from "@/common/component/Navigation";
 import styles from "./index.module.css";
 
 export function GlobalLayout({
