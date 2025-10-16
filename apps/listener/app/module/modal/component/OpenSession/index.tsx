@@ -1,12 +1,12 @@
 import type { OpenInteractionSessionModalStepType } from "@frak-labs/core-sdk";
 import { Spinner } from "@frak-labs/ui/component/Spinner";
 import { prefixModalCss } from "@frak-labs/ui/utils/prefixModalCss";
+import { useInteractionSessionStatus } from "@frak-labs/wallet-shared/wallet/hook/useInteractionSessionStatus";
+import { useOpenSession } from "@frak-labs/wallet-shared/wallet/hook/useOpenSession";
 import { useEffect } from "react";
 import { HandleErrors } from "@/module/component/HandleErrors";
 import styles from "@/module/modal/component/Modal/index.module.css";
 import { useListenerTranslation } from "@/module/providers/ListenerUiProvider";
-import { useInteractionSessionStatus } from "@frak-labs/wallet-shared/wallet/hook/useInteractionSessionStatus";
-import { useOpenSession } from "@frak-labs/wallet-shared/wallet/hook/useOpenSession";
 
 /**
  * The component for the login step of a modal

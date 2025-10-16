@@ -2,8 +2,8 @@ import type {
     ModalRpcStepsResultType,
     ModalStepTypes,
 } from "@frak-labs/core-sdk";
-import { atom } from "jotai";
 import { trackGenericEvent } from "@frak-labs/wallet-shared/common/analytics";
+import { atom } from "jotai";
 
 export type AnyModalKey = ModalStepTypes["key"];
 

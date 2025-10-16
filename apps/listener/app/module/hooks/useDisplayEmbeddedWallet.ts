@@ -9,15 +9,15 @@ import {
     FrakRpcError,
     RpcErrorCodes,
 } from "@frak-labs/frame-connector";
+import { trackGenericEvent } from "@frak-labs/wallet-shared/common/analytics";
+import { sessionAtom } from "@frak-labs/wallet-shared/common/atoms/session";
+import { useInteractionSessionStatus } from "@frak-labs/wallet-shared/wallet/hook/useInteractionSessionStatus";
 import { useAtomValue } from "jotai";
 import { useCallback, useEffect, useRef } from "react";
 import type { Hex } from "viem";
 import { useAccount } from "wagmi";
-import { sessionAtom } from "@frak-labs/wallet-shared/common/atoms/session";
 import { useListenerUI } from "@/module/providers/ListenerUiProvider";
 import type { WalletRpcContext } from "@/module/types/context";
-import { useInteractionSessionStatus } from "@frak-labs/wallet-shared/wallet/hook/useInteractionSessionStatus";
-import { trackGenericEvent } from "@frak-labs/wallet-shared/common/analytics";
 
 type OnDisplayEmbeddedWalletRequest = RpcPromiseHandler<
     IFrameRpcSchema,

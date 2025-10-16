@@ -1,8 +1,8 @@
 import { ReferralInteractionEncoder } from "@frak-labs/core-sdk/interactions";
+import { usePushInteraction } from "@frak-labs/wallet-shared/wallet/hook/usePushInteraction";
 import { useAtomValue } from "jotai";
 import { useEffect, useRef } from "react";
 import { iframeResolvingContextAtom } from "@/module/atoms/resolvingContext";
-import { usePushInteraction } from "@frak-labs/wallet-shared/wallet/hook/usePushInteraction";
 
 const globalInteractionState = {
     isInteractionPushed: false,

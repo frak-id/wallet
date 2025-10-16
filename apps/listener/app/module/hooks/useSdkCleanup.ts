@@ -1,12 +1,15 @@
 import { jotaiStore } from "@frak-labs/ui/atoms/store";
+import { trackGenericEvent } from "@frak-labs/wallet-shared/common/analytics";
+import {
+    sdkSessionAtom,
+    sessionAtom,
+} from "@frak-labs/wallet-shared/common/atoms/session";
+import { emitLifecycleEvent } from "@frak-labs/wallet-shared/sdk/utils/lifecycleEvents";
 import { WebAuthnAbortService } from "@simplewebauthn/browser";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAtom } from "jotai";
 import { RESET } from "jotai/utils";
 import { useCallback } from "react";
-import { trackGenericEvent } from "@frak-labs/wallet-shared/common/analytics";
-import { sdkSessionAtom, sessionAtom } from "@frak-labs/wallet-shared/common/atoms/session";
-import { emitLifecycleEvent } from "@frak-labs/wallet-shared/sdk/utils/lifecycleEvents";
 import { displayedRpcModalStepsAtom } from "../modal/atoms/modalEvents";
 import { useListenerUI } from "../providers/ListenerUiProvider";
 

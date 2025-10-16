@@ -2,11 +2,11 @@ import type {
     FullInteractionTypesKey,
     GetProductInformationReturnType,
 } from "@frak-labs/core-sdk";
+import { authenticatedWalletApi } from "@frak-labs/wallet-shared/common/api/backendClient";
 import { useQuery } from "@tanstack/react-query";
 import { useAtomValue } from "jotai";
 import { useMemo } from "react";
 import type { Hex } from "viem";
-import { authenticatedWalletApi } from "@frak-labs/wallet-shared/common/api/backendClient";
 import { iframeResolvingContextAtom } from "@/module/atoms/resolvingContext";
 import { listenerInteractionsKey } from "@/module/queryKeys/interactions";
 

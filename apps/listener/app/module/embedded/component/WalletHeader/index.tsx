@@ -1,8 +1,8 @@
 import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { LogoFrakWithName } from "@frak-labs/ui/icons/LogoFrakWithName";
 import { prefixWalletCss } from "@frak-labs/ui/utils/prefixWalletCss";
-import { cx } from "class-variance-authority";
 import { sessionAtom } from "@frak-labs/wallet-shared/common/atoms/session";
+import { cx } from "class-variance-authority";
 import { useEmbeddedListenerUI } from "@/module/providers/ListenerUiProvider";
 import styles from "../Wallet/index.module.css";
 

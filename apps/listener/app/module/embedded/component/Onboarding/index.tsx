@@ -1,3 +1,4 @@
+import { useInteractionSessionStatus } from "@frak-labs/wallet-shared/wallet/hook/useInteractionSessionStatus";
 import { cx } from "class-variance-authority";
 import {
     type CSSProperties,
@@ -9,7 +10,6 @@ import {
 import { Trans } from "react-i18next";
 import { Arrow } from "@/module/embedded/component/Onboarding/assets/Arrow";
 import { useListenerTranslation } from "@/module/providers/ListenerUiProvider";
-import { useInteractionSessionStatus } from "@frak-labs/wallet-shared/wallet/hook/useInteractionSessionStatus";
 import styles from "./index.module.css";
 
 function Onboarding({

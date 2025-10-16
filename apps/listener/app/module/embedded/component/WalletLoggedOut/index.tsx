@@ -1,6 +1,6 @@
 import { prefixWalletCss } from "@frak-labs/ui/utils/prefixWalletCss";
-import { cx } from "class-variance-authority";
 import { Markdown } from "@frak-labs/wallet-shared/common/component/Markdown";
+import { cx } from "class-variance-authority";
 import { useSafeResolvingContext } from "@/module/atoms/resolvingContext";
 import { SsoButton } from "@/module/component/SsoButton";
 import { AuthenticateWithPhone } from "@/module/modal/component/AuthenticateWithPhone";

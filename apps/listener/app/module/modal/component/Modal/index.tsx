@@ -3,6 +3,13 @@ import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { useMediaQuery } from "@frak-labs/ui/hook/useMediaQuery";
 import { LogoFrakWithName } from "@frak-labs/ui/icons/LogoFrakWithName";
 import { prefixModalCss } from "@frak-labs/ui/utils/prefixModalCss";
+import { AlertDialog } from "@frak-labs/wallet-shared/common/component/AlertDialog";
+import {
+    Drawer,
+    DrawerContent,
+} from "@frak-labs/wallet-shared/common/component/Drawer";
+import { InAppBrowserToast } from "@frak-labs/wallet-shared/common/component/InAppBrowserToast";
+import { OriginPairingState } from "@frak-labs/wallet-shared/pairing/component/OriginPairingState";
 import { cx } from "class-variance-authority";
 import { useAtomValue } from "jotai";
 import {
@@ -14,9 +21,6 @@ import {
     useMemo,
 } from "react";
 import { Toaster } from "sonner";
-import { AlertDialog } from "@frak-labs/wallet-shared/common/component/AlertDialog";
-import { Drawer, DrawerContent } from "@frak-labs/wallet-shared/common/component/Drawer";
-import { InAppBrowserToast } from "@frak-labs/wallet-shared/common/component/InAppBrowserToast";
 import {
     displayedRpcModalStepsAtom,
     modalRpcResultsAtom,
@@ -38,7 +42,6 @@ import {
     useListenerTranslation,
     useListenerUI,
 } from "@/module/providers/ListenerUiProvider";
-import { OriginPairingState } from "@frak-labs/wallet-shared/pairing/component/OriginPairingState";
 import { ToastLoading } from "../../../component/ToastLoading";
 import styles from "./index.module.css";
 import { ModalStepIndicator } from "./Step";

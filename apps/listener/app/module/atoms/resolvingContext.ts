@@ -3,11 +3,11 @@ import {
     FrakContextManager,
 } from "@frak-labs/core-sdk";
 import { jotaiStore } from "@frak-labs/ui/atoms/store";
-import { atom, useAtomValue } from "jotai";
-import { type Address, isAddressEqual, keccak256, toHex } from "viem";
+import { updateGlobalProperties } from "@frak-labs/wallet-shared/common/analytics";
 import { sessionAtom } from "@frak-labs/wallet-shared/common/atoms/session";
 import { emitLifecycleEvent } from "@frak-labs/wallet-shared/sdk/utils/lifecycleEvents";
-import { updateGlobalProperties } from "@frak-labs/wallet-shared/common/analytics";
+import { atom, useAtomValue } from "jotai";
+import { type Address, isAddressEqual, keccak256, toHex } from "viem";
 import type { WalletRpcContext } from "../types/context";
 
 type IFrameResolvingContext = Omit<WalletRpcContext, "source">;

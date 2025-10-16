@@ -9,6 +9,13 @@ import { Copy } from "@frak-labs/ui/icons/Copy";
 import { Power } from "@frak-labs/ui/icons/Power";
 import { Share } from "@frak-labs/ui/icons/Share";
 import { prefixWalletCss } from "@frak-labs/ui/utils/prefixWalletCss";
+import { trackGenericEvent } from "@frak-labs/wallet-shared/common/analytics";
+import { OriginPairingState } from "@frak-labs/wallet-shared/pairing/component/OriginPairingState";
+import { useGetUserBalance } from "@frak-labs/wallet-shared/tokens/hook/useGetUserBalance";
+import { useGetUserPendingBalance } from "@frak-labs/wallet-shared/tokens/hook/useGetUserPendingBalance";
+import { useCloseSession } from "@frak-labs/wallet-shared/wallet/hook/useCloseSession";
+import { useInteractionSessionStatus } from "@frak-labs/wallet-shared/wallet/hook/useInteractionSessionStatus";
+import { useOpenSession } from "@frak-labs/wallet-shared/wallet/hook/useOpenSession";
 import { cx } from "class-variance-authority";
 import { toast } from "sonner";
 import { useAccount } from "wagmi";
@@ -24,13 +31,6 @@ import {
     useEmbeddedListenerUI,
     useListenerTranslation,
 } from "@/module/providers/ListenerUiProvider";
-import { OriginPairingState } from "@frak-labs/wallet-shared/pairing/component/OriginPairingState";
-import { useGetUserBalance } from "@frak-labs/wallet-shared/tokens/hook/useGetUserBalance";
-import { useGetUserPendingBalance } from "@frak-labs/wallet-shared/tokens/hook/useGetUserPendingBalance";
-import { useCloseSession } from "@frak-labs/wallet-shared/wallet/hook/useCloseSession";
-import { useInteractionSessionStatus } from "@frak-labs/wallet-shared/wallet/hook/useInteractionSessionStatus";
-import { useOpenSession } from "@frak-labs/wallet-shared/wallet/hook/useOpenSession";
-import { trackGenericEvent } from "@frak-labs/wallet-shared/common/analytics";
 import { useShareLink } from "../../../hooks/useShareLink";
 import styles from "./index.module.css";
 

@@ -3,11 +3,14 @@ import {
     ssoPopupFeatures,
     ssoPopupName,
 } from "@frak-labs/core-sdk";
+import { useSsoLink } from "@frak-labs/wallet-shared/authentication/hook/useGetOpenSsoLink";
+import {
+    trackAuthFailed,
+    trackAuthInitiated,
+} from "@frak-labs/wallet-shared/common/analytics";
 import { type ReactNode, useState } from "react";
 import type { Hex } from "viem";
-import { useSsoLink } from "@frak-labs/wallet-shared/authentication/hook/useGetOpenSsoLink";
 import { useListenerWithRequestUI } from "@/module/providers/ListenerUiProvider";
-import { trackAuthFailed, trackAuthInitiated } from "@frak-labs/wallet-shared/common/analytics";
 
 /**
  * Button used to launch an SSO registration
