@@ -1,14 +1,14 @@
+import { lastWebAuthNActionAtom } from "@frak-labs/wallet-shared/common/atoms/webauthn";
+import { sdkKey } from "@frak-labs/wallet-shared/common/queryKeys/sdk";
+import {
+    getSafeSdkSession,
+    getSafeSession,
+} from "@frak-labs/wallet-shared/common/utils/safeSession";
 import { useQuery } from "@tanstack/react-query";
 import { useAtom, useAtomValue } from "jotai";
 import { useCallback } from "react";
 import { authenticatedWalletApi } from "@/module/common/api/backendClient";
 import { sdkSessionAtom, sessionAtom } from "@/module/common/atoms/session";
-import { lastWebAuthNActionAtom } from "@/module/common/atoms/webauthn";
-import { sdkKey } from "@/module/common/queryKeys/sdk";
-import {
-    getSafeSdkSession,
-    getSafeSession,
-} from "@/module/listener/utils/localStorage";
 
 /**
  * Get a safe SDK token

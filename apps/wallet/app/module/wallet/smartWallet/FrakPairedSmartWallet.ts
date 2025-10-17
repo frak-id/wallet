@@ -1,4 +1,6 @@
 import { KernelWallet } from "@frak-labs/app-essentials";
+import { getOriginPairingClient } from "@frak-labs/wallet-shared/pairing/clients/store";
+import type { P256PubKey } from "@frak-labs/wallet-shared/types/WebAuthN";
 import {
     type Address,
     type Chain,
@@ -12,8 +14,6 @@ import {
     type BaseFrakSmartAccount,
     baseFrakWallet,
 } from "@/module/wallet/smartWallet/baseFrakWallet";
-import type { P256PubKey } from "@/types/WebAuthN";
-import { getOriginPairingClient } from "../../pairing/clients/store";
 import { getStubSignature } from "./webAuthN";
 
 /**

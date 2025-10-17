@@ -26,6 +26,7 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./app/*"],
+      "@frak-labs/wallet-shared/*": ["../../packages/wallet-shared/src/*"],
       "@backend-utils": ["../../services/backend/src/utils/index.ts"],
       "@backend-common": ["../../services/backend/src/common/index.ts"],
       "@backend-common/*": ["../../services/backend/src/common/*"]

@@ -1,7 +1,7 @@
+import type { RecoveryFileContent } from "@frak-labs/wallet-shared/types/Recovery";
 import { useQuery } from "@tanstack/react-query";
 import { getRecoveryAvailability } from "@/module/recovery/action/get";
 import { recoveryKey } from "@/module/recovery/queryKeys/recovery";
-import type { RecoveryFileContent } from "@/types/Recovery";
 
 /**
  * Fetch the recovery status for the given chain

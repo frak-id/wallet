@@ -1,14 +1,14 @@
+import { getOriginPairingClient } from "@frak-labs/wallet-shared/pairing/clients/store";
+import type { OriginPairingState as OriginPairingStateType } from "@frak-labs/wallet-shared/pairing/types";
 import { useAtomValue } from "jotai";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { distantWebauthnSessionAtom } from "@/module/common/atoms/session";
-import { getOriginPairingClient } from "@/module/pairing/clients/store";
 import {
     StatusBoxModal,
     StatusBoxWallet,
     StatusBoxWalletEmbedded,
 } from "@/module/pairing/component/PairingStatusBox";
-import type { OriginPairingState as OriginPairingStateType } from "@/module/pairing/types";
 
 type OriginPairingStateProps = {
     type: "embedded" | "modal" | "wallet";

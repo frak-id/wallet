@@ -1,8 +1,8 @@
 import { atom } from "jotai";
 import { atomWithStorage } from "jotai/utils";
-import { dexieDb } from "@/common/storage/dexie/dexieDb";
-import type { Session } from "@/types/Session";
-import type { WebAuthNWallet } from "@/types/WebAuthN";
+import { dexieDb } from "../../common/storage/dexie/dexieDb";
+import type { Session } from "../../types/Session";
+import type { WebAuthNWallet } from "../../types/WebAuthN";
 
 export type LastAuthentication = WebAuthNWallet;
 

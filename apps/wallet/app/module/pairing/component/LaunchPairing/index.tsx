@@ -1,14 +1,14 @@
 import { Spinner } from "@frak-labs/ui/component/Spinner";
+import type { OnPairingSuccessCallback } from "@frak-labs/wallet-shared/pairing/clients/origin";
+import { getOriginPairingClient } from "@frak-labs/wallet-shared/pairing/clients/store";
+import type { OriginPairingState } from "@frak-labs/wallet-shared/pairing/types";
 import { cx } from "class-variance-authority";
 import { Cuer } from "cuer";
 import { atom, useAtom, useAtomValue } from "jotai";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { trackAuthInitiated } from "@/module/common/analytics";
-import type { OnPairingSuccessCallback } from "../../clients/origin";
-import { getOriginPairingClient } from "../../clients/store";
-import type { OriginPairingState } from "../../types";
-import { PairingCode } from "../PairingCode";
-import { PairingStatus } from "../PairingStatus";
+import { PairingCode } from "@/module/pairing/component/PairingCode";
+import { PairingStatus } from "@/module/pairing/component/PairingStatus";
 import styles from "./index.module.css";
 
 const showBrighterQRCodeAtom = atom(false);

@@ -5,10 +5,10 @@ import { RESET } from "jotai/utils";
 import { useMemo } from "react";
 import type { Address } from "viem";
 import { useAccount } from "wagmi";
-import { getSessionStatus } from "@/interaction/action/interactionSession";
-import type { InteractionSession } from "@/types/Session";
-import { interactionSessionAtom } from "@/wallet/atoms/interactionSession";
-import { interactionsKey } from "@/wallet/queryKeys/interactions";
+import { getSessionStatus } from "../../interaction/action/interactionSession";
+import type { InteractionSession } from "../../types/Session";
+import { interactionSessionAtom } from "../atoms/interactionSession";
+import { interactionsKey } from "../queryKeys/interactions";
 
 /**
  * The raw query data we will use to get the session status

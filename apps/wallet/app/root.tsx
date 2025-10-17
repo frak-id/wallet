@@ -8,16 +8,16 @@ import {
     Scripts,
     ScrollRestoration,
 } from "react-router";
+import {
+    PwaInstall,
+    PwaInstallScript,
+} from "@/module/common/component/PwaInstall";
 import { TopLoader } from "@/module/common/component/TopLoader";
 import { RootProvider } from "@/module/common/provider/RootProvider";
 import { ReactScanWrapper } from "@/module/root/component/ReactScanWrapper";
 import { rootConfig } from "@/module/root/config";
 import { DetectPWA } from "@/module/wallet/component/DetectPWA";
 import type { Route } from "./+types/root";
-import {
-    PwaInstall,
-    PwaInstallScript,
-} from "./module/common/component/PwaInstall";
 // Import open panel to ensure it's initialized
 import "./module/common/analytics";
 

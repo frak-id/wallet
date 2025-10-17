@@ -2,6 +2,7 @@ import { Button } from "@frak-labs/ui/component/Button";
 import { Input } from "@frak-labs/ui/component/forms/Input";
 import { useCopyToClipboardWithState } from "@frak-labs/ui/hook/useCopyToClipboardWithState";
 import { Pencil } from "@frak-labs/ui/icons/Pencil";
+import type { User } from "@frak-labs/wallet-shared/types/User";
 import { useAtom, useAtomValue } from "jotai";
 import { Copy } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -14,7 +15,6 @@ import {
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import { sessionAtom } from "@/module/common/atoms/session";
-import type { User } from "@/types/User";
 import { uploadProfilePhotoAtom } from "../../atoms/uploadProfilePhoto";
 import { userAtom, userSetupLaterAtom } from "../../atoms/user";
 import styles from "./index.module.css";

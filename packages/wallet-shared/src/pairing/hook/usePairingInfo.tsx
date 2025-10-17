@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { authenticatedWalletApi } from "@/common/api/backendClient";
+import { authenticatedWalletApi } from "../../common/api/backendClient";
 import { pairingKey } from "../queryKeys";
 
 /**

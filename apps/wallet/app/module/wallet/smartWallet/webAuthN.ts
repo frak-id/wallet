@@ -1,3 +1,7 @@
+import type {
+    P256Signature,
+    WebAuthNSignature,
+} from "@frak-labs/wallet-shared/types/WebAuthN";
 import { ECDSASigValue } from "@peculiar/asn1-ecc";
 import { AsnParser } from "@peculiar/asn1-schema";
 import {
@@ -14,7 +18,6 @@ import {
     size,
     toHex,
 } from "viem";
-import type { P256Signature, WebAuthNSignature } from "@/types/WebAuthN";
 
 /**
  * Verify a webauthn signature internally, and format it for blockchain transaction

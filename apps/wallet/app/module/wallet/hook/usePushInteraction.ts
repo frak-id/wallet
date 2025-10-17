@@ -1,12 +1,12 @@
 import type { PreparedInteraction } from "@frak-labs/core-sdk";
 import { jotaiStore } from "@frak-labs/ui/atoms/store";
+import { pushBackupData } from "@frak-labs/wallet-shared/sdk/utils/backup";
 import { useAtomValue } from "jotai";
 import { useCallback, useEffect, useRef } from "react";
 import type { Hex } from "viem";
 import { authenticatedWalletApi } from "@/module/common/api/backendClient";
 import { sessionAtom } from "@/module/common/atoms/session";
 import { useGetSafeSdkSession } from "@/module/common/hook/useGetSafeSdkSession";
-import { pushBackupData } from "@/module/sdk/utils/backup";
 import { addPendingInteractionAtom } from "@/module/wallet/atoms/pendingInteraction";
 import { trackGenericEvent } from "../../common/analytics";
 

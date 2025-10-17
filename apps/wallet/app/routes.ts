@@ -43,9 +43,6 @@ export default [
         ]),
     ]),
 
-    // Listener route for the SDK
-    route("/listener", "./views/listener.tsx"),
-
     // Catch-all Route
     route("*", "./views/catch-all.tsx"),
 ] satisfies RouteConfig;

@@ -1,7 +1,7 @@
 import type { Table } from "dexie";
 import { Dexie } from "dexie";
-import type { NotificationModel } from "@/common/storage/dexie/NotificationModel";
-import type { PreviousAuthenticatorModel } from "@/common/storage/dexie/PreviousAuthenticatorModel";
+import type { NotificationModel } from "./NotificationModel";
+import type { PreviousAuthenticatorModel } from "./PreviousAuthenticatorModel";
 
 class WalletDB extends Dexie {
     // This table will be used to store all the authenticator a user as used on his device

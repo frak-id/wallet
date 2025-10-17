@@ -3,7 +3,7 @@ import { cx } from "class-variance-authority";
 import { Cuer } from "cuer";
 import { atom, useAtom, useAtomValue } from "jotai";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { trackAuthInitiated } from "@/common/analytics";
+import { trackAuthInitiated } from "../../../common/analytics";
 import type { OnPairingSuccessCallback } from "../../clients/origin";
 import { getOriginPairingClient } from "../../clients/store";
 import type { OriginPairingState } from "../../types";

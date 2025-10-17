@@ -27,12 +27,9 @@ import {
     type UserOperation,
 } from "viem/account-abstraction";
 import { formatAbiItem } from "viem/utils";
-import type { currentViemClient } from "@/blockchain/provider";
-import {
-    fetchAccountMetadata,
-    wrapMessageForSignature,
-} from "@/wallet/smartWallet/signature";
-import { encodeWalletMulticall } from "@/wallet/utils/multicall";
+import type { currentViemClient } from "../../blockchain/provider";
+import { encodeWalletMulticall } from "../utils/multicall";
+import { fetchAccountMetadata, wrapMessageForSignature } from "./signature";
 
 export type BaseFrakSmartAccount = SmartAccount<
     SmartAccountImplementation<typeof entryPoint06Abi, "0.6", object, false>

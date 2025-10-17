@@ -1,5 +1,6 @@
 import { Button } from "@frak-labs/ui/component/Button";
 import { Input } from "@frak-labs/ui/component/forms/Input";
+import type { BalanceItem } from "@frak-labs/wallet-shared/types/Balance";
 import { memo, useCallback, useEffect, useState } from "react";
 import type {
     FieldErrors,
@@ -22,7 +23,6 @@ import { TransactionSuccess } from "@/module/tokens/component/TransactionSuccess
 import { useGetUserBalance } from "@/module/tokens/hook/useGetUserBalance";
 import { getUpdatedToken } from "@/module/tokens/utils/getUpdatedToken";
 import { validateAmount } from "@/module/tokens/utils/validateAmount";
-import type { BalanceItem } from "@/types/Balance";
 import styles from "./tokens-send.module.css";
 
 /**

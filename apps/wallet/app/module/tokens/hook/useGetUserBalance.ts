@@ -1,7 +1,7 @@
+import { balanceKey } from "@frak-labs/wallet-shared/common/queryKeys/balance";
 import { useQuery } from "@tanstack/react-query";
 import { useAccount } from "wagmi";
 import { authenticatedWalletApi } from "@/module/common/api/backendClient";
-import { balanceKey } from "@/module/common/queryKeys/balance";
 
 export function useGetUserBalance() {
     const { address } = useAccount();

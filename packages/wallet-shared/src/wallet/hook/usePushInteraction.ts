@@ -3,12 +3,12 @@ import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { useAtomValue } from "jotai";
 import { useCallback, useEffect, useRef } from "react";
 import type { Hex } from "viem";
-import { authenticatedWalletApi } from "@/common/api/backendClient";
-import { sessionAtom } from "@/common/atoms/session";
-import { useGetSafeSdkSession } from "@/common/hook/useGetSafeSdkSession";
-import { pushBackupData } from "@/sdk/utils/backup";
-import { addPendingInteractionAtom } from "@/wallet/atoms/pendingInteraction";
 import { trackGenericEvent } from "../../common/analytics";
+import { authenticatedWalletApi } from "../../common/api/backendClient";
+import { sessionAtom } from "../../common/atoms/session";
+import { useGetSafeSdkSession } from "../../common/hook/useGetSafeSdkSession";
+import { pushBackupData } from "../../sdk/utils/backup";
+import { addPendingInteractionAtom } from "../atoms/pendingInteraction";
 
 export function usePushInteraction() {
     const { sdkSession, getSdkSession } = useGetSafeSdkSession();

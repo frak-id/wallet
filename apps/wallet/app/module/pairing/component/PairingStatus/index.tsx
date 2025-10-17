@@ -1,7 +1,7 @@
 import { Spinner } from "@frak-labs/ui/component/Spinner";
+import type { BasePairingState } from "@frak-labs/wallet-shared/pairing/types";
 import { Check } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import type { BasePairingState } from "../../types";
 import styles from "./index.module.css";
 
 export function PairingStatus({

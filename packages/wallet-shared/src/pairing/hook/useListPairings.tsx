@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAtomValue } from "jotai";
-import { authenticatedWalletApi } from "@/common/api/backendClient";
-import { webauthnSessionAtom } from "@/common/atoms/session";
+import { authenticatedWalletApi } from "../../common/api/backendClient";
+import { webauthnSessionAtom } from "../../common/atoms/session";
 import { pairingKey } from "../queryKeys";
 
 /**

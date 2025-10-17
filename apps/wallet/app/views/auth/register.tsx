@@ -1,13 +1,13 @@
 import { Button } from "@frak-labs/ui/component/Button";
 import { ButtonAuth } from "@frak-labs/ui/component/ButtonAuth";
+import { isWebAuthNSupported } from "@frak-labs/wallet-shared/common/lib/webauthn";
 import { useEffect, useMemo, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { Link, useNavigate } from "react-router";
+import { AuthenticateWithPhone } from "@/module/authentication/component/AuthenticateWithPhone";
 import { useRegister } from "@/module/authentication/hook/useRegister";
 import { Grid } from "@/module/common/component/Grid";
 import { Notice } from "@/module/common/component/Notice";
-import { isWebAuthNSupported } from "@/module/common/lib/webauthn";
-import { AuthenticateWithPhone } from "@/module/listener/modal/component/AuthenticateWithPhone";
 import { PairingInProgress } from "@/module/pairing/component/PairingInProgress";
 import styles from "./register.module.css";
 

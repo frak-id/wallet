@@ -20,8 +20,8 @@ import {
     toSmartAccount,
 } from "viem/account-abstraction";
 import { estimateGas, signMessage } from "viem/actions";
-import type { currentViemClient } from "@/blockchain/provider";
-import type { WebAuthNWallet } from "@/types/WebAuthN";
+import type { currentViemClient } from "../../blockchain/provider";
+import type { WebAuthNWallet } from "../../types/WebAuthN";
 import type { BaseFrakSmartAccount } from "./baseFrakWallet";
 
 /**

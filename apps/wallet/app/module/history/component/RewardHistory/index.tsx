@@ -1,10 +1,10 @@
+import type { RewardHistory } from "@frak-labs/wallet-shared/types/RewardHistory";
+import { formatUsd } from "@frak-labs/wallet-shared/wallet/utils/mUsdFormatter";
 import { useTranslation } from "react-i18next";
 import { Skeleton } from "@/module/common/component/Skeleton";
 import { Title } from "@/module/common/component/Title";
 import { HistoryDayGroup } from "@/module/history/component/DayGroup";
 import { useGetRewardHistory } from "@/module/history/hook/useGetRewardHistory";
-import { formatUsd } from "@/module/wallet/utils/mUsdFormatter";
-import type { RewardHistory } from "@/types/RewardHistory";
 import styles from "./index.module.css";
 
 export function RewardHistoryList() {

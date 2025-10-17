@@ -1,5 +1,5 @@
+import { authKey } from "@frak-labs/wallet-shared/authentication/queryKeys/auth";
 import { useQuery } from "@tanstack/react-query";
-import { authKey } from "@/module/authentication/queryKeys/auth";
 import { dexieDb } from "@/module/common/storage/dexie/dexieDb";
 
 /**

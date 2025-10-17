@@ -1,4 +1,5 @@
 import { jotaiStore } from "@frak-labs/ui/atoms/store";
+import { getFromLocalStorage } from "@frak-labs/wallet-shared/common/utils/safeSession";
 import { decodeJwt } from "jose";
 import { useEffect, useMemo } from "react";
 import { type Address, type Hex, isAddressEqual } from "viem";
@@ -8,7 +9,6 @@ import {
     type FrakWalletConnector,
     smartAccountConnector,
 } from "@/module/wallet/smartWallet/connector";
-import { getFromLocalStorage } from "../../listener/utils/localStorage";
 import {
     demoPrivateKeyAtom,
     type SdkSessionPayload,

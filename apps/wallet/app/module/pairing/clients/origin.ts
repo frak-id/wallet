@@ -1,14 +1,14 @@
 import { jotaiStore } from "@frak-labs/ui/atoms/store";
-import { nanoid } from "nanoid";
-import type { Hex } from "viem";
-import { trackAuthCompleted } from "../../common/analytics";
-import { sdkSessionAtom, sessionAtom } from "../../common/atoms/session";
-import { getSafeSession } from "../../listener/utils/localStorage";
+import { getSafeSession } from "@frak-labs/wallet-shared/common/utils/safeSession";
 import type {
     OriginPairingState,
     WsOriginMessage,
     WsOriginRequest,
-} from "../types";
+} from "@frak-labs/wallet-shared/pairing/types";
+import { nanoid } from "nanoid";
+import type { Hex } from "viem";
+import { trackAuthCompleted } from "../../common/analytics";
+import { sdkSessionAtom, sessionAtom } from "../../common/atoms/session";
 import { BasePairingClient } from "./base";
 
 export type OnPairingSuccessCallback = () => void | Promise<void>;

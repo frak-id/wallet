@@ -1,14 +1,18 @@
-import { useAtom } from "jotai";
-import { useCallback, useEffect } from "react";
-import { useTranslation } from "react-i18next";
 import {
     inAppBrowserToastDismissedAtom,
     socialRedirectAttemptedAtom,
-} from "@/module/common/atoms/inAppBrowser";
+} from "@frak-labs/wallet-shared/common/atoms/inAppBrowser";
+import {
+    inAppRedirectUrl,
+    isInAppBrowser,
+    isInIframe,
+} from "@frak-labs/wallet-shared/common/lib/inApp";
+import { emitLifecycleEvent } from "@frak-labs/wallet-shared/sdk/utils/lifecycleEvents";
+import { useAtom } from "jotai";
+import { useCallback, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Toast } from "@/module/common/component/Toast";
-import { emitLifecycleEvent } from "../../../sdk/utils/lifecycleEvents";
 import { trackGenericEvent } from "../../analytics";
-import { inAppRedirectUrl, isInAppBrowser, isInIframe } from "../../lib/inApp";
 
 /**
  * Toast component that displays when user is in an in-app browser

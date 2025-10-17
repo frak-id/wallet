@@ -1,4 +1,8 @@
 import { Button } from "@frak-labs/ui/component/Button";
+import { useDeletePairing } from "@frak-labs/wallet-shared/pairing/hook/useDeletePairing";
+import { useGetActivePairings } from "@frak-labs/wallet-shared/pairing/hook/useListPairings";
+import { pairingKey } from "@frak-labs/wallet-shared/pairing/queryKeys";
+import type { Pairing } from "@frak-labs/wallet-shared/pairing/types";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAtomValue } from "jotai";
 import { Laptop, Trash2 } from "lucide-react";
@@ -6,10 +10,6 @@ import { useTranslation } from "react-i18next";
 import { webauthnSessionAtom } from "@/module/common/atoms/session";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
-import { useDeletePairing } from "@/module/pairing/hook/useDeletePairing";
-import { useGetActivePairings } from "@/module/pairing/hook/useListPairings";
-import { pairingKey } from "@/module/pairing/queryKeys";
-import type { Pairing } from "@/module/pairing/types";
 import styles from "./index.module.css";
 
 /**

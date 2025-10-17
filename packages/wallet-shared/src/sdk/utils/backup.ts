@@ -6,14 +6,14 @@ import {
 import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { atom } from "jotai";
 import type { Hex } from "viem";
-import { sdkSessionAtom, sessionAtom } from "@/common/atoms/session";
-import { emitLifecycleEvent } from "@/sdk/utils/lifecycleEvents";
-import type { PendingInteraction } from "@/types/Interaction";
-import type { SdkSession, Session } from "@/types/Session";
+import { sdkSessionAtom, sessionAtom } from "../../common/atoms/session";
+import type { PendingInteraction } from "../../types/Interaction";
+import type { SdkSession, Session } from "../../types/Session";
 import {
     addPendingInteractionsAtom,
     pendingInteractionAtom,
-} from "@/wallet/atoms/pendingInteraction";
+} from "../../wallet/atoms/pendingInteraction";
+import { emitLifecycleEvent } from "./lifecycleEvents";
 
 /**
  * Represent backed up data
@@ -87,11 +87,11 @@ const restoreBackupAtom = atom(null, (_get, set, data: BackupData) => {
 /**
  * Push new backup data
  */
-export async function pushBackupData(args: { productId: Hex }) {
-    // Get the product ID from args
-    const { productId } = args;
+export async function pushBackupData(args?: { productId?: Hex }) {
+    // Get the product ID from args (optional for cleanup scenarios)
+    const productId = args?.productId;
     if (!productId) {
-        console.log("No context to push backup data to");
+        console.log("No productId provided - skipping backup");
         return;
     }
     // Get the current atom backup data

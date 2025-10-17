@@ -1,9 +1,6 @@
 import { KernelWallet } from "@frak-labs/app-essentials";
 import type { Address, Chain, Client, Hex, Transport } from "viem";
-import {
-    type BaseFrakSmartAccount,
-    baseFrakWallet,
-} from "@/wallet/smartWallet/baseFrakWallet";
+import { type BaseFrakSmartAccount, baseFrakWallet } from "./baseFrakWallet";
 
 /**
  * Build a kernel smart account from a private key, that use the ECDSA signer behind the scene

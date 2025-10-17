@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import {
     distantWebauthnSessionAtom,
     webauthnSessionAtom,
-} from "@/common/atoms/session";
+} from "../../common/atoms/session";
 import {
     getOriginPairingClient,
     getTargetPairingClient,

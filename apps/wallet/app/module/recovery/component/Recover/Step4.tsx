@@ -1,4 +1,5 @@
 import { Button } from "@frak-labs/ui/component/Button";
+import type { WebAuthNWallet } from "@frak-labs/wallet-shared/types/WebAuthN";
 import { useAtomValue, useSetAtom } from "jotai";
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
@@ -9,7 +10,6 @@ import {
     recoveryNewWalletAtom,
     recoveryStepAtom,
 } from "@/module/settings/atoms/recovery";
-import type { WebAuthNWallet } from "@/types/WebAuthN";
 import styles from "./Step4.module.css";
 
 const ACTUAL_STEP = 4;

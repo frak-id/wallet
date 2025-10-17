@@ -1,11 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAtom, useAtomValue } from "jotai";
 import { useCallback } from "react";
-import { authenticatedWalletApi } from "@/common/api/backendClient";
-import { sdkSessionAtom, sessionAtom } from "@/common/atoms/session";
-import { lastWebAuthNActionAtom } from "@/common/atoms/webauthn";
-import { sdkKey } from "@/common/queryKeys/sdk";
-import { getSafeSdkSession, getSafeSession } from "@/common/utils/safeSession";
+import { authenticatedWalletApi } from "../api/backendClient";
+import { sdkSessionAtom, sessionAtom } from "../atoms/session";
+import { lastWebAuthNActionAtom } from "../atoms/webauthn";
+import { sdkKey } from "../queryKeys/sdk";
+import { getSafeSdkSession, getSafeSession } from "../utils/safeSession";
 
 /**
  * Get a safe SDK token

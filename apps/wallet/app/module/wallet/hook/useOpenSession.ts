@@ -1,12 +1,12 @@
+import { getEnableSessionData } from "@frak-labs/wallet-shared/interaction/utils/getEnableDisableData";
+import { interactionsKey } from "@frak-labs/wallet-shared/wallet/queryKeys/interactions";
 import {
     type UseMutationOptions,
     useMutation,
     useQueryClient,
 } from "@tanstack/react-query";
 import { useAccount, useSendTransaction } from "wagmi";
-import { getEnableSessionData } from "@/module/interaction/utils/getEnableDisableData";
 import { useConsumePendingInteractions } from "@/module/wallet/hook/useConsumePendingInteractions";
-import { interactionsKey } from "@/module/wallet/queryKeys/interactions";
 import { trackGenericEvent } from "../../common/analytics";
 
 /**

@@ -1,7 +1,7 @@
 import { useAtom } from "jotai";
 import { useCallback, useEffect, useMemo } from "react";
 import { useSearchParams } from "react-router";
-import { pendingPairingAtom } from "@/pairing/atoms/code";
+import { pendingPairingAtom } from "../atoms/code";
 
 /**
  * Hook to get the pairing code from the URL

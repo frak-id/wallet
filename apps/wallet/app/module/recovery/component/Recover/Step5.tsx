@@ -1,3 +1,4 @@
+import type { RecoveryFileContent } from "@frak-labs/wallet-shared/types/Recovery";
 import { useAtomValue, useSetAtom } from "jotai";
 import { SendHorizontal } from "lucide-react";
 import { sleep } from "radash";
@@ -14,7 +15,6 @@ import {
     recoveryStepAtom,
 } from "@/module/settings/atoms/recovery";
 import { ExplorerTxLink } from "@/module/wallet/component/ExplorerLink";
-import type { RecoveryFileContent } from "@/types/Recovery";
 import styles from "./Step5.module.css";
 
 const ACTUAL_STEP = 5;

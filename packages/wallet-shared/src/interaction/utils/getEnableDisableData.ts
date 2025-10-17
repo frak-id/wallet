@@ -4,8 +4,8 @@ import {
     sendInteractionsSelector,
 } from "@frak-labs/app-essentials";
 import { type Address, encodeFunctionData, type Hex, zeroAddress } from "viem";
-import { setExecutionAbi } from "@/recovery/utils/abi";
-import { encodeWalletMulticall } from "@/wallet/utils/multicall";
+import { setExecutionAbi } from "../../recovery/utils/abi";
+import { encodeWalletMulticall } from "../../wallet/utils/multicall";
 
 /**
  * Get an interaction session enable data

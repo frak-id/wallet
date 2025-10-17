@@ -1,7 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { useAtomValue } from "jotai";
 import { useCallback } from "react";
-import { webauthnSessionAtom } from "@/common/atoms/session";
+import { webauthnSessionAtom } from "../../common/atoms/session";
 import { signHashViaWebAuthN } from "../../wallet/smartWallet/signature";
 import type { TargetPairingClient } from "../clients/target";
 import { pairingKey } from "../queryKeys";

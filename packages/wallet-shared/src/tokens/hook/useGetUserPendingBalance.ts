@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAccount } from "wagmi";
-import { authenticatedWalletApi } from "@/common/api/backendClient";
-import { pendingBalanceKey } from "@/common/queryKeys/pendingBalance";
+import { authenticatedWalletApi } from "../../common/api/backendClient";
+import { pendingBalanceKey } from "../../common/queryKeys/pendingBalance";
 
 export function useGetUserPendingBalance() {
     const { address } = useAccount();

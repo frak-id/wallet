@@ -1,9 +1,9 @@
+import type { RecoveryFileContent } from "@frak-labs/wallet-shared/types/Recovery";
+import { getRegisterOptions } from "@frak-labs/wallet-shared/wallet/action/registerOptions";
 import { startRegistration } from "@simplewebauthn/browser";
 import { useMutation } from "@tanstack/react-query";
 import { authenticatedWalletApi } from "@/module/common/api/backendClient";
 import { recoveryKey } from "@/module/recovery/queryKeys/recovery";
-import { getRegisterOptions } from "@/module/wallet/action/registerOptions";
-import type { RecoveryFileContent } from "@/types/Recovery";
 
 /**
  * Create a new webauthn authenticator to recover the given account

@@ -1,7 +1,7 @@
+import { pendingBalanceKey } from "@frak-labs/wallet-shared/common/queryKeys/pendingBalance";
 import { useQuery } from "@tanstack/react-query";
 import { useAccount } from "wagmi";
 import { authenticatedWalletApi } from "@/module/common/api/backendClient";
-import { pendingBalanceKey } from "@/module/common/queryKeys/pendingBalance";
 
 export function useGetUserPendingBalance() {
     const { address } = useAccount();

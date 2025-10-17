@@ -1,9 +1,9 @@
 import { Skeleton } from "@frak-labs/ui/component/Skeleton";
+import { getSafeSession } from "@frak-labs/wallet-shared/common/utils/safeSession";
 import { useAtomValue } from "jotai";
 import { type PropsWithChildren, useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { sessionAtom } from "@/module/common/atoms/session";
-import { getSafeSession } from "@/module/listener/utils/localStorage";
 import { usePendingPairingInfo } from "@/module/pairing/hook/usePendingPairingInfo";
 
 /**

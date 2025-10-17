@@ -2,14 +2,14 @@ import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { startRegistration } from "@simplewebauthn/browser";
 import type { UseMutationOptions } from "@tanstack/react-query";
 import { useMutation } from "@tanstack/react-query";
-import { addLastAuthenticationAtom } from "@/authentication/atoms/lastAuthenticator";
-import { usePreviousAuthenticators } from "@/authentication/hook/usePreviousAuthenticators";
-import { authKey } from "@/authentication/queryKeys/auth";
-import { trackAuthCompleted, trackAuthInitiated } from "@/common/analytics";
-import { authenticatedWalletApi } from "@/common/api/backendClient";
-import { sdkSessionAtom, sessionAtom } from "@/common/atoms/session";
-import type { Session } from "@/types/Session";
-import { getRegisterOptions } from "@/wallet/action/registerOptions";
+import { trackAuthCompleted, trackAuthInitiated } from "../../common/analytics";
+import { authenticatedWalletApi } from "../../common/api/backendClient";
+import { sdkSessionAtom, sessionAtom } from "../../common/atoms/session";
+import type { Session } from "../../types/Session";
+import { getRegisterOptions } from "../../wallet/action/registerOptions";
+import { addLastAuthenticationAtom } from "../atoms/lastAuthenticator";
+import { authKey } from "../queryKeys/auth";
+import { usePreviousAuthenticators } from "./usePreviousAuthenticators";
 
 /**
  * Hook that handle the registration process

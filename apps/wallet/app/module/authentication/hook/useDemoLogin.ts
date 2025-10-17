@@ -1,9 +1,9 @@
 import { jotaiStore } from "@frak-labs/ui/atoms/store";
+import { authKey } from "@frak-labs/wallet-shared/authentication/queryKeys/auth";
+import type { Session } from "@frak-labs/wallet-shared/types/Session";
 import { useMutation } from "@tanstack/react-query";
 import { type Address, type Hex, stringToHex } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
-import { authKey } from "@/module/authentication/queryKeys/auth";
-import type { Session } from "../../../types/Session";
 import { trackAuthCompleted, trackAuthInitiated } from "../../common/analytics";
 import { authenticatedWalletApi } from "../../common/api/backendClient";
 import { sdkSessionAtom, sessionAtom } from "../../common/atoms/session";

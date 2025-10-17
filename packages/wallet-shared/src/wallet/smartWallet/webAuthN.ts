@@ -14,7 +14,7 @@ import {
     size,
     toHex,
 } from "viem";
-import type { P256Signature, WebAuthNSignature } from "@/types/WebAuthN";
+import type { P256Signature, WebAuthNSignature } from "../../types/WebAuthN";
 
 /**
  * Verify a webauthn signature internally, and format it for blockchain transaction
