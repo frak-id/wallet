@@ -16,12 +16,18 @@ const RESTRICTED_ROUTES = [
  */
 export const config = {
     matcher: [
-        "/((?!api|_next/static|_next/image|favicon.ico|robots.txt|manifest.json|favicons).*)",
+        "/((?!api|demo|_next/static|_next/image|favicon.ico|robots.txt|manifest.json|favicons).*)",
     ],
 };
 
 export async function middleware(req: NextRequest) {
     const { pathname } = req.nextUrl;
+
+    // Allow /demo route to bypass authentication (it handles its own session setup)
+    if (pathname === "/demo") {
+        return NextResponse.next();
+    }
+
     const session = await getSession();
 
     // Redirect to dashboard if the user is authenticated
