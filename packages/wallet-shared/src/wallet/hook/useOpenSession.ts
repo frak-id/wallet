@@ -4,10 +4,10 @@ import {
     useQueryClient,
 } from "@tanstack/react-query";
 import { useAccount, useSendTransaction } from "wagmi";
-import { getEnableSessionData } from "@/interaction/utils/getEnableDisableData";
-import { useConsumePendingInteractions } from "@/wallet/hook/useConsumePendingInteractions";
-import { interactionsKey } from "@/wallet/queryKeys/interactions";
 import { trackGenericEvent } from "../../common/analytics";
+import { getEnableSessionData } from "../../interaction/utils/getEnableDisableData";
+import { interactionsKey } from "../queryKeys/interactions";
+import { useConsumePendingInteractions } from "./useConsumePendingInteractions";
 
 /**
  * Hook used to open a session

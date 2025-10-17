@@ -1,4 +1,6 @@
 import { KernelExecuteAbi, kernelAddresses } from "@frak-labs/app-essentials";
+import type { currentViemClient } from "@frak-labs/wallet-shared/blockchain/provider";
+import { encodeWalletMulticall } from "@frak-labs/wallet-shared/wallet/utils/multicall";
 import { isSmartAccountDeployed } from "permissionless";
 import { getAccountNonce, getSenderAddress } from "permissionless/actions";
 import { memo, tryit } from "radash";
@@ -27,12 +29,10 @@ import {
     type UserOperation,
 } from "viem/account-abstraction";
 import { formatAbiItem } from "viem/utils";
-import type { currentViemClient } from "@/module/blockchain/provider";
 import {
     fetchAccountMetadata,
     wrapMessageForSignature,
 } from "@/module/wallet/smartWallet/signature";
-import { encodeWalletMulticall } from "@/module/wallet/utils/multicall";
 
 export type BaseFrakSmartAccount = SmartAccount<
     SmartAccountImplementation<typeof entryPoint06Abi, "0.6", object, false>

@@ -1,11 +1,11 @@
+import { getTargetPairingClient } from "@frak-labs/wallet-shared/pairing/clients/store";
+import type { TargetPairingState as TargetPairingStateType } from "@frak-labs/wallet-shared/pairing/types";
 import { useAtomValue } from "jotai";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { webauthnSessionAtom } from "@/module/common/atoms/session";
-import { getTargetPairingClient } from "@/module/pairing/clients/store";
 import { StatusBoxWallet } from "@/module/pairing/component/PairingStatusBox";
 import { SignatureRequestList } from "@/module/pairing/component/SignatureRequest";
-import type { TargetPairingState as TargetPairingStateType } from "@/module/pairing/types";
 
 /**
  * Component displaying the live target pairing state

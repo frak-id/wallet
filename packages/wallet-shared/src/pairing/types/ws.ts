@@ -1,5 +1,5 @@
 import type { Hex } from "viem";
-import type { DistantWebAuthnWallet } from "@/types/Session";
+import type { DistantWebAuthnWallet } from "../../types/Session";
 
 type WsPartnerConnected = {
     type: "partner-connected";

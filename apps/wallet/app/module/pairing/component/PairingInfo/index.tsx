@@ -1,10 +1,10 @@
+import { usePairingInfo } from "@frak-labs/wallet-shared/pairing/hook/usePairingInfo";
+import type { TargetPairingState } from "@frak-labs/wallet-shared/pairing/types";
 import { Fingerprint } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
-import type { TargetPairingState } from "@/module/pairing/types";
-import { usePairingInfo } from "../../hook/usePairingInfo";
-import { PairingStatus } from "../PairingStatus";
+import { PairingStatus } from "@/module/pairing/component/PairingStatus";
 import styles from "./index.module.css";
 
 export function PairingInfo({

@@ -4,15 +4,15 @@ import { startAuthentication } from "@simplewebauthn/browser";
 import { generateAuthenticationOptions } from "@simplewebauthn/server";
 import type { UseMutationOptions } from "@tanstack/react-query";
 import { useMutation } from "@tanstack/react-query";
-import { addLastAuthenticationAtom } from "@/authentication/atoms/lastAuthenticator";
-import { authKey } from "@/authentication/queryKeys/auth";
-import { trackAuthCompleted, trackAuthInitiated } from "@/common/analytics";
-import { authenticatedWalletApi } from "@/common/api/backendClient";
-import { sdkSessionAtom, sessionAtom } from "@/common/atoms/session";
-import { userAtom } from "@/common/atoms/user";
-import { lastWebAuthNActionAtom } from "@/common/atoms/webauthn";
-import type { PreviousAuthenticatorModel } from "@/common/storage/dexie/PreviousAuthenticatorModel";
-import type { Session } from "@/types/Session";
+import { trackAuthCompleted, trackAuthInitiated } from "../../common/analytics";
+import { authenticatedWalletApi } from "../../common/api/backendClient";
+import { sdkSessionAtom, sessionAtom } from "../../common/atoms/session";
+import { userAtom } from "../../common/atoms/user";
+import { lastWebAuthNActionAtom } from "../../common/atoms/webauthn";
+import type { PreviousAuthenticatorModel } from "../../common/storage/dexie/PreviousAuthenticatorModel";
+import type { Session } from "../../types/Session";
+import { addLastAuthenticationAtom } from "../atoms/lastAuthenticator";
+import { authKey } from "../queryKeys/auth";
 
 /**
  * Hook that handle the registration process

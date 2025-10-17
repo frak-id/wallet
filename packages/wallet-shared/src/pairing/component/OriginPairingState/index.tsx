@@ -1,14 +1,14 @@
 import { useAtomValue } from "jotai";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { distantWebauthnSessionAtom } from "@/common/atoms/session";
-import { getOriginPairingClient } from "@/pairing/clients/store";
+import { distantWebauthnSessionAtom } from "../../../common/atoms/session";
+import { getOriginPairingClient } from "../../clients/store";
+import type { OriginPairingState as OriginPairingStateType } from "../../types";
 import {
     StatusBoxModal,
     StatusBoxWallet,
     StatusBoxWalletEmbedded,
-} from "@/pairing/component/PairingStatusBox";
-import type { OriginPairingState as OriginPairingStateType } from "@/pairing/types";
+} from "../PairingStatusBox";
 
 type OriginPairingStateProps = {
     type: "embedded" | "modal" | "wallet";

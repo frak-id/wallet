@@ -1,10 +1,10 @@
-import type { Hex } from "viem";
-import { getSafeSession } from "../../listener/utils/localStorage";
+import { getSafeSession } from "@frak-labs/wallet-shared/common/utils/safeSession";
 import type {
     TargetPairingState,
     WsTargetMessage,
     WsTargetRequest,
-} from "../types";
+} from "@frak-labs/wallet-shared/pairing/types";
+import type { Hex } from "viem";
 import { BasePairingClient } from "./base";
 
 /**

@@ -1,5 +1,7 @@
 import { getTransport } from "@frak-labs/app-essentials/blockchain";
 import { jotaiStore } from "@frak-labs/ui/atoms/store";
+import { currentChain } from "@frak-labs/wallet-shared/blockchain/provider";
+import { usePersistentPairingClient } from "@frak-labs/wallet-shared/pairing/hook/usePersistentPairingClient";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
@@ -9,12 +11,10 @@ import { Provider } from "jotai";
 import { type PropsWithChildren, useEffect, useMemo } from "react";
 import { createClient } from "viem";
 import { createConfig, useAccount, WagmiProvider } from "wagmi";
-import { currentChain } from "@/module/blockchain/provider";
 import { authenticatedWalletApi } from "@/module/common/api/backendClient";
 import { useEnforceWagmiConnection } from "@/module/common/hook/useEnforceWagmiConnection";
 import { subscriptionAtom } from "@/module/notification/atom/subscriptionAtom";
 import { smartAccountConnector } from "@/module/wallet/smartWallet/connector";
-import { usePersistentPairingClient } from "../../pairing/hook/usePersistentPairingClient";
 import { setProfileId } from "../analytics";
 
 /**

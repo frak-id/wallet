@@ -1,17 +1,17 @@
 import { Button } from "@frak-labs/ui/component/Button";
 import { Spinner } from "@frak-labs/ui/component/Spinner";
+import type { TargetPairingClient } from "@frak-labs/wallet-shared/pairing/clients/target";
+import {
+    useDeclineSignatureRequest,
+    useSignSignatureRequest,
+} from "@frak-labs/wallet-shared/pairing/hook/useSignSignatureRequest";
+import type { TargetPairingPendingSignature } from "@frak-labs/wallet-shared/pairing/types";
 import type { MutationStatus } from "@tanstack/react-query";
 import { Check, Shield, X } from "lucide-react";
 import { useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
-import type { TargetPairingClient } from "@/module/pairing/clients/target";
-import {
-    useDeclineSignatureRequest,
-    useSignSignatureRequest,
-} from "@/module/pairing/hook/useSignSignatureRequest";
-import type { TargetPairingPendingSignature } from "@/module/pairing/types";
 import styles from "./index.module.css";
 
 /**

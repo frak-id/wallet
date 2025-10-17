@@ -1,7 +1,7 @@
 import { Spinner } from "@frak-labs/ui/component/Spinner";
 import { X } from "lucide-react";
 import type { MouseEvent, ReactNode } from "react";
-import { Warning } from "@/common/component/Warning";
+import { Warning } from "../Warning";
 import styles from "./index.module.css";
 
 type ToastProps = {

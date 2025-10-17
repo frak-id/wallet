@@ -1,8 +1,8 @@
+import type { RecoveryFileContent } from "@frak-labs/wallet-shared/types/Recovery";
 import { useMutation } from "@tanstack/react-query";
 import { privateKeyToAccount } from "viem/accounts";
 import { recoveryKey } from "@/module/recovery/queryKeys/recovery";
 import { decryptPrivateKey } from "@/module/recovery/utils/decrypt";
-import type { RecoveryFileContent } from "@/types/Recovery";
 
 /**
  * Parse the guardian private key from the recovery file

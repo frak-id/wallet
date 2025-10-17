@@ -6,8 +6,8 @@ import {
 import { tryit } from "radash";
 import { type Address, isAddressEqual } from "viem";
 import { readContract } from "viem/actions";
-import { currentViemClient } from "@/blockchain/provider";
-import type { InteractionSession } from "@/types/Session";
+import { currentViemClient } from "../../blockchain/provider";
+import type { InteractionSession } from "../../types/Session";
 
 /**
  * Get the current session status

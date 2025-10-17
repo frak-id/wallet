@@ -2,7 +2,7 @@ import { atom } from "jotai";
 import { atomWithStorage } from "jotai/utils";
 import { unique } from "radash";
 import { sha256, stringToHex } from "viem";
-import type { PendingInteraction } from "@/types/Interaction";
+import type { PendingInteraction } from "../../types/Interaction";
 
 type PendingInteractionsStorage = {
     interactions: PendingInteraction[];

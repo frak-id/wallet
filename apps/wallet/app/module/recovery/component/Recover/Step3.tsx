@@ -1,3 +1,4 @@
+import type { RecoveryFileContent } from "@frak-labs/wallet-shared/types/Recovery";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -10,7 +11,6 @@ import {
     recoveryPasswordAtom,
     recoveryStepAtom,
 } from "@/module/settings/atoms/recovery";
-import type { RecoveryFileContent } from "@/types/Recovery";
 
 const ACTUAL_STEP = 3;
 

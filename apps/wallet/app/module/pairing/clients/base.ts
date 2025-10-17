@@ -1,20 +1,20 @@
 import type { Treaty } from "@elysiajs/eden";
 import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import {
-    type Atom,
-    atom,
-    type SetStateAction,
-    type WritableAtom,
-} from "jotai/vanilla";
-import { authenticatedWalletApi } from "../../common/api/backendClient";
-import {
     type BasePairingState,
     WsCloseCode,
     type WsOriginMessage,
     type WsOriginRequest,
     type WsTargetMessage,
     type WsTargetRequest,
-} from "../types";
+} from "@frak-labs/wallet-shared/pairing/types";
+import {
+    type Atom,
+    atom,
+    type SetStateAction,
+    type WritableAtom,
+} from "jotai/vanilla";
+import { authenticatedWalletApi } from "../../common/api/backendClient";
 
 type PairingWs = ReturnType<
     typeof authenticatedWalletApi.pairings.ws.subscribe

@@ -8,11 +8,8 @@ import {
     type Transport,
     toHex,
 } from "viem";
-import type { P256PubKey } from "@/types/WebAuthN";
-import {
-    type BaseFrakSmartAccount,
-    baseFrakWallet,
-} from "@/wallet/smartWallet/baseFrakWallet";
+import type { P256PubKey } from "../../types/WebAuthN";
+import { type BaseFrakSmartAccount, baseFrakWallet } from "./baseFrakWallet";
 import { getStubSignature } from "./webAuthN";
 
 /**

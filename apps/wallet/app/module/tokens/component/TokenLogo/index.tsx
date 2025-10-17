@@ -1,5 +1,5 @@
-import type { BalanceItem } from "@/types/Balance";
-import { FrakToken } from "./FrakToken";
+import type { BalanceItem } from "@frak-labs/wallet-shared/types/Balance";
+import { FrakToken } from "@/module/tokens/component/TokenLogo/FrakToken";
 import styles from "./index.module.css";
 
 export function TokenLogo({

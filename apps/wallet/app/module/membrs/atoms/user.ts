@@ -1,5 +1,5 @@
+import type { User } from "@frak-labs/wallet-shared/types/User";
 import { atomWithStorage } from "jotai/utils";
-import type { User } from "@/types/User";
 
 /**
  * User atom

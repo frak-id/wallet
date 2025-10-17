@@ -186,6 +186,7 @@
         "@frak-labs/core-sdk": "workspace:*",
         "@frak-labs/frame-connector": "workspace:*",
         "@frak-labs/ui": "workspace:*",
+        "@frak-labs/wallet-shared": "workspace:*",
         "@khmyznikov/pwa-install": "^0.5.8",
         "@openpanel/web": "^1.0.1",
         "@peculiar/asn1-ecc": "2.5.0",

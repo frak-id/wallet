@@ -1,14 +1,14 @@
 import { useAtom } from "jotai";
 import { useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { emitLifecycleEvent } from "../../../sdk/utils/lifecycleEvents";
+import { trackGenericEvent } from "../../analytics";
 import {
     inAppBrowserToastDismissedAtom,
     socialRedirectAttemptedAtom,
-} from "@/common/atoms/inAppBrowser";
-import { Toast } from "@/common/component/Toast";
-import { emitLifecycleEvent } from "../../../sdk/utils/lifecycleEvents";
-import { trackGenericEvent } from "../../analytics";
+} from "../../atoms/inAppBrowser";
 import { inAppRedirectUrl, isInAppBrowser, isInIframe } from "../../lib/inApp";
+import { Toast } from "../Toast";
 
 /**
  * Toast component that displays when user is in an in-app browser

@@ -1,6 +1,6 @@
 import type { MutationOptions } from "@tanstack/react-query";
 import { useMutation } from "@tanstack/react-query";
-import { authenticatedWalletApi } from "@/common/api/backendClient";
+import { authenticatedWalletApi } from "../../common/api/backendClient";
 import { pairingKey } from "../queryKeys";
 
 type UseDeletePairingProps = {

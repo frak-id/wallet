@@ -4,6 +4,12 @@ import {
     kernelAddresses,
     multiWebAuthNValidatorV2Abi,
 } from "@frak-labs/app-essentials";
+import { currentViemClient } from "@frak-labs/wallet-shared/blockchain/provider";
+import {
+    doAddPassKeyFnAbi,
+    ecdsaValidatorStorageAbi,
+} from "@frak-labs/wallet-shared/recovery/utils/abi";
+import type { CurrentRecovery } from "@frak-labs/wallet-shared/types/Recovery";
 import { tryit } from "radash";
 import {
     type Address,
@@ -14,12 +20,6 @@ import {
     zeroAddress,
 } from "viem";
 import { readContract } from "viem/actions";
-import { currentViemClient } from "@/module/blockchain/provider";
-import {
-    doAddPassKeyFnAbi,
-    ecdsaValidatorStorageAbi,
-} from "@/module/recovery/utils/abi";
-import type { CurrentRecovery } from "@/types/Recovery";
 
 /**
  * Get the current recovery options for the given wallet

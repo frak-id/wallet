@@ -4,7 +4,7 @@ import { useAtomValue } from "jotai";
 import { RefreshCcw } from "lucide-react";
 import { type PropsWithChildren, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { getTargetPairingClient } from "@/pairing/clients/store";
+import { getTargetPairingClient } from "../../clients/store";
 import styles from "./index.module.css";
 
 type Status = "success" | "waiting" | "loading" | "error";

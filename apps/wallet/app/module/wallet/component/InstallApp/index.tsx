@@ -1,12 +1,12 @@
 import { Button } from "@frak-labs/ui/component/Button";
 import { WebApp } from "@frak-labs/ui/icons/WebApp";
+import { useAddToHomeScreenPrompt } from "@frak-labs/wallet-shared/common/hook/useAddToHomeScreenPrompt";
 import { useAtomValue } from "jotai";
 import { useCallback } from "react";
 import { Trans } from "react-i18next";
 import { ButtonLabel } from "@/module/common/component/ButtonLabel";
 import { Panel } from "@/module/common/component/Panel";
 import { pwaInstallRefAtom } from "@/module/common/component/PwaInstall";
-import { useAddToHomeScreenPrompt } from "@/module/common/hook/useAddToHomeScreenPrompt";
 import { trackGenericEvent } from "../../../common/analytics";
 
 export function InstallApp() {

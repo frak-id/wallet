@@ -3,12 +3,12 @@ import {
     isRunningInProd,
     kernelAddresses,
 } from "@frak-labs/app-essentials";
-import { type Address, encodeFunctionData, toFunctionSelector } from "viem";
 import {
     doAddPassKeyFnAbi,
     setExecutionAbi,
-} from "@/module/recovery/utils/abi";
-import type { GeneratedRecoveryData } from "@/types/Recovery";
+} from "@frak-labs/wallet-shared/recovery/utils/abi";
+import type { GeneratedRecoveryData } from "@frak-labs/wallet-shared/types/Recovery";
+import { type Address, encodeFunctionData, toFunctionSelector } from "viem";
 
 /**
  * Generate the recovery data

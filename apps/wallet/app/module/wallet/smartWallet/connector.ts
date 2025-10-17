@@ -1,6 +1,6 @@
+import { currentChain } from "@frak-labs/wallet-shared/blockchain/provider";
 import type { Address, Hex, Transport } from "viem";
 import { createConnector } from "wagmi";
-import { currentChain } from "@/module/blockchain/provider";
 import { getSmartAccountProvider } from "@/module/wallet/smartWallet/provider";
 
 smartAccountConnector.type = "frakSmartAccountConnector" as const;

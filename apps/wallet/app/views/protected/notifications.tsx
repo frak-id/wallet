@@ -1,3 +1,4 @@
+import type { NotificationModel } from "@frak-labs/wallet-shared/common/storage/dexie/NotificationModel";
 import { useQuery } from "@tanstack/react-query";
 import { BellRing } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -7,7 +8,6 @@ import { Row } from "@/module/common/component/Row";
 import { Skeleton } from "@/module/common/component/Skeleton";
 import { Title } from "@/module/common/component/Title";
 import { dexieDb } from "@/module/common/storage/dexie/dexieDb";
-import type { NotificationModel } from "@/module/common/storage/dexie/NotificationModel";
 import { notificationKey } from "@/module/notification/queryKeys/notification";
 
 /**

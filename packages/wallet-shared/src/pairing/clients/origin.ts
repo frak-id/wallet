@@ -1,9 +1,9 @@
 import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { nanoid } from "nanoid";
 import type { Hex } from "viem";
-import { trackAuthCompleted } from "@/common/analytics";
-import { sdkSessionAtom, sessionAtom } from "@/common/atoms/session";
-import { getSafeSession } from "@/common/utils/safeSession";
+import { trackAuthCompleted } from "../../common/analytics";
+import { sdkSessionAtom, sessionAtom } from "../../common/atoms/session";
+import { getSafeSession } from "../../common/utils/safeSession";
 import type {
     OriginPairingState,
     WsOriginMessage,

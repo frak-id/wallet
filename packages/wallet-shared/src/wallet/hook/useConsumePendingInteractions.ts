@@ -1,14 +1,14 @@
 import { useMutation } from "@tanstack/react-query";
 import { useAtomValue, useSetAtom } from "jotai";
 import { useAccount } from "wagmi";
-import { authenticatedWalletApi } from "@/common/api/backendClient";
-import { useGetSafeSdkSession } from "@/common/hook/useGetSafeSdkSession";
-import { pushBackupData } from "@/sdk/utils/backup";
+import { authenticatedWalletApi } from "../../common/api/backendClient";
+import { useGetSafeSdkSession } from "../../common/hook/useGetSafeSdkSession";
+import { pushBackupData } from "../../sdk/utils/backup";
 import {
     cleanPendingInteractionsAtom,
     pendingInteractionAtom,
-} from "@/wallet/atoms/pendingInteraction";
-import { interactionsKey } from "@/wallet/queryKeys/interactions";
+} from "../atoms/pendingInteraction";
+import { interactionsKey } from "../queryKeys/interactions";
 
 /**
  * Hook used to consume the pending interactions

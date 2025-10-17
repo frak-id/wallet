@@ -1,5 +1,5 @@
 import { isAddressEqual, zeroAddress } from "viem";
-import type { BalanceItem } from "@/types/Balance";
+import type { BalanceItem } from "../../types/Balance";
 
 export function getUpdatedToken({
     tokens,

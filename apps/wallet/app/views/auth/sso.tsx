@@ -8,6 +8,13 @@ import { ButtonAuth } from "@frak-labs/ui/component/ButtonAuth";
 import { formatHash } from "@frak-labs/ui/component/HashDisplay";
 import { Spinner } from "@frak-labs/ui/component/Spinner";
 import {
+    currentSsoMetadataAtom,
+    ssoContextAtom,
+} from "@frak-labs/wallet-shared/authentication/atoms/sso";
+import { ssoKey } from "@frak-labs/wallet-shared/authentication/queryKeys/sso";
+import { compressedSsoToParams } from "@frak-labs/wallet-shared/authentication/utils/ssoDataCompression";
+import type { Session } from "@frak-labs/wallet-shared/types/Session";
+import {
     type UseMutationOptions,
     useMutation,
     useQuery,
@@ -19,16 +26,10 @@ import { Trans, useTranslation } from "react-i18next";
 import { Link, useSearchParams } from "react-router";
 import type { Hex } from "viem";
 import { lastAuthenticatorAtom } from "@/module/authentication/atoms/lastAuthenticator";
-import {
-    currentSsoMetadataAtom,
-    ssoContextAtom,
-} from "@/module/authentication/atoms/sso";
 import styles from "@/module/authentication/component/Sso/index.module.css";
 import { SsoHeader } from "@/module/authentication/component/Sso/SsoHeader";
 import { SsoLoginComponent } from "@/module/authentication/component/Sso/SsoLogin";
 import { SsoRegisterComponent } from "@/module/authentication/component/Sso/SsoRegister";
-import { ssoKey } from "@/module/authentication/queryKeys/sso";
-import { compressedSsoToParams } from "@/module/authentication/utils/ssoDataCompression";
 import {
     demoPrivateKeyAtom,
     sdkSessionAtom,
@@ -36,7 +37,6 @@ import {
 } from "@/module/common/atoms/session";
 import { Grid } from "@/module/common/component/Grid";
 import { Notice } from "@/module/common/component/Notice";
-import type { Session } from "@/types/Session";
 import { useDemoLogin } from "../../module/authentication/hook/useDemoLogin";
 import "./sso.global.css";
 import { findIframeInOpener } from "@frak-labs/core-sdk";
@@ -44,11 +44,11 @@ import {
     createClientCompressionMiddleware,
     createRpcClient,
 } from "@frak-labs/frame-connector";
-import { ua } from "@/module/common/lib/ua";
-import { HandleErrors } from "@/module/listener/component/HandleErrors";
-import { AuthenticateWithPhone } from "@/module/listener/modal/component/AuthenticateWithPhone";
+import { HandleErrors } from "@frak-labs/wallet-shared/authentication/component/HandleErrors";
+import { ua } from "@frak-labs/wallet-shared/common/lib/ua";
+import type { SsoRpcSchema } from "@frak-labs/wallet-shared/types/sso-rpc";
+import { AuthenticateWithPhone } from "@/module/authentication/component/AuthenticateWithPhone";
 import type { OnPairingSuccessCallback } from "@/module/pairing/clients/origin";
-import type { SsoRpcSchema } from "@/types/sso-rpc";
 
 export default function Sso() {
     const { i18n, t } = useTranslation();
@@ -308,7 +308,6 @@ function Header() {
     const lastAuthenticator = useAtomValue(lastAuthenticatorAtom);
     const title = useMemo(
         () =>
-            // @ts-expect-error
             t("authent.sso.title", {
                 context: lastAuthenticator ? "existing" : "new",
             }),

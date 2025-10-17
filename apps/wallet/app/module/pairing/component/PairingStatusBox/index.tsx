@@ -1,10 +1,10 @@
 import { Button } from "@frak-labs/ui/component/Button";
 import { Spinner } from "@frak-labs/ui/component/Spinner";
+import { getTargetPairingClient } from "@frak-labs/wallet-shared/pairing/clients/store";
 import { useAtomValue } from "jotai";
 import { RefreshCcw } from "lucide-react";
 import { type PropsWithChildren, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { getTargetPairingClient } from "@/module/pairing/clients/store";
 import styles from "./index.module.css";
 
 type Status = "success" | "waiting" | "loading" | "error";

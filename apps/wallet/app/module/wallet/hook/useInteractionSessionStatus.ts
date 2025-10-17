@@ -1,14 +1,14 @@
 import { jotaiStore } from "@frak-labs/ui/atoms/store";
+import { getSessionStatus } from "@frak-labs/wallet-shared/interaction/action/interactionSession";
+import type { InteractionSession } from "@frak-labs/wallet-shared/types/Session";
+import { interactionsKey } from "@frak-labs/wallet-shared/wallet/queryKeys/interactions";
 import type { UndefinedInitialDataOptions } from "@tanstack/react-query";
 import { useQuery } from "@tanstack/react-query";
 import { RESET } from "jotai/utils";
 import { useMemo } from "react";
 import type { Address } from "viem";
 import { useAccount } from "wagmi";
-import { getSessionStatus } from "@/module/interaction/action/interactionSession";
 import { interactionSessionAtom } from "@/module/wallet/atoms/interactionSession";
-import { interactionsKey } from "@/module/wallet/queryKeys/interactions";
-import type { InteractionSession } from "@/types/Session";
 
 /**
  * The raw query data we will use to get the session status

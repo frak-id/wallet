@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { authKey } from "@/authentication/queryKeys/auth";
-import { dexieDb } from "@/common/storage/dexie/dexieDb";
+import { dexieDb } from "../../common/storage/dexie/dexieDb";
+import { authKey } from "../queryKeys/auth";
 
 /**
  * Hook used to fetch all the previous authenticators

@@ -1,5 +1,5 @@
+import type { DistantWebAuthnWallet } from "@frak-labs/wallet-shared/types/Session";
 import type { Hex } from "viem";
-import type { DistantWebAuthnWallet } from "../../../types/Session";
 
 type WsPartnerConnected = {
     type: "partner-connected";

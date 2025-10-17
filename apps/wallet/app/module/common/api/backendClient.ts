@@ -1,12 +1,12 @@
 import { treaty } from "@elysiajs/eden";
 import type { App } from "@frak-labs/backend-elysia";
 import { jotaiStore } from "@frak-labs/ui/atoms/store";
-import { RESET } from "jotai/utils";
-import { sdkSessionAtom, sessionAtom } from "@/module/common/atoms/session";
 import {
     getSafeSdkSession,
     getSafeSession,
-} from "@/module/listener/utils/localStorage";
+} from "@frak-labs/wallet-shared/common/utils/safeSession";
+import { RESET } from "jotai/utils";
+import { sdkSessionAtom, sessionAtom } from "@/module/common/atoms/session";
 
 /**
  * Treaty client with authentication tokens if present

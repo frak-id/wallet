@@ -1,5 +1,5 @@
 import type { Hex } from "viem";
-import { getSafeSession } from "@/common/utils/safeSession";
+import { getSafeSession } from "../../common/utils/safeSession";
 import type {
     TargetPairingState,
     WsTargetMessage,

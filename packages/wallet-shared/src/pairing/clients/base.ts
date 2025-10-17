@@ -6,7 +6,7 @@ import {
     type SetStateAction,
     type WritableAtom,
 } from "jotai/vanilla";
-import { authenticatedWalletApi } from "@/common/api/backendClient";
+import { authenticatedWalletApi } from "../../common/api/backendClient";
 import {
     type BasePairingState,
     WsCloseCode,

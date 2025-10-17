@@ -1,5 +1,5 @@
 import type { Address, Hex } from "viem";
-import type { P256PubKey, WebAuthNWallet } from "@/types/WebAuthN";
+import type { P256PubKey, WebAuthNWallet } from "./WebAuthN";
 
 export type Session = {
     token: string;

@@ -1,8 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAccount, useSendTransaction } from "wagmi";
-import { getDisableSessionData } from "@/interaction/utils/getEnableDisableData";
-import { interactionsKey } from "@/wallet/queryKeys/interactions";
 import { trackGenericEvent } from "../../common/analytics";
+import { getDisableSessionData } from "../../interaction/utils/getEnableDisableData";
+import { interactionsKey } from "../queryKeys/interactions";
 
 export function useCloseSession() {
     const queryClient = useQueryClient();

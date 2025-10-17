@@ -9,16 +9,16 @@ import type { SmartAccount } from "viem/account-abstraction";
 import {
     getPimlicoClient,
     getPimlicoTransport,
-} from "@/blockchain/aa-provider";
-import { currentChain, currentViemClient } from "@/blockchain/provider";
-import { sessionAtom } from "@/common/atoms/session";
-import { getSafeSession } from "@/common/utils/safeSession";
-import type { DistantWebAuthnWallet, EcdsaWallet } from "@/types/Session";
-import type { WebAuthNWallet } from "@/types/WebAuthN";
-import { frakEcdsaWalletSmartAccount } from "@/wallet/smartWallet/FrakEcdsaSmartWallet";
-import { frakWalletSmartAccount } from "@/wallet/smartWallet/FrakSmartWallet";
+} from "../../blockchain/aa-provider";
+import { currentChain, currentViemClient } from "../../blockchain/provider";
+import { sessionAtom } from "../../common/atoms/session";
+import { getSafeSession } from "../../common/utils/safeSession";
+import type { DistantWebAuthnWallet, EcdsaWallet } from "../../types/Session";
+import type { WebAuthNWallet } from "../../types/WebAuthN";
 import type { BaseFrakSmartAccount } from "./baseFrakWallet";
+import { frakEcdsaWalletSmartAccount } from "./FrakEcdsaSmartWallet";
 import { frakPairedWalletSmartAccount } from "./FrakPairedSmartWallet";
+import { frakWalletSmartAccount } from "./FrakSmartWallet";
 import { signHashViaWebAuthN } from "./signature";
 
 /**

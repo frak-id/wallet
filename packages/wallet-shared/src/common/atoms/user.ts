@@ -1,5 +1,5 @@
 import { atomWithStorage } from "jotai/utils";
-import type { User } from "@/types/User";
+import type { User } from "../../types/User";
 
 /**
  * User atom

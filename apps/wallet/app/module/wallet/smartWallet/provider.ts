@@ -1,5 +1,15 @@
 import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import {
+    currentChain,
+    currentViemClient,
+} from "@frak-labs/wallet-shared/blockchain/provider";
+import { getSafeSession } from "@frak-labs/wallet-shared/common/utils/safeSession";
+import type {
+    DistantWebAuthnWallet,
+    EcdsaWallet,
+} from "@frak-labs/wallet-shared/types/Session";
+import type { WebAuthNWallet } from "@frak-labs/wallet-shared/types/WebAuthN";
+import {
     createSmartAccountClient,
     type SmartAccountClient,
 } from "permissionless";
@@ -10,13 +20,9 @@ import {
     getPimlicoClient,
     getPimlicoTransport,
 } from "@/module/blockchain/aa-provider";
-import { currentChain, currentViemClient } from "@/module/blockchain/provider";
 import { sessionAtom } from "@/module/common/atoms/session";
-import { getSafeSession } from "@/module/listener/utils/localStorage";
 import { frakEcdsaWalletSmartAccount } from "@/module/wallet/smartWallet/FrakEcdsaSmartWallet";
 import { frakWalletSmartAccount } from "@/module/wallet/smartWallet/FrakSmartWallet";
-import type { DistantWebAuthnWallet, EcdsaWallet } from "@/types/Session";
-import type { WebAuthNWallet } from "@/types/WebAuthN";
 import type { BaseFrakSmartAccount } from "./baseFrakWallet";
 import { frakPairedWalletSmartAccount } from "./FrakPairedSmartWallet";
 import { signHashViaWebAuthN } from "./signature";
