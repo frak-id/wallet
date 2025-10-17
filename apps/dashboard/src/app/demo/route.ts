@@ -1,7 +1,7 @@
-import { isRunningLocally } from "@frak-labs/app-essentials";
+import { isRunningInProd, isRunningLocally } from "@frak-labs/app-essentials";
 import { getIronSession } from "iron-session";
 import type { SessionOptions } from "iron-session";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { type NextRequest, NextResponse } from "next/server";
 import type { Address, Hex } from "viem";
 
@@ -27,29 +27,35 @@ const sessionOptions: SessionOptions = {
 
 /**
  * Demo route handler that automatically activates demo mode and logs in
- * Access via: https://localhost:3001/demo
+ * Access via: http://localhost:3001/demo or https://business-dev.frak.id/demo
  */
 export async function GET(_request: NextRequest) {
-    // Only allow in development
-    if (!isRunningLocally) {
-        return new NextResponse("Demo mode only available in development", {
+    // Only allow in development and staging (block production)
+    if (isRunningInProd) {
+        return new NextResponse("Demo mode not available in production", {
             status: 403,
         });
     }
 
     const cookieStore = await cookies();
+    const headersList = await headers();
+
+    // Get the current domain from the request
+    const host = headersList.get("host") ?? "localhost:3001";
+    const protocol = isRunningLocally ? "http" : "https";
+    const origin = `${protocol}://${host}`;
 
     // Create mock SIWE message following EIP-4361 format exactly
     const expirationTime = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7);
     const issuedAt = new Date();
 
     // Format: {domain} wants you to sign in with your Ethereum account:\n{address}\n\n{statement}\n\n{fields}
-    const mockSiweMessage = `localhost:3001 wants you to sign in with your Ethereum account:
+    const mockSiweMessage = `${host} wants you to sign in with your Ethereum account:
 ${DEMO_WALLET_ADDRESS}
 
 Demo Mode Session
 
-URI: https://localhost:3001
+URI: ${origin}
 Version: 1
 Chain ID: 1
 Nonce: demo${Date.now()}
