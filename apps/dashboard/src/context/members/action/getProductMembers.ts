@@ -1,6 +1,11 @@
 "use server";
 
 import { getSafeSession } from "@/context/auth/actions/session";
+import {
+    getProductMembersMock,
+    getProductsMembersCountMock,
+} from "@/context/members/action/mock";
+import { isDemoModeActive } from "@/module/common/utils/isDemoMode";
 import type {
     GetMembersCountResponseDto,
     GetMembersRequestDto,
@@ -18,6 +23,11 @@ export type GetMembersParam = Omit<
  * @param params
  */
 export async function getProductMembers(params: GetMembersParam) {
+    // Check if demo mode is active
+    if (await isDemoModeActive()) {
+        return getProductMembersMock(params);
+    }
+
     try {
         const session = await getSafeSession();
 
@@ -42,6 +52,11 @@ export async function getProductMembers(params: GetMembersParam) {
 export async function getProductsMembersCount(
     params: Omit<GetMembersParam, "limit" | "offset" | "sort">
 ) {
+    // Check if demo mode is active
+    if (await isDemoModeActive()) {
+        return getProductsMembersCountMock(params);
+    }
+
     try {
         const session = await getSafeSession();
 

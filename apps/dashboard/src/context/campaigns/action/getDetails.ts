@@ -2,7 +2,12 @@
 
 import { getSafeSession } from "@/context/auth/actions/session";
 import { viemClient } from "@/context/blockchain/provider";
+import {
+    getCampaignDetailsMock,
+    getOnChainCampaignsDetailsMock,
+} from "@/context/campaigns/action/mock";
 import { getCampaignRepository } from "@/context/campaigns/repository/CampaignRepository";
+import { isDemoModeActive } from "@/module/common/utils/isDemoMode";
 import {
     addresses,
     interactionCampaignAbi,
@@ -20,6 +25,11 @@ import { multicall, readContract } from "viem/actions";
 export async function getCampaignDetails({
     campaignId,
 }: { campaignId: string }) {
+    // Check if demo mode is active
+    if (await isDemoModeActive()) {
+        return getCampaignDetailsMock({ campaignId });
+    }
+
     const campaignRepository = await getCampaignRepository();
     const campaignDb = await campaignRepository.getOneById(
         ObjectId.createFromHexString(campaignId)
@@ -43,6 +53,11 @@ export async function getCampaignDetails({
 export async function getOnChainCampaignsDetails({
     campaignAddress,
 }: { campaignAddress: Address }) {
+    // Check if demo mode is active
+    if (await isDemoModeActive()) {
+        return getOnChainCampaignsDetailsMock({ campaignAddress });
+    }
+
     const session = await getSafeSession();
 
     // Get the campaign product id

@@ -1,3 +1,4 @@
+import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { backendApi } from "@frak-labs/client/server";
 import { useQuery } from "@tanstack/react-query";
 import { useAtomValue } from "jotai";
@@ -6,12 +7,21 @@ import { type Address, formatUnits } from "viem";
 import { preferredCurrencyAtom } from "../atoms/currency";
 import { formatPrice } from "../utils/formatPrice";
 
-function conversionRateQueryOptions(token?: Address) {
+function conversionRateQueryOptions(token?: Address, isDemoMode?: boolean) {
     return {
         enabled: !!token,
-        queryKey: ["conversionRate", token],
+        queryKey: ["conversionRate", token, isDemoMode ? "demo" : "live"],
         queryFn: async () => {
             if (!token) return null;
+
+            // Return mock conversion rates in demo mode
+            if (isDemoMode) {
+                return {
+                    eur: 0.92,
+                    usd: 1.0,
+                    gbp: 0.79,
+                };
+            }
 
             const { data, error } = await backendApi.common.rate.get({
                 query: { token },
@@ -26,7 +36,8 @@ function conversionRateQueryOptions(token?: Address) {
 }
 
 function useConversionRate({ token }: { token?: Address }) {
-    return useQuery(conversionRateQueryOptions(token));
+    const isDemoMode = useIsDemoMode();
+    return useQuery(conversionRateQueryOptions(token, isDemoMode));
 }
 
 /**

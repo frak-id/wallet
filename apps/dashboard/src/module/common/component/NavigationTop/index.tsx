@@ -4,6 +4,7 @@
 // import { Envelope } from "@/assets/icons/Envelope";
 // import { Notification } from "@/assets/icons/Notification";
 // import { Search } from "@/assets/icons/Search";
+import { DemoModeBadge } from "@/module/common/component/DemoModeBadge";
 import { NavigationProfile } from "@/module/common/component/NavigationProfile";
 import { ButtonRefresh } from "@frak-labs/ui/component/ButtonRefresh";
 // import { useRouter } from "next/navigation";
@@ -29,6 +30,7 @@ export function NavigationTop() {
                     </NavigationTopItem>
                 </ul>
             </nav>*/}
+            <DemoModeBadge />
             <ButtonRefresh />
             <NavigationProfile />
         </div>

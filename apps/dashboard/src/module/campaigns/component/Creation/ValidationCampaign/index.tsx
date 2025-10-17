@@ -16,6 +16,7 @@ import { ButtonCancel } from "@/module/campaigns/component/Creation/NewCampaign/
 import { FormCheck } from "@/module/campaigns/component/Creation/ValidationCampaign/FormCheck";
 import { useSaveCampaign } from "@/module/campaigns/hook/useSaveCampaign";
 import { preferredCurrencyAtom } from "@/module/common/atoms/currency";
+import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { Head } from "@/module/common/component/Head";
 import { Panel } from "@/module/common/component/Panel";
 import { Form, FormLayout } from "@/module/forms/Form";
@@ -39,6 +40,7 @@ export function ValidationCampaign() {
     const save = useSaveCampaign();
     const campaignIsClosing = useAtomValue(campaignIsClosingAtom);
     const preferredCurrency = useAtomValue(preferredCurrencyAtom);
+    const isDemoMode = useIsDemoMode();
 
     // Hook used to send transaction via the nexus wallet
     const { mutateAsync: sendTransaction, isPending: isPendingTransaction } =
@@ -49,6 +51,13 @@ export function ValidationCampaign() {
         useMutation({
             mutationKey: ["campaign", "create"],
             mutationFn: async (campaign: Campaign) => {
+                // In demo mode, just simulate success
+                if (isDemoMode) {
+                    await new Promise((resolve) => setTimeout(resolve, 1000));
+                    setCampaignSuccess(true);
+                    return;
+                }
+
                 const campaignWithCurrency = {
                     ...campaign,
                     setupCurrency: preferredCurrency,

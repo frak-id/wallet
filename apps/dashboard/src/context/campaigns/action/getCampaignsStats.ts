@@ -2,7 +2,9 @@
 
 import { getSafeSession } from "@/context/auth/actions/session";
 import { getBankTokenInfo } from "@/context/campaigns/action/getBankInfo";
+import { getMyCampaignsStatsMock } from "@/context/campaigns/action/mock";
 import { getCampaignRepository } from "@/context/campaigns/repository/CampaignRepository";
+import { isDemoModeActive } from "@/module/common/utils/isDemoMode";
 import { indexerApi } from "@frak-labs/client/server";
 import { type Address, formatUnits, getAddress, isAddressEqual } from "viem";
 
@@ -35,6 +37,11 @@ type ApiResult = {
  * Get the current user campaigns
  */
 export async function getMyCampaignsStats() {
+    // Check if demo mode is active
+    if (await isDemoModeActive()) {
+        return getMyCampaignsStatsMock();
+    }
+
     const session = await getSafeSession();
 
     // Perform the request to our api
