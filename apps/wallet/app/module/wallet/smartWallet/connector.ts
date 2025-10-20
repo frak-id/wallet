@@ -1,29 +1,29 @@
-import type { Address, Hex, Transport } from "viem";
-import { createConnector } from "wagmi";
+import type { Address, Hex } from "viem";
+import { type CreateConnectorFn, createConnector } from "wagmi";
 import { currentChain } from "@/module/blockchain/provider";
-import { getSmartAccountProvider } from "@/module/wallet/smartWallet/provider";
+import {
+    getSmartAccountProvider,
+    type SmartAccountProviderType,
+} from "@/module/wallet/smartWallet/provider";
 
 smartAccountConnector.type = "frakSmartAccountConnector" as const;
 
-export type FrakWalletConnector = ReturnType<typeof smartAccountConnector> & {
-    setEcdsaSigner: (
-        signer:
-            | ((args: { hash: Hex; address: Address }) => Promise<Hex>)
-            | undefined
-    ) => void;
-};
+export type FrakWalletConnector = ReturnType<FrakWalletConnectorFn>;
+export type FrakWalletConnectorFn = CreateConnectorFn<
+    SmartAccountProviderType,
+    {
+        setEcdsaSigner: (
+            signer: (args: { hash: Hex; address: Address }) => Promise<Hex>
+        ) => void;
+    }
+>;
 
 /**
  * Create a connector for the smart account
  */
-export function smartAccountConnector<
-    transport extends Transport = Transport,
->() {
-    // A few types shortcut
-    type Provider = ReturnType<typeof getSmartAccountProvider<transport>>;
-
-    // The current provider
-    let provider: Provider | undefined;
+export function smartAccountConnector(): FrakWalletConnectorFn {
+    // The current provider (cached)
+    let cachedProvider: SmartAccountProviderType | undefined;
 
     // The current ecdsa signer
     let ecdsaSigner:
@@ -31,12 +31,7 @@ export function smartAccountConnector<
         | undefined;
 
     // Create the wagmi connector itself
-    return createConnector<
-        Provider,
-        {
-            setEcdsaSigner: (signer: typeof ecdsaSigner) => void;
-        }
-    >((config) => ({
+    return createConnector((config) => ({
         id: "frak-wallet-connector",
         name: "Frak Smart Account",
         type: smartAccountConnector.type,
@@ -55,7 +50,7 @@ export function smartAccountConnector<
          */
         async connect({ chainId } = {}) {
             // Fetch the provider
-            const provider = await this.getProvider();
+            const accountProvider = await this.getProvider();
 
             // If the chain id is not provided, use the current chain
             if (chainId && chainId !== currentChain.id) {
@@ -63,17 +58,19 @@ export function smartAccountConnector<
             }
 
             // If we got it in cache return it
-            if (provider.currentSmartAccountClient) {
+            if (accountProvider.currentSmartAccountClient) {
                 return {
                     accounts: [
-                        provider.currentSmartAccountClient.account.address,
+                        accountProvider.currentSmartAccountClient.account
+                            .address,
                     ],
                     chainId: currentChain.id,
                 };
             }
 
             // Ask the provider to build it
-            const smartAccountClient = await provider.getSmartAccountClient();
+            const smartAccountClient =
+                await accountProvider.getSmartAccountClient();
             return {
                 accounts: smartAccountClient
                     ? [smartAccountClient.account.address]
@@ -93,12 +90,15 @@ export function smartAccountConnector<
          * Fetch the current accounts
          */
         async getAccounts() {
-            const provider = await this.getProvider();
-            if (provider.currentSmartAccountClient) {
-                return [provider.currentSmartAccountClient.account.address];
+            const accountProvider = await this.getProvider();
+            if (accountProvider.currentSmartAccountClient) {
+                return [
+                    accountProvider.currentSmartAccountClient.account.address,
+                ];
             }
             // Otherwise, get the account for the default chain (could be the case just after the login)
-            const smartAccountClient = await provider.getSmartAccountClient();
+            const smartAccountClient =
+                await accountProvider.getSmartAccountClient();
             if (!smartAccountClient) {
                 return [];
             }
@@ -116,7 +116,7 @@ export function smartAccountConnector<
         },
 
         async getClient(parameters?: { chainId?: number }) {
-            const provider = await this.getProvider();
+            const accountProvider = await this.getProvider();
 
             if (
                 parameters?.chainId &&
@@ -125,17 +125,17 @@ export function smartAccountConnector<
                 throw new Error("Invalid chain id");
             }
 
-            const client = await provider.getSmartAccountClient();
+            const client = await accountProvider.getSmartAccountClient();
             if (!client) {
                 throw new Error("No client found for the given chain");
             }
             return client;
         },
 
-        async getProvider(): Promise<Provider> {
-            if (!provider) {
+        async getProvider() {
+            if (!cachedProvider) {
                 // Create the provider
-                provider = getSmartAccountProvider({
+                cachedProvider = getSmartAccountProvider({
                     onAccountChanged: (wallet) => {
                         console.log("Wagmi provider account changed", {
                             wallet,
@@ -162,7 +162,7 @@ export function smartAccountConnector<
                     },
                 });
             }
-            return provider;
+            return cachedProvider;
         },
         onAccountsChanged() {
             // Not relevant
@@ -180,5 +180,5 @@ export function smartAccountConnector<
         setEcdsaSigner(signer: typeof ecdsaSigner) {
             ecdsaSigner = signer;
         },
-    }));
+    })) satisfies FrakWalletConnectorFn;
 }

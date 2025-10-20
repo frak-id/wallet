@@ -1,6 +1,6 @@
 import type { UseMutationOptions } from "@tanstack/react-query";
 import { type DefaultError, useMutation } from "@tanstack/react-query";
-import { createSmartAccountClient } from "permissionless";
+import { smartAccountActions } from "permissionless";
 import { getUserOperationGasPrice } from "permissionless/actions/pimlico";
 import {
     encodeFunctionData,
@@ -9,6 +9,7 @@ import {
     type LocalAccount,
     toHex,
 } from "viem";
+import { createBundlerClient } from "viem/account-abstraction";
 import { useClient } from "wagmi";
 import {
     getPimlicoClient,
@@ -67,10 +68,10 @@ export function usePerformRecovery(
             const pimlicoClient = getPimlicoClient();
 
             // Build the smart wallet client
-            const accountClient = createSmartAccountClient({
+            const accountClient = createBundlerClient({
                 account: smartAccount,
                 chain: client.chain,
-                bundlerTransport: pimlicoTransport,
+                transport: pimlicoTransport,
                 // Get the right gas fees for the user operation
                 userOperation: {
                     estimateFeesPerGas: async () => {
@@ -81,7 +82,7 @@ export function usePerformRecovery(
                     },
                 },
                 paymaster: true,
-            });
+            }).extend(smartAccountActions);
 
             // Build the function data
             const fnData = encodeFunctionData({
