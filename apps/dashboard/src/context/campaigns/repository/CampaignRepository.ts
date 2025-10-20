@@ -95,6 +95,11 @@ class CampaignRepository {
             });
         }
 
+        // If no conditions, return empty array to avoid MongoDB error
+        if (conditions.length === 0) {
+            return [];
+        }
+
         // If we got only one condition, just return it
         if (conditions.length === 1) {
             return this.collection.find(conditions[0]).toArray();
