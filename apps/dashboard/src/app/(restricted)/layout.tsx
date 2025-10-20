@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { DemoModeSync } from "@/module/common/component/DemoModeSync";
 import { Header } from "@/module/common/component/Header";
 import { MainLayout } from "@/module/common/component/MainLayout";
