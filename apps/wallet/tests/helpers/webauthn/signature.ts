@@ -67,7 +67,9 @@ export async function getRegistrationResponse(
     const digest = createHash("sha256").update(verifyData).digest();
 
     // Sign it
-    const signature = p256.sign(digest, authenticator.privateKey, { format: "der" });
+    const signature = p256.sign(digest, authenticator.privateKey, {
+        format: "der",
+    });
 
     // Build the attestation object
     const attestationStmtMap = new Map<string, number | Uint8Array>();
@@ -158,7 +160,9 @@ export function getAuthenticationResponse(
     const digest = createHash("sha256").update(verifyData).digest();
 
     // Sign it
-    const signature = p256.sign(digest, authenticator.privateKey, { format: "der" });
+    const signature = p256.sign(digest, authenticator.privateKey, {
+        format: "der",
+    });
 
     return {
         id: bufferToBase64URLString(
@@ -169,9 +173,7 @@ export function getAuthenticationResponse(
         authenticatorAttachment: "platform",
         response: {
             authenticatorData: Buffer.from(authData).toString("base64url"),
-            signature: Buffer.from(signature).toString(
-                "base64url"
-            ),
+            signature: Buffer.from(signature).toString("base64url"),
             clientDataJSON: Buffer.from(clientDataJSON).toString("base64url"),
             userHandle: Buffer.from(
                 authenticator.credentialId as unknown as ArrayBuffer
