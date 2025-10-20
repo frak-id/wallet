@@ -48,7 +48,7 @@
     "@tanstack/react-query": "^5.90.3",
     "@tanstack/react-query-devtools": "^5.90.2",
     "@tanstack/react-query-persist-client": "^5.90.5",
-    "@wagmi/core": "^2.22.1",
+    "@wagmi/core": "2.17.3",
     "class-variance-authority": "^0.7.1",
     "cuer": "^0.0.2",
     "dexie": "^4.2.1",
@@ -78,7 +78,7 @@
     "ua-parser-js": "^2.0.6",
     "vaul": "^1.1.2",
     "viem": "catalog:",
-    "wagmi": "^2.18.1"
+    "wagmi": "2.15.6"
   },
   "devDependencies": {
     "@frak-labs/backend-elysia": "workspace:*",
