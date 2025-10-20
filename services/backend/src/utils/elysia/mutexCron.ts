@@ -101,28 +101,24 @@ export const mutexCron = <Name extends string = string>({
         };
 
         // And the cron
-        const cron = new Cron(
-            pattern,
-            finalOptions,
-            async (args: { options: CronContext }) => {
-                if (skipIfLocked && mutex.isLocked()) {
-                    logger.debug(`[Cron] Skipping cron because it's locked`);
-                    return;
-                }
-                // Run exclusively the cron
-                await mutex.runExclusive(async () => {
-                    // Perform the run
-                    await run(args.options);
-                    // If we got an interval, waiting for it before releasing the mutex
-                    if (coolDownInMs) {
-                        logger.debug(
-                            `[Cron] Waiting ${coolDownInMs}ms before releasing the mutex`
-                        );
-                        await Bun.sleep(coolDownInMs);
-                    }
-                });
+        const cron = new Cron(pattern, finalOptions, async (self) => {
+            if (skipIfLocked && mutex.isLocked()) {
+                logger.debug(`[Cron] Skipping cron because it's locked`);
+                return;
             }
-        );
+            // Run exclusively the cron
+            await mutex.runExclusive(async () => {
+                // Perform the run
+                await run(self as CronContext);
+                // If we got an interval, waiting for it before releasing the mutex
+                if (coolDownInMs) {
+                    logger.debug(
+                        `[Cron] Waiting ${coolDownInMs}ms before releasing the mutex`
+                    );
+                    await Bun.sleep(coolDownInMs);
+                }
+            });
+        });
 
         // If got a trigger key, listen to it
         if (triggerKeys) {
