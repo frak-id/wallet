@@ -202,12 +202,12 @@ export function TableCampaignPerformance() {
                         <TooltipTable
                             content={
                                 <>
-                                    <strong>Cost per Purchase</strong>
-                                    <br /> Average cost per purchase.
+                                    <strong>Cost Per Action</strong>
+                                    <br /> Average cost per action.
                                 </>
                             }
                         >
-                            <span>Cost per Purchase</span>
+                            <span>Cost Per Action</span>
                         </TooltipTable>
                     ),
                     cell: ({ row, getValue }) => (
