@@ -83,7 +83,7 @@
   "devDependencies": {
     "@frak-labs/backend-elysia": "workspace:*",
     "@frak-labs/browserslist-config": "workspace:*",
-    "@noble/curves": "^1.9.2",
+    "@noble/curves": "^2.0.1",
     "@playwright/test": "^1.56.0",
     "@react-router/dev": "^7.9.4",
     "@types/dotenv": "^8.2.3",

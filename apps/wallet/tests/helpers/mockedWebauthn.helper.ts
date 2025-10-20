@@ -1,6 +1,6 @@
 import { randomBytes } from "node:crypto";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import { p256 } from "@noble/curves/p256";
+import { p256 } from "@noble/curves/nist.js";
 import type { Frame, Page } from "@playwright/test";
 import type {
     AuthenticationCredential,
@@ -322,7 +322,7 @@ export class MockedWebAuthNHelper {
     private generateCredentialProp() {
         // Convert to base64 and add platform-specific prefix
         const credentialId = `PLAYWRIGHT_${randomBytes(32).toString("base64")}`;
-        const privateKey = p256.utils.randomPrivateKey();
+        const privateKey = p256.utils.randomSecretKey();
         const publicKey = p256.getPublicKey(privateKey, false);
         // Return the credential properties
         return {
