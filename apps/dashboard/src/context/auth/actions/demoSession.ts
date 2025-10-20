@@ -1,8 +1,8 @@
 "use server";
 
 import { isRunningLocally } from "@frak-labs/app-essentials";
-import { getIronSession } from "iron-session";
 import type { SessionOptions } from "iron-session";
+import { getIronSession } from "iron-session";
 import { cookies } from "next/headers";
 import type { Address, Hex } from "viem";
 

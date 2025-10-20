@@ -1,7 +1,7 @@
 "use server";
 
-import productsData from "@/mock/products.json";
 import type { Hex } from "viem";
+import productsData from "@/mock/products.json";
 
 type GetProductResult = {
     owner: { id: Hex; name: string; domain: string }[];

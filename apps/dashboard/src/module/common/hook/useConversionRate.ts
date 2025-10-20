@@ -1,9 +1,9 @@
-import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { backendApi } from "@frak-labs/client/server";
 import { useQuery } from "@tanstack/react-query";
 import { useAtomValue } from "jotai";
 import { useMemo } from "react";
 import { type Address, formatUnits } from "viem";
+import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { preferredCurrencyAtom } from "../atoms/currency";
 import { formatPrice } from "../utils/formatPrice";
 

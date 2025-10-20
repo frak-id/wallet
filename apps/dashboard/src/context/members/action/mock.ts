@@ -1,12 +1,12 @@
 "use server";
 
-import membersData from "@/mock/members.json";
 import type {
     GetMembersPageItem,
     GetMembersRequestDto,
     GetMembersResponseDto,
 } from "@frak-labs/app-essentials";
 import type { Hex } from "viem";
+import membersData from "@/mock/members.json";
 
 type GetMembersParam = Omit<GetMembersRequestDto, "noData" | "onlyAddress">;
 
@@ -72,7 +72,8 @@ function filterByTimestamp(
         const minValue = timestamp.min;
         filtered = filtered.filter(
             (member) =>
-                Number.parseInt(member.firstInteractionTimestamp) >= minValue
+                Number.parseInt(member.firstInteractionTimestamp, 10) >=
+                minValue
         );
     }
 
@@ -80,7 +81,8 @@ function filterByTimestamp(
         const maxValue = timestamp.max;
         filtered = filtered.filter(
             (member) =>
-                Number.parseInt(member.firstInteractionTimestamp) <= maxValue
+                Number.parseInt(member.firstInteractionTimestamp, 10) <=
+                maxValue
         );
     }
 
@@ -150,12 +152,13 @@ export async function getProductMembersMock(
                     break;
                 case "rewards":
                     comparison =
-                        Number.parseInt(a.rewards) - Number.parseInt(b.rewards);
+                        Number.parseInt(a.rewards, 10) -
+                        Number.parseInt(b.rewards, 10);
                     break;
                 case "firstInteractionTimestamp":
                     comparison =
-                        Number.parseInt(a.firstInteractionTimestamp) -
-                        Number.parseInt(b.firstInteractionTimestamp);
+                        Number.parseInt(a.firstInteractionTimestamp, 10) -
+                        Number.parseInt(b.firstInteractionTimestamp, 10);
                     break;
             }
 

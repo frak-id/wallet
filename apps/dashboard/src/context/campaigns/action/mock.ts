@@ -1,9 +1,9 @@
 "use server";
 
+import type { Address } from "viem";
 import campaignStatsData from "@/mock/campaignStats.json";
 import campaignsData from "@/mock/campaigns.json";
 import type { CampaignWithState } from "@/types/Campaign";
-import type { Address } from "viem";
 
 /**
  * Mock implementation of getMyCampaigns for demo mode
@@ -57,7 +57,9 @@ export async function getMyCampaignsStatsMock(): Promise<
  */
 export async function getCampaignDetailsMock({
     campaignId,
-}: { campaignId: string }) {
+}: {
+    campaignId: string;
+}) {
     // Simulate network delay
     await new Promise((resolve) => setTimeout(resolve, 250));
 
@@ -84,7 +86,9 @@ export async function getCampaignDetailsMock({
  */
 export async function getOnChainCampaignsDetailsMock({
     campaignAddress,
-}: { campaignAddress: Address }) {
+}: {
+    campaignAddress: Address;
+}) {
     // Simulate network delay
     await new Promise((resolve) => setTimeout(resolve, 300));
 

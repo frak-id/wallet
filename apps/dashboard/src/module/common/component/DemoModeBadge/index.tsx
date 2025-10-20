@@ -1,7 +1,7 @@
 "use client";
 
-import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { useRouter } from "next/navigation";
+import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import styles from "./index.module.css";
 
 export function DemoModeBadge() {
