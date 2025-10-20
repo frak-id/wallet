@@ -21,6 +21,8 @@ const vendorChunks = {
         "node_modules/permissionless",
         "node_modules/@simplewebauthn",
         "node_modules/@peculiar",
+        "node_modules/@noble",
+        "node_modules/@scure",
     ],
     // Translation + shared ui
     3: ["i18next", "packages/ui"],

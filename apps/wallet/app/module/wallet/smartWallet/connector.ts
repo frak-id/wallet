@@ -48,6 +48,7 @@ export function smartAccountConnector(): FrakWalletConnectorFn {
          * Connect to the smart account
          * @param chainId
          */
+        // @ts-ignore TS2322: withCapabilities of wagmi fcking up function the signature
         async connect({ chainId } = {}) {
             // Fetch the provider
             const accountProvider = await this.getProvider();
@@ -58,12 +59,10 @@ export function smartAccountConnector(): FrakWalletConnectorFn {
             }
 
             // If we got it in cache return it
-            if (accountProvider.currentSmartAccountClient) {
+            const cachedAccount = accountProvider.currentSmartAccountClient?.account?.address;
+            if (cachedAccount) {
                 return {
-                    accounts: [
-                        accountProvider.currentSmartAccountClient.account
-                            .address,
-                    ],
+                    accounts: [cachedAccount],
                     chainId: currentChain.id,
                 };
             }
