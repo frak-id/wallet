@@ -44,9 +44,12 @@ const persistOptions: PersistQueryClientProviderProps["persistOptions"] = {
     maxAge: Number.POSITIVE_INFINITY,
     dehydrateOptions: {
         shouldDehydrateQuery: ({ meta, state }) => {
-            const isValid = state.status === "success";
+            // Only dehydrate successful queries, exclude pending/error/paused
+            const isSuccess = state.status === "success";
             const isStorable = (meta?.storable as boolean) ?? true;
-            return isValid && isStorable;
+            // Also ensure data exists to prevent hydration issues
+            const hasData = state.data !== undefined;
+            return isSuccess && isStorable && hasData;
         },
     },
     // Invalidate the cache when the app version changes

@@ -18,6 +18,8 @@ export function useGetUserBalance() {
             return data;
         },
         enabled: !!address,
+        // Only refetch on mount if data is stale (respects global staleTime of 60s)
+        refetchOnMount: true,
     });
 
     return {
