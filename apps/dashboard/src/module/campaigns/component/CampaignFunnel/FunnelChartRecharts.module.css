@@ -1,0 +1,44 @@
+.container {
+    width: 100%;
+    padding: 1rem 0;
+}
+
+.tooltip {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 0.75rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.tooltipTitle {
+    font-weight: 600;
+    color: #111827;
+    margin: 0 0 0.5rem 0;
+    font-size: 0.875rem;
+}
+
+.tooltipValue {
+    font-size: 0.875rem;
+    color: #374151;
+    margin: 0.25rem 0;
+}
+
+.tooltipType {
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin: 0.25rem 0;
+}
+
+.tooltipConversion {
+    font-size: 0.75rem;
+    color: #10b981;
+    font-weight: 600;
+    margin: 0.25rem 0;
+}
+
+.label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    white-space: nowrap;
+}
