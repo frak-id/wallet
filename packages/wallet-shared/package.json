@@ -19,7 +19,8 @@
     "./types/*": "./src/types/*",
     "./wallet/*": "./src/wallet/*",
     "./interaction/*": "./src/interaction/*",
-    "./recovery/*": "./src/recovery/*"
+    "./recovery/*": "./src/recovery/*",
+    "./i18n": "./src/i18n/config.ts"
   },
   "dependencies": {
     "@elysiajs/eden": "^1.4.1",

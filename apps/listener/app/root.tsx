@@ -8,6 +8,7 @@ import {
     Scripts,
     ScrollRestoration,
 } from "react-router";
+import { RootProvider } from "@/module/providers/RootProvider";
 import type { Route } from "./+types/root";
 
 export const meta = () => {
@@ -93,5 +94,9 @@ export function Layout({ children }: { children: ReactNode }) {
  * App component
  */
 export default function App() {
-    return <Outlet />;
+    return (
+        <RootProvider>
+            <Outlet />
+        </RootProvider>
+    );
 }
