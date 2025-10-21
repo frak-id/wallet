@@ -1,20 +1,17 @@
-import { getTransport } from "@frak-labs/app-essentials/blockchain";
 import { jotaiStore } from "@frak-labs/ui/atoms/store";
-import { currentChain } from "@frak-labs/wallet-shared/blockchain/provider";
 import { usePersistentPairingClient } from "@frak-labs/wallet-shared/pairing/hook/usePersistentPairingClient";
+import { WagmiProviderWithDynamicConfig } from "@frak-labs/wallet-shared/providers/BaseProvider";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import type { PersistQueryClientProviderProps } from "@tanstack/react-query-persist-client";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { Provider } from "jotai";
-import { type PropsWithChildren, useEffect, useMemo } from "react";
-import { createClient } from "viem";
-import { createConfig, useAccount, WagmiProvider } from "wagmi";
+import { type PropsWithChildren, useEffect } from "react";
+import { useAccount } from "wagmi";
 import { authenticatedWalletApi } from "@/module/common/api/backendClient";
 import { useEnforceWagmiConnection } from "@/module/common/hook/useEnforceWagmiConnection";
 import { subscriptionAtom } from "@/module/notification/atom/subscriptionAtom";
-import { smartAccountConnector } from "@/module/wallet/smartWallet/connector";
 import { setProfileId } from "../analytics";
 
 /**
@@ -65,6 +62,7 @@ export function RootProvider({ children }: PropsWithChildren) {
             >
                 <SetupServiceWorker />
                 <WagmiProviderWithDynamicConfig>
+                    <SessionStateManager />
                     {children}
                 </WagmiProviderWithDynamicConfig>
                 <ReactQueryDevtools
@@ -132,35 +130,6 @@ function SetupServiceWorker() {
     }, []);
 
     return null;
-}
-
-function WagmiProviderWithDynamicConfig({ children }: PropsWithChildren) {
-    const config = useMemo(
-        () =>
-            createConfig({
-                chains: [currentChain],
-                connectors: [smartAccountConnector()],
-                multiInjectedProviderDiscovery: false,
-                client: ({ chain }) =>
-                    createClient({
-                        chain,
-                        transport: getTransport({ chain }),
-                        cacheTime: 60_000,
-                        batch: {
-                            multicall: {
-                                wait: 50,
-                            },
-                        },
-                    }),
-            }),
-        []
-    );
-    return (
-        <WagmiProvider config={config}>
-            <SessionStateManager />
-            {children}
-        </WagmiProvider>
-    );
 }
 
 function SessionStateManager() {

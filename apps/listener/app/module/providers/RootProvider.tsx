@@ -1,4 +1,5 @@
 import { jotaiStore } from "@frak-labs/ui/atoms/store";
+import { WagmiProviderWithDynamicConfig } from "@frak-labs/wallet-shared/providers/BaseProvider";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Provider } from "jotai";
 import type { PropsWithChildren } from "react";
@@ -19,13 +20,15 @@ const queryClient = new QueryClient({
 
 /**
  * Root provider for the listener app
- * Provides QueryClient and Jotai store to the app
+ * Provides QueryClient, Jotai store, and Wagmi to the app
  */
 export function RootProvider({ children }: PropsWithChildren) {
     return (
         <Provider store={jotaiStore}>
             <QueryClientProvider client={queryClient}>
-                {children}
+                <WagmiProviderWithDynamicConfig>
+                    {children}
+                </WagmiProviderWithDynamicConfig>
             </QueryClientProvider>
         </Provider>
     );

@@ -84,7 +84,15 @@ export default defineConfig(({ mode, isSsrBuild }: ConfigEnv): UserConfig => {
         },
         server: {
             port: 3000,
-            proxy: {},
+            proxy: {
+                // Proxy listener app from separate dev server
+                "/listener": {
+                    target: "https://localhost:3002",
+                    changeOrigin: true,
+                    secure: false, // Allow self-signed certs in dev
+                    ws: true, // Proxy websockets if needed
+                },
+            },
         },
         build: {
             // todo: should be switched to false once we resolved css conflicts
