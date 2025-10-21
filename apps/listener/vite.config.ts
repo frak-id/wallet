@@ -11,7 +11,7 @@ const DEBUG = JSON.stringify(false);
 
 export default defineConfig(({ isSsrBuild }: ConfigEnv): UserConfig => {
     return {
-        base: "/listener/",
+        base: "/listener",
         define: {
             "process.env.STAGE": JSON.stringify(process.env.STAGE),
             "process.env.BACKEND_URL": JSON.stringify(process.env.BACKEND_URL),
