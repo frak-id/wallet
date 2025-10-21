@@ -21,6 +21,7 @@ import {
 } from "@/context/members/action/getProductMembers";
 import { Row } from "@/module/common/component/Row";
 import type { ReactTableProps } from "@/module/common/component/Table";
+import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import {
     addSelectedMembersAtom,
     removeSelectedMembersAtom,
@@ -46,6 +47,7 @@ const columnHelper = createColumnHelper<GetMembersPageItem>();
  *  - filter on top
  */
 export function TableMembers() {
+    const isDemoMode = useIsDemoMode();
     const [filters, setFilters] = useAtom(tableMembersFiltersAtom);
     const [selectedMembers, setSelectedMembers] = useAtom(selectedMembersAtom);
     const addSelectedMember = useSetAtom(addSelectedMembersAtom);
@@ -161,10 +163,10 @@ export function TableMembers() {
                     enableSorting: true,
                     header: () => "Rewards",
                     cell: ({ getValue }) =>
-                        `${formatEther(BigInt(getValue()))} $`,
+                        `${formatEther(BigInt(getValue()))} ${isDemoMode ? "€" : "$"}`,
                 }),
             ] as ColumnDef<GetMembersPageItem>[],
-        [selectedMembers, addSelectedMember, removeSelectedMember]
+        [selectedMembers, addSelectedMember, removeSelectedMember, isDemoMode]
     );
 
     if (!page || isPending) {
