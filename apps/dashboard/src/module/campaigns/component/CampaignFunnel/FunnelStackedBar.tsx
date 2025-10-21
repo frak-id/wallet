@@ -60,13 +60,19 @@ export function FunnelStackedBar({ data }: Props) {
                                                     "en-US"
                                                 )}
                                             </span>
-                                            {step.dropoff > 0 && (
-                                                <span
-                                                    className={styles.dropoff}
-                                                >
-                                                    -{step.dropoff.toFixed(1)}%
-                                                </span>
-                                            )}
+                                            {step.dropoff > 0 &&
+                                                step.dropoff < 100 && (
+                                                    <span
+                                                        className={
+                                                            styles.conversion
+                                                        }
+                                                    >
+                                                        {(
+                                                            100 - step.dropoff
+                                                        ).toFixed(1)}
+                                                        %
+                                                    </span>
+                                                )}
                                         </>
                                     )}
                                 </div>
@@ -77,15 +83,19 @@ export function FunnelStackedBar({ data }: Props) {
                                         >
                                             {step.count.toLocaleString("en-US")}
                                         </span>
-                                        {step.dropoff > 0 && (
-                                            <span
-                                                className={
-                                                    styles.dropoffOutside
-                                                }
-                                            >
-                                                -{step.dropoff.toFixed(1)}%
-                                            </span>
-                                        )}
+                                        {step.dropoff > 0 &&
+                                            step.dropoff < 100 && (
+                                                <span
+                                                    className={
+                                                        styles.conversionOutside
+                                                    }
+                                                >
+                                                    {(
+                                                        100 - step.dropoff
+                                                    ).toFixed(1)}
+                                                    %
+                                                </span>
+                                            )}
                                     </div>
                                 )}
                             </div>
