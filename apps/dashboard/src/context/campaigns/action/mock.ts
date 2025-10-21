@@ -27,6 +27,7 @@ export async function getMyCampaignsStatsMock(): Promise<
         id: string;
         bank: Address;
         token: Address;
+        eventType: string;
         openInteractions: number;
         readInteractions: number;
         referredInteractions: number;

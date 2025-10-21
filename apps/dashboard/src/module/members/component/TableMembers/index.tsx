@@ -19,9 +19,9 @@ import {
     type GetMembersParam,
     getProductMembers,
 } from "@/context/members/action/getProductMembers";
+import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { Row } from "@/module/common/component/Row";
 import type { ReactTableProps } from "@/module/common/component/Table";
-import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import {
     addSelectedMembersAtom,
     removeSelectedMembersAtom,

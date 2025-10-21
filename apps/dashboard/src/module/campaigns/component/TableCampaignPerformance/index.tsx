@@ -75,6 +75,10 @@ export function TableCampaignPerformance() {
                     ),
                     footer: "Total",
                 }),
+                columnHelper.accessor("eventType", {
+                    header: "Event",
+                    cell: ({ getValue }) => getValue(),
+                }),
                 columnHelper.accessor("ambassador", {
                     header: () => (
                         <TooltipTable
