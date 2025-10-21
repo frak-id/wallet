@@ -7,38 +7,13 @@ import { useGetCampaignFunnel } from "@/module/campaigns/hook/useGetCampaignFunn
 import { Panel } from "@/module/common/component/Panel";
 import { FunnelFilters } from "./FunnelFilters";
 import { FunnelMetrics } from "./FunnelMetrics";
-import { FunnelStackedBar } from "./FunnelStackedBar";
 import styles from "./index.module.css";
 
-// Dynamic imports for recharts components to reduce main bundle size
-const FunnelChartRecharts = dynamic(
-    () =>
-        import("./FunnelChartRecharts").then((mod) => ({
-            default: mod.FunnelChartRecharts,
-        })),
-    { ssr: false, loading: () => <Skeleton /> }
-);
-
+// Dynamic import for recharts horizontal bar chart to reduce main bundle size
 const BarChartRecharts = dynamic(
     () =>
         import("./BarChartRecharts").then((mod) => ({
             default: mod.BarChartRecharts,
-        })),
-    { ssr: false, loading: () => <Skeleton /> }
-);
-
-const AreaChartRecharts = dynamic(
-    () =>
-        import("./AreaChartRecharts").then((mod) => ({
-            default: mod.AreaChartRecharts,
-        })),
-    { ssr: false, loading: () => <Skeleton /> }
-);
-
-const ComposedChartRecharts = dynamic(
-    () =>
-        import("./ComposedChartRecharts").then((mod) => ({
-            default: mod.ComposedChartRecharts,
         })),
     { ssr: false, loading: () => <Skeleton /> }
 );
@@ -51,7 +26,11 @@ export function CampaignFunnel() {
     );
 
     if (isLoading || !data) {
-        return <Skeleton />;
+        return (
+            <div className={styles.visualizations}>
+                <Skeleton />
+            </div>
+        );
     }
 
     return (
@@ -70,38 +49,9 @@ export function CampaignFunnel() {
                 <FunnelMetrics metrics={data.metrics} />
             </Panel>
 
-            {/* Original CSS-based Funnel */}
+            {/* Conversion Funnel */}
             <Panel title="Conversion Funnel" withBadge={false}>
-                <FunnelStackedBar data={data} />
-            </Panel>
-
-            {/* Recharts Visualizations */}
-            <Panel
-                title="Recharts Style 1: Native Funnel Chart"
-                withBadge={false}
-            >
-                <FunnelChartRecharts data={data} />
-            </Panel>
-
-            <Panel
-                title="Recharts Style 2: Horizontal Bar Chart"
-                withBadge={false}
-            >
                 <BarChartRecharts data={data} />
-            </Panel>
-
-            <Panel
-                title="Recharts Style 3: Area Chart (Flow Visualization)"
-                withBadge={false}
-            >
-                <AreaChartRecharts data={data} />
-            </Panel>
-
-            <Panel
-                title="Recharts Style 4: Composed Chart (Bars + Conversion Line)"
-                withBadge={false}
-            >
-                <ComposedChartRecharts data={data} />
             </Panel>
         </div>
     );
