@@ -3,11 +3,11 @@
 import { useWalletStatus } from "@frak-labs/react-sdk";
 import { Button } from "@frak-labs/ui/component/Button";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
 import { deleteSession } from "@/context/auth/actions/session";
 import { useDemoMode } from "@/module/common/atoms/demoMode";
 import { Head } from "@/module/common/component/Head";
 import { Panel } from "@/module/common/component/Panel";
+import { useHydrated } from "@/module/common/hook/useHydrated";
 import { DemoModeSwitch } from "@/module/settings/DemoModeSwitch";
 import { SelectCurrency } from "@/module/settings/SelectCurrency";
 import styles from "./page.module.css";
@@ -16,12 +16,7 @@ export default function SettingsPage() {
     const router = useRouter();
     const { data: walletStatus } = useWalletStatus();
     const { isDemoMode, setDemoMode } = useDemoMode();
-    const [isHydrated, setIsHydrated] = useState(false);
-
-    // Prevent hydration mismatch by waiting for client-side hydration
-    useEffect(() => {
-        setIsHydrated(true);
-    }, []);
+    const isHydrated = useHydrated();
 
     return (
         <>

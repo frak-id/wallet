@@ -1,0 +1,150 @@
+.visualizations {
+    margin-top: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.container {
+    padding: 1.5rem;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: white;
+    margin: 0;
+}
+
+.metricsGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.metricCard {
+    padding: 1rem;
+    background: #f9fafb;
+    border-radius: 6px;
+    border: 1px solid #e5e7eb;
+}
+
+.metricLabel {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #6b7280;
+    margin: 0 0 0.5rem 0;
+}
+
+.metricValue {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0 0 0.25rem 0;
+}
+
+.metricDescription {
+    font-size: 0.75rem;
+    color: #9ca3af;
+    margin: 0;
+}
+
+.funnelContainer {
+    display: flex;
+    gap: 2rem;
+    margin-top: 1.5rem;
+}
+
+.funnelColumn {
+    flex: 1;
+}
+
+.funnelHeader {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.funnelStep {
+    position: relative;
+    padding: 1rem;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: transform 0.2s;
+}
+
+.funnelStep:hover {
+    transform: translateX(4px);
+}
+
+.funnelStep.referrer {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.funnelStep.referred {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.funnelStep.rewards {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.stepName {
+    font-size: 0.9375rem;
+    font-weight: 500;
+}
+
+.stepCount {
+    font-size: 1.125rem;
+    font-weight: 700;
+}
+
+.stepDropoff {
+    position: absolute;
+    right: 1rem;
+    top: -0.75rem;
+    background: #ef4444;
+    color: white;
+    padding: 0.125rem 0.5rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.rewardsStep {
+    margin-top: 2rem;
+    padding: 1.25rem;
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    color: white;
+    border-radius: 4px;
+    text-align: center;
+}
+
+.rewardsLabel {
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.rewardsCount {
+    font-size: 1.75rem;
+    font-weight: 700;
+}

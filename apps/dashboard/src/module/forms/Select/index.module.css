@@ -11,6 +11,7 @@
     background-color: white;
     border: 1px solid var(--frak-color-mischka);
     cursor: pointer;
+    color: var(--frak-color-tuna);
 
     &:focus-visible {
         box-shadow: 0 0 0 1px var(--frak-focus-border-color);

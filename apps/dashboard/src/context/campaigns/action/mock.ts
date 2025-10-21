@@ -1,9 +1,11 @@
 "use server";
 
 import type { Address } from "viem";
+import campaignFunnelData from "@/mock/campaignFunnel.json";
 import campaignStatsData from "@/mock/campaignStats.json";
 import campaignsData from "@/mock/campaigns.json";
 import type { CampaignWithState } from "@/types/Campaign";
+import type { CampaignFunnelData } from "@/types/Funnel";
 
 /**
  * Mock implementation of getMyCampaigns for demo mode
@@ -139,4 +141,36 @@ export async function getOnChainCampaignsDetailsMock({
         // biome-ignore lint/suspicious/noExplicitAny: Type assertion needed to match Viem's ABI-inferred tuple type from multicall
         config: [capConfig, activationPeriod, bankAddress] as any,
     };
+}
+
+/**
+ * Mock implementation of getCampaignFunnel for demo mode
+ * Returns funnel data for a specific campaign or global aggregated data
+ */
+export async function getCampaignFunnelMock({
+    campaignId,
+}: {
+    campaignId?: string;
+}): Promise<CampaignFunnelData> {
+    // Simulate network delay
+    await new Promise((resolve) => setTimeout(resolve, 300));
+
+    // Return global funnel if no campaign ID specified
+    if (!campaignId) {
+        return campaignFunnelData.global as CampaignFunnelData;
+    }
+
+    // Find the campaign funnel by ID
+    const campaigns = campaignFunnelData.campaigns as Record<
+        string,
+        CampaignFunnelData
+    >;
+    const campaignFunnel = campaigns[campaignId];
+
+    if (!campaignFunnel) {
+        // Return global as fallback
+        return campaignFunnelData.global as CampaignFunnelData;
+    }
+
+    return campaignFunnel;
 }

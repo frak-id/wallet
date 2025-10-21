@@ -1,0 +1,148 @@
+{
+    "global": {
+        "referrer": {
+            "steps": [
+                { "name": "Modal visit", "count": 14446, "dropoff": 0 },
+                { "name": "Wallet", "count": 7210, "dropoff": 50.1 },
+                { "name": "Share", "count": 7210, "dropoff": 0 }
+            ]
+        },
+        "referred": {
+            "steps": [
+                { "name": "Site visit", "count": 2384, "dropoff": 0 },
+                { "name": "Wallet", "count": 1192, "dropoff": 50.0 },
+                { "name": "Purchase", "count": 286, "dropoff": 76.0 }
+            ]
+        },
+        "rewards": {
+            "name": "Rewards received",
+            "count": 286
+        },
+        "metrics": {
+            "cpm": 0.41,
+            "cpc": 2.48,
+            "sharingRate": 49.25,
+            "cpa": 20.68,
+            "cac": 20.68,
+            "amountSpent": 5955.0
+        }
+    },
+    "campaigns": {
+        "507f1f77bcf86cd799439011": {
+            "title": "Summer Referral Campaign",
+            "referrer": {
+                "steps": [
+                    { "name": "Modal visit", "count": 5550, "dropoff": 0 },
+                    { "name": "Wallet", "count": 3164, "dropoff": 43.0 },
+                    { "name": "Share", "count": 3164, "dropoff": 0 }
+                ]
+            },
+            "referred": {
+                "steps": [
+                    { "name": "Site visit", "count": 1360, "dropoff": 0 },
+                    { "name": "Wallet", "count": 680, "dropoff": 50.0 },
+                    { "name": "Purchase", "count": 163, "dropoff": 76.0 }
+                ]
+            },
+            "rewards": {
+                "name": "Rewards received",
+                "count": 163
+            },
+            "metrics": {
+                "cpm": 0.59,
+                "cpc": 2.4,
+                "sharingRate": 57.0,
+                "cpa": 20.0,
+                "cac": 20.0,
+                "amountSpent": 3265.0
+            }
+        },
+        "507f1f77bcf86cd799439012": {
+            "title": "Awareness Campaign",
+            "referrer": {
+                "steps": [
+                    { "name": "Modal visit", "count": 151, "dropoff": 0 },
+                    { "name": "Wallet", "count": 77, "dropoff": 49.0 },
+                    { "name": "Share", "count": 77, "dropoff": 0 }
+                ]
+            },
+            "referred": {
+                "steps": [
+                    { "name": "Site visit", "count": 25, "dropoff": 0 },
+                    { "name": "Wallet", "count": 12, "dropoff": 52.0 },
+                    { "name": "Purchase", "count": 3, "dropoff": 75.0 }
+                ]
+            },
+            "rewards": {
+                "name": "Rewards received",
+                "count": 3
+            },
+            "metrics": {
+                "cpm": 0.3,
+                "cpc": 2.96,
+                "sharingRate": 51.0,
+                "cpa": 3.0,
+                "cac": 3.0,
+                "amountSpent": 74.0
+            }
+        },
+        "507f1f77bcf86cd799439014": {
+            "title": "Traffic Boost",
+            "referrer": {
+                "steps": [
+                    { "name": "Modal visit", "count": 2810, "dropoff": 0 },
+                    { "name": "Wallet", "count": 1180, "dropoff": 58.0 },
+                    { "name": "Share", "count": 1180, "dropoff": 0 }
+                ]
+            },
+            "referred": {
+                "steps": [
+                    { "name": "Site visit", "count": 330, "dropoff": 0 },
+                    { "name": "Wallet", "count": 165, "dropoff": 50.0 },
+                    { "name": "Purchase", "count": 40, "dropoff": 75.8 }
+                ]
+            },
+            "rewards": {
+                "name": "Rewards received",
+                "count": 40
+            },
+            "metrics": {
+                "cpm": 0.59,
+                "cpc": 5.01,
+                "sharingRate": 42.0,
+                "cpa": 5.0,
+                "cac": 5.0,
+                "amountSpent": 1652.0
+            }
+        },
+        "507f1f77bcf86cd799439015": {
+            "title": "Retention / Loyal",
+            "referrer": {
+                "steps": [
+                    { "name": "Modal visit", "count": 5935, "dropoff": 0 },
+                    { "name": "Wallet", "count": 2789, "dropoff": 53.0 },
+                    { "name": "Share", "count": 2789, "dropoff": 0 }
+                ]
+            },
+            "referred": {
+                "steps": [
+                    { "name": "Site visit", "count": 669, "dropoff": 0 },
+                    { "name": "Wallet", "count": 335, "dropoff": 49.9 },
+                    { "name": "Purchase", "count": 80, "dropoff": 76.1 }
+                ]
+            },
+            "rewards": {
+                "name": "Rewards received",
+                "count": 80
+            },
+            "metrics": {
+                "cpm": 0.16,
+                "cpc": 1.44,
+                "sharingRate": 47.0,
+                "cpa": 12.0,
+                "cac": 12.0,
+                "amountSpent": 964.0
+            }
+        }
+    }
+}
