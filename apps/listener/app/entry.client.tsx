@@ -8,10 +8,11 @@ import {
 } from "@frak-labs/wallet-shared/i18n";
 import i18next from "i18next";
 import I18nextBrowserLanguageDetector from "i18next-browser-languagedetector";
-import { StrictMode, startTransition } from "react";
-import { hydrateRoot } from "react-dom/client";
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
 import { I18nextProvider, initReactI18next } from "react-i18next";
-import { HydratedRouter } from "react-router/dom";
+import App from "./root";
+import "./styles/all.css";
 
 async function main() {
     await i18next
@@ -37,16 +38,18 @@ async function main() {
             },
         });
 
-    startTransition(() => {
-        hydrateRoot(
-            document,
-            <I18nextProvider i18n={i18next}>
-                <StrictMode>
-                    <HydratedRouter />
-                </StrictMode>
-            </I18nextProvider>
-        );
-    });
+    const root = document.getElementById("root");
+    if (!root) {
+        throw new Error("Root element not found");
+    }
+
+    createRoot(root).render(
+        <I18nextProvider i18n={i18next}>
+            <StrictMode>
+                <App />
+            </StrictMode>
+        </I18nextProvider>
+    );
 }
 
 main().catch((error) => console.error(error));

@@ -51,7 +51,7 @@ export default $config({
                 dev: {
                     title: "Listener",
                     autostart: true,
-                    command: "react-router dev",
+                    command: "vite dev",
                     directory: "apps/listener",
                 },
             });

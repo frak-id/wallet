@@ -7,13 +7,13 @@
   "type": "module",
   "license": "GNU GPL 3.0",
   "scripts": {
-    "build": "NODE_ENV=production react-router build",
-    "dev": "sst dev react-router dev",
-    "start": "react-router-serve ./build/server/index.js",
+    "build": "NODE_ENV=production vite build",
+    "dev": "sst dev vite dev",
+    "preview": "vite preview",
     "lint": "biome lint .",
     "format:check": "biome check .",
     "format": "biome check --write .",
-    "typecheck": "react-router typegen && tsc --noEmit"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@frak-labs/app-essentials": "workspace:*",
@@ -22,11 +22,8 @@
     "@frak-labs/ui": "workspace:*",
     "@frak-labs/wallet-shared": "workspace:*",
     "@openpanel/web": "^1.0.1",
-    "@react-router/node": "^7.9.4",
-    "@react-router/serve": "^7.9.4",
     "@simplewebauthn/browser": "^13.1.0",
     "@tanstack/react-query": "^5.90.3",
-    "@wagmi/core": "^2.17.3",
     "class-variance-authority": "^0.7.1",
     "i18next": "^25.6.0",
     "i18next-browser-languagedetector": "^8.2.0",
@@ -40,21 +37,19 @@
     "react": "catalog:",
     "react-dom": "catalog:",
     "react-i18next": "^16.0.1",
-    "react-router": "^7.9.4",
-    "react-router-dom": "^7.9.4",
     "sonner": "^2.0.7",
     "ua-parser-js": "^2.0.6",
     "vaul": "^1.1.2",
     "viem": "catalog:",
-    "wagmi": "^2.15.6"
+    "wagmi": "^2.18.1"
   },
   "devDependencies": {
     "@frak-labs/backend-elysia": "workspace:*",
     "@frak-labs/browserslist-config": "workspace:*",
-    "@react-router/dev": "^7.9.4",
     "@types/nprogress": "^0.2.3",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
+    "@vitejs/plugin-react": "^5.0.4",
     "bun-types": "latest",
     "esbuild": "^0.25.11",
     "postcss": "^8.5.6",

@@ -1,7 +1,7 @@
 import * as process from "node:process";
-import { reactRouter } from "@react-router/dev/vite";
+import react from "@vitejs/plugin-react";
 import type { Drop } from "esbuild";
-import type { ConfigEnv, UserConfig } from "vite";
+import type { UserConfig } from "vite";
 import { defineConfig } from "vite";
 import mkcert from "vite-plugin-mkcert";
 import tsconfigPaths from "vite-tsconfig-paths";
@@ -9,9 +9,18 @@ import { manualChunks, onwarn } from "../../packages/dev-tooling";
 
 const DEBUG = JSON.stringify(false);
 
-export default defineConfig(({ isSsrBuild }: ConfigEnv): UserConfig => {
+export default defineConfig((): UserConfig => {
     return {
         base: "/listener",
+        resolve: {
+            conditions: ["development"],
+            alias: {
+                "@simplewebauthn/server": new URL(
+                    "./app/module/utils/webauthn/serverShim.ts",
+                    import.meta.url
+                ).pathname,
+            },
+        },
         define: {
             "process.env.STAGE": JSON.stringify(process.env.STAGE),
             "process.env.BACKEND_URL": JSON.stringify(process.env.BACKEND_URL),
@@ -47,21 +56,72 @@ export default defineConfig(({ isSsrBuild }: ConfigEnv): UserConfig => {
                     ? (["console", "debugger"] as Drop[])
                     : [],
         },
-        plugins: [reactRouter(), mkcert(), tsconfigPaths()],
-        resolve: {
-            conditions: ["development"],
-        },
+        plugins: [react(), mkcert(), tsconfigPaths()],
         server: {
             port: 3002,
             proxy: {},
         },
         build: {
             cssCodeSplit: true,
-            target: isSsrBuild ? "ES2022" : "ES2020",
+            target: "ES2020",
             rollupOptions: {
                 output: {
-                    experimentalMinChunkSize: 32000,
+                    // Reduce chunk size threshold to encourage more splitting
+                    experimentalMinChunkSize: 20000,
                     manualChunks(id, meta) {
+                        // Vendor chunk mapping for listener app
+                        const vendorChunks = [
+                            {
+                                name: "vendor-react",
+                                patterns: [
+                                    "node_modules/react/",
+                                    "node_modules/react-dom/",
+                                ],
+                            },
+                            {
+                                name: "vendor-query",
+                                patterns: [
+                                    "node_modules/@tanstack/react-query",
+                                    "node_modules/@tanstack/query-core",
+                                ],
+                            },
+                            {
+                                name: "vendor-jotai",
+                                patterns: ["node_modules/jotai"],
+                            },
+                            {
+                                name: "vendor-aa",
+                                patterns: [
+                                    "node_modules/permissionless",
+                                    "node_modules/@aa-sdk",
+                                ],
+                            },
+                            {
+                                name: "vendor-viem",
+                                patterns: [
+                                    "node_modules/viem",
+                                    "node_modules/ox",
+                                ],
+                            },
+                            {
+                                name: "vendor-webauthn",
+                                patterns: [
+                                    "node_modules/@simplewebauthn",
+                                    "node_modules/@peculiar",
+                                ],
+                            },
+                        ];
+
+                        for (const chunk of vendorChunks) {
+                            if (
+                                chunk.patterns.some((pattern) =>
+                                    id.includes(pattern)
+                                )
+                            ) {
+                                return chunk.name;
+                            }
+                        }
+
                         return manualChunks(id, meta);
                     },
                 },

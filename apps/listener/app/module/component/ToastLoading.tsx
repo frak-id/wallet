@@ -2,7 +2,6 @@ import { Toast } from "@frak-labs/wallet-shared/common/component/Toast";
 import { useIsMutating } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
-import { Link } from "react-router";
 import { useSdkCleanup } from "../hooks/useSdkCleanup";
 import styles from "./ToastLoading.module.css";
 
@@ -70,11 +69,14 @@ export function ToastLoading() {
                             />
                         ),
                         pLink: (
-                            <Link
-                                to="https://frak.id/ressources#troubleshooting"
+                            <a
+                                href="https://frak.id/ressources#troubleshooting"
                                 target="_blank"
+                                rel="noopener noreferrer"
                                 className={styles.toastStuck__link}
-                            />
+                            >
+                                troubleshooting
+                            </a>
                         ),
                     }}
                 />
