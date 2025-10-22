@@ -12,21 +12,15 @@ import {
     type RpcPromiseHandler,
     type RpcResponse,
 } from "@frak-labs/frame-connector";
-import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { trackGenericEvent } from "@frak-labs/wallet-shared/common/analytics";
-import { sessionAtom } from "@frak-labs/wallet-shared/common/atoms/session";
-import { interactionSessionAtom } from "@frak-labs/wallet-shared/wallet/atoms/interactionSession";
 import { useCallback, useEffect, useRef } from "react";
-import {
-    type DisplayedModalStep,
-    displayedRpcModalStepsAtom,
-    setNewModalAtom,
-} from "@/module/modal/atoms/modalEvents";
-import {
-    clearRpcModalAtom,
-    onFinishResultAtom,
-} from "@/module/modal/atoms/modalUtils";
 import { useListenerUI } from "@/module/providers/ListenerUiProvider";
+import {
+    getSharedInteractionSession,
+    getSharedSession,
+} from "@/module/stores/jotaiBridge";
+import { selectShouldFinish, useModalStore } from "@/module/stores/modalStore";
+import type { DisplayedModalStep } from "@/module/stores/types";
 import type { WalletRpcContext } from "@/module/types/context";
 
 type OnDisplayModalRequest = RpcPromiseHandler<
@@ -57,14 +51,13 @@ export function useDisplayModalListener(): OnDisplayModalRequest {
      * - Cleans up on component unmount
      */
     useEffect(() => {
-        // Subscribe to modal state changes
-        const unsubscribe = jotaiStore.sub(displayedRpcModalStepsAtom, () => {
+        // Subscribe to modal state changes using Zustand
+        const unsubscribe = useModalStore.subscribe((state) => {
             const deferred = currentDeferredRef.current;
             if (!deferred) return;
 
             // Check if modal is dismissed
-            const modalState = jotaiStore.get(displayedRpcModalStepsAtom);
-            if (modalState?.dismissed) {
+            if (state.dismissed) {
                 // User cancelled the modal
                 deferred.reject(
                     new FrakRpcError(
@@ -75,15 +68,9 @@ export function useDisplayModalListener(): OnDisplayModalRequest {
                 currentDeferredRef.current = null;
                 return;
             }
-        });
 
-        // Subscribe to completion state
-        const unsubscribeFinish = jotaiStore.sub(onFinishResultAtom, () => {
-            const deferred = currentDeferredRef.current;
-            if (!deferred) return;
-
-            // Check if modal is complete
-            const finishResult = jotaiStore.get(onFinishResultAtom);
+            // Check if modal is complete using the selector
+            const finishResult = selectShouldFinish(state);
             if (finishResult) {
                 // All steps completed successfully
                 deferred.resolve(finishResult);
@@ -94,7 +81,6 @@ export function useDisplayModalListener(): OnDisplayModalRequest {
         // Cleanup on unmount: reject any pending deferred
         return () => {
             unsubscribe();
-            unsubscribeFinish();
 
             // Reject any pending deferred on unmount
             if (currentDeferredRef.current) {
@@ -127,7 +113,7 @@ export function useDisplayModalListener(): OnDisplayModalRequest {
             // If no modal to display, early exit
             const steps = params[0];
             if (Object.keys(steps).length === 0) {
-                jotaiStore.set(clearRpcModalAtom);
+                useModalStore.getState().clearModal();
                 throw new FrakRpcError(
                     RpcErrorCodes.invalidRequest,
                     "No modals to display"
@@ -147,7 +133,7 @@ export function useDisplayModalListener(): OnDisplayModalRequest {
             currentDeferredRef.current = deferred;
 
             // Save the new modal
-            jotaiStore.set(setNewModalAtom, {
+            useModalStore.getState().setNewModal({
                 // Current step + formatted steps
                 currentStep,
                 steps: stepsPrepared,
@@ -261,8 +247,8 @@ function filterStepsToDo({
 }: {
     stepsPrepared: Pick<ModalStepTypes, "key" | "params">[];
 }) {
-    const session = jotaiStore.get(sessionAtom);
-    const interactionSession = jotaiStore.get(interactionSessionAtom);
+    const session = getSharedSession();
+    const interactionSession = getSharedInteractionSession();
 
     // The current result (if already authenticated + session)
     let currentResult: ModalRpcStepsResultType<[]> = {};

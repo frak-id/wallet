@@ -7,7 +7,6 @@ import { sessionAtom } from "@frak-labs/wallet-shared/common/atoms/session";
 import { isWebAuthNSupported } from "@frak-labs/wallet-shared/common/lib/webauthn";
 import { useAtomValue } from "jotai";
 import { useEffect, useMemo } from "react";
-import { iframeResolvingContextAtom } from "@/module/atoms/resolvingContext";
 import { SsoButton } from "@/module/component/SsoButton";
 import { DismissButton } from "@/module/modal/component/Generic";
 import styles from "@/module/modal/component/Modal/index.module.css";
@@ -15,6 +14,7 @@ import {
     useListenerTranslation,
     useModalListenerUI,
 } from "@/module/providers/ListenerUiProvider";
+import { useResolvingContextStore } from "@/module/stores/resolvingContextStore";
 import { AuthenticateWithPhone } from "../AuthenticateWithPhone";
 
 /**
@@ -29,7 +29,7 @@ export function LoginModalStep({
     params: LoginModalStepType["params"];
     onFinish: (args: LoginModalStepType["returns"]) => void;
 }) {
-    const resolvingContext = useAtomValue(iframeResolvingContextAtom);
+    const resolvingContext = useResolvingContextStore((state) => state.context);
     const { t } = useListenerTranslation();
     const {
         currentRequest: { homepageLink, logoUrl },

@@ -1,12 +1,11 @@
 import { useGetSafeSdkSession } from "@frak-labs/wallet-shared/common/hook/useGetSafeSdkSession";
 import { interactionSessionStatusQuery } from "@frak-labs/wallet-shared/wallet/hook/useInteractionSessionStatus";
 import { useQueries } from "@tanstack/react-query";
-import { useAtomValue } from "jotai";
 import { useMemo } from "react";
 import { useAccount } from "wagmi";
-import { iframeResolvingContextAtom } from "@/module/atoms/resolvingContext";
 import { estimatedInteractionRewardQuery } from "@/module/hooks/useEstimatedInteractionReward";
 import { getProductMetadataQuery } from "@/module/hooks/useGetProductMetadata";
+import { useResolvingContextStore } from "@/module/stores/resolvingContextStore";
 
 /**
  * Small hook to preload some listener queries
@@ -20,7 +19,9 @@ import { getProductMetadataQuery } from "@/module/hooks/useGetProductMetadata";
  */
 export function useListenerDataPreload() {
     const address = useAccount().address;
-    const productId = useAtomValue(iframeResolvingContextAtom)?.productId;
+    const productId = useResolvingContextStore(
+        (state) => state.context?.productId
+    );
 
     const queries = useMemo(
         () => [

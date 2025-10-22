@@ -23,7 +23,6 @@ import {
 } from "@frak-labs/wallet-shared/sdk/utils/i18nMapper";
 import { emitLifecycleEvent } from "@frak-labs/wallet-shared/sdk/utils/lifecycleEvents";
 import type { i18n, TOptions } from "i18next";
-import { useAtomValue } from "jotai";
 import {
     createContext,
     type PropsWithChildren,
@@ -33,8 +32,8 @@ import {
     useState,
 } from "react";
 import { useTranslation } from "react-i18next";
-import { iframeResolvingContextAtom } from "@/module/atoms/resolvingContext";
 import { useEstimatedInteractionReward } from "@/module/hooks/useEstimatedInteractionReward";
+import { useResolvingContextStore } from "@/module/stores/resolvingContextStore";
 import { mapDeprecatedModalMetadata } from "../utils/deprecatedModalMetadataMapper";
 
 export type GenericWalletUiType = {
@@ -106,7 +105,7 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
     // Initial translation context
     const { i18n: initialI18n } = useTranslation();
     // We are not using the safeResolvingContext here, since this component is init before the iframe is ready
-    const resolvingContext = useAtomValue(iframeResolvingContextAtom);
+    const resolvingContext = useResolvingContextStore((state) => state.context);
     // Get the estimated reward
     const { estimatedReward: rewardData } = useEstimatedInteractionReward();
 

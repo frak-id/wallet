@@ -44,7 +44,9 @@ export function ListenerWallet() {
             </div>
             <Overlay
                 onOpenChange={(value) => {
-                    !value && clearRequest();
+                    if (!value) {
+                        clearRequest();
+                    }
                 }}
             />
         </>

@@ -1,5 +1,4 @@
 import { prefixModalCss } from "@frak-labs/ui/utils/prefixModalCss";
-import { useAtomValue } from "jotai";
 import {
     Fingerprint,
     HandCoins,
@@ -8,14 +7,14 @@ import {
     WalletMinimal,
 } from "lucide-react";
 import { type PropsWithChildren, useMemo } from "react";
-import {
-    type AnyModalKey,
-    type DisplayedModalStep,
-    displayedRpcModalStepsAtom,
-} from "@/module/modal/atoms/modalEvents";
-import { activeStepAtom } from "@/module/modal/atoms/modalUtils";
 import styles from "@/module/modal/component/Modal/index.module.css";
 import { useListenerTranslation } from "@/module/providers/ListenerUiProvider";
+import {
+    selectActiveStep,
+    selectSteps,
+    useModalStore,
+} from "@/module/stores/modalStore";
+import type { AnyModalKey, DisplayedModalStep } from "@/module/stores/types";
 
 /**
  * Get the right icon for the given step
@@ -51,8 +50,8 @@ function getStepIcon(step: DisplayedModalStep<AnyModalKey>) {
  */
 export function ModalStepIndicator() {
     const { t } = useListenerTranslation();
-    const activeStep = useAtomValue(activeStepAtom);
-    const currentSteps = useAtomValue(displayedRpcModalStepsAtom)?.steps;
+    const activeStep = useModalStore(selectActiveStep);
+    const currentSteps = useModalStore(selectSteps);
 
     // Compute the steps data to be displayed
     const stepsData = useMemo(() => {

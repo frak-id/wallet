@@ -4,11 +4,10 @@ import type {
 } from "@frak-labs/core-sdk";
 import { authenticatedWalletApi } from "@frak-labs/wallet-shared/common/api/backendClient";
 import { useQuery } from "@tanstack/react-query";
-import { useAtomValue } from "jotai";
 import { useMemo } from "react";
 import type { Hex } from "viem";
-import { iframeResolvingContextAtom } from "@/module/atoms/resolvingContext";
 import { listenerInteractionsKey } from "@/module/queryKeys/interactions";
+import { useResolvingContextStore } from "@/module/stores/resolvingContextStore";
 
 /**
  * The query data to fetch the estimated interaction reward
@@ -64,9 +63,9 @@ export function useEstimatedInteractionReward({
 }: {
     interaction?: FullInteractionTypesKey;
 } = {}) {
-    const contextProductId = useAtomValue(
-        iframeResolvingContextAtom
-    )?.productId;
+    const contextProductId = useResolvingContextStore(
+        (state) => state.context?.productId
+    );
     const productId = useMemo(() => contextProductId, [contextProductId]);
     const { data, ...query } = useQuery(
         estimatedInteractionRewardQuery({

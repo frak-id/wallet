@@ -1,14 +1,17 @@
 import { prefixModalCss } from "@frak-labs/ui/utils/prefixModalCss";
 import { trackGenericEvent } from "@frak-labs/wallet-shared/common/analytics";
 import { Markdown } from "@frak-labs/wallet-shared/common/component/Markdown";
-import { useAtom } from "jotai";
 import { useMemo } from "react";
-import { displayedRpcModalStepsAtom } from "@/module/modal/atoms/modalEvents";
 import styles from "@/module/modal/component/Modal/index.module.css";
 import {
     useListenerTranslation,
     useModalListenerUI,
 } from "@/module/providers/ListenerUiProvider";
+import {
+    selectCurrentStepIndex,
+    selectSteps,
+    useModalStore,
+} from "@/module/stores/modalStore";
 
 export function MetadataInfo({ description }: { description?: string }) {
     if (description) {
@@ -31,18 +34,17 @@ export function DismissButton() {
     const {
         currentRequest: { metadata },
     } = useModalListenerUI();
-    const [modalSteps, setModalSteps] = useAtom(displayedRpcModalStepsAtom);
+    const steps = useModalStore(selectSteps);
+    const currentStep = useModalStore(selectCurrentStepIndex);
 
     const { info, goToDismiss } = useMemo(() => {
         const empty = { info: null, goToDismiss: null };
-        if (!(modalSteps && metadata)) return empty;
+        if (!(steps && metadata)) return empty;
 
         // Ensure it's dismissable and we got a final modal
-        const finalStepIndex = modalSteps.steps.findIndex(
-            (step) => step.key === "final"
-        );
+        const finalStepIndex = steps.findIndex((step) => step.key === "final");
         if (!metadata?.isDismissible || finalStepIndex === -1) return empty;
-        if (finalStepIndex === modalSteps.currentStep) return empty;
+        if (finalStepIndex === currentStep) return empty;
 
         const info = {
             index: finalStepIndex,
@@ -51,25 +53,26 @@ export function DismissButton() {
         // Build the function used to go to the dismiss step
         const goToDismiss = () => {
             // If the final step is of type reward, jump to final step + 1 (to close the modal)
-            const finalStep = modalSteps.steps[finalStepIndex];
+            const finalStep = steps[finalStepIndex];
             if (
                 finalStep?.key === "final" &&
                 finalStep?.params?.action?.key === "reward"
             ) {
                 // Update the final step and mark it as autoSkip true
-                setModalSteps({
-                    ...modalSteps,
+                const state = useModalStore.getState();
+                state.setDismissed(true);
+                // Move past the final step to trigger modal close
+                useModalStore.setState({
                     currentStep: finalStepIndex + 1,
-                    dismissed: true,
                 });
                 return;
             }
 
             // Otherwise, just jump to the last step
-            setModalSteps({
-                ...modalSteps,
+            const state = useModalStore.getState();
+            state.setDismissed(true);
+            useModalStore.setState({
                 currentStep: finalStepIndex,
-                dismissed: true,
             });
         };
 
@@ -77,7 +80,7 @@ export function DismissButton() {
             info,
             goToDismiss,
         };
-    }, [metadata, modalSteps, setModalSteps]);
+    }, [metadata, steps, currentStep]);
 
     // If not dismissible, or no dismiss step, return null
     if (!info) return null;

@@ -1,13 +1,13 @@
 import { prefixWalletCss } from "@frak-labs/ui/utils/prefixWalletCss";
 import { Markdown } from "@frak-labs/wallet-shared/common/component/Markdown";
 import { cx } from "class-variance-authority";
-import { useSafeResolvingContext } from "@/module/atoms/resolvingContext";
 import { SsoButton } from "@/module/component/SsoButton";
 import { AuthenticateWithPhone } from "@/module/modal/component/AuthenticateWithPhone";
 import {
     useEmbeddedListenerUI,
     useListenerTranslation,
 } from "@/module/providers/ListenerUiProvider";
+import { useSafeResolvingContext } from "@/module/stores/hooks";
 import styles from "./index.module.css";
 
 /**

@@ -6,11 +6,11 @@ import { Copy, Share } from "lucide-react";
 import { useMemo } from "react";
 import { toast } from "sonner";
 import { useAccount } from "wagmi";
-import { useSafeResolvingContext } from "@/module/atoms/resolvingContext";
 import { useTriggerPushInterraction } from "@/module/hooks/useTriggerPushInterraction";
 import { ButtonAction } from "@/module/modal/component/ButtonAction";
 import styles from "@/module/modal/component/Modal/index.module.css";
 import { useListenerTranslation } from "@/module/providers/ListenerUiProvider";
+import { useSafeResolvingContext } from "@/module/stores/hooks";
 import { useShareLink } from "../../../hooks/useShareLink";
 
 export function FinalModalActionComponent({

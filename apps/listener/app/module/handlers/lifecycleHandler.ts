@@ -4,7 +4,6 @@ import type {
 } from "@frak-labs/core-sdk";
 import { decompressJsonFromB64 } from "@frak-labs/core-sdk";
 import type { LifecycleHandler } from "@frak-labs/frame-connector";
-import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { restoreBackupData } from "@frak-labs/wallet-shared/sdk/utils/backup";
 import { mapI18nConfig } from "@frak-labs/wallet-shared/sdk/utils/i18nMapper";
 import { emitLifecycleEvent } from "@frak-labs/wallet-shared/sdk/utils/lifecycleEvents";
@@ -13,11 +12,7 @@ import type {
     Session,
 } from "@frak-labs/wallet-shared/types/Session";
 import { getI18n } from "react-i18next";
-import {
-    handleHandshakeResponse,
-    iframeResolvingContextAtom,
-    startFetchResolvingContextViaHandshake,
-} from "@/module/atoms/resolvingContext";
+import { useResolvingContextStore } from "@/module/stores/resolvingContextStore";
 import { processSsoCompletion } from "./ssoHandler";
 
 /**
@@ -67,9 +62,8 @@ export const createClientLifecycleHandler =
             }
 
             case "restore-backup": {
-                const resolveContext = jotaiStore.get(
-                    iframeResolvingContextAtom
-                );
+                const resolveContext =
+                    useResolvingContextStore.getState().context;
                 if (!resolveContext) {
                     console.warn(
                         "Can't restore a backup until we are sure of the context"
@@ -100,10 +94,9 @@ export const createClientLifecycleHandler =
                     },
                 } as MessageEvent<ClientLifecycleEvent>;
 
-                const hasContext = jotaiStore.set(
-                    handleHandshakeResponse,
-                    messageEvent
-                );
+                const hasContext = useResolvingContextStore
+                    .getState()
+                    .handleHandshakeResponse(messageEvent);
                 // Once we got a context, we can tell that we are rdy to handle request
                 if (hasContext) {
                     setReadyToHandleRequest();
@@ -132,17 +125,17 @@ export function initializeResolvingContext(): boolean {
     }
 
     // Get the context
-    const currentContext = jotaiStore.get(iframeResolvingContextAtom);
+    const currentContext = useResolvingContextStore.getState().context;
 
     // If we don't have one, initiate the handshake
     if (!currentContext) {
-        jotaiStore.set(startFetchResolvingContextViaHandshake);
+        useResolvingContextStore.getState().startHandshake();
         return false;
     }
 
     // We have an auto context, try to fetch a more precise one using the handshake
     if (currentContext.isAutoContext) {
-        jotaiStore.set(startFetchResolvingContextViaHandshake);
+        useResolvingContextStore.getState().startHandshake();
     }
 
     return true;
@@ -159,18 +152,18 @@ export function checkContextAndEmitReady(): boolean {
     }
 
     // Get the context
-    const currentContext = jotaiStore.get(iframeResolvingContextAtom);
+    const currentContext = useResolvingContextStore.getState().context;
 
     // If we don't have one, initiate the handshake
     if (!currentContext) {
-        jotaiStore.set(startFetchResolvingContextViaHandshake);
+        useResolvingContextStore.getState().startHandshake();
         console.warn("Not ready to handle request yet - no context");
         return false;
     }
 
     // We have an auto context, try to fetch a more precise one using the handshake
     if (currentContext.isAutoContext) {
-        jotaiStore.set(startFetchResolvingContextViaHandshake);
+        useResolvingContextStore.getState().startHandshake();
     }
 
     // If we got a context, we are rdy to handle request

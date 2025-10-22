@@ -19,7 +19,6 @@ import { useOpenSession } from "@frak-labs/wallet-shared/wallet/hook/useOpenSess
 import { cx } from "class-variance-authority";
 import { toast } from "sonner";
 import { useAccount } from "wagmi";
-import { useSafeResolvingContext } from "@/module/atoms/resolvingContext";
 import { ButtonWallet } from "@/module/embedded/component/ButtonWallet";
 import {
     OnboardingActivate,
@@ -31,6 +30,7 @@ import {
     useEmbeddedListenerUI,
     useListenerTranslation,
 } from "@/module/providers/ListenerUiProvider";
+import { useSafeResolvingContext } from "@/module/stores/hooks";
 import { useShareLink } from "../../../hooks/useShareLink";
 import styles from "./index.module.css";
 

@@ -1,7 +1,6 @@
 import type { FinalModalStepType } from "@frak-labs/core-sdk";
-import { useAtomValue } from "jotai";
-import { isModalDismissedAtom } from "@/module/modal/atoms/modalUtils";
 import { FinalModalActionComponent } from "@/module/modal/component/Final/Action";
+import { selectIsDismissed, useModalStore } from "@/module/stores/modalStore";
 
 /**
  * The component for the final step of a modal
@@ -18,7 +17,7 @@ export function FinalModalStep({
     onFinish: (args: object) => void;
 }) {
     // Check if it was dismissed or not
-    const isDismissed = useAtomValue(isModalDismissedAtom);
+    const isDismissed = useModalStore(selectIsDismissed);
 
     return (
         <FinalModalActionComponent

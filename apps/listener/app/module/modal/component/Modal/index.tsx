@@ -1,5 +1,4 @@
 import { RpcErrorCodes } from "@frak-labs/frame-connector";
-import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { useMediaQuery } from "@frak-labs/ui/hook/useMediaQuery";
 import { LogoFrakWithName } from "@frak-labs/ui/icons/LogoFrakWithName";
 import { prefixModalCss } from "@frak-labs/ui/utils/prefixModalCss";
@@ -11,7 +10,6 @@ import {
 import { InAppBrowserToast } from "@frak-labs/wallet-shared/common/component/InAppBrowserToast";
 import { OriginPairingState } from "@frak-labs/wallet-shared/pairing/component/OriginPairingState";
 import { cx } from "class-variance-authority";
-import { useAtomValue } from "jotai";
 import {
     type Dispatch,
     type PropsWithChildren,
@@ -21,15 +19,6 @@ import {
     useMemo,
 } from "react";
 import { Toaster } from "sonner";
-import {
-    displayedRpcModalStepsAtom,
-    modalRpcResultsAtom,
-} from "@/module/modal/atoms/modalEvents";
-import {
-    clearRpcModalAtom,
-    currentDisplayedStepAtom,
-    onFinishResultAtom,
-} from "@/module/modal/atoms/modalUtils";
 import { SiweAuthenticateModalStep } from "@/module/modal/component/Authenticate";
 import { FinalModalStep } from "@/module/modal/component/Final";
 import { MetadataInfo } from "@/module/modal/component/Generic";
@@ -42,6 +31,13 @@ import {
     useListenerTranslation,
     useListenerUI,
 } from "@/module/providers/ListenerUiProvider";
+import {
+    selectCurrentStep,
+    selectCurrentStepObject,
+    selectIsDismissed,
+    selectShouldFinish,
+    useModalStore,
+} from "@/module/stores/modalStore";
 import { ToastLoading } from "../../../component/ToastLoading";
 import styles from "./index.module.css";
 import { ModalStepIndicator } from "./Step";
@@ -61,7 +57,7 @@ export function ListenerModal({
      */
     const onClose = useCallback(() => {
         clearRequest();
-        jotaiStore.set(clearRpcModalAtom);
+        useModalStore.getState().clearModal();
     }, [clearRequest]);
 
     /**
@@ -85,7 +81,7 @@ export function ListenerModal({
     /**
      * Method when the user reached the end of the modal
      */
-    const onFinishResult = useAtomValue(onFinishResultAtom);
+    const onFinishResult = useModalStore(selectShouldFinish);
     useEffect(() => {
         if (!onFinishResult) return;
 
@@ -103,14 +99,14 @@ export function ListenerModal({
         (isVisible: boolean) => {
             if (isVisible) return;
 
-            // Get the current results
-            const results = jotaiStore.get(modalRpcResultsAtom);
-            const steps = jotaiStore.get(displayedRpcModalStepsAtom);
+            // Get the current results and steps from Zustand
+            const state = useModalStore.getState();
+            const results = state.results;
+            const steps = state.steps;
 
             // Get the expected results and the current results
             const expectedResults =
-                steps?.steps?.filter((step) => step.key !== "final")?.length ??
-                0;
+                steps?.filter((step) => step.key !== "final")?.length ?? 0;
             const resultsLength = Object.keys(results ?? {}).length;
 
             // If we don't have enough results, we can tell the requester that the modal was cancelled
@@ -252,22 +248,21 @@ function ModalComponent({
  */
 function CurrentModalMetadataInfo() {
     const { t, i18n } = useListenerTranslation();
-    const modalSteps = useAtomValue(displayedRpcModalStepsAtom);
+    const currentStep = useModalStore(selectCurrentStepObject);
+    const isDismissed = useModalStore(selectIsDismissed);
 
     // Extract step key and metadata
     const descriptionKey = useMemo(() => {
-        const currentStep =
-            modalSteps?.steps?.[modalSteps.currentStep] ?? undefined;
         if (!currentStep) return null;
 
         // If we are in the final step, and the modal was dismissed, used the dismissed metadata
-        if (currentStep.key === "final" && modalSteps?.dismissed) {
+        if (currentStep.key === "final" && isDismissed) {
             return `sdk.modal.${currentStep.key}.dismissed.description`;
         }
 
         // Otherwise, use the default description
         return `sdk.modal.${currentStep.key}.description`;
-    }, [modalSteps]);
+    }, [currentStep, isDismissed]);
 
     // Get the right message depending on the step
     return useMemo(() => {
@@ -294,7 +289,7 @@ function CurrentModalStepComponent({
 }: {
     onError: (reason?: string) => void;
 }) {
-    const currentStep = useAtomValue(currentDisplayedStepAtom);
+    const currentStep = useModalStore(selectCurrentStep);
 
     /**
      * Return the right modal depending on the state

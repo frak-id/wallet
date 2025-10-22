@@ -7,10 +7,9 @@ import {
 import { emitLifecycleEvent } from "@frak-labs/wallet-shared/sdk/utils/lifecycleEvents";
 import { WebAuthnAbortService } from "@simplewebauthn/browser";
 import { useQueryClient } from "@tanstack/react-query";
-import { useAtom } from "jotai";
 import { RESET } from "jotai/utils";
 import { useCallback } from "react";
-import { displayedRpcModalStepsAtom } from "../modal/atoms/modalEvents";
+import { useModalStore } from "@/module/stores/modalStore";
 import { useListenerUI } from "../providers/ListenerUiProvider";
 
 /**
@@ -18,9 +17,6 @@ import { useListenerUI } from "../providers/ListenerUiProvider";
  */
 export function useSdkCleanup() {
     const { currentRequest } = useListenerUI();
-    const [currentModalSteps, setCurrentModalSteps] = useAtom(
-        displayedRpcModalStepsAtom
-    );
     const queryClient = useQueryClient();
 
     return useCallback(() => {
@@ -43,8 +39,11 @@ export function useSdkCleanup() {
         // Clear tanstack side
         queryClient.clear();
 
+        // Get current modal state directly from store (avoid dependency array issues)
+        const currentModalSteps = useModalStore.getState();
+
         // If we don't have anything displayed, or it's not the modal displayed
-        if (!currentRequest || !currentModalSteps) {
+        if (!currentRequest || !currentModalSteps.steps) {
             return;
         }
 
@@ -53,10 +52,9 @@ export function useSdkCleanup() {
             (step) => step.key === "login"
         );
         if (loginStep !== -1 && loginStep < currentModalSteps.currentStep) {
-            setCurrentModalSteps({
-                ...currentModalSteps,
+            useModalStore.setState({
                 currentStep: loginStep,
             });
         }
-    }, [queryClient, currentRequest, currentModalSteps, setCurrentModalSteps]);
+    }, [queryClient, currentRequest]);
 }
