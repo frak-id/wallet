@@ -1,8 +1,10 @@
+/**
+ * Shared CSS custom properties for both wallet and listener apps
+ * App-specific overrides (like backgrounds) are in colors-wallet.css and colors-listener.css
+ */
 :root {
     --frak-text-color: var(--frak-color-white);
     --frak-link-color: var(--frak-color-white);
-    --frak-background-color: var(--frak-color-dark);
-    --frak-contrast-background-color: var(--frak-color-gradient-blue);
     --frak-panel-background-color: rgba(0, 0, 0, 0.35);
     --frak-panel-outlined-border-color: var(--frak-color-blue-zodiac-darker);
     --frak-panel-shadow-color: var(--frak-shadow-color);

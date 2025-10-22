@@ -145,6 +145,7 @@
         "jotai": "^2.15.0",
         "lucide-react": "^0.545.0",
         "micromark": "^4.0.2",
+        "normalize.css": "^8.0.1",
         "nprogress": "^0.2.0",
         "radash": "^12.1.1",
         "react": "catalog:",

@@ -21,7 +21,8 @@
     "./interaction/*": "./src/interaction/*",
     "./recovery/*": "./src/recovery/*",
     "./i18n": "./src/i18n/config.ts",
-    "./providers/*": "./src/providers/*"
+    "./providers/*": "./src/providers/*",
+    "./styles/*": "./styles/*"
   },
   "dependencies": {
     "@elysiajs/eden": "^1.4.1",

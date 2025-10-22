@@ -1,0 +1,53 @@
+/**
+ * Wallet-specific global styles
+ * Base styles are in @frak-labs/wallet-shared/styles/global-base.css
+ */
+
+html {
+    transition: background 0.3s;
+    background: var(--frak-contrast-background-color);
+}
+
+body {
+    position: relative;
+    overflow: auto;
+}
+
+body .desktop {
+    position: relative;
+}
+
+@media (min-width: 600px) {
+    html {
+        background: none;
+    }
+
+    body {
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+    }
+
+    body .desktop {
+        margin: auto;
+        width: 430px;
+        height: 805px;
+        min-height: auto;
+        overflow: hidden;
+        transition: background 0.3s;
+        background: var(--frak-contrast-background-color);
+    }
+}
+
+/**
+ * When in listener page, remove the background image
+ */
+:root[data-listener="true"] {
+    background: none;
+}
+
+/* toploader */
+#nprogress .bar {
+    background: var(--frak-color-gradient) !important;
+}

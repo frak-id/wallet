@@ -9,11 +9,11 @@ import {
     ScrollRestoration,
 } from "react-router";
 import { RootProvider } from "@/module/providers/RootProvider";
+import { rootConfig } from "@/module/root/config";
 import type { Route } from "./+types/root";
 
-export const meta = () => {
-    return [{ title: "Frak Listener" }];
-};
+export const meta = rootConfig.meta;
+export const links = rootConfig.links;
 
 /**
  * Fallback component for hydration
