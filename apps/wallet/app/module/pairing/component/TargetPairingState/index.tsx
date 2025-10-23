@@ -1,13 +1,13 @@
 import { getTargetPairingClient } from "@frak-labs/wallet-shared/pairing/clients/store";
+import { StatusBoxWallet } from "@frak-labs/wallet-shared/pairing/component/PairingStatusBox";
 import type { TargetPairingState as TargetPairingStateType } from "@frak-labs/wallet-shared/pairing/types";
 import {
     selectWebauthnSession,
     sessionStore,
 } from "@frak-labs/wallet-shared/stores/sessionStore";
-import { useAtomValue } from "jotai";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { StatusBoxWallet } from "@/module/pairing/component/PairingStatusBox";
+import { useStore } from "zustand";
 import { SignatureRequestList } from "@/module/pairing/component/SignatureRequest";
 
 /**
@@ -30,7 +30,7 @@ export function TargetPairingState() {
  */
 function InnerTargetPairingState() {
     const client = useMemo(() => getTargetPairingClient(), []);
-    const state = useAtomValue(client.stateAtom);
+    const state = useStore(client.store);
     const { status, text } = getStatusDetails(state) ?? {};
 
     // Don't display anything if the state is idle

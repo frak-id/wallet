@@ -1,6 +1,6 @@
-import { useAtomValue } from "jotai";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { useStore } from "zustand";
 import {
     selectDistantWebauthnSession,
     sessionStore,
@@ -36,7 +36,7 @@ export function OriginPairingState({ type }: OriginPairingStateProps) {
  */
 function InnerOriginPairingState({ type }: OriginPairingStateProps) {
     const client = useMemo(() => getOriginPairingClient(), []);
-    const state = useAtomValue(client.stateAtom);
+    const state = useStore(client.store);
     const { status, text } = getStatusDetails(state);
     const components = {
         embedded: StatusBoxWalletEmbedded,

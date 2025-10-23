@@ -1,5 +1,4 @@
 import type { Treaty } from "@elysiajs/eden";
-import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import {
     type BasePairingState,
     WsCloseCode,
@@ -8,12 +7,8 @@ import {
     type WsTargetMessage,
     type WsTargetRequest,
 } from "@frak-labs/wallet-shared/pairing/types";
-import {
-    type Atom,
-    atom,
-    type SetStateAction,
-    type WritableAtom,
-} from "jotai/vanilla";
+import type { StoreApi } from "zustand/vanilla";
+import { createStore } from "zustand/vanilla";
 import { authenticatedWalletApi } from "../../common/api/backendClient";
 
 type PairingWs = ReturnType<
@@ -50,12 +45,12 @@ export abstract class BasePairingClient<
     private reconnectRetryCount = 0;
 
     /**
-     * The base state of the pairing client
+     * The Zustand store for the pairing client
      */
-    protected _state: WritableAtom<TState, [SetStateAction<TState>], void>;
+    protected _store: StoreApi<TState>;
 
     constructor() {
-        this._state = atom(this.getInitialState());
+        this._store = createStore<TState>()(() => this.getInitialState());
     }
 
     /**
@@ -64,27 +59,31 @@ export abstract class BasePairingClient<
     protected abstract getInitialState(): TState;
 
     /**
+     * Get the Zustand store (for React hooks integration)
+     */
+    get store(): StoreApi<TState> {
+        return this._store;
+    }
+
+    /**
      * Get the current state
      */
-    get stateAtom(): Atom<TState> {
-        return this._state;
-    }
     get state(): TState {
-        return jotaiStore.get(this._state);
+        return this._store.getState();
     }
 
     /**
      * Update the state
      */
     protected setState(newState: Partial<TState>) {
-        jotaiStore.set(this._state, (prev) => ({ ...prev, ...newState }));
+        this._store.setState((prev) => ({ ...prev, ...newState }));
     }
 
     /**
      * Update the state
      */
     protected updateState(updater: (state: TState) => TState) {
-        jotaiStore.set(this._state, updater);
+        this._store.setState(updater);
     }
 
     /**

@@ -1,4 +1,3 @@
-import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { usePersistentPairingClient } from "@frak-labs/wallet-shared/pairing/hook/usePersistentPairingClient";
 import { WagmiProviderWithDynamicConfig } from "@frak-labs/wallet-shared/providers/BaseProvider";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
@@ -6,7 +5,6 @@ import { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import type { PersistQueryClientProviderProps } from "@tanstack/react-query-persist-client";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
-import { Provider } from "jotai";
 import { type PropsWithChildren, useEffect } from "react";
 import { useAccount } from "wagmi";
 import { authenticatedWalletApi } from "@/module/common/api/backendClient";
@@ -55,22 +53,20 @@ const persistOptions: PersistQueryClientProviderProps["persistOptions"] = {
 
 export function RootProvider({ children }: PropsWithChildren) {
     return (
-        <Provider store={jotaiStore}>
-            <PersistQueryClientProvider
-                client={queryClient}
-                persistOptions={persistOptions}
-            >
-                <SetupServiceWorker />
-                <WagmiProviderWithDynamicConfig>
-                    <SessionStateManager />
-                    {children}
-                </WagmiProviderWithDynamicConfig>
-                <ReactQueryDevtools
-                    initialIsOpen={false}
-                    buttonPosition={"top-right"}
-                />
-            </PersistQueryClientProvider>
-        </Provider>
+        <PersistQueryClientProvider
+            client={queryClient}
+            persistOptions={persistOptions}
+        >
+            <SetupServiceWorker />
+            <WagmiProviderWithDynamicConfig>
+                <SessionStateManager />
+                {children}
+            </WagmiProviderWithDynamicConfig>
+            <ReactQueryDevtools
+                initialIsOpen={false}
+                buttonPosition={"top-right"}
+            />
+        </PersistQueryClientProvider>
     );
 }
 

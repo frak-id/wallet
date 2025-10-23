@@ -1,8 +1,8 @@
 import { Spinner } from "@frak-labs/ui/component/Spinner";
 import { cx } from "class-variance-authority";
 import { Cuer } from "cuer";
-import { atom, useAtom, useAtomValue } from "jotai";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { create, useStore } from "zustand";
 import { trackAuthInitiated } from "../../../common/analytics";
 import type { OnPairingSuccessCallback } from "../../clients/origin";
 import { getOriginPairingClient } from "../../clients/store";
@@ -11,7 +11,13 @@ import { PairingCode } from "../PairingCode";
 import { PairingStatus } from "../PairingStatus";
 import styles from "./index.module.css";
 
-const showBrighterQRCodeAtom = atom(false);
+const useShowBrighterQRCodeStore = create<{
+    show: boolean;
+    setShow: (show: boolean) => void;
+}>()((set) => ({
+    show: false,
+    setShow: (show) => set({ show }),
+}));
 
 /**
  * Launch a pairing session
@@ -22,8 +28,11 @@ export function LaunchPairing({
 }: {
     onSuccess?: OnPairingSuccessCallback;
 }) {
-    const [showBrighterQRCode, setShowBrighterQRCode] = useAtom(
-        showBrighterQRCodeAtom
+    const showBrighterQRCode = useShowBrighterQRCodeStore(
+        (state) => state.show
+    );
+    const setShowBrighterQRCode = useShowBrighterQRCodeStore(
+        (state) => state.setShow
     );
     const [showFullScreen, setShowFullScreen] = useState(showBrighterQRCode);
     const [isExiting, setIsExiting] = useState(false);
@@ -31,9 +40,9 @@ export function LaunchPairing({
     const client = getOriginPairingClient();
 
     // Get the current state of the client
-    const clientState = useAtomValue(client.stateAtom);
+    const clientState = useStore(client.store);
 
-    // Sync showFullScreen with jotai atom
+    // Sync showFullScreen with store state
     useEffect(() => {
         if (showBrighterQRCode) {
             setShowFullScreen(true);
@@ -88,8 +97,11 @@ export function LaunchPairing({
 
 function PairingContent({ clientState }: { clientState: OriginPairingState }) {
     const pairingInfo = clientState.pairing;
-    const [showBrighterQRCode, setShowBrighterQRCode] = useAtom(
-        showBrighterQRCodeAtom
+    const showBrighterQRCode = useShowBrighterQRCodeStore(
+        (state) => state.show
+    );
+    const setShowBrighterQRCode = useShowBrighterQRCodeStore(
+        (state) => state.setShow
     );
 
     return (

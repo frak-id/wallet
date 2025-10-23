@@ -4,7 +4,6 @@ import {
     FrakConfigProvider,
     FrakIFrameClientProvider,
 } from "@frak-labs/react-sdk";
-import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
@@ -12,7 +11,6 @@ import {
     PersistQueryClientProvider,
     type PersistQueryClientProviderProps,
 } from "@tanstack/react-query-persist-client";
-import { Provider } from "jotai";
 import { type PropsWithChildren, useEffect } from "react";
 import { frakWalletSdkConfig } from "@/context/frak-wallet/config";
 import { openPanel } from "../utils/openPanel";
@@ -56,18 +54,16 @@ export function RootProvider({ children }: PropsWithChildren) {
     }, []);
 
     return (
-        <Provider store={jotaiStore}>
-            <PersistQueryClientProvider
-                client={queryClient}
-                persistOptions={persistOptions}
-            >
-                <FrakConfigProvider config={frakWalletSdkConfig}>
-                    <FrakIFrameClientProvider>
-                        <ReactQueryDevtools initialIsOpen={false} />
-                        {children}
-                    </FrakIFrameClientProvider>
-                </FrakConfigProvider>
-            </PersistQueryClientProvider>
-        </Provider>
+        <PersistQueryClientProvider
+            client={queryClient}
+            persistOptions={persistOptions}
+        >
+            <FrakConfigProvider config={frakWalletSdkConfig}>
+                <FrakIFrameClientProvider>
+                    <ReactQueryDevtools initialIsOpen={false} />
+                    {children}
+                </FrakIFrameClientProvider>
+            </FrakConfigProvider>
+        </PersistQueryClientProvider>
     );
 }

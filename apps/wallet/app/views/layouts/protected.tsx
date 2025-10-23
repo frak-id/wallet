@@ -1,3 +1,4 @@
+import { OriginPairingState } from "@frak-labs/wallet-shared/pairing/component/OriginPairingState";
 import {
     selectDistantWebauthnSession,
     sessionStore,
@@ -5,7 +6,6 @@ import {
 import { Outlet } from "react-router";
 import { AuthRestricted } from "@/module/common/component/AuthRestricted";
 import { GlobalLayout } from "@/module/common/component/GlobalLayout";
-import { OriginPairingState } from "@/module/pairing/component/OriginPairingState";
 import { TargetPairingState } from "@/module/pairing/component/TargetPairingState";
 
 export default function ProtectedLayout() {

@@ -1,9 +1,9 @@
 import { Button } from "@frak-labs/ui/component/Button";
 import { Spinner } from "@frak-labs/ui/component/Spinner";
-import { useAtomValue } from "jotai";
 import { RefreshCcw } from "lucide-react";
 import { type PropsWithChildren, useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { useStore } from "zustand";
 import { getTargetPairingClient } from "../../clients/store";
 import styles from "./index.module.css";
 
@@ -96,7 +96,7 @@ export function StatusBoxWalletEmbedded({
  */
 function StatusBoxRetry() {
     const client = useMemo(() => getTargetPairingClient(), []);
-    const state = useAtomValue(client.stateAtom);
+    const state = useStore(client.store);
     const { t } = useTranslation();
     const code = state.closeInfo?.code;
     const reason = state.closeInfo?.reason;

@@ -1,15 +1,15 @@
 import { Button } from "@frak-labs/ui/component/Button";
 import { Skeleton } from "@frak-labs/ui/component/Skeleton";
 import { getTargetPairingClient } from "@frak-labs/wallet-shared/pairing/clients/store";
+import { PairingCode } from "@frak-labs/wallet-shared/pairing/component/PairingCode";
 import { usePairingInfo } from "@frak-labs/wallet-shared/pairing/hook/usePairingInfo";
-import { useAtomValue } from "jotai";
 import { AlertCircle } from "lucide-react";
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
+import { useStore } from "zustand";
 import { Grid } from "@/module/common/component/Grid";
 import { Title } from "@/module/common/component/Title";
-import { PairingCode } from "@/module/pairing/component/PairingCode";
 import { PairingHeader } from "@/module/pairing/component/PairingHeader";
 import { PairingInfo } from "@/module/pairing/component/PairingInfo";
 import { usePendingPairingInfo } from "@/module/pairing/hook/usePendingPairingInfo";
@@ -25,7 +25,7 @@ export default function Pairing() {
     const { pairingInfo: pendingPairingInfo, resetPairingInfo } =
         usePendingPairingInfo();
     const navigate = useNavigate();
-    const pairingState = useAtomValue(client.stateAtom);
+    const pairingState = useStore(client.store);
     const { data: pairingInfo } = usePairingInfo({
         id: pendingPairingInfo?.id,
     });
