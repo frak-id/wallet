@@ -1,23 +1,26 @@
 import { Button } from "@frak-labs/ui/component/Button";
-import { useAtomValue } from "jotai";
+import {
+    selectUser,
+    selectUserSetupLater,
+    userStore,
+} from "@frak-labs/wallet-shared/stores/userStore";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import { Grid } from "@/module/common/component/Grid";
 import { Title } from "@/module/common/component/Title";
 import { Membrs } from "@/module/membrs/assets/Membrs";
-import { userAtom, userSetupLaterAtom } from "@/module/membrs/atoms/user";
 import styles from "./membrs.module.css";
 
 export default function Members() {
     const navigate = useNavigate();
     const { t } = useTranslation();
 
-    // Get the user from the atom
-    const user = useAtomValue(userAtom);
+    // Get the user from the store
+    const user = userStore(selectUser);
 
     // User choose to setup his profile later
-    const isUserSetupLater = useAtomValue(userSetupLaterAtom);
+    const isUserSetupLater = userStore(selectUserSetupLater);
 
     useEffect(() => {
         if (user || isUserSetupLater) return;

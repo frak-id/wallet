@@ -1,7 +1,6 @@
-import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { LogoFrakWithName } from "@frak-labs/ui/icons/LogoFrakWithName";
 import { prefixWalletCss } from "@frak-labs/ui/utils/prefixWalletCss";
-import { sessionAtom } from "@frak-labs/wallet-shared/common/atoms/session";
+import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
 import { cx } from "class-variance-authority";
 import { useEmbeddedListenerUI } from "@/module/providers/ListenerUiProvider";
 import styles from "../Wallet/index.module.css";
@@ -11,7 +10,7 @@ import styles from "../Wallet/index.module.css";
  * @constructor
  */
 export function ListenerWalletHeader() {
-    const session = jotaiStore.get(sessionAtom);
+    const session = sessionStore.getState().session;
     const {
         currentRequest: { logoUrl },
     } = useEmbeddedListenerUI();

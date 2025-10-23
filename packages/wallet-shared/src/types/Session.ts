@@ -30,3 +30,17 @@ export type SdkSession = {
     token: string;
     expires: number;
 };
+
+/**
+ * Decoded JWT payload structure for SDK session tokens
+ */
+export type SdkSessionPayload = {
+    address: Address;
+    scopes: string[];
+    sub: Address;
+    iat: number;
+    additionalData?: {
+        sixDegreesToken?: string;
+        demoPkey?: Hex;
+    };
+};

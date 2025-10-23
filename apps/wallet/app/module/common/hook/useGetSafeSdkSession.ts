@@ -1,23 +1,28 @@
-import { lastWebAuthNActionAtom } from "@frak-labs/wallet-shared/common/atoms/webauthn";
 import { sdkKey } from "@frak-labs/wallet-shared/common/queryKeys/sdk";
 import {
     getSafeSdkSession,
     getSafeSession,
 } from "@frak-labs/wallet-shared/common/utils/safeSession";
+import { authenticationStore } from "@frak-labs/wallet-shared/stores/authenticationStore";
+import {
+    selectSdkSession,
+    selectSession,
+    sessionStore,
+} from "@frak-labs/wallet-shared/stores/sessionStore";
 import { useQuery } from "@tanstack/react-query";
-import { useAtom, useAtomValue } from "jotai";
 import { useCallback } from "react";
 import { authenticatedWalletApi } from "@/module/common/api/backendClient";
-import { sdkSessionAtom, sessionAtom } from "@/module/common/atoms/session";
 
 /**
  * Get a safe SDK token
  */
 export function useGetSafeSdkSession() {
-    // Using jotai hook since it's seem to struggle reading from storage directly in some cases
-    const [currentSdkSession, setCurrentSdkSession] = useAtom(sdkSessionAtom);
-    const currentSession = useAtomValue(sessionAtom);
-    const lastWebAuthnAction = useAtomValue(lastWebAuthNActionAtom);
+    const currentSdkSession = sessionStore(selectSdkSession);
+    const currentSession = sessionStore(selectSession);
+    const lastWebAuthnAction = authenticationStore(
+        (state) => state.lastWebAuthNAction
+    );
+    const setCurrentSdkSession = sessionStore.getState().setSdkSession;
 
     /**
      * Generate an SDK session from the last webauthn action if possible

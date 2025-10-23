@@ -1,9 +1,12 @@
 import { getTargetPairingClient } from "@frak-labs/wallet-shared/pairing/clients/store";
 import type { TargetPairingState as TargetPairingStateType } from "@frak-labs/wallet-shared/pairing/types";
+import {
+    selectWebauthnSession,
+    sessionStore,
+} from "@frak-labs/wallet-shared/stores/sessionStore";
 import { useAtomValue } from "jotai";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { webauthnSessionAtom } from "@/module/common/atoms/session";
 import { StatusBoxWallet } from "@/module/pairing/component/PairingStatusBox";
 import { SignatureRequestList } from "@/module/pairing/component/SignatureRequest";
 
@@ -15,7 +18,7 @@ import { SignatureRequestList } from "@/module/pairing/component/SignatureReques
  * todo: only displayed on the wallet
  */
 export function TargetPairingState() {
-    const session = useAtomValue(webauthnSessionAtom);
+    const session = sessionStore(selectWebauthnSession);
     if (!session) return null;
     return <InnerTargetPairingState />;
 }

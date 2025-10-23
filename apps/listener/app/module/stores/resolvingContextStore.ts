@@ -8,15 +8,15 @@ import {
 } from "@frak-labs/core-sdk";
 import { updateGlobalProperties } from "@frak-labs/wallet-shared/common/analytics";
 import { emitLifecycleEvent } from "@frak-labs/wallet-shared/sdk/utils/lifecycleEvents";
+import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
 import { type Address, isAddressEqual, keccak256, toHex } from "viem";
 import { create } from "zustand";
-import { getSharedSession } from "./jotaiBridge";
 import type { IFrameResolvingContext, ResolvingContextStore } from "./types";
 
 /**
  * Resolving context store
  */
-export const useResolvingContextStore = create<ResolvingContextStore>(
+export const resolvingContextStore = create<ResolvingContextStore>(
     (set, get) => ({
         // Initial state
         context: getIFrameResolvingContext(),
@@ -155,8 +155,8 @@ function getIFrameResolvingContext(
  * @returns The referrer address if valid and different from current session, undefined otherwise
  */
 function getWalletReferrer(sourceUrl: string): Address | undefined {
-    // Get the current session via bridge
-    const session = getSharedSession();
+    // Get the current session from store
+    const session = sessionStore.getState().session;
 
     // Get the current frak context
     const frakContext = FrakContextManager.parse({

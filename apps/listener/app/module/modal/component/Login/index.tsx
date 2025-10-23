@@ -3,9 +3,11 @@ import { Spinner } from "@frak-labs/ui/component/Spinner";
 import { prefixModalCss } from "@frak-labs/ui/utils/prefixModalCss";
 import { HandleErrors } from "@frak-labs/wallet-shared/authentication/component/HandleErrors";
 import { useLogin } from "@frak-labs/wallet-shared/authentication/hook/useLogin";
-import { sessionAtom } from "@frak-labs/wallet-shared/common/atoms/session";
 import { isWebAuthNSupported } from "@frak-labs/wallet-shared/common/lib/webauthn";
-import { useAtomValue } from "jotai";
+import {
+    selectSession,
+    sessionStore,
+} from "@frak-labs/wallet-shared/stores/sessionStore";
 import { useEffect, useMemo } from "react";
 import { SsoButton } from "@/module/component/SsoButton";
 import { DismissButton } from "@/module/modal/component/Generic";
@@ -14,7 +16,7 @@ import {
     useListenerTranslation,
     useModalListenerUI,
 } from "@/module/providers/ListenerUiProvider";
-import { useResolvingContextStore } from "@/module/stores/resolvingContextStore";
+import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 import { AuthenticateWithPhone } from "../AuthenticateWithPhone";
 
 /**
@@ -29,7 +31,7 @@ export function LoginModalStep({
     params: LoginModalStepType["params"];
     onFinish: (args: LoginModalStepType["returns"]) => void;
 }) {
-    const resolvingContext = useResolvingContextStore((state) => state.context);
+    const resolvingContext = resolvingContextStore((state) => state.context);
     const { t } = useListenerTranslation();
     const {
         currentRequest: { homepageLink, logoUrl },
@@ -52,7 +54,7 @@ export function LoginModalStep({
         onSuccess: (session) => onFinish({ wallet: session.address }),
     });
 
-    const session = useAtomValue(sessionAtom);
+    const session = sessionStore(selectSession);
 
     /**
      * Listen to the session status, and exit directly after a session is set in the storage

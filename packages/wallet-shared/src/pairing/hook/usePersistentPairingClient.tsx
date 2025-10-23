@@ -1,9 +1,9 @@
-import { useAtomValue } from "jotai";
 import { useEffect } from "react";
 import {
-    distantWebauthnSessionAtom,
-    webauthnSessionAtom,
-} from "../../common/atoms/session";
+    selectDistantWebauthnSession,
+    selectWebauthnSession,
+    sessionStore,
+} from "../../stores/sessionStore";
 import {
     getOriginPairingClient,
     getTargetPairingClient,
@@ -13,8 +13,8 @@ import {
  * Craft some persistent pairing client (auto reconnects etc)
  */
 export function usePersistentPairingClient() {
-    const webauthnSession = useAtomValue(webauthnSessionAtom);
-    const distantWebauthnSession = useAtomValue(distantWebauthnSessionAtom);
+    const webauthnSession = sessionStore(selectWebauthnSession);
+    const distantWebauthnSession = sessionStore(selectDistantWebauthnSession);
 
     useEffect(() => {
         // If we got a webauthn session, create a target client and directly trigger a reconnection

@@ -1,7 +1,6 @@
-import { useAtom } from "jotai";
 import { useCallback, useEffect, useMemo } from "react";
 import { useSearchParams } from "react-router";
-import { pendingPairingAtom } from "../atoms/code";
+import { pairingStore, selectPendingPairing } from "../../stores/pairingStore";
 
 /**
  * Hook to get the pairing code from the URL
@@ -9,7 +8,8 @@ import { pendingPairingAtom } from "../atoms/code";
  */
 export function usePendingPairingInfo() {
     const [searchParams] = useSearchParams();
-    const [pairingInfo, setPairingInfo] = useAtom(pendingPairingAtom);
+    const pairingInfo = pairingStore(selectPendingPairing);
+    const setPairingInfo = pairingStore((state) => state.setPendingPairing);
     const id = useMemo(() => searchParams.get("id"), [searchParams]);
 
     const resetPairingInfo = useCallback(() => {

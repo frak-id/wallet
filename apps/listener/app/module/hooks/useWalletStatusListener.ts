@@ -6,15 +6,10 @@ import type {
     RpcStreamHandler,
     StreamEmitter,
 } from "@frak-labs/frame-connector";
-import { jotaiStore } from "@frak-labs/ui/atoms/store";
-import {
-    sdkSessionAtom,
-    sessionAtom,
-} from "@frak-labs/wallet-shared/common/atoms/session";
 import { pushBackupData } from "@frak-labs/wallet-shared/sdk/utils/backup";
+import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
 import { interactionSessionStatusQuery } from "@frak-labs/wallet-shared/wallet/hook/useInteractionSessionStatus";
 import { useQueryClient } from "@tanstack/react-query";
-import { atom, useAtomValue } from "jotai";
 import { useCallback, useEffect, useRef } from "react";
 import type { WalletRpcContext } from "@/module/types/context";
 import { getSafeSdkSession, getSafeSession } from "@/module/utils/localStorage";
@@ -25,27 +20,25 @@ type OnListenToWallet = RpcStreamHandler<
     WalletRpcContext
 >;
 
-const bothSessionsAtom = atom((get) => ({
-    wallet: get(sessionAtom),
-    sdk: get(sdkSessionAtom),
-}));
-
 /**
  * Hook use to listen to the wallet status
  */
 export function useWalletStatusListener(): OnListenToWallet {
-    // Read from the jotai store
-    const bothSessions = useAtomValue(bothSessionsAtom);
-    const sessionsRef = useRef(undefined as typeof bothSessions | undefined);
-    const unsubscribeSessionRef = useRef<(() => void) | null>(null);
-    const unsubscribeSdkRef = useRef<(() => void) | null>(null);
+    // Read from the zustand store
+    const session = sessionStore((state) => state.session);
+    const sdkSession = sessionStore((state) => state.sdkSession);
+    const sessionsRef = useRef<{
+        wallet: typeof session;
+        sdk: typeof sdkSession;
+    }>({ wallet: session, sdk: sdkSession });
+    const unsubscribeRef = useRef<(() => void) | null>(null);
 
     // Get our query client, to check if we got some cached data
     const queryClient = useQueryClient();
 
     useEffect(() => {
-        sessionsRef.current = bothSessions;
-    }, [bothSessions]);
+        sessionsRef.current = { wallet: session, sdk: sdkSession };
+    }, [session, sdkSession]);
 
     /**
      * Emit the current wallet status
@@ -126,8 +119,7 @@ export function useWalletStatusListener(): OnListenToWallet {
     // Clean up on unmount
     useEffect(() => {
         return () => {
-            unsubscribeSessionRef.current?.();
-            unsubscribeSdkRef.current?.();
+            unsubscribeRef.current?.();
         };
     }, []);
 
@@ -138,8 +130,7 @@ export function useWalletStatusListener(): OnListenToWallet {
     return useCallback(
         async (_params, emitter, context) => {
             // Clean up previous subscription if it exists
-            unsubscribeSessionRef.current?.();
-            unsubscribeSdkRef.current?.();
+            unsubscribeRef.current?.();
 
             let abortController = new AbortController();
 
@@ -150,17 +141,8 @@ export function useWalletStatusListener(): OnListenToWallet {
                 abortController.signal
             );
 
-            // Listen to jotai store update
-            unsubscribeSessionRef.current = jotaiStore.sub(sessionAtom, () => {
-                abortController.abort();
-                abortController = new AbortController();
-                emitCurrentStatus(
-                    emitter,
-                    context.productId,
-                    abortController.signal
-                );
-            });
-            unsubscribeSdkRef.current = jotaiStore.sub(sdkSessionAtom, () => {
+            // Listen to zustand store updates (both session and sdkSession)
+            unsubscribeRef.current = sessionStore.subscribe(() => {
                 abortController.abort();
                 abortController = new AbortController();
                 emitCurrentStatus(

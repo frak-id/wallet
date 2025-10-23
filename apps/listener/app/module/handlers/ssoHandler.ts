@@ -5,14 +5,10 @@ import {
     RpcErrorCodes,
     type RpcPromiseHandler,
 } from "@frak-labs/frame-connector";
-import { jotaiStore } from "@frak-labs/ui/atoms/store";
-import { addLastAuthenticationAtom } from "@frak-labs/wallet-shared/authentication/atoms/lastAuthenticator";
 import { trackAuthCompleted } from "@frak-labs/wallet-shared/common/analytics";
-import {
-    sdkSessionAtom,
-    sessionAtom,
-} from "@frak-labs/wallet-shared/common/atoms/session";
 import { emitLifecycleEvent } from "@frak-labs/wallet-shared/sdk/utils/lifecycleEvents";
+import { addLastAuthentication } from "@frak-labs/wallet-shared/stores/authenticationStore";
+import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
 import type {
     SdkSession,
     Session,
@@ -63,11 +59,11 @@ export async function processSsoCompletion(
 
     try {
         // Save this last authentication
-        await jotaiStore.set(addLastAuthenticationAtom, session);
+        await addLastAuthentication(session);
 
-        // Store the session in atoms
-        jotaiStore.set(sessionAtom, session);
-        jotaiStore.set(sdkSessionAtom, sdkSession);
+        // Store the session in zustand stores
+        sessionStore.getState().setSession(session);
+        sessionStore.getState().setSdkSession(sdkSession);
 
         // Track successful authentication
         await trackAuthCompleted("sso", session);

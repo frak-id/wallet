@@ -1,21 +1,19 @@
 import { pushBackupData } from "@frak-labs/wallet-shared/sdk/utils/backup";
+import {
+    selectPendingInteractionsArray,
+    walletStore,
+} from "@frak-labs/wallet-shared/stores/walletStore";
 import { interactionsKey } from "@frak-labs/wallet-shared/wallet/queryKeys/interactions";
 import { useMutation } from "@tanstack/react-query";
-import { useAtomValue, useSetAtom } from "jotai";
 import { useAccount } from "wagmi";
 import { authenticatedWalletApi } from "@/module/common/api/backendClient";
 import { useGetSafeSdkSession } from "@/module/common/hook/useGetSafeSdkSession";
-import {
-    cleanPendingInteractionsAtom,
-    pendingInteractionAtom,
-} from "@/module/wallet/atoms/pendingInteraction";
 
 /**
  * Hook used to consume the pending interactions
  */
 export function useConsumePendingInteractions() {
-    const { interactions } = useAtomValue(pendingInteractionAtom);
-    const cleanPendingInteractions = useSetAtom(cleanPendingInteractionsAtom);
+    const interactions = walletStore(selectPendingInteractionsArray);
     const { address } = useAccount();
     const { sdkSession, getSdkSession } = useGetSafeSdkSession();
 
@@ -51,7 +49,7 @@ export function useConsumePendingInteractions() {
 
             // Clean the pending interactions
             if (data) {
-                cleanPendingInteractions();
+                walletStore.getState().cleanPendingInteractions();
                 await pushBackupData();
             }
 

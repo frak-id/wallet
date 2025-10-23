@@ -1,7 +1,10 @@
+import {
+    selectWebauthnSession,
+    sessionStore,
+} from "@frak-labs/wallet-shared/stores/sessionStore";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { webauthnSessionAtom } from "@/module/common/atoms/session";
 import { AccordionRecoveryItem } from "@/module/common/component/AccordionRecoveryItem";
 import { useGenerateRecoveryOptions } from "@/module/recovery-setup/hook/useGenerateRecoveryOptions";
 import {
@@ -21,7 +24,7 @@ export function Step2() {
     const password = useAtomValue(recoveryPasswordAtom);
 
     // Get the current session
-    const session = useAtomValue(webauthnSessionAtom);
+    const session = sessionStore(selectWebauthnSession);
 
     // Set the recovery options
     const setRecoveryOptions = useSetAtom(recoveryOptionsAtom);

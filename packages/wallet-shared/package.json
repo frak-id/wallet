@@ -68,7 +68,8 @@
     "ua-parser-js": "^2.0.6",
     "vaul": "^1.1.2",
     "viem": "catalog:",
-    "wagmi": "2.15.6"
+    "wagmi": "2.15.6",
+    "zustand": "^5.0.8"
   },
   "devDependencies": {
     "@types/node": "catalog:",

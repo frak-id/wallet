@@ -5,7 +5,7 @@ import { useMemo } from "react";
 import { useAccount } from "wagmi";
 import { estimatedInteractionRewardQuery } from "@/module/hooks/useEstimatedInteractionReward";
 import { getProductMetadataQuery } from "@/module/hooks/useGetProductMetadata";
-import { useResolvingContextStore } from "@/module/stores/resolvingContextStore";
+import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 
 /**
  * Small hook to preload some listener queries
@@ -19,7 +19,7 @@ import { useResolvingContextStore } from "@/module/stores/resolvingContextStore"
  */
 export function useListenerDataPreload() {
     const address = useAccount().address;
-    const productId = useResolvingContextStore(
+    const productId = resolvingContextStore(
         (state) => state.context?.productId
     );
 

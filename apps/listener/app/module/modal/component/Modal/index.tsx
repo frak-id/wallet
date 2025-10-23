@@ -17,6 +17,7 @@ import {
     useCallback,
     useEffect,
     useMemo,
+    useState,
 } from "react";
 import { Toaster } from "sonner";
 import { SiweAuthenticateModalStep } from "@/module/modal/component/Authenticate";
@@ -32,11 +33,11 @@ import {
     useListenerUI,
 } from "@/module/providers/ListenerUiProvider";
 import {
+    modalStore,
     selectCurrentStep,
     selectCurrentStepObject,
     selectIsDismissed,
     selectShouldFinish,
-    useModalStore,
 } from "@/module/stores/modalStore";
 import { ToastLoading } from "../../../component/ToastLoading";
 import styles from "./index.module.css";
@@ -51,13 +52,22 @@ export function ListenerModal({
     logoUrl,
 }: ModalUiType & GenericWalletUiType) {
     const { clearRequest } = useListenerUI();
+    const [isOpen, setIsOpen] = useState(true);
 
     /**
      * Method to close the modal
      */
     const onClose = useCallback(() => {
-        clearRequest();
-        useModalStore.getState().clearModal();
+        // First, trigger the modal close animation
+        setIsOpen(false);
+
+        // Wait for animation to complete before clearing state
+        setTimeout(() => {
+            // Clear modal store
+            modalStore.getState().clearModal();
+            // Then clear the UI request which will unmount the component
+            clearRequest();
+        }, 200); // 200ms for animation
     }, [clearRequest]);
 
     /**
@@ -81,7 +91,7 @@ export function ListenerModal({
     /**
      * Method when the user reached the end of the modal
      */
-    const onFinishResult = useModalStore(selectShouldFinish);
+    const onFinishResult = modalStore(selectShouldFinish);
     useEffect(() => {
         if (!onFinishResult) return;
 
@@ -100,7 +110,7 @@ export function ListenerModal({
             if (isVisible) return;
 
             // Get the current results and steps from Zustand
-            const state = useModalStore.getState();
+            const state = modalStore.getState();
             const results = state.results;
             const steps = state.steps;
 
@@ -182,7 +192,7 @@ export function ListenerModal({
     return (
         <ModalComponent
             title={titleComponent}
-            open={true}
+            open={isOpen}
             onOpenChange={onOpenChange}
         >
             <Toaster position="top-center" />
@@ -248,8 +258,8 @@ function ModalComponent({
  */
 function CurrentModalMetadataInfo() {
     const { t, i18n } = useListenerTranslation();
-    const currentStep = useModalStore(selectCurrentStepObject);
-    const isDismissed = useModalStore(selectIsDismissed);
+    const currentStep = modalStore(selectCurrentStepObject);
+    const isDismissed = modalStore(selectIsDismissed);
 
     // Extract step key and metadata
     const descriptionKey = useMemo(() => {
@@ -289,7 +299,7 @@ function CurrentModalStepComponent({
 }: {
     onError: (reason?: string) => void;
 }) {
-    const currentStep = useModalStore(selectCurrentStep);
+    const currentStep = modalStore(selectCurrentStep);
 
     /**
      * Return the right modal depending on the state

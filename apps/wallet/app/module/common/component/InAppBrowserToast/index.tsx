@@ -1,14 +1,10 @@
 import {
-    inAppBrowserToastDismissedAtom,
-    socialRedirectAttemptedAtom,
-} from "@frak-labs/wallet-shared/common/atoms/inAppBrowser";
-import {
     inAppRedirectUrl,
     isInAppBrowser,
     isInIframe,
 } from "@frak-labs/wallet-shared/common/lib/inApp";
 import { emitLifecycleEvent } from "@frak-labs/wallet-shared/sdk/utils/lifecycleEvents";
-import { useAtom } from "jotai";
+import { browserStore } from "@frak-labs/wallet-shared/stores/browserStore";
 import { useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Toast } from "@/module/common/component/Toast";
@@ -19,20 +15,12 @@ import { trackGenericEvent } from "../../analytics";
  */
 export function InAppBrowserToast() {
     const { t } = useTranslation();
-    const [isDismissed, setIsDismissed] = useAtom(
-        inAppBrowserToastDismissedAtom
+    const isDismissed = browserStore(
+        (state) => state.inAppBrowserToastDismissed
     );
-    const [hasAttemptedRedirect, setHasAttemptedRedirect] = useAtom(
-        socialRedirectAttemptedAtom
+    const hasAttemptedRedirect = browserStore(
+        (state) => state.socialRedirectAttempted
     );
-
-    // Auto-redirect if this is the first time detecting in-app browser and no redirect has been attempted
-    useEffect(() => {
-        if (!isInAppBrowser || hasAttemptedRedirect) return;
-
-        setHasAttemptedRedirect(true);
-        handleRedirect();
-    }, [hasAttemptedRedirect, setHasAttemptedRedirect]);
 
     const handleRedirect = useCallback(() => {
         if (isInIframe) {
@@ -55,13 +43,18 @@ export function InAppBrowserToast() {
         }
     }, []);
 
-    const handleDismiss = useCallback(
-        (e: React.MouseEvent) => {
-            e.stopPropagation(); // Prevent toast click when clicking dismiss
-            setIsDismissed(true);
-        },
-        [setIsDismissed]
-    );
+    // Auto-redirect if this is the first time detecting in-app browser and no redirect has been attempted
+    useEffect(() => {
+        if (!isInAppBrowser || hasAttemptedRedirect) return;
+
+        browserStore.getState().setSocialRedirectAttempted(true);
+        handleRedirect();
+    }, [hasAttemptedRedirect, handleRedirect]);
+
+    const handleDismiss = useCallback((e: React.MouseEvent) => {
+        e.stopPropagation(); // Prevent toast click when clicking dismiss
+        browserStore.getState().setInAppBrowserToastDismissed(true);
+    }, []);
 
     // Don't show if not in app browser or already dismissed
     if (!isInAppBrowser || isDismissed) {

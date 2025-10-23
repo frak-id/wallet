@@ -1,21 +1,22 @@
 import { useMutation } from "@tanstack/react-query";
-import { useAtomValue, useSetAtom } from "jotai";
 import { useAccount } from "wagmi";
 import { authenticatedWalletApi } from "../../common/api/backendClient";
 import { useGetSafeSdkSession } from "../../common/hook/useGetSafeSdkSession";
 import { pushBackupData } from "../../sdk/utils/backup";
 import {
-    cleanPendingInteractionsAtom,
-    pendingInteractionAtom,
-} from "../atoms/pendingInteraction";
+    selectPendingInteractionsArray,
+    walletStore,
+} from "../../stores/walletStore";
 import { interactionsKey } from "../queryKeys/interactions";
 
 /**
  * Hook used to consume the pending interactions
  */
 export function useConsumePendingInteractions() {
-    const { interactions } = useAtomValue(pendingInteractionAtom);
-    const cleanPendingInteractions = useSetAtom(cleanPendingInteractionsAtom);
+    const interactions = walletStore(selectPendingInteractionsArray);
+    const cleanPendingInteractions = walletStore(
+        (state) => state.cleanPendingInteractions
+    );
     const { address } = useAccount();
     const { sdkSession, getSdkSession } = useGetSafeSdkSession();
 

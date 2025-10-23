@@ -1,4 +1,3 @@
-import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { startAuthentication } from "@simplewebauthn/browser";
 import { tryit } from "radash";
 import {
@@ -11,7 +10,7 @@ import {
     toHex,
 } from "viem";
 import { readContract } from "viem/actions";
-import { lastWebAuthNActionAtom } from "../../common/atoms/webauthn";
+import { authenticationStore } from "../../stores/authenticationStore";
 import type { WebAuthNWallet } from "../../types/WebAuthN";
 import { getSignOptions } from "../action/signOptions";
 import { formatSignature, parseWebAuthNAuthentication } from "./webAuthN";
@@ -130,8 +129,8 @@ export async function signHashViaWebAuthN({
         optionsJSON: options,
     });
 
-    // Store that in our last webauthn action atom
-    jotaiStore.set(lastWebAuthNActionAtom, {
+    // Store that in our last webauthn action
+    authenticationStore.getState().setLastWebAuthNAction({
         wallet: wallet.address,
         signature: authenticationResponse,
         msg: options.challenge,

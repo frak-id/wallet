@@ -1,13 +1,11 @@
-import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import type { UndefinedInitialDataOptions } from "@tanstack/react-query";
 import { useQuery } from "@tanstack/react-query";
-import { RESET } from "jotai/utils";
 import { useMemo } from "react";
 import type { Address } from "viem";
 import { useAccount } from "wagmi";
 import { getSessionStatus } from "../../interaction/action/interactionSession";
+import { walletStore } from "../../stores/walletStore";
 import type { InteractionSession } from "../../types/Session";
-import { interactionSessionAtom } from "../atoms/interactionSession";
 import { interactionsKey } from "../queryKeys/interactions";
 
 /**
@@ -22,7 +20,7 @@ export const interactionSessionStatusQuery = (address?: Address) => ({
             return null;
         }
         const session = await getSessionStatus({ wallet: address });
-        jotaiStore.set(interactionSessionAtom, session ?? RESET);
+        walletStore.getState().setInteractionSession(session ?? null);
         return session;
     },
 });

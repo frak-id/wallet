@@ -1,7 +1,10 @@
 import { useAtomValue } from "jotai";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { distantWebauthnSessionAtom } from "../../../common/atoms/session";
+import {
+    selectDistantWebauthnSession,
+    sessionStore,
+} from "../../../stores/sessionStore";
 import { getOriginPairingClient } from "../../clients/store";
 import type { OriginPairingState as OriginPairingStateType } from "../../types";
 import {
@@ -21,7 +24,7 @@ type OriginPairingStateProps = {
  * Visible on listener, embedded wallet, and wallet
  */
 export function OriginPairingState({ type }: OriginPairingStateProps) {
-    const session = useAtomValue(distantWebauthnSessionAtom);
+    const session = sessionStore(selectDistantWebauthnSession);
     if (!session) return null;
     return <InnerOriginPairingState type={type} />;
 }

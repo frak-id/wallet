@@ -1,15 +1,17 @@
 import { Button } from "@frak-labs/ui/component/Button";
-import { useAtomValue, useSetAtom } from "jotai";
+import {
+    selectDemoPrivateKey,
+    sessionStore,
+} from "@frak-labs/wallet-shared/stores/sessionStore";
 import { KeyRound } from "lucide-react";
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { demoPrivateKeyAtom } from "@/module/common/atoms/session";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
 
 export function PrivateKey() {
     const { t } = useTranslation();
-    const privateKey = useAtomValue(demoPrivateKeyAtom);
+    const privateKey = sessionStore(selectDemoPrivateKey);
 
     if (privateKey) {
         return (
@@ -27,7 +29,7 @@ export function PrivateKey() {
 
 function DeletePrivateKey() {
     const { t } = useTranslation();
-    const setPrivateKey = useSetAtom(demoPrivateKeyAtom);
+    const setPrivateKey = sessionStore.getState().setDemoPrivateKey;
 
     const deletePrivateKey = useCallback(() => {
         setPrivateKey(null);

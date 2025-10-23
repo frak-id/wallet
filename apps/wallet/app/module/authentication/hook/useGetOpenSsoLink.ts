@@ -1,5 +1,5 @@
 import { generateSsoUrl } from "@frak-labs/core-sdk";
-import type { AppSpecificSsoMetadata } from "@frak-labs/wallet-shared/authentication/atoms/sso";
+import type { AppSpecificSsoMetadata } from "@frak-labs/wallet-shared/stores/types";
 import { useMemo } from "react";
 import type { Hex } from "viem";
 

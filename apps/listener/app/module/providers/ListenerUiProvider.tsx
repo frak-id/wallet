@@ -29,11 +29,12 @@ import {
     useCallback,
     useContext,
     useMemo,
+    useRef,
     useState,
 } from "react";
 import { useTranslation } from "react-i18next";
 import { useEstimatedInteractionReward } from "@/module/hooks/useEstimatedInteractionReward";
-import { useResolvingContextStore } from "@/module/stores/resolvingContextStore";
+import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 import { mapDeprecatedModalMetadata } from "../utils/deprecatedModalMetadataMapper";
 
 export type GenericWalletUiType = {
@@ -105,7 +106,7 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
     // Initial translation context
     const { i18n: initialI18n } = useTranslation();
     // We are not using the safeResolvingContext here, since this component is init before the iframe is ready
-    const resolvingContext = useResolvingContextStore((state) => state.context);
+    const resolvingContext = resolvingContextStore((state) => state.context);
     // Get the estimated reward
     const { estimatedReward: rewardData } = useEstimatedInteractionReward();
 
@@ -114,16 +115,34 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
         undefined
     );
 
+    // Track pending clear timeout to prevent flashing on rapid close/open
+    const clearTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
     // Save the current request + display the iframe
     const setRequest = useCallback((request: UIRequest | undefined) => {
+        // Cancel any pending clear operation
+        if (clearTimeoutRef.current) {
+            clearTimeout(clearTimeoutRef.current);
+            clearTimeoutRef.current = null;
+        }
         setCurrentRequest(request);
         emitLifecycleEvent({ iframeLifecycle: "show" });
     }, []);
 
     // Clear the current request + hide the iframe
     const clearRequest = useCallback(() => {
+        // Cancel any existing clear timeout
+        if (clearTimeoutRef.current) {
+            clearTimeout(clearTimeoutRef.current);
+        }
+
         emitLifecycleEvent({ iframeLifecycle: "hide" });
-        setCurrentRequest(undefined);
+
+        // Delay clearing to prevent flashing on rapid close/open
+        clearTimeoutRef.current = setTimeout(() => {
+            setCurrentRequest(undefined);
+            clearTimeoutRef.current = null;
+        }, 50); // 50ms delay allows new requests to cancel the clear
     }, []);
 
     /**

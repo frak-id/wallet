@@ -1,13 +1,12 @@
-import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { startRegistration } from "@simplewebauthn/browser";
 import type { UseMutationOptions } from "@tanstack/react-query";
 import { useMutation } from "@tanstack/react-query";
 import { trackAuthCompleted, trackAuthInitiated } from "../../common/analytics";
 import { authenticatedWalletApi } from "../../common/api/backendClient";
-import { sdkSessionAtom, sessionAtom } from "../../common/atoms/session";
+import { addLastAuthentication } from "../../stores/authenticationStore";
+import { sessionStore } from "../../stores/sessionStore";
 import type { Session } from "../../types/Session";
 import { getRegisterOptions } from "../../wallet/action/registerOptions";
-import { addLastAuthenticationAtom } from "../atoms/lastAuthenticator";
 import { authKey } from "../queryKeys/auth";
 import { usePreviousAuthenticators } from "./usePreviousAuthenticators";
 
@@ -70,11 +69,11 @@ export function useRegister(options?: UseMutationOptions<Session>) {
             const session = { ...authentication, token } as Session;
 
             // Save this to the last authenticator
-            await jotaiStore.set(addLastAuthenticationAtom, session);
+            await addLastAuthentication(session);
 
             // Store the session
-            jotaiStore.set(sessionAtom, session);
-            jotaiStore.set(sdkSessionAtom, sdkJwt);
+            sessionStore.getState().setSession(session);
+            sessionStore.getState().setSdkSession(sdkJwt);
 
             // Track the event
             events.push(trackAuthCompleted("register", session));

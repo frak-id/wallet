@@ -1,5 +1,4 @@
-import { jotaiStore } from "@frak-labs/ui/atoms/store";
-import { lastWebAuthNActionAtom } from "@frak-labs/wallet-shared/common/atoms/webauthn";
+import { authenticationStore } from "@frak-labs/wallet-shared/stores/authenticationStore";
 import type { WebAuthNWallet } from "@frak-labs/wallet-shared/types/WebAuthN";
 import { getSignOptions } from "@frak-labs/wallet-shared/wallet/action/signOptions";
 import { startAuthentication } from "@simplewebauthn/browser";
@@ -130,8 +129,8 @@ export async function signHashViaWebAuthN({
         optionsJSON: options,
     });
 
-    // Store that in our last webauthn action atom
-    jotaiStore.set(lastWebAuthNActionAtom, {
+    // Store that in our last webauthn action store
+    authenticationStore.getState().setLastWebAuthNAction({
         wallet: wallet.address,
         signature: authenticationResponse,
         msg: options.challenge,

@@ -1,8 +1,6 @@
 import { treaty } from "@elysiajs/eden";
 import type { App } from "@frak-labs/backend-elysia";
-import { jotaiStore } from "@frak-labs/ui/atoms/store";
-import { RESET } from "jotai/utils";
-import { sdkSessionAtom, sessionAtom } from "../atoms/session";
+import { sessionStore } from "../../stores/sessionStore";
 import { getSafeSdkSession, getSafeSession } from "../utils/safeSession";
 
 /**
@@ -33,8 +31,8 @@ export const authenticatedBackendApi = treaty<App>(
         // Auto cleanup session on 401 response
         onResponse(response) {
             if (response.status === 401) {
-                jotaiStore.set(sessionAtom, RESET);
-                jotaiStore.set(sdkSessionAtom, RESET);
+                sessionStore.getState().setSession(null);
+                sessionStore.getState().setSdkSession(null);
             }
         },
     }

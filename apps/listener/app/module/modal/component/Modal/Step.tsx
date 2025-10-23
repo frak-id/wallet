@@ -10,9 +10,9 @@ import { type PropsWithChildren, useMemo } from "react";
 import styles from "@/module/modal/component/Modal/index.module.css";
 import { useListenerTranslation } from "@/module/providers/ListenerUiProvider";
 import {
+    modalStore,
     selectActiveStep,
     selectSteps,
-    useModalStore,
 } from "@/module/stores/modalStore";
 import type { AnyModalKey, DisplayedModalStep } from "@/module/stores/types";
 
@@ -50,8 +50,8 @@ function getStepIcon(step: DisplayedModalStep<AnyModalKey>) {
  */
 export function ModalStepIndicator() {
     const { t } = useListenerTranslation();
-    const activeStep = useModalStore(selectActiveStep);
-    const currentSteps = useModalStore(selectSteps);
+    const activeStep = modalStore(selectActiveStep);
+    const currentSteps = modalStore(selectSteps);
 
     // Compute the steps data to be displayed
     const stepsData = useMemo(() => {

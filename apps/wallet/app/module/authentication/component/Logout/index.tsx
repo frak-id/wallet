@@ -1,11 +1,9 @@
-import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { Button } from "@frak-labs/ui/component/Button";
+import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
 import { useQueryClient } from "@tanstack/react-query";
-import { RESET } from "jotai/utils";
 import { LogOut } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
-import { sdkSessionAtom, sessionAtom } from "@/module/common/atoms/session";
 import { Panel } from "@/module/common/component/Panel";
 import { trackGenericEvent } from "../../../common/analytics";
 
@@ -42,8 +40,8 @@ export function Logout() {
                 onClick={async () => {
                     trackGenericEvent("logout");
                     // Session deletion
-                    jotaiStore.set(sessionAtom, RESET);
-                    jotaiStore.set(sdkSessionAtom, RESET);
+                    sessionStore.getState().clearSession();
+                    sessionStore.getState().clearSession();
                     // Query cache
                     queryClient.removeQueries();
                     // Local storage cleanup

@@ -1,5 +1,6 @@
-import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { getFromLocalStorage } from "@frak-labs/wallet-shared/common/utils/safeSession";
+import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
+import type { SdkSessionPayload } from "@frak-labs/wallet-shared/types/Session";
 import { decodeJwt } from "jose";
 import { useEffect, useMemo } from "react";
 import { type Address, type Hex, isAddressEqual } from "viem";
@@ -9,11 +10,6 @@ import {
     type FrakWalletConnector,
     smartAccountConnector,
 } from "@/module/wallet/smartWallet/connector";
-import {
-    demoPrivateKeyAtom,
-    type SdkSessionPayload,
-    sdkSessionAtom,
-} from "../atoms/session";
 
 /**
  * Hook that enforce wagmi connection
@@ -77,14 +73,14 @@ export function useEnforceWagmiConnection() {
 
         (frakConnector as unknown as FrakWalletConnector).setEcdsaSigner(
             ({ hash, address }: { hash: Hex; address: Address }) => {
-                const sdkSession = jotaiStore.get(sdkSessionAtom);
+                const sdkSession = sessionStore.getState().sdkSession;
                 const parsedSession = sdkSession
                     ? decodeJwt<SdkSessionPayload>(sdkSession.token)
                     : undefined;
 
                 // Get the potential pkeys
                 const potentialPkeys = [
-                    jotaiStore.get(demoPrivateKeyAtom) ??
+                    sessionStore.getState().demoPrivateKey ??
                         getFromLocalStorage<Hex>("frak_demoPrivateKey"),
                     parsedSession?.additionalData?.demoPkey,
                 ];

@@ -3,38 +3,28 @@ import {
     compressJsonToB64,
     decompressJsonFromB64,
 } from "@frak-labs/core-sdk";
-import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { ButtonAuth } from "@frak-labs/ui/component/ButtonAuth";
 import { formatHash } from "@frak-labs/ui/component/HashDisplay";
 import { Spinner } from "@frak-labs/ui/component/Spinner";
-import {
-    currentSsoMetadataAtom,
-    ssoContextAtom,
-} from "@frak-labs/wallet-shared/authentication/atoms/sso";
 import { ssoKey } from "@frak-labs/wallet-shared/authentication/queryKeys/sso";
 import { compressedSsoToParams } from "@frak-labs/wallet-shared/authentication/utils/ssoDataCompression";
+import { authenticationStore } from "@frak-labs/wallet-shared/stores/authenticationStore";
+import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
 import type { Session } from "@frak-labs/wallet-shared/types/Session";
 import {
     type UseMutationOptions,
     useMutation,
     useQuery,
 } from "@tanstack/react-query";
-import { useAtomValue } from "jotai";
 import { CloudUpload } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { Link, useSearchParams } from "react-router";
 import type { Hex } from "viem";
-import { lastAuthenticatorAtom } from "@/module/authentication/atoms/lastAuthenticator";
 import styles from "@/module/authentication/component/Sso/index.module.css";
 import { SsoHeader } from "@/module/authentication/component/Sso/SsoHeader";
 import { SsoLoginComponent } from "@/module/authentication/component/Sso/SsoLogin";
 import { SsoRegisterComponent } from "@/module/authentication/component/Sso/SsoRegister";
-import {
-    demoPrivateKeyAtom,
-    sdkSessionAtom,
-    sessionAtom,
-} from "@/module/common/atoms/session";
 import { Grid } from "@/module/common/component/Grid";
 import { Notice } from "@/module/common/component/Notice";
 import { useDemoLogin } from "../../module/authentication/hook/useDemoLogin";
@@ -56,12 +46,14 @@ export default function Sso() {
     /**
      * The current metadata
      */
-    const currentMetadata = useAtomValue(currentSsoMetadataAtom);
+    const currentMetadata = authenticationStore(
+        (state) => state.ssoContext?.metadata
+    );
 
     /**
      * Check if we have a redirectUrl
      */
-    const ssoContext = useAtomValue(ssoContextAtom);
+    const ssoContext = authenticationStore((state) => state.ssoContext);
     const hasRedirectUrl = !!ssoContext?.redirectUrl;
 
     /**
@@ -100,7 +92,7 @@ export default function Sso() {
                 compressedSsoToParams(compressedParam);
 
             // Save the current sso context
-            jotaiStore.set(ssoContextAtom, {
+            authenticationStore.getState().setSsoContext({
                 productId: productId ?? undefined,
                 redirectUrl: redirectUrl ?? undefined,
                 directExit: directExit ?? undefined,
@@ -138,8 +130,8 @@ export default function Sso() {
      */
     const onSuccess = useCallback(async () => {
         // Get the current SSO context
-        const session = jotaiStore.get(sessionAtom);
-        const sdkSession = jotaiStore.get(sdkSessionAtom);
+        const session = sessionStore.getState().session;
+        const sdkSession = sessionStore.getState().sdkSession;
 
         // Find the listener iframe and send RPC message if available
         if (session && sdkSession) {
@@ -190,8 +182,8 @@ export default function Sso() {
      * Redirect or close after success
      */
     const redirectOrClose = useCallback(() => {
-        // Check the current atom context
-        const ssoContext = jotaiStore.get(ssoContextAtom);
+        // Check the current store context
+        const ssoContext = authenticationStore.getState().ssoContext;
         // If we got a redirect, redirect to the page directly with success status
         if (ssoContext?.redirectUrl) {
             const redirectUrl = new URL(
@@ -199,8 +191,8 @@ export default function Sso() {
             );
 
             // Get the full SSO params and compress them for URL passthrough
-            const session = jotaiStore.get(sessionAtom);
-            const sdkSession = jotaiStore.get(sdkSessionAtom);
+            const session = sessionStore.getState().session;
+            const sdkSession = sessionStore.getState().sdkSession;
             if (session && sdkSession) {
                 // Compress to base64url for URL parameter
                 const compressed = compressJsonToB64([session, sdkSession]);
@@ -221,7 +213,8 @@ export default function Sso() {
      * Cancel SSO and redirect back
      */
     const cancelAndRedirect = useCallback(() => {
-        const initialRedirectUrl = jotaiStore.get(ssoContextAtom)?.redirectUrl;
+        const initialRedirectUrl =
+            authenticationStore.getState().ssoContext?.redirectUrl;
         if (initialRedirectUrl) {
             const redirectUrl = new URL(decodeURIComponent(initialRedirectUrl));
             redirectUrl.searchParams.set("status", "cancel");
@@ -304,8 +297,12 @@ export default function Sso() {
 
 function Header() {
     const { t } = useTranslation();
-    const currentMetadata = useAtomValue(currentSsoMetadataAtom);
-    const lastAuthenticator = useAtomValue(lastAuthenticatorAtom);
+    const currentMetadata = authenticationStore(
+        (state) => state.ssoContext?.metadata
+    );
+    const lastAuthenticator = authenticationStore(
+        (state) => state.lastAuthenticator
+    );
     const title = useMemo(
         () =>
             t("authent.sso.title", {
@@ -364,8 +361,10 @@ function Actions({
     onSuccess: () => void;
     onError: (error: Error | null) => void;
 }) {
-    const lastAuthenticator = useAtomValue(lastAuthenticatorAtom);
-    const privateKey = useAtomValue(demoPrivateKeyAtom);
+    const lastAuthenticator = authenticationStore(
+        (state) => state.lastAuthenticator
+    );
+    const privateKey = sessionStore((state) => state.demoPrivateKey);
     const { login, isLoginInProgress } = useLoginDemo({
         onSuccess: () => onSuccess(),
         onError: (error: Error | null) => onError(error),
@@ -476,7 +475,9 @@ function useLoginDemo(options?: UseMutationOptions<Session>) {
         mutationKey: ssoKey.demo.login,
         async mutationFn() {
             // Retrieve the pkey
-            const pkey = jotaiStore.get(demoPrivateKeyAtom) as Hex | undefined;
+            const pkey = sessionStore.getState().demoPrivateKey as
+                | Hex
+                | undefined;
             if (!pkey) {
                 throw new Error("No private key found");
             }

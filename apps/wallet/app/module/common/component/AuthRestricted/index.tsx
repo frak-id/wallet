@@ -1,9 +1,11 @@
 import { Skeleton } from "@frak-labs/ui/component/Skeleton";
 import { getSafeSession } from "@frak-labs/wallet-shared/common/utils/safeSession";
-import { useAtomValue } from "jotai";
+import {
+    selectSession,
+    sessionStore,
+} from "@frak-labs/wallet-shared/stores/sessionStore";
 import { type PropsWithChildren, useEffect, useState } from "react";
 import { useNavigate } from "react-router";
-import { sessionAtom } from "@/module/common/atoms/session";
 import { usePendingPairingInfo } from "@/module/pairing/hook/usePendingPairingInfo";
 
 /**
@@ -17,7 +19,7 @@ export function AuthRestricted({
     requireAuthenticated,
 }: PropsWithChildren<{ requireAuthenticated: boolean }>) {
     const navigate = useNavigate();
-    const sessionFromAtom = useAtomValue(sessionAtom);
+    const sessionFromAtom = sessionStore(selectSession);
     const [canDisplay, setCanDisplay] = useState(false);
     const { pairingInfo } = usePendingPairingInfo();
 

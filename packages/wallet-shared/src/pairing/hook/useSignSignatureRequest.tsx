@@ -1,7 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
-import { useAtomValue } from "jotai";
 import { useCallback } from "react";
-import { webauthnSessionAtom } from "../../common/atoms/session";
+import { selectWebauthnSession, sessionStore } from "../../stores/sessionStore";
 import { signHashViaWebAuthN } from "../../wallet/smartWallet/signature";
 import type { TargetPairingClient } from "../clients/target";
 import { pairingKey } from "../queryKeys";
@@ -15,7 +14,7 @@ export function useSignSignatureRequest({
 }: {
     client: TargetPairingClient;
 }) {
-    const session = useAtomValue(webauthnSessionAtom);
+    const session = sessionStore(selectWebauthnSession);
 
     return useMutation({
         mutationKey: pairingKey.target.handleSignatureRequest(session?.address),

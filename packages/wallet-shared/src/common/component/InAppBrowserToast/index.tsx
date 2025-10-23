@@ -1,12 +1,12 @@
-import { useAtom } from "jotai";
 import { useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { emitLifecycleEvent } from "../../../sdk/utils/lifecycleEvents";
-import { trackGenericEvent } from "../../analytics";
 import {
-    inAppBrowserToastDismissedAtom,
-    socialRedirectAttemptedAtom,
-} from "../../atoms/inAppBrowser";
+    browserStore,
+    selectInAppBrowserToastDismissed,
+    selectSocialRedirectAttempted,
+} from "../../../stores/browserStore";
+import { trackGenericEvent } from "../../analytics";
 import { inAppRedirectUrl, isInAppBrowser, isInIframe } from "../../lib/inApp";
 import { Toast } from "../Toast";
 
@@ -15,11 +15,13 @@ import { Toast } from "../Toast";
  */
 export function InAppBrowserToast() {
     const { t } = useTranslation();
-    const [isDismissed, setIsDismissed] = useAtom(
-        inAppBrowserToastDismissedAtom
+    const isDismissed = browserStore(selectInAppBrowserToastDismissed);
+    const hasAttemptedRedirect = browserStore(selectSocialRedirectAttempted);
+    const setIsDismissed = browserStore(
+        (state) => state.setInAppBrowserToastDismissed
     );
-    const [hasAttemptedRedirect, setHasAttemptedRedirect] = useAtom(
-        socialRedirectAttemptedAtom
+    const setHasAttemptedRedirect = browserStore(
+        (state) => state.setSocialRedirectAttempted
     );
 
     // Auto-redirect if this is the first time detecting in-app browser and no redirect has been attempted

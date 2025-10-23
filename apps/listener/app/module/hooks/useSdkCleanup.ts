@@ -1,15 +1,10 @@
-import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { trackGenericEvent } from "@frak-labs/wallet-shared/common/analytics";
-import {
-    sdkSessionAtom,
-    sessionAtom,
-} from "@frak-labs/wallet-shared/common/atoms/session";
 import { emitLifecycleEvent } from "@frak-labs/wallet-shared/sdk/utils/lifecycleEvents";
+import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
 import { WebAuthnAbortService } from "@simplewebauthn/browser";
 import { useQueryClient } from "@tanstack/react-query";
-import { RESET } from "jotai/utils";
 import { useCallback } from "react";
-import { useModalStore } from "@/module/stores/modalStore";
+import { modalStore } from "@/module/stores/modalStore";
 import { useListenerUI } from "../providers/ListenerUiProvider";
 
 /**
@@ -29,9 +24,9 @@ export function useSdkCleanup() {
             iframeLifecycle: "remove-backup",
         });
 
-        // Clean the jotai session atom, this will force a rerender on the displayed component depending on it
-        jotaiStore.set(sessionAtom, RESET);
-        jotaiStore.set(sdkSessionAtom, RESET);
+        // Clean the session store, this will force a rerender on the displayed component depending on it
+        sessionStore.getState().setSession(null);
+        sessionStore.getState().setSdkSession(null);
 
         // Remove all the iframe local storage
         localStorage.clear();
@@ -40,7 +35,7 @@ export function useSdkCleanup() {
         queryClient.clear();
 
         // Get current modal state directly from store (avoid dependency array issues)
-        const currentModalSteps = useModalStore.getState();
+        const currentModalSteps = modalStore.getState();
 
         // If we don't have anything displayed, or it's not the modal displayed
         if (!currentRequest || !currentModalSteps.steps) {
@@ -52,7 +47,7 @@ export function useSdkCleanup() {
             (step) => step.key === "login"
         );
         if (loginStep !== -1 && loginStep < currentModalSteps.currentStep) {
-            useModalStore.setState({
+            modalStore.setState({
                 currentStep: loginStep,
             });
         }

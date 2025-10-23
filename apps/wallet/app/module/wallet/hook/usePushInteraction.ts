@@ -1,20 +1,21 @@
 import type { PreparedInteraction } from "@frak-labs/core-sdk";
-import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { pushBackupData } from "@frak-labs/wallet-shared/sdk/utils/backup";
-import { useAtomValue } from "jotai";
+import {
+    selectSession,
+    sessionStore,
+} from "@frak-labs/wallet-shared/stores/sessionStore";
+import { walletStore } from "@frak-labs/wallet-shared/stores/walletStore";
 import { useCallback, useEffect, useRef } from "react";
 import type { Hex } from "viem";
 import { authenticatedWalletApi } from "@/module/common/api/backendClient";
-import { sessionAtom } from "@/module/common/atoms/session";
 import { useGetSafeSdkSession } from "@/module/common/hook/useGetSafeSdkSession";
-import { addPendingInteractionAtom } from "@/module/wallet/atoms/pendingInteraction";
 import { trackGenericEvent } from "../../common/analytics";
 
 export function usePushInteraction() {
     const { sdkSession, getSdkSession } = useGetSafeSdkSession();
 
     // Read from the jotai store
-    const currentSession = useAtomValue(sessionAtom);
+    const currentSession = sessionStore(selectSession);
     const sessionsRef = useRef(undefined as typeof currentSession | undefined);
     useEffect(() => {
         sessionsRef.current = currentSession;
@@ -34,7 +35,7 @@ export function usePushInteraction() {
             // If no current wallet present
             if (!userAddress) {
                 // Save the pending interaction
-                jotaiStore.set(addPendingInteractionAtom, {
+                walletStore.getState().addPendingInteraction({
                     productId,
                     interaction,
                     signature,

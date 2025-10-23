@@ -5,7 +5,7 @@ import {
     type RpcMiddleware,
 } from "@frak-labs/frame-connector";
 import { keccak256, toHex } from "viem";
-import { useResolvingContextStore } from "@/module/stores/resolvingContextStore";
+import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 import type {
     CombinedRpcSchema,
     WalletRpcContext,
@@ -46,7 +46,7 @@ export const walletContextMiddleware: RpcMiddleware<
     onRequest: (message, context) => {
         const msg = message as { topic: string };
         // Read resolving context from Zustand store (only once per request)
-        const resolvingContext = useResolvingContextStore.getState().context;
+        const resolvingContext = resolvingContextStore.getState().context;
 
         // If no resolving context is available, reject the request
         if (!resolvingContext) {

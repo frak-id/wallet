@@ -1,6 +1,5 @@
-import { jotaiStore } from "@frak-labs/ui/atoms/store";
+import { sessionStore } from "../../stores/sessionStore";
 import type { SdkSession, Session } from "../../types/Session";
-import { sdkSessionAtom, sessionAtom } from "../atoms/session";
 
 /**
  * Get an item from the local storage
@@ -18,21 +17,29 @@ export function getFromLocalStorage<T>(key: string) {
 }
 
 /**
- * Get the current session in a safe way (in the case of jotai store not synced)
+ * Get the current session in a safe way (in the case of zustand store not synced)
  */
 export function getSafeSession() {
-    return (
-        jotaiStore.get(sessionAtom) ??
-        getFromLocalStorage<Session>("frak_session")
+    const storeState = sessionStore.getState().session;
+    if (storeState) return storeState;
+
+    // Fallback: try to read from localStorage directly
+    const stored = getFromLocalStorage<{ state: { session: Session | null } }>(
+        "frak_session_store"
     );
+    return stored?.state?.session ?? null;
 }
 
 /**
- * Get the current session in a safe way (in the case of jotai store not synced)
+ * Get the current session in a safe way (in the case of zustand store not synced)
  */
 export function getSafeSdkSession() {
-    return (
-        jotaiStore.get(sdkSessionAtom) ??
-        getFromLocalStorage<SdkSession>("frak_sdkSession")
-    );
+    const storeState = sessionStore.getState().sdkSession;
+    if (storeState) return storeState;
+
+    // Fallback: try to read from localStorage directly
+    const stored = getFromLocalStorage<{
+        state: { sdkSession: SdkSession | null };
+    }>("frak_session_store");
+    return stored?.state?.sdkSession ?? null;
 }

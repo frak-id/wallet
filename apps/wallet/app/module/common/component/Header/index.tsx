@@ -1,14 +1,16 @@
 import { LogoFrakWithName } from "@frak-labs/ui/icons/LogoFrakWithName";
 import { Notifications } from "@frak-labs/ui/icons/Notifications";
-import { useAtomValue } from "jotai";
+import {
+    selectSession,
+    sessionStore,
+} from "@frak-labs/wallet-shared/stores/sessionStore";
 import { Link } from "react-router";
 import { useHydrated } from "remix-utils/use-hydrated";
-import { sessionAtom } from "@/module/common/atoms/session";
 import styles from "./index.module.css";
 
 export function Header() {
     const isHydrated = useHydrated();
-    const session = useAtomValue(sessionAtom);
+    const session = sessionStore(selectSession);
 
     return (
         <header className={styles.header}>

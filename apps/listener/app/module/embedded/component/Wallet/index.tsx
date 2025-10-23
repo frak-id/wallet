@@ -1,8 +1,7 @@
-import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { Overlay } from "@frak-labs/ui/component/Overlay";
 import { prefixWalletCss } from "@frak-labs/ui/utils/prefixWalletCss";
-import { sessionAtom } from "@frak-labs/wallet-shared/common/atoms/session";
 import { InAppBrowserToast } from "@frak-labs/wallet-shared/common/component/InAppBrowserToast";
+import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
 import { cva, cx } from "class-variance-authority";
 import { Toaster } from "sonner";
 import { ListenerWalletHeader } from "@/module/embedded/component/WalletHeader";
@@ -58,7 +57,7 @@ export function ListenerWallet() {
  * @constructor
  */
 function CurrentEmbeddedViewComponent() {
-    const session = jotaiStore.get(sessionAtom);
+    const session = sessionStore.getState().session;
 
     return (
         <div

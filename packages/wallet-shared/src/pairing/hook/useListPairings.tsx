@@ -1,14 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
-import { useAtomValue } from "jotai";
 import { authenticatedWalletApi } from "../../common/api/backendClient";
-import { webauthnSessionAtom } from "../../common/atoms/session";
+import { selectWebauthnSession, sessionStore } from "../../stores/sessionStore";
 import { pairingKey } from "../queryKeys";
 
 /**
  * Get all the active pairings
  */
 export function useGetActivePairings() {
-    const wallet = useAtomValue(webauthnSessionAtom);
+    const wallet = sessionStore(selectWebauthnSession);
 
     return useQuery({
         queryKey: pairingKey.listByWallet(wallet?.address),

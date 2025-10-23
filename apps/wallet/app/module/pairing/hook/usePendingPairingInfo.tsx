@@ -1,5 +1,4 @@
-import { pendingPairingAtom } from "@frak-labs/wallet-shared/pairing/atoms/code";
-import { useAtom } from "jotai";
+import { pairingStore } from "@frak-labs/wallet-shared/stores/pairingStore";
 import { useCallback, useEffect, useMemo } from "react";
 import { useSearchParams } from "react-router";
 
@@ -9,17 +8,17 @@ import { useSearchParams } from "react-router";
  */
 export function usePendingPairingInfo() {
     const [searchParams] = useSearchParams();
-    const [pairingInfo, setPairingInfo] = useAtom(pendingPairingAtom);
+    const pairingInfo = pairingStore((state) => state.pendingPairing);
     const id = useMemo(() => searchParams.get("id"), [searchParams]);
 
     const resetPairingInfo = useCallback(() => {
-        setPairingInfo(null);
-    }, [setPairingInfo]);
+        pairingStore.getState().setPendingPairing(null);
+    }, []);
 
     useEffect(() => {
         if (!id) return;
-        setPairingInfo({ id });
-    }, [id, setPairingInfo]);
+        pairingStore.getState().setPendingPairing({ id });
+    }, [id]);
 
     return useMemo(
         () => ({ pairingInfo, resetPairingInfo }),

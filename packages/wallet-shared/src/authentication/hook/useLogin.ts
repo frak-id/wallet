@@ -1,17 +1,18 @@
 import { WebAuthN } from "@frak-labs/app-essentials";
-import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { startAuthentication } from "@simplewebauthn/browser";
 import { generateAuthenticationOptions } from "@simplewebauthn/server";
 import type { UseMutationOptions } from "@tanstack/react-query";
 import { useMutation } from "@tanstack/react-query";
 import { trackAuthCompleted, trackAuthInitiated } from "../../common/analytics";
 import { authenticatedWalletApi } from "../../common/api/backendClient";
-import { sdkSessionAtom, sessionAtom } from "../../common/atoms/session";
-import { userAtom } from "../../common/atoms/user";
-import { lastWebAuthNActionAtom } from "../../common/atoms/webauthn";
 import type { PreviousAuthenticatorModel } from "../../common/storage/dexie/PreviousAuthenticatorModel";
+import {
+    addLastAuthentication,
+    authenticationStore,
+} from "../../stores/authenticationStore";
+import { sessionStore } from "../../stores/sessionStore";
+import { userStore } from "../../stores/userStore";
 import type { Session } from "../../types/Session";
-import { addLastAuthenticationAtom } from "../atoms/lastAuthenticator";
 import { authKey } from "../queryKeys/auth";
 
 /**
@@ -82,7 +83,7 @@ export function useLogin(
             }
 
             // Store this last webauthn action
-            jotaiStore.set(lastWebAuthNActionAtom, {
+            authenticationStore.getState().setLastWebAuthNAction({
                 wallet: data.address,
                 signature: authenticationResponse,
                 msg: authenticationOptions.challenge,
@@ -93,15 +94,15 @@ export function useLogin(
             const session = { ...authentication, token } as Session;
 
             // Save this to the last authenticator
-            await jotaiStore.set(addLastAuthenticationAtom, session);
+            await addLastAuthentication(session);
 
             // Store the session
-            jotaiStore.set(sessionAtom, session);
-            jotaiStore.set(sdkSessionAtom, sdkJwt);
+            sessionStore.getState().setSession(session);
+            sessionStore.getState().setSdkSession(sdkJwt);
 
             // Store the mocked user for now
             // TODO: Remove this once the user is properly stored in the database
-            jotaiStore.set(userAtom, {
+            userStore.getState().setUser({
                 _id: data.address,
                 username: "mocked-username",
             });

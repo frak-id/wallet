@@ -3,16 +3,11 @@ import {
     decompressDataAndCheckHash,
     hashAndCompressData,
 } from "@frak-labs/frame-connector";
-import { jotaiStore } from "@frak-labs/ui/atoms/store";
-import { atom } from "jotai";
 import type { Hex } from "viem";
-import { sdkSessionAtom, sessionAtom } from "../../common/atoms/session";
+import { sessionStore } from "../../stores/sessionStore";
+import { walletStore } from "../../stores/walletStore";
 import type { PendingInteraction } from "../../types/Interaction";
 import type { SdkSession, Session } from "../../types/Session";
-import {
-    addPendingInteractionsAtom,
-    pendingInteractionAtom,
-} from "../../wallet/atoms/pendingInteraction";
 import { emitLifecycleEvent } from "./lifecycleEvents";
 
 /**
@@ -67,22 +62,17 @@ export async function restoreBackupData({
         return;
     }
 
-    // Put everything in the right atoms
-    jotaiStore.set(restoreBackupAtom, data);
-}
-
-// Atom to restore backup data all at once
-const restoreBackupAtom = atom(null, (_get, set, data: BackupData) => {
+    // Restore all the data to stores
     if (data.session?.token) {
-        set(sessionAtom, data.session);
+        sessionStore.getState().setSession(data.session);
     }
     if (data.sdkSession) {
-        set(sdkSessionAtom, data.sdkSession);
+        sessionStore.getState().setSdkSession(data.sdkSession);
     }
     if (data.pendingInteractions) {
-        set(addPendingInteractionsAtom, data.pendingInteractions);
+        walletStore.getState().addPendingInteractions(data.pendingInteractions);
     }
-});
+}
 
 /**
  * Push new backup data
@@ -94,11 +84,19 @@ export async function pushBackupData(args?: { productId?: Hex }) {
         console.log("No productId provided - skipping backup");
         return;
     }
-    // Get the current atom backup data
-    const partialBackup = jotaiStore.get(backupDataAtom);
+    // Get the current backup data from stores
+    const sessionState = sessionStore.getState();
+    const walletState = walletStore.getState();
+
+    const session = sessionState.session;
+    const sdkSession = sessionState.sdkSession;
+    const pendingInteractions = walletState.pendingInteractions.interactions;
+
     // Build backup datas
     const backup: BackupData = {
-        ...partialBackup,
+        session: session?.token ? session : undefined,
+        sdkSession: sdkSession?.token ? sdkSession : undefined,
+        pendingInteractions,
         productId,
         // Backup will expire in a week
         expireAtTimestamp: Date.now() + 7 * 24 * 60 * 60_000,
@@ -126,15 +124,3 @@ export async function pushBackupData(args?: { productId?: Hex }) {
         data: { backup: base64urlEncode(compressedBackup) },
     });
 }
-
-// Read the current data all at once to perform a backup
-const backupDataAtom = atom((get) => {
-    const session = get(sessionAtom);
-    const sdkSession = get(sdkSessionAtom);
-    const pendingInteractions = get(pendingInteractionAtom).interactions;
-    return {
-        session: session?.token ? session : undefined,
-        sdkSession: sdkSession?.token ? sdkSession : undefined,
-        pendingInteractions,
-    };
-});

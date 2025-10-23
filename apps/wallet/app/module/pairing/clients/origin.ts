@@ -1,14 +1,13 @@
-import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { getSafeSession } from "@frak-labs/wallet-shared/common/utils/safeSession";
 import type {
     OriginPairingState,
     WsOriginMessage,
     WsOriginRequest,
 } from "@frak-labs/wallet-shared/pairing/types";
+import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
 import { nanoid } from "nanoid";
 import type { Hex } from "viem";
 import { trackAuthCompleted } from "../../common/analytics";
-import { sdkSessionAtom, sessionAtom } from "../../common/atoms/session";
 import { BasePairingClient } from "./base";
 
 export type OnPairingSuccessCallback = () => void | Promise<void>;
@@ -166,11 +165,11 @@ export class OriginPairingClient extends BasePairingClient<
             this.setState({ status: "paired" });
 
             // Store the session
-            jotaiStore.set(sessionAtom, {
+            sessionStore.getState().setSession({
                 token: message.payload.token,
                 ...message.payload.wallet,
             });
-            jotaiStore.set(sdkSessionAtom, message.payload.sdkJwt);
+            sessionStore.getState().setSdkSession(message.payload.sdkJwt);
 
             // Track the event
             trackAuthCompleted("pairing", message.payload.wallet);

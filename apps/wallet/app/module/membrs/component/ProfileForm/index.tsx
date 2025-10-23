@@ -2,8 +2,17 @@ import { Button } from "@frak-labs/ui/component/Button";
 import { Input } from "@frak-labs/ui/component/forms/Input";
 import { useCopyToClipboardWithState } from "@frak-labs/ui/hook/useCopyToClipboardWithState";
 import { Pencil } from "@frak-labs/ui/icons/Pencil";
+import {
+    selectSession,
+    sessionStore,
+} from "@frak-labs/wallet-shared/stores/sessionStore";
+import {
+    selectUser,
+    selectUserSetupLater,
+    userStore,
+} from "@frak-labs/wallet-shared/stores/userStore";
 import type { User } from "@frak-labs/wallet-shared/types/User";
-import { useAtom, useAtomValue } from "jotai";
+import { useAtom } from "jotai";
 import { Copy } from "lucide-react";
 import { useEffect, useState } from "react";
 import {
@@ -14,9 +23,7 @@ import {
 } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
-import { sessionAtom } from "@/module/common/atoms/session";
 import { uploadProfilePhotoAtom } from "../../atoms/uploadProfilePhoto";
-import { userAtom, userSetupLaterAtom } from "../../atoms/user";
 import styles from "./index.module.css";
 
 // Types
@@ -30,12 +37,13 @@ type FormInput = {
  */
 export function ProfileForm() {
     const { t } = useTranslation();
-    const session = useAtomValue(sessionAtom);
+    const session = sessionStore(selectSession);
     const [isUsernameDisabled, setIsUsernameDisabled] = useState(true);
     const [submitError, setSubmitError] = useState<string>();
 
-    // State management with Jotai atoms
-    const [user, setUser] = useAtom(userAtom);
+    // State management
+    const user = userStore(selectUser);
+    const setUser = (user: User | null) => userStore.getState().setUser(user);
     const [profilePhoto, setProfilePhoto] = useAtom(uploadProfilePhotoAtom);
 
     // Form setup and validation
@@ -218,8 +226,8 @@ function ErrorMessage({ message }: ErrorMessageProps) {
 function SetupLaterButton() {
     const { t } = useTranslation();
     const navigate = useNavigate();
-    const user = useAtomValue(userAtom);
-    const [userSetupLater, setUserSetupLater] = useAtom(userSetupLaterAtom);
+    const user = userStore(selectUser);
+    const userSetupLater = userStore(selectUserSetupLater);
 
     // If the user is already setup or has skipped the setup, don't show the button
     if (user || userSetupLater) return null;
@@ -229,7 +237,7 @@ function SetupLaterButton() {
             <button
                 type="button"
                 onClick={() => {
-                    setUserSetupLater(true);
+                    userStore.getState().setUserSetupLater(true);
                     navigate("/membrs", { viewTransition: true });
                 }}
                 className={`button ${styles.profileForm__link}`}

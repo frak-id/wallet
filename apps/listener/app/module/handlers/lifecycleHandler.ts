@@ -12,7 +12,7 @@ import type {
     Session,
 } from "@frak-labs/wallet-shared/types/Session";
 import { getI18n } from "react-i18next";
-import { useResolvingContextStore } from "@/module/stores/resolvingContextStore";
+import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 import { processSsoCompletion } from "./ssoHandler";
 
 /**
@@ -62,8 +62,7 @@ export const createClientLifecycleHandler =
             }
 
             case "restore-backup": {
-                const resolveContext =
-                    useResolvingContextStore.getState().context;
+                const resolveContext = resolvingContextStore.getState().context;
                 if (!resolveContext) {
                     console.warn(
                         "Can't restore a backup until we are sure of the context"
@@ -94,7 +93,7 @@ export const createClientLifecycleHandler =
                     },
                 } as MessageEvent<ClientLifecycleEvent>;
 
-                const hasContext = useResolvingContextStore
+                const hasContext = resolvingContextStore
                     .getState()
                     .handleHandshakeResponse(messageEvent);
                 // Once we got a context, we can tell that we are rdy to handle request
@@ -125,17 +124,17 @@ export function initializeResolvingContext(): boolean {
     }
 
     // Get the context
-    const currentContext = useResolvingContextStore.getState().context;
+    const currentContext = resolvingContextStore.getState().context;
 
     // If we don't have one, initiate the handshake
     if (!currentContext) {
-        useResolvingContextStore.getState().startHandshake();
+        resolvingContextStore.getState().startHandshake();
         return false;
     }
 
     // We have an auto context, try to fetch a more precise one using the handshake
     if (currentContext.isAutoContext) {
-        useResolvingContextStore.getState().startHandshake();
+        resolvingContextStore.getState().startHandshake();
     }
 
     return true;
@@ -152,18 +151,18 @@ export function checkContextAndEmitReady(): boolean {
     }
 
     // Get the context
-    const currentContext = useResolvingContextStore.getState().context;
+    const currentContext = resolvingContextStore.getState().context;
 
     // If we don't have one, initiate the handshake
     if (!currentContext) {
-        useResolvingContextStore.getState().startHandshake();
+        resolvingContextStore.getState().startHandshake();
         console.warn("Not ready to handle request yet - no context");
         return false;
     }
 
     // We have an auto context, try to fetch a more precise one using the handshake
     if (currentContext.isAutoContext) {
-        useResolvingContextStore.getState().startHandshake();
+        resolvingContextStore.getState().startHandshake();
     }
 
     // If we got a context, we are rdy to handle request

@@ -1,13 +1,16 @@
+import {
+    selectUser,
+    userStore,
+} from "@frak-labs/wallet-shared/stores/userStore";
 import { useAtomValue } from "jotai";
 import { uploadProfilePhotoAtom } from "@/module/membrs/atoms/uploadProfilePhoto";
-import { userAtom } from "@/module/membrs/atoms/user";
 import { AvatarModal } from "@/module/membrs/component/AvatarModal";
 import defaultAvatar from "./assets/avatar.png?url";
 import styles from "./index.module.css";
 
 export function Avatar({ withUpload = false }: { withUpload?: boolean }) {
-    // Get the user from the atom
-    const user = useAtomValue(userAtom);
+    // Get the user from the store
+    const user = userStore(selectUser);
 
     // Get the profile photo from the avatar upload
     const profilePhoto = useAtomValue(uploadProfilePhotoAtom);

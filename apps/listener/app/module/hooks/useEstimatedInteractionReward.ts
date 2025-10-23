@@ -7,7 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import type { Hex } from "viem";
 import { listenerInteractionsKey } from "@/module/queryKeys/interactions";
-import { useResolvingContextStore } from "@/module/stores/resolvingContextStore";
+import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 
 /**
  * The query data to fetch the estimated interaction reward
@@ -63,7 +63,7 @@ export function useEstimatedInteractionReward({
 }: {
     interaction?: FullInteractionTypesKey;
 } = {}) {
-    const contextProductId = useResolvingContextStore(
+    const contextProductId = resolvingContextStore(
         (state) => state.context?.productId
     );
     const productId = useMemo(() => contextProductId, [contextProductId]);

@@ -13,13 +13,11 @@ import {
     type RpcResponse,
 } from "@frak-labs/frame-connector";
 import { trackGenericEvent } from "@frak-labs/wallet-shared/common/analytics";
-import { useCallback, useEffect, useRef } from "react";
+import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
+import { walletStore } from "@frak-labs/wallet-shared/stores/walletStore";
+import { useCallback, useRef } from "react";
 import { useListenerUI } from "@/module/providers/ListenerUiProvider";
-import {
-    getSharedInteractionSession,
-    getSharedSession,
-} from "@/module/stores/jotaiBridge";
-import { selectShouldFinish, useModalStore } from "@/module/stores/modalStore";
+import { modalStore, selectShouldFinish } from "@/module/stores/modalStore";
 import type { DisplayedModalStep } from "@/module/stores/types";
 import type { WalletRpcContext } from "@/module/types/context";
 
@@ -39,81 +37,23 @@ export function useDisplayModalListener(): OnDisplayModalRequest {
     // Hook used to set the requested listener UI
     const { setRequest } = useListenerUI();
 
-    // Store the current deferred promise for completion
-    const currentDeferredRef = useRef<Deferred<ModalRpcStepsResultType> | null>(
-        null
-    );
-
-    /**
-     * Watch for modal completion or dismissal
-     * - Resolves the deferred when all steps are completed
-     * - Rejects the deferred if modal is dismissed
-     * - Cleans up on component unmount
-     */
-    useEffect(() => {
-        // Subscribe to modal state changes using Zustand
-        const unsubscribe = useModalStore.subscribe((state) => {
-            const deferred = currentDeferredRef.current;
-            if (!deferred) return;
-
-            // Check if modal is dismissed
-            if (state.dismissed) {
-                // User cancelled the modal
-                deferred.reject(
-                    new FrakRpcError(
-                        RpcErrorCodes.clientAborted,
-                        "User dismissed the modal"
-                    )
-                );
-                currentDeferredRef.current = null;
-                return;
-            }
-
-            // Check if modal is complete using the selector
-            const finishResult = selectShouldFinish(state);
-            if (finishResult) {
-                // All steps completed successfully
-                deferred.resolve(finishResult);
-                currentDeferredRef.current = null;
-            }
-        });
-
-        // Cleanup on unmount: reject any pending deferred
-        return () => {
-            unsubscribe();
-
-            // Reject any pending deferred on unmount
-            if (currentDeferredRef.current) {
-                currentDeferredRef.current.reject(
-                    new FrakRpcError(
-                        RpcErrorCodes.clientAborted,
-                        "Modal handler component unmounted"
-                    )
-                );
-                currentDeferredRef.current = null;
-            }
-        };
-    }, []);
+    // Store the current unsubscribe function for cleanup
+    const unsubscribeRef = useRef<(() => void) | null>(null);
 
     return useCallback(
         async (params, _context) => {
             // Context is augmented by middleware - no need to read from store
 
-            // Clean up any existing deferred
-            if (currentDeferredRef.current) {
-                currentDeferredRef.current.reject(
-                    new FrakRpcError(
-                        RpcErrorCodes.internalError,
-                        "New modal request superseded previous request"
-                    )
-                );
-                currentDeferredRef.current = null;
+            // Clean up any existing subscription
+            if (unsubscribeRef.current) {
+                unsubscribeRef.current();
+                unsubscribeRef.current = null;
             }
 
             // If no modal to display, early exit
             const steps = params[0];
             if (Object.keys(steps).length === 0) {
-                useModalStore.getState().clearModal();
+                modalStore.getState().clearModal();
                 throw new FrakRpcError(
                     RpcErrorCodes.invalidRequest,
                     "No modals to display"
@@ -130,16 +70,46 @@ export function useDisplayModalListener(): OnDisplayModalRequest {
 
             // Create a new deferred for this modal request
             const deferred = new Deferred<ModalRpcStepsResultType>();
-            currentDeferredRef.current = deferred;
 
             // Save the new modal
-            useModalStore.getState().setNewModal({
+            modalStore.getState().setNewModal({
                 // Current step + formatted steps
                 currentStep,
                 steps: stepsPrepared,
                 // Initial result if any
                 initialResult: currentResult as ModalRpcStepsResultType,
             });
+
+            // Subscribe to modal state changes for THIS specific modal
+            // This subscription will be cleaned up when modal completes or new modal opens
+            const unsubscribe = modalStore.subscribe((state) => {
+                // If modal was cleared (no steps), ignore this state change
+                if (!state.steps) return;
+
+                // Check if modal is dismissed
+                if (state.dismissed) {
+                    // User cancelled the modal
+                    deferred.reject(
+                        new FrakRpcError(
+                            RpcErrorCodes.clientAborted,
+                            "User dismissed the modal"
+                        )
+                    );
+                    unsubscribe();
+                    return;
+                }
+
+                // Check if modal is complete using the selector
+                const finishResult = selectShouldFinish(state);
+                if (finishResult) {
+                    // All steps completed successfully
+                    deferred.resolve(finishResult);
+                    unsubscribe();
+                }
+            });
+
+            // Store the unsubscribe function for cleanup
+            unsubscribeRef.current = unsubscribe;
 
             const metadata = params[1] ?? {};
             const configMetadata = params[2] ?? {};
@@ -247,8 +217,8 @@ function filterStepsToDo({
 }: {
     stepsPrepared: Pick<ModalStepTypes, "key" | "params">[];
 }) {
-    const session = getSharedSession();
-    const interactionSession = getSharedInteractionSession();
+    const session = sessionStore.getState().session;
+    const interactionSession = walletStore.getState().interactionSession;
 
     // The current result (if already authenticated + session)
     let currentResult: ModalRpcStepsResultType<[]> = {};

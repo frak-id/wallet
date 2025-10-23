@@ -10,9 +10,11 @@ import {
     RpcErrorCodes,
 } from "@frak-labs/frame-connector";
 import { trackGenericEvent } from "@frak-labs/wallet-shared/common/analytics";
-import { sessionAtom } from "@frak-labs/wallet-shared/common/atoms/session";
+import {
+    selectSession,
+    sessionStore,
+} from "@frak-labs/wallet-shared/stores/sessionStore";
 import { useInteractionSessionStatus } from "@frak-labs/wallet-shared/wallet/hook/useInteractionSessionStatus";
-import { useAtomValue } from "jotai";
 import { useCallback, useEffect, useRef } from "react";
 import type { Hex } from "viem";
 import { useAccount } from "wagmi";
@@ -33,7 +35,7 @@ export function useDisplayEmbeddedWallet(): OnDisplayEmbeddedWalletRequest {
     const { setRequest } = useListenerUI();
 
     // Get the session
-    const session = useAtomValue(sessionAtom);
+    const session = sessionStore(selectSession);
 
     // Get the session status
     const { address } = useAccount();

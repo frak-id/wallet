@@ -1,9 +1,12 @@
 import { getOriginPairingClient } from "@frak-labs/wallet-shared/pairing/clients/store";
 import type { OriginPairingState as OriginPairingStateType } from "@frak-labs/wallet-shared/pairing/types";
+import {
+    selectDistantWebauthnSession,
+    sessionStore,
+} from "@frak-labs/wallet-shared/stores/sessionStore";
 import { useAtomValue } from "jotai";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { distantWebauthnSessionAtom } from "@/module/common/atoms/session";
 import {
     StatusBoxModal,
     StatusBoxWallet,
@@ -21,7 +24,7 @@ type OriginPairingStateProps = {
  * Visible on listener, embedded wallet, and wallet
  */
 export function OriginPairingState({ type }: OriginPairingStateProps) {
-    const session = useAtomValue(distantWebauthnSessionAtom);
+    const session = sessionStore(selectDistantWebauthnSession);
     if (!session) return null;
     return <InnerOriginPairingState type={type} />;
 }

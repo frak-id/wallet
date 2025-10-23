@@ -3,11 +3,13 @@ import { useDeletePairing } from "@frak-labs/wallet-shared/pairing/hook/useDelet
 import { useGetActivePairings } from "@frak-labs/wallet-shared/pairing/hook/useListPairings";
 import { pairingKey } from "@frak-labs/wallet-shared/pairing/queryKeys";
 import type { Pairing } from "@frak-labs/wallet-shared/pairing/types";
+import {
+    selectWebauthnSession,
+    sessionStore,
+} from "@frak-labs/wallet-shared/stores/sessionStore";
 import { useQueryClient } from "@tanstack/react-query";
-import { useAtomValue } from "jotai";
 import { Laptop, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { webauthnSessionAtom } from "@/module/common/atoms/session";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
 import styles from "./index.module.css";
@@ -88,7 +90,7 @@ function PairingHeader({ pairing }: { pairing: Pairing }) {
 function PairingFooter({ pairing }: { pairing: Pairing }) {
     const { t } = useTranslation();
     const queryClient = useQueryClient();
-    const wallet = useAtomValue(webauthnSessionAtom);
+    const wallet = sessionStore(selectWebauthnSession);
 
     const { mutate: deletePairing } = useDeletePairing({
         mutations: {

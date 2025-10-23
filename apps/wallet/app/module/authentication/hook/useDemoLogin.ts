@@ -1,12 +1,11 @@
-import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import { authKey } from "@frak-labs/wallet-shared/authentication/queryKeys/auth";
+import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
 import type { Session } from "@frak-labs/wallet-shared/types/Session";
 import { useMutation } from "@tanstack/react-query";
 import { type Address, type Hex, stringToHex } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { trackAuthCompleted, trackAuthInitiated } from "../../common/analytics";
 import { authenticatedWalletApi } from "../../common/api/backendClient";
-import { sdkSessionAtom, sessionAtom } from "../../common/atoms/session";
 
 export function useDemoLogin() {
     return useMutation({
@@ -43,12 +42,8 @@ export function useDemoLogin() {
             const session = { ...authentication, token } as Session;
 
             // Store the session
-            jotaiStore.set(sessionAtom, session);
-            jotaiStore.set(sdkSessionAtom, sdkJwt);
-
-            // Store the session
-            jotaiStore.set(sessionAtom, session);
-            jotaiStore.set(sdkSessionAtom, sdkJwt);
+            sessionStore.getState().setSession(session);
+            sessionStore.getState().setSdkSession(sdkJwt);
 
             // Identify the user and track the event
             events.push(trackAuthCompleted("demo", session));

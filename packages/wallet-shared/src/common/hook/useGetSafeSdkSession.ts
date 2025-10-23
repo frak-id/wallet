@@ -1,9 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
-import { useAtom, useAtomValue } from "jotai";
 import { useCallback } from "react";
+import {
+    authenticationStore,
+    selectLastWebAuthNAction,
+} from "../../stores/authenticationStore";
+import {
+    selectSdkSession,
+    selectSession,
+    sessionStore,
+} from "../../stores/sessionStore";
 import { authenticatedWalletApi } from "../api/backendClient";
-import { sdkSessionAtom, sessionAtom } from "../atoms/session";
-import { lastWebAuthNActionAtom } from "../atoms/webauthn";
 import { sdkKey } from "../queryKeys/sdk";
 import { getSafeSdkSession, getSafeSession } from "../utils/safeSession";
 
@@ -11,10 +17,11 @@ import { getSafeSdkSession, getSafeSession } from "../utils/safeSession";
  * Get a safe SDK token
  */
 export function useGetSafeSdkSession() {
-    // Using jotai hook since it's seem to struggle reading from storage directly in some cases
-    const [currentSdkSession, setCurrentSdkSession] = useAtom(sdkSessionAtom);
-    const currentSession = useAtomValue(sessionAtom);
-    const lastWebAuthnAction = useAtomValue(lastWebAuthNActionAtom);
+    // Using zustand hooks
+    const currentSdkSession = sessionStore(selectSdkSession);
+    const currentSession = sessionStore(selectSession);
+    const lastWebAuthnAction = authenticationStore(selectLastWebAuthNAction);
+    const setSdkSession = sessionStore((state) => state.setSdkSession);
 
     /**
      * Generate an SDK session from the last webauthn action if possible
@@ -40,10 +47,10 @@ export function useGetSafeSdkSession() {
             );
         }
         if (session) {
-            setCurrentSdkSession(session);
+            setSdkSession(session);
         }
         return session;
-    }, [lastWebAuthnAction, setCurrentSdkSession]);
+    }, [lastWebAuthnAction, setSdkSession]);
 
     /**
      * Fetch the current sdk session or regen a new one
@@ -95,7 +102,7 @@ export function useGetSafeSdkSession() {
             }
 
             // Save the token and return it
-            setCurrentSdkSession(data);
+            setSdkSession(data);
             return data;
         },
     });

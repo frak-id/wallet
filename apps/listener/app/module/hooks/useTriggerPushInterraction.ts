@@ -1,7 +1,7 @@
 import { ReferralInteractionEncoder } from "@frak-labs/core-sdk/interactions";
 import { usePushInteraction } from "@frak-labs/wallet-shared/wallet/hook/usePushInteraction";
 import { useEffect, useRef } from "react";
-import { useResolvingContextStore } from "@/module/stores/resolvingContextStore";
+import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 
 const globalInteractionState = {
     isInteractionPushed: false,
@@ -17,7 +17,7 @@ export function useTriggerPushInterraction({
     conditionToTrigger: boolean;
 }) {
     const pushInteraction = usePushInteraction();
-    const resolvingContext = useResolvingContextStore((state) => state.context);
+    const resolvingContext = resolvingContextStore((state) => state.context);
     const isMounted = useRef(false);
 
     useEffect(() => {

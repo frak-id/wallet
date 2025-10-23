@@ -10,7 +10,7 @@ import type { AnyModalKey, DisplayedModalStep, ModalStore } from "./types";
 /**
  * Modal store managing the complete modal workflow
  */
-export const useModalStore = create<ModalStore>((set, get) => ({
+export const modalStore = create<ModalStore>((set, get) => ({
     // Initial state
     steps: undefined,
     currentStep: 0,
@@ -112,13 +112,17 @@ export const selectSteps = (state: ModalStore) => state.steps;
 
 // Check if we should finish (returns results if ready, null if not)
 export const selectShouldFinish = (state: ModalStore) => {
-    const { steps, currentStep, results } = state;
+    const { steps, currentStep, results, dismissed } = state;
+
+    // If modal is dismissed or cleared (no steps), don't finish
+    // This prevents race conditions when rapidly closing/opening modals
+    if (!steps || dismissed) return null;
 
     // First check if we should finish
     let shouldFinish = false;
 
     // Check if has a displayable step for this index
-    const currentStepData = steps?.[currentStep];
+    const currentStepData = steps[currentStep];
     if (!currentStepData) {
         shouldFinish = true;
     } else {

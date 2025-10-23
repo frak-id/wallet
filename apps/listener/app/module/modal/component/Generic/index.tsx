@@ -8,9 +8,9 @@ import {
     useModalListenerUI,
 } from "@/module/providers/ListenerUiProvider";
 import {
+    modalStore,
     selectCurrentStepIndex,
     selectSteps,
-    useModalStore,
 } from "@/module/stores/modalStore";
 
 export function MetadataInfo({ description }: { description?: string }) {
@@ -34,8 +34,8 @@ export function DismissButton() {
     const {
         currentRequest: { metadata },
     } = useModalListenerUI();
-    const steps = useModalStore(selectSteps);
-    const currentStep = useModalStore(selectCurrentStepIndex);
+    const steps = modalStore(selectSteps);
+    const currentStep = modalStore(selectCurrentStepIndex);
 
     const { info, goToDismiss } = useMemo(() => {
         const empty = { info: null, goToDismiss: null };
@@ -59,19 +59,19 @@ export function DismissButton() {
                 finalStep?.params?.action?.key === "reward"
             ) {
                 // Update the final step and mark it as autoSkip true
-                const state = useModalStore.getState();
+                const state = modalStore.getState();
                 state.setDismissed(true);
                 // Move past the final step to trigger modal close
-                useModalStore.setState({
+                modalStore.setState({
                     currentStep: finalStepIndex + 1,
                 });
                 return;
             }
 
             // Otherwise, just jump to the last step
-            const state = useModalStore.getState();
+            const state = modalStore.getState();
             state.setDismissed(true);
-            useModalStore.setState({
+            modalStore.setState({
                 currentStep: finalStepIndex,
             });
         };

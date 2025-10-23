@@ -1,4 +1,3 @@
-import { jotaiStore } from "@frak-labs/ui/atoms/store";
 import {
     createSmartAccountClient,
     type SmartAccountClient,
@@ -11,8 +10,8 @@ import {
     getPimlicoTransport,
 } from "../../blockchain/aa-provider";
 import { currentChain, currentViemClient } from "../../blockchain/provider";
-import { sessionAtom } from "../../common/atoms/session";
 import { getSafeSession } from "../../common/utils/safeSession";
+import { sessionStore } from "../../stores/sessionStore";
 import type { DistantWebAuthnWallet, EcdsaWallet } from "../../types/Session";
 import type { WebAuthNWallet } from "../../types/WebAuthN";
 import type { BaseFrakSmartAccount } from "./baseFrakWallet";
@@ -62,9 +61,9 @@ export function getSmartAccountProvider<
     // The current session
     let currentWebAuthNWallet = getSafeSession();
 
-    // Subscribe to the session atom, to refresh the wallet and emit a few stuff?
-    jotaiStore.sub(sessionAtom, () => {
-        const newWallet = getSafeSession();
+    // Subscribe to the session store, to refresh the wallet and emit a few stuff?
+    sessionStore.subscribe((state) => {
+        const newWallet = state.session;
         // If the session hasn't changed, do nothing
         if (
             newWallet?.authenticatorId ===
@@ -77,7 +76,7 @@ export function getSmartAccountProvider<
         // Cleanup the cached stuff
         currentSmartAccountClient = undefined;
         // And tell that it has changed
-        onAccountChanged(newWallet);
+        onAccountChanged(newWallet ?? undefined);
     });
 
     return {
