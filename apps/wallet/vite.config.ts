@@ -61,6 +61,7 @@ export default defineConfig(({ mode, isSsrBuild }: ConfigEnv): UserConfig => {
         return {
             ...baseConfig,
             plugins: [tsconfigPaths()],
+            publicDir: false,
             build: {
                 target: "ES2020",
                 lib: {
