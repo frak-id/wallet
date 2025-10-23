@@ -1,8 +1,8 @@
 import { authenticatedWalletApi } from "@frak-labs/wallet-shared/common/api/backendClient";
 import { type MutationOptions, useMutation } from "@tanstack/react-query";
+import { useNotificationContext } from "@/module/notification/context/NotificationContext";
 import { useNotificationSetupStatus } from "@/module/notification/hook/useNotificationSetupStatus";
 import { notificationKey } from "@/module/notification/queryKeys/notification";
-import { notificationStore } from "@/module/stores/notificationStore";
 
 /**
  * Register the push notification handler
@@ -10,6 +10,7 @@ import { notificationStore } from "@/module/stores/notificationStore";
 export function useSubscribeToPushNotification(
     mutationOptions?: MutationOptions
 ) {
+    const { setSubscription } = useNotificationContext();
     const { isNotificationAllowed, askForNotificationPermission } =
         useNotificationSetupStatus();
 
@@ -44,7 +45,7 @@ export function useSubscribeToPushNotification(
                 "Created subscription Object: ",
                 subscription.toJSON()
             );
-            notificationStore.getState().setSubscription(subscription);
+            setSubscription(subscription);
 
             // Save this new subscription
             const jsonSubscription = subscription.toJSON();

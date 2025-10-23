@@ -9,8 +9,12 @@ import type { PersistQueryClientProviderProps } from "@tanstack/react-query-pers
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { type PropsWithChildren, useEffect } from "react";
 import { useAccount } from "wagmi";
+import { PwaInstallProvider } from "@/module/common/context/PwaInstallContext";
 import { useEnforceWagmiConnection } from "@/module/common/hook/useEnforceWagmiConnection";
-import { notificationStore } from "@/module/stores/notificationStore";
+import {
+    NotificationProvider,
+    useNotificationContext,
+} from "@/module/notification/context/NotificationContext";
 
 /**
  * The query client that will be used by tanstack/react-query
@@ -57,11 +61,15 @@ export function RootProvider({ children }: PropsWithChildren) {
             client={queryClient}
             persistOptions={persistOptions}
         >
-            <SetupServiceWorker />
-            <WagmiProviderWithDynamicConfig>
-                <SessionStateManager />
-                {children}
-            </WagmiProviderWithDynamicConfig>
+            <PwaInstallProvider>
+                <NotificationProvider>
+                    <SetupServiceWorker />
+                    <WagmiProviderWithDynamicConfig>
+                        <SessionStateManager />
+                        {children}
+                    </WagmiProviderWithDynamicConfig>
+                </NotificationProvider>
+            </PwaInstallProvider>
             <ReactQueryDevtools
                 initialIsOpen={false}
                 buttonPosition={"top-right"}
@@ -75,6 +83,8 @@ export function RootProvider({ children }: PropsWithChildren) {
  * @constructor
  */
 function SetupServiceWorker() {
+    const { setSubscription } = useNotificationContext();
+
     // Hook to automatically register the service worker if possible
     useEffect(() => {
         // Early exit if not supported
@@ -105,7 +115,7 @@ function SetupServiceWorker() {
                 );
                 return;
             }
-            notificationStore.getState().setSubscription(subscription);
+            setSubscription(subscription);
 
             // Save this new subscription
             const jsonSubscription = subscription.toJSON();
@@ -123,7 +133,7 @@ function SetupServiceWorker() {
         };
 
         loadServiceWorker();
-    }, []);
+    }, [setSubscription]);
 
     return null;
 }

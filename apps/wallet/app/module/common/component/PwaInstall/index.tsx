@@ -1,7 +1,6 @@
 import "@khmyznikov/pwa-install";
-import type { PWAInstallElement } from "@khmyznikov/pwa-install";
-import { createRef, useEffect } from "react";
-import { pwaInstallStore } from "@/module/stores/pwaInstallStore";
+import { useEffect } from "react";
+import { usePwaInstallRef } from "@/module/common/context/PwaInstallContext";
 
 /**
  * @description Register the beforeinstallprompt event.
@@ -41,17 +40,7 @@ export function PwaInstallScript() {
  * @returns {JSX.Element}
  */
 export function PwaInstall() {
-    const pwaInstallRef = createRef<PWAInstallElement>();
-
-    useEffect(() => {
-        // Store the ref in Zustand for access elsewhere
-        pwaInstallStore.getState().setPwaInstallRef(pwaInstallRef);
-
-        return () => {
-            // Clean up when component unmounts
-            pwaInstallStore.getState().setPwaInstallRef(null);
-        };
-    }, [pwaInstallRef]);
+    const pwaInstallRef = usePwaInstallRef();
 
     useEffect(() => {
         const pwaInstall = pwaInstallRef?.current;

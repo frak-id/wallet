@@ -22,10 +22,7 @@ import {
 } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
-import {
-    profilePhotoStore,
-    selectUploadedPhoto,
-} from "@/module/stores/profilePhotoStore";
+import { useProfilePhoto } from "@/module/membrs/context/ProfilePhotoContext";
 import styles from "./index.module.css";
 
 // Types
@@ -46,7 +43,7 @@ export function ProfileForm() {
     // State management
     const user = userStore(selectUser);
     const setUser = (user: User | null) => userStore.getState().setUser(user);
-    const profilePhoto = profilePhotoStore(selectUploadedPhoto);
+    const { uploadedPhoto, clearUploadedPhoto } = useProfilePhoto();
 
     // Form setup and validation
     const formMethods = useForm<FormInput>({
@@ -66,9 +63,9 @@ export function ProfileForm() {
 
     // Update form when profile photo changes
     useEffect(() => {
-        if (!profilePhoto) return;
-        setValue("photo", profilePhoto, { shouldDirty: true });
-    }, [profilePhoto, setValue]);
+        if (!uploadedPhoto) return;
+        setValue("photo", uploadedPhoto, { shouldDirty: true });
+    }, [uploadedPhoto, setValue]);
 
     const onSubmit: SubmitHandler<FormInput> = async ({ username }) => {
         setSubmitError(undefined);
@@ -79,7 +76,7 @@ export function ProfileForm() {
         const updatedUser: User = {
             _id: session.address,
             username,
-            photo: profilePhoto ?? user?.photo,
+            photo: uploadedPhoto ?? user?.photo,
         };
 
         try {
@@ -88,7 +85,7 @@ export function ProfileForm() {
 
             // Update local state
             setUser(updatedUser);
-            profilePhotoStore.getState().clearUploadedPhoto();
+            clearUploadedPhoto();
             reset(updatedUser);
         } catch (error) {
             console.error(error);

@@ -3,6 +3,7 @@ import { Grid } from "@/module/common/component/Grid";
 import { Title } from "@/module/common/component/Title";
 import { Avatar } from "@/module/membrs/component/Avatar";
 import { ProfileForm } from "@/module/membrs/component/ProfileForm";
+import { ProfilePhotoProvider } from "@/module/membrs/context/ProfilePhotoContext";
 import styles from "./membrs-profile.module.css";
 
 export default function MembersProfile() {
@@ -17,10 +18,12 @@ export default function MembersProfile() {
                 <p>{t("wallet.membrs.profile.text1")}</p>
                 <p>{t("wallet.membrs.profile.text2")}</p>
             </div>
-            <div className={styles.profile__edit}>
-                <Avatar withUpload={true} />
-                <ProfileForm />
-            </div>
+            <ProfilePhotoProvider>
+                <div className={styles.profile__edit}>
+                    <Avatar withUpload={true} />
+                    <ProfileForm />
+                </div>
+            </ProfilePhotoProvider>
         </Grid>
     );
 }

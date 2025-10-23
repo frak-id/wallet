@@ -1,5 +1,4 @@
-import { pairingStore } from "@frak-labs/wallet-shared/stores/pairingStore";
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { useSearchParams } from "react-router";
 
 /**
@@ -7,21 +6,20 @@ import { useSearchParams } from "react-router";
  * @returns The pairing code
  */
 export function usePendingPairingInfo() {
-    const [searchParams] = useSearchParams();
-    const pairingInfo = pairingStore((state) => state.pendingPairing);
-    const id = useMemo(() => searchParams.get("id"), [searchParams]);
+    const [searchParams, setSearchParams] = useSearchParams();
+
+    const pairingInfo = useMemo(() => {
+        const id = searchParams.get("id");
+        return id ? { id } : null;
+    }, [searchParams]);
 
     const resetPairingInfo = useCallback(() => {
-        pairingStore.getState().setPendingPairing(null);
-    }, []);
+        setSearchParams((prev) => {
+            const newParams = new URLSearchParams(prev);
+            newParams.delete("id");
+            return newParams;
+        });
+    }, [setSearchParams]);
 
-    useEffect(() => {
-        if (!id) return;
-        pairingStore.getState().setPendingPairing({ id });
-    }, [id]);
-
-    return useMemo(
-        () => ({ pairingInfo, resetPairingInfo }),
-        [pairingInfo, resetPairingInfo]
-    );
+    return { pairingInfo, resetPairingInfo };
 }

@@ -1,8 +1,5 @@
 import { useCallback, useMemo } from "react";
-import {
-    notificationStore,
-    selectSubscription,
-} from "@/module/stores/notificationStore";
+import { useNotificationContext } from "@/module/notification/context/NotificationContext";
 
 /**
  * Get the notification setup status
@@ -48,9 +45,9 @@ export function useNotificationSetupStatus() {
     }, [isSupported]);
 
     /**
-     * The current subscription from the store
+     * The current subscription from the context
      */
-    const subscription = notificationStore(selectSubscription);
+    const { subscription } = useNotificationContext();
 
     return useMemo(() => {
         if (!statusResult?.isSupported) {

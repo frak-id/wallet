@@ -7,7 +7,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import ReactAvatarEditor from "react-avatar-editor";
 import { useTranslation } from "react-i18next";
 import { create } from "zustand";
-import { profilePhotoStore } from "@/module/stores/profilePhotoStore";
+import { useProfilePhoto } from "@/module/membrs/context/ProfilePhotoContext";
 import { AvatarCamera } from "../AvatarCamera";
 import styles from "./index.module.css";
 
@@ -73,6 +73,7 @@ export function AvatarModal() {
  */
 function AvatarEditorPanel() {
     const { t } = useTranslation();
+    const { setUploadedPhoto } = useProfilePhoto();
     const editorRef = useRef<ReactAvatarEditor | null>(null);
     const [image, setImage] = useState<ImageSource>();
     const [scale, setScale] = useState<number>(INITIAL_SCALE);
@@ -124,7 +125,7 @@ function AvatarEditorPanel() {
         const canvas = editorRef.current.getImageScaledToCanvas();
         const imageDataUrl = canvas.toDataURL("image/webp");
 
-        profilePhotoStore.getState().setUploadedPhoto(imageDataUrl);
+        setUploadedPhoto(imageDataUrl);
         setOpenModal(false);
     };
 

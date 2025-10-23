@@ -3,10 +3,7 @@ import {
     userStore,
 } from "@frak-labs/wallet-shared/stores/userStore";
 import { AvatarModal } from "@/module/membrs/component/AvatarModal";
-import {
-    profilePhotoStore,
-    selectUploadedPhoto,
-} from "@/module/stores/profilePhotoStore";
+import { useProfilePhoto } from "@/module/membrs/context/ProfilePhotoContext";
 import defaultAvatar from "./assets/avatar.png?url";
 import styles from "./index.module.css";
 
@@ -14,13 +11,13 @@ export function Avatar({ withUpload = false }: { withUpload?: boolean }) {
     // Get the user from the store
     const user = userStore(selectUser);
 
-    // Get the profile photo from the avatar upload
-    const profilePhoto = profilePhotoStore(selectUploadedPhoto);
+    // Get the profile photo from the context
+    const { uploadedPhoto } = useProfilePhoto();
 
     return (
         <div className={styles.avatar}>
             <img
-                src={getAvatar(profilePhoto, user?.photo)}
+                src={getAvatar(uploadedPhoto, user?.photo)}
                 alt={"avatar"}
                 width={126}
                 height={126}

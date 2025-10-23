@@ -1,11 +1,11 @@
 import { trackGenericEvent } from "@frak-labs/wallet-shared/common/analytics";
+import { useSessionFlag } from "@frak-labs/wallet-shared/common/hook/useSessionFlag";
 import {
     inAppRedirectUrl,
     isInAppBrowser,
     isInIframe,
 } from "@frak-labs/wallet-shared/common/lib/inApp";
 import { emitLifecycleEvent } from "@frak-labs/wallet-shared/sdk/utils/lifecycleEvents";
-import { browserStore } from "@frak-labs/wallet-shared/stores/browserStore";
 import { useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Toast } from "@/module/common/component/Toast";
@@ -15,11 +15,11 @@ import { Toast } from "@/module/common/component/Toast";
  */
 export function InAppBrowserToast() {
     const { t } = useTranslation();
-    const isDismissed = browserStore(
-        (state) => state.inAppBrowserToastDismissed
+    const [isDismissed, setIsDismissed] = useSessionFlag(
+        "inAppBrowserToastDismissed"
     );
-    const hasAttemptedRedirect = browserStore(
-        (state) => state.socialRedirectAttempted
+    const [hasAttemptedRedirect, setHasAttemptedRedirect] = useSessionFlag(
+        "socialRedirectAttempted"
     );
 
     const handleRedirect = useCallback(() => {
@@ -47,14 +47,17 @@ export function InAppBrowserToast() {
     useEffect(() => {
         if (!isInAppBrowser || hasAttemptedRedirect) return;
 
-        browserStore.getState().setSocialRedirectAttempted(true);
+        setHasAttemptedRedirect(true);
         handleRedirect();
-    }, [hasAttemptedRedirect, handleRedirect]);
+    }, [hasAttemptedRedirect, setHasAttemptedRedirect, handleRedirect]);
 
-    const handleDismiss = useCallback((e: React.MouseEvent) => {
-        e.stopPropagation(); // Prevent toast click when clicking dismiss
-        browserStore.getState().setInAppBrowserToastDismissed(true);
-    }, []);
+    const handleDismiss = useCallback(
+        (e: React.MouseEvent) => {
+            e.stopPropagation(); // Prevent toast click when clicking dismiss
+            setIsDismissed(true);
+        },
+        [setIsDismissed]
+    );
 
     // Don't show if not in app browser or already dismissed
     if (!isInAppBrowser || isDismissed) {

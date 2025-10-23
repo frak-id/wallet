@@ -1,6 +1,6 @@
 import type { PropsWithChildren } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { create } from "zustand";
 import { Grid } from "@/module/common/component/Grid";
 import { Panel } from "@/module/common/component/Panel";
 import { InteractionHistoryList } from "@/module/history/component/InteractionHistory";
@@ -9,26 +9,27 @@ import styles from "./history.module.css";
 
 type HistoryType = "rewards" | "interaction" | "notifications";
 
-const useHistoryTypeStore = create<{
-    type: HistoryType;
-    setType: (type: HistoryType) => void;
-}>()((set) => ({
-    type: "interaction",
-    setType: (type) => set({ type }),
-}));
-
 export default function History() {
     const { t } = useTranslation();
-    const type = useHistoryTypeStore((state) => state.type);
+    const [type, setType] = useState<HistoryType>("interaction");
+
     return (
         <Grid>
             <Panel variant={"invisible"} className={styles.history__panel}>
                 <nav className={styles.history__nav}>
-                    <ButtonType currentType={"rewards"}>
+                    <ButtonType
+                        currentType={"rewards"}
+                        activeType={type}
+                        onTypeChange={setType}
+                    >
                         {t("common.rewards")}
                     </ButtonType>{" "}
                     |{" "}
-                    <ButtonType currentType={"interaction"}>
+                    <ButtonType
+                        currentType={"interaction"}
+                        activeType={type}
+                        onTypeChange={setType}
+                    >
                         {t("common.interactions")}
                     </ButtonType>
                 </nav>
@@ -41,17 +42,22 @@ export default function History() {
 
 function ButtonType({
     currentType,
+    activeType,
+    onTypeChange,
     children,
-}: PropsWithChildren<{ currentType: HistoryType }>) {
-    const type = useHistoryTypeStore((state) => state.type);
-    const setType = useHistoryTypeStore((state) => state.setType);
-    const classActive = currentType === type ? styles.history__active : "";
+}: PropsWithChildren<{
+    currentType: HistoryType;
+    activeType: HistoryType;
+    onTypeChange: (type: HistoryType) => void;
+}>) {
+    const classActive =
+        currentType === activeType ? styles.history__active : "";
 
     return (
         <button
             type="button"
             className={`${styles.history__button} ${classActive}`}
-            onClick={() => setType(currentType)}
+            onClick={() => onTypeChange(currentType)}
         >
             {children}
         </button>

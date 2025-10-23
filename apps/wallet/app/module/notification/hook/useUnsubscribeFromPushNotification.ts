@@ -1,16 +1,13 @@
 import { authenticatedWalletApi } from "@frak-labs/wallet-shared/common/api/backendClient";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { useNotificationContext } from "@/module/notification/context/NotificationContext";
 import { notificationKey } from "@/module/notification/queryKeys/notification";
-import {
-    notificationStore,
-    selectSubscription,
-} from "@/module/stores/notificationStore";
 
 /**
  * Unsubscribe from the push notification
  */
 export function useUnsubscribeFromPushNotification() {
-    const subscription = notificationStore(selectSubscription);
+    const { subscription, clearSubscription } = useNotificationContext();
 
     const { data: hasPushToken, refetch } = useQuery({
         queryKey: notificationKey.push.tokenCount,
@@ -34,7 +31,7 @@ export function useUnsubscribeFromPushNotification() {
             // If we got a current subscription, unsubscribe from it
             if (subscription) {
                 await subscription.unsubscribe();
-                notificationStore.getState().clearSubscription();
+                clearSubscription();
             }
 
             // Remove every subscription related to this user

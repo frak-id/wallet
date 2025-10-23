@@ -95,29 +95,3 @@ export type WalletStore = {
     cleanPendingInteractions: () => void;
     clearWallet: () => void;
 };
-
-/**
- * Pairing Store Types
- */
-export type PairingStore = {
-    // State
-    pendingPairing: { id: string } | null;
-
-    // Actions
-    setPendingPairing: (pairing: { id: string } | null) => void;
-    clearPairing: () => void;
-};
-
-/**
- * Browser Store Types
- */
-export type BrowserStore = {
-    // State
-    inAppBrowserToastDismissed: boolean;
-    socialRedirectAttempted: boolean;
-
-    // Actions
-    setInAppBrowserToastDismissed: (dismissed: boolean) => void;
-    setSocialRedirectAttempted: (attempted: boolean) => void;
-    clearBrowser: () => void;
-};
