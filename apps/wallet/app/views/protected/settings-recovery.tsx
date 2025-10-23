@@ -1,5 +1,4 @@
 import { Accordion } from "@frak-labs/ui/component/Accordion";
-import { useAtomValue, useSetAtom } from "jotai";
 import { TriangleAlert } from "lucide-react";
 import { useEffect } from "react";
 import { Trans } from "react-i18next";
@@ -9,24 +8,23 @@ import { Step2 } from "@/module/recovery-setup/component/Setup/Step2";
 import { Step3 } from "@/module/recovery-setup/component/Setup/Step3";
 import { Step4 } from "@/module/recovery-setup/component/Setup/Step4";
 import {
-    recoveryResetAtom,
-    recoveryStepAtom,
-} from "@/module/settings/atoms/recovery";
+    recoveryStore,
+    selectRecoveryStep,
+} from "@/module/stores/recoveryStore";
 import styles from "./settings-recovery.module.css";
 
 const MAX_STEPS = 5;
 
 export default function SettingsRecovery() {
-    const recoveryReset = useSetAtom(recoveryResetAtom);
-    const step = useAtomValue(recoveryStepAtom);
+    const step = recoveryStore(selectRecoveryStep);
 
     useEffect(() => {
         return () => {
             if (step !== MAX_STEPS) return;
             // Reset the state when leaving the component
-            recoveryReset();
+            recoveryStore.getState().reset();
         };
-    }, [step, recoveryReset]);
+    }, [step]);
 
     return (
         <Grid>

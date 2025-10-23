@@ -1,5 +1,4 @@
 import { Accordion } from "@frak-labs/ui/component/Accordion";
-import { useAtomValue, useSetAtom } from "jotai";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Grid } from "@/module/common/component/Grid";
@@ -11,24 +10,23 @@ import { Step4 } from "@/module/recovery/component/Recover/Step4";
 import { Step5 } from "@/module/recovery/component/Recover/Step5";
 import { Step6 } from "@/module/recovery/component/Recover/Step6";
 import {
-    recoveryResetAtom,
-    recoveryStepAtom,
-} from "@/module/settings/atoms/recovery";
+    recoveryStore,
+    selectRecoveryStep,
+} from "@/module/stores/recoveryStore";
 
 const MAX_STEPS = 6;
 
 export default function Recovery() {
     const { t } = useTranslation();
-    const recoveryReset = useSetAtom(recoveryResetAtom);
-    const step = useAtomValue(recoveryStepAtom);
+    const step = recoveryStore(selectRecoveryStep);
 
     useEffect(() => {
         return () => {
             if (step !== MAX_STEPS) return;
             // Reset the state when leaving the component
-            recoveryReset();
+            recoveryStore.getState().reset();
         };
-    }, [step, recoveryReset]);
+    }, [step]);
 
     return (
         <Grid>

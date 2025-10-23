@@ -1,14 +1,16 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useAtom } from "jotai";
 import { authenticatedWalletApi } from "@/module/common/api/backendClient";
-import { subscriptionAtom } from "@/module/notification/atom/subscriptionAtom";
 import { notificationKey } from "@/module/notification/queryKeys/notification";
+import {
+    notificationStore,
+    selectSubscription,
+} from "@/module/stores/notificationStore";
 
 /**
  * Unsubscribe from the push notification
  */
 export function useUnsubscribeFromPushNotification() {
-    const [subscription, setSubscription] = useAtom(subscriptionAtom);
+    const subscription = notificationStore(selectSubscription);
 
     const { data: hasPushToken, refetch } = useQuery({
         queryKey: notificationKey.push.tokenCount,
@@ -32,7 +34,7 @@ export function useUnsubscribeFromPushNotification() {
             // If we got a current subscription, unsubscribe from it
             if (subscription) {
                 await subscription.unsubscribe();
-                setSubscription(undefined);
+                notificationStore.getState().clearSubscription();
             }
 
             // Remove every subscription related to this user

@@ -1,23 +1,19 @@
 import { Uploader } from "@frak-labs/ui/component/Uploader";
 import type { RecoveryFileContent } from "@frak-labs/wallet-shared/types/Recovery";
-import { useAtom, useSetAtom } from "jotai";
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { AccordionRecoveryItem } from "@/module/common/component/AccordionRecoveryItem";
 import {
-    recoveryFileContentAtom,
-    recoveryStepAtom,
-} from "@/module/settings/atoms/recovery";
+    recoveryStore,
+    selectRecoveryFileContent,
+} from "@/module/stores/recoveryStore";
 
 const ACTUAL_STEP = 1;
 
 export function Step1() {
     const { t } = useTranslation();
-    // Set the current step
-    const setStep = useSetAtom(recoveryStepAtom);
-
     // Get the recovery file product
-    const [fileContent, setFileContent] = useAtom(recoveryFileContentAtom);
+    const fileContent = recoveryStore(selectRecoveryFileContent);
 
     /**
      * Handle the upload of a file
@@ -25,7 +21,7 @@ export function Step1() {
     const handleChange = useCallback(
         async (files: File[] | null) => {
             if (!files || files.length === 0) {
-                setFileContent(null);
+                recoveryStore.getState().setFileContent(null);
                 return null;
             }
             const fileText = await files[0].text();
@@ -37,15 +33,15 @@ export function Step1() {
                 !fileContent.guardianPrivateKeyEncrypted
             ) {
                 // Should display a user message
-                setFileContent(null);
+                recoveryStore.getState().setFileContent(null);
                 throw new Error(t("wallet.recovery.invalidFile"));
             }
             // If all good here, should check that the guardian address match the wallet address recovery options
             // A backend actions checking possible recovery chains???
-            setFileContent(fileContent);
-            setStep(ACTUAL_STEP + 1);
+            recoveryStore.getState().setFileContent(fileContent);
+            recoveryStore.getState().setStep(ACTUAL_STEP + 1);
         },
-        [setFileContent, setStep, t]
+        [t]
     );
 
     return (

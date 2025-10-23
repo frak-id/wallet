@@ -1,9 +1,8 @@
 import { type MutationOptions, useMutation } from "@tanstack/react-query";
-import { useSetAtom } from "jotai";
 import { authenticatedWalletApi } from "@/module/common/api/backendClient";
-import { subscriptionAtom } from "@/module/notification/atom/subscriptionAtom";
 import { useNotificationSetupStatus } from "@/module/notification/hook/useNotificationSetupStatus";
 import { notificationKey } from "@/module/notification/queryKeys/notification";
+import { notificationStore } from "@/module/stores/notificationStore";
 
 /**
  * Register the push notification handler
@@ -13,8 +12,6 @@ export function useSubscribeToPushNotification(
 ) {
     const { isNotificationAllowed, askForNotificationPermission } =
         useNotificationSetupStatus();
-
-    const setSubscription = useSetAtom(subscriptionAtom);
 
     /**
      * Mutation used to subscribe to the push notification
@@ -47,7 +44,7 @@ export function useSubscribeToPushNotification(
                 "Created subscription Object: ",
                 subscription.toJSON()
             );
-            setSubscription(subscription);
+            notificationStore.getState().setSubscription(subscription);
 
             // Save this new subscription
             const jsonSubscription = subscription.toJSON();

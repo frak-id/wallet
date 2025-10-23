@@ -1,17 +1,19 @@
 import { Button } from "@frak-labs/ui/component/Button";
 import { WebApp } from "@frak-labs/ui/icons/WebApp";
 import { useAddToHomeScreenPrompt } from "@frak-labs/wallet-shared/common/hook/useAddToHomeScreenPrompt";
-import { useAtomValue } from "jotai";
 import { useCallback } from "react";
 import { Trans } from "react-i18next";
 import { ButtonLabel } from "@/module/common/component/ButtonLabel";
 import { Panel } from "@/module/common/component/Panel";
-import { pwaInstallRefAtom } from "@/module/common/component/PwaInstall";
+import {
+    pwaInstallStore,
+    selectPwaInstallRef,
+} from "@/module/stores/pwaInstallStore";
 import { trackGenericEvent } from "../../../common/analytics";
 
 export function InstallApp() {
     const { prompt, launchInstallation } = useAddToHomeScreenPrompt();
-    const pwaInstallRef = useAtomValue(pwaInstallRefAtom);
+    const pwaInstallRef = pwaInstallStore(selectPwaInstallRef);
 
     const handleInstall = useCallback(() => {
         trackGenericEvent("install-pwa_initiated");

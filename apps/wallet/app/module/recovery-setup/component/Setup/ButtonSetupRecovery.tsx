@@ -1,10 +1,12 @@
 import { Button } from "@frak-labs/ui/component/Button";
 import { currentChain } from "@frak-labs/wallet-shared/blockchain/provider";
-import { useAtomValue } from "jotai";
 import { Check, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useSetupRecovery } from "@/module/recovery-setup/hook/useSetupRecovery";
-import { recoveryOptionsAtom } from "@/module/settings/atoms/recovery";
+import {
+    recoveryStore,
+    selectRecoveryOptions,
+} from "@/module/stores/recoveryStore";
 
 export function ButtonSetupRecovery({
     className = "",
@@ -15,7 +17,7 @@ export function ButtonSetupRecovery({
 }) {
     const { t } = useTranslation();
     // Get the recovery options
-    const recoveryOptions = useAtomValue(recoveryOptionsAtom);
+    const recoveryOptions = recoveryStore(selectRecoveryOptions);
 
     // Setup recovery
     const { setupRecoveryAsync, isPending, isSuccess, isError, error } =

@@ -3,11 +3,11 @@ import { Slider } from "@frak-labs/ui/component/Slider";
 import { Uploader } from "@frak-labs/ui/component/Uploader";
 import { Upload } from "@frak-labs/ui/icons/Upload";
 import { AlertDialog } from "@frak-labs/wallet-shared/common/component/AlertDialog";
-import { atom, useAtom, useSetAtom } from "jotai";
 import { useCallback, useEffect, useRef, useState } from "react";
 import ReactAvatarEditor from "react-avatar-editor";
 import { useTranslation } from "react-i18next";
-import { uploadProfilePhotoAtom } from "@/module/membrs/atoms/uploadProfilePhoto";
+import { create } from "zustand";
+import { profilePhotoStore } from "@/module/stores/profilePhotoStore";
 import { AvatarCamera } from "../AvatarCamera";
 import styles from "./index.module.css";
 
@@ -33,17 +33,26 @@ type Position = {
 type ImageSource = string | File | undefined;
 
 /**
- * Local open modal atom
- * @description This atom is used to open the modal
+ * Local modal state store
+ * @description Store to manage the avatar modal open/close state
  */
-const localOpenModal = atom(false);
+type LocalModalState = {
+    isOpen: boolean;
+    setIsOpen: (isOpen: boolean) => void;
+};
+
+const useLocalModalStore = create<LocalModalState>()((set) => ({
+    isOpen: false,
+    setIsOpen: (isOpen) => set({ isOpen }),
+}));
 
 /**
  * Modal component for uploading and editing profile avatar
  */
 export function AvatarModal() {
     const { t } = useTranslation();
-    const [openModal, setOpenModal] = useAtom(localOpenModal);
+    const openModal = useLocalModalStore((state) => state.isOpen);
+    const setOpenModal = useLocalModalStore((state) => state.setIsOpen);
 
     return (
         <AlertDialog
@@ -68,8 +77,7 @@ function AvatarEditorPanel() {
     const [image, setImage] = useState<ImageSource>();
     const [scale, setScale] = useState<number>(INITIAL_SCALE);
     const [position, setPosition] = useState<Position>(INITIAL_POSITION);
-    const setProfilePhoto = useSetAtom(uploadProfilePhotoAtom);
-    const setOpenModal = useSetAtom(localOpenModal);
+    const setOpenModal = useLocalModalStore((state) => state.setIsOpen);
 
     /**
      * Reset editor to initial settings
@@ -116,7 +124,7 @@ function AvatarEditorPanel() {
         const canvas = editorRef.current.getImageScaledToCanvas();
         const imageDataUrl = canvas.toDataURL("image/webp");
 
-        setProfilePhoto(imageDataUrl);
+        profilePhotoStore.getState().setUploadedPhoto(imageDataUrl);
         setOpenModal(false);
     };
 

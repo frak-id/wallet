@@ -12,7 +12,6 @@ import {
     userStore,
 } from "@frak-labs/wallet-shared/stores/userStore";
 import type { User } from "@frak-labs/wallet-shared/types/User";
-import { useAtom } from "jotai";
 import { Copy } from "lucide-react";
 import { useEffect, useState } from "react";
 import {
@@ -23,7 +22,10 @@ import {
 } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
-import { uploadProfilePhotoAtom } from "../../atoms/uploadProfilePhoto";
+import {
+    profilePhotoStore,
+    selectUploadedPhoto,
+} from "@/module/stores/profilePhotoStore";
 import styles from "./index.module.css";
 
 // Types
@@ -44,7 +46,7 @@ export function ProfileForm() {
     // State management
     const user = userStore(selectUser);
     const setUser = (user: User | null) => userStore.getState().setUser(user);
-    const [profilePhoto, setProfilePhoto] = useAtom(uploadProfilePhotoAtom);
+    const profilePhoto = profilePhotoStore(selectUploadedPhoto);
 
     // Form setup and validation
     const formMethods = useForm<FormInput>({
@@ -86,7 +88,7 @@ export function ProfileForm() {
 
             // Update local state
             setUser(updatedUser);
-            setProfilePhoto(undefined);
+            profilePhotoStore.getState().clearUploadedPhoto();
             reset(updatedUser);
         } catch (error) {
             console.error(error);

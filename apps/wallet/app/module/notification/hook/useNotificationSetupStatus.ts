@@ -1,6 +1,8 @@
-import { useAtomValue } from "jotai";
 import { useCallback, useMemo } from "react";
-import { subscriptionAtom } from "@/module/notification/atom/subscriptionAtom";
+import {
+    notificationStore,
+    selectSubscription,
+} from "@/module/stores/notificationStore";
 
 /**
  * Get the notification setup status
@@ -46,9 +48,9 @@ export function useNotificationSetupStatus() {
     }, [isSupported]);
 
     /**
-     * The current subscription atom
+     * The current subscription from the store
      */
-    const subscription = useAtomValue(subscriptionAtom);
+    const subscription = notificationStore(selectSubscription);
 
     return useMemo(() => {
         if (!statusResult?.isSupported) {

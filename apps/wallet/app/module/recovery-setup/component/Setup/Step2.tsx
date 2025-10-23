@@ -2,32 +2,27 @@ import {
     selectWebauthnSession,
     sessionStore,
 } from "@frak-labs/wallet-shared/stores/sessionStore";
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { AccordionRecoveryItem } from "@/module/common/component/AccordionRecoveryItem";
 import { useGenerateRecoveryOptions } from "@/module/recovery-setup/hook/useGenerateRecoveryOptions";
 import {
-    recoveryOptionsAtom,
-    recoveryPasswordAtom,
-    recoveryStepAtom,
-} from "@/module/settings/atoms/recovery";
+    recoveryStore,
+    selectRecoveryPassword,
+    selectRecoveryStep,
+} from "@/module/stores/recoveryStore";
 
 const ACTUAL_STEP = 2;
 
 export function Step2() {
     const { t } = useTranslation();
-    // Get or set the current step
-    const [step, setStep] = useAtom(recoveryStepAtom);
 
-    // Get the password
-    const password = useAtomValue(recoveryPasswordAtom);
+    // Get the current step and password
+    const step = recoveryStore(selectRecoveryStep);
+    const password = recoveryStore(selectRecoveryPassword);
 
     // Get the current session
     const session = sessionStore(selectWebauthnSession);
-
-    // Set the recovery options
-    const setRecoveryOptions = useSetAtom(recoveryOptionsAtom);
 
     // Generate recovery options
     const { generateRecoveryOptionsAsync } = useGenerateRecoveryOptions();
@@ -42,21 +37,14 @@ export function Step2() {
             pass: password,
         });
         recoveryOptions.then((resRecoveryOptions) => {
-            setRecoveryOptions(resRecoveryOptions);
+            recoveryStore.getState().setOptions(resRecoveryOptions);
 
             // Delay the next step, otherwise it will be too fast
             setTimeout(() => {
-                setStep(ACTUAL_STEP + 1);
+                recoveryStore.getState().setStep(ACTUAL_STEP + 1);
             }, 2000);
         });
-    }, [
-        generateRecoveryOptionsAsync,
-        session,
-        password,
-        step,
-        setRecoveryOptions,
-        setStep,
-    ]);
+    }, [generateRecoveryOptionsAsync, session, password, step]);
 
     return (
         <AccordionRecoveryItem

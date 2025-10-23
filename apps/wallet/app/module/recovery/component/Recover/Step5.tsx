@@ -1,5 +1,4 @@
 import type { RecoveryFileContent } from "@frak-labs/wallet-shared/types/Recovery";
-import { useAtomValue, useSetAtom } from "jotai";
 import { SendHorizontal } from "lucide-react";
 import { sleep } from "radash";
 import { useMemo } from "react";
@@ -9,11 +8,11 @@ import { AccordionRecoveryItem } from "@/module/common/component/AccordionRecove
 import { usePerformRecovery } from "@/module/recovery/hook/usePerformRecovery";
 import { useRecoveryAvailability } from "@/module/recovery/hook/useRecoveryAvailability";
 import {
-    recoveryFileContentAtom,
-    recoveryGuardianAccountAtom,
-    recoveryNewWalletAtom,
-    recoveryStepAtom,
-} from "@/module/settings/atoms/recovery";
+    recoveryStore,
+    selectRecoveryFileContent,
+    selectRecoveryGuardianAccount,
+    selectRecoveryNewWallet,
+} from "@/module/stores/recoveryStore";
 import { ExplorerTxLink } from "@/module/wallet/component/ExplorerLink";
 import styles from "./Step5.module.css";
 
@@ -22,7 +21,7 @@ const ACTUAL_STEP = 5;
 export function Step5() {
     const { t } = useTranslation();
     // Get the recovery file product
-    const recoveryFileContent = useAtomValue(recoveryFileContentAtom);
+    const recoveryFileContent = recoveryStore(selectRecoveryFileContent);
 
     return (
         <AccordionRecoveryItem
@@ -42,14 +41,11 @@ function TriggerRecovery({
     recoveryFileContent: RecoveryFileContent;
 }) {
     const { t } = useTranslation();
-    // Set the current step
-    const setStep = useSetAtom(recoveryStepAtom);
-
-    // Set the guardian account
-    const guardianAccount = useAtomValue(recoveryGuardianAccountAtom);
+    // Get the guardian account
+    const guardianAccount = recoveryStore(selectRecoveryGuardianAccount);
 
     // Get the new authenticator id
-    const newWallet = useAtomValue(recoveryNewWalletAtom);
+    const newWallet = recoveryStore(selectRecoveryNewWallet);
 
     // Get the available chains for recovery
     const { recoveryAvailability, isLoading } = useRecoveryAvailability({
@@ -70,7 +66,7 @@ function TriggerRecovery({
         onSuccess: async () => {
             // On success, wait 2sec on go to the next step
             await sleep(2000);
-            setStep(ACTUAL_STEP + 1);
+            recoveryStore.getState().setStep(ACTUAL_STEP + 1);
         },
     });
 

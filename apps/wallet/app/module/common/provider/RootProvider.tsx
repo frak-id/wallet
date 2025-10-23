@@ -11,7 +11,7 @@ import { type PropsWithChildren, useEffect } from "react";
 import { useAccount } from "wagmi";
 import { authenticatedWalletApi } from "@/module/common/api/backendClient";
 import { useEnforceWagmiConnection } from "@/module/common/hook/useEnforceWagmiConnection";
-import { subscriptionAtom } from "@/module/notification/atom/subscriptionAtom";
+import { notificationStore } from "@/module/stores/notificationStore";
 import { setProfileId } from "../analytics";
 
 /**
@@ -109,7 +109,7 @@ function SetupServiceWorker() {
                 );
                 return;
             }
-            jotaiStore.set(subscriptionAtom, subscription);
+            notificationStore.getState().setSubscription(subscription);
 
             // Save this new subscription
             const jsonSubscription = subscription.toJSON();

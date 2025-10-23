@@ -226,6 +226,7 @@
         "vaul": "^1.1.2",
         "viem": "catalog:",
         "wagmi": "^2.18.1",
+        "zustand": "^5.0.8",
       },
       "devDependencies": {
         "@frak-labs/backend-elysia": "workspace:*",

@@ -20,6 +20,7 @@
     "./wallet/*": "./src/wallet/*",
     "./interaction/*": "./src/interaction/*",
     "./recovery/*": "./src/recovery/*",
+    "./stores/*": "./src/stores/*",
     "./i18n": "./src/i18n/config.ts",
     "./providers/*": "./src/providers/*",
     "./styles/*": "./styles/*"
