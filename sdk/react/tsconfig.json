@@ -52,7 +52,10 @@
 
     // Declaration files
     "declaration": true,
-    "declarationDir": "./dist"
+    "declarationDir": "./dist",
+
+    // Prevent auto-inclusion of @types packages
+    "types": ["node"]
   },
   "tsc-alias": {
     "resolveFullPaths": true,
