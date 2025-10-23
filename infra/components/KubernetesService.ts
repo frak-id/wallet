@@ -67,6 +67,15 @@ type KubernetesServiceArgs = {
         host: Input<string>;
         tlsSecretName: Input<string>;
         additionalHosts?: string[];
+        // Additional path-based routes to other services
+        pathRoutes?: Array<{
+            path: Input<string>;
+            pathType?: Input<"Prefix" | "Exact">; // Default to "Prefix"
+            serviceName: Input<string>;
+            servicePort: Input<number>;
+        }>;
+        // Custom annotations to add/override
+        customAnnotations?: Record<string, Input<string>>;
     };
 
     // Info for the service monitor
@@ -246,24 +255,47 @@ export class KubernetesService extends ComponentResource {
             );
         }
 
+        const hasPathRoutes =
+            this.args.ingress.pathRoutes &&
+            this.args.ingress.pathRoutes.length > 0;
+
         // Mapper for the ingress rules
-        const hostToRule = (host: Input<string>) => ({
-            host,
-            http: {
-                paths: [
-                    {
-                        path: "/",
-                        pathType: "Prefix",
-                        backend: {
-                            service: {
-                                name: this.service?.metadata?.name ?? "",
-                                port: { number: 80 },
-                            },
+        const hostToRule = (host: Input<string>) => {
+            // Build paths array: main service path + additional path routes
+            const paths: Input<inputs.networking.v1.HTTPIngressPath>[] = [
+                {
+                    path: "/",
+                    pathType: "Prefix",
+                    backend: {
+                        service: {
+                            name: this.service?.metadata?.name ?? "",
+                            port: { number: 80 },
                         },
                     },
-                ],
-            },
-        });
+                },
+            ];
+
+            // Add additional path routes if specified
+            if (hasPathRoutes) {
+                for (const route of this.args.ingress?.pathRoutes ?? []) {
+                    paths.push({
+                        path: route.path,
+                        pathType: route.pathType || "Prefix",
+                        backend: {
+                            service: {
+                                name: route.serviceName,
+                                port: { number: route.servicePort },
+                            },
+                        },
+                    });
+                }
+            }
+
+            return {
+                host,
+                http: { paths },
+            };
+        };
         const rules = [
             hostToRule(this.args.ingress.host),
             ...(this.args.ingress.additionalHosts?.map(hostToRule) ?? []),
@@ -273,6 +305,22 @@ export class KubernetesService extends ComponentResource {
             ...(this.args.ingress.additionalHosts ?? []),
         ];
 
+        // Build annotations
+        const baseAnnotations = {
+            "kubernetes.io/ingress.class": "nginx",
+            "kubernetes.io/tls-acme": "true",
+            "cert-manager.io/cluster-issuer": "letsencrypt",
+            "nginx.ingress.kubernetes.io/ssl-redirect": "true",
+            "nginx.ingress.kubernetes.io/proxy-buffer-size": "8k",
+            "nginx.ingress.kubernetes.io/enable-modsecurity": "false",
+        };
+
+        // Add default rewrite-target for backward compatibility
+        // (only if no path routes are defined - those override with custom logic)
+        const defaultAnnotations = hasPathRoutes
+            ? {}
+            : { "nginx.ingress.kubernetes.io/rewrite-target": "/" };
+
         return new k8s.networking.v1.Ingress(
             `${this.name}Ingress`,
             {
@@ -280,14 +328,10 @@ export class KubernetesService extends ComponentResource {
                     name: `${this.name}-${normalizedStageName}-ingress`.toLocaleLowerCase(),
                     namespace: this.args.namespace,
                     annotations: {
-                        "nginx.ingress.kubernetes.io/rewrite-target": "/",
-                        "kubernetes.io/ingress.class": "nginx",
-                        "kubernetes.io/tls-acme": "true",
-                        "cert-manager.io/cluster-issuer": "letsencrypt",
-                        "nginx.ingress.kubernetes.io/ssl-redirect": "true",
-                        "nginx.ingress.kubernetes.io/proxy-buffer-size": "8k",
-                        "nginx.ingress.kubernetes.io/enable-modsecurity":
-                            "false",
+                        ...baseAnnotations,
+                        ...defaultAnnotations,
+                        // Merge custom annotations if provided (can override defaults)
+                        ...(this.args.ingress?.customAnnotations ?? {}),
                     },
                 },
                 spec: {
