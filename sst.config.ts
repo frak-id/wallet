@@ -34,6 +34,7 @@ export default $config({
         const isGcp = $app?.stage?.startsWith("gcp");
         if (isGcp) {
             await import("./infra/gcp/backend.ts");
+            await import("./infra/gcp/wallet.ts");
             return;
         }
 
@@ -41,20 +42,9 @@ export default $config({
         if ($dev) {
             // Gcp dev stuff
             await import("./infra/gcp/dev.ts");
-            await import("./infra/wallet.ts");
-            // await import("./infra/listener.ts"); // TODO: Uncomment when merged to main
+            await import("./infra/gcp/wallet.ts");
             await import("./infra/dashboard.ts");
             await import("./infra/example.ts");
-
-            // Run listener dev server (infrastructure not deployed yet)
-            new sst.x.DevCommand("Listener", {
-                dev: {
-                    title: "Listener",
-                    autostart: true,
-                    command: "vite dev",
-                    directory: "apps/listener",
-                },
-            });
 
             return;
         }

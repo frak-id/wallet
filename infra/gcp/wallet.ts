@@ -32,6 +32,7 @@ const walletEnv = {
     FRAK_WALLET_URL: walletUrl,
     OPEN_PANEL_API_URL: openPanelApiUrl,
     OPEN_PANEL_WALLET_CLIENT_ID: openPanelWalletClientId.value,
+    OPEN_PANEL_LISTENER_CLIENT_ID: openPanelWalletClientId.value,
 };
 
 // Build the custom Nginx image with frontend files built-in
@@ -77,6 +78,13 @@ export const listenerService = new KubernetesService(
             app: "wallet-listener",
         },
 
+        // Dev command (runs when `sst dev` is active)
+        dev: {
+            command: "bun run dev",
+            directory: "apps/listener",
+            autostart: true,
+        },
+
         // Pod config
         pod: {
             containers: [
@@ -119,6 +127,13 @@ export const walletService = new KubernetesService(
             app: "wallet-frontend",
         },
 
+        // Dev command (runs when `sst dev` is active)
+        dev: {
+            command: "bun run dev",
+            directory: "apps/wallet",
+            autostart: true,
+        },
+
         // Pod config
         pod: {
             containers: [
@@ -153,7 +168,7 @@ export const walletService = new KubernetesService(
             pathRoutes: [
                 {
                     path: "/listener(/|$)(.*)",
-                    pathType: "Prefix",
+                    pathType: "ImplementationSpecific", // Required for regex patterns
                     serviceName: listenerService.service?.metadata?.name ?? "",
                     servicePort: 80,
                 },

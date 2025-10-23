@@ -70,7 +70,7 @@ type KubernetesServiceArgs = {
         // Additional path-based routes to other services
         pathRoutes?: Array<{
             path: Input<string>;
-            pathType?: Input<"Prefix" | "Exact">; // Default to "Prefix"
+            pathType?: Input<"Prefix" | "Exact" | "ImplementationSpecific">; // Default to "Prefix"
             serviceName: Input<string>;
             servicePort: Input<number>;
         }>;

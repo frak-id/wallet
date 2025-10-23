@@ -22,7 +22,7 @@ export const walletNamespace = new kubernetes.core.v1.Namespace(
 let registryPath: Output<string> | undefined;
 if (!$dev) {
     const registry = new gcp.artifactregistry.Repository("wallet-gcr", {
-        repositoryId: "wallet",
+        repositoryId: `wallet-${normalizedStageName}`,
         format: "DOCKER",
         description: "Artifact registry for the cooking bot images",
         location: "europe-west1",
