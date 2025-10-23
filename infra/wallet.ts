@@ -46,4 +46,5 @@ new sst.aws.StaticSite("Wallet", {
         OPEN_PANEL_API_URL: openPanelApiUrl,
         OPEN_PANEL_WALLET_CLIENT_ID: openPanelWalletClientId.value,
     },
+    dev: false,
 });

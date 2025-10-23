@@ -70,7 +70,6 @@ export default $config({
 
         // Add wallet, listener + dashboard
         await import("./infra/wallet.ts");
-        // await import("./infra/listener.ts"); // TODO: Uncomment when merged to main
         await import("./infra/dashboard.ts");
     },
 });

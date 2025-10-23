@@ -1,4 +1,5 @@
 import path from "node:path";
+import type { Resource } from "@pulumi/pulumi";
 import { KubernetesService } from "../components/KubernetesService";
 import {
     backendUrl,
@@ -35,39 +36,54 @@ const walletEnv = {
     OPEN_PANEL_LISTENER_CLIENT_ID: openPanelWalletClientId.value,
 };
 
-// Build the custom Nginx image with frontend files built-in
-export const walletImage = new dockerbuild.Image("wallet", {
-    context: {
-        location: $cli.paths.root,
-    },
-    dockerfile: {
-        location: path.join($cli.paths.root, "apps/wallet/Dockerfile"),
-    },
-    buildArgs: {
-        NODE_ENV: "production",
-        ...walletEnv,
-    },
-    platforms: ["linux/amd64"],
-    push: true,
-    tags: getRegistryPath("wallet"),
-});
+let imageRefs = {
+    wallet: $output(""),
+    listener: $output(""),
+};
+const dependency: Resource[] = [];
 
-// Build the custom Nginx image with frontend files built-in
-export const listenerImage = new dockerbuild.Image("wallet-listener", {
-    context: {
-        location: $cli.paths.root,
-    },
-    dockerfile: {
-        location: path.join($cli.paths.root, "apps/listener/Dockerfile"),
-    },
-    buildArgs: {
-        NODE_ENV: "production",
-        ...walletEnv,
-    },
-    platforms: ["linux/amd64"],
-    push: true,
-    tags: getRegistryPath("wallet-listener"),
-});
+if (!$dev) {
+    // Build the custom Nginx image with frontend files built-in
+    const walletImage = new dockerbuild.Image("wallet", {
+        context: {
+            location: $cli.paths.root,
+        },
+        dockerfile: {
+            location: path.join($cli.paths.root, "apps/wallet/Dockerfile"),
+        },
+        buildArgs: {
+            NODE_ENV: "production",
+            ...walletEnv,
+        },
+        platforms: ["linux/amd64"],
+        push: true,
+        tags: getRegistryPath("wallet"),
+    });
+
+    // Build the custom Nginx image with frontend files built-in
+    const listenerImage = new dockerbuild.Image("wallet-listener", {
+        context: {
+            location: $cli.paths.root,
+        },
+        dockerfile: {
+            location: path.join($cli.paths.root, "apps/listener/Dockerfile"),
+        },
+        buildArgs: {
+            NODE_ENV: "production",
+            ...walletEnv,
+        },
+        platforms: ["linux/amd64"],
+        push: true,
+        tags: getRegistryPath("wallet-listener"),
+    });
+
+    dependency.push(walletImage, listenerImage);
+
+    imageRefs = {
+        wallet: walletImage.ref,
+        listener: listenerImage.ref,
+    };
+}
 
 // Listener service (backend only, no ingress - accessed via wallet ingress)
 export const listenerService = new KubernetesService(
@@ -80,9 +96,12 @@ export const listenerService = new KubernetesService(
 
         // Dev command (runs when `sst dev` is active)
         dev: {
-            command: "bun run dev",
-            directory: "apps/listener",
-            autostart: true,
+            dev: {
+                command: "bun run dev",
+                directory: "apps/listener",
+                autostart: true,
+            },
+            environment: walletEnv,
         },
 
         // Pod config
@@ -90,7 +109,7 @@ export const listenerService = new KubernetesService(
             containers: [
                 {
                     name: "listener",
-                    image: listenerImage.ref,
+                    image: imageRefs.listener,
                     ports: [{ containerPort: 80 }],
                     resources: {
                         limits: { cpu: "10m", memory: "64Mi" },
@@ -114,7 +133,7 @@ export const listenerService = new KubernetesService(
         // No ingress - accessed via wallet's ingress path routing
     },
     {
-        dependsOn: [listenerImage],
+        dependsOn: dependency,
     }
 );
 
@@ -129,9 +148,12 @@ export const walletService = new KubernetesService(
 
         // Dev command (runs when `sst dev` is active)
         dev: {
-            command: "bun run dev",
-            directory: "apps/wallet",
-            autostart: true,
+            dev: {
+                command: "bun run dev",
+                directory: "apps/wallet",
+                autostart: true,
+            },
+            environment: walletEnv,
         },
 
         // Pod config
@@ -139,7 +161,7 @@ export const walletService = new KubernetesService(
             containers: [
                 {
                     name: "wallet",
-                    image: walletImage.ref,
+                    image: imageRefs.wallet,
                     ports: [{ containerPort: 80 }],
                     resources: {
                         limits: { cpu: "10m", memory: "64Mi" },
@@ -181,6 +203,6 @@ export const walletService = new KubernetesService(
         },
     },
     {
-        dependsOn: [walletImage, listenerService],
+        dependsOn: dependency,
     }
 );
