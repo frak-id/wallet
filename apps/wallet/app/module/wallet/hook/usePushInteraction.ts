@@ -14,7 +14,7 @@ import { trackGenericEvent } from "../../common/analytics";
 export function usePushInteraction() {
     const { sdkSession, getSdkSession } = useGetSafeSdkSession();
 
-    // Read from the jotai store
+    // Read from the Zustand store
     const currentSession = sessionStore(selectSession);
     const sessionsRef = useRef(undefined as typeof currentSession | undefined);
     useEffect(() => {

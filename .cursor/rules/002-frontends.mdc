@@ -20,7 +20,8 @@ In the repo we have multiple frontend:
 - Radix UI and Shadcn UI for components
 - CSS modules for styling
 - React Query for server state management
-- Jotai for client state management
+- Zustand for client state management (wallet/listener apps)
+- Jotai for client state management (dashboard app only)
 - Viem and Wagmi for blockchain
 - i18next for internationalization.
 - Typedoc for commenting
@@ -63,7 +64,8 @@ Use these tags to find relevant documentation and resources:
 ## React Guidelines
 - Use functional components and hooks
 - Follow React best practices
-- Use Jotai for global state when needed
+- Use Zustand for global state in wallet/listener apps
+- Use Jotai for global state in dashboard app only
 
 ## UI and Styling
 

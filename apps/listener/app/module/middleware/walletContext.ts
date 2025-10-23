@@ -14,11 +14,11 @@ import type {
 /**
  * Wallet context augmentation middleware
  *
- * Reads the iframe resolving context from Jotai store ONCE per request
+ * Reads the iframe resolving context from Zustand store ONCE per request
  * and augments the RPC context with wallet-specific fields.
  *
  * This centralizes:
- * - Reading from iframeResolvingContextAtom
+ * - Reading from resolvingContextStore
  * - ProductId validation against message origin
  * - Context availability checks
  *

@@ -31,7 +31,7 @@ type OnDisplayModalRequest = RpcPromiseHandler<
  * Hook used to listen to the display modal action
  *
  * Note: Context is augmented by middleware with productId, sourceUrl, etc.
- * No need to read from Jotai store.
+ * No need to read from Zustand store.
  */
 export function useDisplayModalListener(): OnDisplayModalRequest {
     // Hook used to set the requested listener UI

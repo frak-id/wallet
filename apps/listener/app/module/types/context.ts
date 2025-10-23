@@ -7,7 +7,7 @@ import type { Address, Hex } from "viem";
  * Includes both base RPC context fields (origin, source) and wallet-specific fields
  *
  * This context is populated by middleware and passed to all handlers,
- * eliminating the need for handlers to manually read from Jotai store
+ * eliminating the need for handlers to manually read from Zustand store
  */
 export type WalletRpcContext = {
     /**

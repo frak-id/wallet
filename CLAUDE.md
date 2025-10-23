@@ -102,7 +102,7 @@ bun run changeset:release
 - **`example/`** - Integration examples
 
 ### Key Technologies
-- **Frontend**: React 19, TanStack Query, Viem, Wagmi, CSS Modules, React Router v7, Next.js 15
+- **Frontend**: React 19, TanStack Query, Zustand (wallet/listener), Jotai (dashboard only), Viem, Wagmi, CSS Modules, React Router v7, Next.js 15
 - **Backend**: Elysia.js, PostgreSQL (Drizzle ORM), MongoDB
 - **Blockchain**: Account Abstraction (ERC-4337), WebAuthn, Multi-chain support, Pimlico, ZeroDev
 - **Infrastructure**: SST v3 (AWS), Pulumi (GCP), hybrid multi-cloud deployment

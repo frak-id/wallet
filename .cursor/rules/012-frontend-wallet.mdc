@@ -7,7 +7,7 @@ globs: packages/wallet/**/*.ts, packages/wallet/**/*.tsx
 ## Wallet Summary
 
 `@/packages/wallet` is part of Frak monorepo and is designed to provide a wallet solution that integrates with various blockchain functionalities and user authentication mechanisms.
-Project is written in TypeScript using React 19, React Router v7, Radix UI and Shadcn UI for components, React Query for server state management, Jotai for client state management, Viem and Wagmi for blockchain, i18next for internationalization.
+Project is written in TypeScript using React 19, React Router v7, Radix UI and Shadcn UI for components, React Query for server state management, Zustand for client state management, Viem and Wagmi for blockchain, i18next for internationalization.
 
 ## Technical Stack
 
@@ -32,7 +32,7 @@ Follow React Router docs for Data Fetching, Rendering, and Routing.
 app/
 ├── i18n/ # Translation config and locales files
 ├── module/ # React components organized by features
-├── atoms/ # Jotai atoms for client state
+├── stores/ # Zustand stores for client state
 ├── component/ # React components
 ├── hook/ # React hooks
 ├── utils/ # Utils for that feature
