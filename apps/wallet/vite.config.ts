@@ -9,111 +9,124 @@ import { manualChunks, onwarn } from "../../packages/dev-tooling";
 
 const DEBUG = JSON.stringify(false);
 
-export default defineConfig(({ mode, isSsrBuild }: ConfigEnv): UserConfig => {
-    const isSW = mode === "sw";
+export default defineConfig(
+    ({ mode, isSsrBuild, command }: ConfigEnv): UserConfig => {
+        const isSW = mode === "sw";
 
-    const baseConfig = {
-        define: {
-            "process.env.STAGE": JSON.stringify(process.env.STAGE),
-            "process.env.BACKEND_URL": JSON.stringify(process.env.BACKEND_URL),
-            "process.env.INDEXER_URL": JSON.stringify(process.env.INDEXER_URL),
-            "process.env.ERPC_URL": JSON.stringify(process.env.ERPC_URL),
-            "process.env.DRPC_API_KEY": JSON.stringify(
-                process.env.DRPC_API_KEY
-            ),
-            "process.env.PIMLICO_API_KEY": JSON.stringify(
-                process.env.PIMLICO_API_KEY
-            ),
-            "process.env.NEXUS_RPC_SECRET": JSON.stringify(
-                process.env.NEXUS_RPC_SECRET
-            ),
-            "process.env.VAPID_PUBLIC_KEY": JSON.stringify(
-                process.env.VAPID_PUBLIC_KEY
-            ),
-            "process.env.PRIVY_APP_ID": JSON.stringify(
-                process.env.PRIVY_APP_ID
-            ),
-            "process.env.DEBUG": JSON.stringify(DEBUG),
-            "process.env.APP_VERSION": JSON.stringify(
-                process.env.COMMIT_HASH ?? "UNKNOWN"
-            ),
-            "process.env.FRAK_WALLET_URL": JSON.stringify(
-                process.env.FRAK_WALLET_URL
-            ),
-            "process.env.OPEN_PANEL_API_URL": JSON.stringify(
-                process.env.OPEN_PANEL_API_URL
-            ),
-            "process.env.OPEN_PANEL_WALLET_CLIENT_ID": JSON.stringify(
-                process.env.OPEN_PANEL_WALLET_CLIENT_ID
-            ),
-        },
-        // Remove console and debugger on prod
-        esbuild: {
-            drop:
-                process.env.STAGE === "prod"
-                    ? (["console", "debugger"] as Drop[])
-                    : [],
-        },
-    };
+        const baseConfig = {
+            define: {
+                "process.env.STAGE": JSON.stringify(process.env.STAGE),
+                "process.env.BACKEND_URL": JSON.stringify(
+                    process.env.BACKEND_URL
+                ),
+                "process.env.INDEXER_URL": JSON.stringify(
+                    process.env.INDEXER_URL
+                ),
+                "process.env.ERPC_URL": JSON.stringify(process.env.ERPC_URL),
+                "process.env.DRPC_API_KEY": JSON.stringify(
+                    process.env.DRPC_API_KEY
+                ),
+                "process.env.PIMLICO_API_KEY": JSON.stringify(
+                    process.env.PIMLICO_API_KEY
+                ),
+                "process.env.NEXUS_RPC_SECRET": JSON.stringify(
+                    process.env.NEXUS_RPC_SECRET
+                ),
+                "process.env.VAPID_PUBLIC_KEY": JSON.stringify(
+                    process.env.VAPID_PUBLIC_KEY
+                ),
+                "process.env.PRIVY_APP_ID": JSON.stringify(
+                    process.env.PRIVY_APP_ID
+                ),
+                "process.env.DEBUG": JSON.stringify(DEBUG),
+                "process.env.APP_VERSION": JSON.stringify(
+                    process.env.COMMIT_HASH ?? "UNKNOWN"
+                ),
+                "process.env.FRAK_WALLET_URL": JSON.stringify(
+                    process.env.FRAK_WALLET_URL
+                ),
+                "process.env.OPEN_PANEL_API_URL": JSON.stringify(
+                    process.env.OPEN_PANEL_API_URL
+                ),
+                "process.env.OPEN_PANEL_WALLET_CLIENT_ID": JSON.stringify(
+                    process.env.OPEN_PANEL_WALLET_CLIENT_ID
+                ),
+            },
+            // Remove console and debugger on prod
+            esbuild: {
+                drop:
+                    process.env.STAGE === "prod"
+                        ? (["console", "debugger"] as Drop[])
+                        : [],
+            },
+        };
 
-    // Service worker configuration
-    if (isSW) {
+        // Service worker configuration
+        if (isSW) {
+            return {
+                ...baseConfig,
+                plugins: [tsconfigPaths()],
+                publicDir: false,
+                build: {
+                    target: "ES2020",
+                    lib: {
+                        name: "WalletServiceWorker",
+                        entry: "./app/service-worker.ts",
+                        formats: ["iife"],
+                        fileName: () => "sw.js",
+                    },
+                    outDir: "public",
+                    emptyOutDir: false,
+                },
+            };
+        }
+
+        // Wallet app configuration
         return {
             ...baseConfig,
-            plugins: [tsconfigPaths()],
-            publicDir: false,
-            build: {
-                target: "ES2020",
-                lib: {
-                    name: "WalletServiceWorker",
-                    entry: "./app/service-worker.ts",
-                    formats: ["iife"],
-                    fileName: () => "sw.js",
+            plugins: [reactRouter(), mkcert(), tsconfigPaths()],
+            resolve: {
+                conditions: ["development"],
+                ...(command === "build"
+                    ? {
+                          alias: {
+                              "react-dom/server": "react-dom/server.node",
+                          },
+                      }
+                    : undefined),
+            },
+            server: {
+                port: 3000,
+                proxy: {
+                    // Proxy listener app from separate dev server
+                    "/listener": {
+                        target: "https://localhost:3002",
+                        changeOrigin: true,
+                        secure: false, // Allow self-signed certs in dev
+                        ws: true, // Proxy websockets if needed
+                    },
                 },
-                outDir: "public",
-                emptyOutDir: false,
+            },
+            build: {
+                // todo: should be switched to false once we resolved css conflicts
+                cssCodeSplit: true,
+                target: isSsrBuild ? "ES2022" : "ES2020",
+                rollupOptions: {
+                    output: {
+                        // Set a min chunk size to 16kb
+                        // note, this is pre-minification chunk size, not the final bundle size
+                        experimentalMinChunkSize: 32000,
+                        manualChunks(id, meta) {
+                            return manualChunks(id, meta);
+                        },
+                    },
+                    onwarn,
+                },
+                sourcemap: false,
+            },
+            optimizeDeps: {
+                exclude: ["react-scan"],
             },
         };
     }
-
-    // Wallet app configuration
-    return {
-        ...baseConfig,
-        plugins: [reactRouter(), mkcert(), tsconfigPaths()],
-        resolve: {
-            conditions: ["development"],
-        },
-        server: {
-            port: 3000,
-            proxy: {
-                // Proxy listener app from separate dev server
-                "/listener": {
-                    target: "https://localhost:3002",
-                    changeOrigin: true,
-                    secure: false, // Allow self-signed certs in dev
-                    ws: true, // Proxy websockets if needed
-                },
-            },
-        },
-        build: {
-            // todo: should be switched to false once we resolved css conflicts
-            cssCodeSplit: true,
-            target: isSsrBuild ? "ES2022" : "ES2020",
-            rollupOptions: {
-                output: {
-                    // Set a min chunk size to 16kb
-                    // note, this is pre-minification chunk size, not the final bundle size
-                    experimentalMinChunkSize: 32000,
-                    manualChunks(id, meta) {
-                        return manualChunks(id, meta);
-                    },
-                },
-                onwarn,
-            },
-            sourcemap: false,
-        },
-        optimizeDeps: {
-            exclude: ["react-scan"],
-        },
-    };
-});
+);

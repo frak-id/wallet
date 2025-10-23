@@ -11,7 +11,6 @@
     "@pulumi/gcp": "^8.34.0",
     "@pulumi/kubernetes": "^4.23.0",
     "@pulumi/pulumi": "^3.177.0",
-    "@types/dotenv": "^8.2.3",
     "@types/node": "^24.7.2",
     "knip": "^5.65.0",
     "npm-check-updates": "^18.0.1",

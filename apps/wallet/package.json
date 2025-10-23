@@ -87,7 +87,6 @@
     "@noble/curves": "^2.0.1",
     "@playwright/test": "^1.56.0",
     "@react-router/dev": "^7.9.4",
-    "@types/dotenv": "^8.2.3",
     "@types/nprogress": "^0.2.3",
     "@types/react": "catalog:",
     "@types/react-avatar-editor": "^13.0.4",
