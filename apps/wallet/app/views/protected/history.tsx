@@ -1,6 +1,6 @@
-import { atom, useAtom, useAtomValue } from "jotai";
 import type { PropsWithChildren } from "react";
 import { useTranslation } from "react-i18next";
+import { create } from "zustand";
 import { Grid } from "@/module/common/component/Grid";
 import { Panel } from "@/module/common/component/Panel";
 import { InteractionHistoryList } from "@/module/history/component/InteractionHistory";
@@ -9,11 +9,17 @@ import styles from "./history.module.css";
 
 type HistoryType = "rewards" | "interaction" | "notifications";
 
-const historyTypeAtom = atom<HistoryType>("interaction");
+const useHistoryTypeStore = create<{
+    type: HistoryType;
+    setType: (type: HistoryType) => void;
+}>()((set) => ({
+    type: "interaction",
+    setType: (type) => set({ type }),
+}));
 
 export default function History() {
     const { t } = useTranslation();
-    const type = useAtomValue(historyTypeAtom);
+    const type = useHistoryTypeStore((state) => state.type);
     return (
         <Grid>
             <Panel variant={"invisible"} className={styles.history__panel}>
@@ -37,7 +43,8 @@ function ButtonType({
     currentType,
     children,
 }: PropsWithChildren<{ currentType: HistoryType }>) {
-    const [type, setType] = useAtom(historyTypeAtom);
+    const type = useHistoryTypeStore((state) => state.type);
+    const setType = useHistoryTypeStore((state) => state.setType);
     const classActive = currentType === type ? styles.history__active : "";
 
     return (

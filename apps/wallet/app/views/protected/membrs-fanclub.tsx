@@ -1,13 +1,19 @@
 import { Button } from "@frak-labs/ui/component/Button";
-import { atom, useAtomValue, useSetAtom } from "jotai";
+import { create } from "zustand";
 import { Grid } from "@/module/common/component/Grid";
 import styles from "./membrs-fanclub.module.css";
 
-const localStepAtom = atom<"step1" | "step2">("step2");
+const useStepStore = create<{
+    step: "step1" | "step2";
+    setStep: (step: "step1" | "step2") => void;
+}>()((set) => ({
+    step: "step2",
+    setStep: (step) => set({ step }),
+}));
 
 export default function MembrsFanclub() {
     // Get the current step
-    const currentStep = useAtomValue(localStepAtom);
+    const currentStep = useStepStore((state) => state.step);
 
     return (
         <Grid>
@@ -19,7 +25,7 @@ export default function MembrsFanclub() {
 
 function Step1() {
     // Set the current step
-    const setCurrentStep = useSetAtom(localStepAtom);
+    const setCurrentStep = useStepStore((state) => state.setStep);
 
     return (
         <>
