@@ -69,59 +69,6 @@ export default defineConfig((): UserConfig => {
                     // Reduce chunk size threshold to encourage more splitting
                     experimentalMinChunkSize: 20000,
                     manualChunks(id, meta) {
-                        // Vendor chunk mapping for listener app
-                        const vendorChunks = [
-                            {
-                                name: "vendor-react",
-                                patterns: [
-                                    "node_modules/react/",
-                                    "node_modules/react-dom/",
-                                ],
-                            },
-                            {
-                                name: "vendor-query",
-                                patterns: [
-                                    "node_modules/@tanstack/react-query",
-                                    "node_modules/@tanstack/query-core",
-                                ],
-                            },
-                            {
-                                name: "vendor-jotai",
-                                patterns: ["node_modules/jotai"],
-                            },
-                            {
-                                name: "vendor-aa",
-                                patterns: [
-                                    "node_modules/permissionless",
-                                    "node_modules/@aa-sdk",
-                                ],
-                            },
-                            {
-                                name: "vendor-viem",
-                                patterns: [
-                                    "node_modules/viem",
-                                    "node_modules/ox",
-                                ],
-                            },
-                            {
-                                name: "vendor-webauthn",
-                                patterns: [
-                                    "node_modules/@simplewebauthn",
-                                    "node_modules/@peculiar",
-                                ],
-                            },
-                        ];
-
-                        for (const chunk of vendorChunks) {
-                            if (
-                                chunk.patterns.some((pattern) =>
-                                    id.includes(pattern)
-                                )
-                            ) {
-                                return chunk.name;
-                            }
-                        }
-
                         return manualChunks(id, meta);
                     },
                 },

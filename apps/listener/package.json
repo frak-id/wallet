@@ -13,6 +13,7 @@
     "lint": "biome lint .",
     "format:check": "biome check .",
     "format": "biome check --write .",
+    "bundle:check": "sst shell bunx vite-bundle-visualizer",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
