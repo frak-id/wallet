@@ -1,6 +1,6 @@
 ---
 description: This rule apply to every frontends in the monorepo
-globs: *.tsx, *.css, packages/dashboard/**/*.ts, packages/wallet/**/*, packages/shared/**/*.ts, packages/sdk/**/*.ts
+globs: *.tsx, *.css, apps/dashboard/**/*.ts, apps/wallet/**/*, packages/wallet-shared/**/*.ts, sdk/**/*.ts
 alwaysApply: false
 ---
 # Monorepo Frontend Rules
@@ -8,10 +8,10 @@ alwaysApply: false
 ## Frontend Summary
 
 In the repo we have multiple frontend:
- - `@/packages/dashboard`: Business dashboard for company, a SaaS dashboard with blockchain interaction.
- - `@/packages/wallet`: User facing SPA application with high workloads, can also be loaded via an iframe.
- - `@/packages/shared`: Shared components between the dashboard and the wallet.
- - `@/example/*`: Some exemple website showcasing the setup of the Frak SDK.
+ - `apps/dashboard`: Business dashboard for company, a SaaS dashboard with blockchain interaction.
+ - `apps/wallet`: User facing SPA application with high workloads, can also be loaded via an iframe.
+ - `packages/wallet-shared`: Shared components and utilities between the dashboard and the wallet.
+ - `example/*`: Some exemple website showcasing the setup of the Frak SDK.
 
 ## Technical Stack
 

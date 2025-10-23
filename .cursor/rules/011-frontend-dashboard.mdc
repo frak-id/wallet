@@ -1,12 +1,12 @@
 ---
-description: This rule apply to dashboard package.
-globs: packages/dashboard/**/*.ts, packages/dashboard/**/*.tsx
+description: This rule apply to dashboard app.
+globs: apps/dashboard/**/*.ts, apps/dashboard/**/*.tsx
 ---
 # Dashboard Rules
 
 ## Dashboard Summary
 
-`@/packages/dashboard` is part of Frak monorepo and is designed to provide a comprehensive dashboard solution that integrates with various blockchain functionalities and user authentication mechanisms.
+`apps/dashboard` is part of Frak monorepo and is designed to provide a comprehensive dashboard solution that integrates with various blockchain functionalities and user authentication mechanisms.
 Project is written in TypeScript using React 19, Next.js App Router, Radix UI and Shadcn UI for components, React Query for server state management, Jotai for client state management, Viem and Wagmi for blockchain, i18next for internationalization.
 
 ## Technical Stack
