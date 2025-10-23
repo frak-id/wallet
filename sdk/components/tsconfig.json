@@ -60,10 +60,7 @@
     "paths": {
       "@/*": ["./src/*"],
       "@frak-labs/ui/types/*": ["../../packages/ui/types/*"]
-    },
-
-    // Prevent auto-inclusion of @types packages
-    "types": ["node"]
+    }
   },
   "tsc-alias": {
     "resolveFullPaths": true,
