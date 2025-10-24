@@ -6,13 +6,16 @@ import type {
     RpcStreamHandler,
     StreamEmitter,
 } from "@frak-labs/frame-connector";
+import {
+    getSafeSdkSession,
+    getSafeSession,
+} from "@frak-labs/wallet-shared/common/utils/safeSession";
 import { pushBackupData } from "@frak-labs/wallet-shared/sdk/utils/backup";
 import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
 import { interactionSessionStatusQuery } from "@frak-labs/wallet-shared/wallet/hook/useInteractionSessionStatus";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef } from "react";
 import type { WalletRpcContext } from "@/module/types/context";
-import { getSafeSdkSession, getSafeSession } from "@/module/utils/localStorage";
 
 type OnListenToWallet = RpcStreamHandler<
     IFrameRpcSchema,

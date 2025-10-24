@@ -1,3 +1,7 @@
+import {
+    getPimlicoClient,
+    getPimlicoTransport,
+} from "@frak-labs/wallet-shared/blockchain/aa-provider";
 import { doAddPassKeyFnAbi } from "@frak-labs/wallet-shared/recovery/utils/abi";
 import type { RecoveryFileContent } from "@frak-labs/wallet-shared/types/Recovery";
 import type { WebAuthNWallet } from "@frak-labs/wallet-shared/types/WebAuthN";
@@ -14,10 +18,6 @@ import {
 } from "viem";
 import { createBundlerClient } from "viem/account-abstraction";
 import { useClient } from "wagmi";
-import {
-    getPimlicoClient,
-    getPimlicoTransport,
-} from "@/module/blockchain/aa-provider";
 import { recoveryKey } from "@/module/recovery/queryKeys/recovery";
 import { recoverySmartAccount } from "@/module/wallet/smartWallet/RecoverySmartWallet";
 
