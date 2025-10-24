@@ -1,12 +1,12 @@
 import { Button } from "@frak-labs/ui/component/Button";
 import { ButtonAuth } from "@frak-labs/ui/component/ButtonAuth";
+import { useLogin } from "@frak-labs/wallet-shared/authentication/hook/useLogin";
 import { isWebAuthNSupported } from "@frak-labs/wallet-shared/common/lib/webauthn";
 import { CloudUpload } from "lucide-react";
 import { Trans, useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { AuthenticateWithPhone } from "@/module/authentication/component/AuthenticateWithPhone";
 import { LoginList } from "@/module/authentication/component/LoginList";
-import { useLogin } from "@/module/authentication/hook/useLogin";
 import { Back } from "@/module/common/component/Back";
 import { Grid } from "@/module/common/component/Grid";
 import { PairingInProgress } from "@/module/pairing/component/PairingInProgress";

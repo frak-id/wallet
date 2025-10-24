@@ -1,10 +1,10 @@
 import { Button } from "@frak-labs/ui/component/Button";
 import { WalletAddress } from "@frak-labs/ui/component/HashDisplay";
+import { useLogin } from "@frak-labs/wallet-shared/authentication/hook/useLogin";
 import { useCallback, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import { toHex } from "viem";
-import { useLogin } from "@/module/authentication/hook/useLogin";
 import { AccordionRecoveryItem } from "@/module/common/component/AccordionRecoveryItem";
 import {
     recoveryStore,

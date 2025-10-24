@@ -1,13 +1,13 @@
 import { Button } from "@frak-labs/ui/component/Button";
 import { formatHash } from "@frak-labs/ui/component/HashDisplay";
 import { FingerprintFrak } from "@frak-labs/ui/icons/FingerprintFrak";
+import { useLogin } from "@frak-labs/wallet-shared/authentication/hook/useLogin";
 import type { PreviousAuthenticatorModel } from "@frak-labs/wallet-shared/common/storage/dexie/PreviousAuthenticatorModel";
 import { SquareUser } from "lucide-react";
 import { useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import { toHex } from "viem";
-import { useLogin } from "@/module/authentication/hook/useLogin";
 import styles from "./index.module.css";
 
 export function LoginItem({

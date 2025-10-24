@@ -14,9 +14,6 @@ import { interactionsKey } from "../queryKeys/interactions";
  */
 export function useConsumePendingInteractions() {
     const interactions = walletStore(selectPendingInteractionsArray);
-    const cleanPendingInteractions = walletStore(
-        (state) => state.cleanPendingInteractions
-    );
     const { address } = useAccount();
     const { sdkSession, getSdkSession } = useGetSafeSdkSession();
 
@@ -52,13 +49,8 @@ export function useConsumePendingInteractions() {
 
             // Clean the pending interactions
             if (data) {
-                cleanPendingInteractions();
-                // Use the first interaction's productId for backup
-                if (interactions[0]?.productId) {
-                    await pushBackupData({
-                        productId: interactions[0].productId,
-                    });
-                }
+                walletStore.getState().cleanPendingInteractions();
+                await pushBackupData();
             }
 
             return {

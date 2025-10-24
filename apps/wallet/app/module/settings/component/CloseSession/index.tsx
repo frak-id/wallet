@@ -1,10 +1,10 @@
+import { useInteractionSessionStatus } from "@frak-labs/wallet-shared/wallet/hook/useInteractionSessionStatus";
 import { Wallet } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useAccount } from "wagmi";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
 import { ToggleSession } from "@/module/common/component/ToggleSession";
-import { useInteractionSessionStatus } from "@/module/wallet/hook/useInteractionSessionStatus";
 
 export function CloseSession() {
     const { t } = useTranslation();

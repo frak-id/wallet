@@ -1,6 +1,6 @@
+import { useGetUserBalance } from "@frak-labs/wallet-shared/tokens/hook/useGetUserBalance";
 import { useTranslation } from "react-i18next";
 import { Title } from "@/module/common/component/Title";
-import { useGetUserBalance } from "@/module/tokens/hook/useGetUserBalance";
 import styles from "./index.module.css";
 
 export function Balance() {
