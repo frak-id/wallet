@@ -1,10 +1,10 @@
-import { useAtom } from "jotai";
 import { useCallback } from "react";
 import { TablePagination } from "@/module/common/component/TablePagination";
-import { tableMembersFiltersAtom } from "@/module/members/atoms/tableMembers";
+import { membersStore } from "@/stores/membersStore";
 
 export function Pagination({ totalResult }: { totalResult: number }) {
-    const [filters, setFilters] = useAtom(tableMembersFiltersAtom);
+    const filters = membersStore((state) => state.tableFilters);
+    const setFilters = membersStore((state) => state.setTableFilters);
 
     const handlePageChange = useCallback(
         (page: number) =>

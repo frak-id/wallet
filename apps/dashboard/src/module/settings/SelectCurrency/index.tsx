@@ -1,6 +1,4 @@
 import type { Currency } from "@frak-labs/core-sdk";
-import { useAtom } from "jotai";
-import { preferredCurrencyAtom } from "@/module/common/atoms/currency";
 import {
     Select,
     SelectContent,
@@ -8,12 +6,12 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/module/forms/Select";
+import { currencyStore } from "@/stores/currencyStore";
 import styles from "./index.module.css";
 
 export function SelectCurrency() {
-    const [preferredCurrency, setPreferredCurrency] = useAtom(
-        preferredCurrencyAtom
-    );
+    const preferredCurrency = currencyStore((state) => state.preferredCurrency);
+    const setCurrency = currencyStore((state) => state.setCurrency);
 
     return (
         <div className={styles.selectCurrency}>
@@ -27,7 +25,7 @@ export function SelectCurrency() {
                 name="currency-select"
                 onValueChange={(value) => {
                     if (value === "") return;
-                    setPreferredCurrency(value as Currency);
+                    setCurrency(value as Currency);
                 }}
                 value={preferredCurrency}
             >

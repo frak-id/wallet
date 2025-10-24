@@ -102,7 +102,7 @@ bun run changeset:release
 - **`example/`** - Integration examples
 
 ### Key Technologies
-- **Frontend**: React 19, TanStack Query, Zustand (wallet/listener), Jotai (dashboard only), Viem, Wagmi, CSS Modules, React Router v7, Next.js 15
+- **Frontend**: React 19, TanStack Query, Zustand, Viem, Wagmi, CSS Modules, React Router v7, Next.js 15
 - **Backend**: Elysia.js, PostgreSQL (Drizzle ORM), MongoDB
 - **Blockchain**: Account Abstraction (ERC-4337), WebAuthn, Multi-chain support, Pimlico, ZeroDev
 - **Infrastructure**: SST v3 (AWS), Pulumi (GCP), hybrid multi-cloud deployment
@@ -118,6 +118,7 @@ bun run changeset:release
 - WebAuthn-first authentication approach with Account Abstraction
 - Wallet app uses module-based architecture (`app/module/` structure)
 - Backend follows domain-driven design (`src/domain/*/` structure)
+- **State Management**: Zustand with persist middleware across all frontend apps (wallet, dashboard, listener) for consistency and performance
 
 ### Package-Specific Commands
 
@@ -137,7 +138,16 @@ bun run bundle:check # Analyze bundle with vite-bundle-visualizer
 cd apps/dashboard
 bun run dev          # Next.js development with HTTPS (via SST dev)
 bun run build        # Next.js production build (standalone output)
+bun run typecheck    # Type checking
 ```
+
+**State Management**:
+- All frontend apps use Zustand for global state management
+- Dashboard stores located in `apps/dashboard/src/stores/`
+- Stores use persist middleware for localStorage synchronization
+- Always add "use client" directive to store files for Next.js compatibility
+- Use individual selectors for optimal performance: `const value = store((state) => state.value)`
+- Avoid subscribing to entire store: `const store = useStore()` causes unnecessary re-renders
 
 **Backend (`services/backend/`)**:
 ```bash

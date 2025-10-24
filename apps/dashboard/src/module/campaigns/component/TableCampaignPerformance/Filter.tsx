@@ -1,44 +1,41 @@
 "use client";
 import { Button } from "@frak-labs/ui/component/Button";
 import { InputSearch } from "@frak-labs/ui/component/forms/InputSearch";
-import { atom, useAtom } from "jotai";
-import { useSetAtom } from "jotai/index";
+import type { ColumnFiltersState } from "@tanstack/react-table";
 import { SlidersHorizontal } from "lucide-react";
-import { tablePerformanceFiltersAtom } from "@/module/campaigns/component/TableCampaignPerformance/index";
+import { useMemo } from "react";
 import styles from "./index.module.css";
 
-/**
- * Simple atom to ease the set of a title filter
- */
-const titleFilterAtom = atom(
-    (get) =>
-        get(tablePerformanceFiltersAtom).find((filter) => filter.id === "name")
-            ?.value as string,
-    (get, set, update?: string) => {
-        const filters = get(tablePerformanceFiltersAtom).filter(
-            ({ id }) => id !== "title"
-        );
-        if (!update) {
-            set(tablePerformanceFiltersAtom, filters);
-            return;
-        }
-        set(tablePerformanceFiltersAtom, [
-            ...filters,
-            {
-                id: "title",
-                value: update,
-            },
-        ]);
-    }
-);
+type TablePerformanceFiltersProps = {
+    columnFilters: ColumnFiltersState;
+    setColumnFilters: React.Dispatch<React.SetStateAction<ColumnFiltersState>>;
+};
 
-const resetAtom = atom(null, (_get, set) => {
-    set(titleFilterAtom, undefined);
-});
+export function TablePerformanceFilters({
+    columnFilters,
+    setColumnFilters,
+}: TablePerformanceFiltersProps) {
+    // Extract current title from columnFilters
+    const currentTitle = useMemo(
+        () =>
+            (columnFilters.find((filter) => filter.id === "title")
+                ?.value as string) || "",
+        [columnFilters]
+    );
 
-export function TablePerformanceFilters() {
-    const [currentTitle, setCurrentTitle] = useAtom(titleFilterAtom);
-    const resetFilters = useSetAtom(resetAtom);
+    // Helper to update title filter
+    const setTitleFilter = (value: string) => {
+        setColumnFilters((prev) => {
+            const filtered = prev.filter((f) => f.id !== "title");
+            if (!value) return filtered;
+            return [...filtered, { id: "title", value }];
+        });
+    };
+
+    // Reset all filters
+    const resetFilters = () => {
+        setTitleFilter("");
+    };
 
     return (
         <div className={styles.filters}>
@@ -47,7 +44,7 @@ export function TablePerformanceFilters() {
                     placeholder={"Search campaign..."}
                     classNameWrapper={styles.filters__search}
                     value={currentTitle}
-                    onChange={(e) => setCurrentTitle(e.target.value)}
+                    onChange={(e) => setTitleFilter(e.target.value)}
                 />
             </div>
             <div className={styles.filters__item}>

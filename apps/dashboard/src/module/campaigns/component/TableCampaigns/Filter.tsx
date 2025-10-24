@@ -2,12 +2,10 @@
 
 import { Button } from "@frak-labs/ui/component/Button";
 import { InputSearch } from "@frak-labs/ui/component/forms/InputSearch";
+import type { ColumnFiltersState } from "@tanstack/react-table";
 import { format } from "date-fns";
-import { atom, useAtom } from "jotai";
-import { useSetAtom } from "jotai/index";
 import { CalendarIcon, SlidersHorizontal } from "lucide-react";
-import { useState } from "react";
-import { tableCampaignFiltersAtom } from "@/module/campaigns/component/TableCampaigns/index";
+import { useMemo, useState } from "react";
 import { Calendar } from "@/module/common/component/Calendar";
 import {
     Popover,
@@ -16,67 +14,54 @@ import {
 } from "@/module/common/component/Popover";
 import styles from "./index.module.css";
 
-/**
- * Simple atom to ease the set of a title filter
- */
-const titleFilterAtom = atom(
-    (get) =>
-        get(tableCampaignFiltersAtom).find((filter) => filter.id === "name")
-            ?.value as string,
-    (get, set, update?: string) => {
-        const filters = get(tableCampaignFiltersAtom).filter(
-            ({ id }) => id !== "title"
-        );
-        if (!update) {
-            set(tableCampaignFiltersAtom, filters);
-            return;
-        }
-        set(tableCampaignFiltersAtom, [
-            ...filters,
-            {
-                id: "title",
-                value: update,
-            },
-        ]);
-    }
-);
+type TableCampaignFiltersProps = {
+    columnFilters: ColumnFiltersState;
+    setColumnFilters: React.Dispatch<React.SetStateAction<ColumnFiltersState>>;
+};
 
-/**
- * Simple atom to ease the set of a date filter
- */
-const dateFilterAtom = atom(
-    (get) =>
-        get(tableCampaignFiltersAtom).find((filter) => filter.id === "date")
-            ?.value as Date,
-    (get, set, update?: Date) => {
-        const filters = get(tableCampaignFiltersAtom).filter(
-            ({ id }) => id !== "date"
-        );
-        if (!update) {
-            set(tableCampaignFiltersAtom, filters);
-            return;
-        }
-        set(tableCampaignFiltersAtom, [
-            ...filters,
-            {
-                id: "date",
-                value: update,
-            },
-        ]);
-    }
-);
-
-const resetAtom = atom(null, (_get, set) => {
-    set(titleFilterAtom, undefined);
-    set(dateFilterAtom, undefined);
-});
-
-export function TableCampaignFilters() {
+export function TableCampaignFilters({
+    columnFilters,
+    setColumnFilters,
+}: TableCampaignFiltersProps) {
     const [isPopoverOpen, setIsPopoverOpen] = useState(false);
 
-    const [currentTitle, setCurrentTitle] = useAtom(titleFilterAtom);
-    const [currentDate, setCurrentDate] = useAtom(dateFilterAtom);
-    const resetFilters = useSetAtom(resetAtom);
+    // Extract current values from columnFilters
+    const currentTitle = useMemo(
+        () =>
+            (columnFilters.find((filter) => filter.id === "title")
+                ?.value as string) || "",
+        [columnFilters]
+    );
+
+    const currentDate = useMemo(
+        () =>
+            columnFilters.find((filter) => filter.id === "date")?.value as Date,
+        [columnFilters]
+    );
+
+    // Helper to update title filter
+    const setTitleFilter = (value: string) => {
+        setColumnFilters((prev) => {
+            const filtered = prev.filter((f) => f.id !== "title");
+            if (!value) return filtered;
+            return [...filtered, { id: "title", value }];
+        });
+    };
+
+    // Helper to update date filter
+    const setDateFilter = (value?: Date) => {
+        setColumnFilters((prev) => {
+            const filtered = prev.filter((f) => f.id !== "date");
+            if (!value) return filtered;
+            return [...filtered, { id: "date", value }];
+        });
+    };
+
+    // Reset all filters
+    const resetFilters = () => {
+        setTitleFilter("");
+        setDateFilter(undefined);
+    };
 
     return (
         <div className={styles.filters}>
@@ -85,7 +70,7 @@ export function TableCampaignFilters() {
                     placeholder={"Search campaign..."}
                     classNameWrapper={styles.filters__search}
                     value={currentTitle}
-                    onChange={(e) => setCurrentTitle(e.target.value)}
+                    onChange={(e) => setTitleFilter(e.target.value)}
                 />
             </div>
             <div className={styles.filters__item}>
@@ -107,7 +92,7 @@ export function TableCampaignFilters() {
                             selected={currentDate}
                             onSelect={(value) => {
                                 if (!value) return;
-                                setCurrentDate(value);
+                                setDateFilter(value);
                                 setIsPopoverOpen(false);
                             }}
                         />
@@ -116,7 +101,7 @@ export function TableCampaignFilters() {
                 <Button
                     variant={"secondary"}
                     leftIcon={<SlidersHorizontal size={20} />}
-                    onClick={() => resetFilters()}
+                    onClick={resetFilters}
                 >
                     Reset filters
                 </Button>

@@ -1,18 +1,9 @@
 import { Button } from "@frak-labs/ui/component/Button";
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { Check, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { memo, useCallback, useEffect } from "react";
-import {
-    campaignActionAtom,
-    campaignAtom,
-} from "@/module/campaigns/atoms/campaign";
-import {
-    campaignIsClosingAtom,
-    campaignStepAtom,
-    campaignSuccessAtom,
-} from "@/module/campaigns/atoms/steps";
 import { ActionsWrapper } from "@/module/common/component/ActionsWrapper";
+import { campaignStore } from "@/stores/campaignStore";
 import styles from "./index.module.css";
 
 export const Actions = memo(function Actions({
@@ -21,11 +12,12 @@ export const Actions = memo(function Actions({
     isLoading?: boolean;
 }) {
     const router = useRouter();
-    const [step, setStep] = useAtom(campaignStepAtom);
-    const campaignSuccess = useAtomValue(campaignSuccessAtom);
-    const campaignAction = useAtomValue(campaignActionAtom);
-    const setCampaignIsClosing = useSetAtom(campaignIsClosingAtom);
-    const { id: campaignId } = useAtomValue(campaignAtom);
+    const step = campaignStore((state) => state.step);
+    const setStep = campaignStore((state) => state.setStep);
+    const campaignSuccess = campaignStore((state) => state.success);
+    const campaignAction = campaignStore((state) => state.action);
+    const setIsClosing = campaignStore((state) => state.setIsClosing);
+    const campaignId = campaignStore((state) => state.campaign.id);
 
     const getPages = useCallback(
         (campaignId?: string) => {
@@ -60,7 +52,7 @@ export const Actions = memo(function Actions({
                 <Button
                     type={"submit"}
                     variant={"outline"}
-                    onClick={() => setCampaignIsClosing(true)}
+                    onClick={() => setIsClosing(true)}
                 >
                     Close
                 </Button>
@@ -94,7 +86,7 @@ function ButtonNext({
     isLoading: boolean;
     isLastStep: boolean;
 }) {
-    const setCampaignIsClosing = useSetAtom(campaignIsClosingAtom);
+    const setIsClosing = campaignStore((state) => state.setIsClosing);
     return isLastStep ? (
         <Button
             type={"submit"}
@@ -108,7 +100,7 @@ function ButtonNext({
         <Button
             type={"submit"}
             variant={"information"}
-            onClick={() => setCampaignIsClosing(false)}
+            onClick={() => setIsClosing(false)}
         >
             Next
         </Button>

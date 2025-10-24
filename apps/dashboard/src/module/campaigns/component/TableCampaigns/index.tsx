@@ -7,15 +7,12 @@ import {
     type ColumnFiltersState,
     createColumnHelper,
 } from "@tanstack/react-table";
-import { atom, useAtomValue } from "jotai";
-import { useSetAtom } from "jotai/index";
 import { Eye, Pencil, Trash2 } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { capitalize } from "radash";
 import { useMemo, useState } from "react";
-import { campaignResetAtom } from "@/module/campaigns/atoms/campaign";
 import { CampaignStateTag } from "@/module/campaigns/component/TableCampaigns/CampaignStateTag";
 import { TableCampaignFilters } from "@/module/campaigns/component/TableCampaigns/Filter";
 import { useDeleteCampaign } from "@/module/campaigns/hook/useDeleteCampaign";
@@ -26,6 +23,7 @@ import type { ReactTableProps } from "@/module/common/component/Table";
 import { formatDate } from "@/module/common/utils/formatDate";
 import { formatPrice } from "@/module/common/utils/formatPrice";
 import { Switch } from "@/module/forms/Switch";
+import { campaignStore } from "@/stores/campaignStore";
 import type { CampaignWithState } from "@/types/Campaign";
 import styles from "./index.module.css";
 
@@ -38,15 +36,13 @@ const Table = dynamic<ReactTableProps<CampaignWithState>>(
 
 const columnHelper = createColumnHelper<CampaignWithState>();
 
-export const tableCampaignFiltersAtom = atom<ColumnFiltersState>([]);
-
 export function TableCampaigns() {
     const { data, isLoading } = useGetCampaigns();
     const {
         mutate: onUpdateCampaignRunningStatus,
         isPending: isUpdatingCampaignState,
     } = useUpdateCampaignRunningStatus();
-    const columnFilters = useAtomValue(tableCampaignFiltersAtom);
+    const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
     const columns = useMemo(
         () =>
@@ -127,7 +123,10 @@ export function TableCampaigns() {
     return (
         data && (
             <>
-                <TableCampaignFilters />
+                <TableCampaignFilters
+                    columnFilters={columnFilters}
+                    setColumnFilters={setColumnFilters}
+                />
                 <Table
                     data={data}
                     columns={columns}
@@ -179,7 +178,7 @@ function CellActions({
 }: Pick<CellContext<CampaignWithState, unknown>, "row">) {
     const actions = useMemo(() => row.original.actions, [row.original.actions]);
     const router = useRouter();
-    const campaignReset = useSetAtom(campaignResetAtom);
+    const reset = campaignStore((state) => state.reset);
 
     return (
         <div className={styles.table__actions}>
@@ -193,7 +192,7 @@ function CellActions({
                 <button
                     type={"button"}
                     onClick={() => {
-                        campaignReset();
+                        reset();
                         const action =
                             row.original.state.key === "draft"
                                 ? "draft"

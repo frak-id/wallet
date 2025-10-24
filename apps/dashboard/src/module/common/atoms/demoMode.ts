@@ -1,17 +1,7 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { useAtom } from "jotai";
-import { atomWithStorage } from "jotai/utils";
-import { useEffect, useRef } from "react";
-
-/**
- * Atom to store demo mode preference in localStorage
- */
-export const demoModeAtom = atomWithStorage<boolean>(
-    "business_demoMode",
-    false
-);
+import { demoModeStore } from "@/stores/demoModeStore";
 
 /**
  * Hook to get and set demo mode state
@@ -19,27 +9,13 @@ export const demoModeAtom = atomWithStorage<boolean>(
  * Automatically invalidates queries when demo mode changes
  */
 export function useDemoMode() {
-    const [isDemoMode, setDemoMode] = useAtom(demoModeAtom);
+    const isDemoMode = demoModeStore((state) => state.isDemoMode);
+    const setDemoModeInternal = demoModeStore((state) => state.setDemoMode);
     const queryClient = useQueryClient();
-    const previousDemoMode = useRef<boolean | null>(null);
 
-    // Sync demo mode to cookies for server-side access
-    useEffect(() => {
-        if (typeof document !== "undefined") {
-            document.cookie = `business_demoMode=${isDemoMode}; path=/; max-age=31536000; SameSite=Lax`;
-        }
-    }, [isDemoMode]);
-
-    // Invalidate and refetch all queries when demo mode changes
-    useEffect(() => {
-        if (
-            previousDemoMode.current !== null &&
-            previousDemoMode.current !== isDemoMode
-        ) {
-            queryClient.invalidateQueries();
-        }
-        previousDemoMode.current = isDemoMode;
-    }, [isDemoMode, queryClient]);
+    const setDemoMode = (value: boolean) => {
+        setDemoModeInternal(value, queryClient);
+    };
 
     return {
         isDemoMode,

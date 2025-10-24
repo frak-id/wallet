@@ -1,13 +1,11 @@
-import { useAtom } from "jotai";
 import { useEffect } from "react";
-import { tableMembersFiltersCountAtom } from "@/module/members/atoms/tableMembers";
 import type { FormMembersFiltering } from "@/module/members/component/MembersFiltering";
+import { membersStore } from "@/stores/membersStore";
 import styles from "./FiltersCount.module.css";
 
 export function FiltersCount({ filter }: { filter?: FormMembersFiltering }) {
-    const [filtersCount, setFiltersCount] = useAtom(
-        tableMembersFiltersCountAtom
-    );
+    const filtersCount = membersStore((state) => state.tableFiltersCount);
+    const setFiltersCount = membersStore((state) => state.setTableFiltersCount);
 
     useEffect(() => {
         if (!filter) return;

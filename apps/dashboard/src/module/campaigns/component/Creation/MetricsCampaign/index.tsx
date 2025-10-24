@@ -1,7 +1,6 @@
 "use client";
 
 import { Skeleton } from "@frak-labs/ui/component/Skeleton";
-import { useAtomValue } from "jotai";
 import { useMemo } from "react";
 import {
     type ResolverResult,
@@ -9,7 +8,6 @@ import {
     useForm,
 } from "react-hook-form";
 import { toHex } from "viem";
-import { campaignAtom } from "@/module/campaigns/atoms/campaign";
 import { Actions } from "@/module/campaigns/component/Actions";
 import { ButtonCancel } from "@/module/campaigns/component/Creation/NewCampaign/ButtonCancel";
 import { useSaveCampaign } from "@/module/campaigns/hook/useSaveCampaign";
@@ -27,13 +25,14 @@ import {
 } from "@/module/forms/Form";
 import { RadioGroup, RadioGroupItem } from "@/module/forms/RadioGroup";
 import { useProductMetadata } from "@/module/product/hook/useProductMetadata";
+import { campaignStore } from "@/stores/campaignStore";
 import type { Campaign } from "@/types/Campaign";
 import { DistributionConfiguration } from "./DistributionConfig";
 import { FormTriggersCac } from "./FormTriggersCac";
 import styles from "./index.module.css";
 
 export function MetricsCampaign() {
-    const campaign = useAtomValue(campaignAtom);
+    const campaign = campaignStore((state) => state.campaign);
     const saveCampaign = useSaveCampaign();
 
     const pId = useMemo(() => {

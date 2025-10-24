@@ -1,11 +1,9 @@
 "use client";
 
 import { Button } from "@frak-labs/ui/component/Button";
-import { useAtomValue } from "jotai";
 import { useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { getCapPeriod } from "@/context/campaigns/utils/capPeriods";
-import { campaignAtom } from "@/module/campaigns/atoms/campaign";
 import { ActionsMessageSuccess } from "@/module/campaigns/component/Actions";
 import { FormBudget } from "@/module/campaigns/component/Creation/NewCampaign/FormBudget";
 import { FormSchedule } from "@/module/campaigns/component/Creation/NewCampaign/FormSchedule";
@@ -13,6 +11,7 @@ import { useEditCampaign } from "@/module/campaigns/hook/useEditCampaign";
 import { ActionsWrapper } from "@/module/common/component/ActionsWrapper";
 import { Head } from "@/module/common/component/Head";
 import { Form, FormLayout } from "@/module/forms/Form";
+import { campaignStore } from "@/stores/campaignStore";
 import type { Campaign, FinalizedCampaignWithState } from "@/types/Campaign";
 
 /**
@@ -20,7 +19,7 @@ import type { Campaign, FinalizedCampaignWithState } from "@/types/Campaign";
  * @constructor
  */
 export function CampaignEdit() {
-    const campaign = useAtomValue(campaignAtom);
+    const campaign = campaignStore((state) => state.campaign);
 
     const {
         mutate: onEditCampaign,

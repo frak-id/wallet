@@ -2,7 +2,6 @@
 
 import { Button } from "@frak-labs/ui/component/Button";
 import type { NotificationPayload } from "@frak-labs/ui/types/NotificationPayload";
-import { useAtom } from "jotai";
 import { useRouter } from "next/navigation";
 import { useCallback } from "react";
 import { useForm } from "react-hook-form";
@@ -11,11 +10,11 @@ import { ActionsWrapper } from "@/module/common/component/ActionsWrapper";
 import { ButtonWithConfirmationAlert } from "@/module/common/component/ButtonWithConfirmationAlert";
 import { Head } from "@/module/common/component/Head";
 import { Form, FormLayout } from "@/module/forms/Form";
-import { currentPushCreationForm } from "@/module/members/atoms/pushCreationForm";
 import { AudiencePanel } from "@/module/members/component/CreatePush/AudiencePanel";
 import { PushPayloadPanel } from "@/module/members/component/CreatePush/PushPayloadPanel";
 import { PushTitlePanel } from "@/module/members/component/CreatePush/PushTitlePanel";
 import type { FormMembersFiltering } from "@/module/members/component/MembersFiltering";
+import { pushCreationStore } from "@/stores/pushCreationStore";
 
 export type FormCreatePushNotification = {
     pushCampaignTitle: string;
@@ -35,9 +34,10 @@ export type FormCreatePushNotification = {
  * @constructor
  */
 export function CreatePushNotification() {
-    const [previousPushCreationForm, setCurrentPushCreationForm] = useAtom(
-        currentPushCreationForm
+    const previousPushCreationForm = pushCreationStore(
+        (state) => state.currentPushCreationForm
     );
+    const setForm = pushCreationStore((state) => state.setForm);
     const router = useRouter();
 
     const form = useForm<FormCreatePushNotification>({
@@ -63,11 +63,11 @@ export function CreatePushNotification() {
             if (data.targetCount === 0) return;
 
             // Save the form in the push creation form
-            setCurrentPushCreationForm(data);
+            setForm(data);
             // And go to the confirmation page
             router.push("/push/confirm");
         },
-        [setCurrentPushCreationForm, router]
+        [setForm, router]
     );
 
     return (
@@ -84,7 +84,7 @@ export function CreatePushNotification() {
                         }
                         onClick={() => {
                             form.reset();
-                            setCurrentPushCreationForm(undefined);
+                            setForm(undefined);
                             // And go to the previous page
                             router.back();
                         }}
@@ -115,9 +115,7 @@ export function CreatePushNotification() {
                                 buttonText={"Close"}
                                 onClick={() => {
                                     // Save the current form state
-                                    setCurrentPushCreationForm(
-                                        form.getValues()
-                                    );
+                                    setForm(form.getValues());
                                     // And go back
                                     router.back();
                                 }}

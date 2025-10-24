@@ -10,11 +10,9 @@ import {
     type ColumnFiltersState,
     createColumnHelper,
 } from "@tanstack/react-table";
-import { atom } from "jotai";
-import { useAtomValue } from "jotai/index";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { getMyCampaignsStats } from "@/context/campaigns/action/getCampaignsStats";
 import { TablePerformanceFilters } from "@/module/campaigns/component/TableCampaignPerformance/Filter";
 import type { ReactTableProps } from "@/module/common/component/Table";
@@ -55,10 +53,8 @@ function avgPercentages(table: TableReact<TableData>, column: keyof TableData) {
     return <span>{(average * 100).toFixed(2)}%</span>;
 }
 
-export const tablePerformanceFiltersAtom = atom<ColumnFiltersState>([]);
-
 export function TableCampaignPerformance() {
-    const columnFilters = useAtomValue(tablePerformanceFiltersAtom);
+    const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
     const { data, isLoading } = useQuery({
         queryKey: ["campaigns", "stats"],
@@ -252,7 +248,10 @@ export function TableCampaignPerformance() {
 
     return (
         <>
-            <TablePerformanceFilters />
+            <TablePerformanceFilters
+                columnFilters={columnFilters}
+                setColumnFilters={setColumnFilters}
+            />
             <Table
                 data={data}
                 columns={columns}

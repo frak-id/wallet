@@ -1,18 +1,17 @@
 "use client";
 
 import { Button } from "@frak-labs/ui/component/Button";
-import { useSetAtom } from "jotai";
 import { useCallback, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { formatEther, type Hex, parseEther, toHex } from "viem";
 import type { GetMembersParam } from "@/context/members/action/getProductMembers";
 import { Row } from "@/module/common/component/Row";
 import { Form } from "@/module/forms/Form";
-import { tableMembersFiltersCountAtom } from "@/module/members/atoms/tableMembers";
 import { InteractionsFiltering } from "@/module/members/component/MembersFiltering/InteractionsFiltering";
 import { MembershipDateFiltering } from "@/module/members/component/MembersFiltering/MembershipDateFiltering";
 import { ProductFiltering } from "@/module/members/component/MembersFiltering/ProductFiltering";
 import { RewardFiltering } from "@/module/members/component/MembersFiltering/RewardFiltering";
+import { membersStore } from "@/stores/membersStore";
 
 /**
  * Filter for the members fetching process
@@ -33,7 +32,9 @@ export function MembersFiltering({
     disabled?: boolean;
     showResetButton?: boolean;
 }) {
-    const setFiltersDirtyCount = useSetAtom(tableMembersFiltersCountAtom);
+    const setFiltersDirtyCount = membersStore(
+        (state) => state.setTableFiltersCount
+    );
 
     // Map the initial values if any
     const mappedInitialValue = useMemo(() => {

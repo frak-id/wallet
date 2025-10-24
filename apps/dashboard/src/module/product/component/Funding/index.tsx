@@ -17,10 +17,9 @@ import { Spinner } from "@frak-labs/ui/component/Spinner";
 import { Switch } from "@frak-labs/ui/component/Switch";
 import { Tooltip } from "@frak-labs/ui/component/Tooltip";
 import { useMutation } from "@tanstack/react-query";
-import { atom, useAtomValue, useSetAtom } from "jotai";
 import { BadgeCheck, CheckCircle, Plus, XCircle } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
     type Address,
     encodeFunctionData,
@@ -52,20 +51,12 @@ import { useProductMetadata } from "../../hook/useProductMetadata";
 import styles from "./index.module.css";
 
 /**
- * Store product id locally
- */
-const productIdAtom = atom<Hex | null>(null);
-
-/**
  * Product funding page
  * @param productId
  * @returns
  */
 export function ProductFunding({ productId }: { productId: Hex }) {
-    const setProductId = useSetAtom(productIdAtom);
     const { data, isLoading, isPending } = useGetProductFunding({ productId });
-
-    useEffect(() => setProductId(productId), [productId, setProductId]);
 
     return (
         <FormLayout>
@@ -289,7 +280,10 @@ function ProductFundingBank({
                                     Campaigns funding status
                                 </Title>
                                 <Row align={"center"}>
-                                    <ToggleFundingStatus bank={bank} />
+                                    <ToggleFundingStatus
+                                        bank={bank}
+                                        productId={productId}
+                                    />
                                     <Badge
                                         size={"small"}
                                         variant={
@@ -389,12 +383,16 @@ function BankAmount({
  * @param bank
  * @returns
  */
-function ToggleFundingStatus({ bank }: { bank: ProductBank }) {
-    const productId = useAtomValue(productIdAtom);
-
+function ToggleFundingStatus({
+    bank,
+    productId,
+}: {
+    bank: ProductBank;
+    productId: Hex;
+}) {
     const { isSettingDistributionStatus, setDistributionStatus } =
         useSetBankDistributionStatus({
-            productId: productId ?? "0x0",
+            productId,
             bank: bank.address,
         });
 

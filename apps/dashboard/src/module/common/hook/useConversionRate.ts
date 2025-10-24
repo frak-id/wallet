@@ -1,10 +1,9 @@
 import { backendApi } from "@frak-labs/client/server";
 import { useQuery } from "@tanstack/react-query";
-import { useAtomValue } from "jotai";
 import { useMemo } from "react";
 import { type Address, formatUnits } from "viem";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
-import { preferredCurrencyAtom } from "../atoms/currency";
+import { currencyStore } from "@/stores/currencyStore";
 import { formatPrice } from "../utils/formatPrice";
 
 function conversionRateQueryOptions(token?: Address, isDemoMode?: boolean) {
@@ -56,7 +55,7 @@ export function useConvertToPreferredCurrency({
     // For simple decimal conversion
     amount?: number;
 }) {
-    const preferredCurrency = useAtomValue(preferredCurrencyAtom);
+    const preferredCurrency = currencyStore((state) => state.preferredCurrency);
     const { data: rate } = useConversionRate({ token });
 
     return useMemo(() => {

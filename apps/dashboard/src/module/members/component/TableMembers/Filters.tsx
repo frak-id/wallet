@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "@frak-labs/ui/component/Button";
-import { useAtom } from "jotai";
 import { SlidersHorizontal } from "lucide-react";
 import { useState } from "react";
 import {
@@ -9,15 +8,16 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/module/common/component/Popover";
-import { tableMembersFiltersAtom } from "@/module/members/atoms/tableMembers";
 import { MembersFiltering } from "@/module/members/component/MembersFiltering";
 import { FiltersCount } from "@/module/members/component/TableMembers/FiltersCount";
+import { membersStore } from "@/stores/membersStore";
 import styles from "./Filters.module.css";
 
 export function TableMembersFilters() {
     const [isPopoverOpen, setIsPopoverOpen] = useState(false);
-    const [tableMembersFilters, setTableMembersFilters] = useAtom(
-        tableMembersFiltersAtom
+    const tableMembersFilters = membersStore((state) => state.tableFilters);
+    const setTableMembersFilters = membersStore(
+        (state) => state.setTableFilters
     );
 
     return (

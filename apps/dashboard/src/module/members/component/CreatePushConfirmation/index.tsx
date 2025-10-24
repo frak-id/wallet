@@ -3,7 +3,6 @@ import { businessApi } from "@frak-labs/client/server";
 import { Button } from "@frak-labs/ui/component/Button";
 import { Spinner } from "@frak-labs/ui/component/Spinner";
 import { useMutation } from "@tanstack/react-query";
-import { useAtom, useSetAtom } from "jotai";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ActionsMessageError } from "@/module/campaigns/component/Actions";
@@ -12,15 +11,15 @@ import { ButtonWithConfirmationAlert } from "@/module/common/component/ButtonWit
 import { Head } from "@/module/common/component/Head";
 import { Panel } from "@/module/common/component/Panel";
 import { FormLayout } from "@/module/forms/Form";
-import { currentPushCreationForm } from "@/module/members/atoms/pushCreationForm";
 import { PushRecap } from "@/module/members/component/CreatePushConfirmation/PushRecap";
+import { pushCreationStore } from "@/stores/pushCreationStore";
 
 /**
  * Confirm the creation of a push notification
  * @constructor
  */
 export function CreatePushNotificationConfirmation() {
-    const setPushCreationValue = useSetAtom(currentPushCreationForm);
+    const setForm = pushCreationStore((state) => state.setForm);
 
     return (
         <>
@@ -35,7 +34,7 @@ export function CreatePushNotificationConfirmation() {
                             "Are you sure you want to discard everything related to your new push notification?"
                         }
                         onClick={() => {
-                            setPushCreationValue(undefined);
+                            setForm(undefined);
                             window.location.href = "/members";
                         }}
                     />
@@ -49,9 +48,10 @@ export function CreatePushNotificationConfirmation() {
 }
 
 function ConfirmationContent() {
-    const [currentPushCreation, setCurrentPushCreation] = useAtom(
-        currentPushCreationForm
+    const currentPushCreation = pushCreationStore(
+        (state) => state.currentPushCreationForm
     );
+    const setForm = pushCreationStore((state) => state.setForm);
     const router = useRouter();
 
     const {
@@ -77,7 +77,7 @@ function ConfirmationContent() {
             });
 
             console.log("Push submitted, resetting everything");
-            setCurrentPushCreation(undefined);
+            setForm(undefined);
             router.push("/members");
         },
     });

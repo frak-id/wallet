@@ -131,8 +131,14 @@ Expiration Time: ${expirationTime.toISOString()}`;
         <p>Activating demo mode...</p>
     </div>
     <script>
-        // Set demo mode in localStorage (client-side state)
-        localStorage.setItem('business_demoMode', 'true');
+        // Set demo mode in localStorage using Zustand persist format
+        const demoModeState = {
+            state: {
+                isDemoMode: true
+            },
+            version: 0
+        };
+        localStorage.setItem('business_demoMode', JSON.stringify(demoModeState));
 
         // Give browser time to process cookies and localStorage before redirect
         setTimeout(() => {

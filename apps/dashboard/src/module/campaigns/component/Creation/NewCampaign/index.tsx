@@ -1,16 +1,7 @@
 "use client";
 
-import { useAtomValue, useSetAtom } from "jotai";
 import { useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
-import {
-    campaignAtom,
-    campaignResetAtom,
-} from "@/module/campaigns/atoms/campaign";
-import {
-    campaignIsClosingAtom,
-    campaignSuccessAtom,
-} from "@/module/campaigns/atoms/steps";
 import { Actions } from "@/module/campaigns/component/Actions";
 import { ButtonCancel } from "@/module/campaigns/component/Creation/NewCampaign/ButtonCancel";
 import { FormBank } from "@/module/campaigns/component/Creation/NewCampaign/FormBank";
@@ -24,13 +15,14 @@ import { FormTitle } from "@/module/campaigns/component/Creation/NewCampaign/For
 import { useSaveCampaign } from "@/module/campaigns/hook/useSaveCampaign";
 import { Head } from "@/module/common/component/Head";
 import { Form, FormLayout } from "@/module/forms/Form";
+import { campaignStore } from "@/stores/campaignStore";
 import type { Campaign } from "@/types/Campaign";
 
 export function NewCampaign({ title }: { title: string }) {
-    const campaignSuccess = useAtomValue(campaignSuccessAtom);
-    const campaign = useAtomValue(campaignAtom);
-    const campaignReset = useSetAtom(campaignResetAtom);
-    const setCampaignIsClosing = useSetAtom(campaignIsClosingAtom);
+    const campaign = campaignStore((state) => state.campaign);
+    const campaignSuccess = campaignStore((state) => state.success);
+    const reset = campaignStore((state) => state.reset);
+    const setIsClosing = campaignStore((state) => state.setIsClosing);
     const saveCampaign = useSaveCampaign();
 
     /**
@@ -38,10 +30,10 @@ export function NewCampaign({ title }: { title: string }) {
      */
     useEffect(() => {
         if (campaignSuccess) {
-            campaignReset();
+            reset();
         }
-        setCampaignIsClosing(false);
-    }, [campaignSuccess, campaignReset, setCampaignIsClosing]);
+        setIsClosing(false);
+    }, [campaignSuccess, reset, setIsClosing]);
 
     const form = useForm<Campaign>({
         values: useMemo(() => campaign, [campaign]),

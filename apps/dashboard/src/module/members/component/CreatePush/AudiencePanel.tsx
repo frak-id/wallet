@@ -2,7 +2,6 @@
 
 import { Button } from "@frak-labs/ui/component/Button";
 import { useMutation } from "@tanstack/react-query";
-import { useAtomValue, useSetAtom } from "jotai";
 import { useEffect } from "react";
 import { useFormContext } from "react-hook-form";
 import type { Address } from "viem";
@@ -12,9 +11,9 @@ import {
 } from "@/context/members/action/getProductMembers";
 import { Panel } from "@/module/common/component/Panel";
 import { FormField, FormItem, FormMessage } from "@/module/forms/Form";
-import { selectedMembersAtom } from "@/module/members/atoms/selectedMembers";
 import type { FormCreatePushNotification } from "@/module/members/component/CreatePush";
 import { MembersFiltering } from "@/module/members/component/MembersFiltering";
+import { membersStore } from "@/stores/membersStore";
 
 /**
  * Audience panel
@@ -22,7 +21,7 @@ import { MembersFiltering } from "@/module/members/component/MembersFiltering";
  */
 export function AudiencePanel() {
     const { control } = useFormContext<FormCreatePushNotification>();
-    const selectedMembers = useAtomValue(selectedMembersAtom);
+    const selectedMembers = membersStore((state) => state.selectedMembers);
 
     return (
         <Panel title={"Audience"}>
@@ -52,7 +51,7 @@ export function AudiencePanel() {
  * @constructor
  */
 function PreSelectedMembers({ members }: { members: Address[] }) {
-    const setSelectedMembers = useSetAtom(selectedMembersAtom);
+    const clearSelection = membersStore((state) => state.clearSelection);
     const { setValue } = useFormContext<FormCreatePushNotification>();
 
     useEffect(() => {
@@ -69,7 +68,7 @@ function PreSelectedMembers({ members }: { members: Address[] }) {
 
             <Button
                 onClick={() => {
-                    setSelectedMembers(undefined);
+                    clearSelection();
                     setValue("target", undefined);
                     setValue("targetCount", 0);
                 }}
