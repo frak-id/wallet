@@ -40,8 +40,3 @@ export const demoModeStore = create<DemoModeState>()(
         }
     )
 );
-
-/**
- * Selector for demo mode status
- */
-export const selectIsDemoMode = (state: DemoModeState) => state.isDemoMode;

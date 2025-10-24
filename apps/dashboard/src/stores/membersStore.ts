@@ -80,12 +80,3 @@ export const membersStore = create<MembersState>((set, get) => ({
         set({ tableFiltersCount: count });
     },
 }));
-
-/**
- * Selector functions
- */
-export const selectSelectedMembers = (state: MembersState) =>
-    state.selectedMembers;
-export const selectTableFilters = (state: MembersState) => state.tableFilters;
-export const selectTableFiltersCount = (state: MembersState) =>
-    state.tableFiltersCount;

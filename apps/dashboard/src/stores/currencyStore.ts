@@ -24,9 +24,3 @@ export const currencyStore = create<CurrencyState>()(
         }
     )
 );
-
-/**
- * Selector for preferred currency
- */
-export const selectPreferredCurrency = (state: CurrencyState) =>
-    state.preferredCurrency;

@@ -111,13 +111,3 @@ export const campaignStore = create<CampaignState>()(
         }
     )
 );
-
-/**
- * Selector functions for common access patterns
- */
-export const selectCampaign = (state: CampaignState) => state.campaign;
-export const selectStep = (state: CampaignState) => state.step;
-export const selectSuccess = (state: CampaignState) => state.success;
-export const selectIsClosing = (state: CampaignState) => state.isClosing;
-export const selectIsFetched = (state: CampaignState) => state.isFetched;
-export const selectAction = (state: CampaignState) => state.action;

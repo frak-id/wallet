@@ -32,9 +32,3 @@ export const pushCreationStore = create<PushCreationState>()(
         }
     )
 );
-
-/**
- * Selector for current form
- */
-export const selectCurrentPushCreationForm = (state: PushCreationState) =>
-    state.currentPushCreationForm;

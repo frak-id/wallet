@@ -173,11 +173,3 @@ function getWalletReferrer(sourceUrl: string): Address | undefined {
 
     return;
 }
-
-/**
- * Selector functions for computed values
- */
-export const selectResolvingContext = (state: ResolvingContextStore) =>
-    state.context;
-export const selectHandshakeTokens = (state: ResolvingContextStore) =>
-    state.handshakeTokens;
