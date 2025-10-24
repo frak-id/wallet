@@ -10,18 +10,17 @@ import {
     openPanelApiUrl,
     openPanelWalletClientId,
     pimlicoApiKey,
-    privyAppId,
     vapidPublicKey,
     walletUrl,
 } from "../config";
-import { isProd } from "../utils";
+import { isProd, normalizedStageName } from "../utils";
 import { baseDomainName, getRegistryPath, walletNamespace } from "./utils";
 
 // todo: for now on wallet.gcp-dev.frak.id, to test that up a bit, and we wil llater migrate it to the real wallet.frak.id
 const domain = `${isProd ? "wallet" : "wallet-dev"}.${baseDomainName}`;
 
 const walletEnv = {
-    STAGE: $app.stage,
+    STAGE: normalizedStageName,
     BACKEND_URL: backendUrl,
     INDEXER_URL: indexerUrl,
     ERPC_URL: erpcUrl,
@@ -29,12 +28,13 @@ const walletEnv = {
     PIMLICO_API_KEY: pimlicoApiKey.value,
     NEXUS_RPC_SECRET: nexusRpcSecret.value,
     VAPID_PUBLIC_KEY: vapidPublicKey.value,
-    PRIVY_APP_ID: privyAppId.value,
     FRAK_WALLET_URL: walletUrl,
     OPEN_PANEL_API_URL: openPanelApiUrl,
     OPEN_PANEL_WALLET_CLIENT_ID: openPanelWalletClientId.value,
     OPEN_PANEL_LISTENER_CLIENT_ID: openPanelWalletClientId.value,
 };
+
+console.log("Wallet env", { ...walletEnv, DRPC_API_KEY: "****", PIMLICO_API_KEY: "****", NEXUS_RPC_SECRET: "****" });
 
 let imageRefs = {
     wallet: $output(""),
@@ -43,39 +43,86 @@ let imageRefs = {
 const dependency: Resource[] = [];
 
 if (!$dev) {
+    const { baseImage } = await import("./images");
     // Build the custom Nginx image with frontend files built-in
-    const walletImage = new dockerbuild.Image("wallet", {
-        context: {
-            location: $cli.paths.root,
+    const walletImage = new dockerbuild.Image(
+        "wallet",
+        {
+            context: {
+                location: $cli.paths.root,
+            },
+            dockerfile: {
+                location: path.join($cli.paths.root, "apps/wallet/Dockerfile"),
+            },
+            // Non-secret build args
+            buildArgs: {
+                NODE_ENV: "production",
+                BASE_IMAGE: baseImage.ref,
+                STAGE: walletEnv.STAGE,
+                BACKEND_URL: walletEnv.BACKEND_URL,
+                INDEXER_URL: walletEnv.INDEXER_URL,
+                ERPC_URL: walletEnv.ERPC_URL,
+                FRAK_WALLET_URL: walletEnv.FRAK_WALLET_URL,
+                OPEN_PANEL_API_URL: walletEnv.OPEN_PANEL_API_URL,
+            },
+            // Secrets passed via BuildKit (not stored in layers)
+            secrets: {
+                DRPC_API_KEY: walletEnv.DRPC_API_KEY,
+                PIMLICO_API_KEY: walletEnv.PIMLICO_API_KEY,
+                NEXUS_RPC_SECRET: walletEnv.NEXUS_RPC_SECRET,
+                VAPID_PUBLIC_KEY: walletEnv.VAPID_PUBLIC_KEY,
+                OPEN_PANEL_WALLET_CLIENT_ID:
+                    walletEnv.OPEN_PANEL_WALLET_CLIENT_ID,
+            },
+            platforms: ["linux/amd64"],
+            push: true,
+            tags: getRegistryPath("wallet"),
         },
-        dockerfile: {
-            location: path.join($cli.paths.root, "apps/wallet/Dockerfile"),
-        },
-        buildArgs: {
-            NODE_ENV: "production",
-            ...walletEnv,
-        },
-        platforms: ["linux/amd64"],
-        push: true,
-        tags: getRegistryPath("wallet"),
-    });
+        {
+            dependsOn: [baseImage],
+        }
+    );
 
     // Build the custom Nginx image with frontend files built-in
-    const listenerImage = new dockerbuild.Image("wallet-listener", {
-        context: {
-            location: $cli.paths.root,
+    const listenerImage = new dockerbuild.Image(
+        "wallet-listener",
+        {
+            context: {
+                location: $cli.paths.root,
+            },
+            dockerfile: {
+                location: path.join(
+                    $cli.paths.root,
+                    "apps/listener/Dockerfile"
+                ),
+            },
+            // Non-secret build args
+            buildArgs: {
+                NODE_ENV: "production",
+                BASE_IMAGE: baseImage.ref,
+                STAGE: walletEnv.STAGE,
+                BACKEND_URL: walletEnv.BACKEND_URL,
+                INDEXER_URL: walletEnv.INDEXER_URL,
+                ERPC_URL: walletEnv.ERPC_URL,
+                FRAK_WALLET_URL: walletEnv.FRAK_WALLET_URL,
+                OPEN_PANEL_API_URL: walletEnv.OPEN_PANEL_API_URL,
+            },
+            // Secrets passed via BuildKit (not stored in layers)
+            secrets: {
+                DRPC_API_KEY: walletEnv.DRPC_API_KEY,
+                PIMLICO_API_KEY: walletEnv.PIMLICO_API_KEY,
+                NEXUS_RPC_SECRET: walletEnv.NEXUS_RPC_SECRET,
+                OPEN_PANEL_LISTENER_CLIENT_ID:
+                    walletEnv.OPEN_PANEL_LISTENER_CLIENT_ID,
+            },
+            platforms: ["linux/amd64"],
+            push: true,
+            tags: getRegistryPath("wallet-listener"),
         },
-        dockerfile: {
-            location: path.join($cli.paths.root, "apps/listener/Dockerfile"),
-        },
-        buildArgs: {
-            NODE_ENV: "production",
-            ...walletEnv,
-        },
-        platforms: ["linux/amd64"],
-        push: true,
-        tags: getRegistryPath("wallet-listener"),
-    });
+        {
+            dependsOn: [baseImage],
+        }
+    );
 
     dependency.push(walletImage, listenerImage);
 
@@ -189,16 +236,16 @@ export const walletService = new KubernetesService(
             // Route /listener to the listener service
             pathRoutes: [
                 {
-                    path: "/listener(/|$)(.*)",
-                    pathType: "ImplementationSpecific", // Required for regex patterns
+                    path: "/listener",
+                    pathType: "Prefix",
                     serviceName: listenerService.service?.metadata?.name ?? "",
                     servicePort: 80,
                 },
             ],
-            // Rewrite /listener/* to /* for the listener service
+            // No rewrite needed - listener nginx handles /listener prefix internally
             customAnnotations: {
-                "nginx.ingress.kubernetes.io/rewrite-target": "/$2",
-                "nginx.ingress.kubernetes.io/use-regex": "true",
+                "nginx.ingress.kubernetes.io/proxy-buffering": "off",
+                "nginx.ingress.kubernetes.io/proxy-body-size": "10m",
             },
         },
     },

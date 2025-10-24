@@ -7,7 +7,6 @@ import {
     openPanelApiUrl,
     openPanelWalletClientId,
     pimlicoApiKey,
-    privyAppId,
     vapidPublicKey,
     walletUrl,
 } from "./config";
@@ -41,7 +40,6 @@ new sst.aws.StaticSite("Wallet", {
         PIMLICO_API_KEY: pimlicoApiKey.value,
         NEXUS_RPC_SECRET: nexusRpcSecret.value,
         VAPID_PUBLIC_KEY: vapidPublicKey.value,
-        PRIVY_APP_ID: privyAppId.value,
         FRAK_WALLET_URL: walletUrl,
         OPEN_PANEL_API_URL: openPanelApiUrl,
         OPEN_PANEL_WALLET_CLIENT_ID: openPanelWalletClientId.value,

@@ -1,33 +1,40 @@
-# Build listener app
-FROM oven/bun:1.3.0 AS builder
+# Build listener app using pre-built SDK from base image
+ARG BASE_IMAGE=frak-wallet-base:latest
+FROM ${BASE_IMAGE} AS builder
 
 WORKDIR /app
 
-# Copy root package files
-COPY package.json bun.lock tsconfig.json ./
-
-# Copy all workspace packages that listener depends on
-COPY packages/ ./packages/
-COPY services/ ./services/
-COPY sdk/ ./sdk/
-COPY .stubs/ .stubs/
-
-# Copy app package.json files (for workspace resolution)
-COPY apps/listener/package.json ./apps/listener/
-COPY apps/wallet/package.json ./apps/wallet/
-
-# Install dependencies
-RUN bun install
-
-# Build SDK packages (required for listener build)
-RUN bun run build:sdk
-
-# Copy listener source files
+# SDK is already built in the base image - just copy listener source files
 COPY apps/listener/ ./apps/listener/
 
-# Build listener app (Vite build)
+# Non-secret build args
+ARG NODE_ENV
+ARG STAGE
+ARG BACKEND_URL
+ARG INDEXER_URL
+ARG ERPC_URL
+ARG FRAK_WALLET_URL
+ARG OPEN_PANEL_API_URL
+
+ENV NODE_ENV=$NODE_ENV
+ENV STAGE=$STAGE
+ENV BACKEND_URL=$BACKEND_URL
+ENV INDEXER_URL=$INDEXER_URL
+ENV ERPC_URL=$ERPC_URL
+ENV FRAK_WALLET_URL=$FRAK_WALLET_URL
+ENV OPEN_PANEL_API_URL=$OPEN_PANEL_API_URL
+
+# Build listener app with secrets mounted (not stored in layers)
 WORKDIR /app/apps/listener
-RUN bun run build
+RUN --mount=type=secret,id=DRPC_API_KEY \
+    --mount=type=secret,id=PIMLICO_API_KEY \
+    --mount=type=secret,id=NEXUS_RPC_SECRET \
+    --mount=type=secret,id=OPEN_PANEL_LISTENER_CLIENT_ID \
+    export DRPC_API_KEY=$(cat /run/secrets/DRPC_API_KEY) && \
+    export PIMLICO_API_KEY=$(cat /run/secrets/PIMLICO_API_KEY) && \
+    export NEXUS_RPC_SECRET=$(cat /run/secrets/NEXUS_RPC_SECRET) && \
+    export OPEN_PANEL_LISTENER_CLIENT_ID=$(cat /run/secrets/OPEN_PANEL_LISTENER_CLIENT_ID) && \
+    bun run build
 
 # Final nginx image
 FROM nginx:1.29.1

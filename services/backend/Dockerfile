@@ -1,23 +1,16 @@
-# Use a multi-stage build
-FROM --platform=$BUILDPLATFORM node:lts AS builder
+# Use pre-built SDK from base image
+ARG BASE_IMAGE=frak-wallet-base:latest
+FROM ${BASE_IMAGE} AS builder
 
 # Set the working directory to the root of the monorepo
-WORKDIR /monorepo
-
-# Copy the entire monorepo
-COPY . .
-
-# Setup bun (since we are on a node image)
-RUN npm i -g bun
+WORKDIR /app
 
 # Fetch arg env
 ARG STAGE
 ENV NODE_ENV=production
 ENV STAGE=$STAGE
 
-# Install dependencies and build the project
-RUN bun install --frozen-lockfile
-RUN bun run build:sdk
+# SDK is already built in the base image - just build the backend
 RUN cd services/backend && bun run build
 
 # Start a new stage for the final image
@@ -26,11 +19,11 @@ FROM oven/bun
 WORKDIR /app
 
 # Build in a compiled way
-# COPY --from=builder /monorepo/services/backend/server ./server
+# COPY --from=builder /app/services/backend/server ./server
 
 # Build in a bun ways
-COPY --from=builder /monorepo/services/backend/package.json .
-COPY --from=builder /monorepo/services/backend/dist ./dist
+COPY --from=builder /app/services/backend/package.json .
+COPY --from=builder /app/services/backend/dist ./dist
 
 # Runtime port
 EXPOSE 3030

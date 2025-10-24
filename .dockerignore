@@ -14,6 +14,15 @@
 .vscode
 .idea
 
+# Ignore LLM stuff
+.claude/
+.cursor/
+.kiro/
+*.md
+
+# Ignore git stuff
+.github/
+
 # Ignore logs
 **/*.log
 
@@ -24,7 +33,20 @@
 
 # Ignore documentation
 **/docs
+**/generated-docs
 
 # Ignore any other non-essential directories or files
 **/tmp
 **/.DS_Store
+
+# Ignore infra code
+infra/
+.sst/
+
+# Ignore test stuff
+**/playwright/
+**/test-results/
+**/tests/
+**/playwright-report/
+**/*.test.ts
+**/*.spec.ts

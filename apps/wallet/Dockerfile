@@ -1,34 +1,42 @@
-# Build wallet app
-FROM oven/bun:1.3.0 AS builder
+# Build wallet app using pre-built SDK from base image
+ARG BASE_IMAGE=frak-wallet-base:latest
+FROM ${BASE_IMAGE} AS builder
 
 WORKDIR /app
 
-# Copy root package files
-COPY package.json bun.lock tsconfig.json ./
-
-# Copy all workspace packages that wallet depends on
-COPY packages/ ./packages/
-COPY services/ ./services/
-COPY sdk/ ./sdk/
-COPY .stubs/ .stubs/
-
-# Copy app package.json files (for workspace resolution)
-COPY apps/wallet/package.json ./apps/wallet/
-COPY apps/listener/package.json ./apps/listener/
-
-# Install dependencies
-RUN bun install
-
-# Build SDK packages (required for wallet build)
-RUN bun run build:sdk
-
-# Copy wallet source files
+# SDK is already built in the base image - just copy wallet source files
 COPY apps/wallet/ ./apps/wallet/
 
-# Build wallet app (builds service worker + React Router)
+# Non-secret build args
+ARG NODE_ENV
+ARG STAGE
+ARG BACKEND_URL
+ARG INDEXER_URL
+ARG ERPC_URL
+ARG FRAK_WALLET_URL
+ARG OPEN_PANEL_API_URL
+
+ENV NODE_ENV=$NODE_ENV
+ENV STAGE=$STAGE
+ENV BACKEND_URL=$BACKEND_URL
+ENV INDEXER_URL=$INDEXER_URL
+ENV ERPC_URL=$ERPC_URL
+ENV FRAK_WALLET_URL=$FRAK_WALLET_URL
+ENV OPEN_PANEL_API_URL=$OPEN_PANEL_API_URL
+
+# Build wallet app with secrets mounted (not stored in layers)
 WORKDIR /app/apps/wallet
-# SSR build may fail with Bun but client build succeeds - that's what we need
-RUN bun run build
+RUN --mount=type=secret,id=DRPC_API_KEY \
+    --mount=type=secret,id=PIMLICO_API_KEY \
+    --mount=type=secret,id=NEXUS_RPC_SECRET \
+    --mount=type=secret,id=VAPID_PUBLIC_KEY \
+    --mount=type=secret,id=OPEN_PANEL_WALLET_CLIENT_ID \
+    export DRPC_API_KEY=$(cat /run/secrets/DRPC_API_KEY) && \
+    export PIMLICO_API_KEY=$(cat /run/secrets/PIMLICO_API_KEY) && \
+    export NEXUS_RPC_SECRET=$(cat /run/secrets/NEXUS_RPC_SECRET) && \
+    export VAPID_PUBLIC_KEY=$(cat /run/secrets/VAPID_PUBLIC_KEY) && \
+    export OPEN_PANEL_WALLET_CLIENT_ID=$(cat /run/secrets/OPEN_PANEL_WALLET_CLIENT_ID) && \
+    bun run build
 
 # Final nginx image
 FROM nginx:1.29.1

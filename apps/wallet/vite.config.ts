@@ -35,9 +35,6 @@ export default defineConfig(
                 "process.env.VAPID_PUBLIC_KEY": JSON.stringify(
                     process.env.VAPID_PUBLIC_KEY
                 ),
-                "process.env.PRIVY_APP_ID": JSON.stringify(
-                    process.env.PRIVY_APP_ID
-                ),
                 "process.env.DEBUG": JSON.stringify(DEBUG),
                 "process.env.APP_VERSION": JSON.stringify(
                     process.env.COMMIT_HASH ?? "UNKNOWN"
