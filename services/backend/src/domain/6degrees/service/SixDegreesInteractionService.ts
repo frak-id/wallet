@@ -104,7 +104,7 @@ export class SixDegreesInteractionService {
                             ).toString("base64"),
                         };
                     } catch (e) {
-                        log.warn("Failed to map interaction", e);
+                        log.warn({ err: e }, "Failed to map interaction");
                     }
                     return { type: "login" };
                 })
