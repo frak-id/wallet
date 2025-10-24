@@ -92,7 +92,7 @@
     "@types/react": "catalog:",
     "@types/react-avatar-editor": "^13.0.4",
     "@types/react-dom": "catalog:",
-    "@typescript/native-preview": "^7.0.0-dev.20251019.1",
+    "@typescript/native-preview": "^7.0.0-dev.20251024.1",
     "bun-types": "latest",
     "cbor": "^10.0.11",
     "esbuild": "^0.25.11",
