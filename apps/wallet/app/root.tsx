@@ -126,11 +126,11 @@ export default function App() {
     return (
         <>
             <RootProvider>
+                <PwaInstall />
                 <Outlet />
             </RootProvider>
             <TopLoader />
             <DetectPWA />
-            <PwaInstall />
         </>
     );
 }

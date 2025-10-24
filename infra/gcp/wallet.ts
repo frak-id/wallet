@@ -34,13 +34,6 @@ const walletEnv = {
     OPEN_PANEL_LISTENER_CLIENT_ID: openPanelWalletClientId.value,
 };
 
-console.log("Wallet env", {
-    ...walletEnv,
-    DRPC_API_KEY: "****",
-    PIMLICO_API_KEY: "****",
-    NEXUS_RPC_SECRET: "****",
-});
-
 let imageRefs = {
     wallet: $output(""),
     listener: $output(""),
