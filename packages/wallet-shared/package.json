@@ -5,7 +5,8 @@
   "type": "module",
   "license": "GNU GPL 3.0",
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "format": "biome check --write ."
   },
   "main": "./src/index.ts",
   "module": "./src/index.ts",
@@ -45,7 +46,7 @@
     "@tanstack/react-query": "^5.90.3",
     "@tanstack/react-query-devtools": "^5.90.2",
     "@tanstack/react-query-persist-client": "^5.90.5",
-    "@wagmi/core": "^2.17.3",
+    "@wagmi/core": "catalog:",
     "class-variance-authority": "^0.7.1",
     "cuer": "^0.0.2",
     "dexie": "^4.2.1",
@@ -68,8 +69,8 @@
     "ua-parser-js": "^2.0.6",
     "vaul": "^1.1.2",
     "viem": "catalog:",
-    "wagmi": "2.15.6",
-    "zustand": "^5.0.8"
+    "wagmi": "catalog:",
+    "zustand": "catalog:"
   },
   "devDependencies": {
     "@types/node": "catalog:",

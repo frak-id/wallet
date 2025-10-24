@@ -11,6 +11,7 @@
     "build:sw": "vite build --mode sw",
     "dev": "bun run build:sw && sst dev react-router dev",
     "start": "react-router-serve ./build/server/index.js",
+    "serve": "bunx serve build/client -p 3000",
     "lint": "biome lint .",
     "format:check": "biome check .",
     "format": "biome check --write .",
@@ -49,7 +50,7 @@
     "@tanstack/react-query": "^5.90.3",
     "@tanstack/react-query-devtools": "^5.90.2",
     "@tanstack/react-query-persist-client": "^5.90.5",
-    "@wagmi/core": "^2.22.1",
+    "@wagmi/core": "catalog:",
     "class-variance-authority": "^0.7.1",
     "cuer": "^0.0.2",
     "dexie": "^4.2.1",
@@ -78,8 +79,8 @@
     "ua-parser-js": "^2.0.6",
     "vaul": "^1.1.2",
     "viem": "catalog:",
-    "wagmi": "^2.18.1",
-    "zustand": "^5.0.8"
+    "wagmi": "catalog:",
+    "zustand": "catalog:"
   },
   "devDependencies": {
     "@frak-labs/backend-elysia": "workspace:*",

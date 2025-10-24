@@ -1,15 +1,15 @@
 import { getFromLocalStorage } from "@frak-labs/wallet-shared/common/utils/safeSession";
 import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
 import type { SdkSessionPayload } from "@frak-labs/wallet-shared/types/Session";
+import {
+    type FrakWalletConnector,
+    smartAccountConnector,
+} from "@frak-labs/wallet-shared/wallet/smartWallet/connector";
 import { decodeJwt } from "jose";
 import { useEffect, useMemo } from "react";
 import { type Address, type Hex, isAddressEqual } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { useConfig, useConnect } from "wagmi";
-import {
-    type FrakWalletConnector,
-    smartAccountConnector,
-} from "@/module/wallet/smartWallet/connector";
 
 /**
  * Hook that enforce wagmi connection

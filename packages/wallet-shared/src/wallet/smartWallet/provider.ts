@@ -1,10 +1,7 @@
-import {
-    createSmartAccountClient,
-    type SmartAccountClient,
-} from "permissionless";
+import { smartAccountActions } from "permissionless";
 import { getUserOperationGasPrice } from "permissionless/actions/pimlico";
-import type { Address, Hex, Transport } from "viem";
-import type { SmartAccount } from "viem/account-abstraction";
+import type { Address, Hex } from "viem";
+import { createBundlerClient } from "viem/account-abstraction";
 import {
     getPimlicoClient,
     getPimlicoTransport,
@@ -42,21 +39,14 @@ type SmartAccountProviderParameters = {
 /**
  * Get the smart account provider for our wagmi connector
  */
-export function getSmartAccountProvider<
-    transport extends Transport = Transport,
->({ onAccountChanged, signViaEcdsa }: SmartAccountProviderParameters) {
+export function getSmartAccountProvider({
+    onAccountChanged,
+    signViaEcdsa,
+}: SmartAccountProviderParameters): SmartAccountProviderType {
     console.log("Building a new smart account provider");
-    // A few types shortcut
-    type ConnectorClient = SmartAccountClient<
-        transport,
-        typeof currentChain,
-        SmartAccount<BaseFrakSmartAccount>
-    > & {
-        estimateGas?: () => undefined | bigint;
-    };
 
     // The current smart account
-    let currentSmartAccountClient: ConnectorClient | undefined;
+    let currentSmartAccountClient: SmartAccountConnectorClient | undefined;
 
     // The current session
     let currentWebAuthNWallet = getSafeSession();
@@ -133,19 +123,13 @@ export function getSmartAccountProvider<
  * @param chainId
  * @param wallet
  */
-async function buildSmartAccount<transport extends Transport = Transport>({
+async function buildSmartAccount({
     wallet,
     signViaEcdsa,
 }: {
     wallet: WebAuthNWallet | EcdsaWallet | DistantWebAuthnWallet;
     signViaEcdsa: (data: Hex, address: Address) => Promise<Hex>;
-}): Promise<
-    SmartAccountClient<
-        transport,
-        typeof currentChain,
-        SmartAccount<BaseFrakSmartAccount>
-    >
-> {
+}) {
     let smartAccount: BaseFrakSmartAccount;
     if (wallet.type === "ecdsa") {
         // That's a ecdsa wallet
@@ -181,10 +165,10 @@ async function buildSmartAccount<transport extends Transport = Transport>({
     const pimlicoClient = getPimlicoClient();
 
     // Build the smart wallet client
-    return createSmartAccountClient({
+    return createBundlerClient({
         account: smartAccount,
         chain: currentChain,
-        bundlerTransport: pimlicoTransport,
+        transport: pimlicoTransport,
         // Get the right gas fees for the user operation
         userOperation: {
             estimateFeesPerGas: async () => {
@@ -195,9 +179,23 @@ async function buildSmartAccount<transport extends Transport = Transport>({
         },
         // Get the right paymaster datas
         paymaster: true,
-    }) as SmartAccountClient<
-        transport,
-        typeof currentChain,
-        SmartAccount<BaseFrakSmartAccount>
-    >;
+    }).extend(smartAccountActions);
 }
+
+/**
+ * Exported types for connector usage
+ */
+export type SmartAccountConnectorClient = Awaited<
+    ReturnType<typeof buildSmartAccount>
+> & {
+    estimateGas?: () => undefined | bigint;
+};
+
+export type SmartAccountProviderType = {
+    isAuthorized: () => boolean;
+    currentSmartAccountClient: SmartAccountConnectorClient | undefined;
+    getSmartAccountClient: () => Promise<
+        SmartAccountConnectorClient | undefined
+    >;
+    disconnect: () => Promise<void>;
+};

@@ -1,6 +1,7 @@
 import { KernelWallet, kernelAddresses } from "@frak-labs/app-essentials";
 import type { currentViemClient } from "@frak-labs/wallet-shared/blockchain/provider";
 import type { WebAuthNWallet } from "@frak-labs/wallet-shared/types/WebAuthN";
+import type { BaseFrakSmartAccount } from "@frak-labs/wallet-shared/wallet/smartWallet/baseFrakWallet";
 import { isSmartAccountDeployed } from "permissionless";
 import { getAccountNonce } from "permissionless/actions";
 import { memo, tryit } from "radash";
@@ -22,7 +23,6 @@ import {
     toSmartAccount,
 } from "viem/account-abstraction";
 import { estimateGas, signMessage } from "viem/actions";
-import type { BaseFrakSmartAccount } from "./baseFrakWallet";
 
 /**
  * Build a kernel smart account from a private key, that use the ECDSA signer behind the scene

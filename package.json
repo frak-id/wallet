@@ -65,7 +65,10 @@
     "@types/node": "^24.7.2",
     "typescript": "^5.9.3",
     "@simplewebauthn/browser": "^13.2.2",
-    "@simplewebauthn/server": "^13.2.2"
+    "@simplewebauthn/server": "^13.2.2",
+    "zustand": "^5.0.8",
+    "wagmi": "^2.18.1",
+    "@wagmi/core": "^2.22.1"
   },
   "dependencies": {
     "caniuse-lite": "^1.0.30001750"
