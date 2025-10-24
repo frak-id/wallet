@@ -22,7 +22,6 @@ export function HistoryDayGroup<T>({
             <Panel size={"small"}>
                 {items.map((item, index) => (
                     <div
-                        // biome-ignore lint/suspicious/noArrayIndexKey: We are using the index as key because the items are already sorted
                         key={`${day}-${index}`}
                         className={styles.historyGroup__item}
                     >

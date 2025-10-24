@@ -19,6 +19,7 @@
             "!**/sw.js",
             "!**/bundle.js",
             "!**/sst-env.d.ts",
+            "!example/vanilla-js/index.html",
             "!**/.react-router",
             "!**/.rslib",
             "!**/.svelte-kit",
@@ -28,6 +29,12 @@
         ]
     },
     "assist": { "actions": { "source": { "organizeImports": "on" } } },
+    "html": {
+        "experimentalFullSupportEnabled": true,
+        "formatter": {
+            "indentScriptAndStyle": false
+        }
+    },
     "linter": {
         "enabled": true,
         "rules": {
@@ -97,7 +104,8 @@
     },
     "css": {
         "parser": {
-            "cssModules": true
+            "cssModules": true,
+            "tailwindDirectives": true
         },
         "linter": {
             "enabled": true
