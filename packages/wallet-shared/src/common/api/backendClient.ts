@@ -31,8 +31,7 @@ export const authenticatedBackendApi = treaty<App>(
         // Auto cleanup session on 401 response
         onResponse(response) {
             if (response.status === 401) {
-                sessionStore.getState().setSession(null);
-                sessionStore.getState().setSdkSession(null);
+                sessionStore.getState().clearSession();
             }
         },
     }

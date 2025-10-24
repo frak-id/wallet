@@ -1,4 +1,9 @@
 import { authKey } from "@frak-labs/wallet-shared/authentication/queryKeys/auth";
+import {
+    trackAuthCompleted,
+    trackAuthInitiated,
+} from "@frak-labs/wallet-shared/common/analytics";
+import { authenticatedWalletApi } from "@frak-labs/wallet-shared/common/api/backendClient";
 import { addLastAuthentication } from "@frak-labs/wallet-shared/stores/authenticationStore";
 import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
 import type { Session } from "@frak-labs/wallet-shared/types/Session";
@@ -7,8 +12,6 @@ import { startRegistration } from "@simplewebauthn/browser";
 import type { UseMutationOptions } from "@tanstack/react-query";
 import { useMutation } from "@tanstack/react-query";
 import { usePreviousAuthenticators } from "@/module/authentication/hook/usePreviousAuthenticators";
-import { authenticatedWalletApi } from "@/module/common/api/backendClient";
-import { trackAuthCompleted, trackAuthInitiated } from "../../common/analytics";
 
 /**
  * Hook that handle the registration process

@@ -1,5 +1,6 @@
 import { campaignBankAbi } from "@frak-labs/app-essentials/blockchain";
 import { Button } from "@frak-labs/ui/component/Button";
+import { authenticatedBackendApi } from "@frak-labs/wallet-shared/common/api/backendClient";
 import { balanceKey } from "@frak-labs/wallet-shared/common/queryKeys/balance";
 import { claimableKey } from "@frak-labs/wallet-shared/wallet/queryKeys/claimable";
 import { encodeWalletMulticall } from "@frak-labs/wallet-shared/wallet/utils/multicall";
@@ -8,7 +9,6 @@ import { CircleDollarSign } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { encodeFunctionData } from "viem";
 import { useAccount, useSendTransaction } from "wagmi";
-import { authenticatedBackendApi } from "@/module/common/api/backendClient";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
 import styles from "./index.module.css";

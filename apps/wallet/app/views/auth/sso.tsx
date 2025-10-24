@@ -36,9 +36,9 @@ import {
 } from "@frak-labs/frame-connector";
 import { HandleErrors } from "@frak-labs/wallet-shared/authentication/component/HandleErrors";
 import { ua } from "@frak-labs/wallet-shared/common/lib/ua";
+import type { OnPairingSuccessCallback } from "@frak-labs/wallet-shared/pairing/clients/origin";
 import type { SsoRpcSchema } from "@frak-labs/wallet-shared/types/sso-rpc";
 import { AuthenticateWithPhone } from "@/module/authentication/component/AuthenticateWithPhone";
-import type { OnPairingSuccessCallback } from "@/module/pairing/clients/origin";
 
 export default function Sso() {
     const { i18n, t } = useTranslation();

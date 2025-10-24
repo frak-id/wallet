@@ -1,5 +1,5 @@
+import { authenticatedWalletApi } from "@frak-labs/wallet-shared/common/api/backendClient";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { authenticatedWalletApi } from "@/module/common/api/backendClient";
 import { notificationKey } from "@/module/notification/queryKeys/notification";
 import {
     notificationStore,

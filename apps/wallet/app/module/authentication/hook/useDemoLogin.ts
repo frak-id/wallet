@@ -1,11 +1,14 @@
 import { authKey } from "@frak-labs/wallet-shared/authentication/queryKeys/auth";
+import {
+    trackAuthCompleted,
+    trackAuthInitiated,
+} from "@frak-labs/wallet-shared/common/analytics";
+import { authenticatedWalletApi } from "@frak-labs/wallet-shared/common/api/backendClient";
 import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
 import type { Session } from "@frak-labs/wallet-shared/types/Session";
 import { useMutation } from "@tanstack/react-query";
 import { type Address, type Hex, stringToHex } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
-import { trackAuthCompleted, trackAuthInitiated } from "../../common/analytics";
-import { authenticatedWalletApi } from "../../common/api/backendClient";
 
 export function useDemoLogin() {
     return useMutation({

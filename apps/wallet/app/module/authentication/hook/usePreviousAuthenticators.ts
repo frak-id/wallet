@@ -1,6 +1,6 @@
 import { authKey } from "@frak-labs/wallet-shared/authentication/queryKeys/auth";
+import { dexieDb } from "@frak-labs/wallet-shared/common/storage/dexie/dexieDb";
 import { useQuery } from "@tanstack/react-query";
-import { dexieDb } from "@/module/common/storage/dexie/dexieDb";
 
 /**
  * Hook used to fetch all the previous authenticators

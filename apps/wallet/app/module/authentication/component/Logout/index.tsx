@@ -1,11 +1,11 @@
 import { Button } from "@frak-labs/ui/component/Button";
+import { trackGenericEvent } from "@frak-labs/wallet-shared/common/analytics";
 import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
 import { useQueryClient } from "@tanstack/react-query";
 import { LogOut } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import { Panel } from "@/module/common/component/Panel";
-import { trackGenericEvent } from "../../../common/analytics";
 
 function cleanLocalStorage() {
     // Clear static local storage items

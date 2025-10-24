@@ -1,3 +1,4 @@
+import { trackGenericEvent } from "@frak-labs/wallet-shared/common/analytics";
 import {
     inAppRedirectUrl,
     isInAppBrowser,
@@ -8,7 +9,6 @@ import { browserStore } from "@frak-labs/wallet-shared/stores/browserStore";
 import { useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Toast } from "@/module/common/component/Toast";
-import { trackGenericEvent } from "../../analytics";
 
 /**
  * Toast component that displays when user is in an in-app browser

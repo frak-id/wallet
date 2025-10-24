@@ -1,3 +1,5 @@
+import { setProfileId } from "@frak-labs/wallet-shared/common/analytics";
+import { authenticatedWalletApi } from "@frak-labs/wallet-shared/common/api/backendClient";
 import { usePersistentPairingClient } from "@frak-labs/wallet-shared/pairing/hook/usePersistentPairingClient";
 import { WagmiProviderWithDynamicConfig } from "@frak-labs/wallet-shared/providers/BaseProvider";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
@@ -7,10 +9,8 @@ import type { PersistQueryClientProviderProps } from "@tanstack/react-query-pers
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { type PropsWithChildren, useEffect } from "react";
 import { useAccount } from "wagmi";
-import { authenticatedWalletApi } from "@/module/common/api/backendClient";
 import { useEnforceWagmiConnection } from "@/module/common/hook/useEnforceWagmiConnection";
 import { notificationStore } from "@/module/stores/notificationStore";
-import { setProfileId } from "../analytics";
 
 /**
  * The query client that will be used by tanstack/react-query

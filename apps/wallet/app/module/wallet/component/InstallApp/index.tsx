@@ -1,5 +1,6 @@
 import { Button } from "@frak-labs/ui/component/Button";
 import { WebApp } from "@frak-labs/ui/icons/WebApp";
+import { trackGenericEvent } from "@frak-labs/wallet-shared/common/analytics";
 import { useAddToHomeScreenPrompt } from "@frak-labs/wallet-shared/common/hook/useAddToHomeScreenPrompt";
 import { useCallback } from "react";
 import { Trans } from "react-i18next";
@@ -9,7 +10,6 @@ import {
     pwaInstallStore,
     selectPwaInstallRef,
 } from "@/module/stores/pwaInstallStore";
-import { trackGenericEvent } from "../../../common/analytics";
 
 export function InstallApp() {
     const { prompt, launchInstallation } = useAddToHomeScreenPrompt();
