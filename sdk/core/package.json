@@ -107,9 +107,9 @@
     "@arethetypeswrong/cli": "^0.18.2",
     "@frak-labs/browserslist-config": "workspace:*",
     "@frak-labs/dev-tooling": "workspace:*",
-    "@microsoft/api-extractor": "^7.53.1",
+    "@microsoft/api-extractor": "^7.53.3",
     "@rsbuild/plugin-node-polyfill": "^1.4.2",
-    "@rslib/core": "0.15.1",
+    "@rslib/core": "0.16.1",
     "@types/node": "catalog:",
     "typescript": "catalog:",
     "viem": "catalog:"

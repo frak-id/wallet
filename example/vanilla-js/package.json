@@ -18,7 +18,7 @@
     "@frak-labs/components": "workspace:*",
     "@frak-labs/core-sdk": "workspace:*",
     "typescript": "^5",
-    "vite": "^6.3.5",
+    "vite": "^6.4.1",
     "vite-plugin-html": "^3.2.2"
   },
   "browserslist": [

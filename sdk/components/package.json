@@ -64,7 +64,7 @@
     "@frak-labs/ui": "workspace:*",
     "@rsbuild/plugin-preact": "^1.5.2",
     "@rsbuild/plugin-svgr": "^1.2.2",
-    "@rslib/core": "^0.15.1",
+    "@rslib/core": "^0.16.1",
     "@types/node": "catalog:",
     "@types/preact-custom-element": "^4.0.4",
     "typescript": "^5"

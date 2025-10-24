@@ -11,7 +11,7 @@
     "@pulumi/gcp": "^8.34.0",
     "@pulumi/kubernetes": "^4.23.0",
     "@pulumi/pulumi": "^3.177.0",
-    "@types/node": "^24.7.2",
+    "@types/node": "^24.9.1",
     "knip": "^5.65.0",
     "npm-check-updates": "^18.0.1",
     "rimraf": "^6.0.1",
@@ -62,7 +62,7 @@
     "react-dom": "^19.2.0",
     "@types/react": "19.2.2",
     "@types/react-dom": "19.2.2",
-    "@types/node": "^24.7.2",
+    "@types/node": "^24.9.1",
     "typescript": "^5.9.3",
     "@simplewebauthn/browser": "^13.2.2",
     "@simplewebauthn/server": "^13.2.2",
@@ -71,10 +71,10 @@
     "@wagmi/core": "^2.22.1"
   },
   "dependencies": {
-    "caniuse-lite": "^1.0.30001750"
+    "caniuse-lite": "^1.0.30001751"
   },
   "resolutions": {
-    "caniuse-lite": "^1.0.30001750",
+    "caniuse-lite": "^1.0.30001751",
     "@wagmi/connectors": "file:.stubs/wagmi-connectors-stub"
   },
   "trustedDependencies": []

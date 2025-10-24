@@ -82,8 +82,8 @@
         "@arethetypeswrong/cli": "^0.18.2",
         "@frak-labs/browserslist-config": "workspace:*",
         "@frak-labs/dev-tooling": "workspace:*",
-        "@microsoft/api-extractor": "^7.53.1",
-        "@rslib/core": "0.15.1",
+        "@microsoft/api-extractor": "^7.53.3",
+        "@rslib/core": "0.16.1",
         "@types/node": "catalog:",
         "typescript": "^5",
         "viem": "catalog:"
