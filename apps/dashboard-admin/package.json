@@ -5,7 +5,7 @@
   "scripts": {
     "build": "react-router build",
     "dev": "react-router dev",
-    "start": "react-router-serve ./build/server/index.js",
+    "start": "bunx serve build/client -p 3002",
     "typecheck": "react-router typegen && tsc",
     "format:check": "biome check .",
     "format": "biome check --write ."
