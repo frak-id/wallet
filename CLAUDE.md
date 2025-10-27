@@ -96,13 +96,15 @@ bun run changeset:release
     - `recovery/` - Account recovery flows and encryption
     - `stores/` - Zustand state management (sessionStore, userStore, walletStore, authenticationStore)
     - `types/` - Shared TypeScript type definitions
-    - `common/` - Shared utilities, components, analytics (OpenPanel), and storage (Dexie)
+    - `common/` - Shared utilities, components (WalletModal), analytics (OpenPanel), and storage (idb-keyval)
     - `blockchain/` - Blockchain providers and Account Abstraction setup
     - `i18n/` - Internationalization configuration
     - `sdk/` - SDK lifecycle utilities
     - `providers/` - React context providers (FrakContext)
     - `polyfills/` - Runtime polyfills (BigInt serialization)
-    - **Note**: This package has grown large and contains multiple concerns. Two AlertDialog implementations exist (ui vs wallet-shared) with different features (CSS prefixing, custom close buttons). Stores are missing "use client" directives needed for Next.js compatibility. See `docs/audit/PACKAGE_SPLIT_OPTIONS.md` for refactoring plans.
+    - **Storage**: Uses lightweight idb-keyval for IndexedDB (notifications, authenticators) - service worker optimized to 1.73 KB gzipped
+    - **Exports**: Barrel exports in src/index.ts for clean imports - use `import { X } from "@frak-labs/wallet-shared"`
+    - **Note**: Stores are missing "use client" directives needed for Next.js compatibility. See `docs/audit/PACKAGE_SPLIT_OPTIONS.md` for refactoring plans.
   - `ui/` - Radix UI-based component library
   - `app-essentials/` - Core blockchain utilities and WebAuthn
   - `client/` - API client abstractions

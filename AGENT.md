@@ -10,7 +10,7 @@
 
 ## Tech Stack
 - **Runtime**: Bun (package manager + runtime), TypeScript, Node.js
-- **Frontend**: React 19, React Router v7, Wagmi, TanStack Query, Zustand, Dexie (IndexedDB)
+- **Frontend**: React 19, React Router v7, Wagmi, TanStack Query, Zustand, idb-keyval (IndexedDB)
 - **Backend**: Elysia, WebAuthn, Jose (JWT)
 - **Blockchain**: Viem, Permissionless, Smart Account infrastructure
 - **Infrastructure**: SST v3, Pulumi, AWS/GCP deployment
