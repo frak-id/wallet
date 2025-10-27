@@ -1,5 +1,5 @@
 import type { NotificationModel } from "@frak-labs/wallet-shared";
-import { dexieDb } from "@frak-labs/wallet-shared";
+import { notificationStorage } from "@frak-labs/wallet-shared";
 import { useQuery } from "@tanstack/react-query";
 import { BellRing } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -18,9 +18,8 @@ export default function Notifications() {
     const { data: notifications } = useQuery({
         queryKey: notificationKey.history.baseKey,
         queryFn: async () => {
-            const notifications = await dexieDb.notification.toArray();
-            // Sort them by timestamp
-            return notifications.sort((a, b) => b.timestamp - a.timestamp);
+            // Notifications are already sorted by timestamp in storage
+            return await notificationStorage.getAll();
         },
     });
 

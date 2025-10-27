@@ -3,8 +3,8 @@ export * from "./Balance";
 export * from "./HistoryGroup";
 export * from "./Interaction";
 export * from "./InteractionHistory";
-// i18n types
-export * from "./i18n";
+// i18n types are ambient declarations (i18n.d.ts, resources.d.ts)
+// and are automatically included by TypeScript
 export * from "./Recovery";
 export * from "./RewardHistory";
 export * from "./Session";

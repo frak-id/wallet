@@ -29,9 +29,10 @@ export * from "./queryKeys/pendingBalance";
 export * from "./queryKeys/sdk";
 
 // Storage
-export * from "./storage/dexie/dexieDb";
-export * from "./storage/dexie/NotificationModel";
-export * from "./storage/dexie/PreviousAuthenticatorModel";
+export * from "./storage/authenticators";
+export * from "./storage/NotificationModel";
+export * from "./storage/notifications";
+export * from "./storage/PreviousAuthenticatorModel";
 
 // Utils
 export * from "./utils/safeSession";

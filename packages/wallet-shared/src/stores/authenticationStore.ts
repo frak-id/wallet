@@ -4,7 +4,7 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { dexieDb } from "../common/storage/dexie/dexieDb";
+import { authenticatorStorage } from "../common/storage/authenticators";
 import type { Session } from "../types/Session";
 import type { AuthenticationStore } from "./types";
 
@@ -94,8 +94,8 @@ export async function addLastAuthentication(authentication: Session) {
     // Define it as last authentication
     authenticationStore.getState().setLastAuthenticator(webauthnSession);
 
-    // Add it to the last authentications in Dexie
-    await dexieDb.previousAuthenticator.put({
+    // Add it to the last authentications in IndexedDB
+    await authenticatorStorage.put({
         wallet: authentication.address,
         authenticatorId: authentication.authenticatorId,
         transports: authentication.transports,

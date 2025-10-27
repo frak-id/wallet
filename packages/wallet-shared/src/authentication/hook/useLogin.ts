@@ -5,7 +5,7 @@ import type { UseMutationOptions } from "@tanstack/react-query";
 import { useMutation } from "@tanstack/react-query";
 import { trackAuthCompleted, trackAuthInitiated } from "../../common/analytics";
 import { authenticatedWalletApi } from "../../common/api/backendClient";
-import type { PreviousAuthenticatorModel } from "../../common/storage/dexie/PreviousAuthenticatorModel";
+import type { PreviousAuthenticatorModel } from "../../common/storage/PreviousAuthenticatorModel";
 import {
     addLastAuthentication,
     authenticationStore,
