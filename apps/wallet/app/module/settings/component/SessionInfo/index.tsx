@@ -3,7 +3,7 @@ import {
     selectEcdsaSession,
     selectWebauthnSession,
     sessionStore,
-} from "@frak-labs/wallet-shared/stores/sessionStore";
+} from "@frak-labs/wallet-shared";
 import { Fingerprint, KeyRound } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useHydrated } from "remix-utils/use-hydrated";

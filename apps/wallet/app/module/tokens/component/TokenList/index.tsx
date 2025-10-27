@@ -1,5 +1,5 @@
-import { useGetUserBalance } from "@frak-labs/wallet-shared/tokens/hook/useGetUserBalance";
-import type { BalanceItem } from "@frak-labs/wallet-shared/types/Balance";
+import type { BalanceItem } from "@frak-labs/wallet-shared";
+import { useGetUserBalance } from "@frak-labs/wallet-shared";
 import { Skeleton } from "@/module/common/component/Skeleton";
 import { TokenItem } from "@/module/tokens/component/TokenItem";
 import styles from "./index.module.css";

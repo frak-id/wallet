@@ -4,12 +4,12 @@ import {
     kernelAddresses,
     multiWebAuthNValidatorV2Abi,
 } from "@frak-labs/app-essentials";
-import { currentViemClient } from "@frak-labs/wallet-shared/blockchain/provider";
+import type { CurrentRecovery } from "@frak-labs/wallet-shared";
 import {
+    currentViemClient,
     doAddPassKeyFnAbi,
     ecdsaValidatorStorageAbi,
-} from "@frak-labs/wallet-shared/recovery/utils/abi";
-import type { CurrentRecovery } from "@frak-labs/wallet-shared/types/Recovery";
+} from "@frak-labs/wallet-shared";
 import { tryit } from "radash";
 import {
     type Address,

@@ -1,4 +1,4 @@
-import { WagmiProviderWithDynamicConfig } from "@frak-labs/wallet-shared/providers/BaseProvider";
+import { WagmiProviderWithDynamicConfig } from "@frak-labs/wallet-shared";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { PropsWithChildren } from "react";
 

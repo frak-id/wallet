@@ -1,13 +1,13 @@
-import { authKey } from "@frak-labs/wallet-shared/authentication/queryKeys/auth";
+import type { Session } from "@frak-labs/wallet-shared";
 import {
+    addLastAuthentication,
+    authenticatedWalletApi,
+    authKey,
+    getRegisterOptions,
+    sessionStore,
     trackAuthCompleted,
     trackAuthInitiated,
-} from "@frak-labs/wallet-shared/common/analytics";
-import { authenticatedWalletApi } from "@frak-labs/wallet-shared/common/api/backendClient";
-import { addLastAuthentication } from "@frak-labs/wallet-shared/stores/authenticationStore";
-import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
-import type { Session } from "@frak-labs/wallet-shared/types/Session";
-import { getRegisterOptions } from "@frak-labs/wallet-shared/wallet/action/registerOptions";
+} from "@frak-labs/wallet-shared";
 import { startRegistration } from "@simplewebauthn/browser";
 import type { UseMutationOptions } from "@tanstack/react-query";
 import { useMutation } from "@tanstack/react-query";

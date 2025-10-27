@@ -1,10 +1,12 @@
+import type {
+    RecoveryFileContent,
+    WebAuthNWallet,
+} from "@frak-labs/wallet-shared";
 import {
+    doAddPassKeyFnAbi,
     getPimlicoClient,
     getPimlicoTransport,
-} from "@frak-labs/wallet-shared/blockchain/aa-provider";
-import { doAddPassKeyFnAbi } from "@frak-labs/wallet-shared/recovery/utils/abi";
-import type { RecoveryFileContent } from "@frak-labs/wallet-shared/types/Recovery";
-import type { WebAuthNWallet } from "@frak-labs/wallet-shared/types/WebAuthN";
+} from "@frak-labs/wallet-shared";
 import type { UseMutationOptions } from "@tanstack/react-query";
 import { type DefaultError, useMutation } from "@tanstack/react-query";
 import { smartAccountActions } from "permissionless";

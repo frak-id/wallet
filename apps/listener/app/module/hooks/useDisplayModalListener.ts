@@ -12,9 +12,11 @@ import {
     type RpcPromiseHandler,
     type RpcResponse,
 } from "@frak-labs/frame-connector";
-import { trackGenericEvent } from "@frak-labs/wallet-shared/common/analytics";
-import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
-import { walletStore } from "@frak-labs/wallet-shared/stores/walletStore";
+import {
+    sessionStore,
+    trackGenericEvent,
+    walletStore,
+} from "@frak-labs/wallet-shared";
 import { useCallback, useRef } from "react";
 import { useListenerUI } from "@/module/providers/ListenerUiProvider";
 import { modalStore, selectShouldFinish } from "@/module/stores/modalStore";

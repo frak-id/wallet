@@ -2,16 +2,14 @@ import { Button } from "@frak-labs/ui/component/Button";
 import { Input } from "@frak-labs/ui/component/forms/Input";
 import { useCopyToClipboardWithState } from "@frak-labs/ui/hook/useCopyToClipboardWithState";
 import { Pencil } from "@frak-labs/ui/icons/Pencil";
+import type { User } from "@frak-labs/wallet-shared";
 import {
     selectSession,
-    sessionStore,
-} from "@frak-labs/wallet-shared/stores/sessionStore";
-import {
     selectUser,
     selectUserSetupLater,
+    sessionStore,
     userStore,
-} from "@frak-labs/wallet-shared/stores/userStore";
-import type { User } from "@frak-labs/wallet-shared/types/User";
+} from "@frak-labs/wallet-shared";
 import { Copy } from "lucide-react";
 import { useEffect, useState } from "react";
 import {

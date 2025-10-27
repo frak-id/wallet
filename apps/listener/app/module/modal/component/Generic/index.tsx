@@ -1,6 +1,5 @@
 import { prefixModalCss } from "@frak-labs/ui/utils/prefixModalCss";
-import { trackGenericEvent } from "@frak-labs/wallet-shared/common/analytics";
-import { Markdown } from "@frak-labs/wallet-shared/common/component/Markdown";
+import { Markdown, trackGenericEvent } from "@frak-labs/wallet-shared";
 import { useMemo } from "react";
 import styles from "@/module/modal/component/Modal/index.module.css";
 import {

@@ -1,5 +1,5 @@
 import type { IFrameRpcSchema } from "@frak-labs/core-sdk";
-import type { SsoRpcSchema } from "@frak-labs/wallet-shared/types/sso-rpc";
+import type { SsoRpcSchema } from "@frak-labs/wallet-shared";
 import type { Address, Hex } from "viem";
 
 /**

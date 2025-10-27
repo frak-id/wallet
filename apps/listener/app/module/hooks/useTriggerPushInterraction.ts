@@ -1,5 +1,5 @@
 import { ReferralInteractionEncoder } from "@frak-labs/core-sdk/interactions";
-import { usePushInteraction } from "@frak-labs/wallet-shared/wallet/hook/usePushInteraction";
+import { usePushInteraction } from "@frak-labs/wallet-shared";
 import { useEffect, useRef } from "react";
 import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 

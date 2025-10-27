@@ -1,4 +1,4 @@
-import { usePairingInfo } from "@frak-labs/wallet-shared/pairing/hook/usePairingInfo";
+import { usePairingInfo } from "@frak-labs/wallet-shared";
 import type { TargetPairingState } from "@frak-labs/wallet-shared/pairing/types";
 import { Fingerprint } from "lucide-react";
 import { useTranslation } from "react-i18next";

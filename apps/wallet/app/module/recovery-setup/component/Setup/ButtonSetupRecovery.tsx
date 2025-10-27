@@ -1,5 +1,5 @@
 import { Button } from "@frak-labs/ui/component/Button";
-import { currentChain } from "@frak-labs/wallet-shared/blockchain/provider";
+import { currentChain } from "@frak-labs/wallet-shared";
 import { Check, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useSetupRecovery } from "@/module/recovery-setup/hook/useSetupRecovery";

@@ -1,7 +1,6 @@
 import type { ButtonProps } from "@frak-labs/ui/component/Button";
-import { ua } from "@frak-labs/wallet-shared/common/lib/ua";
-import type { OnPairingSuccessCallback } from "@frak-labs/wallet-shared/pairing/clients/origin";
-import { LaunchPairing } from "@frak-labs/wallet-shared/pairing/component/LaunchPairing";
+import type { OnPairingSuccessCallback } from "@frak-labs/wallet-shared";
+import { LaunchPairing, ua } from "@frak-labs/wallet-shared";
 import { type ElementType, useState } from "react";
 import styles from "./index.module.css";
 

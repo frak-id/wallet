@@ -1,8 +1,8 @@
-import { OriginPairingState } from "@frak-labs/wallet-shared/pairing/component/OriginPairingState";
 import {
+    OriginPairingState,
     selectDistantWebauthnSession,
     sessionStore,
-} from "@frak-labs/wallet-shared/stores/sessionStore";
+} from "@frak-labs/wallet-shared";
 import { Outlet } from "react-router";
 import { AuthRestricted } from "@/module/common/component/AuthRestricted";
 import { GlobalLayout } from "@/module/common/component/GlobalLayout";

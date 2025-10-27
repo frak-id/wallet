@@ -1,6 +1,6 @@
 import { Button } from "@frak-labs/ui/component/Button";
 import { WalletAddress } from "@frak-labs/ui/component/HashDisplay";
-import { useLogin } from "@frak-labs/wallet-shared/authentication/hook/useLogin";
+import { useLogin } from "@frak-labs/wallet-shared";
 import { useCallback, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";

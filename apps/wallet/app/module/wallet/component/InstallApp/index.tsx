@@ -1,7 +1,9 @@
 import { Button } from "@frak-labs/ui/component/Button";
 import { WebApp } from "@frak-labs/ui/icons/WebApp";
-import { trackGenericEvent } from "@frak-labs/wallet-shared/common/analytics";
-import { useAddToHomeScreenPrompt } from "@frak-labs/wallet-shared/common/hook/useAddToHomeScreenPrompt";
+import {
+    trackGenericEvent,
+    useAddToHomeScreenPrompt,
+} from "@frak-labs/wallet-shared";
 import { useCallback, useEffect, useState } from "react";
 import { Trans } from "react-i18next";
 import { ButtonLabel } from "@/module/common/component/ButtonLabel";

@@ -1,5 +1,7 @@
-import type { RecoveryFileContent } from "@frak-labs/wallet-shared/types/Recovery";
-import type { WebAuthNWallet } from "@frak-labs/wallet-shared/types/WebAuthN";
+import type {
+    RecoveryFileContent,
+    WebAuthNWallet,
+} from "@frak-labs/wallet-shared";
 import type { Hex, LocalAccount } from "viem";
 import { create } from "zustand";
 

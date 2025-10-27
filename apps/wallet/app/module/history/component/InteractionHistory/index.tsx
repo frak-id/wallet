@@ -1,4 +1,4 @@
-import type { InteractionHistory } from "@frak-labs/wallet-shared/types/InteractionHistory";
+import type { InteractionHistory } from "@frak-labs/wallet-shared";
 import { useTranslation } from "react-i18next";
 import { Skeleton } from "@/module/common/component/Skeleton";
 import { Title } from "@/module/common/component/Title";

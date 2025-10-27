@@ -1,4 +1,4 @@
-import type { HistoryGroup } from "@frak-labs/wallet-shared/types/HistoryGroup";
+import type { HistoryGroup } from "@frak-labs/wallet-shared";
 
 /**
  * Group a list of items by day

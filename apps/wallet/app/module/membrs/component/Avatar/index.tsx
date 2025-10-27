@@ -1,7 +1,4 @@
-import {
-    selectUser,
-    userStore,
-} from "@frak-labs/wallet-shared/stores/userStore";
+import { selectUser, userStore } from "@frak-labs/wallet-shared";
 import { AvatarModal } from "@/module/membrs/component/AvatarModal";
 import { useProfilePhoto } from "@/module/membrs/context/ProfilePhotoContext";
 import defaultAvatar from "./assets/avatar.png?url";

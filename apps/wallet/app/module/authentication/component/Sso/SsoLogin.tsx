@@ -1,6 +1,6 @@
 import { ButtonAuth } from "@frak-labs/ui/component/ButtonAuth";
-import { useLogin } from "@frak-labs/wallet-shared/authentication/hook/useLogin";
-import type { PreviousAuthenticatorModel } from "@frak-labs/wallet-shared/common/storage/dexie/PreviousAuthenticatorModel";
+import type { PreviousAuthenticatorModel } from "@frak-labs/wallet-shared";
+import { useLogin } from "@frak-labs/wallet-shared";
 import { useTranslation } from "react-i18next";
 import styles from "./index.module.css";
 

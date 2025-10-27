@@ -1,9 +1,9 @@
+import type { SdkSessionPayload } from "@frak-labs/wallet-shared";
 import {
     selectDemoPrivateKey,
     selectSdkSession,
     sessionStore,
-} from "@frak-labs/wallet-shared/stores/sessionStore";
-import type { SdkSessionPayload } from "@frak-labs/wallet-shared/types/Session";
+} from "@frak-labs/wallet-shared";
 import { decodeJwt } from "jose";
 import { Panel } from "@/module/common/component/Panel";
 import styles from "./index.module.css";

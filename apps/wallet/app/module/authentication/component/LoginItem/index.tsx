@@ -1,8 +1,8 @@
 import { Button } from "@frak-labs/ui/component/Button";
 import { formatHash } from "@frak-labs/ui/component/HashDisplay";
 import { FingerprintFrak } from "@frak-labs/ui/icons/FingerprintFrak";
-import { useLogin } from "@frak-labs/wallet-shared/authentication/hook/useLogin";
-import type { PreviousAuthenticatorModel } from "@frak-labs/wallet-shared/common/storage/dexie/PreviousAuthenticatorModel";
+import type { PreviousAuthenticatorModel } from "@frak-labs/wallet-shared";
+import { useLogin } from "@frak-labs/wallet-shared";
 import { SquareUser } from "lucide-react";
 import { useTransition } from "react";
 import { useTranslation } from "react-i18next";

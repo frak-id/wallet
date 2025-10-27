@@ -1,4 +1,4 @@
-import type { BalanceItem } from "@frak-labs/wallet-shared/types/Balance";
+import type { BalanceItem } from "@frak-labs/wallet-shared";
 import { isAddressEqual, zeroAddress } from "viem";
 
 export function getUpdatedToken({

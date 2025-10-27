@@ -1,10 +1,10 @@
 import { Button } from "@frak-labs/ui/component/Button";
 import { Spinner } from "@frak-labs/ui/component/Spinner";
-import type { TargetPairingClient } from "@frak-labs/wallet-shared/pairing/clients/target";
+import type { TargetPairingClient } from "@frak-labs/wallet-shared";
 import {
     useDeclineSignatureRequest,
     useSignSignatureRequest,
-} from "@frak-labs/wallet-shared/pairing/hook/useSignSignatureRequest";
+} from "@frak-labs/wallet-shared";
 import type { TargetPairingPendingSignature } from "@frak-labs/wallet-shared/pairing/types";
 import type { MutationStatus } from "@tanstack/react-query";
 import { Check, Shield, X } from "lucide-react";

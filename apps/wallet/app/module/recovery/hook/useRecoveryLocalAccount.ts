@@ -1,4 +1,4 @@
-import type { RecoveryFileContent } from "@frak-labs/wallet-shared/types/Recovery";
+import type { RecoveryFileContent } from "@frak-labs/wallet-shared";
 import { useMutation } from "@tanstack/react-query";
 import { privateKeyToAccount } from "viem/accounts";
 import { recoveryKey } from "@/module/recovery/queryKeys/recovery";

@@ -1,11 +1,11 @@
-import { trackGenericEvent } from "@frak-labs/wallet-shared/common/analytics";
-import { useSessionFlag } from "@frak-labs/wallet-shared/common/hook/useSessionFlag";
 import {
+    emitLifecycleEvent,
     inAppRedirectUrl,
     isInAppBrowser,
     isInIframe,
-} from "@frak-labs/wallet-shared/common/lib/inApp";
-import { emitLifecycleEvent } from "@frak-labs/wallet-shared/sdk/utils/lifecycleEvents";
+    trackGenericEvent,
+    useSessionFlag,
+} from "@frak-labs/wallet-shared";
 import { useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Toast } from "@/module/common/component/Toast";

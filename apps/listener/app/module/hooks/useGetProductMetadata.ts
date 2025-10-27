@@ -1,6 +1,6 @@
 import { addresses, productRegistryAbi } from "@frak-labs/app-essentials";
 import { type ProductTypesKey, productTypesMask } from "@frak-labs/core-sdk";
-import { currentViemClient } from "@frak-labs/wallet-shared/blockchain/provider";
+import { currentViemClient } from "@frak-labs/wallet-shared";
 import type { Hex } from "viem";
 import { readContract } from "viem/actions";
 import { listenerProductKey } from "@/module/queryKeys/product";

@@ -5,10 +5,10 @@ import { prefixModalCss } from "@frak-labs/ui/utils/prefixModalCss";
 import {
     Drawer,
     DrawerContent,
-} from "@frak-labs/wallet-shared/common/component/Drawer";
-import { InAppBrowserToast } from "@frak-labs/wallet-shared/common/component/InAppBrowserToast";
-import { WalletModal } from "@frak-labs/wallet-shared/common/component/WalletModal";
-import { OriginPairingState } from "@frak-labs/wallet-shared/pairing/component/OriginPairingState";
+    InAppBrowserToast,
+    OriginPairingState,
+    WalletModal,
+} from "@frak-labs/wallet-shared";
 import { cx } from "class-variance-authority";
 import {
     type Dispatch,

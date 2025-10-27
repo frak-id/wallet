@@ -1,4 +1,4 @@
-import type { RecoveryFileContent } from "@frak-labs/wallet-shared/types/Recovery";
+import type { RecoveryFileContent } from "@frak-labs/wallet-shared";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AccordionRecoveryItem } from "@/module/common/component/AccordionRecoveryItem";

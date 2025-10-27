@@ -1,5 +1,5 @@
-import type { RewardHistory } from "@frak-labs/wallet-shared/types/RewardHistory";
-import { formatUsd } from "@frak-labs/wallet-shared/wallet/utils/mUsdFormatter";
+import type { RewardHistory } from "@frak-labs/wallet-shared";
+import { formatUsd } from "@frak-labs/wallet-shared";
 import { useTranslation } from "react-i18next";
 import { Skeleton } from "@/module/common/component/Skeleton";
 import { Title } from "@/module/common/component/Title";

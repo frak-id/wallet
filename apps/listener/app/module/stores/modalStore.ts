@@ -3,7 +3,7 @@
  */
 
 import type { ModalStepTypes } from "@frak-labs/core-sdk";
-import { trackGenericEvent } from "@frak-labs/wallet-shared/common/analytics";
+import { trackGenericEvent } from "@frak-labs/wallet-shared";
 import { create } from "zustand";
 import type { AnyModalKey, DisplayedModalStep, ModalStore } from "./types";
 

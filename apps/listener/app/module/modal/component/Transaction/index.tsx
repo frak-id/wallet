@@ -1,7 +1,6 @@
 import type { SendTransactionModalStepType } from "@frak-labs/core-sdk";
 import { ButtonAuth } from "@frak-labs/ui/component/ButtonAuth";
-import { HandleErrors } from "@frak-labs/wallet-shared/authentication/component/HandleErrors";
-import { encodeWalletMulticall } from "@frak-labs/wallet-shared/wallet/utils/multicall";
+import { encodeWalletMulticall, HandleErrors } from "@frak-labs/wallet-shared";
 import { useMemo } from "react";
 import { useAccount, useSendTransaction } from "wagmi";
 import { AccordionTransactions } from "@/module/modal/component/Transaction/AccordionTransactions";

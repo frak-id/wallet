@@ -1,5 +1,5 @@
 import { Button } from "@frak-labs/ui/component/Button";
-import type { WebAuthNWallet } from "@frak-labs/wallet-shared/types/WebAuthN";
+import type { WebAuthNWallet } from "@frak-labs/wallet-shared";
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { AccordionRecoveryItem } from "@/module/common/component/AccordionRecoveryItem";

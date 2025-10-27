@@ -1,10 +1,10 @@
-import { getFromLocalStorage } from "@frak-labs/wallet-shared/common/utils/safeSession";
-import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
-import type { SdkSessionPayload } from "@frak-labs/wallet-shared/types/Session";
+import type { SdkSessionPayload } from "@frak-labs/wallet-shared";
 import {
     type FrakWalletConnector,
+    getFromLocalStorage,
+    sessionStore,
     smartAccountConnector,
-} from "@frak-labs/wallet-shared/wallet/smartWallet/connector";
+} from "@frak-labs/wallet-shared";
 import { decodeJwt } from "jose";
 import { useEffect, useMemo } from "react";
 import { type Address, type Hex, isAddressEqual } from "viem";

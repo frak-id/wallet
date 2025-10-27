@@ -1,3 +1,8 @@
+import {
+    emitLifecycleEvent,
+    sessionStore,
+    updateGlobalProperties,
+} from "@frak-labs/wallet-shared";
 /**
  * Zustand store for iframe resolving context and handshake management
  */
@@ -6,9 +11,6 @@ import {
     type ClientLifecycleEvent,
     FrakContextManager,
 } from "@frak-labs/core-sdk";
-import { updateGlobalProperties } from "@frak-labs/wallet-shared/common/analytics";
-import { emitLifecycleEvent } from "@frak-labs/wallet-shared/sdk/utils/lifecycleEvents";
-import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
 import { type Address, isAddressEqual, keccak256, toHex } from "viem";
 import { create } from "zustand";
 import type { IFrameResolvingContext, ResolvingContextStore } from "./types";

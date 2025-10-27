@@ -1,6 +1,8 @@
-import { authenticatedWalletApi } from "@frak-labs/wallet-shared/common/api/backendClient";
-import type { RecoveryFileContent } from "@frak-labs/wallet-shared/types/Recovery";
-import { getRegisterOptions } from "@frak-labs/wallet-shared/wallet/action/registerOptions";
+import type { RecoveryFileContent } from "@frak-labs/wallet-shared";
+import {
+    authenticatedWalletApi,
+    getRegisterOptions,
+} from "@frak-labs/wallet-shared";
 import { startRegistration } from "@simplewebauthn/browser";
 import { useMutation } from "@tanstack/react-query";
 import { recoveryKey } from "@/module/recovery/queryKeys/recovery";

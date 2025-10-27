@@ -1,7 +1,6 @@
 import { Button } from "@frak-labs/ui/component/Button";
 import { ButtonAuth } from "@frak-labs/ui/component/ButtonAuth";
-import { useLogin } from "@frak-labs/wallet-shared/authentication/hook/useLogin";
-import { isWebAuthNSupported } from "@frak-labs/wallet-shared/common/lib/webauthn";
+import { isWebAuthNSupported, useLogin } from "@frak-labs/wallet-shared";
 import { CloudUpload } from "lucide-react";
 import { Trans, useTranslation } from "react-i18next";
 import { Link } from "react-router";

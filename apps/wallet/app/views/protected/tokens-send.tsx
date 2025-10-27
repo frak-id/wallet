@@ -1,7 +1,7 @@
 import { Button } from "@frak-labs/ui/component/Button";
 import { Input } from "@frak-labs/ui/component/forms/Input";
-import { useGetUserBalance } from "@frak-labs/wallet-shared/tokens/hook/useGetUserBalance";
-import type { BalanceItem } from "@frak-labs/wallet-shared/types/Balance";
+import type { BalanceItem } from "@frak-labs/wallet-shared";
+import { useGetUserBalance } from "@frak-labs/wallet-shared";
 import { memo, useCallback, useEffect, useState } from "react";
 import type {
     FieldErrors,

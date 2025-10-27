@@ -1,4 +1,4 @@
-import { useInteractionSessionStatus } from "@frak-labs/wallet-shared/wallet/hook/useInteractionSessionStatus";
+import { useInteractionSessionStatus } from "@frak-labs/wallet-shared";
 import { X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";

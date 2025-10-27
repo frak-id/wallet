@@ -1,7 +1,4 @@
-import {
-    selectWebauthnSession,
-    sessionStore,
-} from "@frak-labs/wallet-shared/stores/sessionStore";
+import { selectWebauthnSession, sessionStore } from "@frak-labs/wallet-shared";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { AccordionRecoveryItem } from "@/module/common/component/AccordionRecoveryItem";

@@ -1,4 +1,4 @@
-import { dexieDb } from "@frak-labs/wallet-shared/common/storage/dexie/dexieDb";
+import { dexieDb } from "@frak-labs/wallet-shared";
 
 declare const self: ServiceWorkerGlobalScope;
 

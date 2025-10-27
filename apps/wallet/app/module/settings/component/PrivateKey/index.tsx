@@ -1,8 +1,5 @@
 import { Button } from "@frak-labs/ui/component/Button";
-import {
-    selectDemoPrivateKey,
-    sessionStore,
-} from "@frak-labs/wallet-shared/stores/sessionStore";
+import { selectDemoPrivateKey, sessionStore } from "@frak-labs/wallet-shared";
 import { KeyRound } from "lucide-react";
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";

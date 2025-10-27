@@ -1,7 +1,7 @@
 import { type FinalActionType, FrakContextManager } from "@frak-labs/core-sdk";
 import { useCopyToClipboardWithState } from "@frak-labs/ui/hook/useCopyToClipboardWithState";
 import { prefixModalCss } from "@frak-labs/ui/utils/prefixModalCss";
-import { trackGenericEvent } from "@frak-labs/wallet-shared/common/analytics";
+import { trackGenericEvent } from "@frak-labs/wallet-shared";
 import { Copy, Share } from "lucide-react";
 import { useMemo } from "react";
 import { toast } from "sonner";

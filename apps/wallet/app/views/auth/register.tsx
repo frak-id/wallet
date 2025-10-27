@@ -1,6 +1,6 @@
 import { Button } from "@frak-labs/ui/component/Button";
 import { ButtonAuth } from "@frak-labs/ui/component/ButtonAuth";
-import { isWebAuthNSupported } from "@frak-labs/wallet-shared/common/lib/webauthn";
+import { isWebAuthNSupported } from "@frak-labs/wallet-shared";
 import { useEffect, useMemo, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { Link, useNavigate } from "react-router";

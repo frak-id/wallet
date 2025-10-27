@@ -1,6 +1,5 @@
 import { Button } from "@frak-labs/ui/component/Button";
-import { trackGenericEvent } from "@frak-labs/wallet-shared/common/analytics";
-import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
+import { sessionStore, trackGenericEvent } from "@frak-labs/wallet-shared";
 import { useQueryClient } from "@tanstack/react-query";
 import { LogOut } from "lucide-react";
 import { useTranslation } from "react-i18next";

@@ -3,7 +3,7 @@ import {
     selectUser,
     selectUserSetupLater,
     userStore,
-} from "@frak-labs/wallet-shared/stores/userStore";
+} from "@frak-labs/wallet-shared";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";

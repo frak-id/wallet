@@ -4,9 +4,9 @@ import {
     fallbackLng,
     interpolation,
     resources,
+    setupBigIntSerialization,
     supportedLngs,
-} from "@frak-labs/wallet-shared/i18n";
-import { setupBigIntSerialization } from "@frak-labs/wallet-shared/polyfills/bigint-serialization";
+} from "@frak-labs/wallet-shared";
 
 // Setup BigInt serialization polyfill
 setupBigIntSerialization();

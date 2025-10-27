@@ -4,13 +4,12 @@ import type {
 } from "@frak-labs/core-sdk";
 import { decompressJsonFromB64 } from "@frak-labs/core-sdk";
 import type { LifecycleHandler } from "@frak-labs/frame-connector";
-import { restoreBackupData } from "@frak-labs/wallet-shared/sdk/utils/backup";
-import { mapI18nConfig } from "@frak-labs/wallet-shared/sdk/utils/i18nMapper";
-import { emitLifecycleEvent } from "@frak-labs/wallet-shared/sdk/utils/lifecycleEvents";
-import type {
-    SdkSession,
-    Session,
-} from "@frak-labs/wallet-shared/types/Session";
+import type { SdkSession, Session } from "@frak-labs/wallet-shared";
+import {
+    emitLifecycleEvent,
+    mapI18nConfig,
+    restoreBackupData,
+} from "@frak-labs/wallet-shared";
 import { getI18n } from "react-i18next";
 import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 import { processSsoCompletion } from "./ssoHandler";

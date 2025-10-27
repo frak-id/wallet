@@ -11,19 +11,8 @@
   "main": "./src/index.ts",
   "module": "./src/index.ts",
   "exports": {
-    "./common/*": "./src/common/*",
-    "./authentication/*": "./src/authentication/*",
-    "./blockchain/*": "./src/blockchain/*",
+    ".": "./src/index.ts",
     "./pairing/*": "./src/pairing/*",
-    "./sdk/*": "./src/sdk/*",
-    "./tokens/*": "./src/tokens/*",
-    "./types/*": "./src/types/*",
-    "./wallet/*": "./src/wallet/*",
-    "./interaction/*": "./src/interaction/*",
-    "./recovery/*": "./src/recovery/*",
-    "./stores/*": "./src/stores/*",
-    "./i18n": "./src/i18n/config.ts",
-    "./providers/*": "./src/providers/*",
     "./styles/*": "./styles/*"
   },
   "dependencies": {

@@ -1,5 +1,4 @@
-import { authKey } from "@frak-labs/wallet-shared/authentication/queryKeys/auth";
-import { dexieDb } from "@frak-labs/wallet-shared/common/storage/dexie/dexieDb";
+import { authKey, dexieDb } from "@frak-labs/wallet-shared";
 import { useQuery } from "@tanstack/react-query";
 
 /**

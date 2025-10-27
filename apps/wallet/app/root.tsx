@@ -19,7 +19,7 @@ import { rootConfig } from "@/module/root/config";
 import { DetectPWA } from "@/module/wallet/component/DetectPWA";
 import type { Route } from "./+types/root";
 // Import open panel to ensure it's initialized
-import "@frak-labs/wallet-shared/common/analytics";
+import "@frak-labs/wallet-shared";
 
 export const meta = rootConfig.meta;
 export const links = rootConfig.links;

@@ -1,7 +1,9 @@
-import { setProfileId } from "@frak-labs/wallet-shared/common/analytics";
-import { authenticatedWalletApi } from "@frak-labs/wallet-shared/common/api/backendClient";
-import { usePersistentPairingClient } from "@frak-labs/wallet-shared/pairing/hook/usePersistentPairingClient";
-import { WagmiProviderWithDynamicConfig } from "@frak-labs/wallet-shared/providers/BaseProvider";
+import {
+    authenticatedWalletApi,
+    setProfileId,
+    usePersistentPairingClient,
+    WagmiProviderWithDynamicConfig,
+} from "@frak-labs/wallet-shared";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";

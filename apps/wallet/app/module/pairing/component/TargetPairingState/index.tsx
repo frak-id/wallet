@@ -1,10 +1,10 @@
-import { getTargetPairingClient } from "@frak-labs/wallet-shared/pairing/clients/store";
-import { StatusBoxWallet } from "@frak-labs/wallet-shared/pairing/component/PairingStatusBox";
-import type { TargetPairingState as TargetPairingStateType } from "@frak-labs/wallet-shared/pairing/types";
 import {
+    getTargetPairingClient,
+    StatusBoxWallet,
     selectWebauthnSession,
     sessionStore,
-} from "@frak-labs/wallet-shared/stores/sessionStore";
+} from "@frak-labs/wallet-shared";
+import type { TargetPairingState as TargetPairingStateType } from "@frak-labs/wallet-shared/pairing/types";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useStore } from "zustand";

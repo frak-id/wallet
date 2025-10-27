@@ -2,7 +2,7 @@ import type {
     FullInteractionTypesKey,
     GetProductInformationReturnType,
 } from "@frak-labs/core-sdk";
-import { authenticatedWalletApi } from "@frak-labs/wallet-shared/common/api/backendClient";
+import { authenticatedWalletApi } from "@frak-labs/wallet-shared";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import type { Hex } from "viem";

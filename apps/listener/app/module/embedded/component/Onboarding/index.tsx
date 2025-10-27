@@ -1,4 +1,4 @@
-import { useInteractionSessionStatus } from "@frak-labs/wallet-shared/wallet/hook/useInteractionSessionStatus";
+import { useInteractionSessionStatus } from "@frak-labs/wallet-shared";
 import { cx } from "class-variance-authority";
 import {
     type CSSProperties,

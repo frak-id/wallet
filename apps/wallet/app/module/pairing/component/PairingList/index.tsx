@@ -1,12 +1,12 @@
 import { Button } from "@frak-labs/ui/component/Button";
-import { useDeletePairing } from "@frak-labs/wallet-shared/pairing/hook/useDeletePairing";
-import { useGetActivePairings } from "@frak-labs/wallet-shared/pairing/hook/useListPairings";
-import { pairingKey } from "@frak-labs/wallet-shared/pairing/queryKeys";
-import type { Pairing } from "@frak-labs/wallet-shared/pairing/types";
 import {
+    pairingKey,
     selectWebauthnSession,
     sessionStore,
-} from "@frak-labs/wallet-shared/stores/sessionStore";
+    useDeletePairing,
+    useGetActivePairings,
+} from "@frak-labs/wallet-shared";
+import type { Pairing } from "@frak-labs/wallet-shared/pairing/types";
 import { useQueryClient } from "@tanstack/react-query";
 import { Laptop, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";

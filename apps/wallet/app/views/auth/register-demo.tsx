@@ -1,7 +1,6 @@
 import { ButtonAuth } from "@frak-labs/ui/component/ButtonAuth";
-import { authKey } from "@frak-labs/wallet-shared/authentication/queryKeys/auth";
-import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
-import type { Session } from "@frak-labs/wallet-shared/types/Session";
+import type { Session } from "@frak-labs/wallet-shared";
+import { authKey, sessionStore } from "@frak-labs/wallet-shared";
 import { type UseMutationOptions, useMutation } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";

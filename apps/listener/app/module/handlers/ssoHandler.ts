@@ -5,15 +5,15 @@ import {
     RpcErrorCodes,
     type RpcPromiseHandler,
 } from "@frak-labs/frame-connector";
-import { trackAuthCompleted } from "@frak-labs/wallet-shared/common/analytics";
-import { emitLifecycleEvent } from "@frak-labs/wallet-shared/sdk/utils/lifecycleEvents";
-import { addLastAuthentication } from "@frak-labs/wallet-shared/stores/authenticationStore";
-import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
-import type {
-    SdkSession,
-    Session,
-} from "@frak-labs/wallet-shared/types/Session";
-import type { SsoRpcSchema } from "@frak-labs/wallet-shared/types/sso-rpc";
+import {
+    addLastAuthentication,
+    emitLifecycleEvent,
+    type SdkSession,
+    type Session,
+    type SsoRpcSchema,
+    sessionStore,
+    trackAuthCompleted,
+} from "@frak-labs/wallet-shared";
 import type { Hex } from "viem";
 import type { WalletRpcContext } from "@/module/types/context";
 

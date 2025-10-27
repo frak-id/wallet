@@ -6,11 +6,19 @@ import {
 import { ButtonAuth } from "@frak-labs/ui/component/ButtonAuth";
 import { formatHash } from "@frak-labs/ui/component/HashDisplay";
 import { Spinner } from "@frak-labs/ui/component/Spinner";
-import { ssoKey } from "@frak-labs/wallet-shared/authentication/queryKeys/sso";
-import { compressedSsoToParams } from "@frak-labs/wallet-shared/authentication/utils/ssoDataCompression";
-import { authenticationStore } from "@frak-labs/wallet-shared/stores/authenticationStore";
-import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
-import type { Session } from "@frak-labs/wallet-shared/types/Session";
+import type {
+    OnPairingSuccessCallback,
+    Session,
+    SsoRpcSchema,
+} from "@frak-labs/wallet-shared";
+import {
+    authenticationStore,
+    compressedSsoToParams,
+    HandleErrors,
+    sessionStore,
+    ssoKey,
+    ua,
+} from "@frak-labs/wallet-shared";
 import {
     type UseMutationOptions,
     useMutation,
@@ -34,10 +42,6 @@ import {
     createClientCompressionMiddleware,
     createRpcClient,
 } from "@frak-labs/frame-connector";
-import { HandleErrors } from "@frak-labs/wallet-shared/authentication/component/HandleErrors";
-import { ua } from "@frak-labs/wallet-shared/common/lib/ua";
-import type { OnPairingSuccessCallback } from "@frak-labs/wallet-shared/pairing/clients/origin";
-import type { SsoRpcSchema } from "@frak-labs/wallet-shared/types/sso-rpc";
 import { AuthenticateWithPhone } from "@/module/authentication/component/AuthenticateWithPhone";
 
 export default function Sso() {
@@ -305,9 +309,9 @@ function Header() {
     );
     const title = useMemo(
         () =>
-            t("authent.sso.title", {
-                context: lastAuthenticator ? "existing" : "new",
-            }),
+            lastAuthenticator
+                ? t("authent.sso.title_existing")
+                : t("authent.sso.title_new"),
         [t, lastAuthenticator]
     );
 

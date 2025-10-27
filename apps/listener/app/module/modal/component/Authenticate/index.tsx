@@ -1,8 +1,7 @@
 import type { SiweAuthenticateModalStepType } from "@frak-labs/core-sdk";
 import { Spinner } from "@frak-labs/ui/component/Spinner";
 import { prefixModalCss } from "@frak-labs/ui/utils/prefixModalCss";
-import { HandleErrors } from "@frak-labs/wallet-shared/authentication/component/HandleErrors";
-import { TextData } from "@frak-labs/wallet-shared/common/component/TextData";
+import { HandleErrors, TextData } from "@frak-labs/wallet-shared";
 import { useMemo } from "react";
 import { createSiweMessage, type SiweMessage } from "viem/siwe";
 import { useAccount, useSignMessage } from "wagmi";

@@ -1,13 +1,13 @@
 import type { LoginModalStepType } from "@frak-labs/core-sdk";
 import { Spinner } from "@frak-labs/ui/component/Spinner";
 import { prefixModalCss } from "@frak-labs/ui/utils/prefixModalCss";
-import { HandleErrors } from "@frak-labs/wallet-shared/authentication/component/HandleErrors";
-import { useLogin } from "@frak-labs/wallet-shared/authentication/hook/useLogin";
-import { isWebAuthNSupported } from "@frak-labs/wallet-shared/common/lib/webauthn";
 import {
+    HandleErrors,
+    isWebAuthNSupported,
     selectSession,
     sessionStore,
-} from "@frak-labs/wallet-shared/stores/sessionStore";
+    useLogin,
+} from "@frak-labs/wallet-shared";
 import { useEffect, useMemo } from "react";
 import { SsoButton } from "@/module/component/SsoButton";
 import { DismissButton } from "@/module/modal/component/Generic";

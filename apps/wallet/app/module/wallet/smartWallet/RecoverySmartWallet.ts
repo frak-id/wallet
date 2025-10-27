@@ -1,7 +1,9 @@
 import { KernelWallet, kernelAddresses } from "@frak-labs/app-essentials";
-import type { currentViemClient } from "@frak-labs/wallet-shared/blockchain/provider";
-import type { WebAuthNWallet } from "@frak-labs/wallet-shared/types/WebAuthN";
-import type { BaseFrakSmartAccount } from "@frak-labs/wallet-shared/wallet/smartWallet/baseFrakWallet";
+import type {
+    BaseFrakSmartAccount,
+    currentViemClient,
+    WebAuthNWallet,
+} from "@frak-labs/wallet-shared";
 import { isSmartAccountDeployed } from "permissionless";
 import { getAccountNonce } from "permissionless/actions";
 import { memo, tryit } from "radash";

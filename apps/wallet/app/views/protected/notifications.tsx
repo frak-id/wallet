@@ -1,5 +1,5 @@
-import { dexieDb } from "@frak-labs/wallet-shared/common/storage/dexie/dexieDb";
-import type { NotificationModel } from "@frak-labs/wallet-shared/common/storage/dexie/NotificationModel";
+import type { NotificationModel } from "@frak-labs/wallet-shared";
+import { dexieDb } from "@frak-labs/wallet-shared";
 import { useQuery } from "@tanstack/react-query";
 import { BellRing } from "lucide-react";
 import { useTranslation } from "react-i18next";

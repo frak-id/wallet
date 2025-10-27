@@ -9,10 +9,10 @@ import type {
 import {
     getSafeSdkSession,
     getSafeSession,
-} from "@frak-labs/wallet-shared/common/utils/safeSession";
-import { pushBackupData } from "@frak-labs/wallet-shared/sdk/utils/backup";
-import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
-import { interactionSessionStatusQuery } from "@frak-labs/wallet-shared/wallet/hook/useInteractionSessionStatus";
+    interactionSessionStatusQuery,
+    pushBackupData,
+    sessionStore,
+} from "@frak-labs/wallet-shared";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef } from "react";
 import type { WalletRpcContext } from "@/module/types/context";

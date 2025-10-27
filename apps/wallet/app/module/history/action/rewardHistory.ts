@@ -1,7 +1,6 @@
 import type { GetRewardHistoryResponseDto } from "@frak-labs/app-essentials";
 import { indexerApi } from "@frak-labs/client/server";
-import type { HistoryGroup } from "@frak-labs/wallet-shared/types/HistoryGroup";
-import type { RewardHistory } from "@frak-labs/wallet-shared/types/RewardHistory";
+import type { HistoryGroup, RewardHistory } from "@frak-labs/wallet-shared";
 import { type Address, formatUnits, isAddressEqual } from "viem";
 import { groupByDay } from "@/module/history/utils/groupByDay";
 

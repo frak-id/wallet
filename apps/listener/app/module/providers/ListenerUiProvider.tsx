@@ -18,10 +18,10 @@ import type {
     RpcResponse,
 } from "@frak-labs/frame-connector";
 import {
+    emitLifecycleEvent,
     mapI18nConfig,
     translationKeyPathToObject,
-} from "@frak-labs/wallet-shared/sdk/utils/i18nMapper";
-import { emitLifecycleEvent } from "@frak-labs/wallet-shared/sdk/utils/lifecycleEvents";
+} from "@frak-labs/wallet-shared";
 import type { i18n, TOptions } from "i18next";
 import {
     createContext,

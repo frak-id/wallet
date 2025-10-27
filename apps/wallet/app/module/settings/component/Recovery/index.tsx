@@ -1,7 +1,4 @@
-import {
-    selectWebauthnSession,
-    sessionStore,
-} from "@frak-labs/wallet-shared/stores/sessionStore";
+import { selectWebauthnSession, sessionStore } from "@frak-labs/wallet-shared";
 import { Shield } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";

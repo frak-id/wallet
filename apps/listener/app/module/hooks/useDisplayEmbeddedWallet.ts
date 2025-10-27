@@ -9,12 +9,12 @@ import {
     FrakRpcError,
     RpcErrorCodes,
 } from "@frak-labs/frame-connector";
-import { trackGenericEvent } from "@frak-labs/wallet-shared/common/analytics";
 import {
     selectSession,
     sessionStore,
-} from "@frak-labs/wallet-shared/stores/sessionStore";
-import { useInteractionSessionStatus } from "@frak-labs/wallet-shared/wallet/hook/useInteractionSessionStatus";
+    trackGenericEvent,
+    useInteractionSessionStatus,
+} from "@frak-labs/wallet-shared";
 import { useCallback, useEffect, useRef } from "react";
 import type { Hex } from "viem";
 import { useAccount } from "wagmi";

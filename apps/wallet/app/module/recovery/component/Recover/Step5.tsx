@@ -1,4 +1,4 @@
-import type { RecoveryFileContent } from "@frak-labs/wallet-shared/types/Recovery";
+import type { RecoveryFileContent } from "@frak-labs/wallet-shared";
 import { SendHorizontal } from "lucide-react";
 import { sleep } from "radash";
 import { useMemo } from "react";

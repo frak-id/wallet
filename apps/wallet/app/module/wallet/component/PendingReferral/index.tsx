@@ -1,9 +1,11 @@
 import { campaignBankAbi } from "@frak-labs/app-essentials/blockchain";
 import { Button } from "@frak-labs/ui/component/Button";
-import { authenticatedBackendApi } from "@frak-labs/wallet-shared/common/api/backendClient";
-import { balanceKey } from "@frak-labs/wallet-shared/common/queryKeys/balance";
-import { claimableKey } from "@frak-labs/wallet-shared/wallet/queryKeys/claimable";
-import { encodeWalletMulticall } from "@frak-labs/wallet-shared/wallet/utils/multicall";
+import {
+    authenticatedBackendApi,
+    balanceKey,
+    claimableKey,
+    encodeWalletMulticall,
+} from "@frak-labs/wallet-shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CircleDollarSign } from "lucide-react";
 import { useTranslation } from "react-i18next";

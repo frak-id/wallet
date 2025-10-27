@@ -1,6 +1,8 @@
-import { trackGenericEvent } from "@frak-labs/wallet-shared/common/analytics";
-import { emitLifecycleEvent } from "@frak-labs/wallet-shared/sdk/utils/lifecycleEvents";
-import { sessionStore } from "@frak-labs/wallet-shared/stores/sessionStore";
+import {
+    emitLifecycleEvent,
+    sessionStore,
+    trackGenericEvent,
+} from "@frak-labs/wallet-shared";
 import { WebAuthnAbortService } from "@simplewebauthn/browser";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";

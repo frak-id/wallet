@@ -1,5 +1,5 @@
-import { WalletModal } from "@frak-labs/wallet-shared/common/component/WalletModal";
-import type { BalanceItem } from "@frak-labs/wallet-shared/types/Balance";
+import type { BalanceItem } from "@frak-labs/wallet-shared";
+import { WalletModal } from "@frak-labs/wallet-shared";
 import { useState } from "react";
 import { TokenList } from "@/module/tokens/component/TokenList";
 import { TokenLogo } from "@/module/tokens/component/TokenLogo";

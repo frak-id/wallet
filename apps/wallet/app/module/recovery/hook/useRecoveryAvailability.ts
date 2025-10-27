@@ -1,4 +1,4 @@
-import type { RecoveryFileContent } from "@frak-labs/wallet-shared/types/Recovery";
+import type { RecoveryFileContent } from "@frak-labs/wallet-shared";
 import { useQuery } from "@tanstack/react-query";
 import { getRecoveryAvailability } from "@/module/recovery/action/get";
 import { recoveryKey } from "@/module/recovery/queryKeys/recovery";

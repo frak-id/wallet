@@ -2,10 +2,12 @@ import { IconInfo } from "@frak-labs/ui/component/IconInfo";
 import { Spinner } from "@frak-labs/ui/component/Spinner";
 import { Switch } from "@frak-labs/ui/component/Switch";
 import { Tooltip } from "@frak-labs/ui/component/Tooltip";
-import type { InteractionSession } from "@frak-labs/wallet-shared/types/Session";
-import { useCloseSession } from "@frak-labs/wallet-shared/wallet/hook/useCloseSession";
-import { useInteractionSessionStatus } from "@frak-labs/wallet-shared/wallet/hook/useInteractionSessionStatus";
-import { useOpenSession } from "@frak-labs/wallet-shared/wallet/hook/useOpenSession";
+import type { InteractionSession } from "@frak-labs/wallet-shared";
+import {
+    useCloseSession,
+    useInteractionSessionStatus,
+    useOpenSession,
+} from "@frak-labs/wallet-shared";
 import { useTranslation } from "react-i18next";
 import { useAccount } from "wagmi";
 import styles from "./index.module.css";

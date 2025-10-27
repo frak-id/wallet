@@ -3,11 +3,8 @@ import {
     isRunningInProd,
     kernelAddresses,
 } from "@frak-labs/app-essentials";
-import {
-    doAddPassKeyFnAbi,
-    setExecutionAbi,
-} from "@frak-labs/wallet-shared/recovery/utils/abi";
-import type { GeneratedRecoveryData } from "@frak-labs/wallet-shared/types/Recovery";
+import type { GeneratedRecoveryData } from "@frak-labs/wallet-shared";
+import { doAddPassKeyFnAbi, setExecutionAbi } from "@frak-labs/wallet-shared";
 import { type Address, encodeFunctionData, toFunctionSelector } from "viem";
 
 /**

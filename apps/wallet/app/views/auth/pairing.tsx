@@ -1,8 +1,10 @@
 import { Button } from "@frak-labs/ui/component/Button";
 import { Skeleton } from "@frak-labs/ui/component/Skeleton";
-import { getTargetPairingClient } from "@frak-labs/wallet-shared/pairing/clients/store";
-import { PairingCode } from "@frak-labs/wallet-shared/pairing/component/PairingCode";
-import { usePairingInfo } from "@frak-labs/wallet-shared/pairing/hook/usePairingInfo";
+import {
+    getTargetPairingClient,
+    PairingCode,
+    usePairingInfo,
+} from "@frak-labs/wallet-shared";
 import { AlertCircle } from "lucide-react";
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";

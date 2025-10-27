@@ -1,4 +1,4 @@
-import type { BalanceItem } from "@frak-labs/wallet-shared/types/Balance";
+import type { BalanceItem } from "@frak-labs/wallet-shared";
 import { t } from "i18next";
 
 export const validateAmount = (value: string, selectedToken: BalanceItem) => {

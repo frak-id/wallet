@@ -1,5 +1,7 @@
-import { useGetSafeSdkSession } from "@frak-labs/wallet-shared/common/hook/useGetSafeSdkSession";
-import { interactionSessionStatusQuery } from "@frak-labs/wallet-shared/wallet/hook/useInteractionSessionStatus";
+import {
+    interactionSessionStatusQuery,
+    useGetSafeSdkSession,
+} from "@frak-labs/wallet-shared";
 import { useQueries } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { useAccount } from "wagmi";
