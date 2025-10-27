@@ -32,11 +32,21 @@ export const authenticatorStorage = {
      * Get all authenticators
      */
     async getAll(): Promise<PreviousAuthenticatorModel[]> {
-        return (
-            (await get<PreviousAuthenticatorModel[]>(
-                AUTHENTICATORS_KEY,
-                authenticatorStore
-            )) || []
-        );
+        try {
+            return (
+                (await get<PreviousAuthenticatorModel[]>(
+                    AUTHENTICATORS_KEY,
+                    authenticatorStore
+                )) || []
+            );
+        } catch (err) {
+            // If store doesn't exist yet (no writes have been made), return empty array
+            if (err instanceof DOMException && err.name === "NotFoundError") {
+                return [];
+            }
+            // Log unexpected errors for debugging
+            console.error("Failed to get authenticators:", err);
+            return [];
+        }
     },
 };

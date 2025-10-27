@@ -15,15 +15,24 @@ import { notificationKey } from "@/module/notification/queryKeys/notification";
  */
 export default function Notifications() {
     const { t } = useTranslation();
-    const { data: notifications } = useQuery({
+    const { data: notifications, isLoading } = useQuery({
         queryKey: notificationKey.history.baseKey,
         queryFn: async () => {
             // Notifications are already sorted by timestamp in storage
+            // Error handling is done in the storage layer
             return await notificationStorage.getAll();
         },
+        // Add default value to prevent loading state on first render
+        initialData: [],
     });
 
-    if (!notifications) return <Skeleton count={3} height={110} />;
+    if (isLoading) {
+        return (
+            <Grid>
+                <Skeleton count={3} height={110} />
+            </Grid>
+        );
+    }
 
     if (notifications.length === 0) {
         return (

@@ -27,11 +27,21 @@ export const notificationStorage = {
      * Get all notifications sorted by timestamp (newest first)
      */
     async getAll(): Promise<NotificationModel[]> {
-        const notifications =
-            (await get<NotificationModel[]>(
-                NOTIFICATIONS_KEY,
-                notificationStore
-            )) || [];
-        return notifications.sort((a, b) => b.timestamp - a.timestamp);
+        try {
+            const notifications =
+                (await get<NotificationModel[]>(
+                    NOTIFICATIONS_KEY,
+                    notificationStore
+                )) || [];
+            return notifications.sort((a, b) => b.timestamp - a.timestamp);
+        } catch (err) {
+            // If store doesn't exist yet (no writes have been made), return empty array
+            if (err instanceof DOMException && err.name === "NotFoundError") {
+                return [];
+            }
+            // Log unexpected errors for debugging
+            console.error("Failed to get notifications:", err);
+            return [];
+        }
     },
 };
