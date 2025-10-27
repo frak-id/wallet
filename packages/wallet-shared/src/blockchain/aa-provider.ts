@@ -29,9 +29,3 @@ export const getPimlicoClient = memo(
         }),
     { key: () => "pimlico-client" }
 );
-
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-expect-error: Unreachable code error
-BigInt.prototype.toJSON = function (): string {
-    return this.toString();
-};

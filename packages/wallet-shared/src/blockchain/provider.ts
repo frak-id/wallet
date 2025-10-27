@@ -13,9 +13,3 @@ export const currentChain = isRunningInProd ? arbitrum : arbitrumSepolia;
 export const currentViemClient = getViemClientFromChain({
     chain: currentChain,
 });
-
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-expect-error: Unreachable code error
-BigInt.prototype.toJSON = function (): string {
-    return this.toString();
-};

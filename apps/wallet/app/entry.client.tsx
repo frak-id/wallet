@@ -6,6 +6,11 @@ import {
     resources,
     supportedLngs,
 } from "@frak-labs/wallet-shared/i18n";
+import { setupBigIntSerialization } from "@frak-labs/wallet-shared/polyfills/bigint-serialization";
+
+// Setup BigInt serialization polyfill
+setupBigIntSerialization();
+
 import i18next from "i18next";
 import I18nextBrowserLanguageDetector from "i18next-browser-languagedetector";
 import { StrictMode, startTransition } from "react";
