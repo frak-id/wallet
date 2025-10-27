@@ -5,12 +5,12 @@ export * from "./analytics";
 export * from "./api/backendClient";
 
 // Components
-export * from "./component/AlertDialog";
 export * from "./component/Drawer";
 export * from "./component/InAppBrowserToast";
 export * from "./component/Markdown";
 export * from "./component/TextData";
 export * from "./component/Toast";
+export { WalletModal } from "./component/WalletModal";
 export * from "./component/Warning";
 
 // Hooks

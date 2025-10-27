@@ -5,7 +5,7 @@ import { X } from "lucide-react";
 import type { ReactNode } from "react";
 import styles from "./index.module.css";
 
-type AlertDialogComponentProps = {
+type WalletModalProps = {
     title?: ReactNode;
     description?: string;
     text?: ReactNode | string;
@@ -28,7 +28,7 @@ type AlertDialogComponentProps = {
     classNameTitle?: string;
 };
 
-export function AlertDialog({
+export function WalletModal({
     title,
     description,
     text,
@@ -44,7 +44,7 @@ export function AlertDialog({
     onOpenChange,
     classNameContent = "",
     classNameTitle = "",
-}: AlertDialogComponentProps) {
+}: WalletModalProps) {
     return (
         <AlertDialogPrimitive.Root
             defaultOpen={defaultOpen}

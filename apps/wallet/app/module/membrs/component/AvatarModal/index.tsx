@@ -2,7 +2,7 @@ import { Button } from "@frak-labs/ui/component/Button";
 import { Slider } from "@frak-labs/ui/component/Slider";
 import { Uploader } from "@frak-labs/ui/component/Uploader";
 import { Upload } from "@frak-labs/ui/icons/Upload";
-import { AlertDialog } from "@frak-labs/wallet-shared/common/component/AlertDialog";
+import { WalletModal } from "@frak-labs/wallet-shared/common/component/WalletModal";
 import { useCallback, useEffect, useRef, useState } from "react";
 import ReactAvatarEditor from "react-avatar-editor";
 import { useTranslation } from "react-i18next";
@@ -55,7 +55,7 @@ export function AvatarModal() {
     const setOpenModal = useLocalModalStore((state) => state.setIsOpen);
 
     return (
-        <AlertDialog
+        <WalletModal
             open={openModal}
             onOpenChange={setOpenModal}
             title={t("wallet.membrs.profile.avatar.title")}

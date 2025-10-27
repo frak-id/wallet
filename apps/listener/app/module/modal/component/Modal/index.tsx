@@ -2,12 +2,12 @@ import { RpcErrorCodes } from "@frak-labs/frame-connector";
 import { useMediaQuery } from "@frak-labs/ui/hook/useMediaQuery";
 import { LogoFrakWithName } from "@frak-labs/ui/icons/LogoFrakWithName";
 import { prefixModalCss } from "@frak-labs/ui/utils/prefixModalCss";
-import { AlertDialog } from "@frak-labs/wallet-shared/common/component/AlertDialog";
 import {
     Drawer,
     DrawerContent,
 } from "@frak-labs/wallet-shared/common/component/Drawer";
 import { InAppBrowserToast } from "@frak-labs/wallet-shared/common/component/InAppBrowserToast";
+import { WalletModal } from "@frak-labs/wallet-shared/common/component/WalletModal";
 import { OriginPairingState } from "@frak-labs/wallet-shared/pairing/component/OriginPairingState";
 import { cx } from "class-variance-authority";
 import {
@@ -229,10 +229,10 @@ function ModalComponent({
     // Check if the screen is desktop or mobile
     const isDesktop = useMediaQuery("(min-width : 600px)");
 
-    // Use a Drawer for mobile and an AlertDialog for desktop
+    // Use a Drawer for mobile and a WalletModal for desktop
     if (isDesktop) {
         return (
-            <AlertDialog
+            <WalletModal
                 classNameTitle={styles.modalListener__title}
                 title={title}
                 text={children}
