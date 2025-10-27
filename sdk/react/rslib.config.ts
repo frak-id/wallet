@@ -6,7 +6,9 @@ function createLibConfig(config: LibConfig = {}): LibConfig {
     const basicConfig: LibConfig = {
         syntax: "es2022",
         dts: {
-            bundle: false,
+            bundle: {
+                bundledPackages: [],
+            },
             autoExtension: true,
         },
         source: {
