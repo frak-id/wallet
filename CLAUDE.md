@@ -87,6 +87,22 @@ bun run changeset:release
   - `dashboard/` - Next.js 15 business dashboard (standalone output)
   - `dashboard-admin/` - React Router admin interface
 - **`packages/`** - Shared internal libraries (workspace-only)
+  - `wallet-shared/` - Shared code for wallet and listener apps
+    - `authentication/` - WebAuthn authentication hooks and session management
+    - `wallet/` - Smart wallet operations and balance queries
+    - `pairing/` - Device pairing flows and signature requests
+    - `tokens/` - Token management and display hooks
+    - `interaction/` - Interaction tracking utilities
+    - `recovery/` - Account recovery flows and encryption
+    - `stores/` - Zustand state management (sessionStore, userStore, walletStore, authenticationStore)
+    - `types/` - Shared TypeScript type definitions
+    - `common/` - Shared utilities, components, analytics (OpenPanel), and storage (Dexie)
+    - `blockchain/` - Blockchain providers and Account Abstraction setup
+    - `i18n/` - Internationalization configuration
+    - `sdk/` - SDK lifecycle utilities
+    - `providers/` - React context providers (FrakContext)
+    - `polyfills/` - Runtime polyfills (BigInt serialization)
+    - **Note**: This package has grown large and contains multiple concerns. Two AlertDialog implementations exist (ui vs wallet-shared) with different features (CSS prefixing, custom close buttons). Stores are missing "use client" directives needed for Next.js compatibility. See `docs/audit/PACKAGE_SPLIT_OPTIONS.md` for refactoring plans.
   - `ui/` - Radix UI-based component library
   - `app-essentials/` - Core blockchain utilities and WebAuthn
   - `client/` - API client abstractions
