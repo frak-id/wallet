@@ -1,5 +1,5 @@
-import type { Address } from "viem";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { createMockSdkSession, createMockSession } from "../../test/factories";
 import type { SdkSession, Session } from "../../types/Session";
 import { getSafeSdkSession, getSafeSession } from "./safeSession";
 
@@ -30,17 +30,13 @@ describe("safeSession utilities", () => {
         it("should return session from store when available", async () => {
             const { sessionStore } = await import("../../stores/sessionStore");
 
-            const mockSession: Session = {
-                type: "webauthn",
-                address:
-                    "0x1234567890123456789012345678901234567890" as Address,
+            const mockSession = createMockSession({
                 publicKey: {
                     x: "0xabc" as `0x${string}`,
                     y: "0xdef" as `0x${string}`,
                 },
-                authenticatorId: "auth-123",
                 token: "session-token",
-            };
+            });
 
             vi.mocked(sessionStore.getState).mockReturnValue({
                 session: mockSession,
@@ -70,17 +66,13 @@ describe("safeSession utilities", () => {
                 clearSession: vi.fn(),
             });
 
-            const mockSession: Session = {
-                type: "webauthn",
-                address:
-                    "0x1234567890123456789012345678901234567890" as Address,
+            const mockSession = createMockSession({
                 publicKey: {
                     x: "0xabc" as `0x${string}`,
                     y: "0xdef" as `0x${string}`,
                 },
-                authenticatorId: "auth-123",
                 token: "session-token",
-            };
+            });
 
             localStorage.setItem(
                 "frak_session_store",
@@ -135,10 +127,7 @@ describe("safeSession utilities", () => {
         it("should return SDK session from store when available", async () => {
             const { sessionStore } = await import("../../stores/sessionStore");
 
-            const mockSdkSession: SdkSession = {
-                token: "sdk-token",
-                expires: Date.now() + 3600000,
-            };
+            const mockSdkSession = createMockSdkSession({ token: "sdk-token" });
 
             vi.mocked(sessionStore.getState).mockReturnValue({
                 session: null,
@@ -168,10 +157,7 @@ describe("safeSession utilities", () => {
                 clearSession: vi.fn(),
             });
 
-            const mockSdkSession: SdkSession = {
-                token: "sdk-token",
-                expires: Date.now() + 3600000,
-            };
+            const mockSdkSession = createMockSdkSession({ token: "sdk-token" });
 
             localStorage.setItem(
                 "frak_session_store",

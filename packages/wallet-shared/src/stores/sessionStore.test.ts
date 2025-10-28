@@ -1,6 +1,12 @@
 import type { Session } from "@frak-labs/wallet-shared";
 import { beforeEach, describe, expect, it } from "vitest";
 import {
+    createMockDistantWebAuthNSession,
+    createMockEcdsaSession,
+    createMockSdkSession,
+    createMockSession,
+} from "../test/factories";
+import {
     selectDemoPrivateKey,
     selectDistantWebauthnSession,
     selectEcdsaSession,
@@ -28,32 +34,14 @@ describe("sessionStore", () => {
 
     describe("setSession", () => {
         it("should set session", () => {
-            const mockSession: Session = {
-                token: "test-token-123",
-                address: "0x1234567890123456789012345678901234567890",
-                type: "webauthn",
-                authenticatorId: "auth-123",
-                publicKey: {
-                    x: "0x1234567890123456789012345678901234567890123456789012345678901234",
-                    y: "0xabcdef1234567890123456789012345678901234567890123456789012345678",
-                },
-            } as Session;
+            const mockSession = createMockSession({ token: "test-token-123" });
 
             sessionStore.getState().setSession(mockSession);
             expect(sessionStore.getState().session).toEqual(mockSession);
         });
 
         it("should clear session when null", () => {
-            const mockSession: Session = {
-                token: "test-token",
-                address: "0x1234567890123456789012345678901234567890",
-                type: "webauthn",
-                authenticatorId: "auth-123",
-                publicKey: {
-                    x: "0x1234567890123456789012345678901234567890123456789012345678901234",
-                    y: "0xabcdef1234567890123456789012345678901234567890123456789012345678",
-                },
-            } as Session;
+            const mockSession = createMockSession();
 
             sessionStore.getState().setSession(mockSession);
             sessionStore.getState().setSession(null);
@@ -61,16 +49,7 @@ describe("sessionStore", () => {
         });
 
         it("should work with selector", () => {
-            const mockSession: Session = {
-                token: "test-token",
-                address: "0x1234567890123456789012345678901234567890",
-                type: "webauthn",
-                authenticatorId: "auth-123",
-                publicKey: {
-                    x: "0x1234567890123456789012345678901234567890123456789012345678901234",
-                    y: "0xabcdef1234567890123456789012345678901234567890123456789012345678",
-                },
-            } as Session;
+            const mockSession = createMockSession();
 
             sessionStore.getState().setSession(mockSession);
             expect(selectSession(sessionStore.getState())).toEqual(mockSession);
@@ -79,20 +58,18 @@ describe("sessionStore", () => {
 
     describe("setSdkSession", () => {
         it("should set SDK session", () => {
-            const mockSdkSession = {
+            const mockSdkSession = createMockSdkSession({
                 token: "sdk-token-123",
-                expires: Date.now() + 3600000,
-            };
+            });
 
             sessionStore.getState().setSdkSession(mockSdkSession);
             expect(sessionStore.getState().sdkSession).toEqual(mockSdkSession);
         });
 
         it("should clear SDK session when null", () => {
-            const mockSdkSession = {
+            const mockSdkSession = createMockSdkSession({
                 token: "sdk-token-123",
-                expires: Date.now() + 3600000,
-            };
+            });
 
             sessionStore.getState().setSdkSession(mockSdkSession);
             sessionStore.getState().setSdkSession(null);
@@ -100,10 +77,9 @@ describe("sessionStore", () => {
         });
 
         it("should work with selector", () => {
-            const mockSdkSession = {
+            const mockSdkSession = createMockSdkSession({
                 token: "sdk-token-123",
-                expires: Date.now() + 3600000,
-            };
+            });
 
             sessionStore.getState().setSdkSession(mockSdkSession);
             expect(selectSdkSession(sessionStore.getState())).toEqual(
@@ -138,20 +114,10 @@ describe("sessionStore", () => {
 
     describe("clearSession", () => {
         it("should clear all session data", () => {
-            const mockSession: Session = {
-                token: "test-token",
-                address: "0x1234567890123456789012345678901234567890",
-                type: "webauthn",
-                authenticatorId: "auth-123",
-                publicKey: {
-                    x: "0x1234567890123456789012345678901234567890123456789012345678901234",
-                    y: "0xabcdef1234567890123456789012345678901234567890123456789012345678",
-                },
-            } as Session;
-            const mockSdkSession = {
+            const mockSession = createMockSession();
+            const mockSdkSession = createMockSdkSession({
                 token: "sdk-token-123",
-                expires: Date.now() + 3600000,
-            };
+            });
             const mockKey = "0xprivatekey123" as `0x${string}`;
 
             // Set all values
@@ -172,16 +138,7 @@ describe("sessionStore", () => {
 
     describe("selectWebauthnSession", () => {
         it("should return webauthn session", () => {
-            const mockSession: Session = {
-                token: "test-token",
-                address: "0x1234567890123456789012345678901234567890",
-                type: "webauthn",
-                authenticatorId: "auth-123",
-                publicKey: {
-                    x: "0x1234567890123456789012345678901234567890123456789012345678901234",
-                    y: "0xabcdef1234567890123456789012345678901234567890123456789012345678",
-                },
-            } as Session;
+            const mockSession = createMockSession();
 
             sessionStore.getState().setSession(mockSession);
             const result = selectWebauthnSession(sessionStore.getState());
@@ -205,14 +162,7 @@ describe("sessionStore", () => {
         });
 
         it("should return null for non-webauthn session", () => {
-            const mockSession: Session = {
-                token: "test-token",
-                address: "0x1234567890123456789012345678901234567890",
-                type: "ecdsa",
-                publicKey: "0x123456",
-                authenticatorId: "ecdsa-123",
-                transports: undefined,
-            } as Session;
+            const mockSession = createMockEcdsaSession();
 
             sessionStore.getState().setSession(mockSession);
             const result = selectWebauthnSession(sessionStore.getState());
@@ -227,14 +177,7 @@ describe("sessionStore", () => {
 
     describe("selectEcdsaSession", () => {
         it("should return ecdsa session", () => {
-            const mockSession: Session = {
-                token: "test-token",
-                address: "0x1234567890123456789012345678901234567890",
-                type: "ecdsa",
-                publicKey: "0x123456",
-                authenticatorId: "ecdsa-123",
-                transports: undefined,
-            } as Session;
+            const mockSession = createMockEcdsaSession();
 
             sessionStore.getState().setSession(mockSession);
             const result = selectEcdsaSession(sessionStore.getState());
@@ -242,16 +185,7 @@ describe("sessionStore", () => {
         });
 
         it("should return null for non-ecdsa session", () => {
-            const mockSession: Session = {
-                token: "test-token",
-                address: "0x1234567890123456789012345678901234567890",
-                type: "webauthn",
-                authenticatorId: "auth-123",
-                publicKey: {
-                    x: "0x1234567890123456789012345678901234567890123456789012345678901234",
-                    y: "0xabcdef1234567890123456789012345678901234567890123456789012345678",
-                },
-            } as Session;
+            const mockSession = createMockSession();
 
             sessionStore.getState().setSession(mockSession);
             const result = selectEcdsaSession(sessionStore.getState());
@@ -266,18 +200,7 @@ describe("sessionStore", () => {
 
     describe("selectDistantWebauthnSession", () => {
         it("should return distant-webauthn session", () => {
-            const mockSession: Session = {
-                token: "test-token",
-                address: "0x1234567890123456789012345678901234567890",
-                type: "distant-webauthn",
-                authenticatorId: "auth-123",
-                pairingId: "pairing-123",
-                publicKey: {
-                    x: "0x1234567890123456789012345678901234567890123456789012345678901234",
-                    y: "0xabcdef1234567890123456789012345678901234567890123456789012345678",
-                },
-                transports: undefined,
-            } as Session;
+            const mockSession = createMockDistantWebAuthNSession();
 
             sessionStore.getState().setSession(mockSession);
             const result = selectDistantWebauthnSession(
@@ -287,16 +210,7 @@ describe("sessionStore", () => {
         });
 
         it("should return null for non-distant-webauthn session", () => {
-            const mockSession: Session = {
-                token: "test-token",
-                address: "0x1234567890123456789012345678901234567890",
-                type: "webauthn",
-                authenticatorId: "auth-123",
-                publicKey: {
-                    x: "0x1234567890123456789012345678901234567890123456789012345678901234",
-                    y: "0xabcdef1234567890123456789012345678901234567890123456789012345678",
-                },
-            } as Session;
+            const mockSession = createMockSession();
 
             sessionStore.getState().setSession(mockSession);
             const result = selectDistantWebauthnSession(
