@@ -76,7 +76,8 @@
   },
   "resolutions": {
     "caniuse-lite": "^1.0.30001751",
-    "@wagmi/connectors": "file:.stubs/wagmi-connectors-stub"
+    "@wagmi/connectors": "file:.stubs/wagmi-connectors-stub",
+    "parse5": "^7.2.1"
   },
   "trustedDependencies": []
 }
