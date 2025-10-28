@@ -6,17 +6,14 @@ describe("setupBigIntSerialization", () => {
 
     beforeEach(() => {
         // Save original toJSON if it exists
-        // biome-ignore lint/suspicious/noExplicitAny: BigInt.prototype doesn't have toJSON in type definition
         originalToJSON = (BigInt.prototype as any).toJSON;
         // Remove toJSON to simulate fresh environment
-        // biome-ignore lint/suspicious/noExplicitAny: BigInt.prototype doesn't have toJSON in type definition
         delete (BigInt.prototype as any).toJSON;
     });
 
     afterEach(() => {
         // Restore original toJSON
         if (originalToJSON) {
-            // biome-ignore lint/suspicious/noExplicitAny: BigInt.prototype doesn't have toJSON in type definition
             (BigInt.prototype as any).toJSON = originalToJSON;
         }
     });
@@ -24,9 +21,7 @@ describe("setupBigIntSerialization", () => {
     it("should add toJSON method to BigInt prototype", () => {
         setupBigIntSerialization();
 
-        // biome-ignore lint/suspicious/noExplicitAny: BigInt.prototype doesn't have toJSON in type definition
         expect((BigInt.prototype as any).toJSON).toBeDefined();
-        // biome-ignore lint/suspicious/noExplicitAny: BigInt.prototype doesn't have toJSON in type definition
         expect(typeof (BigInt.prototype as any).toJSON).toBe("function");
     });
 
@@ -104,12 +99,10 @@ describe("setupBigIntSerialization", () => {
     it("should not override existing toJSON if already present", () => {
         // Add a custom toJSON first
         const customToJSON = () => "custom";
-        // biome-ignore lint/suspicious/noExplicitAny: BigInt.prototype doesn't have toJSON in type definition
         (BigInt.prototype as any).toJSON = customToJSON;
 
         setupBigIntSerialization();
 
-        // biome-ignore lint/suspicious/noExplicitAny: BigInt.prototype doesn't have toJSON in type definition
         expect((BigInt.prototype as any).toJSON).toBe(customToJSON);
 
         // Custom function should still work
@@ -120,11 +113,9 @@ describe("setupBigIntSerialization", () => {
 
     it("should be idempotent", () => {
         setupBigIntSerialization();
-        // biome-ignore lint/suspicious/noExplicitAny: BigInt.prototype doesn't have toJSON in type definition
         const firstToJSON = (BigInt.prototype as any).toJSON;
 
         setupBigIntSerialization();
-        // biome-ignore lint/suspicious/noExplicitAny: BigInt.prototype doesn't have toJSON in type definition
         const secondToJSON = (BigInt.prototype as any).toJSON;
 
         expect(firstToJSON).toBe(secondToJSON);
@@ -134,7 +125,6 @@ describe("setupBigIntSerialization", () => {
         setupBigIntSerialization();
 
         const bigInt = BigInt(456);
-        // biome-ignore lint/suspicious/noExplicitAny: BigInt.prototype doesn't have toJSON in type definition
         const result = (bigInt as any).toJSON();
 
         expect(result).toBe("456");

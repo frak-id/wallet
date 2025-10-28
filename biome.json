@@ -89,6 +89,26 @@
             }
         }
     },
+    "overrides": [
+        {
+            "includes": [
+                "**/*.test.ts",
+                "**/*.test.tsx",
+                "**/*.spec.ts",
+                "**/*.spec.tsx"
+            ],
+            "linter": {
+                "rules": {
+                    "suspicious": {
+                        "noExplicitAny": "off"
+                    },
+                    "style": {
+                        "noNonNullAssertion": "off"
+                    }
+                }
+            }
+        }
+    ],
     "formatter": {
         "enabled": true,
         "indentStyle": "space",

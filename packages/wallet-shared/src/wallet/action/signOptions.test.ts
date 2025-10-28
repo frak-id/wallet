@@ -1,0 +1,195 @@
+import { WebAuthN } from "@frak-labs/app-essentials";
+import * as simplewebauthn from "@simplewebauthn/server";
+import type { Hex } from "viem";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { getSignOptions } from "./signOptions";
+
+// Mock dependencies
+vi.mock("@simplewebauthn/server", () => ({
+    generateAuthenticationOptions: vi.fn(),
+}));
+
+describe("getSignOptions", () => {
+    const mockAuthenticatorId = "mock-authenticator-id";
+    const mockToSign =
+        "0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890" as Hex;
+    const mockAuthenticationOptions = {
+        challenge: "mock-challenge",
+        rpId: "frak.id",
+        allowCredentials: [],
+    };
+
+    beforeEach(() => {
+        vi.clearAllMocks();
+
+        // Mock generateAuthenticationOptions
+        vi.mocked(
+            simplewebauthn.generateAuthenticationOptions
+        ).mockResolvedValue(mockAuthenticationOptions as any);
+    });
+
+    it("should generate authentication options with authenticatorId", async () => {
+        await getSignOptions({
+            authenticatorId: mockAuthenticatorId,
+            toSign: mockToSign,
+        });
+
+        expect(
+            simplewebauthn.generateAuthenticationOptions
+        ).toHaveBeenCalledWith(
+            expect.objectContaining({
+                allowCredentials: [
+                    {
+                        id: mockAuthenticatorId,
+                        transports: undefined,
+                    },
+                ],
+            })
+        );
+    });
+
+    it("should convert toSign hex to bytes for challenge", async () => {
+        await getSignOptions({
+            authenticatorId: mockAuthenticatorId,
+            toSign: mockToSign,
+        });
+
+        // Verify challenge was passed as Uint8Array
+        const call = vi.mocked(simplewebauthn.generateAuthenticationOptions)
+            .mock.calls[0][0];
+        expect(call.challenge).toBeInstanceOf(Uint8Array);
+    });
+
+    it("should use WebAuthN rpId configuration", async () => {
+        await getSignOptions({
+            authenticatorId: mockAuthenticatorId,
+            toSign: mockToSign,
+        });
+
+        expect(
+            simplewebauthn.generateAuthenticationOptions
+        ).toHaveBeenCalledWith(
+            expect.objectContaining({
+                rpID: WebAuthN.rpId,
+            })
+        );
+    });
+
+    it("should set userVerification to required", async () => {
+        await getSignOptions({
+            authenticatorId: mockAuthenticatorId,
+            toSign: mockToSign,
+        });
+
+        expect(
+            simplewebauthn.generateAuthenticationOptions
+        ).toHaveBeenCalledWith(
+            expect.objectContaining({
+                userVerification: "required",
+            })
+        );
+    });
+
+    it("should set timeout to 180 seconds", async () => {
+        await getSignOptions({
+            authenticatorId: mockAuthenticatorId,
+            toSign: mockToSign,
+        });
+
+        expect(
+            simplewebauthn.generateAuthenticationOptions
+        ).toHaveBeenCalledWith(
+            expect.objectContaining({
+                timeout: 180_000,
+            })
+        );
+    });
+
+    it("should include transports when provided", async () => {
+        const transports = ["usb", "nfc", "internal"];
+
+        await getSignOptions({
+            authenticatorId: mockAuthenticatorId,
+            toSign: mockToSign,
+            transports,
+        });
+
+        expect(
+            simplewebauthn.generateAuthenticationOptions
+        ).toHaveBeenCalledWith(
+            expect.objectContaining({
+                allowCredentials: [
+                    {
+                        id: mockAuthenticatorId,
+                        transports: ["usb", "nfc", "internal"],
+                    },
+                ],
+            })
+        );
+    });
+
+    it("should set transports to undefined when not provided", async () => {
+        await getSignOptions({
+            authenticatorId: mockAuthenticatorId,
+            toSign: mockToSign,
+        });
+
+        expect(
+            simplewebauthn.generateAuthenticationOptions
+        ).toHaveBeenCalledWith(
+            expect.objectContaining({
+                allowCredentials: [
+                    {
+                        id: mockAuthenticatorId,
+                        transports: undefined,
+                    },
+                ],
+            })
+        );
+    });
+
+    it("should return the result from generateAuthenticationOptions", async () => {
+        const result = await getSignOptions({
+            authenticatorId: mockAuthenticatorId,
+            toSign: mockToSign,
+        });
+
+        expect(result).toBe(mockAuthenticationOptions);
+    });
+
+    it("should handle different hex values for toSign", async () => {
+        const differentToSign =
+            "0x1111111111111111111111111111111111111111111111111111111111111111" as Hex;
+
+        await getSignOptions({
+            authenticatorId: mockAuthenticatorId,
+            toSign: differentToSign,
+        });
+
+        // Verify challenge is a Uint8Array (converted from hex)
+        const call = vi.mocked(simplewebauthn.generateAuthenticationOptions)
+            .mock.calls[0][0];
+        expect(call.challenge).toBeInstanceOf(Uint8Array);
+    });
+
+    it("should handle empty transports array", async () => {
+        await getSignOptions({
+            authenticatorId: mockAuthenticatorId,
+            toSign: mockToSign,
+            transports: [],
+        });
+
+        expect(
+            simplewebauthn.generateAuthenticationOptions
+        ).toHaveBeenCalledWith(
+            expect.objectContaining({
+                allowCredentials: [
+                    {
+                        id: mockAuthenticatorId,
+                        transports: [],
+                    },
+                ],
+            })
+        );
+    });
+});
