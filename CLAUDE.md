@@ -50,11 +50,16 @@ bun run test:e2e:dev          # Run tests against dev environment
 bun run test:e2e:prod         # Run tests against prod environment
 bun run test:e2e:ui           # Run with Playwright UI
 
-# Unit tests with Vitest (wallet app)
+# Unit tests with Vitest (wallet app and listener app)
 cd apps/wallet
-bun test                      # Run unit tests
-bun test:ui                   # Run with Vitest UI
-bun test:coverage             # Run with coverage report
+bun run test                  # Run unit tests (IMPORTANT: use "bun run test", not "bun test")
+bun run test:ui               # Run with Vitest UI
+bun run test:coverage         # Run with coverage report
+
+cd apps/listener
+bun run test                  # Run unit tests (IMPORTANT: use "bun run test", not "bun test")
+bun run test:ui               # Run with Vitest UI
+bun run test:coverage         # Run with coverage report
 ```
 
 **Testing Strategy**:
