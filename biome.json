@@ -25,7 +25,8 @@
             "!**/.svelte-kit",
             "!**/*.svelte",
             "!**/playwright-report",
-            "!**/test-results"
+            "!**/test-results",
+            "!**/coverage"
         ]
     },
     "assist": { "actions": { "source": { "organizeImports": "on" } } },

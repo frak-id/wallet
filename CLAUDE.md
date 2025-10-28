@@ -49,7 +49,27 @@ bun run test:e2e              # Run tests against local
 bun run test:e2e:dev          # Run tests against dev environment
 bun run test:e2e:prod         # Run tests against prod environment
 bun run test:e2e:ui           # Run with Playwright UI
+
+# Unit tests with Vitest (wallet app)
+cd apps/wallet
+bun test                      # Run unit tests
+bun test:ui                   # Run with Vitest UI
+bun test:coverage             # Run with coverage report
 ```
+
+**Testing Strategy**:
+- **E2E Tests**: Comprehensive Playwright tests (19 specs) covering user flows
+  - Authentication and registration
+  - Pairing flows
+  - Wallet operations
+  - Settings and profile management
+  - Located in `apps/wallet/tests/`
+- **Unit Tests**: Vitest tests co-located with source files
+  - Tests placed next to source files (e.g., `app/module/stores/recoveryStore.test.ts`)
+  - Focus on business logic and state management
+  - Mock external dependencies (Wagmi, TanStack Query, WebAuthn)
+  - Setup file: `apps/wallet/tests/vitest-setup.ts`
+  - Target: 40% code coverage
 
 ### Deployment
 ```bash
@@ -87,29 +107,40 @@ bun run changeset:release
   - `dashboard/` - Next.js 15 business dashboard (standalone output)
   - `dashboard-admin/` - React Router admin interface
 - **`packages/`** - Shared internal libraries (workspace-only)
-  - `wallet-shared/` - Shared code for wallet and listener apps
-    - `authentication/` - WebAuthn authentication hooks and session management
-    - `wallet/` - Smart wallet operations and balance queries
-    - `pairing/` - Device pairing flows and signature requests
-    - `tokens/` - Token management and display hooks
-    - `interaction/` - Interaction tracking utilities
-    - `recovery/` - Account recovery flows and encryption
-    - `stores/` - Zustand state management (sessionStore, userStore, walletStore, authenticationStore)
-    - `types/` - Shared TypeScript type definitions
-    - `common/` - Shared utilities, components (WalletModal), analytics (OpenPanel), and storage (idb-keyval)
-    - `blockchain/` - Blockchain providers and Account Abstraction setup
-    - `i18n/` - Internationalization configuration
-    - `sdk/` - SDK lifecycle utilities
-    - `providers/` - React context providers (FrakContext)
-    - `polyfills/` - Runtime polyfills (BigInt serialization)
-    - **Storage**: Uses lightweight idb-keyval for IndexedDB (notifications, authenticators) - service worker optimized to 1.73 KB gzipped
-    - **Exports**: Barrel exports in src/index.ts for clean imports - use `import { X } from "@frak-labs/wallet-shared"`
-    - **Note**: Stores are missing "use client" directives needed for Next.js compatibility. See `docs/audit/PACKAGE_SPLIT_OPTIONS.md` for refactoring plans.
-  - `ui/` - Radix UI-based component library
-  - `app-essentials/` - Core blockchain utilities and WebAuthn
-  - `client/` - API client abstractions
-  - `dev-tooling/` - Build configurations (manualChunks, onwarn)
-  - `rpc/` - RPC utilities
+  - `wallet-shared/` - Shared code exclusively for wallet and listener apps (~97 files)
+    - **Purpose**: Central package for wallet/listener functionality (NOT used by dashboard or other apps)
+    - **Architecture**: Well-organized into 13 domain-focused subdirectories
+    - **Structure**:
+      - `authentication/` - WebAuthn authentication (hooks, components, session management)
+      - `wallet/` - Smart wallet operations (hooks, actions, balance queries)
+      - `pairing/` - Device pairing flows (WebSocket clients, signature requests, UI components)
+      - `tokens/` - Token management and display (hooks, components, utilities)
+      - `interaction/` - Interaction tracking (hooks, components, processors)
+      - `recovery/` - Account recovery flows (encryption, decryption, storage)
+      - `stores/` - Zustand state management (4 stores: session, user, wallet, authentication)
+      - `types/` - Shared TypeScript type definitions (Session, Balance, WebAuthN, etc.)
+      - `common/` - Shared utilities (components, analytics via OpenPanel, storage via idb-keyval)
+      - `blockchain/` - Blockchain providers (Viem, Account Abstraction, connectors)
+      - `i18n/` - Internationalization configuration (react-i18next setup)
+      - `sdk/` - SDK lifecycle utilities and event handlers
+      - `providers/` - React context providers (FrakContext for SDK integration)
+      - `polyfills/` - Runtime polyfills (BigInt serialization)
+    - **Key Dependencies**:
+      - Workspace: `@frak-labs/ui`, `@frak-labs/app-essentials`, `@frak-labs/client`, `@frak-labs/core-sdk`, `@frak-labs/frame-connector`
+      - External: React 19, Zustand, Viem, Wagmi, TanStack Query, WebAuthn, idb-keyval, OpenPanel
+    - **Storage**: Uses lightweight idb-keyval for IndexedDB - service worker optimized (1.73 KB gzipped)
+    - **Exports**: Barrel exports in `src/index.ts` for clean imports - use `import { X } from "@frak-labs/wallet-shared"`
+    - **Import Pattern**: Used 228 times across wallet (153) and listener (75) apps
+    - **Known Issues**:
+      - ⚠️ Stores missing "use client" directives (breaks Next.js compatibility)
+      - ⚠️ Component duplication with `ui` package (AlertDialog exists in both)
+      - ⚠️ Backend type coupling via dev dependency on `@frak-labs/backend-elysia`
+    - **Technical Debt**: See `docs/audit/PACKAGE_SPLIT_OPTIONS.md` for refactoring analysis (conclusion: well-organized, needs targeted fixes not full split)
+  - `ui/` - Radix UI-based component library (generic, reusable across all apps)
+  - `app-essentials/` - Core blockchain utilities and WebAuthn configuration
+  - `client/` - API client abstractions (Elysia Eden Treaty integration)
+  - `dev-tooling/` - Build configurations (manualChunks, onwarn suppressions)
+  - `rpc/` - RPC utilities (published as `@frak-labs/frame-connector`)
 - **`sdk/`** - Public SDK packages (published to npm, linked via Changesets)
   - `core/` - Core SDK functionality (rslib build with CDN bundle)
   - `react/` - React hooks and providers

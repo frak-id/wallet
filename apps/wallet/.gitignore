@@ -6,3 +6,6 @@
 /playwright-report/
 /test-results
 /playwright/.storage
+
+# Coverage
+/coverage
