@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { createMockNotification } from "../../test/factories";
 import type { NotificationModel } from "./NotificationModel";
 
 // Mock idb-keyval
@@ -25,12 +26,11 @@ describe("notificationStorage", () => {
         it("should add notification when none exist", async () => {
             const { notificationStorage } = await import("./notifications");
 
-            const mockNotification: NotificationModel = {
+            const mockNotification = createMockNotification({
                 id: "notif-1",
                 title: "Test Notification",
                 body: "Test message",
-                timestamp: Date.now(),
-            };
+            });
 
             mockGet.mockResolvedValue(null);
             mockSet.mockResolvedValue(undefined);
@@ -47,19 +47,18 @@ describe("notificationStorage", () => {
         it("should append to existing notifications", async () => {
             const { notificationStorage } = await import("./notifications");
 
-            const existing: NotificationModel = {
+            const existing = createMockNotification({
                 id: "notif-1",
                 title: "Old",
                 body: "Old message",
                 timestamp: Date.now() - 1000,
-            };
+            });
 
-            const newNotif: NotificationModel = {
+            const newNotif = createMockNotification({
                 id: "notif-2",
                 title: "New",
                 body: "New message",
-                timestamp: Date.now(),
-            };
+            });
 
             mockGet.mockResolvedValue([existing]);
             mockSet.mockResolvedValue(undefined);
@@ -89,24 +88,24 @@ describe("notificationStorage", () => {
             const { notificationStorage } = await import("./notifications");
 
             const mockNotifications: NotificationModel[] = [
-                {
+                createMockNotification({
                     id: "notif-1",
                     title: "Old",
                     body: "Old",
                     timestamp: 1000,
-                },
-                {
+                }),
+                createMockNotification({
                     id: "notif-2",
                     title: "New",
                     body: "New",
                     timestamp: 3000,
-                },
-                {
+                }),
+                createMockNotification({
                     id: "notif-3",
                     title: "Middle",
                     body: "Middle",
                     timestamp: 2000,
-                },
+                }),
             ];
 
             mockGet.mockResolvedValue(mockNotifications);

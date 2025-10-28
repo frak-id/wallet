@@ -4,6 +4,11 @@ import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useDisplayModalListener } from "./useDisplayModalListener";
 
+// Import factory from test utilities
+const { createMockAddress } = await vi.importActual<
+    typeof import("@frak-labs/wallet-shared/test")
+>("@frak-labs/wallet-shared/test");
+
 // Mock modal store
 const mockModalStore = {
     getState: vi.fn(() => ({
@@ -164,7 +169,7 @@ describe("useDisplayModalListener", () => {
     });
 
     it("should skip login step if user is already authenticated", async () => {
-        const mockAddress = "0xabc123" as `0x${string}`;
+        const mockAddress = createMockAddress("abc123");
         mockSessionStore.getState.mockReturnValue({
             session: { address: mockAddress },
         });
@@ -215,7 +220,7 @@ describe("useDisplayModalListener", () => {
     });
 
     it("should skip openSession step if user has active session", async () => {
-        const mockAddress = "0xabc123" as `0x${string}`;
+        const mockAddress = createMockAddress("abc123");
         const futureTime = Date.now() + 3600000;
 
         mockSessionStore.getState.mockReturnValue({
@@ -277,7 +282,7 @@ describe("useDisplayModalListener", () => {
     });
 
     it("should not skip openSession if session is expired", async () => {
-        const mockAddress = "0xabc123" as `0x${string}`;
+        const mockAddress = createMockAddress("abc123");
         const pastTime = Date.now() - 1000;
 
         mockSessionStore.getState.mockReturnValue({

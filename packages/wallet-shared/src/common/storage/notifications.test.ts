@@ -1,5 +1,6 @@
 import * as idbKeyval from "idb-keyval";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { createMockNotification } from "../../test/factories";
 import type { NotificationModel } from "./NotificationModel";
 import { notificationStorage } from "./notifications";
 
@@ -17,12 +18,11 @@ describe("notificationStorage", () => {
 
     describe("add", () => {
         it("should add a notification to an empty store", async () => {
-            const mockNotification: NotificationModel = {
+            const mockNotification = createMockNotification({
                 id: "notif-1",
-                timestamp: Date.now(),
                 title: "Test Notification",
                 body: "Test message",
-            };
+            });
 
             vi.mocked(idbKeyval.get).mockResolvedValue(undefined);
             vi.mocked(idbKeyval.set).mockResolvedValue(undefined);
@@ -42,20 +42,20 @@ describe("notificationStorage", () => {
 
         it("should add a notification to existing notifications", async () => {
             const existing: NotificationModel[] = [
-                {
+                createMockNotification({
                     id: "notif-1",
                     timestamp: 1000,
                     title: "Existing",
                     body: "Existing message",
-                },
+                }),
             ];
 
-            const newNotification: NotificationModel = {
+            const newNotification = createMockNotification({
                 id: "notif-2",
                 timestamp: 2000,
                 title: "New",
                 body: "New message",
-            };
+            });
 
             vi.mocked(idbKeyval.get).mockResolvedValue(existing);
             vi.mocked(idbKeyval.set).mockResolvedValue(undefined);
@@ -71,12 +71,11 @@ describe("notificationStorage", () => {
         });
 
         it("should handle null as empty array", async () => {
-            const mockNotification: NotificationModel = {
+            const mockNotification = createMockNotification({
                 id: "notif-1",
-                timestamp: Date.now(),
                 title: "Test",
                 body: "Test",
-            };
+            });
 
             vi.mocked(idbKeyval.get).mockResolvedValue(null);
             vi.mocked(idbKeyval.set).mockResolvedValue(undefined);
@@ -94,24 +93,24 @@ describe("notificationStorage", () => {
     describe("getAll", () => {
         it("should return all notifications sorted by timestamp (newest first)", async () => {
             const notifications: NotificationModel[] = [
-                {
+                createMockNotification({
                     id: "notif-1",
                     timestamp: 1000,
                     title: "Old",
                     body: "Old message",
-                },
-                {
+                }),
+                createMockNotification({
                     id: "notif-2",
                     timestamp: 3000,
                     title: "Newest",
                     body: "Newest message",
-                },
-                {
+                }),
+                createMockNotification({
                     id: "notif-3",
                     timestamp: 2000,
                     title: "Middle",
                     body: "Middle message",
-                },
+                }),
             ];
 
             // Return a copy to avoid mutation affecting test expectations
@@ -182,18 +181,18 @@ describe("notificationStorage", () => {
 
         it("should sort notifications with same timestamp consistently", async () => {
             const notifications: NotificationModel[] = [
-                {
+                createMockNotification({
                     id: "notif-1",
                     timestamp: 1000,
                     title: "First",
                     body: "First",
-                },
-                {
+                }),
+                createMockNotification({
                     id: "notif-2",
                     timestamp: 1000,
                     title: "Second",
                     body: "Second",
-                },
+                }),
             ];
 
             vi.mocked(idbKeyval.get).mockResolvedValue(notifications);

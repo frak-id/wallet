@@ -1,5 +1,9 @@
 import type { Address, Hex } from "viem";
 import { describe, expect, it, vi } from "vitest";
+import {
+    createMockAddress,
+    createMockWebAuthNWallet,
+} from "../../test/factories";
 import type { AccountMetadata } from "./signature";
 
 vi.mock("@simplewebauthn/browser", () => ({
@@ -100,8 +104,7 @@ describe("signature utilities", () => {
             const mockClient = {
                 chain: { id: 1 },
             } as any;
-            const mockAddress: Address =
-                "0x1234567890123456789012345678901234567890";
+            const mockAddress = createMockAddress();
 
             const mockResult = [
                 "0x00",
@@ -135,8 +138,7 @@ describe("signature utilities", () => {
             const mockClient = {
                 chain: { id: 137 },
             } as any;
-            const mockAddress: Address =
-                "0xabcdef1234567890abcdef1234567890abcdef12";
+            const mockAddress = createMockAddress("abcdef");
 
             vi.mocked(readContract).mockRejectedValue(new Error("Read failed"));
 
@@ -160,8 +162,7 @@ describe("signature utilities", () => {
             const mockClient = {
                 chain: { id: 8453 },
             } as any;
-            const mockAddress: Address =
-                "0x1111111111111111111111111111111111111111";
+            const mockAddress = createMockAddress("1111");
 
             vi.mocked(readContract).mockRejectedValue(new Error("No contract"));
 
@@ -187,17 +188,9 @@ describe("signature utilities", () => {
                 "../../stores/authenticationStore"
             );
 
-            const mockWallet = {
-                type: "webauthn" as const,
-                address:
-                    "0x1234567890123456789012345678901234567890" as Address,
-                publicKey: {
-                    x: "0xabc" as `0x${string}`,
-                    y: "0xdef" as `0x${string}`,
-                },
-                authenticatorId: "auth-id",
+            const mockWallet = createMockWebAuthNWallet({
                 token: "token",
-            };
+            });
 
             const mockOptions = {
                 challenge: "challenge-123",
@@ -234,7 +227,7 @@ describe("signature utilities", () => {
 
             const result = await signHashViaWebAuthN({
                 hash: "0xhash" as Hex,
-                wallet: mockWallet,
+                wallet: mockWallet as import("../../types/WebAuthN").WebAuthNWallet,
             });
 
             expect(result).toBe(mockFormattedSignature);

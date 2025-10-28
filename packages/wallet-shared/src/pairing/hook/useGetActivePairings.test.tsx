@@ -3,8 +3,8 @@ import { renderHook, waitFor } from "@testing-library/react";
 import { HttpResponse, http } from "msw";
 import type React from "react";
 import type { ReactNode } from "react";
-import type { Address } from "viem";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { createMockAddress, createMockSession } from "../../test/factories";
 import { server } from "../../test/msw/server";
 import { useGetActivePairings } from "./useListPairings";
 
@@ -56,13 +56,10 @@ describe("useGetActivePairings", () => {
     it("should fetch pairings list when wallet address is provided", async () => {
         const { sessionStore } = await import("../../stores/sessionStore");
 
-        const mockSession = {
-            type: "webauthn" as const,
-            address: "0x1234567890123456789012345678901234567890" as Address,
-            publicKey: "0xabc" as Address,
-            authenticatorId: "auth-123",
+        const mockSession = createMockSession({
+            address: createMockAddress(),
             token: "mock-auth-token",
-        };
+        });
 
         vi.mocked(sessionStore).mockImplementation((selector: any) => {
             const state = {
@@ -128,13 +125,10 @@ describe("useGetActivePairings", () => {
             )
         );
 
-        const mockSession = {
-            type: "webauthn" as const,
-            address: "0x1234567890123456789012345678901234567890" as Address,
-            publicKey: "0xabc" as Address,
-            authenticatorId: "auth-123",
+        const mockSession = createMockSession({
+            address: createMockAddress(),
             token: "mock-auth-token",
-        };
+        });
 
         vi.mocked(sessionStore).mockImplementation((selector: any) => {
             const state = {
@@ -185,13 +179,10 @@ describe("useGetActivePairings", () => {
             )
         );
 
-        const mockSession = {
-            type: "webauthn" as const,
-            address: "0x1234567890123456789012345678901234567890" as Address,
-            publicKey: "0xabc" as Address,
-            authenticatorId: "auth-123",
+        const mockSession = createMockSession({
+            address: createMockAddress(),
             token: "mock-auth-token",
-        };
+        });
 
         vi.mocked(sessionStore).mockImplementation((selector: any) => {
             const state = {
@@ -249,13 +240,10 @@ describe("useGetActivePairings", () => {
             )
         );
 
-        const mockSession = {
-            type: "webauthn" as const,
-            address: "0x1234567890123456789012345678901234567890" as Address,
-            publicKey: "0xabc" as Address,
-            authenticatorId: "auth-123",
+        const mockSession = createMockSession({
+            address: createMockAddress(),
             token: "mock-auth-token",
-        };
+        });
 
         vi.mocked(sessionStore).mockImplementation((selector: any) => {
             const state = {

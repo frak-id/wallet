@@ -4,6 +4,7 @@ import type React from "react";
 import type { ReactNode } from "react";
 import type { Address } from "viem";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { createMockAddress } from "../../test/factories";
 import { useCloseSession } from "./useCloseSession";
 
 vi.mock("wagmi", () => ({
@@ -22,8 +23,8 @@ vi.mock("../../interaction/utils/getEnableDisableData", () => ({
 describe("useCloseSession", () => {
     let queryClient: QueryClient;
     let wrapper: ({ children }: { children: ReactNode }) => React.ReactElement;
-    const mockAddress: Address = "0x1234567890123456789012345678901234567890";
-    const mockTxHash: Address = "0xabcdef1234567890abcdef1234567890abcdef12";
+    const mockAddress = createMockAddress();
+    const mockTxHash = createMockAddress("abcdef");
 
     beforeEach(() => {
         queryClient = new QueryClient({

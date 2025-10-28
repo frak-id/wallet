@@ -5,6 +5,7 @@ import type React from "react";
 import type { ReactNode } from "react";
 import type { Address } from "viem";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { createMockAddress } from "../../test/factories";
 import { server } from "../../test/msw/server";
 import { useConsumePendingInteractions } from "./useConsumePendingInteractions";
 
@@ -33,7 +34,7 @@ vi.mock("../../stores/walletStore", async () => {
 describe("useConsumePendingInteractions", () => {
     let queryClient: QueryClient;
     let wrapper: ({ children }: { children: ReactNode }) => React.ReactElement;
-    const mockAddress: Address = "0x1234567890123456789012345678901234567890";
+    const mockAddress = createMockAddress();
 
     beforeEach(() => {
         queryClient = new QueryClient({

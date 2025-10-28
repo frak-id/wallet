@@ -1,4 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
+// Import factories before mocking to avoid hoisting issues
+const { createMockAddress, createMockEcdsaSession, createMockSdkSession } =
+    await vi.importActual<typeof import("@frak-labs/wallet-shared/test")>(
+        "@frak-labs/wallet-shared/test"
+    );
+
 import {
     handleOpenSso,
     handlePrepareSso,
@@ -85,19 +92,14 @@ describe("ssoHandler", () => {
     });
 
     describe("processSsoCompletion", () => {
-        const mockSession = {
-            type: "ecdsa" as const,
-            address: "0xabc123" as `0x${string}`,
+        const mockSession = createMockEcdsaSession({
+            address: createMockAddress("abc123"),
             token: "test-token",
-            publicKey: "0x123" as `0x${string}`,
-            authenticatorId: "ecdsa-123" as `ecdsa-${string}`,
-            transports: undefined,
-        };
+        });
 
-        const mockSdkSession = {
+        const mockSdkSession = createMockSdkSession({
             token: "sdk-token-123",
-            expires: Date.now() + 3600000,
-        };
+        });
 
         it("should successfully process SSO completion", async () => {
             await processSsoCompletion(mockSession, mockSdkSession);
@@ -122,13 +124,11 @@ describe("ssoHandler", () => {
         });
 
         it("should handle session without token by adding empty string", async () => {
-            const sessionWithoutToken = {
-                type: "ecdsa" as const,
-                address: "0xabc123" as `0x${string}`,
-                publicKey: "0x123" as `0x${string}`,
-                authenticatorId: "auth-123",
-                transports: undefined,
-            };
+            const sessionWithoutToken = createMockEcdsaSession({
+                address: createMockAddress("abc123"),
+            });
+            // Remove token to test edge case
+            delete (sessionWithoutToken as any).token;
 
             await processSsoCompletion(
                 sessionWithoutToken as any,
@@ -170,19 +170,14 @@ describe("ssoHandler", () => {
 
     describe("handleSsoComplete", () => {
         it("should process SSO completion and return success", async () => {
-            const mockSession = {
-                type: "ecdsa" as const,
-                address: "0xabc123" as `0x${string}`,
+            const mockSession = createMockEcdsaSession({
+                address: createMockAddress("abc123"),
                 token: "test-token",
-                publicKey: "0x123" as `0x${string}`,
-                authenticatorId: "ecdsa-123" as `ecdsa-${string}`,
-                transports: undefined,
-            };
+            });
 
-            const mockSdkSession = {
+            const mockSdkSession = createMockSdkSession({
                 token: "sdk-token-123",
-                expires: Date.now() + 3600000,
-            };
+            });
 
             const result = await handleSsoComplete(
                 [mockSession, mockSdkSession],

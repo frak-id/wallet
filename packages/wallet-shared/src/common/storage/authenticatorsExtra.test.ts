@@ -1,5 +1,5 @@
-import type { Address } from "viem";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { createMockAddress } from "../../test/factories";
 import type { PreviousAuthenticatorModel } from "./PreviousAuthenticatorModel";
 
 // Mock idb-keyval
@@ -27,7 +27,7 @@ describe("authenticatorStorage", () => {
             const { authenticatorStorage } = await import("./authenticators");
 
             const mockAuthenticator: PreviousAuthenticatorModel = {
-                wallet: "0x1234567890123456789012345678901234567890" as Address,
+                wallet: createMockAddress(),
                 authenticatorId: "auth-123",
                 transports: ["internal"],
             };
@@ -47,14 +47,15 @@ describe("authenticatorStorage", () => {
         it("should replace existing authenticator for same wallet", async () => {
             const { authenticatorStorage } = await import("./authenticators");
 
+            const mockWallet = createMockAddress();
             const existing: PreviousAuthenticatorModel = {
-                wallet: "0x1234567890123456789012345678901234567890" as Address,
+                wallet: mockWallet,
                 authenticatorId: "old-auth",
                 transports: ["usb"],
             };
 
             const updated: PreviousAuthenticatorModel = {
-                wallet: "0x1234567890123456789012345678901234567890" as Address,
+                wallet: mockWallet,
                 authenticatorId: "new-auth",
                 transports: ["internal"],
             };
@@ -75,13 +76,13 @@ describe("authenticatorStorage", () => {
             const { authenticatorStorage } = await import("./authenticators");
 
             const existing: PreviousAuthenticatorModel = {
-                wallet: "0x1111111111111111111111111111111111111111" as Address,
+                wallet: createMockAddress("1111"),
                 authenticatorId: "auth-1",
                 transports: ["usb"],
             };
 
             const newAuth: PreviousAuthenticatorModel = {
-                wallet: "0x2222222222222222222222222222222222222222" as Address,
+                wallet: createMockAddress("2222"),
                 authenticatorId: "auth-2",
                 transports: ["internal"],
             };
@@ -115,12 +116,12 @@ describe("authenticatorStorage", () => {
 
             const mockAuthenticators: PreviousAuthenticatorModel[] = [
                 {
-                    wallet: "0x1111111111111111111111111111111111111111" as Address,
+                    wallet: createMockAddress("1111"),
                     authenticatorId: "auth-1",
                     transports: ["usb"],
                 },
                 {
-                    wallet: "0x2222222222222222222222222222222222222222" as Address,
+                    wallet: createMockAddress("2222"),
                     authenticatorId: "auth-2",
                     transports: ["internal"],
                 },

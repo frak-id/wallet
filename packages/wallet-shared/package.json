@@ -16,7 +16,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./pairing/*": "./src/pairing/*",
-    "./styles/*": "./styles/*"
+    "./styles/*": "./styles/*",
+    "./test": "./src/test/factories.ts"
   },
   "dependencies": {
     "@elysiajs/eden": "^1.4.1",

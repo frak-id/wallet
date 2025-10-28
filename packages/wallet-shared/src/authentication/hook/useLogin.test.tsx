@@ -2,9 +2,13 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import type React from "react";
 import type { ReactNode } from "react";
-import type { Address } from "viem";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { PreviousAuthenticatorModel } from "../../common/storage/PreviousAuthenticatorModel";
+import {
+    createMockAddress,
+    createMockSdkSession,
+    createMockSession,
+} from "../../test/factories";
 import { useLogin } from "./useLogin";
 
 vi.mock("@frak-labs/app-essentials", () => ({
@@ -58,7 +62,7 @@ vi.mock("../../stores/userStore", () => ({
 describe("useLogin", () => {
     let queryClient: QueryClient;
     let wrapper: ({ children }: { children: ReactNode }) => React.ReactElement;
-    const mockAddress: Address = "0x1234567890123456789012345678901234567890";
+    const mockAddress = createMockAddress();
 
     const mockAuthResponse = {
         id: "credential-id",
@@ -82,15 +86,8 @@ describe("useLogin", () => {
     };
 
     const mockSessionData = {
-        type: "webauthn" as const,
-        address: mockAddress,
-        publicKey: "0xpublickey" as Address,
-        authenticatorId: "auth-123",
-        token: "session-token",
-        sdkJwt: {
-            token: "sdk-token",
-            expires: Date.now() + 3600000,
-        },
+        ...createMockSession({ address: mockAddress, token: "session-token" }),
+        sdkJwt: createMockSdkSession({ token: "sdk-token" }),
     };
 
     beforeEach(() => {

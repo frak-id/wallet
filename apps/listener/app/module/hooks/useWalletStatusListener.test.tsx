@@ -4,6 +4,11 @@ import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useWalletStatusListener } from "./useWalletStatusListener";
 
+// Import factory from test utilities
+const { createMockAddress } = await vi.importActual<
+    typeof import("@frak-labs/wallet-shared/test")
+>("@frak-labs/wallet-shared/test");
+
 // Mock wallet-shared
 const mockGetSafeSession = vi.fn(() => undefined);
 const mockGetSafeSdkSession = vi.fn(() => undefined);
@@ -86,7 +91,7 @@ describe("useWalletStatusListener", () => {
     });
 
     it("should emit connected status when wallet session exists", async () => {
-        const mockWalletAddress = "0xabc123" as `0x${string}`;
+        const mockWalletAddress = createMockAddress("abc123");
         mockSessionStore.getState.mockReturnValue({
             session: {
                 token: "test-token",
@@ -126,7 +131,7 @@ describe("useWalletStatusListener", () => {
     });
 
     it("should include SDK session token when present", async () => {
-        const mockWalletAddress = "0xabc123" as `0x${string}`;
+        const mockWalletAddress = createMockAddress("abc123");
         const mockSdkToken = "sdk-token-123";
 
         mockSessionStore.getState.mockReturnValue({
@@ -165,7 +170,7 @@ describe("useWalletStatusListener", () => {
     });
 
     it("should include interaction session when cached", async () => {
-        const mockWalletAddress = "0xabc123" as `0x${string}`;
+        const mockWalletAddress = createMockAddress("abc123");
         const mockInteractionSession = {
             sessionStart: Date.now(),
             sessionEnd: Date.now() + 3600000,
@@ -216,7 +221,7 @@ describe("useWalletStatusListener", () => {
     });
 
     it("should handle interaction session query error gracefully", async () => {
-        const mockWalletAddress = "0xabc123" as `0x${string}`;
+        const mockWalletAddress = createMockAddress("abc123");
 
         // Update the hook selector to return undefined for sdkSession
         mockSessionStore.mockImplementation((selector: any) => {
@@ -316,7 +321,7 @@ describe("useWalletStatusListener", () => {
     });
 
     it("should not emit if aborted", async () => {
-        const mockWalletAddress = "0xabc123" as `0x${string}`;
+        const mockWalletAddress = createMockAddress("abc123");
 
         // Mock session store to abort immediately after first call
         mockSessionStore.subscribe.mockImplementation((cb: () => void) => {

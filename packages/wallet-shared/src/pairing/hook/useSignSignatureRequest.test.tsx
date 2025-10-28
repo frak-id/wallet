@@ -4,6 +4,7 @@ import type React from "react";
 import type { ReactNode } from "react";
 import type { Address } from "viem";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { createMockAddress, createMockSession } from "../../test/factories";
 import type { TargetPairingClient } from "../clients/target";
 import type { TargetPairingPendingSignature } from "../types";
 import {
@@ -23,7 +24,7 @@ vi.mock("../../wallet/smartWallet/signature", () => ({
 describe("useSignSignatureRequest", () => {
     let queryClient: QueryClient;
     let wrapper: ({ children }: { children: ReactNode }) => React.ReactElement;
-    const mockAddress: Address = "0x1234567890123456789012345678901234567890";
+    const mockAddress = createMockAddress();
 
     const mockClient: TargetPairingClient = {
         sendSignatureResponse: vi.fn(),
@@ -80,13 +81,7 @@ describe("useSignSignatureRequest", () => {
             "../../wallet/smartWallet/signature"
         );
 
-        const mockSession = {
-            type: "webauthn" as const,
-            address: mockAddress,
-            publicKey: "0xabc" as Address,
-            authenticatorId: "auth-123",
-            token: "token",
-        };
+        const mockSession = createMockSession({ address: mockAddress });
 
         const mockSignature = "0xsignature" as Address;
 
@@ -124,13 +119,7 @@ describe("useSignSignatureRequest", () => {
             .spyOn(console, "warn")
             .mockImplementation(() => {});
 
-        const mockSession = {
-            type: "webauthn" as const,
-            address: mockAddress,
-            publicKey: "0xabc" as Address,
-            authenticatorId: "auth-123",
-            token: "token",
-        };
+        const mockSession = createMockSession({ address: mockAddress });
 
         const mockError = new Error("User cancelled");
 
@@ -172,13 +161,7 @@ describe("useSignSignatureRequest", () => {
             .spyOn(console, "warn")
             .mockImplementation(() => {});
 
-        const mockSession = {
-            type: "webauthn" as const,
-            address: mockAddress,
-            publicKey: "0xabc" as Address,
-            authenticatorId: "auth-123",
-            token: "token",
-        };
+        const mockSession = createMockSession({ address: mockAddress });
 
         vi.mocked(sessionStore).mockReturnValue(mockSession);
         vi.mocked(signHashViaWebAuthN).mockRejectedValue("String error");

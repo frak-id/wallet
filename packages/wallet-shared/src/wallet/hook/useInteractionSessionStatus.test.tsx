@@ -2,9 +2,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import type React from "react";
 import type { ReactNode } from "react";
-import type { Address } from "viem";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { InteractionSession } from "../../types/Session";
+import {
+    createMockAddress,
+    createMockInteractionSession,
+} from "../../test/factories";
 import { useInteractionSessionStatus } from "./useInteractionSessionStatus";
 
 vi.mock("wagmi", () => ({
@@ -24,7 +26,7 @@ vi.mock("../../stores/walletStore", () => ({
 describe("useInteractionSessionStatus", () => {
     let queryClient: QueryClient;
     let wrapper: ({ children }: { children: ReactNode }) => React.ReactElement;
-    const mockAddress: Address = "0x1234567890123456789012345678901234567890";
+    const mockAddress = createMockAddress();
 
     beforeEach(() => {
         queryClient = new QueryClient({
@@ -65,10 +67,7 @@ describe("useInteractionSessionStatus", () => {
         );
         const { walletStore } = await import("../../stores/walletStore");
 
-        const mockSession: InteractionSession = {
-            sessionStart: Date.now(),
-            sessionEnd: Date.now() + 3600000,
-        };
+        const mockSession = createMockInteractionSession();
 
         const setInteractionSession = vi.fn();
 
@@ -100,12 +99,11 @@ describe("useInteractionSessionStatus", () => {
         );
         const { walletStore } = await import("../../stores/walletStore");
 
-        const differentAddress: Address =
-            "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd";
-        const mockSession: InteractionSession = {
+        const differentAddress = createMockAddress("abcdef");
+        const mockSession = createMockInteractionSession({
             sessionStart: Date.now() - 3600000,
             sessionEnd: Date.now(),
-        };
+        });
 
         const setInteractionSession = vi.fn();
 
@@ -164,10 +162,7 @@ describe("useInteractionSessionStatus", () => {
         );
         const { walletStore } = await import("../../stores/walletStore");
 
-        const mockSession: InteractionSession = {
-            sessionStart: Date.now(),
-            sessionEnd: Date.now() + 3600000,
-        };
+        const mockSession = createMockInteractionSession();
 
         const setInteractionSession = vi.fn();
 
@@ -196,10 +191,7 @@ describe("useInteractionSessionStatus", () => {
         );
         const { walletStore } = await import("../../stores/walletStore");
 
-        const mockSession: InteractionSession = {
-            sessionStart: Date.now(),
-            sessionEnd: Date.now() + 3600000,
-        };
+        const mockSession = createMockInteractionSession();
 
         vi.mocked(useAccount).mockReturnValue({ address: mockAddress } as any);
         vi.mocked(getSessionStatus).mockResolvedValue(mockSession);
@@ -232,15 +224,11 @@ describe("useInteractionSessionStatus", () => {
         );
         const { walletStore } = await import("../../stores/walletStore");
 
-        const mockSession1: InteractionSession = {
-            sessionStart: Date.now(),
-            sessionEnd: Date.now() + 3600000,
-        };
+        const mockSession1 = createMockInteractionSession();
 
-        const mockSession2: InteractionSession = {
-            sessionStart: Date.now(),
+        const mockSession2 = createMockInteractionSession({
             sessionEnd: Date.now(),
-        };
+        });
 
         vi.mocked(useAccount).mockReturnValue({ address: mockAddress } as any);
         vi.mocked(getSessionStatus)
@@ -304,10 +292,7 @@ describe("useInteractionSessionStatus", () => {
         );
         const { walletStore } = await import("../../stores/walletStore");
 
-        const mockSession: InteractionSession = {
-            sessionStart: Date.now(),
-            sessionEnd: Date.now() + 3600000,
-        };
+        const mockSession = createMockInteractionSession();
 
         vi.mocked(useAccount).mockReturnValue({ address: mockAddress } as any);
         vi.mocked(getSessionStatus).mockResolvedValue(mockSession);
