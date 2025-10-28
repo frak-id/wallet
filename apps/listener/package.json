@@ -14,7 +14,10 @@
     "format:check": "biome check .",
     "format": "biome check --write .",
     "bundle:check": "sst shell bunx vite-bundle-visualizer",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage"
   },
   "dependencies": {
     "@frak-labs/app-essentials": "workspace:*",
@@ -45,18 +48,25 @@
   "devDependencies": {
     "@frak-labs/backend-elysia": "workspace:*",
     "@frak-labs/browserslist-config": "workspace:*",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.0",
+    "@types/jsdom": "^27.0.0",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "@vitejs/plugin-react": "^5.1.0",
+    "@vitest/coverage-v8": "^4.0.4",
+    "@vitest/ui": "^4.0.4",
     "bun-types": "latest",
     "esbuild": "^0.25.11",
+    "jsdom": "^27.0.1",
     "postcss": "^8.5.6",
     "postcss-preset-env": "^10.4.0",
     "sst": "3.17.5",
     "typescript": "^5",
     "vite": "^7.1.12",
     "vite-plugin-mkcert": "^1.17.9",
-    "vite-tsconfig-paths": "^5.1.4"
+    "vite-tsconfig-paths": "^5.1.4",
+    "vitest": "^4.0.4"
   },
   "browserslist": [
     "extends @frak-labs/browserslist-config"

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createMockSdkSession, createMockSession } from "../../test/factories";
-import type { SdkSession, Session } from "../../types/Session";
+import type { SdkSession } from "../../types/Session";
 import { getSafeSdkSession, getSafeSession } from "./safeSession";
 
 vi.mock("../../stores/sessionStore", async () => {

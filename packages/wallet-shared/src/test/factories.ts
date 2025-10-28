@@ -1,13 +1,6 @@
 import type { Address } from "viem";
 import type { NotificationModel } from "../common/storage/NotificationModel";
-import type {
-    DistantWebAuthNWallet,
-    EcdsaWallet,
-    InteractionSession,
-    SdkSession,
-    Session,
-    WebAuthNWallet,
-} from "../types/Session";
+import type { InteractionSession, SdkSession, Session } from "../types/Session";
 
 /**
  * Test factory functions for creating mock objects with sensible defaults.
@@ -25,9 +18,7 @@ export function createMockAddress(seed = "1234"): Address {
 /**
  * Creates a mock WebAuthN session with default values
  */
-export function createMockSession(
-    overrides?: Partial<Session>
-): WebAuthNWallet {
+export function createMockSession(overrides?: Partial<Session>): Session {
     return {
         type: "webauthn",
         address: createMockAddress(),
@@ -38,15 +29,15 @@ export function createMockSession(
         authenticatorId: "auth-123",
         token: "test-token",
         ...overrides,
-    } as WebAuthNWallet;
+    } as Session;
 }
 
 /**
  * Creates a mock ECDSA session with default values
  */
 export function createMockEcdsaSession(
-    overrides?: Partial<EcdsaWallet>
-): EcdsaWallet {
+    overrides?: Partial<Omit<Session, "type">>
+): Session {
     return {
         type: "ecdsa",
         address: createMockAddress(),
@@ -55,15 +46,15 @@ export function createMockEcdsaSession(
         token: "test-token",
         transports: undefined,
         ...overrides,
-    };
+    } as Session;
 }
 
 /**
  * Creates a mock Distant WebAuthN session with default values
  */
 export function createMockDistantWebAuthNSession(
-    overrides?: Partial<DistantWebAuthNWallet>
-): DistantWebAuthNWallet {
+    overrides?: Partial<Omit<Session, "type">>
+): Session {
     return {
         type: "distant-webauthn",
         address: createMockAddress(),
@@ -76,15 +67,15 @@ export function createMockDistantWebAuthNSession(
         token: "test-token",
         transports: undefined,
         ...overrides,
-    };
+    } as Session;
 }
 
 /**
  * Creates a mock WebAuthN wallet with default values
  */
 export function createMockWebAuthNWallet(
-    overrides?: Partial<WebAuthNWallet>
-): WebAuthNWallet {
+    overrides?: Partial<Omit<Session, "type">>
+): Session {
     return {
         type: "webauthn",
         address: createMockAddress(),
@@ -95,7 +86,7 @@ export function createMockWebAuthNWallet(
         authenticatorId: "auth-id",
         token: "wallet-token",
         ...overrides,
-    };
+    } as Session;
 }
 
 /**
@@ -142,7 +133,11 @@ export function createMockNotification(
 /**
  * Creates a mock Viem client for testing
  */
-export function createMockClient(chainId = 1): any {
+export function createMockClient(chainId = 1): {
+    chain: { id: number };
+    account: undefined;
+    transport: object;
+} {
     return {
         chain: { id: chainId },
         account: undefined,
