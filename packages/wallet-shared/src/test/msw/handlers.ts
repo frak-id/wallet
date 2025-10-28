@@ -63,6 +63,14 @@ export const handlers = [
         }
     ),
 
+    http.post(`${BACKEND_URL}/wallet/interactions/session-status`, () => {
+        return HttpResponse.json({
+            status: "opened",
+            sessionStart: new Date(Date.now() - 1800000),
+            sessionEnd: new Date(Date.now() + 1800000),
+        });
+    }),
+
     // Pairing endpoints
     http.get(`${BACKEND_URL}/wallet/pairings/list`, () => {
         return HttpResponse.json([
