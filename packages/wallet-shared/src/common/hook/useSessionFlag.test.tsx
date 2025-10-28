@@ -161,4 +161,86 @@ describe("useSessionFlag", () => {
             sessionStorage.setItem("test-key", "true");
         }).not.toThrow();
     });
+
+    it("should respond to storage events from other windows with matching key", () => {
+        const { result } = renderHook(() => useSessionFlag("test-key", false));
+
+        expect(result.current[0]).toBe(false);
+
+        // Simulate a storage event from another window/tab
+        act(() => {
+            sessionStorage.setItem("test-key", "true");
+            const event = new StorageEvent("storage", {
+                key: "test-key",
+                newValue: "true",
+                oldValue: null,
+                storageArea: sessionStorage,
+            });
+            window.dispatchEvent(event);
+        });
+
+        expect(result.current[0]).toBe(true);
+    });
+
+    it("should ignore storage events with different key", () => {
+        const { result } = renderHook(() => useSessionFlag("test-key", false));
+
+        const initialValue = result.current[0];
+
+        // Simulate a storage event for a different key
+        act(() => {
+            sessionStorage.setItem("other-key", "true");
+            const event = new StorageEvent("storage", {
+                key: "other-key",
+                newValue: "true",
+                oldValue: null,
+                storageArea: sessionStorage,
+            });
+            window.dispatchEvent(event);
+        });
+
+        // Value should remain unchanged
+        expect(result.current[0]).toBe(initialValue);
+    });
+
+    it("should ignore storage events from localStorage", () => {
+        const { result } = renderHook(() => useSessionFlag("test-key", false));
+
+        const initialValue = result.current[0];
+
+        // Simulate a storage event from localStorage (not sessionStorage)
+        act(() => {
+            const event = new StorageEvent("storage", {
+                key: "test-key",
+                newValue: "true",
+                oldValue: null,
+                storageArea: localStorage,
+            });
+            window.dispatchEvent(event);
+        });
+
+        // Value should remain unchanged
+        expect(result.current[0]).toBe(initialValue);
+    });
+
+    it("should handle storage events when value changes from true to false", () => {
+        sessionStorage.setItem("test-key", "true");
+        const { result } = renderHook(() => useSessionFlag("test-key", false));
+
+        expect(result.current[0]).toBe(true);
+
+        // Simulate a storage event changing value to false
+        act(() => {
+            sessionStorage.setItem("test-key", "false");
+            const event = new StorageEvent("storage", {
+                key: "test-key",
+                newValue: "false",
+                oldValue: "true",
+                storageArea: sessionStorage,
+            });
+            window.dispatchEvent(event);
+        });
+
+        expect(result.current[0]).toBe(false);
+    });
 });

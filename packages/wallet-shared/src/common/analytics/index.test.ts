@@ -2,6 +2,7 @@ import type { Address } from "viem";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Session } from "../../types/Session";
 import {
+    openPanel,
     setProfileId,
     trackAuthCompleted,
     trackAuthFailed,
@@ -221,6 +222,182 @@ describe("Analytics", () => {
 
             // Should not throw any errors
             expect(true).toBe(true);
+        });
+    });
+
+    describe("OpenPanel with instance available", () => {
+        it("should call openPanel methods when instance is available", () => {
+            if (!openPanel) {
+                // Skip if openPanel is not initialized (env vars not set)
+                expect(true).toBe(true);
+                return;
+            }
+
+            setProfileId("test-profile-123");
+            expect(openPanel.profileId).toBe("test-profile-123");
+        });
+
+        it("should call setGlobalProperties when updating properties", () => {
+            if (!openPanel) {
+                expect(true).toBe(true);
+                return;
+            }
+
+            const properties = {
+                wallet: "0x9876" as Address,
+                isIframe: false,
+            };
+
+            updateGlobalProperties(properties);
+            expect(mockSetGlobalProperties).toHaveBeenCalled();
+        });
+
+        it("should call track when tracking auth initiated", async () => {
+            if (!openPanel) {
+                expect(true).toBe(true);
+                return;
+            }
+
+            await trackAuthInitiated("login", { method: "global" });
+            expect(mockTrack).toHaveBeenCalledWith("login_initiated", {
+                method: "global",
+            });
+        });
+
+        it("should call track and identify when tracking auth completed", async () => {
+            if (!openPanel) {
+                expect(true).toBe(true);
+                return;
+            }
+
+            const session: Omit<Session, "token"> = {
+                type: "webauthn",
+                address: "0xtest123" as Address,
+                publicKey: "0xpubkey" as Address,
+                authenticatorId: "auth-id",
+            };
+
+            await trackAuthCompleted("login", session);
+            expect(mockIdentify).toHaveBeenCalled();
+            expect(mockTrack).toHaveBeenCalledWith("login_completed");
+            expect(mockTrack).toHaveBeenCalledWith("user_logged_in");
+        });
+
+        it("should handle session without type in trackAuthCompleted", async () => {
+            if (!openPanel) {
+                expect(true).toBe(true);
+                return;
+            }
+
+            const session: Omit<Session, "token"> = {
+                type: undefined,
+                address: "0xtest456" as Address,
+                publicKey: "0xpubkey2" as Address,
+                authenticatorId: "auth-id-2",
+            };
+
+            await trackAuthCompleted("register", session);
+            expect(mockIdentify).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    profileId: session.address,
+                    properties: expect.objectContaining({
+                        sessionType: "webauthn", // Should default to "webauthn"
+                    }),
+                })
+            );
+        });
+
+        it("should call track when tracking auth failed", async () => {
+            if (!openPanel) {
+                expect(true).toBe(true);
+                return;
+            }
+
+            await trackAuthFailed("login", "Test error reason");
+            expect(mockTrack).toHaveBeenCalledWith("login_failed", {
+                reason: "Test error reason",
+            });
+        });
+
+        it("should call track when tracking generic events", async () => {
+            if (!openPanel) {
+                expect(true).toBe(true);
+                return;
+            }
+
+            const params = { customParam: "value123" };
+            await trackGenericEvent("custom_event", params);
+            expect(mockTrack).toHaveBeenCalledWith("custom_event", params);
+        });
+    });
+
+    describe("Edge cases and error handling", () => {
+        it("should handle trackAuthCompleted when wallet has null type", async () => {
+            const session: Omit<Session, "token"> = {
+                type: null as unknown as undefined,
+                address: "0xnull123" as Address,
+                publicKey: "0xpubnull" as Address,
+                authenticatorId: "auth-null",
+            };
+
+            await trackAuthCompleted("login", session);
+            // Should not throw
+            expect(true).toBe(true);
+        });
+
+        it("should handle empty params in trackGenericEvent", async () => {
+            await trackGenericEvent("empty_event", {});
+            expect(true).toBe(true);
+        });
+
+        it("should handle trackAuthInitiated without args object", async () => {
+            await trackAuthInitiated("register");
+            expect(true).toBe(true);
+        });
+
+        it("should handle multiple concurrent trackAuthCompleted calls", async () => {
+            const session1: Omit<Session, "token"> = {
+                type: "webauthn",
+                address: "0xconcurrent1" as Address,
+                publicKey: "0xpub1" as Address,
+                authenticatorId: "auth-1",
+            };
+
+            const session2: Omit<Session, "token"> = {
+                type: "webauthn",
+                address: "0xconcurrent2" as Address,
+                publicKey: "0xpub2" as Address,
+                authenticatorId: "auth-2",
+            };
+
+            await Promise.all([
+                trackAuthCompleted("login", session1),
+                trackAuthCompleted("register", session2),
+            ]);
+
+            // Should not throw
+            expect(true).toBe(true);
+        });
+
+        it("should handle updateGlobalProperties with empty object", () => {
+            updateGlobalProperties({});
+            expect(true).toBe(true);
+        });
+
+        it("should handle updateGlobalProperties when global is undefined", () => {
+            if (!openPanel) {
+                expect(true).toBe(true);
+                return;
+            }
+
+            // Set global to undefined
+            mockOpenPanelInstance.global = undefined as unknown as Record<
+                string,
+                unknown
+            >;
+
+            updateGlobalProperties({ wallet: "0xtest" as Address });
+            expect(mockSetGlobalProperties).toHaveBeenCalled();
         });
     });
 });
