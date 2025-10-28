@@ -7,7 +7,10 @@ export default defineConfig({
         name: "wallet-shared-unit",
         globals: true,
         environment: "jsdom",
-        setupFiles: ["../../apps/wallet/tests/vitest-setup.ts"],
+        setupFiles: [
+            "../../apps/wallet/tests/vitest-setup.ts",
+            "./src/test/setup-msw.ts",
+        ],
         include: ["src/**/*.{test,spec}.{ts,tsx}"],
         exclude: ["node_modules/**", "**/*.d.ts", "**/*.config.ts"],
         coverage: {

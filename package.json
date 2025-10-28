@@ -43,6 +43,7 @@
     "format:check": "biome check .",
     "knip": "knip",
     "lint": "biome lint .",
+    "test": "bun run --filter '*' test",
     "update:deps": "npm-check-updates -ui -ws",
     "typecheck": "bun run --filter '*' typecheck"
   },

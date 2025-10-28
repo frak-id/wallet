@@ -8,7 +8,10 @@ export default defineConfig({
         name: "wallet-unit",
         globals: true,
         environment: "jsdom",
-        setupFiles: ["./tests/vitest-setup.ts"],
+        setupFiles: [
+            "./tests/vitest-setup.ts",
+            "../../packages/wallet-shared/src/test/setup-msw.ts",
+        ],
         include: [
             "app/**/*.{test,spec}.{ts,tsx}",
             "../../packages/wallet-shared/src/**/*.{test,spec}.{ts,tsx}",

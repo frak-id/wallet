@@ -76,6 +76,7 @@
     "@vitest/ui": "^4.0.4",
     "bun-types": "latest",
     "jsdom": "^27.0.1",
+    "msw": "^2.11.6",
     "typescript": "catalog:",
     "vite": "^7.1.12",
     "vitest": "^4.0.4"
