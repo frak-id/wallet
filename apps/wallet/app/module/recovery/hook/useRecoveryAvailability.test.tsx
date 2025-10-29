@@ -1,11 +1,10 @@
 /** @jsxImportSource react */
 import type { RecoveryFileContent } from "@frak-labs/wallet-shared";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
-import type { ReactNode } from "react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { vi } from "vitest";
 import * as recoveryActions from "@/module/recovery/action/get";
 import { useRecoveryAvailability } from "@/module/recovery/hook/useRecoveryAvailability";
+import { beforeEach, describe, expect, test } from "@/tests/vitest-fixtures";
 
 // Mock the recovery action
 vi.mock("@/module/recovery/action/get", () => ({
@@ -13,53 +12,47 @@ vi.mock("@/module/recovery/action/get", () => ({
 }));
 
 describe("useRecoveryAvailability", () => {
-    let queryClient: QueryClient;
-
-    beforeEach(() => {
-        queryClient = new QueryClient({
-            defaultOptions: {
-                queries: {
-                    retry: false,
-                },
-            },
-        });
+    beforeEach(({ queryWrapper }) => {
         vi.clearAllMocks();
+        queryWrapper.client.clear();
     });
 
-    const wrapper = ({ children }: { children: ReactNode }) => (
-        <QueryClientProvider client={queryClient}>
-            {children}
-        </QueryClientProvider>
-    );
-
-    const mockRecoveryFile: RecoveryFileContent = {
-        initialWallet: {
-            address: "0x1234567890123456789012345678901234567890",
-            publicKey: {
-                x: "0x1234567890123456789012345678901234567890123456789012345678901234",
-                y: "0x1234567890123456789012345678901234567890123456789012345678901234",
+    // Use fixture mockAddress for consistent addresses
+    const createMockRecoveryFile = (mockAddress: string): RecoveryFileContent =>
+        ({
+            initialWallet: {
+                address: mockAddress,
+                publicKey: {
+                    x: "0x1234567890123456789012345678901234567890123456789012345678901234",
+                    y: "0x1234567890123456789012345678901234567890123456789012345678901234",
+                },
+                authenticatorId: "test-authenticator-id",
             },
-            authenticatorId: "test-authenticator-id",
-        },
-        guardianAddress: "0x9876543210987654321098765432109876543210",
-        guardianPrivateKeyEncrypted: "encrypted-key",
-    } as unknown as RecoveryFileContent;
+            guardianAddress: "0x9876543210987654321098765432109876543210",
+            guardianPrivateKeyEncrypted: "encrypted-key",
+        }) as unknown as RecoveryFileContent;
 
-    it("should return initial state", () => {
+    test("should return initial state", ({ queryWrapper, mockAddress }) => {
+        const mockRecoveryFile = createMockRecoveryFile(mockAddress);
+
         const { result } = renderHook(
             () =>
                 useRecoveryAvailability({
                     file: mockRecoveryFile,
                     newAuthenticatorId: "test-auth-id",
                 }),
-            { wrapper }
+            { wrapper: queryWrapper.wrapper }
         );
 
         expect(result.current.recoveryAvailability).toBeUndefined();
         expect(result.current.isLoading).toBe(true);
     });
 
-    it("should fetch recovery availability when file is provided", async () => {
+    test("should fetch recovery availability when file is provided", async ({
+        queryWrapper,
+        mockAddress,
+    }) => {
+        const mockRecoveryFile = createMockRecoveryFile(mockAddress);
         const mockAvailability = {
             available: true,
             alreadyRecovered: false,
@@ -75,7 +68,7 @@ describe("useRecoveryAvailability", () => {
                     file: mockRecoveryFile,
                     newAuthenticatorId: "test-auth-id",
                 }),
-            { wrapper }
+            { wrapper: queryWrapper.wrapper }
         );
 
         await waitFor(() => {
@@ -90,7 +83,11 @@ describe("useRecoveryAvailability", () => {
         });
     });
 
-    it("should not fetch when wallet address is missing", () => {
+    test("should not fetch when wallet address is missing", ({
+        queryWrapper,
+        mockAddress,
+    }) => {
+        const mockRecoveryFile = createMockRecoveryFile(mockAddress);
         const invalidFile = {
             ...mockRecoveryFile,
             initialWallet: { address: "" },
@@ -102,13 +99,17 @@ describe("useRecoveryAvailability", () => {
                     file: invalidFile as RecoveryFileContent,
                     newAuthenticatorId: "test-auth-id",
                 }),
-            { wrapper }
+            { wrapper: queryWrapper.wrapper }
         );
 
         expect(result.current.recoveryAvailability).toBeUndefined();
     });
 
-    it("should handle errors gracefully", async () => {
+    test("should handle errors gracefully", async ({
+        queryWrapper,
+        mockAddress,
+    }) => {
+        const mockRecoveryFile = createMockRecoveryFile(mockAddress);
         const mockError = new Error("Recovery unavailable");
         vi.spyOn(recoveryActions, "getRecoveryAvailability").mockRejectedValue(
             mockError
@@ -120,7 +121,7 @@ describe("useRecoveryAvailability", () => {
                     file: mockRecoveryFile,
                     newAuthenticatorId: "test-auth-id",
                 }),
-            { wrapper }
+            { wrapper: queryWrapper.wrapper }
         );
 
         await waitFor(() => {

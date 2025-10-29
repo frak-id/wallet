@@ -1,7 +1,8 @@
 import { renderHook } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { vi } from "vitest";
 import * as NotificationContext from "@/module/notification/context/NotificationContext";
 import { useNotificationSetupStatus } from "@/module/notification/hook/useNotificationSetupStatus";
+import { beforeEach, describe, expect, test } from "@/tests/vitest-fixtures";
 
 // Mock the notification context
 vi.mock("@/module/notification/context/NotificationContext", () => ({
@@ -13,221 +14,165 @@ vi.mock("@/module/notification/context/NotificationContext", () => ({
 }));
 
 describe("useNotificationSetupStatus", () => {
-    const originalWindow = global.window;
-    const originalNavigator = global.navigator;
-    const originalNotification = global.Notification;
-
-    beforeEach(() => {
+    // Use fixture for automatic browser API cleanup!
+    beforeEach(({ mockNotificationContext }) => {
         vi.clearAllMocks();
-        // Restore defaults before each test
-        global.window = originalWindow;
-        global.navigator = originalNavigator;
-        global.Notification = originalNotification;
-        // Reset mock implementation
-        vi.mocked(NotificationContext.useNotificationContext).mockReturnValue({
-            subscription: undefined,
-            setSubscription: vi.fn(),
-            clearSubscription: vi.fn(),
-        });
+        // Reset mock implementation using fixture
+        vi.mocked(NotificationContext.useNotificationContext).mockReturnValue(
+            mockNotificationContext
+        );
     });
 
-    it("should return not supported when required APIs are missing", () => {
-        // Test the logic by checking when serviceWorker is missing
-        const mockNavigator = Object.create(originalNavigator);
-        Object.defineProperty(mockNavigator, "serviceWorker", {
-            value: undefined,
-            writable: true,
-        });
-        global.navigator = mockNavigator as Navigator;
-
+    test("should return not supported when required APIs are missing", () => {
+        // No browser API mocking = unsupported environment
         const { result } = renderHook(() => useNotificationSetupStatus());
 
         expect(result.current.isSupported).toBe(false);
     });
 
-    it("should detect browser notification support in test environment", () => {
-        // In test environment with jsdom, we have basic browser APIs
+    test("should detect browser notification support when APIs are available", ({
+        mockBrowserAPIs,
+    }) => {
+        // Use fixture to setup browser APIs
+        mockBrowserAPIs.mockNotificationAPI("default");
+        mockBrowserAPIs.mockServiceWorkerAPI();
+        mockBrowserAPIs.mockPushManagerAPI();
+
         const { result } = renderHook(() => useNotificationSetupStatus());
 
-        // Check that the hook returns a boolean for isSupported
-        expect(typeof result.current.isSupported).toBe("boolean");
+        expect(result.current.isSupported).toBe(true);
     });
 
-    it("should return notification permission status structure", () => {
+    test("should return notification permission status structure", ({
+        mockBrowserAPIs,
+    }) => {
+        // Setup full browser API support
+        mockBrowserAPIs.mockNotificationAPI("default");
+        mockBrowserAPIs.mockServiceWorkerAPI();
+        mockBrowserAPIs.mockPushManagerAPI();
+
         const { result } = renderHook(() => useNotificationSetupStatus());
 
-        // The hook should always return at minimum isSupported
+        // The hook should have all required properties when supported
         expect(result.current).toHaveProperty("isSupported");
-
-        if (result.current.isSupported) {
-            // If supported, should have these properties
-            expect(result.current).toHaveProperty("isNotificationAllowed");
-            expect(result.current).toHaveProperty(
-                "askForNotificationPermission"
-            );
-            expect(result.current).toHaveProperty("subscription");
-        }
+        expect(result.current.isSupported).toBe(true);
+        expect(result.current).toHaveProperty("isNotificationAllowed");
+        expect(result.current).toHaveProperty("askForNotificationPermission");
+        expect(result.current).toHaveProperty("subscription");
     });
 
-    it("should provide askForNotificationPermission callback when supported", () => {
+    test("should provide askForNotificationPermission callback when supported", ({
+        mockBrowserAPIs,
+    }) => {
+        // Setup full browser API support
+        mockBrowserAPIs.mockNotificationAPI("default");
+        mockBrowserAPIs.mockServiceWorkerAPI();
+        mockBrowserAPIs.mockPushManagerAPI();
+
         const { result } = renderHook(() => useNotificationSetupStatus());
 
-        if (
-            result.current.isSupported &&
-            "askForNotificationPermission" in result.current
-        ) {
-            expect(typeof result.current.askForNotificationPermission).toBe(
-                "function"
-            );
-        } else {
-            // In unsupported environment, callback should not be present
-            expect(result.current).not.toHaveProperty(
-                "askForNotificationPermission"
-            );
-        }
+        expect(result.current.isSupported).toBe(true);
+        expect(typeof result.current.askForNotificationPermission).toBe(
+            "function"
+        );
     });
 
-    it("should integrate with notification context for subscription", () => {
+    test("should integrate with notification context for subscription", ({
+        mockBrowserAPIs,
+    }) => {
+        // Setup full browser API support
+        mockBrowserAPIs.mockNotificationAPI("default");
+        mockBrowserAPIs.mockServiceWorkerAPI();
+        mockBrowserAPIs.mockPushManagerAPI();
+
         const { result } = renderHook(() => useNotificationSetupStatus());
 
-        if (result.current.isSupported) {
-            // Should include subscription from context (mocked as null)
-            expect(result.current).toHaveProperty("subscription");
-        }
+        expect(result.current.isSupported).toBe(true);
+        expect(result.current).toHaveProperty("subscription");
+        expect(result.current.subscription).toBeUndefined(); // From fixture default
     });
 
-    it("should call Notification.requestPermission when askForNotificationPermission is invoked", async () => {
-        // Mock Notification API
+    test("should call Notification.requestPermission when askForNotificationPermission is invoked", async ({
+        mockBrowserAPIs,
+    }) => {
+        // Setup browser APIs with fixture - so much cleaner!
+        mockBrowserAPIs.mockNotificationAPI("default");
+        mockBrowserAPIs.mockServiceWorkerAPI();
+        mockBrowserAPIs.mockPushManagerAPI();
+
+        const { result } = renderHook(() => useNotificationSetupStatus());
+
+        expect(result.current.isSupported).toBe(true);
+
+        // Mock the requestPermission spy after setup
         const mockRequestPermission = vi.fn().mockResolvedValue("granted");
-        global.Notification = {
-            requestPermission: mockRequestPermission,
-            permission: "default",
-        } as unknown as typeof Notification;
+        global.Notification.requestPermission = mockRequestPermission;
 
-        // Mock full support
-        Object.defineProperty(global.navigator, "serviceWorker", {
-            value: {},
-            writable: true,
-        });
-        Object.defineProperty(global.window, "PushManager", {
-            value: {},
-            writable: true,
-        });
-        global.ServiceWorkerRegistration = {
-            prototype: {
-                showNotification: vi.fn(),
-            },
-        } as unknown as typeof ServiceWorkerRegistration;
-
-        const { result } = renderHook(() => useNotificationSetupStatus());
-
-        if (
-            result.current.isSupported &&
-            "askForNotificationPermission" in result.current
-        ) {
-            await result.current.askForNotificationPermission?.();
-            expect(mockRequestPermission).toHaveBeenCalledTimes(1);
-        }
+        await result.current.askForNotificationPermission?.();
+        expect(mockRequestPermission).toHaveBeenCalledTimes(1);
     });
 
-    it("should handle errors when requesting notification permission fails", async () => {
+    test("should handle errors when requesting notification permission fails", async ({
+        mockBrowserAPIs,
+    }) => {
         const consoleErrorSpy = vi
             .spyOn(console, "error")
             .mockImplementation(() => {});
         const mockError = new Error("Permission denied");
-        const mockRequestPermission = vi.fn().mockRejectedValue(mockError);
 
-        global.Notification = {
-            requestPermission: mockRequestPermission,
-            permission: "default",
-        } as unknown as typeof Notification;
-
-        // Mock full support
-        Object.defineProperty(global.navigator, "serviceWorker", {
-            value: {},
-            writable: true,
-        });
-        Object.defineProperty(global.window, "PushManager", {
-            value: {},
-            writable: true,
-        });
-        global.ServiceWorkerRegistration = {
-            prototype: {
-                showNotification: vi.fn(),
-            },
-        } as unknown as typeof ServiceWorkerRegistration;
+        // Setup browser APIs with fixture
+        mockBrowserAPIs.mockNotificationAPI("default");
+        mockBrowserAPIs.mockServiceWorkerAPI();
+        mockBrowserAPIs.mockPushManagerAPI();
 
         const { result } = renderHook(() => useNotificationSetupStatus());
 
-        if (
-            result.current.isSupported &&
-            "askForNotificationPermission" in result.current
-        ) {
-            await result.current.askForNotificationPermission?.();
-            expect(consoleErrorSpy).toHaveBeenCalledWith(
-                "Failed to request notification permission: ",
-                mockError
-            );
-        }
+        expect(result.current.isSupported).toBe(true);
+
+        // Mock requestPermission to reject
+        const mockRequestPermission = vi.fn().mockRejectedValue(mockError);
+        global.Notification.requestPermission = mockRequestPermission;
+
+        await result.current.askForNotificationPermission?.();
+        expect(consoleErrorSpy).toHaveBeenCalledWith(
+            "Failed to request notification permission: ",
+            mockError
+        );
 
         consoleErrorSpy.mockRestore();
     });
 
-    it("should detect granted notification permission", () => {
-        global.Notification = {
-            permission: "granted",
-        } as unknown as typeof Notification;
-
-        // Mock full support
-        Object.defineProperty(global.navigator, "serviceWorker", {
-            value: {},
-            writable: true,
-        });
-        Object.defineProperty(global.window, "PushManager", {
-            value: {},
-            writable: true,
-        });
-        global.ServiceWorkerRegistration = {
-            prototype: {
-                showNotification: vi.fn(),
-            },
-        } as unknown as typeof ServiceWorkerRegistration;
+    test("should detect granted notification permission", ({
+        mockBrowserAPIs,
+    }) => {
+        // Setup with granted permission - fixture makes this trivial!
+        mockBrowserAPIs.mockNotificationAPI("granted");
+        mockBrowserAPIs.mockServiceWorkerAPI();
+        mockBrowserAPIs.mockPushManagerAPI();
 
         const { result } = renderHook(() => useNotificationSetupStatus());
 
-        if (result.current.isSupported) {
-            expect(result.current.isNotificationAllowed).toBe(true);
-        }
+        expect(result.current.isSupported).toBe(true);
+        expect(result.current.isNotificationAllowed).toBe(true);
     });
 
-    it("should detect denied notification permission", () => {
-        global.Notification = {
-            permission: "denied",
-        } as unknown as typeof Notification;
-
-        // Mock full support
-        Object.defineProperty(global.navigator, "serviceWorker", {
-            value: {},
-            writable: true,
-        });
-        Object.defineProperty(global.window, "PushManager", {
-            value: {},
-            writable: true,
-        });
-        global.ServiceWorkerRegistration = {
-            prototype: {
-                showNotification: vi.fn(),
-            },
-        } as unknown as typeof ServiceWorkerRegistration;
+    test("should detect denied notification permission", ({
+        mockBrowserAPIs,
+    }) => {
+        // Setup with denied permission - fixture makes this trivial!
+        mockBrowserAPIs.mockNotificationAPI("denied");
+        mockBrowserAPIs.mockServiceWorkerAPI();
+        mockBrowserAPIs.mockPushManagerAPI();
 
         const { result } = renderHook(() => useNotificationSetupStatus());
 
-        if (result.current.isSupported) {
-            expect(result.current.isNotificationAllowed).toBe(false);
-        }
+        expect(result.current.isSupported).toBe(true);
+        expect(result.current.isNotificationAllowed).toBe(false);
     });
 
-    it("should include subscription from context when available", () => {
+    test("should include subscription from context when available", ({
+        mockBrowserAPIs,
+    }) => {
         const mockSubscription = {
             endpoint: "https://example.com/push",
             keys: {
@@ -236,35 +181,21 @@ describe("useNotificationSetupStatus", () => {
             },
         } as unknown as PushSubscription;
 
+        // Mock notification context with subscription
         vi.mocked(NotificationContext.useNotificationContext).mockReturnValue({
             subscription: mockSubscription,
             setSubscription: vi.fn(),
             clearSubscription: vi.fn(),
         });
 
-        global.Notification = {
-            permission: "granted",
-        } as unknown as typeof Notification;
-
-        // Mock full support
-        Object.defineProperty(global.navigator, "serviceWorker", {
-            value: {},
-            writable: true,
-        });
-        Object.defineProperty(global.window, "PushManager", {
-            value: {},
-            writable: true,
-        });
-        global.ServiceWorkerRegistration = {
-            prototype: {
-                showNotification: vi.fn(),
-            },
-        } as unknown as typeof ServiceWorkerRegistration;
+        // Setup browser APIs with fixture
+        mockBrowserAPIs.mockNotificationAPI("granted");
+        mockBrowserAPIs.mockServiceWorkerAPI();
+        mockBrowserAPIs.mockPushManagerAPI();
 
         const { result } = renderHook(() => useNotificationSetupStatus());
 
-        if (result.current.isSupported) {
-            expect(result.current.subscription).toEqual(mockSubscription);
-        }
+        expect(result.current.isSupported).toBe(true);
+        expect(result.current.subscription).toEqual(mockSubscription);
     });
 });

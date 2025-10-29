@@ -1,6 +1,8 @@
 import type { BalanceItem } from "@frak-labs/wallet-shared";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { Address } from "viem";
+import { vi } from "vitest";
 import { validateAmount } from "@/module/tokens/utils/validateAmount";
+import { beforeEach, describe, expect, test } from "@/tests/vitest-fixtures";
 
 // Mock i18next
 vi.mock("i18next", () => ({
@@ -15,8 +17,8 @@ vi.mock("i18next", () => ({
 }));
 
 describe("validateAmount", () => {
-    const mockToken: BalanceItem = {
-        token: "0x1234567890123456789012345678901234567890",
+    const createMockToken = (address: Address): BalanceItem => ({
+        token: address,
         name: "Test Token",
         symbol: "TEST",
         decimals: 18,
@@ -25,69 +27,87 @@ describe("validateAmount", () => {
         eurAmount: 100,
         usdAmount: 100,
         gbpAmount: 100,
-    };
+    });
 
     beforeEach(() => {
         vi.clearAllMocks();
     });
 
-    it("should return true for valid amount", () => {
+    test("should return true for valid amount", ({ mockAddress }) => {
+        const mockToken = createMockToken(mockAddress);
         const result = validateAmount("50", mockToken);
         expect(result).toBe(true);
     });
 
-    it("should return true for amount equal to balance", () => {
+    test("should return true for amount equal to balance", ({
+        mockAddress,
+    }) => {
+        const mockToken = createMockToken(mockAddress);
         const result = validateAmount("100", mockToken);
         expect(result).toBe(true);
     });
 
-    it("should return error for zero amount", () => {
+    test("should return error for zero amount", ({ mockAddress }) => {
+        const mockToken = createMockToken(mockAddress);
         const result = validateAmount("0", mockToken);
         expect(result).toBe("Amount must be positive");
     });
 
-    it("should return error for negative amount", () => {
+    test("should return error for negative amount", ({ mockAddress }) => {
+        const mockToken = createMockToken(mockAddress);
         const result = validateAmount("-10", mockToken);
         expect(result).toBe("Amount must be positive");
     });
 
-    it("should return error for amount exceeding balance", () => {
+    test("should return error for amount exceeding balance", ({
+        mockAddress,
+    }) => {
+        const mockToken = createMockToken(mockAddress);
         const result = validateAmount("150", mockToken);
         expect(result).toBe("Amount must be less than balance");
     });
 
-    it("should handle decimal amounts", () => {
+    test("should handle decimal amounts", ({ mockAddress }) => {
+        const mockToken = createMockToken(mockAddress);
         const result = validateAmount("99.99", mockToken);
         expect(result).toBe(true);
     });
 
-    it("should handle small decimal amounts", () => {
+    test("should handle small decimal amounts", ({ mockAddress }) => {
+        const mockToken = createMockToken(mockAddress);
         const result = validateAmount("0.001", mockToken);
         expect(result).toBe(true);
     });
 
-    it("should return error for decimal amount exceeding balance", () => {
+    test("should return error for decimal amount exceeding balance", ({
+        mockAddress,
+    }) => {
+        const mockToken = createMockToken(mockAddress);
         const result = validateAmount("100.01", mockToken);
         expect(result).toBe("Amount must be less than balance");
     });
 
-    it("should handle string amounts", () => {
+    test("should handle string amounts", ({ mockAddress }) => {
+        const mockToken = createMockToken(mockAddress);
         const result = validateAmount("25.5", mockToken);
         expect(result).toBe(true);
     });
 
-    it("should handle token with zero balance", () => {
+    test("should handle token with zero balance", ({ mockAddress }) => {
+        const mockToken = createMockToken(mockAddress);
         const emptyToken = { ...mockToken, amount: 0 };
         const result = validateAmount("1", emptyToken);
         expect(result).toBe("Amount must be less than balance");
     });
 
-    it("should handle very small amounts", () => {
+    test("should handle very small amounts", ({ mockAddress }) => {
+        const mockToken = createMockToken(mockAddress);
         const result = validateAmount("0.00001", mockToken);
         expect(result).toBe(true);
     });
 
-    it("should handle scientific notation", () => {
+    test("should handle scientific notation", ({ mockAddress }) => {
+        const mockToken = createMockToken(mockAddress);
         const result = validateAmount("1e-5", mockToken);
         expect(result).toBe(true);
     });

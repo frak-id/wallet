@@ -3,9 +3,7 @@ import type {
     WebAuthNWallet,
 } from "@frak-labs/wallet-shared";
 import type { LocalAccount } from "viem";
-import { beforeEach, describe, expect, it } from "vitest";
 import {
-    recoveryStore,
     selectRecoveryFileContent,
     selectRecoveryGuardianAccount,
     selectRecoveryNewWallet,
@@ -13,16 +11,12 @@ import {
     selectRecoveryPassword,
     selectRecoveryStep,
 } from "@/module/stores/recoveryStore";
+import { describe, expect, test } from "@/tests/vitest-fixtures";
 
 describe("recoveryStore", () => {
-    beforeEach(() => {
-        // Reset store to initial state before each test
-        recoveryStore.getState().reset();
-    });
-
     describe("initial state", () => {
-        it("should have correct initial values", () => {
-            const state = recoveryStore.getState();
+        test("should have correct initial values", ({ freshRecoveryStore }) => {
+            const state = freshRecoveryStore.getState();
 
             expect(state.step).toBe(1);
             expect(state.password).toBeUndefined();
@@ -34,42 +28,46 @@ describe("recoveryStore", () => {
     });
 
     describe("setStep", () => {
-        it("should update the step", () => {
-            recoveryStore.getState().setStep(2);
-            expect(recoveryStore.getState().step).toBe(2);
+        test("should update the step", ({ freshRecoveryStore }) => {
+            freshRecoveryStore.getState().setStep(2);
+            expect(freshRecoveryStore.getState().step).toBe(2);
 
-            recoveryStore.getState().setStep(4);
-            expect(recoveryStore.getState().step).toBe(4);
+            freshRecoveryStore.getState().setStep(4);
+            expect(freshRecoveryStore.getState().step).toBe(4);
         });
 
-        it("should work with selector", () => {
-            recoveryStore.getState().setStep(3);
-            expect(selectRecoveryStep(recoveryStore.getState())).toBe(3);
+        test("should work with selector", ({ freshRecoveryStore }) => {
+            freshRecoveryStore.getState().setStep(3);
+            expect(selectRecoveryStep(freshRecoveryStore.getState())).toBe(3);
         });
     });
 
     describe("setPassword", () => {
-        it("should set password", () => {
-            recoveryStore.getState().setPassword("test-password-123");
-            expect(recoveryStore.getState().password).toBe("test-password-123");
+        test("should set password", ({ freshRecoveryStore }) => {
+            freshRecoveryStore.getState().setPassword("test-password-123");
+            expect(freshRecoveryStore.getState().password).toBe(
+                "test-password-123"
+            );
         });
 
-        it("should clear password when undefined", () => {
-            recoveryStore.getState().setPassword("test-password");
-            recoveryStore.getState().setPassword(undefined);
-            expect(recoveryStore.getState().password).toBeUndefined();
+        test("should clear password when undefined", ({
+            freshRecoveryStore,
+        }) => {
+            freshRecoveryStore.getState().setPassword("test-password");
+            freshRecoveryStore.getState().setPassword(undefined);
+            expect(freshRecoveryStore.getState().password).toBeUndefined();
         });
 
-        it("should work with selector", () => {
-            recoveryStore.getState().setPassword("my-password");
-            expect(selectRecoveryPassword(recoveryStore.getState())).toBe(
+        test("should work with selector", ({ freshRecoveryStore }) => {
+            freshRecoveryStore.getState().setPassword("my-password");
+            expect(selectRecoveryPassword(freshRecoveryStore.getState())).toBe(
                 "my-password"
             );
         });
     });
 
     describe("setOptions", () => {
-        it("should set recovery options", () => {
+        test("should set recovery options", ({ freshRecoveryStore }) => {
             const mockOptions = {
                 setupTxData: "0x123abc" as `0x${string}`,
                 file: {
@@ -78,156 +76,164 @@ describe("recoveryStore", () => {
                 } as unknown as RecoveryFileContent,
             };
 
-            recoveryStore.getState().setOptions(mockOptions);
-            expect(recoveryStore.getState().options).toEqual(mockOptions);
+            freshRecoveryStore.getState().setOptions(mockOptions);
+            expect(freshRecoveryStore.getState().options).toEqual(mockOptions);
         });
 
-        it("should clear options when undefined", () => {
+        test("should clear options when undefined", ({
+            freshRecoveryStore,
+        }) => {
             const mockOptions = {
                 setupTxData: "0x123abc" as `0x${string}`,
                 file: {} as unknown as RecoveryFileContent,
             };
 
-            recoveryStore.getState().setOptions(mockOptions);
-            recoveryStore.getState().setOptions(undefined);
-            expect(recoveryStore.getState().options).toBeUndefined();
+            freshRecoveryStore.getState().setOptions(mockOptions);
+            freshRecoveryStore.getState().setOptions(undefined);
+            expect(freshRecoveryStore.getState().options).toBeUndefined();
         });
 
-        it("should work with selector", () => {
+        test("should work with selector", ({ freshRecoveryStore }) => {
             const mockOptions = {
                 setupTxData: "0x123abc" as `0x${string}`,
                 file: {} as unknown as RecoveryFileContent,
             };
 
-            recoveryStore.getState().setOptions(mockOptions);
-            expect(selectRecoveryOptions(recoveryStore.getState())).toEqual(
-                mockOptions
-            );
+            freshRecoveryStore.getState().setOptions(mockOptions);
+            expect(
+                selectRecoveryOptions(freshRecoveryStore.getState())
+            ).toEqual(mockOptions);
         });
     });
 
     describe("setFileContent", () => {
-        it("should set file content", () => {
+        test("should set file content", ({ freshRecoveryStore }) => {
             const mockFile: RecoveryFileContent = {
                 initialWallet: { address: "0xWallet" },
                 guardianAddress: "0xGuardian",
                 guardianPrivateKeyEncrypted: "encrypted-data",
             } as unknown as RecoveryFileContent;
 
-            recoveryStore.getState().setFileContent(mockFile);
-            expect(recoveryStore.getState().fileContent).toEqual(mockFile);
+            freshRecoveryStore.getState().setFileContent(mockFile);
+            expect(freshRecoveryStore.getState().fileContent).toEqual(mockFile);
         });
 
-        it("should clear file content when null", () => {
+        test("should clear file content when null", ({
+            freshRecoveryStore,
+        }) => {
             const mockFile = {} as unknown as RecoveryFileContent;
 
-            recoveryStore.getState().setFileContent(mockFile);
-            recoveryStore.getState().setFileContent(null);
-            expect(recoveryStore.getState().fileContent).toBeNull();
+            freshRecoveryStore.getState().setFileContent(mockFile);
+            freshRecoveryStore.getState().setFileContent(null);
+            expect(freshRecoveryStore.getState().fileContent).toBeNull();
         });
 
-        it("should work with selector", () => {
+        test("should work with selector", ({ freshRecoveryStore }) => {
             const mockFile = {} as unknown as RecoveryFileContent;
 
-            recoveryStore.getState().setFileContent(mockFile);
-            expect(selectRecoveryFileContent(recoveryStore.getState())).toEqual(
-                mockFile
-            );
+            freshRecoveryStore.getState().setFileContent(mockFile);
+            expect(
+                selectRecoveryFileContent(freshRecoveryStore.getState())
+            ).toEqual(mockFile);
         });
     });
 
     describe("setGuardianAccount", () => {
-        it("should set guardian account", () => {
+        test("should set guardian account", ({ freshRecoveryStore }) => {
             const mockAccount = {
                 address: "0xGuardian",
                 signMessage: () => {},
             } as unknown as LocalAccount;
 
-            recoveryStore.getState().setGuardianAccount(mockAccount);
-            expect(recoveryStore.getState().guardianAccount).toEqual(
+            freshRecoveryStore.getState().setGuardianAccount(mockAccount);
+            expect(freshRecoveryStore.getState().guardianAccount).toEqual(
                 mockAccount
             );
         });
 
-        it("should clear guardian account when null", () => {
+        test("should clear guardian account when null", ({
+            freshRecoveryStore,
+        }) => {
             const mockAccount = {
                 address: "0xGuardian",
             } as unknown as LocalAccount;
 
-            recoveryStore.getState().setGuardianAccount(mockAccount);
-            recoveryStore.getState().setGuardianAccount(null);
-            expect(recoveryStore.getState().guardianAccount).toBeNull();
+            freshRecoveryStore.getState().setGuardianAccount(mockAccount);
+            freshRecoveryStore.getState().setGuardianAccount(null);
+            expect(freshRecoveryStore.getState().guardianAccount).toBeNull();
         });
 
-        it("should work with selector", () => {
+        test("should work with selector", ({ freshRecoveryStore }) => {
             const mockAccount = {
                 address: "0xGuardian",
             } as unknown as LocalAccount;
 
-            recoveryStore.getState().setGuardianAccount(mockAccount);
+            freshRecoveryStore.getState().setGuardianAccount(mockAccount);
             expect(
-                selectRecoveryGuardianAccount(recoveryStore.getState())
+                selectRecoveryGuardianAccount(freshRecoveryStore.getState())
             ).toEqual(mockAccount);
         });
     });
 
     describe("setNewWallet", () => {
-        it("should set new wallet", () => {
+        test("should set new wallet", ({ freshRecoveryStore }) => {
             const mockWallet = {
                 address: "0xNewWallet",
                 authenticatorId: "auth-123",
             } as unknown as WebAuthNWallet;
 
-            recoveryStore.getState().setNewWallet(mockWallet);
-            expect(recoveryStore.getState().newWallet).toEqual(mockWallet);
+            freshRecoveryStore.getState().setNewWallet(mockWallet);
+            expect(freshRecoveryStore.getState().newWallet).toEqual(mockWallet);
         });
 
-        it("should clear new wallet when null", () => {
+        test("should clear new wallet when null", ({ freshRecoveryStore }) => {
             const mockWallet = {
                 address: "0xNewWallet",
             } as unknown as WebAuthNWallet;
 
-            recoveryStore.getState().setNewWallet(mockWallet);
-            recoveryStore.getState().setNewWallet(null);
-            expect(recoveryStore.getState().newWallet).toBeNull();
+            freshRecoveryStore.getState().setNewWallet(mockWallet);
+            freshRecoveryStore.getState().setNewWallet(null);
+            expect(freshRecoveryStore.getState().newWallet).toBeNull();
         });
 
-        it("should work with selector", () => {
+        test("should work with selector", ({ freshRecoveryStore }) => {
             const mockWallet = {
                 address: "0xNewWallet",
             } as unknown as WebAuthNWallet;
 
-            recoveryStore.getState().setNewWallet(mockWallet);
-            expect(selectRecoveryNewWallet(recoveryStore.getState())).toEqual(
-                mockWallet
-            );
+            freshRecoveryStore.getState().setNewWallet(mockWallet);
+            expect(
+                selectRecoveryNewWallet(freshRecoveryStore.getState())
+            ).toEqual(mockWallet);
         });
     });
 
     describe("reset", () => {
-        it("should reset all state to initial values", () => {
+        test("should reset all state to initial values", ({
+            freshRecoveryStore,
+        }) => {
             // Set various state values
-            recoveryStore.getState().setStep(3);
-            recoveryStore.getState().setPassword("test-pass");
-            recoveryStore.getState().setOptions({
+            freshRecoveryStore.getState().setStep(3);
+            freshRecoveryStore.getState().setPassword("test-pass");
+            freshRecoveryStore.getState().setOptions({
                 setupTxData: "0xabc" as `0x${string}`,
                 file: {} as unknown as RecoveryFileContent,
             });
-            recoveryStore
+            freshRecoveryStore
                 .getState()
                 .setFileContent({} as unknown as RecoveryFileContent);
-            recoveryStore
+            freshRecoveryStore
                 .getState()
                 .setGuardianAccount({} as unknown as LocalAccount);
-            recoveryStore
+            freshRecoveryStore
                 .getState()
                 .setNewWallet({} as unknown as WebAuthNWallet);
 
             // Reset
-            recoveryStore.getState().reset();
+            freshRecoveryStore.getState().reset();
 
             // Verify all values are back to initial state
-            const state = recoveryStore.getState();
+            const state = freshRecoveryStore.getState();
             expect(state.step).toBe(1);
             expect(state.password).toBeUndefined();
             expect(state.options).toBeUndefined();
@@ -238,7 +244,9 @@ describe("recoveryStore", () => {
     });
 
     describe("selectors", () => {
-        it("should select correct values from state", () => {
+        test("should select correct values from state", ({
+            freshRecoveryStore,
+        }) => {
             const mockFile = {} as unknown as RecoveryFileContent;
             const mockAccount = {
                 address: "0xGuardian",
@@ -251,14 +259,14 @@ describe("recoveryStore", () => {
                 file: mockFile,
             };
 
-            recoveryStore.getState().setStep(2);
-            recoveryStore.getState().setPassword("password");
-            recoveryStore.getState().setOptions(mockOptions);
-            recoveryStore.getState().setFileContent(mockFile);
-            recoveryStore.getState().setGuardianAccount(mockAccount);
-            recoveryStore.getState().setNewWallet(mockWallet);
+            freshRecoveryStore.getState().setStep(2);
+            freshRecoveryStore.getState().setPassword("password");
+            freshRecoveryStore.getState().setOptions(mockOptions);
+            freshRecoveryStore.getState().setFileContent(mockFile);
+            freshRecoveryStore.getState().setGuardianAccount(mockAccount);
+            freshRecoveryStore.getState().setNewWallet(mockWallet);
 
-            const state = recoveryStore.getState();
+            const state = freshRecoveryStore.getState();
 
             expect(selectRecoveryStep(state)).toBe(2);
             expect(selectRecoveryPassword(state)).toBe("password");

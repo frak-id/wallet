@@ -1,10 +1,9 @@
 /** @jsxImportSource react */
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
-import type { ReactNode } from "react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { vi } from "vitest";
 import * as recoveryActions from "@/module/recovery/action/get";
 import { useRecoverySetupStatus } from "@/module/recovery-setup/hook/useRecoverySetupStatus";
+import { beforeEach, describe, expect, test } from "@/tests/vitest-fixtures";
 
 // Mock wagmi
 vi.mock("wagmi", () => ({
@@ -15,33 +14,26 @@ vi.mock("wagmi", () => ({
 vi.mock("@/module/recovery/action/get");
 
 describe("useRecoverySetupStatus", () => {
-    let queryClient: QueryClient;
-
     beforeEach(() => {
-        queryClient = new QueryClient({
-            defaultOptions: {
-                queries: {
-                    retry: false,
-                },
-            },
-        });
         vi.clearAllMocks();
     });
 
-    const wrapper = ({ children }: { children: ReactNode }) => (
-        <QueryClientProvider client={queryClient}>
-            {children}
-        </QueryClientProvider>
-    );
-
-    it("should not fetch when address is undefined", async () => {
+    test("should not fetch when address is undefined", async ({
+        queryWrapper,
+        mockWagmiHooks,
+    }) => {
+        // Customize mockWagmiHooks for this specific test
         const { useAccount } = await import("wagmi");
-        vi.mocked(useAccount).mockReturnValue({
+        mockWagmiHooks.useAccount.mockReturnValue({
             address: undefined,
+            isConnected: false,
+            isConnecting: false,
+            isDisconnected: true,
         } as unknown as ReturnType<typeof useAccount>);
+        vi.mocked(useAccount).mockImplementation(mockWagmiHooks.useAccount);
 
         const { result } = renderHook(() => useRecoverySetupStatus(), {
-            wrapper,
+            wrapper: queryWrapper.wrapper,
         });
 
         // Should not be loading since query is disabled
@@ -49,9 +41,11 @@ describe("useRecoverySetupStatus", () => {
         expect(result.current.recoverySetupStatus).toBeUndefined();
     });
 
-    it("should fetch recovery status when address is available", async () => {
-        const mockAddress =
-            "0x1234567890123456789012345678901234567890" as `0x${string}`;
+    test("should fetch recovery status when address is available", async ({
+        queryWrapper,
+        mockAddress,
+        mockWagmiHooks,
+    }) => {
         const mockRecoveryOptions = {
             executor:
                 "0x9876543210987654321098765432109876543210" as `0x${string}`,
@@ -59,17 +53,16 @@ describe("useRecoverySetupStatus", () => {
                 "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd" as `0x${string}`,
         };
 
+        // Use mockWagmiHooks fixture - already configured with mockAddress
         const { useAccount } = await import("wagmi");
-        vi.mocked(useAccount).mockReturnValue({
-            address: mockAddress,
-        } as unknown as ReturnType<typeof useAccount>);
+        vi.mocked(useAccount).mockImplementation(mockWagmiHooks.useAccount);
 
         vi.spyOn(recoveryActions, "getCurrentRecoveryOption").mockResolvedValue(
             mockRecoveryOptions
         );
 
         const { result } = renderHook(() => useRecoverySetupStatus(), {
-            wrapper,
+            wrapper: queryWrapper.wrapper,
         });
 
         await waitFor(() => {
@@ -82,21 +75,20 @@ describe("useRecoverySetupStatus", () => {
         });
     });
 
-    it("should return null when no recovery setup exists", async () => {
-        const mockAddress =
-            "0x1234567890123456789012345678901234567890" as `0x${string}`;
-
+    test("should return null when no recovery setup exists", async ({
+        queryWrapper,
+        mockWagmiHooks,
+    }) => {
+        // Use mockWagmiHooks fixture - already configured with mockAddress
         const { useAccount } = await import("wagmi");
-        vi.mocked(useAccount).mockReturnValue({
-            address: mockAddress,
-        } as unknown as ReturnType<typeof useAccount>);
+        vi.mocked(useAccount).mockImplementation(mockWagmiHooks.useAccount);
 
         vi.spyOn(recoveryActions, "getCurrentRecoveryOption").mockResolvedValue(
             null
         );
 
         const { result } = renderHook(() => useRecoverySetupStatus(), {
-            wrapper,
+            wrapper: queryWrapper.wrapper,
         });
 
         await waitFor(() => {
@@ -106,22 +98,22 @@ describe("useRecoverySetupStatus", () => {
         expect(result.current.recoverySetupStatus).toBeNull();
     });
 
-    it("should handle errors gracefully", async () => {
-        const mockAddress =
-            "0x1234567890123456789012345678901234567890" as `0x${string}`;
+    test("should handle errors gracefully", async ({
+        queryWrapper,
+        mockWagmiHooks,
+    }) => {
         const mockError = new Error("Failed to fetch recovery options");
 
+        // Use mockWagmiHooks fixture - already configured with mockAddress
         const { useAccount } = await import("wagmi");
-        vi.mocked(useAccount).mockReturnValue({
-            address: mockAddress,
-        } as unknown as ReturnType<typeof useAccount>);
+        vi.mocked(useAccount).mockImplementation(mockWagmiHooks.useAccount);
 
         vi.spyOn(recoveryActions, "getCurrentRecoveryOption").mockRejectedValue(
             mockError
         );
 
         const { result } = renderHook(() => useRecoverySetupStatus(), {
-            wrapper,
+            wrapper: queryWrapper.wrapper,
         });
 
         await waitFor(() => {
@@ -131,21 +123,20 @@ describe("useRecoverySetupStatus", () => {
         expect(result.current.error).toBe(mockError);
     });
 
-    it("should have gcTime of 0 for fresh data", async () => {
-        const mockAddress =
-            "0x1234567890123456789012345678901234567890" as `0x${string}`;
-
+    test("should have gcTime of 0 for fresh data", async ({
+        queryWrapper,
+        mockWagmiHooks,
+    }) => {
+        // Use mockWagmiHooks fixture - already configured with mockAddress
         const { useAccount } = await import("wagmi");
-        vi.mocked(useAccount).mockReturnValue({
-            address: mockAddress,
-        } as unknown as ReturnType<typeof useAccount>);
+        vi.mocked(useAccount).mockImplementation(mockWagmiHooks.useAccount);
 
         vi.spyOn(recoveryActions, "getCurrentRecoveryOption").mockResolvedValue(
             null
         );
 
         const { result } = renderHook(() => useRecoverySetupStatus(), {
-            wrapper,
+            wrapper: queryWrapper.wrapper,
         });
 
         await waitFor(() => {
