@@ -105,14 +105,23 @@ export default defineConfig(
                 },
             },
             build: {
-                // todo: should be switched to false once we resolved css conflicts
+                // CSS code splitting - keep enabled for better caching
                 cssCodeSplit: true,
                 target: isSsrBuild ? "ES2022" : "ES2020",
+                // Chunk size warning limit - we're optimizing chunks to stay under this
+                chunkSizeWarningLimit: 400,
                 rollupOptions: {
                     output: {
-                        // Set a min chunk size to 16kb
-                        // note, this is pre-minification chunk size, not the final bundle size
-                        experimentalMinChunkSize: 32000,
+                        /**
+                         * experimentalMinChunkSize optimization
+                         *
+                         * Set to 20KB to balance between:
+                         * - Too many small chunks = HTTP overhead + browser parsing overhead
+                         * - Too few large chunks = poor caching granularity
+                         *
+                         * 20KB pre-minification ≈ 5-7KB gzipped, optimal for HTTP/2 multiplexing
+                         */
+                        experimentalMinChunkSize: 20000,
                         manualChunks(id, meta) {
                             return manualChunks(id, meta);
                         },

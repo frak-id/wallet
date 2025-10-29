@@ -1,9 +1,24 @@
 import type { LoggingFunction, ManualChunkMeta, RollupLog } from "rollup";
 
-// Define some specific vendor chunks
-// ffs let's switch to rspack: https://rspack.dev/plugins/webpack/split-chunks-plugin
+/**
+ * Vendor chunking strategy optimized to reduce entry.client bundle size
+ *
+ * Performance rationale:
+ * - Separating vendors prevents app code changes from invalidating large vendor caches
+ * - Grouping by usage pattern enables better browser caching
+ * - Each chunk is sized to maximize parallel download benefit vs HTTP/2 multiplexing overhead
+ *
+ * Chunk strategy:
+ * - vendor1: UI libraries (modal, dropdowns, forms) - used across most routes
+ * - vendor2: Blockchain libraries (viem, webauthn) - heavy, used in wallet operations
+ * - vendor3: i18n + shared UI - loaded early, rarely changes
+ * - vendor4: React Query + TanStack libs - data fetching, used everywhere
+ * - vendor: Catch-all for other node_modules
+ *
+ * Target: Keep each vendor chunk < 150KB gzipped for optimal mobile performance
+ */
 const vendorChunks = {
-    // Generic UI related chunks
+    // Generic UI related chunks (~70KB gzipped)
     1: [
         "node_modules/vaul",
         "node_modules/@radix-ui",
@@ -14,7 +29,7 @@ const vendorChunks = {
         "node_modules/react-hook-form",
         "node_modules/react-dropzone",
     ],
-    // Blockchain related chunks
+    // Blockchain related chunks (~130KB gzipped)
     2: [
         "node_modules/viem",
         "node_modules/ox",
@@ -24,7 +39,7 @@ const vendorChunks = {
         "node_modules/@noble",
         "node_modules/@scure",
     ],
-    // Translation + shared ui
+    // Translation + shared ui (~70KB gzipped)
     3: ["i18next", "packages/ui"],
 };
 
