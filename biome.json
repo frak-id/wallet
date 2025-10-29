@@ -26,7 +26,8 @@
             "!**/*.svelte",
             "!**/playwright-report",
             "!**/test-results",
-            "!**/coverage"
+            "!**/coverage",
+            "!**/routeTree.gen.ts"
         ]
     },
     "assist": { "actions": { "source": { "organizeImports": "on" } } },

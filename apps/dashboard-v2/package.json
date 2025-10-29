@@ -1,0 +1,54 @@
+{
+    "name": "@frak-labs/nexus-dashboard-v2",
+    "version": "0.0.1",
+    "description": "The Frak Nexus Dashboard built with TanStack Start",
+    "private": true,
+    "type": "module",
+    "license": "GNU GPL 3.0",
+    "scripts": {
+        "dev": "vite dev --port 30022",
+        "build": "vite build",
+        "start": "vite preview --port 3022",
+        "lint": "biome lint .",
+        "format:check": "biome check .",
+        "format": "biome check --write .",
+        "typecheck": "tsc --noEmit"
+    },
+    "dependencies": {
+        "@frak-labs/app-essentials": "workspace:*",
+        "@frak-labs/client": "workspace:*",
+        "@frak-labs/core-sdk": "workspace:*",
+        "@frak-labs/react-sdk": "workspace:*",
+        "@frak-labs/ui": "workspace:*",
+        "@tanstack/react-query": "^5.90.5",
+        "@tanstack/react-query-devtools": "^5.90.2",
+        "@tanstack/react-router": "^1.133.0",
+        "@tanstack/react-router-devtools": "^1.133.0",
+        "@tanstack/react-start": "^1.133.0",
+        "iron-session": "^8.0.4",
+        "lucide-react": "^0.547.0",
+        "mongodb": "^6.20.0",
+        "normalize.css": "^8.0.1",
+        "react": "catalog:",
+        "react-dom": "catalog:",
+        "viem": "catalog:",
+        "zustand": "^5.0.8"
+    },
+    "devDependencies": {
+        "@frak-labs/browserslist-config": "workspace:*",
+        "@tanstack/react-devtools": "^0.7.0",
+        "@tanstack/router-plugin": "^1.133.0",
+        "@types/node": "catalog:",
+        "@types/react": "catalog:",
+        "@types/react-dom": "catalog:",
+        "@vitejs/plugin-react": "^5.0.4",
+        "bun-types": "latest",
+        "sst": "3.17.5",
+        "typescript": "^5",
+        "vite": "^7.1.12",
+        "vite-tsconfig-paths": "^5.1.4"
+    },
+    "browserslist": [
+        "extends @frak-labs/browserslist-config"
+    ]
+}
