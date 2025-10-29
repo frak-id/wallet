@@ -1,0 +1,21 @@
+.header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    flex-direction: column;
+    gap: 8px;
+    position: fixed;
+    z-index: 1;
+    width: 100%;
+    height: 72px;
+    padding: 16px 24px;
+    background: var(--frak-header-background-color);
+    backdrop-filter: blur(10px);
+}
+
+.header__logo {
+    position: absolute;
+    margin-top: -18px;
+    top: 50%;
+    left: 28px;
+}
