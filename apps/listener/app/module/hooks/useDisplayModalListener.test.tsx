@@ -1,13 +1,9 @@
 import { FrakRpcError, RpcErrorCodes } from "@frak-labs/frame-connector";
 import { renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { vi } from "vitest"; // Keep vi from vitest for vi.mock() hoisting
+import { beforeEach, describe, expect, test } from "@/tests/fixtures";
 import { useDisplayModalListener } from "./useDisplayModalListener";
-
-// Import factory from test utilities
-const { createMockAddress } = await vi.importActual<
-    typeof import("@frak-labs/wallet-shared/test")
->("@frak-labs/wallet-shared/test");
 
 // Mock modal store
 const mockModalStore = {
@@ -93,11 +89,11 @@ describe("useDisplayModalListener", () => {
         });
     });
 
-    it("should throw error for empty steps", async () => {
+    test("should throw error for empty steps", async ({ mockProductId }) => {
         const { result } = renderHook(() => useDisplayModalListener());
 
         const params = [{}, {}, {}] as any;
-        const context = { productId: "0x123" as `0x${string}` };
+        const context = { productId: mockProductId };
 
         await expect(result.current(params, context as any)).rejects.toThrow(
             FrakRpcError
@@ -117,7 +113,9 @@ describe("useDisplayModalListener", () => {
         expect(mockModalStore.getState().clearModal).toHaveBeenCalled();
     });
 
-    it("should prepare and sort steps by importance", async () => {
+    test("should prepare and sort steps by importance", async ({
+        mockProductId,
+    }) => {
         let subscribeCb: ((state: any) => void) | undefined;
         let stateSnapshot: any;
 
@@ -136,7 +134,7 @@ describe("useDisplayModalListener", () => {
             openSession: {},
         };
         const params = [steps, {}, {}] as any;
-        const context = { productId: "0x123" as `0x${string}` };
+        const context = { productId: mockProductId };
 
         // Start the promise but don't await yet
         const promise = result.current(params, context as any);
@@ -168,8 +166,10 @@ describe("useDisplayModalListener", () => {
         await promise.catch(() => {});
     });
 
-    it("should skip login step if user is already authenticated", async () => {
-        const mockAddress = createMockAddress("abc123");
+    test("should skip login step if user is already authenticated", async ({
+        mockAddress,
+        mockProductId,
+    }) => {
         mockSessionStore.getState.mockReturnValue({
             session: { address: mockAddress },
         });
@@ -189,7 +189,7 @@ describe("useDisplayModalListener", () => {
             final: { action: { key: "success" } },
         };
         const params = [steps, {}, {}] as any;
-        const context = { productId: "0x123" as `0x${string}` };
+        const context = { productId: mockProductId };
 
         const promise = result.current(params, context as any);
 
@@ -219,8 +219,10 @@ describe("useDisplayModalListener", () => {
         await promise.catch(() => {});
     });
 
-    it("should skip openSession step if user has active session", async () => {
-        const mockAddress = createMockAddress("abc123");
+    test("should skip openSession step if user has active session", async ({
+        mockAddress,
+        mockProductId,
+    }) => {
         const futureTime = Date.now() + 3600000;
 
         mockSessionStore.getState.mockReturnValue({
@@ -249,7 +251,7 @@ describe("useDisplayModalListener", () => {
             final: { action: { key: "success" } },
         };
         const params = [steps, {}, {}] as any;
-        const context = { productId: "0x123" as `0x${string}` };
+        const context = { productId: mockProductId };
 
         const promise = result.current(params, context as any);
 
@@ -281,8 +283,10 @@ describe("useDisplayModalListener", () => {
         await promise.catch(() => {});
     });
 
-    it("should not skip openSession if session is expired", async () => {
-        const mockAddress = createMockAddress("abc123");
+    test("should not skip openSession if session is expired", async ({
+        mockAddress,
+        mockProductId,
+    }) => {
         const pastTime = Date.now() - 1000;
 
         mockSessionStore.getState.mockReturnValue({
@@ -311,7 +315,7 @@ describe("useDisplayModalListener", () => {
             final: { action: { key: "success" } },
         };
         const params = [steps, {}, {}] as any;
-        const context = { productId: "0x123" as `0x${string}` };
+        const context = { productId: mockProductId };
 
         const promise = result.current(params, context as any);
 
@@ -339,7 +343,9 @@ describe("useDisplayModalListener", () => {
         await promise.catch(() => {});
     });
 
-    it("should reject promise when modal is dismissed", async () => {
+    test("should reject promise when modal is dismissed", async ({
+        mockProductId,
+    }) => {
         let subscribeCb: ((state: any) => void) | undefined;
         (mockModalStore.subscribe as any).mockImplementation(
             (cb: (state: any) => void) => {
@@ -354,7 +360,7 @@ describe("useDisplayModalListener", () => {
             final: { action: { key: "success" } },
         };
         const params = [steps, {}, {}] as any;
-        const context = { productId: "0x123" as `0x${string}` };
+        const context = { productId: mockProductId };
 
         const promise = result.current(params, context as any);
 
@@ -385,7 +391,9 @@ describe("useDisplayModalListener", () => {
         }
     });
 
-    it("should resolve promise when modal is completed", async () => {
+    test("should resolve promise when modal is completed", async ({
+        mockProductId,
+    }) => {
         let subscribeCb: ((state: any) => void) | undefined;
         (mockModalStore.subscribe as any).mockImplementation(
             (cb: (state: any) => void) => {
@@ -410,7 +418,7 @@ describe("useDisplayModalListener", () => {
             final: { action: { key: "success" } },
         };
         const params = [steps, {}, {}] as any;
-        const context = { productId: "0x123" as `0x${string}` };
+        const context = { productId: mockProductId };
 
         const promise = result.current(params, context as any);
 
@@ -431,7 +439,9 @@ describe("useDisplayModalListener", () => {
         expect(result_value).toEqual(finalResult);
     });
 
-    it("should call setRequest with correct parameters", async () => {
+    test("should call setRequest with correct parameters", async ({
+        mockProductId,
+    }) => {
         let subscribeCb: ((state: any) => void) | undefined;
         (mockModalStore.subscribe as any).mockImplementation(
             (cb: (state: any) => void) => {
@@ -485,7 +495,9 @@ describe("useDisplayModalListener", () => {
         await promise.catch(() => {});
     });
 
-    it("should track modal display with correct step", async () => {
+    test("should track modal display with correct step", async ({
+        mockProductId,
+    }) => {
         let subscribeCb: ((state: any) => void) | undefined;
         (mockModalStore.subscribe as any).mockImplementation(
             (cb: (state: any) => void) => {
@@ -501,7 +513,7 @@ describe("useDisplayModalListener", () => {
             final: { action: { key: "redirect" } },
         };
         const params = [steps, {}, {}] as any;
-        const context = { productId: "0x123" as `0x${string}` };
+        const context = { productId: mockProductId };
 
         const promise = result.current(params, context as any);
 
@@ -523,7 +535,9 @@ describe("useDisplayModalListener", () => {
         await promise.catch(() => {});
     });
 
-    it("should track final step with action key", async () => {
+    test("should track final step with action key", async ({
+        mockProductId,
+    }) => {
         let subscribeCb: ((state: any) => void) | undefined;
         (mockModalStore.subscribe as any).mockImplementation(
             (cb: (state: any) => void) => {
@@ -538,7 +552,7 @@ describe("useDisplayModalListener", () => {
             final: { action: { key: "redirect" } },
         };
         const params = [steps, {}, {}] as any;
-        const context = { productId: "0x123" as `0x${string}` };
+        const context = { productId: mockProductId };
 
         const promise = result.current(params, context as any);
 
@@ -560,7 +574,9 @@ describe("useDisplayModalListener", () => {
         await promise.catch(() => {});
     });
 
-    it("should clean up previous subscription on new modal", async () => {
+    test("should clean up previous subscription on new modal", async ({
+        mockProductId,
+    }) => {
         const mockUnsubscribe1 = vi.fn();
         const mockUnsubscribe2 = vi.fn();
 
@@ -593,7 +609,7 @@ describe("useDisplayModalListener", () => {
             final: { action: { key: "success" } },
         };
         const params = [steps, {}, {}] as any;
-        const context = { productId: "0x123" as `0x${string}` };
+        const context = { productId: mockProductId };
 
         // First modal
         const promise1 = result.current(params, context as any);
@@ -628,7 +644,9 @@ describe("useDisplayModalListener", () => {
         await Promise.allSettled([promise1, promise2]);
     });
 
-    it("should ignore state changes when modal is cleared", async () => {
+    test("should ignore state changes when modal is cleared", async ({
+        mockProductId,
+    }) => {
         let subscribeCb: ((state: any) => void) | undefined;
         (mockModalStore.subscribe as any).mockImplementation(
             (cb: (state: any) => void) => {
@@ -643,7 +661,7 @@ describe("useDisplayModalListener", () => {
             final: { action: { key: "success" } },
         };
         const params = [steps, {}, {}] as any;
-        const context = { productId: "0x123" as `0x${string}` };
+        const context = { productId: mockProductId };
 
         const promise = result.current(params, context as any);
 

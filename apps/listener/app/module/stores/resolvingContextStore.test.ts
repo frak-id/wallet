@@ -1,5 +1,6 @@
 import type { ClientLifecycleEvent } from "@frak-labs/core-sdk";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { vi } from "vitest"; // Keep vi from vitest for vi.mock() hoisting
+import { beforeEach, describe, expect, test } from "@/tests/fixtures";
 import { resolvingContextStore } from "./resolvingContextStore";
 
 // Mock wallet-shared imports
@@ -29,7 +30,7 @@ describe("resolvingContextStore", () => {
     });
 
     describe("startHandshake", () => {
-        it("should generate and add handshake token", () => {
+        test("should generate and add handshake token", () => {
             const { startHandshake, handshakeTokens } =
                 resolvingContextStore.getState();
 
@@ -42,7 +43,7 @@ describe("resolvingContextStore", () => {
             expect(updatedTokens.size).toBe(1);
         });
 
-        it("should emit handshake lifecycle event", async () => {
+        test("should emit handshake lifecycle event", async () => {
             const { emitLifecycleEvent } = await import(
                 "@frak-labs/wallet-shared"
             );
@@ -55,7 +56,7 @@ describe("resolvingContextStore", () => {
             });
         });
 
-        it("should not add token if more than 10 tokens exist", () => {
+        test("should not add token if more than 10 tokens exist", () => {
             const { startHandshake } = resolvingContextStore.getState();
             const consoleSpy = vi
                 .spyOn(console, "warn")
@@ -79,7 +80,7 @@ describe("resolvingContextStore", () => {
             consoleSpy.mockRestore();
         });
 
-        it("should generate unique tokens", () => {
+        test("should generate unique tokens", () => {
             const { startHandshake } = resolvingContextStore.getState();
 
             startHandshake();
@@ -92,7 +93,7 @@ describe("resolvingContextStore", () => {
     });
 
     describe("handleHandshakeResponse", () => {
-        it("should reject invalid event type", () => {
+        test("should reject invalid event type", () => {
             const { handleHandshakeResponse } =
                 resolvingContextStore.getState();
             const consoleSpy = vi
@@ -113,7 +114,7 @@ describe("resolvingContextStore", () => {
             consoleSpy.mockRestore();
         });
 
-        it("should reject event without token", () => {
+        test("should reject event without token", () => {
             const { handleHandshakeResponse } =
                 resolvingContextStore.getState();
             const consoleSpy = vi
@@ -135,7 +136,7 @@ describe("resolvingContextStore", () => {
             consoleSpy.mockRestore();
         });
 
-        it("should reject unrecognized token", () => {
+        test("should reject unrecognized token", () => {
             const { handleHandshakeResponse } =
                 resolvingContextStore.getState();
             const consoleSpy = vi
@@ -160,7 +161,7 @@ describe("resolvingContextStore", () => {
             consoleSpy.mockRestore();
         });
 
-        it("should accept valid handshake response and set context", () => {
+        test("should accept valid handshake response and set context", () => {
             const { startHandshake, handleHandshakeResponse } =
                 resolvingContextStore.getState();
 
@@ -190,7 +191,7 @@ describe("resolvingContextStore", () => {
             expect(context?.isAutoContext).toBe(false);
         });
 
-        it("should remove token after successful handshake", () => {
+        test("should remove token after successful handshake", () => {
             const { startHandshake, handleHandshakeResponse } =
                 resolvingContextStore.getState();
 
@@ -217,7 +218,7 @@ describe("resolvingContextStore", () => {
             expect(updatedTokens.size).toBe(0);
         });
 
-        it("should compute productId from normalized domain", () => {
+        test("should compute productId from normalized domain", () => {
             const { startHandshake, handleHandshakeResponse } =
                 resolvingContextStore.getState();
 
@@ -244,7 +245,7 @@ describe("resolvingContextStore", () => {
             expect(context?.productId).toMatch(/^0x[a-f0-9]{64}$/);
         });
 
-        it("should update global properties on context change", async () => {
+        test("should update global properties on context change", async () => {
             const { updateGlobalProperties } = await import(
                 "@frak-labs/wallet-shared"
             );
@@ -277,7 +278,7 @@ describe("resolvingContextStore", () => {
             });
         });
 
-        it("should not update context if sourceUrl and isAutoContext are same", async () => {
+        test("should not update context if sourceUrl and isAutoContext are same", async () => {
             const { updateGlobalProperties } = await import(
                 "@frak-labs/wallet-shared"
             );
@@ -319,7 +320,7 @@ describe("resolvingContextStore", () => {
     });
 
     describe("setContext", () => {
-        it("should set context", () => {
+        test("should set context", () => {
             const { setContext } = resolvingContextStore.getState();
 
             const context = {
@@ -334,7 +335,7 @@ describe("resolvingContextStore", () => {
             expect(resolvingContextStore.getState().context).toEqual(context);
         });
 
-        it("should allow setting context to undefined", () => {
+        test("should allow setting context to undefined", () => {
             const { setContext } = resolvingContextStore.getState();
 
             // Set a context first
@@ -353,7 +354,7 @@ describe("resolvingContextStore", () => {
     });
 
     describe("clearContext", () => {
-        it("should clear context", () => {
+        test("should clear context", () => {
             const { setContext, clearContext } =
                 resolvingContextStore.getState();
 
@@ -375,7 +376,7 @@ describe("resolvingContextStore", () => {
     });
 
     describe("Edge cases", () => {
-        it("should handle event with origin but no currentUrl", () => {
+        test("should handle event with origin but no currentUrl", () => {
             const { startHandshake, handleHandshakeResponse } =
                 resolvingContextStore.getState();
 
@@ -399,7 +400,7 @@ describe("resolvingContextStore", () => {
             expect(context?.sourceUrl).toBe("https://fallback.com");
         });
 
-        it("should handle www prefix correctly", () => {
+        test("should handle www prefix correctly", () => {
             const { startHandshake, handleHandshakeResponse } =
                 resolvingContextStore.getState();
 

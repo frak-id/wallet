@@ -1,5 +1,6 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { vi } from "vitest"; // Keep vi from vitest for vi.mock() hoisting
 import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
+import { beforeEach, describe, expect, test } from "@/tests/fixtures";
 import {
     checkContextAndEmitReady,
     createClientLifecycleHandler,
@@ -48,12 +49,12 @@ describe("lifecycleHandler", () => {
     });
 
     describe("initializeResolvingContext", () => {
-        it("should return false if window is undefined", () => {
+        test("should return false if window is undefined", () => {
             // Cannot easily test this without mocking window globally
             // Skip this edge case as it's mainly for SSR protection
         });
 
-        it("should return false if no context exists", () => {
+        test("should return false if no context exists", () => {
             // No context in store (from beforeEach)
             const result = initializeResolvingContext();
 
@@ -64,7 +65,7 @@ describe("lifecycleHandler", () => {
             ).toBeGreaterThan(0);
         });
 
-        it("should return true if context exists and is not auto", () => {
+        test("should return true if context exists and is not auto", () => {
             resolvingContextStore.setState({
                 context: {
                     productId: "0x123" as `0x${string}`,
@@ -84,7 +85,7 @@ describe("lifecycleHandler", () => {
             );
         });
 
-        it("should return true if context is auto context", () => {
+        test("should return true if context is auto context", () => {
             resolvingContextStore.setState({
                 context: {
                     productId: "0x123" as `0x${string}`,
@@ -106,7 +107,7 @@ describe("lifecycleHandler", () => {
     });
 
     describe("checkContextAndEmitReady", () => {
-        it("should return false if no context", async () => {
+        test("should return false if no context", async () => {
             const { emitLifecycleEvent } = await import(
                 "@frak-labs/wallet-shared"
             );
@@ -134,7 +135,7 @@ describe("lifecycleHandler", () => {
             consoleSpy.mockRestore();
         });
 
-        it("should emit connected event and return true if context exists", async () => {
+        test("should emit connected event and return true if context exists", async () => {
             const { emitLifecycleEvent } = await import(
                 "@frak-labs/wallet-shared"
             );
@@ -157,7 +158,7 @@ describe("lifecycleHandler", () => {
             });
         });
 
-        it("should start handshake and emit connected if context is auto", async () => {
+        test("should start handshake and emit connected if context is auto", async () => {
             const { emitLifecycleEvent } = await import(
                 "@frak-labs/wallet-shared"
             );
@@ -187,7 +188,7 @@ describe("lifecycleHandler", () => {
     });
 
     describe("createClientLifecycleHandler", () => {
-        it("should handle modal-css event by appending stylesheet link", async () => {
+        test("should handle modal-css event by appending stylesheet link", async () => {
             const mockSetReady = vi.fn();
             const handler = createClientLifecycleHandler(mockSetReady);
 
@@ -219,7 +220,7 @@ describe("lifecycleHandler", () => {
             mockAppendChild.mockRestore();
         });
 
-        it("should handle modal-i18n event with valid i18n override", async () => {
+        test("should handle modal-i18n event with valid i18n override", async () => {
             const { mapI18nConfig } = await import("@frak-labs/wallet-shared");
             const { getI18n } = await import("react-i18next");
 
@@ -248,7 +249,7 @@ describe("lifecycleHandler", () => {
             );
         });
 
-        it("should skip modal-i18n event with empty i18n override", async () => {
+        test("should skip modal-i18n event with empty i18n override", async () => {
             const { mapI18nConfig } = await import("@frak-labs/wallet-shared");
 
             const mockSetReady = vi.fn();
@@ -264,7 +265,7 @@ describe("lifecycleHandler", () => {
             expect(mapI18nConfig).not.toHaveBeenCalled();
         });
 
-        it("should skip modal-i18n event with invalid i18n override", async () => {
+        test("should skip modal-i18n event with invalid i18n override", async () => {
             const { mapI18nConfig } = await import("@frak-labs/wallet-shared");
 
             const mockSetReady = vi.fn();
@@ -280,7 +281,7 @@ describe("lifecycleHandler", () => {
             expect(mapI18nConfig).not.toHaveBeenCalled();
         });
 
-        it("should handle restore-backup event with valid context", async () => {
+        test("should handle restore-backup event with valid context", async () => {
             const { restoreBackupData } = await import(
                 "@frak-labs/wallet-shared"
             );
@@ -313,7 +314,7 @@ describe("lifecycleHandler", () => {
             });
         });
 
-        it("should skip restore-backup event without context", async () => {
+        test("should skip restore-backup event without context", async () => {
             const { restoreBackupData } = await import(
                 "@frak-labs/wallet-shared"
             );
@@ -340,7 +341,7 @@ describe("lifecycleHandler", () => {
             consoleSpy.mockRestore();
         });
 
-        it("should handle heartbeat event by calling setReadyToHandleRequest", async () => {
+        test("should handle heartbeat event by calling setReadyToHandleRequest", async () => {
             const mockSetReady = vi.fn();
             const handler = createClientLifecycleHandler(mockSetReady);
 
@@ -354,7 +355,7 @@ describe("lifecycleHandler", () => {
             expect(mockSetReady).toHaveBeenCalled();
         });
 
-        it("should handle handshake-response event and call setReadyToHandleRequest", async () => {
+        test("should handle handshake-response event and call setReadyToHandleRequest", async () => {
             const mockSetReady = vi.fn();
             const handler = createClientLifecycleHandler(mockSetReady);
 
@@ -383,7 +384,7 @@ describe("lifecycleHandler", () => {
             expect(mockSetReady).toHaveBeenCalled();
         });
 
-        it("should handle handshake-response event but not call setReadyToHandleRequest if no context", async () => {
+        test("should handle handshake-response event but not call setReadyToHandleRequest if no context", async () => {
             const mockSetReady = vi.fn();
             const handler = createClientLifecycleHandler(mockSetReady);
 
@@ -406,7 +407,7 @@ describe("lifecycleHandler", () => {
             expect(mockSetReady).not.toHaveBeenCalled();
         });
 
-        it("should handle sso-redirect-complete event with valid compressed data", async () => {
+        test("should handle sso-redirect-complete event with valid compressed data", async () => {
             const { decompressJsonFromB64 } = await import(
                 "@frak-labs/core-sdk"
             );
@@ -439,7 +440,7 @@ describe("lifecycleHandler", () => {
             );
         });
 
-        it("should handle sso-redirect-complete event with invalid compressed data", async () => {
+        test("should handle sso-redirect-complete event with invalid compressed data", async () => {
             const { decompressJsonFromB64 } = await import(
                 "@frak-labs/core-sdk"
             );
@@ -470,7 +471,7 @@ describe("lifecycleHandler", () => {
             consoleSpy.mockRestore();
         });
 
-        it("should handle sso-redirect-complete event and catch errors", async () => {
+        test("should handle sso-redirect-complete event and catch errors", async () => {
             const { decompressJsonFromB64 } = await import(
                 "@frak-labs/core-sdk"
             );
@@ -502,7 +503,7 @@ describe("lifecycleHandler", () => {
             consoleSpy.mockRestore();
         });
 
-        it("should ignore non-lifecycle events", async () => {
+        test("should ignore non-lifecycle events", async () => {
             const mockSetReady = vi.fn();
             const handler = createClientLifecycleHandler(mockSetReady);
 

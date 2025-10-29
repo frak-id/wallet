@@ -1,4 +1,5 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { vi } from "vitest"; // Keep vi from vitest for vi.mock() hoisting
+import { beforeEach, describe, expect, test } from "@/tests/fixtures";
 import { loggingMiddleware } from "./logging";
 
 // Mock app-essentials
@@ -18,7 +19,7 @@ describe("loggingMiddleware", () => {
     });
 
     describe("onRequest", () => {
-        it("should return context unchanged in production", () => {
+        test("should return context unchanged in production", () => {
             mockIsRunningLocally = false;
 
             const message = {
@@ -36,7 +37,7 @@ describe("loggingMiddleware", () => {
             expect(result).toBe(context);
         });
 
-        it("should log request in local development", () => {
+        test("should log request in local development", () => {
             mockIsRunningLocally = true;
 
             const consoleSpy = vi
@@ -66,7 +67,7 @@ describe("loggingMiddleware", () => {
             consoleSpy.mockRestore();
         });
 
-        it("should not log request data content, only presence", () => {
+        test("should not log request data content, only presence", () => {
             mockIsRunningLocally = true;
 
             const consoleSpy = vi
@@ -91,7 +92,7 @@ describe("loggingMiddleware", () => {
     });
 
     describe("onResponse", () => {
-        it("should return response unchanged in production", () => {
+        test("should return response unchanged in production", () => {
             mockIsRunningLocally = false;
 
             const message = {
@@ -111,7 +112,7 @@ describe("loggingMiddleware", () => {
             expect(result).toBe(response);
         });
 
-        it("should log success response in local development", () => {
+        test("should log success response in local development", () => {
             mockIsRunningLocally = true;
 
             const consoleSpy = vi
@@ -146,7 +147,7 @@ describe("loggingMiddleware", () => {
             consoleSpy.mockRestore();
         });
 
-        it("should log error response in local development", () => {
+        test("should log error response in local development", () => {
             mockIsRunningLocally = true;
 
             const consoleSpy = vi
@@ -183,7 +184,7 @@ describe("loggingMiddleware", () => {
             consoleSpy.mockRestore();
         });
 
-        it("should not log response result content, only presence", () => {
+        test("should not log response result content, only presence", () => {
             mockIsRunningLocally = true;
 
             const consoleSpy = vi
@@ -211,7 +212,7 @@ describe("loggingMiddleware", () => {
             consoleSpy.mockRestore();
         });
 
-        it("should handle response with both result and error gracefully", () => {
+        test("should handle response with both result and error gracefully", () => {
             mockIsRunningLocally = true;
 
             const consoleLogSpy = vi

@@ -1,13 +1,7 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
-import type { ReactNode } from "react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { vi } from "vitest"; // Keep vi from vitest for vi.mock() hoisting
+import { beforeEach, describe, expect, test } from "@/tests/fixtures";
 import { useWalletStatusListener } from "./useWalletStatusListener";
-
-// Import factory from test utilities
-const { createMockAddress } = await vi.importActual<
-    typeof import("@frak-labs/wallet-shared/test")
->("@frak-labs/wallet-shared/test");
 
 // Mock wallet-shared
 const mockGetSafeSession = vi.fn(() => undefined);
@@ -46,24 +40,16 @@ vi.mock("@frak-labs/wallet-shared", () => ({
 }));
 
 describe("useWalletStatusListener", () => {
-    let queryClient: QueryClient;
-
-    beforeEach(() => {
-        queryClient = new QueryClient({
-            defaultOptions: {
-                queries: { retry: false },
-            },
-        });
+    // Use fixture for automatic QueryClient setup and cleanup
+    beforeEach(({ queryWrapper }) => {
+        queryWrapper.client.clear();
         vi.clearAllMocks();
     });
 
-    const wrapper = ({ children }: { children: ReactNode }) => (
-        <QueryClientProvider client={queryClient}>
-            {children}
-        </QueryClientProvider>
-    );
-
-    it("should emit not-connected status when no wallet session", async () => {
+    test("should emit not-connected status when no wallet session", async ({
+        queryWrapper,
+        mockProductId,
+    }) => {
         mockSessionStore.getState.mockReturnValue({
             session: undefined,
             sdkSession: undefined,
@@ -71,11 +57,11 @@ describe("useWalletStatusListener", () => {
         mockGetSafeSession.mockReturnValue(undefined);
 
         const { result } = renderHook(() => useWalletStatusListener(), {
-            wrapper,
+            wrapper: queryWrapper.wrapper,
         });
 
         const mockEmitter = vi.fn();
-        const context = { productId: "0x123" as `0x${string}` };
+        const context = { productId: mockProductId };
 
         await result.current([] as any, mockEmitter, context as any);
 
@@ -86,17 +72,20 @@ describe("useWalletStatusListener", () => {
         });
 
         expect(mockPushBackupData).toHaveBeenCalledWith({
-            productId: "0x123",
+            productId: mockProductId,
         });
     });
 
-    it("should emit connected status when wallet session exists", async () => {
-        const mockWalletAddress = createMockAddress("abc123");
+    test("should emit connected status when wallet session exists", async ({
+        queryWrapper,
+        mockAddress,
+        mockProductId,
+    }) => {
         mockSessionStore.getState.mockReturnValue({
             session: {
                 token: "test-token",
                 type: "ecdsa",
-                address: mockWalletAddress,
+                address: mockAddress,
                 publicKey: "0x123" as `0x${string}`,
                 authenticatorId: "ecdsa-123",
                 transports: undefined,
@@ -105,40 +94,43 @@ describe("useWalletStatusListener", () => {
         });
         mockGetSafeSession.mockReturnValue(undefined);
 
-        queryClient.setQueryData(["interaction-session"], undefined);
+        queryWrapper.client.setQueryData(["interaction-session"], undefined);
 
         const { result } = renderHook(() => useWalletStatusListener(), {
-            wrapper,
+            wrapper: queryWrapper.wrapper,
         });
 
         const mockEmitter = vi.fn();
-        const context = { productId: "0x123" as `0x${string}` };
+        const context = { productId: mockProductId };
 
         await result.current([] as any, mockEmitter, context as any);
 
         await waitFor(() => {
             expect(mockEmitter).toHaveBeenCalledWith({
                 key: "connected",
-                wallet: mockWalletAddress,
+                wallet: mockAddress,
                 interactionToken: undefined,
                 interactionSession: undefined,
             });
         });
 
         expect(mockPushBackupData).toHaveBeenCalledWith({
-            productId: "0x123",
+            productId: mockProductId,
         });
     });
 
-    it("should include SDK session token when present", async () => {
-        const mockWalletAddress = createMockAddress("abc123");
+    test("should include SDK session token when present", async ({
+        queryWrapper,
+        mockAddress,
+        mockProductId,
+    }) => {
         const mockSdkToken = "sdk-token-123";
 
         mockSessionStore.getState.mockReturnValue({
             session: {
                 token: "test-token",
                 type: "ecdsa",
-                address: mockWalletAddress,
+                address: mockAddress,
                 publicKey: "0x123" as `0x${string}`,
                 authenticatorId: "ecdsa-123",
                 transports: undefined,
@@ -148,29 +140,32 @@ describe("useWalletStatusListener", () => {
         mockGetSafeSession.mockReturnValue(undefined);
         mockGetSafeSdkSession.mockReturnValue(undefined);
 
-        queryClient.setQueryData(["interaction-session"], undefined);
+        queryWrapper.client.setQueryData(["interaction-session"], undefined);
 
         const { result } = renderHook(() => useWalletStatusListener(), {
-            wrapper,
+            wrapper: queryWrapper.wrapper,
         });
 
         const mockEmitter = vi.fn();
-        const context = { productId: "0x123" as `0x${string}` };
+        const context = { productId: mockProductId };
 
         await result.current([] as any, mockEmitter, context as any);
 
         await waitFor(() => {
             expect(mockEmitter).toHaveBeenCalledWith({
                 key: "connected",
-                wallet: mockWalletAddress,
+                wallet: mockAddress,
                 interactionToken: mockSdkToken,
                 interactionSession: undefined,
             });
         });
     });
 
-    it("should include interaction session when cached", async () => {
-        const mockWalletAddress = createMockAddress("abc123");
+    test("should include interaction session when cached", async ({
+        queryWrapper,
+        mockAddress,
+        mockProductId,
+    }) => {
         const mockInteractionSession = {
             sessionStart: Date.now(),
             sessionEnd: Date.now() + 3600000,
@@ -179,38 +174,38 @@ describe("useWalletStatusListener", () => {
         // Update the hook selector to return undefined for sdkSession
         mockSessionStore.mockImplementation((selector: any) => {
             const state = {
-                session: { address: mockWalletAddress },
+                session: { address: mockAddress },
                 sdkSession: undefined,
             };
             return selector(state);
         });
 
         mockSessionStore.getState.mockReturnValue({
-            session: { address: mockWalletAddress },
+            session: { address: mockAddress },
             sdkSession: undefined,
         });
         mockGetSafeSession.mockReturnValue(undefined);
         mockGetSafeSdkSession.mockReturnValue(undefined);
 
         // Set cached query data
-        queryClient.setQueryData(
+        queryWrapper.client.setQueryData(
             ["interaction-session"],
             mockInteractionSession
         );
 
         const { result } = renderHook(() => useWalletStatusListener(), {
-            wrapper,
+            wrapper: queryWrapper.wrapper,
         });
 
         const mockEmitter = vi.fn();
-        const context = { productId: "0x123" as `0x${string}` };
+        const context = { productId: mockProductId };
 
         await result.current([] as any, mockEmitter, context as any);
 
         await waitFor(() => {
             expect(mockEmitter).toHaveBeenCalledWith({
                 key: "connected",
-                wallet: mockWalletAddress,
+                wallet: mockAddress,
                 interactionToken: undefined,
                 interactionSession: {
                     startTimestamp: mockInteractionSession.sessionStart,
@@ -220,52 +215,57 @@ describe("useWalletStatusListener", () => {
         });
     });
 
-    it("should handle interaction session query error gracefully", async () => {
-        const mockWalletAddress = createMockAddress("abc123");
-
+    test("should handle interaction session query error gracefully", async ({
+        queryWrapper,
+        mockAddress,
+        mockProductId,
+    }) => {
         // Update the hook selector to return undefined for sdkSession
         mockSessionStore.mockImplementation((selector: any) => {
             const state = {
-                session: { address: mockWalletAddress },
+                session: { address: mockAddress },
                 sdkSession: undefined,
             };
             return selector(state);
         });
 
         mockSessionStore.getState.mockReturnValue({
-            session: { address: mockWalletAddress },
+            session: { address: mockAddress },
             sdkSession: undefined,
         });
         mockGetSafeSession.mockReturnValue(undefined);
         mockGetSafeSdkSession.mockReturnValue(undefined);
 
         // Set query to fail
-        queryClient.setQueryDefaults(["interaction-session"], {
+        queryWrapper.client.setQueryDefaults(["interaction-session"], {
             queryFn: async () => {
                 throw new Error("Query failed");
             },
         });
 
         const { result } = renderHook(() => useWalletStatusListener(), {
-            wrapper,
+            wrapper: queryWrapper.wrapper,
         });
 
         const mockEmitter = vi.fn();
-        const context = { productId: "0x123" as `0x${string}` };
+        const context = { productId: mockProductId };
 
         await result.current([] as any, mockEmitter, context as any);
 
         await waitFor(() => {
             expect(mockEmitter).toHaveBeenCalledWith({
                 key: "connected",
-                wallet: mockWalletAddress,
+                wallet: mockAddress,
                 interactionToken: undefined,
                 interactionSession: undefined,
             });
         });
     });
 
-    it("should subscribe to session store changes", async () => {
+    test("should subscribe to session store changes", async ({
+        queryWrapper,
+        mockProductId,
+    }) => {
         let subscribeCallback: (() => void) | undefined;
         mockSessionStore.subscribe.mockImplementation((cb: () => void) => {
             subscribeCallback = cb;
@@ -278,11 +278,11 @@ describe("useWalletStatusListener", () => {
         });
 
         const { result } = renderHook(() => useWalletStatusListener(), {
-            wrapper,
+            wrapper: queryWrapper.wrapper,
         });
 
         const mockEmitter = vi.fn();
-        const context = { productId: "0x123" as `0x${string}` };
+        const context = { productId: mockProductId };
 
         await result.current([] as any, mockEmitter, context as any);
 
@@ -291,7 +291,10 @@ describe("useWalletStatusListener", () => {
         expect(subscribeCallback).toBeDefined();
     });
 
-    it("should clean up previous subscription on new listener call", async () => {
+    test("should clean up previous subscription on new listener call", async ({
+        queryWrapper,
+        mockProductId,
+    }) => {
         const mockUnsubscribe1 = vi.fn();
         const mockUnsubscribe2 = vi.fn();
 
@@ -305,11 +308,11 @@ describe("useWalletStatusListener", () => {
         });
 
         const { result } = renderHook(() => useWalletStatusListener(), {
-            wrapper,
+            wrapper: queryWrapper.wrapper,
         });
 
         const mockEmitter = vi.fn();
-        const context = { productId: "0x123" as `0x${string}` };
+        const context = { productId: mockProductId };
 
         // First call
         await result.current([] as any, mockEmitter, context as any);
@@ -320,9 +323,11 @@ describe("useWalletStatusListener", () => {
         expect(mockUnsubscribe1).toHaveBeenCalled();
     });
 
-    it("should not emit if aborted", async () => {
-        const mockWalletAddress = createMockAddress("abc123");
-
+    test("should not emit if aborted", async ({
+        queryWrapper,
+        mockAddress,
+        mockProductId,
+    }) => {
         // Mock session store to abort immediately after first call
         mockSessionStore.subscribe.mockImplementation((cb: () => void) => {
             // Trigger callback immediately to test abort logic
@@ -331,16 +336,16 @@ describe("useWalletStatusListener", () => {
         });
 
         mockSessionStore.getState.mockReturnValue({
-            session: { address: mockWalletAddress },
+            session: { address: mockAddress },
             sdkSession: undefined,
         });
 
         const { result } = renderHook(() => useWalletStatusListener(), {
-            wrapper,
+            wrapper: queryWrapper.wrapper,
         });
 
         const mockEmitter = vi.fn();
-        const context = { productId: "0x123" as `0x${string}` };
+        const context = { productId: mockProductId };
 
         await result.current([] as any, mockEmitter, context as any);
 
@@ -350,25 +355,27 @@ describe("useWalletStatusListener", () => {
         });
     });
 
-    it("should use productId from context parameter", async () => {
+    test("should use productId from context parameter", async ({
+        queryWrapper,
+        mockProductId,
+    }) => {
         mockSessionStore.getState.mockReturnValue({
             session: undefined,
             sdkSession: undefined,
         });
 
         const { result } = renderHook(() => useWalletStatusListener(), {
-            wrapper,
+            wrapper: queryWrapper.wrapper,
         });
 
         const mockEmitter = vi.fn();
-        const customProductId = "0xCustomId" as `0x${string}`;
-        const context = { productId: customProductId };
+        const context = { productId: mockProductId };
 
         await result.current([] as any, mockEmitter, context as any);
 
         await waitFor(() => {
             expect(mockPushBackupData).toHaveBeenCalledWith({
-                productId: customProductId,
+                productId: mockProductId,
             });
         });
     });

@@ -1,7 +1,6 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook } from "@testing-library/react";
-import type { ReactNode } from "react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { vi } from "vitest"; // Keep vi from vitest for vi.mock() hoisting
+import { beforeEach, describe, expect, test } from "@/tests/fixtures";
 import { useShareLink } from "./useShareLink";
 
 // Mock wallet-shared
@@ -27,21 +26,15 @@ vi.mock("../providers/ListenerUiProvider", () => ({
 }));
 
 describe("useShareLink", () => {
-    let queryClient: QueryClient;
-
-    beforeEach(() => {
-        queryClient = new QueryClient();
+    beforeEach(({ queryWrapper }) => {
+        queryWrapper.client.clear();
         vi.clearAllMocks();
     });
 
-    const wrapper = ({ children }: { children: ReactNode }) => (
-        <QueryClientProvider client={queryClient}>
-            {children}
-        </QueryClientProvider>
-    );
-
-    it("should return early if link is null", async () => {
-        const { result } = renderHook(() => useShareLink(null), { wrapper });
+    test("should return early if link is null", async ({ queryWrapper }) => {
+        const { result } = renderHook(() => useShareLink(null), {
+            wrapper: queryWrapper.wrapper,
+        });
 
         await result.current.mutateAsync();
 
@@ -49,15 +42,21 @@ describe("useShareLink", () => {
         expect(mockTrackGenericEvent).not.toHaveBeenCalled();
     });
 
-    it("should return early if link is empty string", async () => {
-        const { result } = renderHook(() => useShareLink(""), { wrapper });
+    test("should return early if link is empty string", async ({
+        queryWrapper,
+    }) => {
+        const { result } = renderHook(() => useShareLink(""), {
+            wrapper: queryWrapper.wrapper,
+        });
 
         await result.current.mutateAsync();
 
         expect(mockTrackGenericEvent).not.toHaveBeenCalled();
     });
 
-    it("should return early if navigator is undefined", async () => {
+    test("should return early if navigator is undefined", async ({
+        queryWrapper,
+    }) => {
         // Temporarily remove navigator
         const originalNavigator = global.navigator;
         // @ts-expect-error - Testing undefined navigator
@@ -66,7 +65,7 @@ describe("useShareLink", () => {
         const { result } = renderHook(
             () => useShareLink("https://example.com"),
             {
-                wrapper,
+                wrapper: queryWrapper.wrapper,
             }
         );
 
@@ -78,7 +77,9 @@ describe("useShareLink", () => {
         global.navigator = originalNavigator;
     });
 
-    it("should return early if navigator.share is not a function", async () => {
+    test("should return early if navigator.share is not a function", async ({
+        queryWrapper,
+    }) => {
         const originalShare = navigator.share;
         // @ts-expect-error - Testing missing share function
         delete navigator.share;
@@ -86,7 +87,7 @@ describe("useShareLink", () => {
         const { result } = renderHook(
             () => useShareLink("https://example.com"),
             {
-                wrapper,
+                wrapper: queryWrapper.wrapper,
             }
         );
 
@@ -100,7 +101,9 @@ describe("useShareLink", () => {
         }
     });
 
-    it("should return early if canShare returns false", async () => {
+    test("should return early if canShare returns false", async ({
+        queryWrapper,
+    }) => {
         const mockShare = vi.fn();
         const mockCanShare = vi.fn().mockReturnValue(false);
 
@@ -118,7 +121,7 @@ describe("useShareLink", () => {
         const { result } = renderHook(
             () => useShareLink("https://example.com"),
             {
-                wrapper,
+                wrapper: queryWrapper.wrapper,
             }
         );
 
@@ -133,7 +136,9 @@ describe("useShareLink", () => {
         expect(mockTrackGenericEvent).not.toHaveBeenCalled();
     });
 
-    it("should successfully share link and track event", async () => {
+    test("should successfully share link and track event", async ({
+        queryWrapper,
+    }) => {
         const mockShare = vi.fn().mockResolvedValue(undefined);
         const mockCanShare = vi.fn().mockReturnValue(true);
 
@@ -151,7 +156,7 @@ describe("useShareLink", () => {
         const { result } = renderHook(
             () => useShareLink("https://example.com"),
             {
-                wrapper,
+                wrapper: queryWrapper.wrapper,
             }
         );
 
@@ -169,7 +174,7 @@ describe("useShareLink", () => {
         expect(response).toBe("Shared successfully");
     });
 
-    it("should handle share error gracefully", async () => {
+    test("should handle share error gracefully", async ({ queryWrapper }) => {
         const mockShare = vi
             .fn()
             .mockRejectedValue(new Error("User cancelled"));
@@ -192,7 +197,7 @@ describe("useShareLink", () => {
         const { result } = renderHook(
             () => useShareLink("https://example.com"),
             {
-                wrapper,
+                wrapper: queryWrapper.wrapper,
             }
         );
 

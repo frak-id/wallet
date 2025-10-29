@@ -1,5 +1,6 @@
 import { renderHook } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { vi } from "vitest"; // Keep vi from vitest for vi.mock() hoisting
+import { beforeEach, describe, expect, test } from "@/tests/fixtures";
 import { useSendPing } from "./useSendPing";
 
 describe("useSendPing", () => {
@@ -8,14 +9,14 @@ describe("useSendPing", () => {
         global.fetch = vi.fn() as unknown as typeof fetch;
     });
 
-    it("should return a memoized async function", () => {
+    test("should return a memoized async function", () => {
         const { result } = renderHook(() => useSendPing());
 
         expect(result.current).toBeDefined();
         expect(typeof result.current.then).toBe("function"); // Check it's a Promise
     });
 
-    it("should call fetch with correct parameters", async () => {
+    test("should call fetch with correct parameters", async () => {
         const mockFetch = vi.fn().mockResolvedValue({
             ok: true,
             json: async () => ({}),
@@ -42,7 +43,7 @@ describe("useSendPing", () => {
         });
     });
 
-    it("should return the same memoized function on re-render", () => {
+    test("should return the same memoized function on re-render", () => {
         const { result, rerender } = renderHook(() => useSendPing());
 
         const firstResult = result.current;
@@ -52,7 +53,7 @@ describe("useSendPing", () => {
         expect(firstResult).toBe(secondResult);
     });
 
-    it("should handle fetch without awaiting response", () => {
+    test("should handle fetch without awaiting response", () => {
         const mockFetch = vi.fn();
         global.fetch = mockFetch as unknown as typeof fetch;
 

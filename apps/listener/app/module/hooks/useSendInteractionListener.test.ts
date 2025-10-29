@@ -1,6 +1,7 @@
 import { FrakRpcError, RpcErrorCodes } from "@frak-labs/frame-connector";
 import { renderHook } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { vi } from "vitest"; // Keep vi from vitest for vi.mock() hoisting
+import { beforeEach, describe, expect, test } from "@/tests/fixtures";
 import { useSendInteractionListener } from "./useSendInteractionListener";
 
 // Mock wallet-shared
@@ -14,36 +15,38 @@ describe("useSendInteractionListener", () => {
         vi.clearAllMocks();
     });
 
-    it("should throw error if productId is missing", async () => {
+    test("should throw error if productId is missing", async ({
+        mockProductId,
+    }) => {
         const { result } = renderHook(() => useSendInteractionListener());
 
         const params = [undefined, { type: "test" }, undefined] as any;
-        const context = { productId: "0x123" as `0x${string}` };
+        const context = { productId: mockProductId };
 
         await expect(result.current(params, context as any)).rejects.toThrow(
             "Missing productId or interaction"
         );
     });
 
-    it("should throw error if interaction is missing", async () => {
+    test("should throw error if interaction is missing", async ({
+        mockProductId,
+    }) => {
         const { result } = renderHook(() => useSendInteractionListener());
 
-        const params = ["0x123" as `0x${string}`, undefined, undefined] as any;
-        const context = { productId: "0x123" as `0x${string}` };
+        const params = [mockProductId, undefined, undefined] as any;
+        const context = { productId: mockProductId };
 
         await expect(result.current(params, context as any)).rejects.toThrow(
             "Missing productId or interaction"
         );
     });
 
-    it("should throw error if productId in params doesn't match context", async () => {
+    test("should throw error if productId in params doesn't match context", async ({
+        mockProductId,
+    }) => {
         const { result } = renderHook(() => useSendInteractionListener());
 
-        const params = [
-            "0x123" as `0x${string}`,
-            { type: "test" },
-            undefined,
-        ] as any;
+        const params = [mockProductId, { type: "test" }, undefined] as any;
         const context = { productId: "0x456" as `0x${string}` };
 
         const consoleSpy = vi
@@ -68,7 +71,7 @@ describe("useSendInteractionListener", () => {
         expect(consoleSpy).toHaveBeenCalledWith(
             "Product ID in params doesn't match validated context",
             {
-                paramsProductId: "0x123",
+                paramsProductId: mockProductId,
                 contextProductId: "0x456",
             }
         );
@@ -76,7 +79,9 @@ describe("useSendInteractionListener", () => {
         consoleSpy.mockRestore();
     });
 
-    it("should throw walletNotConnected error for pending-wallet status", async () => {
+    test("should throw walletNotConnected error for pending-wallet status", async ({
+        mockProductId,
+    }) => {
         mockPushInteraction.mockResolvedValue({
             status: "pending-wallet",
             delegationId: undefined,
@@ -84,12 +89,8 @@ describe("useSendInteractionListener", () => {
 
         const { result } = renderHook(() => useSendInteractionListener());
 
-        const params = [
-            "0x123" as `0x${string}`,
-            { type: "test" },
-            undefined,
-        ] as any;
-        const context = { productId: "0x123" as `0x${string}` };
+        const params = [mockProductId, { type: "test" }, undefined] as any;
+        const context = { productId: mockProductId };
 
         await expect(result.current(params, context as any)).rejects.toThrow(
             FrakRpcError
@@ -107,7 +108,9 @@ describe("useSendInteractionListener", () => {
         }
     });
 
-    it("should throw serverError for no-sdk-session status", async () => {
+    test("should throw serverError for no-sdk-session status", async ({
+        mockProductId,
+    }) => {
         mockPushInteraction.mockResolvedValue({
             status: "no-sdk-session",
             delegationId: undefined,
@@ -115,12 +118,8 @@ describe("useSendInteractionListener", () => {
 
         const { result } = renderHook(() => useSendInteractionListener());
 
-        const params = [
-            "0x123" as `0x${string}`,
-            { type: "test" },
-            undefined,
-        ] as any;
-        const context = { productId: "0x123" as `0x${string}` };
+        const params = [mockProductId, { type: "test" }, undefined] as any;
+        const context = { productId: mockProductId };
 
         await expect(result.current(params, context as any)).rejects.toThrow(
             FrakRpcError
@@ -138,7 +137,9 @@ describe("useSendInteractionListener", () => {
         }
     });
 
-    it("should throw serverError for push-error status", async () => {
+    test("should throw serverError for push-error status", async ({
+        mockProductId,
+    }) => {
         mockPushInteraction.mockResolvedValue({
             status: "push-error",
             delegationId: undefined,
@@ -146,12 +147,8 @@ describe("useSendInteractionListener", () => {
 
         const { result } = renderHook(() => useSendInteractionListener());
 
-        const params = [
-            "0x123" as `0x${string}`,
-            { type: "test" },
-            undefined,
-        ] as any;
-        const context = { productId: "0x123" as `0x${string}` };
+        const params = [mockProductId, { type: "test" }, undefined] as any;
+        const context = { productId: mockProductId };
 
         await expect(result.current(params, context as any)).rejects.toThrow(
             FrakRpcError
@@ -169,7 +166,7 @@ describe("useSendInteractionListener", () => {
         }
     });
 
-    it("should return delegationId on success", async () => {
+    test("should return delegationId on success", async ({ mockProductId }) => {
         const mockDelegationId = "delegation-123";
         mockPushInteraction.mockResolvedValue({
             status: "success",
@@ -178,24 +175,20 @@ describe("useSendInteractionListener", () => {
 
         const { result } = renderHook(() => useSendInteractionListener());
 
-        const params = [
-            "0x123" as `0x${string}`,
-            { type: "test" },
-            undefined,
-        ] as any;
-        const context = { productId: "0x123" as `0x${string}` };
+        const params = [mockProductId, { type: "test" }, undefined] as any;
+        const context = { productId: mockProductId };
 
         const response = await result.current(params, context as any);
 
         expect(response).toEqual({ delegationId: mockDelegationId });
         expect(mockPushInteraction).toHaveBeenCalledWith({
-            productId: "0x123",
+            productId: mockProductId,
             interaction: { type: "test" },
             signature: undefined,
         });
     });
 
-    it("should pass signature to pushInteraction", async () => {
+    test("should pass signature to pushInteraction", async () => {
         mockPushInteraction.mockResolvedValue({
             status: "success",
             delegationId: "delegation-456",
@@ -219,7 +212,7 @@ describe("useSendInteractionListener", () => {
         });
     });
 
-    it("should handle BigInt productId comparison correctly", async () => {
+    test("should handle BigInt productId comparison correctly", async () => {
         mockPushInteraction.mockResolvedValue({
             status: "success",
             delegationId: "delegation-789",

@@ -1,8 +1,7 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook } from "@testing-library/react";
-import type { ReactNode } from "react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { vi } from "vitest"; // Keep vi from vitest for vi.mock() hoisting
 import { modalStore } from "@/module/stores/modalStore";
+import { beforeEach, describe, expect, test } from "@/tests/fixtures";
 import { useSdkCleanup } from "./useSdkCleanup";
 
 // Mock wallet-shared
@@ -43,10 +42,8 @@ vi.mock("../providers/ListenerUiProvider", () => ({
 }));
 
 describe("useSdkCleanup", () => {
-    let queryClient: QueryClient;
-
-    beforeEach(() => {
-        queryClient = new QueryClient();
+    beforeEach(({ queryWrapper }) => {
+        queryWrapper.client.clear();
         vi.clearAllMocks();
 
         // Reset modalStore
@@ -66,30 +63,30 @@ describe("useSdkCleanup", () => {
         });
     });
 
-    const wrapper = ({ children }: { children: ReactNode }) => (
-        <QueryClientProvider client={queryClient}>
-            {children}
-        </QueryClientProvider>
-    );
-
-    it("should track cleanup event", () => {
-        const { result } = renderHook(() => useSdkCleanup(), { wrapper });
+    test("should track cleanup event", ({ queryWrapper }) => {
+        const { result } = renderHook(() => useSdkCleanup(), {
+            wrapper: queryWrapper.wrapper,
+        });
 
         result.current();
 
         expect(mockTrackGenericEvent).toHaveBeenCalledWith("sdk-cleanup");
     });
 
-    it("should cancel any pending WebAuthn ceremony", () => {
-        const { result } = renderHook(() => useSdkCleanup(), { wrapper });
+    test("should cancel any pending WebAuthn ceremony", ({ queryWrapper }) => {
+        const { result } = renderHook(() => useSdkCleanup(), {
+            wrapper: queryWrapper.wrapper,
+        });
 
         result.current();
 
         expect(mockCancelCeremony).toHaveBeenCalled();
     });
 
-    it("should emit remove-backup lifecycle event", () => {
-        const { result } = renderHook(() => useSdkCleanup(), { wrapper });
+    test("should emit remove-backup lifecycle event", ({ queryWrapper }) => {
+        const { result } = renderHook(() => useSdkCleanup(), {
+            wrapper: queryWrapper.wrapper,
+        });
 
         result.current();
 
@@ -98,8 +95,10 @@ describe("useSdkCleanup", () => {
         });
     });
 
-    it("should clear session and SDK session", () => {
-        const { result } = renderHook(() => useSdkCleanup(), { wrapper });
+    test("should clear session and SDK session", ({ queryWrapper }) => {
+        const { result } = renderHook(() => useSdkCleanup(), {
+            wrapper: queryWrapper.wrapper,
+        });
 
         result.current();
 
@@ -107,18 +106,22 @@ describe("useSdkCleanup", () => {
         expect(mockSetSdkSession).toHaveBeenCalledWith(null);
     });
 
-    it("should clear localStorage", () => {
-        const { result } = renderHook(() => useSdkCleanup(), { wrapper });
+    test("should clear localStorage", ({ queryWrapper }) => {
+        const { result } = renderHook(() => useSdkCleanup(), {
+            wrapper: queryWrapper.wrapper,
+        });
 
         result.current();
 
         expect(window.localStorage.clear).toHaveBeenCalled();
     });
 
-    it("should clear queryClient cache", () => {
-        const clearSpy = vi.spyOn(queryClient, "clear");
+    test("should clear queryClient cache", ({ queryWrapper }) => {
+        const clearSpy = vi.spyOn(queryWrapper.client, "clear");
 
-        const { result } = renderHook(() => useSdkCleanup(), { wrapper });
+        const { result } = renderHook(() => useSdkCleanup(), {
+            wrapper: queryWrapper.wrapper,
+        });
 
         result.current();
 
@@ -128,7 +131,9 @@ describe("useSdkCleanup", () => {
     // Note: Testing the "no current request" branch requires runtime mock changes
     // which is complex. This branch is covered indirectly by other tests.
 
-    it("should not reset modal step if no modal steps", () => {
+    test("should not reset modal step if no modal steps", ({
+        queryWrapper,
+    }) => {
         modalStore.setState({
             steps: undefined,
             currentStep: 0,
@@ -136,7 +141,9 @@ describe("useSdkCleanup", () => {
             dismissed: false,
         });
 
-        const { result } = renderHook(() => useSdkCleanup(), { wrapper });
+        const { result } = renderHook(() => useSdkCleanup(), {
+            wrapper: queryWrapper.wrapper,
+        });
 
         result.current();
 
@@ -144,7 +151,9 @@ describe("useSdkCleanup", () => {
         expect(modalStore.getState().currentStep).toBe(0);
     });
 
-    it("should reset to login step if currently past login step", () => {
+    test("should reset to login step if currently past login step", ({
+        queryWrapper,
+    }) => {
         modalStore.setState({
             steps: [
                 { key: "login", params: {} },
@@ -156,7 +165,9 @@ describe("useSdkCleanup", () => {
             dismissed: false,
         });
 
-        const { result } = renderHook(() => useSdkCleanup(), { wrapper });
+        const { result } = renderHook(() => useSdkCleanup(), {
+            wrapper: queryWrapper.wrapper,
+        });
 
         result.current();
 
@@ -164,7 +175,7 @@ describe("useSdkCleanup", () => {
         expect(modalStore.getState().currentStep).toBe(0);
     });
 
-    it("should not reset if already at login step", () => {
+    test("should not reset if already at login step", ({ queryWrapper }) => {
         modalStore.setState({
             steps: [
                 { key: "login", params: {} },
@@ -176,7 +187,9 @@ describe("useSdkCleanup", () => {
             dismissed: false,
         });
 
-        const { result } = renderHook(() => useSdkCleanup(), { wrapper });
+        const { result } = renderHook(() => useSdkCleanup(), {
+            wrapper: queryWrapper.wrapper,
+        });
 
         result.current();
 
@@ -184,7 +197,7 @@ describe("useSdkCleanup", () => {
         expect(modalStore.getState().currentStep).toBe(0);
     });
 
-    it("should not reset if no login step exists", () => {
+    test("should not reset if no login step exists", ({ queryWrapper }) => {
         modalStore.setState({
             steps: [
                 { key: "openSession", params: {} },
@@ -195,7 +208,9 @@ describe("useSdkCleanup", () => {
             dismissed: false,
         });
 
-        const { result } = renderHook(() => useSdkCleanup(), { wrapper });
+        const { result } = renderHook(() => useSdkCleanup(), {
+            wrapper: queryWrapper.wrapper,
+        });
 
         result.current();
 
@@ -203,9 +218,11 @@ describe("useSdkCleanup", () => {
         expect(modalStore.getState().currentStep).toBe(1);
     });
 
-    it("should return the same callback function reference", () => {
+    test("should return the same callback function reference", ({
+        queryWrapper,
+    }) => {
         const { result, rerender } = renderHook(() => useSdkCleanup(), {
-            wrapper,
+            wrapper: queryWrapper.wrapper,
         });
 
         const firstCallback = result.current;

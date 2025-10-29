@@ -1,6 +1,7 @@
 import { FrakRpcError, RpcErrorCodes } from "@frak-labs/frame-connector";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { vi } from "vitest"; // Keep vi from vitest for vi.mock() hoisting
 import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
+import { beforeEach, describe, expect, test } from "@/tests/fixtures";
 import { walletContextMiddleware } from "./walletContext";
 
 // Mock app-essentials
@@ -25,7 +26,7 @@ describe("walletContextMiddleware", () => {
     });
 
     describe("onRequest", () => {
-        it("should throw error if no resolving context available", () => {
+        test("should throw error if no resolving context available", () => {
             const message = {
                 id: "1",
                 topic: "frak_sendInteraction" as const,
@@ -55,7 +56,7 @@ describe("walletContextMiddleware", () => {
             }
         });
 
-        it("should handle same-origin messages from wallet window", () => {
+        test("should handle same-origin messages from wallet window", () => {
             resolvingContextStore.setState({
                 context: {
                     productId: "0x123" as `0x${string}`,
@@ -85,7 +86,7 @@ describe("walletContextMiddleware", () => {
             });
         });
 
-        it("should augment context with wallet fields when productId matches", () => {
+        test("should augment context with wallet fields when productId matches", () => {
             const storedContext = {
                 productId:
                     "0x02438d3405cadd648e08dbff51bdbeb415913e642189100dc4a012064c870883" as `0x${string}`,
@@ -116,7 +117,7 @@ describe("walletContextMiddleware", () => {
             });
         });
 
-        it("should include walletReferrer if present in stored context", () => {
+        test("should include walletReferrer if present in stored context", () => {
             const storedContext = {
                 productId:
                     "0x02438d3405cadd648e08dbff51bdbeb415913e642189100dc4a012064c870883" as `0x${string}`,
@@ -142,7 +143,7 @@ describe("walletContextMiddleware", () => {
             expect(result?.walletReferrer).toBe("0xabc123");
         });
 
-        it("should handle www prefix in origin correctly", () => {
+        test("should handle www prefix in origin correctly", () => {
             // Store context for example.com (normalized)
             const storedContext = {
                 productId:
@@ -175,7 +176,7 @@ describe("walletContextMiddleware", () => {
             });
         });
 
-        it("should throw error for productId mismatch in production", () => {
+        test("should throw error for productId mismatch in production", () => {
             mockIsRunningLocally = false; // Already set in beforeEach, but being explicit
 
             const storedContext = {
@@ -228,7 +229,7 @@ describe("walletContextMiddleware", () => {
             consoleSpy.mockRestore();
         });
 
-        it("should allow productId mismatch in local development", () => {
+        test("should allow productId mismatch in local development", () => {
             mockIsRunningLocally = true;
 
             const storedContext = {
@@ -262,7 +263,7 @@ describe("walletContextMiddleware", () => {
             consoleSpy.mockRestore();
         });
 
-        it("should handle subdomain variations correctly", () => {
+        test("should handle subdomain variations correctly", () => {
             const storedContext = {
                 productId:
                     "0x02438d3405cadd648e08dbff51bdbeb415913e642189100dc4a012064c870883" as `0x${string}`,
@@ -294,7 +295,7 @@ describe("walletContextMiddleware", () => {
             consoleSpy.mockRestore();
         });
 
-        it("should log debug message for same-origin requests", () => {
+        test("should log debug message for same-origin requests", () => {
             resolvingContextStore.setState({
                 context: {
                     productId: "0x123" as `0x${string}`,

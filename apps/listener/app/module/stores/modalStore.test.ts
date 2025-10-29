@@ -1,4 +1,5 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { vi } from "vitest"; // Keep vi from vitest for vi.mock() hoisting
+import { beforeEach, describe, expect, test } from "@/tests/fixtures";
 import {
     modalStore,
     selectActiveStep,
@@ -30,7 +31,7 @@ describe("modalStore", () => {
     });
 
     describe("Initial state", () => {
-        it("should have correct initial state", () => {
+        test("should have correct initial state", () => {
             const state = modalStore.getState();
             expect(state.steps).toBeUndefined();
             expect(state.currentStep).toBe(0);
@@ -40,7 +41,7 @@ describe("modalStore", () => {
     });
 
     describe("setNewModal", () => {
-        it("should set new modal with steps and initial results", () => {
+        test("should set new modal with steps and initial results", () => {
             const steps = [
                 { key: "login" as const, params: {} as any },
                 {
@@ -63,7 +64,7 @@ describe("modalStore", () => {
             expect(state.dismissed).toBe(false);
         });
 
-        it("should add onResponse callbacks to each step", () => {
+        test("should add onResponse callbacks to each step", () => {
             const steps = [{ key: "login" as const, params: {} as any }];
 
             modalStore.getState().setNewModal({
@@ -77,7 +78,7 @@ describe("modalStore", () => {
             expect(typeof state.steps?.[0].onResponse).toBe("function");
         });
 
-        it("should allow setting non-zero initial step", () => {
+        test("should allow setting non-zero initial step", () => {
             const steps = [
                 { key: "login" as const, params: {} as any },
                 {
@@ -95,7 +96,7 @@ describe("modalStore", () => {
             expect(modalStore.getState().currentStep).toBe(1);
         });
 
-        it("should reset dismissed flag when setting new modal", () => {
+        test("should reset dismissed flag when setting new modal", () => {
             modalStore.setState({ dismissed: true });
 
             modalStore.getState().setNewModal({
@@ -107,7 +108,7 @@ describe("modalStore", () => {
             expect(modalStore.getState().dismissed).toBe(false);
         });
 
-        it("should call onResponse to update results and move to next step", async () => {
+        test("should call onResponse to update results and move to next step", async () => {
             const { trackGenericEvent } = await import(
                 "@frak-labs/wallet-shared"
             );
@@ -136,7 +137,7 @@ describe("modalStore", () => {
             );
         });
 
-        it("should not update results if results is undefined when onResponse called", () => {
+        test("should not update results if results is undefined when onResponse called", () => {
             const steps = [{ key: "login" as const, params: {} as any }];
 
             modalStore.getState().setNewModal({
@@ -175,7 +176,7 @@ describe("modalStore", () => {
             });
         });
 
-        it("should update results with step response", () => {
+        test("should update results with step response", () => {
             modalStore
                 .getState()
                 .completeStep("login", { status: "success" } as any);
@@ -184,7 +185,7 @@ describe("modalStore", () => {
             expect(state.results).toEqual({ login: { status: "success" } });
         });
 
-        it("should track analytics event", async () => {
+        test("should track analytics event", async () => {
             const { trackGenericEvent } = await import(
                 "@frak-labs/wallet-shared"
             );
@@ -198,7 +199,7 @@ describe("modalStore", () => {
             );
         });
 
-        it("should move to next step", () => {
+        test("should move to next step", () => {
             modalStore
                 .getState()
                 .completeStep("login", { status: "success" } as any);
@@ -206,7 +207,7 @@ describe("modalStore", () => {
             expect(modalStore.getState().currentStep).toBe(1);
         });
 
-        it("should return early if results is undefined", () => {
+        test("should return early if results is undefined", () => {
             modalStore.setState({ results: undefined });
 
             modalStore
@@ -216,7 +217,7 @@ describe("modalStore", () => {
             expect(modalStore.getState().currentStep).toBe(0);
         });
 
-        it("should return early if steps is undefined", () => {
+        test("should return early if steps is undefined", () => {
             modalStore.setState({ steps: undefined });
 
             modalStore
@@ -228,7 +229,7 @@ describe("modalStore", () => {
     });
 
     describe("nextStep", () => {
-        it("should increment currentStep by 1", () => {
+        test("should increment currentStep by 1", () => {
             modalStore.setState({ currentStep: 0 });
 
             modalStore.getState().nextStep();
@@ -236,7 +237,7 @@ describe("modalStore", () => {
             expect(modalStore.getState().currentStep).toBe(1);
         });
 
-        it("should increment from non-zero step", () => {
+        test("should increment from non-zero step", () => {
             modalStore.setState({ currentStep: 3 });
 
             modalStore.getState().nextStep();
@@ -246,7 +247,7 @@ describe("modalStore", () => {
     });
 
     describe("clearModal", () => {
-        it("should reset all modal state", () => {
+        test("should reset all modal state", () => {
             modalStore.setState({
                 steps: [
                     {
@@ -271,13 +272,13 @@ describe("modalStore", () => {
     });
 
     describe("setDismissed", () => {
-        it("should set dismissed to true", () => {
+        test("should set dismissed to true", () => {
             modalStore.getState().setDismissed(true);
 
             expect(modalStore.getState().dismissed).toBe(true);
         });
 
-        it("should set dismissed to false", () => {
+        test("should set dismissed to false", () => {
             modalStore.setState({ dismissed: true });
 
             modalStore.getState().setDismissed(false);
@@ -287,7 +288,7 @@ describe("modalStore", () => {
     });
 
     describe("dismissModal", () => {
-        it("should set dismissed flag when no steps present", async () => {
+        test("should set dismissed flag when no steps present", async () => {
             const { trackGenericEvent } = await import(
                 "@frak-labs/wallet-shared"
             );
@@ -301,7 +302,7 @@ describe("modalStore", () => {
             expect(trackGenericEvent).toHaveBeenCalledWith("modal_dismissed");
         });
 
-        it("should set dismissed flag when no final step found", async () => {
+        test("should set dismissed flag when no final step found", async () => {
             const { trackGenericEvent } = await import(
                 "@frak-labs/wallet-shared"
             );
@@ -322,7 +323,7 @@ describe("modalStore", () => {
             expect(trackGenericEvent).toHaveBeenCalledWith("modal_dismissed");
         });
 
-        it("should atomically set dismissed and move to final step for non-reward", async () => {
+        test("should atomically set dismissed and move to final step for non-reward", async () => {
             const { trackGenericEvent } = await import(
                 "@frak-labs/wallet-shared"
             );
@@ -349,7 +350,7 @@ describe("modalStore", () => {
             expect(trackGenericEvent).toHaveBeenCalledWith("modal_dismissed");
         });
 
-        it("should atomically set dismissed and skip past reward final step", async () => {
+        test("should atomically set dismissed and skip past reward final step", async () => {
             const { trackGenericEvent } = await import(
                 "@frak-labs/wallet-shared"
             );
@@ -376,7 +377,7 @@ describe("modalStore", () => {
             expect(trackGenericEvent).toHaveBeenCalledWith("modal_dismissed");
         });
 
-        it("should work correctly when already on final step", async () => {
+        test("should work correctly when already on final step", async () => {
             const { trackGenericEvent } = await import(
                 "@frak-labs/wallet-shared"
             );
@@ -406,7 +407,7 @@ describe("modalStore", () => {
 
     describe("Selectors", () => {
         describe("selectCurrentStep", () => {
-            it("should return current step object", () => {
+            test("should return current step object", () => {
                 const steps = [
                     {
                         key: "login" as const,
@@ -426,7 +427,7 @@ describe("modalStore", () => {
                 expect(current).toBe(steps[0]);
             });
 
-            it("should return undefined if no steps", () => {
+            test("should return undefined if no steps", () => {
                 modalStore.setState({ steps: undefined, currentStep: 0 });
 
                 const current = selectCurrentStep(modalStore.getState());
@@ -434,7 +435,7 @@ describe("modalStore", () => {
                 expect(current).toBeUndefined();
             });
 
-            it("should return second step when currentStep is 1", () => {
+            test("should return second step when currentStep is 1", () => {
                 const steps = [
                     {
                         key: "login" as const,
@@ -456,7 +457,7 @@ describe("modalStore", () => {
         });
 
         describe("selectActiveStep", () => {
-            it("should return current step index", () => {
+            test("should return current step index", () => {
                 modalStore.setState({ currentStep: 3 });
 
                 expect(selectActiveStep(modalStore.getState())).toBe(3);
@@ -464,14 +465,14 @@ describe("modalStore", () => {
         });
 
         describe("selectResults", () => {
-            it("should return results object", () => {
+            test("should return results object", () => {
                 const results = { login: { status: "success" } } as any;
                 modalStore.setState({ results });
 
                 expect(selectResults(modalStore.getState())).toBe(results);
             });
 
-            it("should return undefined if no results", () => {
+            test("should return undefined if no results", () => {
                 modalStore.setState({ results: undefined });
 
                 expect(selectResults(modalStore.getState())).toBeUndefined();
@@ -479,7 +480,7 @@ describe("modalStore", () => {
         });
 
         describe("selectSteps", () => {
-            it("should return steps array", () => {
+            test("should return steps array", () => {
                 const steps = [
                     {
                         key: "login" as const,
@@ -492,7 +493,7 @@ describe("modalStore", () => {
                 expect(selectSteps(modalStore.getState())).toBe(steps);
             });
 
-            it("should return undefined if no steps", () => {
+            test("should return undefined if no steps", () => {
                 modalStore.setState({ steps: undefined });
 
                 expect(selectSteps(modalStore.getState())).toBeUndefined();
@@ -500,13 +501,13 @@ describe("modalStore", () => {
         });
 
         describe("selectShouldFinish", () => {
-            it("should return null if no steps", () => {
+            test("should return null if no steps", () => {
                 modalStore.setState({ steps: undefined });
 
                 expect(selectShouldFinish(modalStore.getState())).toBeNull();
             });
 
-            it("should return null if dismissed", () => {
+            test("should return null if dismissed", () => {
                 const steps = [
                     { key: "login" as const, params: {}, onResponse: vi.fn() },
                 ];
@@ -515,7 +516,7 @@ describe("modalStore", () => {
                 expect(selectShouldFinish(modalStore.getState())).toBeNull();
             });
 
-            it("should return null if current step exists and is not final with autoSkip", () => {
+            test("should return null if current step exists and is not final with autoSkip", () => {
                 const steps = [
                     {
                         key: "login" as const,
@@ -528,7 +529,7 @@ describe("modalStore", () => {
                 expect(selectShouldFinish(modalStore.getState())).toBeNull();
             });
 
-            it("should return results if no current step data (workflow complete)", () => {
+            test("should return results if no current step data (workflow complete)", () => {
                 const steps = [
                     {
                         key: "login" as const,
@@ -546,7 +547,7 @@ describe("modalStore", () => {
                 expect(selectShouldFinish(modalStore.getState())).toBe(results);
             });
 
-            it("should return results if current step is final with autoSkip", () => {
+            test("should return results if current step is final with autoSkip", () => {
                 const steps = [
                     {
                         key: "final" as const,
@@ -564,7 +565,7 @@ describe("modalStore", () => {
                 expect(selectShouldFinish(modalStore.getState())).toBe(results);
             });
 
-            it("should return null if current step is final without autoSkip", () => {
+            test("should return null if current step is final without autoSkip", () => {
                 const steps = [
                     {
                         key: "final" as const,
@@ -577,7 +578,7 @@ describe("modalStore", () => {
                 expect(selectShouldFinish(modalStore.getState())).toBeNull();
             });
 
-            it("should return null if current step is final with autoSkip undefined", () => {
+            test("should return null if current step is final with autoSkip undefined", () => {
                 const steps = [
                     {
                         key: "final" as const,
@@ -592,13 +593,13 @@ describe("modalStore", () => {
         });
 
         describe("selectIsDismissed", () => {
-            it("should return true when dismissed", () => {
+            test("should return true when dismissed", () => {
                 modalStore.setState({ dismissed: true });
 
                 expect(selectIsDismissed(modalStore.getState())).toBe(true);
             });
 
-            it("should return false when not dismissed", () => {
+            test("should return false when not dismissed", () => {
                 modalStore.setState({ dismissed: false });
 
                 expect(selectIsDismissed(modalStore.getState())).toBe(false);
@@ -606,7 +607,7 @@ describe("modalStore", () => {
         });
 
         describe("selectDisplayedSteps", () => {
-            it("should return steps with metadata", () => {
+            test("should return steps with metadata", () => {
                 const steps = [
                     {
                         key: "login" as const,
@@ -629,7 +630,7 @@ describe("modalStore", () => {
                 });
             });
 
-            it("should return undefined if no steps", () => {
+            test("should return undefined if no steps", () => {
                 modalStore.setState({ steps: undefined });
 
                 expect(
@@ -639,7 +640,7 @@ describe("modalStore", () => {
         });
 
         describe("selectCurrentStepIndex", () => {
-            it("should return current step index", () => {
+            test("should return current step index", () => {
                 modalStore.setState({ currentStep: 5 });
 
                 expect(selectCurrentStepIndex(modalStore.getState())).toBe(5);
@@ -647,7 +648,7 @@ describe("modalStore", () => {
         });
 
         describe("selectCurrentStepObject", () => {
-            it("should return current step object", () => {
+            test("should return current step object", () => {
                 const steps = [
                     {
                         key: "login" as const,
@@ -667,7 +668,7 @@ describe("modalStore", () => {
                 expect(current).toBe(steps[1]);
             });
 
-            it("should return undefined if no steps", () => {
+            test("should return undefined if no steps", () => {
                 modalStore.setState({ steps: undefined, currentStep: 0 });
 
                 const current = selectCurrentStepObject(modalStore.getState());
@@ -675,7 +676,7 @@ describe("modalStore", () => {
                 expect(current).toBeUndefined();
             });
 
-            it("should return undefined if currentStep is out of bounds", () => {
+            test("should return undefined if currentStep is out of bounds", () => {
                 const steps = [
                     {
                         key: "login" as const,
@@ -693,7 +694,7 @@ describe("modalStore", () => {
     });
 
     describe("Edge cases and complex workflows", () => {
-        it("should handle multi-step workflow with onResponse callbacks", async () => {
+        test("should handle multi-step workflow with onResponse callbacks", async () => {
             const { trackGenericEvent } = await import(
                 "@frak-labs/wallet-shared"
             );
@@ -734,7 +735,7 @@ describe("modalStore", () => {
             expect(trackGenericEvent).toHaveBeenCalledTimes(2);
         });
 
-        it("should handle rapid modal changes", () => {
+        test("should handle rapid modal changes", () => {
             // Set first modal
             modalStore.getState().setNewModal({
                 currentStep: 0,

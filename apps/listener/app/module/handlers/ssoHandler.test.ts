@@ -1,11 +1,5 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
-
-// Import factories before mocking to avoid hoisting issues
-const { createMockAddress, createMockEcdsaSession, createMockSdkSession } =
-    await vi.importActual<typeof import("@frak-labs/wallet-shared/test")>(
-        "@frak-labs/wallet-shared/test"
-    );
-
+import { vi } from "vitest"; // Keep vi from vitest for vi.mock() hoisting
+import { beforeEach, describe, expect, test } from "@/tests/fixtures";
 import {
     handleOpenSso,
     handlePrepareSso,
@@ -92,16 +86,11 @@ describe("ssoHandler", () => {
     });
 
     describe("processSsoCompletion", () => {
-        const mockSession = createMockEcdsaSession({
-            address: createMockAddress("abc123"),
-            token: "test-token",
-        });
-
-        const mockSdkSession = createMockSdkSession({
-            token: "sdk-token-123",
-        });
-
-        it("should successfully process SSO completion", async () => {
+        test("should successfully process SSO completion", async ({
+            mockAddress,
+            mockSession,
+            mockSdkSession,
+        }) => {
             await processSsoCompletion(mockSession, mockSdkSession);
 
             expect(mockAddLastAuthentication).toHaveBeenCalledWith(mockSession);
@@ -113,7 +102,10 @@ describe("ssoHandler", () => {
             );
         });
 
-        it("should complete without error when no pending request", async () => {
+        test("should complete without error when no pending request", async ({
+            mockSession,
+            mockSdkSession,
+        }) => {
             // Just verify it doesn't throw when pendingSsoRequest is undefined
             await expect(
                 processSsoCompletion(mockSession, mockSdkSession)
@@ -123,9 +115,15 @@ describe("ssoHandler", () => {
             expect(mockSetSession).toHaveBeenCalledWith(mockSession);
         });
 
-        it("should handle session without token by adding empty string", async () => {
+        test("should handle session without token by adding empty string", async ({
+            mockAddress,
+            mockSdkSession,
+        }) => {
+            const { createMockEcdsaSession } = await import(
+                "@frak-labs/wallet-shared/test"
+            );
             const sessionWithoutToken = createMockEcdsaSession({
-                address: createMockAddress("abc123"),
+                address: mockAddress,
             });
             // Remove token to test edge case
             delete (sessionWithoutToken as any).token;
@@ -143,7 +141,10 @@ describe("ssoHandler", () => {
             );
         });
 
-        it("should throw error on storage failure", async () => {
+        test("should throw error on storage failure", async ({
+            mockSession,
+            mockSdkSession,
+        }) => {
             const error = new Error("Storage failed");
             mockAddLastAuthentication.mockRejectedValueOnce(error);
 
@@ -152,7 +153,10 @@ describe("ssoHandler", () => {
             ).rejects.toThrow("Storage failed");
         });
 
-        it("should log success message with wallet address", async () => {
+        test("should log success message with wallet address", async ({
+            mockSession,
+            mockSdkSession,
+        }) => {
             const consoleSpy = vi.spyOn(console, "log");
 
             await processSsoCompletion(mockSession, mockSdkSession);
@@ -169,16 +173,10 @@ describe("ssoHandler", () => {
     });
 
     describe("handleSsoComplete", () => {
-        it("should process SSO completion and return success", async () => {
-            const mockSession = createMockEcdsaSession({
-                address: createMockAddress("abc123"),
-                token: "test-token",
-            });
-
-            const mockSdkSession = createMockSdkSession({
-                token: "sdk-token-123",
-            });
-
+        test("should process SSO completion and return success", async ({
+            mockSession,
+            mockSdkSession,
+        }) => {
             const result = await handleSsoComplete(
                 [mockSession, mockSdkSession],
                 {} as any
@@ -190,13 +188,15 @@ describe("ssoHandler", () => {
     });
 
     describe("handlePrepareSso", () => {
-        it("should generate SSO URL with correct parameters", async () => {
+        test("should generate SSO URL with correct parameters", async ({
+            mockProductId,
+        }) => {
             const ssoInfo = {
                 redirectUrl: "https://example.com/callback",
             };
             const name = "Test App";
             const css = "body { background: red; }";
-            const context = { productId: "0x123" as `0x${string}` } as any;
+            const context = { productId: mockProductId } as any;
 
             const result = await handlePrepareSso(
                 [ssoInfo, name, css],
@@ -213,9 +213,11 @@ describe("ssoHandler", () => {
             expect(result).toEqual({ ssoUrl: "https://sso.example.com/auth" });
         });
 
-        it("should work without optional parameters", async () => {
+        test("should work without optional parameters", async ({
+            mockProductId,
+        }) => {
             const ssoInfo = {};
-            const context = { productId: "0x456" as `0x${string}` } as any;
+            const context = { productId: mockProductId } as any;
 
             const result = await handlePrepareSso(
                 [ssoInfo, undefined, undefined] as any,
@@ -234,11 +236,12 @@ describe("ssoHandler", () => {
     });
 
     describe("handleOpenSso", () => {
-        const mockContext = {
-            productId: "0x123" as `0x${string}`,
-        } as any;
-
-        it("should throw error if called server-side", async () => {
+        test("should throw error if called server-side", async ({
+            mockProductId,
+        }) => {
+            const mockContext = {
+                productId: mockProductId,
+            } as any;
             const originalWindow = global.window;
             // @ts-expect-error
             delete global.window;
@@ -255,7 +258,12 @@ describe("ssoHandler", () => {
             global.window = originalWindow;
         });
 
-        it("should handle redirect mode (openInSameWindow: true)", async () => {
+        test("should handle redirect mode (openInSameWindow: true)", async ({
+            mockProductId,
+        }) => {
+            const mockContext = {
+                productId: mockProductId,
+            } as any;
             const ssoInfo = { openInSameWindow: true };
 
             const result = await handleOpenSso(
@@ -271,7 +279,12 @@ describe("ssoHandler", () => {
             expect(result).toEqual({ wallet: undefined });
         });
 
-        it("should handle redirect mode (redirectUrl present)", async () => {
+        test("should handle redirect mode (redirectUrl present)", async ({
+            mockProductId,
+        }) => {
+            const mockContext = {
+                productId: mockProductId,
+            } as any;
             const ssoInfo = { redirectUrl: "https://example.com/callback" };
 
             const result = await handleOpenSso(
@@ -286,7 +299,12 @@ describe("ssoHandler", () => {
             expect(result).toEqual({ wallet: undefined });
         });
 
-        it("should create deferred for popup mode", async () => {
+        test("should create deferred for popup mode", async ({
+            mockProductId,
+        }) => {
+            const mockContext = {
+                productId: mockProductId,
+            } as any;
             const ssoInfo = { openInSameWindow: false };
 
             // Start the handler (don't await, let it timeout)
@@ -301,7 +319,12 @@ describe("ssoHandler", () => {
             // Let it timeout naturally (tested separately)
         }, 200);
 
-        it("should handle popup mode - timeout", async () => {
+        test("should handle popup mode - timeout", async ({
+            mockProductId,
+        }) => {
+            const mockContext = {
+                productId: mockProductId,
+            } as any;
             vi.useFakeTimers();
 
             const ssoInfo = { openInSameWindow: false };
