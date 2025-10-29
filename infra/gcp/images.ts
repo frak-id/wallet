@@ -17,7 +17,7 @@ export const baseImage = new dockerbuild.Image("base-image", {
     buildArgs: {
         NODE_ENV: "production",
     },
-    push: false,
+    push: true,
     tags: getRegistryPath("base"),
 });
 

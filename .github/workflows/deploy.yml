@@ -73,6 +73,9 @@ jobs:
               - 'packages/**'
               - 'infra/**'
             services:
+              - 'apps/wallet/**'
+              - 'apps/listener/**'
+              - 'packages/wallet-shared/**'
               - 'services/**'
               - 'packages/**'
               - 'infra/**'
