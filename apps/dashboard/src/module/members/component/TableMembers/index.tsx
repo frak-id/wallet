@@ -41,13 +41,11 @@ const columnHelper = createColumnHelper<GetMembersPageItem>();
  *  - filter on top
  */
 export function TableMembers() {
-    const filters = membersStore((state) => state.filters);
-    const setFilters = membersStore((state) => state.setFilters);
+    const filters = membersStore((state) => state.tableFilters);
+    const setFilters = membersStore((state) => state.setTableFilters);
     const selectedMembers = membersStore((state) => state.selectedMembers);
-    const addSelectedMember = membersStore((state) => state.addSelectedMember);
-    const removeSelectedMember = membersStore(
-        (state) => state.removeSelectedMember
-    );
+    const addSelectedMember = membersStore((state) => state.addMember);
+    const removeSelectedMember = membersStore((state) => state.removeMember);
     const clearSelection = membersStore((state) => state.clearSelection);
     const isDemoMode = useIsDemoMode();
 
