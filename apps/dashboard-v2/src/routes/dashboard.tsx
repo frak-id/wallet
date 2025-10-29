@@ -1,6 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { requireAuth } from "@/middleware/auth";
 
-export const Route = createFileRoute("/dashboard")({ component: Dashboard });
+export const Route = createFileRoute("/dashboard")({
+    beforeLoad: requireAuth,
+    component: Dashboard,
+});
 
 function Dashboard() {
     return (

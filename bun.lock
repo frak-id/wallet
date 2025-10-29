@@ -146,6 +146,7 @@
         "lucide-react": "^0.547.0",
         "mongodb": "^6.20.0",
         "normalize.css": "^8.0.1",
+        "radash": "^12.1.1",
         "react": "catalog:",
         "react-dom": "catalog:",
         "viem": "catalog:",
