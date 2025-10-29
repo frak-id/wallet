@@ -12,6 +12,17 @@ export default defineConfig({
             "./tests/vitest-setup.ts",
             "../../packages/wallet-shared/src/test/setup-msw.ts",
         ],
+        // Optimized reporters for CI vs local development
+        reporters: process.env.CI
+            ? [
+                  "verbose", // Detailed output for CI logs
+                  "github-actions", // GitHub Actions annotations
+                  ["html", { outputFile: "coverage/test-report.html" }],
+              ]
+            : [
+                  ["default", { summary: true }], // Clean summary for local
+                  ["html", { outputFile: "coverage/test-report.html" }],
+              ],
         include: [
             "app/**/*.{test,spec}.{ts,tsx}",
             "../../packages/wallet-shared/src/**/*.{test,spec}.{ts,tsx}",

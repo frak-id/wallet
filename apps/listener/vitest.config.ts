@@ -9,6 +9,17 @@ export default defineConfig({
         globals: true,
         environment: "jsdom",
         setupFiles: ["./tests/vitest-setup.ts"],
+        // Optimized reporters for CI vs local development
+        reporters: process.env.CI
+            ? [
+                  "verbose", // Detailed output for CI logs
+                  "github-actions", // GitHub Actions annotations
+                  ["html", { outputFile: "coverage/test-report.html" }],
+              ]
+            : [
+                  ["default", { summary: true }], // Clean summary for local
+                  ["html", { outputFile: "coverage/test-report.html" }],
+              ],
         include: ["app/**/*.{test,spec}.{ts,tsx}"],
         exclude: [
             "node_modules/**",
