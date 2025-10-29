@@ -65,13 +65,6 @@ export default defineConfig((): UserConfig => {
             cssCodeSplit: true,
             target: "ES2020",
             rollupOptions: {
-                output: {
-                    // Reduce chunk size threshold to encourage more splitting
-                    experimentalMinChunkSize: 20000,
-                    manualChunks(id, meta) {
-                        return manualChunks(id, meta);
-                    },
-                },
                 onwarn,
             },
             sourcemap: false,

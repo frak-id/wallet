@@ -8,6 +8,7 @@
   "license": "GNU GPL 3.0",
   "scripts": {
     "build": "NODE_ENV=production vite build",
+    "start": "bunx serve dist/ -p 3000",
     "dev": "sst dev vite dev",
     "preview": "vite preview",
     "lint": "biome lint .",
