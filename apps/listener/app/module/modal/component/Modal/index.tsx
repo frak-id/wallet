@@ -15,11 +15,11 @@ import {
     type PropsWithChildren,
     type ReactNode,
     useCallback,
-    useEffect,
     useMemo,
     useState,
 } from "react";
 import { Toaster } from "sonner";
+import { useShallow } from "zustand/react/shallow";
 import { SiweAuthenticateModalStep } from "@/module/modal/component/Authenticate";
 import { FinalModalStep } from "@/module/modal/component/Final";
 import { MetadataInfo } from "@/module/modal/component/Generic";
@@ -37,7 +37,6 @@ import {
     selectCurrentStep,
     selectCurrentStepObject,
     selectIsDismissed,
-    selectShouldFinish,
 } from "@/module/stores/modalStore";
 import { ToastLoading } from "../../../component/ToastLoading";
 import styles from "./index.module.css";
@@ -89,21 +88,10 @@ export function ListenerModal({
     );
 
     /**
-     * Method when the user reached the end of the modal
-     */
-    const onFinishResult = modalStore(selectShouldFinish);
-    useEffect(() => {
-        if (!onFinishResult) return;
-
-        // Emit the result and exit
-        emitter({
-            result: onFinishResult,
-        });
-        onClose();
-    }, [onFinishResult, emitter, onClose]);
-
-    /**
-     * When the modal visibility changes
+     * When the modal visibility changes (user manually closes modal)
+     * Note: This handles the edge case where user closes after completing all steps.
+     * The hook subscription (useDisplayModalListener) handles normal completion flow.
+     * This callback handles manual close and determines if it's a success or cancellation.
      */
     const onOpenChange = useCallback(
         (isVisible: boolean) => {
@@ -258,8 +246,13 @@ function ModalComponent({
  */
 function CurrentModalMetadataInfo() {
     const { t, i18n } = useListenerTranslation();
-    const currentStep = modalStore(selectCurrentStepObject);
-    const isDismissed = modalStore(selectIsDismissed);
+    // Consolidate subscriptions using useShallow for better performance
+    const { currentStep, isDismissed } = modalStore(
+        useShallow((state) => ({
+            currentStep: selectCurrentStepObject(state),
+            isDismissed: selectIsDismissed(state),
+        }))
+    );
 
     // Extract step key and metadata
     const descriptionKey = useMemo(() => {

@@ -1,5 +1,5 @@
 import { prefixModalCss } from "@frak-labs/ui/utils/prefixModalCss";
-import { Markdown, trackGenericEvent } from "@frak-labs/wallet-shared";
+import { Markdown } from "@frak-labs/wallet-shared";
 import { useMemo } from "react";
 import styles from "@/module/modal/component/Modal/index.module.css";
 import {
@@ -49,30 +49,10 @@ export function DismissButton() {
             index: finalStepIndex,
         };
 
-        // Build the function used to go to the dismiss step
+        // Use the new atomic dismissModal action from the store
+        // This ensures dismissed flag and currentStep are updated atomically
         const goToDismiss = () => {
-            // If the final step is of type reward, jump to final step + 1 (to close the modal)
-            const finalStep = steps[finalStepIndex];
-            if (
-                finalStep?.key === "final" &&
-                finalStep?.params?.action?.key === "reward"
-            ) {
-                // Update the final step and mark it as autoSkip true
-                const state = modalStore.getState();
-                state.setDismissed(true);
-                // Move past the final step to trigger modal close
-                modalStore.setState({
-                    currentStep: finalStepIndex + 1,
-                });
-                return;
-            }
-
-            // Otherwise, just jump to the last step
-            const state = modalStore.getState();
-            state.setDismissed(true);
-            modalStore.setState({
-                currentStep: finalStepIndex,
-            });
+            modalStore.getState().dismissModal();
         };
 
         return {
@@ -89,10 +69,7 @@ export function DismissButton() {
         <button
             type={"button"}
             className={`${styles.modalListener__buttonLink} ${prefixModalCss("button-link")}`}
-            onClick={() => {
-                goToDismiss();
-                trackGenericEvent("modal-dismissed");
-            }}
+            onClick={goToDismiss}
         >
             {t("sdk.modal.dismiss.primaryAction")}
         </button>

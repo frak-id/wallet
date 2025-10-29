@@ -286,6 +286,124 @@ describe("modalStore", () => {
         });
     });
 
+    describe("dismissModal", () => {
+        it("should set dismissed flag when no steps present", async () => {
+            const { trackGenericEvent } = await import(
+                "@frak-labs/wallet-shared"
+            );
+
+            modalStore.setState({ steps: undefined });
+
+            modalStore.getState().dismissModal();
+
+            const state = modalStore.getState();
+            expect(state.dismissed).toBe(true);
+            expect(trackGenericEvent).toHaveBeenCalledWith("modal_dismissed");
+        });
+
+        it("should set dismissed flag when no final step found", async () => {
+            const { trackGenericEvent } = await import(
+                "@frak-labs/wallet-shared"
+            );
+
+            const steps = [
+                {
+                    key: "login" as const,
+                    params: {} as any,
+                    onResponse: vi.fn(),
+                },
+            ];
+            modalStore.setState({ steps: steps as any, currentStep: 0 });
+
+            modalStore.getState().dismissModal();
+
+            const state = modalStore.getState();
+            expect(state.dismissed).toBe(true);
+            expect(trackGenericEvent).toHaveBeenCalledWith("modal_dismissed");
+        });
+
+        it("should atomically set dismissed and move to final step for non-reward", async () => {
+            const { trackGenericEvent } = await import(
+                "@frak-labs/wallet-shared"
+            );
+
+            const steps = [
+                {
+                    key: "login" as const,
+                    params: {} as any,
+                    onResponse: vi.fn(),
+                },
+                {
+                    key: "final" as const,
+                    params: { action: { key: "success" } } as any,
+                    onResponse: vi.fn(),
+                },
+            ];
+            modalStore.setState({ steps: steps as any, currentStep: 0 });
+
+            modalStore.getState().dismissModal();
+
+            const state = modalStore.getState();
+            expect(state.dismissed).toBe(true);
+            expect(state.currentStep).toBe(1);
+            expect(trackGenericEvent).toHaveBeenCalledWith("modal_dismissed");
+        });
+
+        it("should atomically set dismissed and skip past reward final step", async () => {
+            const { trackGenericEvent } = await import(
+                "@frak-labs/wallet-shared"
+            );
+
+            const steps = [
+                {
+                    key: "login" as const,
+                    params: {} as any,
+                    onResponse: vi.fn(),
+                },
+                {
+                    key: "final" as const,
+                    params: { action: { key: "reward" } } as any,
+                    onResponse: vi.fn(),
+                },
+            ];
+            modalStore.setState({ steps: steps as any, currentStep: 0 });
+
+            modalStore.getState().dismissModal();
+
+            const state = modalStore.getState();
+            expect(state.dismissed).toBe(true);
+            expect(state.currentStep).toBe(2);
+            expect(trackGenericEvent).toHaveBeenCalledWith("modal_dismissed");
+        });
+
+        it("should work correctly when already on final step", async () => {
+            const { trackGenericEvent } = await import(
+                "@frak-labs/wallet-shared"
+            );
+
+            const steps = [
+                {
+                    key: "login" as const,
+                    params: {} as any,
+                    onResponse: vi.fn(),
+                },
+                {
+                    key: "final" as const,
+                    params: { action: { key: "success" } } as any,
+                    onResponse: vi.fn(),
+                },
+            ];
+            modalStore.setState({ steps: steps as any, currentStep: 1 });
+
+            modalStore.getState().dismissModal();
+
+            const state = modalStore.getState();
+            expect(state.dismissed).toBe(true);
+            expect(state.currentStep).toBe(1);
+            expect(trackGenericEvent).toHaveBeenCalledWith("modal_dismissed");
+        });
+    });
+
     describe("Selectors", () => {
         describe("selectCurrentStep", () => {
             it("should return current step object", () => {

@@ -91,6 +91,37 @@ export const modalStore = create<ModalStore>((set, get) => ({
     setDismissed: (dismissed) => {
         set({ dismissed });
     },
+
+    dismissModal: () => {
+        const { steps } = get();
+
+        // Find the final step
+        const finalStepIndex =
+            steps?.findIndex((step) => step.key === "final") ?? -1;
+
+        if (finalStepIndex === -1 || !steps) {
+            // No final step found, just mark as dismissed
+            set({ dismissed: true });
+            trackGenericEvent("modal_dismissed");
+            return;
+        }
+
+        // Check if final step is a reward step (should skip past it)
+        const finalStep = steps[finalStepIndex];
+        const isRewardStep =
+            finalStep?.key === "final" &&
+            finalStep?.params?.action?.key === "reward";
+
+        // Atomic update: set dismissed and move to appropriate step
+        // If reward step, move past it to trigger close
+        // Otherwise, move to the final step
+        set({
+            dismissed: true,
+            currentStep: isRewardStep ? finalStepIndex + 1 : finalStepIndex,
+        });
+
+        trackGenericEvent("modal_dismissed");
+    },
 }));
 
 /**

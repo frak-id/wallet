@@ -82,4 +82,5 @@ export interface ModalStore {
     nextStep: () => void;
     clearModal: () => void;
     setDismissed: (dismissed: boolean) => void;
+    dismissModal: () => void;
 }
