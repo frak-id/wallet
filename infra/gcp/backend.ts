@@ -106,8 +106,8 @@ export const backendInstance = new KubernetesService(
                     },
                     // Ressources requests/limits
                     resources: {
-                        requests: { cpu: "50m", memory: "256Mi" },
-                        limits: { cpu: "200m", memory: "512Mi" },
+                        requests: { cpu: "200m", memory: "256Mi" },
+                        limits: { cpu: "400m", memory: "512Mi" },
                     },
                 },
             ],
@@ -124,7 +124,8 @@ export const backendInstance = new KubernetesService(
         hpa: {
             min: 1,
             max: 2,
-            cpuUtilization: 80,
+            // Yup 120% cpu, limits = request x2, and hpa based on requests cpu usage
+            cpuUtilization: 120,
         },
 
         // Ingress config

@@ -124,6 +124,13 @@ export const mutexCron = <Name extends string = string>({
         if (triggerKeys) {
             for (const key of triggerKeys) {
                 eventEmitter.on(key, () => {
+                    // Check if we should skip when locked
+                    if (skipIfLocked && mutex.isLocked()) {
+                        logger.debug(
+                            `[Cron] Skipping event trigger ${key} because mutex is locked`
+                        );
+                        return;
+                    }
                     logger.debug(`[Cron] Event trigger: ${key}`);
                     cron.trigger().then(() => {
                         logger.debug(`[Cron] Event trigger end: ${key}`);

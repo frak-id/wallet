@@ -157,6 +157,10 @@ export class KubernetesService extends ComponentResource {
     }
 
     private createDeployment(): k8s.apps.v1.Deployment {
+        // When HPA is enabled, do not set replicas - let HPA manage it
+        // This prevents conflicts with VPA recommender and follows K8s best practices
+        const replicas = this.args.hpa ? undefined : (this.args.pod.replicas || 1);
+
         return new k8s.apps.v1.Deployment(
             `${this.name}Deployment`,
             {
@@ -167,7 +171,7 @@ export class KubernetesService extends ComponentResource {
                 },
                 spec: {
                     selector: { matchLabels: this.labels },
-                    replicas: this.args.pod.replicas || 1,
+                    replicas,
                     template: {
                         metadata: { labels: this.labels },
                         spec: {
