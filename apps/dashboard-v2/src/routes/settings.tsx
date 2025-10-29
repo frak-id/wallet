@@ -1,6 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { requireAuth } from "@/middleware/auth";
 
-export const Route = createFileRoute("/settings")({ component: Settings });
+export const Route = createFileRoute("/settings")({
+    beforeLoad: requireAuth,
+    component: Settings,
+});
 
 function Settings() {
     return (

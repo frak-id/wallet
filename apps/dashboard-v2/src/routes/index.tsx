@@ -1,12 +1,11 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
+import { getSession } from "@/context/auth/session";
 
-export const Route = createFileRoute("/")({ component: Dashboard });
-
-function Dashboard() {
-    return (
-        <div>
-            <h1>Frak Dashboard</h1>
-            <p>Welcome to your dashboard</p>
-        </div>
-    );
-}
+export const Route = createFileRoute("/")({
+    beforeLoad: async () => {
+        const session = await getSession();
+        throw redirect({
+            to: session ? "/dashboard" : "/login",
+        });
+    },
+});

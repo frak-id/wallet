@@ -3,3 +3,4 @@
 @import "colors-app.css";
 @import "@frak-labs/ui/styles/global.css";
 @import "global.css";
+@import "authentication.css";
