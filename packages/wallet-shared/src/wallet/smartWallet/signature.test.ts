@@ -1,9 +1,6 @@
 import type { Address, Hex } from "viem";
-import { describe, expect, it, vi } from "vitest";
-import {
-    createMockAddress,
-    createMockWebAuthNWallet,
-} from "../../test/factories";
+import { vi } from "vitest"; // Keep vi from vitest for vi.mock() hoisting
+import { describe, expect, test } from "../../../tests/vitest-fixtures";
 import type { AccountMetadata } from "./signature";
 
 vi.mock("@simplewebauthn/browser", () => ({
@@ -31,7 +28,7 @@ vi.mock("./webAuthN", () => ({
 
 describe("signature utilities", () => {
     describe("wrapMessageForSignature", () => {
-        it("should wrap message with domain separator", async () => {
+        test("should wrap message with domain separator", async () => {
             const { wrapMessageForSignature } = await import("./signature");
 
             const message: Hex = "0x1234";
@@ -49,7 +46,7 @@ describe("signature utilities", () => {
             expect(result.startsWith("0x")).toBe(true);
         });
 
-        it("should produce consistent output for same inputs", async () => {
+        test("should produce consistent output for same inputs", async () => {
             const { wrapMessageForSignature } = await import("./signature");
 
             const message: Hex = "0xabcd";
@@ -67,7 +64,7 @@ describe("signature utilities", () => {
             expect(result1).toBe(result2);
         });
 
-        it("should handle different chain IDs", async () => {
+        test("should handle different chain IDs", async () => {
             const { wrapMessageForSignature } = await import("./signature");
 
             const message: Hex = "0x5678";
@@ -97,14 +94,13 @@ describe("signature utilities", () => {
     });
 
     describe("fetchAccountMetadata", () => {
-        it("should fetch metadata from contract", async () => {
+        test("should fetch metadata from contract", async ({ mockAddress }) => {
             const { fetchAccountMetadata } = await import("./signature");
             const { readContract } = await import("viem/actions");
 
             const mockClient = {
                 chain: { id: 1 },
             } as any;
-            const mockAddress = createMockAddress();
 
             const mockResult = [
                 "0x00",
@@ -131,9 +127,10 @@ describe("signature utilities", () => {
             });
         });
 
-        it("should return defaults when contract read fails", async () => {
+        test("should return defaults when contract read fails", async () => {
             const { fetchAccountMetadata } = await import("./signature");
             const { readContract } = await import("viem/actions");
+            const { createMockAddress } = await import("../../test/factories");
 
             const mockClient = {
                 chain: { id: 137 },
@@ -155,9 +152,10 @@ describe("signature utilities", () => {
             });
         });
 
-        it("should use chain ID from client", async () => {
+        test("should use chain ID from client", async () => {
             const { fetchAccountMetadata } = await import("./signature");
             const { readContract } = await import("viem/actions");
+            const { createMockAddress } = await import("../../test/factories");
 
             const mockClient = {
                 chain: { id: 8453 },
@@ -176,7 +174,7 @@ describe("signature utilities", () => {
     });
 
     describe("signHashViaWebAuthN", () => {
-        it("should sign hash successfully", async () => {
+        test("should sign hash successfully", async () => {
             const { signHashViaWebAuthN } = await import("./signature");
             const { startAuthentication } = await import(
                 "@simplewebauthn/browser"
@@ -186,6 +184,9 @@ describe("signature utilities", () => {
                 await import("./webAuthN");
             const { authenticationStore } = await import(
                 "../../stores/authenticationStore"
+            );
+            const { createMockWebAuthNWallet } = await import(
+                "../../test/factories"
             );
 
             const mockWallet = createMockWebAuthNWallet({

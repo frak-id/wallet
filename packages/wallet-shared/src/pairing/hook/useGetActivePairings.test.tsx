@@ -1,10 +1,13 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import { HttpResponse, http } from "msw";
-import type React from "react";
-import type { ReactNode } from "react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { createMockAddress, createMockSession } from "../../test/factories";
+import { vi } from "vitest"; // Keep vi from vitest for vi.mock() hoisting
+import {
+    afterEach,
+    beforeEach,
+    describe,
+    expect,
+    test,
+} from "../../../tests/vitest-fixtures";
 import { server } from "../../test/msw/server";
 import { useGetActivePairings } from "./useListPairings";
 
@@ -19,47 +22,35 @@ vi.mock("../../stores/sessionStore", async () => {
 });
 
 describe("useGetActivePairings", () => {
-    let queryClient: QueryClient;
-    let wrapper: ({ children }: { children: ReactNode }) => React.ReactElement;
-
-    beforeEach(() => {
-        queryClient = new QueryClient({
-            defaultOptions: {
-                queries: { retry: false },
-            },
-        });
-        wrapper = ({ children }: { children: ReactNode }) => (
-            <QueryClientProvider client={queryClient}>
-                {children}
-            </QueryClientProvider>
-        );
+    beforeEach(({ queryWrapper }) => {
+        queryWrapper.client.clear();
+        vi.clearAllMocks();
     });
 
     afterEach(() => {
         vi.clearAllMocks();
-        queryClient.clear();
     });
 
-    it("should not fetch when no wallet address is provided", async () => {
+    test("should not fetch when no wallet address is provided", async ({
+        queryWrapper,
+    }) => {
         const { sessionStore } = await import("../../stores/sessionStore");
 
         vi.mocked(sessionStore).mockReturnValue(null);
 
         const { result } = renderHook(() => useGetActivePairings(), {
-            wrapper,
+            wrapper: queryWrapper.wrapper,
         });
 
         expect(result.current.data).toBeUndefined();
         expect(result.current.isLoading).toBe(false);
     });
 
-    it("should fetch pairings list when wallet address is provided", async () => {
+    test("should fetch pairings list when wallet address is provided", async ({
+        queryWrapper,
+        mockSession,
+    }) => {
         const { sessionStore } = await import("../../stores/sessionStore");
-
-        const mockSession = createMockSession({
-            address: createMockAddress(),
-            token: "mock-auth-token",
-        });
 
         vi.mocked(sessionStore).mockImplementation((selector: any) => {
             const state = {
@@ -85,7 +76,7 @@ describe("useGetActivePairings", () => {
         });
 
         const { result } = renderHook(() => useGetActivePairings(), {
-            wrapper,
+            wrapper: queryWrapper.wrapper,
         });
 
         await waitFor(() => {
@@ -110,7 +101,10 @@ describe("useGetActivePairings", () => {
         ]);
     });
 
-    it("should return null when API returns no data", async () => {
+    test("should return null when API returns no data", async ({
+        queryWrapper,
+        mockSession,
+    }) => {
         const { sessionStore } = await import("../../stores/sessionStore");
         const consoleWarnSpy = vi
             .spyOn(console, "warn")
@@ -125,11 +119,6 @@ describe("useGetActivePairings", () => {
             )
         );
 
-        const mockSession = createMockSession({
-            address: createMockAddress(),
-            token: "mock-auth-token",
-        });
-
         vi.mocked(sessionStore).mockImplementation((selector: any) => {
             const state = {
                 session: mockSession,
@@ -154,7 +143,7 @@ describe("useGetActivePairings", () => {
         });
 
         const { result } = renderHook(() => useGetActivePairings(), {
-            wrapper,
+            wrapper: queryWrapper.wrapper,
         });
 
         await waitFor(() => {
@@ -167,7 +156,10 @@ describe("useGetActivePairings", () => {
         consoleWarnSpy.mockRestore();
     });
 
-    it("should return empty array when no pairings exist", async () => {
+    test("should return empty array when no pairings exist", async ({
+        queryWrapper,
+        mockSession,
+    }) => {
         const { sessionStore } = await import("../../stores/sessionStore");
 
         server.use(
@@ -178,11 +170,6 @@ describe("useGetActivePairings", () => {
                 }
             )
         );
-
-        const mockSession = createMockSession({
-            address: createMockAddress(),
-            token: "mock-auth-token",
-        });
 
         vi.mocked(sessionStore).mockImplementation((selector: any) => {
             const state = {
@@ -208,7 +195,7 @@ describe("useGetActivePairings", () => {
         });
 
         const { result } = renderHook(() => useGetActivePairings(), {
-            wrapper,
+            wrapper: queryWrapper.wrapper,
         });
 
         await waitFor(() => {
@@ -218,7 +205,10 @@ describe("useGetActivePairings", () => {
         expect(result.current.data).toEqual([]);
     });
 
-    it("should refetch pairings when refetch is called", async () => {
+    test("should refetch pairings when refetch is called", async ({
+        queryWrapper,
+        mockSession,
+    }) => {
         const { sessionStore } = await import("../../stores/sessionStore");
         let callCount = 0;
 
@@ -240,11 +230,6 @@ describe("useGetActivePairings", () => {
             )
         );
 
-        const mockSession = createMockSession({
-            address: createMockAddress(),
-            token: "mock-auth-token",
-        });
-
         vi.mocked(sessionStore).mockImplementation((selector: any) => {
             const state = {
                 session: mockSession,
@@ -269,7 +254,7 @@ describe("useGetActivePairings", () => {
         });
 
         const { result } = renderHook(() => useGetActivePairings(), {
-            wrapper,
+            wrapper: queryWrapper.wrapper,
         });
 
         await waitFor(() => {

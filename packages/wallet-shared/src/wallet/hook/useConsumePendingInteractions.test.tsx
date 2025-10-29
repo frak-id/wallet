@@ -1,11 +1,14 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import { HttpResponse, http } from "msw";
-import type React from "react";
-import type { ReactNode } from "react";
 import type { Address } from "viem";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { createMockAddress } from "../../test/factories";
+import { vi } from "vitest"; // Keep vi from vitest for vi.mock() hoisting
+import {
+    afterEach,
+    beforeEach,
+    describe,
+    expect,
+    test,
+} from "../../../tests/vitest-fixtures";
 import { server } from "../../test/msw/server";
 import { useConsumePendingInteractions } from "./useConsumePendingInteractions";
 
@@ -32,30 +35,18 @@ vi.mock("../../stores/walletStore", async () => {
 });
 
 describe("useConsumePendingInteractions", () => {
-    let queryClient: QueryClient;
-    let wrapper: ({ children }: { children: ReactNode }) => React.ReactElement;
-    const mockAddress = createMockAddress();
-
-    beforeEach(() => {
-        queryClient = new QueryClient({
-            defaultOptions: {
-                queries: { retry: false },
-                mutations: { retry: false },
-            },
-        });
-        wrapper = ({ children }: { children: ReactNode }) => (
-            <QueryClientProvider client={queryClient}>
-                {children}
-            </QueryClientProvider>
-        );
+    beforeEach(({ queryWrapper }) => {
+        queryWrapper.client.clear();
+        vi.clearAllMocks();
     });
 
     afterEach(() => {
         vi.clearAllMocks();
-        queryClient.clear();
     });
 
-    it("should not submit when no address is provided", async () => {
+    test("should not submit when no address is provided", async ({
+        queryWrapper,
+    }) => {
         const { useAccount } = await import("wagmi");
         const { useGetSafeSdkSession } = await import(
             "../../common/hook/useGetSafeSdkSession"
@@ -76,7 +67,7 @@ describe("useConsumePendingInteractions", () => {
         ]);
 
         const { result } = renderHook(() => useConsumePendingInteractions(), {
-            wrapper,
+            wrapper: queryWrapper.wrapper,
         });
 
         await result.current.mutateAsync();
@@ -84,7 +75,10 @@ describe("useConsumePendingInteractions", () => {
         expect(result.current.data).toBeUndefined();
     });
 
-    it("should not submit when no pending interactions", async () => {
+    test("should not submit when no pending interactions", async ({
+        queryWrapper,
+        mockAddress,
+    }) => {
         const { useAccount } = await import("wagmi");
         const { useGetSafeSdkSession } = await import(
             "../../common/hook/useGetSafeSdkSession"
@@ -101,7 +95,7 @@ describe("useConsumePendingInteractions", () => {
         vi.mocked(walletStore).mockReturnValue([]);
 
         const { result } = renderHook(() => useConsumePendingInteractions(), {
-            wrapper,
+            wrapper: queryWrapper.wrapper,
         });
 
         await result.current.mutateAsync();
@@ -109,7 +103,10 @@ describe("useConsumePendingInteractions", () => {
         expect(result.current.data).toBeUndefined();
     });
 
-    it("should not submit when no SDK session", async () => {
+    test("should not submit when no SDK session", async ({
+        queryWrapper,
+        mockAddress,
+    }) => {
         const { useAccount } = await import("wagmi");
         const { useGetSafeSdkSession } = await import(
             "../../common/hook/useGetSafeSdkSession"
@@ -132,7 +129,7 @@ describe("useConsumePendingInteractions", () => {
         ]);
 
         const { result } = renderHook(() => useConsumePendingInteractions(), {
-            wrapper,
+            wrapper: queryWrapper.wrapper,
         });
 
         await result.current.mutateAsync();
@@ -140,7 +137,10 @@ describe("useConsumePendingInteractions", () => {
         expect(result.current.data).toBeUndefined();
     });
 
-    it("should submit pending interactions successfully", async () => {
+    test("should submit pending interactions successfully", async ({
+        queryWrapper,
+        mockAddress,
+    }) => {
         const { useAccount } = await import("wagmi");
         const { useGetSafeSdkSession } = await import(
             "../../common/hook/useGetSafeSdkSession"
@@ -183,7 +183,7 @@ describe("useConsumePendingInteractions", () => {
         });
 
         const { result } = renderHook(() => useConsumePendingInteractions(), {
-            wrapper,
+            wrapper: queryWrapper.wrapper,
         });
 
         await result.current.mutateAsync();
@@ -200,7 +200,10 @@ describe("useConsumePendingInteractions", () => {
         expect(pushBackupData).toHaveBeenCalledTimes(1);
     });
 
-    it("should use getSdkSession when sdkSession is null", async () => {
+    test("should use getSdkSession when sdkSession is null", async ({
+        queryWrapper,
+        mockAddress,
+    }) => {
         const { useAccount } = await import("wagmi");
         const { useGetSafeSdkSession } = await import(
             "../../common/hook/useGetSafeSdkSession"
@@ -234,7 +237,7 @@ describe("useConsumePendingInteractions", () => {
         });
 
         const { result } = renderHook(() => useConsumePendingInteractions(), {
-            wrapper,
+            wrapper: queryWrapper.wrapper,
         });
 
         await result.current.mutateAsync();
@@ -247,7 +250,10 @@ describe("useConsumePendingInteractions", () => {
         expect(cleanPendingInteractions).toHaveBeenCalledTimes(1);
     });
 
-    it("should handle empty API response", async () => {
+    test("should handle empty API response", async ({
+        queryWrapper,
+        mockAddress,
+    }) => {
         const { useAccount } = await import("wagmi");
         const { useGetSafeSdkSession } = await import(
             "../../common/hook/useGetSafeSdkSession"
@@ -288,7 +294,7 @@ describe("useConsumePendingInteractions", () => {
         });
 
         const { result } = renderHook(() => useConsumePendingInteractions(), {
-            wrapper,
+            wrapper: queryWrapper.wrapper,
         });
 
         await result.current.mutateAsync();

@@ -1,5 +1,12 @@
 import { renderHook, waitFor } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { vi } from "vitest"; // Keep vi from vitest for vi.mock() hoisting
+import {
+    afterEach,
+    beforeEach,
+    describe,
+    expect,
+    test,
+} from "../../../tests/vitest-fixtures";
 import { useAddToHomeScreenPrompt } from "./useAddToHomeScreenPrompt";
 
 describe("useAddToHomeScreenPrompt", () => {
@@ -22,7 +29,7 @@ describe("useAddToHomeScreenPrompt", () => {
         delete (window as any).promptEvent;
     });
 
-    it("should initialize with null prompt and not installed", () => {
+    test("should initialize with null prompt and not installed", () => {
         const { result } = renderHook(() => useAddToHomeScreenPrompt());
 
         expect(result.current.prompt).toBeNull();
@@ -30,7 +37,7 @@ describe("useAddToHomeScreenPrompt", () => {
         expect(result.current.outcome).toBeNull();
     });
 
-    it("should capture prompt from window.promptEvent", async () => {
+    test("should capture prompt from window.promptEvent", async () => {
         const { result } = renderHook(() => useAddToHomeScreenPrompt());
 
         await waitFor(
@@ -41,7 +48,7 @@ describe("useAddToHomeScreenPrompt", () => {
         );
     });
 
-    it("should clear prompt after launching installation", async () => {
+    test("should clear prompt after launching installation", async () => {
         const { result } = renderHook(() => useAddToHomeScreenPrompt());
 
         await waitFor(() => {
@@ -55,7 +62,7 @@ describe("useAddToHomeScreenPrompt", () => {
         });
     });
 
-    it("should set outcome after installation", async () => {
+    test("should set outcome after installation", async () => {
         const { result } = renderHook(() => useAddToHomeScreenPrompt());
 
         await waitFor(() => {
@@ -69,7 +76,7 @@ describe("useAddToHomeScreenPrompt", () => {
         });
     });
 
-    it("should throw error when launching without prompt", async () => {
+    test("should throw error when launching without prompt", async () => {
         const { result } = renderHook(() => useAddToHomeScreenPrompt());
 
         await expect(result.current.launchInstallation()).rejects.toThrow(
@@ -77,7 +84,7 @@ describe("useAddToHomeScreenPrompt", () => {
         );
     });
 
-    it("should call prompt on the event", async () => {
+    test("should call prompt on the event", async () => {
         const { result } = renderHook(() => useAddToHomeScreenPrompt());
 
         await waitFor(() => {
@@ -89,7 +96,7 @@ describe("useAddToHomeScreenPrompt", () => {
         expect(mockPromptEvent.prompt).toHaveBeenCalledTimes(1);
     });
 
-    it("should handle appinstalled event", async () => {
+    test("should handle appinstalled event", async () => {
         const { result } = renderHook(() => useAddToHomeScreenPrompt());
 
         // Simulate appinstalled event
@@ -101,7 +108,7 @@ describe("useAddToHomeScreenPrompt", () => {
         });
     });
 
-    it("should clean up event listeners on unmount", () => {
+    test("should clean up event listeners on unmount", () => {
         const removeEventListenerSpy = vi.spyOn(window, "removeEventListener");
 
         const { unmount } = renderHook(() => useAddToHomeScreenPrompt());

@@ -17,7 +17,8 @@
     ".": "./src/index.ts",
     "./pairing/*": "./src/pairing/*",
     "./styles/*": "./styles/*",
-    "./test": "./src/test/factories.ts"
+    "./test": "./src/test/factories.ts",
+    "./tests/vitest-fixtures": "./tests/vitest-fixtures.ts"
   },
   "dependencies": {
     "@elysiajs/eden": "^1.4.1",

@@ -1,5 +1,5 @@
 import { act, renderHook } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import { useSessionFlag } from "./useSessionFlag";
 
 describe("useSessionFlag", () => {
@@ -11,13 +11,13 @@ describe("useSessionFlag", () => {
         sessionStorage.clear();
     });
 
-    it("should return default value when no stored value exists", () => {
+    test("should return default value when no stored value exists", () => {
         const { result } = renderHook(() => useSessionFlag("test-key", false));
 
         expect(result.current[0]).toBe(false);
     });
 
-    it("should return false when no value exists (ignores default on client)", () => {
+    test("should return false when no value exists (ignores default on client)", () => {
         // The hook only uses default value for SSR, not client-side
         const { result } = renderHook(() => useSessionFlag("test-key", true));
 
@@ -25,7 +25,7 @@ describe("useSessionFlag", () => {
         expect(result.current[0]).toBe(false);
     });
 
-    it("should return stored value from sessionStorage", () => {
+    test("should return stored value from sessionStorage", () => {
         sessionStorage.setItem("test-key", "true");
 
         const { result } = renderHook(() => useSessionFlag("test-key", false));
@@ -33,7 +33,7 @@ describe("useSessionFlag", () => {
         expect(result.current[0]).toBe(true);
     });
 
-    it("should update value when setValue is called", () => {
+    test("should update value when setValue is called", () => {
         const { result } = renderHook(() => useSessionFlag("test-key", false));
 
         expect(result.current[0]).toBe(false);
@@ -46,7 +46,7 @@ describe("useSessionFlag", () => {
         expect(sessionStorage.getItem("test-key")).toBe("true");
     });
 
-    it("should update value to false", () => {
+    test("should update value to false", () => {
         sessionStorage.setItem("test-key", "true");
 
         const { result } = renderHook(() => useSessionFlag("test-key", false));
@@ -61,7 +61,7 @@ describe("useSessionFlag", () => {
         expect(sessionStorage.getItem("test-key")).toBe("false");
     });
 
-    it("should sync across multiple hook instances with same key", () => {
+    test("should sync across multiple hook instances with same key", () => {
         const { result: result1 } = renderHook(() =>
             useSessionFlag("shared-key", false)
         );
@@ -80,7 +80,7 @@ describe("useSessionFlag", () => {
         expect(result2.current[0]).toBe(true);
     });
 
-    it("should not sync across different keys", () => {
+    test("should not sync across different keys", () => {
         const { result: result1 } = renderHook(() =>
             useSessionFlag("key-1", false)
         );
@@ -96,7 +96,7 @@ describe("useSessionFlag", () => {
         expect(result2.current[0]).toBe(false);
     });
 
-    it("should handle multiple updates", () => {
+    test("should handle multiple updates", () => {
         const { result } = renderHook(() => useSessionFlag("test-key", false));
 
         act(() => {
@@ -118,7 +118,7 @@ describe("useSessionFlag", () => {
         expect(result.current[0]).toBe(true);
     });
 
-    it("should persist value after unmount and remount", () => {
+    test("should persist value after unmount and remount", () => {
         const { result: result1, unmount } = renderHook(() =>
             useSessionFlag("test-key", false)
         );
@@ -136,7 +136,7 @@ describe("useSessionFlag", () => {
         expect(result2.current[0]).toBe(true);
     });
 
-    it("should handle non-boolean stored values", () => {
+    test("should handle non-boolean stored values", () => {
         sessionStorage.setItem("test-key", "invalid");
 
         const { result } = renderHook(() => useSessionFlag("test-key", false));
@@ -145,7 +145,7 @@ describe("useSessionFlag", () => {
         expect(result.current[0]).toBe(false);
     });
 
-    it("should clean up subscribers on unmount", () => {
+    test("should clean up subscribers on unmount", () => {
         const { unmount: unmount1 } = renderHook(() =>
             useSessionFlag("test-key", false)
         );
@@ -162,7 +162,7 @@ describe("useSessionFlag", () => {
         }).not.toThrow();
     });
 
-    it("should respond to storage events from other windows with matching key", () => {
+    test("should respond to storage events from other windows with matching key", () => {
         const { result } = renderHook(() => useSessionFlag("test-key", false));
 
         expect(result.current[0]).toBe(false);
@@ -182,7 +182,7 @@ describe("useSessionFlag", () => {
         expect(result.current[0]).toBe(true);
     });
 
-    it("should ignore storage events with different key", () => {
+    test("should ignore storage events with different key", () => {
         const { result } = renderHook(() => useSessionFlag("test-key", false));
 
         const initialValue = result.current[0];
@@ -203,7 +203,7 @@ describe("useSessionFlag", () => {
         expect(result.current[0]).toBe(initialValue);
     });
 
-    it("should ignore storage events from localStorage", () => {
+    test("should ignore storage events from localStorage", () => {
         const { result } = renderHook(() => useSessionFlag("test-key", false));
 
         const initialValue = result.current[0];
@@ -223,7 +223,7 @@ describe("useSessionFlag", () => {
         expect(result.current[0]).toBe(initialValue);
     });
 
-    it("should handle storage events when value changes from true to false", () => {
+    test("should handle storage events when value changes from true to false", () => {
         sessionStorage.setItem("test-key", "true");
         const { result } = renderHook(() => useSessionFlag("test-key", false));
 

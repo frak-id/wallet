@@ -1,14 +1,13 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
-import type React from "react";
-import type { ReactNode } from "react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { PreviousAuthenticatorModel } from "../../common/storage/PreviousAuthenticatorModel";
+import { vi } from "vitest"; // Keep vi from vitest for vi.mock() hoisting
 import {
-    createMockAddress,
-    createMockSdkSession,
-    createMockSession,
-} from "../../test/factories";
+    afterEach,
+    beforeEach,
+    describe,
+    expect,
+    test,
+} from "../../../tests/vitest-fixtures";
+import type { PreviousAuthenticatorModel } from "../../common/storage/PreviousAuthenticatorModel";
 import { useLogin } from "./useLogin";
 
 vi.mock("@frak-labs/app-essentials", () => ({
@@ -60,10 +59,6 @@ vi.mock("../../stores/userStore", () => ({
 }));
 
 describe("useLogin", () => {
-    let queryClient: QueryClient;
-    let wrapper: ({ children }: { children: ReactNode }) => React.ReactElement;
-    const mockAddress = createMockAddress();
-
     const mockAuthResponse = {
         id: "credential-id",
         rawId: "credential-id",
@@ -85,30 +80,21 @@ describe("useLogin", () => {
         timeout: 180000,
     };
 
-    const mockSessionData = {
-        ...createMockSession({ address: mockAddress, token: "session-token" }),
-        sdkJwt: createMockSdkSession({ token: "sdk-token" }),
-    };
-
-    beforeEach(() => {
-        queryClient = new QueryClient({
-            defaultOptions: {
-                mutations: { retry: false },
-            },
-        });
-        wrapper = ({ children }: { children: ReactNode }) => (
-            <QueryClientProvider client={queryClient}>
-                {children}
-            </QueryClientProvider>
-        );
+    beforeEach(({ queryWrapper }) => {
+        queryWrapper.client.clear();
+        vi.clearAllMocks();
     });
 
     afterEach(() => {
         vi.clearAllMocks();
-        queryClient.clear();
     });
 
-    it("should login successfully without specific authenticator", async () => {
+    test("should login successfully without specific authenticator", async ({
+        queryWrapper,
+        mockAddress,
+        mockSession,
+        mockSdkSession,
+    }) => {
         const { startAuthentication } = await import("@simplewebauthn/browser");
         const { generateAuthenticationOptions } = await import(
             "@simplewebauthn/server"
@@ -130,6 +116,13 @@ describe("useLogin", () => {
         const setSdkSession = vi.fn();
         const setUser = vi.fn();
 
+        const mockSessionData = {
+            ...mockSession,
+            address: mockAddress,
+            token: "session-token",
+            sdkJwt: { ...mockSdkSession, token: "sdk-token" },
+        };
+
         vi.mocked(generateAuthenticationOptions).mockResolvedValue(
             mockAuthOptions
         );
@@ -150,7 +143,9 @@ describe("useLogin", () => {
         } as any);
         vi.mocked(addLastAuthentication).mockResolvedValue(undefined);
 
-        const { result } = renderHook(() => useLogin(), { wrapper });
+        const { result } = renderHook(() => useLogin(), {
+            wrapper: queryWrapper.wrapper,
+        });
 
         await result.current.login(undefined);
 
@@ -186,7 +181,12 @@ describe("useLogin", () => {
         });
     });
 
-    it("should login with specific authenticator", async () => {
+    test("should login with specific authenticator", async ({
+        queryWrapper,
+        mockAddress,
+        mockSession,
+        mockSdkSession,
+    }) => {
         const { startAuthentication } = await import("@simplewebauthn/browser");
         const { generateAuthenticationOptions } = await import(
             "@simplewebauthn/server"
@@ -209,6 +209,13 @@ describe("useLogin", () => {
             wallet: mockAddress,
         };
 
+        const mockSessionData = {
+            ...mockSession,
+            address: mockAddress,
+            token: "session-token",
+            sdkJwt: { ...mockSdkSession, token: "sdk-token" },
+        };
+
         vi.mocked(generateAuthenticationOptions).mockResolvedValue(
             mockAuthOptions
         );
@@ -229,7 +236,9 @@ describe("useLogin", () => {
         } as any);
         vi.mocked(addLastAuthentication).mockResolvedValue(undefined);
 
-        const { result } = renderHook(() => useLogin(), { wrapper });
+        const { result } = renderHook(() => useLogin(), {
+            wrapper: queryWrapper.wrapper,
+        });
 
         await result.current.login({ lastAuthentication });
 
@@ -250,7 +259,12 @@ describe("useLogin", () => {
         });
     });
 
-    it("should track analytics events", async () => {
+    test("should track analytics events", async ({
+        queryWrapper,
+        mockAddress,
+        mockSession,
+        mockSdkSession,
+    }) => {
         const { startAuthentication } = await import("@simplewebauthn/browser");
         const { generateAuthenticationOptions } = await import(
             "@simplewebauthn/server"
@@ -266,6 +280,13 @@ describe("useLogin", () => {
         const { trackAuthInitiated, trackAuthCompleted } = await import(
             "../../common/analytics"
         );
+
+        const mockSessionData = {
+            ...mockSession,
+            address: mockAddress,
+            token: "session-token",
+            sdkJwt: { ...mockSdkSession, token: "sdk-token" },
+        };
 
         vi.mocked(generateAuthenticationOptions).mockResolvedValue(
             mockAuthOptions
@@ -286,7 +307,9 @@ describe("useLogin", () => {
             setUser: vi.fn(),
         } as any);
 
-        const { result } = renderHook(() => useLogin(), { wrapper });
+        const { result } = renderHook(() => useLogin(), {
+            wrapper: queryWrapper.wrapper,
+        });
 
         await result.current.login(undefined);
 
@@ -306,7 +329,9 @@ describe("useLogin", () => {
         );
     });
 
-    it("should handle authentication API errors", async () => {
+    test("should handle authentication API errors", async ({
+        queryWrapper,
+    }) => {
         const { startAuthentication } = await import("@simplewebauthn/browser");
         const { generateAuthenticationOptions } = await import(
             "@simplewebauthn/server"
@@ -326,7 +351,9 @@ describe("useLogin", () => {
             error: mockError,
         } as any);
 
-        const { result } = renderHook(() => useLogin(), { wrapper });
+        const { result } = renderHook(() => useLogin(), {
+            wrapper: queryWrapper.wrapper,
+        });
 
         await expect(result.current.login(undefined)).rejects.toThrow(
             "Authentication failed"
@@ -339,7 +366,9 @@ describe("useLogin", () => {
         expect(result.current.error).toEqual(mockError);
     });
 
-    it("should handle WebAuthn startAuthentication errors", async () => {
+    test("should handle WebAuthn startAuthentication errors", async ({
+        queryWrapper,
+    }) => {
         const { startAuthentication } = await import("@simplewebauthn/browser");
         const { generateAuthenticationOptions } = await import(
             "@simplewebauthn/server"
@@ -352,7 +381,9 @@ describe("useLogin", () => {
         );
         vi.mocked(startAuthentication).mockRejectedValue(mockError);
 
-        const { result } = renderHook(() => useLogin(), { wrapper });
+        const { result } = renderHook(() => useLogin(), {
+            wrapper: queryWrapper.wrapper,
+        });
 
         await expect(result.current.login(undefined)).rejects.toThrow(
             "User cancelled authentication"
@@ -363,7 +394,12 @@ describe("useLogin", () => {
         });
     });
 
-    it("should encode authentication response correctly", async () => {
+    test("should encode authentication response correctly", async ({
+        queryWrapper,
+        mockAddress,
+        mockSession,
+        mockSdkSession,
+    }) => {
         const { startAuthentication } = await import("@simplewebauthn/browser");
         const { generateAuthenticationOptions } = await import(
             "@simplewebauthn/server"
@@ -376,6 +412,13 @@ describe("useLogin", () => {
         );
         const { sessionStore } = await import("../../stores/sessionStore");
         const { userStore } = await import("../../stores/userStore");
+
+        const mockSessionData = {
+            ...mockSession,
+            address: mockAddress,
+            token: "session-token",
+            sdkJwt: { ...mockSdkSession, token: "sdk-token" },
+        };
 
         vi.mocked(generateAuthenticationOptions).mockResolvedValue(
             mockAuthOptions
@@ -396,7 +439,9 @@ describe("useLogin", () => {
             setUser: vi.fn(),
         } as any);
 
-        const { result } = renderHook(() => useLogin(), { wrapper });
+        const { result } = renderHook(() => useLogin(), {
+            wrapper: queryWrapper.wrapper,
+        });
 
         await result.current.login(undefined);
 
@@ -410,7 +455,12 @@ describe("useLogin", () => {
         });
     });
 
-    it("should call addLastAuthentication with session", async () => {
+    test("should call addLastAuthentication with session", async ({
+        queryWrapper,
+        mockAddress,
+        mockSession,
+        mockSdkSession,
+    }) => {
         const { startAuthentication } = await import("@simplewebauthn/browser");
         const { generateAuthenticationOptions } = await import(
             "@simplewebauthn/server"
@@ -426,6 +476,13 @@ describe("useLogin", () => {
         const { addLastAuthentication } = await import(
             "../../stores/authenticationStore"
         );
+
+        const mockSessionData = {
+            ...mockSession,
+            address: mockAddress,
+            token: "session-token",
+            sdkJwt: { ...mockSdkSession, token: "sdk-token" },
+        };
 
         vi.mocked(generateAuthenticationOptions).mockResolvedValue(
             mockAuthOptions
@@ -447,7 +504,9 @@ describe("useLogin", () => {
         } as any);
         vi.mocked(addLastAuthentication).mockResolvedValue(undefined);
 
-        const { result } = renderHook(() => useLogin(), { wrapper });
+        const { result } = renderHook(() => useLogin(), {
+            wrapper: queryWrapper.wrapper,
+        });
 
         await result.current.login(undefined);
 
@@ -464,7 +523,12 @@ describe("useLogin", () => {
         );
     });
 
-    it("should accept custom mutation options", async () => {
+    test("should accept custom mutation options", async ({
+        queryWrapper,
+        mockAddress,
+        mockSession,
+        mockSdkSession,
+    }) => {
         const { startAuthentication } = await import("@simplewebauthn/browser");
         const { generateAuthenticationOptions } = await import(
             "@simplewebauthn/server"
@@ -479,6 +543,13 @@ describe("useLogin", () => {
         const { userStore } = await import("../../stores/userStore");
 
         const onSuccess = vi.fn();
+
+        const mockSessionData = {
+            ...mockSession,
+            address: mockAddress,
+            token: "session-token",
+            sdkJwt: { ...mockSdkSession, token: "sdk-token" },
+        };
 
         vi.mocked(generateAuthenticationOptions).mockResolvedValue(
             mockAuthOptions
@@ -500,7 +571,7 @@ describe("useLogin", () => {
         } as any);
 
         const { result } = renderHook(() => useLogin({ onSuccess }), {
-            wrapper,
+            wrapper: queryWrapper.wrapper,
         });
 
         await result.current.login(undefined);
@@ -516,8 +587,10 @@ describe("useLogin", () => {
         });
     });
 
-    it("should return correct hook properties", () => {
-        const { result } = renderHook(() => useLogin(), { wrapper });
+    test("should return correct hook properties", ({ queryWrapper }) => {
+        const { result } = renderHook(() => useLogin(), {
+            wrapper: queryWrapper.wrapper,
+        });
 
         expect(result.current).toHaveProperty("isLoading");
         expect(result.current).toHaveProperty("isSuccess");

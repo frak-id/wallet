@@ -1,12 +1,13 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { vi } from "vitest"; // Keep vi from vitest for vi.mock() hoisting
 import { useEnvironment } from "@/module/root/hook/useEnvironment";
+import { beforeEach, describe, expect, test } from "@/tests/vitest-fixtures";
 
 describe("useEnvironment", () => {
     beforeEach(() => {
         vi.unstubAllEnvs();
     });
 
-    it("should return isDebug true when DEBUG is 'true'", () => {
+    test("should return isDebug true when DEBUG is 'true'", () => {
         vi.stubEnv("DEBUG", "true");
 
         const result = useEnvironment();
@@ -14,7 +15,7 @@ describe("useEnvironment", () => {
         expect(result.isDebug).toBe(true);
     });
 
-    it("should return isDebug false when DEBUG is not 'true'", () => {
+    test("should return isDebug false when DEBUG is not 'true'", () => {
         vi.stubEnv("DEBUG", "false");
 
         const result = useEnvironment();
@@ -22,7 +23,7 @@ describe("useEnvironment", () => {
         expect(result.isDebug).toBe(false);
     });
 
-    it("should return isDebug false when DEBUG is undefined", () => {
+    test("should return isDebug false when DEBUG is undefined", () => {
         vi.unstubAllEnvs();
 
         const result = useEnvironment();
@@ -30,7 +31,7 @@ describe("useEnvironment", () => {
         expect(result.isDebug).toBe(false);
     });
 
-    it("should return isProduction based on isRunningInProd", () => {
+    test("should return isProduction based on isRunningInProd", () => {
         const result = useEnvironment();
 
         // isProduction is determined by isRunningInProd from app-essentials

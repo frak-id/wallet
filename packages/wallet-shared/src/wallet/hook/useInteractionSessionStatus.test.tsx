@@ -1,12 +1,12 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
-import type React from "react";
-import type { ReactNode } from "react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { vi } from "vitest"; // Keep vi from vitest for vi.mock() hoisting
 import {
-    createMockAddress,
-    createMockInteractionSession,
-} from "../../test/factories";
+    afterEach,
+    beforeEach,
+    describe,
+    expect,
+    test,
+} from "../../../tests/vitest-fixtures";
 import { useInteractionSessionStatus } from "./useInteractionSessionStatus";
 
 vi.mock("wagmi", () => ({
@@ -24,35 +24,24 @@ vi.mock("../../stores/walletStore", () => ({
 }));
 
 describe("useInteractionSessionStatus", () => {
-    let queryClient: QueryClient;
-    let wrapper: ({ children }: { children: ReactNode }) => React.ReactElement;
-    const mockAddress = createMockAddress();
-
-    beforeEach(() => {
-        queryClient = new QueryClient({
-            defaultOptions: {
-                queries: { retry: false },
-            },
-        });
-        wrapper = ({ children }: { children: ReactNode }) => (
-            <QueryClientProvider client={queryClient}>
-                {children}
-            </QueryClientProvider>
-        );
+    beforeEach(({ queryWrapper }) => {
+        queryWrapper.client.clear();
+        vi.clearAllMocks();
     });
 
     afterEach(() => {
         vi.clearAllMocks();
-        queryClient.clear();
     });
 
-    it("should not fetch when no address is provided", async () => {
+    test("should not fetch when no address is provided", async ({
+        queryWrapper,
+    }) => {
         const { useAccount } = await import("wagmi");
 
         vi.mocked(useAccount).mockReturnValue({ address: undefined } as any);
 
         const { result } = renderHook(() => useInteractionSessionStatus(), {
-            wrapper,
+            wrapper: queryWrapper.wrapper,
         });
 
         expect(result.current.data).toBeUndefined();
@@ -60,14 +49,18 @@ describe("useInteractionSessionStatus", () => {
         expect(result.current.fetchStatus).toBe("idle");
     });
 
-    it("should use wagmi address when no param address is provided", async () => {
+    test("should use wagmi address when no param address is provided", async ({
+        queryWrapper,
+        mockAddress,
+        mockInteractionSession,
+    }) => {
         const { useAccount } = await import("wagmi");
         const { getSessionStatus } = await import(
             "../../interaction/action/interactionSession"
         );
         const { walletStore } = await import("../../stores/walletStore");
 
-        const mockSession = createMockInteractionSession();
+        const mockSession = mockInteractionSession;
 
         const setInteractionSession = vi.fn();
 
@@ -78,7 +71,7 @@ describe("useInteractionSessionStatus", () => {
         } as any);
 
         const { result } = renderHook(() => useInteractionSessionStatus(), {
-            wrapper,
+            wrapper: queryWrapper.wrapper,
         });
 
         await waitFor(() => {
@@ -92,18 +85,24 @@ describe("useInteractionSessionStatus", () => {
         expect(setInteractionSession).toHaveBeenCalledWith(mockSession);
     });
 
-    it("should use param address over wagmi address", async () => {
+    test("should use param address over wagmi address", async ({
+        queryWrapper,
+        mockAddress,
+        mockInteractionSession,
+    }) => {
         const { useAccount } = await import("wagmi");
         const { getSessionStatus } = await import(
             "../../interaction/action/interactionSession"
         );
         const { walletStore } = await import("../../stores/walletStore");
 
+        const { createMockAddress } = await import("../../test/factories");
         const differentAddress = createMockAddress("abcdef");
-        const mockSession = createMockInteractionSession({
+        const mockSession = {
+            ...mockInteractionSession,
             sessionStart: Date.now() - 3600000,
             sessionEnd: Date.now(),
-        });
+        };
 
         const setInteractionSession = vi.fn();
 
@@ -115,7 +114,7 @@ describe("useInteractionSessionStatus", () => {
 
         const { result } = renderHook(
             () => useInteractionSessionStatus({ address: differentAddress }),
-            { wrapper }
+            { wrapper: queryWrapper.wrapper }
         );
 
         await waitFor(() => {
@@ -128,7 +127,10 @@ describe("useInteractionSessionStatus", () => {
         });
     });
 
-    it("should return null when session status is null", async () => {
+    test("should return null when session status is null", async ({
+        queryWrapper,
+        mockAddress,
+    }) => {
         const { useAccount } = await import("wagmi");
         const { getSessionStatus } = await import(
             "../../interaction/action/interactionSession"
@@ -144,7 +146,7 @@ describe("useInteractionSessionStatus", () => {
         } as any);
 
         const { result } = renderHook(() => useInteractionSessionStatus(), {
-            wrapper,
+            wrapper: queryWrapper.wrapper,
         });
 
         await waitFor(() => {
@@ -155,14 +157,18 @@ describe("useInteractionSessionStatus", () => {
         expect(setInteractionSession).toHaveBeenCalledWith(null);
     });
 
-    it("should update wallet store with session status", async () => {
+    test("should update wallet store with session status", async ({
+        queryWrapper,
+        mockAddress,
+        mockInteractionSession,
+    }) => {
         const { useAccount } = await import("wagmi");
         const { getSessionStatus } = await import(
             "../../interaction/action/interactionSession"
         );
         const { walletStore } = await import("../../stores/walletStore");
 
-        const mockSession = createMockInteractionSession();
+        const mockSession = mockInteractionSession;
 
         const setInteractionSession = vi.fn();
 
@@ -173,7 +179,7 @@ describe("useInteractionSessionStatus", () => {
         } as any);
 
         const { result } = renderHook(() => useInteractionSessionStatus(), {
-            wrapper,
+            wrapper: queryWrapper.wrapper,
         });
 
         await waitFor(() => {
@@ -184,14 +190,18 @@ describe("useInteractionSessionStatus", () => {
         expect(setInteractionSession).toHaveBeenCalledWith(mockSession);
     });
 
-    it("should respect custom query options", async () => {
+    test("should respect custom query options", async ({
+        queryWrapper,
+        mockAddress,
+        mockInteractionSession,
+    }) => {
         const { useAccount } = await import("wagmi");
         const { getSessionStatus } = await import(
             "../../interaction/action/interactionSession"
         );
         const { walletStore } = await import("../../stores/walletStore");
 
-        const mockSession = createMockInteractionSession();
+        const mockSession = mockInteractionSession;
 
         vi.mocked(useAccount).mockReturnValue({ address: mockAddress } as any);
         vi.mocked(getSessionStatus).mockResolvedValue(mockSession);
@@ -207,7 +217,7 @@ describe("useInteractionSessionStatus", () => {
                         gcTime: 20000,
                     },
                 }),
-            { wrapper }
+            { wrapper: queryWrapper.wrapper }
         );
 
         await waitFor(() => {
@@ -217,18 +227,22 @@ describe("useInteractionSessionStatus", () => {
         expect(result.current.data).toEqual(mockSession);
     });
 
-    it("should refetch session status when refetch is called", async () => {
+    test("should refetch session status when refetch is called", async ({
+        queryWrapper,
+        mockAddress,
+        mockInteractionSession,
+    }) => {
         const { useAccount } = await import("wagmi");
         const { getSessionStatus } = await import(
             "../../interaction/action/interactionSession"
         );
         const { walletStore } = await import("../../stores/walletStore");
 
-        const mockSession1 = createMockInteractionSession();
-
-        const mockSession2 = createMockInteractionSession({
+        const mockSession1 = mockInteractionSession;
+        const mockSession2 = {
+            ...mockInteractionSession,
             sessionEnd: Date.now(),
-        });
+        };
 
         vi.mocked(useAccount).mockReturnValue({ address: mockAddress } as any);
         vi.mocked(getSessionStatus)
@@ -239,7 +253,7 @@ describe("useInteractionSessionStatus", () => {
         } as any);
 
         const { result } = renderHook(() => useInteractionSessionStatus(), {
-            wrapper,
+            wrapper: queryWrapper.wrapper,
         });
 
         await waitFor(() => {
@@ -259,7 +273,10 @@ describe("useInteractionSessionStatus", () => {
         expect(getSessionStatus).toHaveBeenCalledTimes(2);
     });
 
-    it("should handle errors from getSessionStatus", async () => {
+    test("should handle errors from getSessionStatus", async ({
+        queryWrapper,
+        mockAddress,
+    }) => {
         const { useAccount } = await import("wagmi");
         const { getSessionStatus } = await import(
             "../../interaction/action/interactionSession"
@@ -275,7 +292,7 @@ describe("useInteractionSessionStatus", () => {
         } as any);
 
         const { result } = renderHook(() => useInteractionSessionStatus(), {
-            wrapper,
+            wrapper: queryWrapper.wrapper,
         });
 
         await waitFor(() => {
@@ -285,14 +302,18 @@ describe("useInteractionSessionStatus", () => {
         expect(result.current.error).toEqual(mockError);
     });
 
-    it("should be disabled when address changes from defined to undefined", async () => {
+    test("should be disabled when address changes from defined to undefined", async ({
+        queryWrapper,
+        mockAddress,
+        mockInteractionSession,
+    }) => {
         const { useAccount } = await import("wagmi");
         const { getSessionStatus } = await import(
             "../../interaction/action/interactionSession"
         );
         const { walletStore } = await import("../../stores/walletStore");
 
-        const mockSession = createMockInteractionSession();
+        const mockSession = mockInteractionSession;
 
         vi.mocked(useAccount).mockReturnValue({ address: mockAddress } as any);
         vi.mocked(getSessionStatus).mockResolvedValue(mockSession);
@@ -302,7 +323,7 @@ describe("useInteractionSessionStatus", () => {
 
         const { result, rerender } = renderHook(
             () => useInteractionSessionStatus(),
-            { wrapper }
+            { wrapper: queryWrapper.wrapper }
         );
 
         await waitFor(() => {

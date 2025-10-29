@@ -1,7 +1,13 @@
 import { WebAuthN } from "@frak-labs/app-essentials";
 import * as simplewebauthn from "@simplewebauthn/server";
 import type { Hex } from "viem";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { vi } from "vitest"; // Keep vi from vitest for vi.mock() hoisting
+import {
+    beforeEach,
+    describe,
+    expect,
+    test,
+} from "../../../tests/vitest-fixtures";
 import { getSignOptions } from "./signOptions";
 
 // Mock dependencies
@@ -28,7 +34,7 @@ describe("getSignOptions", () => {
         ).mockResolvedValue(mockAuthenticationOptions as any);
     });
 
-    it("should generate authentication options with authenticatorId", async () => {
+    test("should generate authentication options with authenticatorId", async () => {
         await getSignOptions({
             authenticatorId: mockAuthenticatorId,
             toSign: mockToSign,
@@ -48,7 +54,7 @@ describe("getSignOptions", () => {
         );
     });
 
-    it("should convert toSign hex to bytes for challenge", async () => {
+    test("should convert toSign hex to bytes for challenge", async () => {
         await getSignOptions({
             authenticatorId: mockAuthenticatorId,
             toSign: mockToSign,
@@ -60,7 +66,7 @@ describe("getSignOptions", () => {
         expect(call.challenge).toBeInstanceOf(Uint8Array);
     });
 
-    it("should use WebAuthN rpId configuration", async () => {
+    test("should use WebAuthN rpId configuration", async () => {
         await getSignOptions({
             authenticatorId: mockAuthenticatorId,
             toSign: mockToSign,
@@ -75,7 +81,7 @@ describe("getSignOptions", () => {
         );
     });
 
-    it("should set userVerification to required", async () => {
+    test("should set userVerification to required", async () => {
         await getSignOptions({
             authenticatorId: mockAuthenticatorId,
             toSign: mockToSign,
@@ -90,7 +96,7 @@ describe("getSignOptions", () => {
         );
     });
 
-    it("should set timeout to 180 seconds", async () => {
+    test("should set timeout to 180 seconds", async () => {
         await getSignOptions({
             authenticatorId: mockAuthenticatorId,
             toSign: mockToSign,
@@ -105,7 +111,7 @@ describe("getSignOptions", () => {
         );
     });
 
-    it("should include transports when provided", async () => {
+    test("should include transports when provided", async () => {
         const transports = ["usb", "nfc", "internal"];
 
         await getSignOptions({
@@ -128,7 +134,7 @@ describe("getSignOptions", () => {
         );
     });
 
-    it("should set transports to undefined when not provided", async () => {
+    test("should set transports to undefined when not provided", async () => {
         await getSignOptions({
             authenticatorId: mockAuthenticatorId,
             toSign: mockToSign,
@@ -148,7 +154,7 @@ describe("getSignOptions", () => {
         );
     });
 
-    it("should return the result from generateAuthenticationOptions", async () => {
+    test("should return the result from generateAuthenticationOptions", async () => {
         const result = await getSignOptions({
             authenticatorId: mockAuthenticatorId,
             toSign: mockToSign,
@@ -157,7 +163,7 @@ describe("getSignOptions", () => {
         expect(result).toBe(mockAuthenticationOptions);
     });
 
-    it("should handle different hex values for toSign", async () => {
+    test("should handle different hex values for toSign", async () => {
         const differentToSign =
             "0x1111111111111111111111111111111111111111111111111111111111111111" as Hex;
 
@@ -172,7 +178,7 @@ describe("getSignOptions", () => {
         expect(call.challenge).toBeInstanceOf(Uint8Array);
     });
 
-    it("should handle empty transports array", async () => {
+    test("should handle empty transports array", async () => {
         await getSignOptions({
             authenticatorId: mockAuthenticatorId,
             toSign: mockToSign,

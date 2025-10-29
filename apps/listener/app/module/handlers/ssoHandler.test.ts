@@ -87,7 +87,6 @@ describe("ssoHandler", () => {
 
     describe("processSsoCompletion", () => {
         test("should successfully process SSO completion", async ({
-            mockAddress,
             mockSession,
             mockSdkSession,
         }) => {

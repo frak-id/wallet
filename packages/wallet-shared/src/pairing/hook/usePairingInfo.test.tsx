@@ -1,8 +1,12 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
-import type React from "react";
-import type { ReactNode } from "react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { vi } from "vitest"; // Keep vi from vitest for vi.mock() hoisting
+import {
+    afterEach,
+    beforeEach,
+    describe,
+    expect,
+    test,
+} from "../../../tests/vitest-fixtures";
 import { authenticatedWalletApi } from "../../common/api/backendClient";
 import { usePairingInfo } from "./usePairingInfo";
 
@@ -17,37 +21,27 @@ vi.mock("../../common/api/backendClient", () => ({
 }));
 
 describe("usePairingInfo", () => {
-    let queryClient: QueryClient;
-    let wrapper: ({ children }: { children: ReactNode }) => React.ReactElement;
-
-    beforeEach(() => {
-        queryClient = new QueryClient({
-            defaultOptions: {
-                queries: { retry: false },
-            },
-        });
-        wrapper = ({ children }: { children: ReactNode }) => (
-            <QueryClientProvider client={queryClient}>
-                {children}
-            </QueryClientProvider>
-        );
+    beforeEach(({ queryWrapper }) => {
+        queryWrapper.client.clear();
+        vi.clearAllMocks();
     });
 
     afterEach(() => {
         vi.clearAllMocks();
-        queryClient.clear();
     });
 
-    it("should not fetch when no id is provided", () => {
+    test("should not fetch when no id is provided", ({ queryWrapper }) => {
         const { result } = renderHook(() => usePairingInfo({ id: undefined }), {
-            wrapper,
+            wrapper: queryWrapper.wrapper,
         });
 
         expect(result.current.data).toBeUndefined();
         expect(result.current.isLoading).toBe(false);
     });
 
-    it("should fetch pairing info when id is provided", async () => {
+    test("should fetch pairing info when id is provided", async ({
+        queryWrapper,
+    }) => {
         const mockPairingData = {
             id: "pairing-1",
             name: "Device pairing-1",
@@ -65,7 +59,7 @@ describe("usePairingInfo", () => {
         const { result } = renderHook(
             () => usePairingInfo({ id: "pairing-1" }),
             {
-                wrapper,
+                wrapper: queryWrapper.wrapper,
             }
         );
 
@@ -76,7 +70,7 @@ describe("usePairingInfo", () => {
         expect(result.current.data).toEqual(mockPairingData);
     });
 
-    it("should throw error when data is null", async () => {
+    test("should throw error when data is null", async ({ queryWrapper }) => {
         vi.mocked(authenticatedWalletApi.pairings.find).mockReturnValue({
             get: vi.fn().mockResolvedValue({
                 data: null,
@@ -85,7 +79,7 @@ describe("usePairingInfo", () => {
         } as any);
 
         const { result } = renderHook(() => usePairingInfo({ id: "test-id" }), {
-            wrapper,
+            wrapper: queryWrapper.wrapper,
         });
 
         await waitFor(() => {
@@ -97,7 +91,9 @@ describe("usePairingInfo", () => {
         );
     });
 
-    it("should refetch pairing info when refetch is called", async () => {
+    test("should refetch pairing info when refetch is called", async ({
+        queryWrapper,
+    }) => {
         const mockData1 = {
             id: "test-id",
             pairingCode: "code1",
@@ -128,7 +124,7 @@ describe("usePairingInfo", () => {
         } as any);
 
         const { result } = renderHook(() => usePairingInfo({ id: "test-id" }), {
-            wrapper,
+            wrapper: queryWrapper.wrapper,
         });
 
         await waitFor(() => {
@@ -146,7 +142,9 @@ describe("usePairingInfo", () => {
         expect(mockGet).toHaveBeenCalledTimes(2);
     });
 
-    it("should be disabled when id is not provided", async () => {
+    test("should be disabled when id is not provided", async ({
+        queryWrapper,
+    }) => {
         const mockGet = vi.fn();
 
         vi.mocked(authenticatedWalletApi.pairings.find).mockReturnValue({
@@ -156,7 +154,7 @@ describe("usePairingInfo", () => {
         const { result, rerender } = renderHook(
             ({ id }: { id?: string }) => usePairingInfo({ id }),
             {
-                wrapper,
+                wrapper: queryWrapper.wrapper,
                 initialProps: { id: undefined },
             }
         );

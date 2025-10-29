@@ -1,10 +1,13 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
-import type React from "react";
-import type { ReactNode } from "react";
 import type { Address } from "viem";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { createMockAddress, createMockSession } from "../../test/factories";
+import { vi } from "vitest"; // Keep vi from vitest for vi.mock() hoisting
+import {
+    afterEach,
+    beforeEach,
+    describe,
+    expect,
+    test,
+} from "../../../tests/vitest-fixtures";
 import type { TargetPairingClient } from "../clients/target";
 import type { TargetPairingPendingSignature } from "../types";
 import {
@@ -22,10 +25,6 @@ vi.mock("../../wallet/smartWallet/signature", () => ({
 }));
 
 describe("useSignSignatureRequest", () => {
-    let queryClient: QueryClient;
-    let wrapper: ({ children }: { children: ReactNode }) => React.ReactElement;
-    const mockAddress = createMockAddress();
-
     const mockClient: TargetPairingClient = {
         sendSignatureResponse: vi.fn(),
     } as any;
@@ -37,33 +36,25 @@ describe("useSignSignatureRequest", () => {
         from: "origin",
     };
 
-    beforeEach(() => {
-        queryClient = new QueryClient({
-            defaultOptions: {
-                mutations: { retry: false },
-            },
-        });
-        wrapper = ({ children }: { children: ReactNode }) => (
-            <QueryClientProvider client={queryClient}>
-                {children}
-            </QueryClientProvider>
-        );
+    beforeEach(({ queryWrapper }) => {
+        queryWrapper.client.clear();
         vi.clearAllMocks();
     });
 
     afterEach(() => {
         vi.clearAllMocks();
-        queryClient.clear();
     });
 
-    it("should throw error when no session is present", async () => {
+    test("should throw error when no session is present", async ({
+        queryWrapper,
+    }) => {
         const { sessionStore } = await import("../../stores/sessionStore");
 
         vi.mocked(sessionStore).mockReturnValue(null);
 
         const { result } = renderHook(
             () => useSignSignatureRequest({ client: mockClient }),
-            { wrapper }
+            { wrapper: queryWrapper.wrapper }
         );
 
         await expect(result.current.mutateAsync(mockRequest)).rejects.toThrow(
@@ -75,13 +66,14 @@ describe("useSignSignatureRequest", () => {
         });
     });
 
-    it("should sign and send signature response successfully", async () => {
+    test("should sign and send signature response successfully", async ({
+        queryWrapper,
+        mockSession,
+    }) => {
         const { sessionStore } = await import("../../stores/sessionStore");
         const { signHashViaWebAuthN } = await import(
             "../../wallet/smartWallet/signature"
         );
-
-        const mockSession = createMockSession({ address: mockAddress });
 
         const mockSignature = "0xsignature" as Address;
 
@@ -90,7 +82,7 @@ describe("useSignSignatureRequest", () => {
 
         const { result } = renderHook(
             () => useSignSignatureRequest({ client: mockClient }),
-            { wrapper }
+            { wrapper: queryWrapper.wrapper }
         );
 
         await result.current.mutateAsync(mockRequest);
@@ -109,7 +101,10 @@ describe("useSignSignatureRequest", () => {
         );
     });
 
-    it("should send error response when signing fails", async () => {
+    test("should send error response when signing fails", async ({
+        queryWrapper,
+        mockSession,
+    }) => {
         const { sessionStore } = await import("../../stores/sessionStore");
         const { signHashViaWebAuthN } = await import(
             "../../wallet/smartWallet/signature"
@@ -119,8 +114,6 @@ describe("useSignSignatureRequest", () => {
             .spyOn(console, "warn")
             .mockImplementation(() => {});
 
-        const mockSession = createMockSession({ address: mockAddress });
-
         const mockError = new Error("User cancelled");
 
         vi.mocked(sessionStore).mockReturnValue(mockSession);
@@ -128,7 +121,7 @@ describe("useSignSignatureRequest", () => {
 
         const { result } = renderHook(
             () => useSignSignatureRequest({ client: mockClient }),
-            { wrapper }
+            { wrapper: queryWrapper.wrapper }
         );
 
         await expect(result.current.mutateAsync(mockRequest)).rejects.toThrow(
@@ -151,7 +144,10 @@ describe("useSignSignatureRequest", () => {
         consoleWarnSpy.mockRestore();
     });
 
-    it("should handle unknown errors", async () => {
+    test("should handle unknown errors", async ({
+        queryWrapper,
+        mockSession,
+    }) => {
         const { sessionStore } = await import("../../stores/sessionStore");
         const { signHashViaWebAuthN } = await import(
             "../../wallet/smartWallet/signature"
@@ -161,14 +157,12 @@ describe("useSignSignatureRequest", () => {
             .spyOn(console, "warn")
             .mockImplementation(() => {});
 
-        const mockSession = createMockSession({ address: mockAddress });
-
         vi.mocked(sessionStore).mockReturnValue(mockSession);
         vi.mocked(signHashViaWebAuthN).mockRejectedValue("String error");
 
         const { result } = renderHook(
             () => useSignSignatureRequest({ client: mockClient }),
-            { wrapper }
+            { wrapper: queryWrapper.wrapper }
         );
 
         await expect(
@@ -204,7 +198,7 @@ describe("useDeclineSignatureRequest", () => {
         vi.clearAllMocks();
     });
 
-    it("should decline signature request", () => {
+    test("should decline signature request", () => {
         const { result } = renderHook(() =>
             useDeclineSignatureRequest({ client: mockClient })
         );
@@ -217,7 +211,7 @@ describe("useDeclineSignatureRequest", () => {
         );
     });
 
-    it("should return stable callback reference", () => {
+    test("should return stable callback reference", () => {
         const { result, rerender } = renderHook(() =>
             useDeclineSignatureRequest({ client: mockClient })
         );
@@ -229,7 +223,7 @@ describe("useDeclineSignatureRequest", () => {
         expect(callback1).toBe(callback2);
     });
 
-    it("should handle multiple decline requests", () => {
+    test("should handle multiple decline requests", () => {
         const { result } = renderHook(() =>
             useDeclineSignatureRequest({ client: mockClient })
         );

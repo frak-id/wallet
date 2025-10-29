@@ -439,9 +439,7 @@ describe("useDisplayModalListener", () => {
         expect(result_value).toEqual(finalResult);
     });
 
-    test("should call setRequest with correct parameters", async ({
-        mockProductId,
-    }) => {
+    test("should call setRequest with correct parameters", async () => {
         let subscribeCb: ((state: any) => void) | undefined;
         (mockModalStore.subscribe as any).mockImplementation(
             (cb: (state: any) => void) => {

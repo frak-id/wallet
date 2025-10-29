@@ -1,6 +1,6 @@
 import { renderHook } from "@testing-library/react";
 import type { Hex } from "viem";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { useSsoLink } from "./useGetOpenSsoLink";
 
 vi.mock("@frak-labs/core-sdk", () => ({
@@ -18,7 +18,7 @@ describe("useSsoLink", () => {
         vi.clearAllMocks();
     });
 
-    it("should generate SSO link with all parameters", async () => {
+    test("should generate SSO link with all parameters", async () => {
         const { generateSsoUrl } = await import("@frak-labs/core-sdk");
 
         vi.mocked(generateSsoUrl).mockReturnValue(
@@ -52,7 +52,7 @@ describe("useSsoLink", () => {
         );
     });
 
-    it("should generate SSO link without optional parameters", async () => {
+    test("should generate SSO link without optional parameters", async () => {
         const { generateSsoUrl } = await import("@frak-labs/core-sdk");
 
         vi.mocked(generateSsoUrl).mockReturnValue(
@@ -83,7 +83,7 @@ describe("useSsoLink", () => {
         );
     });
 
-    it("should regenerate link when productId changes", async () => {
+    test("should regenerate link when productId changes", async () => {
         const { generateSsoUrl } = await import("@frak-labs/core-sdk");
 
         vi.mocked(generateSsoUrl)
@@ -114,7 +114,7 @@ describe("useSsoLink", () => {
         expect(generateSsoUrl).toHaveBeenCalledTimes(2);
     });
 
-    it("should handle French language parameter", async () => {
+    test("should handle French language parameter", async () => {
         const { generateSsoUrl } = await import("@frak-labs/core-sdk");
 
         vi.mocked(generateSsoUrl).mockReturnValue(
@@ -146,7 +146,7 @@ describe("useSsoLink", () => {
         );
     });
 
-    it("should memoize the link when dependencies don't change", async () => {
+    test("should memoize the link when dependencies don't change", async () => {
         const { generateSsoUrl } = await import("@frak-labs/core-sdk");
 
         vi.mocked(generateSsoUrl).mockReturnValue(

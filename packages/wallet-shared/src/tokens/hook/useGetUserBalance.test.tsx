@@ -1,8 +1,12 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
-import type React from "react";
-import type { ReactNode } from "react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { vi } from "vitest"; // Keep vi from vitest for vi.mock() hoisting
+import {
+    afterEach,
+    beforeEach,
+    describe,
+    expect,
+    test,
+} from "../../../tests/vitest-fixtures";
 import { authenticatedWalletApi } from "../../common/api/backendClient";
 import { useGetUserBalance } from "./useGetUserBalance";
 
@@ -19,36 +23,26 @@ vi.mock("../../common/api/backendClient", () => ({
 }));
 
 describe("useGetUserBalance", () => {
-    let queryClient: QueryClient;
-    let wrapper: ({ children }: { children: ReactNode }) => React.ReactElement;
-
-    beforeEach(() => {
-        queryClient = new QueryClient({
-            defaultOptions: {
-                queries: {
-                    retry: false,
-                },
-            },
-        });
-        wrapper = ({ children }: { children: ReactNode }) => (
-            <QueryClientProvider client={queryClient}>
-                {children}
-            </QueryClientProvider>
-        );
+    beforeEach(({ queryWrapper }) => {
+        queryWrapper.client.clear();
+        vi.clearAllMocks();
     });
 
     afterEach(() => {
         vi.clearAllMocks();
-        queryClient.clear();
     });
 
-    it("should return null balance when no address is provided", async () => {
+    test("should return null balance when no address is provided", async ({
+        queryWrapper,
+    }) => {
         const { useAccount } = await import("wagmi");
         vi.mocked(useAccount).mockReturnValue({
             address: undefined,
         } as any);
 
-        const { result } = renderHook(() => useGetUserBalance(), { wrapper });
+        const { result } = renderHook(() => useGetUserBalance(), {
+            wrapper: queryWrapper.wrapper,
+        });
 
         await waitFor(() => {
             expect(result.current.userBalance).toBeUndefined();
@@ -56,7 +50,9 @@ describe("useGetUserBalance", () => {
         });
     });
 
-    it("should fetch balance when address is provided", async () => {
+    test("should fetch balance when address is provided", async ({
+        queryWrapper,
+    }) => {
         const mockAddress = "0x1234567890123456789012345678901234567890";
         const mockBalance = {
             balance: "1000000000000000000",
@@ -73,7 +69,9 @@ describe("useGetUserBalance", () => {
             error: null,
         } as any);
 
-        const { result } = renderHook(() => useGetUserBalance(), { wrapper });
+        const { result } = renderHook(() => useGetUserBalance(), {
+            wrapper: queryWrapper.wrapper,
+        });
 
         await waitFor(() => {
             expect(result.current.isLoading).toBe(false);
@@ -83,7 +81,7 @@ describe("useGetUserBalance", () => {
         expect(authenticatedWalletApi.balance.get).toHaveBeenCalledTimes(1);
     });
 
-    it("should handle API errors", async () => {
+    test("should handle API errors", async ({ queryWrapper }) => {
         const mockAddress = "0x1234567890123456789012345678901234567890";
         const mockError = new Error("API Error");
 
@@ -97,7 +95,9 @@ describe("useGetUserBalance", () => {
             error: mockError,
         } as any);
 
-        const { result } = renderHook(() => useGetUserBalance(), { wrapper });
+        const { result } = renderHook(() => useGetUserBalance(), {
+            wrapper: queryWrapper.wrapper,
+        });
 
         await waitFor(() => {
             expect(result.current.isLoading).toBe(false);
@@ -106,7 +106,7 @@ describe("useGetUserBalance", () => {
         });
     });
 
-    it("should refetch when refetch is called", async () => {
+    test("should refetch when refetch is called", async ({ queryWrapper }) => {
         const mockAddress = "0x1234567890123456789012345678901234567890";
         const mockBalance1 = { balance: "1000", formatted: "0.001" };
         const mockBalance2 = { balance: "2000", formatted: "0.002" };
@@ -126,7 +126,9 @@ describe("useGetUserBalance", () => {
                 error: null,
             } as any);
 
-        const { result } = renderHook(() => useGetUserBalance(), { wrapper });
+        const { result } = renderHook(() => useGetUserBalance(), {
+            wrapper: queryWrapper.wrapper,
+        });
 
         await waitFor(() => {
             expect(result.current.userBalance).toEqual(mockBalance1);
@@ -141,20 +143,24 @@ describe("useGetUserBalance", () => {
         expect(authenticatedWalletApi.balance.get).toHaveBeenCalledTimes(2);
     });
 
-    it("should not fetch when address is null", async () => {
+    test("should not fetch when address is null", async ({ queryWrapper }) => {
         const { useAccount } = await import("wagmi");
         vi.mocked(useAccount).mockReturnValue({
             address: null,
         } as any);
 
-        renderHook(() => useGetUserBalance(), { wrapper });
+        renderHook(() => useGetUserBalance(), {
+            wrapper: queryWrapper.wrapper,
+        });
 
         await waitFor(() => {
             expect(authenticatedWalletApi.balance.get).not.toHaveBeenCalled();
         });
     });
 
-    it("should return null from queryFn when address is not set", async () => {
+    test("should return null from queryFn when address is not set", async ({
+        queryWrapper,
+    }) => {
         const mockAddress = "0x1234567890123456789012345678901234567890";
 
         const { useAccount } = await import("wagmi");
@@ -171,7 +177,9 @@ describe("useGetUserBalance", () => {
             }
         );
 
-        const { result } = renderHook(() => useGetUserBalance(), { wrapper });
+        const { result } = renderHook(() => useGetUserBalance(), {
+            wrapper: queryWrapper.wrapper,
+        });
 
         await waitFor(() => {
             expect(result.current.isLoading).toBe(false);

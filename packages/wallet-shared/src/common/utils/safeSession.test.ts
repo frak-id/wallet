@@ -1,5 +1,11 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { createMockSdkSession, createMockSession } from "../../test/factories";
+import { vi } from "vitest"; // Keep vi from vitest for vi.mock() hoisting
+import {
+    afterEach,
+    beforeEach,
+    describe,
+    expect,
+    test,
+} from "../../../tests/vitest-fixtures";
 import type { SdkSession } from "../../types/Session";
 import { getSafeSdkSession, getSafeSession } from "./safeSession";
 
@@ -27,10 +33,11 @@ describe("safeSession utilities", () => {
     });
 
     describe("getSafeSession", () => {
-        it("should return session from store when available", async () => {
+        test("should return session from store when available", async () => {
             const { sessionStore } = await import("../../stores/sessionStore");
+            const { createMockSession } = await import("../../test/factories");
 
-            const mockSession = createMockSession({
+            const sessionWithDetails = createMockSession({
                 publicKey: {
                     x: "0xabc" as `0x${string}`,
                     y: "0xdef" as `0x${string}`,
@@ -39,7 +46,7 @@ describe("safeSession utilities", () => {
             });
 
             vi.mocked(sessionStore.getState).mockReturnValue({
-                session: mockSession,
+                session: sessionWithDetails,
                 sdkSession: null,
                 demoPrivateKey: null,
                 setSession: vi.fn(),
@@ -50,11 +57,12 @@ describe("safeSession utilities", () => {
 
             const result = getSafeSession();
 
-            expect(result).toEqual(mockSession);
+            expect(result).toEqual(sessionWithDetails);
         });
 
-        it("should return session from localStorage when store is empty", async () => {
+        test("should return session from localStorage when store is empty", async () => {
             const { sessionStore } = await import("../../stores/sessionStore");
+            const { createMockSession } = await import("../../test/factories");
 
             vi.mocked(sessionStore.getState).mockReturnValue({
                 session: null,
@@ -66,7 +74,7 @@ describe("safeSession utilities", () => {
                 clearSession: vi.fn(),
             });
 
-            const mockSession = createMockSession({
+            const sessionWithDetails = createMockSession({
                 publicKey: {
                     x: "0xabc" as `0x${string}`,
                     y: "0xdef" as `0x${string}`,
@@ -77,16 +85,16 @@ describe("safeSession utilities", () => {
             localStorage.setItem(
                 "frak_session_store",
                 JSON.stringify({
-                    state: { session: mockSession },
+                    state: { session: sessionWithDetails },
                 })
             );
 
             const result = getSafeSession();
 
-            expect(result).toEqual(mockSession);
+            expect(result).toEqual(sessionWithDetails);
         });
 
-        it("should return null when session is not available anywhere", async () => {
+        test("should return null when session is not available anywhere", async () => {
             const { sessionStore } = await import("../../stores/sessionStore");
 
             vi.mocked(sessionStore.getState).mockReturnValue({
@@ -104,7 +112,7 @@ describe("safeSession utilities", () => {
             expect(result).toBeNull();
         });
 
-        it("should return null when localStorage has invalid data", async () => {
+        test("should return null when localStorage has invalid data", async () => {
             const { sessionStore } = await import("../../stores/sessionStore");
 
             vi.mocked(sessionStore.getState).mockReturnValue({
@@ -124,14 +132,19 @@ describe("safeSession utilities", () => {
     });
 
     describe("getSafeSdkSession", () => {
-        it("should return SDK session from store when available", async () => {
+        test("should return SDK session from store when available", async () => {
             const { sessionStore } = await import("../../stores/sessionStore");
+            const { createMockSdkSession } = await import(
+                "../../test/factories"
+            );
 
-            const mockSdkSession = createMockSdkSession({ token: "sdk-token" });
+            const sdkSessionWithToken = createMockSdkSession({
+                token: "sdk-token",
+            });
 
             vi.mocked(sessionStore.getState).mockReturnValue({
                 session: null,
-                sdkSession: mockSdkSession,
+                sdkSession: sdkSessionWithToken,
                 demoPrivateKey: null,
                 setSession: vi.fn(),
                 setSdkSession: vi.fn(),
@@ -141,11 +154,14 @@ describe("safeSession utilities", () => {
 
             const result = getSafeSdkSession();
 
-            expect(result).toEqual(mockSdkSession);
+            expect(result).toEqual(sdkSessionWithToken);
         });
 
-        it("should return SDK session from localStorage when store is empty", async () => {
+        test("should return SDK session from localStorage when store is empty", async () => {
             const { sessionStore } = await import("../../stores/sessionStore");
+            const { createMockSdkSession } = await import(
+                "../../test/factories"
+            );
 
             vi.mocked(sessionStore.getState).mockReturnValue({
                 session: null,
@@ -157,21 +173,23 @@ describe("safeSession utilities", () => {
                 clearSession: vi.fn(),
             });
 
-            const mockSdkSession = createMockSdkSession({ token: "sdk-token" });
+            const sdkSessionWithToken = createMockSdkSession({
+                token: "sdk-token",
+            });
 
             localStorage.setItem(
                 "frak_session_store",
                 JSON.stringify({
-                    state: { sdkSession: mockSdkSession },
+                    state: { sdkSession: sdkSessionWithToken },
                 })
             );
 
             const result = getSafeSdkSession();
 
-            expect(result).toEqual(mockSdkSession);
+            expect(result).toEqual(sdkSessionWithToken);
         });
 
-        it("should return null when SDK session is not available anywhere", async () => {
+        test("should return null when SDK session is not available anywhere", async () => {
             const { sessionStore } = await import("../../stores/sessionStore");
 
             vi.mocked(sessionStore.getState).mockReturnValue({
@@ -189,7 +207,7 @@ describe("safeSession utilities", () => {
             expect(result).toBeNull();
         });
 
-        it("should prioritize store over localStorage", async () => {
+        test("should prioritize store over localStorage", async () => {
             const { sessionStore } = await import("../../stores/sessionStore");
 
             const storeSdkSession: SdkSession = {
@@ -226,7 +244,7 @@ describe("safeSession utilities", () => {
     });
 
     describe("getFromLocalStorage", () => {
-        it("should handle missing localStorage items", async () => {
+        test("should handle missing localStorage items", async () => {
             const { sessionStore } = await import("../../stores/sessionStore");
 
             vi.mocked(sessionStore.getState).mockReturnValue({

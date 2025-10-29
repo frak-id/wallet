@@ -1,4 +1,9 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import {
+    beforeEach,
+    describe,
+    expect,
+    test,
+} from "../../tests/vitest-fixtures";
 import type { User } from "../types/User";
 import { selectUser, selectUserSetupLater, userStore } from "./userStore";
 
@@ -9,7 +14,7 @@ describe("userStore", () => {
     });
 
     describe("initial state", () => {
-        it("should have correct initial values", () => {
+        test("should have correct initial values", () => {
             const state = userStore.getState();
 
             expect(state.user).toBeNull();
@@ -18,7 +23,7 @@ describe("userStore", () => {
     });
 
     describe("setUser", () => {
-        it("should set user", () => {
+        test("should set user", () => {
             const mockUser: User = {
                 _id: "user-123",
                 username: "testuser",
@@ -29,7 +34,7 @@ describe("userStore", () => {
             expect(userStore.getState().user).toEqual(mockUser);
         });
 
-        it("should update existing user", () => {
+        test("should update existing user", () => {
             const mockUser1: User = {
                 _id: "user-123",
                 username: "user1",
@@ -47,7 +52,7 @@ describe("userStore", () => {
             expect(userStore.getState().user).toEqual(mockUser2);
         });
 
-        it("should clear user when null", () => {
+        test("should clear user when null", () => {
             const mockUser: User = {
                 _id: "user-123",
                 username: "testuser",
@@ -58,7 +63,7 @@ describe("userStore", () => {
             expect(userStore.getState().user).toBeNull();
         });
 
-        it("should work with selector", () => {
+        test("should work with selector", () => {
             const mockUser: User = {
                 _id: "user-123",
                 username: "testuser",
@@ -70,31 +75,31 @@ describe("userStore", () => {
     });
 
     describe("setUserSetupLater", () => {
-        it("should set userSetupLater to true", () => {
+        test("should set userSetupLater to true", () => {
             userStore.getState().setUserSetupLater(true);
             expect(userStore.getState().userSetupLater).toBe(true);
         });
 
-        it("should set userSetupLater to false", () => {
+        test("should set userSetupLater to false", () => {
             userStore.getState().setUserSetupLater(true);
             userStore.getState().setUserSetupLater(false);
             expect(userStore.getState().userSetupLater).toBe(false);
         });
 
-        it("should clear userSetupLater when null", () => {
+        test("should clear userSetupLater when null", () => {
             userStore.getState().setUserSetupLater(true);
             userStore.getState().setUserSetupLater(null);
             expect(userStore.getState().userSetupLater).toBeNull();
         });
 
-        it("should work with selector", () => {
+        test("should work with selector", () => {
             userStore.getState().setUserSetupLater(true);
             expect(selectUserSetupLater(userStore.getState())).toBe(true);
         });
     });
 
     describe("clearUser", () => {
-        it("should clear all user data", () => {
+        test("should clear all user data", () => {
             const mockUser: User = {
                 _id: "user-123",
                 username: "testuser",
@@ -113,7 +118,7 @@ describe("userStore", () => {
             expect(state.userSetupLater).toBeNull();
         });
 
-        it("should clear only user when userSetupLater was not set", () => {
+        test("should clear only user when userSetupLater was not set", () => {
             const mockUser: User = {
                 _id: "user-123",
                 username: "testuser",
@@ -129,7 +134,7 @@ describe("userStore", () => {
     });
 
     describe("selectors", () => {
-        it("should select correct values from state", () => {
+        test("should select correct values from state", () => {
             const mockUser: User = {
                 _id: "user-123",
                 username: "testuser",
@@ -145,7 +150,7 @@ describe("userStore", () => {
             expect(selectUserSetupLater(state)).toBe(true);
         });
 
-        it("should return null for unset values", () => {
+        test("should return null for unset values", () => {
             const state = userStore.getState();
 
             expect(selectUser(state)).toBeNull();
@@ -154,7 +159,7 @@ describe("userStore", () => {
     });
 
     describe("user profile updates", () => {
-        it("should handle partial user updates", () => {
+        test("should handle partial user updates", () => {
             const mockUser: User = {
                 _id: "user-123",
                 username: "testuser",
@@ -171,7 +176,7 @@ describe("userStore", () => {
             expect(userStore.getState().user?.username).toBe("updateduser");
         });
 
-        it("should handle user with all fields", () => {
+        test("should handle user with all fields", () => {
             const completeUser: User = {
                 _id: "user-123",
                 username: "testuser",

@@ -1,5 +1,11 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { createMockAddress } from "../../test/factories";
+import { vi } from "vitest"; // Keep vi from vitest for vi.mock() hoisting
+import {
+    afterEach,
+    beforeEach,
+    describe,
+    expect,
+    test,
+} from "../../../tests/vitest-fixtures";
 import type { PreviousAuthenticatorModel } from "./PreviousAuthenticatorModel";
 
 // Mock idb-keyval
@@ -23,11 +29,13 @@ describe("authenticatorStorage", () => {
     });
 
     describe("put", () => {
-        it("should add new authenticator when none exist", async () => {
+        test("should add new authenticator when none exist", async ({
+            mockAddress,
+        }) => {
             const { authenticatorStorage } = await import("./authenticators");
 
             const mockAuthenticator: PreviousAuthenticatorModel = {
-                wallet: createMockAddress(),
+                wallet: mockAddress,
                 authenticatorId: "auth-123",
                 transports: ["internal"],
             };
@@ -44,10 +52,12 @@ describe("authenticatorStorage", () => {
             );
         });
 
-        it("should replace existing authenticator for same wallet", async () => {
+        test("should replace existing authenticator for same wallet", async ({
+            mockAddress,
+        }) => {
             const { authenticatorStorage } = await import("./authenticators");
 
-            const mockWallet = createMockAddress();
+            const mockWallet = mockAddress;
             const existing: PreviousAuthenticatorModel = {
                 wallet: mockWallet,
                 authenticatorId: "old-auth",
@@ -72,8 +82,9 @@ describe("authenticatorStorage", () => {
             );
         });
 
-        it("should add to existing authenticators for different wallet", async () => {
+        test("should add to existing authenticators for different wallet", async () => {
             const { authenticatorStorage } = await import("./authenticators");
+            const { createMockAddress } = await import("../../test/factories");
 
             const existing: PreviousAuthenticatorModel = {
                 wallet: createMockAddress("1111"),
@@ -101,7 +112,7 @@ describe("authenticatorStorage", () => {
     });
 
     describe("getAll", () => {
-        it("should return empty array when no authenticators exist", async () => {
+        test("should return empty array when no authenticators exist", async () => {
             const { authenticatorStorage } = await import("./authenticators");
 
             mockGet.mockResolvedValue(null);
@@ -111,8 +122,9 @@ describe("authenticatorStorage", () => {
             expect(result).toEqual([]);
         });
 
-        it("should return all authenticators", async () => {
+        test("should return all authenticators", async () => {
             const { authenticatorStorage } = await import("./authenticators");
+            const { createMockAddress } = await import("../../test/factories");
 
             const mockAuthenticators: PreviousAuthenticatorModel[] = [
                 {
@@ -134,7 +146,7 @@ describe("authenticatorStorage", () => {
             expect(result).toEqual(mockAuthenticators);
         });
 
-        it("should handle NotFoundError and return empty array", async () => {
+        test("should handle NotFoundError and return empty array", async () => {
             const { authenticatorStorage } = await import("./authenticators");
 
             const notFoundError = new DOMException(
@@ -148,7 +160,7 @@ describe("authenticatorStorage", () => {
             expect(result).toEqual([]);
         });
 
-        it("should log and return empty array on unexpected errors", async () => {
+        test("should log and return empty array on unexpected errors", async () => {
             const { authenticatorStorage } = await import("./authenticators");
 
             const consoleErrorSpy = vi

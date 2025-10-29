@@ -1,10 +1,13 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
-import type React from "react";
-import type { ReactNode } from "react";
 import type { Address } from "viem";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { createMockAddress } from "../../test/factories";
+import { vi } from "vitest"; // Keep vi from vitest for vi.mock() hoisting
+import {
+    afterEach,
+    beforeEach,
+    describe,
+    expect,
+    test,
+} from "../../../tests/vitest-fixtures";
 import { useCloseSession } from "./useCloseSession";
 
 vi.mock("wagmi", () => ({
@@ -21,30 +24,18 @@ vi.mock("../../interaction/utils/getEnableDisableData", () => ({
 }));
 
 describe("useCloseSession", () => {
-    let queryClient: QueryClient;
-    let wrapper: ({ children }: { children: ReactNode }) => React.ReactElement;
-    const mockAddress = createMockAddress();
-    const mockTxHash = createMockAddress("abcdef");
-
-    beforeEach(() => {
-        queryClient = new QueryClient({
-            defaultOptions: {
-                mutations: { retry: false },
-            },
-        });
-        wrapper = ({ children }: { children: ReactNode }) => (
-            <QueryClientProvider client={queryClient}>
-                {children}
-            </QueryClientProvider>
-        );
+    beforeEach(({ queryWrapper }) => {
+        queryWrapper.client.clear();
+        vi.clearAllMocks();
     });
 
     afterEach(() => {
         vi.clearAllMocks();
-        queryClient.clear();
     });
 
-    it("should not execute when no address is provided", async () => {
+    test("should not execute when no address is provided", async ({
+        queryWrapper,
+    }) => {
         const { useAccount, useSendTransaction } = await import("wagmi");
         const { getDisableSessionData } = await import(
             "../../interaction/utils/getEnableDisableData"
@@ -57,7 +48,9 @@ describe("useCloseSession", () => {
             sendTransactionAsync,
         } as any);
 
-        const { result } = renderHook(() => useCloseSession(), { wrapper });
+        const { result } = renderHook(() => useCloseSession(), {
+            wrapper: queryWrapper.wrapper,
+        });
 
         await result.current.mutateAsync();
 
@@ -66,13 +59,18 @@ describe("useCloseSession", () => {
         expect(getDisableSessionData).not.toHaveBeenCalled();
     });
 
-    it("should close session successfully", async () => {
+    test("should close session successfully", async ({
+        queryWrapper,
+        mockAddress,
+    }) => {
         const { useAccount, useSendTransaction } = await import("wagmi");
         const { getDisableSessionData } = await import(
             "../../interaction/utils/getEnableDisableData"
         );
         const { trackGenericEvent } = await import("../../common/analytics");
 
+        const { createMockAddress } = await import("../../test/factories");
+        const mockTxHash = createMockAddress("abcdef");
         const mockDisableData: Address =
             "0xdisabledata1234567890abcdef1234567890abcd";
         const sendTransactionAsync = vi.fn().mockResolvedValue(mockTxHash);
@@ -83,7 +81,9 @@ describe("useCloseSession", () => {
         } as any);
         vi.mocked(getDisableSessionData).mockReturnValue(mockDisableData);
 
-        const { result } = renderHook(() => useCloseSession(), { wrapper });
+        const { result } = renderHook(() => useCloseSession(), {
+            wrapper: queryWrapper.wrapper,
+        });
 
         await result.current.mutateAsync();
 
@@ -107,14 +107,22 @@ describe("useCloseSession", () => {
         );
     });
 
-    it("should invalidate session status queries after closing", async () => {
+    test("should invalidate session status queries after closing", async ({
+        queryWrapper,
+        mockAddress,
+    }) => {
         const { useAccount, useSendTransaction } = await import("wagmi");
         const { getDisableSessionData } = await import(
             "../../interaction/utils/getEnableDisableData"
         );
 
+        const { createMockAddress } = await import("../../test/factories");
+        const mockTxHash = createMockAddress("abcdef");
         const sendTransactionAsync = vi.fn().mockResolvedValue(mockTxHash);
-        const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
+        const invalidateQueries = vi.spyOn(
+            queryWrapper.client,
+            "invalidateQueries"
+        );
 
         vi.mocked(useAccount).mockReturnValue({ address: mockAddress } as any);
         vi.mocked(useSendTransaction).mockReturnValue({
@@ -124,7 +132,9 @@ describe("useCloseSession", () => {
             "0xdisabledata" as Address
         );
 
-        const { result } = renderHook(() => useCloseSession(), { wrapper });
+        const { result } = renderHook(() => useCloseSession(), {
+            wrapper: queryWrapper.wrapper,
+        });
 
         await result.current.mutateAsync();
 
@@ -135,7 +145,10 @@ describe("useCloseSession", () => {
         expect(invalidateQueries).toHaveBeenCalled();
     });
 
-    it("should handle transaction errors", async () => {
+    test("should handle transaction errors", async ({
+        queryWrapper,
+        mockAddress,
+    }) => {
         const { useAccount, useSendTransaction } = await import("wagmi");
         const { getDisableSessionData } = await import(
             "../../interaction/utils/getEnableDisableData"
@@ -152,7 +165,9 @@ describe("useCloseSession", () => {
             "0xdisabledata" as Address
         );
 
-        const { result } = renderHook(() => useCloseSession(), { wrapper });
+        const { result } = renderHook(() => useCloseSession(), {
+            wrapper: queryWrapper.wrapper,
+        });
 
         await expect(result.current.mutateAsync()).rejects.toThrow(
             "Transaction failed"
@@ -165,12 +180,17 @@ describe("useCloseSession", () => {
         expect(result.current.error).toEqual(mockError);
     });
 
-    it("should log transaction hash", async () => {
+    test("should log transaction hash", async ({
+        queryWrapper,
+        mockAddress,
+    }) => {
         const { useAccount, useSendTransaction } = await import("wagmi");
         const { getDisableSessionData } = await import(
             "../../interaction/utils/getEnableDisableData"
         );
 
+        const { createMockAddress } = await import("../../test/factories");
+        const mockTxHash = createMockAddress("abcdef");
         const consoleLogSpy = vi
             .spyOn(console, "log")
             .mockImplementation(() => {});
@@ -184,7 +204,9 @@ describe("useCloseSession", () => {
             "0xdisabledata" as Address
         );
 
-        const { result } = renderHook(() => useCloseSession(), { wrapper });
+        const { result } = renderHook(() => useCloseSession(), {
+            wrapper: queryWrapper.wrapper,
+        });
 
         await result.current.mutateAsync();
 

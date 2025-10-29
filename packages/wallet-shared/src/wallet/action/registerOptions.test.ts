@@ -1,7 +1,13 @@
 import { WebAuthN } from "@frak-labs/app-essentials";
 import type { AuthenticatorTransportFuture } from "@simplewebauthn/browser";
 import * as simplewebauthn from "@simplewebauthn/server";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { vi } from "vitest"; // Keep vi from vitest for vi.mock() hoisting
+import {
+    beforeEach,
+    describe,
+    expect,
+    test,
+} from "../../../tests/vitest-fixtures";
 import { getRegisterOptions } from "./registerOptions";
 
 // Mock dependencies
@@ -29,7 +35,7 @@ describe("getRegisterOptions", () => {
         );
     });
 
-    it("should generate registration options with date-based username", async () => {
+    test("should generate registration options with date-based username", async () => {
         const date = new Date();
         const day = date.getDate().toString().padStart(2, "0");
         const month = (date.getMonth() + 1).toString().padStart(2, "0");
@@ -46,7 +52,7 @@ describe("getRegisterOptions", () => {
         );
     });
 
-    it("should generate user ID from random bytes", async () => {
+    test("should generate user ID from random bytes", async () => {
         await getRegisterOptions();
 
         // Verify generateRegistrationOptions was called with a userID
@@ -55,7 +61,7 @@ describe("getRegisterOptions", () => {
         expect(call.userID).toBeInstanceOf(Uint8Array);
     });
 
-    it("should use WebAuthN configuration values", async () => {
+    test("should use WebAuthN configuration values", async () => {
         await getRegisterOptions();
 
         expect(simplewebauthn.generateRegistrationOptions).toHaveBeenCalledWith(
@@ -66,7 +72,7 @@ describe("getRegisterOptions", () => {
         );
     });
 
-    it("should set authenticatorAttachment to cross-platform when crossPlatform is true", async () => {
+    test("should set authenticatorAttachment to cross-platform when crossPlatform is true", async () => {
         await getRegisterOptions({ crossPlatform: true });
 
         expect(simplewebauthn.generateRegistrationOptions).toHaveBeenCalledWith(
@@ -78,7 +84,7 @@ describe("getRegisterOptions", () => {
         );
     });
 
-    it("should set authenticatorAttachment to undefined when crossPlatform is false", async () => {
+    test("should set authenticatorAttachment to undefined when crossPlatform is false", async () => {
         await getRegisterOptions({ crossPlatform: false });
 
         expect(simplewebauthn.generateRegistrationOptions).toHaveBeenCalledWith(
@@ -90,7 +96,7 @@ describe("getRegisterOptions", () => {
         );
     });
 
-    it("should use default crossPlatform value of false when not provided", async () => {
+    test("should use default crossPlatform value of false when not provided", async () => {
         await getRegisterOptions();
 
         expect(simplewebauthn.generateRegistrationOptions).toHaveBeenCalledWith(
@@ -102,7 +108,7 @@ describe("getRegisterOptions", () => {
         );
     });
 
-    it("should map excludeCredentials with id and transports", async () => {
+    test("should map excludeCredentials with id and transports", async () => {
         const excludeCredentials = [
             {
                 id: "credential-1" as Base64URLString,
@@ -126,7 +132,7 @@ describe("getRegisterOptions", () => {
         );
     });
 
-    it("should use empty array for excludeCredentials when not provided", async () => {
+    test("should use empty array for excludeCredentials when not provided", async () => {
         await getRegisterOptions();
 
         expect(simplewebauthn.generateRegistrationOptions).toHaveBeenCalledWith(
@@ -136,7 +142,7 @@ describe("getRegisterOptions", () => {
         );
     });
 
-    it("should set required authenticator selection options", async () => {
+    test("should set required authenticator selection options", async () => {
         await getRegisterOptions();
 
         expect(simplewebauthn.generateRegistrationOptions).toHaveBeenCalledWith(
@@ -150,7 +156,7 @@ describe("getRegisterOptions", () => {
         );
     });
 
-    it("should set timeout to 180 seconds", async () => {
+    test("should set timeout to 180 seconds", async () => {
         await getRegisterOptions();
 
         expect(simplewebauthn.generateRegistrationOptions).toHaveBeenCalledWith(
@@ -160,7 +166,7 @@ describe("getRegisterOptions", () => {
         );
     });
 
-    it("should set attestationType to direct", async () => {
+    test("should set attestationType to direct", async () => {
         await getRegisterOptions();
 
         expect(simplewebauthn.generateRegistrationOptions).toHaveBeenCalledWith(
@@ -170,7 +176,7 @@ describe("getRegisterOptions", () => {
         );
     });
 
-    it("should support ES256 algorithm (-7)", async () => {
+    test("should support ES256 algorithm (-7)", async () => {
         await getRegisterOptions();
 
         expect(simplewebauthn.generateRegistrationOptions).toHaveBeenCalledWith(
@@ -180,7 +186,7 @@ describe("getRegisterOptions", () => {
         );
     });
 
-    it("should return the result from generateRegistrationOptions", async () => {
+    test("should return the result from generateRegistrationOptions", async () => {
         const result = await getRegisterOptions();
 
         expect(result).toBe(mockRegistrationOptions);

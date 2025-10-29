@@ -1,5 +1,10 @@
 import type { Hex } from "viem";
-import { beforeEach, describe, expect, it } from "vitest";
+import {
+    beforeEach,
+    describe,
+    expect,
+    test,
+} from "../../tests/vitest-fixtures";
 import type { PendingInteraction } from "../types/Interaction";
 import type { InteractionSession } from "../types/Session";
 import {
@@ -26,7 +31,7 @@ describe("walletStore", () => {
     });
 
     describe("initial state", () => {
-        it("should have correct initial values", () => {
+        test("should have correct initial values", () => {
             const state = walletStore.getState();
 
             expect(state.interactionSession).toBeNull();
@@ -35,7 +40,7 @@ describe("walletStore", () => {
     });
 
     describe("setInteractionSession", () => {
-        it("should set interaction session", () => {
+        test("should set interaction session", () => {
             const mockSession: InteractionSession = {
                 sessionStart: Date.now(),
                 sessionEnd: Date.now() + 3600000, // 1 hour later
@@ -47,7 +52,7 @@ describe("walletStore", () => {
             );
         });
 
-        it("should clear interaction session when null", () => {
+        test("should clear interaction session when null", () => {
             const mockSession: InteractionSession = {
                 sessionStart: Date.now(),
                 sessionEnd: Date.now() + 3600000,
@@ -58,7 +63,7 @@ describe("walletStore", () => {
             expect(walletStore.getState().interactionSession).toBeNull();
         });
 
-        it("should work with selector", () => {
+        test("should work with selector", () => {
             const mockSession: InteractionSession = {
                 sessionStart: Date.now(),
                 sessionEnd: Date.now() + 3600000,
@@ -72,7 +77,7 @@ describe("walletStore", () => {
     });
 
     describe("addPendingInteraction", () => {
-        it("should add a single pending interaction", () => {
+        test("should add a single pending interaction", () => {
             const mockInteraction = createMockInteraction("product-123");
 
             walletStore.getState().addPendingInteraction(mockInteraction);
@@ -83,7 +88,7 @@ describe("walletStore", () => {
             expect(interactions[0]).toEqual(mockInteraction);
         });
 
-        it("should add multiple interactions sequentially", () => {
+        test("should add multiple interactions sequentially", () => {
             const interaction1 = createMockInteraction("product-1");
             const interaction2 = createMockInteraction("product-2");
 
@@ -95,7 +100,7 @@ describe("walletStore", () => {
             expect(interactions).toHaveLength(2);
         });
 
-        it("should filter out duplicate interactions", () => {
+        test("should filter out duplicate interactions", () => {
             const interaction = createMockInteraction("product-123");
 
             // Add the same interaction twice
@@ -110,7 +115,7 @@ describe("walletStore", () => {
     });
 
     describe("addPendingInteractions", () => {
-        it("should add multiple interactions at once", () => {
+        test("should add multiple interactions at once", () => {
             const interactions: PendingInteraction[] = [
                 createMockInteraction("product-1"),
                 createMockInteraction("product-2"),
@@ -124,7 +129,7 @@ describe("walletStore", () => {
             expect(stored).toHaveLength(3);
         });
 
-        it("should merge with existing interactions", () => {
+        test("should merge with existing interactions", () => {
             const existing = createMockInteraction("product-1");
             const newInteractions: PendingInteraction[] = [
                 createMockInteraction("product-2"),
@@ -139,7 +144,7 @@ describe("walletStore", () => {
             expect(stored).toHaveLength(3);
         });
 
-        it("should filter duplicate interactions in batch", () => {
+        test("should filter duplicate interactions in batch", () => {
             const interaction1 = createMockInteraction("product-1");
             const interactions: PendingInteraction[] = [
                 interaction1,
@@ -155,7 +160,7 @@ describe("walletStore", () => {
             expect(stored).toHaveLength(2);
         });
 
-        it("should handle empty array", () => {
+        test("should handle empty array", () => {
             walletStore.getState().addPendingInteractions([]);
 
             const stored =
@@ -165,7 +170,7 @@ describe("walletStore", () => {
     });
 
     describe("cleanPendingInteractions", () => {
-        it("should clear all pending interactions", () => {
+        test("should clear all pending interactions", () => {
             const interactions: PendingInteraction[] = [
                 createMockInteraction("product-1"),
                 createMockInteraction("product-2"),
@@ -179,7 +184,7 @@ describe("walletStore", () => {
             expect(stored).toHaveLength(0);
         });
 
-        it("should reset to empty interactions array", () => {
+        test("should reset to empty interactions array", () => {
             walletStore.getState().cleanPendingInteractions();
 
             expect(walletStore.getState().pendingInteractions).toEqual({
@@ -189,7 +194,7 @@ describe("walletStore", () => {
     });
 
     describe("clearWallet", () => {
-        it("should clear all wallet data", () => {
+        test("should clear all wallet data", () => {
             const mockSession: InteractionSession = {
                 sessionStart: Date.now(),
                 sessionEnd: Date.now() + 3600000,
@@ -213,7 +218,7 @@ describe("walletStore", () => {
     });
 
     describe("selectors", () => {
-        it("should select interaction session", () => {
+        test("should select interaction session", () => {
             const mockSession: InteractionSession = {
                 sessionStart: Date.now(),
                 sessionEnd: Date.now() + 3600000,
@@ -226,7 +231,7 @@ describe("walletStore", () => {
             );
         });
 
-        it("should select pending interactions object", () => {
+        test("should select pending interactions object", () => {
             const interactions: PendingInteraction[] = [
                 createMockInteraction("product-1"),
             ];
@@ -237,7 +242,7 @@ describe("walletStore", () => {
             expect(result).toEqual({ interactions });
         });
 
-        it("should select pending interactions array", () => {
+        test("should select pending interactions array", () => {
             const interactions: PendingInteraction[] = [
                 createMockInteraction("product-1"),
                 createMockInteraction("product-2"),
@@ -252,7 +257,7 @@ describe("walletStore", () => {
             expect(result).toEqual(interactions);
         });
 
-        it("should return empty array when no pending interactions", () => {
+        test("should return empty array when no pending interactions", () => {
             const result = selectPendingInteractionsArray(
                 walletStore.getState()
             );
@@ -261,7 +266,7 @@ describe("walletStore", () => {
     });
 
     describe("interaction deduplication", () => {
-        it("should deduplicate based on interaction content hash", () => {
+        test("should deduplicate based on interaction content hash", () => {
             const interaction: PendingInteraction = {
                 productId: "0x123" as Hex,
                 interaction: {
@@ -280,7 +285,7 @@ describe("walletStore", () => {
             expect(interactions).toHaveLength(1);
         });
 
-        it("should keep interactions with different content", () => {
+        test("should keep interactions with different content", () => {
             const interaction1: PendingInteraction = {
                 productId: "0x123" as Hex,
                 interaction: {

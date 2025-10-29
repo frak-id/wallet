@@ -1,8 +1,8 @@
-import { describe, expect, it } from "vitest";
 import { groupByDay } from "@/module/history/utils/groupByDay";
+import { describe, expect, test } from "@/tests/vitest-fixtures";
 
 describe("groupByDay", () => {
-    it("should group items by day", () => {
+    test("should group items by day", () => {
         const now = Date.now();
         const oneDayAgo = now - 24 * 60 * 60 * 1000;
         const twoDaysAgo = now - 2 * 24 * 60 * 60 * 1000;
@@ -22,7 +22,7 @@ describe("groupByDay", () => {
         expect(result.Today).toHaveLength(2);
     });
 
-    it("should sort items by timestamp descending", () => {
+    test("should sort items by timestamp descending", () => {
         const now = Math.floor(Date.now() / 1000);
         const items = [
             { timestamp: now - 1000, id: 1 },
@@ -38,7 +38,7 @@ describe("groupByDay", () => {
         expect(todayItems[2].id).toBe(1);
     });
 
-    it("should handle empty array", () => {
+    test("should handle empty array", () => {
         const items: { timestamp: number; id: number }[] = [];
 
         const result = groupByDay(items);
@@ -46,7 +46,7 @@ describe("groupByDay", () => {
         expect(result).toEqual({});
     });
 
-    it("should handle single item", () => {
+    test("should handle single item", () => {
         const now = Math.floor(Date.now() / 1000);
         const items = [{ timestamp: now, id: 1 }];
 
@@ -57,7 +57,7 @@ describe("groupByDay", () => {
         expect(result.Today[0].id).toBe(1);
     });
 
-    it("should group Yesterday items", () => {
+    test("should group Yesterday items", () => {
         const yesterday = Math.floor((Date.now() - 24 * 60 * 60 * 1000) / 1000);
         const items = [
             { timestamp: yesterday, id: 1 },
@@ -70,7 +70,7 @@ describe("groupByDay", () => {
         expect(result.Yesterday).toHaveLength(2);
     });
 
-    it("should group older items by date", () => {
+    test("should group older items by date", () => {
         const threeDaysAgo = Math.floor(
             (Date.now() - 3 * 24 * 60 * 60 * 1000) / 1000
         );
@@ -84,7 +84,7 @@ describe("groupByDay", () => {
         expect(keys[0]).not.toBe("Yesterday");
     });
 
-    it("should preserve item data in grouped results", () => {
+    test("should preserve item data in grouped results", () => {
         const now = Math.floor(Date.now() / 1000);
         const items = [
             { timestamp: now, id: 1, name: "Item 1" },
@@ -97,7 +97,7 @@ describe("groupByDay", () => {
         expect(result.Today[1]).toEqual(items[1]);
     });
 
-    it("should handle items spanning multiple days", () => {
+    test("should handle items spanning multiple days", () => {
         const now = Math.floor(Date.now() / 1000);
         const yesterday = Math.floor((Date.now() - 24 * 60 * 60 * 1000) / 1000);
         const twoDaysAgo = Math.floor(
@@ -116,7 +116,7 @@ describe("groupByDay", () => {
         expect(keys.length).toBeGreaterThanOrEqual(2); // At least Today and Yesterday
     });
 
-    it("should handle items with same timestamp", () => {
+    test("should handle items with same timestamp", () => {
         const now = Math.floor(Date.now() / 1000);
         const items = [
             { timestamp: now, id: 1 },
@@ -129,7 +129,7 @@ describe("groupByDay", () => {
         expect(result.Today).toHaveLength(3);
     });
 
-    it("should handle very old timestamps", () => {
+    test("should handle very old timestamps", () => {
         const oldTimestamp = Math.floor(
             new Date("2020-01-01").getTime() / 1000
         );
@@ -142,7 +142,7 @@ describe("groupByDay", () => {
         expect(result[keys[0]]).toHaveLength(1);
     });
 
-    it("should return record object with string keys", () => {
+    test("should return record object with string keys", () => {
         const now = Math.floor(Date.now() / 1000);
         const items = [{ timestamp: now, id: 1 }];
 

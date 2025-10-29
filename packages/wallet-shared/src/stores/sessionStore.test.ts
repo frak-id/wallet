@@ -1,5 +1,10 @@
 import type { Session } from "@frak-labs/wallet-shared";
-import { beforeEach, describe, expect, it } from "vitest";
+import {
+    beforeEach,
+    describe,
+    expect,
+    test,
+} from "../../tests/vitest-fixtures";
 import {
     createMockDistantWebAuthNSession,
     createMockEcdsaSession,
@@ -23,7 +28,7 @@ describe("sessionStore", () => {
     });
 
     describe("initial state", () => {
-        it("should have correct initial values", () => {
+        test("should have correct initial values", () => {
             const state = sessionStore.getState();
 
             expect(state.session).toBeNull();
@@ -33,14 +38,14 @@ describe("sessionStore", () => {
     });
 
     describe("setSession", () => {
-        it("should set session", () => {
+        test("should set session", () => {
             const mockSession = createMockSession({ token: "test-token-123" });
 
             sessionStore.getState().setSession(mockSession);
             expect(sessionStore.getState().session).toEqual(mockSession);
         });
 
-        it("should clear session when null", () => {
+        test("should clear session when null", () => {
             const mockSession = createMockSession();
 
             sessionStore.getState().setSession(mockSession);
@@ -48,7 +53,7 @@ describe("sessionStore", () => {
             expect(sessionStore.getState().session).toBeNull();
         });
 
-        it("should work with selector", () => {
+        test("should work with selector", () => {
             const mockSession = createMockSession();
 
             sessionStore.getState().setSession(mockSession);
@@ -57,7 +62,7 @@ describe("sessionStore", () => {
     });
 
     describe("setSdkSession", () => {
-        it("should set SDK session", () => {
+        test("should set SDK session", () => {
             const mockSdkSession = createMockSdkSession({
                 token: "sdk-token-123",
             });
@@ -66,7 +71,7 @@ describe("sessionStore", () => {
             expect(sessionStore.getState().sdkSession).toEqual(mockSdkSession);
         });
 
-        it("should clear SDK session when null", () => {
+        test("should clear SDK session when null", () => {
             const mockSdkSession = createMockSdkSession({
                 token: "sdk-token-123",
             });
@@ -76,7 +81,7 @@ describe("sessionStore", () => {
             expect(sessionStore.getState().sdkSession).toBeNull();
         });
 
-        it("should work with selector", () => {
+        test("should work with selector", () => {
             const mockSdkSession = createMockSdkSession({
                 token: "sdk-token-123",
             });
@@ -89,14 +94,14 @@ describe("sessionStore", () => {
     });
 
     describe("setDemoPrivateKey", () => {
-        it("should set demo private key", () => {
+        test("should set demo private key", () => {
             const mockKey = "0xprivatekey123" as `0x${string}`;
 
             sessionStore.getState().setDemoPrivateKey(mockKey);
             expect(sessionStore.getState().demoPrivateKey).toBe(mockKey);
         });
 
-        it("should clear demo private key when null", () => {
+        test("should clear demo private key when null", () => {
             const mockKey = "0xprivatekey123" as `0x${string}`;
 
             sessionStore.getState().setDemoPrivateKey(mockKey);
@@ -104,7 +109,7 @@ describe("sessionStore", () => {
             expect(sessionStore.getState().demoPrivateKey).toBeNull();
         });
 
-        it("should work with selector", () => {
+        test("should work with selector", () => {
             const mockKey = "0xprivatekey123" as `0x${string}`;
 
             sessionStore.getState().setDemoPrivateKey(mockKey);
@@ -113,7 +118,7 @@ describe("sessionStore", () => {
     });
 
     describe("clearSession", () => {
-        it("should clear all session data", () => {
+        test("should clear all session data", () => {
             const mockSession = createMockSession();
             const mockSdkSession = createMockSdkSession({
                 token: "sdk-token-123",
@@ -137,7 +142,7 @@ describe("sessionStore", () => {
     });
 
     describe("selectWebauthnSession", () => {
-        it("should return webauthn session", () => {
+        test("should return webauthn session", () => {
             const mockSession = createMockSession();
 
             sessionStore.getState().setSession(mockSession);
@@ -145,7 +150,7 @@ describe("sessionStore", () => {
             expect(result).toEqual(mockSession);
         });
 
-        it("should return webauthn session when type is undefined", () => {
+        test("should return webauthn session when type is undefined", () => {
             const mockSession: Session = {
                 token: "test-token",
                 address: "0x1234567890123456789012345678901234567890",
@@ -161,7 +166,7 @@ describe("sessionStore", () => {
             expect(result).toEqual(mockSession);
         });
 
-        it("should return null for non-webauthn session", () => {
+        test("should return null for non-webauthn session", () => {
             const mockSession = createMockEcdsaSession();
 
             sessionStore.getState().setSession(mockSession);
@@ -169,14 +174,14 @@ describe("sessionStore", () => {
             expect(result).toBeNull();
         });
 
-        it("should return null when no session", () => {
+        test("should return null when no session", () => {
             const result = selectWebauthnSession(sessionStore.getState());
             expect(result).toBeNull();
         });
     });
 
     describe("selectEcdsaSession", () => {
-        it("should return ecdsa session", () => {
+        test("should return ecdsa session", () => {
             const mockSession = createMockEcdsaSession();
 
             sessionStore.getState().setSession(mockSession);
@@ -184,7 +189,7 @@ describe("sessionStore", () => {
             expect(result).toEqual(mockSession);
         });
 
-        it("should return null for non-ecdsa session", () => {
+        test("should return null for non-ecdsa session", () => {
             const mockSession = createMockSession();
 
             sessionStore.getState().setSession(mockSession);
@@ -192,14 +197,14 @@ describe("sessionStore", () => {
             expect(result).toBeNull();
         });
 
-        it("should return null when no session", () => {
+        test("should return null when no session", () => {
             const result = selectEcdsaSession(sessionStore.getState());
             expect(result).toBeNull();
         });
     });
 
     describe("selectDistantWebauthnSession", () => {
-        it("should return distant-webauthn session", () => {
+        test("should return distant-webauthn session", () => {
             const mockSession = createMockDistantWebAuthNSession();
 
             sessionStore.getState().setSession(mockSession);
@@ -209,7 +214,7 @@ describe("sessionStore", () => {
             expect(result).toEqual(mockSession);
         });
 
-        it("should return null for non-distant-webauthn session", () => {
+        test("should return null for non-distant-webauthn session", () => {
             const mockSession = createMockSession();
 
             sessionStore.getState().setSession(mockSession);
@@ -219,7 +224,7 @@ describe("sessionStore", () => {
             expect(result).toBeNull();
         });
 
-        it("should return null when no session", () => {
+        test("should return null when no session", () => {
             const result = selectDistantWebauthnSession(
                 sessionStore.getState()
             );

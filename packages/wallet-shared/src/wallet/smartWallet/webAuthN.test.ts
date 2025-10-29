@@ -1,5 +1,6 @@
 import type { Hex } from "viem";
-import { describe, expect, it, vi } from "vitest";
+import { vi } from "vitest"; // Keep vi from vitest for vi.mock() hoisting
+import { describe, expect, test } from "../../../tests/vitest-fixtures";
 
 vi.mock("@simplewebauthn/browser", () => ({
     base64URLStringToBuffer: vi.fn((str: string) => {
@@ -28,7 +29,7 @@ vi.mock("@peculiar/asn1-ecc", () => ({
 
 describe("webAuthN utilities", () => {
     describe("parseWebAuthNAuthentication", () => {
-        it("should parse WebAuthn authentication response", async () => {
+        test("should parse WebAuthn authentication response", async () => {
             const { parseWebAuthNAuthentication } = await import("./webAuthN");
 
             const mockResponse = {
@@ -53,7 +54,7 @@ describe("webAuthN utilities", () => {
     });
 
     describe("formatSignature", () => {
-        it("should format signature with all components", async () => {
+        test("should format signature with all components", async () => {
             const { formatSignature } = await import("./webAuthN");
 
             const signatureData = {
@@ -79,7 +80,7 @@ describe("webAuthN utilities", () => {
             expect(result.length).toBeGreaterThan(2);
         });
 
-        it("should produce consistent output for same inputs", async () => {
+        test("should produce consistent output for same inputs", async () => {
             const { formatSignature } = await import("./webAuthN");
 
             const signatureData = {
@@ -97,7 +98,7 @@ describe("webAuthN utilities", () => {
             expect(result1).toBe(result2);
         });
 
-        it("should handle different authenticator ID hashes", async () => {
+        test("should handle different authenticator ID hashes", async () => {
             const { formatSignature } = await import("./webAuthN");
 
             const base = {
@@ -123,7 +124,7 @@ describe("webAuthN utilities", () => {
     });
 
     describe("getStubSignature", () => {
-        it("should generate stub signature", async () => {
+        test("should generate stub signature", async () => {
             const { getStubSignature } = await import("./webAuthN");
 
             const authenticatorIdHash =
@@ -135,7 +136,7 @@ describe("webAuthN utilities", () => {
             expect(result.startsWith("0x")).toBe(true);
         });
 
-        it("should use max values for signature components", async () => {
+        test("should use max values for signature components", async () => {
             const { getStubSignature } = await import("./webAuthN");
 
             const authenticatorIdHash = "0x1234" as Hex;
@@ -145,7 +146,7 @@ describe("webAuthN utilities", () => {
             expect(result.length).toBeGreaterThan(100);
         });
 
-        it("should produce consistent output for same authenticator ID", async () => {
+        test("should produce consistent output for same authenticator ID", async () => {
             const { getStubSignature } = await import("./webAuthN");
 
             const authenticatorIdHash = "0xabcd" as Hex;

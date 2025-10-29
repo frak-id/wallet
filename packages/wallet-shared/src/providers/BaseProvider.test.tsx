@@ -1,5 +1,6 @@
 import { render } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { vi } from "vitest"; // Keep vi from vitest for vi.mock() hoisting
+import { describe, expect, test } from "../../tests/vitest-fixtures";
 import { WagmiProviderWithDynamicConfig } from "./BaseProvider";
 
 vi.mock("@frak-labs/app-essentials/blockchain", () => ({
@@ -27,7 +28,7 @@ vi.mock("../wallet/smartWallet/connector", () => ({
 }));
 
 describe("WagmiProviderWithDynamicConfig", () => {
-    it("should not throw when rendering", () => {
+    test("should not throw when rendering", () => {
         expect(() =>
             render(
                 <WagmiProviderWithDynamicConfig>
@@ -37,7 +38,7 @@ describe("WagmiProviderWithDynamicConfig", () => {
         ).not.toThrow();
     });
 
-    it("should create config on mount", async () => {
+    test("should create config on mount", async () => {
         const { createConfig } = await import("wagmi");
 
         render(
@@ -49,7 +50,7 @@ describe("WagmiProviderWithDynamicConfig", () => {
         expect(createConfig).toHaveBeenCalled();
     });
 
-    it("should use smart account connector", async () => {
+    test("should use smart account connector", async () => {
         const { smartAccountConnector } = await import(
             "../wallet/smartWallet/connector"
         );
@@ -63,7 +64,7 @@ describe("WagmiProviderWithDynamicConfig", () => {
         expect(smartAccountConnector).toHaveBeenCalled();
     });
 
-    it("should memoize config", async () => {
+    test("should memoize config", async () => {
         const { createConfig } = await import("wagmi");
 
         const { rerender } = render(

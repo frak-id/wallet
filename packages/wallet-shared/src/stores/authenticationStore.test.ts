@@ -1,5 +1,11 @@
 import type { AuthenticationResponseJSON } from "@simplewebauthn/browser";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { vi } from "vitest"; // Keep vi from vitest for vi.mock() hoisting
+import {
+    beforeEach,
+    describe,
+    expect,
+    test,
+} from "../../tests/vitest-fixtures";
 import type { Session } from "../types/Session";
 import {
     addLastAuthentication,
@@ -28,7 +34,7 @@ describe("authenticationStore", () => {
     });
 
     describe("initial state", () => {
-        it("should have correct initial values", () => {
+        test("should have correct initial values", () => {
             const state = authenticationStore.getState();
 
             expect(state.lastAuthenticator).toBeNull();
@@ -38,7 +44,7 @@ describe("authenticationStore", () => {
     });
 
     describe("setLastAuthenticator", () => {
-        it("should set last authenticator", () => {
+        test("should set last authenticator", () => {
             const mockAuthenticator: LastAuthentication = {
                 token: "test-token",
                 address: "0x1234567890123456789012345678901234567890",
@@ -58,7 +64,7 @@ describe("authenticationStore", () => {
             );
         });
 
-        it("should clear last authenticator when null", () => {
+        test("should clear last authenticator when null", () => {
             const mockAuthenticator: LastAuthentication = {
                 token: "test-token",
                 address: "0x1234567890123456789012345678901234567890",
@@ -77,7 +83,7 @@ describe("authenticationStore", () => {
             expect(authenticationStore.getState().lastAuthenticator).toBeNull();
         });
 
-        it("should work with selector", () => {
+        test("should work with selector", () => {
             const mockAuthenticator: LastAuthentication = {
                 token: "test-token",
                 address: "0x1234567890123456789012345678901234567890",
@@ -99,7 +105,7 @@ describe("authenticationStore", () => {
     });
 
     describe("setLastWebAuthNAction", () => {
-        it("should set last WebAuthN action", () => {
+        test("should set last WebAuthN action", () => {
             const mockAction: LastWebAuthNAction = {
                 wallet: "0x1234567890123456789012345678901234567890",
                 signature: {
@@ -121,7 +127,7 @@ describe("authenticationStore", () => {
             );
         });
 
-        it("should clear last WebAuthN action when null", () => {
+        test("should clear last WebAuthN action when null", () => {
             const mockAction: LastWebAuthNAction = {
                 wallet: "0x1234567890123456789012345678901234567890",
                 signature: {
@@ -140,7 +146,7 @@ describe("authenticationStore", () => {
             ).toBeNull();
         });
 
-        it("should work with selector", () => {
+        test("should work with selector", () => {
             const mockAction: LastWebAuthNAction = {
                 wallet: "0x1234567890123456789012345678901234567890",
                 signature: {
@@ -160,7 +166,7 @@ describe("authenticationStore", () => {
     });
 
     describe("setSsoContext", () => {
-        it("should set SSO context", () => {
+        test("should set SSO context", () => {
             const mockSsoContext = {
                 productId: "product-123",
                 metadata: { name: "Example App" },
@@ -172,7 +178,7 @@ describe("authenticationStore", () => {
             );
         });
 
-        it("should clear SSO context when null", () => {
+        test("should clear SSO context when null", () => {
             const mockSsoContext = {
                 productId: "product-123",
                 metadata: { name: "Example App" },
@@ -183,7 +189,7 @@ describe("authenticationStore", () => {
             expect(authenticationStore.getState().ssoContext).toBeNull();
         });
 
-        it("should work with selector", () => {
+        test("should work with selector", () => {
             const mockSsoContext = {
                 productId: "product-123",
                 metadata: { name: "Example App" },
@@ -197,7 +203,7 @@ describe("authenticationStore", () => {
     });
 
     describe("clearAuthentication", () => {
-        it("should clear all authentication data", () => {
+        test("should clear all authentication data", () => {
             const mockAuthenticator: LastAuthentication = {
                 token: "test-token",
                 address: "0x1234567890123456789012345678901234567890",
@@ -234,7 +240,7 @@ describe("authenticationStore", () => {
     });
 
     describe("selectCurrentSsoMetadata", () => {
-        it("should return SSO metadata when context exists", () => {
+        test("should return SSO metadata when context exists", () => {
             const mockMetadata = { name: "Example App", domain: "example.com" };
             const mockSsoContext = {
                 productId: "product-123",
@@ -249,14 +255,14 @@ describe("authenticationStore", () => {
             expect(result).toEqual(mockMetadata);
         });
 
-        it("should return undefined when no SSO context", () => {
+        test("should return undefined when no SSO context", () => {
             const result = selectCurrentSsoMetadata(
                 authenticationStore.getState()
             );
             expect(result).toBeUndefined();
         });
 
-        it("should return undefined when SSO context has no metadata", () => {
+        test("should return undefined when SSO context has no metadata", () => {
             const mockSsoContext = {
                 productId: "product-123",
             };
@@ -271,7 +277,7 @@ describe("authenticationStore", () => {
     });
 
     describe("addLastAuthentication", () => {
-        it("should add webauthn authentication", async () => {
+        test("should add webauthn authentication", async () => {
             const { authenticatorStorage } = await import(
                 "../common/storage/authenticators"
             );
@@ -301,7 +307,7 @@ describe("authenticationStore", () => {
             });
         });
 
-        it("should add authentication with undefined type (treated as webauthn)", async () => {
+        test("should add authentication with undefined type (treated as webauthn)", async () => {
             const { authenticatorStorage } = await import(
                 "../common/storage/authenticators"
             );
@@ -325,7 +331,7 @@ describe("authenticationStore", () => {
             expect(authenticatorStorage.put).toHaveBeenCalled();
         });
 
-        it("should not add ecdsa authentication", async () => {
+        test("should not add ecdsa authentication", async () => {
             const { authenticatorStorage } = await import(
                 "../common/storage/authenticators"
             );
@@ -345,7 +351,7 @@ describe("authenticationStore", () => {
             expect(authenticatorStorage.put).not.toHaveBeenCalled();
         });
 
-        it("should not add authentication without authenticatorId", async () => {
+        test("should not add authentication without authenticatorId", async () => {
             const { authenticatorStorage } = await import(
                 "../common/storage/authenticators"
             );
@@ -368,7 +374,7 @@ describe("authenticationStore", () => {
             expect(authenticatorStorage.put).not.toHaveBeenCalled();
         });
 
-        it("should not add distant-webauthn authentication", async () => {
+        test("should not add distant-webauthn authentication", async () => {
             const { authenticatorStorage } = await import(
                 "../common/storage/authenticators"
             );
@@ -394,7 +400,7 @@ describe("authenticationStore", () => {
     });
 
     describe("selectors", () => {
-        it("should select correct values from state", () => {
+        test("should select correct values from state", () => {
             const mockAuthenticator: LastAuthentication = {
                 token: "test-token",
                 address: "0x1234567890123456789012345678901234567890",
