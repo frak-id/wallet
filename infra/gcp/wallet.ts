@@ -17,7 +17,7 @@ import { isProd, normalizedStageName } from "../utils";
 import { baseDomainName, getRegistryPath, walletNamespace } from "./utils";
 
 // todo: for now on wallet.gcp-dev.frak.id, to test that up a bit, and we wil llater migrate it to the real wallet.frak.id
-const domain = `${isProd ? "wallet" : "wallet-dev"}.${baseDomainName}`;
+const subDomain = isProd ? "wallet" : "wallet-dev";
 
 const walletEnv = {
     STAGE: normalizedStageName,
@@ -229,8 +229,9 @@ export const walletService = new KubernetesService(
 
         // Ingress config with path-based routing
         ingress: {
-            host: domain,
+            host: `${subDomain}.${baseDomainName}`,
             tlsSecretName: "wallet-tls",
+            additionalHosts: [`${subDomain}.frak.id`],
             // Route /listener to the listener service
             pathRoutes: [
                 {

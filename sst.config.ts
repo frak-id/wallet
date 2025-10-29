@@ -68,8 +68,7 @@ export default $config({
             await import("./infra/gcp/dev.ts");
         }
 
-        // Add wallet, listener + dashboard
-        await import("./infra/wallet.ts");
+        // Add dashboard (remain on AWS for now)
         await import("./infra/dashboard.ts");
     },
 });
