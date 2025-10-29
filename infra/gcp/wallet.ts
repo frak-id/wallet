@@ -229,9 +229,9 @@ export const walletService = new KubernetesService(
 
         // Ingress config with path-based routing
         ingress: {
-            host: `${subDomain}.${baseDomainName}`,
+            host: `${subDomain}.frak.id`,
             tlsSecretName: "wallet-tls",
-            additionalHosts: [`${subDomain}.frak.id`],
+            additionalHosts: [`wallet.${baseDomainName}`],
             // Route /listener to the listener service
             pathRoutes: [
                 {
