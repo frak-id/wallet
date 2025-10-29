@@ -157,13 +157,37 @@ export const listenerService = new KubernetesService(
                     image: imageRefs.listener,
                     ports: [{ containerPort: 80 }],
                     resources: {
-                        limits: { cpu: "10m", memory: "64Mi" },
-                        requests: { cpu: "1m", memory: "8Mi" },
+                        limits: { cpu: "100m", memory: "128Mi" },
+                        requests: { cpu: "10m", memory: "32Mi" },
                     },
                     env: Object.entries(walletEnv).map(([name, value]) => ({
                         name,
                         value,
                     })),
+                    // Readiness probe - ensures pod is ready before receiving traffic
+                    readinessProbe: {
+                        httpGet: {
+                            path: "/listener/",
+                            port: 80,
+                        },
+                        initialDelaySeconds: 2,
+                        periodSeconds: 5,
+                        timeoutSeconds: 2,
+                        successThreshold: 1,
+                        failureThreshold: 3,
+                    },
+                    // Liveness probe - restarts pod if nginx crashes
+                    livenessProbe: {
+                        httpGet: {
+                            path: "/listener/",
+                            port: 80,
+                        },
+                        initialDelaySeconds: 10,
+                        periodSeconds: 10,
+                        timeoutSeconds: 2,
+                        successThreshold: 1,
+                        failureThreshold: 3,
+                    },
                 },
             ],
         },
@@ -209,13 +233,37 @@ export const walletService = new KubernetesService(
                     image: imageRefs.wallet,
                     ports: [{ containerPort: 80 }],
                     resources: {
-                        limits: { cpu: "10m", memory: "64Mi" },
-                        requests: { cpu: "1m", memory: "8Mi" },
+                        limits: { cpu: "100m", memory: "128Mi" },
+                        requests: { cpu: "10m", memory: "32Mi" },
                     },
                     env: Object.entries(walletEnv).map(([name, value]) => ({
                         name,
                         value,
                     })),
+                    // Readiness probe - ensures pod is ready before receiving traffic
+                    readinessProbe: {
+                        httpGet: {
+                            path: "/",
+                            port: 80,
+                        },
+                        initialDelaySeconds: 2,
+                        periodSeconds: 5,
+                        timeoutSeconds: 2,
+                        successThreshold: 1,
+                        failureThreshold: 3,
+                    },
+                    // Liveness probe - restarts pod if nginx crashes
+                    livenessProbe: {
+                        httpGet: {
+                            path: "/",
+                            port: 80,
+                        },
+                        initialDelaySeconds: 10,
+                        periodSeconds: 10,
+                        timeoutSeconds: 2,
+                        successThreshold: 1,
+                        failureThreshold: 3,
+                    },
                 },
             ],
         },
@@ -243,8 +291,11 @@ export const walletService = new KubernetesService(
             ],
             // No rewrite needed - listener nginx handles /listener prefix internally
             customAnnotations: {
-                "nginx.ingress.kubernetes.io/proxy-buffering": "off",
                 "nginx.ingress.kubernetes.io/proxy-body-size": "10m",
+                // Enable buffering for better performance with static assets
+                "nginx.ingress.kubernetes.io/proxy-buffering": "on",
+                "nginx.ingress.kubernetes.io/proxy-buffers-number": "4",
+                "nginx.ingress.kubernetes.io/proxy-buffer-size": "8k",
             },
         },
     },
