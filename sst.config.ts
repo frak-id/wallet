@@ -35,6 +35,7 @@ export default $config({
         if (isGcp) {
             await import("./infra/gcp/backend.ts");
             await import("./infra/gcp/wallet.ts");
+            await import("./infra/gcp/business.ts");
             return;
         }
 
@@ -43,6 +44,7 @@ export default $config({
             // Gcp dev stuff
             await import("./infra/gcp/dev.ts");
             await import("./infra/gcp/wallet.ts");
+            await import("./infra/gcp/business.ts");
             await import("./infra/dashboard.ts");
             await import("./infra/example.ts");
 

@@ -23,6 +23,8 @@
 .rslib
 .turbo
 generated-docs/
+.output
+.nitro
 
 # production
 build
