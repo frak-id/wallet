@@ -1,0 +1,40 @@
+.radioGroup {
+    display: flex;
+    flex-direction: column;
+}
+
+.radioGroup__item {
+    all: unset;
+    background-color: white;
+    width: 20px;
+    height: 20px;
+    border-radius: 100%;
+    border: 2px solid #94979f;
+    cursor: pointer;
+
+    &:focus-visible {
+        box-shadow: 0 0 0 1px var(--frak-focus-border-color);
+    }
+
+    &:has(.radioGroup__indicator) {
+        background: #94979f;
+    }
+}
+
+.radioGroup__indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+.radioGroup__indicator::after {
+    content: "";
+    display: block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: white;
+}
