@@ -1,4 +1,3 @@
-import type { AuthenticationResponseJSON } from "@simplewebauthn/browser";
 import { vi } from "vitest"; // Keep vi from vitest for vi.mock() hoisting
 import {
     beforeEach,
@@ -15,7 +14,11 @@ import {
     selectLastWebAuthNAction,
     selectSsoContext,
 } from "./authenticationStore";
-import type { LastAuthentication, LastWebAuthNAction } from "./types";
+import type {
+    AuthenticationResponseJSON,
+    LastAuthentication,
+    LastWebAuthNAction,
+} from "./types";
 
 // Mock the authenticator storage
 vi.mock("../common/storage/authenticators", () => ({
@@ -110,15 +113,22 @@ describe("authenticationStore", () => {
                 wallet: "0x1234567890123456789012345678901234567890",
                 signature: {
                     id: "cred-123",
-                    rawId: "raw-123",
                     response: {
-                        clientDataJSON: "client-data",
-                        authenticatorData: "auth-data",
-                        signature: "signature-data",
+                        metadata: {
+                            challenge: "test-challenge",
+                            crossOrigin: false,
+                            origin: "https://example.com",
+                            type: "webauthn.get",
+                            userVerified: true,
+                        },
+                        signature: {
+                            r: 0n,
+                            s: 0n,
+                            yParity: 0,
+                        },
                     },
-                    type: "public-key",
                 } as AuthenticationResponseJSON,
-                challenge: "test-message",
+                challenge: "0x746573742d6d657373616765",
             };
 
             authenticationStore.getState().setLastWebAuthNAction(mockAction);
@@ -132,11 +142,12 @@ describe("authenticationStore", () => {
                 wallet: "0x1234567890123456789012345678901234567890",
                 signature: {
                     id: "cred-123",
-                    rawId: "raw-123",
-                    response: {},
-                    type: "public-key",
+                    response: {
+                        metadata: {} as any,
+                        signature: { r: 0n, s: 0n, yParity: 0 },
+                    },
                 } as AuthenticationResponseJSON,
-                challenge: "test-message",
+                challenge: "0x746573742d6d657373616765",
             };
 
             authenticationStore.getState().setLastWebAuthNAction(mockAction);
@@ -151,11 +162,12 @@ describe("authenticationStore", () => {
                 wallet: "0x1234567890123456789012345678901234567890",
                 signature: {
                     id: "cred-123",
-                    rawId: "raw-123",
-                    response: {},
-                    type: "public-key",
+                    response: {
+                        metadata: {} as any,
+                        signature: { r: 0n, s: 0n, yParity: 0 },
+                    },
                 } as AuthenticationResponseJSON,
-                challenge: "test-message",
+                challenge: "0x746573742d6d657373616765",
             };
 
             authenticationStore.getState().setLastWebAuthNAction(mockAction);
@@ -216,8 +228,14 @@ describe("authenticationStore", () => {
             };
             const mockAction: LastWebAuthNAction = {
                 wallet: "0x1234567890123456789012345678901234567890",
-                signature: {} as AuthenticationResponseJSON,
-                challenge: "test",
+                signature: {
+                    id: "test-id",
+                    response: {
+                        metadata: {} as any,
+                        signature: { r: 0n, s: 0n, yParity: 0 },
+                    },
+                } as AuthenticationResponseJSON,
+                challenge: "0x74657374",
             };
             const mockSsoContext = { productId: "product-123" };
 
@@ -413,8 +431,14 @@ describe("authenticationStore", () => {
             };
             const mockAction: LastWebAuthNAction = {
                 wallet: "0x1234567890123456789012345678901234567890",
-                signature: {} as AuthenticationResponseJSON,
-                challenge: "test",
+                signature: {
+                    id: "test-id",
+                    response: {
+                        metadata: {} as any,
+                        signature: { r: 0n, s: 0n, yParity: 0 },
+                    },
+                } as AuthenticationResponseJSON,
+                challenge: "0x74657374",
             };
             const mockSsoContext = {
                 productId: "product-123",

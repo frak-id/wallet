@@ -196,7 +196,9 @@ describe("signature utilities", () => {
                 signature: {
                     r: 123n,
                     s: 456n,
-                    raw: "0xrawsignature" as Hex,
+                },
+                raw: {
+                    id: "cred-id",
                 },
             };
 
@@ -226,15 +228,12 @@ describe("signature utilities", () => {
                 wallet: mockWallet.address,
                 signature: {
                     id: "cred-id",
-                    rawId: "cred-id",
-                    type: "public-key",
                     response: {
-                        authenticatorData: "0xauthdata",
-                        clientDataJSON: "0xclientdata",
-                        signature: "0xrawsignature",
+                        metadata: mockOxResponse.metadata,
+                        signature: mockOxResponse.signature,
                     },
                 },
-                msg: "0xhash",
+                challenge: "0xhash",
             });
         });
     });

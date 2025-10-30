@@ -1,111 +1,58 @@
 import { WebAuthN } from "@frak-labs/app-essentials";
-import { vi } from "vitest"; // Keep vi from vitest for vi.mock() hoisting
-import {
-    beforeEach,
-    describe,
-    expect,
-    test,
-} from "../../../tests/vitest-fixtures";
+import { describe, expect, test } from "../../../tests/vitest-fixtures";
 import { getRegisterOptions } from "./registerOptions";
 
-// Mock dependencies
-vi.mock("ox", () => ({
-    WebAuthnP256: {
-        getCredentialCreationOptions: vi.fn(),
-    },
-}));
-
 describe("getRegisterOptions", () => {
-    const mockRegistrationOptions = {
-        challenge: "mock-challenge",
-        rp: { name: "Frak", id: "frak.id" },
-        user: {
-            id: new Uint8Array(),
-            name: "test-user",
-            displayName: "test-user",
-        },
-    };
-
-    beforeEach(async () => {
-        vi.clearAllMocks();
-
-        // Mock ox WebAuthnP256.getCredentialCreationOptions
-        const { WebAuthnP256 } = await import("ox");
-        vi.mocked(WebAuthnP256.getCredentialCreationOptions).mockReturnValue(
-            mockRegistrationOptions as any
-        );
-    });
-
-    test("should call ox WebAuthnP256.getCredentialCreationOptions with correct parameters", async () => {
-        const { WebAuthnP256 } = await import("ox");
+    test("should return registration options with correct structure", () => {
         const date = new Date();
         const day = date.getDate().toString().padStart(2, "0");
         const month = (date.getMonth() + 1).toString().padStart(2, "0");
         const year = date.getFullYear().toString();
         const expectedUsername = `${WebAuthN.defaultUsername}-${day}-${month}-${year}`;
 
-        await getRegisterOptions();
+        const result = getRegisterOptions();
 
-        expect(WebAuthnP256.getCredentialCreationOptions).toHaveBeenCalledWith(
-            expect.objectContaining({
-                rp: {
-                    id: WebAuthN.rpId,
-                    name: WebAuthN.rpName,
-                },
-                user: expect.objectContaining({
-                    name: expectedUsername,
-                    displayName: expectedUsername,
-                }),
-                timeout: 180_000,
-                attestation: "direct",
-                authenticatorSelection: {
-                    residentKey: "required",
-                    authenticatorAttachment: undefined,
-                    userVerification: "required",
-                },
-            })
-        );
-    });
-
-    test("should set authenticatorAttachment to cross-platform when crossPlatform is true", async () => {
-        const { WebAuthnP256 } = await import("ox");
-
-        await getRegisterOptions();
-
-        expect(WebAuthnP256.getCredentialCreationOptions).toHaveBeenCalledWith(
-            expect.objectContaining({
-                authenticatorSelection: expect.objectContaining({
-                    authenticatorAttachment: "cross-platform",
-                }),
-            })
-        );
-    });
-
-    test("should handle excludeCredentials", async () => {
-        const { WebAuthnP256 } = await import("ox");
-        const excludeCredentials = [
-            {
-                id: "credential-1",
-                transports: ["usb", "nfc"] as AuthenticatorTransport[],
+        expect(result).toEqual({
+            rp: {
+                id: WebAuthN.rpId,
+                name: WebAuthN.rpName,
             },
-            {
-                id: "credential-2",
-                transports: ["internal"] as AuthenticatorTransport[],
+            user: {
+                name: expectedUsername,
+                displayName: expectedUsername,
             },
-        ];
-
-        await getRegisterOptions({ excludeCredentials });
-
-        expect(WebAuthnP256.getCredentialCreationOptions).toHaveBeenCalledWith(
-            expect.objectContaining({
-                excludeCredentialIds: ["credential-1", "credential-2"],
-            })
-        );
+            timeout: 180_000,
+            attestation: "direct",
+            authenticatorSelection: {
+                residentKey: "required",
+                userVerification: "required",
+            },
+        });
     });
 
-    test("should return the result from ox", async () => {
-        const result = await getRegisterOptions();
+    test("should generate username with current date", () => {
+        const date = new Date();
+        const day = date.getDate().toString().padStart(2, "0");
+        const month = (date.getMonth() + 1).toString().padStart(2, "0");
+        const year = date.getFullYear().toString();
+        const expectedUsername = `${WebAuthN.defaultUsername}-${day}-${month}-${year}`;
 
-        expect(result).toBe(mockRegistrationOptions);
+        const result = getRegisterOptions();
+
+        expect(result.user.name).toBe(expectedUsername);
+        expect(result.user.displayName).toBe(expectedUsername);
+    });
+
+    test("should set timeout to 3 minutes", () => {
+        const result = getRegisterOptions();
+
+        expect(result.timeout).toBe(180_000);
+    });
+
+    test("should require resident key and user verification", () => {
+        const result = getRegisterOptions();
+
+        expect(result.authenticatorSelection.residentKey).toBe("required");
+        expect(result.authenticatorSelection.userVerification).toBe("required");
     });
 });

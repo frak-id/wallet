@@ -1,8 +1,26 @@
-import type {
-    AuthenticationCredential,
-    AuthenticatorTransportFuture,
-    RegistrationCredential,
-} from "@simplewebauthn/browser";
+/**
+ * Custom types for WebAuthn credentials (ox-compatible)
+ * These replace @simplewebauthn/browser types after migration to ox library
+ */
+
+export type AuthenticatorTransportFuture =
+    | "ble"
+    | "cable"
+    | "hybrid"
+    | "internal"
+    | "nfc"
+    | "smart-card"
+    | "usb";
+
+export type RegistrationCredential = PublicKeyCredential & {
+    response: AuthenticatorAttestationResponse;
+    authenticatorAttachment?: AuthenticatorAttachment;
+};
+
+export type AuthenticationCredential = PublicKeyCredential & {
+    response: AuthenticatorAssertionResponse;
+    authenticatorAttachment?: AuthenticatorAttachment;
+};
 
 export type CredentialProps = {
     credentialId: Uint8Array;

@@ -1,4 +1,4 @@
-import { base64URLStringToBuffer } from "@simplewebauthn/browser";
+import { base64URLStringToBuffer } from "@frak-labs/wallet-shared/common/utils/base64url";
 import { bytesToString, type Hex } from "viem";
 import { passToKey } from "@/module/recovery-setup/utils/encrypt";
 

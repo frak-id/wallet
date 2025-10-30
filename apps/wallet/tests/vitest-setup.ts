@@ -26,6 +26,15 @@ beforeAll(() => {
     global.window = jsdom.window as unknown as Window & typeof globalThis;
     global.document = jsdom.window.document;
     global.navigator = jsdom.window.navigator;
+
+    // Setup BigInt serialization for Zustand persist middleware
+    // biome-ignore lint/suspicious/noExplicitAny: BigInt.prototype doesn't have toJSON in type definition
+    if (typeof BigInt !== "undefined" && !(BigInt.prototype as any).toJSON) {
+        // biome-ignore lint/suspicious/noExplicitAny: BigInt.prototype doesn't have toJSON in type definition
+        (BigInt.prototype as any).toJSON = function () {
+            return this.toString();
+        };
+    }
 });
 
 // Cleanup after each test
@@ -96,13 +105,17 @@ vi.mock("react-router", async () => {
     };
 });
 
-// Mock WebAuthn browser API
-vi.mock("@simplewebauthn/browser", () => ({
-    startRegistration: vi.fn(),
-    startAuthentication: vi.fn(),
-    browserSupportsWebAuthn: vi.fn(() => true),
-    browserSupportsWebAuthnAutofill: vi.fn(() => false),
-}));
+// Mock ox WebAuthn API (migrated from @simplewebauthn)
+vi.mock("ox", async () => {
+    const actual = await vi.importActual<typeof import("ox")>("ox");
+    return {
+        ...actual,
+        WebAuthnP256: {
+            sign: vi.fn(),
+            createCredential: vi.fn(),
+        },
+    };
+});
 
 // Mock IndexedDB (idb-keyval)
 vi.mock("idb-keyval", () => ({

@@ -130,7 +130,9 @@ describe("useLogin", () => {
             signature: {
                 r: 123n,
                 s: 456n,
-                raw: mockAuthResponse.response.signature as any,
+            },
+            raw: {
+                id: mockAuthResponse.id,
             },
         } as any);
         vi.mocked(WebAuthnP256.getClientDataJSON).mockReturnValue({
@@ -164,26 +166,27 @@ describe("useLogin", () => {
             expect(result.current.isSuccess).toBe(true);
         });
 
-        expect(WebAuthnP256.sign).toHaveBeenCalledWith({
-            credentialId: undefined,
-            rpId: "test.frak.id",
-            userVerification: "required",
-        });
-        expect(setLastWebAuthNAction).toHaveBeenCalledWith({
-            wallet: mockAddress,
-            signature: {
-                id: mockAuthResponse.id,
-                rawId: mockAuthResponse.rawId,
-                type: "public-key",
-                response: {
-                    authenticatorData:
-                        mockAuthResponse.response.authenticatorData,
-                    clientDataJSON: mockAuthResponse.response.clientDataJSON,
-                    signature: mockAuthResponse.response.signature,
-                },
-            },
-            msg: mockAuthOptions.challenge,
-        });
+        expect(WebAuthnP256.sign).toHaveBeenCalledWith(
+            expect.objectContaining({
+                credentialId: undefined,
+                rpId: "test.frak.id",
+                userVerification: "required",
+                challenge: expect.stringMatching(/^0x[a-f0-9]{64}$/),
+            })
+        );
+        expect(setLastWebAuthNAction).toHaveBeenCalledWith(
+            expect.objectContaining({
+                wallet: mockAddress,
+                signature: expect.objectContaining({
+                    id: mockAuthResponse.id,
+                    response: expect.objectContaining({
+                        metadata: expect.any(Object),
+                        signature: expect.any(Object),
+                    }),
+                }),
+                challenge: expect.stringMatching(/^0x[a-f0-9]{64}$/),
+            })
+        );
         expect(setSession).toHaveBeenCalledWith(
             expect.objectContaining({
                 type: "webauthn",
@@ -241,7 +244,9 @@ describe("useLogin", () => {
             signature: {
                 r: 123n,
                 s: 456n,
-                raw: mockAuthResponse.response.signature as any,
+            },
+            raw: {
+                id: mockAuthResponse.id,
             },
         } as any);
         vi.mocked(WebAuthnP256.getClientDataJSON).mockReturnValue({
@@ -275,11 +280,14 @@ describe("useLogin", () => {
             expect(result.current.isSuccess).toBe(true);
         });
 
-        expect(WebAuthnP256.sign).toHaveBeenCalledWith({
-            credentialId: "specific-auth-id",
-            rpId: "test.frak.id",
-            userVerification: "required",
-        });
+        expect(WebAuthnP256.sign).toHaveBeenCalledWith(
+            expect.objectContaining({
+                credentialId: "specific-auth-id",
+                rpId: "test.frak.id",
+                userVerification: "required",
+                challenge: expect.stringMatching(/^0x[a-f0-9]{64}$/),
+            })
+        );
     });
 
     test("should track analytics events", async ({
@@ -319,7 +327,9 @@ describe("useLogin", () => {
             signature: {
                 r: 123n,
                 s: 456n,
-                raw: mockAuthResponse.response.signature as any,
+            },
+            raw: {
+                id: mockAuthResponse.id,
             },
         } as any);
         vi.mocked(WebAuthnP256.getClientDataJSON).mockReturnValue({
@@ -385,7 +395,9 @@ describe("useLogin", () => {
             signature: {
                 r: 123n,
                 s: 456n,
-                raw: mockAuthResponse.response.signature as any,
+            },
+            raw: {
+                id: mockAuthResponse.id,
             },
         } as any);
         vi.mocked(WebAuthnP256.getClientDataJSON).mockReturnValue({
@@ -469,7 +481,9 @@ describe("useLogin", () => {
             signature: {
                 r: 123n,
                 s: 456n,
-                raw: mockAuthResponse.response.signature as any,
+            },
+            raw: {
+                id: mockAuthResponse.id,
             },
         } as any);
         vi.mocked(WebAuthnP256.getClientDataJSON).mockReturnValue({
@@ -502,22 +516,34 @@ describe("useLogin", () => {
             expect(result.current.isSuccess).toBe(true);
         });
 
-        expect(authenticatedWalletApi.auth.login.post).toHaveBeenCalledWith({
-            expectedChallenge: mockAuthOptions.challenge,
-            authenticatorResponse: btoa(
-                JSON.stringify({
-                    id: mockAuthResponse.id,
-                    rawId: mockAuthResponse.rawId,
-                    type: "public-key",
-                    response: {
-                        authenticatorData:
-                            mockAuthResponse.response.authenticatorData,
-                        clientDataJSON:
-                            mockAuthResponse.response.clientDataJSON,
-                        signature: mockAuthResponse.response.signature,
-                    },
-                })
-            ),
+        expect(authenticatedWalletApi.auth.login.post).toHaveBeenCalledWith(
+            expect.objectContaining({
+                expectedChallenge: expect.stringMatching(/^0x[a-f0-9]{64}$/),
+                authenticatorResponse: expect.any(String),
+            })
+        );
+
+        // Verify the authenticatorResponse structure
+        const callArgs = vi.mocked(authenticatedWalletApi.auth.login.post).mock
+            .calls[0][0];
+        const decodedResponse = JSON.parse(
+            atob(callArgs.authenticatorResponse)
+        );
+        expect(decodedResponse).toEqual({
+            id: mockAuthResponse.id,
+            response: {
+                metadata: expect.objectContaining({
+                    credentialId: mockAuthResponse.id,
+                    authenticatorData:
+                        mockAuthResponse.response.authenticatorData,
+                    clientDataJSON: mockAuthResponse.response.clientDataJSON,
+                    challengeIndex: 23,
+                }),
+                signature: expect.objectContaining({
+                    r: expect.any(String),
+                    s: expect.any(String),
+                }),
+            },
         });
     });
 
@@ -558,7 +584,9 @@ describe("useLogin", () => {
             signature: {
                 r: 123n,
                 s: 456n,
-                raw: mockAuthResponse.response.signature as any,
+            },
+            raw: {
+                id: mockAuthResponse.id,
             },
         } as any);
         vi.mocked(WebAuthnP256.getClientDataJSON).mockReturnValue({
@@ -637,7 +665,9 @@ describe("useLogin", () => {
             signature: {
                 r: 123n,
                 s: 456n,
-                raw: mockAuthResponse.response.signature as any,
+            },
+            raw: {
+                id: mockAuthResponse.id,
             },
         } as any);
         vi.mocked(WebAuthnP256.getClientDataJSON).mockReturnValue({
