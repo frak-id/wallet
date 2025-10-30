@@ -1,0 +1,103 @@
+.placeholder {
+    color: var(--frak-color-regent-gray);
+    font-style: italic;
+    text-align: center;
+    padding: 20px;
+}
+
+.overallStatus__success {
+    width: 100%;
+    padding: 16px;
+    background-color: var(--frak-color-white-ice);
+    border-left: 4px solid var(--frak-color-malachite);
+    border-radius: 4px;
+    margin-bottom: 24px;
+}
+
+.overallStatus__success p {
+    margin-top: 8px;
+    color: var(--frak-color-tuna);
+    font-size: 14px;
+}
+
+.overallStatus__warning {
+    width: 100%;
+    padding: 16px;
+    background-color: var(--frak-color-wild-sand);
+    border-left: 4px solid var(--frak-color-flush-orange);
+    border-radius: 4px;
+    margin-bottom: 24px;
+}
+
+.overallStatus__warning p {
+    margin-top: 8px;
+    color: var(--frak-color-tuna);
+    font-size: 14px;
+}
+
+.stepItem {
+    padding: 16px;
+    border-left: 4px solid var(--frak-color-mischka);
+    margin-bottom: 24px;
+    position: relative;
+    width: 100%;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.stepPosition {
+    color: var(--frak-color-tuna);
+    width: 24px;
+    height: 24px;
+    border-color: var(--frak-color-tuna);
+    border-radius: 50%;
+    border-style: solid;
+    border-width: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: bold;
+    margin-right: 12px;
+    flex-shrink: 0;
+}
+
+.stepName {
+    font-size: 18px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    color: var(--frak-color-shark);
+}
+
+.icon {
+    color: var(--frak-color-malachite);
+    margin-left: 8px;
+    flex-shrink: 0;
+}
+
+.iconWarning {
+    color: var(--frak-color-flush-orange);
+    margin-left: 8px;
+    flex-shrink: 0;
+}
+
+.description {
+    margin: 8px 0 8px 36px;
+    color: var(--frak-color-gray);
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    margin-top: 16px;
+    margin-left: 36px;
+    gap: 16px;
+}

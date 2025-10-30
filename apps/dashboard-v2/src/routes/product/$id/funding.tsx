@@ -1,8 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
+import type { Hex } from "viem";
 import { requireAuth } from "@/middleware/auth";
 import { Breadcrumb } from "@/module/common/component/Breadcrumb";
-import { Head } from "@/module/common/component/Head";
 import { RestrictedLayout } from "@/module/common/component/RestrictedLayout";
+import { ProductFunding } from "@/module/product/component/Funding";
 
 export const Route = createFileRoute("/product/$id/funding")({
     beforeLoad: requireAuth,
@@ -14,15 +15,8 @@ function ProductFundingPage() {
 
     return (
         <RestrictedLayout>
-            <Head
-                title={{ content: "Product Funding" }}
-                leftSection={<Breadcrumb current={"Funding"} />}
-            />
-            <div style={{ padding: "2rem" }}>
-                <h2>Product Funding - Coming Soon</h2>
-                <p>Product ID: {id}</p>
-                <p>This page is under development.</p>
-            </div>
+            <Breadcrumb current={"Funding"} />
+            <ProductFunding productId={id as Hex} />
         </RestrictedLayout>
     );
 }
