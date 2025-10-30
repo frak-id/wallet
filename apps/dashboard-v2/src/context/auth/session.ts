@@ -1,12 +1,7 @@
 import { isRunningLocally } from "@frak-labs/app-essentials";
 import { createServerFn } from "@tanstack/react-start";
-import {
-    clearSession,
-    getRequestHost,
-    getSession as getStartSession,
-    updateSession,
-} from "@tanstack/react-start/server";
-import { guard } from "radash";
+import type { SessionOptions } from "iron-session";
+import { sealData, unsealData } from "iron-session";
 import { type Hex, keccak256, toHex } from "viem";
 import {
     parseSiweMessage,
@@ -17,21 +12,78 @@ import { viemClient } from "@/context/blockchain/provider";
 import type { AuthSession, AuthSessionClient } from "@/types/AuthSession";
 
 /**
- * Session configuration for TanStack Start
+ * Session configuration for iron-session
+ * Must match backend's expected format
  */
-export const sessionConfig = {
-    password:
-        process.env.SESSION_ENCRYPTION_KEY ??
-        "development-secret-key-min-32-chars-long!",
-    name: "businessSession",
-    maxAge: 60 * 60 * 24 * 7, // 1 week
-    cookie: {
+const sessionOptions: SessionOptions = {
+    password: process.env.SESSION_ENCRYPTION_KEY ?? "",
+    cookieName: "businessSession",
+    ttl: 60 * 60 * 24 * 7, // 1 week
+    cookieOptions: {
         secure: !isRunningLocally,
-        sameSite: "lax" as const,
+        sameSite: "lax",
         domain: isRunningLocally ? undefined : ".frak.id",
         httpOnly: true,
+        path: "/",
     },
 };
+
+/**
+ * Helper to get cookie value from request
+ */
+function getCookie(request: Request, name: string): string | undefined {
+    const cookieHeader = request.headers.get("cookie");
+    if (!cookieHeader) return undefined;
+
+    const cookies = cookieHeader.split(";").map((c) => c.trim());
+    for (const cookie of cookies) {
+        const [cookieName, ...cookieValue] = cookie.split("=");
+        if (cookieName === name) {
+            return cookieValue.join("=");
+        }
+    }
+    return undefined;
+}
+
+/**
+ * Helper to build a Set-Cookie header value
+ */
+function buildSetCookieHeader(
+    name: string,
+    value: string,
+    options: SessionOptions["cookieOptions"] & { maxAge?: number } = {}
+): string {
+    const cookieParts = [`${name}=${value}`];
+
+    if (options.httpOnly) cookieParts.push("HttpOnly");
+    if (options.secure) cookieParts.push("Secure");
+    if (options.sameSite) cookieParts.push(`SameSite=${options.sameSite}`);
+    if (options.domain) cookieParts.push(`Domain=${options.domain}`);
+    if (options.path) cookieParts.push(`Path=${options.path}`);
+    if (options.maxAge !== undefined)
+        cookieParts.push(`Max-Age=${options.maxAge}`);
+
+    return cookieParts.join("; ");
+}
+
+/**
+ * Helper to build a delete cookie header
+ */
+function buildDeleteCookieHeader(
+    name: string,
+    options: Pick<SessionOptions["cookieOptions"], "domain" | "path"> = {}
+): string {
+    const cookieParts = [
+        `${name}=`,
+        "Max-Age=0",
+        "Expires=Thu, 01 Jan 1970 00:00:00 GMT",
+    ];
+
+    if (options.domain) cookieParts.push(`Domain=${options.domain}`);
+    if (options.path) cookieParts.push(`Path=${options.path}`);
+
+    return cookieParts.join("; ");
+}
 
 /**
  * Set the session for the user after SIWE authentication
@@ -49,7 +101,7 @@ export const setSession = createServerFn({ method: "POST" })
         }
 
         // Ensure the siwe message is valid
-        const host = getRequestHost();
+        const host = ctx.request.headers.get("host") ?? "";
         const isValid = validateSiweMessage({
             message: siweMessage,
             domain: host,
@@ -73,12 +125,40 @@ export const setSession = createServerFn({ method: "POST" })
             throw new Error("Invalid signature");
         }
 
-        // Build the session and save it
-        await updateSession<AuthSession>(sessionConfig, {
+        // Build the session data
+        const sessionData: AuthSession = {
             wallet: siweMessage.address,
             siwe: {
-                message: message,
+                message,
                 signature,
+            },
+        };
+
+        // Seal the session data using iron-session
+        const sealed = await sealData(sessionData, {
+            password: sessionOptions.password,
+            ttl: sessionOptions.ttl,
+        });
+
+        // Calculate max-age for cookie (ttl - 60s as per iron-session convention)
+        const maxAge = sessionOptions.ttl ? sessionOptions.ttl - 60 : undefined;
+
+        // Build the Set-Cookie header
+        const setCookieHeader = buildSetCookieHeader(
+            sessionOptions.cookieName,
+            sealed,
+            {
+                ...sessionOptions.cookieOptions,
+                maxAge,
+            }
+        );
+
+        // Return a Response with the Set-Cookie header
+        // TanStack Start will use this to set the cookie
+        return new Response(null, {
+            status: 200,
+            headers: {
+                "Set-Cookie": setCookieHeader,
             },
         });
     });
@@ -88,26 +168,57 @@ export const setSession = createServerFn({ method: "POST" })
  */
 export const deleteSession = createServerFn({ method: "POST" }).handler(
     async () => {
-        await clearSession(sessionConfig);
+        const deleteCookieHeader = buildDeleteCookieHeader(
+            sessionOptions.cookieName,
+            {
+                domain: sessionOptions.cookieOptions?.domain,
+                path: sessionOptions.cookieOptions?.path,
+            }
+        );
+
+        return new Response(null, {
+            status: 200,
+            headers: {
+                "Set-Cookie": deleteCookieHeader,
+            },
+        });
     }
 );
 
 /**
  * Get the current session
- * Validates session expiration and clears if expired
+ * Validates session expiration
+ * Note: Cannot clear invalid sessions from here as we can't return both data and Response
+ * Invalid sessions should be cleared by calling deleteSession explicitly
  */
 export const getSession = createServerFn({ method: "GET" }).handler(
-    async (): Promise<AuthSessionClient | null> => {
-        const session = await getStartSession<AuthSession>(sessionConfig);
-
-        if (!session.data.wallet || !session.data.siwe?.message) {
+    async (ctx): Promise<AuthSessionClient | null> => {
+        // Get the session cookie
+        const sealed = getCookie(ctx.request, sessionOptions.cookieName);
+        if (!sealed) {
             return null;
         }
 
-        const message = parseSiweMessage(session.data.siwe.message);
+        // Unseal the session data
+        let session: AuthSession;
+        try {
+            session = await unsealData<AuthSession>(sealed, {
+                password: sessionOptions.password,
+                ttl: sessionOptions.ttl,
+            });
+        } catch (error) {
+            console.error("Failed to unseal session:", error);
+            // Session is invalid - caller should call deleteSession to clear it
+            return null;
+        }
+
+        if (!session.wallet || !session.siwe?.message) {
+            return null;
+        }
+
+        const message = parseSiweMessage(session.siwe.message);
         if (!message) {
-            // Invalid message format - clear session
-            await guard(() => clearSession(sessionConfig));
+            // Invalid message format
             return null;
         }
 
@@ -116,13 +227,12 @@ export const getSession = createServerFn({ method: "GET" }).handler(
             !message.expirationTime ||
             message.expirationTime.getTime() < Date.now()
         ) {
-            // Session expired - clear it
-            await guard(() => clearSession(sessionConfig));
+            // Session expired
             return null;
         }
 
         return {
-            wallet: session.data.wallet,
+            wallet: session.wallet,
         };
     }
 );
