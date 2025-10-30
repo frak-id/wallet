@@ -6,7 +6,7 @@
     "type": "module",
     "license": "GNU GPL 3.0",
     "scripts": {
-        "dev": "vite dev --port 30022",
+        "dev": "vite dev --port 3022",
         "build": "vite build",
         "start": "vite preview --port 3022",
         "start:prod": "PORT=3022 bun run .output/server/index.mjs",
