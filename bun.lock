@@ -143,6 +143,7 @@
         "@tanstack/react-start": "^1.133.0",
         "class-variance-authority": "^0.7.1",
         "iron-session": "^8.0.4",
+        "ky": "^1.13.0",
         "lucide-react": "^0.547.0",
         "mongodb": "^6.20.0",
         "nitro": "^3.0.1-alpha.0",

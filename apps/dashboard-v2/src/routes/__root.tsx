@@ -4,12 +4,8 @@ import {
     HeadContent,
     Link,
     Scripts,
-    useMatches,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
-import { Header } from "@/module/common/component/Header";
-import { MainLayout } from "@/module/common/component/MainLayout";
-import { Navigation } from "@/module/common/component/Navigation";
 import { RootProvider } from "@/module/common/provider/RootProvider";
 import "@/polyfill/bigint-serialization";
 import allCss from "@/styles/all.css?url";
@@ -91,9 +87,6 @@ export const Route = createRootRoute({
 });
 
 function RootDocument({ children }: { children: React.ReactNode }) {
-    const matches = useMatches();
-    const isLoginPage = matches.some((match) => match.routeId === "/login");
-
     return (
         <html lang="en">
             <head>
@@ -101,17 +94,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             </head>
             <body>
                 <RootProvider>
-                    {!isLoginPage && (
-                        <>
-                            <Header />
-                            <Navigation />
-                        </>
-                    )}
-                    {isLoginPage ? (
-                        children
-                    ) : (
-                        <MainLayout>{children}</MainLayout>
-                    )}
+                    {children}
                     <TanStackDevtools
                         config={{
                             position: "bottom-right",

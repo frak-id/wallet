@@ -5,13 +5,17 @@ import { getSession } from "@/context/auth/session";
  * beforeLoad hook for protected routes
  * Use this in route definitions to require authentication
  */
-export async function requireAuth() {
+export async function requireAuth({
+    location,
+}: {
+    location: { href: string };
+}) {
     const session = await getSession();
     if (!session) {
         throw redirect({
             to: "/login",
             search: {
-                redirect: window.location.pathname,
+                redirect: location.href,
             },
         });
     }

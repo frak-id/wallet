@@ -1,7 +1,5 @@
-"use client";
-
 import { mergeElement } from "@frak-labs/ui/utils/mergeElement";
-import { Link, useMatchRoute } from "@tanstack/react-router";
+import { useMatchRoute, useNavigate } from "@tanstack/react-router";
 import { cx } from "class-variance-authority";
 import type { PropsWithChildren, ReactNode } from "react";
 import { Cash } from "@/assets/icons/Cash";
@@ -75,6 +73,7 @@ export function NavigationItem({
     disabled,
     ...props
 }: PropsWithChildren<NavigationItemProps>) {
+    const navigate = useNavigate();
     const matchRoute = useMatchRoute();
     const isRouteActive = url ? matchRoute({ to: url, fuzzy: true }) : false;
 
@@ -84,32 +83,14 @@ export function NavigationItem({
             : "";
 
     const handleClick = () => {
-        if (url?.startsWith("http")) {
+        if (!url) return;
+
+        if (url.startsWith("http")) {
             window.open(url, "_blank", "noopener,noreferrer");
+        } else {
+            navigate({ to: url });
         }
     };
-
-    if (url && !url.startsWith("http")) {
-        return (
-            <li className={className}>
-                <Link
-                    to={url}
-                    className={cx(
-                        styles.navigationItem__button,
-                        !isSub && activeClassName
-                    )}
-                    disabled={disabled}
-                    {...props}
-                >
-                    {children}
-                    {rightSection &&
-                        mergeElement(rightSection, {
-                            className: styles.navigationItem__rightSection,
-                        })}
-                </Link>
-            </li>
-        );
-    }
 
     return (
         <li className={className}>

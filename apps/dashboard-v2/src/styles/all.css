@@ -4,3 +4,4 @@
 @import "@frak-labs/ui/styles/global.css";
 @import "global.css";
 @import "authentication.css";
+@import "restricted.css";
