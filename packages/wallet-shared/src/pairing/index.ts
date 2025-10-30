@@ -1,7 +1,10 @@
 // Clients
 export type { PairingWsEventListener } from "./clients/base";
 export { BasePairingClient } from "./clients/base";
-export type { OriginPairingClient } from "./clients/origin";
+export type {
+    OnPairingSuccessCallback,
+    OriginPairingClient,
+} from "./clients/origin";
 export {
     getOriginPairingClient,
     getTargetPairingClient,

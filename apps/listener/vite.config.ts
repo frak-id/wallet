@@ -16,12 +16,6 @@ export default {
             process.env.NODE_ENV === "production"
                 ? ["production", "default"]
                 : ["development"],
-        alias: {
-            "@simplewebauthn/server": new URL(
-                "./app/module/utils/webauthn/serverShim.ts",
-                import.meta.url
-            ).pathname,
-        },
     },
     define: {
         "process.env.STAGE": JSON.stringify(process.env.STAGE),

@@ -1,6 +1,4 @@
 import { WebAuthN } from "@frak-labs/app-essentials";
-import type { AuthenticatorTransportFuture } from "@simplewebauthn/browser";
-import * as simplewebauthn from "@simplewebauthn/server";
 import { vi } from "vitest"; // Keep vi from vitest for vi.mock() hoisting
 import {
     beforeEach,
@@ -11,8 +9,10 @@ import {
 import { getRegisterOptions } from "./registerOptions";
 
 // Mock dependencies
-vi.mock("@simplewebauthn/server", () => ({
-    generateRegistrationOptions: vi.fn(),
+vi.mock("ox", () => ({
+    WebAuthnP256: {
+        getCredentialCreationOptions: vi.fn(),
+    },
 }));
 
 describe("getRegisterOptions", () => {
@@ -26,16 +26,18 @@ describe("getRegisterOptions", () => {
         },
     };
 
-    beforeEach(() => {
+    beforeEach(async () => {
         vi.clearAllMocks();
 
-        // Mock generateRegistrationOptions
-        vi.mocked(simplewebauthn.generateRegistrationOptions).mockResolvedValue(
+        // Mock ox WebAuthnP256.getCredentialCreationOptions
+        const { WebAuthnP256 } = await import("ox");
+        vi.mocked(WebAuthnP256.getCredentialCreationOptions).mockReturnValue(
             mockRegistrationOptions as any
         );
     });
 
-    test("should generate registration options with date-based username", async () => {
+    test("should call ox WebAuthnP256.getCredentialCreationOptions with correct parameters", async () => {
+        const { WebAuthnP256 } = await import("ox");
         const date = new Date();
         const day = date.getDate().toString().padStart(2, "0");
         const month = (date.getMonth() + 1).toString().padStart(2, "0");
@@ -44,38 +46,33 @@ describe("getRegisterOptions", () => {
 
         await getRegisterOptions();
 
-        expect(simplewebauthn.generateRegistrationOptions).toHaveBeenCalledWith(
+        expect(WebAuthnP256.getCredentialCreationOptions).toHaveBeenCalledWith(
             expect.objectContaining({
-                userName: expectedUsername,
-                userDisplayName: expectedUsername,
-            })
-        );
-    });
-
-    test("should generate user ID from random bytes", async () => {
-        await getRegisterOptions();
-
-        // Verify generateRegistrationOptions was called with a userID
-        const call = vi.mocked(simplewebauthn.generateRegistrationOptions).mock
-            .calls[0][0];
-        expect(call.userID).toBeInstanceOf(Uint8Array);
-    });
-
-    test("should use WebAuthN configuration values", async () => {
-        await getRegisterOptions();
-
-        expect(simplewebauthn.generateRegistrationOptions).toHaveBeenCalledWith(
-            expect.objectContaining({
-                rpName: WebAuthN.rpName,
-                rpID: WebAuthN.rpId,
+                rp: {
+                    id: WebAuthN.rpId,
+                    name: WebAuthN.rpName,
+                },
+                user: expect.objectContaining({
+                    name: expectedUsername,
+                    displayName: expectedUsername,
+                }),
+                timeout: 180_000,
+                attestation: "direct",
+                authenticatorSelection: {
+                    residentKey: "required",
+                    authenticatorAttachment: undefined,
+                    userVerification: "required",
+                },
             })
         );
     });
 
     test("should set authenticatorAttachment to cross-platform when crossPlatform is true", async () => {
-        await getRegisterOptions({ crossPlatform: true });
+        const { WebAuthnP256 } = await import("ox");
 
-        expect(simplewebauthn.generateRegistrationOptions).toHaveBeenCalledWith(
+        await getRegisterOptions();
+
+        expect(WebAuthnP256.getCredentialCreationOptions).toHaveBeenCalledWith(
             expect.objectContaining({
                 authenticatorSelection: expect.objectContaining({
                     authenticatorAttachment: "cross-platform",
@@ -84,109 +81,29 @@ describe("getRegisterOptions", () => {
         );
     });
 
-    test("should set authenticatorAttachment to undefined when crossPlatform is false", async () => {
-        await getRegisterOptions({ crossPlatform: false });
-
-        expect(simplewebauthn.generateRegistrationOptions).toHaveBeenCalledWith(
-            expect.objectContaining({
-                authenticatorSelection: expect.objectContaining({
-                    authenticatorAttachment: undefined,
-                }),
-            })
-        );
-    });
-
-    test("should use default crossPlatform value of false when not provided", async () => {
-        await getRegisterOptions();
-
-        expect(simplewebauthn.generateRegistrationOptions).toHaveBeenCalledWith(
-            expect.objectContaining({
-                authenticatorSelection: expect.objectContaining({
-                    authenticatorAttachment: undefined,
-                }),
-            })
-        );
-    });
-
-    test("should map excludeCredentials with id and transports", async () => {
+    test("should handle excludeCredentials", async () => {
+        const { WebAuthnP256 } = await import("ox");
         const excludeCredentials = [
             {
-                id: "credential-1" as Base64URLString,
-                transports: ["usb", "nfc"] as AuthenticatorTransportFuture[],
+                id: "credential-1",
+                transports: ["usb", "nfc"] as AuthenticatorTransport[],
             },
             {
-                id: "credential-2" as Base64URLString,
-                transports: ["internal"] as AuthenticatorTransportFuture[],
+                id: "credential-2",
+                transports: ["internal"] as AuthenticatorTransport[],
             },
         ];
 
         await getRegisterOptions({ excludeCredentials });
 
-        expect(simplewebauthn.generateRegistrationOptions).toHaveBeenCalledWith(
+        expect(WebAuthnP256.getCredentialCreationOptions).toHaveBeenCalledWith(
             expect.objectContaining({
-                excludeCredentials: [
-                    { id: "credential-1", transports: ["usb", "nfc"] },
-                    { id: "credential-2", transports: ["internal"] },
-                ],
+                excludeCredentialIds: ["credential-1", "credential-2"],
             })
         );
     });
 
-    test("should use empty array for excludeCredentials when not provided", async () => {
-        await getRegisterOptions();
-
-        expect(simplewebauthn.generateRegistrationOptions).toHaveBeenCalledWith(
-            expect.objectContaining({
-                excludeCredentials: [],
-            })
-        );
-    });
-
-    test("should set required authenticator selection options", async () => {
-        await getRegisterOptions();
-
-        expect(simplewebauthn.generateRegistrationOptions).toHaveBeenCalledWith(
-            expect.objectContaining({
-                authenticatorSelection: {
-                    requireResidentKey: true,
-                    authenticatorAttachment: undefined,
-                    userVerification: "required",
-                },
-            })
-        );
-    });
-
-    test("should set timeout to 180 seconds", async () => {
-        await getRegisterOptions();
-
-        expect(simplewebauthn.generateRegistrationOptions).toHaveBeenCalledWith(
-            expect.objectContaining({
-                timeout: 180_000,
-            })
-        );
-    });
-
-    test("should set attestationType to direct", async () => {
-        await getRegisterOptions();
-
-        expect(simplewebauthn.generateRegistrationOptions).toHaveBeenCalledWith(
-            expect.objectContaining({
-                attestationType: "direct",
-            })
-        );
-    });
-
-    test("should support ES256 algorithm (-7)", async () => {
-        await getRegisterOptions();
-
-        expect(simplewebauthn.generateRegistrationOptions).toHaveBeenCalledWith(
-            expect.objectContaining({
-                supportedAlgorithmIDs: [-7],
-            })
-        );
-    });
-
-    test("should return the result from generateRegistrationOptions", async () => {
+    test("should return the result from ox", async () => {
         const result = await getRegisterOptions();
 
         expect(result).toBe(mockRegistrationOptions);

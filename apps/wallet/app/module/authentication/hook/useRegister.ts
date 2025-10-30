@@ -8,9 +8,10 @@ import {
     trackAuthCompleted,
     trackAuthInitiated,
 } from "@frak-labs/wallet-shared";
-import { startRegistration } from "@simplewebauthn/browser";
 import type { UseMutationOptions } from "@tanstack/react-query";
 import { useMutation } from "@tanstack/react-query";
+import { WebAuthnP256 } from "ox";
+import { toHex } from "viem";
 import { usePreviousAuthenticators } from "@/module/authentication/hook/usePreviousAuthenticators";
 
 /**
@@ -36,32 +37,31 @@ export function useRegister(options?: UseMutationOptions<Session>) {
             // Identify the user and track the event
             const events = [trackAuthInitiated("register")];
 
-            // Build the credentials to exclude
-            const excludeCredentials = previousAuthenticators?.map(
-                (auth) =>
-                    ({
-                        id: auth.authenticatorId,
-                        transports: auth.transports,
-                    }) as const
-            );
-
-            // Get the registration options
-            const registrationOptions = await getRegisterOptions({
-                excludeCredentials,
-            });
-
             // Start the registration
-            const registrationResponse = await startRegistration({
-                optionsJSON: registrationOptions,
+            const { id, publicKey, raw } = await WebAuthnP256.createCredential({
+                ...getRegisterOptions(),
+                excludeCredentialIds: previousAuthenticators?.map(
+                    (cred) => cred.authenticatorId
+                ),
+            });
+            console.log("Output", {
+                id,
+                publicKey,
+                raw,
             });
 
             // Verify it
-            const encodedResponse = btoa(JSON.stringify(registrationResponse));
+            const encodedResponse = btoa(JSON.stringify(raw));
             const { data, error } =
                 await authenticatedWalletApi.auth.register.post({
+                    id,
                     userAgent: navigator.userAgent,
-                    expectedChallenge: registrationOptions.challenge,
-                    registrationResponse: encodedResponse,
+                    publicKey: {
+                        x: toHex(publicKey.x),
+                        y: toHex(publicKey.y),
+                        prefix: publicKey.prefix,
+                    },
+                    raw: encodedResponse,
                 });
             if (error) {
                 throw error;

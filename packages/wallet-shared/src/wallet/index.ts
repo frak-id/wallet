@@ -1,6 +1,5 @@
 // Actions
 export { getRegisterOptions } from "./action/registerOptions";
-export { getSignOptions } from "./action/signOptions";
 
 // Hooks
 export { useCloseSession } from "./hook/useCloseSession";
@@ -41,7 +40,6 @@ export {
 export {
     formatSignature,
     getStubSignature,
-    parseWebAuthNAuthentication,
 } from "./smartWallet/webAuthN";
 
 // Utils

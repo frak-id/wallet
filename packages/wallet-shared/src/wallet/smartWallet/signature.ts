@@ -1,4 +1,4 @@
-import { startAuthentication } from "@simplewebauthn/browser";
+import { WebAuthnP256 } from "ox";
 import { tryit } from "radash";
 import {
     type Address,
@@ -12,8 +12,7 @@ import {
 import { readContract } from "viem/actions";
 import { authenticationStore } from "../../stores/authenticationStore";
 import type { WebAuthNWallet } from "../../types/WebAuthN";
-import { getSignOptions } from "../action/signOptions";
-import { formatSignature, parseWebAuthNAuthentication } from "./webAuthN";
+import { formatSignature } from "./webAuthN";
 
 export type AccountMetadata = {
     name: string;
@@ -118,34 +117,31 @@ export async function signHashViaWebAuthN({
     hash: Hex;
     wallet: WebAuthNWallet;
 }) {
-    // Get the signature options from server
-    const options = await getSignOptions({
-        authenticatorId: wallet.authenticatorId,
-        toSign: hash,
+    // Sign with WebAuthn using ox
+    const { metadata, signature, raw } = await WebAuthnP256.sign({
+        challenge: hash,
+        credentialId: wallet.authenticatorId,
     });
 
-    // Start the client authentication
-    const authenticationResponse = await startAuthentication({
-        optionsJSON: options,
-    });
-
-    // Store that in our last webauthn action
+    // Store the authentication action
     authenticationStore.getState().setLastWebAuthNAction({
         wallet: wallet.address,
-        signature: authenticationResponse,
-        msg: options.challenge,
+        signature: {
+            id: raw.id,
+            response: {
+                metadata,
+                signature,
+            },
+        },
+        challenge: hash,
     });
 
-    // Perform the verification of the signature
-    const { authenticatorData, clientData, challengeOffset, signature } =
-        parseWebAuthNAuthentication(authenticationResponse);
-
-    // Format the signature
+    // Format the signature for blockchain
     return formatSignature({
         authenticatorIdHash: keccak256(toHex(wallet.authenticatorId)),
-        rs: [BigInt(signature.r), BigInt(signature.s)],
-        challengeOffset,
-        authenticatorData,
-        clientData,
+        rs: [signature.r, signature.s],
+        challengeOffset: BigInt(metadata.challengeIndex) + 13n,
+        authenticatorData: metadata.authenticatorData,
+        clientData: toHex(metadata.clientDataJSON),
     });
 }

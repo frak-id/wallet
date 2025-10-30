@@ -118,7 +118,7 @@ describe("authenticationStore", () => {
                     },
                     type: "public-key",
                 } as AuthenticationResponseJSON,
-                msg: "test-message",
+                challenge: "test-message",
             };
 
             authenticationStore.getState().setLastWebAuthNAction(mockAction);
@@ -136,7 +136,7 @@ describe("authenticationStore", () => {
                     response: {},
                     type: "public-key",
                 } as AuthenticationResponseJSON,
-                msg: "test-message",
+                challenge: "test-message",
             };
 
             authenticationStore.getState().setLastWebAuthNAction(mockAction);
@@ -155,7 +155,7 @@ describe("authenticationStore", () => {
                     response: {},
                     type: "public-key",
                 } as AuthenticationResponseJSON,
-                msg: "test-message",
+                challenge: "test-message",
             };
 
             authenticationStore.getState().setLastWebAuthNAction(mockAction);
@@ -217,7 +217,7 @@ describe("authenticationStore", () => {
             const mockAction: LastWebAuthNAction = {
                 wallet: "0x1234567890123456789012345678901234567890",
                 signature: {} as AuthenticationResponseJSON,
-                msg: "test",
+                challenge: "test",
             };
             const mockSsoContext = { productId: "product-123" };
 
@@ -414,7 +414,7 @@ describe("authenticationStore", () => {
             const mockAction: LastWebAuthNAction = {
                 wallet: "0x1234567890123456789012345678901234567890",
                 signature: {} as AuthenticationResponseJSON,
-                msg: "test",
+                challenge: "test",
             };
             const mockSsoContext = {
                 productId: "product-123",

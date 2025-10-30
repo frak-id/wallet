@@ -1,4 +1,3 @@
-import type { AuthenticatorTransportFuture } from "@simplewebauthn/browser";
 import type { Address } from "viem";
 
 /**
@@ -7,5 +6,5 @@ import type { Address } from "viem";
 export type PreviousAuthenticatorModel = {
     wallet: Address;
     authenticatorId: string;
-    transports?: AuthenticatorTransportFuture[];
+    transports?: AuthenticatorTransport[];
 };

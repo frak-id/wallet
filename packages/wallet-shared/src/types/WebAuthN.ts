@@ -1,4 +1,3 @@
-import type { AuthenticatorTransportFuture } from "@simplewebauthn/browser";
 import type { Address, Hex } from "viem";
 
 /**
@@ -14,7 +13,7 @@ export type WebAuthNWallet = Readonly<{
     // The authenticator id
     authenticatorId: string;
     // The transports of this authenticator
-    transports?: AuthenticatorTransportFuture[];
+    transports?: AuthenticatorTransport[];
 }>;
 
 /**
