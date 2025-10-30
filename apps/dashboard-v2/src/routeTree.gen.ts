@@ -11,9 +11,13 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as NotFoundRouteImport } from './routes/not-found'
+import { Route as MintRouteImport } from './routes/mint'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ProductIdRouteImport } from './routes/product/$id'
+import { Route as ProductIdTeamRouteImport } from './routes/product/$id/team'
+import { Route as ProductIdFundingRouteImport } from './routes/product/$id/funding'
 
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
@@ -23,6 +27,11 @@ const SettingsRoute = SettingsRouteImport.update({
 const NotFoundRoute = NotFoundRouteImport.update({
   id: '/not-found',
   path: '/not-found',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MintRoute = MintRouteImport.update({
+  id: '/mint',
+  path: '/mint',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -40,43 +49,100 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProductIdRoute = ProductIdRouteImport.update({
+  id: '/product/$id',
+  path: '/product/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProductIdTeamRoute = ProductIdTeamRouteImport.update({
+  id: '/team',
+  path: '/team',
+  getParentRoute: () => ProductIdRoute,
+} as any)
+const ProductIdFundingRoute = ProductIdFundingRouteImport.update({
+  id: '/funding',
+  path: '/funding',
+  getParentRoute: () => ProductIdRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/mint': typeof MintRoute
   '/not-found': typeof NotFoundRoute
   '/settings': typeof SettingsRoute
+  '/product/$id': typeof ProductIdRouteWithChildren
+  '/product/$id/funding': typeof ProductIdFundingRoute
+  '/product/$id/team': typeof ProductIdTeamRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/mint': typeof MintRoute
   '/not-found': typeof NotFoundRoute
   '/settings': typeof SettingsRoute
+  '/product/$id': typeof ProductIdRouteWithChildren
+  '/product/$id/funding': typeof ProductIdFundingRoute
+  '/product/$id/team': typeof ProductIdTeamRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/mint': typeof MintRoute
   '/not-found': typeof NotFoundRoute
   '/settings': typeof SettingsRoute
+  '/product/$id': typeof ProductIdRouteWithChildren
+  '/product/$id/funding': typeof ProductIdFundingRoute
+  '/product/$id/team': typeof ProductIdTeamRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/dashboard' | '/login' | '/not-found' | '/settings'
+  fullPaths:
+    | '/'
+    | '/dashboard'
+    | '/login'
+    | '/mint'
+    | '/not-found'
+    | '/settings'
+    | '/product/$id'
+    | '/product/$id/funding'
+    | '/product/$id/team'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard' | '/login' | '/not-found' | '/settings'
-  id: '__root__' | '/' | '/dashboard' | '/login' | '/not-found' | '/settings'
+  to:
+    | '/'
+    | '/dashboard'
+    | '/login'
+    | '/mint'
+    | '/not-found'
+    | '/settings'
+    | '/product/$id'
+    | '/product/$id/funding'
+    | '/product/$id/team'
+  id:
+    | '__root__'
+    | '/'
+    | '/dashboard'
+    | '/login'
+    | '/mint'
+    | '/not-found'
+    | '/settings'
+    | '/product/$id'
+    | '/product/$id/funding'
+    | '/product/$id/team'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DashboardRoute: typeof DashboardRoute
   LoginRoute: typeof LoginRoute
+  MintRoute: typeof MintRoute
   NotFoundRoute: typeof NotFoundRoute
   SettingsRoute: typeof SettingsRoute
+  ProductIdRoute: typeof ProductIdRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -93,6 +159,13 @@ declare module '@tanstack/react-router' {
       path: '/not-found'
       fullPath: '/not-found'
       preLoaderRoute: typeof NotFoundRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mint': {
+      id: '/mint'
+      path: '/mint'
+      fullPath: '/mint'
+      preLoaderRoute: typeof MintRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -116,15 +189,52 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/product/$id': {
+      id: '/product/$id'
+      path: '/product/$id'
+      fullPath: '/product/$id'
+      preLoaderRoute: typeof ProductIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/product/$id/team': {
+      id: '/product/$id/team'
+      path: '/team'
+      fullPath: '/product/$id/team'
+      preLoaderRoute: typeof ProductIdTeamRouteImport
+      parentRoute: typeof ProductIdRoute
+    }
+    '/product/$id/funding': {
+      id: '/product/$id/funding'
+      path: '/funding'
+      fullPath: '/product/$id/funding'
+      preLoaderRoute: typeof ProductIdFundingRouteImport
+      parentRoute: typeof ProductIdRoute
+    }
   }
 }
+
+interface ProductIdRouteChildren {
+  ProductIdFundingRoute: typeof ProductIdFundingRoute
+  ProductIdTeamRoute: typeof ProductIdTeamRoute
+}
+
+const ProductIdRouteChildren: ProductIdRouteChildren = {
+  ProductIdFundingRoute: ProductIdFundingRoute,
+  ProductIdTeamRoute: ProductIdTeamRoute,
+}
+
+const ProductIdRouteWithChildren = ProductIdRoute._addFileChildren(
+  ProductIdRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DashboardRoute: DashboardRoute,
   LoginRoute: LoginRoute,
+  MintRoute: MintRoute,
   NotFoundRoute: NotFoundRoute,
   SettingsRoute: SettingsRoute,
+  ProductIdRoute: ProductIdRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

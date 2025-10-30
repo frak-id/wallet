@@ -1,7 +1,5 @@
 .main {
     position: relative;
-    overflow-x: hidden;
-    min-height: 100vh;
 }
 
 .ellipse-blue-corner,

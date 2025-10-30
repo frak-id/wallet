@@ -3,21 +3,23 @@ import { requireAuth } from "@/middleware/auth";
 import { Breadcrumb } from "@/module/common/component/Breadcrumb";
 import { Head } from "@/module/common/component/Head";
 import { RestrictedLayout } from "@/module/common/component/RestrictedLayout";
-import { MyProducts } from "@/module/dashboard/component/Products";
 
-export const Route = createFileRoute("/dashboard")({
+export const Route = createFileRoute("/mint")({
     beforeLoad: requireAuth,
-    component: Dashboard,
+    component: MintPage,
 });
 
-function Dashboard() {
+function MintPage() {
     return (
         <RestrictedLayout>
             <Head
-                title={{ content: "Dashboard" }}
-                leftSection={<Breadcrumb current={"Home"} />}
+                title={{ content: "List a Product" }}
+                leftSection={<Breadcrumb current={"List Product"} />}
             />
-            <MyProducts />
+            <div style={{ padding: "2rem" }}>
+                <h2>List a Product - Coming Soon</h2>
+                <p>This page is under development.</p>
+            </div>
         </RestrictedLayout>
     );
 }
