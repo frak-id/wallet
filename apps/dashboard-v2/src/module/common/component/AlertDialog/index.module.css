@@ -1,0 +1,12 @@
+.alertDialog__content {
+    max-width: 850px;
+    border-radius: 8px;
+    color: var(--frak-color-tuna);
+}
+
+.alertDialog__title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--frak-color-shark);
+}
