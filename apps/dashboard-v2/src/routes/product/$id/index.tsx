@@ -1,11 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import type { Hex } from "viem";
 import { requireAuth } from "@/middleware/auth";
-import { Breadcrumb } from "@/module/common/component/Breadcrumb";
 import { RestrictedLayout } from "@/module/common/component/RestrictedLayout";
 import { ProductDetails } from "@/module/product/component/ProductDetails";
 
-export const Route = createFileRoute("/product/$id")({
+export const Route = createFileRoute("/product/$id/")({
     beforeLoad: requireAuth,
     component: ProductPage,
 });
@@ -15,7 +14,6 @@ function ProductPage() {
 
     return (
         <RestrictedLayout>
-            <Breadcrumb current={"Product"} />
             <ProductDetails productId={id as Hex} />
         </RestrictedLayout>
     );

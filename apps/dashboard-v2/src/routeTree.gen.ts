@@ -15,7 +15,7 @@ import { Route as MintRouteImport } from './routes/mint'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as ProductIdRouteImport } from './routes/product/$id'
+import { Route as ProductIdIndexRouteImport } from './routes/product/$id/index'
 import { Route as ProductIdTeamRouteImport } from './routes/product/$id/team'
 import { Route as ProductIdSetupStatusRouteImport } from './routes/product/$id/setup-status'
 import { Route as ProductIdFundingRouteImport } from './routes/product/$id/funding'
@@ -50,25 +50,25 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ProductIdRoute = ProductIdRouteImport.update({
-  id: '/product/$id',
-  path: '/product/$id',
+const ProductIdIndexRoute = ProductIdIndexRouteImport.update({
+  id: '/product/$id/',
+  path: '/product/$id/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProductIdTeamRoute = ProductIdTeamRouteImport.update({
-  id: '/team',
-  path: '/team',
-  getParentRoute: () => ProductIdRoute,
+  id: '/product/$id/team',
+  path: '/product/$id/team',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ProductIdSetupStatusRoute = ProductIdSetupStatusRouteImport.update({
-  id: '/setup-status',
-  path: '/setup-status',
-  getParentRoute: () => ProductIdRoute,
+  id: '/product/$id/setup-status',
+  path: '/product/$id/setup-status',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ProductIdFundingRoute = ProductIdFundingRouteImport.update({
-  id: '/funding',
-  path: '/funding',
-  getParentRoute: () => ProductIdRoute,
+  id: '/product/$id/funding',
+  path: '/product/$id/funding',
+  getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -78,10 +78,10 @@ export interface FileRoutesByFullPath {
   '/mint': typeof MintRoute
   '/not-found': typeof NotFoundRoute
   '/settings': typeof SettingsRoute
-  '/product/$id': typeof ProductIdRouteWithChildren
   '/product/$id/funding': typeof ProductIdFundingRoute
   '/product/$id/setup-status': typeof ProductIdSetupStatusRoute
   '/product/$id/team': typeof ProductIdTeamRoute
+  '/product/$id': typeof ProductIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -90,10 +90,10 @@ export interface FileRoutesByTo {
   '/mint': typeof MintRoute
   '/not-found': typeof NotFoundRoute
   '/settings': typeof SettingsRoute
-  '/product/$id': typeof ProductIdRouteWithChildren
   '/product/$id/funding': typeof ProductIdFundingRoute
   '/product/$id/setup-status': typeof ProductIdSetupStatusRoute
   '/product/$id/team': typeof ProductIdTeamRoute
+  '/product/$id': typeof ProductIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -103,10 +103,10 @@ export interface FileRoutesById {
   '/mint': typeof MintRoute
   '/not-found': typeof NotFoundRoute
   '/settings': typeof SettingsRoute
-  '/product/$id': typeof ProductIdRouteWithChildren
   '/product/$id/funding': typeof ProductIdFundingRoute
   '/product/$id/setup-status': typeof ProductIdSetupStatusRoute
   '/product/$id/team': typeof ProductIdTeamRoute
+  '/product/$id/': typeof ProductIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -117,10 +117,10 @@ export interface FileRouteTypes {
     | '/mint'
     | '/not-found'
     | '/settings'
-    | '/product/$id'
     | '/product/$id/funding'
     | '/product/$id/setup-status'
     | '/product/$id/team'
+    | '/product/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -129,10 +129,10 @@ export interface FileRouteTypes {
     | '/mint'
     | '/not-found'
     | '/settings'
-    | '/product/$id'
     | '/product/$id/funding'
     | '/product/$id/setup-status'
     | '/product/$id/team'
+    | '/product/$id'
   id:
     | '__root__'
     | '/'
@@ -141,10 +141,10 @@ export interface FileRouteTypes {
     | '/mint'
     | '/not-found'
     | '/settings'
-    | '/product/$id'
     | '/product/$id/funding'
     | '/product/$id/setup-status'
     | '/product/$id/team'
+    | '/product/$id/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -154,7 +154,10 @@ export interface RootRouteChildren {
   MintRoute: typeof MintRoute
   NotFoundRoute: typeof NotFoundRoute
   SettingsRoute: typeof SettingsRoute
-  ProductIdRoute: typeof ProductIdRouteWithChildren
+  ProductIdFundingRoute: typeof ProductIdFundingRoute
+  ProductIdSetupStatusRoute: typeof ProductIdSetupStatusRoute
+  ProductIdTeamRoute: typeof ProductIdTeamRoute
+  ProductIdIndexRoute: typeof ProductIdIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -201,52 +204,36 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/product/$id': {
-      id: '/product/$id'
+    '/product/$id/': {
+      id: '/product/$id/'
       path: '/product/$id'
       fullPath: '/product/$id'
-      preLoaderRoute: typeof ProductIdRouteImport
+      preLoaderRoute: typeof ProductIdIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/product/$id/team': {
       id: '/product/$id/team'
-      path: '/team'
+      path: '/product/$id/team'
       fullPath: '/product/$id/team'
       preLoaderRoute: typeof ProductIdTeamRouteImport
-      parentRoute: typeof ProductIdRoute
+      parentRoute: typeof rootRouteImport
     }
     '/product/$id/setup-status': {
       id: '/product/$id/setup-status'
-      path: '/setup-status'
+      path: '/product/$id/setup-status'
       fullPath: '/product/$id/setup-status'
       preLoaderRoute: typeof ProductIdSetupStatusRouteImport
-      parentRoute: typeof ProductIdRoute
+      parentRoute: typeof rootRouteImport
     }
     '/product/$id/funding': {
       id: '/product/$id/funding'
-      path: '/funding'
+      path: '/product/$id/funding'
       fullPath: '/product/$id/funding'
       preLoaderRoute: typeof ProductIdFundingRouteImport
-      parentRoute: typeof ProductIdRoute
+      parentRoute: typeof rootRouteImport
     }
   }
 }
-
-interface ProductIdRouteChildren {
-  ProductIdFundingRoute: typeof ProductIdFundingRoute
-  ProductIdSetupStatusRoute: typeof ProductIdSetupStatusRoute
-  ProductIdTeamRoute: typeof ProductIdTeamRoute
-}
-
-const ProductIdRouteChildren: ProductIdRouteChildren = {
-  ProductIdFundingRoute: ProductIdFundingRoute,
-  ProductIdSetupStatusRoute: ProductIdSetupStatusRoute,
-  ProductIdTeamRoute: ProductIdTeamRoute,
-}
-
-const ProductIdRouteWithChildren = ProductIdRoute._addFileChildren(
-  ProductIdRouteChildren,
-)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -255,7 +242,10 @@ const rootRouteChildren: RootRouteChildren = {
   MintRoute: MintRoute,
   NotFoundRoute: NotFoundRoute,
   SettingsRoute: SettingsRoute,
-  ProductIdRoute: ProductIdRouteWithChildren,
+  ProductIdFundingRoute: ProductIdFundingRoute,
+  ProductIdSetupStatusRoute: ProductIdSetupStatusRoute,
+  ProductIdTeamRoute: ProductIdTeamRoute,
+  ProductIdIndexRoute: ProductIdIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

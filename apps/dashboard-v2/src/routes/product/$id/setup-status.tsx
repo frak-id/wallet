@@ -1,7 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import type { Hex } from "viem";
 import { requireAuth } from "@/middleware/auth";
-import { Breadcrumb } from "@/module/common/component/Breadcrumb";
 import { RestrictedLayout } from "@/module/common/component/RestrictedLayout";
 import { ProductSetupStatus } from "@/module/product/component/SetupStatus";
 
@@ -15,7 +14,6 @@ function ProductSetupStatusPage() {
 
     return (
         <RestrictedLayout>
-            <Breadcrumb current={"Setup Status"} />
             <ProductSetupStatus productId={id as Hex} />
         </RestrictedLayout>
     );
