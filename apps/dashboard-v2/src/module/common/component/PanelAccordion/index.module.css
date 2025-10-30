@@ -1,0 +1,13 @@
+.panelAccordion__trigger {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    & > h2 {
+        margin-bottom: 0;
+    }
+}
+
+.panelAccordion__content {
+    margin-top: 14px;
+}

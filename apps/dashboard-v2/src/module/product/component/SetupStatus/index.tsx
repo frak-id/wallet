@@ -1,8 +1,9 @@
 import { Button } from "@frak-labs/ui/component/Button";
+import { Spinner } from "@frak-labs/ui/component/Spinner";
 import { useNavigate } from "@tanstack/react-router";
 import { AlertCircle, BadgeCheck } from "lucide-react";
 import type { Hex } from "viem";
-import { Badge } from "@/module/common/component/Badge";
+import { CallOut } from "@/module/common/component/CallOut";
 import { Panel } from "@/module/common/component/Panel";
 import { Row } from "@/module/common/component/Row";
 import { FormLayout } from "@/module/forms/Form";
@@ -15,42 +16,24 @@ import styles from "./index.module.css";
 
 /**
  * Page containing basic product setup status overview
+ *
+ * @constructor
  */
 export function ProductSetupStatus({ productId }: { productId: Hex }) {
-    const { data, isLoading, isPending } = useProductSetupStatus({ productId });
-
-    if (isLoading || isPending) {
-        return (
-            <FormLayout>
-                <ProductHead productId={productId} />
-                <Panel title={"Product setup status"}>
-                    <p>Loading setup status...</p>
-                </Panel>
-            </FormLayout>
-        );
-    }
-
-    if (!data) {
-        return (
-            <FormLayout>
-                <ProductHead productId={productId} />
-                <Panel title={"Product setup status"}>
-                    <p className={styles.placeholder}>
-                        Unable to load setup status.
-                    </p>
-                </Panel>
-            </FormLayout>
-        );
-    }
+    const { data } = useProductSetupStatus({ productId });
 
     return (
         <FormLayout>
             <ProductHead productId={productId} />
-            <Panel title={"Product setup status"}>
-                <SetupStatusItems
-                    items={data.items ?? []}
-                    hasWarning={data.hasWarning}
-                />
+            <Panel title={"Product setup status"} withBadge={false}>
+                {!data ? (
+                    <Spinner />
+                ) : (
+                    <SetupStatusItems
+                        items={data.items ?? []}
+                        hasWarning={data.hasWarning}
+                    />
+                )}
             </Panel>
         </FormLayout>
     );
@@ -83,22 +66,18 @@ function SetupStatusItems({
 function OverallStatus({ hasWarning }: { hasWarning: boolean }) {
     if (!hasWarning) {
         return (
-            <div className={styles.overallStatus__success}>
-                <Badge variant={"success"}>All Setup Complete</Badge>
-                <p>Great job! Your product is set up correctly.</p>
-            </div>
+            <CallOut variant={"success"}>
+                Great job! Your product is set up correctly.
+            </CallOut>
         );
     }
 
     return (
-        <div className={styles.overallStatus__warning}>
-            <Badge variant={"warning"}>Action Required</Badge>
-            <p>
-                Some items need your attention.
-                <br />
-                Please review and complete them.
-            </p>
-        </div>
+        <CallOut variant={"warning"}>
+            Some items need your attention.
+            <br />
+            Please review and complete them.
+        </CallOut>
     );
 }
 

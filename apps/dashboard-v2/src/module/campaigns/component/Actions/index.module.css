@@ -1,0 +1,30 @@
+.actions {
+    display: flex;
+}
+
+.action__left,
+.action__right {
+    flex: 1;
+    display: flex;
+    gap: 15px;
+}
+
+.action__right {
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.action__message {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    font-weight: 600;
+}
+
+.action__message--success {
+    color: var(--frak-color-malachite);
+}
+
+.action__message--error {
+    color: var(--frak-color-red);
+}
