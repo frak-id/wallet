@@ -64,7 +64,8 @@
     "postcss-preset-env": "^10.4.0",
     "sst": "3.17.5",
     "typescript": "^5",
-    "vite": "^7.1.12",
+    "rolldown-vite": "^7.1.20",
+    "vite": "npm:rolldown-vite@latest",
     "vite-plugin-mkcert": "^1.17.9",
     "vite-tsconfig-paths": "^5.1.4",
     "vitest": "^4.0.4"

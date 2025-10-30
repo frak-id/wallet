@@ -5,7 +5,7 @@ import {
 } from "@frak-labs/frame-connector";
 import { loadPolyfills } from "@frak-labs/ui/utils/polyfills";
 import { useEffect } from "react";
-import { ListenerUiRenderer } from "@/module/component/ListerUiRenderer";
+import { ListenerUiRenderer } from "@/module/component/ListenerUiRenderer";
 import {
     checkContextAndEmitReady,
     createClientLifecycleHandler,
