@@ -17,6 +17,7 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProductIdRouteImport } from './routes/product/$id'
 import { Route as ProductIdTeamRouteImport } from './routes/product/$id/team'
+import { Route as ProductIdSetupStatusRouteImport } from './routes/product/$id/setup-status'
 import { Route as ProductIdFundingRouteImport } from './routes/product/$id/funding'
 
 const SettingsRoute = SettingsRouteImport.update({
@@ -59,6 +60,11 @@ const ProductIdTeamRoute = ProductIdTeamRouteImport.update({
   path: '/team',
   getParentRoute: () => ProductIdRoute,
 } as any)
+const ProductIdSetupStatusRoute = ProductIdSetupStatusRouteImport.update({
+  id: '/setup-status',
+  path: '/setup-status',
+  getParentRoute: () => ProductIdRoute,
+} as any)
 const ProductIdFundingRoute = ProductIdFundingRouteImport.update({
   id: '/funding',
   path: '/funding',
@@ -74,6 +80,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRoute
   '/product/$id': typeof ProductIdRouteWithChildren
   '/product/$id/funding': typeof ProductIdFundingRoute
+  '/product/$id/setup-status': typeof ProductIdSetupStatusRoute
   '/product/$id/team': typeof ProductIdTeamRoute
 }
 export interface FileRoutesByTo {
@@ -85,6 +92,7 @@ export interface FileRoutesByTo {
   '/settings': typeof SettingsRoute
   '/product/$id': typeof ProductIdRouteWithChildren
   '/product/$id/funding': typeof ProductIdFundingRoute
+  '/product/$id/setup-status': typeof ProductIdSetupStatusRoute
   '/product/$id/team': typeof ProductIdTeamRoute
 }
 export interface FileRoutesById {
@@ -97,6 +105,7 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRoute
   '/product/$id': typeof ProductIdRouteWithChildren
   '/product/$id/funding': typeof ProductIdFundingRoute
+  '/product/$id/setup-status': typeof ProductIdSetupStatusRoute
   '/product/$id/team': typeof ProductIdTeamRoute
 }
 export interface FileRouteTypes {
@@ -110,6 +119,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/product/$id'
     | '/product/$id/funding'
+    | '/product/$id/setup-status'
     | '/product/$id/team'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -121,6 +131,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/product/$id'
     | '/product/$id/funding'
+    | '/product/$id/setup-status'
     | '/product/$id/team'
   id:
     | '__root__'
@@ -132,6 +143,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/product/$id'
     | '/product/$id/funding'
+    | '/product/$id/setup-status'
     | '/product/$id/team'
   fileRoutesById: FileRoutesById
 }
@@ -203,6 +215,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProductIdTeamRouteImport
       parentRoute: typeof ProductIdRoute
     }
+    '/product/$id/setup-status': {
+      id: '/product/$id/setup-status'
+      path: '/setup-status'
+      fullPath: '/product/$id/setup-status'
+      preLoaderRoute: typeof ProductIdSetupStatusRouteImport
+      parentRoute: typeof ProductIdRoute
+    }
     '/product/$id/funding': {
       id: '/product/$id/funding'
       path: '/funding'
@@ -215,11 +234,13 @@ declare module '@tanstack/react-router' {
 
 interface ProductIdRouteChildren {
   ProductIdFundingRoute: typeof ProductIdFundingRoute
+  ProductIdSetupStatusRoute: typeof ProductIdSetupStatusRoute
   ProductIdTeamRoute: typeof ProductIdTeamRoute
 }
 
 const ProductIdRouteChildren: ProductIdRouteChildren = {
   ProductIdFundingRoute: ProductIdFundingRoute,
+  ProductIdSetupStatusRoute: ProductIdSetupStatusRoute,
   ProductIdTeamRoute: ProductIdTeamRoute,
 }
 

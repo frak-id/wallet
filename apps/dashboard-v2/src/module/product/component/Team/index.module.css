@@ -1,0 +1,75 @@
+.team__table {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.table__header {
+    text-align: left;
+    padding: 12px 16px;
+    font-weight: 600;
+    color: var(--frak-color-shark);
+    border-bottom: 2px solid var(--frak-color-mischka);
+}
+
+.table__row {
+    border-bottom: 1px solid var(--frak-color-athens-gray);
+}
+
+.table__row:hover {
+    background-color: var(--frak-color-wild-sand);
+}
+
+.table__cell {
+    padding: 16px;
+    vertical-align: middle;
+}
+
+.wallet {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.wallet__me {
+    font-weight: 600;
+    color: var(--frak-color-royal-blue);
+}
+
+.wallet__address {
+    font-family: monospace;
+    font-size: 13px;
+    color: var(--frak-color-tuna);
+    background-color: var(--frak-color-athens-gray);
+    padding: 4px 8px;
+    border-radius: 4px;
+    word-break: break-all;
+}
+
+.permissions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.team__placeholder {
+    color: var(--frak-color-regent-gray);
+    font-style: italic;
+    text-align: center;
+    padding: 20px;
+}
+
+.team__note {
+    margin-top: 24px;
+    padding: 12px 16px;
+    background-color: var(--frak-color-wild-sand);
+    border-left: 4px solid var(--frak-color-moon-raker);
+    color: var(--frak-color-tuna);
+    font-size: 14px;
+    border-radius: 4px;
+}
