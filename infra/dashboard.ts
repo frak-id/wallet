@@ -5,6 +5,7 @@ import {
     indexerUrl,
     mongoBusinessDb,
     nexusRpcSecret,
+    onRampUrl,
     openPanelApiUrl,
     openPanelBusinessClientId,
     sessionEncryptionKy,
@@ -13,8 +14,6 @@ import {
 import { isProd } from "./utils";
 
 const subdomain = isProd ? "business" : "business-dev";
-
-const onRampUrl = new sst.Secret("FUNDING_ON_RAMP_URL");
 
 /**
  * Business dashboard
