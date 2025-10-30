@@ -1,0 +1,42 @@
+.demoModeSwitch {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.demoModeSwitch__content {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.demoModeSwitch__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+}
+
+.demoModeSwitch__label {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--color-text-primary);
+    cursor: pointer;
+}
+
+.demoModeSwitch__description {
+    font-size: 13px;
+    color: var(--color-text-secondary);
+    line-height: 1.5;
+    margin: 0;
+}
+
+.demoModeSwitch__warning {
+    font-size: 13px;
+    color: var(--color-warning);
+    background-color: var(--color-warning-bg, rgba(255, 165, 0, 0.1));
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin: 0;
+    font-weight: 500;
+}
