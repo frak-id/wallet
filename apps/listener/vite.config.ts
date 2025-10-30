@@ -12,7 +12,10 @@ export default {
     resolve: {
         // CRITICAL: Use production conditions for tree shaking!
         // "development" loads full dev builds with debugging code
-        conditions: process.env.NODE_ENV === "production" ? ["production", "default"] : ["development"],
+        conditions:
+            process.env.NODE_ENV === "production"
+                ? ["production", "default"]
+                : ["development"],
         alias: {
             "@simplewebauthn/server": new URL(
                 "./app/module/utils/webauthn/serverShim.ts",

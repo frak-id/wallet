@@ -1,32 +1,32 @@
 // Stores
 
 // Authentication
-export * from "./authentication";
+export * from "./authentication/index.js";
 // Blockchain
-export * from "./blockchain";
+export * from "./blockchain/index.js";
 // Common utilities and components
-export * from "./common";
+export * from "./common/index.js";
 // i18n
-export * from "./i18n";
+export * from "./i18n/index.js";
 // Interaction
-export * from "./interaction";
+export * from "./interaction/index.js";
 // Pairing
-export * from "./pairing";
+export * from "./pairing/index.js";
 // Polyfills
-export * from "./polyfills/bigint-serialization";
+export { setupBigIntSerialization } from "./polyfills/bigint-serialization";
 // Providers
-export * from "./providers";
+export * from "./providers/index.js";
 // Recovery
-export * from "./recovery";
+export * from "./recovery/index.js";
 // SDK utilities
-export * from "./sdk";
+export * from "./sdk/index.js";
 export * from "./stores/authenticationStore";
 export * from "./stores/sessionStore";
 export * from "./stores/userStore";
 export * from "./stores/walletStore";
 // Tokens
-export * from "./tokens";
+export * from "./tokens/index.js";
 // Types
-export * from "./types";
+export * from "./types/index.js";
 // Wallet
-export * from "./wallet";
+export * from "./wallet/index.js";

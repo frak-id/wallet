@@ -1,27 +1,49 @@
 // Actions
-export * from "./action/registerOptions";
-export * from "./action/signOptions";
+export { getRegisterOptions } from "./action/registerOptions";
+export { getSignOptions } from "./action/signOptions";
 
 // Hooks
-export * from "./hook/useCloseSession";
-export * from "./hook/useConsumePendingInteractions";
-export * from "./hook/useInteractionSessionStatus";
-export * from "./hook/useOpenSession";
-export * from "./hook/usePushInteraction";
+export { useCloseSession } from "./hook/useCloseSession";
+export { useConsumePendingInteractions } from "./hook/useConsumePendingInteractions";
+export {
+    interactionSessionStatusQuery,
+    useInteractionSessionStatus,
+} from "./hook/useInteractionSessionStatus";
+export { useOpenSession } from "./hook/useOpenSession";
+export { usePushInteraction } from "./hook/usePushInteraction";
 
 // Query Keys
-export * from "./queryKeys/claimable";
-export * from "./queryKeys/interactions";
+export { claimableKey } from "./queryKeys/claimable";
+export { interactionsKey } from "./queryKeys/interactions";
 
 // Smart Wallet
-export * from "./smartWallet/baseFrakWallet";
-export * from "./smartWallet/connector";
-export * from "./smartWallet/FrakEcdsaSmartWallet";
-export * from "./smartWallet/FrakPairedSmartWallet";
-export * from "./smartWallet/FrakSmartWallet";
-export * from "./smartWallet/provider";
-export * from "./smartWallet/signature";
-export * from "./smartWallet/webAuthN";
-export * from "./utils/mUsdFormatter";
+export type { BaseFrakSmartAccount } from "./smartWallet/baseFrakWallet";
+export { baseFrakWallet } from "./smartWallet/baseFrakWallet";
+export type {
+    FrakWalletConnector,
+    FrakWalletConnectorFn,
+} from "./smartWallet/connector";
+export { smartAccountConnector } from "./smartWallet/connector";
+export { frakEcdsaWalletSmartAccount } from "./smartWallet/FrakEcdsaSmartWallet";
+export { frakPairedWalletSmartAccount } from "./smartWallet/FrakPairedSmartWallet";
+export { frakWalletSmartAccount } from "./smartWallet/FrakSmartWallet";
+export type {
+    SmartAccountConnectorClient,
+    SmartAccountProviderType,
+} from "./smartWallet/provider";
+export { getSmartAccountProvider } from "./smartWallet/provider";
+export type { AccountMetadata } from "./smartWallet/signature";
+export {
+    fetchAccountMetadata,
+    signHashViaWebAuthN,
+    wrapMessageForSignature,
+} from "./smartWallet/signature";
+export {
+    formatSignature,
+    getStubSignature,
+    parseWebAuthNAuthentication,
+} from "./smartWallet/webAuthN";
+
 // Utils
-export * from "./utils/multicall";
+export { formatUsd } from "./utils/mUsdFormatter";
+export { encodeWalletMulticall } from "./utils/multicall";

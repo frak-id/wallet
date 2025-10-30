@@ -1,3 +1,3 @@
 // Hooks
-export * from "./hook/useGetUserBalance";
-export * from "./hook/useGetUserPendingBalance";
+export { useGetUserBalance } from "./hook/useGetUserBalance";
+export { useGetUserPendingBalance } from "./hook/useGetUserPendingBalance";

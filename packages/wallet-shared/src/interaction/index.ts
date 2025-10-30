@@ -1,5 +1,8 @@
 // Actions
-export * from "./action/interactionSession";
+export { getSessionStatus } from "./action/interactionSession";
 
 // Utils
-export * from "./utils/getEnableDisableData";
+export {
+    getDisableSessionData,
+    getEnableSessionData,
+} from "./utils/getEnableDisableData";
