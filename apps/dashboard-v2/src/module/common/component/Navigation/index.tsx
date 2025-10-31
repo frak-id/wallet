@@ -6,11 +6,11 @@ import { Cash } from "@/assets/icons/Cash";
 import { Gear } from "@/assets/icons/Gear";
 import { Home } from "@/assets/icons/Home";
 import { Info } from "@/assets/icons/Info";
-import { Laptop } from "@/assets/icons/Laptop";
 import { Message } from "@/assets/icons/Message";
 import { Users } from "@/assets/icons/Users";
 import { Wallet } from "@/assets/icons/Wallet";
 import styles from "./index.module.css";
+import { NavigationCampaignsSwitcher } from "./NavigationCampaignsSwitcher";
 
 export function Navigation() {
     return (
@@ -19,11 +19,7 @@ export function Navigation() {
                 <NavigationItem url="/dashboard">
                     <NavigationLabel icon={<Home />}>Dashboard</NavigationLabel>
                 </NavigationItem>
-                <NavigationItem url="/campaigns/list">
-                    <NavigationLabel icon={<Laptop />}>
-                        Campaigns
-                    </NavigationLabel>
-                </NavigationItem>
+                <NavigationCampaignsSwitcher />
                 <NavigationItem url="/members">
                     <NavigationLabel icon={<Users />}>Members</NavigationLabel>
                 </NavigationItem>
