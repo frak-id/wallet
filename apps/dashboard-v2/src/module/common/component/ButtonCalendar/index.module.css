@@ -1,0 +1,5 @@
+.buttonCalendar__trigger {
+    gap: 8px;
+    border: 1px solid var(--frak-color-mischka) !important;
+    color: var(--frak-color-tuna) !important;
+}
