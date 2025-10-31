@@ -8,6 +8,8 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
+import { createFileRoute } from '@tanstack/react-router'
+
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as NotFoundRouteImport } from './routes/not-found'
@@ -18,11 +20,32 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PushCreateRouteImport } from './routes/push/create'
 import { Route as PushConfirmRouteImport } from './routes/push/confirm'
+import { Route as EmbeddedLayoutRouteImport } from './routes/embedded/_layout'
+import { Route as CampaignsValidationRouteImport } from './routes/campaigns/validation'
+import { Route as CampaignsPerformanceRouteImport } from './routes/campaigns/performance'
+import { Route as CampaignsNewRouteImport } from './routes/campaigns/new'
+import { Route as CampaignsMetricsRouteImport } from './routes/campaigns/metrics'
+import { Route as CampaignsListRouteImport } from './routes/campaigns/list'
+import { Route as CampaignsCampaignIdRouteImport } from './routes/campaigns/$campaignId'
 import { Route as ProductIdIndexRouteImport } from './routes/product/$id/index'
 import { Route as ProductIdTeamRouteImport } from './routes/product/$id/team'
 import { Route as ProductIdSetupStatusRouteImport } from './routes/product/$id/setup-status'
 import { Route as ProductIdFundingRouteImport } from './routes/product/$id/funding'
+import { Route as EmbeddedLayoutPurchaseTrackerRouteImport } from './routes/embedded/_layout/purchase-tracker'
+import { Route as EmbeddedLayoutMintRouteImport } from './routes/embedded/_layout/mint'
+import { Route as EmbeddedLayoutCreateCampaignRouteImport } from './routes/embedded/_layout/create-campaign'
+import { Route as CampaignsEditCampaignIdRouteImport } from './routes/campaigns/edit/$campaignId'
+import { Route as CampaignsDraftCampaignIdRouteImport } from './routes/campaigns/draft/$campaignId'
+import { Route as CampaignsDraftCampaignIdValidationRouteImport } from './routes/campaigns/draft/$campaignId/validation'
+import { Route as CampaignsDraftCampaignIdMetricsRouteImport } from './routes/campaigns/draft/$campaignId/metrics'
 
+const EmbeddedRouteImport = createFileRoute('/embedded')()
+
+const EmbeddedRoute = EmbeddedRouteImport.update({
+  id: '/embedded',
+  path: '/embedded',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -68,6 +91,40 @@ const PushConfirmRoute = PushConfirmRouteImport.update({
   path: '/push/confirm',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EmbeddedLayoutRoute = EmbeddedLayoutRouteImport.update({
+  id: '/_layout',
+  getParentRoute: () => EmbeddedRoute,
+} as any)
+const CampaignsValidationRoute = CampaignsValidationRouteImport.update({
+  id: '/campaigns/validation',
+  path: '/campaigns/validation',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CampaignsPerformanceRoute = CampaignsPerformanceRouteImport.update({
+  id: '/campaigns/performance',
+  path: '/campaigns/performance',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CampaignsNewRoute = CampaignsNewRouteImport.update({
+  id: '/campaigns/new',
+  path: '/campaigns/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CampaignsMetricsRoute = CampaignsMetricsRouteImport.update({
+  id: '/campaigns/metrics',
+  path: '/campaigns/metrics',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CampaignsListRoute = CampaignsListRouteImport.update({
+  id: '/campaigns/list',
+  path: '/campaigns/list',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CampaignsCampaignIdRoute = CampaignsCampaignIdRouteImport.update({
+  id: '/campaigns/$campaignId',
+  path: '/campaigns/$campaignId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProductIdIndexRoute = ProductIdIndexRouteImport.update({
   id: '/product/$id/',
   path: '/product/$id/',
@@ -88,6 +145,46 @@ const ProductIdFundingRoute = ProductIdFundingRouteImport.update({
   path: '/product/$id/funding',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EmbeddedLayoutPurchaseTrackerRoute =
+  EmbeddedLayoutPurchaseTrackerRouteImport.update({
+    id: '/purchase-tracker',
+    path: '/purchase-tracker',
+    getParentRoute: () => EmbeddedLayoutRoute,
+  } as any)
+const EmbeddedLayoutMintRoute = EmbeddedLayoutMintRouteImport.update({
+  id: '/mint',
+  path: '/mint',
+  getParentRoute: () => EmbeddedLayoutRoute,
+} as any)
+const EmbeddedLayoutCreateCampaignRoute =
+  EmbeddedLayoutCreateCampaignRouteImport.update({
+    id: '/create-campaign',
+    path: '/create-campaign',
+    getParentRoute: () => EmbeddedLayoutRoute,
+  } as any)
+const CampaignsEditCampaignIdRoute = CampaignsEditCampaignIdRouteImport.update({
+  id: '/campaigns/edit/$campaignId',
+  path: '/campaigns/edit/$campaignId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CampaignsDraftCampaignIdRoute =
+  CampaignsDraftCampaignIdRouteImport.update({
+    id: '/campaigns/draft/$campaignId',
+    path: '/campaigns/draft/$campaignId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const CampaignsDraftCampaignIdValidationRoute =
+  CampaignsDraftCampaignIdValidationRouteImport.update({
+    id: '/validation',
+    path: '/validation',
+    getParentRoute: () => CampaignsDraftCampaignIdRoute,
+  } as any)
+const CampaignsDraftCampaignIdMetricsRoute =
+  CampaignsDraftCampaignIdMetricsRouteImport.update({
+    id: '/metrics',
+    path: '/metrics',
+    getParentRoute: () => CampaignsDraftCampaignIdRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -97,12 +194,26 @@ export interface FileRoutesByFullPath {
   '/mint': typeof MintRoute
   '/not-found': typeof NotFoundRoute
   '/settings': typeof SettingsRoute
+  '/campaigns/$campaignId': typeof CampaignsCampaignIdRoute
+  '/campaigns/list': typeof CampaignsListRoute
+  '/campaigns/metrics': typeof CampaignsMetricsRoute
+  '/campaigns/new': typeof CampaignsNewRoute
+  '/campaigns/performance': typeof CampaignsPerformanceRoute
+  '/campaigns/validation': typeof CampaignsValidationRoute
+  '/embedded': typeof EmbeddedLayoutRouteWithChildren
   '/push/confirm': typeof PushConfirmRoute
   '/push/create': typeof PushCreateRoute
+  '/campaigns/draft/$campaignId': typeof CampaignsDraftCampaignIdRouteWithChildren
+  '/campaigns/edit/$campaignId': typeof CampaignsEditCampaignIdRoute
+  '/embedded/create-campaign': typeof EmbeddedLayoutCreateCampaignRoute
+  '/embedded/mint': typeof EmbeddedLayoutMintRoute
+  '/embedded/purchase-tracker': typeof EmbeddedLayoutPurchaseTrackerRoute
   '/product/$id/funding': typeof ProductIdFundingRoute
   '/product/$id/setup-status': typeof ProductIdSetupStatusRoute
   '/product/$id/team': typeof ProductIdTeamRoute
   '/product/$id': typeof ProductIdIndexRoute
+  '/campaigns/draft/$campaignId/metrics': typeof CampaignsDraftCampaignIdMetricsRoute
+  '/campaigns/draft/$campaignId/validation': typeof CampaignsDraftCampaignIdValidationRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -112,12 +223,26 @@ export interface FileRoutesByTo {
   '/mint': typeof MintRoute
   '/not-found': typeof NotFoundRoute
   '/settings': typeof SettingsRoute
+  '/campaigns/$campaignId': typeof CampaignsCampaignIdRoute
+  '/campaigns/list': typeof CampaignsListRoute
+  '/campaigns/metrics': typeof CampaignsMetricsRoute
+  '/campaigns/new': typeof CampaignsNewRoute
+  '/campaigns/performance': typeof CampaignsPerformanceRoute
+  '/campaigns/validation': typeof CampaignsValidationRoute
+  '/embedded': typeof EmbeddedLayoutRouteWithChildren
   '/push/confirm': typeof PushConfirmRoute
   '/push/create': typeof PushCreateRoute
+  '/campaigns/draft/$campaignId': typeof CampaignsDraftCampaignIdRouteWithChildren
+  '/campaigns/edit/$campaignId': typeof CampaignsEditCampaignIdRoute
+  '/embedded/create-campaign': typeof EmbeddedLayoutCreateCampaignRoute
+  '/embedded/mint': typeof EmbeddedLayoutMintRoute
+  '/embedded/purchase-tracker': typeof EmbeddedLayoutPurchaseTrackerRoute
   '/product/$id/funding': typeof ProductIdFundingRoute
   '/product/$id/setup-status': typeof ProductIdSetupStatusRoute
   '/product/$id/team': typeof ProductIdTeamRoute
   '/product/$id': typeof ProductIdIndexRoute
+  '/campaigns/draft/$campaignId/metrics': typeof CampaignsDraftCampaignIdMetricsRoute
+  '/campaigns/draft/$campaignId/validation': typeof CampaignsDraftCampaignIdValidationRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -128,12 +253,27 @@ export interface FileRoutesById {
   '/mint': typeof MintRoute
   '/not-found': typeof NotFoundRoute
   '/settings': typeof SettingsRoute
+  '/campaigns/$campaignId': typeof CampaignsCampaignIdRoute
+  '/campaigns/list': typeof CampaignsListRoute
+  '/campaigns/metrics': typeof CampaignsMetricsRoute
+  '/campaigns/new': typeof CampaignsNewRoute
+  '/campaigns/performance': typeof CampaignsPerformanceRoute
+  '/campaigns/validation': typeof CampaignsValidationRoute
+  '/embedded': typeof EmbeddedRouteWithChildren
+  '/embedded/_layout': typeof EmbeddedLayoutRouteWithChildren
   '/push/confirm': typeof PushConfirmRoute
   '/push/create': typeof PushCreateRoute
+  '/campaigns/draft/$campaignId': typeof CampaignsDraftCampaignIdRouteWithChildren
+  '/campaigns/edit/$campaignId': typeof CampaignsEditCampaignIdRoute
+  '/embedded/_layout/create-campaign': typeof EmbeddedLayoutCreateCampaignRoute
+  '/embedded/_layout/mint': typeof EmbeddedLayoutMintRoute
+  '/embedded/_layout/purchase-tracker': typeof EmbeddedLayoutPurchaseTrackerRoute
   '/product/$id/funding': typeof ProductIdFundingRoute
   '/product/$id/setup-status': typeof ProductIdSetupStatusRoute
   '/product/$id/team': typeof ProductIdTeamRoute
   '/product/$id/': typeof ProductIdIndexRoute
+  '/campaigns/draft/$campaignId/metrics': typeof CampaignsDraftCampaignIdMetricsRoute
+  '/campaigns/draft/$campaignId/validation': typeof CampaignsDraftCampaignIdValidationRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -145,12 +285,26 @@ export interface FileRouteTypes {
     | '/mint'
     | '/not-found'
     | '/settings'
+    | '/campaigns/$campaignId'
+    | '/campaigns/list'
+    | '/campaigns/metrics'
+    | '/campaigns/new'
+    | '/campaigns/performance'
+    | '/campaigns/validation'
+    | '/embedded'
     | '/push/confirm'
     | '/push/create'
+    | '/campaigns/draft/$campaignId'
+    | '/campaigns/edit/$campaignId'
+    | '/embedded/create-campaign'
+    | '/embedded/mint'
+    | '/embedded/purchase-tracker'
     | '/product/$id/funding'
     | '/product/$id/setup-status'
     | '/product/$id/team'
     | '/product/$id'
+    | '/campaigns/draft/$campaignId/metrics'
+    | '/campaigns/draft/$campaignId/validation'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -160,12 +314,26 @@ export interface FileRouteTypes {
     | '/mint'
     | '/not-found'
     | '/settings'
+    | '/campaigns/$campaignId'
+    | '/campaigns/list'
+    | '/campaigns/metrics'
+    | '/campaigns/new'
+    | '/campaigns/performance'
+    | '/campaigns/validation'
+    | '/embedded'
     | '/push/confirm'
     | '/push/create'
+    | '/campaigns/draft/$campaignId'
+    | '/campaigns/edit/$campaignId'
+    | '/embedded/create-campaign'
+    | '/embedded/mint'
+    | '/embedded/purchase-tracker'
     | '/product/$id/funding'
     | '/product/$id/setup-status'
     | '/product/$id/team'
     | '/product/$id'
+    | '/campaigns/draft/$campaignId/metrics'
+    | '/campaigns/draft/$campaignId/validation'
   id:
     | '__root__'
     | '/'
@@ -175,12 +343,27 @@ export interface FileRouteTypes {
     | '/mint'
     | '/not-found'
     | '/settings'
+    | '/campaigns/$campaignId'
+    | '/campaigns/list'
+    | '/campaigns/metrics'
+    | '/campaigns/new'
+    | '/campaigns/performance'
+    | '/campaigns/validation'
+    | '/embedded'
+    | '/embedded/_layout'
     | '/push/confirm'
     | '/push/create'
+    | '/campaigns/draft/$campaignId'
+    | '/campaigns/edit/$campaignId'
+    | '/embedded/_layout/create-campaign'
+    | '/embedded/_layout/mint'
+    | '/embedded/_layout/purchase-tracker'
     | '/product/$id/funding'
     | '/product/$id/setup-status'
     | '/product/$id/team'
     | '/product/$id/'
+    | '/campaigns/draft/$campaignId/metrics'
+    | '/campaigns/draft/$campaignId/validation'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -191,8 +374,17 @@ export interface RootRouteChildren {
   MintRoute: typeof MintRoute
   NotFoundRoute: typeof NotFoundRoute
   SettingsRoute: typeof SettingsRoute
+  CampaignsCampaignIdRoute: typeof CampaignsCampaignIdRoute
+  CampaignsListRoute: typeof CampaignsListRoute
+  CampaignsMetricsRoute: typeof CampaignsMetricsRoute
+  CampaignsNewRoute: typeof CampaignsNewRoute
+  CampaignsPerformanceRoute: typeof CampaignsPerformanceRoute
+  CampaignsValidationRoute: typeof CampaignsValidationRoute
+  EmbeddedRoute: typeof EmbeddedRouteWithChildren
   PushConfirmRoute: typeof PushConfirmRoute
   PushCreateRoute: typeof PushCreateRoute
+  CampaignsDraftCampaignIdRoute: typeof CampaignsDraftCampaignIdRouteWithChildren
+  CampaignsEditCampaignIdRoute: typeof CampaignsEditCampaignIdRoute
   ProductIdFundingRoute: typeof ProductIdFundingRoute
   ProductIdSetupStatusRoute: typeof ProductIdSetupStatusRoute
   ProductIdTeamRoute: typeof ProductIdTeamRoute
@@ -201,6 +393,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/embedded': {
+      id: '/embedded'
+      path: '/embedded'
+      fullPath: '/embedded'
+      preLoaderRoute: typeof EmbeddedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/settings': {
       id: '/settings'
       path: '/settings'
@@ -264,6 +463,55 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PushConfirmRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/embedded/_layout': {
+      id: '/embedded/_layout'
+      path: '/embedded'
+      fullPath: '/embedded'
+      preLoaderRoute: typeof EmbeddedLayoutRouteImport
+      parentRoute: typeof EmbeddedRoute
+    }
+    '/campaigns/validation': {
+      id: '/campaigns/validation'
+      path: '/campaigns/validation'
+      fullPath: '/campaigns/validation'
+      preLoaderRoute: typeof CampaignsValidationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/campaigns/performance': {
+      id: '/campaigns/performance'
+      path: '/campaigns/performance'
+      fullPath: '/campaigns/performance'
+      preLoaderRoute: typeof CampaignsPerformanceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/campaigns/new': {
+      id: '/campaigns/new'
+      path: '/campaigns/new'
+      fullPath: '/campaigns/new'
+      preLoaderRoute: typeof CampaignsNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/campaigns/metrics': {
+      id: '/campaigns/metrics'
+      path: '/campaigns/metrics'
+      fullPath: '/campaigns/metrics'
+      preLoaderRoute: typeof CampaignsMetricsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/campaigns/list': {
+      id: '/campaigns/list'
+      path: '/campaigns/list'
+      fullPath: '/campaigns/list'
+      preLoaderRoute: typeof CampaignsListRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/campaigns/$campaignId': {
+      id: '/campaigns/$campaignId'
+      path: '/campaigns/$campaignId'
+      fullPath: '/campaigns/$campaignId'
+      preLoaderRoute: typeof CampaignsCampaignIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/product/$id/': {
       id: '/product/$id/'
       path: '/product/$id'
@@ -292,8 +540,102 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProductIdFundingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/embedded/_layout/purchase-tracker': {
+      id: '/embedded/_layout/purchase-tracker'
+      path: '/purchase-tracker'
+      fullPath: '/embedded/purchase-tracker'
+      preLoaderRoute: typeof EmbeddedLayoutPurchaseTrackerRouteImport
+      parentRoute: typeof EmbeddedLayoutRoute
+    }
+    '/embedded/_layout/mint': {
+      id: '/embedded/_layout/mint'
+      path: '/mint'
+      fullPath: '/embedded/mint'
+      preLoaderRoute: typeof EmbeddedLayoutMintRouteImport
+      parentRoute: typeof EmbeddedLayoutRoute
+    }
+    '/embedded/_layout/create-campaign': {
+      id: '/embedded/_layout/create-campaign'
+      path: '/create-campaign'
+      fullPath: '/embedded/create-campaign'
+      preLoaderRoute: typeof EmbeddedLayoutCreateCampaignRouteImport
+      parentRoute: typeof EmbeddedLayoutRoute
+    }
+    '/campaigns/edit/$campaignId': {
+      id: '/campaigns/edit/$campaignId'
+      path: '/campaigns/edit/$campaignId'
+      fullPath: '/campaigns/edit/$campaignId'
+      preLoaderRoute: typeof CampaignsEditCampaignIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/campaigns/draft/$campaignId': {
+      id: '/campaigns/draft/$campaignId'
+      path: '/campaigns/draft/$campaignId'
+      fullPath: '/campaigns/draft/$campaignId'
+      preLoaderRoute: typeof CampaignsDraftCampaignIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/campaigns/draft/$campaignId/validation': {
+      id: '/campaigns/draft/$campaignId/validation'
+      path: '/validation'
+      fullPath: '/campaigns/draft/$campaignId/validation'
+      preLoaderRoute: typeof CampaignsDraftCampaignIdValidationRouteImport
+      parentRoute: typeof CampaignsDraftCampaignIdRoute
+    }
+    '/campaigns/draft/$campaignId/metrics': {
+      id: '/campaigns/draft/$campaignId/metrics'
+      path: '/metrics'
+      fullPath: '/campaigns/draft/$campaignId/metrics'
+      preLoaderRoute: typeof CampaignsDraftCampaignIdMetricsRouteImport
+      parentRoute: typeof CampaignsDraftCampaignIdRoute
+    }
   }
 }
+
+interface EmbeddedLayoutRouteChildren {
+  EmbeddedLayoutCreateCampaignRoute: typeof EmbeddedLayoutCreateCampaignRoute
+  EmbeddedLayoutMintRoute: typeof EmbeddedLayoutMintRoute
+  EmbeddedLayoutPurchaseTrackerRoute: typeof EmbeddedLayoutPurchaseTrackerRoute
+}
+
+const EmbeddedLayoutRouteChildren: EmbeddedLayoutRouteChildren = {
+  EmbeddedLayoutCreateCampaignRoute: EmbeddedLayoutCreateCampaignRoute,
+  EmbeddedLayoutMintRoute: EmbeddedLayoutMintRoute,
+  EmbeddedLayoutPurchaseTrackerRoute: EmbeddedLayoutPurchaseTrackerRoute,
+}
+
+const EmbeddedLayoutRouteWithChildren = EmbeddedLayoutRoute._addFileChildren(
+  EmbeddedLayoutRouteChildren,
+)
+
+interface EmbeddedRouteChildren {
+  EmbeddedLayoutRoute: typeof EmbeddedLayoutRouteWithChildren
+}
+
+const EmbeddedRouteChildren: EmbeddedRouteChildren = {
+  EmbeddedLayoutRoute: EmbeddedLayoutRouteWithChildren,
+}
+
+const EmbeddedRouteWithChildren = EmbeddedRoute._addFileChildren(
+  EmbeddedRouteChildren,
+)
+
+interface CampaignsDraftCampaignIdRouteChildren {
+  CampaignsDraftCampaignIdMetricsRoute: typeof CampaignsDraftCampaignIdMetricsRoute
+  CampaignsDraftCampaignIdValidationRoute: typeof CampaignsDraftCampaignIdValidationRoute
+}
+
+const CampaignsDraftCampaignIdRouteChildren: CampaignsDraftCampaignIdRouteChildren =
+  {
+    CampaignsDraftCampaignIdMetricsRoute: CampaignsDraftCampaignIdMetricsRoute,
+    CampaignsDraftCampaignIdValidationRoute:
+      CampaignsDraftCampaignIdValidationRoute,
+  }
+
+const CampaignsDraftCampaignIdRouteWithChildren =
+  CampaignsDraftCampaignIdRoute._addFileChildren(
+    CampaignsDraftCampaignIdRouteChildren,
+  )
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -303,8 +645,17 @@ const rootRouteChildren: RootRouteChildren = {
   MintRoute: MintRoute,
   NotFoundRoute: NotFoundRoute,
   SettingsRoute: SettingsRoute,
+  CampaignsCampaignIdRoute: CampaignsCampaignIdRoute,
+  CampaignsListRoute: CampaignsListRoute,
+  CampaignsMetricsRoute: CampaignsMetricsRoute,
+  CampaignsNewRoute: CampaignsNewRoute,
+  CampaignsPerformanceRoute: CampaignsPerformanceRoute,
+  CampaignsValidationRoute: CampaignsValidationRoute,
+  EmbeddedRoute: EmbeddedRouteWithChildren,
   PushConfirmRoute: PushConfirmRoute,
   PushCreateRoute: PushCreateRoute,
+  CampaignsDraftCampaignIdRoute: CampaignsDraftCampaignIdRouteWithChildren,
+  CampaignsEditCampaignIdRoute: CampaignsEditCampaignIdRoute,
   ProductIdFundingRoute: ProductIdFundingRoute,
   ProductIdSetupStatusRoute: ProductIdSetupStatusRoute,
   ProductIdTeamRoute: ProductIdTeamRoute,
