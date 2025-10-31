@@ -1,5 +1,3 @@
-"use client";
-
 import { useNavigate } from "@tanstack/react-router";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import styles from "./index.module.css";

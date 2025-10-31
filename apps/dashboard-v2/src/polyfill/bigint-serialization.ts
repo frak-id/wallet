@@ -1,5 +1,3 @@
-"use client";
-
 export type {}; // This line makes the file an external module
 
 declare global {

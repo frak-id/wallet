@@ -1,5 +1,3 @@
-"use client";
-
 import { useSiweAuthenticate } from "@frak-labs/react-sdk";
 import { ClientOnly } from "@frak-labs/ui/component/ClientOnly";
 import { Spinner } from "@frak-labs/ui/component/Spinner";
