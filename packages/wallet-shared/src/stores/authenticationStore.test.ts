@@ -115,11 +115,11 @@ describe("authenticationStore", () => {
                     id: "cred-123",
                     response: {
                         metadata: {
-                            challenge: "test-challenge",
-                            crossOrigin: false,
-                            origin: "https://example.com",
-                            type: "webauthn.get",
-                            userVerified: true,
+                            authenticatorData: "0x1234",
+                            challengeIndex: 0,
+                            clientDataJSON: "test-client-data",
+                            typeIndex: 0,
+                            userVerificationRequired: true,
                         },
                         signature: {
                             r: 0n,
@@ -127,7 +127,7 @@ describe("authenticationStore", () => {
                             yParity: 0,
                         },
                     },
-                } as AuthenticationResponseJSON,
+                } satisfies AuthenticationResponseJSON,
                 challenge: "0x746573742d6d657373616765",
             };
 

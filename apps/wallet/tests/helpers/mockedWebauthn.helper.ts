@@ -161,6 +161,7 @@ export class MockedWebAuthNHelper {
                         rawId: response.rawId,
                         authenticatorAttachment:
                             response.authenticatorAttachment,
+                        toJSON: () => ({}),
                         response: {
                             attestationObject: base64URLStringToBuffer(
                                 response.response.attestationObject
@@ -218,6 +219,7 @@ export class MockedWebAuthNHelper {
                         rawId: response.rawId,
                         authenticatorAttachment:
                             response.authenticatorAttachment,
+                        toJSON: () => ({}),
                         response: {
                             authenticatorData: base64URLStringToBuffer(
                                 response.response.authenticatorData

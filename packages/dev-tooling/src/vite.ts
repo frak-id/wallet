@@ -34,8 +34,6 @@ const vendorChunks = {
         "node_modules/viem",
         "node_modules/ox",
         "node_modules/permissionless",
-        "node_modules/@simplewebauthn",
-        "node_modules/@peculiar",
         "node_modules/@noble",
         "node_modules/@scure",
     ],

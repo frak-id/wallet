@@ -86,7 +86,7 @@ export default {
                         // Blockchain libraries - viem + wagmi + all crypto
                         {
                             name: "blockchain-vendor",
-                            test: /node_modules[\\/](viem|0x|wagmi|@wagmi|permissionless|@simplewebauthn|@peculiar|@noble|@scure)/,
+                            test: /node_modules[\\/](viem|0x|wagmi|@wagmi|permissionless|@noble|@scure)/,
                             priority: 35,
                         },
 
