@@ -1,0 +1,57 @@
+.formGoals__label {
+    display: flex !important;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.formGoals__label_disabled {
+    display: flex !important;
+    align-items: center;
+    color: var(--frak-color-grayText);
+    gap: 8px;
+}
+
+.formGoals__badges {
+    display: flex;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.formGoals__informationWrapper {
+    max-width: 428px;
+    margin-left: auto;
+}
+
+.formGoals__information {
+    padding: 16px;
+    color: var(--frak-color-pale-sky);
+}
+
+.formGoals__information--awareness {
+    background: #fdf1e8;
+}
+
+.formGoals__information--traffic {
+    background: #d8e1ff;
+}
+
+.formGoals__information--registration {
+    background: #e8fde9;
+}
+
+.formGoals__information--sales {
+    background: #fde8eb;
+}
+
+.formGoals__information--retention {
+    background: #fdfce8;
+}
+
+.formGoals__title {
+    color: var(--frak-color-tuna);
+    font-size: 16px;
+    font-weight: 500;
+}

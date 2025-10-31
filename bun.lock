@@ -159,6 +159,7 @@
         "date-fns": "^4.1.0",
         "iron-session": "^8.0.4",
         "ky": "^1.13.0",
+        "lru-cache": "^11.2.2",
         "lucide-react": "^0.547.0",
         "mongodb": "^6.20.0",
         "nitro": "^3.0.1-alpha.0",

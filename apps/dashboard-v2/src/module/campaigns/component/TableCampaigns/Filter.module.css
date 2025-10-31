@@ -1,0 +1,22 @@
+.filters {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+    align-items: center;
+}
+
+.filters__item {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.filters__search {
+    width: 300px;
+}
+
+.filters__datePickerTrigger {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}

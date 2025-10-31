@@ -1,0 +1,15 @@
+.tooltipTable {
+    position: absolute;
+    left: -1px;
+    top: -1px;
+    z-index: 1;
+    background-color: var(--frak-color-white);
+    border: 1px solid #d5d5d5;
+    border-radius: 8px;
+    padding: 20px;
+    max-width: 330px;
+    width: max-content !important;
+    white-space: normal;
+    font-size: 16px;
+    font-weight: 400;
+}

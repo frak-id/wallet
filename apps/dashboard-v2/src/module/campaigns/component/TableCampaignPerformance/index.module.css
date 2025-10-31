@@ -1,0 +1,20 @@
+.filters {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    gap: 16px;
+}
+
+.filters__item {
+    display: flex;
+    gap: 16px;
+    flex: 1;
+}
+
+.filters__item:last-child {
+    justify-content: flex-end;
+}
+
+.filters__search {
+    max-width: 320px;
+}
