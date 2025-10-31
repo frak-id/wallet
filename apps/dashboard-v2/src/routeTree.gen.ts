@@ -16,6 +16,7 @@ import { Route as NotFoundRouteImport } from './routes/not-found'
 import { Route as MintRouteImport } from './routes/mint'
 import { Route as MembersRouteImport } from './routes/members'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as DemoRouteImport } from './routes/demo'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PushCreateRouteImport } from './routes/push/create'
@@ -69,6 +70,11 @@ const MembersRoute = MembersRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DemoRoute = DemoRouteImport.update({
+  id: '/demo',
+  path: '/demo',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardRoute = DashboardRouteImport.update({
@@ -189,6 +195,7 @@ const CampaignsDraftCampaignIdMetricsRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
+  '/demo': typeof DemoRoute
   '/login': typeof LoginRoute
   '/members': typeof MembersRoute
   '/mint': typeof MintRoute
@@ -218,6 +225,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
+  '/demo': typeof DemoRoute
   '/login': typeof LoginRoute
   '/members': typeof MembersRoute
   '/mint': typeof MintRoute
@@ -248,6 +256,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
+  '/demo': typeof DemoRoute
   '/login': typeof LoginRoute
   '/members': typeof MembersRoute
   '/mint': typeof MintRoute
@@ -280,6 +289,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/dashboard'
+    | '/demo'
     | '/login'
     | '/members'
     | '/mint'
@@ -309,6 +319,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/dashboard'
+    | '/demo'
     | '/login'
     | '/members'
     | '/mint'
@@ -338,6 +349,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/dashboard'
+    | '/demo'
     | '/login'
     | '/members'
     | '/mint'
@@ -369,6 +381,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DashboardRoute: typeof DashboardRoute
+  DemoRoute: typeof DemoRoute
   LoginRoute: typeof LoginRoute
   MembersRoute: typeof MembersRoute
   MintRoute: typeof MintRoute
@@ -433,6 +446,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/demo': {
+      id: '/demo'
+      path: '/demo'
+      fullPath: '/demo'
+      preLoaderRoute: typeof DemoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard': {
@@ -640,6 +660,7 @@ const CampaignsDraftCampaignIdRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DashboardRoute: DashboardRoute,
+  DemoRoute: DemoRoute,
   LoginRoute: LoginRoute,
   MembersRoute: MembersRoute,
   MintRoute: MintRoute,
