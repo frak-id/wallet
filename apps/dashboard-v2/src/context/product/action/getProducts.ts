@@ -1,9 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
-import { getRequestHeader } from "@tanstack/react-start/server";
 import { type Address, type Hex, toHex } from "viem";
 import { indexerApi } from "@/context/api/indexerApi";
 import { getSafeSession } from "@/context/auth/session";
 import { getMyProductsMock } from "@/context/product/action/mock";
+import { isDemoModeActive } from "@/module/common/utils/isDemoMode";
 
 type ApiResult = {
     id: string; // bigint
@@ -18,17 +18,6 @@ type GetProductResult = {
     owner: { id: Hex; name: string; domain: string }[];
     operator: { id: Hex; name: string; domain: string }[];
 };
-
-/**
- * Check if demo mode is active from cookies
- */
-function isDemoModeActive(): boolean {
-    const cookies = getRequestHeader("cookie") || "";
-    const demoModeCookie = cookies
-        .split(";")
-        .find((c) => c.trim().startsWith("business_demoMode="));
-    return demoModeCookie?.split("=")[1] === "true";
-}
 
 /**
  * Get all the user products
@@ -69,7 +58,7 @@ async function getProducts({ wallet }: { wallet: Address }) {
 export const getMyProducts = createServerFn({ method: "GET" }).handler(
     async () => {
         // Check if demo mode is active
-        if (isDemoModeActive()) {
+        if (await isDemoModeActive()) {
             return getMyProductsMock();
         }
 

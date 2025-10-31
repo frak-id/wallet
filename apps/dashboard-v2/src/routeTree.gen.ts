@@ -12,9 +12,12 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as NotFoundRouteImport } from './routes/not-found'
 import { Route as MintRouteImport } from './routes/mint'
+import { Route as MembersRouteImport } from './routes/members'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PushCreateRouteImport } from './routes/push/create'
+import { Route as PushConfirmRouteImport } from './routes/push/confirm'
 import { Route as ProductIdIndexRouteImport } from './routes/product/$id/index'
 import { Route as ProductIdTeamRouteImport } from './routes/product/$id/team'
 import { Route as ProductIdSetupStatusRouteImport } from './routes/product/$id/setup-status'
@@ -35,6 +38,11 @@ const MintRoute = MintRouteImport.update({
   path: '/mint',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MembersRoute = MembersRouteImport.update({
+  id: '/members',
+  path: '/members',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -48,6 +56,16 @@ const DashboardRoute = DashboardRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PushCreateRoute = PushCreateRouteImport.update({
+  id: '/push/create',
+  path: '/push/create',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PushConfirmRoute = PushConfirmRouteImport.update({
+  id: '/push/confirm',
+  path: '/push/confirm',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProductIdIndexRoute = ProductIdIndexRouteImport.update({
@@ -75,9 +93,12 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/members': typeof MembersRoute
   '/mint': typeof MintRoute
   '/not-found': typeof NotFoundRoute
   '/settings': typeof SettingsRoute
+  '/push/confirm': typeof PushConfirmRoute
+  '/push/create': typeof PushCreateRoute
   '/product/$id/funding': typeof ProductIdFundingRoute
   '/product/$id/setup-status': typeof ProductIdSetupStatusRoute
   '/product/$id/team': typeof ProductIdTeamRoute
@@ -87,9 +108,12 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/members': typeof MembersRoute
   '/mint': typeof MintRoute
   '/not-found': typeof NotFoundRoute
   '/settings': typeof SettingsRoute
+  '/push/confirm': typeof PushConfirmRoute
+  '/push/create': typeof PushCreateRoute
   '/product/$id/funding': typeof ProductIdFundingRoute
   '/product/$id/setup-status': typeof ProductIdSetupStatusRoute
   '/product/$id/team': typeof ProductIdTeamRoute
@@ -100,9 +124,12 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/members': typeof MembersRoute
   '/mint': typeof MintRoute
   '/not-found': typeof NotFoundRoute
   '/settings': typeof SettingsRoute
+  '/push/confirm': typeof PushConfirmRoute
+  '/push/create': typeof PushCreateRoute
   '/product/$id/funding': typeof ProductIdFundingRoute
   '/product/$id/setup-status': typeof ProductIdSetupStatusRoute
   '/product/$id/team': typeof ProductIdTeamRoute
@@ -114,9 +141,12 @@ export interface FileRouteTypes {
     | '/'
     | '/dashboard'
     | '/login'
+    | '/members'
     | '/mint'
     | '/not-found'
     | '/settings'
+    | '/push/confirm'
+    | '/push/create'
     | '/product/$id/funding'
     | '/product/$id/setup-status'
     | '/product/$id/team'
@@ -126,9 +156,12 @@ export interface FileRouteTypes {
     | '/'
     | '/dashboard'
     | '/login'
+    | '/members'
     | '/mint'
     | '/not-found'
     | '/settings'
+    | '/push/confirm'
+    | '/push/create'
     | '/product/$id/funding'
     | '/product/$id/setup-status'
     | '/product/$id/team'
@@ -138,9 +171,12 @@ export interface FileRouteTypes {
     | '/'
     | '/dashboard'
     | '/login'
+    | '/members'
     | '/mint'
     | '/not-found'
     | '/settings'
+    | '/push/confirm'
+    | '/push/create'
     | '/product/$id/funding'
     | '/product/$id/setup-status'
     | '/product/$id/team'
@@ -151,9 +187,12 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DashboardRoute: typeof DashboardRoute
   LoginRoute: typeof LoginRoute
+  MembersRoute: typeof MembersRoute
   MintRoute: typeof MintRoute
   NotFoundRoute: typeof NotFoundRoute
   SettingsRoute: typeof SettingsRoute
+  PushConfirmRoute: typeof PushConfirmRoute
+  PushCreateRoute: typeof PushCreateRoute
   ProductIdFundingRoute: typeof ProductIdFundingRoute
   ProductIdSetupStatusRoute: typeof ProductIdSetupStatusRoute
   ProductIdTeamRoute: typeof ProductIdTeamRoute
@@ -183,6 +222,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MintRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/members': {
+      id: '/members'
+      path: '/members'
+      fullPath: '/members'
+      preLoaderRoute: typeof MembersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -202,6 +248,20 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/push/create': {
+      id: '/push/create'
+      path: '/push/create'
+      fullPath: '/push/create'
+      preLoaderRoute: typeof PushCreateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/push/confirm': {
+      id: '/push/confirm'
+      path: '/push/confirm'
+      fullPath: '/push/confirm'
+      preLoaderRoute: typeof PushConfirmRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/product/$id/': {
@@ -239,9 +299,12 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DashboardRoute: DashboardRoute,
   LoginRoute: LoginRoute,
+  MembersRoute: MembersRoute,
   MintRoute: MintRoute,
   NotFoundRoute: NotFoundRoute,
   SettingsRoute: SettingsRoute,
+  PushConfirmRoute: PushConfirmRoute,
+  PushCreateRoute: PushCreateRoute,
   ProductIdFundingRoute: ProductIdFundingRoute,
   ProductIdSetupStatusRoute: ProductIdSetupStatusRoute,
   ProductIdTeamRoute: ProductIdTeamRoute,
