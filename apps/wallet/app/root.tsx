@@ -14,7 +14,7 @@ import {
 } from "@/module/common/component/PwaInstall";
 import { TopLoader } from "@/module/common/component/TopLoader";
 import { RootProvider } from "@/module/common/provider/RootProvider";
-import { ReactScanWrapper } from "@/module/root/component/ReactScanWrapper";
+// import { ReactScanWrapper } from "@/module/root/component/ReactScanWrapper";
 import { rootConfig } from "@/module/root/config";
 import { DetectPWA } from "@/module/wallet/component/DetectPWA";
 import type { Route } from "./+types/root";
@@ -96,7 +96,7 @@ export function Layout({ children }: { children: ReactNode }) {
     return (
         <html lang={"en"}>
             <head>
-                <ReactScanWrapper />
+                {/* <ReactScanWrapper /> */}
                 <meta charSet="utf-8" />
                 <meta
                     name="viewport"

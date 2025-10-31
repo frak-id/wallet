@@ -78,7 +78,8 @@
     "jsdom": "^27.0.1",
     "msw": "^2.11.6",
     "typescript": "catalog:",
-    "vite": "^7.1.12",
+    "rolldown-vite": "^7.1.20",
+    "vite": "npm:rolldown-vite@^7.1.20",
     "vitest": "^4.0.4"
   }
 }

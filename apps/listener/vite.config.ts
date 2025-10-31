@@ -62,16 +62,12 @@ export default {
         rolldownOptions: {
             // Enable aggressive tree shaking
             treeshake: {
-                preset: "recommended",
                 moduleSideEffects: "no-external", // External packages (node_modules) have no side effects
                 propertyReadSideEffects: false, // Reading properties doesn't cause side effects
-                tryCatchDeoptimization: false, // Don't disable tree shaking in try-catch
             },
             optimization: {
                 // This will to remove some stuff that will be defined, like stage depend variable
                 inlineConst: { mode: "all", pass: 3 },
-                // Minify module IDs for smaller bundle
-                moduleIds: "deterministic",
             },
             output: {
                 advancedChunks: {
