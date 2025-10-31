@@ -1,3 +1,4 @@
+import { isRunningInProd } from "@frak-labs/app-essentials";
 import { TanStackDevtools } from "@tanstack/react-devtools";
 import {
     createRootRoute,
@@ -31,9 +32,82 @@ export const Route = createRootRoute({
                 title: "Frak Business Hub | Manage Your Web3 Products",
             },
             {
+                name: "application-name",
+                content: "Frak Business Hub",
+            },
+            {
                 name: "description",
                 content:
                     "Frak Business Hub: Deploy, manage, and optimize your Web3 products. Create blockchain-based campaigns, track interactions, and grow your community in the decentralized ecosystem.",
+            },
+            {
+                name: "author",
+                content: "Frak labs",
+            },
+            {
+                name: "author",
+                content: "Rodolphe Stoclin",
+            },
+            {
+                name: "author",
+                content: "Quentin Nivelais",
+            },
+            {
+                name: "creator",
+                content: "Frak labs",
+            },
+            {
+                name: "publisher",
+                content: "Frak labs",
+            },
+            {
+                name: "keywords",
+                content:
+                    "frak, frak-wallet, web3, blockchain, product management, decentralized, business dashboard, campaign management, community building",
+            },
+            {
+                property: "og:type",
+                content: "website",
+            },
+            {
+                property: "og:url",
+                content: isRunningInProd
+                    ? "https://business.frak.id"
+                    : "https://business-dev.frak.id",
+            },
+            {
+                property: "og:title",
+                content: "Frak Business Hub | Manage Your Web3 Products",
+            },
+            {
+                property: "og:description",
+                content:
+                    "Deploy, manage, and optimize your Web3 products with Frak Business Hub. Create blockchain-based campaigns and grow your community.",
+            },
+            {
+                property: "og:site_name",
+                content: "Frak Business Hub",
+            },
+            {
+                name: "twitter:card",
+                content: "summary_large_image",
+            },
+            {
+                name: "twitter:site",
+                content: "@frak_defi",
+            },
+            {
+                name: "twitter:title",
+                content: "Frak Business Hub | Manage Your Web3 Products",
+            },
+            {
+                name: "twitter:description",
+                content:
+                    "Deploy, manage, and optimize your Web3 products with Frak Business Hub. Create blockchain-based campaigns and grow your community.",
+            },
+            {
+                name: "google",
+                content: "notranslate",
             },
         ],
         links: [
@@ -69,6 +143,18 @@ export const Route = createRootRoute({
                 href: "/manifest.json",
             },
             {
+                rel: "author",
+                href: "https://frak.id/",
+            },
+            {
+                rel: "author",
+                href: "https://github.com/srod",
+            },
+            {
+                rel: "author",
+                href: "https://github.com/KONFeature",
+            },
+            {
                 rel: "stylesheet",
                 href: globalCss,
             },
@@ -91,6 +177,9 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <html lang="en">
             <head>
                 <HeadContent />
+                {process.env.DEBUG === "true" && (
+                    <script src="//unpkg.com/react-scan/dist/auto.global.js" />
+                )}
             </head>
             <body>
                 <RootProvider>
