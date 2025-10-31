@@ -1,5 +1,3 @@
-"use client";
-
 import { useMediaQuery } from "@frak-labs/ui/hook/useMediaQuery";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useLocation } from "@tanstack/react-router";

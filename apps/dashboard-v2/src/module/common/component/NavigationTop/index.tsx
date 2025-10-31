@@ -1,5 +1,3 @@
-"use client";
-
 import { ButtonRefresh } from "@frak-labs/ui/component/ButtonRefresh";
 import { DemoModeBadge } from "@/module/common/component/DemoModeBadge";
 import { NavigationProfile } from "@/module/common/component/NavigationProfile";
