@@ -20,7 +20,9 @@ export default defineConfig({
     // Replace some env variable when it's needed
     define: {
         "process.env.STAGE": JSON.stringify(process.env.STAGE),
-        "process.env.FRAK_WALLET_URL": JSON.stringify(process.env.FRAK_WALLET_URL),
+        "process.env.FRAK_WALLET_URL": JSON.stringify(
+            process.env.FRAK_WALLET_URL
+        ),
         "process.env.BACKEND_URL": JSON.stringify(process.env.BACKEND_URL),
         "process.env.INDEXER_URL": JSON.stringify(process.env.INDEXER_URL),
         "process.env.ERPC_URL": JSON.stringify(process.env.ERPC_URL),
@@ -31,7 +33,9 @@ export default defineConfig({
             process.env.OPEN_PANEL_BUSINESS_CLIENT_ID
         ),
         "process.env.DRPC_API_KEY": JSON.stringify(process.env.DRPC_API_KEY),
-        "process.env.NEXUS_RPC_SECRET": JSON.stringify(process.env.NEXUS_RPC_SECRET),
+        "process.env.NEXUS_RPC_SECRET": JSON.stringify(
+            process.env.NEXUS_RPC_SECRET
+        ),
         "process.env.FUNDING_ON_RAMP_URL": JSON.stringify(
             process.env.FUNDING_ON_RAMP_URL
         ),
