@@ -1,5 +1,6 @@
 import { isRunningLocally } from "@frak-labs/app-essentials";
 import { createServerFn } from "@tanstack/react-start";
+import { getRequest } from "@tanstack/react-start/server";
 import type { SessionOptions } from "iron-session";
 import { sealData, unsealData } from "iron-session";
 import { type Hex, keccak256, toHex } from "viem";
@@ -71,7 +72,10 @@ function buildSetCookieHeader(
  */
 function buildDeleteCookieHeader(
     name: string,
-    options: Pick<SessionOptions["cookieOptions"], "domain" | "path"> = {}
+    options: Pick<
+        NonNullable<SessionOptions["cookieOptions"]>,
+        "domain" | "path"
+    > = {}
 ): string {
     const cookieParts = [
         `${name}=`,
@@ -101,7 +105,8 @@ export const setSession = createServerFn({ method: "POST" })
         }
 
         // Ensure the siwe message is valid
-        const host = ctx.request.headers.get("host") ?? "";
+        const request = getRequest();
+        const host = request.headers.get("host") ?? "";
         const isValid = validateSiweMessage({
             message: siweMessage,
             domain: host,
@@ -192,9 +197,10 @@ export const deleteSession = createServerFn({ method: "POST" }).handler(
  * Invalid sessions should be cleared by calling deleteSession explicitly
  */
 export const getSession = createServerFn({ method: "GET" }).handler(
-    async (ctx): Promise<AuthSessionClient | null> => {
+    async (): Promise<AuthSessionClient | null> => {
         // Get the session cookie
-        const sealed = getCookie(ctx.request, sessionOptions.cookieName);
+        const request = getRequest();
+        const sealed = getCookie(request, sessionOptions.cookieName);
         if (!sealed) {
             return null;
         }
