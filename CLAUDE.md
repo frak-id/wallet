@@ -116,7 +116,7 @@ bun run changeset:release
 - **`packages/`** - Shared internal libraries (workspace-only)
   - `wallet-shared/` - Shared code exclusively for wallet and listener apps (~97 files)
     - **Purpose**: Central package for wallet/listener functionality (NOT used by dashboard or other apps)
-    - **Architecture**: Well-organized into 13 domain-focused subdirectories
+    - **Architecture**: Well-organized into 15 domain-focused subdirectories
     - **Structure**:
       - `authentication/` - WebAuthn authentication (hooks, components, session management)
       - `wallet/` - Smart wallet operations (hooks, actions, balance queries)
@@ -132,6 +132,7 @@ bun run changeset:release
       - `sdk/` - SDK lifecycle utilities and event handlers
       - `providers/` - React context providers (FrakContext for SDK integration)
       - `polyfills/` - Runtime polyfills (BigInt serialization)
+      - `test/` - Testing utilities and shared test helpers
     - **Key Dependencies**:
       - Workspace: `@frak-labs/ui`, `@frak-labs/app-essentials`, `@frak-labs/client`, `@frak-labs/core-sdk`, `@frak-labs/frame-connector`
       - External: React 19, Zustand, Viem, Wagmi, TanStack Query, WebAuthn, idb-keyval, OpenPanel

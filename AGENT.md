@@ -3,9 +3,9 @@
 ## Commands
 - **Build**: `bun sst build --stage dev` (infra), `bun run --filter '*' typecheck` (all), `bun run --cwd apps/wallet build`
 - **Dev**: `bun sst dev` (full stack), `bun run --cwd apps/wallet dev` (wallet only)
-- **Deploy**: Use CI only - do not deploy locally. 
+- **Deploy**: Prefer CI for production deployments. Local deployment available: `bun run deploy` (AWS dev), `bun run deploy:prod` (AWS prod), `bun run deploy-gcp:staging`/`deploy-gcp:prod` (GCP backend only) 
 - **Lint**: `biome lint .`, `biome check --write .` (format), `biome check .` (check only)
-- **Test**: Use `bun test` in specific package directories (no global test command)
+- **Test**: Use `bun run test` in apps/wallet, apps/business, and apps/listener directories (IMPORTANT: use "bun run test", not "bun test")
 - **TypeCheck**: `bun run --filter '*' typecheck` (all packages), `tsc --noEmit` (individual)
 
 ## Tech Stack
