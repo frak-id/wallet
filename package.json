@@ -67,7 +67,11 @@
     "typescript": "^5.9.3",
     "zustand": "^5.0.8",
     "wagmi": "^2.18.1",
-    "@wagmi/core": "^2.22.1"
+    "@wagmi/core": "^2.22.1",
+    "@tanstack/react-query": "^5.90.6",
+    "@tanstack/react-query-devtools": "^5.90.2",
+    "@tanstack/react-query-persist-client": "^5.90.8",
+    "@tanstack/query-sync-storage-persister": "^5.90.7"
   },
   "dependencies": {
     "caniuse-lite": "^1.0.30001751"
