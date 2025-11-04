@@ -10,7 +10,7 @@ export default defineConfig({
         }),
     ],
     test: {
-        name: "dashboard-v2-unit",
+        name: "business-unit",
         globals: true,
         environment: "jsdom",
         setupFiles: ["./tests/vitest-setup.ts"],

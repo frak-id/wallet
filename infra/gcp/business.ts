@@ -46,7 +46,7 @@ if (!$dev) {
             dockerfile: {
                 location: path.join(
                     $cli.paths.root,
-                    "apps/dashboard-v2/Dockerfile"
+                    "apps/business/Dockerfile"
                 ),
             },
             // Non-secret build args
@@ -95,7 +95,7 @@ export const businessService = new KubernetesService(
         dev: {
             dev: {
                 command: "bun run dev",
-                directory: "apps/dashboard-v2",
+                directory: "apps/business",
                 autostart: true,
             },
             environment: businessEnv,

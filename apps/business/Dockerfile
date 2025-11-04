@@ -23,7 +23,7 @@ ENV ERPC_URL=$ERPC_URL
 ENV OPEN_PANEL_API_URL=$OPEN_PANEL_API_URL
 
 # Build business app with secrets mounted (not stored in layers)
-WORKDIR /app/apps/wallet
+WORKDIR /app/apps/business
 RUN --mount=type=secret,id=OPEN_PANEL_BUSINESS_CLIENT_ID \
     --mount=type=secret,id=DRPC_API_KEY \
     --mount=type=secret,id=NEXUS_RPC_SECRET \
@@ -40,8 +40,8 @@ FROM oven/bun
 WORKDIR /app
 
 # Copy the bundled stuff
-COPY --from=builder /app/apps/dashboard-v2/package.json .
-COPY --from=builder /app/apps/dashboard-v2/.output ./.output
+COPY --from=builder /app/apps/business/package.json .
+COPY --from=builder /app/apps/business/.output ./.output
 
 # Runtime port
 EXPOSE 3022
