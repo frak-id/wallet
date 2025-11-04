@@ -1,5 +1,6 @@
 import { isRunningInProd, isRunningLocally } from "@frak-labs/app-essentials";
 import { createServerFn } from "@tanstack/react-start";
+import { getRequest } from "@tanstack/react-start/server";
 import type { SessionOptions } from "iron-session";
 import { sealData } from "iron-session";
 import type { Address, Hex } from "viem";
@@ -54,13 +55,14 @@ function buildSetCookieHeader(
  */
 export const createDemoSession = createServerFn({ method: "POST" })
     .inputValidator((input: undefined) => input)
-    .handler(async (ctx) => {
+    .handler(async () => {
         // Block in production
         if (isRunningInProd) {
             throw new Error("Demo mode not available in production");
         }
 
-        const host = ctx.request.headers.get("host") ?? "localhost:3022";
+        const request = getRequest();
+        const host = request.headers.get("host") ?? "localhost:3022";
         const protocol = isRunningLocally ? "http" : "https";
         const origin = `${protocol}://${host}`;
 
