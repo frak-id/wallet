@@ -24,28 +24,22 @@ export const baseImage = new dockerbuild.Image("base-image", {
 /**
  * Create the elysia image
  */
-export const elysiaImage = new dockerbuild.Image(
-    "elysia-image",
-    {
-        context: {
-            location: $cli.paths.root,
-        },
-        dockerfile: {
-            location: path.join($cli.paths.root, "services/backend/Dockerfile"),
-        },
-        platforms: ["linux/amd64"],
-        buildArgs: {
-            NODE_ENV: "production",
-            STAGE: normalizedStageName,
-            BASE_IMAGE: baseImage.ref,
-        },
-        push: true,
-        tags: getRegistryPath("backend"),
+export const elysiaImage = new dockerbuild.Image("elysia-image", {
+    context: {
+        location: $cli.paths.root,
     },
-    {
-        dependsOn: [baseImage],
-    }
-);
+    dockerfile: {
+        location: path.join($cli.paths.root, "services/backend/Dockerfile"),
+    },
+    platforms: ["linux/amd64"],
+    buildArgs: {
+        NODE_ENV: "production",
+        STAGE: normalizedStageName,
+        BASE_IMAGE: baseImage.ref,
+    },
+    push: true,
+    tags: getRegistryPath("backend"),
+});
 
 /**
  * Create the db migration image

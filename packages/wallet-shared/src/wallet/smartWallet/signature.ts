@@ -1,3 +1,4 @@
+import { WebAuthN } from "@frak-labs/app-essentials";
 import { WebAuthnP256 } from "ox";
 import { tryit } from "radash";
 import {
@@ -121,6 +122,8 @@ export async function signHashViaWebAuthN({
     const { metadata, signature, raw } = await WebAuthnP256.sign({
         challenge: hash,
         credentialId: wallet.authenticatorId,
+        rpId: WebAuthN.rpId,
+        userVerification: "required",
     });
 
     // Store the authentication action

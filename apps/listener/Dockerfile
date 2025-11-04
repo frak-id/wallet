@@ -4,8 +4,14 @@ FROM ${BASE_IMAGE} AS builder
 
 WORKDIR /app
 
-# SDK is already built in the base image - just copy listener source files
-COPY apps/listener/ ./apps/listener/
+# Install dependencies (SDK already built in base image)
+RUN bun install --frozen-lockfile
+
+# Copy required packages
+COPY packages/ ./packages/
+
+# Copy listener app source files
+COPY apps/listener ./apps/listener
 
 # Non-secret build args
 ARG NODE_ENV

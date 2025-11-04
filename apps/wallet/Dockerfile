@@ -4,8 +4,14 @@ FROM ${BASE_IMAGE} AS builder
 
 WORKDIR /app
 
-# SDK is already built in the base image - just copy wallet source files
-COPY apps/wallet/ ./apps/wallet/
+# Install dependencies (SDK already built in base image)
+RUN bun install --frozen-lockfile
+
+# Copy required packages
+COPY packages/ ./packages/
+
+# Copy wallet app source files
+COPY apps/wallet ./apps/wallet
 
 # Non-secret build args
 ARG NODE_ENV

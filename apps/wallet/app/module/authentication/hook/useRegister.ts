@@ -44,11 +44,6 @@ export function useRegister(options?: UseMutationOptions<Session>) {
                     (cred) => cred.authenticatorId
                 ),
             });
-            console.log("Output", {
-                id,
-                publicKey,
-                raw,
-            });
 
             // Verify it
             const encodedResponse = btoa(JSON.stringify(raw));

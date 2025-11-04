@@ -7,8 +7,40 @@ WORKDIR /app
 # Copy root package files
 COPY package.json bun.lock tsconfig.json ./
 
-# Copy all workspace packages
-COPY . .
+# Copy stubs
+COPY .stubs/ ./.stubs/
+
+# Copy only package.json files from workspace packages (for dependency resolution)
+# Apps
+COPY apps/dashboard/package.json ./apps/dashboard/
+COPY apps/dashboard-admin/package.json ./apps/dashboard-admin/
+COPY apps/listener/package.json ./apps/listener/
+COPY apps/wallet/package.json ./apps/wallet/
+
+# Services
+COPY services/backend/package.json ./services/backend/
+
+# Packages (only package.json)
+COPY packages/app-essentials/package.json ./packages/app-essentials/
+COPY packages/browserslist-config/package.json ./packages/browserslist-config/
+COPY packages/client/package.json ./packages/client/
+COPY packages/dev-tooling/package.json ./packages/dev-tooling/
+COPY packages/ui/package.json ./packages/ui/
+COPY packages/wallet-shared/package.json ./packages/wallet-shared/
+
+# Examples
+COPY example/components/package.json ./example/components/
+COPY example/vanilla-js/package.json ./example/vanilla-js/
+COPY example/wallet-ethcc/package.json ./example/wallet-ethcc/
+
+# Copy full SDK and RPC package (needed for building)
+COPY sdk ./sdk
+COPY packages/rpc ./packages/rpc
+COPY packages/dev-tooling ./packages/dev-tooling
+COPY packages/browserslist-config ./packages/browserslist-config
+
+# Needed since it's this package exporting the global window with Frak info
+COPY packages/ui ./packages/ui
 
 # Install dependencies
 RUN bun install --frozen-lockfile
@@ -16,4 +48,8 @@ RUN bun install --frozen-lockfile
 # Build SDK packages (this is the expensive 3-4min step we want to do once)
 RUN bun run build:sdk
 
+# Remove node_modules to reduce image size (but keep package.json files for workspace resolution)
+RUN rm -rf node_modules
+
 # This layer can be cached and reused across all app builds
+# Other Dockerfiles should manually COPY the specific folders they need

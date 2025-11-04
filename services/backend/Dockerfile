@@ -10,7 +10,16 @@ ARG STAGE
 ENV NODE_ENV=production
 ENV STAGE=$STAGE
 
-# SDK is already built in the base image - just build the backend
+# Install dependencies (SDK already built in base image)
+RUN bun install --frozen-lockfile
+
+# Copy required packages
+COPY packages/ ./packages/
+
+# Copy backend service
+COPY services/backend ./services/backend
+
+# Build the backend
 RUN cd services/backend && bun run build
 
 # Start a new stage for the final image

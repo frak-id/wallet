@@ -42,85 +42,70 @@ const dependency: Resource[] = [];
 
 if (!$dev) {
     const { baseImage } = await import("./images");
-    // Build the custom Nginx image with frontend files built-in
-    const walletImage = new dockerbuild.Image(
-        "wallet",
-        {
-            context: {
-                location: $cli.paths.root,
-            },
-            dockerfile: {
-                location: path.join($cli.paths.root, "apps/wallet/Dockerfile"),
-            },
-            // Non-secret build args
-            buildArgs: {
-                NODE_ENV: "production",
-                BASE_IMAGE: baseImage.ref,
-                STAGE: walletEnv.STAGE,
-                BACKEND_URL: walletEnv.BACKEND_URL,
-                INDEXER_URL: walletEnv.INDEXER_URL,
-                ERPC_URL: walletEnv.ERPC_URL,
-                FRAK_WALLET_URL: walletEnv.FRAK_WALLET_URL,
-                OPEN_PANEL_API_URL: walletEnv.OPEN_PANEL_API_URL,
-            },
-            // Secrets passed via BuildKit (not stored in layers)
-            secrets: {
-                DRPC_API_KEY: walletEnv.DRPC_API_KEY,
-                PIMLICO_API_KEY: walletEnv.PIMLICO_API_KEY,
-                NEXUS_RPC_SECRET: walletEnv.NEXUS_RPC_SECRET,
-                VAPID_PUBLIC_KEY: walletEnv.VAPID_PUBLIC_KEY,
-                OPEN_PANEL_WALLET_CLIENT_ID:
-                    walletEnv.OPEN_PANEL_WALLET_CLIENT_ID,
-            },
-            platforms: ["linux/amd64"],
-            push: true,
-            tags: getRegistryPath("wallet"),
-        },
-        {
-            dependsOn: [baseImage],
-        }
-    );
 
     // Build the custom Nginx image with frontend files built-in
-    const listenerImage = new dockerbuild.Image(
-        "wallet-listener",
-        {
-            context: {
-                location: $cli.paths.root,
-            },
-            dockerfile: {
-                location: path.join(
-                    $cli.paths.root,
-                    "apps/listener/Dockerfile"
-                ),
-            },
-            // Non-secret build args
-            buildArgs: {
-                NODE_ENV: "production",
-                BASE_IMAGE: baseImage.ref,
-                STAGE: walletEnv.STAGE,
-                BACKEND_URL: walletEnv.BACKEND_URL,
-                INDEXER_URL: walletEnv.INDEXER_URL,
-                ERPC_URL: walletEnv.ERPC_URL,
-                FRAK_WALLET_URL: walletEnv.FRAK_WALLET_URL,
-                OPEN_PANEL_API_URL: walletEnv.OPEN_PANEL_API_URL,
-            },
-            // Secrets passed via BuildKit (not stored in layers)
-            secrets: {
-                DRPC_API_KEY: walletEnv.DRPC_API_KEY,
-                PIMLICO_API_KEY: walletEnv.PIMLICO_API_KEY,
-                NEXUS_RPC_SECRET: walletEnv.NEXUS_RPC_SECRET,
-                OPEN_PANEL_LISTENER_CLIENT_ID:
-                    walletEnv.OPEN_PANEL_LISTENER_CLIENT_ID,
-            },
-            platforms: ["linux/amd64"],
-            push: true,
-            tags: getRegistryPath("wallet-listener"),
+    const walletImage = new dockerbuild.Image("wallet", {
+        context: {
+            location: $cli.paths.root,
         },
-        {
-            dependsOn: [baseImage],
-        }
-    );
+        dockerfile: {
+            location: path.join($cli.paths.root, "apps/wallet/Dockerfile"),
+        },
+        // Non-secret build args
+        buildArgs: {
+            NODE_ENV: "production",
+            BASE_IMAGE: baseImage.ref,
+            STAGE: walletEnv.STAGE,
+            BACKEND_URL: walletEnv.BACKEND_URL,
+            INDEXER_URL: walletEnv.INDEXER_URL,
+            ERPC_URL: walletEnv.ERPC_URL,
+            FRAK_WALLET_URL: walletEnv.FRAK_WALLET_URL,
+            OPEN_PANEL_API_URL: walletEnv.OPEN_PANEL_API_URL,
+        },
+        // Secrets passed via BuildKit (not stored in layers)
+        secrets: {
+            DRPC_API_KEY: walletEnv.DRPC_API_KEY,
+            PIMLICO_API_KEY: walletEnv.PIMLICO_API_KEY,
+            NEXUS_RPC_SECRET: walletEnv.NEXUS_RPC_SECRET,
+            VAPID_PUBLIC_KEY: walletEnv.VAPID_PUBLIC_KEY,
+            OPEN_PANEL_WALLET_CLIENT_ID: walletEnv.OPEN_PANEL_WALLET_CLIENT_ID,
+        },
+        platforms: ["linux/amd64"],
+        push: true,
+        tags: getRegistryPath("wallet"),
+    });
+
+    // Build the custom Nginx image with frontend files built-in
+    const listenerImage = new dockerbuild.Image("wallet-listener", {
+        context: {
+            location: $cli.paths.root,
+        },
+        dockerfile: {
+            location: path.join($cli.paths.root, "apps/listener/Dockerfile"),
+        },
+        // Non-secret build args
+        buildArgs: {
+            NODE_ENV: "production",
+            BASE_IMAGE: baseImage.ref,
+            STAGE: walletEnv.STAGE,
+            BACKEND_URL: walletEnv.BACKEND_URL,
+            INDEXER_URL: walletEnv.INDEXER_URL,
+            ERPC_URL: walletEnv.ERPC_URL,
+            FRAK_WALLET_URL: walletEnv.FRAK_WALLET_URL,
+            OPEN_PANEL_API_URL: walletEnv.OPEN_PANEL_API_URL,
+        },
+        // Secrets passed via BuildKit (not stored in layers)
+        secrets: {
+            DRPC_API_KEY: walletEnv.DRPC_API_KEY,
+            PIMLICO_API_KEY: walletEnv.PIMLICO_API_KEY,
+            NEXUS_RPC_SECRET: walletEnv.NEXUS_RPC_SECRET,
+            OPEN_PANEL_LISTENER_CLIENT_ID:
+                walletEnv.OPEN_PANEL_LISTENER_CLIENT_ID,
+        },
+        platforms: ["linux/amd64"],
+        push: true,
+        tags: getRegistryPath("wallet-listener"),
+    });
 
     dependency.push(walletImage, listenerImage);
 
@@ -292,10 +277,10 @@ export const walletService = new KubernetesService(
             // No rewrite needed - listener nginx handles /listener prefix internally
             customAnnotations: {
                 "nginx.ingress.kubernetes.io/proxy-body-size": "10m",
-                // Enable buffering for better performance with static assets
-                "nginx.ingress.kubernetes.io/proxy-buffering": "on",
-                "nginx.ingress.kubernetes.io/proxy-buffers-number": "4",
-                "nginx.ingress.kubernetes.io/proxy-buffer-size": "8k",
+                // Disable buffering to prevent ingress from caching responses
+                "nginx.ingress.kubernetes.io/proxy-buffering": "off",
+                // Force ingress to always revalidate with backend
+                "nginx.ingress.kubernetes.io/force-ssl-redirect": "false",
                 // Connection pooling and keepalive for ingress -> pod connections
                 "nginx.ingress.kubernetes.io/upstream-keepalive-connections":
                     "64",

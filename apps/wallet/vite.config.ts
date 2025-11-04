@@ -9,6 +9,8 @@ import { onwarn } from "../../packages/dev-tooling";
 
 const DEBUG = JSON.stringify(false);
 
+const isProd = process.env.STAGE?.includes("prod") ?? false;
+
 export default defineConfig(({ mode, command }: ConfigEnv): UserConfig => {
     const isSW = mode === "sw";
 
@@ -46,10 +48,7 @@ export default defineConfig(({ mode, command }: ConfigEnv): UserConfig => {
         },
         // Remove console and debugger on prod
         esbuild: {
-            drop:
-                process.env.STAGE === "prod"
-                    ? (["console", "debugger"] as Drop[])
-                    : [],
+            drop: isProd ? (["console", "debugger"] as Drop[]) : [],
         },
     };
 
@@ -111,7 +110,7 @@ export default defineConfig(({ mode, command }: ConfigEnv): UserConfig => {
             // Chunk size warning limit - we're optimizing chunks to stay under this
             chunkSizeWarningLimit: 400,
             minify: true,
-            sourcemap: false,
+            sourcemap: !isProd,
             rolldownOptions: {
                 // Enable aggressive tree shaking
                 treeshake: {
