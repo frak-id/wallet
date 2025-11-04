@@ -18,8 +18,8 @@
 
 ## Architecture
 - **Monorepo**: Bun workspaces with packages in `apps/`, `packages/`, `sdk/`, `services/`
-- **Key Apps**: wallet (React Router), dashboard, dashboard-admin
-- **Core Packages**: app-essentials (blockchain utils), shared (tooling/components)
+- **Key Apps**: wallet (React Router), business (TanStack Start), dashboard (Next.js legacy), dashboard-admin (React Router), listener (iframe)
+- **Core Packages**: app-essentials (blockchain utils), wallet-shared (wallet/listener), ui (components)
 - **SDK**: core, legacy, react, components (external facing)
 
 ## Code Style

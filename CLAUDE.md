@@ -109,8 +109,10 @@ bun run changeset:release
 ### Monorepo Structure
 - **`apps/`** - Frontend applications
   - `wallet/` - React Router v7 user wallet (SSR disabled, module-based architecture)
-  - `dashboard/` - Next.js 15 business dashboard (standalone output)
+  - `business/` - TanStack Start business dashboard (SSR enabled, formerly dashboard-v2)
+  - `dashboard/` - Next.js 15 business dashboard (standalone output, legacy)
   - `dashboard-admin/` - React Router admin interface
+  - `listener/` - Iframe communication app for SDK interactions
 - **`packages/`** - Shared internal libraries (workspace-only)
   - `wallet-shared/` - Shared code exclusively for wallet and listener apps (~97 files)
     - **Purpose**: Central package for wallet/listener functionality (NOT used by dashboard or other apps)
@@ -156,7 +158,7 @@ bun run changeset:release
 - **`example/`** - Integration examples
 
 ### Key Technologies
-- **Frontend**: React 19, TanStack Query, Zustand, Viem, Wagmi, CSS Modules, React Router v7, Next.js 15
+- **Frontend**: React 19, TanStack Query, Zustand, Viem, Wagmi, CSS Modules, TanStack Start, React Router v7, Next.js 15
 - **Backend**: Elysia.js, PostgreSQL (Drizzle ORM), MongoDB
 - **Blockchain**: Account Abstraction (ERC-4337), WebAuthn, Multi-chain support, Pimlico, ZeroDev
 - **Infrastructure**: SST v3 (AWS), Pulumi (GCP), hybrid multi-cloud deployment
@@ -187,7 +189,18 @@ bun run i18n:types   # Generate i18n types from locales
 bun run bundle:check # Analyze bundle with vite-bundle-visualizer
 ```
 
-**Dashboard (`apps/dashboard/`)**:
+**Business Dashboard (`apps/business/`)**:
+```bash
+cd apps/business
+bun run dev          # TanStack Start development (Vite dev server on port 3022)
+bun run build        # Production build (Nitro output)
+bun run start        # Preview production build locally
+bun run start:prod   # Run production build
+bun run typecheck    # Type checking
+bun run test         # Run Vitest tests
+```
+
+**Dashboard Legacy (`apps/dashboard/`)**:
 ```bash
 cd apps/dashboard
 bun run dev          # Next.js development with HTTPS (via SST dev)
@@ -197,9 +210,10 @@ bun run typecheck    # Type checking
 
 **State Management**:
 - All frontend apps use Zustand for global state management
-- Dashboard stores located in `apps/dashboard/src/stores/`
+- Business stores located in `apps/business/src/stores/`
+- Dashboard (legacy) stores located in `apps/dashboard/src/stores/`
 - Stores use persist middleware for localStorage synchronization
-- Always add "use client" directive to store files for Next.js compatibility
+- Always add "use client" directive to store files for Next.js/React compatibility
 - Use individual selectors for optimal performance: `const value = store((state) => state.value)`
 - Avoid subscribing to entire store: `const store = useStore()` causes unnecessary re-renders
 
