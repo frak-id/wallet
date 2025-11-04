@@ -1,5 +1,5 @@
 {
-    "name": "@frak-labs/nexus-dashboard-v2",
+    "name": "@frak-labs/nexus-business",
     "version": "0.0.1",
     "description": "The Frak Nexus Dashboard built with TanStack Start",
     "private": true,
