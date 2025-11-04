@@ -79,13 +79,18 @@ export default defineConfig(({ mode, command }: ConfigEnv): UserConfig => {
         plugins: [reactRouter(), mkcert(), tsconfigPaths()],
         resolve: {
             conditions: ["development"],
-            ...(command === "build"
-                ? {
-                      alias: {
+            alias: {
+                // Enforce stub for @wagmi/connectors to avoid heavy dependencies (MetaMask SDK, etc.)
+                "@wagmi/connectors": new URL(
+                    "../../.stubs/wagmi-connectors-stub/index.js",
+                    import.meta.url
+                ).pathname,
+                ...(command === "build"
+                    ? {
                           "react-dom/server": "react-dom/server.node",
-                      },
-                  }
-                : undefined),
+                      }
+                    : {}),
+            },
         },
         server: {
             port: 3000,
