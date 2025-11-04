@@ -13,7 +13,7 @@ export * from "./interaction";
 // Pairing
 export * from "./pairing";
 // Polyfills
-export * from "./polyfills/bigint-serialization";
+export { setupBigIntSerialization } from "./polyfills/bigint-serialization";
 // Providers
 export * from "./providers";
 // Recovery

@@ -3,11 +3,23 @@
  */
 
 import type { SsoMetadata } from "@frak-labs/core-sdk";
-import type { AuthenticationResponseJSON } from "@simplewebauthn/browser";
+import type { Signature } from "ox";
+import type { SignMetadata } from "ox/WebAuthnP256";
 import type { Address, Hex } from "viem";
 import type { PendingInteraction } from "../types/Interaction";
 import type { InteractionSession, SdkSession, Session } from "../types/Session";
 import type { User } from "../types/User";
+
+/**
+ * WebAuthn authentication response structure
+ */
+export type AuthenticationResponseJSON = {
+    id: string;
+    response: {
+        metadata: SignMetadata;
+        signature: Signature.Signature<false>;
+    };
+};
 
 /**
  * Session Store Types
@@ -45,7 +57,7 @@ export type UserStore = {
 export type LastWebAuthNAction = {
     wallet: Address;
     signature: AuthenticationResponseJSON;
-    msg: string;
+    challenge: Hex;
 };
 
 export type LastAuthentication = Session & { type: "webauthn" };

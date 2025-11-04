@@ -1,3 +1,3 @@
 // Providers
-export * from "./aa-provider";
-export * from "./provider";
+export { getPimlicoClient, getPimlicoTransport } from "./aa-provider";
+export { currentChain, currentViemClient } from "./provider";

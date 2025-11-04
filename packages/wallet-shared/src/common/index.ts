@@ -1,38 +1,57 @@
 // Analytics
-export * from "./analytics";
+export {
+    openPanel,
+    setProfileId,
+    trackAuthCompleted,
+    trackAuthFailed,
+    trackAuthInitiated,
+    trackGenericEvent,
+    updateGlobalProperties,
+} from "./analytics";
 
 // API
-export * from "./api/backendClient";
+export {
+    authenticatedBackendApi,
+    authenticatedWalletApi,
+} from "./api/backendClient";
 
 // Components
-export * from "./component/Drawer";
-export * from "./component/InAppBrowserToast";
-export * from "./component/Markdown";
-export * from "./component/TextData";
-export * from "./component/Toast";
+export { Drawer, DrawerContent, DrawerTrigger } from "./component/Drawer";
+export { InAppBrowserToast } from "./component/InAppBrowserToast";
+export { Markdown } from "./component/Markdown";
+export { TextData } from "./component/TextData";
+export { Toast } from "./component/Toast";
 export { WalletModal } from "./component/WalletModal";
-export * from "./component/Warning";
+export { Warning } from "./component/Warning";
 
 // Hooks
-export * from "./hook/useAddToHomeScreenPrompt";
-export * from "./hook/useGetSafeSdkSession";
-export * from "./hook/useSessionFlag";
+export { useAddToHomeScreenPrompt } from "./hook/useAddToHomeScreenPrompt";
+export { useGetSafeSdkSession } from "./hook/useGetSafeSdkSession";
+export { useSessionFlag } from "./hook/useSessionFlag";
 
 // Lib
-export * from "./lib/inApp";
-export * from "./lib/ua";
-export * from "./lib/webauthn";
+export {
+    inAppRedirectUrl,
+    isInAppBrowser,
+    isInIframe,
+} from "./lib/inApp";
+export { ua } from "./lib/ua";
+export { isWebAuthNSupported } from "./lib/webauthn";
 
 // Query Keys
-export * from "./queryKeys/balance";
-export * from "./queryKeys/pendingBalance";
-export * from "./queryKeys/sdk";
+export { balanceKey } from "./queryKeys/balance";
+export { pendingBalanceKey } from "./queryKeys/pendingBalance";
+export { sdkKey } from "./queryKeys/sdk";
 
 // Storage
-export * from "./storage/authenticators";
-export * from "./storage/NotificationModel";
-export * from "./storage/notifications";
-export * from "./storage/PreviousAuthenticatorModel";
+export { authenticatorStorage } from "./storage/authenticators";
+export type { NotificationModel } from "./storage/NotificationModel";
+export { notificationStorage } from "./storage/notifications";
+export type { PreviousAuthenticatorModel } from "./storage/PreviousAuthenticatorModel";
 
 // Utils
-export * from "./utils/safeSession";
+export {
+    getFromLocalStorage,
+    getSafeSdkSession,
+    getSafeSession,
+} from "./utils/safeSession";

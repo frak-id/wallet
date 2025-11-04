@@ -1,8 +1,17 @@
-import type {
-    AuthenticationCredential,
-    AuthenticatorTransportFuture,
-    RegistrationCredential,
-} from "@simplewebauthn/browser";
+/**
+ * Custom types for WebAuthn credentials (ox-compatible)
+ * These replace @simplewebauthn/browser types after migration to ox library
+ */
+
+export type RegistrationCredential = PublicKeyCredential & {
+    response: AuthenticatorAttestationResponse;
+    authenticatorAttachment?: AuthenticatorAttachment;
+};
+
+export type AuthenticationCredential = PublicKeyCredential & {
+    response: AuthenticatorAssertionResponse;
+    authenticatorAttachment?: AuthenticatorAttachment;
+};
 
 export type CredentialProps = {
     credentialId: Uint8Array;
@@ -37,16 +46,17 @@ export type ParsableAuthenticatorAttestationResponse = Omit<
     clientDataJSON: string;
     publicKey: string;
     publicKeyAlgorithm: number;
-    transports: AuthenticatorTransportFuture[];
+    transports: AuthenticatorTransport[];
     authenticatorData: string;
 };
 
-export type CreateResponse = Omit<
+export type CreateResponse = Pick<
     RegistrationCredential,
-    "response" | "getClientExtensionResults"
-> & {
-    response: ParsableAuthenticatorAttestationResponse;
-};
+    "id" | "type" | "rawId" | "authenticatorAttachment"
+> &
+    Partial<Pick<RegistrationCredential, "toJSON">> & {
+        response: ParsableAuthenticatorAttestationResponse;
+    };
 
 /* -------------------------------------------------------------------------- */
 /*                                     Get                                    */
@@ -62,9 +72,10 @@ export type ParsableAuthenticatorAssertionResponse = Omit<
     clientDataJSON: string;
 };
 
-export type GetResponse = Omit<
+export type GetResponse = Pick<
     AuthenticationCredential,
-    "getClientExtensionResults" | "response"
-> & {
-    response: ParsableAuthenticatorAssertionResponse;
-};
+    "id" | "type" | "rawId" | "authenticatorAttachment"
+> &
+    Partial<Pick<AuthenticationCredential, "toJSON">> & {
+        response: ParsableAuthenticatorAssertionResponse;
+    };

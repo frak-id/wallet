@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
+import { bufferToBase64URLString } from "@frak-labs/wallet-shared/common/utils/base64url";
 import { p256 } from "@noble/curves/nist.js";
-import { bufferToBase64URLString } from "@simplewebauthn/browser";
 import type {
     CreateResponse,
     CredentialPropsString,

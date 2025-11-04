@@ -37,7 +37,7 @@ export function useGetSafeSdkSession() {
         const { data: session, error } =
             await authenticatedWalletApi.auth.sdk.fromWebAuthNSignature.post({
                 signature: encodedSignature,
-                msg: lastWebAuthnAction.msg,
+                challenge: lastWebAuthnAction.challenge,
                 wallet: lastWebAuthnAction.wallet,
             });
         if (error) {

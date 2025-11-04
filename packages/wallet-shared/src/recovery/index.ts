@@ -1,2 +1,6 @@
 // Utils
-export * from "./utils/abi";
+export {
+    doAddPassKeyFnAbi,
+    ecdsaValidatorStorageAbi,
+    setExecutionAbi,
+} from "./utils/abi";

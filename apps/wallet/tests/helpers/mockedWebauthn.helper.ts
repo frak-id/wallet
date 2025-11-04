@@ -2,21 +2,17 @@ import { randomBytes } from "node:crypto";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { p256 } from "@noble/curves/nist.js";
 import type { Frame, Page } from "@playwright/test";
-import type {
-    AuthenticationCredential,
-    RegistrationCredential,
-} from "@simplewebauthn/browser";
-import { isoCBOR } from "@simplewebauthn/server/helpers";
-// import { encodeOne } from "cbor";
 import { AUTHENTICATOR_STATE } from "../../playwright.config";
 import {
     getAuthenticationResponse,
     getRegistrationResponse,
 } from "./webauthn/signature";
 import type {
+    AuthenticationCredential,
     CreateResponse,
     CredentialProps,
     GetResponse,
+    RegistrationCredential,
 } from "./webauthn/types";
 import {
     EC2_SHA256_ALGO,
@@ -58,11 +54,11 @@ export class MockedWebAuthNHelper {
 
     async setup() {
         // Restore credentials
-        this.restoreCredentialProps();
+        await this.restoreCredentialProps();
 
         // If none found, generate new ones
         if (!this.credentialProps) {
-            this.credentialProps = this.generateCredentialProp();
+            this.credentialProps = await this.generateCredentialProp();
             this.saveCredentialProps();
         }
 
@@ -165,6 +161,7 @@ export class MockedWebAuthNHelper {
                         rawId: response.rawId,
                         authenticatorAttachment:
                             response.authenticatorAttachment,
+                        toJSON: () => ({}),
                         response: {
                             attestationObject: base64URLStringToBuffer(
                                 response.response.attestationObject
@@ -222,6 +219,7 @@ export class MockedWebAuthNHelper {
                         rawId: response.rawId,
                         authenticatorAttachment:
                             response.authenticatorAttachment,
+                        toJSON: () => ({}),
                         response: {
                             authenticatorData: base64URLStringToBuffer(
                                 response.response.authenticatorData
@@ -251,7 +249,7 @@ export class MockedWebAuthNHelper {
     /**
      * Get the COSE public key of the current credential
      */
-    private cosePublicKeyCBOR(publicKey: Uint8Array) {
+    private async cosePublicKeyCBOR(publicKey: Uint8Array) {
         // Convert public key to uncompressed point
         const x = publicKey.slice(1, 33);
         const y = publicKey.slice(33, 65);
@@ -263,7 +261,8 @@ export class MockedWebAuthNHelper {
         COSEKey.set(-2, x);
         COSEKey.set(-3, y);
 
-        return isoCBOR.encode(COSEKey);
+        const cbor = await import("cbor");
+        return cbor.default.encodeOne(COSEKey);
     }
 
     // Save the credential props to the file
@@ -291,7 +290,7 @@ export class MockedWebAuthNHelper {
     }
 
     // Restore the credential props from the file
-    private restoreCredentialProps() {
+    private async restoreCredentialProps() {
         // Check if the file exists
         if (!existsSync(this.authenticatorFile)) {
             console.warn(
@@ -314,12 +313,12 @@ export class MockedWebAuthNHelper {
             privateKey: parsedPrivateKey,
             aaguid: Buffer.from(aaguid, "base64"),
             publicKey,
-            cosePublicKey: this.cosePublicKeyCBOR(publicKey),
+            cosePublicKey: await this.cosePublicKeyCBOR(publicKey),
         };
     }
 
     // Generate fresh credential props
-    private generateCredentialProp() {
+    private async generateCredentialProp() {
         // Convert to base64 and add platform-specific prefix
         const credentialId = `PLAYWRIGHT_${randomBytes(32).toString("base64")}`;
         const privateKey = p256.utils.randomSecretKey();
@@ -330,7 +329,7 @@ export class MockedWebAuthNHelper {
             credentialId: Buffer.from(credentialId),
             privateKey,
             publicKey,
-            cosePublicKey: this.cosePublicKeyCBOR(publicKey),
+            cosePublicKey: await this.cosePublicKeyCBOR(publicKey),
         };
     }
 

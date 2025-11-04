@@ -1,8 +1,8 @@
 import { WebAuthN } from "@frak-labs/app-essentials";
-import { startAuthentication } from "@simplewebauthn/browser";
-import { generateAuthenticationOptions } from "@simplewebauthn/server";
 import type { UseMutationOptions } from "@tanstack/react-query";
 import { useMutation } from "@tanstack/react-query";
+import { WebAuthnP256 } from "ox";
+import { generatePrivateKey } from "viem/accounts";
 import { trackAuthCompleted, trackAuthInitiated } from "../../common/analytics";
 import { authenticatedWalletApi } from "../../common/api/backendClient";
 import type { PreviousAuthenticatorModel } from "../../common/storage/PreviousAuthenticatorModel";
@@ -45,29 +45,24 @@ export function useLogin(
                 }),
             ];
 
-            // Get the authenticate options (if needed)
-            const allowCredentials = args?.lastAuthentication
-                ? [
-                      {
-                          id: args?.lastAuthentication.authenticatorId,
-                          transports: args?.lastAuthentication.transports,
-                      } as const,
-                  ]
-                : undefined;
-
-            // Get the authenticate options
-            const authenticationOptions = await generateAuthenticationOptions({
-                rpID: WebAuthN.rpId,
+            // Sign with WebAuthn using ox
+            const challenge = generatePrivateKey();
+            const { metadata, signature, raw } = await WebAuthnP256.sign({
+                credentialId: args?.lastAuthentication?.authenticatorId,
+                rpId: WebAuthN.rpId,
                 userVerification: "required",
-                allowCredentials,
-                // timeout in ms (3min, can be useful for mobile phone linking)
-                timeout: 180_000,
+                challenge,
             });
+            const credentialId = raw.id;
 
-            // Start the authentication
-            const authenticationResponse = await startAuthentication({
-                optionsJSON: authenticationOptions,
-            });
+            // Convert ox response to the format expected by backend
+            const authenticationResponse = {
+                id: credentialId,
+                response: {
+                    metadata,
+                    signature,
+                },
+            };
 
             // Verify it
             const encodedResponse = btoa(
@@ -75,7 +70,7 @@ export function useLogin(
             );
             const { data, error } =
                 await authenticatedWalletApi.auth.login.post({
-                    expectedChallenge: authenticationOptions.challenge,
+                    expectedChallenge: challenge,
                     authenticatorResponse: encodedResponse,
                 });
             if (error) {
@@ -86,7 +81,7 @@ export function useLogin(
             authenticationStore.getState().setLastWebAuthNAction({
                 wallet: data.address,
                 signature: authenticationResponse,
-                msg: authenticationOptions.challenge,
+                challenge: challenge,
             });
 
             // Extract a few data

@@ -1,13 +1,13 @@
 // Components
-export * from "./component/HandleErrors";
+export { HandleErrors } from "./component/HandleErrors";
 
 // Hooks
-export * from "./hook/useGetOpenSsoLink";
-export * from "./hook/useLogin";
+export { useSsoLink } from "./hook/useGetOpenSsoLink";
+export { useLogin } from "./hook/useLogin";
 
 // Query Keys
-export * from "./queryKeys/auth";
-export * from "./queryKeys/sso";
+export { authKey } from "./queryKeys/auth";
+export { ssoKey } from "./queryKeys/sso";
 
 // Utils
-export * from "./utils/ssoDataCompression";
+export { compressedSsoToParams } from "./utils/ssoDataCompression";

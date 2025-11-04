@@ -1,2 +1,8 @@
 // Config
-export * from "./config";
+export {
+    defaultNS,
+    fallbackLng,
+    interpolation,
+    resources,
+    supportedLngs,
+} from "./config";

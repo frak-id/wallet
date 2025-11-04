@@ -16,12 +16,11 @@ vi.mock("@frak-labs/app-essentials", () => ({
     },
 }));
 
-vi.mock("@simplewebauthn/browser", () => ({
-    startAuthentication: vi.fn(),
-}));
-
-vi.mock("@simplewebauthn/server", () => ({
-    generateAuthenticationOptions: vi.fn(),
+vi.mock("ox", () => ({
+    WebAuthnP256: {
+        sign: vi.fn(),
+        getClientDataJSON: vi.fn(),
+    },
 }));
 
 vi.mock("../../common/analytics", () => ({
@@ -95,10 +94,7 @@ describe("useLogin", () => {
         mockSession,
         mockSdkSession,
     }) => {
-        const { startAuthentication } = await import("@simplewebauthn/browser");
-        const { generateAuthenticationOptions } = await import(
-            "@simplewebauthn/server"
-        );
+        const { WebAuthnP256 } = await import("ox");
         const { authenticatedWalletApi } = await import(
             "../../common/api/backendClient"
         );
@@ -123,10 +119,27 @@ describe("useLogin", () => {
             sdkJwt: { ...mockSdkSession, token: "sdk-token" },
         };
 
-        vi.mocked(generateAuthenticationOptions).mockResolvedValue(
-            mockAuthOptions
-        );
-        vi.mocked(startAuthentication).mockResolvedValue(mockAuthResponse);
+        vi.mocked(WebAuthnP256.sign).mockResolvedValue({
+            metadata: {
+                credentialId: mockAuthResponse.id,
+                authenticatorData: mockAuthResponse.response
+                    .authenticatorData as any,
+                clientDataJSON: mockAuthResponse.response.clientDataJSON as any,
+                challengeIndex: 23,
+            },
+            signature: {
+                r: 123n,
+                s: 456n,
+            },
+            raw: {
+                id: mockAuthResponse.id,
+            },
+        } as any);
+        vi.mocked(WebAuthnP256.getClientDataJSON).mockReturnValue({
+            challenge: mockAuthOptions.challenge,
+            origin: "https://test.frak.id",
+            type: "webauthn.get",
+        } as any);
         vi.mocked(authenticatedWalletApi.auth.login.post).mockResolvedValue({
             data: mockSessionData,
             error: null,
@@ -153,20 +166,27 @@ describe("useLogin", () => {
             expect(result.current.isSuccess).toBe(true);
         });
 
-        expect(generateAuthenticationOptions).toHaveBeenCalledWith({
-            rpID: "test.frak.id",
-            userVerification: "required",
-            allowCredentials: undefined,
-            timeout: 180000,
-        });
-        expect(startAuthentication).toHaveBeenCalledWith({
-            optionsJSON: mockAuthOptions,
-        });
-        expect(setLastWebAuthNAction).toHaveBeenCalledWith({
-            wallet: mockAddress,
-            signature: mockAuthResponse,
-            msg: mockAuthOptions.challenge,
-        });
+        expect(WebAuthnP256.sign).toHaveBeenCalledWith(
+            expect.objectContaining({
+                credentialId: undefined,
+                rpId: "test.frak.id",
+                userVerification: "required",
+                challenge: expect.stringMatching(/^0x[a-f0-9]{64}$/),
+            })
+        );
+        expect(setLastWebAuthNAction).toHaveBeenCalledWith(
+            expect.objectContaining({
+                wallet: mockAddress,
+                signature: expect.objectContaining({
+                    id: mockAuthResponse.id,
+                    response: expect.objectContaining({
+                        metadata: expect.any(Object),
+                        signature: expect.any(Object),
+                    }),
+                }),
+                challenge: expect.stringMatching(/^0x[a-f0-9]{64}$/),
+            })
+        );
         expect(setSession).toHaveBeenCalledWith(
             expect.objectContaining({
                 type: "webauthn",
@@ -187,10 +207,7 @@ describe("useLogin", () => {
         mockSession,
         mockSdkSession,
     }) => {
-        const { startAuthentication } = await import("@simplewebauthn/browser");
-        const { generateAuthenticationOptions } = await import(
-            "@simplewebauthn/server"
-        );
+        const { WebAuthnP256 } = await import("ox");
         const { authenticatedWalletApi } = await import(
             "../../common/api/backendClient"
         );
@@ -216,10 +233,27 @@ describe("useLogin", () => {
             sdkJwt: { ...mockSdkSession, token: "sdk-token" },
         };
 
-        vi.mocked(generateAuthenticationOptions).mockResolvedValue(
-            mockAuthOptions
-        );
-        vi.mocked(startAuthentication).mockResolvedValue(mockAuthResponse);
+        vi.mocked(WebAuthnP256.sign).mockResolvedValue({
+            metadata: {
+                credentialId: mockAuthResponse.id,
+                authenticatorData: mockAuthResponse.response
+                    .authenticatorData as any,
+                clientDataJSON: mockAuthResponse.response.clientDataJSON as any,
+                challengeIndex: 23,
+            },
+            signature: {
+                r: 123n,
+                s: 456n,
+            },
+            raw: {
+                id: mockAuthResponse.id,
+            },
+        } as any);
+        vi.mocked(WebAuthnP256.getClientDataJSON).mockReturnValue({
+            challenge: mockAuthOptions.challenge,
+            origin: "https://test.frak.id",
+            type: "webauthn.get",
+        } as any);
         vi.mocked(authenticatedWalletApi.auth.login.post).mockResolvedValue({
             data: mockSessionData,
             error: null,
@@ -246,17 +280,14 @@ describe("useLogin", () => {
             expect(result.current.isSuccess).toBe(true);
         });
 
-        expect(generateAuthenticationOptions).toHaveBeenCalledWith({
-            rpID: "test.frak.id",
-            userVerification: "required",
-            allowCredentials: [
-                {
-                    id: "specific-auth-id",
-                    transports: ["internal"],
-                },
-            ],
-            timeout: 180000,
-        });
+        expect(WebAuthnP256.sign).toHaveBeenCalledWith(
+            expect.objectContaining({
+                credentialId: "specific-auth-id",
+                rpId: "test.frak.id",
+                userVerification: "required",
+                challenge: expect.stringMatching(/^0x[a-f0-9]{64}$/),
+            })
+        );
     });
 
     test("should track analytics events", async ({
@@ -265,10 +296,7 @@ describe("useLogin", () => {
         mockSession,
         mockSdkSession,
     }) => {
-        const { startAuthentication } = await import("@simplewebauthn/browser");
-        const { generateAuthenticationOptions } = await import(
-            "@simplewebauthn/server"
-        );
+        const { WebAuthnP256 } = await import("ox");
         const { authenticatedWalletApi } = await import(
             "../../common/api/backendClient"
         );
@@ -288,10 +316,27 @@ describe("useLogin", () => {
             sdkJwt: { ...mockSdkSession, token: "sdk-token" },
         };
 
-        vi.mocked(generateAuthenticationOptions).mockResolvedValue(
-            mockAuthOptions
-        );
-        vi.mocked(startAuthentication).mockResolvedValue(mockAuthResponse);
+        vi.mocked(WebAuthnP256.sign).mockResolvedValue({
+            metadata: {
+                credentialId: mockAuthResponse.id,
+                authenticatorData: mockAuthResponse.response
+                    .authenticatorData as any,
+                clientDataJSON: mockAuthResponse.response.clientDataJSON as any,
+                challengeIndex: 23,
+            },
+            signature: {
+                r: 123n,
+                s: 456n,
+            },
+            raw: {
+                id: mockAuthResponse.id,
+            },
+        } as any);
+        vi.mocked(WebAuthnP256.getClientDataJSON).mockReturnValue({
+            challenge: mockAuthOptions.challenge,
+            origin: "https://test.frak.id",
+            type: "webauthn.get",
+        } as any);
         vi.mocked(authenticatedWalletApi.auth.login.post).mockResolvedValue({
             data: mockSessionData,
             error: null,
@@ -332,20 +377,34 @@ describe("useLogin", () => {
     test("should handle authentication API errors", async ({
         queryWrapper,
     }) => {
-        const { startAuthentication } = await import("@simplewebauthn/browser");
-        const { generateAuthenticationOptions } = await import(
-            "@simplewebauthn/server"
-        );
+        const { WebAuthnP256 } = await import("ox");
         const { authenticatedWalletApi } = await import(
             "../../common/api/backendClient"
         );
 
         const mockError = new Error("Authentication failed");
 
-        vi.mocked(generateAuthenticationOptions).mockResolvedValue(
-            mockAuthOptions
-        );
-        vi.mocked(startAuthentication).mockResolvedValue(mockAuthResponse);
+        vi.mocked(WebAuthnP256.sign).mockResolvedValue({
+            metadata: {
+                credentialId: mockAuthResponse.id,
+                authenticatorData: mockAuthResponse.response
+                    .authenticatorData as any,
+                clientDataJSON: mockAuthResponse.response.clientDataJSON as any,
+                challengeIndex: 23,
+            },
+            signature: {
+                r: 123n,
+                s: 456n,
+            },
+            raw: {
+                id: mockAuthResponse.id,
+            },
+        } as any);
+        vi.mocked(WebAuthnP256.getClientDataJSON).mockReturnValue({
+            challenge: mockAuthOptions.challenge,
+            origin: "https://test.frak.id",
+            type: "webauthn.get",
+        } as any);
         vi.mocked(authenticatedWalletApi.auth.login.post).mockResolvedValue({
             data: null,
             error: mockError,
@@ -369,17 +428,11 @@ describe("useLogin", () => {
     test("should handle WebAuthn startAuthentication errors", async ({
         queryWrapper,
     }) => {
-        const { startAuthentication } = await import("@simplewebauthn/browser");
-        const { generateAuthenticationOptions } = await import(
-            "@simplewebauthn/server"
-        );
+        const { WebAuthnP256 } = await import("ox");
 
         const mockError = new Error("User cancelled authentication");
 
-        vi.mocked(generateAuthenticationOptions).mockResolvedValue(
-            mockAuthOptions
-        );
-        vi.mocked(startAuthentication).mockRejectedValue(mockError);
+        vi.mocked(WebAuthnP256.sign).mockRejectedValue(mockError);
 
         const { result } = renderHook(() => useLogin(), {
             wrapper: queryWrapper.wrapper,
@@ -400,10 +453,7 @@ describe("useLogin", () => {
         mockSession,
         mockSdkSession,
     }) => {
-        const { startAuthentication } = await import("@simplewebauthn/browser");
-        const { generateAuthenticationOptions } = await import(
-            "@simplewebauthn/server"
-        );
+        const { WebAuthnP256 } = await import("ox");
         const { authenticatedWalletApi } = await import(
             "../../common/api/backendClient"
         );
@@ -420,10 +470,27 @@ describe("useLogin", () => {
             sdkJwt: { ...mockSdkSession, token: "sdk-token" },
         };
 
-        vi.mocked(generateAuthenticationOptions).mockResolvedValue(
-            mockAuthOptions
-        );
-        vi.mocked(startAuthentication).mockResolvedValue(mockAuthResponse);
+        vi.mocked(WebAuthnP256.sign).mockResolvedValue({
+            metadata: {
+                credentialId: mockAuthResponse.id,
+                authenticatorData: mockAuthResponse.response
+                    .authenticatorData as any,
+                clientDataJSON: mockAuthResponse.response.clientDataJSON as any,
+                challengeIndex: 23,
+            },
+            signature: {
+                r: 123n,
+                s: 456n,
+            },
+            raw: {
+                id: mockAuthResponse.id,
+            },
+        } as any);
+        vi.mocked(WebAuthnP256.getClientDataJSON).mockReturnValue({
+            challenge: mockAuthOptions.challenge,
+            origin: "https://test.frak.id",
+            type: "webauthn.get",
+        } as any);
         vi.mocked(authenticatedWalletApi.auth.login.post).mockResolvedValue({
             data: mockSessionData,
             error: null,
@@ -449,9 +516,34 @@ describe("useLogin", () => {
             expect(result.current.isSuccess).toBe(true);
         });
 
-        expect(authenticatedWalletApi.auth.login.post).toHaveBeenCalledWith({
-            expectedChallenge: mockAuthOptions.challenge,
-            authenticatorResponse: btoa(JSON.stringify(mockAuthResponse)),
+        expect(authenticatedWalletApi.auth.login.post).toHaveBeenCalledWith(
+            expect.objectContaining({
+                expectedChallenge: expect.stringMatching(/^0x[a-f0-9]{64}$/),
+                authenticatorResponse: expect.any(String),
+            })
+        );
+
+        // Verify the authenticatorResponse structure
+        const callArgs = vi.mocked(authenticatedWalletApi.auth.login.post).mock
+            .calls[0][0];
+        const decodedResponse = JSON.parse(
+            atob(callArgs.authenticatorResponse)
+        );
+        expect(decodedResponse).toEqual({
+            id: mockAuthResponse.id,
+            response: {
+                metadata: expect.objectContaining({
+                    credentialId: mockAuthResponse.id,
+                    authenticatorData:
+                        mockAuthResponse.response.authenticatorData,
+                    clientDataJSON: mockAuthResponse.response.clientDataJSON,
+                    challengeIndex: 23,
+                }),
+                signature: expect.objectContaining({
+                    r: expect.any(String),
+                    s: expect.any(String),
+                }),
+            },
         });
     });
 
@@ -461,10 +553,7 @@ describe("useLogin", () => {
         mockSession,
         mockSdkSession,
     }) => {
-        const { startAuthentication } = await import("@simplewebauthn/browser");
-        const { generateAuthenticationOptions } = await import(
-            "@simplewebauthn/server"
-        );
+        const { WebAuthnP256 } = await import("ox");
         const { authenticatedWalletApi } = await import(
             "../../common/api/backendClient"
         );
@@ -484,10 +573,27 @@ describe("useLogin", () => {
             sdkJwt: { ...mockSdkSession, token: "sdk-token" },
         };
 
-        vi.mocked(generateAuthenticationOptions).mockResolvedValue(
-            mockAuthOptions
-        );
-        vi.mocked(startAuthentication).mockResolvedValue(mockAuthResponse);
+        vi.mocked(WebAuthnP256.sign).mockResolvedValue({
+            metadata: {
+                credentialId: mockAuthResponse.id,
+                authenticatorData: mockAuthResponse.response
+                    .authenticatorData as any,
+                clientDataJSON: mockAuthResponse.response.clientDataJSON as any,
+                challengeIndex: 23,
+            },
+            signature: {
+                r: 123n,
+                s: 456n,
+            },
+            raw: {
+                id: mockAuthResponse.id,
+            },
+        } as any);
+        vi.mocked(WebAuthnP256.getClientDataJSON).mockReturnValue({
+            challenge: mockAuthOptions.challenge,
+            origin: "https://test.frak.id",
+            type: "webauthn.get",
+        } as any);
         vi.mocked(authenticatedWalletApi.auth.login.post).mockResolvedValue({
             data: mockSessionData,
             error: null,
@@ -529,10 +635,7 @@ describe("useLogin", () => {
         mockSession,
         mockSdkSession,
     }) => {
-        const { startAuthentication } = await import("@simplewebauthn/browser");
-        const { generateAuthenticationOptions } = await import(
-            "@simplewebauthn/server"
-        );
+        const { WebAuthnP256 } = await import("ox");
         const { authenticatedWalletApi } = await import(
             "../../common/api/backendClient"
         );
@@ -551,10 +654,27 @@ describe("useLogin", () => {
             sdkJwt: { ...mockSdkSession, token: "sdk-token" },
         };
 
-        vi.mocked(generateAuthenticationOptions).mockResolvedValue(
-            mockAuthOptions
-        );
-        vi.mocked(startAuthentication).mockResolvedValue(mockAuthResponse);
+        vi.mocked(WebAuthnP256.sign).mockResolvedValue({
+            metadata: {
+                credentialId: mockAuthResponse.id,
+                authenticatorData: mockAuthResponse.response
+                    .authenticatorData as any,
+                clientDataJSON: mockAuthResponse.response.clientDataJSON as any,
+                challengeIndex: 23,
+            },
+            signature: {
+                r: 123n,
+                s: 456n,
+            },
+            raw: {
+                id: mockAuthResponse.id,
+            },
+        } as any);
+        vi.mocked(WebAuthnP256.getClientDataJSON).mockReturnValue({
+            challenge: mockAuthOptions.challenge,
+            origin: "https://test.frak.id",
+            type: "webauthn.get",
+        } as any);
         vi.mocked(authenticatedWalletApi.auth.login.post).mockResolvedValue({
             data: mockSessionData,
             error: null,

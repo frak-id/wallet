@@ -3,8 +3,10 @@ import { vi } from "vitest"; // Keep vi from vitest for vi.mock() hoisting
 import { describe, expect, test } from "../../../tests/vitest-fixtures";
 import type { AccountMetadata } from "./signature";
 
-vi.mock("@simplewebauthn/browser", () => ({
-    startAuthentication: vi.fn(),
+vi.mock("ox", () => ({
+    WebAuthnP256: {
+        sign: vi.fn(),
+    },
 }));
 
 vi.mock("viem/actions", () => ({
@@ -17,12 +19,7 @@ vi.mock("../../stores/authenticationStore", () => ({
     },
 }));
 
-vi.mock("../action/signOptions", () => ({
-    getSignOptions: vi.fn(),
-}));
-
 vi.mock("./webAuthN", () => ({
-    parseWebAuthNAuthentication: vi.fn(),
     formatSignature: vi.fn(),
 }));
 
@@ -176,12 +173,8 @@ describe("signature utilities", () => {
     describe("signHashViaWebAuthN", () => {
         test("should sign hash successfully", async () => {
             const { signHashViaWebAuthN } = await import("./signature");
-            const { startAuthentication } = await import(
-                "@simplewebauthn/browser"
-            );
-            const { getSignOptions } = await import("../action/signOptions");
-            const { parseWebAuthNAuthentication, formatSignature } =
-                await import("./webAuthN");
+            const { WebAuthnP256 } = await import("ox");
+            const { formatSignature } = await import("./webAuthN");
             const { authenticationStore } = await import(
                 "../../stores/authenticationStore"
             );
@@ -193,33 +186,28 @@ describe("signature utilities", () => {
                 token: "token",
             });
 
-            const mockOptions = {
-                challenge: "challenge-123",
-                rpId: "test.frak.id",
-            };
-
-            const mockAuthResponse = {
-                id: "cred-id",
-                response: {},
-            };
-
-            const mockParsedAuth = {
-                authenticatorData: "0xauthdata" as Hex,
-                clientData: "0xclientdata" as Hex,
-                challengeOffset: 10n,
-                signature: { r: "0x123", s: "0x456" },
+            const mockOxResponse = {
+                metadata: {
+                    credentialId: "cred-id",
+                    authenticatorData: "0xauthdata" as Hex,
+                    clientDataJSON: "0xclientdata" as Hex,
+                    challengeIndex: 10,
+                },
+                signature: {
+                    r: 123n,
+                    s: 456n,
+                },
+                raw: {
+                    id: "cred-id",
+                },
             };
 
             const mockFormattedSignature: Address =
                 "0xformattedsignature1234567890abcdef12345678";
             const setLastWebAuthNAction = vi.fn();
 
-            vi.mocked(getSignOptions).mockResolvedValue(mockOptions as any);
-            vi.mocked(startAuthentication).mockResolvedValue(
-                mockAuthResponse as any
-            );
-            vi.mocked(parseWebAuthNAuthentication).mockReturnValue(
-                mockParsedAuth as any
+            vi.mocked(WebAuthnP256.sign).mockResolvedValue(
+                mockOxResponse as any
             );
             vi.mocked(formatSignature).mockReturnValue(mockFormattedSignature);
             vi.mocked(authenticationStore.getState).mockReturnValue({
@@ -232,17 +220,20 @@ describe("signature utilities", () => {
             });
 
             expect(result).toBe(mockFormattedSignature);
-            expect(getSignOptions).toHaveBeenCalledWith({
-                authenticatorId: "auth-id",
-                toSign: "0xhash",
-            });
-            expect(startAuthentication).toHaveBeenCalledWith({
-                optionsJSON: mockOptions,
+            expect(WebAuthnP256.sign).toHaveBeenCalledWith({
+                challenge: "0xhash",
+                credentialId: "auth-id",
             });
             expect(setLastWebAuthNAction).toHaveBeenCalledWith({
                 wallet: mockWallet.address,
-                signature: mockAuthResponse,
-                msg: mockOptions.challenge,
+                signature: {
+                    id: "cred-id",
+                    response: {
+                        metadata: mockOxResponse.metadata,
+                        signature: mockOxResponse.signature,
+                    },
+                },
+                challenge: "0xhash",
             });
         });
     });

@@ -1,4 +1,4 @@
-import { bufferToBase64URLString } from "@simplewebauthn/browser";
+import { bufferToBase64URLString } from "@frak-labs/wallet-shared/common/utils/base64url";
 import { random } from "radash";
 import {
     type Address,

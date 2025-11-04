@@ -1,25 +1,44 @@
 // Clients
-export * from "./clients/base";
-export * from "./clients/origin";
-export * from "./clients/store";
-export * from "./clients/target";
-
+export type { PairingWsEventListener } from "./clients/base";
+export { BasePairingClient } from "./clients/base";
+export type {
+    OnPairingSuccessCallback,
+    OriginPairingClient,
+} from "./clients/origin";
+export {
+    getOriginPairingClient,
+    getTargetPairingClient,
+} from "./clients/store";
+export { TargetPairingClient } from "./clients/target";
 // Components
-export * from "./component/LaunchPairing";
-export * from "./component/OriginPairingState";
-export * from "./component/PairingCode";
-export * from "./component/PairingStatus";
-export * from "./component/PairingStatusBox";
-
+export { LaunchPairing } from "./component/LaunchPairing";
+export { OriginPairingState } from "./component/OriginPairingState";
+export { PairingCode } from "./component/PairingCode";
+export { PairingStatus } from "./component/PairingStatus";
+export {
+    StatusBoxModal,
+    StatusBoxWallet,
+    StatusBoxWalletEmbedded,
+} from "./component/PairingStatusBox";
 // Hooks
-export * from "./hook/useDeletePairing";
-export * from "./hook/useListPairings";
-export * from "./hook/usePairingInfo";
-export * from "./hook/usePersistentPairingClient";
-export * from "./hook/useSignSignatureRequest";
-
+export { useDeletePairing } from "./hook/useDeletePairing";
+export { useGetActivePairings } from "./hook/useListPairings";
+export { usePairingInfo } from "./hook/usePairingInfo";
+export { usePersistentPairingClient } from "./hook/usePersistentPairingClient";
+export {
+    useDeclineSignatureRequest,
+    useSignSignatureRequest,
+} from "./hook/useSignSignatureRequest";
 // Query Keys
-export * from "./queryKeys";
+export { pairingKey } from "./queryKeys";
+// Types
+export type {
+    BasePairingState,
+    TargetPairingIdState,
+    TargetPairingPendingSignature,
+    TargetPairingState,
+    WsCloseCode,
+} from "./types/index";
 
 // Note: Types are not re-exported from the barrel due to naming conflicts
 // Import types directly from "./pairing/types" if needed

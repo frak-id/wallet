@@ -1,2 +1,2 @@
 // Providers
-export * from "./BaseProvider";
+export { WagmiProviderWithDynamicConfig } from "./BaseProvider";

@@ -25,16 +25,6 @@ vi.mock("@frak-labs/wallet-shared", () => ({
     },
 }));
 
-// Mock WebAuthn
-const mockCancelCeremony = vi.fn();
-vi.mock("@simplewebauthn/browser", () => ({
-    WebAuthnAbortService: {
-        get cancelCeremony() {
-            return mockCancelCeremony;
-        },
-    },
-}));
-
 // Mock ListenerUiProvider
 const mockCurrentRequest = { type: "modal" as const };
 vi.mock("../providers/ListenerUiProvider", () => ({
@@ -71,16 +61,6 @@ describe("useSdkCleanup", () => {
         result.current();
 
         expect(mockTrackGenericEvent).toHaveBeenCalledWith("sdk-cleanup");
-    });
-
-    test("should cancel any pending WebAuthn ceremony", ({ queryWrapper }) => {
-        const { result } = renderHook(() => useSdkCleanup(), {
-            wrapper: queryWrapper.wrapper,
-        });
-
-        result.current();
-
-        expect(mockCancelCeremony).toHaveBeenCalled();
     });
 
     test("should emit remove-backup lifecycle event", ({ queryWrapper }) => {

@@ -3,7 +3,6 @@ import {
     sessionStore,
     trackGenericEvent,
 } from "@frak-labs/wallet-shared";
-import { WebAuthnAbortService } from "@simplewebauthn/browser";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { modalStore } from "@/module/stores/modalStore";
@@ -18,8 +17,6 @@ export function useSdkCleanup() {
 
     return useCallback(() => {
         trackGenericEvent("sdk-cleanup");
-        // Cancel any pending webauthn request
-        WebAuthnAbortService.cancelCeremony();
 
         // Remove backup data from the client website
         emitLifecycleEvent({
