@@ -323,7 +323,7 @@ export class KubernetesService extends ComponentResource {
 
         // Add default rewrite-target for backward compatibility
         // (only if no path routes are defined - those override with custom logic)
-        const defaultAnnotations = hasPathRoutes
+        const defaultAnnotations: Record<string, string> = hasPathRoutes
             ? {}
             : { "nginx.ingress.kubernetes.io/rewrite-target": "/" };
 
