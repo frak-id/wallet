@@ -296,6 +296,21 @@ export const walletService = new KubernetesService(
                 "nginx.ingress.kubernetes.io/proxy-buffering": "on",
                 "nginx.ingress.kubernetes.io/proxy-buffers-number": "4",
                 "nginx.ingress.kubernetes.io/proxy-buffer-size": "8k",
+                // Connection pooling and keepalive for ingress -> pod connections
+                "nginx.ingress.kubernetes.io/upstream-keepalive-connections":
+                    "64",
+                "nginx.ingress.kubernetes.io/upstream-keepalive-requests":
+                    "1000",
+                "nginx.ingress.kubernetes.io/upstream-keepalive-timeout": "60",
+                // HTTP/2 optimizations for better multiplexing
+                "nginx.ingress.kubernetes.io/http2-max-field-size": "8k",
+                "nginx.ingress.kubernetes.io/http2-max-header-size": "32k",
+                "nginx.ingress.kubernetes.io/http2-max-concurrent-streams":
+                    "128",
+                // Connection timeouts optimized for static assets
+                "nginx.ingress.kubernetes.io/proxy-connect-timeout": "5",
+                "nginx.ingress.kubernetes.io/proxy-send-timeout": "60",
+                "nginx.ingress.kubernetes.io/proxy-read-timeout": "60",
             },
         },
     },

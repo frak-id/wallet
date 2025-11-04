@@ -27,7 +27,6 @@
     "@frak-labs/ui": "workspace:*",
     "@frak-labs/wallet-shared": "workspace:*",
     "@openpanel/web": "^1.0.1",
-    "@simplewebauthn/browser": "^13.2.2",
     "@tanstack/react-query": "^5.90.5",
     "class-variance-authority": "^0.7.1",
     "i18next": "^25.6.0",
