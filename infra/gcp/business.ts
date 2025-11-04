@@ -65,7 +65,8 @@ if (!$dev) {
                 DRPC_API_KEY: businessEnv.DRPC_API_KEY,
                 NEXUS_RPC_SECRET: businessEnv.NEXUS_RPC_SECRET,
                 FUNDING_ON_RAMP_URL: businessEnv.FUNDING_ON_RAMP_URL,
-                OPEN_PANEL_BUSINESS_CLIENT_ID: businessEnv.OPEN_PANEL_BUSINESS_CLIENT_ID,
+                OPEN_PANEL_BUSINESS_CLIENT_ID:
+                    businessEnv.OPEN_PANEL_BUSINESS_CLIENT_ID,
             },
             platforms: ["linux/amd64"],
             push: true,
