@@ -80,7 +80,7 @@
         "jsdom": "^27.0.1",
         "sst": "3.17.5",
         "typescript": "^5",
-        "vite": "^7.1.12",
+        "vite": "7.1.12",
         "vite-tsconfig-paths": "^5.1.4",
         "vitest": "^4.0.4"
     },
