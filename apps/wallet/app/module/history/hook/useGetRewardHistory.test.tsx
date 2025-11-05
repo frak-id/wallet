@@ -58,7 +58,9 @@ describe("useGetRewardHistory", () => {
         mockWagmiHooks,
     }) => {
         const { useAccount } = await import("wagmi");
-        vi.mocked(useAccount).mockImplementation(mockWagmiHooks.useAccount);
+        vi.mocked(useAccount).mockImplementation(
+            mockWagmiHooks.useAccount as any
+        );
 
         const { result } = renderHook(() => useGetRewardHistory(), {
             wrapper: queryWrapper.wrapper,
@@ -76,7 +78,9 @@ describe("useGetRewardHistory", () => {
 
         // Setup mocks
         const { useAccount } = await import("wagmi");
-        vi.mocked(useAccount).mockImplementation(mockWagmiHooks.useAccount);
+        vi.mocked(useAccount).mockImplementation(
+            mockWagmiHooks.useAccount as any
+        );
 
         vi.spyOn(rewardHistoryActions, "getRewardHistory").mockResolvedValue(
             mockHistory
@@ -99,15 +103,15 @@ describe("useGetRewardHistory", () => {
 
     test("should not fetch when address is missing", async ({
         queryWrapper,
-        mockWagmiHooks,
     }) => {
         // Mock useAccount to return no address
         const { useAccount } = await import("wagmi");
         vi.mocked(useAccount).mockReturnValue({
-            ...mockWagmiHooks.useAccount(),
             address: undefined,
             isConnected: false,
-        });
+            isConnecting: false,
+            isDisconnected: true,
+        } as any);
 
         renderHook(() => useGetRewardHistory(), {
             wrapper: queryWrapper.wrapper,
@@ -126,7 +130,9 @@ describe("useGetRewardHistory", () => {
         const mockError = new Error("Failed to fetch reward history");
 
         const { useAccount } = await import("wagmi");
-        vi.mocked(useAccount).mockImplementation(mockWagmiHooks.useAccount);
+        vi.mocked(useAccount).mockImplementation(
+            mockWagmiHooks.useAccount as any
+        );
 
         vi.spyOn(rewardHistoryActions, "getRewardHistory").mockRejectedValue(
             mockError
@@ -153,7 +159,9 @@ describe("useGetRewardHistory", () => {
         const mockHistory = createMockRewardHistory();
 
         const { useAccount } = await import("wagmi");
-        vi.mocked(useAccount).mockImplementation(mockWagmiHooks.useAccount);
+        vi.mocked(useAccount).mockImplementation(
+            mockWagmiHooks.useAccount as any
+        );
 
         vi.spyOn(rewardHistoryActions, "getRewardHistory").mockResolvedValue(
             mockHistory
@@ -188,7 +196,9 @@ describe("useGetRewardHistory", () => {
         const emptyHistory: HistoryGroup<RewardHistory> = {};
 
         const { useAccount } = await import("wagmi");
-        vi.mocked(useAccount).mockImplementation(mockWagmiHooks.useAccount);
+        vi.mocked(useAccount).mockImplementation(
+            mockWagmiHooks.useAccount as any
+        );
 
         vi.spyOn(rewardHistoryActions, "getRewardHistory").mockResolvedValue(
             emptyHistory
@@ -231,7 +241,9 @@ describe("useGetRewardHistory", () => {
         };
 
         const { useAccount } = await import("wagmi");
-        vi.mocked(useAccount).mockImplementation(mockWagmiHooks.useAccount);
+        vi.mocked(useAccount).mockImplementation(
+            mockWagmiHooks.useAccount as any
+        );
 
         vi.spyOn(rewardHistoryActions, "getRewardHistory").mockResolvedValue(
             mockHistory
@@ -289,7 +301,9 @@ describe("useGetRewardHistory", () => {
         };
 
         const { useAccount } = await import("wagmi");
-        vi.mocked(useAccount).mockImplementation(mockWagmiHooks.useAccount);
+        vi.mocked(useAccount).mockImplementation(
+            mockWagmiHooks.useAccount as any
+        );
 
         vi.spyOn(rewardHistoryActions, "getRewardHistory").mockResolvedValue(
             mockHistory

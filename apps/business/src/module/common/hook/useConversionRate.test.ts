@@ -1,8 +1,13 @@
 import { backendApi } from "@frak-labs/client/server";
 import { renderHook, waitFor } from "@testing-library/react";
-import type { Address } from "viem";
 import { vi } from "vitest";
-import { describe, expect, type TestContext, test } from "@/tests/fixtures";
+import {
+    createMockAddress,
+    describe,
+    expect,
+    type TestContext,
+    test,
+} from "@/tests/vitest-fixtures";
 import { useConvertToPreferredCurrency } from "./useConversionRate";
 
 // Mock the backend API
@@ -21,7 +26,7 @@ vi.mock("@/module/common/atoms/demoMode", () => ({
     useIsDemoMode: vi.fn(() => false),
 }));
 
-const mockToken = "0x1234567890123456789012345678901234567890" as Address;
+const mockToken = createMockAddress("token");
 
 describe("useConvertToPreferredCurrency", () => {
     describe("with amount parameter", () => {

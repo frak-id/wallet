@@ -6,7 +6,7 @@ import { getSession } from "@/context/auth/session";
 /**
  * Get roles on a product
  */
-async function getRolesOnProductInternal({
+export async function getRolesOnProductInternal({
     productId,
 }: {
     productId?: Hex | "";

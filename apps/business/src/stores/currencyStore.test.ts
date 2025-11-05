@@ -1,5 +1,10 @@
 import type { Currency } from "@frak-labs/core-sdk";
-import { describe, expect, type TestContext, test } from "@/tests/fixtures";
+import {
+    describe,
+    expect,
+    type TestContext,
+    test,
+} from "@/tests/vitest-fixtures";
 
 describe("currencyStore", () => {
     describe("initial state", () => {

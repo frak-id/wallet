@@ -2,7 +2,12 @@ import { backendApi } from "@frak-labs/client/server";
 import { renderHook, waitFor } from "@testing-library/react";
 import type { Hex } from "viem";
 import { vi } from "vitest";
-import { describe, expect, type TestContext, test } from "@/tests/fixtures";
+import {
+    describe,
+    expect,
+    type TestContext,
+    test,
+} from "@/tests/vitest-fixtures";
 import { useGetAdminWallet } from "./useGetAdminWallet";
 
 // Mock the backend API
