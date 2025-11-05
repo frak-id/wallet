@@ -11,6 +11,7 @@ export default defineConfig({
         }),
         tanstackStart(),
         viteReact(),
+        // @ts-expect-error - Bun creates duplicate Vite installations causing type conflicts
         nitro({
             config: {
                 preset: "bun",
