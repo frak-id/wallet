@@ -223,6 +223,8 @@ describe("signature utilities", () => {
             expect(WebAuthnP256.sign).toHaveBeenCalledWith({
                 challenge: "0xhash",
                 credentialId: "auth-id",
+                rpId: "localhost",
+                userVerification: "required",
             });
             expect(setLastWebAuthNAction).toHaveBeenCalledWith({
                 wallet: mockWallet.address,
