@@ -37,6 +37,9 @@ describe("useGetAdminWallet", () => {
                     pubKey: mockAdminWallet,
                 },
                 error: null,
+                response: {} as Response,
+                status: 200,
+                headers: {},
             });
 
             const { result } = renderHook(
@@ -58,6 +61,9 @@ describe("useGetAdminWallet", () => {
             vi.mocked(backendApi.common.adminWallet.get).mockResolvedValueOnce({
                 data: {} as any,
                 error: null,
+                response: {} as Response,
+                status: 200,
+                headers: {},
             });
 
             const { result } = renderHook(
@@ -78,7 +84,10 @@ describe("useGetAdminWallet", () => {
             // Mock response with null data
             vi.mocked(backendApi.common.adminWallet.get).mockResolvedValueOnce({
                 data: null,
-                error: null,
+                error: null as any,
+                response: {} as Response,
+                status: 200,
+                headers: {},
             });
 
             const { result } = renderHook(
@@ -106,6 +115,9 @@ describe("useGetAdminWallet", () => {
                     pubKey: mockAdminWallet,
                 },
                 error: null,
+                response: {} as Response,
+                status: 200,
+                headers: {},
             });
 
             const { result } = renderHook(
@@ -130,6 +142,9 @@ describe("useGetAdminWallet", () => {
                     pubKey: mockAdminWallet,
                 },
                 error: null,
+                response: {} as Response,
+                status: 200,
+                headers: {},
             });
 
             const { result } = renderHook(
@@ -157,7 +172,10 @@ describe("useGetAdminWallet", () => {
             // Mock API error
             vi.mocked(backendApi.common.adminWallet.get).mockResolvedValueOnce({
                 data: null,
-                error: mockError,
+                error: { status: 400, value: mockError },
+                response: {} as Response,
+                status: 400,
+                headers: {},
             });
 
             const { result } = renderHook(
@@ -169,7 +187,10 @@ describe("useGetAdminWallet", () => {
                 expect(result.current.isError).toBe(true);
             });
 
-            expect(result.current.error).toBe(mockError);
+            expect(result.current.error).toEqual({
+                status: 400,
+                value: mockError,
+            });
         });
 
         test("should handle API rejection", async ({
@@ -224,6 +245,9 @@ describe("useGetAdminWallet", () => {
                     pubKey: mockAdminWallet,
                 },
                 error: null,
+                response: {} as Response,
+                status: 200,
+                headers: {},
             });
 
             const { result } = renderHook(
@@ -251,6 +275,9 @@ describe("useGetAdminWallet", () => {
                     pubKey: mockAdminWallet,
                 },
                 error: null,
+                response: {} as Response,
+                status: 200,
+                headers: {},
             });
 
             const { result } = renderHook(
@@ -278,6 +305,9 @@ describe("useGetAdminWallet", () => {
                     pubKey: mockAdminWallet,
                 },
                 error: null,
+                response: {} as Response,
+                status: 200,
+                headers: {},
             });
 
             // First hook instance
@@ -323,10 +353,16 @@ describe("useGetAdminWallet", () => {
                 .mockResolvedValueOnce({
                     data: { pubKey: wallet1 },
                     error: null,
+                    response: {} as Response,
+                    status: 200,
+                    headers: {},
                 })
                 .mockResolvedValueOnce({
                     data: { pubKey: wallet2 },
                     error: null,
+                    response: {} as Response,
+                    status: 200,
+                    headers: {},
                 });
 
             // Fetch for first product

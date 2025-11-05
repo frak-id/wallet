@@ -5,7 +5,7 @@
     "jsx": "react-jsx",
     "module": "ESNext",
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
-    "types": ["vite/client", "vitest/globals"],
+    "types": ["vite/client", "vitest/globals", "bun-types"],
 
     /* Bundler mode */
     "moduleResolution": "bundler",
@@ -24,8 +24,10 @@
     "paths": {
       "@/*": ["./src/*"],
       "@/tests/vitest-fixtures": ["./tests/vitest-fixtures.ts"],
-      "@frak-labs/wallet-shared/tests/vitest-fixtures": ["../../packages/wallet-shared/tests/vitest-fixtures.ts"]
+      "@frak-labs/wallet-shared/tests/vitest-fixtures": ["../../packages/wallet-shared/tests/vitest-fixtures.ts"],
+      "@backend-utils": ["../../services/backend/src/utils/index.ts"],
+      "@backend-common": ["../../services/backend/src/common/index.ts"],
+      "@backend-common/*": ["../../services/backend/src/common/*"]
     }
   }
 }
-

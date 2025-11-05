@@ -45,6 +45,9 @@ describe("useConvertToPreferredCurrency", () => {
                     gbp: 0.79,
                 },
                 error: null,
+                response: {} as Response,
+                status: 200,
+                headers: {},
             });
 
             const { result } = renderHook(
@@ -81,6 +84,9 @@ describe("useConvertToPreferredCurrency", () => {
                     gbp: 0.79,
                 },
                 error: null,
+                response: {} as Response,
+                status: 200,
+                headers: {},
             });
 
             const { result } = renderHook(
@@ -116,6 +122,9 @@ describe("useConvertToPreferredCurrency", () => {
                     gbp: 0.79,
                 },
                 error: null,
+                response: {} as Response,
+                status: 200,
+                headers: {},
             });
 
             const { result } = renderHook(
@@ -152,6 +161,9 @@ describe("useConvertToPreferredCurrency", () => {
                     gbp: 0.79,
                 },
                 error: null,
+                response: {} as Response,
+                status: 200,
+                headers: {},
             });
 
             // 1000000000000000000n (1e18) with 18 decimals = 1.0
@@ -188,6 +200,9 @@ describe("useConvertToPreferredCurrency", () => {
                     gbp: 0.79,
                 },
                 error: null,
+                response: {} as Response,
+                status: 200,
+                headers: {},
             });
 
             // 1000 tokens (1000 * 1e18)
@@ -224,6 +239,9 @@ describe("useConvertToPreferredCurrency", () => {
                     gbp: 0.79,
                 },
                 error: null,
+                response: {} as Response,
+                status: 200,
+                headers: {},
             });
 
             // 100 USDC (100 * 1e6)
@@ -267,7 +285,10 @@ describe("useConvertToPreferredCurrency", () => {
             // Mock failed API call
             vi.mocked(backendApi.common.rate.get).mockResolvedValueOnce({
                 data: null,
-                error: "Network error",
+                error: { status: 400, value: "Network error" },
+                response: {} as Response,
+                status: 400,
+                headers: {},
             });
 
             const { result } = renderHook(
@@ -295,6 +316,9 @@ describe("useConvertToPreferredCurrency", () => {
                     gbp: 0.79,
                 },
                 error: null,
+                response: {} as Response,
+                status: 200,
+                headers: {},
             });
 
             const { result } = renderHook(
@@ -321,6 +345,9 @@ describe("useConvertToPreferredCurrency", () => {
                     gbp: 0.79,
                 },
                 error: null,
+                response: {} as Response,
+                status: 200,
+                headers: {},
             });
 
             const { result } = renderHook(
@@ -355,6 +382,9 @@ describe("useConvertToPreferredCurrency", () => {
                     gbp: 0.79,
                 },
                 error: null,
+                response: {} as Response,
+                status: 200,
+                headers: {},
             });
 
             const { result, rerender } = renderHook(
@@ -395,6 +425,9 @@ describe("useConvertToPreferredCurrency", () => {
                     gbp: 0.79,
                 },
                 error: null,
+                response: {} as Response,
+                status: 200,
+                headers: {},
             });
 
             const { result } = renderHook(

@@ -88,7 +88,7 @@ describe("useWebhookInteractionStatus", () => {
                 expect(result.current.isSuccess).toBe(true);
             });
 
-            expect(result.current.data?.isActive).toBe(false);
+            expect((result.current.data as any)?.isActive).toBe(false);
         });
 
         test("should handle webhook with different sources", async ({
@@ -119,7 +119,7 @@ describe("useWebhookInteractionStatus", () => {
                 expect(result.current.isSuccess).toBe(true);
             });
 
-            expect(result.current.data?.source).toBe("shopify");
+            expect((result.current.data as any)?.source).toBe("shopify");
         });
     });
 
@@ -217,8 +217,8 @@ describe("useWebhookInteractionStatus", () => {
                 expect(result2.current.isSuccess).toBe(true);
             });
 
-            expect(result1.current.data?.isActive).toBe(true);
-            expect(result2.current.data?.isActive).toBe(false);
+            expect((result1.current.data as any)?.isActive).toBe(true);
+            expect((result2.current.data as any)?.isActive).toBe(false);
         });
     });
 
@@ -412,13 +412,13 @@ describe("useWebhookInteractionStatus", () => {
                 expect(result.current.isSuccess).toBe(true);
             });
 
-            expect(result.current.data?.isActive).toBe(false);
+            expect((result.current.data as any)?.isActive).toBe(false);
 
             // Refetch
             await result.current.refetch();
 
             await waitFor(() => {
-                expect(result.current.data?.isActive).toBe(true);
+                expect((result.current.data as any)?.isActive).toBe(true);
             });
 
             expect(getMock).toHaveBeenCalledTimes(2);

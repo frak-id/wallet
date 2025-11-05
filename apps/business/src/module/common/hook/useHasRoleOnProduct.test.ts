@@ -72,13 +72,16 @@ describe("useHasRoleOnProduct", () => {
             // Mock successful API response with owner role
             vi.mocked(businessApi.roles.get).mockResolvedValueOnce({
                 data: {
-                    roles: 1n,
+                    roles: "0x1" as `0x${string}`,
                     isOwner: true,
                     isAdministrator: true,
                     isInteractionManager: true,
                     isCampaignManager: true,
                 },
                 error: null,
+                response: {} as Response,
+                status: 200,
+                headers: {},
             });
 
             const { result } = renderHook(
@@ -106,13 +109,16 @@ describe("useHasRoleOnProduct", () => {
             // Mock response with no roles
             vi.mocked(businessApi.roles.get).mockResolvedValueOnce({
                 data: {
-                    roles: 0n,
+                    roles: "0x0" as `0x${string}`,
                     isOwner: false,
                     isAdministrator: false,
                     isInteractionManager: false,
                     isCampaignManager: false,
                 },
                 error: null,
+                response: {} as Response,
+                status: 200,
+                headers: {},
             });
 
             const { result } = renderHook(
@@ -128,7 +134,7 @@ describe("useHasRoleOnProduct", () => {
                 expect(result.current.rolesReady).toBe(true);
             });
 
-            expect(result.current.roles).toBe(0n);
+            expect(result.current.roles).toBe("0x0");
             expect(result.current.isOwner).toBe(false);
             expect(result.current.isAdministrator).toBe(false);
         });
@@ -139,13 +145,16 @@ describe("useHasRoleOnProduct", () => {
             // Mock response with only campaign manager role
             vi.mocked(businessApi.roles.get).mockResolvedValueOnce({
                 data: {
-                    roles: 8n,
+                    roles: "0x8" as `0x${string}`,
                     isOwner: false,
                     isAdministrator: false,
                     isInteractionManager: false,
                     isCampaignManager: true,
                 },
                 error: null,
+                response: {} as Response,
+                status: 200,
+                headers: {},
             });
 
             const { result } = renderHook(
@@ -175,13 +184,16 @@ describe("useHasRoleOnProduct", () => {
             // Mock successful API response
             vi.mocked(businessApi.roles.get).mockResolvedValueOnce({
                 data: {
-                    roles: 2n,
+                    roles: "0x2" as `0x${string}`,
                     isOwner: false,
                     isAdministrator: true,
                     isInteractionManager: false,
                     isCampaignManager: false,
                 },
                 error: null,
+                response: {} as Response,
+                status: 200,
+                headers: {},
             });
 
             const { result } = renderHook(
@@ -209,7 +221,10 @@ describe("useHasRoleOnProduct", () => {
             // Mock API error
             vi.mocked(businessApi.roles.get).mockResolvedValueOnce({
                 data: null,
-                error: "Network error",
+                error: { status: 400, value: "Network error" },
+                response: {} as Response,
+                status: 400,
+                headers: {},
             });
 
             const { result } = renderHook(
@@ -238,6 +253,9 @@ describe("useHasRoleOnProduct", () => {
             vi.mocked(businessApi.roles.get).mockResolvedValueOnce({
                 data: undefined as any,
                 error: null,
+                response: {} as Response,
+                status: 200,
+                headers: {},
             });
 
             const { result } = renderHook(
@@ -265,13 +283,16 @@ describe("useHasRoleOnProduct", () => {
             // Mock initial response
             vi.mocked(businessApi.roles.get).mockResolvedValueOnce({
                 data: {
-                    roles: 0n,
+                    roles: "0x0" as `0x${string}`,
                     isOwner: false,
                     isAdministrator: false,
                     isInteractionManager: false,
                     isCampaignManager: false,
                 },
                 error: null,
+                response: {} as Response,
+                status: 200,
+                headers: {},
             });
 
             const { result } = renderHook(
@@ -297,13 +318,16 @@ describe("useHasRoleOnProduct", () => {
             // Mock initial response with no roles
             vi.mocked(businessApi.roles.get).mockResolvedValueOnce({
                 data: {
-                    roles: 0n,
+                    roles: "0x0" as `0x${string}`,
                     isOwner: false,
                     isAdministrator: false,
                     isInteractionManager: false,
                     isCampaignManager: false,
                 },
                 error: null,
+                response: {} as Response,
+                status: 200,
+                headers: {},
             });
 
             const { result } = renderHook(
@@ -324,13 +348,16 @@ describe("useHasRoleOnProduct", () => {
             // Mock updated response with admin role
             vi.mocked(businessApi.roles.get).mockResolvedValueOnce({
                 data: {
-                    roles: 2n,
+                    roles: "0x2" as `0x${string}`,
                     isOwner: false,
                     isAdministrator: true,
                     isInteractionManager: false,
                     isCampaignManager: false,
                 },
                 error: null,
+                response: {} as Response,
+                status: 200,
+                headers: {},
             });
 
             // Call refresh
@@ -352,13 +379,16 @@ describe("useHasRoleOnProduct", () => {
             // Mock first product response
             vi.mocked(businessApi.roles.get).mockResolvedValueOnce({
                 data: {
-                    roles: 1n,
+                    roles: "0x1" as `0x${string}`,
                     isOwner: true,
                     isAdministrator: true,
                     isInteractionManager: true,
                     isCampaignManager: true,
                 },
                 error: null,
+                response: {} as Response,
+                status: 200,
+                headers: {},
             });
 
             const { result, rerender } = renderHook(
@@ -382,13 +412,16 @@ describe("useHasRoleOnProduct", () => {
             // Mock second product response (no roles)
             vi.mocked(businessApi.roles.get).mockResolvedValueOnce({
                 data: {
-                    roles: 0n,
+                    roles: "0x0" as `0x${string}`,
                     isOwner: false,
                     isAdministrator: false,
                     isInteractionManager: false,
                     isCampaignManager: false,
                 },
                 error: null,
+                response: {} as Response,
+                status: 200,
+                headers: {},
             });
 
             // Change productId
