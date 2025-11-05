@@ -74,7 +74,6 @@
     "@arethetypeswrong/cli": "^0.18.2",
     "@frak-labs/browserslist-config": "workspace:*",
     "@frak-labs/dev-tooling": "workspace:*",
-    "@microsoft/api-extractor": "^7.54.0",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
     "react": "catalog:",
