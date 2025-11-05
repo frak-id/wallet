@@ -57,7 +57,6 @@
   "devDependencies": {
     "@frak-labs/browserslist-config": "workspace:*",
     "@frak-labs/dev-tooling": "workspace:*",
-    "@microsoft/api-extractor": "^7.54.0",
     "esbuild": "^0.24.2",
     "typescript": "catalog:"
   }
