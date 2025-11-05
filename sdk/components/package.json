@@ -56,15 +56,15 @@
     "@frak-labs/core-sdk": "workspace:*",
     "class-variance-authority": "^0.7.1",
     "preact": "^10.27.2",
-    "preact-custom-element": "^4.5.1"
+    "preact-custom-element": "^4.6.0"
   },
   "devDependencies": {
     "@frak-labs/browserslist-config": "workspace:*",
     "@frak-labs/dev-tooling": "workspace:*",
     "@frak-labs/ui": "workspace:*",
-    "@rsbuild/plugin-preact": "^1.5.2",
+    "@rsbuild/plugin-preact": "^1.6.0",
     "@rsbuild/plugin-svgr": "^1.2.2",
-    "@rslib/core": "^0.16.1",
+    "@rslib/core": "^0.17.1",
     "@types/node": "catalog:",
     "@types/preact-custom-element": "^4.0.4",
     "typescript": "^5"
