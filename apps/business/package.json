@@ -80,11 +80,14 @@
         "jsdom": "^27.1.0",
         "sst": "3.17.21",
         "typescript": "^5",
-        "vite": "7.1.12",
+        "vite": "catalog:",
         "vite-tsconfig-paths": "^5.1.4",
         "vitest": "^4.0.7"
     },
     "browserslist": [
         "extends @frak-labs/browserslist-config"
-    ]
+    ],
+    "overrides": {
+        "vite": "catalog:"
+    }
 }
