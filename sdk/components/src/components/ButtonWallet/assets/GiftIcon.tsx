@@ -1,0 +1,24 @@
+import type { JSX } from "preact";
+
+export function GiftIcon(props: JSX.SVGAttributes<SVGSVGElement>) {
+    return (
+        <svg
+            fill="none"
+            height="1em"
+            viewBox="0 0 28 28"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+            {...props}
+        >
+            <title>Gift icon</title>
+            <path
+                d="m23.1427 13.9999v11.4285h-18.2857v-11.4285m9.1429 11.4285v-17.14282m0 0h-5.1429c-.75776 0-1.48448-.30102-2.0203-.83684s-.83684-1.26255-.83684-2.02031.30102-1.48448.83684-2.0203 1.26254-.83684 2.0203-.83684c4 0 5.1429 5.71429 5.1429 5.71429zm0 0h5.1428c.7578 0 1.4845-.30102 2.0203-.83684s.8369-1.26255.8369-2.02031-.3011-1.48448-.8369-2.0203-1.2625-.83684-2.0203-.83684c-4 0-5.1428 5.71429-5.1428 5.71429zm-11.42861 0h22.85711v5.71432h-22.85711z"
+                stroke="#fff"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            />
+        </svg>
+    );
+}
+
+export default GiftIcon;

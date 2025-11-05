@@ -40,6 +40,15 @@ This document provides quick reference guidelines for AI agents working on the F
 - **`apps/listener/`** - Iframe communication app for SDK interactions
 - **`apps/dashboard-admin/`** - React Router admin interface
 
+## SDK Packages
+
+- **Build Strategy**: Dual-tool approach (tsdown for NPM, esbuild for CDN)
+- **`sdk/core/`** - Core SDK (tsdown: ESM+CJS, esbuild: IIFE CDN bundle)
+- **`sdk/react/`** - React hooks (tsdown: ESM+CJS)
+- **`sdk/components/`** - Web Components (tsdown: ESM, esbuild: ESM with code splitting)
+- **`sdk/legacy/`** - Legacy UMD bundle (esbuild only)
+- **Build**: `bun run build:sdk` (builds all packages in dependency order)
+
 ## Testing
 
 - **E2E Tests**: 13 Playwright specs in `apps/wallet/tests/specs/`

@@ -23,7 +23,6 @@
             "!**/sst-env.d.ts",
             "!example/vanilla-js/index.html",
             "!**/.react-router",
-            "!**/.rslib",
             "!**/.svelte-kit",
             "!**/*.svelte",
             "!**/playwright-report",

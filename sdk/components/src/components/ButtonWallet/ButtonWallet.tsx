@@ -3,7 +3,7 @@ import { cx } from "class-variance-authority";
 import { useEffect, useMemo, useState } from "preact/hooks";
 import { useClientReady } from "@/hooks/useClientReady";
 import { useReward } from "@/hooks/useReward";
-import GiftIcon from "./assets/gift.svg";
+import { GiftIcon } from "./assets/GiftIcon";
 import styles from "./ButtonWallet.module.css";
 import type { ButtonWalletProps } from "./types";
 import { openWalletModal } from "./utils";
