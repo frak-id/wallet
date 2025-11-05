@@ -20,7 +20,6 @@
 
 # build
 .react-router
-.rslib
 .turbo
 generated-docs/
 .output

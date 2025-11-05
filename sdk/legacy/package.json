@@ -42,8 +42,8 @@
     "format:check": "biome check .",
     "format": "biome check --write .",
     "clean": "rimraf dist",
-    "build": "rslib build",
-    "build:watch": "rslib build --watch",
+    "build": "node esbuild.umd.mjs",
+    "build:watch": "node esbuild.umd.mjs",
     "prepublish": "bun run lint && bun run build",
     "publish": "echo 'Publishing legacy...'"
   },
@@ -58,7 +58,7 @@
     "@frak-labs/browserslist-config": "workspace:*",
     "@frak-labs/dev-tooling": "workspace:*",
     "@microsoft/api-extractor": "^7.54.0",
-    "@rslib/core": "^0.17.1",
+    "esbuild": "^0.24.2",
     "typescript": "catalog:"
   }
 }

@@ -45,8 +45,8 @@
     "format:check": "biome check .",
     "format": "biome check --write .",
     "clean": "rimraf cdn dist",
-    "build": "rslib build",
-    "build:watch": "rslib build --watch",
+    "build": "tsdown && node esbuild.cdn.mjs",
+    "build:watch": "tsdown --watch",
     "typecheck": "tsc --noEmit",
     "prepublish": "bun run lint && bun run build",
     "publish": "echo 'Publishing components...'"
@@ -62,11 +62,10 @@
     "@frak-labs/browserslist-config": "workspace:*",
     "@frak-labs/dev-tooling": "workspace:*",
     "@frak-labs/ui": "workspace:*",
-    "@rsbuild/plugin-preact": "^1.6.0",
-    "@rsbuild/plugin-svgr": "^1.2.2",
-    "@rslib/core": "^0.17.1",
     "@types/node": "catalog:",
     "@types/preact-custom-element": "^4.0.4",
+    "esbuild": "^0.24.2",
+    "tsdown": "^0.16.0",
     "typescript": "^5"
   },
   "browserslist": [
