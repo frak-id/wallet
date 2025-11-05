@@ -19,7 +19,7 @@ describe("useNotificationSetupStatus", () => {
         vi.clearAllMocks();
         // Reset mock implementation using fixture
         vi.mocked(NotificationContext.useNotificationContext).mockReturnValue(
-            mockNotificationContext
+            mockNotificationContext as any
         );
     });
 

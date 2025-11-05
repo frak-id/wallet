@@ -7,11 +7,39 @@ import {
     type BaseTestFixtures,
     test as baseTest,
 } from "@frak-labs/wallet-shared/tests/vitest-fixtures";
+import type { Address } from "viem";
+import type { AuthSessionClient } from "@/types/AuthSession";
+
+/**
+ * Creates a mock Ethereum address for testing
+ * Can be used in fixtures or directly in tests/mocks
+ * @param seed - Optional seed for generating different addresses (will be hashed to hex)
+ * @example
+ * createMockAddress("product") // 0x1234567890123456789012345678901234567890
+ * createMockAddress("member1") // 0xabcdef1234567890123456789012345678901234
+ */
+export function createMockAddress(seed = "default"): Address {
+    // Create a simple hash from the seed to ensure valid hex chars
+    const hash = seed
+        .split("")
+        .reduce((acc, char) => acc + char.charCodeAt(0), 0);
+
+    // Generate a repeating pattern based on the hash
+    const hexPattern = hash.toString(16).padStart(8, "0").slice(0, 8);
+    const address = hexPattern.repeat(5).slice(0, 40);
+
+    return `0x${address}` as Address;
+}
 
 /**
  * Dashboard-specific test fixtures (extends BaseTestFixtures)
  */
 export type DashboardTestFixtures = BaseTestFixtures & {
+    /**
+     * Mock authentication session for business dashboard
+     */
+    mockAuthSession: AuthSessionClient;
+
     /**
      * Fresh campaign store that auto-resets before and after each test
      */
@@ -57,6 +85,7 @@ export type DashboardTestFixtures = BaseTestFixtures & {
 export const test = baseTest.extend<
     Pick<
         DashboardTestFixtures,
+        | "mockAuthSession"
         | "freshCampaignStore"
         | "freshCurrencyStore"
         | "freshDemoModeStore"
@@ -64,6 +93,18 @@ export const test = baseTest.extend<
         | "freshPushCreationStore"
     >
 >({
+    /**
+     * Provides a mock authentication session for business dashboard tests
+     * Uses createMockAddress from wallet-shared for proper type safety
+     */
+    // biome-ignore lint/correctness/noEmptyPattern: Vitest requires object destructuring
+    mockAuthSession: async ({}, use) => {
+        const session: AuthSessionClient = {
+            wallet: createMockAddress("business"),
+        };
+        await use(session);
+    },
+
     /**
      * Provides a fresh campaign store that auto-resets
      * Store is reset before and after each test

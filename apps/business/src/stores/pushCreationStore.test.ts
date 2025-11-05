@@ -1,5 +1,10 @@
 import type { FormCreatePushNotification } from "@/module/members/component/CreatePush/types";
-import { describe, expect, type TestContext, test } from "@/tests/fixtures";
+import {
+    describe,
+    expect,
+    type TestContext,
+    test,
+} from "@/tests/vitest-fixtures";
 
 const mockForm: FormCreatePushNotification = {
     title: "Test Push Notification",

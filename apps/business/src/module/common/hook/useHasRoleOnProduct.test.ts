@@ -1,8 +1,14 @@
 import { businessApi } from "@frak-labs/client/server";
 import { renderHook, waitFor } from "@testing-library/react";
-import type { Address, Hex } from "viem";
+import type { Hex } from "viem";
 import { vi } from "vitest";
-import { describe, expect, type TestContext, test } from "@/tests/fixtures";
+import {
+    createMockAddress,
+    describe,
+    expect,
+    type TestContext,
+    test,
+} from "@/tests/vitest-fixtures";
 import { useHasRoleOnProduct } from "./useHasRoleOnProduct";
 
 // Mock the business API
@@ -18,15 +24,14 @@ vi.mock("@frak-labs/client/server", () => ({
 vi.mock("@frak-labs/react-sdk", () => ({
     useWalletStatus: vi.fn(() => ({
         data: {
-            wallet: "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0" as Address,
+            wallet: createMockAddress("sdk-wallet"),
             status: "connected",
         },
     })),
 }));
 
-const mockProductId =
-    "0x0000000000000000000000000000000000000000000000000000000000000001" as Hex;
-const mockWallet = "0x1111111111111111111111111111111111111111" as Address;
+const mockProductId = createMockAddress("product") as Hex;
+const mockWallet = createMockAddress("wallet");
 
 describe("useHasRoleOnProduct", () => {
     describe("default state", () => {
@@ -341,10 +346,8 @@ describe("useHasRoleOnProduct", () => {
         test("should refetch when productId changes", async ({
             queryWrapper,
         }: TestContext) => {
-            const productId1 =
-                "0x0000000000000000000000000000000000000000000000000000000000000001" as Hex;
-            const productId2 =
-                "0x0000000000000000000000000000000000000000000000000000000000000002" as Hex;
+            const productId1 = createMockAddress("product1") as Hex;
+            const productId2 = createMockAddress("product2") as Hex;
 
             // Mock first product response
             vi.mocked(businessApi.roles.get).mockResolvedValueOnce({

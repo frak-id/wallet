@@ -55,7 +55,9 @@ describe("useGetInteractionHistory", () => {
         mockWagmiHooks,
     }) => {
         const { useAccount } = await import("wagmi");
-        vi.mocked(useAccount).mockImplementation(mockWagmiHooks.useAccount);
+        vi.mocked(useAccount).mockImplementation(
+            mockWagmiHooks.useAccount as any
+        );
 
         const { result } = renderHook(() => useGetInteractionHistory(), {
             wrapper: queryWrapper.wrapper,
@@ -72,7 +74,9 @@ describe("useGetInteractionHistory", () => {
         const mockHistory = createMockHistoryGroup();
 
         const { useAccount } = await import("wagmi");
-        vi.mocked(useAccount).mockImplementation(mockWagmiHooks.useAccount);
+        vi.mocked(useAccount).mockImplementation(
+            mockWagmiHooks.useAccount as any
+        );
 
         vi.spyOn(
             interactionHistoryActions,
@@ -98,15 +102,15 @@ describe("useGetInteractionHistory", () => {
 
     test("should not fetch when address is missing", async ({
         queryWrapper,
-        mockWagmiHooks,
     }) => {
         // Mock useAccount to return no address
         const { useAccount } = await import("wagmi");
         vi.mocked(useAccount).mockReturnValue({
-            ...mockWagmiHooks.useAccount(),
             address: undefined,
             isConnected: false,
-        });
+            isConnecting: false,
+            isDisconnected: true,
+        } as any);
 
         renderHook(() => useGetInteractionHistory(), {
             wrapper: queryWrapper.wrapper,
@@ -127,7 +131,9 @@ describe("useGetInteractionHistory", () => {
         const mockError = new Error("Failed to fetch interaction history");
 
         const { useAccount } = await import("wagmi");
-        vi.mocked(useAccount).mockImplementation(mockWagmiHooks.useAccount);
+        vi.mocked(useAccount).mockImplementation(
+            mockWagmiHooks.useAccount as any
+        );
 
         vi.spyOn(
             interactionHistoryActions,
@@ -157,7 +163,9 @@ describe("useGetInteractionHistory", () => {
         const mockHistory = createMockHistoryGroup();
 
         const { useAccount } = await import("wagmi");
-        vi.mocked(useAccount).mockImplementation(mockWagmiHooks.useAccount);
+        vi.mocked(useAccount).mockImplementation(
+            mockWagmiHooks.useAccount as any
+        );
 
         vi.spyOn(
             interactionHistoryActions,
@@ -195,7 +203,9 @@ describe("useGetInteractionHistory", () => {
         const emptyHistory: HistoryGroup<InteractionHistory> = {};
 
         const { useAccount } = await import("wagmi");
-        vi.mocked(useAccount).mockImplementation(mockWagmiHooks.useAccount);
+        vi.mocked(useAccount).mockImplementation(
+            mockWagmiHooks.useAccount as any
+        );
 
         vi.spyOn(
             interactionHistoryActions,
@@ -253,7 +263,9 @@ describe("useGetInteractionHistory", () => {
         };
 
         const { useAccount } = await import("wagmi");
-        vi.mocked(useAccount).mockImplementation(mockWagmiHooks.useAccount);
+        vi.mocked(useAccount).mockImplementation(
+            mockWagmiHooks.useAccount as any
+        );
 
         vi.spyOn(
             interactionHistoryActions,

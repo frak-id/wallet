@@ -1,17 +1,23 @@
-import { describe, expect, type TestContext, test } from "@/tests/fixtures";
+import {
+    createMockAddress,
+    describe,
+    expect,
+    type TestContext,
+    test,
+} from "@/tests/vitest-fixtures";
 import type { Campaign } from "@/types/Campaign";
 
 const mockCampaign: Campaign = {
     title: "Test Campaign",
     type: "awareness",
-    productId: "0x1234567890123456789012345678901234567890",
+    productId: createMockAddress("product"),
     specialCategories: [],
     budget: {
         type: "daily",
         maxEuroDaily: 100,
     },
     territories: ["US", "FR"],
-    bank: "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd",
+    bank: createMockAddress("bank"),
     scheduled: {
         dateStart: new Date("2024-01-01"),
     },

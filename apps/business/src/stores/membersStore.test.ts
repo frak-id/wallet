@@ -1,10 +1,15 @@
-import type { Address } from "viem";
 import type { GetMembersParam } from "@/context/members/action/getProductMembers";
-import { describe, expect, type TestContext, test } from "@/tests/fixtures";
+import {
+    createMockAddress,
+    describe,
+    expect,
+    type TestContext,
+    test,
+} from "@/tests/vitest-fixtures";
 
-const mockAddress1 = "0x1234567890123456789012345678901234567890" as Address;
-const mockAddress2 = "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd" as Address;
-const mockAddress3 = "0x9876543210987654321098765432109876543210" as Address;
+const mockAddress1 = createMockAddress("member1");
+const mockAddress2 = createMockAddress("member2");
+const mockAddress3 = createMockAddress("member3");
 
 describe("membersStore", () => {
     describe("initial state", () => {

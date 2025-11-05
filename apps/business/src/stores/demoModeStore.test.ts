@@ -1,5 +1,11 @@
 import { QueryClient } from "@tanstack/react-query";
-import { describe, expect, type TestContext, test, vi } from "@/tests/fixtures";
+import {
+    describe,
+    expect,
+    type TestContext,
+    test,
+    vi,
+} from "@/tests/vitest-fixtures";
 
 describe("demoModeStore", () => {
     describe("initial state", () => {

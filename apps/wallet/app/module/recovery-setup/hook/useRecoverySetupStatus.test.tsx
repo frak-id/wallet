@@ -30,7 +30,9 @@ describe("useRecoverySetupStatus", () => {
             isConnecting: false,
             isDisconnected: true,
         } as unknown as ReturnType<typeof useAccount>);
-        vi.mocked(useAccount).mockImplementation(mockWagmiHooks.useAccount);
+        vi.mocked(useAccount).mockImplementation(
+            mockWagmiHooks.useAccount as any
+        );
 
         const { result } = renderHook(() => useRecoverySetupStatus(), {
             wrapper: queryWrapper.wrapper,
@@ -55,7 +57,9 @@ describe("useRecoverySetupStatus", () => {
 
         // Use mockWagmiHooks fixture - already configured with mockAddress
         const { useAccount } = await import("wagmi");
-        vi.mocked(useAccount).mockImplementation(mockWagmiHooks.useAccount);
+        vi.mocked(useAccount).mockImplementation(
+            mockWagmiHooks.useAccount as any
+        );
 
         vi.spyOn(recoveryActions, "getCurrentRecoveryOption").mockResolvedValue(
             mockRecoveryOptions
@@ -81,7 +85,9 @@ describe("useRecoverySetupStatus", () => {
     }) => {
         // Use mockWagmiHooks fixture - already configured with mockAddress
         const { useAccount } = await import("wagmi");
-        vi.mocked(useAccount).mockImplementation(mockWagmiHooks.useAccount);
+        vi.mocked(useAccount).mockImplementation(
+            mockWagmiHooks.useAccount as any
+        );
 
         vi.spyOn(recoveryActions, "getCurrentRecoveryOption").mockResolvedValue(
             null
@@ -106,7 +112,9 @@ describe("useRecoverySetupStatus", () => {
 
         // Use mockWagmiHooks fixture - already configured with mockAddress
         const { useAccount } = await import("wagmi");
-        vi.mocked(useAccount).mockImplementation(mockWagmiHooks.useAccount);
+        vi.mocked(useAccount).mockImplementation(
+            mockWagmiHooks.useAccount as any
+        );
 
         vi.spyOn(recoveryActions, "getCurrentRecoveryOption").mockRejectedValue(
             mockError
@@ -129,7 +137,9 @@ describe("useRecoverySetupStatus", () => {
     }) => {
         // Use mockWagmiHooks fixture - already configured with mockAddress
         const { useAccount } = await import("wagmi");
-        vi.mocked(useAccount).mockImplementation(mockWagmiHooks.useAccount);
+        vi.mocked(useAccount).mockImplementation(
+            mockWagmiHooks.useAccount as any
+        );
 
         vi.spyOn(recoveryActions, "getCurrentRecoveryOption").mockResolvedValue(
             null
