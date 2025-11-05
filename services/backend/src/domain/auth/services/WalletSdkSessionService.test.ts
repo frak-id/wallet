@@ -1,19 +1,24 @@
 import { afterAll, beforeAll, describe, expect, it, mock } from "bun:test";
 import type { Address } from "viem";
+import { mockAll } from "../../../../test/mock";
+import { JwtContextMock } from "../../../../test/mock/common";
 import type { StaticWalletSdkTokenDto } from "../models/WalletSessionDto";
 import { WalletSdkSessionService } from "./WalletSdkSessionService";
 
 describe("WalletSdkSessionService", () => {
     let service: WalletSdkSessionService;
 
-    const mockWalletSdkJwt = {
-        sign: mock(() => Promise.resolve("mock-jwt-token")),
-    };
-
     const mockWallet = "0x1234567890abcdef1234567890abcdef12345678" as Address;
 
     beforeAll(() => {
-        service = new WalletSdkSessionService(mockWalletSdkJwt);
+        mockAll();
+        service = new WalletSdkSessionService();
+
+        // Reset the mock to clear any previous calls
+        JwtContextMock.walletSdk.sign.mockReset();
+        JwtContextMock.walletSdk.sign.mockImplementation(() =>
+            Promise.resolve("mock-jwt-token")
+        );
     });
 
     afterAll(() => {
@@ -30,7 +35,7 @@ describe("WalletSdkSessionService", () => {
                 wallet: mockWallet,
             });
 
-            expect(mockWalletSdkJwt.sign).toHaveBeenCalledWith({
+            expect(JwtContextMock.walletSdk.sign).toHaveBeenCalledWith({
                 address: mockWallet,
                 scopes: ["interaction"],
                 sub: mockWallet,
@@ -63,7 +68,7 @@ describe("WalletSdkSessionService", () => {
                 additionalData,
             });
 
-            expect(mockWalletSdkJwt.sign).toHaveBeenCalledWith({
+            expect(JwtContextMock.walletSdk.sign).toHaveBeenCalledWith({
                 address: mockWallet,
                 scopes: ["interaction"],
                 sub: mockWallet,
@@ -90,7 +95,7 @@ describe("WalletSdkSessionService", () => {
                 additionalData: {}, // Empty object
             });
 
-            expect(mockWalletSdkJwt.sign).toHaveBeenCalledWith({
+            expect(JwtContextMock.walletSdk.sign).toHaveBeenCalledWith({
                 address: mockWallet,
                 scopes: ["interaction"],
                 sub: mockWallet,
@@ -121,7 +126,7 @@ describe("WalletSdkSessionService", () => {
             for (const wallet of testWallets) {
                 await service.generateSdkJwt({ wallet });
 
-                expect(mockWalletSdkJwt.sign).toHaveBeenCalledWith(
+                expect(JwtContextMock.walletSdk.sign).toHaveBeenCalledWith(
                     expect.objectContaining({
                         address: wallet,
                         sub: wallet,
@@ -134,16 +139,13 @@ describe("WalletSdkSessionService", () => {
         });
 
         it("should handle JWT signing errors gracefully", async () => {
-            const errorJwt = {
-                sign: mock(() =>
-                    Promise.reject(new Error("JWT signing failed"))
-                ),
-            };
-
-            const serviceWithError = new WalletSdkSessionService(errorJwt);
+            // Mock the sign to throw an error for this test
+            JwtContextMock.walletSdk.sign.mockImplementationOnce(() =>
+                Promise.reject(new Error("JWT signing failed"))
+            );
 
             await expect(
-                serviceWithError.generateSdkJwt({
+                service.generateSdkJwt({
                     wallet: mockWallet,
                 })
             ).rejects.toThrow("JWT signing failed");
