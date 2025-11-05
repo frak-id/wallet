@@ -76,3 +76,27 @@ export function mockPermissionlessActions() {
         getSenderAddress: getSenderAddressMock,
     }));
 }
+
+/* -------------------------------------------------------------------------- */
+/*                                     Ox                                     */
+/* -------------------------------------------------------------------------- */
+
+const oxWebAuthnP256VerifyMock = mock(() => true);
+
+export const oxMocks = {
+    WebAuthnP256: {
+        verify: oxWebAuthnP256VerifyMock,
+    },
+};
+
+/**
+ * Mock the ox library.
+ */
+export function mockOx() {
+    mock.module("ox", () => ({
+        WebAuthnP256: {
+            verify: oxWebAuthnP256VerifyMock,
+        },
+        Signature: {},
+    }));
+}

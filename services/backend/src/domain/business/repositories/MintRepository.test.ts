@@ -40,6 +40,10 @@ describe("MintRepository", () => {
             },
             isRunningInProd: false,
             stringToBytes32: mock((str: string) => `0x${str.padEnd(64, "0")}`),
+            getTokenAddressForStablecoin: mock((_currency: string) => {
+                // Return a mock token address based on currency
+                return "0xmocktokenaddress" as Address;
+            }),
         }));
 
         // Change the admin wallet repository mock
@@ -193,7 +197,7 @@ describe("MintRepository", () => {
                 key: "minter",
             });
             expect(viemActionsMocks.simulateContract).toHaveBeenCalledTimes(3);
-            expect(viemActionsMocks.writeContract).toHaveBeenCalledTimes(4); // mint + interaction + bank + mint tokens
+            expect(viemActionsMocks.writeContract).toHaveBeenCalledTimes(3); // mint + interaction + bank
             expect(
                 viemActionsMocks.waitForTransactionReceipt
             ).toHaveBeenCalledTimes(2); // mint + interaction
@@ -364,8 +368,7 @@ describe("MintRepository", () => {
             viemActionsMocks.writeContract
                 .mockResolvedValueOnce(mockTxHash) // mint
                 .mockResolvedValueOnce(mockTxHash) // interaction
-                .mockResolvedValueOnce(mockTxHash) // bank deployment
-                .mockRejectedValueOnce(new Error("Mint tokens failed")); // mint tokens fails
+                .mockRejectedValueOnce(new Error("Bank deployment failed")); // bank deployment fails
 
             const result = await mintRepository.mintProduct(mintParams);
 

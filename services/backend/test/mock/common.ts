@@ -46,6 +46,183 @@ export const rolesRepositoryMocks = {
     getRoles: mock(() => Promise.resolve([])),
 };
 
+export const JwtContextMock = {
+    wallet: {
+        sign: mock(() => Promise.resolve("mock-jwt-token")),
+        verify: mock(() => Promise.resolve({ wallet: "0x123" })),
+    },
+    walletSdk: {
+        sign: mock(() => Promise.resolve("mock-sdk-jwt-token")),
+        verify: mock(() => Promise.resolve({ wallet: "0x123" })),
+    },
+};
+
+/**
+ * Flexible database mock for Drizzle ORM that can be customized per test.
+ *
+ * Uses an object to hold mock functions so they can be reassigned and all references update.
+ * This allows tests to configure different responses for different scenarios.
+ *
+ * @example Basic usage in tests
+ * ```typescript
+ * beforeEach(() => {
+ *     dbMock.__reset();  // Clear previous test configurations
+ *     dbMock.__setSelectResponse(() => Promise.resolve([mockData]));
+ * });
+ *
+ * it("should fetch data", async () => {
+ *     const result = await db.select().from(table).where(condition);
+ *     expect(result).toEqual([mockData]);
+ * });
+ * ```
+ *
+ * @example Multiple query types
+ * ```typescript
+ * dbMock.__setSelectResponse(() => Promise.resolve([{ id: 1 }]));
+ * dbMock.__setInsertResponse(() => Promise.resolve([{ id: 2 }]));
+ * dbMock.__setFindManyResponse(() => Promise.resolve([{ id: 3 }]));
+ * ```
+ */
+const mockFunctions = {
+    selectMockFn: () => Promise.resolve([]),
+    insertMockFn: () => Promise.resolve([]),
+    updateMockFn: () => Promise.resolve([]),
+    deleteMockFn: () => Promise.resolve([]),
+    findManyMockFn: () => Promise.resolve([]),
+};
+
+// Create separate mocks so tests can verify they were called
+const deleteExecuteMock = mock(() => mockFunctions.deleteMockFn());
+// biome-ignore lint/suspicious/noExplicitAny: Transaction callback needs flexible typing
+const transactionMock = mock(async (fn: any) => {
+    const result = await fn(dbMock);
+    return result;
+});
+// biome-ignore lint/suspicious/noExplicitAny: Update accepts table argument
+const updateMock = mock((_table?: any) => ({
+    set: mock(() => ({
+        where: mock(() => mockFunctions.updateMockFn()),
+    })),
+}));
+
+// Helper to create a thenable object that can be awaited or chained
+const createThenable = (
+    promiseFn: () => Promise<unknown>,
+    chainMethods: Record<string, unknown> = {}
+) => {
+    // Create a lazy thenable that calls promiseFn when awaited
+    const thenable = {
+        // biome-ignore lint/suspicious/noThenProperty: Required for promise-like behavior in mocks
+        then: (
+            onfulfilled?: (value: unknown) => unknown,
+            onrejected?: (reason: unknown) => unknown
+        ) => {
+            const promise = promiseFn();
+            return promise.then(onfulfilled, onrejected);
+        },
+        catch: (onrejected?: (reason: unknown) => unknown) => {
+            const promise = promiseFn();
+            return promise.catch(onrejected);
+        },
+        finally: (onfinally?: () => void) => {
+            const promise = promiseFn();
+            return promise.finally(onfinally);
+        },
+        ...chainMethods,
+    };
+    return thenable;
+};
+
+// biome-ignore lint/suspicious/noExplicitAny: Mock object requires flexible typing for Drizzle ORM compatibility
+export const dbMock: any = {
+    select: mock(() => ({
+        from: mock(() => ({
+            where: mock((_condition?: unknown) => {
+                const chainable = {
+                    limit: mock((_count?: number) =>
+                        mockFunctions.selectMockFn()
+                    ),
+                    innerJoin: mock(() => ({
+                        where: mock(() => ({
+                            limit: mock(() => mockFunctions.selectMockFn()),
+                        })),
+                    })),
+                };
+                return createThenable(
+                    () => mockFunctions.selectMockFn(),
+                    chainable
+                );
+            }),
+            innerJoin: mock(() => ({
+                where: mock(() => ({
+                    limit: mock(() => mockFunctions.selectMockFn()),
+                })),
+            })),
+            limit: mock(() => mockFunctions.selectMockFn()),
+        })),
+    })),
+    insert: mock(() => ({
+        values: mock(() => ({
+            returning: mock(() => mockFunctions.insertMockFn()),
+            onConflictDoUpdate: mock(() => ({
+                returning: mock(() => mockFunctions.insertMockFn()),
+            })),
+            onConflictDoNothing: mock(() => mockFunctions.insertMockFn()),
+        })),
+    })),
+    update: updateMock,
+    delete: mock(() => ({
+        where: mock(() => ({
+            execute: deleteExecuteMock,
+        })),
+    })),
+    transaction: transactionMock,
+    query: {
+        purchaseStatusTable: {
+            // biome-ignore lint/suspicious/noExplicitAny: Drizzle query options require flexible typing
+            findMany: mock((_opts?: any) => mockFunctions.findManyMockFn()),
+        },
+        pushTokensTable: {
+            // biome-ignore lint/suspicious/noExplicitAny: Drizzle query options require flexible typing
+            findMany: mock((_opts?: any) => mockFunctions.findManyMockFn()),
+        },
+    },
+    // Helper methods to configure mock responses
+    // biome-ignore lint/suspicious/noExplicitAny: Mock configuration requires flexible function types
+    __setSelectResponse: (fn: any) => {
+        mockFunctions.selectMockFn = fn;
+    },
+    // biome-ignore lint/suspicious/noExplicitAny: Mock configuration requires flexible function types
+    __setInsertResponse: (fn: any) => {
+        mockFunctions.insertMockFn = fn;
+    },
+    // biome-ignore lint/suspicious/noExplicitAny: Mock configuration requires flexible function types
+    __setUpdateResponse: (fn: any) => {
+        mockFunctions.updateMockFn = fn;
+    },
+    // biome-ignore lint/suspicious/noExplicitAny: Mock configuration requires flexible function types
+    __setDeleteResponse: (fn: any) => {
+        mockFunctions.deleteMockFn = fn;
+    },
+    // biome-ignore lint/suspicious/noExplicitAny: Mock configuration requires flexible function types
+    __setFindManyResponse: (fn: any) => {
+        mockFunctions.findManyMockFn = fn;
+    },
+    __getDeleteExecuteMock: () => deleteExecuteMock,
+    __getTransactionMock: () => transactionMock,
+    __getUpdateMock: () => updateMock,
+    __reset: () => {
+        mockFunctions.selectMockFn = () => Promise.resolve([]);
+        mockFunctions.insertMockFn = () => Promise.resolve([]);
+        mockFunctions.updateMockFn = () => Promise.resolve([]);
+        mockFunctions.deleteMockFn = () => Promise.resolve([]);
+        mockFunctions.findManyMockFn = () => Promise.resolve([]);
+        deleteExecuteMock.mockClear();
+        transactionMock.mockClear();
+        updateMock.mockClear();
+    },
+};
+
 mock.module("@backend-common", () => ({
     indexerApi: indexerApiMocks,
     pricingRepository: pricingRepositoryMocks,
@@ -53,6 +230,12 @@ mock.module("@backend-common", () => ({
     adminWalletsRepository: adminWalletsRepositoryMocks,
     interactionDiamondRepository: interactionDiamondRepositoryMocks,
     rolesRepository: rolesRepositoryMocks,
+    get JwtContext() {
+        return JwtContextMock;
+    },
+    get db() {
+        return dbMock;
+    },
     log: {
         debug: mock(() => {}),
         info: mock(() => {}),

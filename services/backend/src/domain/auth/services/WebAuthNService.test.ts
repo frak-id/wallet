@@ -1,11 +1,9 @@
 import { afterAll, beforeAll, describe, expect, it, mock } from "bun:test";
-import type {
-    AuthenticationResponseJSON,
-    VerifiedAuthenticationResponse,
-} from "@simplewebauthn/server";
-import { mockAll } from "../../../../test/mock";
-import { permissionlessActionsMocks } from "../../../../test/mock/viem";
-import { webauthnMocks } from "../../../../test/mock/webauthn";
+import {
+    mockAll,
+    oxMocks,
+    permissionlessActionsMocks,
+} from "../../../../test/mock";
 import type { AuthenticatorRepository } from "../repositories/AuthenticatorRepository";
 import { WebAuthNService } from "./WebAuthNService";
 
@@ -14,18 +12,11 @@ describe("WebAuthNService", () => {
     beforeAll(() => {
         mockAll();
 
-        webauthnMocks.verifyAuthenticationResponse.mockImplementation(() =>
-            Promise.resolve({
-                verified: true,
-                authenticationInfo: {
-                    newCounter: 5,
-                },
-            } as unknown as VerifiedAuthenticationResponse)
-        );
-
         permissionlessActionsMocks.getSenderAddress.mockImplementation(() =>
             Promise.resolve("0x1234567890abcdef1234567890abcdef12345678")
         );
+
+        oxMocks.WebAuthnP256.verify.mockImplementation(() => true);
     });
 
     // Restore all the mocks after the test
@@ -115,32 +106,41 @@ describe("WebAuthNService", () => {
 
             const result = await service.isValidSignature({
                 compressedSignature,
-                msg: "test-message",
+                challenge: "0x1234567890abcdef",
             });
 
             expect(result).toBe(false);
         });
 
         it("should return signature verification details when valid", async () => {
-            const mockSignature: AuthenticationResponseJSON = {
+            // Create mock signature using ox format (what the service now expects)
+            const mockSignature = {
                 id: "test-credential-id",
-                rawId: "test-raw-id",
                 response: {
-                    clientDataJSON: "test-client-data",
-                    authenticatorData: "test-auth-data",
-                    signature: "test-signature",
+                    signature: {
+                        r: 123456789n,
+                        s: 987654321n,
+                        yParity: 0,
+                    },
+                    metadata: {
+                        challenge: "test-challenge",
+                        origin: "https://test.com",
+                        type: "webauthn.get" as const,
+                        authenticatorData: new Uint8Array([1, 2, 3]),
+                        clientDataJSON: new Uint8Array([4, 5, 6]),
+                    },
                 },
-                type: "public-key",
-                clientExtensionResults: {},
             };
 
             const compressedSignature = Buffer.from(
-                JSON.stringify(mockSignature)
+                JSON.stringify(mockSignature, (_, v) =>
+                    typeof v === "bigint" ? v.toString() : v
+                )
             ).toString("base64");
 
             const result = await webAuthNService.isValidSignature({
                 compressedSignature,
-                msg: "test-message",
+                challenge: "0x1234567890abcdef",
             });
 
             expect(result).toEqual({
@@ -152,39 +152,42 @@ describe("WebAuthNService", () => {
             });
         });
 
-        it("should update counter when verification counter has changed", async () => {
-            const updateCounterSpy = mock(() => Promise.resolve());
-            const mockRepo = {
-                ...mockAuthenticatorRepository,
-                updateCounter: updateCounterSpy,
-            } as unknown as AuthenticatorRepository;
-            const service = new WebAuthNService(mockRepo);
+        it("should return false when signature verification fails", async () => {
+            // Mock the verify function to return false for this test
+            oxMocks.WebAuthnP256.verify.mockImplementationOnce(() => false);
 
-            const mockSignature: AuthenticationResponseJSON = {
+            // Create mock signature with invalid values that will fail verification
+            const mockSignature = {
                 id: "test-credential-id",
-                rawId: "test-raw-id",
                 response: {
-                    clientDataJSON: "test-client-data",
-                    authenticatorData: "test-auth-data",
-                    signature: "test-signature",
+                    signature: {
+                        r: 0n,
+                        s: 0n,
+                        yParity: 0,
+                    },
+                    metadata: {
+                        challenge: "invalid-challenge",
+                        origin: "https://malicious.com",
+                        type: "webauthn.get" as const,
+                        authenticatorData: new Uint8Array([]),
+                        clientDataJSON: new Uint8Array([]),
+                    },
                 },
-                type: "public-key",
-                clientExtensionResults: {},
             };
 
             const compressedSignature = Buffer.from(
-                JSON.stringify(mockSignature)
+                JSON.stringify(mockSignature, (_, v) =>
+                    typeof v === "bigint" ? v.toString() : v
+                )
             ).toString("base64");
 
-            await service.isValidSignature({
+            const result = await webAuthNService.isValidSignature({
                 compressedSignature,
-                msg: "test-message",
+                challenge: "0x1234567890abcdef",
             });
 
-            expect(updateCounterSpy).toHaveBeenCalledWith({
-                credentialId: "test-credential-id",
-                counter: 6, // newCounter (5) + 1
-            });
+            // Should return false when verification fails
+            expect(result).toBe(false);
         });
     });
 });
