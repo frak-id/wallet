@@ -40,6 +40,22 @@
   ],
   "main": "./cdn/components.js",
   "browser": "./cdn/components.js",
+  "exports": {
+    "./buttonWallet": {
+      "development": "./src/components/ButtonWallet/index.ts",
+      "import": "./dist/buttonWallet.js",
+      "types": "./dist/buttonWallet.d.ts"
+    },
+    "./buttonShare": {
+      "development": "./src/components/ButtonShare/index.ts",
+      "import": "./dist/buttonShare.js",
+      "types": "./dist/buttonShare.d.ts"
+    },
+    "./cdn": {
+      "import": "./cdn/components.js"
+    },
+    "./dist/*": "./dist/*"
+  },
   "scripts": {
     "lint": "biome lint .",
     "format:check": "biome check .",
@@ -59,14 +75,17 @@
     "preact-custom-element": "^4.6.0"
   },
   "devDependencies": {
+    "@bosh-code/tsdown-plugin-inject-css": "^2.0.0",
     "@frak-labs/browserslist-config": "workspace:*",
     "@frak-labs/dev-tooling": "workspace:*",
     "@frak-labs/ui": "workspace:*",
     "@types/node": "catalog:",
     "@types/preact-custom-element": "^4.0.4",
     "esbuild": "^0.24.2",
+    "esbuild-css-modules-plugin": "^3.1.5",
     "tsdown": "^0.16.0",
-    "typescript": "^5"
+    "typescript": "^5",
+    "unplugin-lightningcss": "^0.4.3"
   },
   "browserslist": [
     "extends @frak-labs/browserslist-config"

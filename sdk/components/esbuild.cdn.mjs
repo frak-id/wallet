@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import * as esbuild from "esbuild";
+import cssModulesPlugin from "esbuild-css-modules-plugin";
 
 /**
  * CDN Bundle Build Script (esbuild)
@@ -19,8 +20,10 @@ import * as esbuild from "esbuild";
  *
  * tsdown CANNOT do code splitting, which is a deal breaker for this use case.
  *
- * This dual-tool approach is industry standard (used by Vue, React, Preact, etc.)
- * for component libraries that need both NPM and CDN distribution.
+ * CSS Modules: esbuild-css-modules-plugin v3.1.5
+ * - Configured WITHOUT inject to generate clean CSS output
+ * - CSS auto-loaded via import.meta.url in loader.ts
+ * - This approach is simpler and more reliable than runtime injection
  */
 
 // Clean cdn directory
@@ -50,6 +53,18 @@ await esbuild.build({
     jsx: "automatic",
     jsxImportSource: "preact",
     conditions: ["development"], // Use source files from core-sdk instead of built dist
+    plugins: [
+        cssModulesPlugin({
+            // Generate CSS files without runtime injection
+            // The CSS auto-loader in loader.ts will handle loading
+            inject: false,
+            // Use "dashes" to preserve underscores in class names (button__left stays as-is)
+            // "camelCaseOnly" would transform button__left → buttonLeft (breaks component)
+            localsConvention: "dashes",
+            // Force CSS output even with code splitting
+            force: true,
+        }),
+    ],
 });
 
-console.log("✓ CDN bundles built successfully");
+console.log("✓ CDN bundles built successfully with esbuild-css-modules-plugin");
