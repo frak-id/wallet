@@ -3,8 +3,10 @@ import viteReact from "@vitejs/plugin-react";
 import { nitro } from "nitro/vite";
 import { defineConfig } from "vite";
 import viteTsConfigPaths from "vite-tsconfig-paths";
+import { lightningCssConfig } from "../../packages/dev-tooling";
 
 export default defineConfig({
+    css: lightningCssConfig,
     plugins: [
         viteTsConfigPaths({
             projects: ["./tsconfig.json"],

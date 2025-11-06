@@ -4,11 +4,13 @@ import type { Drop } from "esbuild";
 import type { UserConfig } from "rolldown-vite";
 import mkcert from "vite-plugin-mkcert";
 import tsconfigPaths from "vite-tsconfig-paths";
+import { lightningCssConfig } from "../../packages/dev-tooling";
 
 const DEBUG = JSON.stringify(false);
 
 export default {
     base: "/listener",
+    css: lightningCssConfig,
     resolve: {
         // CRITICAL: Use production conditions for tree shaking!
         // "development" loads full dev builds with debugging code

@@ -5,7 +5,7 @@ import type { ConfigEnv, UserConfig } from "rolldown-vite";
 import { defineConfig } from "rolldown-vite";
 import mkcert from "vite-plugin-mkcert";
 import tsconfigPaths from "vite-tsconfig-paths";
-import { onwarn } from "../../packages/dev-tooling";
+import { lightningCssConfig, onwarn } from "../../packages/dev-tooling";
 
 const DEBUG = JSON.stringify(false);
 
@@ -75,6 +75,7 @@ export default defineConfig(({ mode, command }: ConfigEnv): UserConfig => {
     // Wallet app configuration
     return {
         ...baseConfig,
+        css: lightningCssConfig,
         plugins: [reactRouter(), mkcert(), tsconfigPaths()],
         resolve: {
             conditions: ["development"],
