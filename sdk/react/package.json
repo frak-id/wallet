@@ -59,6 +59,9 @@
     "build:watch": "tsdown --watch",
     "check-exports": "attw --pack .",
     "typecheck": "tsc --noEmit",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage",
     "prepublish": "bun run lint && bun run build",
     "publish": "echo 'Publishing react...'"
   },
@@ -74,11 +77,22 @@
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.2",
     "@frak-labs/dev-tooling": "workspace:*",
+    "@frak-labs/wallet-shared": "workspace:*",
+    "@tanstack/react-query": "catalog:",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^14.3.1",
+    "@testing-library/react-hooks": "^8.0.1",
+    "@testing-library/user-event": "^14.5.2",
+    "@types/jsdom": "^27.0.0",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
+    "@vitest/coverage-v8": "^4.0.7",
+    "@vitest/ui": "^4.0.7",
+    "jsdom": "^27.1.0",
     "react": "catalog:",
     "tsdown": "^0.16.0",
     "typescript": "^5",
-    "viem": "catalog:"
+    "viem": "catalog:",
+    "vitest": "^4.0.7"
   }
 }

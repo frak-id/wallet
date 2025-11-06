@@ -1,6 +1,15 @@
 {
   // This tsconfig file contains the shared config for the build (tsconfig.build.json) and type checking (tsconfig.json) config.
-  "include": ["./src"],
+  "include": ["./src/**/*", "./tests/**/*"],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "../../**/*.ts",
+    "../../**/*.tsx",
+    "../**/*.ts",
+    "../**/*.tsx"
+  ],
+  "references": [],
   "compilerOptions": {
     // Output directory
     "outDir": "./dist",
@@ -29,12 +38,13 @@
 
     // Interop constraints
     "esModuleInterop": false,
-    "allowSyntheticDefaultImports": false,
+    "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
     "verbatimModuleSyntax": true,
     "importHelpers": true, // This is only used for build validation. Since we do not have `tslib` installed, this will fail if we accidentally make use of anything that'd require injection of helpers.
 
     // Language and environment
+    "jsx": "react-jsx",
     "moduleResolution": "bundler",
     "module": "esnext",
     "target": "ES2021", // Setting this to `ES2021` enables native support for `Node v16+`: https://github.com/microsoft/TypeScript/wiki/Node-Target-Mapping.
