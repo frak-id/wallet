@@ -1,71 +1,32 @@
-import "@testing-library/jest-dom/vitest";
-import { cleanup } from "@testing-library/react";
-import { afterEach } from "vitest";
+/**
+ * Vitest Setup File for Listener App Unit Tests
+ *
+ * This file imports shared React setup and provides listener-specific mocks:
+ * - react-testing-library-setup.ts: RTL cleanup and jest-dom matchers
+ * - react-setup.ts: BigInt serialization for Zustand
+ * - shared-setup.ts: Browser API mocks (crypto, MessageChannel, IntersectionObserver)
+ * - apps-setup.ts: Environment variables
+ *
+ * Listener-specific mocks:
+ * - window.origin for iframe postMessage security
+ * - document.referrer to identify parent window origin
+ */
 
-// Cleanup after each test
-afterEach(() => {
-    cleanup();
-});
+// Import shared React Testing Library setup (cleanup + jest-dom)
+import "../../../test-setup/react-testing-library-setup";
 
-// Mock window.matchMedia
-Object.defineProperty(window, "matchMedia", {
-    writable: true,
-    value: (query: string) => ({
-        matches: false,
-        media: query,
-        onchange: null,
-        addListener: () => {},
-        removeListener: () => {},
-        addEventListener: () => {},
-        removeEventListener: () => {},
-        dispatchEvent: () => true,
-    }),
-});
+// Import shared React setup (BigInt serialization)
+import "../../../test-setup/react-setup";
 
-// Mock window.origin
+// Mock window.origin (used for iframe postMessage security)
 Object.defineProperty(window, "origin", {
     writable: true,
     value: "http://localhost:3000",
 });
 
-// Mock document.referrer
+// Mock document.referrer (used to identify parent window origin)
 Object.defineProperty(document, "referrer", {
     value: "https://example.com",
     writable: true,
     configurable: true,
 });
-
-// Mock IntersectionObserver
-global.IntersectionObserver = class IntersectionObserver {
-    disconnect() {}
-    observe() {}
-    takeRecords() {
-        return [];
-    }
-    unobserve() {}
-} as unknown as typeof IntersectionObserver;
-
-// Mock ResizeObserver
-global.ResizeObserver = class ResizeObserver {
-    disconnect() {}
-    observe() {}
-    unobserve() {}
-} as unknown as typeof ResizeObserver;
-
-// Mock MessageChannel for iframe communication
-global.MessageChannel = class MessageChannel {
-    port1 = {
-        postMessage: () => {},
-        addEventListener: () => {},
-        removeEventListener: () => {},
-        start: () => {},
-        close: () => {},
-    } as unknown as MessagePort;
-    port2 = {
-        postMessage: () => {},
-        addEventListener: () => {},
-        removeEventListener: () => {},
-        start: () => {},
-        close: () => {},
-    } as unknown as MessagePort;
-} as unknown as typeof MessageChannel;

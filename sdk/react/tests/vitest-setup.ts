@@ -6,85 +6,28 @@
  * - Use .test.ts or .test.tsx extension for test files
  * - Run tests with: bun run test (or bun run test:ui for Vitest UI)
  *
- * This file provides:
- * - Global test cleanup (React Testing Library)
- * - Browser API mocks (window, IntersectionObserver, MessageChannel, crypto)
+ * This file imports shared React setup and provides React SDK-specific mocks:
+ * - react-testing-library-setup.ts: RTL cleanup and jest-dom matchers
+ * - react-setup.ts: BigInt serialization for Zustand
+ * - shared-setup.ts: Browser API mocks (crypto, MessageChannel, IntersectionObserver)
+ *
+ * React SDK-specific mocks:
  * - Core SDK action mocks (displayModal, openSso, watchWalletStatus, etc.)
  * - Frame connector error mocks (FrakRpcError, ClientNotFound)
  */
 
-import "@testing-library/jest-dom/vitest";
-import { cleanup } from "@testing-library/react";
-import { JSDOM } from "jsdom";
-import { afterEach, beforeAll, vi } from "vitest";
+import { afterEach, vi } from "vitest";
 
-// Setup jsdom before tests
-beforeAll(() => {
-    const jsdom = new JSDOM("<!doctype html><html><body></body></html>", {
-        url: "http://localhost",
-        pretendToBeVisual: true,
-    });
-    global.window = jsdom.window as unknown as Window & typeof globalThis;
-    global.document = jsdom.window.document;
-    global.navigator = jsdom.window.navigator;
+// Import shared React Testing Library setup (cleanup + jest-dom)
+import "../../../test-setup/react-testing-library-setup";
 
-    // Setup BigInt serialization for potential Zustand persist middleware usage
-    // biome-ignore lint/suspicious/noExplicitAny: BigInt.prototype doesn't have toJSON in type definition
-    if (typeof BigInt !== "undefined" && !(BigInt.prototype as any).toJSON) {
-        // biome-ignore lint/suspicious/noExplicitAny: BigInt.prototype doesn't have toJSON in type definition
-        (BigInt.prototype as any).toJSON = function () {
-            return this.toString();
-        };
-    }
-});
+// Import shared React setup (BigInt serialization)
+import "../../../test-setup/react-setup";
 
-// Cleanup after each test
+// Additional cleanup for SDK-specific mocks
 afterEach(() => {
-    cleanup();
-    vi.clearAllMocks();
+    vi.clearAllMocks(); // Clear SDK action mocks
 });
-
-// Mock crypto.randomUUID if not available
-if (!global.crypto) {
-    global.crypto = {
-        randomUUID: () => "test-uuid",
-    } as unknown as Crypto;
-}
-
-// Mock IntersectionObserver
-global.IntersectionObserver = class IntersectionObserver {
-    disconnect() {}
-    observe() {}
-    takeRecords() {
-        return [];
-    }
-    unobserve() {}
-} as unknown as typeof IntersectionObserver;
-
-// Mock ResizeObserver
-global.ResizeObserver = class ResizeObserver {
-    disconnect() {}
-    observe() {}
-    unobserve() {}
-} as unknown as typeof ResizeObserver;
-
-// Mock MessageChannel for iframe communication
-global.MessageChannel = class MessageChannel {
-    port1 = {
-        postMessage: () => {},
-        addEventListener: () => {},
-        removeEventListener: () => {},
-        start: () => {},
-        close: () => {},
-    } as unknown as MessagePort;
-    port2 = {
-        postMessage: () => {},
-        addEventListener: () => {},
-        removeEventListener: () => {},
-        start: () => {},
-        close: () => {},
-    } as unknown as MessagePort;
-} as unknown as typeof MessageChannel;
 
 // Mock @frak-labs/core-sdk actions
 // These are mocked globally so tests can customize behavior via vi.mocked()

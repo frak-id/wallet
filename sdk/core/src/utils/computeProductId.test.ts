@@ -9,11 +9,11 @@ import { computeProductId } from "./computeProductId";
 
 describe("computeProductId", () => {
     it("should compute product ID from current domain (window.location.host)", () => {
-        // Mock window.location.host is set to "localhost" in vitest-setup.ts
+        // In JSDOM test environment, window.location.host is "localhost:3000"
         const productId = computeProductId();
 
-        // Should compute keccak256 hash of "localhost"
-        const expectedId = keccak256(toHex("localhost"));
+        // Should compute keccak256 hash of window.location.host
+        const expectedId = keccak256(toHex(window.location.host));
         expect(productId).toBe(expectedId);
     });
 

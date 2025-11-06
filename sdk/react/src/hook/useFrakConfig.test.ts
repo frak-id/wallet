@@ -178,7 +178,7 @@ describe("useFrakConfig", () => {
             wrapper,
         });
 
-        // In test environment, window.location.host is "localhost"
-        expect(result.current.domain).toBe("localhost");
+        // In test environment, window.location.host is "localhost:3000" (JSDOM default)
+        expect(result.current.domain).toBe(window.location.host);
     });
 });

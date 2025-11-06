@@ -115,8 +115,8 @@ describe("FrakConfigProvider", () => {
             )
         );
 
-        // In test environment, window.location.host is "localhost"
-        expect(receivedConfig.domain).toBe("localhost");
+        // In test environment, window.location.host is "localhost:3000" (JSDOM default)
+        expect(receivedConfig.domain).toBe(window.location.host);
     });
 
     test("should pass through all config properties", ({ mockFrakConfig }) => {

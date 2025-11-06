@@ -1,58 +1,28 @@
 import react from "@vitejs/plugin-react";
 import tsconfigPaths from "vite-tsconfig-paths";
-import { defineConfig } from "vitest/config";
+import { defineConfig, mergeConfig } from "vitest/config";
+import sharedConfig from "../../vitest.shared";
 
-export default defineConfig({
-    plugins: [react(), tsconfigPaths()],
-    test: {
-        name: "listener-unit",
-        globals: true,
-        environment: "jsdom",
-        setupFiles: ["./tests/vitest-setup.ts"],
-        // Optimized reporters for CI vs local development
-        reporters: process.env.CI
-            ? [
-                  "verbose", // Detailed output for CI logs
-                  "github-actions", // GitHub Actions annotations
-                  ["html", { outputFile: "coverage/test-report.html" }],
-              ]
-            : [
-                  ["default", { summary: true }], // Clean summary for local
-                  ["html", { outputFile: "coverage/test-report.html" }],
-              ],
-        include: ["app/**/*.{test,spec}.{ts,tsx}"],
-        exclude: [
-            "node_modules/**",
-            "build/**",
-            "**/*.e2e.{test,spec}.{ts,tsx}",
-        ],
-        coverage: {
-            provider: "v8",
-            reporter: ["text", "json", "html"],
-            include: ["app/**/*.{ts,tsx}"],
-            exclude: [
-                "node_modules/**",
-                "build/**",
-                "**/*.d.ts",
-                "**/*.config.ts",
-                "**/*.{test,spec}.{ts,tsx}",
-                "coverage/**/*",
-                // Exclude UI components from coverage (focus on business logic)
-                "**/component/**/*.tsx",
-                "app/module/modal/component/**/*.tsx",
-                "app/module/embedded/component/**/*.tsx",
-                // Exclude entry points and routes
-                "app/main.tsx",
-                "app/App.tsx",
+export default mergeConfig(
+    sharedConfig,
+    defineConfig({
+        plugins: [react(), tsconfigPaths()],
+        test: {
+            name: "listener-unit",
+            setupFiles: [
+                "./tests/vitest-setup.ts",
+                "../../test-setup/shared-setup.ts",
+                "../../test-setup/apps-setup.ts",
             ],
-            thresholds: {
-                lines: 40,
-                functions: 40,
-                branches: 40,
-                statements: 40,
+            include: ["app/**/*.{test,spec}.{ts,tsx}"],
+            coverage: {
+                include: ["app/**/*.{ts,tsx}"],
+                exclude: [
+                    // Exclude entry points (listener app specific)
+                    "app/main.tsx",
+                    "app/App.tsx",
+                ],
             },
         },
-        testTimeout: 10000,
-        hookTimeout: 10000,
-    },
-});
+    })
+);
