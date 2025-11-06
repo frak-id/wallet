@@ -29,7 +29,6 @@ Visit our comprehensive documentation at **[docs.frak.id](https://docs.frak.id)*
 - **`client/`** - API client abstractions (Elysia Eden Treaty integration)
 - **`dev-tooling/`** - Build configurations (manualChunks, onwarn suppressions)
 - **`rpc/`** - RPC utilities (published as `@frak-labs/frame-connector`)
-- **`browserslist-config/`** - Browser compatibility configuration
 
 ### 🛠️ SDK (`/sdk`)
 - **`core/`** - Core SDK functionality and blockchain interactions

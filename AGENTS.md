@@ -22,7 +22,10 @@ This document provides quick reference guidelines for AI agents working on the F
 - **Language**: TypeScript. Prefer `types` over `interfaces`.
 - **Formatting**: Use `bun run format` (Biome).
 - **Imports**: Use absolute imports: `@/...`
-- **Styling**: CSS Modules. No Tailwind.
+- **Styling**: CSS Modules with Lightning CSS (Vite apps) or PostCSS (Next.js legacy). No Tailwind.
+  - Lightning CSS: 100x faster, centralized config in `packages/dev-tooling/src/vite.ts`
+  - Supports CSS nesting, autoprefixing, minification
+  - Targets: Chrome 100+, Safari 14+, Firefox 91+, Edge 100+
 - **Patterns**: Functional, declarative programming. Avoid classes. Use early returns.
 - **Naming**:
   - Directories: `lowercase-with-dashes`

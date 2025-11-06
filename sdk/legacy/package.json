@@ -51,11 +51,7 @@
     "@frak-labs/core-sdk": "workspace:*",
     "@frak-labs/ui": "workspace:*"
   },
-  "browserslist": [
-    "extends @frak-labs/browserslist-config"
-  ],
   "devDependencies": {
-    "@frak-labs/browserslist-config": "workspace:*",
     "@frak-labs/dev-tooling": "workspace:*",
     "esbuild": "^0.24.2",
     "typescript": "catalog:"

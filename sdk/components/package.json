@@ -76,7 +76,6 @@
   },
   "devDependencies": {
     "@bosh-code/tsdown-plugin-inject-css": "^2.0.0",
-    "@frak-labs/browserslist-config": "workspace:*",
     "@frak-labs/dev-tooling": "workspace:*",
     "@frak-labs/ui": "workspace:*",
     "@types/node": "catalog:",
@@ -86,8 +85,5 @@
     "tsdown": "^0.16.0",
     "typescript": "^5",
     "unplugin-lightningcss": "^0.4.3"
-  },
-  "browserslist": [
-    "extends @frak-labs/browserslist-config"
-  ]
+  }
 }

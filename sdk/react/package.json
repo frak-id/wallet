@@ -73,7 +73,6 @@
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.2",
-    "@frak-labs/browserslist-config": "workspace:*",
     "@frak-labs/dev-tooling": "workspace:*",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
@@ -81,8 +80,5 @@
     "tsdown": "^0.16.0",
     "typescript": "^5",
     "viem": "catalog:"
-  },
-  "browserslist": [
-    "extends @frak-labs/browserslist-config"
-  ]
+  }
 }

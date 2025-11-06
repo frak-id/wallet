@@ -147,7 +147,7 @@ bun run changeset:release
   - `ui/` - Radix UI-based component library (generic, reusable across all apps)
   - `app-essentials/` - Core blockchain utilities and WebAuthn configuration
   - `client/` - API client abstractions (Elysia Eden Treaty integration)
-  - `dev-tooling/` - Build configurations (manualChunks, onwarn suppressions)
+  - `dev-tooling/` - Build configurations (manualChunks, onwarn suppressions, Lightning CSS config)
   - `rpc/` - RPC utilities (published as `@frak-labs/frame-connector`)
 - **`sdk/`** - Public SDK packages (published to npm, linked via Changesets)
   - `core/` - Core SDK functionality (tsdown for ESM/CJS, esbuild for CDN bundle)
@@ -160,6 +160,7 @@ bun run changeset:release
 
 ### Key Technologies
 - **Frontend**: React 19, TanStack Query, Zustand, Viem, Wagmi, CSS Modules, TanStack Start, React Router v7, Next.js 15
+- **Styling**: Lightning CSS for modern Vite apps (wallet, listener, business), PostCSS for Next.js (dashboard legacy only)
 - **Backend**: Elysia.js, PostgreSQL (Drizzle ORM), MongoDB
 - **Blockchain**: Account Abstraction (ERC-4337), WebAuthn, Multi-chain support, Pimlico, ZeroDev
 - **Infrastructure**: SST v3 (AWS), Pulumi (GCP), hybrid multi-cloud deployment
@@ -176,6 +177,11 @@ bun run changeset:release
 - Wallet app uses module-based architecture (`app/module/` structure)
 - Backend follows domain-driven design (`src/domain/*/` structure)
 - **State Management**: Zustand with persist middleware across all frontend apps (wallet, dashboard, listener) for consistency and performance
+- **CSS Processing**: Lightning CSS (100x faster than PostCSS) for Vite apps with centralized config in `packages/dev-tooling/src/vite.ts`
+  - Targets: Chrome 100+, Safari 14+, Firefox 91+, Edge 100+ (baseline-widely-available)
+  - Features: CSS nesting, CSS Modules (camelCase), autoprefixing, minification
+  - Apps using Lightning CSS: wallet, listener, business, wallet-ethcc
+  - Legacy dashboard (Next.js) uses PostCSS + autoprefixer (being phased out)
 
 ### Package-Specific Commands
 

@@ -77,7 +77,6 @@
         "zustand": "^5.0.8",
       },
       "devDependencies": {
-        "@frak-labs/browserslist-config": "workspace:*",
         "@tanstack/react-devtools": "^0.8.0",
         "@tanstack/router-plugin": "^1.134.12",
         "@testing-library/jest-dom": "^6.9.1",
@@ -144,7 +143,6 @@
         "zustand": "^5.0.8",
       },
       "devDependencies": {
-        "@frak-labs/browserslist-config": "workspace:*",
         "@types/node": "catalog:",
         "@types/react": "catalog:",
         "@types/react-dom": "catalog:",
@@ -225,7 +223,6 @@
       },
       "devDependencies": {
         "@frak-labs/backend-elysia": "workspace:*",
-        "@frak-labs/browserslist-config": "workspace:*",
         "@testing-library/jest-dom": "^6.9.1",
         "@testing-library/react": "^16.3.0",
         "@types/jsdom": "^27.0.0",
@@ -302,7 +299,6 @@
       },
       "devDependencies": {
         "@frak-labs/backend-elysia": "workspace:*",
-        "@frak-labs/browserslist-config": "workspace:*",
         "@noble/curves": "^2.0.1",
         "@playwright/test": "^1.56.1",
         "@react-router/dev": "^7.9.5",
@@ -371,7 +367,6 @@
       "name": "@frak-labs-example/vanilla-js",
       "version": "0.0.1",
       "devDependencies": {
-        "@frak-labs/browserslist-config": "workspace:*",
         "@frak-labs/components": "workspace:*",
         "@frak-labs/core-sdk": "workspace:*",
         "rolldown-vite": "^7.2.0",
@@ -406,7 +401,6 @@
         "viem": "catalog:",
       },
       "devDependencies": {
-        "@frak-labs/browserslist-config": "workspace:*",
         "@react-router/dev": "^7.9.5",
         "@types/react": "catalog:",
         "@types/react-dom": "catalog:",
@@ -427,10 +421,6 @@
         "bun-types": "latest",
         "typescript": "catalog:",
       },
-    },
-    "packages/browserslist-config": {
-      "name": "@frak-labs/browserslist-config",
-      "version": "0.0.1",
     },
     "packages/client": {
       "name": "@frak-labs/client",
@@ -461,7 +451,6 @@
       },
       "devDependencies": {
         "@arethetypeswrong/cli": "^0.18.2",
-        "@frak-labs/browserslist-config": "workspace:*",
         "@frak-labs/dev-tooling": "workspace:*",
         "@types/node": "catalog:",
         "tsdown": "^0.16.0",
@@ -580,7 +569,6 @@
       },
       "devDependencies": {
         "@bosh-code/tsdown-plugin-inject-css": "^2.0.0",
-        "@frak-labs/browserslist-config": "workspace:*",
         "@frak-labs/dev-tooling": "workspace:*",
         "@frak-labs/ui": "workspace:*",
         "@types/node": "catalog:",
@@ -602,7 +590,6 @@
       },
       "devDependencies": {
         "@arethetypeswrong/cli": "^0.18.2",
-        "@frak-labs/browserslist-config": "workspace:*",
         "@frak-labs/dev-tooling": "workspace:*",
         "@types/jsdom": "^27.0.0",
         "@types/node": "catalog:",
@@ -627,7 +614,6 @@
         "@frak-labs/ui": "workspace:*",
       },
       "devDependencies": {
-        "@frak-labs/browserslist-config": "workspace:*",
         "@frak-labs/dev-tooling": "workspace:*",
         "esbuild": "^0.24.2",
         "typescript": "catalog:",
@@ -642,7 +628,6 @@
       },
       "devDependencies": {
         "@arethetypeswrong/cli": "^0.18.2",
-        "@frak-labs/browserslist-config": "workspace:*",
         "@frak-labs/dev-tooling": "workspace:*",
         "@types/node": "catalog:",
         "@types/react": "catalog:",
@@ -1016,8 +1001,6 @@
     "@frak-labs/app-essentials": ["@frak-labs/app-essentials@workspace:packages/app-essentials"],
 
     "@frak-labs/backend-elysia": ["@frak-labs/backend-elysia@workspace:services/backend"],
-
-    "@frak-labs/browserslist-config": ["@frak-labs/browserslist-config@workspace:packages/browserslist-config"],
 
     "@frak-labs/client": ["@frak-labs/client@workspace:packages/client"],
 

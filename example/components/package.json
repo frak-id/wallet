@@ -44,5 +44,11 @@
     "@sinclair/typebox": "0.34.41",
     "normalize.css": "^8.0.1",
     "svelte-i18n": "^4.0.1"
-  }
+  },
+  "browserslist": [
+    ">0.3%",
+    "last 2 versions",
+    "safari>=14",
+    "not dead"
+  ]
 }

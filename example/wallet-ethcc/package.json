@@ -38,7 +38,6 @@
     "viem": "catalog:"
   },
   "devDependencies": {
-    "@frak-labs/browserslist-config": "workspace:*",
     "@react-router/dev": "^7.9.5",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
@@ -47,8 +46,5 @@
     "typescript": "^5",
     "vite": "npm:rolldown-vite@^7.2.0",
     "vite-tsconfig-paths": "^5.1.4"
-  },
-  "browserslist": [
-    "extends @frak-labs/browserslist-config"
-  ]
+  }
 }

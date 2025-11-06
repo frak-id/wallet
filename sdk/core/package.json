@@ -108,7 +108,6 @@
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.2",
-    "@frak-labs/browserslist-config": "workspace:*",
     "@frak-labs/dev-tooling": "workspace:*",
     "@types/jsdom": "^27.0.0",
     "@types/node": "catalog:",
@@ -120,8 +119,5 @@
     "typescript": "catalog:",
     "viem": "catalog:",
     "vitest": "^4.0.7"
-  },
-  "browserslist": [
-    "extends @frak-labs/browserslist-config"
-  ]
+  }
 }

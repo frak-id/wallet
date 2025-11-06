@@ -29,6 +29,9 @@
 - **Language**: TypeScript only, use `types` over `interfaces`, avoid `enums` (use maps)
 - **Formatting**: Biome (4 spaces, double quotes, semicolons, ES5 trailing commas)
 - **Imports**: Absolute imports with `@/` prefix, organize imports enabled
+- **Styling**: CSS Modules with Lightning CSS (Vite apps: wallet, listener, business) or PostCSS (Next.js dashboard legacy)
+  - Lightning CSS: 100x faster than PostCSS, centralized config in `packages/dev-tooling/src/vite.ts`
+  - Browser targets: Chrome 100+, Safari 14+, Firefox 91+, Edge 100+
 - **Functions**: Use `function` keyword for pure functions, `async/await` over callbacks
 - **Naming**: Descriptive names with auxiliary verbs (isLoading, hasError), event handlers with `handle` prefix
 - **Architecture**: Functional/declarative patterns, avoid classes, early returns, DRY principles

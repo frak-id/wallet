@@ -64,7 +64,6 @@
         "zustand": "^5.0.8"
     },
     "devDependencies": {
-        "@frak-labs/browserslist-config": "workspace:*",
         "@tanstack/react-devtools": "^0.8.0",
         "@tanstack/router-plugin": "^1.134.12",
         "@testing-library/jest-dom": "^6.9.1",
@@ -85,9 +84,6 @@
         "vite-tsconfig-paths": "^5.1.4",
         "vitest": "^4.0.7"
     },
-    "browserslist": [
-        "extends @frak-labs/browserslist-config"
-    ],
     "overrides": {
         "vite": "catalog:"
     }

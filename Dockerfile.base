@@ -22,7 +22,6 @@ COPY services/backend/package.json ./services/backend/
 
 # Packages (only package.json)
 COPY packages/app-essentials/package.json ./packages/app-essentials/
-COPY packages/browserslist-config/package.json ./packages/browserslist-config/
 COPY packages/client/package.json ./packages/client/
 COPY packages/dev-tooling/package.json ./packages/dev-tooling/
 COPY packages/ui/package.json ./packages/ui/
@@ -37,7 +36,6 @@ COPY example/wallet-ethcc/package.json ./example/wallet-ethcc/
 COPY sdk ./sdk
 COPY packages/rpc ./packages/rpc
 COPY packages/dev-tooling ./packages/dev-tooling
-COPY packages/browserslist-config ./packages/browserslist-config
 
 # Needed since it's this package exporting the global window with Frak info
 COPY packages/ui ./packages/ui
