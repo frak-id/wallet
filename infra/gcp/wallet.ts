@@ -143,7 +143,10 @@ export const listenerService = new KubernetesService(
                     ports: [{ containerPort: 80 }],
                     resources: {
                         limits: { cpu: "100m", memory: "128Mi" },
-                        requests: { cpu: "10m", memory: "32Mi" },
+                        requests: {
+                            cpu: isProd ? "10m" : "5m",
+                            memory: isProd ? "32Mi" : "16Mi",
+                        },
                     },
                     env: Object.entries(walletEnv).map(([name, value]) => ({
                         name,
@@ -219,7 +222,10 @@ export const walletService = new KubernetesService(
                     ports: [{ containerPort: 80 }],
                     resources: {
                         limits: { cpu: "100m", memory: "128Mi" },
-                        requests: { cpu: "10m", memory: "32Mi" },
+                        requests: {
+                            cpu: isProd ? "10m" : "5m",
+                            memory: isProd ? "32Mi" : "16Mi",
+                        },
                     },
                     env: Object.entries(walletEnv).map(([name, value]) => ({
                         name,
