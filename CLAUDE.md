@@ -170,10 +170,10 @@ bun run changeset:release
   - `dev-tooling/` - Build configurations (manualChunks, onwarn suppressions, Lightning CSS config)
   - `rpc/` - RPC utilities (published as `@frak-labs/frame-connector`)
 - **`sdk/`** - Public SDK packages (published to npm, linked via Changesets)
-  - `core/` - Core SDK functionality (tsdown for ESM/CJS, esbuild for CDN bundle)
-  - `react/` - React hooks and providers (tsdown build)
-  - `components/` - Web Components for integration (tsdown for NPM, esbuild for CDN)
-  - `legacy/` - Backward compatibility (esbuild UMD bundle, ignored by Knip)
+  - `core/` - Core SDK functionality (tsdown: NPM ESM/CJS + CDN IIFE)
+  - `react/` - React hooks and providers (tsdown: NPM ESM/CJS)
+  - `components/` - Web Components for integration (tsdown: NPM ESM + CDN ESM with code splitting)
+  - `legacy/` - Backward compatibility (tsdown: IIFE bundle, ignored by Knip)
 - **`services/backend/`** - Elysia.js backend with domain-driven structure
 - **`infra/`** - SST v3 (AWS) and Pulumi (GCP) infrastructure
 - **`example/`** - Integration examples
@@ -184,7 +184,7 @@ bun run changeset:release
 - **Backend**: Elysia.js, PostgreSQL (Drizzle ORM), MongoDB
 - **Blockchain**: Account Abstraction (ERC-4337), WebAuthn, Multi-chain support, Pimlico, ZeroDev
 - **Infrastructure**: SST v3 (AWS), Pulumi (GCP), hybrid multi-cloud deployment
-- **Tooling**: Biome (4-space, double quotes), Changesets (linked packages), Knip, tsdown, esbuild, Playwright
+- **Tooling**: Biome (4-space, double quotes), Changesets (linked packages), Knip, tsdown, Playwright
 
 ### Development Principles
 - Use TypeScript for all code; prefer types over interfaces
@@ -263,41 +263,41 @@ bun run build:sdk
 
 # Work on specific SDK package
 cd sdk/core
-bun run build         # Build with tsdown (ESM/CJS) + esbuild (CDN bundle)
-bun run build:watch   # Build in watch mode (tsdown only)
+bun run build         # Build with tsdown (NPM: ESM/CJS + CDN: IIFE)
+bun run build:watch   # Build in watch mode
 bun run check-exports # Verify package exports with @arethetypeswrong/cli
 
 cd sdk/react
-bun run build         # Build with tsdown (ESM/CJS)
+bun run build         # Build with tsdown (NPM: ESM/CJS)
 bun run build:watch   # Build in watch mode
 
 cd sdk/components
-bun run build         # Build with tsdown (NPM) + esbuild (CDN)
+bun run build         # Build with tsdown (NPM: ESM + CDN: ESM with code splitting)
+bun run build:watch   # Build in watch mode
 
 cd sdk/legacy
-bun run build         # Build with esbuild (UMD bundle only)
+bun run build         # Build with tsdown (IIFE bundle for backward compatibility)
+bun run build:watch   # Build in watch mode
 ```
 
-**SDK Build Architecture (Dual-Tool Approach)**:
-SDK packages use a dual-tool build strategy combining tsdown and esbuild:
+**SDK Build Architecture (tsdown)**:
+All SDK packages use tsdown (powered by Rolldown) for building both NPM and CDN distributions:
 
-- **tsdown**: Builds NPM packages with ESM + CJS + TypeScript declarations → `./dist/`
-  - Optimized for library bundling with proper type definitions
-  - Fast builds with tree-shaking and minification
-  - Used by: `core`, `react`, `components`, `rpc`
+- **tsdown**: Unified build tool for all SDK packages → `./dist/` and `./cdn/`
+  - **NPM packages**: ESM + CJS + TypeScript declarations for library consumers
+  - **CDN bundles**: IIFE or ESM formats optimized for browser `<script>` tag usage
+  - **Code splitting**: Rolldown automatically splits code across entry points for optimal loading
+  - **Multi-format output**: Array of configs enables different formats to different directories
+  - Fast builds with tree-shaking, minification, and stage-aware configuration
+  - Used by: `core` (NPM + IIFE), `react` (NPM), `components` (NPM + ESM with splitting), `legacy` (IIFE), `rpc` (NPM)
 
-- **esbuild**: Builds CDN bundles for browser consumption → `./cdn/`
-  - IIFE format with globalName for `<script>` tag usage (`core`, `legacy`)
-  - ESM format with code splitting for web components (`components`)
-  - Environment variable injection and stage-aware configuration
-  - Used by: `core` (IIFE), `components` (ESM), `legacy` (UMD)
-
-**Why not use tsdown for everything?** tsdown cannot:
-- Output different formats to different directories (`./dist/` vs `./cdn/`)
-- Support code splitting (critical for `components` performance)
-- Provide per-entry format control (some ESM+CJS, some IIFE)
-
-This dual-tool approach is industry standard (Vue, React, Preact) for libraries requiring both NPM and CDN distribution. Each esbuild script contains detailed comments explaining its specific use case.
+**Key capabilities**:
+- **Multiple output directories**: Array of configs with different `outDir` per format
+- **Code splitting**: ESM format with `outputOptions` for dynamic chunk naming (`[name].[hash].js`)
+- **Format flexibility**: IIFE with `globalName` for browser globals (FrakSDK, NexusSDK)
+- **CSS modules**: Lightning CSS + custom plugins for CSS handling
+- **JSX transformation**: Preact JSX via `esbuildOptions.jsx` configuration
+- **Dependency bundling**: `noExternal: [/.*/]` bundles all dependencies for CDN
 
 ## Important Notes
 

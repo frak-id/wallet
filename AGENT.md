@@ -21,9 +21,8 @@
 - **Key Apps**: wallet (React Router), business (TanStack Start), dashboard (Next.js legacy), dashboard-admin (React Router), listener (iframe)
 - **Core Packages**: app-essentials (blockchain utils), wallet-shared (wallet/listener), ui (components)
 - **SDK**: core, legacy, react, components (external facing)
-  - Uses dual-tool build: tsdown (NPM: ESM+CJS+types → `./dist/`) + esbuild (CDN bundles → `./cdn/`)
-  - tsdown cannot do code splitting or separate output dirs (required for CDN bundles)
-  - Industry standard approach for NPM + CDN distribution
+  - Uses tsdown (powered by Rolldown): NPM (ESM+CJS+types → `./dist/`) + CDN bundles (→ `./cdn/`)
+  - Supports code splitting, multiple output directories, and custom plugins
 
 ## Code Style
 - **Language**: TypeScript only, use `types` over `interfaces`, avoid `enums` (use maps)

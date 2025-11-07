@@ -46,11 +46,11 @@ This document provides quick reference guidelines for AI agents working on the F
 
 ## SDK Packages
 
-- **Build Strategy**: Dual-tool approach (tsdown for NPM, esbuild for CDN)
-- **`sdk/core/`** - Core SDK (tsdown: ESM+CJS, esbuild: IIFE CDN bundle)
-- **`sdk/react/`** - React hooks (tsdown: ESM+CJS)
-- **`sdk/components/`** - Web Components (tsdown: ESM, esbuild: ESM with code splitting)
-- **`sdk/legacy/`** - Legacy UMD bundle (esbuild only)
+- **Build Strategy**: tsdown (powered by Rolldown)
+- **`sdk/core/`** - Core SDK (NPM: ESM+CJS, CDN: IIFE bundle)
+- **`sdk/react/`** - React hooks (NPM: ESM+CJS)
+- **`sdk/components/`** - Web Components (NPM: ESM, CDN: ESM with code splitting + custom CSS plugin)
+- **`sdk/legacy/`** - Legacy IIFE bundle for backward compatibility
 - **Build**: `bun run build:sdk` (builds all packages in dependency order)
 
 ## Testing

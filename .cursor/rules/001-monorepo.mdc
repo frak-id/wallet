@@ -19,9 +19,9 @@ Performance is mandatory on every part of this monorepo.
 - Typedoc for commenting
 - Changesets for packages versioning
 - Bun as package manager, do not use npm, pnpm or yarn
-- SDK Build Tools: tsdown (NPM packages: ESM+CJS+types) + esbuild (CDN bundles: IIFE/ESM)
-  - Dual-tool approach: tsdown cannot do code splitting or separate output dirs (required for CDN)
-  - Industry standard for libraries requiring both NPM and CDN distribution
+- SDK Build Tool: tsdown (powered by Rolldown)
+  - Builds both NPM packages (ESM+CJS+types → `./dist/`) and CDN bundles (IIFE/ESM → `./cdn/`)
+  - Supports code splitting, multiple output directories via array configs, and custom plugins
 
 ## Key Principles
 

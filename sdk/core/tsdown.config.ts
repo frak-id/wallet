@@ -16,31 +16,52 @@ if (process.env.STAGE === "production") {
 const packageJson = JSON.parse(fs.readFileSync("./package.json", "utf8"));
 const sdkVersion = packageJson.version;
 
-export default defineConfig({
-    entry: {
-        index: "./src/index.ts",
-        actions: "./src/actions/index.ts",
-        interactions: "./src/interactions/index.ts",
-        bundle: "./src/bundle.ts",
+const buildDefine = {
+    "process.env.OPEN_PANEL_API_URL": JSON.stringify(
+        "https://op-api.gcp.frak.id"
+    ),
+    "process.env.OPEN_PANEL_SDK_CLIENT_ID": JSON.stringify(opClientId),
+    "process.env.SDK_VERSION": JSON.stringify(sdkVersion),
+};
+
+export default defineConfig([
+    // NPM distribution (ESM + CJS)
+    {
+        entry: {
+            index: "./src/index.ts",
+            actions: "./src/actions/index.ts",
+            interactions: "./src/interactions/index.ts",
+            bundle: "./src/bundle.ts",
+        },
+        format: ["esm", "cjs"],
+        platform: "browser",
+        target: "es2022",
+        clean: true,
+        minify: true,
+        dts: true,
+        outDir: "./dist",
+        treeshake: {
+            moduleSideEffects: false,
+        },
+        define: buildDefine,
     },
-    format: ["esm", "cjs"],
-    platform: "browser",
-    target: "es2022",
-    clean: true,
-    minify: true,
-    dts: true,
-    outDir: "./dist",
-    treeshake: {
-        moduleSideEffects: false,
+    // CDN distribution (IIFE)
+    {
+        entry: {
+            bundle: "./src/bundle.ts",
+        },
+        format: "iife",
+        globalName: "FrakSDK",
+        platform: "browser",
+        target: "es2022",
+        clean: true,
+        minify: true,
+        dts: false,
+        outDir: "./cdn",
+        noExternal: [/.*/],
+        treeshake: {
+            moduleSideEffects: false,
+        },
+        define: buildDefine,
     },
-    esbuildOptions(options) {
-        options.define = {
-            "process.env.OPEN_PANEL_API_URL": JSON.stringify(
-                "https://op-api.gcp.frak.id"
-            ),
-            "process.env.OPEN_PANEL_SDK_CLIENT_ID": JSON.stringify(opClientId),
-            "process.env.SDK_VERSION": JSON.stringify(sdkVersion),
-        };
-        return options;
-    },
-});
+]);

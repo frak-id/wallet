@@ -42,8 +42,8 @@
     "format:check": "biome check .",
     "format": "biome check --write .",
     "clean": "rimraf dist",
-    "build": "node esbuild.umd.mjs",
-    "build:watch": "node esbuild.umd.mjs",
+    "build": "tsdown",
+    "build:watch": "tsdown --watch",
     "prepublish": "bun run lint && bun run build",
     "publish": "echo 'Publishing legacy...'"
   },
@@ -53,7 +53,7 @@
   },
   "devDependencies": {
     "@frak-labs/dev-tooling": "workspace:*",
-    "esbuild": "^0.24.2",
+    "tsdown": "^0.16.0",
     "typescript": "catalog:"
   }
 }
