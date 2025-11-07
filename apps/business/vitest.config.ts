@@ -29,6 +29,9 @@ export default mergeConfig(
                     "src/router.tsx",
                     "src/routeTree.gen.ts",
                     "src/routes/__root.tsx",
+                    // Exclude component files (focus coverage on business logic)
+                    "**/component/**/*.tsx",
+                    "**/components/**/*.tsx",
                 ],
             },
         },

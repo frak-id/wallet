@@ -60,8 +60,8 @@ bun run test:e2e:ui           # Run with Playwright UI
 ## Test Framework
 
 - **Unit Tests**: Vitest 4.0 with Projects API (workspace mode) and jsdom environment
-  - 6 test projects: wallet-unit, listener-unit, business-unit, wallet-shared-unit, core-sdk-unit, react-sdk-unit
-  - 179 test files, 1927 tests total
+  - 7 test projects: wallet-unit, listener-unit, business-unit, wallet-shared-unit, ui-unit, core-sdk-unit, react-sdk-unit
+  - Test files across all projects (includes component tests)
   - Parallel execution across all projects from root directory
 - **Coverage**: v8 provider with 40% threshold (lines, functions, branches, statements)
 - **E2E Tests**: Playwright for end-to-end testing
@@ -128,6 +128,7 @@ Each project has its own setup file importing shared configurations:
 - `apps/listener/tests/vitest-setup.ts`
 - `apps/business/tests/vitest-setup.ts`
 - `packages/wallet-shared/tests/vitest-setup.ts`
+- `packages/ui/tests/vitest-setup.ts`
 - `sdk/core/tests/vitest-setup.ts`
 - `sdk/react/tests/vitest-setup.ts`
 
@@ -297,6 +298,245 @@ it("should handle async operation", async () => {
     await promise;
 });
 ```
+
+## Testing React Components
+
+### When to Write Component Tests
+
+Component tests are valuable for:
+- **UI Components** (`packages/ui/component/`) - Core reusable components
+- **Wallet-Shared Components** (`packages/wallet-shared/src/*/component/`) - Domain-specific UI components
+- **Complex Components** - Components with multiple states, interactions, or edge cases
+- **Critical User Flows** - Components that handle important user interactions
+
+Component tests supplement E2E tests by providing faster feedback during development and catching regressions early.
+
+### Component Test Structure
+
+```typescript
+import { describe, it, expect, beforeEach, vi } from "vitest";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { Button } from "./index";
+
+describe("Button", () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+    });
+
+    it("should render with default props", () => {
+        render(<Button>Click me</Button>);
+        expect(screen.getByRole("button", { name: "Click me" })).toBeInTheDocument();
+    });
+
+    it("should handle click events", () => {
+        const handleClick = vi.fn();
+        render(<Button onClick={handleClick}>Click me</Button>);
+
+        fireEvent.click(screen.getByRole("button"));
+        expect(handleClick).toHaveBeenCalledTimes(1);
+    });
+});
+```
+
+### What to Test in Components
+
+**DO Test:**
+- Component renders correctly with default props
+- Props are applied correctly (variants, sizes, states)
+- User interactions (clicks, input changes, form submissions)
+- Edge cases (empty states, disabled states, error states)
+- Accessibility (ARIA attributes, keyboard navigation, focus management)
+- Controlled vs uncontrolled behavior
+- Callback functions are called with correct arguments
+
+**DON'T Test:**
+- Implementation details (internal state, CSS class names)
+- Third-party library behavior (Radix UI internals, vaul internals)
+- Styling details (colors, spacing, layout - use E2E for visual testing)
+- Component composition details (how subcomponents are structured)
+
+### Testing Radix UI Components
+
+Radix UI components use portals and complex state management. Testing patterns:
+
+**Use accessible queries:**
+```typescript
+// ✅ DO: Use role-based queries
+screen.getByRole("button", { name: "Open Dialog" });
+screen.getByRole("alertdialog");
+screen.getByRole("switch");
+
+// ❌ DON'T: Query by CSS classes or implementation details
+container.querySelector(".alertDialog__content");
+```
+
+**Test portal rendering:**
+```typescript
+// For modals, dialogs, drawers - content renders in portal
+await waitFor(() => {
+    expect(screen.getByRole("alertdialog")).toBeInTheDocument();
+});
+```
+
+**Test controlled/uncontrolled modes:**
+```typescript
+// Controlled mode
+const { rerender } = render(<Dialog open={false} />);
+expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+
+rerender(<Dialog open={true} />);
+await waitFor(() => {
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+});
+
+// Uncontrolled mode
+render(<Dialog defaultOpen={true} />);
+await waitFor(() => {
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+});
+```
+
+### Testing CSS Modules
+
+CSS Modules generate hashed class names, so don't test specific class names:
+
+```typescript
+// ❌ DON'T: Test specific class names
+expect(container.firstChild).toHaveClass("button_primary_abc123");
+
+// ✅ DO: Test behavior and visual state
+expect(button).toBeDisabled();
+expect(button).toHaveAttribute("type", "submit");
+expect(screen.getByRole("button")).toBeInTheDocument();
+```
+
+### Testing Wallet-Shared Components
+
+Wallet-shared components may depend on:
+- **React Query** - Mock `@tanstack/react-query` hooks if needed
+- **i18n** - Mock `react-i18next` if components use `useTranslation`
+- **Wagmi** - Mock Wagmi hooks if components use blockchain functionality
+- **Router** - Router mocks are already set up in `wallet-mocks.ts`
+
+Example with mocks:
+```typescript
+import { vi } from "vitest";
+
+// Mock React Query if component uses it
+vi.mock("@tanstack/react-query", () => ({
+    useQuery: vi.fn(() => ({ data: null, isLoading: false })),
+}));
+
+// Component test
+it("should render with data", () => {
+    render(<ComponentThatUsesQuery />);
+    // ... test assertions
+});
+```
+
+### Component Test Examples
+
+**Button Component:**
+```typescript
+describe("Button", () => {
+    it("should render all variants", () => {
+        const variants = ["primary", "secondary", "outline"] as const;
+        variants.forEach((variant) => {
+            const { unmount } = render(<Button variant={variant}>Button</Button>);
+            expect(screen.getByRole("button")).toBeInTheDocument();
+            unmount();
+        });
+    });
+
+    it("should show loading state", () => {
+        render(<Button isLoading>Loading</Button>);
+        expect(screen.getByRole("button")).toBeDisabled();
+    });
+});
+```
+
+**Input Component:**
+```typescript
+describe("Input", () => {
+    it("should handle onChange events", () => {
+        const handleChange = vi.fn();
+        render(<Input onChange={handleChange} />);
+
+        const input = screen.getByRole("textbox");
+        fireEvent.change(input, { target: { value: "new value" } });
+
+        expect(handleChange).toHaveBeenCalledTimes(1);
+    });
+
+    it("should render with leftSection and rightSection", () => {
+        render(<Input leftSection="@" rightSection="✓" />);
+        expect(screen.getByText("@")).toBeInTheDocument();
+        expect(screen.getByText("✓")).toBeInTheDocument();
+    });
+});
+```
+
+**Modal/Dialog Component:**
+```typescript
+describe("AlertDialog", () => {
+    it("should open when trigger is clicked", async () => {
+        render(
+            <AlertDialog
+                title="Test"
+                button={{ label: "Open" }}
+            />
+        );
+
+        fireEvent.click(screen.getByRole("button", { name: "Open" }));
+
+        await waitFor(() => {
+            expect(screen.getByRole("alertdialog")).toBeInTheDocument();
+        });
+    });
+
+    it("should close when overlay is clicked", async () => {
+        const handleOpenChange = vi.fn();
+        render(
+            <AlertDialog
+                title="Test"
+                button={{ label: "Open" }}
+                onOpenChange={handleOpenChange}
+            />
+        );
+
+        fireEvent.click(screen.getByRole("button", { name: "Open" }));
+        await waitFor(() => {
+            expect(screen.getByRole("alertdialog")).toBeInTheDocument();
+        });
+
+        // Click overlay
+        const overlay = document.querySelector('[data-radix-portal]');
+        if (overlay) {
+            fireEvent.click(overlay);
+            await waitFor(() => {
+                expect(handleOpenChange).toHaveBeenCalledWith(false);
+            });
+        }
+    });
+});
+```
+
+### UI Package Testing
+
+The UI package (`packages/ui/`) has its own Vitest configuration:
+- **Config**: `packages/ui/vitest.config.ts`
+- **Setup**: `packages/ui/tests/vitest-setup.ts`
+- **Test scripts**: `bun run test`, `bun run test:ui`, `bun run test:coverage`
+
+Run UI package tests:
+```bash
+cd packages/ui
+bun run test              # Run tests
+bun run test:ui           # Run with Vitest UI
+bun run test:coverage     # Run with coverage
+```
+
+UI package tests are included when running `bun run test` from root.
 
 ## Coverage Targets
 

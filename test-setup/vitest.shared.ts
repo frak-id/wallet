@@ -75,9 +75,6 @@ export default defineConfig({
                 "**/*.config.ts",
                 "**/*.{test,spec}.{ts,tsx}",
                 "**/*.e2e.{test,spec}.{ts,tsx}",
-                // UI component patterns (focus coverage on business logic)
-                "**/component/**/*.tsx",
-                "**/components/**/*.tsx",
             ],
         },
 

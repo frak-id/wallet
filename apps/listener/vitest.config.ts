@@ -21,6 +21,9 @@ export default mergeConfig(
                     // Exclude entry points (listener app specific)
                     "app/main.tsx",
                     "app/App.tsx",
+                    // Exclude component files (focus coverage on business logic)
+                    "**/component/**/*.tsx",
+                    "**/components/**/*.tsx",
                 ],
             },
         },

@@ -29,6 +29,9 @@ export default mergeConfig(
                     "app/root.tsx",
                     "app/routes.ts",
                     "playwright.config.ts",
+                    // Exclude component files (focus coverage on business logic)
+                    "**/component/**/*.tsx",
+                    "**/components/**/*.tsx",
                 ],
             },
         },
