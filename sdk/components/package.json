@@ -64,6 +64,9 @@
     "build": "tsdown && node esbuild.cdn.mjs",
     "build:watch": "tsdown --watch",
     "typecheck": "tsc --noEmit",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage",
     "prepublish": "bun run lint && bun run build",
     "publish": "echo 'Publishing components...'"
   },
@@ -78,12 +81,22 @@
     "@bosh-code/tsdown-plugin-inject-css": "^2.0.0",
     "@frak-labs/dev-tooling": "workspace:*",
     "@frak-labs/ui": "workspace:*",
+    "@preact/preset-vite": "^2.8.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/preact": "^3.2.3",
+    "@testing-library/user-event": "^14.5.2",
+    "@types/jsdom": "^27.0.0",
     "@types/node": "catalog:",
     "@types/preact-custom-element": "^4.0.4",
+    "@vitest/coverage-v8": "^4.0.7",
+    "@vitest/ui": "^4.0.7",
     "esbuild": "^0.24.2",
     "esbuild-css-modules-plugin": "^3.1.5",
+    "jsdom": "^27.1.0",
     "tsdown": "^0.16.0",
     "typescript": "^5",
-    "unplugin-lightningcss": "^0.4.3"
+    "unplugin-lightningcss": "^0.4.3",
+    "vite-tsconfig-paths": "^5.1.4",
+    "vitest": "^4.0.7"
   }
 }
