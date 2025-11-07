@@ -1,6 +1,6 @@
 ---
 description: Testing guidelines and best practices for unit tests and E2E tests
-globs: **/*.test.ts, **/*.test.tsx, **/*.spec.ts, **/*.spec.tsx, **/vitest.config.ts, **/tests/**/*
+globs: **/*.test.ts, **/*.test.tsx, **/*.spec.ts, **/*.spec.tsx, **/vitest.config.ts, **/tests/**, test-setup/**/*
 ---
 # Testing Rules
 
@@ -8,20 +8,40 @@ globs: **/*.test.ts, **/*.test.tsx, **/*.spec.ts, **/*.spec.tsx, **/vitest.confi
 
 **CRITICAL**: Always use `bun run test` instead of `bun test` for unit tests.
 
-### Unit Tests (Vitest)
+### Unit Tests (Vitest 4.0 Projects API)
 
-#### Wallet App
+#### Workspace Mode (All Projects)
+Run all 6 test projects (wallet, listener, business, wallet-shared, core-sdk, react-sdk) in parallel:
+```bash
+bun run test                  # Run all 179 test files (1927 tests) across all projects
+bun run test:ui               # Run with Vitest UI for all projects
+bun run test:coverage         # Run with coverage report for all projects
+bun run test --project wallet-unit  # Run specific project only
+```
+
+#### Individual Projects
+Run tests for a specific project:
+
+**Wallet App**
 ```bash
 cd apps/wallet
-bun run test                  # Run unit tests
+bun run test                  # Run wallet unit tests only
 bun run test:ui               # Run with Vitest UI
 bun run test:coverage         # Run with coverage report
 ```
 
-#### Listener App
+**Listener App**
 ```bash
 cd apps/listener
-bun run test                  # Run unit tests
+bun run test                  # Run listener unit tests only
+bun run test:ui               # Run with Vitest UI
+bun run test:coverage         # Run with coverage report
+```
+
+**Business App**
+```bash
+cd apps/business
+bun run test                  # Run business unit tests only
 bun run test:ui               # Run with Vitest UI
 bun run test:coverage         # Run with coverage report
 ```
@@ -39,10 +59,54 @@ bun run test:e2e:ui           # Run with Playwright UI
 
 ## Test Framework
 
-- **Unit Tests**: Vitest v4.0.4 with jsdom environment
+- **Unit Tests**: Vitest 4.0 with Projects API (workspace mode) and jsdom environment
+  - 6 test projects: wallet-unit, listener-unit, business-unit, wallet-shared-unit, core-sdk-unit, react-sdk-unit
+  - 179 test files, 1927 tests total
+  - Parallel execution across all projects from root directory
 - **Coverage**: v8 provider with 40% threshold (lines, functions, branches, statements)
 - **E2E Tests**: Playwright for end-to-end testing
 - **Testing Library**: @testing-library/react for React hooks and components
+
+## Test Configuration Architecture
+
+### Workspace Configuration (Vitest 4.0 Projects API)
+- **`vitest.config.ts`** (root) - Workspace entry point, discovers all project configs
+- **`test-setup/vitest.shared.ts`** - Shared configuration inherited by all projects:
+  - Common settings: environment: "jsdom", timeouts, reporters, coverage thresholds
+  - Individual projects extend with `mergeConfig(sharedConfig, defineConfig({...}))`
+
+### Shared Test Setup Files
+Located in `test-setup/` directory:
+
+- **`shared-setup.ts`** - Browser API mocks for all projects:
+  - `crypto.randomUUID` polyfill
+  - `window.matchMedia` mock
+  - `IntersectionObserver` mock
+  - `ResizeObserver` mock
+  - `MessageChannel` mock (for iframe communication)
+
+- **`react-setup.ts`** - React-specific setup:
+  - BigInt serialization for Zustand persist middleware
+
+- **`wallet-mocks.ts`** - Wallet-specific mocks (wallet + wallet-shared):
+  - Wagmi hooks (useAccount, useConnect, useBalance, etc.)
+  - React Router hooks (useNavigate, useLocation, etc.)
+  - WebAuthn API (ox library)
+  - IndexedDB (idb-keyval)
+
+- **`apps-setup.ts`** - Frontend app-specific setup:
+  - Environment variables (STAGE, BACKEND_URL, etc.)
+  - OpenPanel analytics mock
+  - document.cookie mock
+
+### Project-Specific Setup Files
+Each project has its own setup file importing shared configurations:
+- `apps/wallet/tests/vitest-setup.ts`
+- `apps/listener/tests/vitest-setup.ts`
+- `apps/business/tests/vitest-setup.ts`
+- `packages/wallet-shared/tests/vitest-setup.ts`
+- `sdk/core/tests/vitest-setup.ts`
+- `sdk/react/tests/vitest-setup.ts`
 
 ## Test Organization
 

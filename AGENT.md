@@ -5,7 +5,7 @@
 - **Dev**: `bun sst dev` (full stack), `bun run --cwd apps/wallet dev` (wallet only)
 - **Deploy**: Prefer CI for production deployments. Local deployment available: `bun run deploy` (AWS dev), `bun run deploy:prod` (AWS prod), `bun run deploy-gcp:staging`/`deploy-gcp:prod` (GCP backend only) 
 - **Lint**: `biome lint .`, `biome check --write .` (format), `biome check .` (check only)
-- **Test**: Use `bun run test` in apps/wallet, apps/business, and apps/listener directories (IMPORTANT: use "bun run test", not "bun test")
+- **Test**: `bun run test` from root (runs all 6 projects via Vitest 4.0 Projects API), or use in individual directories like apps/wallet, apps/business, apps/listener (IMPORTANT: use "bun run test", not "bun test")
 - **TypeCheck**: `bun run --filter '*' typecheck` (all packages), `tsc --noEmit` (individual)
 
 ## Tech Stack

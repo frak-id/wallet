@@ -50,19 +50,28 @@ bun run test:e2e:dev          # Run tests against dev environment
 bun run test:e2e:prod         # Run tests against prod environment
 bun run test:e2e:ui           # Run with Playwright UI
 
-# Unit tests with Vitest (wallet app and listener app)
+# Unit tests with Vitest (workspace mode - runs all 6 projects)
+bun run test                  # Run all tests across all projects (IMPORTANT: use "bun run test", not "bun test")
+bun run test:ui               # Run with Vitest UI for all projects
+bun run test:coverage         # Run with coverage report for all projects
+
+# Or run tests for specific projects
 cd apps/wallet
-bun run test                  # Run unit tests (IMPORTANT: use "bun run test", not "bun test")
+bun run test                  # Run wallet app tests only
 bun run test:ui               # Run with Vitest UI
 bun run test:coverage         # Run with coverage report
 
 cd apps/listener
-bun run test                  # Run unit tests (IMPORTANT: use "bun run test", not "bun test")
+bun run test                  # Run listener app tests only
 bun run test:ui               # Run with Vitest UI
 bun run test:coverage         # Run with coverage report
 ```
 
 **Testing Strategy**:
+- **Framework**: Vitest 4.0 with Projects API (workspace mode)
+  - 6 test projects: wallet, listener, business, wallet-shared, core-sdk, react-sdk
+  - 179 test files, 1927 tests total
+  - Run from root with `bun run test` to execute all projects in parallel
 - **E2E Tests**: Comprehensive Playwright tests (19 specs) covering user flows
   - Authentication and registration
   - Pairing flows
@@ -73,8 +82,16 @@ bun run test:coverage         # Run with coverage report
   - Tests placed next to source files (e.g., `app/module/stores/recoveryStore.test.ts`)
   - Focus on business logic and state management
   - Mock external dependencies (Wagmi, TanStack Query, WebAuthn)
-  - Setup file: `apps/wallet/tests/vitest-setup.ts`
+  - Centralized test setup in `test-setup/` directory
   - Target: 40% code coverage
+
+**Test Configuration Architecture**:
+- `vitest.config.ts` - Root workspace config (Vitest 4.0 Projects API)
+- `test-setup/vitest.shared.ts` - Shared config inherited by all projects
+- `test-setup/shared-setup.ts` - Browser API mocks (crypto, MessageChannel, IntersectionObserver, ResizeObserver, matchMedia)
+- `test-setup/react-setup.ts` - BigInt serialization for Zustand persist
+- `test-setup/wallet-mocks.ts` - Wagmi, React Router, WebAuthn, idb-keyval mocks
+- `test-setup/apps-setup.ts` - Environment variables for frontend apps
 
 ### Deployment
 ```bash

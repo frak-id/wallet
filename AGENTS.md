@@ -13,7 +13,8 @@ This document provides quick reference guidelines for AI agents working on the F
 - **Format**: `bun run format`
 - **Typecheck**: `bun run typecheck`
 - **Test**:
-  - Unit tests (Vitest): `cd apps/wallet && bun run test` or `cd apps/listener && bun run test` or `cd apps/business && bun run test`
+  - Unit tests (Vitest 4.0 Projects): `bun run test` (from root - runs all 6 projects: wallet, listener, business, wallet-shared, core-sdk, react-sdk)
+  - Individual project tests: `cd apps/wallet && bun run test` or `cd apps/listener && bun run test` or `cd apps/business && bun run test`
   - E2E tests (Playwright): `cd apps/wallet && bun run test:e2e`
   - IMPORTANT: Use `bun run test`, NOT `bun test`
 
