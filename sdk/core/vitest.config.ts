@@ -1,5 +1,5 @@
 import { defineConfig, mergeConfig } from "vitest/config";
-import sharedConfig from "../../vitest.shared";
+import sharedConfig from "../../test-setup/vitest.shared";
 
 export default mergeConfig(
     sharedConfig,
