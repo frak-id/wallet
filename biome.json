@@ -109,6 +109,16 @@
                     }
                 }
             }
+        },
+        {
+            "includes": ["test-setup/**"],
+            "linter": {
+                "rules": {
+                    "suspicious": {
+                        "noExplicitAny": "off"
+                    }
+                }
+            }
         }
     ],
     "formatter": {

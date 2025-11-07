@@ -1,12 +1,12 @@
-import react from "@vitejs/plugin-react";
-import tsconfigPaths from "vite-tsconfig-paths";
 import { defineConfig, mergeConfig } from "vitest/config";
-import sharedConfig from "../../test-setup/vitest.shared";
+import sharedConfig, {
+    getReactTestPlugins,
+} from "../../test-setup/vitest.shared";
 
 export default mergeConfig(
     sharedConfig,
     defineConfig({
-        plugins: [react(), tsconfigPaths()],
+        plugins: await getReactTestPlugins(),
         test: {
             name: "wallet-unit",
             setupFiles: [

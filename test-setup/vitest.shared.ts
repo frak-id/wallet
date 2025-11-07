@@ -7,11 +7,14 @@
  *
  * Usage:
  * import { defineConfig, mergeConfig } from "vitest/config";
- * import sharedConfig from "../../vitest.shared";
+ * import sharedConfig, { getReactTestPlugins } from "../../vitest.shared";
  *
  * export default mergeConfig(
  *   sharedConfig,
- *   defineConfig({ ... project-specific config ... })
+ *   defineConfig({
+ *     plugins: getReactTestPlugins(),
+ *     ... other project-specific config ...
+ *   })
  * );
  *
  * Note on setupFiles:
@@ -22,7 +25,11 @@
  * the actual setup logic is properly shared in the test-setup/ directory to maintain
  * DRY principles.
  */
+
 import { defineConfig } from "vitest/config";
+
+// Use generic type to avoid importing vite types that may not be available in all projects
+type VitePlugin = any;
 
 export default defineConfig({
     test: {
@@ -85,3 +92,84 @@ export default defineConfig({
         ],
     },
 });
+
+/**
+ * Plugin Configuration Helpers
+ *
+ * These helpers provide consistent plugin configurations across test projects,
+ * reducing boilerplate and ensuring all projects use the same plugin setup.
+ */
+
+/**
+ * Standard Vite plugins for React projects with TypeScript path mapping
+ *
+ * Includes:
+ * - @vitejs/plugin-react: JSX transformation and React Fast Refresh
+ * - vite-tsconfig-paths: Resolves TypeScript path aliases from tsconfig.json
+ *
+ * Used by: wallet, listener, business apps
+ *
+ * Note: Uses dynamic imports to avoid loading dependencies for projects that don't need them.
+ *
+ * @param options - Optional configuration
+ * @param options.tsconfigProjects - Custom tsconfig file paths for vite-tsconfig-paths
+ * @returns Array of Vite plugins for React + TypeScript projects
+ *
+ * @example
+ * ```typescript
+ * // Standard usage (auto-discovers tsconfig.json):
+ * plugins: getReactTestPlugins()
+ *
+ * // Custom tsconfig location:
+ * plugins: getReactTestPlugins({ tsconfigProjects: ["./tsconfig.json"] })
+ * ```
+ */
+export async function getReactTestPlugins(options?: {
+    tsconfigProjects?: string[];
+}): Promise<VitePlugin[]> {
+    const { tsconfigProjects } = options || {};
+
+    // Dynamic imports to avoid loading these packages for projects that don't use them
+    // Using any cast to suppress type errors - works at runtime but bypasses type-checking
+    const [{ default: react }, { default: tsconfigPaths }] = (await Promise.all(
+        [
+            // @ts-expect-error - Unsafe cast to any for dynamic imports
+            import(/* @vite-ignore */ "@vitejs/plugin-react"),
+            // @ts-expect-error - Unsafe cast to any for dynamic imports
+            import(/* @vite-ignore */ "vite-tsconfig-paths"),
+        ]
+    )) as any;
+
+    return [
+        react(),
+        tsconfigPaths(
+            tsconfigProjects ? { projects: tsconfigProjects } : undefined
+        ),
+    ];
+}
+
+/**
+ * Minimal plugins for React-only projects without TypeScript path mapping
+ *
+ * Includes:
+ * - @vitejs/plugin-react: JSX transformation and React Fast Refresh
+ *
+ * Used by: wallet-shared package (uses relative imports, no path aliases)
+ *
+ * Note: Uses dynamic import to avoid loading React plugin for projects that don't need it.
+ *
+ * @returns Array containing only the React plugin
+ *
+ * @example
+ * ```typescript
+ * plugins: getReactOnlyPlugins()
+ * ```
+ */
+export async function getReactOnlyPlugins(): Promise<VitePlugin[]> {
+    // Dynamic import to avoid loading React plugin for projects that don't use it
+    // Using any cast to suppress type errors - works at runtime but bypasses type-checking
+    const { default: react } =
+        // @ts-expect-error - Unsafe cast to any for dynamic import
+        (await import(/* @vite-ignore */ "@vitejs/plugin-react")) as any;
+    return [react()];
+}

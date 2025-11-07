@@ -5,7 +5,7 @@
  * the wallet app and wallet-shared package:
  *
  * - Wagmi hooks (useAccount, useConnect, useBalance, etc.)
- * - React Router hooks (useNavigate, useLocation, etc.)
+ * - React Router hooks (useNavigate, useLocation, etc.) - via router-mocks.ts
  * - WebAuthn API (ox library)
  * - IndexedDB (idb-keyval)
  *
@@ -18,6 +18,7 @@
  */
 
 import { vi } from "vitest";
+import { setupReactRouterMock } from "./router-mocks";
 
 // Mock Wagmi hooks
 vi.mock("wagmi", () => ({
@@ -55,27 +56,11 @@ vi.mock("wagmi", () => ({
     })),
 }));
 
-// Mock React Router
-vi.mock("react-router", async () => {
-    // biome-ignore lint/suspicious/noExplicitAny: react-router types not available at root level
-    const actual = await vi.importActual<any>("react-router");
-    return {
-        ...actual,
-        useNavigate: vi.fn(() => vi.fn()),
-        useLocation: vi.fn(() => ({
-            pathname: "/",
-            search: "",
-            hash: "",
-            state: null,
-        })),
-        useParams: vi.fn(() => ({})),
-        useSearchParams: vi.fn(() => [new URLSearchParams(), vi.fn()]),
-    };
-});
+// Mock React Router (using shared router-mocks.ts abstraction)
+await setupReactRouterMock();
 
 // Mock ox WebAuthn API (migrated from @simplewebauthn)
 vi.mock("ox", async () => {
-    // biome-ignore lint/suspicious/noExplicitAny: ox types not available at root level
     const actual = await vi.importActual<any>("ox");
     return {
         ...actual,

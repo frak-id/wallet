@@ -20,9 +20,7 @@ import { beforeAll } from "vitest";
 // Setup BigInt serialization for Zustand persist middleware
 // This is needed by any project using Zustand with persist (wallet, wallet-shared, react-sdk)
 beforeAll(() => {
-    // biome-ignore lint/suspicious/noExplicitAny: BigInt.prototype doesn't have toJSON in type definition
     if (typeof BigInt !== "undefined" && !(BigInt.prototype as any).toJSON) {
-        // biome-ignore lint/suspicious/noExplicitAny: BigInt.prototype doesn't have toJSON in type definition
         (BigInt.prototype as any).toJSON = function () {
             return this.toString();
         };

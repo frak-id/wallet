@@ -1,11 +1,12 @@
-import react from "@vitejs/plugin-react";
 import { defineConfig, mergeConfig } from "vitest/config";
-import sharedConfig from "../../test-setup/vitest.shared";
+import sharedConfig, {
+    getReactOnlyPlugins,
+} from "../../test-setup/vitest.shared";
 
 export default mergeConfig(
     sharedConfig,
     defineConfig({
-        plugins: [react()],
+        plugins: await getReactOnlyPlugins(),
         test: {
             name: "wallet-shared-unit",
             setupFiles: [

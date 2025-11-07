@@ -78,6 +78,11 @@ bun run test:e2e:ui           # Run with Playwright UI
 ### Shared Test Setup Files
 Located in `test-setup/` directory:
 
+- **`vitest.shared.ts`** - Shared configuration and plugin helpers:
+  - Common Vitest settings (jsdom, timeouts, reporters, coverage)
+  - `getReactTestPlugins()` - React + TypeScript path mapping plugins
+  - `getReactOnlyPlugins()` - React plugin only (for packages without path aliases)
+
 - **`shared-setup.ts`** - Browser API mocks for all projects:
   - `crypto.randomUUID` polyfill
   - `window.matchMedia` mock
@@ -88,16 +93,34 @@ Located in `test-setup/` directory:
 - **`react-setup.ts`** - React-specific setup:
   - BigInt serialization for Zustand persist middleware
 
+- **`router-mocks.ts`** - Router mock factory functions:
+  - `setupReactRouterMock()` - For react-router (wallet, wallet-shared)
+  - `setupTanStackRouterMock()` - For @tanstack/react-router (business)
+  - Factory functions for creating custom router mocks
+
+- **`dom-mocks.ts`** - DOM mocking utilities:
+  - `mockWindowOrigin()` - Mock window.origin property
+  - `mockDocumentReferrer()` - Mock document.referrer property
+  - `setupListenerDomMocks()` - Combined setup for listener app
+
 - **`wallet-mocks.ts`** - Wallet-specific mocks (wallet + wallet-shared):
   - Wagmi hooks (useAccount, useConnect, useBalance, etc.)
-  - React Router hooks (useNavigate, useLocation, etc.)
   - WebAuthn API (ox library)
   - IndexedDB (idb-keyval)
+  - Uses `router-mocks.ts` for React Router mocking
 
 - **`apps-setup.ts`** - Frontend app-specific setup:
   - Environment variables (STAGE, BACKEND_URL, etc.)
   - OpenPanel analytics mock
   - document.cookie mock
+
+- **`README.md`** - Comprehensive test architecture documentation:
+  - Setup file execution order and dependencies
+  - Fixture inheritance chain
+  - When to use fixtures vs factories
+  - Project-specific setup details
+  - Common patterns and best practices
+  - Debugging guide
 
 ### Project-Specific Setup Files
 Each project has its own setup file importing shared configurations:
@@ -172,6 +195,78 @@ vi.mock("module", () => ({
 - **TanStack Query**: Mock `useQuery`, `useMutation`, `useQueryClient`
 - **WebAuthn**: Mock `@simplewebauthn/browser` functions
 - **react-i18next**: Mock `useTranslation`, `getI18n`
+
+## Test Setup Utilities
+
+### Plugin Helpers (vitest.shared.ts)
+
+Use plugin helpers in vitest.config.ts to reduce boilerplate:
+
+```typescript
+// For React + TypeScript path mapping (wallet, listener, business)
+import sharedConfig, { getReactTestPlugins } from "../../test-setup/vitest.shared";
+
+export default mergeConfig(
+    sharedConfig,
+    defineConfig({
+        plugins: await getReactTestPlugins(),
+        // ... project config
+    })
+);
+
+// For React-only (wallet-shared - no path aliases)
+import sharedConfig, { getReactOnlyPlugins } from "../../test-setup/vitest.shared";
+
+export default mergeConfig(
+    sharedConfig,
+    defineConfig({
+        plugins: await getReactOnlyPlugins(),
+        // ... project config
+    })
+);
+```
+
+### Router Mock Utilities (router-mocks.ts)
+
+Use router mock factories in project setup files:
+
+```typescript
+// For react-router (wallet, wallet-shared)
+import { setupReactRouterMock } from "../../../test-setup/router-mocks";
+await setupReactRouterMock();
+
+// For @tanstack/react-router (business)
+import { setupTanStackRouterMock } from "../../../test-setup/router-mocks";
+await setupTanStackRouterMock();
+
+// With custom state
+await setupReactRouterMock({
+    pathname: "/custom",
+    search: "?foo=bar"
+});
+```
+
+### DOM Mock Utilities (dom-mocks.ts)
+
+Use DOM mocking utilities for window/document properties:
+
+```typescript
+import {
+    mockWindowOrigin,
+    mockDocumentReferrer,
+    setupListenerDomMocks
+} from "../../../test-setup/dom-mocks";
+
+// Individual mocks
+mockWindowOrigin("https://example.com");
+mockDocumentReferrer("https://referrer.com");
+
+// Combined setup (for listener)
+setupListenerDomMocks({
+    origin: "https://example.com",
+    referrer: "https://referrer.com"
+});
+```
 
 ## Testing React Hooks
 

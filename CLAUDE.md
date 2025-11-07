@@ -87,11 +87,14 @@ bun run test:coverage         # Run with coverage report
 
 **Test Configuration Architecture**:
 - `vitest.config.ts` - Root workspace config (Vitest 4.0 Projects API)
-- `test-setup/vitest.shared.ts` - Shared config inherited by all projects
+- `test-setup/vitest.shared.ts` - Shared config with plugin helpers (getReactTestPlugins, getReactOnlyPlugins)
 - `test-setup/shared-setup.ts` - Browser API mocks (crypto, MessageChannel, IntersectionObserver, ResizeObserver, matchMedia)
 - `test-setup/react-setup.ts` - BigInt serialization for Zustand persist
-- `test-setup/wallet-mocks.ts` - Wagmi, React Router, WebAuthn, idb-keyval mocks
+- `test-setup/router-mocks.ts` - Router mock factories (react-router, @tanstack/react-router)
+- `test-setup/dom-mocks.ts` - DOM mocking utilities (window.origin, document.referrer)
+- `test-setup/wallet-mocks.ts` - Wagmi, WebAuthn, idb-keyval mocks (uses router-mocks)
 - `test-setup/apps-setup.ts` - Environment variables for frontend apps
+- `test-setup/README.md` - Comprehensive test architecture documentation
 
 ### Deployment
 ```bash

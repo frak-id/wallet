@@ -8,9 +8,11 @@
  * - apps-setup.ts: Environment variables
  *
  * Listener-specific mocks:
- * - window.origin for iframe postMessage security
- * - document.referrer to identify parent window origin
+ * - window.origin for iframe postMessage security (via dom-mocks.ts)
+ * - document.referrer to identify parent window origin (via dom-mocks.ts)
  */
+
+import { setupListenerDomMocks } from "../../../test-setup/dom-mocks";
 
 // Import shared React Testing Library setup (cleanup + jest-dom)
 import "../../../test-setup/react-testing-library-setup";
@@ -18,15 +20,5 @@ import "../../../test-setup/react-testing-library-setup";
 // Import shared React setup (BigInt serialization)
 import "../../../test-setup/react-setup";
 
-// Mock window.origin (used for iframe postMessage security)
-Object.defineProperty(window, "origin", {
-    writable: true,
-    value: "http://localhost:3000",
-});
-
-// Mock document.referrer (used to identify parent window origin)
-Object.defineProperty(document, "referrer", {
-    value: "https://example.com",
-    writable: true,
-    configurable: true,
-});
+// Setup DOM mocks for iframe communication testing
+setupListenerDomMocks();

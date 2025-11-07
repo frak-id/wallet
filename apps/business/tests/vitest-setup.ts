@@ -13,11 +13,12 @@
  * - apps-setup.ts: Environment variables
  *
  * Business-specific mocks:
- * - TanStack Router hooks (useNavigate, useRouter, etc.)
+ * - TanStack Router hooks (useNavigate, useRouter, etc.) - via router-mocks.ts
  * - TanStack Start hooks
  */
 
 import { vi } from "vitest";
+import { setupTanStackRouterMock } from "../../../test-setup/router-mocks";
 
 // Import shared React Testing Library setup (cleanup + jest-dom)
 import "../../../test-setup/react-testing-library-setup";
@@ -25,34 +26,8 @@ import "../../../test-setup/react-testing-library-setup";
 // Import shared React setup (BigInt serialization)
 import "../../../test-setup/react-setup";
 
-// Mock TanStack Router hooks
-vi.mock("@tanstack/react-router", async () => {
-    const actual = await vi.importActual<
-        typeof import("@tanstack/react-router")
-    >("@tanstack/react-router");
-    return {
-        ...actual,
-        useNavigate: vi.fn(() => vi.fn()),
-        useRouter: vi.fn(() => ({
-            navigate: vi.fn(),
-            buildLocation: vi.fn(),
-            history: {
-                go: vi.fn(),
-                back: vi.fn(),
-                forward: vi.fn(),
-            },
-        })),
-        useMatchRoute: vi.fn(() => vi.fn()),
-        useParams: vi.fn(() => ({})),
-        useSearch: vi.fn(() => ({})),
-        useLocation: vi.fn(() => ({
-            href: "http://localhost:3022",
-            pathname: "/",
-            search: "",
-            hash: "",
-        })),
-    };
-});
+// Mock TanStack Router hooks (using shared router-mocks.ts abstraction)
+await setupTanStackRouterMock();
 
 // Mock TanStack Start specific hooks if needed
 vi.mock("@tanstack/react-start", async () => {
