@@ -1,0 +1,7 @@
+{
+    "name": "@wagmi/connectors-stub",
+    "version": "6.0.1",
+    "description": "Empty stub for @wagmi/connectors to avoid MetaMask SDK",
+    "main": "index.js",
+    "types": "index.d.ts"
+}

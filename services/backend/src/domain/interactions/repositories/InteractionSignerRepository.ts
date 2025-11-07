@@ -16,10 +16,10 @@ import { LRUCache } from "lru-cache";
 import * as solady from "solady";
 import {
     type Address,
-    type Hex,
-    type LocalAccount,
     encodeFunctionData,
+    type Hex,
     keccak256,
+    type LocalAccount,
 } from "viem";
 import {
     estimateGas,
@@ -227,7 +227,11 @@ export class InteractionSignerRepository {
         compressedData,
         initialData,
         account,
-    }: { compressedData: Hex; initialData: Hex; account: LocalAccount }) {
+    }: {
+        compressedData: Hex;
+        initialData: Hex;
+        account: LocalAccount;
+    }) {
         // Perform both simulation
         const [compressedGas, initialGas] = await Promise.all([
             estimateGas(viemClient, {

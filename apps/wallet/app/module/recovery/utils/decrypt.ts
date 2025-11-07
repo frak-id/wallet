@@ -1,6 +1,6 @@
+import { base64URLStringToBuffer } from "@frak-labs/wallet-shared/common/utils/base64url";
+import { bytesToString, type Hex } from "viem";
 import { passToKey } from "@/module/recovery-setup/utils/encrypt";
-import { base64URLStringToBuffer } from "@simplewebauthn/browser";
-import { type Hex, bytesToString } from "viem";
 
 /**
  * Decrypts the guardian private key using the password
@@ -10,7 +10,10 @@ import { type Hex, bytesToString } from "viem";
 export async function decryptPrivateKey({
     pass,
     guardianPrivateKeyEncrypted,
-}: { pass: string; guardianPrivateKeyEncrypted: string }) {
+}: {
+    pass: string;
+    guardianPrivateKeyEncrypted: string;
+}) {
     if (typeof window === "undefined") {
         throw new Error("This function should only be used in the browser");
     }

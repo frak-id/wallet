@@ -1,0 +1,7 @@
+@import "normalize.css/normalize.css";
+@import "@frak-labs/ui/styles/colors.css";
+@import "@frak-labs/wallet-shared/styles/colors-base.css";
+@import "colors-listener.css";
+@import "@frak-labs/ui/styles/global.css";
+@import "@frak-labs/wallet-shared/styles/global-base.css";
+@import "global.css";

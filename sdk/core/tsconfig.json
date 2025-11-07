@@ -48,7 +48,7 @@
 
     // Declaration files
     "declaration": true,
-    "declarationDir": "./dist",
+    "declarationDir": "./dist"
   },
   "tsc-alias": {
     "resolveFullPaths": true,

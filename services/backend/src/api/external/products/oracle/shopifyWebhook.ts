@@ -1,5 +1,4 @@
-import { log } from "@backend-common";
-import { db } from "@backend-common";
+import { db, log } from "@backend-common";
 import { t, validateBodyHmac } from "@backend-utils";
 import { isRunningInProd } from "@frak-labs/app-essentials";
 import { eq } from "drizzle-orm";
@@ -8,9 +7,9 @@ import { concatHex, keccak256, toHex } from "viem";
 import {
     OracleContext,
     type OrderFinancialStatus,
-    type ShopifyOrderUpdateWebhookDto,
     productOracleTable,
     type purchaseStatusEnum,
+    type ShopifyOrderUpdateWebhookDto,
 } from "../../../../domain/oracle";
 
 export const shopifyWebhook = new Elysia()
@@ -68,7 +67,7 @@ export const shopifyWebhook = new Elysia()
             // Ensure the order id match the one in the headers
             if (
                 webhookData?.id !==
-                Number.parseInt(headers["x-shopify-order-id"] ?? "0")
+                Number.parseInt(headers["x-shopify-order-id"] ?? "0", 10)
             ) {
                 throw new Error("Order id mismatch");
             }

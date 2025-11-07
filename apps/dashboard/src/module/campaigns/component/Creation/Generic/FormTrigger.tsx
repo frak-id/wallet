@@ -1,3 +1,7 @@
+import type { InteractionTypesKey } from "@frak-labs/core-sdk";
+import { Checkbox } from "@frak-labs/ui/component/forms/Checkbox";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useFormContext } from "react-hook-form";
 import { InputAmountCampaign } from "@/module/common/component/InputAmount";
 import { Row } from "@/module/common/component/Row";
 import {
@@ -9,10 +13,6 @@ import {
 } from "@/module/forms/Form";
 import { interactionTypesInfo } from "@/module/product/utils/interactionTypes";
 import type { CampaignTrigger } from "@/types/Campaign";
-import type { InteractionTypesKey } from "@frak-labs/core-sdk";
-import { Checkbox } from "@frak-labs/ui/component/forms/Checkbox";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { useFormContext } from "react-hook-form";
 import styles from "./FormTrigger.module.css";
 
 type FormTriggerProps = {

@@ -1,25 +1,25 @@
-import { TopLoader } from "@/module/common/component/TopLoader";
-import { RootProvider } from "@/module/common/provider/RootProvider";
-import { ReactScanWrapper } from "@/module/root/component/ReactScanWrapper";
-import { rootConfig } from "@/module/root/config";
-import { DetectPWA } from "@/module/wallet/component/DetectPWA";
 import { Spinner } from "@frak-labs/ui/component/Spinner";
 import type { ReactNode } from "react";
 import {
+    isRouteErrorResponse,
     Links,
     Meta,
     Outlet,
     Scripts,
     ScrollRestoration,
-    isRouteErrorResponse,
 } from "react-router";
-import type { Route } from "./+types/root";
 import {
     PwaInstall,
     PwaInstallScript,
-} from "./module/common/component/PwaInstall";
+} from "@/module/common/component/PwaInstall";
+import { TopLoader } from "@/module/common/component/TopLoader";
+import { RootProvider } from "@/module/common/provider/RootProvider";
+// import { ReactScanWrapper } from "@/module/root/component/ReactScanWrapper";
+import { rootConfig } from "@/module/root/config";
+import { DetectPWA } from "@/module/wallet/component/DetectPWA";
+import type { Route } from "./+types/root";
 // Import open panel to ensure it's initialized
-import "./module/common/analytics";
+import "@frak-labs/wallet-shared";
 
 export const meta = rootConfig.meta;
 export const links = rootConfig.links;
@@ -96,7 +96,7 @@ export function Layout({ children }: { children: ReactNode }) {
     return (
         <html lang={"en"}>
             <head>
-                <ReactScanWrapper />
+                {/* <ReactScanWrapper /> */}
                 <meta charSet="utf-8" />
                 <meta
                     name="viewport"
@@ -126,11 +126,11 @@ export default function App() {
     return (
         <>
             <RootProvider>
+                <PwaInstall />
                 <Outlet />
             </RootProvider>
             <TopLoader />
             <DetectPWA />
-            <PwaInstall />
         </>
     );
 }

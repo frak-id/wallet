@@ -49,7 +49,32 @@ bun run test:e2e              # Run tests against local
 bun run test:e2e:dev          # Run tests against dev environment
 bun run test:e2e:prod         # Run tests against prod environment
 bun run test:e2e:ui           # Run with Playwright UI
+
+# Unit tests with Vitest (wallet app and listener app)
+cd apps/wallet
+bun run test                  # Run unit tests (IMPORTANT: use "bun run test", not "bun test")
+bun run test:ui               # Run with Vitest UI
+bun run test:coverage         # Run with coverage report
+
+cd apps/listener
+bun run test                  # Run unit tests (IMPORTANT: use "bun run test", not "bun test")
+bun run test:ui               # Run with Vitest UI
+bun run test:coverage         # Run with coverage report
 ```
+
+**Testing Strategy**:
+- **E2E Tests**: Comprehensive Playwright tests (19 specs) covering user flows
+  - Authentication and registration
+  - Pairing flows
+  - Wallet operations
+  - Settings and profile management
+  - Located in `apps/wallet/tests/`
+- **Unit Tests**: Vitest tests co-located with source files
+  - Tests placed next to source files (e.g., `app/module/stores/recoveryStore.test.ts`)
+  - Focus on business logic and state management
+  - Mock external dependencies (Wagmi, TanStack Query, WebAuthn)
+  - Setup file: `apps/wallet/tests/vitest-setup.ts`
+  - Target: 40% code coverage
 
 ### Deployment
 ```bash
@@ -87,11 +112,40 @@ bun run changeset:release
   - `dashboard/` - Next.js 15 business dashboard (standalone output)
   - `dashboard-admin/` - React Router admin interface
 - **`packages/`** - Shared internal libraries (workspace-only)
-  - `ui/` - Radix UI-based component library
-  - `app-essentials/` - Core blockchain utilities and WebAuthn
-  - `client/` - API client abstractions
-  - `dev-tooling/` - Build configurations (manualChunks, onwarn)
-  - `rpc/` - RPC utilities
+  - `wallet-shared/` - Shared code exclusively for wallet and listener apps (~97 files)
+    - **Purpose**: Central package for wallet/listener functionality (NOT used by dashboard or other apps)
+    - **Architecture**: Well-organized into 13 domain-focused subdirectories
+    - **Structure**:
+      - `authentication/` - WebAuthn authentication (hooks, components, session management)
+      - `wallet/` - Smart wallet operations (hooks, actions, balance queries)
+      - `pairing/` - Device pairing flows (WebSocket clients, signature requests, UI components)
+      - `tokens/` - Token management and display (hooks, components, utilities)
+      - `interaction/` - Interaction tracking (hooks, components, processors)
+      - `recovery/` - Account recovery flows (encryption, decryption, storage)
+      - `stores/` - Zustand state management (4 stores: session, user, wallet, authentication)
+      - `types/` - Shared TypeScript type definitions (Session, Balance, WebAuthN, etc.)
+      - `common/` - Shared utilities (components, analytics via OpenPanel, storage via idb-keyval)
+      - `blockchain/` - Blockchain providers (Viem, Account Abstraction, connectors)
+      - `i18n/` - Internationalization configuration (react-i18next setup)
+      - `sdk/` - SDK lifecycle utilities and event handlers
+      - `providers/` - React context providers (FrakContext for SDK integration)
+      - `polyfills/` - Runtime polyfills (BigInt serialization)
+    - **Key Dependencies**:
+      - Workspace: `@frak-labs/ui`, `@frak-labs/app-essentials`, `@frak-labs/client`, `@frak-labs/core-sdk`, `@frak-labs/frame-connector`
+      - External: React 19, Zustand, Viem, Wagmi, TanStack Query, WebAuthn, idb-keyval, OpenPanel
+    - **Storage**: Uses lightweight idb-keyval for IndexedDB - service worker optimized (1.73 KB gzipped)
+    - **Exports**: Barrel exports in `src/index.ts` for clean imports - use `import { X } from "@frak-labs/wallet-shared"`
+    - **Import Pattern**: Used 228 times across wallet (153) and listener (75) apps
+    - **Known Issues**:
+      - ⚠️ Stores missing "use client" directives (breaks Next.js compatibility)
+      - ⚠️ Component duplication with `ui` package (AlertDialog exists in both)
+      - ⚠️ Backend type coupling via dev dependency on `@frak-labs/backend-elysia`
+    - **Technical Debt**: See `docs/audit/PACKAGE_SPLIT_OPTIONS.md` for refactoring analysis (conclusion: well-organized, needs targeted fixes not full split)
+  - `ui/` - Radix UI-based component library (generic, reusable across all apps)
+  - `app-essentials/` - Core blockchain utilities and WebAuthn configuration
+  - `client/` - API client abstractions (Elysia Eden Treaty integration)
+  - `dev-tooling/` - Build configurations (manualChunks, onwarn suppressions)
+  - `rpc/` - RPC utilities (published as `@frak-labs/frame-connector`)
 - **`sdk/`** - Public SDK packages (published to npm, linked via Changesets)
   - `core/` - Core SDK functionality (rslib build with CDN bundle)
   - `react/` - React hooks and providers
@@ -102,7 +156,7 @@ bun run changeset:release
 - **`example/`** - Integration examples
 
 ### Key Technologies
-- **Frontend**: React 19, TanStack Query, Viem, Wagmi, CSS Modules, React Router v7, Next.js 15
+- **Frontend**: React 19, TanStack Query, Zustand, Viem, Wagmi, CSS Modules, React Router v7, Next.js 15
 - **Backend**: Elysia.js, PostgreSQL (Drizzle ORM), MongoDB
 - **Blockchain**: Account Abstraction (ERC-4337), WebAuthn, Multi-chain support, Pimlico, ZeroDev
 - **Infrastructure**: SST v3 (AWS), Pulumi (GCP), hybrid multi-cloud deployment
@@ -118,6 +172,7 @@ bun run changeset:release
 - WebAuthn-first authentication approach with Account Abstraction
 - Wallet app uses module-based architecture (`app/module/` structure)
 - Backend follows domain-driven design (`src/domain/*/` structure)
+- **State Management**: Zustand with persist middleware across all frontend apps (wallet, dashboard, listener) for consistency and performance
 
 ### Package-Specific Commands
 
@@ -137,7 +192,16 @@ bun run bundle:check # Analyze bundle with vite-bundle-visualizer
 cd apps/dashboard
 bun run dev          # Next.js development with HTTPS (via SST dev)
 bun run build        # Next.js production build (standalone output)
+bun run typecheck    # Type checking
 ```
+
+**State Management**:
+- All frontend apps use Zustand for global state management
+- Dashboard stores located in `apps/dashboard/src/stores/`
+- Stores use persist middleware for localStorage synchronization
+- Always add "use client" directive to store files for Next.js compatibility
+- Use individual selectors for optimal performance: `const value = store((state) => state.value)`
+- Avoid subscribing to entire store: `const store = useStore()` causes unnecessary re-renders
 
 **Backend (`services/backend/`)**:
 ```bash

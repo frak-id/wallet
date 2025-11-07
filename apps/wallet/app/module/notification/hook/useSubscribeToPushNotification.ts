@@ -1,9 +1,8 @@
-import { authenticatedWalletApi } from "@/module/common/api/backendClient";
-import { subscriptionAtom } from "@/module/notification/atom/subscriptionAtom";
+import { authenticatedWalletApi } from "@frak-labs/wallet-shared";
+import { type MutationOptions, useMutation } from "@tanstack/react-query";
+import { useNotificationContext } from "@/module/notification/context/NotificationContext";
 import { useNotificationSetupStatus } from "@/module/notification/hook/useNotificationSetupStatus";
 import { notificationKey } from "@/module/notification/queryKeys/notification";
-import { type MutationOptions, useMutation } from "@tanstack/react-query";
-import { useSetAtom } from "jotai";
 
 /**
  * Register the push notification handler
@@ -11,10 +10,9 @@ import { useSetAtom } from "jotai";
 export function useSubscribeToPushNotification(
     mutationOptions?: MutationOptions
 ) {
+    const { setSubscription } = useNotificationContext();
     const { isNotificationAllowed, askForNotificationPermission } =
         useNotificationSetupStatus();
-
-    const setSubscription = useSetAtom(subscriptionAtom);
 
     /**
      * Mutation used to subscribe to the push notification

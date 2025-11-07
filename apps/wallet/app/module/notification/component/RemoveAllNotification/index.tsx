@@ -1,8 +1,8 @@
+import { Button } from "@frak-labs/ui/component/Button";
+import { BellOff } from "lucide-react";
 import { Panel } from "@/module/common/component/Panel";
 import { Row } from "@/module/common/component/Row";
 import { useUnsubscribeFromPushNotification } from "@/module/notification/hook/useUnsubscribeFromPushNotification";
-import { Button } from "@frak-labs/ui/component/Button";
-import { BellOff } from "lucide-react";
 
 export function RemoveAllNotification() {
     const { hasPushToken, unsubscribeFromPush, isPending } =

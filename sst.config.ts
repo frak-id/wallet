@@ -34,6 +34,7 @@ export default $config({
         const isGcp = $app?.stage?.startsWith("gcp");
         if (isGcp) {
             await import("./infra/gcp/backend.ts");
+            await import("./infra/gcp/wallet.ts");
             return;
         }
 
@@ -41,9 +42,10 @@ export default $config({
         if ($dev) {
             // Gcp dev stuff
             await import("./infra/gcp/dev.ts");
-            await import("./infra/wallet.ts");
+            await import("./infra/gcp/wallet.ts");
             await import("./infra/dashboard.ts");
             await import("./infra/example.ts");
+
             return;
         }
 
@@ -66,8 +68,7 @@ export default $config({
             await import("./infra/gcp/dev.ts");
         }
 
-        // Add wallet + dashboard
-        await import("./infra/wallet.ts");
+        // Add dashboard (remain on AWS for now)
         await import("./infra/dashboard.ts");
     },
 });

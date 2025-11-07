@@ -1,34 +1,26 @@
 import {
-    inAppBrowserToastDismissedAtom,
-    socialRedirectAttemptedAtom,
-} from "@/module/common/atoms/inAppBrowser";
-import { Toast } from "@/module/common/component/Toast";
-import { useAtom } from "jotai";
+    emitLifecycleEvent,
+    inAppRedirectUrl,
+    isInAppBrowser,
+    isInIframe,
+    trackGenericEvent,
+    useSessionFlag,
+} from "@frak-labs/wallet-shared";
 import { useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { emitLifecycleEvent } from "../../../sdk/utils/lifecycleEvents";
-import { trackGenericEvent } from "../../analytics";
-import { inAppRedirectUrl, isInAppBrowser, isInIframe } from "../../lib/inApp";
+import { Toast } from "@/module/common/component/Toast";
 
 /**
  * Toast component that displays when user is in an in-app browser
  */
 export function InAppBrowserToast() {
     const { t } = useTranslation();
-    const [isDismissed, setIsDismissed] = useAtom(
-        inAppBrowserToastDismissedAtom
+    const [isDismissed, setIsDismissed] = useSessionFlag(
+        "inAppBrowserToastDismissed"
     );
-    const [hasAttemptedRedirect, setHasAttemptedRedirect] = useAtom(
-        socialRedirectAttemptedAtom
+    const [hasAttemptedRedirect, setHasAttemptedRedirect] = useSessionFlag(
+        "socialRedirectAttempted"
     );
-
-    // Auto-redirect if this is the first time detecting in-app browser and no redirect has been attempted
-    useEffect(() => {
-        if (!isInAppBrowser || hasAttemptedRedirect) return;
-
-        setHasAttemptedRedirect(true);
-        handleRedirect();
-    }, [hasAttemptedRedirect, setHasAttemptedRedirect]);
 
     const handleRedirect = useCallback(() => {
         if (isInIframe) {
@@ -50,6 +42,14 @@ export function InAppBrowserToast() {
             window.location.href = `${inAppRedirectUrl}${encodeURIComponent(window.location.href)}`;
         }
     }, []);
+
+    // Auto-redirect if this is the first time detecting in-app browser and no redirect has been attempted
+    useEffect(() => {
+        if (!isInAppBrowser || hasAttemptedRedirect) return;
+
+        setHasAttemptedRedirect(true);
+        handleRedirect();
+    }, [hasAttemptedRedirect, setHasAttemptedRedirect, handleRedirect]);
 
     const handleDismiss = useCallback(
         (e: React.MouseEvent) => {

@@ -1,6 +1,6 @@
-import type { Campaign } from "@/types/Campaign";
 import type { ObjectId } from "mongodb";
 import type { Address, Hex } from "viem";
+import type { Campaign } from "@/types/Campaign";
 
 export type CampaignDocument =
     | FinalizedCampaignDocument

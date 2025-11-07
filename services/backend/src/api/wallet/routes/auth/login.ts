@@ -1,9 +1,7 @@
-import { viemClient } from "@backend-common";
-import { JwtContext } from "@backend-common";
+import { JwtContext, viemClient } from "@backend-common";
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import { verifyMessage } from "viem/actions";
-import { SixDegreesContext } from "../../../../domain/6degrees/context";
 import {
     AuthContext,
     type StaticWalletSdkTokenDto,
@@ -95,41 +93,19 @@ export const loginRoutes = new Elysia()
             const verificationnResult =
                 await AuthContext.services.webAuthN.isValidSignature({
                     compressedSignature: rawAuthenticatorResponse,
-                    msg: expectedChallenge,
+                    challenge: expectedChallenge,
                 });
             if (!verificationnResult) {
                 return status(404, "Invalid signature");
             }
 
             // Otherwise all good, extract a few info
-            const {
-                address,
-                authenticatorId,
-                publicKey,
-                transports,
-                rawPublicKey,
-            } = verificationnResult;
+            const { address, authenticatorId, publicKey, transports } =
+                verificationnResult;
 
             // Prepare the additional data object
             const additionalData: StaticWalletSdkTokenDto["additionalData"] =
                 {};
-
-            // Check if that's a six degrees wallet, and iuf yes, generate a token accordingly
-            const isSixDegrees =
-                await SixDegreesContext.services.routing.isRoutedWallet(
-                    address
-                );
-            if (isSixDegrees) {
-                const token =
-                    await SixDegreesContext.services.authentication.login({
-                        publicKey: rawPublicKey,
-                        challenge: expectedChallenge,
-                        signature: rawAuthenticatorResponse,
-                    });
-                if (token) {
-                    additionalData.sixDegreesToken = token;
-                }
-            }
 
             // Create the token and set the cookie
             const token = await JwtContext.wallet.sign({
@@ -162,7 +138,7 @@ export const loginRoutes = new Elysia()
         {
             body: t.Object({
                 // Challenge should be on the backend side
-                expectedChallenge: t.String(),
+                expectedChallenge: t.Hex(),
                 // b64 + stringified version of the authenticator response
                 authenticatorResponse: t.String(),
             }),

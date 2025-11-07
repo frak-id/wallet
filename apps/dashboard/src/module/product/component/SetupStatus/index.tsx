@@ -1,4 +1,9 @@
 "use client";
+import { Button } from "@frak-labs/ui/component/Button";
+import { Spinner } from "@frak-labs/ui/component/Spinner";
+import { AlertCircle, BadgeCheck } from "lucide-react";
+import { useRouter } from "next/navigation";
+import type { Hex } from "viem";
 import { CallOut } from "@/module/common/component/CallOut";
 import { Panel } from "@/module/common/component/Panel";
 import { Row } from "@/module/common/component/Row";
@@ -8,11 +13,6 @@ import {
     type ProductSetupStatusItem,
     useProductSetupStatus,
 } from "@/module/product/hook/useProductSetupStatus";
-import { Button } from "@frak-labs/ui/component/Button";
-import { Spinner } from "@frak-labs/ui/component/Spinner";
-import { AlertCircle, BadgeCheck } from "lucide-react";
-import { useRouter } from "next/navigation";
-import type { Hex } from "viem";
 import styles from "./index.module.css";
 
 /**
@@ -43,7 +43,10 @@ export function ProductSetupStatus({ productId }: { productId: Hex }) {
 function SetupStatusItems({
     items,
     hasWarning,
-}: { items: ProductSetupStatusItem[]; hasWarning: boolean }) {
+}: {
+    items: ProductSetupStatusItem[];
+    hasWarning: boolean;
+}) {
     return (
         <div>
             <Row>
@@ -82,7 +85,10 @@ function OverallStatus({ hasWarning }: { hasWarning: boolean }) {
 function SetupStatusItem({
     item,
     position,
-}: { item: ProductSetupStatusItem; position: number }) {
+}: {
+    item: ProductSetupStatusItem;
+    position: number;
+}) {
     if (item.isGood) {
         return <SuccessStatusItem item={item} position={position} />;
     }
@@ -93,7 +99,10 @@ function SetupStatusItem({
 function SuccessStatusItem({
     item,
     position,
-}: { item: ProductSetupStatusItem; position: number }) {
+}: {
+    item: ProductSetupStatusItem;
+    position: number;
+}) {
     return (
         <div className={styles.stepItem}>
             <div className={styles.header}>
@@ -111,7 +120,10 @@ function SuccessStatusItem({
 function WarningStatusItem({
     item,
     position,
-}: { item: ProductSetupStatusItem; position: number }) {
+}: {
+    item: ProductSetupStatusItem;
+    position: number;
+}) {
     const router = useRouter();
     return (
         <div className={styles.stepItem}>

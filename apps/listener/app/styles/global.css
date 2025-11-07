@@ -1,0 +1,13 @@
+/**
+ * Listener-specific global styles
+ * Base styles are in @frak-labs/wallet-shared/styles/global-base.css
+ */
+
+html {
+    background: transparent;
+}
+
+body {
+    background: transparent;
+    overflow: auto;
+}

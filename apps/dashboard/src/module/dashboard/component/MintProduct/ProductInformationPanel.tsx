@@ -1,5 +1,20 @@
 "use client";
 
+import type { ProductTypesKey } from "@frak-labs/core-sdk";
+import {
+    Accordion,
+    AccordionContent,
+    AccordionItem,
+    AccordionTrigger,
+} from "@frak-labs/ui/component/Accordion";
+import { Button } from "@frak-labs/ui/component/Button";
+import { Checkbox } from "@frak-labs/ui/component/forms/Checkbox";
+import { Input } from "@frak-labs/ui/component/forms/Input";
+import { Spinner } from "@frak-labs/ui/component/Spinner";
+import { TextWithCopy } from "@frak-labs/ui/component/TextWithCopy";
+import { validateUrl } from "@frak-labs/ui/utils/validateUrl";
+import { CheckCircle2, ExternalLink, XCircle } from "lucide-react";
+import type { UseFormReturn } from "react-hook-form";
 import { PanelAccordion } from "@/module/common/component/PanelAccordion";
 import { useDnsTxtRecordToSet } from "@/module/dashboard/hooks/dnsRecordHooks";
 import { CurrencySelector } from "@/module/forms/CurrencySelector";
@@ -12,21 +27,6 @@ import {
     FormMessage,
 } from "@/module/forms/Form";
 import type { ProductNew } from "@/types/Product";
-import type { ProductTypesKey } from "@frak-labs/core-sdk";
-import {
-    Accordion,
-    AccordionContent,
-    AccordionItem,
-    AccordionTrigger,
-} from "@frak-labs/ui/component/Accordion";
-import { Button } from "@frak-labs/ui/component/Button";
-import { Spinner } from "@frak-labs/ui/component/Spinner";
-import { TextWithCopy } from "@frak-labs/ui/component/TextWithCopy";
-import { Checkbox } from "@frak-labs/ui/component/forms/Checkbox";
-import { Input } from "@frak-labs/ui/component/forms/Input";
-import { validateUrl } from "@frak-labs/ui/utils/validateUrl";
-import { CheckCircle2, ExternalLink, XCircle } from "lucide-react";
-import type { UseFormReturn } from "react-hook-form";
 import styles from "./index.module.css";
 import { productTypeDescriptions } from "./utils";
 

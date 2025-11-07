@@ -1,10 +1,10 @@
-import { Panel } from "@/module/common/component/Panel";
-import { Title } from "@/module/common/component/Title";
-import { ToggleSession } from "@/module/common/component/ToggleSession";
-import { useInteractionSessionStatus } from "@/module/wallet/hook/useInteractionSessionStatus";
+import { useInteractionSessionStatus } from "@frak-labs/wallet-shared";
 import { Wallet } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useAccount } from "wagmi";
+import { Panel } from "@/module/common/component/Panel";
+import { Title } from "@/module/common/component/Title";
+import { ToggleSession } from "@/module/common/component/ToggleSession";
 
 export function CloseSession() {
     const { t } = useTranslation();

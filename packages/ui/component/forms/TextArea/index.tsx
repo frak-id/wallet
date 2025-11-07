@@ -1,7 +1,7 @@
-import { cva, cx } from "class-variance-authority";
 import type { VariantProps } from "class-variance-authority";
-import { isValidElement } from "react";
+import { cva, cx } from "class-variance-authority";
 import type { ComponentPropsWithRef, ReactNode } from "react";
+import { isValidElement } from "react";
 import { hasClassName } from "../../../utils/hasClassName";
 import { mergeElement } from "../../../utils/mergeElement";
 import styles from "./index.module.css";

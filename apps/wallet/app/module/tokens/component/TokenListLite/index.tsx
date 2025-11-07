@@ -1,15 +1,10 @@
+import { useGetUserBalance } from "@frak-labs/wallet-shared";
 import { Skeleton } from "@/module/common/component/Skeleton";
 import { TokenItemLite } from "@/module/tokens/component/TokenItemLite";
-import { useGetUserBalance } from "@/module/tokens/hook/useGetUserBalance";
-import { useEffect } from "react";
 import styles from "./index.module.css";
 
 export function TokenListLite() {
-    const { userBalance, isLoading, refetch } = useGetUserBalance();
-
-    useEffect(() => {
-        refetch();
-    }, [refetch]);
+    const { userBalance, isLoading } = useGetUserBalance();
 
     if (isLoading) {
         return <Skeleton height={18} />;

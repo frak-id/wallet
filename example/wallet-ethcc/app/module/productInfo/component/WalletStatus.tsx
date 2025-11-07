@@ -1,6 +1,6 @@
-import { Panel } from "@/module/common/component/Panel";
 import type { GetProductInformationReturnType } from "@frak-labs/core-sdk";
 import { useGetProductInformation } from "@frak-labs/react-sdk";
+import { Panel } from "@/module/common/component/Panel";
 
 export function ProductInfo() {
     const {

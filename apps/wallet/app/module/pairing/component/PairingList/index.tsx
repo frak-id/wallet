@@ -1,15 +1,17 @@
-import { webauthnSessionAtom } from "@/module/common/atoms/session";
-import { Panel } from "@/module/common/component/Panel";
-import { Title } from "@/module/common/component/Title";
-import { useDeletePairing } from "@/module/pairing/hook/useDeletePairing";
-import { useGetActivePairings } from "@/module/pairing/hook/useListPairings";
-import { pairingKey } from "@/module/pairing/queryKeys";
-import type { Pairing } from "@/module/pairing/types";
 import { Button } from "@frak-labs/ui/component/Button";
+import {
+    pairingKey,
+    selectWebauthnSession,
+    sessionStore,
+    useDeletePairing,
+    useGetActivePairings,
+} from "@frak-labs/wallet-shared";
+import type { Pairing } from "@frak-labs/wallet-shared/pairing/types";
 import { useQueryClient } from "@tanstack/react-query";
-import { useAtomValue } from "jotai";
 import { Laptop, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { Panel } from "@/module/common/component/Panel";
+import { Title } from "@/module/common/component/Title";
 import styles from "./index.module.css";
 
 /**
@@ -88,7 +90,7 @@ function PairingHeader({ pairing }: { pairing: Pairing }) {
 function PairingFooter({ pairing }: { pairing: Pairing }) {
     const { t } = useTranslation();
     const queryClient = useQueryClient();
-    const wallet = useAtomValue(webauthnSessionAtom);
+    const wallet = sessionStore(selectWebauthnSession);
 
     const { mutate: deletePairing } = useDeletePairing({
         mutations: {
@@ -121,7 +123,10 @@ function PairingFooter({ pairing }: { pairing: Pairing }) {
 function PairingSingleDetails({
     label,
     value,
-}: { label: string; value: string }) {
+}: {
+    label: string;
+    value: string;
+}) {
     return (
         <>
             <div className={styles.pairing__label}>{label}</div>

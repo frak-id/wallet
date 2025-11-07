@@ -110,7 +110,9 @@
 }
 
 .panel {
-    transition: opacity 0.3s ease, filter 0.3s ease;
+    transition:
+        opacity 0.3s ease,
+        filter 0.3s ease;
 }
 
 .panelDisabled {
@@ -272,7 +274,9 @@
     border: 1px solid var(--color-border, #dee2e6);
     border-radius: 8px;
     padding: 16px;
-    transition: border-color 0.2s ease, background-color 0.2s ease;
+    transition:
+        border-color 0.2s ease,
+        background-color 0.2s ease;
     cursor: pointer;
 }
 

@@ -1,5 +1,5 @@
-import { onClientReady } from "@/utils/clientReady";
 import { useCallback, useEffect, useState } from "preact/hooks";
+import { onClientReady } from "@/utils/clientReady";
 
 /**
  * Hook to manage client readiness state for the wallet button

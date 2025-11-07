@@ -58,12 +58,15 @@ export const nexusRpcSecret = new sst.Secret("NEXUS_RPC_SECRET");
 export const vapidPublicKey = new sst.Secret("VAPID_PUBLIC_KEY");
 export const sessionEncryptionKy = new sst.Secret("SESSION_ENCRYPTION_KEY");
 export const mongoBusinessDb = new sst.Secret("MONGODB_BUSINESS_URI");
-export const privyAppId = new sst.Secret("PRIVY_APP_ID");
 
 // Open panel secrets
 export const openPanelWalletClientId = new sst.Secret(
     "OPEN_PANEL_WALLET_CLIENT_ID"
 );
+// TODO: Uncomment when listener is deployed
+// export const openPanelListenerClientId = new sst.Secret(
+//     "OPEN_PANEL_LISTENER_CLIENT_ID"
+// );
 export const openPanelSdkClientId = new sst.Secret("OPEN_PANEL_SDK_CLIENT_ID");
 export const openPanelBusinessClientId = new sst.Secret(
     "OPEN_PANEL_BUSINESS_CLIENT_ID"

@@ -1,3 +1,6 @@
+import { CircleDollarSign, Wallet } from "lucide-react";
+import { useMemo } from "react";
+import { useFormContext } from "react-hook-form";
 import { InputAmountCampaign } from "@/module/common/component/InputAmount";
 import { Row } from "@/module/common/component/Row";
 import {
@@ -8,17 +11,10 @@ import {
     FormMessage,
 } from "@/module/forms/Form";
 import type { Campaign } from "@/types/Campaign";
-import { CircleDollarSign, Wallet } from "lucide-react";
-import { useMemo } from "react";
-import { useFormContext } from "react-hook-form";
 import { Column } from "../../../../common/component/Column";
 import styles from "./FormBudgetRow.module.css";
 
-export function FormBudgetRow({
-    disabled,
-}: {
-    disabled?: boolean;
-}) {
+export function FormBudgetRow({ disabled }: { disabled?: boolean }) {
     const { control, watch } = useFormContext<Campaign>();
 
     const maxEuroDaily = watch("budget.maxEuroDaily");

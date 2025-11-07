@@ -1,3 +1,4 @@
+import usePagination from "@lucasmogari/react-pagination";
 import {
     Pagination,
     PaginationContent,
@@ -7,7 +8,6 @@ import {
     PaginationNext,
     PaginationPrevious,
 } from "@/module/common/component/Pagination";
-import usePagination from "@lucasmogari/react-pagination";
 import styles from "./index.module.css";
 
 type TablePaginationProps = {

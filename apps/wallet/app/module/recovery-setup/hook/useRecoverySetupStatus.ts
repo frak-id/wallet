@@ -1,7 +1,7 @@
-import { recoverySetupKey } from "@/module/recovery-setup/queryKeys/recovery-setup";
-import { getCurrentRecoveryOption } from "@/module/recovery/action/get";
 import { useQuery } from "@tanstack/react-query";
 import { useAccount } from "wagmi";
+import { getCurrentRecoveryOption } from "@/module/recovery/action/get";
+import { recoverySetupKey } from "@/module/recovery-setup/queryKeys/recovery-setup";
 
 /**
  * Fetch the recovery status for the given chain

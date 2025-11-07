@@ -1,5 +1,4 @@
-import { log } from "@backend-common";
-import { JwtContext } from "@backend-common";
+import { JwtContext, log } from "@backend-common";
 import { t } from "@backend-utils";
 import { WebAuthN } from "@frak-labs/app-essentials";
 import {
@@ -8,7 +7,7 @@ import {
 } from "@simplewebauthn/server";
 import { Elysia, status } from "elysia";
 import { Binary } from "mongodb";
-import { SixDegreesContext } from "../../../../domain/6degrees/context";
+import type { PublicKeyCredential } from "ox/WebAuthnP256";
 import {
     AuthContext,
     type StaticWalletSdkTokenDto,
@@ -22,45 +21,39 @@ export const registerRoutes = new Elysia()
         async ({
             // Request
             body: {
-                registrationResponse: rawRegistrationResponse,
-                expectedChallenge,
+                id,
+                publicKey,
+                raw: rawRegistrationResponse,
                 userAgent,
                 previousWallet,
-                isSixDegrees,
             },
         }) => {
             // Decode the registration response
             const registrationResponse =
-                AuthContext.services.webAuthN.parseCompressedResponse<RegistrationResponseJSON>(
+                AuthContext.services.webAuthN.parseCompressedResponse<PublicKeyCredential>(
                     rawRegistrationResponse
                 );
 
             // Verify the registration response
             const verification = await verifyRegistrationResponse({
-                response: registrationResponse,
-                expectedChallenge,
-                expectedOrigin: WebAuthN.rpOrigin,
+                response:
+                    registrationResponse as unknown as RegistrationResponseJSON,
+                expectedChallenge: (challenge) => {
+                    console.log("Challenge", challenge);
+                    return true;
+                },
                 expectedRPID: WebAuthN.rpId,
+                expectedOrigin: WebAuthN.rpOrigin,
             });
-            if (!verification.registrationInfo) {
+            if (!verification.verified) {
                 log.error(
                     {
                         verification,
-                        expectedChallenge,
-                        response: registrationResponse,
-                        rpOrigin: WebAuthN.rpOrigin,
-                        rpId: WebAuthN.rpId,
                     },
                     "Registration of a new authenticator failed"
                 );
                 return status(400, "Registration failed");
             }
-
-            // Get the public key
-            const publicKey = AuthContext.services.webAuthN.decodePublicKey({
-                credentialPubKey:
-                    verification.registrationInfo.credential.publicKey,
-            });
 
             // Extract the info we want to store
             const { credential, credentialDeviceType, credentialBackedUp } =
@@ -74,7 +67,7 @@ export const registerRoutes = new Elysia()
                     pubKey: publicKey,
                 }));
             await AuthContext.repositories.authenticator.createAuthenticator({
-                _id: credential.id,
+                _id: id,
                 smartWalletAddress: walletAddress,
                 userAgent,
                 credentialPublicKey: new Binary(credential.publicKey),
@@ -82,28 +75,12 @@ export const registerRoutes = new Elysia()
                 credentialDeviceType,
                 credentialBackedUp,
                 publicKey,
-                transports: registrationResponse.response.transports,
+                transports: credential.transports,
             });
 
             // Prepare the additional data object
             const additionalData: StaticWalletSdkTokenDto["additionalData"] =
                 {};
-
-            // If that's a six degrees wallet, register it
-            if (isSixDegrees) {
-                await SixDegreesContext.services.routing.registerRoutedWallet(
-                    walletAddress
-                );
-                const token =
-                    await SixDegreesContext.services.authentication.register({
-                        publicKey: credential.publicKey,
-                        challenge: expectedChallenge,
-                        signature: rawRegistrationResponse,
-                    });
-                if (token) {
-                    additionalData.sixDegreesToken = token;
-                }
-            }
 
             // Finally, generate a JWT token for the SDK
             const sdkJwt =
@@ -134,15 +111,17 @@ export const registerRoutes = new Elysia()
         },
         {
             body: t.Object({
-                // Challenge should be on the backend side
-                expectedChallenge: t.String(),
-                // b64 + stringified version of the registration response
-                registrationResponse: t.String(),
+                id: t.String(),
+                publicKey: t.Object({
+                    x: t.Hex(),
+                    y: t.Hex(),
+                    prefix: t.Number(),
+                }),
+                // b64 + stringified version of the raw registration response
+                raw: t.String(),
                 userAgent: t.String(),
                 previousWallet: t.Optional(t.Address()),
                 setSessionCookie: t.Optional(t.Boolean()),
-                // potential routing request
-                isSixDegrees: t.Optional(t.Boolean()),
             }),
             response: {
                 400: t.String(),

@@ -1,6 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { db } from "@backend-common";
-import { JwtContext } from "@backend-common";
+import { db, JwtContext } from "@backend-common";
 import { and, eq, inArray, isNull } from "drizzle-orm";
 import type { ElysiaWS } from "elysia/ws";
 import { UAParser } from "ua-parser-js";
@@ -13,8 +12,8 @@ import type { WalletSdkSessionService } from "../../auth/services/WalletSdkSessi
 import { pairingSignatureRequestTable, pairingTable } from "../db/schema";
 import { WsCloseCode } from "../dto/WebSocketCloseCode";
 import {
-    PairingRepository,
     originTopic,
+    PairingRepository,
     targetTopic,
 } from "./PairingRepository";
 
@@ -96,7 +95,10 @@ export class PairingConnectionRepository extends PairingRepository {
     private async handleInitiateRequest({
         userAgent,
         ws,
-    }: { userAgent?: string; ws: ElysiaWS }) {
+    }: {
+        userAgent?: string;
+        ws: ElysiaWS;
+    }) {
         const deviceName = this.uaToDeviceName(userAgent);
 
         // Create a new pairing

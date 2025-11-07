@@ -1,9 +1,9 @@
+import type { InteractionHistory } from "@frak-labs/wallet-shared";
+import { useTranslation } from "react-i18next";
 import { Skeleton } from "@/module/common/component/Skeleton";
 import { Title } from "@/module/common/component/Title";
 import { HistoryDayGroup } from "@/module/history/component/DayGroup";
 import { useGetInteractionHistory } from "@/module/history/hook/useGetInteractionHistory";
-import type { InteractionHistory } from "@/types/InteractionHistory";
-import { useTranslation } from "react-i18next";
 import styles from "./index.module.css";
 
 export function InteractionHistoryList() {
@@ -28,7 +28,9 @@ export function InteractionHistoryList() {
  */
 function InteractionHistoryItem({
     interaction,
-}: { interaction: InteractionHistory }) {
+}: {
+    interaction: InteractionHistory;
+}) {
     const { t } = useTranslation();
 
     return (

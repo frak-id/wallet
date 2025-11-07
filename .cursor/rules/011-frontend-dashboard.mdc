@@ -1,13 +1,24 @@
 ---
-description: This rule apply to dashboard package.
-globs: packages/dashboard/**/*.ts, packages/dashboard/**/*.tsx
+description: This rule apply to dashboard app.
+globs: apps/dashboard/**/*.ts, apps/dashboard/**/*.tsx
 ---
 # Dashboard Rules
 
 ## Dashboard Summary
 
-`@/packages/dashboard` is part of Frak monorepo and is designed to provide a comprehensive dashboard solution that integrates with various blockchain functionalities and user authentication mechanisms.
-Project is written in TypeScript using React 19, Next.js App Router, Radix UI and Shadcn UI for components, React Query for server state management, Jotai for client state management, Viem and Wagmi for blockchain, i18next for internationalization.
+`apps/dashboard` is part of Frak monorepo and is designed to provide a comprehensive dashboard solution that integrates with various blockchain functionalities and user authentication mechanisms.
+Project is written in TypeScript using React 19, Next.js App Router, Radix UI and Shadcn UI for components, React Query for server state management, Zustand for client state management, Viem and Wagmi for blockchain, i18next for internationalization.
+
+## State Management
+
+- Dashboard uses Zustand for global client state
+- Store files located in `apps/dashboard/src/stores/`
+- All stores must include "use client" directive at the top
+- Stores use persist middleware for localStorage synchronization
+- Best practices:
+  - Use individual selectors: `const value = store((state) => state.value)`
+  - Avoid whole-store subscriptions: `const { value } = store()` causes unnecessary re-renders
+  - Support functional updates when needed: `setFilters((prev) => ({ ...prev, newValue }))`
 
 ## Technical Stack
 

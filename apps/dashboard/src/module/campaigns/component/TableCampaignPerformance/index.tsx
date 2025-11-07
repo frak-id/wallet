@@ -1,22 +1,23 @@
+import { Skeleton } from "@frak-labs/ui/component/Skeleton";
+import { computeWithPrecision } from "@frak-labs/ui/utils/computeWithPrecision";
+import { useQuery } from "@tanstack/react-query";
+import type {
+    CellContext,
+    ColumnDef,
+    Table as TableReact,
+} from "@tanstack/react-table";
+import {
+    type ColumnFiltersState,
+    createColumnHelper,
+} from "@tanstack/react-table";
+import dynamic from "next/dynamic";
+import Link from "next/link";
+import { useMemo, useState } from "react";
 import { getMyCampaignsStats } from "@/context/campaigns/action/getCampaignsStats";
 import { TablePerformanceFilters } from "@/module/campaigns/component/TableCampaignPerformance/Filter";
 import type { ReactTableProps } from "@/module/common/component/Table";
 import { TooltipTable } from "@/module/common/component/TooltipTable";
 import { useConvertToPreferredCurrency } from "@/module/common/hook/useConversionRate";
-import { Skeleton } from "@frak-labs/ui/component/Skeleton";
-import { computeWithPrecision } from "@frak-labs/ui/utils/computeWithPrecision";
-import { useQuery } from "@tanstack/react-query";
-import {
-    type ColumnFiltersState,
-    createColumnHelper,
-} from "@tanstack/react-table";
-import type { CellContext, ColumnDef } from "@tanstack/react-table";
-import type { Table as TableReact } from "@tanstack/react-table";
-import { atom } from "jotai";
-import { useAtomValue } from "jotai/index";
-import dynamic from "next/dynamic";
-import Link from "next/link";
-import { useMemo } from "react";
 
 const Table = dynamic<ReactTableProps<TableData>>(
     () => import("@/module/common/component/Table").then((mod) => mod.Table),
@@ -52,10 +53,8 @@ function avgPercentages(table: TableReact<TableData>, column: keyof TableData) {
     return <span>{(average * 100).toFixed(2)}%</span>;
 }
 
-export const tablePerformanceFiltersAtom = atom<ColumnFiltersState>([]);
-
 export function TableCampaignPerformance() {
-    const columnFilters = useAtomValue(tablePerformanceFiltersAtom);
+    const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
     const { data, isLoading } = useQuery({
         queryKey: ["campaigns", "stats"],
@@ -71,6 +70,10 @@ export function TableCampaignPerformance() {
                         <Link href={"#"}>{getValue()}</Link>
                     ),
                     footer: "Total",
+                }),
+                columnHelper.accessor("eventType", {
+                    header: "Event",
+                    cell: ({ getValue }) => getValue(),
                 }),
                 columnHelper.accessor("ambassador", {
                     header: () => (
@@ -199,12 +202,12 @@ export function TableCampaignPerformance() {
                         <TooltipTable
                             content={
                                 <>
-                                    <strong>Cost per Purchase</strong>
-                                    <br /> Average cost per purchase.
+                                    <strong>Cost Per Action</strong>
+                                    <br /> Average cost per action.
                                 </>
                             }
                         >
-                            <span>Cost per Purchase</span>
+                            <span>Cost Per Action</span>
                         </TooltipTable>
                     ),
                     cell: ({ row, getValue }) => (
@@ -245,7 +248,10 @@ export function TableCampaignPerformance() {
 
     return (
         <>
-            <TablePerformanceFilters />
+            <TablePerformanceFilters
+                columnFilters={columnFilters}
+                setColumnFilters={setColumnFilters}
+            />
             <Table
                 data={data}
                 columns={columns}

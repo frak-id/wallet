@@ -1,10 +1,6 @@
-import { dexieDb } from "@/module/common/storage/dexie/dexieDb";
+import { notificationStorage } from "@frak-labs/wallet-shared/common/storage/notifications";
 
 declare const self: ServiceWorkerGlobalScope;
-
-/*
- * todo: Dexi is fat af in when compiled, find a lighter way, should be under 200kb (and now it's at 701kb)
- */
 
 /**
  * Auto claims all clients
@@ -45,11 +41,10 @@ self.addEventListener("push", (event) => {
         ...additionalParams,
     };
 
-    // Save the notification in our database
-    const notificationDb = dexieDb.notification;
+    // Save the notification in IndexedDB
     const notificationId = `${Date.now()}-${JSON.stringify(payload)}`;
-    const insertToDbPromise = notificationDb
-        .put({
+    const insertToDbPromise = notificationStorage
+        .add({
             id: notificationId,
             title,
             timestamp: Date.now(),
@@ -81,7 +76,6 @@ self.addEventListener("notificationclick", (event) => {
     // Get the url to open
     const url = event.notification.data?.url || "https://wallet.frak.id/";
     event.waitUntil(
-        // @ts-ignore
         self.clients
             .matchAll({
                 type: "window",

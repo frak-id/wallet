@@ -1,9 +1,3 @@
-import { viemClient } from "@/context/blockchain/provider";
-import { useGetAdminWallet } from "@/module/common/hook/useGetAdminWallet";
-import { useGetProductAdministrators } from "@/module/product/hook/useGetProductAdministrators";
-import { useGetProductFunding } from "@/module/product/hook/useGetProductFunding";
-import { useProductInteractionContract } from "@/module/product/hook/useProductInteractionContract";
-import { useProductMetadata } from "@/module/product/hook/useProductMetadata";
 import {
     addresses,
     interactionValidatorRoles,
@@ -15,6 +9,12 @@ import { businessApi } from "@frak-labs/client/server";
 import { useQuery } from "@tanstack/react-query";
 import type { Hex } from "viem";
 import { readContract } from "viem/actions";
+import { viemClient } from "@/context/blockchain/provider";
+import { useGetAdminWallet } from "@/module/common/hook/useGetAdminWallet";
+import { useGetProductAdministrators } from "@/module/product/hook/useGetProductAdministrators";
+import { useGetProductFunding } from "@/module/product/hook/useGetProductFunding";
+import { useProductInteractionContract } from "@/module/product/hook/useProductInteractionContract";
+import { useProductMetadata } from "@/module/product/hook/useProductMetadata";
 
 type SetupStatusItemKey =
     // Does the product have multiple admin?

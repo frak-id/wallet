@@ -1,5 +1,33 @@
 "use client";
 
+import {
+    addresses,
+    detectStablecoinFromToken,
+    isRunningInProd,
+} from "@frak-labs/app-essentials";
+import {
+    campaignBankAbi,
+    type Stablecoin,
+} from "@frak-labs/app-essentials/blockchain";
+import { useSendTransactionAction } from "@frak-labs/react-sdk";
+import { Button } from "@frak-labs/ui/component/Button";
+import { Column, Columns } from "@frak-labs/ui/component/Columns";
+import { IconInfo } from "@frak-labs/ui/component/IconInfo";
+import { Spinner } from "@frak-labs/ui/component/Spinner";
+import { Switch } from "@frak-labs/ui/component/Switch";
+import { Tooltip } from "@frak-labs/ui/component/Tooltip";
+import { useMutation } from "@tanstack/react-query";
+import { BadgeCheck, CheckCircle, Plus, XCircle } from "lucide-react";
+import Link from "next/link";
+import { useMemo, useState } from "react";
+import {
+    type Address,
+    encodeFunctionData,
+    formatUnits,
+    type Hex,
+    isAddressEqual,
+} from "viem";
+import { readContract } from "viem/actions";
 import { viemClient } from "@/context/blockchain/provider";
 import { useAddProductBank } from "@/module/bank/hook/useAddProductBank";
 import { Badge } from "@/module/common/component/Badge";
@@ -19,39 +47,8 @@ import {
 } from "@/module/product/hook/useGetProductFunding";
 import { useSetBankDistributionStatus } from "@/module/product/hook/useSetBankDistributionStatus";
 import { currencyOptions } from "@/module/product/utils/currencyOptions";
-import { addresses, isRunningInProd } from "@frak-labs/app-essentials";
-import { detectStablecoinFromToken } from "@frak-labs/app-essentials";
-import {
-    type Stablecoin,
-    campaignBankAbi,
-} from "@frak-labs/app-essentials/blockchain";
-import { useSendTransactionAction } from "@frak-labs/react-sdk";
-import { Button } from "@frak-labs/ui/component/Button";
-import { Column, Columns } from "@frak-labs/ui/component/Columns";
-import { IconInfo } from "@frak-labs/ui/component/IconInfo";
-import { Spinner } from "@frak-labs/ui/component/Spinner";
-import { Switch } from "@frak-labs/ui/component/Switch";
-import { Tooltip } from "@frak-labs/ui/component/Tooltip";
-import { useMutation } from "@tanstack/react-query";
-import { atom, useAtomValue, useSetAtom } from "jotai";
-import { BadgeCheck, CheckCircle, Plus, XCircle } from "lucide-react";
-import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
-import {
-    type Address,
-    type Hex,
-    encodeFunctionData,
-    formatUnits,
-    isAddressEqual,
-} from "viem";
-import { readContract } from "viem/actions";
 import { useProductMetadata } from "../../hook/useProductMetadata";
 import styles from "./index.module.css";
-
-/**
- * Store product id locally
- */
-const productIdAtom = atom<Hex | null>(null);
 
 /**
  * Product funding page
@@ -59,10 +56,7 @@ const productIdAtom = atom<Hex | null>(null);
  * @returns
  */
 export function ProductFunding({ productId }: { productId: Hex }) {
-    const setProductId = useSetAtom(productIdAtom);
     const { data, isLoading, isPending } = useGetProductFunding({ productId });
-
-    useEffect(() => setProductId(productId), [productId, setProductId]);
 
     return (
         <FormLayout>
@@ -84,7 +78,10 @@ export function ProductFunding({ productId }: { productId: Hex }) {
 function ProductFundingBanks({
     banks,
     productId,
-}: { banks: ProductBank[]; productId: Hex }) {
+}: {
+    banks: ProductBank[];
+    productId: Hex;
+}) {
     return (
         <>
             {banks.map((bank) => (
@@ -107,7 +104,11 @@ function FundAction({
     bank,
     isTestBank,
     productId,
-}: { bank: ProductBank; isTestBank: boolean; productId: Hex }) {
+}: {
+    bank: ProductBank;
+    isTestBank: boolean;
+    productId: Hex;
+}) {
     const { mutate: fundTestBank, isPending } = useFundTestBank();
     const { data: productMetadata, isLoading: isLoadingProductMetadata } =
         useProductMetadata({ productId });
@@ -177,7 +178,10 @@ function FundAction({
 function ProductFundingBank({
     bank,
     productId,
-}: { bank: ProductBank; productId: Hex }) {
+}: {
+    bank: ProductBank;
+    productId: Hex;
+}) {
     const isTestBank = useMemo(
         () => isAddressEqual(bank.token.address, addresses.mUSDToken),
         [bank.token.address]
@@ -276,7 +280,10 @@ function ProductFundingBank({
                                     Campaigns funding status
                                 </Title>
                                 <Row align={"center"}>
-                                    <ToggleFundingStatus bank={bank} />
+                                    <ToggleFundingStatus
+                                        bank={bank}
+                                        productId={productId}
+                                    />
                                     <Badge
                                         size={"small"}
                                         variant={
@@ -376,12 +383,16 @@ function BankAmount({
  * @param bank
  * @returns
  */
-function ToggleFundingStatus({ bank }: { bank: ProductBank }) {
-    const productId = useAtomValue(productIdAtom);
-
+function ToggleFundingStatus({
+    bank,
+    productId,
+}: {
+    bank: ProductBank;
+    productId: Hex;
+}) {
     const { isSettingDistributionStatus, setDistributionStatus } =
         useSetBankDistributionStatus({
-            productId: productId ?? "0x0",
+            productId,
             bank: bank.address,
         });
 
@@ -489,7 +500,10 @@ function WithdrawFunds({ bank }: { bank: ProductBank }) {
 function AddNewBank({
     banks,
     productId,
-}: { banks: ProductBank[]; productId: Hex }) {
+}: {
+    banks: ProductBank[];
+    productId: Hex;
+}) {
     const [isAdding, setIsAdding] = useState(false);
     const [selectedCurrency, setSelectedCurrency] = useState<string>("");
     const { mutate: addBank, isPending } = useAddProductBank();

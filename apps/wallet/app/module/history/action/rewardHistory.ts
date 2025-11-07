@@ -1,9 +1,8 @@
-import { groupByDay } from "@/module/history/utils/groupByDay";
-import type { HistoryGroup } from "@/types/HistoryGroup";
-import type { RewardHistory } from "@/types/RewardHistory";
 import type { GetRewardHistoryResponseDto } from "@frak-labs/app-essentials";
 import { indexerApi } from "@frak-labs/client/server";
+import type { HistoryGroup, RewardHistory } from "@frak-labs/wallet-shared";
 import { type Address, formatUnits, isAddressEqual } from "viem";
+import { groupByDay } from "@/module/history/utils/groupByDay";
 
 /**
  * Get the reward history for a user
@@ -30,7 +29,7 @@ export async function getRewardHistory({
                 amount: Number.parseFloat(
                     formatUnits(BigInt(item.amount), token?.decimals ?? 18)
                 ),
-                timestamp: Number.parseInt(item.timestamp),
+                timestamp: Number.parseInt(item.timestamp, 10),
                 txHash: item.txHash,
                 productId: item.productId,
                 productName: item.productName,
@@ -45,7 +44,7 @@ export async function getRewardHistory({
                 amount: Number.parseFloat(
                     formatUnits(BigInt(item.amount), token?.decimals ?? 18)
                 ),
-                timestamp: Number.parseInt(item.timestamp),
+                timestamp: Number.parseInt(item.timestamp, 10),
                 txHash: item.txHash,
                 productId: item.productId,
                 productName: item.productName,

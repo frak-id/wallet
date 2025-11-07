@@ -1,2 +1,2 @@
 export { PairingContext } from "./context";
-export { pairingTable, pairingSignatureRequestTable } from "./db/schema";
+export { pairingSignatureRequestTable, pairingTable } from "./db/schema";

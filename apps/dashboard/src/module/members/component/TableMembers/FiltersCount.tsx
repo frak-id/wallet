@@ -1,13 +1,11 @@
-import { tableMembersFiltersCountAtom } from "@/module/members/atoms/tableMembers";
-import type { FormMembersFiltering } from "@/module/members/component/MembersFiltering";
-import { useAtom } from "jotai";
 import { useEffect } from "react";
+import type { FormMembersFiltering } from "@/module/members/component/MembersFiltering";
+import { membersStore } from "@/stores/membersStore";
 import styles from "./FiltersCount.module.css";
 
 export function FiltersCount({ filter }: { filter?: FormMembersFiltering }) {
-    const [filtersCount, setFiltersCount] = useAtom(
-        tableMembersFiltersCountAtom
-    );
+    const filtersCount = membersStore((state) => state.tableFiltersCount);
+    const setFiltersCount = membersStore((state) => state.setTableFiltersCount);
 
     useEffect(() => {
         if (!filter) return;
@@ -30,7 +28,7 @@ function filterOutUndefined(obj: FormMembersFiltering): string[] {
     const result: string[] = [];
 
     for (const key in obj) {
-        // @ts-ignore
+        // @ts-expect-error
         const value = obj[key];
 
         // Check if min/max are defined, or if the value is an array and not empty

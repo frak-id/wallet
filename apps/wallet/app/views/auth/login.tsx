@@ -1,15 +1,14 @@
-import { LoginList } from "@/module/authentication/component/LoginList";
-import { useLogin } from "@/module/authentication/hook/useLogin";
-import { Back } from "@/module/common/component/Back";
-import { Grid } from "@/module/common/component/Grid";
-import { isWebAuthNSupported } from "@/module/common/lib/webauthn";
-import { AuthenticateWithPhone } from "@/module/listener/modal/component/AuthenticateWithPhone";
-import { PairingInProgress } from "@/module/pairing/component/PairingInProgress";
 import { Button } from "@frak-labs/ui/component/Button";
 import { ButtonAuth } from "@frak-labs/ui/component/ButtonAuth";
+import { isWebAuthNSupported, useLogin } from "@frak-labs/wallet-shared";
 import { CloudUpload } from "lucide-react";
 import { Trans, useTranslation } from "react-i18next";
 import { Link } from "react-router";
+import { AuthenticateWithPhone } from "@/module/authentication/component/AuthenticateWithPhone";
+import { LoginList } from "@/module/authentication/component/LoginList";
+import { Back } from "@/module/common/component/Back";
+import { Grid } from "@/module/common/component/Grid";
+import { PairingInProgress } from "@/module/pairing/component/PairingInProgress";
 import styles from "./login.module.css";
 
 export default function Login() {

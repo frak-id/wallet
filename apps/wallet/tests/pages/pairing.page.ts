@@ -1,4 +1,4 @@
-import { type Page, expect } from "@playwright/test";
+import { expect, type Page } from "@playwright/test";
 
 export class PairingPage {
     constructor(private readonly page: Page) {}

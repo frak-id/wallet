@@ -1,24 +1,27 @@
+import type {
+    RecoveryFileContent,
+    WebAuthNWallet,
+} from "@frak-labs/wallet-shared";
 import {
+    doAddPassKeyFnAbi,
     getPimlicoClient,
     getPimlicoTransport,
-} from "@/module/blockchain/aa-provider";
-import { recoveryKey } from "@/module/recovery/queryKeys/recovery";
-import { doAddPassKeyFnAbi } from "@/module/recovery/utils/abi";
-import { recoverySmartAccount } from "@/module/wallet/smartWallet/RecoverySmartWallet";
-import type { RecoveryFileContent } from "@/types/Recovery";
-import type { WebAuthNWallet } from "@/types/WebAuthN";
-import { type DefaultError, useMutation } from "@tanstack/react-query";
+} from "@frak-labs/wallet-shared";
 import type { UseMutationOptions } from "@tanstack/react-query";
-import { createSmartAccountClient } from "permissionless";
+import { type DefaultError, useMutation } from "@tanstack/react-query";
+import { smartAccountActions } from "permissionless";
 import { getUserOperationGasPrice } from "permissionless/actions/pimlico";
 import {
-    type Hex,
-    type LocalAccount,
     encodeFunctionData,
+    type Hex,
     keccak256,
+    type LocalAccount,
     toHex,
 } from "viem";
+import { createBundlerClient } from "viem/account-abstraction";
 import { useClient } from "wagmi";
+import { recoveryKey } from "@/module/recovery/queryKeys/recovery";
+import { recoverySmartAccount } from "@/module/wallet/smartWallet/RecoverySmartWallet";
 
 type MutationParams = {
     file: RecoveryFileContent;
@@ -67,10 +70,10 @@ export function usePerformRecovery(
             const pimlicoClient = getPimlicoClient();
 
             // Build the smart wallet client
-            const accountClient = createSmartAccountClient({
+            const accountClient = createBundlerClient({
                 account: smartAccount,
                 chain: client.chain,
-                bundlerTransport: pimlicoTransport,
+                transport: pimlicoTransport,
                 // Get the right gas fees for the user operation
                 userOperation: {
                     estimateFeesPerGas: async () => {
@@ -81,7 +84,7 @@ export function usePerformRecovery(
                     },
                 },
                 paymaster: true,
-            });
+            }).extend(smartAccountActions);
 
             // Build the function data
             const fnData = encodeFunctionData({

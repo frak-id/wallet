@@ -1,7 +1,7 @@
-import { nProgressStylesUrl } from "@/module/common/component/TopLoader";
-import allCssUrl from "@/styles/all.css?url";
 import { isRunningInProd } from "@frak-labs/app-essentials";
 import type { LinksFunction, MetaFunction } from "react-router";
+import { nProgressStylesUrl } from "@/module/common/component/TopLoader";
+import allCssUrl from "@/styles/all.css?url";
 
 const meta: MetaFunction = () => {
     return [

@@ -1,10 +1,13 @@
 "use server";
 
-import { getSafeSession } from "@/context/auth/actions/session";
-import { getBankTokenInfo } from "@/context/campaigns/action/getBankInfo";
-import { getCampaignRepository } from "@/context/campaigns/repository/CampaignRepository";
 import { indexerApi } from "@frak-labs/client/server";
 import { type Address, formatUnits, getAddress, isAddressEqual } from "viem";
+import { getSafeSession } from "@/context/auth/actions/session";
+import { getBankTokenInfo } from "@/context/campaigns/action/getBankInfo";
+import { getMyCampaignsStatsMock } from "@/context/campaigns/action/mock";
+import { getCampaignRepository } from "@/context/campaigns/repository/CampaignRepository";
+import { isDemoModeActive } from "@/module/common/utils/isDemoMode";
+import type { Goal } from "@/types/Campaign";
 
 type CampaignStats = {
     productId: string;
@@ -32,9 +35,31 @@ type ApiResult = {
 };
 
 /**
+ * Map campaign goal types to display labels for the Event column
+ */
+function mapGoalToEventType(goal?: Goal | ""): string {
+    if (!goal) return "Unknown";
+
+    const goalMap: Record<Goal, string> = {
+        sales: "Purchase",
+        awareness: "Share",
+        traffic: "Opt-in",
+        retention: "Repeat Purchase",
+        registration: "Registration",
+    };
+
+    return goalMap[goal] || "Unknown";
+}
+
+/**
  * Get the current user campaigns
  */
 export async function getMyCampaignsStats() {
+    // Check if demo mode is active
+    if (await isDemoModeActive()) {
+        return getMyCampaignsStatsMock();
+    }
+
     const session = await getSafeSession();
 
     // Perform the request to our api
@@ -118,6 +143,7 @@ export async function getMyCampaignsStats() {
             id: campaignDoc?._id?.toHexString() ?? campaign.id,
             bank: campaign.bank,
             token: token,
+            eventType: mapGoalToEventType(campaignDoc?.type),
             // Raw stats
             openInteractions: Number(campaign.openInteractions),
             readInteractions: Number(campaign.readInteractions),

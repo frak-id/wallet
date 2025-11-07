@@ -1,16 +1,16 @@
 "use client";
-import { Head } from "@/module/common/component/Head";
-import { useCheckDomainName } from "@/module/dashboard/hooks/dnsRecordHooks";
-import { useMintMyProduct } from "@/module/dashboard/hooks/useMintMyProduct";
-import { FormLayout } from "@/module/forms/Form";
 import type { Stablecoin } from "@frak-labs/app-essentials";
 import type { ProductTypesKey } from "@frak-labs/core-sdk";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { Head } from "@/module/common/component/Head";
+import { useCheckDomainName } from "@/module/dashboard/hooks/dnsRecordHooks";
+import { useMintMyProduct } from "@/module/dashboard/hooks/useMintMyProduct";
+import { FormLayout } from "@/module/forms/Form";
 import { ProductInformationPanel } from "./ProductInformationPanel";
 import { RegistrationPanel } from "./RegistrationPanel";
-import { ValidationPanel } from "./ValidationPanel";
 import { defaultProductTypes, getDefaultStablecoin } from "./utils";
+import { ValidationPanel } from "./ValidationPanel";
 
 type ProductNew = {
     name: string;

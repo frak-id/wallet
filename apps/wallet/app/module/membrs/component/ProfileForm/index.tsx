@@ -1,10 +1,15 @@
-import { sessionAtom } from "@/module/common/atoms/session";
-import type { User } from "@/types/User";
 import { Button } from "@frak-labs/ui/component/Button";
 import { Input } from "@frak-labs/ui/component/forms/Input";
 import { useCopyToClipboardWithState } from "@frak-labs/ui/hook/useCopyToClipboardWithState";
 import { Pencil } from "@frak-labs/ui/icons/Pencil";
-import { useAtom, useAtomValue } from "jotai";
+import type { User } from "@frak-labs/wallet-shared";
+import {
+    selectSession,
+    selectUser,
+    selectUserSetupLater,
+    sessionStore,
+    userStore,
+} from "@frak-labs/wallet-shared";
 import { Copy } from "lucide-react";
 import { useEffect, useState } from "react";
 import {
@@ -15,8 +20,7 @@ import {
 } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
-import { uploadProfilePhotoAtom } from "../../atoms/uploadProfilePhoto";
-import { userAtom, userSetupLaterAtom } from "../../atoms/user";
+import { useProfilePhoto } from "@/module/membrs/context/ProfilePhotoContext";
 import styles from "./index.module.css";
 
 // Types
@@ -30,13 +34,14 @@ type FormInput = {
  */
 export function ProfileForm() {
     const { t } = useTranslation();
-    const session = useAtomValue(sessionAtom);
+    const session = sessionStore(selectSession);
     const [isUsernameDisabled, setIsUsernameDisabled] = useState(true);
     const [submitError, setSubmitError] = useState<string>();
 
-    // State management with Jotai atoms
-    const [user, setUser] = useAtom(userAtom);
-    const [profilePhoto, setProfilePhoto] = useAtom(uploadProfilePhotoAtom);
+    // State management
+    const user = userStore(selectUser);
+    const setUser = (user: User | null) => userStore.getState().setUser(user);
+    const { uploadedPhoto, clearUploadedPhoto } = useProfilePhoto();
 
     // Form setup and validation
     const formMethods = useForm<FormInput>({
@@ -56,9 +61,9 @@ export function ProfileForm() {
 
     // Update form when profile photo changes
     useEffect(() => {
-        if (!profilePhoto) return;
-        setValue("photo", profilePhoto, { shouldDirty: true });
-    }, [profilePhoto, setValue]);
+        if (!uploadedPhoto) return;
+        setValue("photo", uploadedPhoto, { shouldDirty: true });
+    }, [uploadedPhoto, setValue]);
 
     const onSubmit: SubmitHandler<FormInput> = async ({ username }) => {
         setSubmitError(undefined);
@@ -69,7 +74,7 @@ export function ProfileForm() {
         const updatedUser: User = {
             _id: session.address,
             username,
-            photo: profilePhoto ?? user?.photo,
+            photo: uploadedPhoto ?? user?.photo,
         };
 
         try {
@@ -78,7 +83,7 @@ export function ProfileForm() {
 
             // Update local state
             setUser(updatedUser);
-            setProfilePhoto(undefined);
+            clearUploadedPhoto();
             reset(updatedUser);
         } catch (error) {
             console.error(error);
@@ -218,8 +223,8 @@ function ErrorMessage({ message }: ErrorMessageProps) {
 function SetupLaterButton() {
     const { t } = useTranslation();
     const navigate = useNavigate();
-    const user = useAtomValue(userAtom);
-    const [userSetupLater, setUserSetupLater] = useAtom(userSetupLaterAtom);
+    const user = userStore(selectUser);
+    const userSetupLater = userStore(selectUserSetupLater);
 
     // If the user is already setup or has skipped the setup, don't show the button
     if (user || userSetupLater) return null;
@@ -229,7 +234,7 @@ function SetupLaterButton() {
             <button
                 type="button"
                 onClick={() => {
-                    setUserSetupLater(true);
+                    userStore.getState().setUserSetupLater(true);
                     navigate("/membrs", { viewTransition: true });
                 }}
                 className={`button ${styles.profileForm__link}`}

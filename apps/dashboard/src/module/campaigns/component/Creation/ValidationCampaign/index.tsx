@@ -1,44 +1,43 @@
 "use client";
 
-import { viemClient } from "@/context/blockchain/provider";
-import {
-    saveCampaignDraft,
-    updateCampaignState,
-} from "@/context/campaigns/action/createCampaign";
-import { getCreationData } from "@/context/campaigns/action/createOnChain";
-import { campaignAtom } from "@/module/campaigns/atoms/campaign";
-import {
-    campaignIsClosingAtom,
-    campaignSuccessAtom,
-} from "@/module/campaigns/atoms/steps";
-import { Actions } from "@/module/campaigns/component/Actions";
-import { ButtonCancel } from "@/module/campaigns/component/Creation/NewCampaign/ButtonCancel";
-import { FormCheck } from "@/module/campaigns/component/Creation/ValidationCampaign/FormCheck";
-import { useSaveCampaign } from "@/module/campaigns/hook/useSaveCampaign";
-import { preferredCurrencyAtom } from "@/module/common/atoms/currency";
-import { Head } from "@/module/common/component/Head";
-import { Panel } from "@/module/common/component/Panel";
-import { Form, FormLayout } from "@/module/forms/Form";
-import type { Campaign } from "@/types/Campaign";
 import { useSendTransactionAction } from "@frak-labs/react-sdk";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useAtom, useAtomValue } from "jotai";
 import { useRouter } from "next/navigation";
 import { tryit } from "radash";
 import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import type { Hex, TransactionReceipt } from "viem";
 import { waitForTransactionReceipt } from "viem/actions";
+import { viemClient } from "@/context/blockchain/provider";
+import {
+    saveCampaignDraft,
+    updateCampaignState,
+} from "@/context/campaigns/action/createCampaign";
+import { getCreationData } from "@/context/campaigns/action/createOnChain";
+import { Actions } from "@/module/campaigns/component/Actions";
+import { ButtonCancel } from "@/module/campaigns/component/Creation/NewCampaign/ButtonCancel";
+import { FormCheck } from "@/module/campaigns/component/Creation/ValidationCampaign/FormCheck";
+import { useSaveCampaign } from "@/module/campaigns/hook/useSaveCampaign";
+import { useIsDemoMode } from "@/module/common/atoms/demoMode";
+import { Head } from "@/module/common/component/Head";
+import { Panel } from "@/module/common/component/Panel";
+import { Form, FormLayout } from "@/module/forms/Form";
+import { campaignStore } from "@/stores/campaignStore";
+import { currencyStore } from "@/stores/currencyStore";
+import type { Campaign } from "@/types/Campaign";
 import styles from "./index.module.css";
 
 export function ValidationCampaign() {
     const router = useRouter();
-    const [campaign, setCampaign] = useAtom(campaignAtom);
-    const [campaignSuccess, setCampaignSuccess] = useAtom(campaignSuccessAtom);
+    const campaign = campaignStore((state) => state.campaign);
+    const setCampaign = campaignStore((state) => state.setCampaign);
+    const campaignSuccess = campaignStore((state) => state.success);
+    const setSuccess = campaignStore((state) => state.setSuccess);
+    const isClosing = campaignStore((state) => state.isClosing);
+    const preferredCurrency = currencyStore((state) => state.preferredCurrency);
     const [txHash, setTxHash] = useState<Hex | undefined>();
     const save = useSaveCampaign();
-    const campaignIsClosing = useAtomValue(campaignIsClosingAtom);
-    const preferredCurrency = useAtomValue(preferredCurrencyAtom);
+    const isDemoMode = useIsDemoMode();
 
     // Hook used to send transaction via the nexus wallet
     const { mutateAsync: sendTransaction, isPending: isPendingTransaction } =
@@ -49,6 +48,13 @@ export function ValidationCampaign() {
         useMutation({
             mutationKey: ["campaign", "create"],
             mutationFn: async (campaign: Campaign) => {
+                // In demo mode, just simulate success
+                if (isDemoMode) {
+                    await new Promise((resolve) => setTimeout(resolve, 1000));
+                    setSuccess(true);
+                    return;
+                }
+
                 const campaignWithCurrency = {
                     ...campaign,
                     setupCurrency: preferredCurrency,
@@ -90,7 +96,7 @@ export function ValidationCampaign() {
 
                 if (!result) return;
                 setTxHash(result?.hash);
-                setCampaignSuccess(true);
+                setSuccess(true);
             },
         });
 
@@ -139,7 +145,7 @@ export function ValidationCampaign() {
                         }
 
                         // If the user click on close button, we save it and return
-                        if (campaignIsClosing) {
+                        if (isClosing) {
                             await save(campaign);
                             return;
                         }

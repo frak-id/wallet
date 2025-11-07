@@ -1,6 +1,6 @@
-import { useRecoverySetupStatus } from "@/module/recovery-setup/hook/useRecoverySetupStatus";
 import { WalletAddress } from "@frak-labs/ui/component/HashDisplay";
 import { useTranslation } from "react-i18next";
+import { useRecoverySetupStatus } from "@/module/recovery-setup/hook/useRecoverySetupStatus";
 
 /**
  * Component for the settings with the recovery options

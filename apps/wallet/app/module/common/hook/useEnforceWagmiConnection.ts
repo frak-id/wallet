@@ -1,19 +1,15 @@
+import type { SdkSessionPayload } from "@frak-labs/wallet-shared";
 import {
     type FrakWalletConnector,
+    getFromLocalStorage,
+    sessionStore,
     smartAccountConnector,
-} from "@/module/wallet/smartWallet/connector";
-import { jotaiStore } from "@frak-labs/ui/atoms/store";
+} from "@frak-labs/wallet-shared";
 import { decodeJwt } from "jose";
 import { useEffect, useMemo } from "react";
-import { type Hex, isAddressEqual } from "viem";
+import { type Address, type Hex, isAddressEqual } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { useConfig, useConnect } from "wagmi";
-import { getFromLocalStorage } from "../../listener/utils/localStorage";
-import {
-    type SdkSessionPayload,
-    demoPrivateKeyAtom,
-    sdkSessionAtom,
-} from "../atoms/session";
 
 /**
  * Hook that enforce wagmi connection
@@ -76,15 +72,15 @@ export function useEnforceWagmiConnection() {
         }
 
         (frakConnector as unknown as FrakWalletConnector).setEcdsaSigner(
-            ({ hash, address }) => {
-                const sdkSession = jotaiStore.get(sdkSessionAtom);
+            ({ hash, address }: { hash: Hex; address: Address }) => {
+                const sdkSession = sessionStore.getState().sdkSession;
                 const parsedSession = sdkSession
                     ? decodeJwt<SdkSessionPayload>(sdkSession.token)
                     : undefined;
 
                 // Get the potential pkeys
                 const potentialPkeys = [
-                    jotaiStore.get(demoPrivateKeyAtom) ??
+                    sessionStore.getState().demoPrivateKey ??
                         getFromLocalStorage<Hex>("frak_demoPrivateKey"),
                     parsedSession?.additionalData?.demoPkey,
                 ];

@@ -1,22 +1,19 @@
+import { Button } from "@frak-labs/ui/component/Button";
+import { useTranslation } from "react-i18next";
 import { AccordionRecoveryItem } from "@/module/common/component/AccordionRecoveryItem";
 import { useDownloadRecoveryFile } from "@/module/recovery-setup/hook/useDownloadRecoveryFile";
 import {
-    recoveryOptionsAtom,
-    recoveryStepAtom,
-} from "@/module/settings/atoms/recovery";
-import { Button } from "@frak-labs/ui/component/Button";
-import { useAtomValue, useSetAtom } from "jotai";
-import { useTranslation } from "react-i18next";
+    recoveryStore,
+    selectRecoveryOptions,
+} from "@/module/stores/recoveryStore";
 
 const ACTUAL_STEP = 3;
 
 export function Step3() {
     const { t } = useTranslation();
-    // Set the current step
-    const setStep = useSetAtom(recoveryStepAtom);
 
     // Get the recovery options
-    const recoveryOptions = useAtomValue(recoveryOptionsAtom);
+    const recoveryOptions = recoveryStore(selectRecoveryOptions);
 
     // Download the recovery file
     const { downloadRecoveryFileAsync } = useDownloadRecoveryFile();
@@ -35,7 +32,7 @@ export function Step3() {
                     });
                     // Slight delay the next step, otherwise it will be too fast
                     setTimeout(() => {
-                        setStep(ACTUAL_STEP + 1);
+                        recoveryStore.getState().setStep(ACTUAL_STEP + 1);
                     }, 1000);
                 }}
             >

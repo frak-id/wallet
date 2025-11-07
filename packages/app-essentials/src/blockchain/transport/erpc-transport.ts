@@ -1,4 +1,4 @@
-import { http, type Chain } from "viem";
+import { type Chain, http } from "viem";
 
 /**
  * The default public rpc url

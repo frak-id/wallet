@@ -1,0 +1,8 @@
+/**
+ * Listener-specific CSS custom property overrides
+ * Base properties are in @frak-labs/wallet-shared/styles/colors-base.css
+ */
+:root {
+    --frak-background-color: transparent;
+    --frak-contrast-background-color: transparent;
+}

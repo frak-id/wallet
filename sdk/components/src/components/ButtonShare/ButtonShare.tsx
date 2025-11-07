@@ -1,10 +1,10 @@
-import { Spinner } from "@/components/Spinner";
-import { useClientReady } from "@/hooks/useClientReady";
-import { useReward } from "@/hooks/useReward";
 import { trackEvent } from "@frak-labs/core-sdk";
 import { displayEmbeddedWallet } from "@frak-labs/core-sdk/actions";
 import { cx } from "class-variance-authority";
 import { useCallback, useMemo } from "preact/hooks";
+import { Spinner } from "@/components/Spinner";
+import { useClientReady } from "@/hooks/useClientReady";
+import { useReward } from "@/hooks/useReward";
 import styles from "./ButtonShare.module.css";
 import { ErrorMessage } from "./components/ErrorMessage";
 import { useShareModal } from "./hooks/useShareModal";

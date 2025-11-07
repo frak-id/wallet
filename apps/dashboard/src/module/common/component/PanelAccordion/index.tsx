@@ -1,9 +1,4 @@
 import {
-    Panel,
-    PanelTitle,
-    type panelVariants,
-} from "@/module/common/component/Panel";
-import {
     Accordion,
     AccordionContent,
     AccordionItem,
@@ -11,6 +6,11 @@ import {
 } from "@frak-labs/ui/component/Accordion";
 import type { VariantProps } from "class-variance-authority";
 import type { ComponentPropsWithRef } from "react";
+import {
+    Panel,
+    PanelTitle,
+    type panelVariants,
+} from "@/module/common/component/Panel";
 import styles from "./index.module.css";
 
 export type PanelProps = ComponentPropsWithRef<typeof Panel> &

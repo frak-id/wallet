@@ -1,30 +1,28 @@
+import type { RecoveryFileContent } from "@frak-labs/wallet-shared";
+import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { AccordionRecoveryItem } from "@/module/common/component/AccordionRecoveryItem";
 import { Password } from "@/module/common/component/Password";
 import { useRecoveryLocalAccount } from "@/module/recovery/hook/useRecoveryLocalAccount";
 import {
-    recoveryFileContentAtom,
-    recoveryGuardianAccountAtom,
-    recoveryPasswordAtom,
-    recoveryStepAtom,
-} from "@/module/settings/atoms/recovery";
-import type { RecoveryFileContent } from "@/types/Recovery";
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import { useMemo, useState } from "react";
-import { useTranslation } from "react-i18next";
+    recoveryStore,
+    selectRecoveryFileContent,
+    selectRecoveryPassword,
+} from "@/module/stores/recoveryStore";
 
 const ACTUAL_STEP = 3;
 
 export function Step3() {
     const { t } = useTranslation();
     // Get the recovery file product
-    const recoveryFileContent = useAtomValue(recoveryFileContentAtom);
+    const recoveryFileContent = recoveryStore(selectRecoveryFileContent);
 
-    // Set the password for recovery
-    const [password, setPassword] = useAtom(recoveryPasswordAtom);
+    // Get the password for recovery
+    const password = recoveryStore(selectRecoveryPassword);
 
     // Submit handler that handles the form password submission
     const onSubmit = async ({ password }: { password: string }) => {
-        setPassword(password);
+        recoveryStore.getState().setPassword(password);
     };
 
     return (
@@ -44,19 +42,15 @@ export function Step3() {
 
 function TriggerPasswordVerification({
     recoveryFileContent,
-}: { recoveryFileContent: RecoveryFileContent }) {
+}: {
+    recoveryFileContent: RecoveryFileContent;
+}) {
     const { t } = useTranslation();
-    // Set the current step
-    const setStep = useSetAtom(recoveryStepAtom);
-
     // Set the error state
     const [error, setError] = useState<string | null>(null);
 
     // Get the password for recovery
-    const password = useAtomValue(recoveryPasswordAtom);
-
-    // Set the guardian account
-    const setGuardianAccount = useSetAtom(recoveryGuardianAccountAtom);
+    const password = recoveryStore(selectRecoveryPassword);
 
     // Extract the local account from the file
     const { getRecoveryLocalAccountAsync } = useRecoveryLocalAccount();
@@ -71,8 +65,8 @@ function TriggerPasswordVerification({
                     file: recoveryFileContent,
                     pass: password,
                 });
-                setGuardianAccount(account);
-                setStep(ACTUAL_STEP + 1);
+                recoveryStore.getState().setGuardianAccount(account);
+                recoveryStore.getState().setStep(ACTUAL_STEP + 1);
             } catch (e) {
                 // Password must be wrong
                 console.error(t("wallet.recovery.errorLoading"), e);
@@ -80,14 +74,7 @@ function TriggerPasswordVerification({
             }
         }
         loadGuardianAccount();
-    }, [
-        recoveryFileContent,
-        getRecoveryLocalAccountAsync,
-        password,
-        setStep,
-        setGuardianAccount,
-        t,
-    ]);
+    }, [recoveryFileContent, getRecoveryLocalAccountAsync, password, t]);
 
     if (error) {
         return <p className={"error"}>{error}</p>;

@@ -6,10 +6,10 @@ import { concatHex, keccak256, toHex } from "viem";
 import { log } from "../../../../common";
 import {
     OracleContext,
-    type WooCommerceOrderStatus,
-    type WooCommerceOrderUpdateWebhookDto,
     productOracleTable,
     type purchaseStatusEnum,
+    type WooCommerceOrderStatus,
+    type WooCommerceOrderUpdateWebhookDto,
 } from "../../../../domain/oracle";
 
 export const wooCommerceWebhook = new Elysia()

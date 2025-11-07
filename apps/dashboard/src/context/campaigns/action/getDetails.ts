@@ -1,8 +1,5 @@
 "use server";
 
-import { getSafeSession } from "@/context/auth/actions/session";
-import { viemClient } from "@/context/blockchain/provider";
-import { getCampaignRepository } from "@/context/campaigns/repository/CampaignRepository";
 import {
     addresses,
     interactionCampaignAbi,
@@ -13,13 +10,28 @@ import {
 import { ObjectId } from "mongodb";
 import { type Address, toHex } from "viem";
 import { multicall, readContract } from "viem/actions";
+import { getSafeSession } from "@/context/auth/actions/session";
+import { viemClient } from "@/context/blockchain/provider";
+import {
+    getCampaignDetailsMock,
+    getOnChainCampaignsDetailsMock,
+} from "@/context/campaigns/action/mock";
+import { getCampaignRepository } from "@/context/campaigns/repository/CampaignRepository";
+import { isDemoModeActive } from "@/module/common/utils/isDemoMode";
 
 /**
  * Fetch the campaign details from mongodb
  */
 export async function getCampaignDetails({
     campaignId,
-}: { campaignId: string }) {
+}: {
+    campaignId: string;
+}) {
+    // Check if demo mode is active
+    if (await isDemoModeActive()) {
+        return getCampaignDetailsMock({ campaignId });
+    }
+
     const campaignRepository = await getCampaignRepository();
     const campaignDb = await campaignRepository.getOneById(
         ObjectId.createFromHexString(campaignId)
@@ -42,7 +54,14 @@ export async function getCampaignDetails({
  */
 export async function getOnChainCampaignsDetails({
     campaignAddress,
-}: { campaignAddress: Address }) {
+}: {
+    campaignAddress: Address;
+}) {
+    // Check if demo mode is active
+    if (await isDemoModeActive()) {
+        return getOnChainCampaignsDetailsMock({ campaignAddress });
+    }
+
     const session = await getSafeSession();
 
     // Get the campaign product id

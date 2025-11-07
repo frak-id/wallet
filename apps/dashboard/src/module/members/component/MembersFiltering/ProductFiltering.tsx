@@ -1,3 +1,5 @@
+import { useFormContext } from "react-hook-form";
+import type { Hex } from "viem";
 import { useMyProducts } from "@/module/dashboard/hooks/useMyProducts";
 import {
     FormControl,
@@ -8,13 +10,14 @@ import {
 } from "@/module/forms/Form";
 import { MultiSelect } from "@/module/forms/MultiSelect";
 import type { FormMembersFiltering } from "@/module/members/component/MembersFiltering";
-import { useFormContext } from "react-hook-form";
-import type { Hex } from "viem";
 
 export function ProductFiltering({
     disabled,
     onSubmit,
-}: { disabled?: boolean; onSubmit: (data: FormMembersFiltering) => void }) {
+}: {
+    disabled?: boolean;
+    onSubmit: (data: FormMembersFiltering) => void;
+}) {
     const { isEmpty, products, isPending } = useMyProducts();
     const productsOptions = [
         ...(products?.operator ?? []),

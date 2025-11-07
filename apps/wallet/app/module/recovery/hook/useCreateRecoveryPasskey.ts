@@ -1,9 +1,12 @@
-import { authenticatedWalletApi } from "@/module/common/api/backendClient";
-import { recoveryKey } from "@/module/recovery/queryKeys/recovery";
-import { getRegisterOptions } from "@/module/wallet/action/registerOptions";
-import type { RecoveryFileContent } from "@/types/Recovery";
-import { startRegistration } from "@simplewebauthn/browser";
+import type { RecoveryFileContent } from "@frak-labs/wallet-shared";
+import {
+    authenticatedWalletApi,
+    getRegisterOptions,
+} from "@frak-labs/wallet-shared";
 import { useMutation } from "@tanstack/react-query";
+import { WebAuthnP256 } from "ox";
+import { toHex } from "viem";
+import { recoveryKey } from "@/module/recovery/queryKeys/recovery";
 
 /**
  * Create a new webauthn authenticator to recover the given account
@@ -14,18 +17,22 @@ export function useCreateRecoveryPasskey() {
         gcTime: 0,
         mutationFn: async ({ file }: { file: RecoveryFileContent }) => {
             // Get the registration options and start the registration
-            const registrationOptions = await getRegisterOptions();
-            const registrationResponse = await startRegistration({
-                optionsJSON: registrationOptions,
-            });
+            const { id, publicKey, raw } = await WebAuthnP256.createCredential(
+                getRegisterOptions()
+            );
 
             // Verify the registration and return the formatted output
-            const encodedResponse = btoa(JSON.stringify(registrationResponse));
+            const encodedResponse = btoa(JSON.stringify(raw));
             const { data: wallet, error } =
                 await authenticatedWalletApi.auth.register.post({
+                    id,
                     userAgent: navigator.userAgent,
-                    expectedChallenge: registrationOptions.challenge,
-                    registrationResponse: encodedResponse,
+                    publicKey: {
+                        x: toHex(publicKey.x),
+                        y: toHex(publicKey.y),
+                        prefix: publicKey.prefix,
+                    },
+                    raw: encodedResponse,
                     previousWallet: file.initialWallet.address,
                 });
             if (error) {

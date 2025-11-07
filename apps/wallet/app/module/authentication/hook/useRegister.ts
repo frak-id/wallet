@@ -1,15 +1,18 @@
-import { addLastAuthenticationAtom } from "@/module/authentication/atoms/lastAuthenticator";
-import { usePreviousAuthenticators } from "@/module/authentication/hook/usePreviousAuthenticators";
-import { authKey } from "@/module/authentication/queryKeys/auth";
-import { authenticatedWalletApi } from "@/module/common/api/backendClient";
-import { sdkSessionAtom, sessionAtom } from "@/module/common/atoms/session";
-import { getRegisterOptions } from "@/module/wallet/action/registerOptions";
-import type { Session } from "@/types/Session";
-import { jotaiStore } from "@frak-labs/ui/atoms/store";
-import { startRegistration } from "@simplewebauthn/browser";
-import { useMutation } from "@tanstack/react-query";
+import type { Session } from "@frak-labs/wallet-shared";
+import {
+    addLastAuthentication,
+    authenticatedWalletApi,
+    authKey,
+    getRegisterOptions,
+    sessionStore,
+    trackAuthCompleted,
+    trackAuthInitiated,
+} from "@frak-labs/wallet-shared";
 import type { UseMutationOptions } from "@tanstack/react-query";
-import { trackAuthCompleted, trackAuthInitiated } from "../../common/analytics";
+import { useMutation } from "@tanstack/react-query";
+import { WebAuthnP256 } from "ox";
+import { toHex } from "viem";
+import { usePreviousAuthenticators } from "@/module/authentication/hook/usePreviousAuthenticators";
 
 /**
  * Hook that handle the registration process
@@ -34,32 +37,26 @@ export function useRegister(options?: UseMutationOptions<Session>) {
             // Identify the user and track the event
             const events = [trackAuthInitiated("register")];
 
-            // Build the credentials to exclude
-            const excludeCredentials = previousAuthenticators?.map(
-                (auth) =>
-                    ({
-                        id: auth.authenticatorId,
-                        transports: auth.transports,
-                    }) as const
-            );
-
-            // Get the registration options
-            const registrationOptions = await getRegisterOptions({
-                excludeCredentials,
-            });
-
             // Start the registration
-            const registrationResponse = await startRegistration({
-                optionsJSON: registrationOptions,
+            const { id, publicKey, raw } = await WebAuthnP256.createCredential({
+                ...getRegisterOptions(),
+                excludeCredentialIds: previousAuthenticators?.map(
+                    (cred) => cred.authenticatorId
+                ),
             });
 
             // Verify it
-            const encodedResponse = btoa(JSON.stringify(registrationResponse));
+            const encodedResponse = btoa(JSON.stringify(raw));
             const { data, error } =
                 await authenticatedWalletApi.auth.register.post({
+                    id,
                     userAgent: navigator.userAgent,
-                    expectedChallenge: registrationOptions.challenge,
-                    registrationResponse: encodedResponse,
+                    publicKey: {
+                        x: toHex(publicKey.x),
+                        y: toHex(publicKey.y),
+                        prefix: publicKey.prefix,
+                    },
+                    raw: encodedResponse,
                 });
             if (error) {
                 throw error;
@@ -70,11 +67,11 @@ export function useRegister(options?: UseMutationOptions<Session>) {
             const session = { ...authentication, token } as Session;
 
             // Save this to the last authenticator
-            await jotaiStore.set(addLastAuthenticationAtom, session);
+            await addLastAuthentication(session);
 
             // Store the session
-            jotaiStore.set(sessionAtom, session);
-            jotaiStore.set(sdkSessionAtom, sdkJwt);
+            sessionStore.getState().setSession(session);
+            sessionStore.getState().setSdkSession(sdkJwt);
 
             // Track the event
             events.push(trackAuthCompleted("register", session));

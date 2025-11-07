@@ -1,8 +1,8 @@
-import { AlertDialog } from "@/module/common/component/AlertDialog";
+import type { BalanceItem } from "@frak-labs/wallet-shared";
+import { WalletModal } from "@frak-labs/wallet-shared";
+import { useState } from "react";
 import { TokenList } from "@/module/tokens/component/TokenList";
 import { TokenLogo } from "@/module/tokens/component/TokenLogo";
-import type { BalanceItem } from "@/types/Balance";
-import { useState } from "react";
 import styles from "./index.module.css";
 
 export function TokenModalList({
@@ -15,7 +15,7 @@ export function TokenModalList({
     const [openModal, setOpenModal] = useState(false);
 
     return (
-        <AlertDialog
+        <WalletModal
             title={"Select a token"}
             text={
                 <TokenList

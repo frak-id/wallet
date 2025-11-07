@@ -1,10 +1,12 @@
-import { sessionAtom } from "@/module/common/atoms/session";
-import { getSafeSession } from "@/module/listener/utils/localStorage";
-import { usePendingPairingInfo } from "@/module/pairing/hook/usePendingPairingInfo";
 import { Skeleton } from "@frak-labs/ui/component/Skeleton";
-import { useAtomValue } from "jotai";
+import {
+    getSafeSession,
+    selectSession,
+    sessionStore,
+} from "@frak-labs/wallet-shared";
 import { type PropsWithChildren, useEffect, useState } from "react";
 import { useNavigate } from "react-router";
+import { usePendingPairingInfo } from "@/module/pairing/hook/usePendingPairingInfo";
 
 /**
  * Simple wrapper that limit the access to the subpage depending on the authentication status
@@ -17,7 +19,7 @@ export function AuthRestricted({
     requireAuthenticated,
 }: PropsWithChildren<{ requireAuthenticated: boolean }>) {
     const navigate = useNavigate();
-    const sessionFromAtom = useAtomValue(sessionAtom);
+    const sessionFromAtom = sessionStore(selectSession);
     const [canDisplay, setCanDisplay] = useState(false);
     const { pairingInfo } = usePendingPairingInfo();
 

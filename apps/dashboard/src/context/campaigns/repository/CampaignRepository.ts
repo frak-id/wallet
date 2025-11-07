@@ -1,13 +1,13 @@
 "use server";
 
+import { type Collection, type Filter, ObjectId } from "mongodb";
+import type { Address } from "viem";
 import type {
     CampaignDocument,
     CampaignState,
     DraftCampaignDocument,
 } from "@/context/campaigns/dto/CampaignDocument";
 import { getMongoDb } from "@/context/common/mongoDb";
-import { type Collection, type Filter, ObjectId } from "mongodb";
-import type { Address } from "viem";
 
 class CampaignRepository {
     constructor(private readonly collection: Collection<CampaignDocument>) {}
@@ -76,7 +76,10 @@ class CampaignRepository {
     public async findByAddressesOrCreator({
         addresses,
         creator,
-    }: { addresses: Address[]; creator?: Address }) {
+    }: {
+        addresses: Address[];
+        creator?: Address;
+    }) {
         // Build our or conditions array
         const conditions: Filter<CampaignDocument>[] = [];
         if (addresses.length) {
@@ -90,6 +93,11 @@ class CampaignRepository {
             conditions.push({
                 creator: { $regex: new RegExp(`^${creator}$`, "i") },
             });
+        }
+
+        // If no conditions, return empty array to avoid MongoDB error
+        if (conditions.length === 0) {
+            return [];
         }
 
         // If we got only one condition, just return it

@@ -8,8 +8,8 @@ import {
 import { LRUCache } from "lru-cache";
 import {
     type Address,
-    type Hex,
     concatHex,
+    type Hex,
     isAddressEqual,
     keccak256,
     toHex,
@@ -46,7 +46,10 @@ export class RolesRepository {
     public async getRolesOnProduct({
         wallet,
         productId,
-    }: { wallet: Address; productId: bigint }) {
+    }: {
+        wallet: Address;
+        productId: bigint;
+    }) {
         const cacheKey = keccak256(concatHex([wallet, toHex(productId)]));
         const cached = this.productRolesCache.get(cacheKey);
         if (cached) {
@@ -90,7 +93,11 @@ export class RolesRepository {
         wallet,
         productId,
         role,
-    }: { wallet: Address; productId: bigint; role: bigint }) {
+    }: {
+        wallet: Address;
+        productId: bigint;
+        role: bigint;
+    }) {
         const { isOwner, roles } = await this.getRolesOnProduct({
             wallet,
             productId,
@@ -115,7 +122,10 @@ export class RolesRepository {
     hasRolesOrAdmin({
         onChainRoles,
         role,
-    }: { onChainRoles: bigint; role: bigint }) {
+    }: {
+        onChainRoles: bigint;
+        role: bigint;
+    }) {
         return this.hasRoles({
             onChainRoles,
             role: role | productRoles.productAdministrator,

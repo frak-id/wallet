@@ -1,7 +1,12 @@
 "use client";
 
+import { Button } from "@frak-labs/ui/component/Button";
+import { Skeleton } from "@frak-labs/ui/component/Skeleton";
+import { useQuery } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
 import { getCampaignDetails } from "@/context/campaigns/action/getDetails";
-import { campaignAtom } from "@/module/campaigns/atoms/campaign";
 import { CampaignStatus } from "@/module/campaigns/component/CampaignDetails/CampaignStatus";
 import { CampaignTerritory } from "@/module/campaigns/component/CampaignDetails/CampaignTerritory";
 import { FormBudgetRow } from "@/module/campaigns/component/Creation/NewCampaign/FormBudgetRow";
@@ -11,25 +16,15 @@ import { FormPriceRange } from "@/module/campaigns/component/Creation/Validation
 import { ActionsWrapper } from "@/module/common/component/ActionsWrapper";
 import { Panel } from "@/module/common/component/Panel";
 import { Form, FormLayout } from "@/module/forms/Form";
+import { campaignStore } from "@/stores/campaignStore";
 import type { Campaign } from "@/types/Campaign";
-import { Button } from "@frak-labs/ui/component/Button";
-import { Skeleton } from "@frak-labs/ui/component/Skeleton";
-import { useQuery } from "@tanstack/react-query";
-import { useAtomValue } from "jotai";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
-import { useForm } from "react-hook-form";
 
 /**
  * Campaign details component
  * @param campaignId
  * @constructor
  */
-export function CampaignDetails({
-    campaignId,
-}: {
-    campaignId: string;
-}) {
+export function CampaignDetails({ campaignId }: { campaignId: string }) {
     const router = useRouter();
     const {
         data: campaign,
@@ -39,7 +34,7 @@ export function CampaignDetails({
         queryKey: ["campaign", campaignId],
         queryFn: () => getCampaignDetails({ campaignId }),
     });
-    const campaignState = useAtomValue(campaignAtom);
+    const campaignState = campaignStore((state) => state.campaign);
 
     const form = useForm<Campaign>({
         defaultValues: campaignState,

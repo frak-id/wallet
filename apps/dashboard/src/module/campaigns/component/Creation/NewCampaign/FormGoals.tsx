@@ -1,3 +1,12 @@
+import {
+    MousePointer,
+    RotateCw,
+    ShoppingBag,
+    User,
+    Volume2,
+} from "lucide-react";
+import { type ReactElement, useEffect, useState } from "react";
+import type { UseFormReturn } from "react-hook-form";
 import { Badge } from "@/module/common/component/Badge";
 import { Column } from "@/module/common/component/Column";
 import { Panel } from "@/module/common/component/Panel";
@@ -12,15 +21,6 @@ import {
 } from "@/module/forms/Form";
 import { RadioGroup, RadioGroupItem } from "@/module/forms/RadioGroup";
 import type { Campaign } from "@/types/Campaign";
-import {
-    MousePointer,
-    RotateCw,
-    ShoppingBag,
-    User,
-    Volume2,
-} from "lucide-react";
-import { type ReactElement, useEffect, useState } from "react";
-import type { UseFormReturn } from "react-hook-form";
 import styles from "./FormGoals.module.css";
 
 type ItemGoals = {

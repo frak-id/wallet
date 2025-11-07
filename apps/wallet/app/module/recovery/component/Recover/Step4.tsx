@@ -1,29 +1,21 @@
+import { Button } from "@frak-labs/ui/component/Button";
+import type { WebAuthNWallet } from "@frak-labs/wallet-shared";
+import { useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { AccordionRecoveryItem } from "@/module/common/component/AccordionRecoveryItem";
 import { useCreateRecoveryPasskey } from "@/module/recovery/hook/useCreateRecoveryPasskey";
 import {
-    recoveryFileContentAtom,
-    recoveryNewWalletAtom,
-    recoveryStepAtom,
-} from "@/module/settings/atoms/recovery";
-import type { WebAuthNWallet } from "@/types/WebAuthN";
-import { Button } from "@frak-labs/ui/component/Button";
-import { useAtomValue, useSetAtom } from "jotai";
-import { useCallback } from "react";
-import { useTranslation } from "react-i18next";
+    recoveryStore,
+    selectRecoveryFileContent,
+} from "@/module/stores/recoveryStore";
 import styles from "./Step4.module.css";
 
 const ACTUAL_STEP = 4;
 
 export function Step4() {
     const { t } = useTranslation();
-    // Set the current step
-    const setStep = useSetAtom(recoveryStepAtom);
-
-    // Set the new wallet
-    const setNewWallet = useSetAtom(recoveryNewWalletAtom);
-
     // Get the recovery file product
-    const recoveryFileContent = useAtomValue(recoveryFileContentAtom);
+    const recoveryFileContent = recoveryStore(selectRecoveryFileContent);
 
     // Register the new wallet
     const { createRecoveryPasskeyAsync, error, isPending } =
@@ -38,14 +30,9 @@ export function Step4() {
             console.error("Invalid wallet public key", wallet.publicKey);
             return;
         }
-        setNewWallet(wallet as WebAuthNWallet);
-        setStep(ACTUAL_STEP + 1);
-    }, [
-        createRecoveryPasskeyAsync,
-        setNewWallet,
-        setStep,
-        recoveryFileContent,
-    ]);
+        recoveryStore.getState().setNewWallet(wallet as WebAuthNWallet);
+        recoveryStore.getState().setStep(ACTUAL_STEP + 1);
+    }, [createRecoveryPasskeyAsync, recoveryFileContent]);
 
     return (
         <AccordionRecoveryItem

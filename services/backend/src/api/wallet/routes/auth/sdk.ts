@@ -28,12 +28,12 @@ export const walletSdkRoutes = new Elysia({ prefix: "/sdk" })
     // Generate a new token from a previous webauthn signature
     .post(
         "/fromWebAuthNSignature",
-        async ({ body: { signature, msg, wallet } }) => {
+        async ({ body: { signature, challenge, wallet } }) => {
             // Check the validity of the webauthn signature
             const verificationnResult =
                 await AuthContext.services.webAuthN.isValidSignature({
                     compressedSignature: signature,
-                    msg,
+                    challenge,
                 });
 
             // If not valid, return an error
@@ -53,7 +53,7 @@ export const walletSdkRoutes = new Elysia({ prefix: "/sdk" })
         },
         {
             body: t.Object({
-                msg: t.String(),
+                challenge: t.Hex(),
                 signature: t.String(),
                 wallet: t.Address(),
             }),

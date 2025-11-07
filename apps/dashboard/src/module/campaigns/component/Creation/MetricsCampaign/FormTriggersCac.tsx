@@ -1,19 +1,17 @@
 "use client";
 
-import { campaignAtom } from "@/module/campaigns/atoms/campaign";
-import { campaignStepAtom } from "@/module/campaigns/atoms/steps";
+import {
+    type InteractionTypesKey,
+    interactionTypes,
+    type ProductTypesKey,
+} from "@frak-labs/core-sdk";
+import { Button } from "@frak-labs/ui/component/Button";
+import { useMemo } from "react";
+import { useFormContext } from "react-hook-form";
 import { Panel } from "@/module/common/component/Panel";
 import { FormDescription } from "@/module/forms/Form";
 import { interactionTypesInfo } from "@/module/product/utils/interactionTypes";
-import {
-    type InteractionTypesKey,
-    type ProductTypesKey,
-    interactionTypes,
-} from "@frak-labs/core-sdk";
-import { Button } from "@frak-labs/ui/component/Button";
-import { useAtomValue, useSetAtom } from "jotai";
-import { useMemo } from "react";
-import { useFormContext } from "react-hook-form";
+import { campaignStore } from "@/stores/campaignStore";
 import { FormTrigger } from "../Generic/FormTrigger";
 import styles from "./FormTriggersCac.module.css";
 
@@ -22,8 +20,8 @@ export function FormTriggersCac({
 }: {
     productTypes: ProductTypesKey[];
 }) {
-    const setStep = useSetAtom(campaignStepAtom);
-    const { type: currentGoal } = useAtomValue(campaignAtom);
+    const setStep = campaignStore((state) => state.setStep);
+    const currentGoal = campaignStore((state) => state.campaign.type);
     const availableInteractions = useMemo(() => {
         if (!currentGoal) return [];
 

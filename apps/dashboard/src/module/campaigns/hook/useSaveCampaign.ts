@@ -1,18 +1,13 @@
-import { saveCampaignDraft } from "@/context/campaigns/action/createCampaign";
-import { campaignAtom } from "@/module/campaigns/atoms/campaign";
-import {
-    campaignIsClosingAtom,
-    campaignStepAtom,
-} from "@/module/campaigns/atoms/steps";
-import type { Campaign } from "@/types/Campaign";
 import { useQueryClient } from "@tanstack/react-query";
-import { useAtomValue, useSetAtom } from "jotai";
 import { useRouter } from "next/navigation";
+import { saveCampaignDraft } from "@/context/campaigns/action/createCampaign";
+import { campaignStore } from "@/stores/campaignStore";
+import type { Campaign } from "@/types/Campaign";
 
 export function useSaveCampaign() {
-    const setCampaign = useSetAtom(campaignAtom);
-    const campaignIsClosing = useAtomValue(campaignIsClosingAtom);
-    const setStep = useSetAtom(campaignStepAtom);
+    const setCampaign = campaignStore((state) => state.setCampaign);
+    const setStep = campaignStore((state) => state.setStep);
+    const campaignIsClosing = campaignStore((state) => state.isClosing);
     const queryClient = useQueryClient();
     const router = useRouter();
 

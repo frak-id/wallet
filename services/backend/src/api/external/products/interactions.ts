@@ -1,9 +1,9 @@
 import {
+    db,
     eventEmitter,
     interactionDiamondRepository,
     log,
 } from "@backend-common";
-import { db } from "@backend-common";
 import { t, validateBodyHmac } from "@backend-utils";
 import { interactionTypes } from "@frak-labs/core-sdk";
 import {
@@ -190,25 +190,32 @@ export const interactionsApi = new Elysia({ prefix: "/interactions" })
 function mapRawInteraction({
     key,
     data,
-}: { key: Hex; data: unknown[] }):
-    | { handlerTypeDenominator: Hex; interactionData: Hex }
-    | undefined {
+}: {
+    key: Hex;
+    data: unknown[];
+}): { handlerTypeDenominator: Hex; interactionData: Hex } | undefined {
     switch (key) {
         // Case of a customer meeting interaction
         case interactionTypes.retail.customerMeeting: {
             if (data.length !== 1) {
-                log.warn("Invalid data length for customer meeting", {
-                    key,
-                    data,
-                });
+                log.warn(
+                    {
+                        key,
+                        data,
+                    },
+                    "Invalid data length for customer meeting"
+                );
                 return undefined;
             }
             const agency = data[0];
             if (typeof agency !== "string") {
-                log.warn("Invalid data type for customer meeting", {
-                    key,
-                    data,
-                });
+                log.warn(
+                    {
+                        key,
+                        data,
+                    },
+                    "Invalid data type for customer meeting"
+                );
                 return undefined;
             }
             // Otherwise, return the formatted interaction
@@ -219,18 +226,24 @@ function mapRawInteraction({
         // Case of an unsafe purchase
         case interactionTypes.purchase.unsafeCompleted: {
             if (data.length !== 1) {
-                log.warn("Invalid data length for purchase", {
-                    key,
-                    data,
-                });
+                log.warn(
+                    {
+                        key,
+                        data,
+                    },
+                    "Invalid data length for purchase"
+                );
                 return undefined;
             }
             const purchaseId = data[0];
             if (typeof purchaseId !== "string") {
-                log.warn("Invalid data type for purchase", {
-                    key,
-                    data,
-                });
+                log.warn(
+                    {
+                        key,
+                        data,
+                    },
+                    "Invalid data type for purchase"
+                );
                 return undefined;
             }
             // Otherwise, return the formatted interaction
@@ -243,9 +256,12 @@ function mapRawInteraction({
     }
 
     // Unknown interaction
-    log.warn("Interaction not allowed as raw interaction, aborting", {
-        key,
-        data,
-    });
+    log.warn(
+        {
+            key,
+            data,
+        },
+        "Interaction not allowed as raw interaction, aborting"
+    );
     return undefined;
 }

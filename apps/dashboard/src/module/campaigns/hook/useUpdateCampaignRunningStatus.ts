@@ -1,8 +1,8 @@
-import { useWaitForTxAndInvalidateQueries } from "@/module/common/utils/useWaitForTxAndInvalidateQueries";
 import { interactionCampaignAbi } from "@frak-labs/app-essentials";
 import { useSendTransactionAction } from "@frak-labs/react-sdk";
 import { useMutation } from "@tanstack/react-query";
 import { type Address, encodeFunctionData } from "viem";
+import { useWaitForTxAndInvalidateQueries } from "@/module/common/utils/useWaitForTxAndInvalidateQueries";
 
 /**
  * Update the running status of a campaign
@@ -16,7 +16,10 @@ export function useUpdateCampaignRunningStatus() {
         mutationFn: async ({
             campaign,
             newRunningStatus,
-        }: { campaign: Address; newRunningStatus: boolean }) => {
+        }: {
+            campaign: Address;
+            newRunningStatus: boolean;
+        }) => {
             // Send the transaction to the blockchain
             const { hash } = await sendTx({
                 tx: {

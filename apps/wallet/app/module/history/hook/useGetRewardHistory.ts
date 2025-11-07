@@ -1,7 +1,7 @@
-import { getRewardHistory } from "@/module/history/action/rewardHistory";
-import { historyKey } from "@/module/history/queryKeys/history";
 import { useQuery } from "@tanstack/react-query";
 import { useAccount } from "wagmi";
+import { getRewardHistory } from "@/module/history/action/rewardHistory";
+import { historyKey } from "@/module/history/queryKeys/history";
 
 // Fetch the current wallet history
 export function useGetRewardHistory() {

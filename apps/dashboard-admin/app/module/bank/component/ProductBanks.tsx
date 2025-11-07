@@ -11,7 +11,9 @@ import { useToken } from "~/module/token/hook/useToken";
 
 export function ProductBanksList({
     banks,
-}: { banks: GetProductInfoResponseDto["banks"] }) {
+}: {
+    banks: GetProductInfoResponseDto["banks"];
+}) {
     if (banks.length === 0) {
         return (
             <Card>
@@ -49,7 +51,9 @@ export function ProductBanksList({
 
 function BankRow({
     bank,
-}: { bank: GetProductInfoResponseDto["banks"][number] }) {
+}: {
+    bank: GetProductInfoResponseDto["banks"][number];
+}) {
     const { token } = useToken(bank.tokenId);
 
     return (

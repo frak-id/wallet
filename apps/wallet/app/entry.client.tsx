@@ -1,11 +1,16 @@
+import { isRunningLocally } from "@frak-labs/app-essentials";
 import {
     defaultNS,
     fallbackLng,
     interpolation,
     resources,
+    setupBigIntSerialization,
     supportedLngs,
-} from "@/i18n/config";
-import { isRunningLocally } from "@frak-labs/app-essentials";
+} from "@frak-labs/wallet-shared";
+
+// Setup BigInt serialization polyfill
+setupBigIntSerialization();
+
 import i18next from "i18next";
 import I18nextBrowserLanguageDetector from "i18next-browser-languagedetector";
 import { StrictMode, startTransition } from "react";

@@ -73,9 +73,9 @@ export class OracleProofService {
      */
     async getPurchaseStatus({
         selector,
-    }: { selector: PurchaseSelector }): Promise<
-        typeof purchaseStatusTable.$inferSelect | undefined
-    > {
+    }: {
+        selector: PurchaseSelector;
+    }): Promise<typeof purchaseStatusTable.$inferSelect | undefined> {
         let purchases: (typeof purchaseStatusTable.$inferSelect)[];
         if ("token" in selector) {
             // Case when it's a token

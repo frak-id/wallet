@@ -1,9 +1,5 @@
 "use server";
 
-import { getSafeSession } from "@/context/auth/actions/session";
-import { getAttachedCampaigns } from "@/context/campaigns/action/getAttachedCampaigns";
-import { getCampaignRepository } from "@/context/campaigns/repository/CampaignRepository";
-import { getRolesOnProduct } from "@/context/product/action/roles";
 import {
     addresses,
     affiliationFixedCampaignAbi,
@@ -11,6 +7,10 @@ import {
 } from "@frak-labs/app-essentials";
 import { ObjectId } from "mongodb";
 import { type Address, encodeFunctionData, isAddressEqual } from "viem";
+import { getSafeSession } from "@/context/auth/actions/session";
+import { getAttachedCampaigns } from "@/context/campaigns/action/getAttachedCampaigns";
+import { getCampaignRepository } from "@/context/campaigns/repository/CampaignRepository";
+import { getRolesOnProduct } from "@/context/product/action/roles";
 
 /**
  * Function used to delete a campaign

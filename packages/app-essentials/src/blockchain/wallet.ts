@@ -1,5 +1,5 @@
-import { type Hex, encodeAbiParameters, encodeFunctionData } from "viem";
-import { KernelInitAbi, addresses, kernelAddresses } from "../blockchain";
+import { encodeAbiParameters, encodeFunctionData, type Hex } from "viem";
+import { addresses, KernelInitAbi, kernelAddresses } from "../blockchain";
 
 /**
  * The account creation ABI for a kernel smart account (from the KernelFactory)

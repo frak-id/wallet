@@ -1,0 +1,191 @@
+---
+description: Testing guidelines and best practices for unit tests and E2E tests
+globs: **/*.test.ts, **/*.test.tsx, **/*.spec.ts, **/*.spec.tsx, **/vitest.config.ts, **/tests/**/*
+---
+# Testing Rules
+
+## Testing Commands
+
+**CRITICAL**: Always use `bun run test` instead of `bun test` for unit tests.
+
+### Unit Tests (Vitest)
+
+#### Wallet App
+```bash
+cd apps/wallet
+bun run test                  # Run unit tests
+bun run test:ui               # Run with Vitest UI
+bun run test:coverage         # Run with coverage report
+```
+
+#### Listener App
+```bash
+cd apps/listener
+bun run test                  # Run unit tests
+bun run test:ui               # Run with Vitest UI
+bun run test:coverage         # Run with coverage report
+```
+
+### E2E Tests (Playwright)
+
+#### Wallet App
+```bash
+cd apps/wallet
+bun run test:e2e              # Run tests against local
+bun run test:e2e:dev          # Run tests against dev environment
+bun run test:e2e:prod         # Run tests against prod environment
+bun run test:e2e:ui           # Run with Playwright UI
+```
+
+## Test Framework
+
+- **Unit Tests**: Vitest v4.0.4 with jsdom environment
+- **Coverage**: v8 provider with 40% threshold (lines, functions, branches, statements)
+- **E2E Tests**: Playwright for end-to-end testing
+- **Testing Library**: @testing-library/react for React hooks and components
+
+## Test Organization
+
+### Unit Test Location
+- Co-locate tests with source files (e.g., `modalStore.test.ts` next to `modalStore.ts`)
+- Use `*.test.ts` or `*.test.tsx` extension
+- Setup files located in `tests/vitest-setup.ts`
+- Tests should be placed in the same directory as the code they test
+
+### Test File Structure
+```typescript
+import { describe, it, expect, beforeEach, vi } from "vitest";
+
+describe("ComponentName", () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+    });
+
+    it("should do something specific", () => {
+        // Arrange
+        // Act
+        // Assert
+    });
+});
+```
+
+## Mocking Strategies
+
+### External Packages
+Mock at module level with `vi.mock()`:
+```typescript
+vi.mock("@frak-labs/wallet-shared", () => ({
+    get sessionStore() { return mockSessionStore; },
+    getSafeSession: () => mockGetSafeSession(),
+}));
+```
+
+### Zustand Stores
+Create dual-purpose mocks (function + object with getState/subscribe):
+```typescript
+const mockSessionStore: any = Object.assign(
+    vi.fn((selector: any) => {
+        const state = { session: undefined };
+        return selector(state);
+    }),
+    {
+        getState: vi.fn(() => ({ session: undefined })),
+        subscribe: vi.fn(() => vi.fn()),
+    }
+);
+```
+
+### Hoisting Issues
+Use getter properties in `vi.mock()` to avoid hoisting issues:
+```typescript
+vi.mock("module", () => ({
+    get value() { return mockValue; },  // Lazy evaluation
+}));
+```
+
+### Common Mocks
+- **Wagmi**: Mock hooks like `useAccount`, `usePublicClient`, `useWalletClient`
+- **TanStack Query**: Mock `useQuery`, `useMutation`, `useQueryClient`
+- **WebAuthn**: Mock `@simplewebauthn/browser` functions
+- **react-i18next**: Mock `useTranslation`, `getI18n`
+
+## Testing React Hooks
+
+### Using renderHook
+```typescript
+import { renderHook, waitFor } from "@testing-library/react";
+
+it("should update state", async () => {
+    const { result } = renderHook(() => useMyHook());
+
+    await waitFor(() => {
+        expect(result.current.value).toBe(expectedValue);
+    });
+});
+```
+
+### Async Handlers
+```typescript
+it("should handle async operation", async () => {
+    const { result } = renderHook(() => useAsyncHook());
+
+    const promise = result.current.handler(params);
+
+    await waitFor(() => {
+        expect(mockFunction).toHaveBeenCalled();
+    });
+
+    await promise;
+});
+```
+
+## Coverage Targets
+
+### Required Coverage
+- Lines: 40%
+- Functions: 40%
+- Branches: 40%
+- Statements: 40%
+
+### Coverage Exclusions
+- UI components: `**/component/**/*.tsx`
+- Entry points: `app/main.tsx`, `app/App.tsx`
+- Build artifacts and node_modules
+- Test files themselves
+
+## Best Practices
+
+### Test Independence
+- Each test should be independent and not rely on other tests
+- Use `beforeEach` to reset state between tests
+- Clear all mocks with `vi.clearAllMocks()`
+
+### Test Naming
+- Use descriptive test names that explain what is being tested
+- Format: "should [expected behavior] when [condition]"
+- Example: "should emit connected status when wallet session exists"
+
+### Test Coverage Focus
+- Focus on business logic and state management
+- Test error paths and edge cases
+- Don't over-test implementation details
+- Prioritize critical user flows
+
+### Async Testing
+- Always use `async/await` with `waitFor` for async operations
+- Don't use arbitrary timeouts - let `waitFor` handle timing
+- Test both success and error cases for async operations
+
+### Mock Management
+- Keep mocks close to the tests that use them
+- Create reusable mock factories when needed
+- Document complex mocking strategies
+- Reset mocks between tests to avoid side effects
+
+## Resource Tags
+
+Use these tags to find relevant documentation:
+
+- @Vitest - Vitest testing framework documentation
+- @TestingLibrary - React Testing Library documentation
+- @Playwright - Playwright E2E testing documentation

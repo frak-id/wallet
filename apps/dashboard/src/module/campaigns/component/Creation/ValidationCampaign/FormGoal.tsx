@@ -1,8 +1,8 @@
-import { FormDescription, FormItem } from "@/module/forms/Form";
-import type { Campaign } from "@/types/Campaign";
 import { Input } from "@frak-labs/ui/component/forms/Input";
 import { capitalize } from "radash";
 import type { UseFormReturn } from "react-hook-form";
+import { FormDescription, FormItem } from "@/module/forms/Form";
+import type { Campaign } from "@/types/Campaign";
 
 /**
  * Display the campaign goal

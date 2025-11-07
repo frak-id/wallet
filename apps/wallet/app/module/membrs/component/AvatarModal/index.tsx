@@ -1,13 +1,13 @@
-import { AlertDialog } from "@/module/common/component/AlertDialog";
-import { uploadProfilePhotoAtom } from "@/module/membrs/atoms/uploadProfilePhoto";
 import { Button } from "@frak-labs/ui/component/Button";
 import { Slider } from "@frak-labs/ui/component/Slider";
 import { Uploader } from "@frak-labs/ui/component/Uploader";
 import { Upload } from "@frak-labs/ui/icons/Upload";
-import { atom, useAtom, useSetAtom } from "jotai";
+import { WalletModal } from "@frak-labs/wallet-shared";
 import { useCallback, useEffect, useRef, useState } from "react";
 import ReactAvatarEditor from "react-avatar-editor";
 import { useTranslation } from "react-i18next";
+import { create } from "zustand";
+import { useProfilePhoto } from "@/module/membrs/context/ProfilePhotoContext";
 import { AvatarCamera } from "../AvatarCamera";
 import styles from "./index.module.css";
 
@@ -33,20 +33,29 @@ type Position = {
 type ImageSource = string | File | undefined;
 
 /**
- * Local open modal atom
- * @description This atom is used to open the modal
+ * Local modal state store
+ * @description Store to manage the avatar modal open/close state
  */
-const localOpenModal = atom(false);
+type LocalModalState = {
+    isOpen: boolean;
+    setIsOpen: (isOpen: boolean) => void;
+};
+
+const useLocalModalStore = create<LocalModalState>()((set) => ({
+    isOpen: false,
+    setIsOpen: (isOpen) => set({ isOpen }),
+}));
 
 /**
  * Modal component for uploading and editing profile avatar
  */
 export function AvatarModal() {
     const { t } = useTranslation();
-    const [openModal, setOpenModal] = useAtom(localOpenModal);
+    const openModal = useLocalModalStore((state) => state.isOpen);
+    const setOpenModal = useLocalModalStore((state) => state.setIsOpen);
 
     return (
-        <AlertDialog
+        <WalletModal
             open={openModal}
             onOpenChange={setOpenModal}
             title={t("wallet.membrs.profile.avatar.title")}
@@ -64,12 +73,12 @@ export function AvatarModal() {
  */
 function AvatarEditorPanel() {
     const { t } = useTranslation();
+    const { setUploadedPhoto } = useProfilePhoto();
     const editorRef = useRef<ReactAvatarEditor | null>(null);
     const [image, setImage] = useState<ImageSource>();
     const [scale, setScale] = useState<number>(INITIAL_SCALE);
     const [position, setPosition] = useState<Position>(INITIAL_POSITION);
-    const setProfilePhoto = useSetAtom(uploadProfilePhotoAtom);
-    const setOpenModal = useSetAtom(localOpenModal);
+    const setOpenModal = useLocalModalStore((state) => state.setIsOpen);
 
     /**
      * Reset editor to initial settings
@@ -116,7 +125,7 @@ function AvatarEditorPanel() {
         const canvas = editorRef.current.getImageScaledToCanvas();
         const imageDataUrl = canvas.toDataURL("image/webp");
 
-        setProfilePhoto(imageDataUrl);
+        setUploadedPhoto(imageDataUrl);
         setOpenModal(false);
     };
 

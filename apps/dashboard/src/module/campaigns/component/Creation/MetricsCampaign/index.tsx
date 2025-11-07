@@ -1,6 +1,13 @@
 "use client";
 
-import { campaignAtom } from "@/module/campaigns/atoms/campaign";
+import { Skeleton } from "@frak-labs/ui/component/Skeleton";
+import { useMemo } from "react";
+import {
+    type ResolverResult,
+    type UseFormReturn,
+    useForm,
+} from "react-hook-form";
+import { toHex } from "viem";
 import { Actions } from "@/module/campaigns/component/Actions";
 import { ButtonCancel } from "@/module/campaigns/component/Creation/NewCampaign/ButtonCancel";
 import { useSaveCampaign } from "@/module/campaigns/hook/useSaveCampaign";
@@ -18,18 +25,14 @@ import {
 } from "@/module/forms/Form";
 import { RadioGroup, RadioGroupItem } from "@/module/forms/RadioGroup";
 import { useProductMetadata } from "@/module/product/hook/useProductMetadata";
+import { campaignStore } from "@/stores/campaignStore";
 import type { Campaign } from "@/types/Campaign";
-import { Skeleton } from "@frak-labs/ui/component/Skeleton";
-import { useAtomValue } from "jotai";
-import { useMemo } from "react";
-import { type UseFormReturn, useForm } from "react-hook-form";
-import { toHex } from "viem";
 import { DistributionConfiguration } from "./DistributionConfig";
 import { FormTriggersCac } from "./FormTriggersCac";
 import styles from "./index.module.css";
 
 export function MetricsCampaign() {
-    const campaign = useAtomValue(campaignAtom);
+    const campaign = campaignStore((state) => state.campaign);
     const saveCampaign = useSaveCampaign();
 
     const pId = useMemo(() => {
@@ -42,14 +45,14 @@ export function MetricsCampaign() {
     });
     const form = useForm<Campaign>({
         values: useMemo(() => campaign, [campaign]),
-        resolver: (values) => {
+        resolver: (values): ResolverResult<Campaign> => {
             // Check that we have at least one trigger set with a CAC greater than 0
             const hasTrigger = Object.values(values.triggers).some(
                 (trigger) => trigger.cac && trigger.cac > 0
             );
             if (!hasTrigger) {
                 return {
-                    values,
+                    values: {},
                     errors: {
                         triggers: {
                             message: "At least one trigger should be set",
@@ -88,7 +91,7 @@ export function MetricsCampaign() {
                             />
                         }
                     />
-                    <DistributionTypeToggle {...form} />
+                    <DistributionTypeToggle form={form} />
                     <FormTriggersCac
                         productTypes={product?.productTypes ?? []}
                     />
@@ -104,7 +107,7 @@ export function MetricsCampaign() {
     );
 }
 
-function DistributionTypeToggle(form: UseFormReturn<Campaign>) {
+function DistributionTypeToggle({ form }: { form: UseFormReturn<Campaign> }) {
     return (
         <Panel title="Define the type of rewards">
             <FormField

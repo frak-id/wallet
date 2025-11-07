@@ -3,17 +3,9 @@ import { KubernetesService } from "../components/KubernetesService";
 import { isProd, normalizedStageName } from "../utils";
 import { elysiaImage, migrationImage } from "./images";
 import { elysiaEnv, postgresEnv } from "./secrets";
-import { domainName } from "./utils";
+import { domainName, walletNamespace } from "./utils";
 
 const appLabels = { app: "elysia" };
-
-// Create a dedicated namespace for backend
-export const backendNamespace = new kubernetes.core.v1.Namespace(
-    "infra-wallet",
-    {
-        metadata: { name: `wallet-${normalizedStageName}` },
-    }
-);
 
 /**
  * All the secrets for the elysia instance
@@ -21,7 +13,7 @@ export const backendNamespace = new kubernetes.core.v1.Namespace(
 const elysiaSecrets = new kubernetes.core.v1.Secret("elysia-secrets", {
     metadata: {
         name: `elysia-secrets-${normalizedStageName}`,
-        namespace: backendNamespace.metadata.name,
+        namespace: walletNamespace.metadata.name,
     },
     type: "Opaque",
     stringData: elysiaEnv,
@@ -32,7 +24,7 @@ const dbMigrationSecrets = new kubernetes.core.v1.Secret(
     {
         metadata: {
             name: `db-migration-section-${normalizedStageName}`,
-            namespace: backendNamespace.metadata.name,
+            namespace: walletNamespace.metadata.name,
         },
         type: "Opaque",
         stringData: {
@@ -47,7 +39,7 @@ const dbMigrationSecrets = new kubernetes.core.v1.Secret(
  * Create the db migration job
  */
 const migrationJob = new KubernetesJob("ElysiaDbMigration", {
-    namespace: backendNamespace.metadata.name,
+    namespace: walletNamespace.metadata.name,
     appLabels,
     job: {
         container: {
@@ -73,7 +65,7 @@ export const backendInstance = new KubernetesService(
     "Elysia",
     {
         // Global config
-        namespace: backendNamespace.metadata.name,
+        namespace: walletNamespace.metadata.name,
         appLabels,
 
         // Pod config
@@ -114,8 +106,8 @@ export const backendInstance = new KubernetesService(
                     },
                     // Ressources requests/limits
                     resources: {
-                        requests: { cpu: "50m", memory: "256Mi" },
-                        limits: { cpu: "200m", memory: "512Mi" },
+                        requests: { cpu: "200m", memory: "256Mi" },
+                        limits: { cpu: "400m", memory: "512Mi" },
                     },
                 },
             ],
@@ -132,7 +124,8 @@ export const backendInstance = new KubernetesService(
         hpa: {
             min: 1,
             max: 2,
-            cpuUtilization: 80,
+            // Yup 120% cpu, limits = request x2, and hpa based on requests cpu usage
+            cpuUtilization: 120,
         },
 
         // Ingress config
@@ -141,6 +134,23 @@ export const backendInstance = new KubernetesService(
             tlsSecretName: "elysia-tls",
             // For legacy purposes
             additionalHosts: [legacyDomain],
+            // Performance optimizations for API backend
+            customAnnotations: {
+                // Connection pooling for ingress -> backend pod connections
+                "nginx.ingress.kubernetes.io/upstream-keepalive-connections":
+                    "32",
+                "nginx.ingress.kubernetes.io/upstream-keepalive-requests":
+                    "1000",
+                "nginx.ingress.kubernetes.io/upstream-keepalive-timeout": "60",
+                // Optimized timeouts for API responses
+                "nginx.ingress.kubernetes.io/proxy-connect-timeout": "5",
+                "nginx.ingress.kubernetes.io/proxy-send-timeout": "30",
+                "nginx.ingress.kubernetes.io/proxy-read-timeout": "30",
+                // Buffer settings for API responses
+                "nginx.ingress.kubernetes.io/proxy-buffering": "on",
+                "nginx.ingress.kubernetes.io/proxy-buffers-number": "4",
+                "nginx.ingress.kubernetes.io/proxy-buffer-size": "8k",
+            },
         },
 
         // ServiceMonitor config

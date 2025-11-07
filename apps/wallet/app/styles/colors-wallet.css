@@ -1,0 +1,8 @@
+/**
+ * Wallet-specific CSS custom property overrides
+ * Base properties are in @frak-labs/wallet-shared/styles/colors-base.css
+ */
+:root {
+    --frak-background-color: var(--frak-color-dark);
+    --frak-contrast-background-color: var(--frak-color-gradient-blue);
+}

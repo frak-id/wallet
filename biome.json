@@ -1,33 +1,40 @@
 {
     "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
     "files": {
-        "ignore": [
-            "_cjs",
-            "_esm",
-            "_types",
-            "dist",
-            "build",
-            "cdn",
-            "node_modules/**",
-            ".sst/**",
-            ".open-next/**",
-            ".next/**",
-            "tsconfig.json",
-            "tsconfig.*.json",
-            "package.json",
-            "sw.js",
-            "bundle.js",
-            "sst-env.d.ts",
-            ".react-router/**",
-            ".rslib/**",
-            ".svelte-kit/**",
-            "**/*.svelte",
-            "playwright-report/**",
-            "test-results/**"
+        "includes": [
+            "**",
+            "!**/_cjs",
+            "!**/_esm",
+            "!**/_types",
+            "!**/dist",
+            "!**/build",
+            "!**/cdn",
+            "!**/node_modules",
+            "!**/.sst",
+            "!**/.open-next",
+            "!**/.next",
+            "!**/tsconfig.json",
+            "!**/tsconfig.*.json",
+            "!**/package.json",
+            "!**/sw.js",
+            "!**/bundle.js",
+            "!**/sst-env.d.ts",
+            "!example/vanilla-js/index.html",
+            "!**/.react-router",
+            "!**/.rslib",
+            "!**/.svelte-kit",
+            "!**/*.svelte",
+            "!**/playwright-report",
+            "!**/test-results",
+            "!**/coverage"
         ]
     },
-    "organizeImports": {
-        "enabled": true
+    "assist": { "actions": { "source": { "organizeImports": "on" } } },
+    "html": {
+        "experimentalFullSupportEnabled": true,
+        "formatter": {
+            "indentScriptAndStyle": false
+        }
     },
     "linter": {
         "enabled": true,
@@ -40,24 +47,68 @@
                         "maxAllowedComplexity": 16
                     }
                 },
-                "noUselessTernary": "error"
+                "noUselessTernary": "error",
+                "noImportantStyles": "off"
             },
             "correctness": {
                 "useHookAtTopLevel": "error",
-                "noUnusedVariables": "error",
+                "noUnusedVariables": {
+                    "level": "error",
+                    "options": {
+                        "ignoreRestSiblings": true
+                    }
+                },
                 "noUnusedImports": "error",
                 "noUndeclaredVariables": "off",
                 "noUnusedPrivateClassMembers": "error"
             },
             "style": {
                 "useFragmentSyntax": "error",
-                "useShorthandArrayType": "error",
                 "useShorthandAssign": "error",
                 "useImportType": "error",
-                "useExportType": "error"
+                "useExportType": "error",
+                "useConsistentArrayType": {
+                    "level": "error",
+                    "options": { "syntax": "shorthand" }
+                },
+                "noDescendingSpecificity": "off"
+            },
+            "a11y": {
+                "noStaticElementInteractions": "off"
+            },
+            "security": {
+                "noDangerouslySetInnerHtml": "off"
+            },
+            "suspicious": {
+                "noDuplicateProperties": "off",
+                "noDocumentCookie": "off",
+                "noUnknownAtRules": "off"
+            },
+            "performance": {
+                "noImgElement": "off"
             }
         }
     },
+    "overrides": [
+        {
+            "includes": [
+                "**/*.test.ts",
+                "**/*.test.tsx",
+                "**/*.spec.ts",
+                "**/*.spec.tsx"
+            ],
+            "linter": {
+                "rules": {
+                    "suspicious": {
+                        "noExplicitAny": "off"
+                    },
+                    "style": {
+                        "noNonNullAssertion": "off"
+                    }
+                }
+            }
+        }
+    ],
     "formatter": {
         "enabled": true,
         "indentStyle": "space",
@@ -74,7 +125,8 @@
     },
     "css": {
         "parser": {
-            "cssModules": true
+            "cssModules": true,
+            "tailwindDirectives": true
         },
         "linter": {
             "enabled": true

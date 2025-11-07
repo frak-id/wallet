@@ -1,11 +1,11 @@
+import { Input } from "@frak-labs/ui/component/forms/Input";
+import type { UseFormReturn } from "react-hook-form";
 import { FormBudgetRow } from "@/module/campaigns/component/Creation/NewCampaign/FormBudgetRow";
 import { FormAdvertising } from "@/module/campaigns/component/Creation/ValidationCampaign/FormAdvertising";
 import { FormGoal } from "@/module/campaigns/component/Creation/ValidationCampaign/FormGoal";
 import { Panel } from "@/module/common/component/Panel";
 import { FormDescription, FormItem } from "@/module/forms/Form";
 import type { Campaign } from "@/types/Campaign";
-import { Input } from "@frak-labs/ui/component/forms/Input";
-import type { UseFormReturn } from "react-hook-form";
 import { FormPriceRange } from "./FormPriceRange";
 
 export function FormCheck(form: UseFormReturn<Campaign>) {

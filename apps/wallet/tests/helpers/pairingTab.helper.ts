@@ -1,8 +1,8 @@
 import {
     type BrowserContext,
+    expect,
     type Page,
     type PageScreenshotOptions,
-    expect,
 } from "@playwright/test";
 import { PairingPage } from "tests/pages/pairing.page";
 import { MockedWebAuthNHelper } from "./mockedWebauthn.helper";

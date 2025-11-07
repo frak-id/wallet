@@ -39,14 +39,12 @@ jobs:
           node-version: 22
 
       - uses: oven-sh/setup-bun@v2
-        with:
-          no-cache: true
 
       - name: Setup SST Cache
         id: sst-caching
         uses: actions/cache@v4
         with:
-          path: | 
+          path: |
             .sst/platform/
             .sst/provider-lock.json
             .sst/esbuild.json
@@ -75,6 +73,9 @@ jobs:
               - 'packages/**'
               - 'infra/**'
             services:
+              - 'apps/wallet/**'
+              - 'apps/listener/**'
+              - 'packages/wallet-shared/**'
               - 'services/**'
               - 'packages/**'
               - 'infra/**'
@@ -94,7 +95,7 @@ jobs:
           role-to-assume: arn:aws:iam::262732185023:role/github-action-deploy-role
           aws-region: eu-west-1
           retry-max-attempts: 5
-      
+
       - name: "👥 Login to Google Cloud"
         uses: 'google-github-actions/auth@v2'
         if: steps.changes.outputs.services == 'true' || github.event.inputs.force_deploy == 'true'
@@ -103,7 +104,7 @@ jobs:
           workload_identity_provider: 'projects/426208135260/locations/global/workloadIdentityPools/github/providers/sst-deployer'
           service_account: 'sst-service-account@frak-main-v1.iam.gserviceaccount.com'
           project_id: 'frak-main-v1'
-  
+
       - name: 'Set up Cloud SDK'
         uses: 'google-github-actions/setup-gcloud@v2'
         if: steps.changes.outputs.services == 'true' || github.event.inputs.force_deploy == 'true'

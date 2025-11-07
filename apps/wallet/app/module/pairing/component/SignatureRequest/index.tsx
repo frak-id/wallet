@@ -1,17 +1,17 @@
-import { Panel } from "@/module/common/component/Panel";
-import { Title } from "@/module/common/component/Title";
-import type { TargetPairingClient } from "@/module/pairing/clients/target";
+import { Button } from "@frak-labs/ui/component/Button";
+import { Spinner } from "@frak-labs/ui/component/Spinner";
+import type { TargetPairingClient } from "@frak-labs/wallet-shared";
 import {
     useDeclineSignatureRequest,
     useSignSignatureRequest,
-} from "@/module/pairing/hook/useSignSignatureRequest";
-import type { TargetPairingPendingSignature } from "@/module/pairing/types";
-import { Button } from "@frak-labs/ui/component/Button";
-import { Spinner } from "@frak-labs/ui/component/Spinner";
+} from "@frak-labs/wallet-shared";
+import type { TargetPairingPendingSignature } from "@frak-labs/wallet-shared/pairing/types";
 import type { MutationStatus } from "@tanstack/react-query";
 import { Check, Shield, X } from "lucide-react";
 import { useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
+import { Panel } from "@/module/common/component/Panel";
+import { Title } from "@/module/common/component/Title";
 import styles from "./index.module.css";
 
 /**
@@ -23,7 +23,10 @@ import styles from "./index.module.css";
 export function SignatureRequestList({
     requests,
     client,
-}: { requests: TargetPairingPendingSignature[]; client: TargetPairingClient }) {
+}: {
+    requests: TargetPairingPendingSignature[];
+    client: TargetPairingClient;
+}) {
     return (
         <div className={styles.signatureRequestList}>
             {requests.map((request) => (
@@ -86,7 +89,9 @@ function SignatureRequest({
  */
 function SignatureRequestDescription({
     request,
-}: { request: TargetPairingPendingSignature }) {
+}: {
+    request: TargetPairingPendingSignature;
+}) {
     return (
         <p className={styles.signatureRequest__description}>
             <Trans
@@ -114,7 +119,10 @@ function SignatureRequestDescription({
 function SignatureRequestState({
     status,
     isDeclined,
-}: { status: MutationStatus; isDeclined: boolean }) {
+}: {
+    status: MutationStatus;
+    isDeclined: boolean;
+}) {
     const label = getSignatureRequestStateLabel(status, isDeclined);
     const { t } = useTranslation();
 

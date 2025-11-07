@@ -12,7 +12,9 @@ import { getCode } from "viem/actions";
 export class PendingBalanceRepository {
     async getPendingBalance({
         address,
-    }: { address: Address }): Promise<TokenAmount> {
+    }: {
+        address: Address;
+    }): Promise<TokenAmount> {
         const pendingBalance = await this._getPendingBalance({ address });
 
         return {
@@ -34,7 +36,9 @@ export class PendingBalanceRepository {
      */
     private async _getPendingBalance({
         address,
-    }: { address: Address }): Promise<number> {
+    }: {
+        address: Address;
+    }): Promise<number> {
         try {
             // Check if the user has earned a reward
             const hasEarnedReward = await this.hasEarnedReward(address);

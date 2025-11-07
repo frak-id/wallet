@@ -1,4 +1,4 @@
-import { type Hex, concatHex, encodeAbiParameters, pad, toHex } from "viem";
+import { concatHex, encodeAbiParameters, type Hex, pad, toHex } from "viem";
 import { interactionTypes } from "../constants/interactionTypes";
 import { productTypes } from "../constants/productTypes";
 import type { PreparedInteraction } from "../types";
@@ -59,7 +59,10 @@ export const PurchaseInteractionEncoder = {
     completedPurchase({
         purchaseId,
         proof,
-    }: { purchaseId: Hex; proof: Hex[] }): PreparedInteraction {
+    }: {
+        purchaseId: Hex;
+        proof: Hex[];
+    }): PreparedInteraction {
         const innerData = encodeAbiParameters(
             [{ type: "uint256" }, { type: "bytes32[]" }],
             [BigInt(purchaseId), proof]
@@ -81,7 +84,9 @@ export const PurchaseInteractionEncoder = {
      */
     unsafeCompletedPurchase({
         purchaseId,
-    }: { purchaseId: Hex }): PreparedInteraction {
+    }: {
+        purchaseId: Hex;
+    }): PreparedInteraction {
         const interactionData = concatHex([
             interactionTypes.purchase.unsafeCompleted,
             pad(purchaseId, { size: 32 }),

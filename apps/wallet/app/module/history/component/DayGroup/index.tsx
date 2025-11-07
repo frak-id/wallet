@@ -1,7 +1,7 @@
+import type { HistoryGroup } from "@frak-labs/wallet-shared";
+import type { ReactNode } from "react";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
-import type { HistoryGroup } from "@/types/HistoryGroup";
-import type { ReactNode } from "react";
 import styles from "./index.module.css";
 
 /**
@@ -11,7 +11,10 @@ import styles from "./index.module.css";
 export function HistoryDayGroup<T>({
     group,
     innerComponent,
-}: { group: HistoryGroup<T>; innerComponent: (item: T) => ReactNode }) {
+}: {
+    group: HistoryGroup<T>;
+    innerComponent: (item: T) => ReactNode;
+}) {
     console.log(group);
     return Object.entries(group).map(([day, items]) => (
         <div key={day} className={styles.historyGroup}>
@@ -19,7 +22,6 @@ export function HistoryDayGroup<T>({
             <Panel size={"small"}>
                 {items.map((item, index) => (
                     <div
-                        // biome-ignore lint/suspicious/noArrayIndexKey: We are using the index as key because the items are already sorted
                         key={`${day}-${index}`}
                         className={styles.historyGroup__item}
                     >

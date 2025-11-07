@@ -1,17 +1,12 @@
 "use client";
 
-import { getCampaignDetails } from "@/context/campaigns/action/getDetails";
-import {
-    campaignActionAtom,
-    campaignAtom,
-    isFetchedCampaignAtom,
-} from "@/module/campaigns/atoms/campaign";
-import type { Campaign } from "@/types/Campaign";
 import { Spinner } from "@frak-labs/ui/component/Spinner";
 import { useQuery } from "@tanstack/react-query";
-import { useAtom, useSetAtom } from "jotai";
 import { usePathname, useRouter } from "next/navigation";
 import { type PropsWithChildren, useEffect } from "react";
+import { getCampaignDetails } from "@/context/campaigns/action/getDetails";
+import { campaignStore } from "@/stores/campaignStore";
+import type { Campaign } from "@/types/Campaign";
 
 /**
  * Campaign load component
@@ -26,11 +21,10 @@ export function CampaignLoad({
 }>) {
     const router = useRouter();
     const pathname = usePathname();
-    const setCampaign = useSetAtom(campaignAtom);
-    const setCampaignAction = useSetAtom(campaignActionAtom);
-    const [isFetchedCampaign, setIsFetchedCampaign] = useAtom(
-        isFetchedCampaignAtom
-    );
+    const setCampaign = campaignStore((state) => state.setCampaign);
+    const setAction = campaignStore((state) => state.setAction);
+    const isFetched = campaignStore((state) => state.isFetched);
+    const setIsFetched = campaignStore((state) => state.setIsFetched);
     const {
         data: campaign,
         isLoading,
@@ -49,7 +43,7 @@ export function CampaignLoad({
             campaign.state.key === "created" ? "edit" : "draft";
 
         // Set the campaign action
-        setCampaignAction(campaignAction);
+        setAction(campaignAction);
 
         // Redirect in case of draft page and campaign is created
         if (campaignAction === "edit" && isDraftPage) {
@@ -60,20 +54,14 @@ export function CampaignLoad({
         if (campaignAction === "draft" && isEditPage) {
             router.push(`/campaigns/draft/${campaignId}`);
         }
-    }, [setCampaignAction, campaign, pathname, router, campaignId]);
+    }, [setAction, campaign, pathname, router, campaignId]);
 
     useEffect(() => {
-        if (!isFetchedCampaign && campaign) {
+        if (!isFetched && campaign) {
             setCampaign({ ...campaign, id: campaignId } as Campaign);
-            setIsFetchedCampaign(true);
+            setIsFetched(true);
         }
-    }, [
-        isFetchedCampaign,
-        setIsFetchedCampaign,
-        campaign,
-        setCampaign,
-        campaignId,
-    ]);
+    }, [isFetched, setIsFetched, campaign, setCampaign, campaignId]);
 
     if (isLoading || isPending) {
         return <Spinner />;

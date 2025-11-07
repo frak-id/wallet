@@ -8,11 +8,11 @@
   "module": "src/index.ts",
   "main": "./src/index.ts",
   "dependencies": {
-    "viem": "^2.31.2"
+    "viem": "catalog:"
   },
   "devDependencies": {
     "bun-types": "latest",
-    "typescript": "^5.8.3"
+    "typescript": "catalog:"
   },
   "exports": {
     ".": {

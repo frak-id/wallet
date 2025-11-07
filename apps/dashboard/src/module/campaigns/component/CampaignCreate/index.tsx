@@ -1,8 +1,7 @@
 "use client";
 
-import { campaignActionAtom } from "@/module/campaigns/atoms/campaign";
-import { useSetAtom } from "jotai";
 import { type PropsWithChildren, useEffect } from "react";
+import { campaignStore } from "@/stores/campaignStore";
 
 /**
  * Campaign create component
@@ -10,11 +9,11 @@ import { type PropsWithChildren, useEffect } from "react";
  * @constructor
  */
 export function CampaignCreate({ children }: PropsWithChildren) {
-    const setCampaignAction = useSetAtom(campaignActionAtom);
+    const setAction = campaignStore((state) => state.setAction);
 
     useEffect(() => {
-        setCampaignAction("create");
-    }, [setCampaignAction]);
+        setAction("create");
+    }, [setAction]);
 
     return children;
 }

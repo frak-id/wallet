@@ -1,3 +1,8 @@
+import { Button } from "@frak-labs/ui/component/Button";
+import { Tooltip } from "@frak-labs/ui/component/Tooltip";
+import { CheckIcon, ChevronDown, X, XIcon } from "lucide-react";
+import type { ComponentPropsWithRef } from "react";
+import { useState } from "react";
 import { Badge } from "@/module/common/component/Badge";
 import {
     Command,
@@ -14,11 +19,6 @@ import {
     PopoverTrigger,
 } from "@/module/common/component/Popover";
 import { Separator } from "@/module/common/component/Separator";
-import { Button } from "@frak-labs/ui/component/Button";
-import { Tooltip } from "@frak-labs/ui/component/Tooltip";
-import { CheckIcon, ChevronDown, X, XIcon } from "lucide-react";
-import { useState } from "react";
-import type { ComponentPropsWithRef } from "react";
 import styles from "./index.module.css";
 
 type Option = {
@@ -221,11 +221,7 @@ function SelectedValues({
  * @param size
  * @constructor
  */
-function SelectedValuesMore({
-    size,
-}: {
-    size: number;
-}) {
+function SelectedValuesMore({ size }: { size: number }) {
     return (
         <div className={styles.multiSelect__triggerInner}>
             <div className={styles.multiSelect__triggerBadges}>

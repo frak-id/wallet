@@ -1,27 +1,23 @@
-import { useLogin } from "@/module/authentication/hook/useLogin";
-import { AccordionRecoveryItem } from "@/module/common/component/AccordionRecoveryItem";
-import {
-    recoveryFileContentAtom,
-    recoveryStepAtom,
-} from "@/module/settings/atoms/recovery";
 import { Button } from "@frak-labs/ui/component/Button";
 import { WalletAddress } from "@frak-labs/ui/component/HashDisplay";
-import { useAtomValue, useSetAtom } from "jotai";
+import { useLogin } from "@frak-labs/wallet-shared";
 import { useCallback, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import { toHex } from "viem";
+import { AccordionRecoveryItem } from "@/module/common/component/AccordionRecoveryItem";
+import {
+    recoveryStore,
+    selectRecoveryFileContent,
+} from "@/module/stores/recoveryStore";
 import styles from "./Step2.module.css";
 
 const ACTUAL_STEP = 2;
 
 export function Step2() {
     const { t } = useTranslation();
-    // Set the current step
-    const setStep = useSetAtom(recoveryStepAtom);
-
     // Get the recovery file
-    const fileContent = useAtomValue(recoveryFileContentAtom);
+    const fileContent = recoveryStore(selectRecoveryFileContent);
 
     const navigate = useNavigate();
     const [, startTransition] = useTransition();
@@ -46,7 +42,7 @@ export function Step2() {
             });
 
             // If no wallet, go to the next step
-            if (!wallet) setStep(ACTUAL_STEP + 1);
+            if (!wallet) recoveryStore.getState().setStep(ACTUAL_STEP + 1);
 
             // If login is in success, go to the wallet
             if (wallet) {
@@ -56,9 +52,9 @@ export function Step2() {
             }
         } catch (e) {
             console.error(e);
-            setStep(ACTUAL_STEP + 1);
+            recoveryStore.getState().setStep(ACTUAL_STEP + 1);
         }
-    }, [fileContent, login, setStep, navigate]);
+    }, [fileContent, login, navigate]);
 
     return (
         <AccordionRecoveryItem

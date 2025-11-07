@@ -3,7 +3,7 @@ import {
     productInteractionDiamond_delegateToFacet,
     productInteractionDiamond_handleInteraction,
 } from "@backend-utils";
-import { type Address, type Hex, encodeFunctionData, encodePacked } from "viem";
+import { type Address, encodeFunctionData, encodePacked, type Hex } from "viem";
 import { simulateContract } from "viem/actions";
 import type { InteractionData } from "../types/interactions";
 
@@ -47,7 +47,7 @@ export class InteractionPackerRepository {
                 abi: [productInteractionDiamond_delegateToFacet],
                 functionName: "delegateToFacet",
                 args: [
-                    Number.parseInt(interactionData.handlerTypeDenominator),
+                    Number.parseInt(interactionData.handlerTypeDenominator, 10),
                     interactionData.interactionData,
                 ],
             });
@@ -78,7 +78,10 @@ export class InteractionPackerRepository {
     packageInteractionData({
         interactionData,
         signature,
-    }: { interactionData: InteractionData; signature: Hex }) {
+    }: {
+        interactionData: InteractionData;
+        signature: Hex;
+    }) {
         return encodeFunctionData({
             abi: [productInteractionDiamond_handleInteraction],
             functionName: "handleInteraction",

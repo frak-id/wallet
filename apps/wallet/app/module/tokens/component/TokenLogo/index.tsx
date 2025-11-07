@@ -1,11 +1,14 @@
-import type { BalanceItem } from "@/types/Balance";
-import { FrakToken } from "./FrakToken";
+import type { BalanceItem } from "@frak-labs/wallet-shared";
+import { FrakToken } from "@/module/tokens/component/TokenLogo/FrakToken";
 import styles from "./index.module.css";
 
 export function TokenLogo({
     token,
     size = 24,
-}: { token?: BalanceItem; size?: number }) {
+}: {
+    token?: BalanceItem;
+    size?: number;
+}) {
     return (
         token && (
             <span className={styles.tokenLogo}>

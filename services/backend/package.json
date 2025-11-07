@@ -30,7 +30,7 @@
     "@elysiajs/cors": "^1.4.0",
     "@frak-labs/app-essentials": "workspace:*",
     "@frak-labs/core-sdk": "workspace:*",
-    "@simplewebauthn/server": "^13.1.1",
+    "@simplewebauthn/server": "^13.2.2",
     "@slack/web-api": "^7.9.2",
     "airtable": "^0.12.2",
     "async-mutex": "^0.5.0",
@@ -43,12 +43,13 @@
     "lru-cache": "^11.1.0",
     "merkletreejs": "^0.5.2",
     "mongodb": "^6.17.0",
+    "ox": "^0.9.14",
     "permissionless": "^0.2.47",
     "postgres": "^3.4.7",
     "solady": "^0.1.19",
     "sst": "3.17.5",
     "ua-parser-js": "^2.0.3",
-    "viem": "^2.31.2",
+    "viem": "catalog:",
     "web-push": "^3.6.7",
     "whatwg-url": "^14.2.0"
   },
@@ -58,7 +59,7 @@
     "bun-types": "latest",
     "drizzle-kit": "^0.30.5",
     "pino-pretty": "^13.0.0",
-    "typescript": "^5.8.3"
+    "typescript": "catalog:"
   },
   "module": "src/index.ts",
   "main": "./src/index.ts"

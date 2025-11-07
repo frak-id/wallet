@@ -1,3 +1,5 @@
+import { Checkbox } from "@frak-labs/ui/component/forms/Checkbox";
+import type { UseFormReturn } from "react-hook-form";
 import { Panel } from "@/module/common/component/Panel";
 import {
     FormControl,
@@ -8,8 +10,6 @@ import {
     FormMessage,
 } from "@/module/forms/Form";
 import type { Campaign } from "@/types/Campaign";
-import { Checkbox } from "@frak-labs/ui/component/forms/Checkbox";
-import type { UseFormReturn } from "react-hook-form";
 import styles from "./FormSpecialAdvertising.module.css";
 
 const itemsSpecialAdvertising = [

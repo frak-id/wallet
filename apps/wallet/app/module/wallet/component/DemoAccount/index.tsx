@@ -1,28 +1,27 @@
+import type { SdkSessionPayload } from "@frak-labs/wallet-shared";
 import {
-    type SdkSessionPayload,
-    demoPrivateKeyAtom,
-    sdkSessionAtom,
-} from "@/module/common/atoms/session";
-import { Panel } from "@/module/common/component/Panel";
+    selectDemoPrivateKey,
+    selectSdkSession,
+    sessionStore,
+} from "@frak-labs/wallet-shared";
 import { decodeJwt } from "jose";
-import { atom, useAtomValue } from "jotai";
+import { Panel } from "@/module/common/component/Panel";
 import styles from "./index.module.css";
 
-const isDemoAccountAtom = atom((get) => {
-    const demoPkey = get(demoPrivateKeyAtom);
-    if (demoPkey) return true;
-
-    const sdkSession = get(sdkSessionAtom);
-    if (!sdkSession) return false;
-
-    const parsedSession = decodeJwt<SdkSessionPayload>(sdkSession.token);
-    if (!parsedSession) return false;
-
-    return parsedSession?.additionalData?.demoPkey !== undefined;
-});
-
 export function DemoAccount() {
-    const isDemoAccount = useAtomValue(isDemoAccountAtom);
+    const demoPkey = sessionStore(selectDemoPrivateKey);
+    const sdkSession = sessionStore(selectSdkSession);
+
+    const isDemoAccount = (() => {
+        if (demoPkey) return true;
+        if (!sdkSession) return false;
+
+        const parsedSession = decodeJwt<SdkSessionPayload>(sdkSession.token);
+        if (!parsedSession) return false;
+
+        return parsedSession?.additionalData?.demoPkey !== undefined;
+    })();
+
     if (!isDemoAccount) {
         return null;
     }

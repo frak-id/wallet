@@ -1,9 +1,5 @@
 "use server";
 
-import { getSafeSession } from "@/context/auth/actions/session";
-import { viemClient } from "@/context/blockchain/provider";
-import { getCampaignRepository } from "@/context/campaigns/repository/CampaignRepository";
-import type { CampaignWithState } from "@/types/Campaign";
 import {
     addresses,
     interactionCampaignAbi,
@@ -14,6 +10,12 @@ import { indexerApi } from "@frak-labs/client/server";
 import { all, sift, unique } from "radash";
 import { type Address, getAddress, isAddress, isAddressEqual } from "viem";
 import { multicall } from "viem/actions";
+import { getSafeSession } from "@/context/auth/actions/session";
+import { viemClient } from "@/context/blockchain/provider";
+import { getMyCampaignsMock } from "@/context/campaigns/action/mock";
+import { getCampaignRepository } from "@/context/campaigns/repository/CampaignRepository";
+import { isDemoModeActive } from "@/module/common/utils/isDemoMode";
+import type { CampaignWithState } from "@/types/Campaign";
 
 type ApiResult = {
     productId: string;
@@ -31,6 +33,11 @@ type ApiResult = {
  * Get the current user campaigns
  */
 export async function getMyCampaigns(): Promise<CampaignWithState[]> {
+    // Check if demo mode is active
+    if (await isDemoModeActive()) {
+        return getMyCampaignsMock();
+    }
+
     const session = await getSafeSession();
 
     // Perform the request to our api, and fallback to empty array

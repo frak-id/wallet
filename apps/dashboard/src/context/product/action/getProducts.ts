@@ -1,8 +1,10 @@
 "use server";
 
-import { getSafeSession } from "@/context/auth/actions/session";
 import { indexerApi } from "@frak-labs/client/server";
 import { type Address, type Hex, toHex } from "viem";
+import { getSafeSession } from "@/context/auth/actions/session";
+import { getMyProductsMock } from "@/context/product/action/mock";
+import { isDemoModeActive } from "@/module/common/utils/isDemoMode";
 
 type ApiResult = {
     id: string; // bigint
@@ -55,6 +57,11 @@ async function getProducts({ wallet }: { wallet: Address }) {
  * Get the products for the current user
  */
 export async function getMyProducts() {
+    // Check if demo mode is active
+    if (await isDemoModeActive()) {
+        return getMyProductsMock();
+    }
+
     const session = await getSafeSession();
     return getProducts({ wallet: session.wallet });
 }

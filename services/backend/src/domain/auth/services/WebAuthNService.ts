@@ -1,18 +1,22 @@
 import { viemClient } from "@backend-common";
-import {
-    KernelWallet,
-    WebAuthN,
-    kernelAddresses,
-} from "@frak-labs/app-essentials";
-import {
-    type AuthenticationResponseJSON,
-    verifyAuthenticationResponse,
-} from "@simplewebauthn/server";
+import { KernelWallet, kernelAddresses } from "@frak-labs/app-essentials";
+import { type Signature, WebAuthnP256 } from "ox";
+import type { SignMetadata } from "ox/WebAuthnP256";
 import { getSenderAddress } from "permissionless/actions";
-import { type Address, type Hex, concatHex, keccak256, toHex } from "viem";
+import { type Address, concatHex, type Hex, keccak256, toHex } from "viem";
 import { entryPoint06Address } from "viem/account-abstraction";
 import type { AuthenticatorRepository } from "../repositories/AuthenticatorRepository";
-import { decodePublicKey } from "../utils/webauthnDecode";
+
+/**
+ * WebAuthn authentication response structure (simplified ox format)
+ */
+type AuthenticationResponseJSON = {
+    id: string;
+    response: {
+        metadata: SignMetadata;
+        signature: Signature.Signature<false>;
+    };
+};
 
 export class WebAuthNService {
     constructor(
@@ -32,7 +36,10 @@ export class WebAuthNService {
     async getWalletAddress({
         authenticatorId,
         pubKey,
-    }: { authenticatorId: string; pubKey: { x: Hex; y: Hex } }) {
+    }: {
+        authenticatorId: string;
+        pubKey: { x: Hex; y: Hex };
+    }) {
         // Compute base stuff to fetch the smart wallet address
         const authenticatorIdHash = keccak256(toHex(authenticatorId));
         const initCode = KernelWallet.getWebAuthNSmartWalletInitCode({
@@ -68,54 +75,49 @@ export class WebAuthNService {
      */
     async isValidSignature({
         compressedSignature,
-        msg,
+        challenge,
     }: {
         compressedSignature: string;
-        msg: string;
+        challenge: Hex;
     }) {
         // Decode the authenticator response
-        const signature =
+        const result =
             this.parseCompressedResponse<AuthenticationResponseJSON>(
                 compressedSignature
             );
 
         // Find the authenticator
         const authenticator =
-            await this.authenticatorRepository.getByCredentialId(signature.id);
+            await this.authenticatorRepository.getByCredentialId(result.id);
         if (!authenticator) {
             return false;
         }
 
         // Check if the address match the signature provided
         const walletAddress = await this.getWalletAddress({
-            authenticatorId: signature.id,
+            authenticatorId: result.id,
             pubKey: authenticator.publicKey,
         });
 
-        // Ensure the verification pass
-        const verification = await verifyAuthenticationResponse({
-            response: signature,
-            expectedOrigin: WebAuthN.rpOrigin,
-            expectedRPID: WebAuthN.rpId,
-            credential: {
-                counter: authenticator.counter,
-                id: authenticator._id,
-                publicKey: authenticator.credentialPublicKey.buffer,
+        // Ensure the verification pass using ox
+        const { signature, metadata } = result.response;
+        const verification = WebAuthnP256.verify({
+            publicKey: {
+                x: BigInt(authenticator.publicKey.x),
+                y: BigInt(authenticator.publicKey.y),
+                prefix: 4,
             },
-            expectedChallenge: msg,
+            signature: {
+                r: BigInt(signature.r),
+                s: BigInt(signature.s),
+                yParity: signature.yParity,
+            },
+            metadata,
+            challenge,
         });
+
         if (!verification) {
             return false;
-        }
-
-        // Update this authenticator counter (if the counter has changed, not the case with touch id)
-        if (
-            verification.authenticationInfo.newCounter !== authenticator.counter
-        ) {
-            await this.authenticatorRepository.updateCounter({
-                credentialId: authenticator._id,
-                counter: verification.authenticationInfo.newCounter + 1,
-            });
         }
 
         // All good, return a few info
@@ -126,9 +128,5 @@ export class WebAuthNService {
             rawPublicKey: authenticator.credentialPublicKey.buffer,
             transports: authenticator.transports,
         };
-    }
-
-    get decodePublicKey() {
-        return decodePublicKey;
     }
 }

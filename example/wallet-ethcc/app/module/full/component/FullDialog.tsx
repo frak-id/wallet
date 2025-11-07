@@ -1,4 +1,3 @@
-import { Panel } from "@/module/common/component/Panel";
 import {
     addresses,
     productInteractionManagerAbi,
@@ -6,16 +5,17 @@ import {
 import type {
     LoginModalStepType,
     ModalRpcStepsResultType,
+    OpenInteractionSessionModalStepType,
     SendTransactionModalStepType,
     SiweAuthenticateModalStepType,
 } from "@frak-labs/core-sdk";
-import type { OpenInteractionSessionModalStepType } from "@frak-labs/core-sdk";
 import { useDisplayModal } from "@frak-labs/react-sdk";
 import { Button } from "@frak-labs/ui/component/Button";
 import { BadgeCheck } from "lucide-react";
 import { useMemo } from "react";
 import { encodeFunctionData } from "viem";
 import { parseSiweMessage } from "viem/siwe";
+import { Panel } from "@/module/common/component/Panel";
 
 export function FullDialog() {
     const {

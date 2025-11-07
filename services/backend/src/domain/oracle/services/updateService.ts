@@ -1,8 +1,7 @@
-import { adminWalletsRepository, log, viemClient } from "@backend-common";
-import { db } from "@backend-common";
+import { adminWalletsRepository, db, log, viemClient } from "@backend-common";
 import { addresses } from "@frak-labs/app-essentials";
 import { and, eq, inArray, isNull, sql } from "drizzle-orm";
-import { type Hex, type LocalAccount, encodePacked } from "viem";
+import { encodePacked, type Hex, type LocalAccount } from "viem";
 import {
     readContract,
     simulateContract,
@@ -19,12 +18,14 @@ import type { MerkleTreeRepository } from "../repositories/MerkleTreeRepository"
 
 // 50 items waiting for update
 const ORACLE_UPDATE_THRESHOLD = Number.parseInt(
-    process.env.ORACLE_UPDATE_THRESHOLD ?? "50"
+    process.env.ORACLE_UPDATE_THRESHOLD ?? "50",
+    10
 );
 
 // 24hr
 const ORACLE_UPDATE_MAX_AGE_MINUTES = Number.parseInt(
-    process.env.ORACLE_UPDATE_MAX_AGE_MINUTES ?? "1440"
+    process.env.ORACLE_UPDATE_MAX_AGE_MINUTES ?? "1440",
+    10
 );
 
 export class UpdateOracleService {
@@ -199,11 +200,7 @@ export class UpdateOracleService {
     /**
      * Invalidate the oracle trees needing updates
      */
-    async invalidateOracleTree({
-        oracleIds,
-    }: {
-        oracleIds: Set<number>;
-    }) {
+    async invalidateOracleTree({ oracleIds }: { oracleIds: Set<number> }) {
         if (oracleIds.size === 0) {
             return [];
         }
@@ -228,11 +225,7 @@ export class UpdateOracleService {
     /**
      * Update each products merkle root
      */
-    async updateProductsMerkleRoot({
-        productIds,
-    }: {
-        productIds: Hex[];
-    }) {
+    async updateProductsMerkleRoot({ productIds }: { productIds: Hex[] }) {
         const oracleUpdater =
             await adminWalletsRepository.getKeySpecificAccount({
                 key: "oracle-updater",

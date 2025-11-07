@@ -1,10 +1,10 @@
-import { bufferToBase64URLString } from "@simplewebauthn/browser";
+import { bufferToBase64URLString } from "@frak-labs/wallet-shared/common/utils/base64url";
 import { random } from "radash";
 import {
     type Address,
-    type Hex,
     concat,
     concatBytes,
+    type Hex,
     keccak256,
     stringToBytes,
     toBytes,
@@ -18,10 +18,13 @@ import {
 export async function passToKey({
     pass,
     salt,
-}: { pass: string; salt: Uint8Array }) {
+}: {
+    pass: string;
+    salt: Uint8Array;
+}) {
     const baseKey = await window.crypto.subtle.importKey(
         "raw",
-        stringToBytes(pass),
+        new Uint8Array(stringToBytes(pass)),
         { name: "PBKDF2" },
         false,
         ["deriveBits", "deriveKey"]
@@ -31,7 +34,7 @@ export async function passToKey({
     return await window.crypto.subtle.deriveKey(
         {
             name: "PBKDF2",
-            salt,
+            salt: new Uint8Array(salt),
             iterations: 300_000,
             hash: "SHA-512",
         },
@@ -51,7 +54,11 @@ export async function encryptPrivateKey({
     privateKey,
     initialAddress,
     pass,
-}: { privateKey: Hex; initialAddress: Address; pass: string }) {
+}: {
+    privateKey: Hex;
+    initialAddress: Address;
+    pass: string;
+}) {
     if (typeof window === "undefined") {
         throw new Error("This function should only be used in the browser");
     }
@@ -77,7 +84,7 @@ export async function encryptPrivateKey({
             iv: iv,
         },
         key,
-        stringToBytes(privateKey)
+        new Uint8Array(stringToBytes(privateKey))
     );
 
     // Concat all the data and return them

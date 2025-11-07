@@ -1,6 +1,6 @@
-import { recoverySetupKey } from "@/module/recovery-setup/queryKeys/recovery-setup";
-import type { RecoveryFileContent } from "@/types/Recovery";
+import type { RecoveryFileContent } from "@frak-labs/wallet-shared";
 import { useMutation } from "@tanstack/react-query";
+import { recoverySetupKey } from "@/module/recovery-setup/queryKeys/recovery-setup";
 
 /**
  * Hook used to trigger the download of the recovery file

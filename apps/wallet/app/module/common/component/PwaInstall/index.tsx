@@ -1,20 +1,6 @@
 import "@khmyznikov/pwa-install";
-import type { PWAInstallElement } from "@khmyznikov/pwa-install";
-import { atom, useAtomValue } from "jotai";
-import { type RefObject, createRef, useEffect } from "react";
-
-/**
- * @description Keep the pwa-install element to be used elsewhere.
- *
- * @example
- *
- * const pwaInstallRef = useAtomValue(pwaInstallRefAtom);
- *
- * @returns {RefObject<PWAInstallElement | null>}
- */
-export const pwaInstallRefAtom = atom<RefObject<PWAInstallElement | null>>(
-    createRef<PWAInstallElement>()
-);
+import { useEffect } from "react";
+import { usePwaInstallRef } from "@/module/common/context/PwaInstallContext";
 
 /**
  * @description Register the beforeinstallprompt event.
@@ -28,7 +14,6 @@ export const pwaInstallRefAtom = atom<RefObject<PWAInstallElement | null>>(
 export function PwaInstallScript() {
     return (
         <script
-            // biome-ignore lint/security/noDangerouslySetInnerHtml:
             dangerouslySetInnerHTML={{
                 __html: `
                     window.addEventListener("beforeinstallprompt", (e) => {
@@ -55,18 +40,17 @@ export function PwaInstallScript() {
  * @returns {JSX.Element}
  */
 export function PwaInstall() {
-    const pwaInstallRef = useAtomValue(pwaInstallRefAtom);
+    const pwaInstallRef = usePwaInstallRef();
 
     useEffect(() => {
         const pwaInstall = pwaInstallRef?.current;
         if (!pwaInstall) return;
 
-        // @ts-ignore
         pwaInstall.externalPromptEvent = window.promptEvent;
     }, [pwaInstallRef]);
 
     return (
-        // @ts-ignore
+        // @ts-expect-error
         <pwa-install
             ref={pwaInstallRef}
             manifest-url="/manifest.json"

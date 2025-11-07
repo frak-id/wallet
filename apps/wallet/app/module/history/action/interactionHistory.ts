@@ -1,9 +1,11 @@
-import { groupByDay } from "@/module/history/utils/groupByDay";
-import type { HistoryGroup } from "@/types/HistoryGroup";
-import type { InteractionHistory } from "@/types/InteractionHistory";
 import type { GetInteractionsResponseDto } from "@frak-labs/app-essentials";
 import { indexerApi } from "@frak-labs/client/server";
+import type {
+    HistoryGroup,
+    InteractionHistory,
+} from "@frak-labs/wallet-shared";
 import type { Address } from "viem";
+import { groupByDay } from "@/module/history/utils/groupByDay";
 
 /**
  * Get the reward history for a user

@@ -1,19 +1,19 @@
-import { Badge } from "@/module/common/component/Badge";
-import { Row } from "@/module/common/component/Row";
-import { Title } from "@/module/common/component/Title";
-import { Form, FormLabel } from "@/module/forms/Form";
 import { businessApi } from "@frak-labs/client/server";
 import { Button } from "@frak-labs/ui/component/Button";
 import { Column, Columns } from "@frak-labs/ui/component/Columns";
+import { Input } from "@frak-labs/ui/component/forms/Input";
 import { Spinner } from "@frak-labs/ui/component/Spinner";
 import { TextWithCopy } from "@frak-labs/ui/component/TextWithCopy";
-import { Input } from "@frak-labs/ui/component/forms/Input";
 import { useMutation } from "@tanstack/react-query";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import type { Hex } from "viem";
 import { generatePrivateKey } from "viem/accounts";
+import { Badge } from "@/module/common/component/Badge";
+import { Row } from "@/module/common/component/Row";
+import { Title } from "@/module/common/component/Title";
+import { Form, FormLabel } from "@/module/forms/Form";
 import { useOracleSetupData } from "../../hook/useOracleSetupData";
 
 type OraclePlatform = "shopify" | "woocommerce" | "custom" | "internal";
@@ -424,7 +424,10 @@ function useWebhookSetup({ productId }: { productId: Hex }) {
         mutationFn: async ({
             webhookKey,
             platform,
-        }: { webhookKey: string; platform: OraclePlatform }) => {
+        }: {
+            webhookKey: string;
+            platform: OraclePlatform;
+        }) => {
             await businessApi.product({ productId }).oracleWebhook.setup.post({
                 hookSignatureKey: webhookKey,
                 platform,

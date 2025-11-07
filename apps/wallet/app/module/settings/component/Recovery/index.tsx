@@ -1,11 +1,10 @@
-import { webauthnSessionAtom } from "@/module/common/atoms/session";
-import { Panel } from "@/module/common/component/Panel";
-import { Title } from "@/module/common/component/Title";
-import { CurrentRecoverySetupStatus } from "@/module/recovery-setup/component/CurrentSetupStatus";
-import { useAtomValue } from "jotai";
+import { selectWebauthnSession, sessionStore } from "@frak-labs/wallet-shared";
 import { Shield } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
+import { Panel } from "@/module/common/component/Panel";
+import { Title } from "@/module/common/component/Title";
+import { CurrentRecoverySetupStatus } from "@/module/recovery-setup/component/CurrentSetupStatus";
 
 /**
  * Component for the settings with the recovery link
@@ -13,7 +12,7 @@ import { Link } from "react-router";
  */
 export function RecoveryLink() {
     const { t } = useTranslation();
-    const webauthnSession = useAtomValue(webauthnSessionAtom);
+    const webauthnSession = sessionStore(selectWebauthnSession);
 
     if (!webauthnSession) {
         return null;

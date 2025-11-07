@@ -1,16 +1,18 @@
-import { authenticatedBackendApi } from "@/module/common/api/backendClient";
-import { Panel } from "@/module/common/component/Panel";
-import { Title } from "@/module/common/component/Title";
-import { balanceKey } from "@/module/common/queryKeys/balance";
-import { claimableKey } from "@/module/wallet/queryKeys/claimable";
-import { encodeWalletMulticall } from "@/module/wallet/utils/multicall";
 import { campaignBankAbi } from "@frak-labs/app-essentials/blockchain";
 import { Button } from "@frak-labs/ui/component/Button";
+import {
+    authenticatedBackendApi,
+    balanceKey,
+    claimableKey,
+    encodeWalletMulticall,
+} from "@frak-labs/wallet-shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CircleDollarSign } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { encodeFunctionData } from "viem";
 import { useAccount, useSendTransaction } from "wagmi";
+import { Panel } from "@/module/common/component/Panel";
+import { Title } from "@/module/common/component/Title";
 import styles from "./index.module.css";
 
 export function PendingReferral() {

@@ -1,3 +1,7 @@
+import { Checkbox } from "@frak-labs/ui/component/forms/Checkbox";
+import { Input } from "@frak-labs/ui/component/forms/Input";
+import { useEffect, useState } from "react";
+import { useFormContext, useWatch } from "react-hook-form";
 import { Row } from "@/module/common/component/Row";
 import {
     FormField,
@@ -6,16 +10,15 @@ import {
     FormMessage,
 } from "@/module/forms/Form";
 import type { FormMembersFiltering } from "@/module/members/component/MembersFiltering";
-import { Checkbox } from "@frak-labs/ui/component/forms/Checkbox";
-import { Input } from "@frak-labs/ui/component/forms/Input";
-import { useEffect, useState } from "react";
-import { useFormContext, useWatch } from "react-hook-form";
 import styles from "./index.module.css";
 
 export function InteractionsFiltering({
     disabled,
     onSubmit,
-}: { disabled?: boolean; onSubmit: (data: FormMembersFiltering) => void }) {
+}: {
+    disabled?: boolean;
+    onSubmit: (data: FormMembersFiltering) => void;
+}) {
     const { control, handleSubmit, setValue } =
         useFormContext<FormMembersFiltering>();
     const currentInteractions = useWatch({ control, name: "interactions" });
@@ -113,8 +116,10 @@ export function InteractionsFiltering({
 
                             if (
                                 Number.parseInt(
-                                    currentInteractions?.min as unknown as string
-                                ) >= Number.parseInt(value as unknown as string)
+                                    currentInteractions?.min as unknown as string,
+                                    10
+                                ) >=
+                                Number.parseInt(value as unknown as string, 10)
                             ) {
                                 return "Max interactions should be greater than minimum";
                             }

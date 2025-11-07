@@ -1,10 +1,10 @@
 "use server";
 
-import { viemClient } from "@/context/blockchain/provider";
 import { campaignBankAbi } from "@frak-labs/app-essentials/blockchain";
 import { LRUCache } from "lru-cache";
 import { type Address, erc20Abi } from "viem";
 import { readContract } from "viem/actions";
+import { viemClient } from "@/context/blockchain/provider";
 
 type BankInfo = {
     token?: Address;

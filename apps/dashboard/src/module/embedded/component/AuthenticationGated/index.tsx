@@ -1,13 +1,13 @@
 "use client";
 
-import { getSession, setSession } from "@/context/auth/actions/session";
-import { Panel } from "@/module/common/component/Panel";
-import { Title } from "@/module/common/component/Title";
 import { useSiweAuthenticate, useWalletStatus } from "@frak-labs/react-sdk";
 import { Button } from "@frak-labs/ui/component/Button";
 import { Spinner } from "@frak-labs/ui/component/Spinner";
 import { useQuery } from "@tanstack/react-query";
 import { type ReactNode, useMemo } from "react";
+import { getSession, setSession } from "@/context/auth/actions/session";
+import { Panel } from "@/module/common/component/Panel";
+import { Title } from "@/module/common/component/Title";
 import styles from "../Mint/index.module.css";
 
 /**
@@ -16,7 +16,10 @@ import styles from "../Mint/index.module.css";
 export function AuthenticationGated({
     children,
     action,
-}: { action: string; children: ReactNode }) {
+}: {
+    action: string;
+    children: ReactNode;
+}) {
     const {
         data: walletStatus,
         refetch: refetchWalletStatus,

@@ -1,21 +1,22 @@
-import { currentChain } from "@/module/blockchain/provider";
-import { authenticatedWalletApi } from "@/module/common/api/backendClient";
-import { useEnforceWagmiConnection } from "@/module/common/hook/useEnforceWagmiConnection";
-import { subscriptionAtom } from "@/module/notification/atom/subscriptionAtom";
-import { smartAccountConnector } from "@/module/wallet/smartWallet/connector";
-import { getTransport } from "@frak-labs/app-essentials/blockchain";
-import { jotaiStore } from "@frak-labs/ui/atoms/store";
+import {
+    authenticatedWalletApi,
+    setProfileId,
+    usePersistentPairingClient,
+    WagmiProviderWithDynamicConfig,
+} from "@frak-labs/wallet-shared";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import type { PersistQueryClientProviderProps } from "@tanstack/react-query-persist-client";
-import { Provider } from "jotai";
-import { type PropsWithChildren, useEffect, useMemo } from "react";
-import { createClient } from "viem";
-import { WagmiProvider, createConfig, useAccount } from "wagmi";
-import { usePersistentPairingClient } from "../../pairing/hook/usePersistentPairingClient";
-import { setProfileId } from "../analytics";
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
+import { type PropsWithChildren, useEffect } from "react";
+import { useAccount } from "wagmi";
+import { PwaInstallProvider } from "@/module/common/context/PwaInstallContext";
+import { useEnforceWagmiConnection } from "@/module/common/hook/useEnforceWagmiConnection";
+import {
+    NotificationProvider,
+    useNotificationContext,
+} from "@/module/notification/context/NotificationContext";
 
 /**
  * The query client that will be used by tanstack/react-query
@@ -44,9 +45,12 @@ const persistOptions: PersistQueryClientProviderProps["persistOptions"] = {
     maxAge: Number.POSITIVE_INFINITY,
     dehydrateOptions: {
         shouldDehydrateQuery: ({ meta, state }) => {
-            const isValid = state.status === "success";
+            // Only dehydrate successful queries, exclude pending/error/paused
+            const isSuccess = state.status === "success";
             const isStorable = (meta?.storable as boolean) ?? true;
-            return isValid && isStorable;
+            // Also ensure data exists to prevent hydration issues
+            const hasData = state.data !== undefined;
+            return isSuccess && isStorable && hasData;
         },
     },
     // Invalidate the cache when the app version changes
@@ -55,23 +59,24 @@ const persistOptions: PersistQueryClientProviderProps["persistOptions"] = {
 
 export function RootProvider({ children }: PropsWithChildren) {
     return (
-        <>
-            <Provider store={jotaiStore}>
-                <PersistQueryClientProvider
-                    client={queryClient}
-                    persistOptions={persistOptions}
-                >
+        <PersistQueryClientProvider
+            client={queryClient}
+            persistOptions={persistOptions}
+        >
+            <PwaInstallProvider>
+                <NotificationProvider>
                     <SetupServiceWorker />
                     <WagmiProviderWithDynamicConfig>
+                        <SessionStateManager />
                         {children}
                     </WagmiProviderWithDynamicConfig>
-                    <ReactQueryDevtools
-                        initialIsOpen={false}
-                        buttonPosition={"top-right"}
-                    />
-                </PersistQueryClientProvider>
-            </Provider>
-        </>
+                </NotificationProvider>
+            </PwaInstallProvider>
+            <ReactQueryDevtools
+                initialIsOpen={false}
+                buttonPosition={"top-right"}
+            />
+        </PersistQueryClientProvider>
     );
 }
 
@@ -80,6 +85,8 @@ export function RootProvider({ children }: PropsWithChildren) {
  * @constructor
  */
 function SetupServiceWorker() {
+    const { setSubscription } = useNotificationContext();
+
     // Hook to automatically register the service worker if possible
     useEffect(() => {
         // Early exit if not supported
@@ -110,7 +117,7 @@ function SetupServiceWorker() {
                 );
                 return;
             }
-            jotaiStore.set(subscriptionAtom, subscription);
+            setSubscription(subscription);
 
             // Save this new subscription
             const jsonSubscription = subscription.toJSON();
@@ -128,38 +135,9 @@ function SetupServiceWorker() {
         };
 
         loadServiceWorker();
-    }, []);
+    }, [setSubscription]);
 
     return null;
-}
-
-function WagmiProviderWithDynamicConfig({ children }: PropsWithChildren) {
-    const config = useMemo(
-        () =>
-            createConfig({
-                chains: [currentChain],
-                connectors: [smartAccountConnector()],
-                multiInjectedProviderDiscovery: false,
-                client: ({ chain }) =>
-                    createClient({
-                        chain,
-                        transport: getTransport({ chain }),
-                        cacheTime: 60_000,
-                        batch: {
-                            multicall: {
-                                wait: 50,
-                            },
-                        },
-                    }),
-            }),
-        []
-    );
-    return (
-        <WagmiProvider config={config}>
-            <SessionStateManager />
-            {children}
-        </WagmiProvider>
-    );
 }
 
 function SessionStateManager() {

@@ -1,5 +1,3 @@
-import { useWaitForTxAndInvalidateQueries } from "@/module/common/utils/useWaitForTxAndInvalidateQueries";
-import { encodeProductTypesMask } from "@/module/product/utils/productTypes";
 import {
     addresses,
     productInteractionManagerAbi,
@@ -9,7 +7,9 @@ import {
 import type { ProductTypesKey } from "@frak-labs/core-sdk";
 import { useSendTransactionAction } from "@frak-labs/react-sdk";
 import { useMutation } from "@tanstack/react-query";
-import { type Address, type Hex, encodeFunctionData } from "viem";
+import { type Address, encodeFunctionData, type Hex } from "viem";
+import { useWaitForTxAndInvalidateQueries } from "@/module/common/utils/useWaitForTxAndInvalidateQueries";
+import { encodeProductTypesMask } from "@/module/product/utils/productTypes";
 import { useProductInteractionContract } from "./useProductInteractionContract";
 
 type ProductEditParams = {

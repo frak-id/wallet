@@ -1,5 +1,7 @@
 "use client";
 
+import { getCountryDataList } from "countries-list";
+import type { UseFormReturn } from "react-hook-form";
 import { Panel } from "@/module/common/component/Panel";
 import {
     FormControl,
@@ -11,8 +13,6 @@ import {
 } from "@/module/forms/Form";
 import { MultiSelect } from "@/module/forms/MultiSelect";
 import type { Campaign } from "@/types/Campaign";
-import { getCountryDataList } from "countries-list";
-import type { UseFormReturn } from "react-hook-form";
 
 export function FormTerritory(form: UseFormReturn<Campaign>) {
     return (

@@ -1,15 +1,17 @@
 import * as process from "node:process";
 import { reactRouter } from "@react-router/dev/vite";
 import type { Drop } from "esbuild";
-import { defineConfig } from "vite";
-import type { ConfigEnv, UserConfig } from "vite";
+import type { ConfigEnv, UserConfig } from "rolldown-vite";
+import { defineConfig } from "rolldown-vite";
 import mkcert from "vite-plugin-mkcert";
 import tsconfigPaths from "vite-tsconfig-paths";
-import { manualChunks, onwarn } from "../../packages/dev-tooling";
+import { onwarn } from "../../packages/dev-tooling";
 
 const DEBUG = JSON.stringify(false);
 
-export default defineConfig(({ mode, isSsrBuild }: ConfigEnv): UserConfig => {
+const isProd = process.env.STAGE?.includes("prod") ?? false;
+
+export default defineConfig(({ mode, command }: ConfigEnv): UserConfig => {
     const isSW = mode === "sw";
 
     const baseConfig = {
@@ -30,9 +32,6 @@ export default defineConfig(({ mode, isSsrBuild }: ConfigEnv): UserConfig => {
             "process.env.VAPID_PUBLIC_KEY": JSON.stringify(
                 process.env.VAPID_PUBLIC_KEY
             ),
-            "process.env.PRIVY_APP_ID": JSON.stringify(
-                process.env.PRIVY_APP_ID
-            ),
             "process.env.DEBUG": JSON.stringify(DEBUG),
             "process.env.APP_VERSION": JSON.stringify(
                 process.env.COMMIT_HASH ?? "UNKNOWN"
@@ -49,10 +48,7 @@ export default defineConfig(({ mode, isSsrBuild }: ConfigEnv): UserConfig => {
         },
         // Remove console and debugger on prod
         esbuild: {
-            drop:
-                process.env.STAGE === "prod"
-                    ? (["console", "debugger"] as Drop[])
-                    : [],
+            drop: isProd ? (["console", "debugger"] as Drop[]) : [],
         },
     };
 
@@ -61,6 +57,7 @@ export default defineConfig(({ mode, isSsrBuild }: ConfigEnv): UserConfig => {
         return {
             ...baseConfig,
             plugins: [tsconfigPaths()],
+            publicDir: false,
             build: {
                 target: "ES2020",
                 lib: {
@@ -81,27 +78,85 @@ export default defineConfig(({ mode, isSsrBuild }: ConfigEnv): UserConfig => {
         plugins: [reactRouter(), mkcert(), tsconfigPaths()],
         resolve: {
             conditions: ["development"],
+            alias: {
+                // Enforce stub for @wagmi/connectors to avoid heavy dependencies (MetaMask SDK, etc.)
+                "@wagmi/connectors": new URL(
+                    "../../.stubs/wagmi-connectors-stub/index.js",
+                    import.meta.url
+                ).pathname,
+                ...(command === "build"
+                    ? {
+                          "react-dom/server": "react-dom/server.node",
+                      }
+                    : {}),
+            },
         },
         server: {
             port: 3000,
-            proxy: {},
+            proxy: {
+                // Proxy listener app from separate dev server
+                "/listener": {
+                    target: "https://localhost:3002",
+                    changeOrigin: true,
+                    secure: false, // Allow self-signed certs in dev
+                    ws: true, // Proxy websockets if needed
+                },
+            },
         },
         build: {
-            // todo: should be switched to false once we resolved css conflicts
-            cssCodeSplit: true,
-            target: isSsrBuild ? "ES2022" : "ES2020",
-            rollupOptions: {
+            // CSS code splitting - keep enabled for better caching
+            cssCodeSplit: false,
+            target: "baseline-widely-available",
+            // Chunk size warning limit - we're optimizing chunks to stay under this
+            chunkSizeWarningLimit: 400,
+            minify: true,
+            sourcemap: !isProd,
+            rolldownOptions: {
+                // Enable aggressive tree shaking
+                treeshake: {
+                    moduleSideEffects: "no-external", // External packages (node_modules) have no side effects
+                    propertyReadSideEffects: false, // Reading properties doesn't cause side effects
+                },
+                optimization: {
+                    // This will to remove some stuff that will be defined, like stage depend variable
+                    inlineConst: { mode: "all", pass: 3 },
+                },
                 output: {
-                    // Set a min chunk size to 16kb
-                    // note, this is pre-minification chunk size, not the final bundle size
-                    experimentalMinChunkSize: 32000,
-                    manualChunks(id, meta) {
-                        return manualChunks(id, meta);
+                    advancedChunks: {
+                        // Only chunk stuff shared by at least 2 module
+                        minShareCount: 2,
+                        groups: [
+                            // React ecosystem - React + React-DOM + scheduler
+                            {
+                                name: "react-vendor",
+                                test: /node_modules[\\/](react|react-dom|react[\\/]jsx-runtime)/,
+                                priority: 40,
+                            },
+
+                            // Blockchain libraries - viem + wagmi + all crypto
+                            {
+                                name: "blockchain-vendor",
+                                test: /node_modules[\\/](viem|0x|wagmi|@wagmi|permissionless|@noble|@scure)/,
+                                priority: 35,
+                            },
+
+                            // UI vendors - ALL UI libraries together
+                            {
+                                name: "ui-vendor",
+                                test: /node_modules[\\/](@radix-ui|vaul|micromark|sonner|lucide-react|class-variance-authority|cuer|nprogress|react-hook-form|react-dropzone)/,
+                                priority: 30,
+                            },
+
+                            // All the other elements shared within the codebase
+                            {
+                                name: "common",
+                                priority: 10,
+                            },
+                        ],
                     },
                 },
                 onwarn,
             },
-            sourcemap: false,
         },
         optimizeDeps: {
             exclude: ["react-scan"],

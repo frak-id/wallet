@@ -1,94 +1,93 @@
 {
-	"name": "@frak-labs/frame-connector",
-	"author": "Frak Labs",
-	"maintainers": [
-		{
-			"name": "srod",
-			"url": "https://twitter.com/srod"
-		},
-		{
-			"name": "Quentin Nivelais",
-			"url": "https://twitter.com/QNivelais"
-		}
-	],
-	"version": "0.1.0",
-	"description": "Generic, type-safe RPC communication layer for bidirectional postMessage communication",
-	"repository": {
-		"url": "https://github.com/frak-id/wallet",
-		"directory": "packages/rpc"
-	},
-	"homepage": "https://docs.frak.id/wallet-sdk/overview",
-	"keywords": [
-		"frak-labs",
-		"rpc",
-		"postmessage",
-		"iframe",
-		"type-safe",
-		"bidirectional"
-	],
-	"license": "GNU GPL 3.0",
-	"sideEffects": false,
-	"private": false,
-	"publishConfig": {
-		"access": "public"
-	},
-	"type": "module",
-	"files": [
-		"/dist"
-	],
-	"main": "./dist/index.cjs",
-	"types": "./dist/index.d.cts",
-	"exports": {
-		".": {
-			"import": {
-				"types": "./dist/index.d.ts",
-				"default": "./dist/index.js"
-			},
-			"require": {
-				"types": "./dist/index.d.cts",
-				"default": "./dist/index.cjs"
-			}
-		},
-		"./middleware": {
-			"import": {
-				"types": "./dist/middleware.d.ts",
-				"default": "./dist/middleware.js"
-			},
-			"require": {
-				"types": "./dist/middleware.d.cts",
-				"default": "./dist/middleware.cjs"
-			}
-		}
-	},
-	"scripts": {
-		"lint": "biome lint .",
-		"format:check": "biome check .",
-		"format": "biome check --write .",
-		"clean": "rimraf dist",
-		"build": "rslib build",
-		"build:watch": "rslib build --watch",
-		"check-exports": "attw --pack .",
-		"typecheck": "tsc --noEmit",
-		"prepublish": "bun run lint && bun run build",
-		"publish": "echo 'Publishing rpc...'"
-	},
-	"dependencies": {
-		"@jsonjoy.com/json-pack": "^1.2.0"
-	},
-	"peerDependencies": {
-		"viem": "^2.23.14"
-	},
-	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.18.2",
-		"@frak-labs/browserslist-config": "workspace:*",
-		"@frak-labs/dev-tooling": "workspace:*",
-		"@microsoft/api-extractor": "^7.52.8",
-		"@rslib/core": "^0.9.2",
-		"@types/node": "^24",
-		"typescript": "^5",
-		"viem": "^2.23.14"
-	},
-	"browserslist": [
-		"extends @frak-labs/browserslist-config"
-	]
+    "name": "@frak-labs/frame-connector",
+    "author": "Frak Labs",
+    "maintainers": [
+        {
+            "name": "srod",
+            "url": "https://twitter.com/srod"
+        },
+        {
+            "name": "Quentin Nivelais",
+            "url": "https://twitter.com/QNivelais"
+        }
+    ],
+    "version": "0.1.0",
+    "description": "Generic, type-safe RPC communication layer for bidirectional postMessage communication",
+    "repository": {
+        "url": "https://github.com/frak-id/wallet",
+        "directory": "packages/rpc"
+    },
+    "homepage": "https://docs.frak.id/wallet-sdk/overview",
+    "keywords": [
+        "frak-labs",
+        "rpc",
+        "postmessage",
+        "iframe",
+        "type-safe",
+        "bidirectional"
+    ],
+    "license": "GNU GPL 3.0",
+    "sideEffects": false,
+    "private": false,
+    "publishConfig": {
+        "access": "public"
+    },
+    "type": "module",
+    "files": [
+        "/dist"
+    ],
+    "main": "./dist/index.cjs",
+    "types": "./dist/index.d.cts",
+    "exports": {
+        ".": {
+            "import": {
+                "types": "./dist/index.d.ts",
+                "default": "./dist/index.js"
+            },
+            "require": {
+                "types": "./dist/index.d.cts",
+                "default": "./dist/index.cjs"
+            }
+        },
+        "./middleware": {
+            "import": {
+                "types": "./dist/middleware.d.ts",
+                "default": "./dist/middleware.js"
+            },
+            "require": {
+                "types": "./dist/middleware.d.cts",
+                "default": "./dist/middleware.cjs"
+            }
+        }
+    },
+    "scripts": {
+        "lint": "biome lint .",
+        "format:check": "biome check .",
+        "format": "biome check --write .",
+        "clean": "rimraf dist",
+        "build": "tsdown",
+        "build:watch": "tsdown --watch",
+        "check-exports": "attw --pack .",
+        "typecheck": "tsc --noEmit",
+        "prepublish": "bun run lint && bun run build",
+        "publish": "echo 'Publishing rpc...'"
+    },
+    "dependencies": {
+        "@jsonjoy.com/json-pack": "^1.21.0"
+    },
+    "peerDependencies": {
+        "viem": "^2.x"
+    },
+    "devDependencies": {
+        "@arethetypeswrong/cli": "^0.18.2",
+        "@frak-labs/browserslist-config": "workspace:*",
+        "@frak-labs/dev-tooling": "workspace:*",
+        "@types/node": "catalog:",
+        "tsdown": "^0.16.0",
+        "typescript": "^5",
+        "viem": "catalog:"
+    },
+    "browserslist": [
+        "extends @frak-labs/browserslist-config"
+    ]
 }

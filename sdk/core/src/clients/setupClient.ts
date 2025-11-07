@@ -19,7 +19,9 @@ import { createIframe, getSupportedCurrency } from "../utils";
  */
 export async function setupClient({
     config,
-}: { config: FrakWalletSdkConfig }): Promise<FrakClient | undefined> {
+}: {
+    config: FrakWalletSdkConfig;
+}): Promise<FrakClient | undefined> {
     // Prepare the config
     const preparedConfig = prepareConfig(config);
 

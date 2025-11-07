@@ -1,11 +1,14 @@
-import { webauthnSessionAtom } from "@/module/common/atoms/session";
-import { getTargetPairingClient } from "@/module/pairing/clients/store";
-import { StatusBoxWallet } from "@/module/pairing/component/PairingStatusBox";
-import { SignatureRequestList } from "@/module/pairing/component/SignatureRequest";
-import type { TargetPairingState as TargetPairingStateType } from "@/module/pairing/types";
-import { useAtomValue } from "jotai";
+import {
+    getTargetPairingClient,
+    StatusBoxWallet,
+    selectWebauthnSession,
+    sessionStore,
+} from "@frak-labs/wallet-shared";
+import type { TargetPairingState as TargetPairingStateType } from "@frak-labs/wallet-shared/pairing/types";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { useStore } from "zustand";
+import { SignatureRequestList } from "@/module/pairing/component/SignatureRequest";
 
 /**
  * Component displaying the live target pairing state
@@ -15,7 +18,7 @@ import { useTranslation } from "react-i18next";
  * todo: only displayed on the wallet
  */
 export function TargetPairingState() {
-    const session = useAtomValue(webauthnSessionAtom);
+    const session = sessionStore(selectWebauthnSession);
     if (!session) return null;
     return <InnerTargetPairingState />;
 }
@@ -27,7 +30,7 @@ export function TargetPairingState() {
  */
 function InnerTargetPairingState() {
     const client = useMemo(() => getTargetPairingClient(), []);
-    const state = useAtomValue(client.stateAtom);
+    const state = useStore(client.store);
     const { status, text } = getStatusDetails(state) ?? {};
 
     // Don't display anything if the state is idle

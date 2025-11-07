@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
-import { p256 } from "@noble/curves/p256";
-import { bufferToBase64URLString } from "@simplewebauthn/browser";
+import { bufferToBase64URLString } from "@frak-labs/wallet-shared/common/utils/base64url";
+import { p256 } from "@noble/curves/nist.js";
 import type {
     CreateResponse,
     CredentialPropsString,
@@ -67,12 +67,14 @@ export async function getRegistrationResponse(
     const digest = createHash("sha256").update(verifyData).digest();
 
     // Sign it
-    const signature = p256.sign(digest, authenticator.privateKey);
+    const signature = p256.sign(digest, authenticator.privateKey, {
+        format: "der",
+    });
 
     // Build the attestation object
     const attestationStmtMap = new Map<string, number | Uint8Array>();
     attestationStmtMap.set("alg", EC2_SHA256_ALGO);
-    attestationStmtMap.set("sig", Buffer.from(signature.toDERHex(), "hex"));
+    attestationStmtMap.set("sig", signature);
 
     const attestationObjMap = new Map<
         string,
@@ -158,7 +160,9 @@ export function getAuthenticationResponse(
     const digest = createHash("sha256").update(verifyData).digest();
 
     // Sign it
-    const signature = p256.sign(digest, authenticator.privateKey);
+    const signature = p256.sign(digest, authenticator.privateKey, {
+        format: "der",
+    });
 
     return {
         id: bufferToBase64URLString(
@@ -169,9 +173,7 @@ export function getAuthenticationResponse(
         authenticatorAttachment: "platform",
         response: {
             authenticatorData: Buffer.from(authData).toString("base64url"),
-            signature: Buffer.from(signature.toDERHex(), "hex").toString(
-                "base64url"
-            ),
+            signature: Buffer.from(signature).toString("base64url"),
             clientDataJSON: Buffer.from(clientDataJSON).toString("base64url"),
             userHandle: Buffer.from(
                 authenticator.credentialId as unknown as ArrayBuffer

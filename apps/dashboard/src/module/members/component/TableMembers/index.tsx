@@ -1,34 +1,29 @@
 "use client";
 
+import type { GetMembersPageItem } from "@frak-labs/app-essentials";
+import { Button } from "@frak-labs/ui/component/Button";
+import { Checkbox } from "@frak-labs/ui/component/forms/Checkbox";
+import { WalletAddress } from "@frak-labs/ui/component/HashDisplay";
+import { Skeleton } from "@frak-labs/ui/component/Skeleton";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import {
+    type ColumnDef,
+    createColumnHelper,
+    type SortingState,
+} from "@tanstack/react-table";
+import dynamic from "next/dynamic";
+import { useEffect, useMemo, useState } from "react";
+import { formatEther, isAddressEqual } from "viem";
 import {
     type GetMembersParam,
     getProductMembers,
 } from "@/context/members/action/getProductMembers";
+import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { Row } from "@/module/common/component/Row";
 import type { ReactTableProps } from "@/module/common/component/Table";
-import {
-    addSelectedMembersAtom,
-    removeSelectedMembersAtom,
-    selectedMembersAtom,
-} from "@/module/members/atoms/selectedMembers";
-import { tableMembersFiltersAtom } from "@/module/members/atoms/tableMembers";
 import { TableMembersFilters } from "@/module/members/component/TableMembers/Filters";
 import { Pagination } from "@/module/members/component/TableMembers/Pagination";
-import type { GetMembersPageItem } from "@frak-labs/app-essentials";
-import { Button } from "@frak-labs/ui/component/Button";
-import { WalletAddress } from "@frak-labs/ui/component/HashDisplay";
-import { Skeleton } from "@frak-labs/ui/component/Skeleton";
-import { Checkbox } from "@frak-labs/ui/component/forms/Checkbox";
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import {
-    type ColumnDef,
-    type SortingState,
-    createColumnHelper,
-} from "@tanstack/react-table";
-import { useAtom, useSetAtom } from "jotai";
-import dynamic from "next/dynamic";
-import { useEffect, useMemo, useState } from "react";
-import { formatEther, isAddressEqual } from "viem";
+import { membersStore } from "@/stores/membersStore";
 import styles from "./index.module.css";
 
 const Table = dynamic<ReactTableProps<GetMembersPageItem>>(
@@ -46,10 +41,13 @@ const columnHelper = createColumnHelper<GetMembersPageItem>();
  *  - filter on top
  */
 export function TableMembers() {
-    const [filters, setFilters] = useAtom(tableMembersFiltersAtom);
-    const [selectedMembers, setSelectedMembers] = useAtom(selectedMembersAtom);
-    const addSelectedMember = useSetAtom(addSelectedMembersAtom);
-    const removeSelectedMember = useSetAtom(removeSelectedMembersAtom);
+    const filters = membersStore((state) => state.tableFilters);
+    const setFilters = membersStore((state) => state.setTableFilters);
+    const selectedMembers = membersStore((state) => state.selectedMembers);
+    const addSelectedMember = membersStore((state) => state.addMember);
+    const removeSelectedMember = membersStore((state) => state.removeMember);
+    const clearSelection = membersStore((state) => state.clearSelection);
+    const isDemoMode = useIsDemoMode();
 
     /**
      * Replicate pagination state for the table using the filter
@@ -149,7 +147,7 @@ export function TableMembers() {
                     header: () => "Member from",
                     cell: ({ getValue }) =>
                         new Date(
-                            Number.parseInt(getValue()) * 1000
+                            Number.parseInt(getValue(), 10) * 1000
                         ).toLocaleDateString(),
                 }),
                 columnHelper.accessor("totalInteractions", {
@@ -161,10 +159,10 @@ export function TableMembers() {
                     enableSorting: true,
                     header: () => "Rewards",
                     cell: ({ getValue }) =>
-                        `${formatEther(BigInt(getValue()))} $`,
+                        `${formatEther(BigInt(getValue()))} ${isDemoMode ? "€" : "$"}`,
                 }),
             ] as ColumnDef<GetMembersPageItem>[],
-        [selectedMembers, addSelectedMember, removeSelectedMember]
+        [selectedMembers, addSelectedMember, removeSelectedMember, isDemoMode]
     );
 
     if (!page || isPending) {
@@ -200,7 +198,7 @@ export function TableMembers() {
                                     </p>
                                     <Button
                                         type={"button"}
-                                        onClick={() => setSelectedMembers([])}
+                                        onClick={() => clearSelection()}
                                         variant={"outline"}
                                     >
                                         Clear selection
