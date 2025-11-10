@@ -63,7 +63,7 @@
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "bun-types": "latest",
-    "sst": "3.17.21",
+    "sst": "3.17.23",
     "typescript": "^5"
   },
   "browserslist": [

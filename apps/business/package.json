@@ -78,7 +78,7 @@
         "bun-types": "latest",
         "jsdom": "^27.1.0",
         "lightningcss": "^1.30.2",
-        "sst": "3.17.21",
+        "sst": "3.17.23",
         "typescript": "^5",
         "vite": "catalog:",
         "vite-tsconfig-paths": "^5.1.4",
