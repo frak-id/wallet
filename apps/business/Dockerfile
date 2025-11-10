@@ -35,7 +35,7 @@ RUN --mount=type=secret,id=OPEN_PANEL_BUSINESS_CLIENT_ID \
     bun run build
 
 # Start a new stage for the final image
-FROM oven/bun
+FROM oven/bun:1.3.2
 
 WORKDIR /app
 
