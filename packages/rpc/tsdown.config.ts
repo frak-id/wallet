@@ -1,3 +1,4 @@
+import nodePolyfills from "@rolldown/plugin-node-polyfills";
 import { defineConfig } from "tsdown";
 
 export default defineConfig({
@@ -15,4 +16,5 @@ export default defineConfig({
     treeshake: {
         moduleSideEffects: false,
     },
+    plugins: [nodePolyfills()],
 });

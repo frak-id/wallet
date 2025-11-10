@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import nodePolyfills from "@rolldown/plugin-node-polyfills";
 import { defineConfig } from "tsdown";
 
 const openPanelClientId = {
@@ -44,6 +45,7 @@ export default defineConfig([
             moduleSideEffects: false,
         },
         define: buildDefine,
+        plugins: [nodePolyfills()],
     },
     // CDN distribution (IIFE)
     {
@@ -63,5 +65,6 @@ export default defineConfig([
             moduleSideEffects: false,
         },
         define: buildDefine,
+        plugins: [nodePolyfills()],
     },
 ]);

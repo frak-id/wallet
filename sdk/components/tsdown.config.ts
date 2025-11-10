@@ -1,5 +1,6 @@
 import { Buffer } from "node:buffer";
 import { injectCssPlugin } from "@bosh-code/tsdown-plugin-inject-css";
+import nodePolyfills from "@rolldown/plugin-node-polyfills";
 import { defineConfig } from "tsdown";
 import LightningCSS from "unplugin-lightningcss/rolldown";
 
@@ -105,6 +106,7 @@ export default defineConfig([
         dts: true,
         outDir: "./dist",
         plugins: [
+            nodePolyfills(),
             LightningCSS({ options: { minify: true } }),
             injectCssPlugin(),
         ],
@@ -136,6 +138,7 @@ export default defineConfig([
             };
         },
         plugins: [
+            nodePolyfills(),
             LightningCSS({ options: { minify: true } }),
             combineCssPlugin(),
         ],

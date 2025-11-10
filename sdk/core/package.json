@@ -109,6 +109,7 @@
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.2",
     "@frak-labs/dev-tooling": "workspace:*",
+    "@rolldown/plugin-node-polyfills": "^1.0.0",
     "@types/jsdom": "^27.0.0",
     "@types/node": "catalog:",
     "@vitest/coverage-v8": "^4.0.7",

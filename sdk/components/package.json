@@ -82,6 +82,7 @@
     "@frak-labs/dev-tooling": "workspace:*",
     "@frak-labs/ui": "workspace:*",
     "@preact/preset-vite": "^2.8.1",
+    "@rolldown/plugin-node-polyfills": "^1.0.0",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/preact": "^3.2.3",
     "@testing-library/user-event": "^14.5.2",
