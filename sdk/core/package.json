@@ -112,12 +112,12 @@
     "@rolldown/plugin-node-polyfills": "^1.0.0",
     "@types/jsdom": "^27.0.0",
     "@types/node": "catalog:",
-    "@vitest/coverage-v8": "^4.0.7",
-    "@vitest/ui": "^4.0.7",
+    "@vitest/coverage-v8": "^4.0.8",
+    "@vitest/ui": "^4.0.8",
     "jsdom": "^27.1.0",
-    "tsdown": "^0.16.0",
+    "tsdown": "^0.16.1",
     "typescript": "catalog:",
     "viem": "catalog:",
-    "vitest": "^4.0.7"
+    "vitest": "^4.0.8"
   }
 }

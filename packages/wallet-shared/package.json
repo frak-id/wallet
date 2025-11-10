@@ -41,10 +41,10 @@
     "@wagmi/core": "catalog:",
     "class-variance-authority": "^0.7.1",
     "cuer": "^0.0.3",
-    "i18next": "^25.6.0",
+    "i18next": "^25.6.1",
     "idb-keyval": "^6.2.2",
     "jose": "^6.1.0",
-    "lucide-react": "^0.552.0",
+    "lucide-react": "^0.553.0",
     "micromark": "^4.0.2",
     "nanoid": "^5.1.6",
     "nprogress": "^0.2.0",
@@ -72,14 +72,14 @@
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "@vitejs/plugin-react": "^5.1.0",
-    "@vitest/coverage-v8": "^4.0.7",
-    "@vitest/ui": "^4.0.7",
+    "@vitest/coverage-v8": "^4.0.8",
+    "@vitest/ui": "^4.0.8",
     "bun-types": "latest",
     "jsdom": "^27.1.0",
-    "msw": "^2.12.0",
+    "msw": "^2.12.1",
     "typescript": "catalog:",
-    "rolldown-vite": "^7.2.0",
+    "rolldown-vite": "^7.2.2",
     "vite": "catalog:",
-    "vitest": "^4.0.7"
+    "vitest": "^4.0.8"
   }
 }

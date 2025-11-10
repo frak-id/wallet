@@ -17,7 +17,7 @@
     "@frak-labs/components": "workspace:*",
     "@frak-labs/core-sdk": "workspace:*",
     "typescript": "^5",
-    "rolldown-vite": "^7.2.0",
+    "rolldown-vite": "^7.2.2",
     "vite": "catalog:",
     "vite-plugin-html": "^3.2.2"
   }
