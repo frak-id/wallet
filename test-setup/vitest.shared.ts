@@ -130,9 +130,7 @@ export async function getReactTestPlugins(options?: {
     // Using any cast to suppress type errors - works at runtime but bypasses type-checking
     const [{ default: react }, { default: tsconfigPaths }] = (await Promise.all(
         [
-            // @ts-expect-error - Unsafe cast to any for dynamic imports
             import(/* @vite-ignore */ "@vitejs/plugin-react"),
-            // @ts-expect-error - Unsafe cast to any for dynamic imports
             import(/* @vite-ignore */ "vite-tsconfig-paths"),
         ]
     )) as any;
@@ -165,8 +163,8 @@ export async function getReactTestPlugins(options?: {
 export async function getReactOnlyPlugins(): Promise<VitePlugin[]> {
     // Dynamic import to avoid loading React plugin for projects that don't use it
     // Using any cast to suppress type errors - works at runtime but bypasses type-checking
-    const { default: react } =
-        // @ts-expect-error - Unsafe cast to any for dynamic import
-        (await import(/* @vite-ignore */ "@vitejs/plugin-react")) as any;
+    const { default: react } = (await import(
+        /* @vite-ignore */ "@vitejs/plugin-react"
+    )) as any;
     return [react()];
 }

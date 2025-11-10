@@ -13,11 +13,8 @@ export default defineConfig({
         }),
         tanstackStart(),
         viteReact(),
-        // @ts-expect-error - Bun peer dependency deduplication issue causes duplicate vite installations
         nitro({
-            config: {
-                preset: "bun",
-            },
+            preset: "bun",
         }),
     ],
     // Replace some env variable when it's needed

@@ -41,7 +41,7 @@ describe("openWalletModal", () => {
     });
 
     it("should use modalWalletConfig when provided", () => {
-        const customConfig = { metadata: { position: "left" } };
+        const customConfig = { metadata: { position: "left" as const } };
         window.FrakSetup.modalWalletConfig = customConfig;
 
         openWalletModal();

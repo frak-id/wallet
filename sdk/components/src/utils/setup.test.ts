@@ -12,6 +12,14 @@ describe("setup", () => {
     beforeEach(() => {
         vi.clearAllMocks();
         window.modalBuilderSteps = undefined;
+        // Setup a mock client
+        window.FrakSetup.client = {
+            config: {
+                metadata: {
+                    name: "Test App",
+                },
+            },
+        } as any;
     });
 
     describe("setupModalConfig", () => {
@@ -21,27 +29,27 @@ describe("setup", () => {
                 mockModalBuilder
             );
 
-            setupModalConfig(window.FrakSetup.client);
+            setupModalConfig(window.FrakSetup.client!);
 
             expect(coreSdkActions.modalBuilder).toHaveBeenCalledWith(
-                window.FrakSetup.client,
+                window.FrakSetup.client!,
                 window.FrakSetup.modalConfig ?? {}
             );
             expect(window.modalBuilderSteps).toBeDefined();
         });
 
         it("should use modalConfig when provided", () => {
-            const customConfig = { metadata: { position: "left" } };
-            window.FrakSetup.modalConfig = customConfig;
+            const customConfig = { metadata: { position: "left" as const } };
+            window.FrakSetup.modalConfig = customConfig as any;
             const mockModalBuilder = vi.fn().mockReturnValue({});
             vi.mocked(coreSdkActions.modalBuilder).mockImplementation(
                 mockModalBuilder
             );
 
-            setupModalConfig(window.FrakSetup.client);
+            setupModalConfig(window.FrakSetup.client!);
 
             expect(coreSdkActions.modalBuilder).toHaveBeenCalledWith(
-                window.FrakSetup.client,
+                window.FrakSetup.client!,
                 customConfig
             );
         });
@@ -58,10 +66,10 @@ describe("setup", () => {
                 .spyOn(console, "log")
                 .mockImplementation(() => {});
 
-            await setupReferral(window.FrakSetup.client);
+            await setupReferral(window.FrakSetup.client!);
 
             expect(coreSdkActions.referralInteraction).toHaveBeenCalledWith(
-                window.FrakSetup.client,
+                window.FrakSetup.client!,
                 {
                     modalConfig: window.FrakSetup.modalWalletConfig,
                 }

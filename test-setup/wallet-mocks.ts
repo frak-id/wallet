@@ -80,4 +80,5 @@ vi.mock("idb-keyval", () => ({
     keys: vi.fn(() => []),
     values: vi.fn(() => []),
     entries: vi.fn(() => []),
+    createStore: vi.fn(() => ({})),
 }));

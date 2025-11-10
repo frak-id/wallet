@@ -32,10 +32,11 @@ describe("useClientReady", () => {
         window.FrakSetup.client = {
             config: {
                 metadata: {
+                    name: "Test App",
                     currency: "eur",
                 },
             },
-        };
+        } as any;
     });
 
     it("should return disabled state initially when client is not ready", () => {
@@ -49,10 +50,11 @@ describe("useClientReady", () => {
         window.FrakSetup.client = {
             config: {
                 metadata: {
+                    name: "Test App",
                     currency: "eur",
                 },
             },
-        };
+        } as any;
 
         const { result } = renderHook(() => useClientReady());
 
