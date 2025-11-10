@@ -80,7 +80,7 @@
     "@tanstack/react-query-devtools": "^5.90.2",
     "@tanstack/react-query-persist-client": "^5.90.8",
     "@tanstack/query-sync-storage-persister": "^5.90.7",
-    "vite": "7.1.12"
+    "vite": "npm:rolldown-vite@^7.2.2"
   },
   "dependencies": {
     "caniuse-lite": "^1.0.30001753"

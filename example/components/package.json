@@ -36,7 +36,7 @@
     "tailwindcss-animate": "^1.0.7",
     "typescript": "catalog:",
     "rolldown-vite": "^7.2.0",
-    "vite": "npm:rolldown-vite@^7.2.0",
+    "vite": "catalog:",
     "zod": "^3.25.76"
   },
   "dependencies": {
