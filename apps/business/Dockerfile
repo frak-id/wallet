@@ -5,6 +5,15 @@ FROM ${BASE_IMAGE} AS builder
 # Set the working directory to the root of the monorepo
 WORKDIR /app
 
+# Install dependencies (SDK already built in base image)
+RUN bun install --frozen-lockfile
+
+# Copy required packages
+COPY packages/ ./packages/
+
+# Copy business app source files
+COPY apps/business ./apps/business
+
 # Non-secret build args
 ARG NODE_ENV
 ARG STAGE
