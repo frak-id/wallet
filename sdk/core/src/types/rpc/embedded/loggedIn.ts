@@ -17,7 +17,7 @@ export type EmbeddedViewActionSharing = {
         popupTitle?: string;
         /**
          * The text that will be shared alongside the link.
-         * Can contain the variable {LINK} to specify where the link is placed, otherwise it will be added at the end
+         * Can contain the variable `{LINK}` to specify where the link is placed, otherwise it will be added at the end
          * @deprecated Use the top level `config.metadata.i18n` instead
          */
         text?: string;

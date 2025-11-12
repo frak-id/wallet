@@ -18,9 +18,9 @@ const config = {
     entryPointStrategy: "packages",
     packageOptions: {
         entryPoints: [
-            // top level entry points,
+            // Top level entry points for all packages
             "src/index.ts",
-            // Core SDK custom entry points
+            // Core SDK custom entry points (these will be ignored for packages without them)
             "src/actions/index.ts",
             "src/interactions/index.ts",
         ],
@@ -31,8 +31,10 @@ const config = {
     blockTags: [
         // All the previous typedoc supported tags
         ...OptionDefaults.blockTags,
-        // Support the description tag, for frontmatter usage,
+        // Support the description tag, for frontmatter usage
         "@description",
+        // Support the group tag for categorization
+        "@group",
     ],
     // Module is too fat, and members too verbose, should find a mix
     outputFileStrategy: "members",
@@ -47,10 +49,17 @@ const config = {
     expandObjects: true,
     expandParameters: false,
     typeDeclarationVisibility: "compact",
-    includeVersion: true,
     readme: "none",
+    hidePageHeader: true,
     // Frontmatter
     frontmatterCommentTags: ["description"],
+    // Validation settings - suppress expected warnings
+    validation: {
+        // Don't warn about types marked @ignore but referenced elsewhere
+        notDocumented: false,
+        // Don't warn about invalid links (we use fully qualified paths)
+        invalidLink: false,
+    },
 };
 
 export default config;
