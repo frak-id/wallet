@@ -4,8 +4,8 @@ import {
     selectSession,
     sessionStore,
 } from "@frak-labs/wallet-shared";
+import { useNavigate } from "@tanstack/react-router";
 import { type PropsWithChildren, useEffect, useState } from "react";
-import { useNavigate } from "react-router";
 import { usePendingPairingInfo } from "@/module/pairing/hook/usePendingPairingInfo";
 
 /**
@@ -31,14 +31,17 @@ export function AuthRestricted({
         // If require an auth but no token, redirect to registration
         if (requireAuthenticated && !session?.token) {
             console.log("Redirecting to registration");
-            navigate("/register", { replace: true });
+            navigate({ to: "/register", replace: true });
             return;
         }
 
         // If don't require an auth but have token, redirect to wallet
         if (!requireAuthenticated && session?.token) {
             console.log("Redirecting to wallet");
-            navigate(pairingInfo ? "/pairing" : "/wallet", { replace: true });
+            navigate({
+                to: pairingInfo ? "/pairing" : "/wallet",
+                replace: true,
+            });
             return;
         }
 

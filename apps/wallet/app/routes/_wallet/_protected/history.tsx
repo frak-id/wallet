@@ -1,3 +1,4 @@
+import { createFileRoute } from "@tanstack/react-router";
 import type { PropsWithChildren } from "react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -9,7 +10,11 @@ import styles from "./history.module.css";
 
 type HistoryType = "rewards" | "interaction" | "notifications";
 
-export default function History() {
+export const Route = createFileRoute("/_wallet/_protected/history")({
+    component: History,
+});
+
+function History() {
     const { t } = useTranslation();
     const [type, setType] = useState<HistoryType>("interaction");
 

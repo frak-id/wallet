@@ -46,17 +46,17 @@ RUN --mount=type=secret,id=DRPC_API_KEY \
 
 # Pre-compress all compressible static assets in builder stage
 # This creates .gz files alongside originals (e.g., app.js + app.js.gz)
-RUN find build/client -type f \
+RUN find dist -type f \
     \( -name '*.js' -o -name '*.css' -o -name '*.html' -o -name '*.json' \
     -o -name '*.svg' -o -name '*.txt' -o -name '*.xml' -o -name '*.ico' \) \
     -exec gzip -9 -k {} \; && \
-    echo "Pre-compressed $(find build/client -name '*.gz' | wc -l) files"
+    echo "Pre-compressed $(find dist -name '*.gz' | wc -l) files"
 
 # Final nginx image
 FROM nginx:1.29.1
 
 # Copy built static files (including pre-compressed .gz files) from builder
-COPY --from=builder /app/apps/wallet/build/client /usr/share/nginx/html
+COPY --from=builder /app/apps/wallet/dist /usr/share/nginx/html
 
 # Copy nginx configuration
 COPY apps/wallet/nginx.conf /etc/nginx/conf.d/default.conf

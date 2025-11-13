@@ -1,4 +1,5 @@
 import { Accordion } from "@frak-labs/ui/component/Accordion";
+import { createFileRoute } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Grid } from "@/module/common/component/Grid";
@@ -16,7 +17,11 @@ import {
 
 const MAX_STEPS = 6;
 
-export default function Recovery() {
+export const Route = createFileRoute("/_wallet/_auth/recovery")({
+    component: Recovery,
+});
+
+function Recovery() {
     const { t } = useTranslation();
     const step = recoveryStore(selectRecoveryStep);
 

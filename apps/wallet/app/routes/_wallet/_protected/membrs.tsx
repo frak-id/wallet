@@ -4,15 +4,19 @@ import {
     selectUserSetupLater,
     userStore,
 } from "@frak-labs/wallet-shared";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router";
 import { Grid } from "@/module/common/component/Grid";
 import { Title } from "@/module/common/component/Title";
 import { Membrs } from "@/module/membrs/assets/Membrs";
 import styles from "./membrs.module.css";
 
-export default function Members() {
+export const Route = createFileRoute("/_wallet/_protected/membrs")({
+    component: Members,
+});
+
+function Members() {
     const navigate = useNavigate();
     const { t } = useTranslation();
 
@@ -26,7 +30,7 @@ export default function Members() {
         if (user || isUserSetupLater) return;
 
         // Redirect to the profile page if the user does not have a profile
-        navigate("/membrs/profile");
+        navigate({ to: "/membrs/profile" });
     }, [user, isUserSetupLater, navigate]);
 
     return user || isUserSetupLater ? (
@@ -38,7 +42,7 @@ export default function Members() {
                 <p>{t("wallet.membrs.introduction.title")}</p>
             </div>
             <p className={styles.membrs__button}>
-                <Button onClick={() => navigate("/membrs/fanclub")}>
+                <Button onClick={() => navigate({ to: "/membrs/fanclub" })}>
                     {t("wallet.membrs.introduction.button")}
                 </Button>
             </p>

@@ -1,7 +1,11 @@
-import { Outlet } from "react-router";
+import { createFileRoute, Outlet } from "@tanstack/react-router";
 import { GlobalLayout } from "@/module/common/component/GlobalLayout";
 
-export default function SsoLayout() {
+export const Route = createFileRoute("/_wallet/_sso")({
+    component: SsoLayout,
+});
+
+function SsoLayout() {
     return (
         <GlobalLayout header={false}>
             <Outlet />

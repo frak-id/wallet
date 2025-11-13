@@ -1,9 +1,9 @@
 import { Button } from "@frak-labs/ui/component/Button";
 import { sessionStore, trackGenericEvent } from "@frak-labs/wallet-shared";
 import { useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
 import { LogOut } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router";
 import { Panel } from "@/module/common/component/Panel";
 
 function cleanLocalStorage() {
@@ -46,7 +46,7 @@ export function Logout() {
                     // Local storage cleanup
                     setTimeout(() => {
                         cleanLocalStorage();
-                        navigate("/register", { viewTransition: true });
+                        navigate({ to: "/register" });
                     }, 100);
                 }}
                 leftIcon={<LogOut size={32} />}

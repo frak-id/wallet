@@ -1,4 +1,5 @@
 import { Button } from "@frak-labs/ui/component/Button";
+import { createFileRoute } from "@tanstack/react-router";
 import { create } from "zustand";
 import { Grid } from "@/module/common/component/Grid";
 import styles from "./membrs-fanclub.module.css";
@@ -11,7 +12,11 @@ const useStepStore = create<{
     setStep: (step) => set({ step }),
 }));
 
-export default function MembrsFanclub() {
+export const Route = createFileRoute("/_wallet/_protected/membrs/fanclub")({
+    component: MembrsFanclub,
+});
+
+function MembrsFanclub() {
     // Get the current step
     const currentStep = useStepStore((state) => state.step);
 
@@ -37,7 +42,7 @@ function Step1() {
                 </p>
             </div>
             <Button onClick={() => setCurrentStep("step2")}>
-                i’m ready for this
+                i'm ready for this
             </Button>
         </>
     );
@@ -48,8 +53,8 @@ function Step2() {
         <>
             <div className={styles.fanClub__introduction}>
                 <p>
-                    Jul, Lena Situation, L’équipe, there is someone or something
-                    you’re fond of. Search and pick your one and only
+                    Jul, Lena Situation, L'équipe, there is someone or something
+                    you're fond of. Search and pick your one and only
                 </p>
             </div>
             <ul className={styles.fanClub__list}>

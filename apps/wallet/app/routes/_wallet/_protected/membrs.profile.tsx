@@ -1,3 +1,4 @@
+import { createFileRoute } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { Grid } from "@/module/common/component/Grid";
 import { Title } from "@/module/common/component/Title";
@@ -6,7 +7,11 @@ import { ProfileForm } from "@/module/membrs/component/ProfileForm";
 import { ProfilePhotoProvider } from "@/module/membrs/context/ProfilePhotoContext";
 import styles from "./membrs-profile.module.css";
 
-export default function MembersProfile() {
+export const Route = createFileRoute("/_wallet/_protected/membrs/profile")({
+    component: MembersProfile,
+});
+
+function MembersProfile() {
     const { t } = useTranslation();
 
     return (

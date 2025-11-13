@@ -1,6 +1,6 @@
+import { Link } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import type { PropsWithChildren } from "react";
-import { Link } from "react-router";
 import styles from "./index.module.css";
 
 type BackProps = {

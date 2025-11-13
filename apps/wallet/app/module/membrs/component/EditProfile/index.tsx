@@ -1,7 +1,7 @@
 import { Button } from "@frak-labs/ui/component/Button";
+import { useNavigate } from "@tanstack/react-router";
 import { UserPen } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router";
 import { Panel } from "@/module/common/component/Panel";
 
 /**
@@ -19,7 +19,7 @@ export function EditProfile() {
                 width={"full"}
                 align={"left"}
                 onClick={async () => {
-                    navigate("/membrs/profile", { viewTransition: true });
+                    navigate({ to: "/membrs/profile" });
                 }}
                 leftIcon={<UserPen size={32} />}
             >

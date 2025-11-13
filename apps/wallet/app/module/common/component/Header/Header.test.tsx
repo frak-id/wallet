@@ -14,8 +14,8 @@ vi.mock("remix-utils/use-hydrated", () => ({
     useHydrated: () => mockUseHydrated(),
 }));
 
-vi.mock("react-router", async () => {
-    const actual = await vi.importActual("react-router");
+vi.mock("@tanstack/react-router", async () => {
+    const actual = await vi.importActual("@tanstack/react-router");
     return {
         ...actual,
         Link: ({ children, to, ...props }: any) => (

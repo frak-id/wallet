@@ -1,9 +1,9 @@
 import { Button } from "@frak-labs/ui/component/Button";
 import { ButtonAuth } from "@frak-labs/ui/component/ButtonAuth";
 import { isWebAuthNSupported, useLogin } from "@frak-labs/wallet-shared";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { CloudUpload } from "lucide-react";
 import { Trans, useTranslation } from "react-i18next";
-import { Link } from "react-router";
 import { AuthenticateWithPhone } from "@/module/authentication/component/AuthenticateWithPhone";
 import { LoginList } from "@/module/authentication/component/LoginList";
 import { Back } from "@/module/common/component/Back";
@@ -11,7 +11,11 @@ import { Grid } from "@/module/common/component/Grid";
 import { PairingInProgress } from "@/module/pairing/component/PairingInProgress";
 import styles from "./login.module.css";
 
-export default function Login() {
+export const Route = createFileRoute("/_wallet/_auth/login")({
+    component: Login,
+});
+
+function Login() {
     const { t } = useTranslation();
     const { login, isLoading } = useLogin({});
 

@@ -2,18 +2,15 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { NavigationItem } from "./index";
 
-vi.mock("react-router", async () => {
-    const actual = await vi.importActual("react-router");
+vi.mock("@tanstack/react-router", async () => {
+    const actual = await vi.importActual("@tanstack/react-router");
     return {
         ...actual,
-        NavLink: ({ children, to, className }: any) => {
+        Link: ({ children, to, activeProps, inactiveProps }: any) => {
             const isActive = false; // Mock active state
-            const classNames =
-                typeof className === "function"
-                    ? className({ isActive })
-                    : className;
+            const props = isActive ? activeProps : inactiveProps;
             return (
-                <a href={to} className={classNames}>
+                <a href={to} {...props}>
                     {children}
                 </a>
             );

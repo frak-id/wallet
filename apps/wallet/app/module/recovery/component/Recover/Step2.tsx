@@ -1,9 +1,9 @@
 import { Button } from "@frak-labs/ui/component/Button";
 import { WalletAddress } from "@frak-labs/ui/component/HashDisplay";
 import { useLogin } from "@frak-labs/wallet-shared";
+import { useNavigate } from "@tanstack/react-router";
 import { useCallback, useTransition } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router";
 import { toHex } from "viem";
 import { AccordionRecoveryItem } from "@/module/common/component/AccordionRecoveryItem";
 import {
@@ -47,7 +47,7 @@ export function Step2() {
             // If login is in success, go to the wallet
             if (wallet) {
                 startTransition(() => {
-                    navigate("/wallet", { viewTransition: true });
+                    navigate({ to: "/wallet", viewTransition: true });
                 });
             }
         } catch (e) {

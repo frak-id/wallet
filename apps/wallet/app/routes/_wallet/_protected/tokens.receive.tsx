@@ -1,9 +1,14 @@
+import { createFileRoute } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { Back } from "@/module/common/component/Back";
 import { Grid } from "@/module/common/component/Grid";
 import { QRCodeWallet } from "@/module/wallet/component/QRCodeWallet";
 
-export default function TokensReceive() {
+export const Route = createFileRoute("/_wallet/_protected/tokens/receive")({
+    component: TokensReceive,
+});
+
+function TokensReceive() {
     const { t } = useTranslation();
     return (
         <>
