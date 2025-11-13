@@ -1,6 +1,6 @@
 import { productTypesMask } from "@frak-labs/core-sdk";
+import { Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { Link } from "react-router";
 import { Button } from "~/module/common/components/ui/button";
 import {
     Card,
@@ -142,7 +142,12 @@ function ProductRow({ product }: { product: MappedProduct }) {
             </TableCell>
             <TableCell className="text-right">
                 <Button asChild size="sm" variant="outline">
-                    <Link to={`/product/${product.id}`}>View Details</Link>
+                    <Link
+                        to="/product/$id"
+                        params={{ id: product.id.toString() }}
+                    >
+                        View Details
+                    </Link>
                 </Button>
             </TableCell>
         </TableRow>

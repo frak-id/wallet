@@ -1,17 +1,11 @@
 import { isRunningInProd } from "@frak-labs/app-essentials";
-import { IndexerState } from "../module/health/component/IndexerState";
-import { MeasurePings } from "../module/health/component/Ping";
-import type { Route } from "./+types/health";
+import { createFileRoute } from "@tanstack/react-router";
+import { IndexerState } from "~/module/health/component/IndexerState";
+import { MeasurePings } from "~/module/health/component/Ping";
 
-export function meta(_: Route.MetaArgs) {
-    return [
-        { title: "Health - Frak Dashboard Admin" },
-        {
-            name: "description",
-            content: "Health status of Frak services",
-        },
-    ];
-}
+export const Route = createFileRoute("/_layout/health")({
+    component: HealthComponent,
+});
 
 const urls = isRunningInProd
     ? [
@@ -27,11 +21,10 @@ const urls = isRunningInProd
           "https://backend-dev.frak.id/health",
       ];
 
-export default function Health() {
+function HealthComponent() {
     return (
         <>
             <MeasurePings urls={urls} />
-
             <IndexerState />
         </>
     );
