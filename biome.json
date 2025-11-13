@@ -22,7 +22,6 @@
             "!**/bundle.js",
             "!**/sst-env.d.ts",
             "!example/vanilla-js/index.html",
-            "!**/.react-router",
             "!**/.svelte-kit",
             "!**/*.svelte",
             "!**/playwright-report",
