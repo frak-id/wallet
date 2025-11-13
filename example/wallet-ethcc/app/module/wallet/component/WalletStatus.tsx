@@ -1,6 +1,5 @@
 import type { WalletStatusReturnType } from "@frak-labs/core-sdk";
 import { useWalletStatus } from "@frak-labs/react-sdk";
-import { Link } from "react-router";
 import { Panel } from "@/module/common/component/Panel";
 
 export function WalletStatus() {
@@ -10,9 +9,7 @@ export function WalletStatus() {
         <Panel variant={"primary"}>
             <h2>Wallet Status</h2>
             <InnerStatus status={walletStatus} />
-            <Link to={process.env.FRAK_WALLET_URL ?? ""}>
-                Check on Frak Wallet
-            </Link>
+            <a href={process.env.FRAK_WALLET_URL ?? ""}>Check on Frak Wallet</a>
         </Panel>
     );
 }

@@ -9,7 +9,6 @@ import type {
 import { useDisplayModal } from "@frak-labs/react-sdk";
 import { Button } from "@frak-labs/ui/component/Button";
 import { BadgeCheck } from "lucide-react";
-import { Link } from "react-router";
 import { encodeFunctionData } from "viem";
 import { Panel } from "@/module/common/component/Panel";
 
@@ -87,12 +86,13 @@ function SendTxResult({
             </h4>
 
             <p>TxHash: {data.sendTransaction.hash}</p>
-            <Link
-                to={`https://sepolia.arbiscan.io/tx/${data.sendTransaction.hash}`}
+            <a
+                href={`https://sepolia.arbiscan.io/tx/${data.sendTransaction.hash}`}
                 target={"_blank"}
+                rel="noreferrer"
             >
                 View on arbiscan
-            </Link>
+            </a>
         </div>
     );
 }

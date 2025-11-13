@@ -11,7 +11,7 @@ export const ethccWebsite = new sst.aws.StaticSite("WalletExampleEthCC", {
     },
     build: {
         command: "bun run build",
-        output: "build/client",
+        output: "dist",
     },
     vite: {
         types: "./sst-env.d.ts",
