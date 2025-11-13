@@ -2,8 +2,8 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Back } from "./index";
 
-vi.mock("react-router", async () => {
-    const actual = await vi.importActual("react-router");
+vi.mock("@tanstack/react-router", async () => {
+    const actual = await vi.importActual("@tanstack/react-router");
     return {
         ...actual,
         Link: ({ children, to, ...props }: any) => (

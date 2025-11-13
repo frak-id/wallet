@@ -5,7 +5,7 @@
  * the wallet app and wallet-shared package:
  *
  * - Wagmi hooks (useAccount, useConnect, useBalance, etc.)
- * - React Router hooks (useNavigate, useLocation, etc.) - via router-mocks.ts
+ * - TanStack Router hooks (useNavigate, useLocation, etc.) - via router-mocks.ts
  * - WebAuthn API (ox library)
  * - IndexedDB (idb-keyval)
  *
@@ -18,7 +18,7 @@
  */
 
 import { vi } from "vitest";
-import { setupReactRouterMock } from "./router-mocks";
+import { setupTanStackRouterMock } from "./router-mocks";
 
 // Mock Wagmi hooks
 vi.mock("wagmi", () => ({
@@ -56,8 +56,8 @@ vi.mock("wagmi", () => ({
     })),
 }));
 
-// Mock React Router (using shared router-mocks.ts abstraction)
-await setupReactRouterMock();
+// Mock TanStack Router (using shared router-mocks.ts abstraction)
+await setupTanStackRouterMock();
 
 // Mock ox WebAuthn API (migrated from @simplewebauthn)
 vi.mock("ox", async () => {

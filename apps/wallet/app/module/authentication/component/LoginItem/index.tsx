@@ -3,10 +3,10 @@ import { formatHash } from "@frak-labs/ui/component/HashDisplay";
 import { FingerprintFrak } from "@frak-labs/ui/icons/FingerprintFrak";
 import type { PreviousAuthenticatorModel } from "@frak-labs/wallet-shared";
 import { useLogin } from "@frak-labs/wallet-shared";
+import { useNavigate } from "@tanstack/react-router";
 import { SquareUser } from "lucide-react";
 import { useTransition } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router";
 import { toHex } from "viem";
 import styles from "./index.module.css";
 
@@ -21,7 +21,7 @@ export function LoginItem({
     const { login } = useLogin({
         onSuccess: () => {
             startTransition(() => {
-                navigate("/wallet");
+                navigate({ to: "/wallet" });
             });
         },
     });

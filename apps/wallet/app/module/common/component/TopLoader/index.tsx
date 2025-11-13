@@ -1,34 +1,21 @@
+import { useRouterState } from "@tanstack/react-router";
 import NProgress from "nprogress";
 import nProgressStylesUrl from "nprogress/nprogress.css?url";
-import { useEffect, useMemo } from "react";
-import { useFetchers, useNavigation } from "react-router";
+import { useEffect } from "react";
 
 export function TopLoader() {
     NProgress.configure({ showSpinner: false });
-    const navigation = useNavigation();
-    const fetchers = useFetchers();
+    const router = useRouterState();
 
-    const state = useMemo<"idle" | "loading">(
-        function getGlobalState() {
-            const states = [
-                navigation.state,
-                ...fetchers.map((fetcher) => fetcher.state),
-            ];
-            if (states.every((state) => state === "idle")) return "idle";
-            return "loading";
-        },
-        [navigation.state, fetchers]
-    );
+    const isLoading = router.status === "pending";
 
     useEffect(() => {
-        if (state === "loading") {
+        if (isLoading) {
             NProgress.start();
-        }
-
-        if (state === "idle") {
+        } else {
             NProgress.done();
         }
-    }, [state]);
+    }, [isLoading]);
 
     return null;
 }

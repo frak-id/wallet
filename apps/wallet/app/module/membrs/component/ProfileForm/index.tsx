@@ -10,6 +10,7 @@ import {
     sessionStore,
     userStore,
 } from "@frak-labs/wallet-shared";
+import { useNavigate } from "@tanstack/react-router";
 import { Copy } from "lucide-react";
 import { useEffect, useState } from "react";
 import {
@@ -19,7 +20,6 @@ import {
     useForm,
 } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router";
 import { useProfilePhoto } from "@/module/membrs/context/ProfilePhotoContext";
 import styles from "./index.module.css";
 
@@ -235,7 +235,7 @@ function SetupLaterButton() {
                 type="button"
                 onClick={() => {
                     userStore.getState().setUserSetupLater(true);
-                    navigate("/membrs", { viewTransition: true });
+                    navigate({ to: "/membrs" });
                 }}
                 className={`button ${styles.profileForm__link}`}
             >

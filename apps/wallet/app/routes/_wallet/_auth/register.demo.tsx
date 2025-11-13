@@ -2,20 +2,24 @@ import { ButtonAuth } from "@frak-labs/ui/component/ButtonAuth";
 import type { Session } from "@frak-labs/wallet-shared";
 import { authKey, sessionStore } from "@frak-labs/wallet-shared";
 import { type UseMutationOptions, useMutation } from "@tanstack/react-query";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
-import { useNavigate } from "react-router";
 import { generatePrivateKey } from "viem/accounts";
+import { useDemoLogin } from "@/module/authentication/hook/useDemoLogin";
 import { Grid } from "@/module/common/component/Grid";
-import { useDemoLogin } from "../../module/authentication/hook/useDemoLogin";
 import styles from "./register.module.css";
 
-export default function RegisterDemo() {
+export const Route = createFileRoute("/_wallet/_auth/register/demo")({
+    component: RegisterDemo,
+});
+
+function RegisterDemo() {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const [disabled, setDisabled] = useState(false);
     const { register, error, isRegisterInProgress } = useRegisterDemo({
-        onSuccess: () => navigate("/wallet"),
+        onSuccess: () => navigate({ to: "/wallet" }),
     });
 
     /**

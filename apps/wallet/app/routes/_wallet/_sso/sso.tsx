@@ -2,7 +2,12 @@ import {
     type CompressedSsoData,
     compressJsonToB64,
     decompressJsonFromB64,
+    findIframeInOpener,
 } from "@frak-labs/core-sdk";
+import {
+    createClientCompressionMiddleware,
+    createRpcClient,
+} from "@frak-labs/frame-connector";
 import { ButtonAuth } from "@frak-labs/ui/component/ButtonAuth";
 import { formatHash } from "@frak-labs/ui/component/HashDisplay";
 import { Spinner } from "@frak-labs/ui/component/Spinner";
@@ -24,28 +29,33 @@ import {
     useMutation,
     useQuery,
 } from "@tanstack/react-query";
+import { createFileRoute, Link, useSearch } from "@tanstack/react-router";
 import { CloudUpload } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
-import { Link, useSearchParams } from "react-router";
 import type { Hex } from "viem";
+import { AuthenticateWithPhone } from "@/module/authentication/component/AuthenticateWithPhone";
 import styles from "@/module/authentication/component/Sso/index.module.css";
 import { SsoHeader } from "@/module/authentication/component/Sso/SsoHeader";
 import { SsoLoginComponent } from "@/module/authentication/component/Sso/SsoLogin";
 import { SsoRegisterComponent } from "@/module/authentication/component/Sso/SsoRegister";
+import { useDemoLogin } from "@/module/authentication/hook/useDemoLogin";
 import { Grid } from "@/module/common/component/Grid";
 import { Notice } from "@/module/common/component/Notice";
-import { useDemoLogin } from "../../module/authentication/hook/useDemoLogin";
 import "./sso.global.css";
-import { findIframeInOpener } from "@frak-labs/core-sdk";
-import {
-    createClientCompressionMiddleware,
-    createRpcClient,
-} from "@frak-labs/frame-connector";
-import { AuthenticateWithPhone } from "@/module/authentication/component/AuthenticateWithPhone";
 
-export default function Sso() {
+export const Route = createFileRoute("/_wallet/_sso/sso")({
+    component: Sso,
+    validateSearch: (search: Record<string, unknown>) => {
+        return {
+            p: (search.p as string) || undefined,
+        };
+    },
+});
+
+function Sso() {
     const { i18n, t } = useTranslation();
+    const searchParams = useSearch({ from: "/_wallet/_sso/sso" });
 
     /**
      * The current metadata
@@ -71,19 +81,16 @@ export default function Sso() {
     const [error, setError] = useState<Error | null>(null);
 
     /**
-     * Get the search params and set stuff in the sso context
-     */
-    const [searchParams] = useSearchParams();
-
-    /**
      * Set the sso context atom directly
      */
     useQuery({
         gcTime: 0,
         staleTime: 0,
-        queryKey: ssoKey.params.bySearchParams(searchParams.toString()),
+        queryKey: ssoKey.params.bySearchParams(
+            searchParams.p ? `p=${searchParams.p}` : ""
+        ),
         queryFn: async () => {
-            const compressedString = searchParams.get("p");
+            const compressedString = searchParams.p;
             if (!compressedString) {
                 return null;
             }

@@ -1,4 +1,5 @@
 import { Accordion } from "@frak-labs/ui/component/Accordion";
+import { createFileRoute } from "@tanstack/react-router";
 import { TriangleAlert } from "lucide-react";
 import { useEffect } from "react";
 import { Trans } from "react-i18next";
@@ -15,7 +16,11 @@ import styles from "./settings-recovery.module.css";
 
 const MAX_STEPS = 5;
 
-export default function SettingsRecovery() {
+export const Route = createFileRoute("/_wallet/_protected/settings/recovery")({
+    component: SettingsRecovery,
+});
+
+function SettingsRecovery() {
     const step = recoveryStore(selectRecoveryStep);
 
     useEffect(() => {

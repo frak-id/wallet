@@ -1,5 +1,6 @@
 import * as process from "node:process";
-import { reactRouter } from "@react-router/dev/vite";
+import { tanstackRouter } from "@tanstack/router-plugin/vite";
+import viteReact from "@vitejs/plugin-react";
 import type { Drop } from "esbuild";
 import type { ConfigEnv, UserConfig } from "rolldown-vite";
 import { defineConfig } from "rolldown-vite";
@@ -76,7 +77,16 @@ export default defineConfig(({ mode, command }: ConfigEnv): UserConfig => {
     return {
         ...baseConfig,
         css: lightningCssConfig,
-        plugins: [reactRouter(), mkcert(), tsconfigPaths()],
+        plugins: [
+            tanstackRouter({
+                routesDirectory: "./app/routes",
+                generatedRouteTree: "./app/routeTree.gen.ts",
+                autoCodeSplitting: true,
+            }),
+            viteReact(),
+            mkcert(),
+            tsconfigPaths(),
+        ],
         resolve: {
             conditions: ["development"],
             alias: {

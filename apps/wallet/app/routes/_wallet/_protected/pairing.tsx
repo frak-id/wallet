@@ -5,10 +5,10 @@ import {
     PairingCode,
     usePairingInfo,
 } from "@frak-labs/wallet-shared";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { AlertCircle } from "lucide-react";
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router";
 import { useStore } from "zustand";
 import { Grid } from "@/module/common/component/Grid";
 import { Title } from "@/module/common/component/Title";
@@ -17,11 +17,24 @@ import { PairingInfo } from "@/module/pairing/component/PairingInfo";
 import { usePendingPairingInfo } from "@/module/pairing/hook/usePendingPairingInfo";
 import styles from "./pairing.module.css";
 
+type PairingSearch = {
+    id?: string;
+};
+
+export const Route = createFileRoute("/_wallet/_protected/pairing")({
+    component: Pairing,
+    validateSearch: (search: Record<string, unknown>): PairingSearch => {
+        return {
+            id: (search.id as string) || "",
+        };
+    },
+});
+
 /**
  * Pairing page
  * @returns A page to pair with the wallet
  */
-export default function Pairing() {
+function Pairing() {
     const client = getTargetPairingClient();
     const { t } = useTranslation();
     const { pairingInfo: pendingPairingInfo, resetPairingInfo } =
@@ -44,7 +57,7 @@ export default function Pairing() {
                 client.disconnect();
             }
             resetPairingInfo();
-            navigate("/wallet");
+            navigate({ to: "/wallet" });
         },
         [navigate, resetPairingInfo, client, pairingInfo, pendingPairingInfo]
     );

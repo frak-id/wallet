@@ -1,7 +1,7 @@
 import { LogoFrakWithName } from "@frak-labs/ui/icons/LogoFrakWithName";
 import { Notifications } from "@frak-labs/ui/icons/Notifications";
 import { selectSession, sessionStore } from "@frak-labs/wallet-shared";
-import { Link } from "react-router";
+import { Link } from "@tanstack/react-router";
 import { useHydrated } from "remix-utils/use-hydrated";
 import styles from "./index.module.css";
 

@@ -59,7 +59,7 @@ new sst.aws.StaticSite("Admin", {
     },
     build: {
         command: "bun run build",
-        output: "build/client",
+        output: "dist",
     },
     vite: {
         types: "./sst-env.d.ts",

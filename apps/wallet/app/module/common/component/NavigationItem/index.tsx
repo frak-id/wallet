@@ -1,5 +1,5 @@
+import { Link } from "@tanstack/react-router";
 import type { PropsWithChildren } from "react";
-import { NavLink } from "react-router";
 import styles from "./index.module.css";
 
 type NavigationProps = {
@@ -12,15 +12,17 @@ export function NavigationItem({
 }: PropsWithChildren<NavigationProps>) {
     return (
         <li>
-            <NavLink
-                className={({ isActive }) =>
-                    `${styles.navigation__button} ${isActive ? styles["navigation__button--active"] : ""}`
-                }
+            <Link
+                activeProps={{
+                    className: `${styles.navigation__button} ${styles["navigation__button--active"]}`,
+                }}
+                inactiveProps={{
+                    className: styles.navigation__button,
+                }}
                 to={url}
-                viewTransition
             >
                 {children}
-            </NavLink>
+            </Link>
         </li>
     );
 }

@@ -1,6 +1,7 @@
 import type { NotificationModel } from "@frak-labs/wallet-shared";
 import { notificationStorage } from "@frak-labs/wallet-shared";
 import { useQuery } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
 import { BellRing } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Grid } from "@/module/common/component/Grid";
@@ -10,10 +11,14 @@ import { Skeleton } from "@/module/common/component/Skeleton";
 import { Title } from "@/module/common/component/Title";
 import { notificationKey } from "@/module/notification/queryKeys/notification";
 
+export const Route = createFileRoute("/_wallet/_protected/notifications")({
+    component: Notifications,
+});
+
 /**
  * View to display user notifications history
  */
-export default function Notifications() {
+function Notifications() {
     const { t } = useTranslation();
     const { data: notifications, isLoading } = useQuery({
         queryKey: notificationKey.history.baseKey,

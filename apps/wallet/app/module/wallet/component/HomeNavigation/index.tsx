@@ -1,8 +1,8 @@
 import { ButtonRefresh } from "@frak-labs/ui/component/ButtonRefresh";
+import { Link } from "@tanstack/react-router";
 import { HandCoins, RefreshCcw, Send } from "lucide-react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router";
 import styles from "./index.module.css";
 
 export function HomeNavigation() {

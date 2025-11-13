@@ -1,5 +1,5 @@
+import { Link } from "@tanstack/react-router";
 import { Trans, useTranslation } from "react-i18next";
-import { Link } from "react-router";
 import { AccordionRecoveryItem } from "@/module/common/component/AccordionRecoveryItem";
 
 const ACTUAL_STEP = 6;

@@ -2,6 +2,7 @@ import { Button } from "@frak-labs/ui/component/Button";
 import { Input } from "@frak-labs/ui/component/forms/Input";
 import type { BalanceItem } from "@frak-labs/wallet-shared";
 import { useGetUserBalance } from "@frak-labs/wallet-shared";
+import { createFileRoute } from "@tanstack/react-router";
 import { memo, useCallback, useEffect, useState } from "react";
 import type {
     FieldErrors,
@@ -24,6 +25,10 @@ import { TransactionSuccess } from "@/module/tokens/component/TransactionSuccess
 import { getUpdatedToken } from "@/module/tokens/utils/getUpdatedToken";
 import { validateAmount } from "@/module/tokens/utils/validateAmount";
 import styles from "./tokens-send.module.css";
+
+export const Route = createFileRoute("/_wallet/_protected/tokens/send")({
+    component: TokensSend,
+});
 
 /**
  * Form input type definition for the token send form
@@ -173,7 +178,7 @@ const TransactionStatus = memo(function TransactionStatus({
  *
  * @returns {JSX.Element} The rendered token send form
  */
-export default function TokensSend() {
+function TokensSend() {
     const { t } = useTranslation();
 
     // Form control and validation

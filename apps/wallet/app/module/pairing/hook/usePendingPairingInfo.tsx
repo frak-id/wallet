@@ -1,25 +1,27 @@
+import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useCallback, useMemo } from "react";
-import { useSearchParams } from "react-router";
 
 /**
  * Hook to get the pairing code from the URL
  * @returns The pairing code
  */
 export function usePendingPairingInfo() {
-    const [searchParams, setSearchParams] = useSearchParams();
+    const search = useSearch({ strict: false });
+    const navigate = useNavigate();
 
     const pairingInfo = useMemo(() => {
-        const id = searchParams.get("id");
+        const id = (search as { id?: string }).id;
         return id ? { id } : null;
-    }, [searchParams]);
+    }, [search]);
 
     const resetPairingInfo = useCallback(() => {
-        setSearchParams((prev) => {
-            const newParams = new URLSearchParams(prev);
-            newParams.delete("id");
-            return newParams;
+        const currentSearch = search as Record<string, unknown>;
+        const { id, ...rest } = currentSearch;
+        navigate({
+            search: rest as never,
+            replace: true,
         });
-    }, [setSearchParams]);
+    }, [navigate, search]);
 
     return { pairingInfo, resetPairingInfo };
 }

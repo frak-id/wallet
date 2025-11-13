@@ -8,7 +8,7 @@ const mockSessionStore = vi.fn();
 const mockGetSafeSession = vi.fn();
 const mockUsePendingPairingInfo = vi.fn();
 
-vi.mock("react-router", () => ({
+vi.mock("@tanstack/react-router", () => ({
     useNavigate: () => mockNavigate,
 }));
 
@@ -64,7 +64,8 @@ describe("AuthRestricted", () => {
         );
 
         await waitFor(() => {
-            expect(mockNavigate).toHaveBeenCalledWith("/register", {
+            expect(mockNavigate).toHaveBeenCalledWith({
+                to: "/register",
                 replace: true,
             });
         });
@@ -81,7 +82,8 @@ describe("AuthRestricted", () => {
         );
 
         await waitFor(() => {
-            expect(mockNavigate).toHaveBeenCalledWith("/wallet", {
+            expect(mockNavigate).toHaveBeenCalledWith({
+                to: "/wallet",
                 replace: true,
             });
         });
@@ -101,7 +103,8 @@ describe("AuthRestricted", () => {
         );
 
         await waitFor(() => {
-            expect(mockNavigate).toHaveBeenCalledWith("/pairing", {
+            expect(mockNavigate).toHaveBeenCalledWith({
+                to: "/pairing",
                 replace: true,
             });
         });

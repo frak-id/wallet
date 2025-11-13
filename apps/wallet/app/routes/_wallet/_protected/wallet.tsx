@@ -1,3 +1,4 @@
+import { createFileRoute } from "@tanstack/react-router";
 import { memo } from "react";
 import { useHydrated } from "remix-utils/use-hydrated";
 import { Grid } from "@/module/common/component/Grid";
@@ -9,6 +10,10 @@ import { InstallApp } from "@/module/wallet/component/InstallApp";
 import { OpenSession } from "@/module/wallet/component/OpenSession";
 import { PendingReferral } from "@/module/wallet/component/PendingReferral";
 import { Welcome } from "@/module/wallet/component/Welcome";
+
+export const Route = createFileRoute("/_wallet/_protected/wallet")({
+    component: Wallet,
+});
 
 /**
  * HydratedComponents
@@ -38,7 +43,7 @@ const HydratedComponents = memo(function HydratedComponents() {
  *
  * @returns {JSX.Element} The rendered wallet view
  */
-export default function Wallet() {
+function Wallet() {
     const isHydrated = useHydrated();
 
     return (

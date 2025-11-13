@@ -1,9 +1,9 @@
 import { Button } from "@frak-labs/ui/component/Button";
 import { ButtonAuth } from "@frak-labs/ui/component/ButtonAuth";
 import { isWebAuthNSupported } from "@frak-labs/wallet-shared";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
-import { Link, useNavigate } from "react-router";
 import { AuthenticateWithPhone } from "@/module/authentication/component/AuthenticateWithPhone";
 import { useRegister } from "@/module/authentication/hook/useRegister";
 import { Grid } from "@/module/common/component/Grid";
@@ -11,7 +11,11 @@ import { Notice } from "@/module/common/component/Notice";
 import { PairingInProgress } from "@/module/pairing/component/PairingInProgress";
 import styles from "./register.module.css";
 
-export default function Register() {
+export const Route = createFileRoute("/_wallet/_auth/register")({
+    component: Register,
+});
+
+function Register() {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const [disabled, setDisabled] = useState(false);
@@ -63,7 +67,7 @@ export default function Register() {
         if (!isPreviouslyUsedAuthenticatorError) return;
 
         setTimeout(() => {
-            navigate("/login");
+            navigate({ to: "/login" });
         }, 3000);
     }, [isPreviouslyUsedAuthenticatorError, navigate]);
 
