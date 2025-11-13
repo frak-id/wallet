@@ -1,4 +1,5 @@
-import { reactRouter } from "@react-router/dev/vite";
+import tanstackRouter from "@tanstack/router-plugin/vite";
+import viteReact from "@vitejs/plugin-react";
 import type { UserConfig } from "vite";
 import { defineConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
@@ -19,7 +20,15 @@ export default defineConfig((): UserConfig => {
         server: {
             port: 3012,
         },
-        plugins: [reactRouter(), tsconfigPaths()],
+        plugins: [
+            tanstackRouter({
+                routesDirectory: "./app/routes",
+                generatedRouteTree: "./app/routeTree.gen.ts",
+                autoCodeSplitting: true,
+            }),
+            viteReact(),
+            tsconfigPaths(),
+        ],
         build: {
             rollupOptions: {
                 onwarn,
