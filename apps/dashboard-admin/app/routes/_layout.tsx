@@ -1,6 +1,11 @@
 import { Separator } from "@radix-ui/react-separator";
+import {
+    createFileRoute,
+    Link,
+    Outlet,
+    useRouterState,
+} from "@tanstack/react-router";
 import { Activity, Award, LayoutGrid, Users } from "lucide-react";
-import { Link, Outlet, useLocation } from "react-router";
 import {
     Sidebar,
     SidebarContent,
@@ -15,40 +20,44 @@ import {
     SidebarProvider,
     SidebarTrigger,
 } from "~/module/common/components/ui/sidebar";
-import { ThemeToggle } from "../../module/common/components/ui/theme-toggle";
+import { ThemeToggle } from "../module/common/components/ui/theme-toggle";
+
+export const Route = createFileRoute("/_layout")({
+    component: LayoutComponent,
+});
 
 const sidebarLinks = [
     {
         label: "Products",
-        href: "/",
+        to: "/",
         icon: (
             <LayoutGrid className="size-5 text-neutral-700 dark:text-neutral-200" />
         ),
     },
     {
         label: "Members",
-        href: "/members",
+        to: "/members",
         icon: (
             <Users className="size-5 text-neutral-700 dark:text-neutral-200" />
         ),
     },
     {
         label: "Campaigns",
-        href: "/campaigns",
+        to: "/campaigns",
         icon: (
             <Award className="size-5 text-neutral-700 dark:text-neutral-200" />
         ),
     },
     {
         label: "Health",
-        href: "/health",
+        to: "/health",
         icon: (
             <Activity className="size-5 text-neutral-700 dark:text-neutral-200" />
         ),
     },
 ];
 
-export default function SidebarLayout() {
+function LayoutComponent() {
     return (
         <SidebarProvider>
             <Sidebar collapsible="offcanvas" variant="inset">
@@ -74,12 +83,12 @@ export default function SidebarLayout() {
                                     <SidebarMenuItem key={link.label}>
                                         <SidebarMenuButton
                                             tooltip={link.label}
-                                            isActive={
-                                                link.href === location.pathname
-                                            }
                                             asChild
                                         >
-                                            <Link to={link.href}>
+                                            <Link
+                                                to={link.to}
+                                                activeOptions={{ exact: true }}
+                                            >
                                                 {link.icon}
                                                 <span>{link.label}</span>
                                             </Link>
@@ -104,11 +113,11 @@ export default function SidebarLayout() {
     );
 }
 
-export function Header() {
-    const location = useLocation();
+function Header() {
+    const router = useRouterState();
+    const pathname = router.location.pathname;
     const title =
-        sidebarLinks.find((link) => link.href === location.pathname)?.label ??
-        location.pathname;
+        sidebarLinks.find((link) => link.to === pathname)?.label ?? pathname;
 
     return (
         <header className="group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 flex h-12 shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear">

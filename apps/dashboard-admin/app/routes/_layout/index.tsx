@@ -1,3 +1,4 @@
+import { createFileRoute } from "@tanstack/react-router";
 import {
     Card,
     CardContent,
@@ -5,19 +6,12 @@ import {
     CardTitle,
 } from "~/module/common/components/ui/card";
 import { ProductList } from "~/module/product/component/ProductList";
-import type { Route } from "../../+types/root";
 
-export function meta(_: Route.MetaArgs) {
-    return [
-        { title: "Frak Dashboard Admin" },
-        {
-            name: "description",
-            content: "Administrative dashboard for Frak products",
-        },
-    ];
-}
+export const Route = createFileRoute("/_layout/")({
+    component: HomeComponent,
+});
 
-export default function Home() {
+function HomeComponent() {
     return (
         <>
             {/* Quick Stats */}
