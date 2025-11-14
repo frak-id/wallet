@@ -1,11 +1,16 @@
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { useConfigStore } from "@/stores/configStore";
 import { getLanguageLabel } from "@/utils/languages";
 import styles from "./CustomizationSubForm.module.css";
 import { FinalPreview } from "./FinalPreview";
-import { type FinalFormData, finalFormSchema } from "./schemas";
+
+type FinalFormData = {
+    description?: string;
+    dismissed?: {
+        description?: string;
+    };
+};
 
 type FinalCustomizationProps = {
     lang: "en" | "fr";
@@ -23,7 +28,6 @@ export function FinalCustomization({ lang }: FinalCustomizationProps) {
         watch,
         formState: { errors },
     } = useForm<FinalFormData>({
-        resolver: zodResolver(finalFormSchema),
         defaultValues: {
             description: langData["sdk.modal.final.description"] || "",
             dismissed: {

@@ -1,9 +1,11 @@
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { useConfigStore } from "@/stores/configStore";
 import styles from "./CustomizationSubForm.module.css";
-import { type CssFormData, cssFormSchema } from "./schemas";
+
+type CssFormData = {
+    css?: string;
+};
 
 export function CssCustomization() {
     const config = useConfigStore((state) => state.config);
@@ -16,7 +18,6 @@ export function CssCustomization() {
         handleSubmit,
         formState: { errors },
     } = useForm<CssFormData>({
-        resolver: zodResolver(cssFormSchema),
         defaultValues: {
             css: config.customizations.css || "",
         },

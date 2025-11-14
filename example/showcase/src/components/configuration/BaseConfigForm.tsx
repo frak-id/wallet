@@ -1,5 +1,4 @@
 import { Input } from "@frak-labs/ui/component/forms/Input";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -14,7 +13,14 @@ import { useConfigStore } from "@/stores/configStore";
 import { currencies } from "@/utils/currencies";
 import { languages } from "@/utils/languages";
 import styles from "./BaseConfigForm.module.css";
-import { type BaseConfigFormData, baseConfigSchema } from "./schemas";
+
+type BaseConfigFormData = {
+    name: string;
+    lang: "auto" | "en" | "fr";
+    currency: "eur" | "usd" | "gbp";
+    logoUrl?: string;
+    homepageLink?: string;
+};
 
 export function BaseConfigForm() {
     const { t } = useTranslation();
@@ -28,7 +34,6 @@ export function BaseConfigForm() {
         setValue,
         formState: { errors },
     } = useForm<BaseConfigFormData>({
-        resolver: zodResolver(baseConfigSchema),
         defaultValues: {
             name: config.metadata.name,
             lang: (config.metadata.lang as "auto" | "en" | "fr") || "auto",
@@ -64,7 +69,14 @@ export function BaseConfigForm() {
                         placeholder={t(
                             "configuration.baseForm.namePlaceholder"
                         )}
-                        {...register("name")}
+                        {...register("name", {
+                            required: "configuration.baseForm.nameRequired",
+                            maxLength: {
+                                value: 100,
+                                message:
+                                    "Application name must be less than 100 characters",
+                            },
+                        })}
                     />
                     {errors.name && (
                         <span className={styles.error}>
@@ -151,7 +163,13 @@ export function BaseConfigForm() {
                         placeholder={t(
                             "configuration.baseForm.logoUrlPlaceholder"
                         )}
-                        {...register("logoUrl")}
+                        {...register("logoUrl", {
+                            pattern: {
+                                value: /^https?:\/\/.+/,
+                                message:
+                                    "configuration.baseForm.logoUrlInvalid",
+                            },
+                        })}
                     />
                     {errors.logoUrl && (
                         <span className={styles.error}>
@@ -175,7 +193,13 @@ export function BaseConfigForm() {
                         placeholder={t(
                             "configuration.baseForm.homepageLinkPlaceholder"
                         )}
-                        {...register("homepageLink")}
+                        {...register("homepageLink", {
+                            pattern: {
+                                value: /^https?:\/\/.+/,
+                                message:
+                                    "configuration.baseForm.homepageLinkInvalid",
+                            },
+                        })}
                     />
                     {errors.homepageLink && (
                         <span className={styles.error}>

@@ -1,11 +1,15 @@
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { useConfigStore } from "@/stores/configStore";
 import { getLanguageLabel } from "@/utils/languages";
 import styles from "./CustomizationSubForm.module.css";
 import { LoginPreview } from "./LoginPreview";
-import { type LoginFormData, loginFormSchema } from "./schemas";
+
+type LoginFormData = {
+    description?: string;
+    primaryAction?: string;
+    success?: string;
+};
 
 type LoginCustomizationProps = {
     lang: "en" | "fr";
@@ -23,7 +27,6 @@ export function LoginCustomization({ lang }: LoginCustomizationProps) {
         watch,
         formState: { errors },
     } = useForm<LoginFormData>({
-        resolver: zodResolver(loginFormSchema),
         defaultValues: {
             description: langData["sdk.modal.login.description"] || "",
             primaryAction: langData["sdk.modal.login.primaryAction"] || "",

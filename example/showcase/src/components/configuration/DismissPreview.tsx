@@ -1,5 +1,8 @@
 import styles from "./Preview.module.css";
-import type { DismissFormData } from "./schemas";
+
+type DismissFormData = {
+    primaryAction?: string;
+};
 
 type DismissPreviewProps = {
     formData: DismissFormData;

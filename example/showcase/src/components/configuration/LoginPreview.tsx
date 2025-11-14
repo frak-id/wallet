@@ -1,5 +1,10 @@
 import styles from "./Preview.module.css";
-import type { LoginFormData } from "./schemas";
+
+type LoginFormData = {
+    description?: string;
+    primaryAction?: string;
+    success?: string;
+};
 
 type LoginPreviewProps = {
     formData: LoginFormData;
