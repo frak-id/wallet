@@ -22,8 +22,6 @@
             "!**/bundle.js",
             "!**/sst-env.d.ts",
             "!example/vanilla-js/index.html",
-            "!**/.svelte-kit",
-            "!**/*.svelte",
             "!**/playwright-report",
             "!**/test-results",
             "!**/coverage",

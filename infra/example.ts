@@ -44,18 +44,6 @@ export const vanillaJsWebsite = new sst.aws.StaticSite("VanillaJsDemo", {
 });
 
 /**
- * Frak SDK showcase website (Svelte)
- */
-export const componentsWebsite = new sst.aws.SvelteKit("ComponentsDemo", {
-    path: "example/components",
-    // Set the custom domain
-    domain: {
-        name: "components.frak.id",
-    },
-    dev: { autostart: false },
-});
-
-/**
  * Frak SDK showcase website
  */
 export const showcaseWebsite = new sst.aws.StaticSite("ShowcaseDemo", {
