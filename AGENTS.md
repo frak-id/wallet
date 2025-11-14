@@ -45,11 +45,11 @@ This document provides quick reference guidelines for AI agents working on the F
 
 ## Key Applications
 
-- **`apps/wallet/`** - React Router v7 user wallet (SSR disabled, module-based architecture)
+- **`apps/wallet/`** - TanStack Router user wallet (SSR disabled, module-based architecture)
 - **`apps/business/`** - TanStack Start business dashboard (SSR enabled, primary dashboard)
 - **`apps/dashboard/`** - Next.js 15 business dashboard (legacy, standalone output)
 - **`apps/listener/`** - Iframe communication app for SDK interactions
-- **`apps/dashboard-admin/`** - React Router admin interface
+- **`apps/dashboard-admin/`** - TanStack Router admin interface
 
 ## SDK Packages
 

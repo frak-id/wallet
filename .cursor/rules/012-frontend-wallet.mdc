@@ -7,23 +7,23 @@ globs: apps/wallet/**/*.ts, apps/wallet/**/*.tsx
 ## Wallet Summary
 
 `apps/wallet` is part of Frak monorepo and is designed to provide a wallet solution that integrates with various blockchain functionalities and user authentication mechanisms.
-Project is written in TypeScript using React 19, React Router v7, Radix UI and Shadcn UI for components, React Query for server state management, Zustand for client state management, Viem and Wagmi for blockchain, i18next for internationalization.
+Project is written in TypeScript using React 19, TanStack Router v1, Radix UI and Shadcn UI for components, TanStack Query for server state management, Zustand for client state management, Viem and Wagmi for blockchain, i18next for internationalization.
 
 ## Technical Stack
 
-- React Router v7 framework for all `*.tsx` files
+- TanStack Router v1 framework for all `*.tsx` files
 
 ## Resource Tags
 
 Use these tags to find relevant documentation and resources:
 
-- @ReactRouter - React Router framework documentation and resources
+- @TanStackRouter - TanStack Router framework documentation and resources
 
 ## Key Principles
 
-- You are an expert in TypeScript, React Router, React, Shadcn UI, Radix UI and CSS modules.
+- You are an expert in TypeScript, TanStack Router, React, Shadcn UI, Radix UI and CSS modules.
 
-Follow React Router docs for Data Fetching, Rendering, and Routing.
+Follow TanStack Router docs for Data Fetching, Rendering, and Routing.
 
 ## Structure
 
@@ -32,12 +32,11 @@ Follow React Router docs for Data Fetching, Rendering, and Routing.
 app/
 ├── i18n/ # Translation config and locales files
 ├── module/ # React components organized by features
-├── stores/ # Zustand stores for client state
-├── component/ # React components
-├── hook/ # React hooks
-├── utils/ # Utils for that feature
+│   ├── component/ # React components
+│   ├── hook/ # React hooks
+│   └── utils/ # Utils for that feature
+├── routes/ # TanStack Router file-based routes
 ├── styles/ # CSS global styles
-├── types/ # TypeScript types
-└── views/ # React Router views served by `routes.ts`
+└── routeTree.gen.ts # Generated route tree (auto-generated)
 public/ # Public assets
 ```

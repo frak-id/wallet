@@ -13,7 +13,7 @@ Frak Wallet is a Web3 infrastructure monorepo for seamless referral tracking and
 
 ### Building and Development
 ```bash
-# Start development server (SST + React Router)
+# Start development server (SST + TanStack Router)
 bun dev
 
 # Build SDK packages
@@ -135,10 +135,10 @@ bun run changeset:release
 
 ### Monorepo Structure
 - **`apps/`** - Frontend applications
-  - `wallet/` - React Router v7 user wallet (SSR disabled, module-based architecture)
+  - `wallet/` - TanStack Router user wallet (SSR disabled, module-based architecture)
   - `business/` - TanStack Start business dashboard (SSR enabled, formerly dashboard-v2)
   - `dashboard/` - Next.js 15 business dashboard (standalone output, legacy)
-  - `dashboard-admin/` - React Router admin interface
+  - `dashboard-admin/` - TanStack Router admin interface
   - `listener/` - Iframe communication app for SDK interactions
 - **`packages/`** - Shared internal libraries (workspace-only)
   - `wallet-shared/` - Shared code exclusively for wallet and listener apps (~97 files)
@@ -186,8 +186,8 @@ bun run changeset:release
 - **`example/`** - Integration examples
 
 ### Key Technologies
-- **Frontend**: React 19, TanStack Query, Zustand, Viem, Wagmi, CSS Modules, TanStack Start, React Router v7, Next.js 15
-- **Styling**: Lightning CSS for modern Vite apps (wallet, listener, business), PostCSS for Next.js (dashboard legacy only)
+- **Frontend**: React 19, TanStack Query, Zustand, Viem, Wagmi, CSS Modules, TanStack Start, TanStack Router, Next.js 15 (legacy)
+- **Styling**: Lightning CSS for modern Vite apps (wallet, listener, business, showcase), PostCSS for Next.js (dashboard legacy only)
 - **Backend**: Elysia.js, PostgreSQL (Drizzle ORM), MongoDB
 - **Blockchain**: Account Abstraction (ERC-4337), WebAuthn, Multi-chain support, Pimlico, ZeroDev
 - **Infrastructure**: SST v3 (AWS), Pulumi (GCP), hybrid multi-cloud deployment
@@ -207,7 +207,7 @@ bun run changeset:release
 - **CSS Processing**: Lightning CSS (100x faster than PostCSS) for Vite apps with centralized config in `packages/dev-tooling/src/vite.ts`
   - Targets: Chrome 100+, Safari 14+, Firefox 91+, Edge 100+ (baseline-widely-available)
   - Features: CSS nesting, CSS Modules (camelCase), autoprefixing, minification
-  - Apps using Lightning CSS: wallet, listener, business, wallet-ethcc
+  - Apps using Lightning CSS: wallet, listener, business, wallet-ethcc, showcase
   - Legacy dashboard (Next.js) uses PostCSS + autoprefixer (being phased out)
 
 ### Package-Specific Commands
@@ -216,9 +216,9 @@ bun run changeset:release
 ```bash
 cd apps/wallet
 bun run dev          # Development (builds service worker first, then starts SST dev)
-bun run build        # Production build (builds service worker, then React Router)
+bun run build        # Production build (builds service worker, then TanStack Router)
 bun run build:sw     # Build service worker separately (vite --mode sw)
-bun run typecheck    # Type checking with React Router typegen (run typegen first)
+bun run typecheck    # Type checking with TanStack Router typegen (run typegen first)
 bun run i18n:types   # Generate i18n types from locales
 bun run bundle:check # Analyze bundle with vite-bundle-visualizer
 ```
@@ -311,7 +311,7 @@ All SDK packages use tsdown (powered by Rolldown) for building both NPM and CDN 
 ### Critical Workflows
 - **Always use `bun`** as the package manager (never npm, pnpm, or yarn)
 - **Service Worker**: Wallet app requires service worker build before dev/build (`bun run build:sw`)
-- **React Router**: Run `react-router typegen` before typechecking wallet app
+- **TanStack Router**: Run typegen before typechecking wallet app
 - **Drizzle ORM**: Database schemas located in `src/domain/*/db/schema.ts` pattern
 
 ### Code Quality
