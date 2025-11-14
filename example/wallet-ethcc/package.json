@@ -26,7 +26,7 @@
     "@tanstack/react-query": "catalog:",
     "@tanstack/react-query-devtools": "catalog:",
     "@tanstack/react-query-persist-client": "catalog:",
-    "@tanstack/react-router": "^1.135.2",
+    "@tanstack/react-router": "^1.136.1",
     "lucide-react": "^0.553.0",
     "normalize.css": "^8.0.1",
     "react": "catalog:",
@@ -34,13 +34,13 @@
     "viem": "catalog:"
   },
   "devDependencies": {
-    "@tanstack/react-router-devtools": "^1.135.2",
-    "@tanstack/router-plugin": "^1.135.2",
+    "@tanstack/react-router-devtools": "^1.136.1",
+    "@tanstack/router-plugin": "^1.136.1",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
-    "@vitejs/plugin-react": "^5.1.0",
+    "@vitejs/plugin-react": "^5.1.1",
     "lightningcss": "^1.30.2",
-    "rolldown-vite": "^7.2.2",
+    "rolldown-vite": "^7.2.5",
     "typescript": "^5",
     "vite": "catalog:",
     "vite-tsconfig-paths": "^5.1.4"
