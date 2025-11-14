@@ -27,7 +27,6 @@
     "@tanstack/react-query-devtools": "catalog:",
     "@tanstack/react-query-persist-client": "catalog:",
     "@tanstack/react-router": "^1.135.2",
-    "isbot": "^5.1.32",
     "lucide-react": "^0.553.0",
     "normalize.css": "^8.0.1",
     "react": "catalog:",
