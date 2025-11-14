@@ -16,7 +16,7 @@ This is a demonstration application showcasing the Frak SDK components and provi
 - **TanStack Router** for file-based routing
 - **Zustand** for state management with localStorage persistence
 - **react-i18next** for internationalization (English & French)
-- **react-hook-form** + **Zod** for form validation
+- **react-hook-form** for form validation
 - **CSS Modules** with Lightning CSS
 - **Vite** for build tooling
 

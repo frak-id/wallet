@@ -1,11 +1,13 @@
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { useConfigStore } from "@/stores/configStore";
 import { getLanguageLabel } from "@/utils/languages";
 import styles from "./CustomizationSubForm.module.css";
 import { DismissPreview } from "./DismissPreview";
-import { type DismissFormData, dismissFormSchema } from "./schemas";
+
+type DismissFormData = {
+    primaryAction?: string;
+};
 
 type DismissCustomizationProps = {
     lang: "en" | "fr";
@@ -23,7 +25,6 @@ export function DismissCustomization({ lang }: DismissCustomizationProps) {
         watch,
         formState: { errors },
     } = useForm<DismissFormData>({
-        resolver: zodResolver(dismissFormSchema),
         defaultValues: {
             primaryAction: langData["sdk.modal.dismiss.primaryAction"] || "",
         },

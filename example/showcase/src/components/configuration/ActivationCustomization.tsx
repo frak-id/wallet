@@ -1,11 +1,14 @@
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { useConfigStore } from "@/stores/configStore";
 import { getLanguageLabel } from "@/utils/languages";
 import { ActivationPreview } from "./ActivationPreview";
 import styles from "./CustomizationSubForm.module.css";
-import { type ActivationFormData, activationFormSchema } from "./schemas";
+
+type ActivationFormData = {
+    description?: string;
+    primaryAction?: string;
+};
 
 type ActivationCustomizationProps = {
     lang: "en" | "fr";
@@ -25,7 +28,6 @@ export function ActivationCustomization({
         watch,
         formState: { errors },
     } = useForm<ActivationFormData>({
-        resolver: zodResolver(activationFormSchema),
         defaultValues: {
             description: langData["sdk.modal.openSession.description"] || "",
             primaryAction:

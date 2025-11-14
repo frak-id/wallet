@@ -1,5 +1,11 @@
 import styles from "./Preview.module.css";
-import type { FinalFormData } from "./schemas";
+
+type FinalFormData = {
+    description?: string;
+    dismissed?: {
+        description?: string;
+    };
+};
 
 type FinalPreviewProps = {
     formData: FinalFormData;

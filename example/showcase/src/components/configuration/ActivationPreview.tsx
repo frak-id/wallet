@@ -1,5 +1,9 @@
 import styles from "./Preview.module.css";
-import type { ActivationFormData } from "./schemas";
+
+type ActivationFormData = {
+    description?: string;
+    primaryAction?: string;
+};
 
 type ActivationPreviewProps = {
     formData: ActivationFormData;
