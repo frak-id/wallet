@@ -17,8 +17,8 @@
  * - TanStack Start hooks
  */
 
+import { setupTanStackRouterMock } from "@test-setup";
 import { vi } from "vitest";
-import { setupTanStackRouterMock } from "../../../test-setup/router-mocks";
 
 // Import shared React Testing Library setup (cleanup + jest-dom)
 import "../../../test-setup/react-testing-library-setup";
