@@ -59,6 +59,26 @@ Use these tags to find relevant documentation and resources:
 - Leverage route-level code splitting
 - Optimize bundle size using Vite's built-in features
 
+## Structure
+
+- Structure project files as follows:
+```
+src/
+├── assets/ # Static assets
+├── components/ # Shared React components
+├── context/ # React context providers (auth, blockchain, etc.)
+├── middleware/ # Server middleware
+├── mock/ # Mock data for development
+├── module/ # Feature modules organized by domain
+├── polyfill/ # Runtime polyfills
+├── routes/ # TanStack Router file-based routes
+├── router.tsx # Router configuration
+├── routeTree.gen.ts # Generated route tree (auto-generated)
+├── stores/ # Zustand stores for client state
+├── styles/ # Global styles and CSS modules
+└── types/ # TypeScript type definitions
+```
+
 ## Key Conventions
 
 - Use Server Functions for API calls

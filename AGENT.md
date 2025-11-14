@@ -10,7 +10,7 @@
 
 ## Tech Stack
 - **Runtime**: Bun (package manager + runtime), TypeScript, Node.js
-- **Frontend**: React 19, React Router v7, Wagmi, TanStack Query, Zustand, idb-keyval (IndexedDB)
+- **Frontend**: React 19, TanStack Router, TanStack Start, Wagmi, TanStack Query, Zustand, idb-keyval (IndexedDB)
 - **Backend**: Elysia, WebAuthn, Jose (JWT)
 - **Blockchain**: Viem, Permissionless, Smart Account infrastructure
 - **Infrastructure**: SST v3, Pulumi, AWS/GCP deployment
@@ -18,7 +18,7 @@
 
 ## Architecture
 - **Monorepo**: Bun workspaces with packages in `apps/`, `packages/`, `sdk/`, `services/`
-- **Key Apps**: wallet (React Router), business (TanStack Start), dashboard (Next.js legacy), dashboard-admin (React Router), listener (iframe)
+- **Key Apps**: wallet (TanStack Router), business (TanStack Start), dashboard (Next.js legacy), dashboard-admin (TanStack Router), listener (iframe)
 - **Core Packages**: app-essentials (blockchain utils), wallet-shared (wallet/listener), ui (components)
 - **SDK**: core, legacy, react, components (external facing)
   - Uses tsdown (powered by Rolldown): NPM (ESM+CJS+types → `./dist/`) + CDN bundles (→ `./cdn/`)
