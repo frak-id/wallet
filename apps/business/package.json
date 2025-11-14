@@ -58,7 +58,11 @@
         "zustand": "^5.0.8"
     },
     "devDependencies": {
+        "@tanstack/query-sync-storage-persister": "catalog:",
         "@tanstack/react-devtools": "^0.8.1",
+        "@tanstack/react-query-devtools": "catalog:",
+        "@tanstack/react-query-persist-client": "catalog:",
+        "@tanstack/react-router-devtools": "^1.135.2",
         "@tanstack/router-plugin": "^1.135.0",
         "@testing-library/jest-dom": "^6.9.1",
         "@testing-library/react": "^16.3.0",
