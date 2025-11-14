@@ -12,7 +12,7 @@
  * - document.referrer to identify parent window origin (via dom-mocks.ts)
  */
 
-import { setupListenerDomMocks } from "../../../test-setup/dom-mocks";
+import { setupListenerDomMocks } from "@test-setup";
 
 // Import shared React Testing Library setup (cleanup + jest-dom)
 import "../../../test-setup/react-testing-library-setup";

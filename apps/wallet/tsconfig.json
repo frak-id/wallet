@@ -19,6 +19,7 @@
     "paths": {
       "@/*": ["./app/*"],
       "@/tests/vitest-fixtures": ["./tests/vitest-fixtures.ts"],
+      "@test-setup": ["../../test-setup/index.ts"],
       "@frak-labs/wallet-shared/*": ["../../packages/wallet-shared/src/*"],
       "@backend-utils": ["../../services/backend/src/utils/index.ts"],
       "@backend-infrastructure": ["../../services/backend/src/infrastructure/index.ts"],

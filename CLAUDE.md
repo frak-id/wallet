@@ -91,7 +91,8 @@ bun run test:watch            # Run in watch mode
 
 **Test Configuration Architecture**:
 - `vitest.config.ts` - Root workspace config (Vitest 4.0 Projects API)
-- `test-setup/vitest.shared.ts` - Shared config with plugin helpers (getReactTestPlugins, getReactOnlyPlugins)
+- `test-setup/vitest.shared.ts` - Shared config with performance optimizations (pool config, plugin helpers)
+- `test-setup/index.ts` - Centralized test utilities barrel export (@test-setup alias)
 - `test-setup/shared-setup.ts` - Browser API mocks (crypto, MessageChannel, IntersectionObserver, ResizeObserver, matchMedia)
 - `test-setup/react-setup.ts` - BigInt serialization for Zustand persist
 - `test-setup/router-mocks.ts` - Router mock factories (react-router, @tanstack/react-router)
