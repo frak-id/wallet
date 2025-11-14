@@ -72,9 +72,8 @@ function buildSetCookieHeader(
  */
 function buildDeleteCookieHeader(
     name: string,
-    options: Pick<
-        NonNullable<SessionOptions["cookieOptions"]>,
-        "domain" | "path"
+    options: Partial<
+        Pick<NonNullable<SessionOptions["cookieOptions"]>, "domain" | "path">
     > = {}
 ): string {
     const cookieParts = [
