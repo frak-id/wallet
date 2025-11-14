@@ -1,5 +1,4 @@
 import { campaignBankAbi } from "@frak-labs/app-essentials/blockchain";
-import { createServerFn } from "@tanstack/react-start";
 import { LRUCache } from "lru-cache";
 import { type Address, erc20Abi } from "viem";
 import { readContract } from "viem/actions";
@@ -47,12 +46,3 @@ export async function getBankTokenInfoInternal({ bank }: { bank: Address }) {
         decimals,
     };
 }
-
-/**
- * Server function to get bank token info
- */
-export const getBankTokenInfo = createServerFn({ method: "GET" })
-    .inputValidator((input: { bank: Address }) => input)
-    .handler(async ({ data }) => {
-        return getBankTokenInfoInternal({ bank: data.bank });
-    });

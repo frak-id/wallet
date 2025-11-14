@@ -1,6 +1,5 @@
 import { useRouterState } from "@tanstack/react-router";
 import NProgress from "nprogress";
-import nProgressStylesUrl from "nprogress/nprogress.css?url";
 import { useEffect } from "react";
 
 export function TopLoader() {
@@ -19,5 +18,3 @@ export function TopLoader() {
 
     return null;
 }
-
-export { nProgressStylesUrl };

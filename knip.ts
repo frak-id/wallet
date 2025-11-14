@@ -30,7 +30,11 @@ const config: KnipConfig = {
             project: ["app/**/*.{ts,tsx}"],
         },
         "apps/dashboard": {
-            entry: ["src/app/**/page.tsx", "src/app/**/layout.tsx", "src/app/**/*.ts"],
+            entry: [
+                "src/app/**/page.tsx",
+                "src/app/**/layout.tsx",
+                "src/app/**/*.ts",
+            ],
             project: ["src/**/*.{ts,tsx}"],
         },
         "apps/dashboard-admin": {
