@@ -16,6 +16,6 @@ export default defineConfig({
         transformer: "lightningcss",
     },
     server: {
-        port: 3015,
+        port: 3014,
     },
 });
