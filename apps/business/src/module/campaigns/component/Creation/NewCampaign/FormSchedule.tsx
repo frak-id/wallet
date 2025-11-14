@@ -42,9 +42,7 @@ export function FormSchedule(form: UseFormReturn<Campaign>) {
     );
 }
 
-export function FormScheduleFields<T extends FieldValues>(
-    form: UseFormReturn<T>
-) {
+function FormScheduleFields<T extends FieldValues>(form: UseFormReturn<T>) {
     const [isEndDate, setIsEndDate] = useState<boolean | "indeterminate">(
         "indeterminate"
     );

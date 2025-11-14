@@ -259,7 +259,6 @@ const FormValidMessage = ({
 FormValidMessage.displayName = "FormValidMessage";
 
 export {
-    useFormField,
     Form,
     FormLayout,
     FormItem,

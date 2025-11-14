@@ -6,7 +6,7 @@ export type CampaignDocument =
     | FinalizedCampaignDocument
     | DraftCampaignDocument;
 
-export type FinalizedCampaignDocument = Campaign & {
+type FinalizedCampaignDocument = Campaign & {
     _id?: ObjectId;
     // The creator of the campaign
     creator: Address;
