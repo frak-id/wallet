@@ -1,21 +1,61 @@
-/**
- * NOTE: This test is temporarily disabled due to a rolldown parse error
- * when transforming Accordion component. The error occurs during the
- * build/transform phase before tests run, preventing the test from executing.
- *
- * PanelAccordion is a wrapper combining Panel and Accordion components.
- * The component logic is straightforward and can be tested manually or via integration tests.
- *
- * TODO: Re-enable when rolldown parse issue is resolved or when using
- * a different build tool that handles the Accordion component correctly.
- */
+import { render, screen } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
+import { PanelAccordion } from "./index";
 
-import { describe } from "vitest";
+describe("PanelAccordion", () => {
+    it("should render children within accordion when open", () => {
+        render(
+            <PanelAccordion title="Test Panel" defaultValue="item-1">
+                <div>Test Content</div>
+            </PanelAccordion>
+        );
 
-describe.skip("PanelAccordion", () => {
-    it.todo("should render children");
-    it.todo("should render with title");
-    it.todo("should render accordion structure");
-    it.todo("should pass value prop to accordion");
-    it.todo("should pass defaultValue prop to accordion");
+        expect(screen.getByText("Test Content")).toBeInTheDocument();
+    });
+
+    it("should render with title", () => {
+        render(
+            <PanelAccordion title="Test Panel Title">
+                <div>Content</div>
+            </PanelAccordion>
+        );
+
+        expect(screen.getByText("Test Panel Title")).toBeInTheDocument();
+    });
+
+    it("should render accordion structure with data-state", () => {
+        const { container } = render(
+            <PanelAccordion title="Test Panel" defaultValue="item-1">
+                <div>Content</div>
+            </PanelAccordion>
+        );
+
+        // Accordion renders with data-state attribute
+        const accordionItem = container.querySelector("[data-state]");
+        expect(accordionItem).toBeInTheDocument();
+    });
+
+    it("should pass defaultValue prop to accordion", () => {
+        const { container } = render(
+            <PanelAccordion title="Test Panel" defaultValue="item-1">
+                <div>Content</div>
+            </PanelAccordion>
+        );
+
+        // When defaultValue is "item-1", accordion item should be open
+        const accordionItem = container.querySelector('[data-state="open"]');
+        expect(accordionItem).toBeInTheDocument();
+    });
+
+    it("should support controlled value prop", () => {
+        const { container } = render(
+            <PanelAccordion title="Test Panel" value="item-1">
+                <div>Content</div>
+            </PanelAccordion>
+        );
+
+        // When value is "item-1", accordion item should be open
+        const accordionItem = container.querySelector('[data-state="open"]');
+        expect(accordionItem).toBeInTheDocument();
+    });
 });

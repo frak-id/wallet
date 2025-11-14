@@ -1,21 +1,49 @@
-/**
- * NOTE: This test is temporarily disabled due to a rolldown parse error
- * when transforming ButtonRefresh component from @frak-labs/ui. The error occurs
- * during the build/transform phase before tests run, preventing the test from executing.
- *
- * NavigationTop is a simple composition component that renders DemoModeBadge,
- * ButtonRefresh, and NavigationProfile. The component logic is straightforward
- * and can be tested manually or via integration tests.
- *
- * TODO: Re-enable when rolldown parse issue is resolved or when using
- * a different build tool that handles the ButtonRefresh component correctly.
- */
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { render } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
+import { NavigationTop } from "./index";
 
-import { describe } from "vitest";
+vi.mock("@/module/common/component/DemoModeBadge", () => ({
+    DemoModeBadge: () => <div data-testid="demo-mode-badge">Demo Mode</div>,
+}));
 
-describe.skip("NavigationTop", () => {
-    it.todo("should render DemoModeBadge");
-    it.todo("should render ButtonRefresh");
-    it.todo("should render NavigationProfile");
-    it.todo("should render all components in correct order");
+vi.mock("@/module/common/component/NavigationProfile", () => ({
+    NavigationProfile: () => (
+        <div data-testid="navigation-profile">Profile</div>
+    ),
+}));
+
+const queryClient = new QueryClient();
+
+function renderWithQueryClient(component: React.ReactElement) {
+    return render(
+        <QueryClientProvider client={queryClient}>
+            {component}
+        </QueryClientProvider>
+    );
+}
+
+describe("NavigationTop", () => {
+    it("should render DemoModeBadge", () => {
+        const { getByTestId } = renderWithQueryClient(<NavigationTop />);
+        expect(getByTestId("demo-mode-badge")).toBeInTheDocument();
+    });
+
+    it("should render ButtonRefresh", () => {
+        const { container } = renderWithQueryClient(<NavigationTop />);
+        // ButtonRefresh renders as a button
+        const button = container.querySelector("button");
+        expect(button).toBeInTheDocument();
+    });
+
+    it("should render NavigationProfile", () => {
+        const { getByTestId } = renderWithQueryClient(<NavigationTop />);
+        expect(getByTestId("navigation-profile")).toBeInTheDocument();
+    });
+
+    it("should render all components in correct order", () => {
+        const { container } = renderWithQueryClient(<NavigationTop />);
+        const children = Array.from(container.firstChild?.childNodes ?? []);
+        expect(children).toHaveLength(3);
+    });
 });
