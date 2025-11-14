@@ -22,7 +22,7 @@
     "@frak-labs/react-sdk": "workspace:*",
     "@frak-labs/ui": "workspace:*",
     "@lucasmogari/react-pagination": "^2.1.0",
-    "@openpanel/web": "^1.0.1",
+    "@openpanel/web": "^1.0.2",
     "@radix-ui/react-collapsible": "^1.1.12",
     "@radix-ui/react-label": "^2.1.8",
     "@radix-ui/react-popover": "^1.1.15",

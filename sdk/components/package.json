@@ -89,13 +89,13 @@
     "@types/jsdom": "^27.0.0",
     "@types/node": "catalog:",
     "@types/preact-custom-element": "^4.0.4",
-    "@vitest/coverage-v8": "^4.0.8",
-    "@vitest/ui": "^4.0.8",
-    "jsdom": "^27.1.0",
+    "@vitest/coverage-v8": "^4.0.9",
+    "@vitest/ui": "^4.0.9",
+    "jsdom": "^27.2.0",
     "tsdown": "^0.16.4",
     "typescript": "^5",
     "unplugin-lightningcss": "^0.4.3",
     "vite-tsconfig-paths": "^5.1.4",
-    "vitest": "^4.0.8"
+    "vitest": "^4.0.9"
   }
 }
