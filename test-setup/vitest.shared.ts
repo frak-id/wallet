@@ -26,6 +26,7 @@
  * DRY principles.
  */
 
+import os from "node:os";
 import { defineConfig } from "vitest/config";
 
 // Use generic type to avoid importing vite types that may not be available in all projects
@@ -43,6 +44,29 @@ export default defineConfig({
         testTimeout: 10000,
         hookTimeout: 10000,
 
+        // Pool configuration for optimized parallel execution
+        // Threads pool provides better performance for CPU-intensive tests
+        // Note: In Vitest 4.0, poolOptions was removed - all options are now top-level
+        pool: "threads",
+
+        // Full isolation ensures test independence (safer but slightly slower)
+        isolate: true,
+
+        // Leave 1 CPU core free for system operations to prevent throttling
+        // Use at least 1 worker even on single-core systems
+        maxWorkers: Math.max(1, os.cpus().length - 1),
+
+        // Run test files in parallel for better performance
+        fileParallelism: true,
+
+        // Test execution sequencing for deterministic and concurrent runs
+        sequence: {
+            // Deterministic ordering aids in debugging flaky tests
+            shuffle: false,
+            // Run tests concurrently within files for better performance
+            concurrent: true,
+        },
+
         // Optimized reporters for CI vs local development
         reporters: process.env.CI
             ? [
@@ -56,7 +80,10 @@ export default defineConfig({
               ],
 
         // Coverage configuration (V8 provider with 40% thresholds)
+        // Disabled by default locally to improve test speed (~20% faster)
+        // Enable with --coverage flag or automatically in CI
         coverage: {
+            enabled: process.env.CI === "true",
             provider: "v8",
             reporter: ["text", "json", "html"],
             thresholds: {
