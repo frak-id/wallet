@@ -16,7 +16,7 @@
     "ignore": [
         "@frak-labs-example/wallet-ethcc",
         "@frak-labs-example/vanilla-js",
-        "@frak-labs-example/components",
+        "@frak-labs-example/showcase",
 
         "@frak-labs/ui",
         "@frak-labs/backend-elysia",

@@ -54,6 +54,3 @@ sst-env.d.ts
 
 # IDE
 .idea
-
-# Svelte
-.svelte-kit
