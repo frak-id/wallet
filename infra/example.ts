@@ -44,13 +44,32 @@ export const vanillaJsWebsite = new sst.aws.StaticSite("VanillaJsDemo", {
 });
 
 /**
- * Frak components demo website
+ * Frak SDK showcase website (Svelte)
  */
 export const componentsWebsite = new sst.aws.SvelteKit("ComponentsDemo", {
     path: "example/components",
     // Set the custom domain
     domain: {
         name: "components.frak.id",
+    },
+    dev: { autostart: false },
+});
+
+/**
+ * Frak SDK showcase website
+ */
+export const showcaseWebsite = new sst.aws.StaticSite("ShowcaseDemo", {
+    path: "example/showcase",
+    // Set the custom domain
+    domain: {
+        name: "showcase.frak.id",
+    },
+    build: {
+        command: "bun run build",
+        output: "dist",
+    },
+    vite: {
+        types: "./sst-env.d.ts",
     },
     dev: { autostart: false },
 });

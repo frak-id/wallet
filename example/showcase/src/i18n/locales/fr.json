@@ -1,0 +1,58 @@
+{
+    "common": {
+        "h1": "Apprenez à utiliser les composants Frak",
+        "learnMore": "En savoir plus sur les composants Frak",
+        "embedOptions": "Options d'intégration",
+        "h2": "Frak propose des composants à intégrer sur votre site"
+    },
+    "components": {
+        "shareButton": {
+            "title": "Bouton de partage",
+            "description": "Ajoutez un bouton de partage dans votre page",
+            "action": "Ouvrir la modale de partage"
+        },
+        "walletButton": {
+            "title": "Bouton de porte-monnaie",
+            "description": "Ajoutez un bouton de porte-monnaie",
+            "action": "Ouvrir la modale de porte-monnaie"
+        }
+    },
+    "configuration": {
+        "title": "Assistant de configuration SDK",
+        "steps": {
+            "base": "Configuration de base",
+            "customization": "Personnalisation",
+            "code": "Génération de code"
+        },
+        "navigation": {
+            "previous": "Précédent",
+            "next": "Suivant"
+        },
+        "baseForm": {
+            "name": "Nom de l'application",
+            "namePlaceholder": "Mon Application",
+            "nameRequired": "Le nom de l'application est requis",
+            "language": "Langue",
+            "currency": "Devise",
+            "logoUrl": "URL du logo",
+            "logoUrlPlaceholder": "https://exemple.com/logo.png",
+            "logoUrlInvalid": "Veuillez entrer une URL valide",
+            "homepageLink": "Lien de la page d'accueil",
+            "homepageLinkPlaceholder": "https://exemple.com",
+            "homepageLinkInvalid": "Veuillez entrer une URL valide"
+        },
+        "customizationForm": {
+            "customCss": "CSS personnalisé",
+            "customCssPlaceholder": "Entrez des styles CSS personnalisés...",
+            "i18nStrings": "Traductions personnalisées",
+            "preview": "Aperçu en direct"
+        },
+        "codeOutput": {
+            "title": "Configuration générée",
+            "copy": "Copier dans le presse-papiers",
+            "copied": "Copié !",
+            "save": "Enregistrer dans LocalStorage",
+            "saved": "Enregistré !"
+        }
+    }
+}

@@ -1,0 +1,111 @@
+.select__trigger {
+    all: unset;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    border-radius: 6px;
+    padding: 0 0.75rem;
+    height: 40px;
+    gap: 0.5rem;
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--text-color);
+    transition: border-color 0.3s ease;
+}
+
+.select__trigger:hover {
+    border-color: var(--border-hover-color);
+}
+
+.select__trigger:focus-visible {
+    box-shadow: 0 0 0 1px var(--frak-focus-border-color);
+}
+
+.select__trigger:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.select__trigger--medium {
+    width: 320px;
+}
+
+.select__trigger--big {
+    width: 100%;
+}
+
+.select__icon {
+    color: var(--text-secondary);
+}
+
+.select__content {
+    overflow: hidden;
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    box-shadow: var(--card-shadow);
+    max-height: 384px;
+    width: var(--radix-select-trigger-width);
+    z-index: 50;
+}
+
+.select__viewport {
+    padding: 0.25rem;
+}
+
+.select__item {
+    color: var(--text-color);
+    border-radius: 4px;
+    padding: 0.5rem 2.25rem 0.5rem 1.75rem;
+    position: relative;
+    user-select: none;
+    cursor: pointer;
+    outline: none;
+    font-size: 13px;
+}
+
+.select__item[data-disabled] {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.select__item[data-highlighted] {
+    background-color: var(--bg-secondary);
+}
+
+.select__label {
+    padding: 0.5rem 1.5rem;
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.select__separator {
+    height: 1px;
+    background-color: var(--border-color);
+    margin: 0.25rem;
+}
+
+.select__itemIndicator {
+    position: absolute;
+    left: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 20px;
+    display: inline-flex;
+    align-items: center;
+    color: var(--accent-color);
+}
+
+.select__scrollButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 25px;
+    background-color: var(--bg-primary);
+    cursor: default;
+    color: var(--text-secondary);
+}

@@ -1,0 +1,61 @@
+.preview {
+    position: relative;
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(85px);
+    padding: 25px 15px;
+    border-radius: 16px;
+    color: #fff;
+}
+
+.description {
+    margin: 0;
+}
+
+.buttonContainer {
+    display: flex;
+    justify-content: center;
+    margin-top: 40px;
+}
+
+.primaryButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    max-width: 80%;
+    border: 1px solid transparent;
+    padding: 5px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    line-height: 24px;
+    text-align: center;
+    background-color: #fff;
+    color: #000;
+}
+
+.primaryButton:hover {
+    background-color: #f0f0f0;
+}
+
+.dismissButtonContainer {
+    position: absolute;
+    bottom: 15px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    margin: 0;
+}
+
+.dismissButton {
+    all: unset;
+    cursor: pointer;
+    text-decoration: underline;
+    display: inline-flex;
+    gap: 8px;
+}
+
+.finalDescription {
+    margin-bottom: 25px;
+}

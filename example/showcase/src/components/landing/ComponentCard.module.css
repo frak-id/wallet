@@ -1,0 +1,41 @@
+.card {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+    max-width: 300px;
+}
+
+.card h3 {
+    color: var(--text-color);
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0 0 8px 0;
+    transition: color 0.3s ease;
+}
+
+.card p {
+    color: #6b7280;
+    font-size: 14px;
+    line-height: 1.5;
+    margin: 0 0 20px 0;
+    transition: color 0.3s ease;
+}
+
+:global(.card__button) {
+    background-color: var(--background-color);
+    color: var(--accent-color);
+    border: 1px solid var(--accent-color);
+    border-radius: 4px;
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition:
+        background-color 0.3s ease,
+        color 0.3s ease;
+}
+
+:global(.card__button:hover) {
+    background-color: var(--border-color);
+}

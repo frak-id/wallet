@@ -1,0 +1,58 @@
+{
+    "common": {
+        "h1": "Learn how to use Frak Components",
+        "learnMore": "Learn more about Frak Components",
+        "embedOptions": "Embed options",
+        "h2": "Frak offers components to embed on your site"
+    },
+    "components": {
+        "shareButton": {
+            "title": "Share Button",
+            "description": "Add a share button in your page",
+            "action": "Open share modal"
+        },
+        "walletButton": {
+            "title": "Wallet Button",
+            "description": "Add a floating wallet button",
+            "action": "Open wallet modal"
+        }
+    },
+    "configuration": {
+        "title": "SDK Configuration Wizard",
+        "steps": {
+            "base": "Base Configuration",
+            "customization": "Customization",
+            "code": "Code Generation"
+        },
+        "navigation": {
+            "previous": "Previous",
+            "next": "Next"
+        },
+        "baseForm": {
+            "name": "Application Name",
+            "namePlaceholder": "My App",
+            "nameRequired": "Application name is required",
+            "language": "Language",
+            "currency": "Currency",
+            "logoUrl": "Logo URL",
+            "logoUrlPlaceholder": "https://example.com/logo.png",
+            "logoUrlInvalid": "Please enter a valid URL",
+            "homepageLink": "Homepage Link",
+            "homepageLinkPlaceholder": "https://example.com",
+            "homepageLinkInvalid": "Please enter a valid URL"
+        },
+        "customizationForm": {
+            "customCss": "Custom CSS",
+            "customCssPlaceholder": "Enter custom CSS styles...",
+            "i18nStrings": "Custom Translations",
+            "preview": "Live Preview"
+        },
+        "codeOutput": {
+            "title": "Generated Configuration",
+            "copy": "Copy to Clipboard",
+            "copied": "Copied!",
+            "save": "Save to LocalStorage",
+            "saved": "Saved!"
+        }
+    }
+}
