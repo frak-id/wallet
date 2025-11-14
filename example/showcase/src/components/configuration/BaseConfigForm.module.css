@@ -1,0 +1,66 @@
+.container {
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.form {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.formField {
+    display: grid;
+    gap: 0.5rem;
+}
+
+.label {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-color);
+}
+
+.formField input {
+    font-size: 13px;
+}
+
+.error {
+    font-size: 12px;
+    color: var(--error-color);
+}
+
+.description {
+    font-size: 12px;
+    color: #6b7280;
+    margin: 0;
+    line-height: 1.5;
+}
+
+.description strong {
+    font-weight: 600;
+}
+
+.submitButton {
+    width: 100%;
+    padding: 0.75rem;
+    background-color: #1a202c;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    margin-top: 1rem;
+}
+
+.submitButton:hover {
+    background-color: #2d3748;
+}
+
+:root.dark .submitButton {
+    background-color: #2d3748;
+}
+
+:root.dark .submitButton:hover {
+    background-color: #4a5568;
+}

@@ -367,6 +367,48 @@
         "zod": "^3.25.76",
       },
     },
+    "example/showcase": {
+      "name": "@frak-labs-example/showcase",
+      "version": "0.0.1",
+      "dependencies": {
+        "@frak-labs/core-sdk": "workspace:*",
+        "@frak-labs/ui": "workspace:*",
+        "@hookform/resolvers": "^3.9.1",
+        "@radix-ui/react-accordion": "^1.2.12",
+        "@radix-ui/react-label": "^2.1.8",
+        "@radix-ui/react-select": "^2.2.6",
+        "@radix-ui/react-slot": "^1.2.4",
+        "@tanstack/react-router": "^1.135.0",
+        "class-variance-authority": "^0.7.1",
+        "i18next": "^25.6.1",
+        "i18next-browser-languagedetector": "^8.2.0",
+        "lucide-react": "^0.553.0",
+        "normalize.css": "^8.0.1",
+        "react": "catalog:",
+        "react-dom": "catalog:",
+        "react-hook-form": "^7.66.0",
+        "react-i18next": "^16.2.4",
+        "sonner": "^2.0.7",
+        "zod": "^3.25.76",
+        "zustand": "^5.0.8",
+      },
+      "devDependencies": {
+        "@tanstack/router-plugin": "^1.135.0",
+        "@testing-library/jest-dom": "^6.9.1",
+        "@testing-library/react": "^16.3.0",
+        "@types/react": "catalog:",
+        "@types/react-dom": "catalog:",
+        "@vitejs/plugin-react": "^5.1.0",
+        "@vitest/coverage-v8": "^4.0.8",
+        "@vitest/ui": "^4.0.8",
+        "jsdom": "^27.1.0",
+        "lightningcss": "^1.30.2",
+        "typescript": "catalog:",
+        "vite": "catalog:",
+        "vite-tsconfig-paths": "^5.1.4",
+        "vitest": "^4.0.8",
+      },
+    },
     "example/vanilla-js": {
       "name": "@frak-labs-example/vanilla-js",
       "version": "0.0.1",
@@ -1028,6 +1070,8 @@
 
     "@frak-labs-example/components": ["@frak-labs-example/components@workspace:example/components"],
 
+    "@frak-labs-example/showcase": ["@frak-labs-example/showcase@workspace:example/showcase"],
+
     "@frak-labs-example/vanilla-js": ["@frak-labs-example/vanilla-js@workspace:example/vanilla-js"],
 
     "@frak-labs-example/wallet-ethcc": ["@frak-labs-example/wallet-ethcc@workspace:example/wallet-ethcc"],
@@ -1077,6 +1121,8 @@
     "@hapi/topo": ["@hapi/topo@5.1.0", "", { "dependencies": { "@hapi/hoek": "^9.0.0" } }, "sha512-foQZKJig7Ob0BMAYBfcJk8d77QtOe7Wo4ox7ff1lQYoNNAb6jwcY1ncdoy2e9wQZzvNy7ODZCYJkK8kzmcAnAg=="],
 
     "@hexagon/base64": ["@hexagon/base64@1.1.28", "", {}, "sha512-lhqDEAvWixy3bZ+UOYbPwUbBkwBq5C1LAJ/xPC8Oi+lL54oyakv/npbA0aU2hgCsx/1NUd4IBvV03+aUBWxerw=="],
+
+    "@hookform/resolvers": ["@hookform/resolvers@3.10.0", "", { "peerDependencies": { "react-hook-form": "^7.0.0" } }, "sha512-79Dv+3mDF7i+2ajj7SkypSKHhl1cbln1OGavqrsF7p6mbUv11xpqpacPsGDCTRvCSjEEIez2ef1NveSVL3b0Ag=="],
 
     "@img/colour": ["@img/colour@1.0.0", "", {}, "sha512-A5P/LfWGFSl6nsckYtjw9da+19jB8hkJ6ACTGcDfEJ0aE+l2n2El7dsVM7UVHZQ9s2lmYMWlrS21YLy2IR1LUw=="],
 

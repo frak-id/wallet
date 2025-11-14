@@ -1,0 +1,35 @@
+.container {
+    max-width: 900px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    border-top: 1px solid var(--border-color);
+    padding-top: 40px;
+}
+
+/* Scoped Accordion overrides - only for example app */
+.container [class*="accordion__item"] {
+    border-bottom: 1px solid var(--border-color);
+}
+
+.container [class*="accordion__trigger"] {
+    padding: 1rem 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex: 1;
+    font-size: 16px;
+    font-weight: 500;
+    transition: all 0.3s;
+}
+
+.container [class*="accordion__trigger"]:hover {
+    text-decoration: underline;
+}
+
+.container [class*="accordion__chevron"] {
+    flex-shrink: 0;
+    margin: 0;
+    font-size: 1em;
+}

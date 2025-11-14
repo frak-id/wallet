@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Frak SDK Showcase</title>
+    <meta name="description" content="Frak SDK Showcase - Interactive component demos" />
+    <link rel="icon" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <script>
+        const config = localStorage.getItem("frak-wallet-sdk-config");
+
+        if (config) {
+            window.FrakSetup = {
+                config: {
+                    walletUrl: "https://wallet-dev.frak.id",
+                    ...JSON.parse(config),
+                },
+            };
+        } else {
+            window.FrakSetup = {
+                config: {
+                    walletUrl: "https://wallet-dev.frak.id",
+                    metadata: {
+                        name: "Example components",
+                    },
+                },
+            };
+        }
+    </script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@frak-labs/components" defer></script>
+</head>
+
+<body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+</body>
+
+</html>
