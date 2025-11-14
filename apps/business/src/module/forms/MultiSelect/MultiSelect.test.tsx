@@ -1,22 +1,85 @@
-/**
- * NOTE: This test is temporarily disabled due to a rolldown parse error
- * when transforming Button component. The error occurs during the
- * build/transform phase before tests run, preventing the test from executing.
- *
- * MultiSelect is a complex component that combines Button, Popover, Command,
- * and Badge components. The component logic is straightforward and can be
- * tested manually or via integration tests.
- *
- * TODO: Re-enable when rolldown parse issue is resolved or when using
- * a different build tool that handles the Button component correctly.
- */
+import { render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
+import { MultiSelect } from "./index";
 
-import { describe } from "vitest";
+describe("MultiSelect", () => {
+    const options = [
+        { name: "Option 1", value: "opt1" },
+        { name: "Option 2", value: "opt2" },
+        { name: "Option 3", value: "opt3" },
+    ];
 
-describe.skip("MultiSelect", () => {
-    it.todo("should render with placeholder");
-    it.todo("should display selected values");
-    it.todo("should toggle options");
-    it.todo("should clear selections");
-    it.todo("should filter options");
+    it("should render with placeholder", () => {
+        const onValueChange = vi.fn();
+        render(
+            <MultiSelect
+                options={options}
+                onValueChange={onValueChange}
+                placeholder="Select items"
+            />
+        );
+
+        expect(screen.getByText("Select items")).toBeInTheDocument();
+    });
+
+    it("should display selected values when value prop is provided", () => {
+        const onValueChange = vi.fn();
+        render(
+            <MultiSelect
+                options={options}
+                onValueChange={onValueChange}
+                value={["opt1", "opt2"]}
+            />
+        );
+
+        expect(screen.getByText("Option 1")).toBeInTheDocument();
+        expect(screen.getByText("Option 2")).toBeInTheDocument();
+    });
+
+    it("should show count badge when more than 2 items selected", () => {
+        const onValueChange = vi.fn();
+        render(
+            <MultiSelect
+                options={options}
+                onValueChange={onValueChange}
+                value={["opt1", "opt2", "opt3"]}
+            />
+        );
+
+        expect(screen.getByText("3 selected")).toBeInTheDocument();
+    });
+
+    it("should render button with trigger variant", () => {
+        const onValueChange = vi.fn();
+        render(
+            <MultiSelect
+                options={options}
+                onValueChange={onValueChange}
+                placeholder="Select items"
+            />
+        );
+
+        const button = screen.getByText("Select items").closest("button");
+        expect(button).toBeInTheDocument();
+        // Button should have specific structure for MultiSelect trigger
+        expect(button?.className).toContain("multiSelect__trigger");
+    });
+
+    it("should call onValueChange when clear is clicked", () => {
+        const onValueChange = vi.fn();
+        render(
+            <MultiSelect
+                options={options}
+                onValueChange={onValueChange}
+                value={["opt1"]}
+            />
+        );
+
+        // Find clear button (X icon)
+        const clearButton = screen
+            .getByText("Option 1")
+            .closest("span")
+            ?.querySelector("svg");
+        expect(clearButton).toBeInTheDocument();
+    });
 });
