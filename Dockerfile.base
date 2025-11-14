@@ -29,7 +29,7 @@ COPY packages/ui/package.json ./packages/ui/
 COPY packages/wallet-shared/package.json ./packages/wallet-shared/
 
 # Examples
-COPY example/components/package.json ./example/components/
+COPY example/showcase/package.json ./example/showcase/
 COPY example/vanilla-js/package.json ./example/vanilla-js/
 COPY example/wallet-ethcc/package.json ./example/wallet-ethcc/
 
