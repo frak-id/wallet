@@ -62,8 +62,8 @@ export const test = baseTest.extend<
     >
 >({
     /**
-     * Provides a fresh recovery store that auto-resets
-     * Store is reset before and after each test
+     * Provides a fresh recovery store that auto-resets after each test
+     * Note: Only resets after use to avoid redundant overhead
      */
     freshRecoveryStore: async (
         // biome-ignore lint/correctness/noEmptyPattern: Vitest requires object destructuring
@@ -73,9 +73,6 @@ export const test = baseTest.extend<
         ) => Promise<void>
     ) => {
         const { recoveryStore } = await import("@/module/stores/recoveryStore");
-
-        // Reset before use
-        recoveryStore.getState().reset();
 
         await use(recoveryStore);
 

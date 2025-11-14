@@ -253,49 +253,48 @@ export const test = baseTest.extend<BaseTestFixtures>({
     },
 
     /**
-     * Provides fresh sessionStore that auto-resets
+     * Provides fresh sessionStore that auto-resets after each test
+     * Note: Only resets after use to avoid redundant overhead
      */
     // biome-ignore lint/correctness/noEmptyPattern: Vitest requires object destructuring
     freshSessionStore: async ({}, use) => {
         const { sessionStore } = await import("@frak-labs/wallet-shared");
-        sessionStore.getState().clearSession();
         await use(sessionStore);
         sessionStore.getState().clearSession();
     },
 
     /**
-     * Provides fresh walletStore that auto-resets
+     * Provides fresh walletStore that auto-resets after each test
+     * Note: Only resets after use to avoid redundant overhead
      */
     // biome-ignore lint/correctness/noEmptyPattern: Vitest requires object destructuring
     freshWalletStore: async ({}, use) => {
         const { walletStore } = await import("@frak-labs/wallet-shared");
-        walletStore.getState().cleanPendingInteractions();
-        walletStore.getState().setInteractionSession(null);
         await use(walletStore);
         walletStore.getState().cleanPendingInteractions();
         walletStore.getState().setInteractionSession(null);
     },
 
     /**
-     * Provides fresh userStore that auto-resets
+     * Provides fresh userStore that auto-resets after each test
+     * Note: Only resets after use to avoid redundant overhead
      */
     // biome-ignore lint/correctness/noEmptyPattern: Vitest requires object destructuring
     freshUserStore: async ({}, use) => {
         const { userStore } = await import("@frak-labs/wallet-shared");
-        userStore.getState().clearUser();
         await use(userStore);
         userStore.getState().clearUser();
     },
 
     /**
-     * Provides fresh authenticationStore that auto-resets
+     * Provides fresh authenticationStore that auto-resets after each test
+     * Note: Only resets after use to avoid redundant overhead
      */
     // biome-ignore lint/correctness/noEmptyPattern: Vitest requires object destructuring
     freshAuthenticationStore: async ({}, use) => {
         const { authenticationStore } = await import(
             "@frak-labs/wallet-shared"
         );
-        authenticationStore.getState().clearAuthentication();
         await use(authenticationStore);
         authenticationStore.getState().clearAuthentication();
     },
