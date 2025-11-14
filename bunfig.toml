@@ -3,3 +3,4 @@ telemetry = false
 
 [install]
 conditions = ["development", "import"]
+linker = "isolated"

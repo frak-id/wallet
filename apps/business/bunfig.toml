@@ -1,6 +1,0 @@
-# Business app specific Bun configuration
-# Force isolated installs to ensure regular vite is used (not rolldown-vite from workspace)
-
-[install]
-# Use isolated linker so this package doesn't inherit hoisted vite from workspace
-linker = "isolated"
