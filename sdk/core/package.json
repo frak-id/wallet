@@ -103,7 +103,7 @@
   },
   "dependencies": {
     "@frak-labs/frame-connector": "workspace:*",
-    "@openpanel/web": "^1.0.1"
+    "@openpanel/web": "^1.0.2"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.2",
@@ -111,12 +111,12 @@
     "@rolldown/plugin-node-polyfills": "^1.0.0",
     "@types/jsdom": "^27.0.0",
     "@types/node": "catalog:",
-    "@vitest/coverage-v8": "^4.0.8",
-    "@vitest/ui": "^4.0.8",
-    "jsdom": "^27.1.0",
+    "@vitest/coverage-v8": "^4.0.9",
+    "@vitest/ui": "^4.0.9",
+    "jsdom": "^27.2.0",
     "tsdown": "^0.16.4",
     "typescript": "catalog:",
     "viem": "catalog:",
-    "vitest": "^4.0.8"
+    "vitest": "^4.0.9"
   }
 }

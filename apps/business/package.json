@@ -25,7 +25,7 @@
         "@frak-labs/react-sdk": "workspace:*",
         "@frak-labs/ui": "workspace:*",
         "@lucasmogari/react-pagination": "^2.1.0",
-        "@openpanel/web": "^1.0.1",
+        "@openpanel/web": "^1.0.2",
         "@radix-ui/react-collapsible": "^1.1.12",
         "@radix-ui/react-label": "^2.1.8",
         "@radix-ui/react-popover": "^1.1.15",
@@ -71,16 +71,16 @@
         "@types/react": "catalog:",
         "@types/react-dom": "catalog:",
         "@vitejs/plugin-react": "^5.1.1",
-        "@vitest/coverage-v8": "^4.0.8",
-        "@vitest/ui": "^4.0.8",
+        "@vitest/coverage-v8": "^4.0.9",
+        "@vitest/ui": "^4.0.9",
         "bun-types": "latest",
-        "jsdom": "^27.1.0",
+        "jsdom": "^27.2.0",
         "rolldown-vite": "^7.2.5",
         "lightningcss": "^1.30.2",
         "sst": "3.17.23",
         "typescript": "^5",
         "vite": "catalog:",
         "vite-tsconfig-paths": "^5.1.4",
-        "vitest": "^4.0.8"
+        "vitest": "^4.0.9"
     }
 }
