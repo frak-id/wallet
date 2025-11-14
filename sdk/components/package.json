@@ -92,7 +92,7 @@
     "@vitest/coverage-v8": "^4.0.8",
     "@vitest/ui": "^4.0.8",
     "jsdom": "^27.1.0",
-    "tsdown": "^0.16.1",
+    "tsdown": "^0.16.4",
     "typescript": "^5",
     "unplugin-lightningcss": "^0.4.3",
     "vite-tsconfig-paths": "^5.1.4",
