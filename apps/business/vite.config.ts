@@ -13,7 +13,7 @@ export default defineConfig({
         }),
         tanstackStart(),
         viteReact(),
-        nitro(),
+        nitro({ preset: "bun" }),
     ],
     // Replace some env variable when it's needed
     define: {
