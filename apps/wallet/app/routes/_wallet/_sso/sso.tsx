@@ -24,12 +24,9 @@ import {
     ssoKey,
     ua,
 } from "@frak-labs/wallet-shared";
-import {
-    type UseMutationOptions,
-    useMutation,
-    useQuery,
-} from "@tanstack/react-query";
-import { createFileRoute, Link, useSearch } from "@tanstack/react-router";
+import { type UseMutationOptions, useMutation } from "@tanstack/react-query";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import i18next from "i18next";
 import { CloudUpload } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
@@ -51,11 +48,56 @@ export const Route = createFileRoute("/_wallet/_sso/sso")({
             p: (search.p as string) || undefined,
         };
     },
+    beforeLoad: async ({ search }) => {
+        const compressedString = search.p;
+        if (!compressedString) {
+            // If no SSO params, redirect to register
+            throw redirect({ to: "/register", replace: true });
+        }
+
+        // Decompress the SSO parameters
+        const compressedParam =
+            decompressJsonFromB64<CompressedSsoData>(compressedString);
+        if (!compressedParam) {
+            // Return error to be handled gracefully by component
+            return {
+                error: new Error(
+                    "Invalid SSO parameters. The link may be corrupted or expired."
+                ),
+            };
+        }
+
+        // Convert compressed params to full params
+        const { productId, redirectUrl, directExit, lang, metadata } =
+            compressedSsoToParams(compressedParam);
+
+        // Save the SSO context to the store
+        authenticationStore.getState().setSsoContext({
+            productId: productId ?? undefined,
+            redirectUrl: redirectUrl ?? undefined,
+            directExit: directExit ?? undefined,
+            metadata: metadata ?? undefined,
+        });
+
+        // Change language if provided and different from current
+        if (lang && i18next.language !== lang) {
+            await i18next.changeLanguage(lang);
+        }
+
+        return {
+            ssoParams: { productId, redirectUrl, directExit, lang, metadata },
+        };
+    },
 });
 
 function Sso() {
-    const { i18n, t } = useTranslation();
-    const searchParams = useSearch({ from: "/_wallet/_sso/sso" });
+    const { t } = useTranslation();
+
+    /**
+     * Get route context to check for initialization errors
+     * beforeLoad returns route context, not loader data
+     */
+    const routeContext = Route.useRouteContext();
 
     /**
      * The current metadata
@@ -76,50 +118,11 @@ function Sso() {
     const [success, setSuccess] = useState(false);
 
     /**
-     * The error state
+     * The error state (can come from beforeLoad or from login/register actions)
      */
-    const [error, setError] = useState<Error | null>(null);
-
-    /**
-     * Set the sso context atom directly
-     */
-    useQuery({
-        gcTime: 0,
-        staleTime: 0,
-        queryKey: ssoKey.params.bySearchParams(
-            searchParams.p ? `p=${searchParams.p}` : ""
-        ),
-        queryFn: async () => {
-            const compressedString = searchParams.p;
-            if (!compressedString) {
-                return null;
-            }
-            const compressedParam =
-                decompressJsonFromB64<CompressedSsoData>(compressedString);
-            if (!compressedParam) {
-                return null;
-            }
-            const { productId, redirectUrl, directExit, lang, metadata } =
-                compressedSsoToParams(compressedParam);
-
-            // Save the current sso context
-            authenticationStore.getState().setSsoContext({
-                productId: productId ?? undefined,
-                redirectUrl: redirectUrl ?? undefined,
-                directExit: directExit ?? undefined,
-                metadata: metadata ?? undefined,
-            });
-
-            // If we got a language, change the i18n language
-            if (lang && i18n.language !== lang) {
-                await i18n.changeLanguage(lang);
-            }
-            // Return no data
-            return null;
-        },
-        refetchOnMount: true,
-        refetchOnWindowFocus: true,
-    });
+    const [error, setError] = useState<Error | null>(
+        (routeContext as { error?: Error })?.error ?? null
+    );
 
     /**
      * Add a data attribute to the root element to style the layout
@@ -232,6 +235,26 @@ function Sso() {
             window.location.href = redirectUrl.toString();
         }
     }, []);
+
+    // Show error state if loader failed
+    if (error) {
+        return (
+            <>
+                <SsoHeader />
+                <Grid className={styles.sso__grid}>
+                    <h2>An error occurred</h2>
+                    <HandleErrors error={error} />
+                    <button
+                        className={styles.sso__buttonLink}
+                        onClick={() => window.close()}
+                        type={"button"}
+                    >
+                        Close
+                    </button>
+                </Grid>
+            </>
+        );
+    }
 
     if (!currentMetadata) {
         return <Spinner />;
