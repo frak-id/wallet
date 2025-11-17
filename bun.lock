@@ -342,6 +342,7 @@
         "zustand": "^5.0.8",
       },
       "devDependencies": {
+        "@frak-labs/app-essentials": "workspace:*",
         "@tanstack/router-plugin": "^1.136.1",
         "@testing-library/jest-dom": "^6.9.1",
         "@testing-library/react": "^16.3.0",
@@ -354,6 +355,7 @@
         "lightningcss": "^1.30.2",
         "typescript": "catalog:",
         "vite": "catalog:",
+        "vite-plugin-html": "^3.2.2",
         "vite-tsconfig-paths": "^5.1.4",
         "vitest": "^4.0.9",
       },
@@ -362,6 +364,7 @@
       "name": "@frak-labs-example/vanilla-js",
       "version": "0.0.1",
       "devDependencies": {
+        "@frak-labs/app-essentials": "workspace:*",
         "@frak-labs/components": "workspace:*",
         "@frak-labs/core-sdk": "workspace:*",
         "rolldown-vite": "^7.2.5",

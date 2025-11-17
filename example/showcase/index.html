@@ -16,14 +16,14 @@
         if (config) {
             window.FrakSetup = {
                 config: {
-                    walletUrl: "https://wallet-dev.frak.id",
+                    walletUrl: "<%- walletUrl %>",
                     ...JSON.parse(config),
                 },
             };
         } else {
             window.FrakSetup = {
                 config: {
-                    walletUrl: "https://wallet-dev.frak.id",
+                    walletUrl: "<%- walletUrl %>",
                     metadata: {
                         name: "Example components",
                     },
@@ -31,7 +31,7 @@
             };
         }
     </script>
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@frak-labs/components" defer></script>
+    <%- injectScript %>
 </head>
 
 <body>

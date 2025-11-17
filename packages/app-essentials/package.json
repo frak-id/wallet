@@ -24,6 +24,11 @@
       "types": "./src/blockchain/index.ts",
       "import": "./src/blockchain/index.ts",
       "default": "./src/blockchain/index.ts"
+    },
+    "./utils/env": {
+      "types": "./src/utils/env.ts",
+      "import": "./src/utils/env.ts",
+      "default": "./src/utils/env.ts"
     }
   }
 }
