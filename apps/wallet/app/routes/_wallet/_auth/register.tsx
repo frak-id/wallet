@@ -19,7 +19,9 @@ function Register() {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const [disabled, setDisabled] = useState(false);
-    const { register, error, isRegisterInProgress } = useRegister({});
+    const { register, error, isRegisterInProgress, isSuccess } = useRegister(
+        {}
+    );
 
     /**
      * Boolean used to know if the error is about a previously used authenticator
@@ -70,6 +72,13 @@ function Register() {
             navigate({ to: "/login" });
         }, 3000);
     }, [isPreviouslyUsedAuthenticatorError, navigate]);
+
+    // Redirect to wallet after successful registration
+    useEffect(() => {
+        if (isSuccess) {
+            navigate({ to: "/wallet", replace: true });
+        }
+    }, [isSuccess, navigate]);
 
     return (
         <Grid

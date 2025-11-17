@@ -1,8 +1,9 @@
 import { Button } from "@frak-labs/ui/component/Button";
 import { ButtonAuth } from "@frak-labs/ui/component/ButtonAuth";
 import { isWebAuthNSupported, useLogin } from "@frak-labs/wallet-shared";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { CloudUpload } from "lucide-react";
+import { useEffect } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { AuthenticateWithPhone } from "@/module/authentication/component/AuthenticateWithPhone";
 import { LoginList } from "@/module/authentication/component/LoginList";
@@ -17,7 +18,15 @@ export const Route = createFileRoute("/_wallet/_auth/login")({
 
 function Login() {
     const { t } = useTranslation();
-    const { login, isLoading } = useLogin({});
+    const navigate = useNavigate();
+    const { login, isLoading, isSuccess } = useLogin({});
+
+    // Redirect to wallet after successful login
+    useEffect(() => {
+        if (isSuccess) {
+            navigate({ to: "/wallet", replace: true });
+        }
+    }, [isSuccess, navigate]);
 
     return (
         <>
