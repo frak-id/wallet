@@ -20,16 +20,25 @@ export const viemMocks = {
     request: requestMock,
 };
 
-// Create proper mock functions
-const multicallMock = mock(() => Promise.resolve([]));
-const readContractMock = mock(() => Promise.resolve());
-const simulateContractMock = mock(() => Promise.resolve({ request: {} }));
+// Create proper mock functions with proper typing
+const multicallMock = mock(<T = unknown>() => Promise.resolve([] as T[]));
+const readContractMock = mock(<T = unknown>() =>
+    Promise.resolve(undefined as T)
+);
+const simulateContractMock = mock(() =>
+    Promise.resolve({ request: {}, result: undefined })
+);
 const writeContractMock = mock(() => Promise.resolve("0x" as Hex));
-const waitForTransactionReceiptMock = mock(() => Promise.resolve({}));
+const waitForTransactionReceiptMock = mock(() =>
+    Promise.resolve({ status: "success" as const })
+);
 const getTransactionCountMock = mock(() => Promise.resolve(0));
 const verifyMessageMock = mock(() => Promise.resolve(true));
 const getCodeMock = mock(() => Promise.resolve("0x"));
 const getStorageAtMock = mock(() => Promise.resolve("0x" as Hex));
+const estimateGasMock = mock(() => Promise.resolve(100000n));
+const sendTransactionMock = mock(() => Promise.resolve("0x" as Hex));
+const signTypedDataMock = mock(() => Promise.resolve("0x" as Hex));
 
 export const viemActionsMocks = {
     multicall: multicallMock,
@@ -41,6 +50,9 @@ export const viemActionsMocks = {
     verifyMessage: verifyMessageMock,
     getCode: getCodeMock,
     getStorageAt: getStorageAtMock,
+    estimateGas: estimateGasMock,
+    sendTransaction: sendTransactionMock,
+    signTypedData: signTypedDataMock,
 };
 
 export function mockViemActions() {
@@ -55,6 +67,9 @@ export function mockViemActions() {
         verifyMessage: verifyMessageMock,
         getCode: getCodeMock,
         getStorageAt: getStorageAtMock,
+        estimateGas: estimateGasMock,
+        sendTransaction: sendTransactionMock,
+        signTypedData: signTypedDataMock,
         prepareAuthorization: mock(() => Promise.resolve({})),
     }));
 }

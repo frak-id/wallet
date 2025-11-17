@@ -2,6 +2,7 @@ export { InteractionsContext } from "./context";
 export {
     archivedInteractionsTable,
     backendTrackerTable,
+    interactionSimulationStatus,
     interactionsPurchaseTrackerTable,
     pendingInteractionsTable,
     pushedInteractionsTable,

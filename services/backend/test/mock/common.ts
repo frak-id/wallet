@@ -1,5 +1,5 @@
 import { mock } from "bun:test";
-import type { LocalAccount } from "viem";
+import type { Address, LocalAccount } from "viem";
 import { viemMocks } from "./viem";
 
 /* -------------------------------------------------------------------------- */
@@ -33,13 +33,21 @@ export const adminWalletsRepositoryMocks = {
     getKeySpecificAccount: mock(() =>
         Promise.resolve(undefined as undefined | LocalAccount)
     ),
+    getProductSpecificAccount: mock(() =>
+        Promise.resolve(undefined as undefined | LocalAccount)
+    ),
     getMutexForAccount: mock(() => ({
         runExclusive: mock((fn: () => Promise<unknown>) => fn()),
     })),
 };
 
 export const interactionDiamondRepositoryMocks = {
-    getInteractionDiamond: mock(() => Promise.resolve(undefined)),
+    getDiamondContract: mock(<T = Address | undefined>() =>
+        Promise.resolve(undefined as T)
+    ),
+    getInteractionDiamond: mock(<T = Address | undefined>() =>
+        Promise.resolve(undefined as T)
+    ),
 };
 
 export const rolesRepositoryMocks = {
@@ -101,7 +109,14 @@ const transactionMock = mock(async (fn: any) => {
 // biome-ignore lint/suspicious/noExplicitAny: Update accepts table argument
 const updateMock = mock((_table?: any) => ({
     set: mock(() => ({
-        where: mock(() => mockFunctions.updateMockFn()),
+        where: mock(() => ({
+            returning: mock(() => mockFunctions.updateMockFn()),
+            // biome-ignore lint/suspicious/noThenProperty: mocked stuff
+            then: (onfulfilled?: (value: unknown) => unknown) => {
+                const promise = mockFunctions.updateMockFn();
+                return promise.then(onfulfilled);
+            },
+        })),
     })),
 }));
 
@@ -172,9 +187,19 @@ export const dbMock: any = {
     })),
     update: updateMock,
     delete: mock(() => ({
-        where: mock(() => ({
-            execute: deleteExecuteMock,
-        })),
+        where: mock(() => {
+            // Make it callable directly (returns promise) or with .execute()
+            const deleteResult = () => mockFunctions.deleteMockFn();
+            return Object.assign(deleteResult, {
+                execute: deleteExecuteMock,
+                // biome-ignore lint/suspicious/noThenProperty: mocked stuff
+                then: (onfulfilled?: (value: unknown) => unknown) => {
+                    deleteExecuteMock();
+                    const promise = mockFunctions.deleteMockFn();
+                    return promise.then(onfulfilled);
+                },
+            });
+        }),
     })),
     transaction: transactionMock,
     query: {

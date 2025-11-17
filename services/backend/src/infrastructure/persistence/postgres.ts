@@ -1,17 +1,17 @@
-import { pendingInteractionsTable } from "@backend-domain/interactions";
 import {
     backendTrackerTable,
     interactionSimulationStatus,
     interactionsPurchaseTrackerTable,
+    pendingInteractionsTable,
     pushedInteractionsTable,
-} from "@backend-domain/interactions/db/schema";
+} from "@backend-domain/interactions";
 import { pushTokensTable } from "@backend-domain/notifications";
 import {
     productOracleTable,
+    purchaseItemTable,
     purchaseStatusEnum,
     purchaseStatusTable,
 } from "@backend-domain/oracle";
-import { purchaseItemTable } from "@backend-domain/oracle/db/schema";
 import {
     pairingSignatureRequestTable,
     pairingTable,
