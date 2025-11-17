@@ -1,5 +1,5 @@
 import { db } from "@backend-infrastructure";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import {
     archivedInteractionsTable,
     pendingInteractionsTable,
@@ -36,14 +36,38 @@ export class ArchiveRepository {
     }
 
     /**
-     * Archive multiple interactions
+     * Archive multiple interactions (bulk operation)
      */
     async archiveInteractions(
         interactions: (typeof pendingInteractionsTable.$inferSelect)[],
         reason: "max_retries" | "expired" | "manual"
     ) {
-        for (const interaction of interactions) {
-            await this.archiveInteraction(interaction, reason);
-        }
+        if (interactions.length === 0) return;
+
+        await db.transaction(async (trx) => {
+            // Bulk insert into archive
+            await trx.insert(archivedInteractionsTable).values(
+                interactions.map((interaction) => ({
+                    wallet: interaction.wallet,
+                    productId: interaction.productId,
+                    typeDenominator: interaction.typeDenominator,
+                    interactionData: interaction.interactionData,
+                    signature: interaction.signature ?? undefined,
+                    finalStatus: interaction.status ?? "pending",
+                    failureReason: interaction.failureReason ?? undefined,
+                    totalRetries: interaction.retryCount ?? 0,
+                    archiveReason: reason,
+                    originalCreatedAt: interaction.createdAt,
+                }))
+            );
+
+            // Bulk delete from pending
+            await trx.delete(pendingInteractionsTable).where(
+                inArray(
+                    pendingInteractionsTable.id,
+                    interactions.map((i) => i.id)
+                )
+            );
+        });
     }
 }

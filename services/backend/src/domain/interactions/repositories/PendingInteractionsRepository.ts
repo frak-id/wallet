@@ -11,15 +11,14 @@ export class PendingInteractionsRepository {
     /**
      * Get and lock interactions to process
      * Automatically unlocks interactions locked for more than 5 minutes
+     * Uses a single UPDATE with subquery for better performance
      */
     async getAndLock({
         status,
         limit = 50,
-        skipProcess = (arr) => arr.length === 0,
     }: {
         status: "pending" | "succeeded";
         limit?: number;
-        skipProcess?: (interactions: SelectedInteraction[]) => boolean;
     }) {
         return db.transaction(async (trx) => {
             const now = new Date();
@@ -41,9 +40,9 @@ export class PendingInteractionsRepository {
                     )
                 );
 
-            // Get all unlocked interactions with the target status
-            const interactions = await trx
-                .select()
+            // Get candidate IDs first (with limit)
+            const candidates = await trx
+                .select({ id: pendingInteractionsTable.id })
                 .from(pendingInteractionsTable)
                 .where(
                     and(
@@ -53,20 +52,21 @@ export class PendingInteractionsRepository {
                 )
                 .limit(limit);
 
-            if (skipProcess(interactions)) {
+            if (candidates.length === 0) {
                 return [];
             }
 
-            // Lock them
-            await trx
+            // Lock them and return full data in one query using RETURNING
+            const interactions = await trx
                 .update(pendingInteractionsTable)
                 .set({ lockedAt: now })
                 .where(
                     inArray(
                         pendingInteractionsTable.id,
-                        interactions.map((out) => out.id)
+                        candidates.map((c) => c.id)
                     )
-                );
+                )
+                .returning();
 
             return interactions;
         });

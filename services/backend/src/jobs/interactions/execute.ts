@@ -115,34 +115,37 @@ async function executeInteractions({
             failedSignatures.includes(i.id)
         );
 
-        for (const interaction of failedInteractions) {
-            const retryCount = (interaction.retryCount ?? 0) + 1;
-            const nextRetryAt = calculateNextRetry(
-                "execution_failed",
-                retryCount
-            );
+        // Batch all updates in a single transaction
+        await db.transaction(async (trx) => {
+            for (const interaction of failedInteractions) {
+                const retryCount = (interaction.retryCount ?? 0) + 1;
+                const nextRetryAt = calculateNextRetry(
+                    "execution_failed",
+                    retryCount
+                );
 
-            await db
-                .update(pendingInteractionsTable)
-                .set({
-                    status: "execution_failed",
-                    failureReason:
-                        "Failed to generate signature for interaction",
-                    retryCount,
-                    lastRetryAt: new Date(),
-                    nextRetryAt,
-                })
-                .where(eq(pendingInteractionsTable.id, interaction.id));
+                await trx
+                    .update(pendingInteractionsTable)
+                    .set({
+                        status: "execution_failed",
+                        failureReason:
+                            "Failed to generate signature for interaction",
+                        retryCount,
+                        lastRetryAt: new Date(),
+                        nextRetryAt,
+                    })
+                    .where(eq(pendingInteractionsTable.id, interaction.id));
 
-            logger.debug(
-                {
-                    interactionId: interaction.id,
-                    retryCount,
-                    nextRetryAt,
-                },
-                "Scheduled retry for signature generation failure"
-            );
-        }
+                logger.debug(
+                    {
+                        interactionId: interaction.id,
+                        retryCount,
+                        nextRetryAt,
+                    },
+                    "Scheduled retry for signature generation failure"
+                );
+            }
+        });
 
         logger.warn(
             {
@@ -178,33 +181,35 @@ async function executeInteractions({
         );
 
         // Mark these interactions as execution_failed so they can be retried quickly
-        for (const { interaction } of preparedInteractions) {
-            const retryCount = (interaction.retryCount ?? 0) + 1;
-            const nextRetryAt = calculateNextRetry(
-                "execution_failed",
-                retryCount
-            );
+        await db.transaction(async (trx) => {
+            for (const { interaction } of preparedInteractions) {
+                const retryCount = (interaction.retryCount ?? 0) + 1;
+                const nextRetryAt = calculateNextRetry(
+                    "execution_failed",
+                    retryCount
+                );
 
-            await db
-                .update(pendingInteractionsTable)
-                .set({
-                    status: "execution_failed",
-                    failureReason: "Failed to push transaction on-chain",
-                    retryCount,
-                    lastRetryAt: new Date(),
-                    nextRetryAt,
-                })
-                .where(eq(pendingInteractionsTable.id, interaction.id));
+                await trx
+                    .update(pendingInteractionsTable)
+                    .set({
+                        status: "execution_failed",
+                        failureReason: "Failed to push transaction on-chain",
+                        retryCount,
+                        lastRetryAt: new Date(),
+                        nextRetryAt,
+                    })
+                    .where(eq(pendingInteractionsTable.id, interaction.id));
 
-            logger.debug(
-                {
-                    interactionId: interaction.id,
-                    retryCount,
-                    nextRetryAt,
-                },
-                "Scheduled retry for on-chain push failure"
-            );
-        }
+                logger.debug(
+                    {
+                        interactionId: interaction.id,
+                        retryCount,
+                        nextRetryAt,
+                    },
+                    "Scheduled retry for on-chain push failure"
+                );
+            }
+        });
 
         logger.warn(
             {
