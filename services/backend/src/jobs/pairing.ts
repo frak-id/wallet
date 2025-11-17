@@ -1,7 +1,7 @@
 import { db } from "@backend-infrastructure";
 import { mutexCron } from "@backend-utils";
 import { and, isNull, lt, or } from "drizzle-orm";
-import Elysia from "elysia";
+import { Elysia } from "elysia";
 import { pairingSignatureRequestTable, pairingTable } from "../domain/pairing";
 
 // Pairing related jobs

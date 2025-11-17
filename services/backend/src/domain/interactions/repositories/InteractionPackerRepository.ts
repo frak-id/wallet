@@ -41,9 +41,11 @@ export class InteractionPackerRepository {
             );
             return {
                 isSimulationSuccess: false,
+                failureReason: "No diamond contract found for product",
             };
         }
 
+        // Simulate the interaction execution
         try {
             await simulateContract(viemClient, {
                 account: wallet,

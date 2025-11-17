@@ -1,5 +1,6 @@
 export { InteractionsContext } from "./context";
 export {
+    archivedInteractionsTable,
     backendTrackerTable,
     interactionsPurchaseTrackerTable,
     pendingInteractionsTable,

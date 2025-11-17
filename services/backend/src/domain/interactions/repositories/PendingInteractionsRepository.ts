@@ -1,12 +1,16 @@
 import { db } from "@backend-infrastructure";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, isNotNull, isNull, lt } from "drizzle-orm";
 import { pendingInteractionsTable } from "../db/schema";
 
 type SelectedInteraction = typeof pendingInteractionsTable.$inferSelect;
 
+// Auto-unlock threshold (5 minutes)
+const LOCK_TIMEOUT_MS = 5 * 60 * 1000;
+
 export class PendingInteractionsRepository {
     /**
-     * Get and lock interactions to simulate depending on their status
+     * Get and lock interactions to process
+     * Automatically unlocks interactions locked for more than 5 minutes
      */
     async getAndLock({
         status,
@@ -18,14 +22,33 @@ export class PendingInteractionsRepository {
         skipProcess?: (interactions: SelectedInteraction[]) => boolean;
     }) {
         return db.transaction(async (trx) => {
-            // Get all the interactions to simulate
+            const now = new Date();
+            const lockTimeoutThreshold = new Date(
+                now.getTime() - LOCK_TIMEOUT_MS
+            );
+
+            // First, auto-unlock stale locks
+            await trx
+                .update(pendingInteractionsTable)
+                .set({ lockedAt: null })
+                .where(
+                    and(
+                        isNotNull(pendingInteractionsTable.lockedAt),
+                        lt(
+                            pendingInteractionsTable.lockedAt,
+                            lockTimeoutThreshold
+                        )
+                    )
+                );
+
+            // Get all unlocked interactions with the target status
             const interactions = await trx
                 .select()
                 .from(pendingInteractionsTable)
                 .where(
                     and(
                         eq(pendingInteractionsTable.status, status),
-                        eq(pendingInteractionsTable.locked, false)
+                        isNull(pendingInteractionsTable.lockedAt)
                     )
                 )
                 .limit(limit);
@@ -37,9 +60,7 @@ export class PendingInteractionsRepository {
             // Lock them
             await trx
                 .update(pendingInteractionsTable)
-                .set({
-                    locked: true,
-                })
+                .set({ lockedAt: now })
                 .where(
                     inArray(
                         pendingInteractionsTable.id,
@@ -52,19 +73,49 @@ export class PendingInteractionsRepository {
     }
 
     /**
-     * Unlock interactions post shenanigans
+     * Unlock interactions
      */
     async unlock(interactions: SelectedInteraction[]) {
+        if (interactions.length === 0) return;
+
         return db
             .update(pendingInteractionsTable)
-            .set({
-                locked: false,
-            })
+            .set({ lockedAt: null })
             .where(
                 inArray(
                     pendingInteractionsTable.id,
                     interactions.map((out) => out.id)
                 )
             );
+    }
+
+    /**
+     * Reset interactions to pending for retry (needs re-simulation)
+     * Note: Only updates status - retryCount/nextRetryAt/lastRetryAt were already set by simulate job
+     */
+    async resetForSimulation(ids: number[]) {
+        if (ids.length === 0) return;
+
+        return db
+            .update(pendingInteractionsTable)
+            .set({
+                status: "pending",
+            })
+            .where(inArray(pendingInteractionsTable.id, ids));
+    }
+
+    /**
+     * Reset interactions to succeeded for retry (skip simulation, go to execution)
+     * Note: Only updates status - retryCount/nextRetryAt/lastRetryAt were already set by execute job
+     */
+    async resetForExecution(ids: number[]) {
+        if (ids.length === 0) return;
+
+        return db
+            .update(pendingInteractionsTable)
+            .set({
+                status: "succeeded",
+            })
+            .where(inArray(pendingInteractionsTable.id, ids));
     }
 }

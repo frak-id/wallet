@@ -120,6 +120,42 @@ export class InteractionSignerRepository {
     }
 
     /**
+     * Check if the signer is allowed for a given product
+     * @param productId
+     */
+    async checkSignerAllowedForProduct(
+        productId: Hex
+    ): Promise<{ isAllowed: boolean; signerAddress?: Address }> {
+        // Get the diamond for id
+        const interactionContract =
+            await interactionDiamondRepository.getDiamondContract(productId);
+        if (!interactionContract) {
+            log.warn(
+                { productId },
+                "[InteractionSignerRepository] No diamond contract found for product"
+            );
+            return { isAllowed: false };
+        }
+
+        // Get the signer
+        const signerAccount =
+            await adminWalletsRepository.getProductSpecificAccount({
+                productId: BigInt(productId),
+            });
+
+        // Check if allowed (with cache)
+        const isAllowed = await this.checkIfSignerIsAllowed({
+            interactionContract,
+            signerAccount,
+        });
+
+        return {
+            isAllowed,
+            signerAddress: signerAccount.address,
+        };
+    }
+
+    /**
      * Check if the signer is allowed to sign the interaction
      * @param interactionContract
      * @param signerAccount
