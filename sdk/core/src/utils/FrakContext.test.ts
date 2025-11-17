@@ -4,6 +4,7 @@
  */
 
 import type { Address } from "viem";
+import { mockWindowHistory } from "../../../../test-setup/dom-mocks";
 import {
     afterEach,
     beforeEach,
@@ -311,28 +312,96 @@ describe("FrakContextManager", () => {
     });
 
     describe("replaceUrl", () => {
-        // Note: replaceUrl tests are skipped because window.location cannot be mocked
-        // in JSDOM environment. The function is primarily used for browser DOM manipulation
-        // and is tested through integration/E2E tests.
+        const mockAddress =
+            "0x1234567890123456789012345678901234567890" as Address;
 
-        it.skip("should update window.location with context", () => {
-            // Skip: Cannot mock window.location in JSDOM
+        beforeEach(() => {
+            // Mock window.location.href
+            Object.defineProperty(window, "location", {
+                writable: true,
+                value: {
+                    href: "https://example.com/page",
+                },
+            });
+
+            // Mock window.history using our test utility
+            mockWindowHistory(vi);
         });
 
-        it.skip("should use provided URL instead of window.location.href", () => {
-            // Skip: Cannot mock window.location in JSDOM
+        it("should update window.location with context", () => {
+            const url = "https://example.com/test";
+            const context: FrakContext = { r: mockAddress };
+
+            FrakContextManager.replaceUrl({ url, context });
+
+            const historySpy = vi.mocked(window.history.replaceState);
+            expect(historySpy).toHaveBeenCalledTimes(1);
+            expect(historySpy).toHaveBeenCalledWith(
+                null,
+                "",
+                expect.stringContaining("fCtx=")
+            );
+
+            const calledUrl = historySpy.mock.calls[0]?.[2] as string;
+            expect(calledUrl).toContain("https://example.com/test");
+            expect(calledUrl).toContain("fCtx=");
         });
 
-        it.skip("should remove fCtx when context is null", () => {
-            // Skip: Cannot mock window.location in JSDOM
+        it("should use provided URL instead of window.location.href", () => {
+            const customUrl = "https://custom.com/path";
+            const context: FrakContext = { r: mockAddress };
+
+            FrakContextManager.replaceUrl({ url: customUrl, context });
+
+            const historySpy = vi.mocked(window.history.replaceState);
+            const calledUrl = historySpy.mock.calls[0]?.[2] as string;
+
+            expect(calledUrl).toContain("https://custom.com/path");
+            expect(calledUrl).not.toContain("https://example.com/page");
         });
 
-        it.skip("should not call replaceState when context has no referrer", () => {
-            // Skip: Cannot mock window.location in JSDOM
+        it("should remove fCtx when context is null", () => {
+            const url = "https://example.com/test?fCtx=existing";
+
+            FrakContextManager.replaceUrl({ url, context: null });
+
+            const historySpy = vi.mocked(window.history.replaceState);
+            expect(historySpy).toHaveBeenCalledTimes(1);
+
+            const calledUrl = historySpy.mock.calls[0]?.[2] as string;
+            expect(calledUrl).not.toContain("fCtx=");
         });
 
-        it.skip("should handle missing window gracefully", () => {
-            // Skip: Cannot mock window.location in JSDOM
+        it("should not call replaceState when context has no referrer", () => {
+            const url = "https://example.com/test";
+            const context: Partial<FrakContext> = {};
+
+            FrakContextManager.replaceUrl({ url, context });
+
+            const historySpy = vi.mocked(window.history.replaceState);
+            expect(historySpy).not.toHaveBeenCalled();
+        });
+
+        it("should handle missing window gracefully", () => {
+            // Remove window.location to simulate missing window
+            Object.defineProperty(window, "location", {
+                writable: true,
+                value: undefined,
+            });
+
+            const url = "https://example.com/test";
+            const context: FrakContext = { r: mockAddress };
+
+            // Should not throw error
+            expect(() => {
+                FrakContextManager.replaceUrl({ url, context });
+            }).not.toThrow();
+
+            const historySpy = vi.mocked(window.history.replaceState);
+            expect(historySpy).not.toHaveBeenCalled();
+            expect(consoleErrorSpy).toHaveBeenCalledWith(
+                "No window found, can't update context"
+            );
         });
     });
 });

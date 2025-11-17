@@ -83,6 +83,48 @@ export function mockDocumentCookie(initialValue = "") {
 }
 
 /**
+ * Mock window.history property
+ *
+ * Used for testing browser history manipulation (replaceState, pushState).
+ * By default, window.history methods are read-only in JSDOM environment.
+ * This mock allows testing code that calls window.history.replaceState/pushState.
+ *
+ * Note: This function must be called with the vi object from vitest since
+ * vitest cannot be dynamically imported in CommonJS contexts.
+ *
+ * @param vi - The vitest mock object (import { vi } from "vitest")
+ *
+ * @example
+ * ```typescript
+ * import { vi } from "vitest";
+ * import { mockWindowHistory } from "@test-setup";
+ *
+ * mockWindowHistory(vi);
+ * const historySpy = vi.mocked(window.history.replaceState);
+ *
+ * // Call your function that uses window.history
+ * someFunction();
+ *
+ * expect(historySpy).toHaveBeenCalledWith(null, "", "https://example.com");
+ * ```
+ */
+export function mockWindowHistory(vi: any) {
+    Object.defineProperty(window, "history", {
+        writable: true,
+        value: {
+            replaceState: vi.fn(),
+            pushState: vi.fn(),
+            back: vi.fn(),
+            forward: vi.fn(),
+            go: vi.fn(),
+            length: 0,
+            scrollRestoration: "auto" as ScrollRestoration,
+            state: null,
+        },
+    });
+}
+
+/**
  * Complete DOM setup for listener app
  *
  * Combines window.origin and document.referrer mocks with sensible defaults

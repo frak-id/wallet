@@ -30,6 +30,7 @@
 // DOM mocking utilities
 export {
     mockDocumentReferrer,
+    mockWindowHistory,
     mockWindowOrigin,
     setupListenerDomMocks,
 } from "./dom-mocks";
