@@ -5,7 +5,7 @@ import { Cron, type CronOptions } from "croner";
 import { Elysia } from "elysia";
 import type { FrakEvents } from "../events";
 
-type CronContext = Cron & {
+type CronContext = Cron["options"] & {
     context: {
         logger: pino.Logger;
     };
@@ -96,8 +96,8 @@ export const mutexCron = <Name extends string = string>({
                 decorators,
                 logger,
             },
-            catch: (error) =>
-                logger.warn({ error }, "[Cron] error while processing cron"),
+            catch: (error, job) =>
+                logger.warn({ error, name: job.name }, "[Cron] error while processing cron"),
         };
 
         // And the cron
@@ -109,7 +109,7 @@ export const mutexCron = <Name extends string = string>({
             // Run exclusively the cron
             await mutex.runExclusive(async () => {
                 // Perform the run
-                await run(self as CronContext);
+                await run(self.options as CronContext);
                 // If we got an interval, waiting for it before releasing the mutex
                 if (coolDownInMs) {
                     logger.debug(
