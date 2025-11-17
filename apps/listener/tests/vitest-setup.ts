@@ -12,13 +12,13 @@
  * - document.referrer to identify parent window origin (via dom-mocks.ts)
  */
 
-import { setupListenerDomMocks } from "@test-setup";
+import { setupListenerDomMocks } from "@frak-labs/test-foundation";
 
 // Import shared React Testing Library setup (cleanup + jest-dom)
-import "../../../test-setup/react-testing-library-setup";
+import "@frak-labs/test-foundation/react-testing-library-setup";
 
 // Import shared React setup (BigInt serialization)
-import "../../../test-setup/react-setup";
+import "@frak-labs/test-foundation/react-setup";
 
 // Setup DOM mocks for iframe communication testing
 setupListenerDomMocks();

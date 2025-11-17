@@ -78,6 +78,7 @@
         "zustand": "^5.0.8",
       },
       "devDependencies": {
+        "@frak-labs/test-foundation": "workspace:*",
         "@tanstack/query-sync-storage-persister": "catalog:",
         "@tanstack/react-devtools": "^0.8.1",
         "@tanstack/react-query-devtools": "catalog:",
@@ -224,6 +225,7 @@
       },
       "devDependencies": {
         "@frak-labs/backend-elysia": "workspace:*",
+        "@frak-labs/test-foundation": "workspace:*",
         "@testing-library/jest-dom": "^6.9.1",
         "@testing-library/react": "^16.3.0",
         "@types/jsdom": "^27.0.0",
@@ -288,6 +290,7 @@
       },
       "devDependencies": {
         "@frak-labs/backend-elysia": "workspace:*",
+        "@frak-labs/test-foundation": "workspace:*",
         "@noble/curves": "^2.0.1",
         "@playwright/test": "^1.56.1",
         "@tanstack/react-router-devtools": "^1.136.1",
@@ -458,6 +461,22 @@
         "viem": "^2.x",
       },
     },
+    "packages/test-foundation": {
+      "name": "@frak-labs/test-foundation",
+      "version": "0.1.0",
+      "dependencies": {
+        "@openpanel/web": "*",
+        "@tanstack/react-router": "*",
+        "@testing-library/jest-dom": "*",
+        "@testing-library/react": "*",
+        "@vitejs/plugin-react": "*",
+        "idb-keyval": "*",
+        "ox": "*",
+        "vite-tsconfig-paths": "*",
+        "vitest": "*",
+        "wagmi": "*",
+      },
+    },
     "packages/ui": {
       "name": "@frak-labs/ui",
       "version": "0.0.0",
@@ -482,6 +501,7 @@
       },
       "devDependencies": {
         "@frak-labs/app-essentials": "workspace:*",
+        "@frak-labs/test-foundation": "workspace:*",
         "@testing-library/jest-dom": "^6.9.1",
         "@testing-library/react": "^16.3.0",
         "@types/react": "catalog:",
@@ -529,6 +549,7 @@
         "zustand": "catalog:",
       },
       "devDependencies": {
+        "@frak-labs/test-foundation": "workspace:*",
         "@testing-library/jest-dom": "^6.9.1",
         "@testing-library/react": "^16.3.0",
         "@types/node": "catalog:",
@@ -557,6 +578,7 @@
       "devDependencies": {
         "@bosh-code/tsdown-plugin-inject-css": "^2.0.0",
         "@frak-labs/dev-tooling": "workspace:*",
+        "@frak-labs/test-foundation": "workspace:*",
         "@frak-labs/ui": "workspace:*",
         "@preact/preset-vite": "^2.10.2",
         "@rolldown/plugin-node-polyfills": "^1.0.0",
@@ -586,6 +608,7 @@
       "devDependencies": {
         "@arethetypeswrong/cli": "^0.18.2",
         "@frak-labs/dev-tooling": "workspace:*",
+        "@frak-labs/test-foundation": "workspace:*",
         "@rolldown/plugin-node-polyfills": "^1.0.0",
         "@types/jsdom": "^27.0.0",
         "@types/node": "catalog:",
@@ -625,6 +648,7 @@
       "devDependencies": {
         "@arethetypeswrong/cli": "^0.18.2",
         "@frak-labs/dev-tooling": "workspace:*",
+        "@frak-labs/test-foundation": "workspace:*",
         "@frak-labs/wallet-shared": "workspace:*",
         "@tanstack/react-query": "catalog:",
         "@testing-library/jest-dom": "^6.9.1",
@@ -1016,6 +1040,8 @@
     "@frak-labs/nexus-wallet": ["@frak-labs/nexus-wallet@workspace:apps/wallet"],
 
     "@frak-labs/react-sdk": ["@frak-labs/react-sdk@workspace:sdk/react"],
+
+    "@frak-labs/test-foundation": ["@frak-labs/test-foundation@workspace:packages/test-foundation"],
 
     "@frak-labs/ui": ["@frak-labs/ui@workspace:packages/ui"],
 

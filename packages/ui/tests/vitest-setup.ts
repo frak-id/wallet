@@ -10,10 +10,10 @@
  */
 
 // Import shared React Testing Library setup (cleanup + jest-dom)
-import "../../../test-setup/react-testing-library-setup";
+import "@frak-labs/test-foundation/react-testing-library-setup";
 
 // Import shared React setup (BigInt serialization)
-import "../../../test-setup/react-setup";
+import "@frak-labs/test-foundation/react-setup";
 
 // Import shared browser API mocks
-import "../../../test-setup/shared-setup";
+import "@frak-labs/test-foundation/shared-setup";

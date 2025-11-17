@@ -8,11 +8,11 @@
  * Usage:
  * ```typescript
  * // In listener app setup:
- * import { setupListenerDomMocks } from "../../../test-setup/dom-mocks";
+ * import { setupListenerDomMocks } from "@frak-labs/test-foundation";
  * setupListenerDomMocks();
  *
  * // In individual tests with custom values:
- * import { mockWindowOrigin, mockDocumentReferrer } from "../../../test-setup/dom-mocks";
+ * import { mockWindowOrigin, mockDocumentReferrer } from "@frak-labs/test-foundation";
  * mockWindowOrigin("https://custom-origin.com");
  * mockDocumentReferrer("https://custom-parent.com");
  * ```
@@ -97,7 +97,7 @@ export function mockDocumentCookie(initialValue = "") {
  * @example
  * ```typescript
  * import { vi } from "vitest";
- * import { mockWindowHistory } from "@test-setup";
+ * import { mockWindowHistory } from "@frak-labs/test-foundation";
  *
  * mockWindowHistory(vi);
  * const historySpy = vi.mocked(window.history.replaceState);
@@ -138,7 +138,7 @@ export function mockWindowHistory(vi: any) {
  * @example
  * ```typescript
  * // In listener/tests/vitest-setup.ts:
- * import { setupListenerDomMocks } from "../../../test-setup/dom-mocks";
+ * import { setupListenerDomMocks } from "@frak-labs/test-foundation";
  * setupListenerDomMocks();
  *
  * // With custom values:

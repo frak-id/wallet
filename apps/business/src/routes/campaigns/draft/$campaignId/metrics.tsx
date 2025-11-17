@@ -1,9 +1,6 @@
 import { createFileRoute, lazyRouteComponent } from "@tanstack/react-router";
 import { requireAuth } from "@/middleware/auth";
-import {
-    loadCampaignData,
-    validateDraftCampaign,
-} from "@/middleware/campaign";
+import { loadCampaignData, validateDraftCampaign } from "@/middleware/campaign";
 
 export const Route = createFileRoute("/campaigns/draft/$campaignId/metrics")({
     // Auth only in beforeLoad

@@ -1,6 +1,6 @@
 ---
 description: Testing guidelines and best practices for unit tests and E2E tests
-globs: **/*.test.ts, **/*.test.tsx, **/*.spec.ts, **/*.spec.tsx, **/vitest.config.ts, **/tests/**, test-setup/**/*
+globs: **/*.test.ts, **/*.test.tsx, **/*.spec.ts, **/*.spec.tsx, **/vitest.config.ts, **/tests/**, packages/test-foundation/**/*
 ---
 # Testing Rules
 
@@ -80,12 +80,12 @@ bun run test:e2e:ui           # Run with Playwright UI
 
 ### Workspace Configuration (Vitest 4.0 Projects API)
 - **`vitest.config.ts`** (root) - Workspace entry point, discovers all project configs
-- **`test-setup/vitest.shared.ts`** - Shared configuration inherited by all projects:
+- **`@frak-labs/test-foundation/vitest.shared`** - Shared configuration inherited by all projects:
   - Common settings: environment: "jsdom", timeouts, reporters, coverage thresholds
   - Individual projects extend with `mergeConfig(sharedConfig, defineConfig({...}))`
 
 ### Shared Test Setup Files
-Located in `test-setup/` directory:
+Located in `packages/test-foundation/` workspace package (`@frak-labs/test-foundation`):
 
 - **`vitest.shared.ts`** - Shared configuration and plugin helpers:
   - Common Vitest settings (jsdom, timeouts, reporters, coverage)
@@ -130,6 +130,8 @@ Located in `test-setup/` directory:
   - Project-specific setup details
   - Common patterns and best practices
   - Debugging guide
+
+All test utilities are available as a workspace package: `@frak-labs/test-foundation`
 
 ### Project-Specific Setup Files
 Each project has its own setup file importing shared configurations:
@@ -215,7 +217,7 @@ Use plugin helpers in vitest.config.ts to reduce boilerplate:
 
 ```typescript
 // For React + TypeScript path mapping (wallet, listener, business)
-import sharedConfig, { getReactTestPlugins } from "../../test-setup/vitest.shared";
+import sharedConfig, { getReactTestPlugins } from "@frak-labs/test-foundation/vitest.shared";
 
 export default mergeConfig(
     sharedConfig,
@@ -226,7 +228,7 @@ export default mergeConfig(
 );
 
 // For React-only (wallet-shared - no path aliases)
-import sharedConfig, { getReactOnlyPlugins } from "../../test-setup/vitest.shared";
+import sharedConfig, { getReactOnlyPlugins } from "@frak-labs/test-foundation/vitest.shared";
 
 export default mergeConfig(
     sharedConfig,
@@ -243,11 +245,11 @@ Use router mock factories in project setup files:
 
 ```typescript
 // For react-router (wallet, wallet-shared)
-import { setupReactRouterMock } from "../../../test-setup/router-mocks";
+import { setupReactRouterMock } from "@frak-labs/test-foundation";
 await setupReactRouterMock();
 
 // For @tanstack/react-router (business)
-import { setupTanStackRouterMock } from "../../../test-setup/router-mocks";
+import { setupTanStackRouterMock } from "@frak-labs/test-foundation";
 await setupTanStackRouterMock();
 
 // With custom state
@@ -266,7 +268,7 @@ import {
     mockWindowOrigin,
     mockDocumentReferrer,
     setupListenerDomMocks
-} from "../../../test-setup/dom-mocks";
+} from "@frak-labs/test-foundation";
 
 // Individual mocks
 mockWindowOrigin("https://example.com");

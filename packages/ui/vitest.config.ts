@@ -1,7 +1,7 @@
-import { defineConfig, mergeConfig } from "vitest/config";
 import sharedConfig, {
     getReactOnlyPlugins,
-} from "../../test-setup/vitest.shared";
+} from "@frak-labs/test-foundation/vitest.shared";
+import { defineConfig, mergeConfig } from "vitest/config";
 
 const plugins = await getReactOnlyPlugins();
 
@@ -13,7 +13,7 @@ export default mergeConfig(
             name: "ui-unit",
             setupFiles: [
                 "./tests/vitest-setup.ts",
-                "../../test-setup/shared-setup.ts",
+                "@frak-labs/test-foundation/shared-setup",
             ],
             include: ["component/**/*.{test,spec}.{ts,tsx}"],
             coverage: {

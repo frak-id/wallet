@@ -1,7 +1,7 @@
 /**
  * Centralized Test Utilities Index
  *
- * This file provides a single entry point for importing test utilities from test-setup directory,
+ * This file provides a single entry point for importing test utilities from the test-foundation package,
  * simplifying imports across test files and reducing boilerplate.
  *
  * Usage:
@@ -10,14 +10,14 @@
  *     setupTanStackRouterMock,
  *     mockWindowOrigin,
  *     getReactTestPlugins
- * } from '@test-setup';
+ * } from '@frak-labs/test-foundation';
  * ```
  *
  * Instead of:
  * ```ts
- * import { setupTanStackRouterMock } from '../../../test-setup/router-mocks';
- * import { mockWindowOrigin } from '../../../test-setup/dom-mocks';
- * import { getReactTestPlugins } from '../../test-setup/vitest.shared';
+ * import { setupTanStackRouterMock } from '../../../packages/test-foundation/src/router-mocks';
+ * import { mockWindowOrigin } from '../../../packages/test-foundation/src/dom-mocks';
+ * import { getReactTestPlugins } from '../../packages/test-foundation/src/vitest.shared';
  * ```
  *
  * Note: For factory functions and fixtures from wallet-shared, import directly:

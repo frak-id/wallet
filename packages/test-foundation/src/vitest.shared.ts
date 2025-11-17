@@ -19,14 +19,14 @@
  *
  * Note on setupFiles:
  * Each project must specify its own setupFiles paths (e.g., "./tests/vitest-setup.ts",
- * "../../test-setup/shared-setup.ts") because Vitest resolves these paths relative to
+ * "@frak-labs/test-foundation/shared-setup") because Vitest resolves these paths relative to
  * the project's config file location. This is a Vitest architectural requirement and
  * cannot be abstracted into this shared config. While this creates some repetition,
- * the actual setup logic is properly shared in the test-setup/ directory to maintain
+ * the actual setup logic is properly shared in the @frak-labs/test-foundation package to maintain
  * DRY principles.
  */
 
-import os from "node:os";
+import * as os from "node:os";
 import { defineConfig } from "vitest/config";
 
 // Use generic type to avoid importing vite types that may not be available in all projects

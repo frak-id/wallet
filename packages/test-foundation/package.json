@@ -1,0 +1,32 @@
+{
+    "name": "@frak-labs/test-foundation",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "description": "Shared test configuration and utilities for Frak Wallet monorepo",
+    "main": "./src/index.ts",
+    "module": "./src/index.ts",
+    "exports": {
+        ".": "./src/index.ts",
+        "./vitest.shared": "./src/vitest.shared.ts",
+        "./shared-setup": "./src/shared-setup.ts",
+        "./react-setup": "./src/react-setup.ts",
+        "./react-testing-library-setup": "./src/react-testing-library-setup.ts",
+        "./wallet-mocks": "./src/wallet-mocks.ts",
+        "./apps-setup": "./src/apps-setup.ts",
+        "./router-mocks": "./src/router-mocks.ts",
+        "./dom-mocks": "./src/dom-mocks.ts"
+    },
+    "dependencies": {
+        "@openpanel/web": "*",
+        "@tanstack/react-router": "*",
+        "@testing-library/jest-dom": "*",
+        "@testing-library/react": "*",
+        "@vitejs/plugin-react": "*",
+        "idb-keyval": "*",
+        "ox": "*",
+        "vite-tsconfig-paths": "*",
+        "vitest": "*",
+        "wagmi": "*"
+    }
+}

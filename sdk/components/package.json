@@ -80,6 +80,7 @@
   "devDependencies": {
     "@bosh-code/tsdown-plugin-inject-css": "^2.0.0",
     "@frak-labs/dev-tooling": "workspace:*",
+    "@frak-labs/test-foundation": "workspace:*",
     "@frak-labs/ui": "workspace:*",
     "@preact/preset-vite": "^2.10.2",
     "@rolldown/plugin-node-polyfills": "^1.0.0",

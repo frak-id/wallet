@@ -70,6 +70,7 @@
   },
   "devDependencies": {
     "@frak-labs/backend-elysia": "workspace:*",
+    "@frak-labs/test-foundation": "workspace:*",
     "@noble/curves": "^2.0.1",
     "@playwright/test": "^1.56.1",
     "@tanstack/react-router-devtools": "^1.136.1",

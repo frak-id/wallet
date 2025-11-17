@@ -3,8 +3,8 @@
  * Tests Frak context compression, URL parsing, and management
  */
 
+import { mockWindowHistory } from "@frak-labs/test-foundation";
 import type { Address } from "viem";
-import { mockWindowHistory } from "../../../../test-setup/dom-mocks";
 import {
     afterEach,
     beforeEach,

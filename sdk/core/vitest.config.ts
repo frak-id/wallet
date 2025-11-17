@@ -1,5 +1,5 @@
+import sharedConfig from "@frak-labs/test-foundation/vitest.shared";
 import { defineConfig, mergeConfig } from "vitest/config";
-import sharedConfig from "../../test-setup/vitest.shared";
 
 export default mergeConfig(
     sharedConfig,
@@ -8,7 +8,7 @@ export default mergeConfig(
             name: "core-sdk-unit",
             setupFiles: [
                 "./tests/vitest-setup.ts",
-                "../../test-setup/shared-setup.ts",
+                "@frak-labs/test-foundation/shared-setup",
             ],
             include: ["src/**/*.{test,spec}.ts"],
             exclude: ["cdn/**"],

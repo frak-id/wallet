@@ -109,7 +109,7 @@
             }
         },
         {
-            "includes": ["test-setup/**"],
+            "includes": ["packages/test-foundation/**"],
             "linter": {
                 "rules": {
                     "suspicious": {

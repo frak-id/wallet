@@ -1,6 +1,6 @@
-# Test Setup Architecture
+# Test Foundation Package
 
-This directory contains shared test configuration and utilities for all test projects in the Frak Wallet monorepo. The test setup uses **Vitest 4.0 Projects API** with 7 projects running in parallel.
+This package (`@frak-labs/test-foundation`) contains shared test configuration and utilities for all test projects in the Frak Wallet monorepo. The test setup uses **Vitest 4.0 Projects API** with 7 projects running in parallel.
 
 ## Overview
 
@@ -63,19 +63,23 @@ Understanding the order in which setup files execute is critical for debugging t
      - Business: TanStack Router mocks (via `router-mocks.ts`)
      - Listener: DOM mocks for iframe context (via `dom-mocks.ts`)
 
-## File Structure
+## Package Structure
 
 ```
-test-setup/
+packages/test-foundation/
+├── package.json                        # Package configuration
+├── tsconfig.json                       # TypeScript configuration
 ├── README.md                           # This file
-├── vitest.shared.ts                    # Shared Vitest config + plugin helpers
-├── shared-setup.ts                     # Browser API mocks (all projects)
-├── react-setup.ts                      # React-specific setup (5 projects)
-├── react-testing-library-setup.ts      # RTL cleanup + jest-dom (5 projects)
-├── wallet-mocks.ts                     # Wagmi/Router/WebAuthn mocks (2 projects)
-├── apps-setup.ts                       # Environment variables (3 projects)
-├── router-mocks.ts                     # Router mock factories (NEW!)
-└── dom-mocks.ts                        # DOM mocking utilities (NEW!)
+└── src/
+    ├── index.ts                        # Main exports
+    ├── vitest.shared.ts                # Shared Vitest config + plugin helpers
+    ├── shared-setup.ts                 # Browser API mocks (all projects)
+    ├── react-setup.ts                  # React-specific setup (5 projects)
+    ├── react-testing-library-setup.ts  # RTL cleanup + jest-dom (5 projects)
+    ├── wallet-mocks.ts                 # Wagmi/Router/WebAuthn mocks (2 projects)
+    ├── apps-setup.ts                   # Environment variables (3 projects)
+    ├── router-mocks.ts                 # Router mock factories
+    └── dom-mocks.ts                    # DOM mocking utilities
 ```
 
 ## Plugin Helpers
@@ -94,18 +98,18 @@ Standard Vite plugins for React projects with TypeScript path mapping.
 
 **Usage:**
 ```typescript
-import { getReactTestPlugins } from "../../test-setup/vitest.shared";
+import { getReactTestPlugins } from "@frak-labs/test-foundation/vitest.shared";
 
 export default mergeConfig(
     sharedConfig,
     defineConfig({
-        plugins: getReactTestPlugins(),
+        plugins: await getReactTestPlugins(),
         // ...
     })
 );
 
 // With custom tsconfig location:
-plugins: getReactTestPlugins({ tsconfigProjects: ["./tsconfig.json"] })
+plugins: await getReactTestPlugins({ tsconfigProjects: ["./tsconfig.json"] })
 ```
 
 ### `getReactOnlyPlugins()`
@@ -119,9 +123,9 @@ Minimal plugins for React-only projects without TypeScript path mapping.
 
 **Usage:**
 ```typescript
-import { getReactOnlyPlugins } from "../../test-setup/vitest.shared";
+import { getReactOnlyPlugins } from "@frak-labs/test-foundation/vitest.shared";
 
-plugins: getReactOnlyPlugins()
+plugins: await getReactOnlyPlugins()
 ```
 
 ## Router Mock Factories
@@ -167,7 +171,7 @@ Global mock for `@tanstack/react-router` (business app).
 **Usage:**
 ```typescript
 // In business/tests/vitest-setup.ts:
-import { setupTanStackRouterMock } from "../../../test-setup/router-mocks";
+import { setupTanStackRouterMock } from "@frak-labs/test-foundation";
 await setupTanStackRouterMock();
 ```
 
@@ -186,7 +190,7 @@ Complete DOM setup for listener app iframe communication testing.
 **Usage:**
 ```typescript
 // In listener/tests/vitest-setup.ts:
-import { setupListenerDomMocks } from "../../../test-setup/dom-mocks";
+import { setupListenerDomMocks } from "@frak-labs/test-foundation";
 setupListenerDomMocks();
 
 // With custom values:
@@ -205,7 +209,7 @@ import {
     mockWindowOrigin,
     mockDocumentReferrer,
     mockDocumentCookie
-} from "../../../test-setup/dom-mocks";
+} from "@frak-labs/test-foundation";
 
 mockWindowOrigin("https://custom-origin.com");
 mockDocumentReferrer("https://custom-parent.com");
@@ -285,10 +289,10 @@ To simplify imports and improve consistency, use these recommended import patter
 
 ### Centralized Test Utilities (Recommended)
 
-The `test-setup/index.ts` provides a single entry point for test utilities from the test-setup directory:
+The `@frak-labs/test-foundation` package provides a single entry point for test utilities:
 
 ```typescript
-// ✅ RECOMMENDED: Import utilities from test-setup
+// ✅ RECOMMENDED: Import utilities from test-foundation
 import {
     // Router mocks
     setupTanStackRouterMock,
@@ -300,7 +304,7 @@ import {
     // Plugin helpers
     getReactTestPlugins,
     getReactOnlyPlugins,
-} from "@test-setup";
+} from "@frak-labs/test-foundation";
 
 // Factory functions and fixtures import directly from wallet-shared:
 import { createMockSession, createMockAddress } from "@frak-labs/wallet-shared/test";
@@ -351,8 +355,8 @@ Here's a complete example showing the recommended import organization:
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-// 2. Test utilities from centralized test-setup
-import { setupTanStackRouterMock, mockWindowOrigin } from "@test-setup";
+// 2. Test utilities from test-foundation package
+import { setupTanStackRouterMock, mockWindowOrigin } from "@frak-labs/test-foundation";
 
 // 3. Factory functions from wallet-shared
 import { createMockSession } from "@frak-labs/wallet-shared/test";
@@ -376,11 +380,10 @@ describe("LoginForm", () => {
 ```typescript
 // ❌ DON'T: Import setup files directly (they run automatically)
 import "./vitest-setup";
-import "../../test-setup/shared-setup";
+import "@frak-labs/test-foundation/shared-setup";
 
 // ❌ DON'T: Import from internal paths
 import { test } from "vitest"; // Use project fixtures instead
-import { setupRouter } from "../../test-setup/router-mocks"; // Use @test-setup
 
 // ❌ DON'T: Mix fixture sources
 import { test } from "@frak-labs/wallet-shared/tests/vitest-fixtures";
@@ -420,19 +423,20 @@ import { createMockSession } from "@frak-labs/wallet-shared/test";
 // Test fixtures from project-specific file
 import { test, expect } from "@/tests/vitest-fixtures";
 
-// Test utilities from centralized test-setup
-import { setupTanStackRouterMock, mockWindowOrigin } from "@test-setup";
+// Test utilities from test-foundation package
+import { setupTanStackRouterMock, mockWindowOrigin } from "@frak-labs/test-foundation";
 
 // Factory functions from wallet-shared
 import { createMockSession } from "@frak-labs/wallet-shared/test";
 ```
 
 **Benefits:**
-- ✅ Shorter, cleaner imports for test-setup utilities
+- ✅ Shorter, cleaner imports using workspace package name
 - ✅ Consistent pattern across all test files
 - ✅ Easier to refactor (single source of truth)
 - ✅ Better IntelliSense support
 - ✅ Type-safe with proper fixture typing
+- ✅ No TypeScript path aliases needed
 
 ## Project-Specific Setup
 
@@ -601,7 +605,8 @@ test("should navigate on click", () => {
 
 1. **"Cannot find module" errors**
    - Check setupFiles paths are relative to the vitest.config.ts location
-   - Verify imports use correct relative paths (e.g., `../../../test-setup/`)
+   - Verify imports use `@frak-labs/test-foundation` package name
+   - Ensure Bun workspace resolution is working (`bun install`)
 
 2. **"X is not defined" errors**
    - Verify shared-setup.ts is included in setupFiles
@@ -892,7 +897,7 @@ import type { User } from "./types";
 
 5. **Optimize Imports**
    - Import only what you need from test utilities
-   - Use centralized `@test-setup` imports for cleaner code
+   - Use `@frak-labs/test-foundation` package imports for cleaner code
 
 6. **Mock Expensive Operations**
    - Mock API calls with MSW

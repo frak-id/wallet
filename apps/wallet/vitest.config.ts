@@ -1,7 +1,7 @@
-import { defineConfig, mergeConfig } from "vitest/config";
 import sharedConfig, {
     getReactTestPlugins,
-} from "../../test-setup/vitest.shared";
+} from "@frak-labs/test-foundation/vitest.shared";
+import { defineConfig, mergeConfig } from "vitest/config";
 
 export default mergeConfig(
     sharedConfig,
@@ -11,8 +11,8 @@ export default mergeConfig(
             name: "wallet-unit",
             setupFiles: [
                 "./tests/vitest-setup.ts",
-                "../../test-setup/shared-setup.ts",
-                "../../test-setup/apps-setup.ts",
+                "@frak-labs/test-foundation/shared-setup",
+                "@frak-labs/test-foundation/apps-setup",
                 "../../packages/wallet-shared/src/test/setup-msw.ts",
             ],
             include: ["app/**/*.{test,spec}.{ts,tsx}"],

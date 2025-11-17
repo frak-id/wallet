@@ -17,14 +17,14 @@
  * - TanStack Start hooks
  */
 
-import { setupTanStackRouterMock } from "@test-setup";
+import { setupTanStackRouterMock } from "@frak-labs/test-foundation";
 import { vi } from "vitest";
 
 // Import shared React Testing Library setup (cleanup + jest-dom)
-import "../../../test-setup/react-testing-library-setup";
+import "@frak-labs/test-foundation/react-testing-library-setup";
 
 // Import shared React setup (BigInt serialization)
-import "../../../test-setup/react-setup";
+import "@frak-labs/test-foundation/react-setup";
 
 // Mock TanStack Router hooks (using shared router-mocks.ts abstraction)
 await setupTanStackRouterMock();

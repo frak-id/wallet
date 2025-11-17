@@ -86,7 +86,7 @@ bun run test:watch            # Run in watch mode
   - Tests placed next to source files (e.g., `app/module/stores/recoveryStore.test.ts`)
   - Focus on business logic and state management
   - Mock external dependencies (Wagmi, TanStack Query, WebAuthn)
-  - Centralized test setup in `test-setup/` directory
+  - Centralized test setup in `@frak-labs/test-foundation` package
   - Target: 40% code coverage
 
 **Test Configuration Architecture**:
@@ -142,6 +142,7 @@ bun run changeset:release
   - `dashboard-admin/` - TanStack Router admin interface
   - `listener/` - Iframe communication app for SDK interactions
 - **`packages/`** - Shared internal libraries (workspace-only)
+  - `test-foundation/` - Centralized test configuration and utilities (`@frak-labs/test-foundation`)
   - `wallet-shared/` - Shared code exclusively for wallet and listener apps (~97 files)
     - **Purpose**: Central package for wallet/listener functionality (NOT used by dashboard or other apps)
     - **Architecture**: Well-organized into 15 domain-focused subdirectories
@@ -177,6 +178,8 @@ bun run changeset:release
   - `client/` - API client abstractions (Elysia Eden Treaty integration)
   - `dev-tooling/` - Build configurations (manualChunks, onwarn suppressions, Lightning CSS config)
   - `rpc/` - RPC utilities (published as `@frak-labs/frame-connector`)
+
+  Note: All packages are workspace-only except `rpc` which is published to npm
 - **`sdk/`** - Public SDK packages (published to npm, linked via Changesets)
   - `core/` - Core SDK functionality (tsdown: NPM ESM/CJS + CDN IIFE)
   - `react/` - React hooks and providers (tsdown: NPM ESM/CJS)

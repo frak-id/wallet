@@ -58,6 +58,7 @@
         "zustand": "^5.0.8"
     },
     "devDependencies": {
+        "@frak-labs/test-foundation": "workspace:*",
         "@tanstack/query-sync-storage-persister": "catalog:",
         "@tanstack/react-devtools": "^0.8.1",
         "@tanstack/react-query-devtools": "catalog:",
@@ -75,8 +76,8 @@
         "@vitest/ui": "^4.0.9",
         "bun-types": "latest",
         "jsdom": "^27.2.0",
-        "rolldown-vite": "^7.2.5",
         "lightningcss": "^1.30.2",
+        "rolldown-vite": "^7.2.5",
         "sst": "3.17.23",
         "typescript": "^5",
         "vite": "catalog:",

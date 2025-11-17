@@ -17,13 +17,13 @@
  */
 
 // Import shared React Testing Library setup (cleanup + jest-dom)
-import "../../../test-setup/react-testing-library-setup";
+import "@frak-labs/test-foundation/react-testing-library-setup";
 
 // Import shared React setup (BigInt serialization)
-import "../../../test-setup/react-setup";
+import "@frak-labs/test-foundation/react-setup";
 
 // Import shared wallet mocks (Wagmi, Router, WebAuthn, idb-keyval)
-import "../../../test-setup/wallet-mocks";
+import "@frak-labs/test-foundation/wallet-mocks";
 
 // Note: Don't mock TanStack Query globally - tests will create their own QueryClient
 // and mock only the API calls they need. This allows proper query state management.

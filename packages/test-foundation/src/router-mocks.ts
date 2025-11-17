@@ -7,7 +7,7 @@
  * Usage:
  * ```typescript
  * // In wallet-mocks.ts or business/tests/vitest-setup.ts:
- * import { setupTanStackRouterMock } from "./router-mocks";
+ * import { setupTanStackRouterMock } from "@frak-labs/test-foundation";
  * await setupTanStackRouterMock();
  *
  * // With custom options:

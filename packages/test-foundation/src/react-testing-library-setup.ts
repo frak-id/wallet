@@ -17,7 +17,7 @@
  * Usage:
  * Import this file in your project's vitest-setup.ts:
  * ```typescript
- * import "../../../test-setup/react-testing-library-setup";
+ * import "@frak-labs/test-foundation/react-testing-library-setup";
  * ```
  */
 
