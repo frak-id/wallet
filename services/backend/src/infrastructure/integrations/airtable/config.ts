@@ -1,4 +1,4 @@
-import { t } from "../../utils";
+import { t } from "@backend-utils";
 
 export type TableType = "demo_request" | "simulation";
 

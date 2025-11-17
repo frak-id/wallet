@@ -1,6 +1,6 @@
+import { log } from "@backend-infrastructure/external/logger";
 import { WebClient } from "@slack/web-api";
 import Airtable from "airtable";
-import { log } from "../../common";
 import {
     AIRTABLE_CONFIG,
     type AirtableRequestBody,

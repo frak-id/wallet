@@ -1,4 +1,8 @@
-import { interactionDiamondRepository, log, viemClient } from "@backend-common";
+import {
+    interactionDiamondRepository,
+    log,
+    viemClient,
+} from "@backend-infrastructure";
 import {
     productInteractionDiamond_delegateToFacet,
     productInteractionDiamond_handleInteraction,

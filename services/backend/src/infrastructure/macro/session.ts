@@ -1,4 +1,4 @@
-import { JwtContext } from "@backend-common";
+import { JwtContext } from "@backend-infrastructure";
 import { isRunningLocally } from "@frak-labs/app-essentials";
 import { Elysia, status, t } from "elysia";
 

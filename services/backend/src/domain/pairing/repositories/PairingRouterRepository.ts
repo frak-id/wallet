@@ -1,4 +1,4 @@
-import { db } from "@backend-common";
+import { db } from "@backend-infrastructure";
 import { and, eq } from "drizzle-orm";
 import type { ElysiaWS } from "elysia/ws";
 import type { StaticWalletTokenDto } from "../../auth/models/WalletSessionDto";

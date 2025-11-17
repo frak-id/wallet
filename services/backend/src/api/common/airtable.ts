@@ -1,10 +1,10 @@
-import { Elysia, status, t } from "elysia";
-import { log } from "../../common";
+import { log } from "@backend-infrastructure";
 import {
     AirtableRepository,
     AirtableRequestBodyType,
     type TableType,
-} from "../../domain/airtable";
+} from "@backend-infrastructure/integrations/airtable";
+import { Elysia, status, t } from "elysia";
 
 /**
  * Airtable API routes for external integrations

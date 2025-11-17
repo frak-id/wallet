@@ -1,4 +1,4 @@
-import { log } from "@backend-common";
+import { log } from "@backend-infrastructure";
 import { t } from "@backend-utils";
 import type { ProductTypesKey } from "@frak-labs/core-sdk";
 import { productTypes } from "@frak-labs/core-sdk";

@@ -1,4 +1,7 @@
-import { adminWalletsRepository, pricingRepository } from "@backend-common";
+import {
+    adminWalletsRepository,
+    pricingRepository,
+} from "@backend-infrastructure";
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import { isAddress, isHex } from "viem";

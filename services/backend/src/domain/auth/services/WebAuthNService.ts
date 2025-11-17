@@ -1,4 +1,4 @@
-import { viemClient } from "@backend-common";
+import { viemClient } from "@backend-infrastructure";
 import { KernelWallet, kernelAddresses } from "@frak-labs/app-essentials";
 import { type Signature, WebAuthnP256 } from "ox";
 import type { SignMetadata } from "ox/WebAuthnP256";

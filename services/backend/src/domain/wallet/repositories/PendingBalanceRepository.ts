@@ -1,4 +1,4 @@
-import { indexerApi, log, viemClient } from "@backend-common";
+import { indexerApi, log, viemClient } from "@backend-infrastructure";
 import type { TokenAmount } from "@backend-utils";
 import type { GetRewardHistoryResponseDto } from "@frak-labs/app-essentials";
 import type { Address } from "viem";

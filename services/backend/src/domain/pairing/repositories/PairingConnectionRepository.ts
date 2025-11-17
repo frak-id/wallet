@@ -1,9 +1,8 @@
 import { randomUUID } from "node:crypto";
-import { db, JwtContext } from "@backend-common";
+import { db, JwtContext, log } from "@backend-infrastructure";
 import { and, eq, inArray, isNull } from "drizzle-orm";
 import type { ElysiaWS } from "elysia/ws";
 import { UAParser } from "ua-parser-js";
-import { log } from "../../../common";
 import type {
     StaticWalletTokenDto,
     StaticWalletWebauthnTokenDto,

@@ -1,4 +1,4 @@
-import { indexerApi, viemClient } from "@backend-common";
+import { indexerApi, viemClient } from "@backend-infrastructure";
 import type { GetAllTokenResponseDto } from "@frak-labs/app-essentials";
 import { LRUCache } from "lru-cache";
 import { type Address, erc20Abi, formatUnits } from "viem";

@@ -1,4 +1,4 @@
-import { db } from "@backend-common";
+import { db } from "@backend-infrastructure";
 import { and, eq, inArray } from "drizzle-orm";
 import { pendingInteractionsTable } from "../db/schema";
 

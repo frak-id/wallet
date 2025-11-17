@@ -1,4 +1,4 @@
-import { db, log } from "@backend-common";
+import { db, log } from "@backend-infrastructure";
 import { t, validateBodyHmac } from "@backend-utils";
 import { isRunningInProd } from "@frak-labs/app-essentials";
 import { eq } from "drizzle-orm";

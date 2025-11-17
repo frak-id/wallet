@@ -1,4 +1,4 @@
-import { log, viemClient } from "@backend-common";
+import { log, viemClient } from "@backend-infrastructure";
 import { interactionManager_getInteractionContract } from "@backend-utils";
 import { addresses } from "@frak-labs/app-essentials";
 import { LRUCache } from "lru-cache";

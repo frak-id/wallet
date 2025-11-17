@@ -1,4 +1,4 @@
-import { db } from "@backend-common";
+import { db } from "@backend-infrastructure";
 import { mutexCron } from "@backend-utils";
 import type { pino } from "@bogeychan/elysia-logger";
 import { inArray } from "drizzle-orm";

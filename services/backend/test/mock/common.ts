@@ -223,7 +223,7 @@ export const dbMock: any = {
     },
 };
 
-mock.module("@backend-common", () => ({
+mock.module("@backend-infrastructure", () => ({
     indexerApi: indexerApiMocks,
     pricingRepository: pricingRepositoryMocks,
     viemClient: viemMocks,

@@ -1,5 +1,5 @@
+import { log } from "@backend-infrastructure";
 import { CryptoHasher } from "bun";
-import { log } from "../common";
 
 /**
  * Validate a hmac signature around a request body

@@ -3,7 +3,7 @@ import {
     interactionDiamondRepository,
     log,
     viemClient,
-} from "@backend-common";
+} from "@backend-infrastructure";
 import {
     interactionDelegator_execute,
     productInteractionDiamond_hasAllRoles,

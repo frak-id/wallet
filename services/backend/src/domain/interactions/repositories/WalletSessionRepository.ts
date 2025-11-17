@@ -1,4 +1,4 @@
-import { viemClient } from "@backend-common";
+import { viemClient } from "@backend-infrastructure";
 import { addresses, getExecutionAbi } from "@frak-labs/app-essentials";
 import { LRUCache } from "lru-cache";
 import { type Address, isAddressEqual, toFunctionSelector } from "viem";

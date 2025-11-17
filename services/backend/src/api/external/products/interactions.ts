@@ -3,7 +3,7 @@ import {
     eventEmitter,
     interactionDiamondRepository,
     log,
-} from "@backend-common";
+} from "@backend-infrastructure";
 import { t, validateBodyHmac } from "@backend-utils";
 import { interactionTypes } from "@frak-labs/core-sdk";
 import {

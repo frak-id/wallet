@@ -1,4 +1,4 @@
-import { viemClient } from "@backend-common";
+import { viemClient } from "@backend-infrastructure";
 import {
     addresses,
     productAdministratorRegistryAbi,
@@ -25,9 +25,9 @@ type WalletRolesOnProduct = {
 };
 
 /**
- * Repository used to mint a product
+ * Repository for querying on-chain product roles from smart contracts
  */
-export class RolesRepository {
+export class OnChainRolesRepository {
     // Cache for wallet roles on a product (key = keccak(productId, wallet))
     private readonly productRolesCache = new LRUCache<
         Hex,
@@ -133,4 +133,4 @@ export class RolesRepository {
     }
 }
 
-export const rolesRepository = new RolesRepository();
+export const onChainRolesRepository = new OnChainRolesRepository();

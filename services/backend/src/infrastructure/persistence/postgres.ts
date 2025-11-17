@@ -1,27 +1,23 @@
-import { drizzle } from "drizzle-orm/postgres-js";
-import postgres from "postgres";
-import {
-    fixedRoutingTable,
-    walletRoutingTable,
-} from "../../domain/6degrees/db/schema";
-import { pendingInteractionsTable } from "../../domain/interactions";
+import { pendingInteractionsTable } from "@backend-domain/interactions";
 import {
     backendTrackerTable,
     interactionSimulationStatus,
     interactionsPurchaseTrackerTable,
     pushedInteractionsTable,
-} from "../../domain/interactions/db/schema";
-import { pushTokensTable } from "../../domain/notifications";
+} from "@backend-domain/interactions/db/schema";
+import { pushTokensTable } from "@backend-domain/notifications";
 import {
     productOracleTable,
     purchaseStatusEnum,
     purchaseStatusTable,
-} from "../../domain/oracle";
-import { purchaseItemTable } from "../../domain/oracle/db/schema";
+} from "@backend-domain/oracle";
+import { purchaseItemTable } from "@backend-domain/oracle/db/schema";
 import {
     pairingSignatureRequestTable,
     pairingTable,
-} from "../../domain/pairing";
+} from "@backend-domain/pairing";
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
 
 /**
  * Postgres master client
@@ -40,9 +36,6 @@ const postgresDb = postgres({
 export const db = drizzle({
     client: postgresDb,
     schema: {
-        // 6 degrees domain
-        fixedRoutingTable,
-        walletRoutingTable,
         // Interaction domain
         pendingInteractionsTable,
         interactionSimulationStatus,
