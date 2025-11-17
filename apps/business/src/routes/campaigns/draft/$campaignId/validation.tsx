@@ -1,15 +1,24 @@
 import { createFileRoute, lazyRouteComponent } from "@tanstack/react-router";
-import { loadCampaign, validateDraftCampaign } from "@/middleware/campaign";
+import { requireAuth } from "@/middleware/auth";
+import {
+    loadCampaignData,
+    validateDraftCampaign,
+} from "@/middleware/campaign";
 
 export const Route = createFileRoute("/campaigns/draft/$campaignId/validation")(
     {
-        beforeLoad: async ({ params, location }) => {
-            return loadCampaign({
+        // Auth only in beforeLoad
+        beforeLoad: requireAuth,
+        // Data fetching + validation in loader
+        loader: async ({ params }) => {
+            return loadCampaignData({
                 params,
-                location,
                 validateState: validateDraftCampaign(params.campaignId),
             });
         },
+        // Cache configuration
+        staleTime: 5 * 60 * 1000, // 5 minutes
+        gcTime: 30 * 60 * 1000, // 30 minutes
         component: lazyRouteComponent(
             () => import("@/module/campaigns/page/CampaignsDraftValidationPage")
         ),

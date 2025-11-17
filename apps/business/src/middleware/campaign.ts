@@ -1,47 +1,46 @@
 import { redirect } from "@tanstack/react-router";
 import { getCampaignDetails } from "@/context/campaigns/action/getDetails";
 import type { CampaignDocument } from "@/context/campaigns/dto/CampaignDocument";
-import { requireAuth } from "./auth";
 
 type CampaignStateValidator = (campaign: CampaignDocument) => {
     shouldRedirect: boolean;
     redirectTo?: { to: string; params: { campaignId: string } };
 };
 
-type LoadCampaignOptions = {
-    params: { campaignId: string };
-    location: { href: string };
-    validateState?: CampaignStateValidator;
-};
-
 /**
- * beforeLoad hook for campaign routes
- * Handles authentication, campaign fetching, and optional state validation
+ * Loader function for campaign routes
+ * Handles campaign fetching and optional state validation (without auth check)
+ *
+ * Use this in loader with requireAuth in beforeLoad for better separation of concerns
  *
  * @example
  * // Basic usage (view route - no state validation)
- * beforeLoad: async ({ params, location }) => {
- *     return loadCampaign({ params, location });
- * }
+ * export const Route = createFileRoute("/campaigns/$campaignId")({
+ *     beforeLoad: requireAuth,
+ *     loader: async ({ params }) => {
+ *         return loadCampaignData({ params });
+ *     },
+ * });
  *
  * @example
  * // Draft route - only allow non-created campaigns
- * beforeLoad: async ({ params, location }) => {
- *     return loadCampaign({
- *         params,
- *         location,
- *         validateState: validateDraftCampaign,
- *     });
- * }
+ * export const Route = createFileRoute("/campaigns/draft/$campaignId")({
+ *     beforeLoad: requireAuth,
+ *     loader: async ({ params }) => {
+ *         return loadCampaignData({
+ *             params,
+ *             validateState: validateDraftCampaign(params.campaignId),
+ *         });
+ *     },
+ * });
  */
-export async function loadCampaign({
+export async function loadCampaignData({
     params,
-    location,
     validateState,
-}: LoadCampaignOptions) {
-    // Require authentication
-    const { session } = await requireAuth({ location });
-
+}: {
+    params: { campaignId: string };
+    validateState?: CampaignStateValidator;
+}) {
     // Fetch campaign details
     const campaign = await getCampaignDetails({
         data: { campaignId: params.campaignId },
@@ -53,13 +52,14 @@ export async function loadCampaign({
 
     // Optional state validation
     if (validateState) {
-        const validation = validateState(campaign);
+        const validation = validateState(campaign as CampaignDocument);
         if (validation.shouldRedirect && validation.redirectTo) {
             throw redirect(validation.redirectTo);
         }
     }
 
-    return { session, campaign };
+    // Return serialized campaign for loader
+    return campaign;
 }
 
 /**

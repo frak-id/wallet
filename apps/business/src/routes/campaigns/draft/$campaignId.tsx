@@ -1,26 +1,31 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { loadCampaign, validateDraftCampaign } from "@/middleware/campaign";
+import { requireAuth } from "@/middleware/auth";
+import { loadCampaignData, validateDraftCampaign } from "@/middleware/campaign";
 import { NewCampaign } from "@/module/campaigns/component/Creation/NewCampaign";
 import { RestrictedLayout } from "@/module/common/component/RestrictedLayout";
 import { campaignStore } from "@/stores/campaignStore";
 import type { Campaign } from "@/types/Campaign";
 
 export const Route = createFileRoute("/campaigns/draft/$campaignId")({
-    beforeLoad: async ({ params, location }) => {
-        return loadCampaign({
+    // Auth only in beforeLoad
+    beforeLoad: requireAuth,
+    // Data fetching + validation in loader
+    loader: async ({ params }) => {
+        return loadCampaignData({
             params,
-            location,
             validateState: validateDraftCampaign(params.campaignId),
         });
     },
+    // Cache configuration
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes
     component: CampaignsDraftPage,
 });
 
 function CampaignsDraftPage() {
     const { campaignId } = Route.useParams();
-    const routeContext = Route.useRouteContext();
-    const { campaign } = routeContext as { campaign: Campaign };
+    const campaign = Route.useLoaderData() as Campaign;
 
     // Use individual selectors to avoid infinite loop
     const setCampaign = campaignStore((state) => state.setCampaign);
