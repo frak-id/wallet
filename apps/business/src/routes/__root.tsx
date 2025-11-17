@@ -7,11 +7,13 @@ import {
     Scripts,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
+import { useDelayedLoading } from "@/hooks/useDelayedLoading";
 import { RootProvider } from "@/module/common/provider/RootProvider";
 import "@/polyfill/bigint-serialization";
 import allCss from "@/styles/all.css?url";
 import colorsCss from "@/styles/colors-app.css?url";
 import globalCss from "@/styles/global.css?url";
+import styles from "./__root.module.css";
 
 export const Route = createRootRoute({
     notFoundComponent: NotFound,
@@ -173,6 +175,8 @@ export const Route = createRootRoute({
 });
 
 function RootDocument({ children }: { children: React.ReactNode }) {
+    const showSpinner = useDelayedLoading(200);
+
     return (
         <html lang="en">
             <head>
@@ -184,6 +188,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             <body>
                 <RootProvider>
                     {children}
+                    {showSpinner && <LoadingBar />}
                     <TanStackDevtools
                         config={{
                             position: "bottom-right",
@@ -200,6 +205,10 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             </body>
         </html>
     );
+}
+
+function LoadingBar() {
+    return <div className={styles.loadingBar} />;
 }
 
 function NotFound() {

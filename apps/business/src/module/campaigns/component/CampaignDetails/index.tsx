@@ -20,17 +20,26 @@ import type { Campaign } from "@/types/Campaign";
 /**
  * Campaign details component
  * @param campaignId
+ * @param campaign - Optional preloaded campaign data from route loader
  * @constructor
  */
-export function CampaignDetails({ campaignId }: { campaignId: string }) {
+export function CampaignDetails({
+    campaignId,
+    campaign: preloadedCampaign,
+}: {
+    campaignId: string;
+    campaign?: Campaign;
+}) {
     const navigate = useNavigate();
     const {
-        data: campaign,
+        data: campaign = preloadedCampaign,
         isLoading,
         isPending,
     } = useQuery({
         queryKey: ["campaign", campaignId],
         queryFn: () => getCampaignDetails({ data: { campaignId } }),
+        enabled: !preloadedCampaign, // Only fetch if not preloaded
+        initialData: preloadedCampaign,
     });
     const campaignState = campaignStore((state) => state.campaign);
 
