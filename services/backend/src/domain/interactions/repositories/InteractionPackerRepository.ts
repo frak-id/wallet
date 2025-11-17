@@ -47,7 +47,7 @@ export class InteractionPackerRepository {
                 abi: [productInteractionDiamond_delegateToFacet],
                 functionName: "delegateToFacet",
                 args: [
-                    Number.parseInt(interactionData.handlerTypeDenominator, 10),
+                    Number.parseInt(interactionData.handlerTypeDenominator, 16),
                     interactionData.interactionData,
                 ],
             });
