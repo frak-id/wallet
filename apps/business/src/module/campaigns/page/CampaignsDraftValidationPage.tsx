@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 import { ValidationCampaign } from "@/module/campaigns/component/Creation/ValidationCampaign";
-import { RestrictedLayout } from "@/module/common/component/RestrictedLayout";
-import { Route } from "@/routes/campaigns/draft/$campaignId/validation";
+import { Route } from "@/routes/_restricted/campaigns/draft/$campaignId/validation";
 import { campaignStore } from "@/stores/campaignStore";
 import type { Campaign } from "@/types/Campaign";
 
@@ -21,9 +20,5 @@ export default function CampaignsDraftValidationPage() {
         setIsFetched(true);
     }, [campaign, campaignId, setCampaign, setAction, setIsFetched]);
 
-    return (
-        <RestrictedLayout>
-            <ValidationCampaign />
-        </RestrictedLayout>
-    );
+    return <ValidationCampaign />;
 }

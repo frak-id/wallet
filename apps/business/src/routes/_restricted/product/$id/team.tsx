@@ -1,35 +1,24 @@
 import { Spinner } from "@frak-labs/ui/component/Spinner";
 import { createFileRoute } from "@tanstack/react-router";
 import type { Hex } from "viem";
-import { requireAuth } from "@/middleware/auth";
-import { RestrictedLayout } from "@/module/common/component/RestrictedLayout";
 import { queryClient } from "@/module/common/provider/RootProvider";
-import { ProductDetails } from "@/module/product/component/ProductDetails";
+import { Team } from "@/module/product/component/Team";
 import { productMetadataQueryOptions } from "@/module/product/queries/queryOptions";
 import { demoModeStore } from "@/stores/demoModeStore";
 
-export const Route = createFileRoute("/product/$id/")({
-    beforeLoad: requireAuth,
+export const Route = createFileRoute("/_restricted/product/$id/team")({
     loader: ({ params }) => {
         const isDemoMode = demoModeStore.getState().isDemoMode;
         return queryClient.ensureQueryData(
             productMetadataQueryOptions(params.id as Hex, isDemoMode)
         );
     },
-    component: ProductPage,
-    pendingComponent: () => (
-        <RestrictedLayout>
-            <Spinner />
-        </RestrictedLayout>
-    ),
+    component: ProductTeamPage,
+    pendingComponent: () => <Spinner />,
 });
 
-function ProductPage() {
+function ProductTeamPage() {
     const { id } = Route.useParams();
 
-    return (
-        <RestrictedLayout>
-            <ProductDetails productId={id as Hex} />
-        </RestrictedLayout>
-    );
+    return <Team productId={id as Hex} />;
 }

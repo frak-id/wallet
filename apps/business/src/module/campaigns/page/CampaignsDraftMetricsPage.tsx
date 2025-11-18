@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 import { MetricsCampaign } from "@/module/campaigns/component/Creation/MetricsCampaign";
-import { RestrictedLayout } from "@/module/common/component/RestrictedLayout";
-import { Route } from "@/routes/campaigns/draft/$campaignId/metrics";
+import { Route } from "@/routes/_restricted/campaigns/draft/$campaignId/metrics";
 import { campaignStore } from "@/stores/campaignStore";
 import type { Campaign } from "@/types/Campaign";
 
@@ -21,9 +20,5 @@ export default function CampaignsDraftMetricsPage() {
         setIsFetched(true);
     }, [campaign, campaignId, setCampaign, setAction, setIsFetched]);
 
-    return (
-        <RestrictedLayout>
-            <MetricsCampaign />
-        </RestrictedLayout>
-    );
+    return <MetricsCampaign />;
 }

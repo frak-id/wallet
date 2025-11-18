@@ -3,17 +3,14 @@ import { Button } from "@frak-labs/ui/component/Button";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { deleteSession } from "@/context/auth/session";
-import { requireAuth } from "@/middleware/auth";
 import { useDemoMode } from "@/module/common/atoms/demoMode";
 import { Head } from "@/module/common/component/Head";
 import { Panel } from "@/module/common/component/Panel";
-import { RestrictedLayout } from "@/module/common/component/RestrictedLayout";
 import { DemoModeSwitch } from "@/module/settings/DemoModeSwitch";
 import { SelectCurrency } from "@/module/settings/SelectCurrency";
 import styles from "./settings.module.css";
 
-export const Route = createFileRoute("/settings")({
-    beforeLoad: requireAuth,
+export const Route = createFileRoute("/_restricted/settings")({
     component: Settings,
 });
 
@@ -29,7 +26,7 @@ function Settings() {
     }, []);
 
     return (
-        <RestrictedLayout>
+        <>
             <Head title={{ content: "Settings" }} />
 
             <Panel title="Wallet">
@@ -71,6 +68,6 @@ function Settings() {
                     {isHydrated && isDemoMode ? "Exit Demo Mode" : "Logout"}
                 </Button>
             </Panel>
-        </RestrictedLayout>
+        </>
     );
 }

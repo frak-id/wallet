@@ -11,34 +11,35 @@
 import { createFileRoute } from '@tanstack/react-router'
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as NotFoundRouteImport } from './routes/not-found'
-import { Route as MintRouteImport } from './routes/mint'
-import { Route as MembersRouteImport } from './routes/members'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as DemoRouteImport } from './routes/demo'
-import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as RestrictedRouteImport } from './routes/_restricted'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as PushCreateRouteImport } from './routes/push/create'
-import { Route as PushConfirmRouteImport } from './routes/push/confirm'
 import { Route as EmbeddedLayoutRouteImport } from './routes/embedded/_layout'
-import { Route as CampaignsValidationRouteImport } from './routes/campaigns/validation'
-import { Route as CampaignsPerformanceRouteImport } from './routes/campaigns/performance'
-import { Route as CampaignsNewRouteImport } from './routes/campaigns/new'
-import { Route as CampaignsMetricsRouteImport } from './routes/campaigns/metrics'
-import { Route as CampaignsListRouteImport } from './routes/campaigns/list'
-import { Route as CampaignsCampaignIdRouteImport } from './routes/campaigns/$campaignId'
-import { Route as ProductIdIndexRouteImport } from './routes/product/$id/index'
-import { Route as ProductIdTeamRouteImport } from './routes/product/$id/team'
-import { Route as ProductIdSetupStatusRouteImport } from './routes/product/$id/setup-status'
-import { Route as ProductIdFundingRouteImport } from './routes/product/$id/funding'
+import { Route as RestrictedSettingsRouteImport } from './routes/_restricted/settings'
+import { Route as RestrictedMintRouteImport } from './routes/_restricted/mint'
+import { Route as RestrictedMembersRouteImport } from './routes/_restricted/members'
+import { Route as RestrictedDashboardRouteImport } from './routes/_restricted/dashboard'
 import { Route as EmbeddedLayoutPurchaseTrackerRouteImport } from './routes/embedded/_layout/purchase-tracker'
 import { Route as EmbeddedLayoutMintRouteImport } from './routes/embedded/_layout/mint'
 import { Route as EmbeddedLayoutCreateCampaignRouteImport } from './routes/embedded/_layout/create-campaign'
-import { Route as CampaignsEditCampaignIdRouteImport } from './routes/campaigns/edit/$campaignId'
-import { Route as CampaignsDraftCampaignIdRouteImport } from './routes/campaigns/draft/$campaignId'
-import { Route as CampaignsDraftCampaignIdValidationRouteImport } from './routes/campaigns/draft/$campaignId/validation'
-import { Route as CampaignsDraftCampaignIdMetricsRouteImport } from './routes/campaigns/draft/$campaignId/metrics'
+import { Route as RestrictedPushCreateRouteImport } from './routes/_restricted/push/create'
+import { Route as RestrictedPushConfirmRouteImport } from './routes/_restricted/push/confirm'
+import { Route as RestrictedCampaignsValidationRouteImport } from './routes/_restricted/campaigns/validation'
+import { Route as RestrictedCampaignsPerformanceRouteImport } from './routes/_restricted/campaigns/performance'
+import { Route as RestrictedCampaignsNewRouteImport } from './routes/_restricted/campaigns/new'
+import { Route as RestrictedCampaignsMetricsRouteImport } from './routes/_restricted/campaigns/metrics'
+import { Route as RestrictedCampaignsListRouteImport } from './routes/_restricted/campaigns/list'
+import { Route as RestrictedCampaignsCampaignIdRouteImport } from './routes/_restricted/campaigns/$campaignId'
+import { Route as RestrictedProductIdIndexRouteImport } from './routes/_restricted/product/$id/index'
+import { Route as RestrictedProductIdTeamRouteImport } from './routes/_restricted/product/$id/team'
+import { Route as RestrictedProductIdSetupStatusRouteImport } from './routes/_restricted/product/$id/setup-status'
+import { Route as RestrictedProductIdFundingRouteImport } from './routes/_restricted/product/$id/funding'
+import { Route as RestrictedCampaignsEditCampaignIdRouteImport } from './routes/_restricted/campaigns/edit/$campaignId'
+import { Route as RestrictedCampaignsDraftCampaignIdRouteImport } from './routes/_restricted/campaigns/draft/$campaignId'
+import { Route as RestrictedCampaignsDraftCampaignIdValidationRouteImport } from './routes/_restricted/campaigns/draft/$campaignId/validation'
+import { Route as RestrictedCampaignsDraftCampaignIdMetricsRouteImport } from './routes/_restricted/campaigns/draft/$campaignId/metrics'
 
 const EmbeddedRouteImport = createFileRoute('/embedded')()
 
@@ -47,24 +48,9 @@ const EmbeddedRoute = EmbeddedRouteImport.update({
   path: '/embedded',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SettingsRoute = SettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const NotFoundRoute = NotFoundRouteImport.update({
   id: '/not-found',
   path: '/not-found',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MintRoute = MintRouteImport.update({
-  id: '/mint',
-  path: '/mint',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MembersRoute = MembersRouteImport.update({
-  id: '/members',
-  path: '/members',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -77,9 +63,8 @@ const DemoRoute = DemoRouteImport.update({
   path: '/demo',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DashboardRoute = DashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
+const RestrictedRoute = RestrictedRouteImport.update({
+  id: '/_restricted',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -87,69 +72,29 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PushCreateRoute = PushCreateRouteImport.update({
-  id: '/push/create',
-  path: '/push/create',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PushConfirmRoute = PushConfirmRouteImport.update({
-  id: '/push/confirm',
-  path: '/push/confirm',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const EmbeddedLayoutRoute = EmbeddedLayoutRouteImport.update({
   id: '/_layout',
   getParentRoute: () => EmbeddedRoute,
 } as any)
-const CampaignsValidationRoute = CampaignsValidationRouteImport.update({
-  id: '/campaigns/validation',
-  path: '/campaigns/validation',
-  getParentRoute: () => rootRouteImport,
+const RestrictedSettingsRoute = RestrictedSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => RestrictedRoute,
 } as any)
-const CampaignsPerformanceRoute = CampaignsPerformanceRouteImport.update({
-  id: '/campaigns/performance',
-  path: '/campaigns/performance',
-  getParentRoute: () => rootRouteImport,
+const RestrictedMintRoute = RestrictedMintRouteImport.update({
+  id: '/mint',
+  path: '/mint',
+  getParentRoute: () => RestrictedRoute,
 } as any)
-const CampaignsNewRoute = CampaignsNewRouteImport.update({
-  id: '/campaigns/new',
-  path: '/campaigns/new',
-  getParentRoute: () => rootRouteImport,
+const RestrictedMembersRoute = RestrictedMembersRouteImport.update({
+  id: '/members',
+  path: '/members',
+  getParentRoute: () => RestrictedRoute,
 } as any)
-const CampaignsMetricsRoute = CampaignsMetricsRouteImport.update({
-  id: '/campaigns/metrics',
-  path: '/campaigns/metrics',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CampaignsListRoute = CampaignsListRouteImport.update({
-  id: '/campaigns/list',
-  path: '/campaigns/list',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CampaignsCampaignIdRoute = CampaignsCampaignIdRouteImport.update({
-  id: '/campaigns/$campaignId',
-  path: '/campaigns/$campaignId',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProductIdIndexRoute = ProductIdIndexRouteImport.update({
-  id: '/product/$id/',
-  path: '/product/$id/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProductIdTeamRoute = ProductIdTeamRouteImport.update({
-  id: '/product/$id/team',
-  path: '/product/$id/team',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProductIdSetupStatusRoute = ProductIdSetupStatusRouteImport.update({
-  id: '/product/$id/setup-status',
-  path: '/product/$id/setup-status',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProductIdFundingRoute = ProductIdFundingRouteImport.update({
-  id: '/product/$id/funding',
-  path: '/product/$id/funding',
-  getParentRoute: () => rootRouteImport,
+const RestrictedDashboardRoute = RestrictedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => RestrictedRoute,
 } as any)
 const EmbeddedLayoutPurchaseTrackerRoute =
   EmbeddedLayoutPurchaseTrackerRouteImport.update({
@@ -168,147 +113,216 @@ const EmbeddedLayoutCreateCampaignRoute =
     path: '/create-campaign',
     getParentRoute: () => EmbeddedLayoutRoute,
   } as any)
-const CampaignsEditCampaignIdRoute = CampaignsEditCampaignIdRouteImport.update({
-  id: '/campaigns/edit/$campaignId',
-  path: '/campaigns/edit/$campaignId',
-  getParentRoute: () => rootRouteImport,
+const RestrictedPushCreateRoute = RestrictedPushCreateRouteImport.update({
+  id: '/push/create',
+  path: '/push/create',
+  getParentRoute: () => RestrictedRoute,
 } as any)
-const CampaignsDraftCampaignIdRoute =
-  CampaignsDraftCampaignIdRouteImport.update({
+const RestrictedPushConfirmRoute = RestrictedPushConfirmRouteImport.update({
+  id: '/push/confirm',
+  path: '/push/confirm',
+  getParentRoute: () => RestrictedRoute,
+} as any)
+const RestrictedCampaignsValidationRoute =
+  RestrictedCampaignsValidationRouteImport.update({
+    id: '/campaigns/validation',
+    path: '/campaigns/validation',
+    getParentRoute: () => RestrictedRoute,
+  } as any)
+const RestrictedCampaignsPerformanceRoute =
+  RestrictedCampaignsPerformanceRouteImport.update({
+    id: '/campaigns/performance',
+    path: '/campaigns/performance',
+    getParentRoute: () => RestrictedRoute,
+  } as any)
+const RestrictedCampaignsNewRoute = RestrictedCampaignsNewRouteImport.update({
+  id: '/campaigns/new',
+  path: '/campaigns/new',
+  getParentRoute: () => RestrictedRoute,
+} as any)
+const RestrictedCampaignsMetricsRoute =
+  RestrictedCampaignsMetricsRouteImport.update({
+    id: '/campaigns/metrics',
+    path: '/campaigns/metrics',
+    getParentRoute: () => RestrictedRoute,
+  } as any)
+const RestrictedCampaignsListRoute = RestrictedCampaignsListRouteImport.update({
+  id: '/campaigns/list',
+  path: '/campaigns/list',
+  getParentRoute: () => RestrictedRoute,
+} as any)
+const RestrictedCampaignsCampaignIdRoute =
+  RestrictedCampaignsCampaignIdRouteImport.update({
+    id: '/campaigns/$campaignId',
+    path: '/campaigns/$campaignId',
+    getParentRoute: () => RestrictedRoute,
+  } as any)
+const RestrictedProductIdIndexRoute =
+  RestrictedProductIdIndexRouteImport.update({
+    id: '/product/$id/',
+    path: '/product/$id/',
+    getParentRoute: () => RestrictedRoute,
+  } as any)
+const RestrictedProductIdTeamRoute = RestrictedProductIdTeamRouteImport.update({
+  id: '/product/$id/team',
+  path: '/product/$id/team',
+  getParentRoute: () => RestrictedRoute,
+} as any)
+const RestrictedProductIdSetupStatusRoute =
+  RestrictedProductIdSetupStatusRouteImport.update({
+    id: '/product/$id/setup-status',
+    path: '/product/$id/setup-status',
+    getParentRoute: () => RestrictedRoute,
+  } as any)
+const RestrictedProductIdFundingRoute =
+  RestrictedProductIdFundingRouteImport.update({
+    id: '/product/$id/funding',
+    path: '/product/$id/funding',
+    getParentRoute: () => RestrictedRoute,
+  } as any)
+const RestrictedCampaignsEditCampaignIdRoute =
+  RestrictedCampaignsEditCampaignIdRouteImport.update({
+    id: '/campaigns/edit/$campaignId',
+    path: '/campaigns/edit/$campaignId',
+    getParentRoute: () => RestrictedRoute,
+  } as any)
+const RestrictedCampaignsDraftCampaignIdRoute =
+  RestrictedCampaignsDraftCampaignIdRouteImport.update({
     id: '/campaigns/draft/$campaignId',
     path: '/campaigns/draft/$campaignId',
-    getParentRoute: () => rootRouteImport,
+    getParentRoute: () => RestrictedRoute,
   } as any)
-const CampaignsDraftCampaignIdValidationRoute =
-  CampaignsDraftCampaignIdValidationRouteImport.update({
+const RestrictedCampaignsDraftCampaignIdValidationRoute =
+  RestrictedCampaignsDraftCampaignIdValidationRouteImport.update({
     id: '/validation',
     path: '/validation',
-    getParentRoute: () => CampaignsDraftCampaignIdRoute,
+    getParentRoute: () => RestrictedCampaignsDraftCampaignIdRoute,
   } as any)
-const CampaignsDraftCampaignIdMetricsRoute =
-  CampaignsDraftCampaignIdMetricsRouteImport.update({
+const RestrictedCampaignsDraftCampaignIdMetricsRoute =
+  RestrictedCampaignsDraftCampaignIdMetricsRouteImport.update({
     id: '/metrics',
     path: '/metrics',
-    getParentRoute: () => CampaignsDraftCampaignIdRoute,
+    getParentRoute: () => RestrictedCampaignsDraftCampaignIdRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/dashboard': typeof DashboardRoute
   '/demo': typeof DemoRoute
   '/login': typeof LoginRoute
-  '/members': typeof MembersRoute
-  '/mint': typeof MintRoute
   '/not-found': typeof NotFoundRoute
-  '/settings': typeof SettingsRoute
-  '/campaigns/$campaignId': typeof CampaignsCampaignIdRoute
-  '/campaigns/list': typeof CampaignsListRoute
-  '/campaigns/metrics': typeof CampaignsMetricsRoute
-  '/campaigns/new': typeof CampaignsNewRoute
-  '/campaigns/performance': typeof CampaignsPerformanceRoute
-  '/campaigns/validation': typeof CampaignsValidationRoute
+  '/dashboard': typeof RestrictedDashboardRoute
+  '/members': typeof RestrictedMembersRoute
+  '/mint': typeof RestrictedMintRoute
+  '/settings': typeof RestrictedSettingsRoute
   '/embedded': typeof EmbeddedLayoutRouteWithChildren
-  '/push/confirm': typeof PushConfirmRoute
-  '/push/create': typeof PushCreateRoute
-  '/campaigns/draft/$campaignId': typeof CampaignsDraftCampaignIdRouteWithChildren
-  '/campaigns/edit/$campaignId': typeof CampaignsEditCampaignIdRoute
+  '/campaigns/$campaignId': typeof RestrictedCampaignsCampaignIdRoute
+  '/campaigns/list': typeof RestrictedCampaignsListRoute
+  '/campaigns/metrics': typeof RestrictedCampaignsMetricsRoute
+  '/campaigns/new': typeof RestrictedCampaignsNewRoute
+  '/campaigns/performance': typeof RestrictedCampaignsPerformanceRoute
+  '/campaigns/validation': typeof RestrictedCampaignsValidationRoute
+  '/push/confirm': typeof RestrictedPushConfirmRoute
+  '/push/create': typeof RestrictedPushCreateRoute
   '/embedded/create-campaign': typeof EmbeddedLayoutCreateCampaignRoute
   '/embedded/mint': typeof EmbeddedLayoutMintRoute
   '/embedded/purchase-tracker': typeof EmbeddedLayoutPurchaseTrackerRoute
-  '/product/$id/funding': typeof ProductIdFundingRoute
-  '/product/$id/setup-status': typeof ProductIdSetupStatusRoute
-  '/product/$id/team': typeof ProductIdTeamRoute
-  '/product/$id': typeof ProductIdIndexRoute
-  '/campaigns/draft/$campaignId/metrics': typeof CampaignsDraftCampaignIdMetricsRoute
-  '/campaigns/draft/$campaignId/validation': typeof CampaignsDraftCampaignIdValidationRoute
+  '/campaigns/draft/$campaignId': typeof RestrictedCampaignsDraftCampaignIdRouteWithChildren
+  '/campaigns/edit/$campaignId': typeof RestrictedCampaignsEditCampaignIdRoute
+  '/product/$id/funding': typeof RestrictedProductIdFundingRoute
+  '/product/$id/setup-status': typeof RestrictedProductIdSetupStatusRoute
+  '/product/$id/team': typeof RestrictedProductIdTeamRoute
+  '/product/$id': typeof RestrictedProductIdIndexRoute
+  '/campaigns/draft/$campaignId/metrics': typeof RestrictedCampaignsDraftCampaignIdMetricsRoute
+  '/campaigns/draft/$campaignId/validation': typeof RestrictedCampaignsDraftCampaignIdValidationRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/dashboard': typeof DashboardRoute
   '/demo': typeof DemoRoute
   '/login': typeof LoginRoute
-  '/members': typeof MembersRoute
-  '/mint': typeof MintRoute
   '/not-found': typeof NotFoundRoute
-  '/settings': typeof SettingsRoute
-  '/campaigns/$campaignId': typeof CampaignsCampaignIdRoute
-  '/campaigns/list': typeof CampaignsListRoute
-  '/campaigns/metrics': typeof CampaignsMetricsRoute
-  '/campaigns/new': typeof CampaignsNewRoute
-  '/campaigns/performance': typeof CampaignsPerformanceRoute
-  '/campaigns/validation': typeof CampaignsValidationRoute
+  '/dashboard': typeof RestrictedDashboardRoute
+  '/members': typeof RestrictedMembersRoute
+  '/mint': typeof RestrictedMintRoute
+  '/settings': typeof RestrictedSettingsRoute
   '/embedded': typeof EmbeddedLayoutRouteWithChildren
-  '/push/confirm': typeof PushConfirmRoute
-  '/push/create': typeof PushCreateRoute
-  '/campaigns/draft/$campaignId': typeof CampaignsDraftCampaignIdRouteWithChildren
-  '/campaigns/edit/$campaignId': typeof CampaignsEditCampaignIdRoute
+  '/campaigns/$campaignId': typeof RestrictedCampaignsCampaignIdRoute
+  '/campaigns/list': typeof RestrictedCampaignsListRoute
+  '/campaigns/metrics': typeof RestrictedCampaignsMetricsRoute
+  '/campaigns/new': typeof RestrictedCampaignsNewRoute
+  '/campaigns/performance': typeof RestrictedCampaignsPerformanceRoute
+  '/campaigns/validation': typeof RestrictedCampaignsValidationRoute
+  '/push/confirm': typeof RestrictedPushConfirmRoute
+  '/push/create': typeof RestrictedPushCreateRoute
   '/embedded/create-campaign': typeof EmbeddedLayoutCreateCampaignRoute
   '/embedded/mint': typeof EmbeddedLayoutMintRoute
   '/embedded/purchase-tracker': typeof EmbeddedLayoutPurchaseTrackerRoute
-  '/product/$id/funding': typeof ProductIdFundingRoute
-  '/product/$id/setup-status': typeof ProductIdSetupStatusRoute
-  '/product/$id/team': typeof ProductIdTeamRoute
-  '/product/$id': typeof ProductIdIndexRoute
-  '/campaigns/draft/$campaignId/metrics': typeof CampaignsDraftCampaignIdMetricsRoute
-  '/campaigns/draft/$campaignId/validation': typeof CampaignsDraftCampaignIdValidationRoute
+  '/campaigns/draft/$campaignId': typeof RestrictedCampaignsDraftCampaignIdRouteWithChildren
+  '/campaigns/edit/$campaignId': typeof RestrictedCampaignsEditCampaignIdRoute
+  '/product/$id/funding': typeof RestrictedProductIdFundingRoute
+  '/product/$id/setup-status': typeof RestrictedProductIdSetupStatusRoute
+  '/product/$id/team': typeof RestrictedProductIdTeamRoute
+  '/product/$id': typeof RestrictedProductIdIndexRoute
+  '/campaigns/draft/$campaignId/metrics': typeof RestrictedCampaignsDraftCampaignIdMetricsRoute
+  '/campaigns/draft/$campaignId/validation': typeof RestrictedCampaignsDraftCampaignIdValidationRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/dashboard': typeof DashboardRoute
+  '/_restricted': typeof RestrictedRouteWithChildren
   '/demo': typeof DemoRoute
   '/login': typeof LoginRoute
-  '/members': typeof MembersRoute
-  '/mint': typeof MintRoute
   '/not-found': typeof NotFoundRoute
-  '/settings': typeof SettingsRoute
-  '/campaigns/$campaignId': typeof CampaignsCampaignIdRoute
-  '/campaigns/list': typeof CampaignsListRoute
-  '/campaigns/metrics': typeof CampaignsMetricsRoute
-  '/campaigns/new': typeof CampaignsNewRoute
-  '/campaigns/performance': typeof CampaignsPerformanceRoute
-  '/campaigns/validation': typeof CampaignsValidationRoute
+  '/_restricted/dashboard': typeof RestrictedDashboardRoute
+  '/_restricted/members': typeof RestrictedMembersRoute
+  '/_restricted/mint': typeof RestrictedMintRoute
+  '/_restricted/settings': typeof RestrictedSettingsRoute
   '/embedded': typeof EmbeddedRouteWithChildren
   '/embedded/_layout': typeof EmbeddedLayoutRouteWithChildren
-  '/push/confirm': typeof PushConfirmRoute
-  '/push/create': typeof PushCreateRoute
-  '/campaigns/draft/$campaignId': typeof CampaignsDraftCampaignIdRouteWithChildren
-  '/campaigns/edit/$campaignId': typeof CampaignsEditCampaignIdRoute
+  '/_restricted/campaigns/$campaignId': typeof RestrictedCampaignsCampaignIdRoute
+  '/_restricted/campaigns/list': typeof RestrictedCampaignsListRoute
+  '/_restricted/campaigns/metrics': typeof RestrictedCampaignsMetricsRoute
+  '/_restricted/campaigns/new': typeof RestrictedCampaignsNewRoute
+  '/_restricted/campaigns/performance': typeof RestrictedCampaignsPerformanceRoute
+  '/_restricted/campaigns/validation': typeof RestrictedCampaignsValidationRoute
+  '/_restricted/push/confirm': typeof RestrictedPushConfirmRoute
+  '/_restricted/push/create': typeof RestrictedPushCreateRoute
   '/embedded/_layout/create-campaign': typeof EmbeddedLayoutCreateCampaignRoute
   '/embedded/_layout/mint': typeof EmbeddedLayoutMintRoute
   '/embedded/_layout/purchase-tracker': typeof EmbeddedLayoutPurchaseTrackerRoute
-  '/product/$id/funding': typeof ProductIdFundingRoute
-  '/product/$id/setup-status': typeof ProductIdSetupStatusRoute
-  '/product/$id/team': typeof ProductIdTeamRoute
-  '/product/$id/': typeof ProductIdIndexRoute
-  '/campaigns/draft/$campaignId/metrics': typeof CampaignsDraftCampaignIdMetricsRoute
-  '/campaigns/draft/$campaignId/validation': typeof CampaignsDraftCampaignIdValidationRoute
+  '/_restricted/campaigns/draft/$campaignId': typeof RestrictedCampaignsDraftCampaignIdRouteWithChildren
+  '/_restricted/campaigns/edit/$campaignId': typeof RestrictedCampaignsEditCampaignIdRoute
+  '/_restricted/product/$id/funding': typeof RestrictedProductIdFundingRoute
+  '/_restricted/product/$id/setup-status': typeof RestrictedProductIdSetupStatusRoute
+  '/_restricted/product/$id/team': typeof RestrictedProductIdTeamRoute
+  '/_restricted/product/$id/': typeof RestrictedProductIdIndexRoute
+  '/_restricted/campaigns/draft/$campaignId/metrics': typeof RestrictedCampaignsDraftCampaignIdMetricsRoute
+  '/_restricted/campaigns/draft/$campaignId/validation': typeof RestrictedCampaignsDraftCampaignIdValidationRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/dashboard'
     | '/demo'
     | '/login'
+    | '/not-found'
+    | '/dashboard'
     | '/members'
     | '/mint'
-    | '/not-found'
     | '/settings'
+    | '/embedded'
     | '/campaigns/$campaignId'
     | '/campaigns/list'
     | '/campaigns/metrics'
     | '/campaigns/new'
     | '/campaigns/performance'
     | '/campaigns/validation'
-    | '/embedded'
     | '/push/confirm'
     | '/push/create'
-    | '/campaigns/draft/$campaignId'
-    | '/campaigns/edit/$campaignId'
     | '/embedded/create-campaign'
     | '/embedded/mint'
     | '/embedded/purchase-tracker'
+    | '/campaigns/draft/$campaignId'
+    | '/campaigns/edit/$campaignId'
     | '/product/$id/funding'
     | '/product/$id/setup-status'
     | '/product/$id/team'
@@ -318,27 +332,27 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/dashboard'
     | '/demo'
     | '/login'
+    | '/not-found'
+    | '/dashboard'
     | '/members'
     | '/mint'
-    | '/not-found'
     | '/settings'
+    | '/embedded'
     | '/campaigns/$campaignId'
     | '/campaigns/list'
     | '/campaigns/metrics'
     | '/campaigns/new'
     | '/campaigns/performance'
     | '/campaigns/validation'
-    | '/embedded'
     | '/push/confirm'
     | '/push/create'
-    | '/campaigns/draft/$campaignId'
-    | '/campaigns/edit/$campaignId'
     | '/embedded/create-campaign'
     | '/embedded/mint'
     | '/embedded/purchase-tracker'
+    | '/campaigns/draft/$campaignId'
+    | '/campaigns/edit/$campaignId'
     | '/product/$id/funding'
     | '/product/$id/setup-status'
     | '/product/$id/team'
@@ -348,60 +362,44 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
-    | '/dashboard'
+    | '/_restricted'
     | '/demo'
     | '/login'
-    | '/members'
-    | '/mint'
     | '/not-found'
-    | '/settings'
-    | '/campaigns/$campaignId'
-    | '/campaigns/list'
-    | '/campaigns/metrics'
-    | '/campaigns/new'
-    | '/campaigns/performance'
-    | '/campaigns/validation'
+    | '/_restricted/dashboard'
+    | '/_restricted/members'
+    | '/_restricted/mint'
+    | '/_restricted/settings'
     | '/embedded'
     | '/embedded/_layout'
-    | '/push/confirm'
-    | '/push/create'
-    | '/campaigns/draft/$campaignId'
-    | '/campaigns/edit/$campaignId'
+    | '/_restricted/campaigns/$campaignId'
+    | '/_restricted/campaigns/list'
+    | '/_restricted/campaigns/metrics'
+    | '/_restricted/campaigns/new'
+    | '/_restricted/campaigns/performance'
+    | '/_restricted/campaigns/validation'
+    | '/_restricted/push/confirm'
+    | '/_restricted/push/create'
     | '/embedded/_layout/create-campaign'
     | '/embedded/_layout/mint'
     | '/embedded/_layout/purchase-tracker'
-    | '/product/$id/funding'
-    | '/product/$id/setup-status'
-    | '/product/$id/team'
-    | '/product/$id/'
-    | '/campaigns/draft/$campaignId/metrics'
-    | '/campaigns/draft/$campaignId/validation'
+    | '/_restricted/campaigns/draft/$campaignId'
+    | '/_restricted/campaigns/edit/$campaignId'
+    | '/_restricted/product/$id/funding'
+    | '/_restricted/product/$id/setup-status'
+    | '/_restricted/product/$id/team'
+    | '/_restricted/product/$id/'
+    | '/_restricted/campaigns/draft/$campaignId/metrics'
+    | '/_restricted/campaigns/draft/$campaignId/validation'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  DashboardRoute: typeof DashboardRoute
+  RestrictedRoute: typeof RestrictedRouteWithChildren
   DemoRoute: typeof DemoRoute
   LoginRoute: typeof LoginRoute
-  MembersRoute: typeof MembersRoute
-  MintRoute: typeof MintRoute
   NotFoundRoute: typeof NotFoundRoute
-  SettingsRoute: typeof SettingsRoute
-  CampaignsCampaignIdRoute: typeof CampaignsCampaignIdRoute
-  CampaignsListRoute: typeof CampaignsListRoute
-  CampaignsMetricsRoute: typeof CampaignsMetricsRoute
-  CampaignsNewRoute: typeof CampaignsNewRoute
-  CampaignsPerformanceRoute: typeof CampaignsPerformanceRoute
-  CampaignsValidationRoute: typeof CampaignsValidationRoute
   EmbeddedRoute: typeof EmbeddedRouteWithChildren
-  PushConfirmRoute: typeof PushConfirmRoute
-  PushCreateRoute: typeof PushCreateRoute
-  CampaignsDraftCampaignIdRoute: typeof CampaignsDraftCampaignIdRouteWithChildren
-  CampaignsEditCampaignIdRoute: typeof CampaignsEditCampaignIdRoute
-  ProductIdFundingRoute: typeof ProductIdFundingRoute
-  ProductIdSetupStatusRoute: typeof ProductIdSetupStatusRoute
-  ProductIdTeamRoute: typeof ProductIdTeamRoute
-  ProductIdIndexRoute: typeof ProductIdIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -413,32 +411,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EmbeddedRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/settings': {
-      id: '/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof SettingsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/not-found': {
       id: '/not-found'
       path: '/not-found'
       fullPath: '/not-found'
       preLoaderRoute: typeof NotFoundRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/mint': {
-      id: '/mint'
-      path: '/mint'
-      fullPath: '/mint'
-      preLoaderRoute: typeof MintRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/members': {
-      id: '/members'
-      path: '/members'
-      fullPath: '/members'
-      preLoaderRoute: typeof MembersRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -455,11 +432,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DemoRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/dashboard': {
-      id: '/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof DashboardRouteImport
+    '/_restricted': {
+      id: '/_restricted'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof RestrictedRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -469,20 +446,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/push/create': {
-      id: '/push/create'
-      path: '/push/create'
-      fullPath: '/push/create'
-      preLoaderRoute: typeof PushCreateRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/push/confirm': {
-      id: '/push/confirm'
-      path: '/push/confirm'
-      fullPath: '/push/confirm'
-      preLoaderRoute: typeof PushConfirmRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/embedded/_layout': {
       id: '/embedded/_layout'
       path: '/embedded'
@@ -490,75 +453,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EmbeddedLayoutRouteImport
       parentRoute: typeof EmbeddedRoute
     }
-    '/campaigns/validation': {
-      id: '/campaigns/validation'
-      path: '/campaigns/validation'
-      fullPath: '/campaigns/validation'
-      preLoaderRoute: typeof CampaignsValidationRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_restricted/settings': {
+      id: '/_restricted/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof RestrictedSettingsRouteImport
+      parentRoute: typeof RestrictedRoute
     }
-    '/campaigns/performance': {
-      id: '/campaigns/performance'
-      path: '/campaigns/performance'
-      fullPath: '/campaigns/performance'
-      preLoaderRoute: typeof CampaignsPerformanceRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_restricted/mint': {
+      id: '/_restricted/mint'
+      path: '/mint'
+      fullPath: '/mint'
+      preLoaderRoute: typeof RestrictedMintRouteImport
+      parentRoute: typeof RestrictedRoute
     }
-    '/campaigns/new': {
-      id: '/campaigns/new'
-      path: '/campaigns/new'
-      fullPath: '/campaigns/new'
-      preLoaderRoute: typeof CampaignsNewRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_restricted/members': {
+      id: '/_restricted/members'
+      path: '/members'
+      fullPath: '/members'
+      preLoaderRoute: typeof RestrictedMembersRouteImport
+      parentRoute: typeof RestrictedRoute
     }
-    '/campaigns/metrics': {
-      id: '/campaigns/metrics'
-      path: '/campaigns/metrics'
-      fullPath: '/campaigns/metrics'
-      preLoaderRoute: typeof CampaignsMetricsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/campaigns/list': {
-      id: '/campaigns/list'
-      path: '/campaigns/list'
-      fullPath: '/campaigns/list'
-      preLoaderRoute: typeof CampaignsListRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/campaigns/$campaignId': {
-      id: '/campaigns/$campaignId'
-      path: '/campaigns/$campaignId'
-      fullPath: '/campaigns/$campaignId'
-      preLoaderRoute: typeof CampaignsCampaignIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/product/$id/': {
-      id: '/product/$id/'
-      path: '/product/$id'
-      fullPath: '/product/$id'
-      preLoaderRoute: typeof ProductIdIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/product/$id/team': {
-      id: '/product/$id/team'
-      path: '/product/$id/team'
-      fullPath: '/product/$id/team'
-      preLoaderRoute: typeof ProductIdTeamRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/product/$id/setup-status': {
-      id: '/product/$id/setup-status'
-      path: '/product/$id/setup-status'
-      fullPath: '/product/$id/setup-status'
-      preLoaderRoute: typeof ProductIdSetupStatusRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/product/$id/funding': {
-      id: '/product/$id/funding'
-      path: '/product/$id/funding'
-      fullPath: '/product/$id/funding'
-      preLoaderRoute: typeof ProductIdFundingRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_restricted/dashboard': {
+      id: '/_restricted/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof RestrictedDashboardRouteImport
+      parentRoute: typeof RestrictedRoute
     }
     '/embedded/_layout/purchase-tracker': {
       id: '/embedded/_layout/purchase-tracker'
@@ -581,36 +502,186 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EmbeddedLayoutCreateCampaignRouteImport
       parentRoute: typeof EmbeddedLayoutRoute
     }
-    '/campaigns/edit/$campaignId': {
-      id: '/campaigns/edit/$campaignId'
+    '/_restricted/push/create': {
+      id: '/_restricted/push/create'
+      path: '/push/create'
+      fullPath: '/push/create'
+      preLoaderRoute: typeof RestrictedPushCreateRouteImport
+      parentRoute: typeof RestrictedRoute
+    }
+    '/_restricted/push/confirm': {
+      id: '/_restricted/push/confirm'
+      path: '/push/confirm'
+      fullPath: '/push/confirm'
+      preLoaderRoute: typeof RestrictedPushConfirmRouteImport
+      parentRoute: typeof RestrictedRoute
+    }
+    '/_restricted/campaigns/validation': {
+      id: '/_restricted/campaigns/validation'
+      path: '/campaigns/validation'
+      fullPath: '/campaigns/validation'
+      preLoaderRoute: typeof RestrictedCampaignsValidationRouteImport
+      parentRoute: typeof RestrictedRoute
+    }
+    '/_restricted/campaigns/performance': {
+      id: '/_restricted/campaigns/performance'
+      path: '/campaigns/performance'
+      fullPath: '/campaigns/performance'
+      preLoaderRoute: typeof RestrictedCampaignsPerformanceRouteImport
+      parentRoute: typeof RestrictedRoute
+    }
+    '/_restricted/campaigns/new': {
+      id: '/_restricted/campaigns/new'
+      path: '/campaigns/new'
+      fullPath: '/campaigns/new'
+      preLoaderRoute: typeof RestrictedCampaignsNewRouteImport
+      parentRoute: typeof RestrictedRoute
+    }
+    '/_restricted/campaigns/metrics': {
+      id: '/_restricted/campaigns/metrics'
+      path: '/campaigns/metrics'
+      fullPath: '/campaigns/metrics'
+      preLoaderRoute: typeof RestrictedCampaignsMetricsRouteImport
+      parentRoute: typeof RestrictedRoute
+    }
+    '/_restricted/campaigns/list': {
+      id: '/_restricted/campaigns/list'
+      path: '/campaigns/list'
+      fullPath: '/campaigns/list'
+      preLoaderRoute: typeof RestrictedCampaignsListRouteImport
+      parentRoute: typeof RestrictedRoute
+    }
+    '/_restricted/campaigns/$campaignId': {
+      id: '/_restricted/campaigns/$campaignId'
+      path: '/campaigns/$campaignId'
+      fullPath: '/campaigns/$campaignId'
+      preLoaderRoute: typeof RestrictedCampaignsCampaignIdRouteImport
+      parentRoute: typeof RestrictedRoute
+    }
+    '/_restricted/product/$id/': {
+      id: '/_restricted/product/$id/'
+      path: '/product/$id'
+      fullPath: '/product/$id'
+      preLoaderRoute: typeof RestrictedProductIdIndexRouteImport
+      parentRoute: typeof RestrictedRoute
+    }
+    '/_restricted/product/$id/team': {
+      id: '/_restricted/product/$id/team'
+      path: '/product/$id/team'
+      fullPath: '/product/$id/team'
+      preLoaderRoute: typeof RestrictedProductIdTeamRouteImport
+      parentRoute: typeof RestrictedRoute
+    }
+    '/_restricted/product/$id/setup-status': {
+      id: '/_restricted/product/$id/setup-status'
+      path: '/product/$id/setup-status'
+      fullPath: '/product/$id/setup-status'
+      preLoaderRoute: typeof RestrictedProductIdSetupStatusRouteImport
+      parentRoute: typeof RestrictedRoute
+    }
+    '/_restricted/product/$id/funding': {
+      id: '/_restricted/product/$id/funding'
+      path: '/product/$id/funding'
+      fullPath: '/product/$id/funding'
+      preLoaderRoute: typeof RestrictedProductIdFundingRouteImport
+      parentRoute: typeof RestrictedRoute
+    }
+    '/_restricted/campaigns/edit/$campaignId': {
+      id: '/_restricted/campaigns/edit/$campaignId'
       path: '/campaigns/edit/$campaignId'
       fullPath: '/campaigns/edit/$campaignId'
-      preLoaderRoute: typeof CampaignsEditCampaignIdRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof RestrictedCampaignsEditCampaignIdRouteImport
+      parentRoute: typeof RestrictedRoute
     }
-    '/campaigns/draft/$campaignId': {
-      id: '/campaigns/draft/$campaignId'
+    '/_restricted/campaigns/draft/$campaignId': {
+      id: '/_restricted/campaigns/draft/$campaignId'
       path: '/campaigns/draft/$campaignId'
       fullPath: '/campaigns/draft/$campaignId'
-      preLoaderRoute: typeof CampaignsDraftCampaignIdRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof RestrictedCampaignsDraftCampaignIdRouteImport
+      parentRoute: typeof RestrictedRoute
     }
-    '/campaigns/draft/$campaignId/validation': {
-      id: '/campaigns/draft/$campaignId/validation'
+    '/_restricted/campaigns/draft/$campaignId/validation': {
+      id: '/_restricted/campaigns/draft/$campaignId/validation'
       path: '/validation'
       fullPath: '/campaigns/draft/$campaignId/validation'
-      preLoaderRoute: typeof CampaignsDraftCampaignIdValidationRouteImport
-      parentRoute: typeof CampaignsDraftCampaignIdRoute
+      preLoaderRoute: typeof RestrictedCampaignsDraftCampaignIdValidationRouteImport
+      parentRoute: typeof RestrictedCampaignsDraftCampaignIdRoute
     }
-    '/campaigns/draft/$campaignId/metrics': {
-      id: '/campaigns/draft/$campaignId/metrics'
+    '/_restricted/campaigns/draft/$campaignId/metrics': {
+      id: '/_restricted/campaigns/draft/$campaignId/metrics'
       path: '/metrics'
       fullPath: '/campaigns/draft/$campaignId/metrics'
-      preLoaderRoute: typeof CampaignsDraftCampaignIdMetricsRouteImport
-      parentRoute: typeof CampaignsDraftCampaignIdRoute
+      preLoaderRoute: typeof RestrictedCampaignsDraftCampaignIdMetricsRouteImport
+      parentRoute: typeof RestrictedCampaignsDraftCampaignIdRoute
     }
   }
 }
+
+interface RestrictedCampaignsDraftCampaignIdRouteChildren {
+  RestrictedCampaignsDraftCampaignIdMetricsRoute: typeof RestrictedCampaignsDraftCampaignIdMetricsRoute
+  RestrictedCampaignsDraftCampaignIdValidationRoute: typeof RestrictedCampaignsDraftCampaignIdValidationRoute
+}
+
+const RestrictedCampaignsDraftCampaignIdRouteChildren: RestrictedCampaignsDraftCampaignIdRouteChildren =
+  {
+    RestrictedCampaignsDraftCampaignIdMetricsRoute:
+      RestrictedCampaignsDraftCampaignIdMetricsRoute,
+    RestrictedCampaignsDraftCampaignIdValidationRoute:
+      RestrictedCampaignsDraftCampaignIdValidationRoute,
+  }
+
+const RestrictedCampaignsDraftCampaignIdRouteWithChildren =
+  RestrictedCampaignsDraftCampaignIdRoute._addFileChildren(
+    RestrictedCampaignsDraftCampaignIdRouteChildren,
+  )
+
+interface RestrictedRouteChildren {
+  RestrictedDashboardRoute: typeof RestrictedDashboardRoute
+  RestrictedMembersRoute: typeof RestrictedMembersRoute
+  RestrictedMintRoute: typeof RestrictedMintRoute
+  RestrictedSettingsRoute: typeof RestrictedSettingsRoute
+  RestrictedCampaignsCampaignIdRoute: typeof RestrictedCampaignsCampaignIdRoute
+  RestrictedCampaignsListRoute: typeof RestrictedCampaignsListRoute
+  RestrictedCampaignsMetricsRoute: typeof RestrictedCampaignsMetricsRoute
+  RestrictedCampaignsNewRoute: typeof RestrictedCampaignsNewRoute
+  RestrictedCampaignsPerformanceRoute: typeof RestrictedCampaignsPerformanceRoute
+  RestrictedCampaignsValidationRoute: typeof RestrictedCampaignsValidationRoute
+  RestrictedPushConfirmRoute: typeof RestrictedPushConfirmRoute
+  RestrictedPushCreateRoute: typeof RestrictedPushCreateRoute
+  RestrictedCampaignsDraftCampaignIdRoute: typeof RestrictedCampaignsDraftCampaignIdRouteWithChildren
+  RestrictedCampaignsEditCampaignIdRoute: typeof RestrictedCampaignsEditCampaignIdRoute
+  RestrictedProductIdFundingRoute: typeof RestrictedProductIdFundingRoute
+  RestrictedProductIdSetupStatusRoute: typeof RestrictedProductIdSetupStatusRoute
+  RestrictedProductIdTeamRoute: typeof RestrictedProductIdTeamRoute
+  RestrictedProductIdIndexRoute: typeof RestrictedProductIdIndexRoute
+}
+
+const RestrictedRouteChildren: RestrictedRouteChildren = {
+  RestrictedDashboardRoute: RestrictedDashboardRoute,
+  RestrictedMembersRoute: RestrictedMembersRoute,
+  RestrictedMintRoute: RestrictedMintRoute,
+  RestrictedSettingsRoute: RestrictedSettingsRoute,
+  RestrictedCampaignsCampaignIdRoute: RestrictedCampaignsCampaignIdRoute,
+  RestrictedCampaignsListRoute: RestrictedCampaignsListRoute,
+  RestrictedCampaignsMetricsRoute: RestrictedCampaignsMetricsRoute,
+  RestrictedCampaignsNewRoute: RestrictedCampaignsNewRoute,
+  RestrictedCampaignsPerformanceRoute: RestrictedCampaignsPerformanceRoute,
+  RestrictedCampaignsValidationRoute: RestrictedCampaignsValidationRoute,
+  RestrictedPushConfirmRoute: RestrictedPushConfirmRoute,
+  RestrictedPushCreateRoute: RestrictedPushCreateRoute,
+  RestrictedCampaignsDraftCampaignIdRoute:
+    RestrictedCampaignsDraftCampaignIdRouteWithChildren,
+  RestrictedCampaignsEditCampaignIdRoute:
+    RestrictedCampaignsEditCampaignIdRoute,
+  RestrictedProductIdFundingRoute: RestrictedProductIdFundingRoute,
+  RestrictedProductIdSetupStatusRoute: RestrictedProductIdSetupStatusRoute,
+  RestrictedProductIdTeamRoute: RestrictedProductIdTeamRoute,
+  RestrictedProductIdIndexRoute: RestrictedProductIdIndexRoute,
+}
+
+const RestrictedRouteWithChildren = RestrictedRoute._addFileChildren(
+  RestrictedRouteChildren,
+)
 
 interface EmbeddedLayoutRouteChildren {
   EmbeddedLayoutCreateCampaignRoute: typeof EmbeddedLayoutCreateCampaignRoute
@@ -640,47 +711,13 @@ const EmbeddedRouteWithChildren = EmbeddedRoute._addFileChildren(
   EmbeddedRouteChildren,
 )
 
-interface CampaignsDraftCampaignIdRouteChildren {
-  CampaignsDraftCampaignIdMetricsRoute: typeof CampaignsDraftCampaignIdMetricsRoute
-  CampaignsDraftCampaignIdValidationRoute: typeof CampaignsDraftCampaignIdValidationRoute
-}
-
-const CampaignsDraftCampaignIdRouteChildren: CampaignsDraftCampaignIdRouteChildren =
-  {
-    CampaignsDraftCampaignIdMetricsRoute: CampaignsDraftCampaignIdMetricsRoute,
-    CampaignsDraftCampaignIdValidationRoute:
-      CampaignsDraftCampaignIdValidationRoute,
-  }
-
-const CampaignsDraftCampaignIdRouteWithChildren =
-  CampaignsDraftCampaignIdRoute._addFileChildren(
-    CampaignsDraftCampaignIdRouteChildren,
-  )
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  DashboardRoute: DashboardRoute,
+  RestrictedRoute: RestrictedRouteWithChildren,
   DemoRoute: DemoRoute,
   LoginRoute: LoginRoute,
-  MembersRoute: MembersRoute,
-  MintRoute: MintRoute,
   NotFoundRoute: NotFoundRoute,
-  SettingsRoute: SettingsRoute,
-  CampaignsCampaignIdRoute: CampaignsCampaignIdRoute,
-  CampaignsListRoute: CampaignsListRoute,
-  CampaignsMetricsRoute: CampaignsMetricsRoute,
-  CampaignsNewRoute: CampaignsNewRoute,
-  CampaignsPerformanceRoute: CampaignsPerformanceRoute,
-  CampaignsValidationRoute: CampaignsValidationRoute,
   EmbeddedRoute: EmbeddedRouteWithChildren,
-  PushConfirmRoute: PushConfirmRoute,
-  PushCreateRoute: PushCreateRoute,
-  CampaignsDraftCampaignIdRoute: CampaignsDraftCampaignIdRouteWithChildren,
-  CampaignsEditCampaignIdRoute: CampaignsEditCampaignIdRoute,
-  ProductIdFundingRoute: ProductIdFundingRoute,
-  ProductIdSetupStatusRoute: ProductIdSetupStatusRoute,
-  ProductIdTeamRoute: ProductIdTeamRoute,
-  ProductIdIndexRoute: ProductIdIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

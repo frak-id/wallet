@@ -1,16 +1,14 @@
 import { Skeleton } from "@frak-labs/ui/component/Skeleton";
 import { createFileRoute, lazyRouteComponent } from "@tanstack/react-router";
-import { requireAuth } from "@/middleware/auth";
 import {
     campaignQueryOptions,
     validateDraftCampaign,
 } from "@/module/campaigns/queries/queryOptions";
-import { RestrictedLayout } from "@/module/common/component/RestrictedLayout";
 import { queryClient } from "@/module/common/provider/RootProvider";
 
-export const Route = createFileRoute("/campaigns/draft/$campaignId/metrics")({
-    // Auth only in beforeLoad
-    beforeLoad: requireAuth,
+export const Route = createFileRoute(
+    "/_restricted/campaigns/draft/$campaignId/validation"
+)({
     // Prefetch into TanStack Query cache with validation
     loader: ({ params }) => {
         return queryClient.ensureQueryData(
@@ -21,11 +19,7 @@ export const Route = createFileRoute("/campaigns/draft/$campaignId/metrics")({
         );
     },
     component: lazyRouteComponent(
-        () => import("@/module/campaigns/page/CampaignsDraftMetricsPage")
+        () => import("@/module/campaigns/page/CampaignsDraftValidationPage")
     ),
-    pendingComponent: () => (
-        <RestrictedLayout>
-            <Skeleton />
-        </RestrictedLayout>
-    ),
+    pendingComponent: () => <Skeleton />,
 });

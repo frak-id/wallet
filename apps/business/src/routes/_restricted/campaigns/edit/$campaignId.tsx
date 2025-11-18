@@ -2,35 +2,29 @@ import { Skeleton } from "@frak-labs/ui/component/Skeleton";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { requireAuth } from "@/middleware/auth";
 import { CampaignEdit } from "@/module/campaigns/component/CampaignEdit";
 import {
     campaignQueryOptions,
     validateEditCampaign,
 } from "@/module/campaigns/queries/queryOptions";
-import { RestrictedLayout } from "@/module/common/component/RestrictedLayout";
 import { queryClient } from "@/module/common/provider/RootProvider";
 import { campaignStore } from "@/stores/campaignStore";
 
-export const Route = createFileRoute("/campaigns/edit/$campaignId")({
-    // Auth only in beforeLoad
-    beforeLoad: requireAuth,
-    // Prefetch into TanStack Query cache with validation
-    loader: ({ params }) => {
-        return queryClient.ensureQueryData(
-            campaignQueryOptions(
-                params.campaignId,
-                validateEditCampaign(params.campaignId)
-            )
-        );
-    },
-    component: CampaignsEditPage,
-    pendingComponent: () => (
-        <RestrictedLayout>
-            <Skeleton />
-        </RestrictedLayout>
-    ),
-});
+export const Route = createFileRoute("/_restricted/campaigns/edit/$campaignId")(
+    {
+        // Prefetch into TanStack Query cache with validation
+        loader: ({ params }) => {
+            return queryClient.ensureQueryData(
+                campaignQueryOptions(
+                    params.campaignId,
+                    validateEditCampaign(params.campaignId)
+                )
+            );
+        },
+        component: CampaignsEditPage,
+        pendingComponent: () => <Skeleton />,
+    }
+);
 
 function CampaignsEditPage() {
     const { campaignId } = Route.useParams();
@@ -50,9 +44,5 @@ function CampaignsEditPage() {
         setIsFetched(true);
     }, [campaign, campaignId, setCampaign, setAction, setIsFetched]);
 
-    return (
-        <RestrictedLayout>
-            <CampaignEdit />
-        </RestrictedLayout>
-    );
+    return <CampaignEdit />;
 }

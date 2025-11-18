@@ -2,16 +2,12 @@ import { Skeleton } from "@frak-labs/ui/component/Skeleton";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { requireAuth } from "@/middleware/auth";
 import { CampaignDetails } from "@/module/campaigns/component/CampaignDetails";
 import { campaignQueryOptions } from "@/module/campaigns/queries/queryOptions";
-import { RestrictedLayout } from "@/module/common/component/RestrictedLayout";
 import { queryClient } from "@/module/common/provider/RootProvider";
 import { campaignStore } from "@/stores/campaignStore";
 
-export const Route = createFileRoute("/campaigns/$campaignId")({
-    // Auth only in beforeLoad
-    beforeLoad: requireAuth,
+export const Route = createFileRoute("/_restricted/campaigns/$campaignId")({
     // Prefetch into TanStack Query cache
     loader: ({ params }) => {
         return queryClient.ensureQueryData(
@@ -19,11 +15,7 @@ export const Route = createFileRoute("/campaigns/$campaignId")({
         );
     },
     component: CampaignsContentPage,
-    pendingComponent: () => (
-        <RestrictedLayout>
-            <Skeleton />
-        </RestrictedLayout>
-    ),
+    pendingComponent: () => <Skeleton />,
 });
 
 function CampaignsContentPage() {
@@ -42,9 +34,5 @@ function CampaignsContentPage() {
         setIsFetched(true);
     }, [campaign, campaignId, setCampaign, setIsFetched]);
 
-    return (
-        <RestrictedLayout>
-            <CampaignDetails campaignId={campaignId} campaign={campaign} />
-        </RestrictedLayout>
-    );
+    return <CampaignDetails campaignId={campaignId} campaign={campaign} />;
 }
