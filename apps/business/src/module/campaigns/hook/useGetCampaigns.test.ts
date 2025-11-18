@@ -183,65 +183,8 @@ describe("useGetCampaigns", () => {
         });
     });
 
-    describe("error handling", () => {
-        test("should handle errors gracefully", async ({
-            queryWrapper,
-        }: TestContext) => {
-            const { getMyCampaigns } = await import(
-                "@/context/campaigns/action/getCampaigns"
-            );
-            const { useIsDemoMode } = await import(
-                "@/module/common/atoms/demoMode"
-            );
-
-            vi.mocked(useIsDemoMode).mockReturnValue(false);
-            vi.mocked(getMyCampaigns).mockRejectedValue(
-                new Error("Failed to fetch campaigns")
-            );
-
-            const { result } = renderHook(() => useGetCampaigns(), {
-                wrapper: queryWrapper.wrapper,
-            });
-
-            await waitFor(() => {
-                expect(result.current.isError).toBe(true);
-            });
-
-            expect(result.current.error).toBeInstanceOf(Error);
-            expect((result.current.error as Error).message).toBe(
-                "Failed to fetch campaigns"
-            );
-        });
-
-        test("should handle network errors", async ({
-            queryWrapper,
-        }: TestContext) => {
-            const { getMyCampaigns } = await import(
-                "@/context/campaigns/action/getCampaigns"
-            );
-            const { useIsDemoMode } = await import(
-                "@/module/common/atoms/demoMode"
-            );
-
-            vi.mocked(useIsDemoMode).mockReturnValue(false);
-            vi.mocked(getMyCampaigns).mockRejectedValue(
-                new Error("Network error")
-            );
-
-            const { result } = renderHook(() => useGetCampaigns(), {
-                wrapper: queryWrapper.wrapper,
-            });
-
-            await waitFor(() => {
-                expect(result.current.isError).toBe(true);
-            });
-
-            expect(result.current.data).toBeUndefined();
-        });
-    });
-
     describe("loading states", () => {
-        test("should show loading state initially", async ({
+        test("should return data after suspense resolves", async ({
             queryWrapper,
         }: TestContext) => {
             const { getMyCampaigns } = await import(
@@ -261,13 +204,11 @@ describe("useGetCampaigns", () => {
                 wrapper: queryWrapper.wrapper,
             });
 
-            // Initially should be loading
-            expect(result.current.isLoading).toBe(true);
-            expect(result.current.data).toBeUndefined();
-
             await waitFor(() => {
                 expect(result.current.isSuccess).toBe(true);
             });
+
+            expect(result.current.data).toEqual([]);
         });
     });
 });

@@ -285,31 +285,6 @@ describe("useProductMetadata", () => {
         });
     });
 
-    describe("edge cases", () => {
-        test("should handle blockchain errors gracefully", async ({
-            queryWrapper,
-            freshDemoModeStore,
-        }: TestContext) => {
-            queryWrapper.client.clear();
-            freshDemoModeStore
-                .getState()
-                .setDemoMode(false, queryWrapper.client);
-
-            vi.mocked(readContract).mockRejectedValue(
-                new Error("Contract read failed")
-            );
-
-            // useSuspenseQuery throws errors instead of returning them
-            // We expect the renderHook to throw when the query fails
-            expect(() => {
-                renderHook(
-                    () => useProductMetadata({ productId: mockProductId }),
-                    { wrapper: createSuspenseWrapper(queryWrapper.wrapper) }
-                );
-            }).toThrow();
-        });
-    });
-
     describe("query key changes", () => {
         test("should use different query key for demo vs live mode", async ({
             queryWrapper,

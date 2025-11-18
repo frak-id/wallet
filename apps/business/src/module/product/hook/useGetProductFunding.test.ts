@@ -341,9 +341,8 @@ describe("useGetProductFunding", () => {
             queryWrapper,
             freshDemoModeStore,
         }: TestContext) => {
-            queryWrapper.client.clear();
-
             // Test demo mode
+            queryWrapper.client.clear();
             freshDemoModeStore
                 .getState()
                 .setDemoMode(true, queryWrapper.client);
@@ -357,7 +356,10 @@ describe("useGetProductFunding", () => {
                 expect(demoResult.current.isSuccess).toBe(true);
             });
 
-            // Test live mode
+            expect(demoResult.current.data).toHaveLength(2);
+
+            // Test live mode - clear cache and create new wrapper
+            queryWrapper.client.clear();
             freshDemoModeStore
                 .getState()
                 .setDemoMode(false, queryWrapper.client);
@@ -377,8 +379,6 @@ describe("useGetProductFunding", () => {
                 expect(liveResult.current.isSuccess).toBe(true);
             });
 
-            // Both should succeed but with different query keys
-            expect(demoResult.current.data).toHaveLength(2);
             expect(liveResult.current.data).toHaveLength(0);
         });
     });

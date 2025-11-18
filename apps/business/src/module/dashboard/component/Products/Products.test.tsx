@@ -47,20 +47,22 @@ vi.mock("lucide-react", () => ({
 }));
 
 describe("MyProducts", () => {
-    it("should render spinner when loading", async () => {
+    it("should render products when data is available", async () => {
         const { useMyProducts } = await import(
             "@/module/dashboard/hooks/useMyProducts"
         );
+        // useSuspenseQuery always returns data after suspense resolves
         vi.mocked(useMyProducts).mockReturnValue({
-            products: undefined,
-            isPending: true,
+            products: {
+                operator: [],
+                owner: [],
+            },
+            isEmpty: true,
         } as any);
 
-        const { container } = render(<MyProducts />);
+        render(<MyProducts />);
 
-        // Spinner renders as a span with 8 child spans (leaves)
-        const spinnerLeaves = container.querySelectorAll("span span");
-        expect(spinnerLeaves.length).toBe(8);
+        expect(screen.getByText("My Products")).toBeInTheDocument();
     });
 
     it("should render products list when loaded", async () => {
