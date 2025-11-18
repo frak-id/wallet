@@ -1,5 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
-import { getMyCampaigns } from "@/context/campaigns/action/getCampaigns";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { campaignsListQueryOptions } from "@/module/campaigns/queries/queryOptions";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 
 /**
@@ -7,12 +7,5 @@ import { useIsDemoMode } from "@/module/common/atoms/demoMode";
  */
 export const useGetCampaigns = () => {
     const isDemoMode = useIsDemoMode();
-
-    return useQuery({
-        queryKey: ["campaigns", "my-campaigns", isDemoMode ? "demo" : "live"],
-        queryFn: async () => {
-            const result = await getMyCampaigns();
-            return result;
-        },
-    });
+    return useSuspenseQuery(campaignsListQueryOptions(isDemoMode));
 };

@@ -18,14 +18,14 @@ export function ProductFiltering({
     disabled?: boolean;
     onSubmit: (data: FormMembersFiltering) => void;
 }) {
-    const { isEmpty, products, isPending } = useMyProducts();
+    const { isEmpty, products } = useMyProducts();
     const productsOptions = [
         ...(products?.operator ?? []),
         ...(products?.owner ?? []),
     ];
     const { control, handleSubmit } = useFormContext<FormMembersFiltering>();
 
-    if (isEmpty || !products || isPending) {
+    if (isEmpty || !products) {
         return null;
     }
 

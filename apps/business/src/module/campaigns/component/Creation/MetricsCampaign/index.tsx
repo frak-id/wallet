@@ -34,11 +34,11 @@ export function MetricsCampaign() {
     const saveCampaign = useSaveCampaign();
 
     const pId = useMemo(() => {
-        if (!campaign.productId) return;
+        if (!campaign.productId) return "0x0" as const;
         return toHex(BigInt(campaign.productId));
     }, [campaign.productId]);
 
-    const { data: product, isPending: productIsPending } = useProductMetadata({
+    const { data: product } = useProductMetadata({
         productId: pId,
     });
     const form = useForm<Campaign>({
@@ -73,7 +73,10 @@ export function MetricsCampaign() {
         });
     }
 
-    if (productIsPending) return <Skeleton />;
+    // Show skeleton if no productId is set yet
+    if (!campaign.productId) {
+        return <Skeleton />;
+    }
 
     return (
         <FormLayout>
@@ -98,7 +101,7 @@ export function MetricsCampaign() {
                         form={form}
                     />
 
-                    <Actions isLoading={productIsPending} />
+                    <Actions isLoading={form.formState.isSubmitting} />
                 </form>
             </Form>
         </FormLayout>

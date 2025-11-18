@@ -27,7 +27,7 @@ import styles from "./index.module.css";
 const columnHelper = createColumnHelper<CampaignWithState>();
 
 export function TableCampaigns() {
-    const { data, isLoading } = useGetCampaigns();
+    const { data } = useGetCampaigns();
     const {
         mutate: onUpdateCampaignRunningStatus,
         isPending: isUpdatingCampaignState,
@@ -109,7 +109,7 @@ export function TableCampaigns() {
         [onUpdateCampaignRunningStatus, isUpdatingCampaignState]
     );
 
-    if (!data || isLoading) {
+    if (!data) {
         return <Skeleton />;
     }
 

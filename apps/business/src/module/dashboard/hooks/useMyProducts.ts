@@ -1,19 +1,13 @@
-import { useQuery } from "@tanstack/react-query";
-import { getMyProducts } from "@/context/product/action/getProducts";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
+import { myProductsQueryOptions } from "@/module/dashboard/queries/queryOptions";
 
 export function useMyProducts() {
     const isDemoMode = useIsDemoMode();
-
-    const { data, isPending } = useQuery({
-        queryKey: ["product", "get-mine", isDemoMode ? "demo" : "live"],
-        queryFn: () => getMyProducts(),
-    });
+    const { data } = useSuspenseQuery(myProductsQueryOptions(isDemoMode));
 
     return {
-        isEmpty:
-            !data || (data.owner.length === 0 && data.operator.length === 0),
+        isEmpty: data.owner.length === 0 && data.operator.length === 0,
         products: data,
-        isPending,
     };
 }

@@ -1,5 +1,4 @@
 import { Button } from "@frak-labs/ui/component/Button";
-import { Spinner } from "@frak-labs/ui/component/Spinner";
 import { useNavigate } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
 import type { Hex } from "viem";
@@ -13,11 +12,7 @@ import styles from "./index.module.css";
  * @constructor
  */
 export function MyProducts() {
-    const { products, isPending } = useMyProducts();
-
-    if (isPending) {
-        return <Spinner />;
-    }
+    const { products } = useMyProducts();
 
     return (
         <Panel variant={"ghost"} title={"My Products"} withBadge={false}>

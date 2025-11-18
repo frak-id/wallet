@@ -1,6 +1,6 @@
 import { Skeleton } from "@frak-labs/ui/component/Skeleton";
 import { computeWithPrecision } from "@frak-labs/ui/utils/computeWithPrecision";
-import { useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import type {
     CellContext,
     ColumnDef,
@@ -11,8 +11,9 @@ import {
     createColumnHelper,
 } from "@tanstack/react-table";
 import { useMemo, useState } from "react";
-import { getMyCampaignsStats } from "@/context/campaigns/action/getCampaignsStats";
+import type { getMyCampaignsStats } from "@/context/campaigns/action/getCampaignsStats";
 import { TablePerformanceFilters } from "@/module/campaigns/component/TableCampaignPerformance/Filter";
+import { campaignsStatsQueryOptions } from "@/module/campaigns/queries/queryOptions";
 import { Table } from "@/module/common/component/Table";
 import { TooltipTable } from "@/module/common/component/TooltipTable";
 import { useConvertToPreferredCurrency } from "@/module/common/hook/useConversionRate";
@@ -47,10 +48,7 @@ function avgPercentages(table: TableReact<TableData>, column: keyof TableData) {
 export function TableCampaignPerformance() {
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
-    const { data, isLoading } = useQuery({
-        queryKey: ["campaigns", "stats"],
-        queryFn: () => getMyCampaignsStats({ data: undefined }),
-    });
+    const { data } = useSuspenseQuery(campaignsStatsQueryOptions());
 
     const columns = useMemo(
         () =>
@@ -231,7 +229,7 @@ export function TableCampaignPerformance() {
         []
     );
 
-    if (!data || isLoading) {
+    if (!data) {
         return <Skeleton />;
     }
 

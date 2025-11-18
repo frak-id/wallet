@@ -35,11 +35,7 @@ type FormProduct = {
 };
 
 export function ProductDetails({ productId }: { productId: Hex }) {
-    const {
-        data: product,
-        isLoading: productIsLoading,
-        isPending: productIsPending,
-    } = useProductMetadata({ productId });
+    const { data: product } = useProductMetadata({ productId });
     const {
         mutate: editProduct,
         isSuccess: editProductSuccess,
@@ -80,7 +76,7 @@ export function ProductDetails({ productId }: { productId: Hex }) {
         <FormLayout>
             <ProductHead productId={productId} />
             <Form {...form}>
-                {!(productIsLoading || productIsPending) && (
+                {product && (
                     <Panel title={"Details of the product"}>
                         <FormField
                             control={form.control}

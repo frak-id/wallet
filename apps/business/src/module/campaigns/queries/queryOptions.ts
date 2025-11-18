@@ -1,5 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 import { redirect } from "@tanstack/react-router";
+import { getMyCampaigns } from "@/context/campaigns/action/getCampaigns";
 import { getCampaignDetails } from "@/context/campaigns/action/getDetails";
 import type { CampaignDocument } from "@/context/campaigns/dto/CampaignDocument";
 
@@ -7,6 +8,33 @@ type CampaignStateValidator = (campaign: CampaignDocument) => {
     shouldRedirect: boolean;
     redirectTo?: { to: string; params: { campaignId: string } };
 };
+
+/**
+ * Query options for fetching all campaigns for the current user
+ */
+export const campaignsListQueryOptions = (isDemoMode: boolean) =>
+    queryOptions({
+        queryKey: ["campaigns", "my-campaigns", isDemoMode ? "demo" : "live"],
+        queryFn: async () => {
+            return await getMyCampaigns();
+        },
+        staleTime: 5 * 60 * 1000, // 5 minutes
+    });
+
+/**
+ * Query options for fetching campaign performance stats
+ */
+export const campaignsStatsQueryOptions = () =>
+    queryOptions({
+        queryKey: ["campaigns", "stats"],
+        queryFn: async () => {
+            const { getMyCampaignsStats } = await import(
+                "@/context/campaigns/action/getCampaignsStats"
+            );
+            return await getMyCampaignsStats({ data: undefined });
+        },
+        staleTime: 5 * 60 * 1000, // 5 minutes
+    });
 
 /**
  * Query options for fetching campaign details

@@ -11,15 +11,13 @@ import {
 } from "@tanstack/react-table";
 import { useEffect, useMemo, useState } from "react";
 import { formatEther, isAddressEqual } from "viem";
-import {
-    type GetMembersParam,
-    getProductMembers,
-} from "@/context/members/action/getProductMembers";
+import type { GetMembersParam } from "@/context/members/action/getProductMembers";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { Row } from "@/module/common/component/Row";
 import { Table } from "@/module/common/component/Table";
 import { TableMembersFilters } from "@/module/members/component/TableMembers/Filters";
 import { Pagination } from "@/module/members/component/TableMembers/Pagination";
+import { membersPageQueryOptions } from "@/module/members/queries/queryOptions";
 import { membersStore } from "@/stores/membersStore";
 import styles from "./index.module.css";
 
@@ -86,11 +84,7 @@ export function TableMembers() {
     }, [sortingState, setFilters]);
 
     const { data: page, isPending } = useQuery({
-        queryKey: ["members", "page", filters],
-        queryFn: async () => {
-            const result = await getProductMembers({ data: filters });
-            return result;
-        },
+        ...membersPageQueryOptions(filters),
         placeholderData: keepPreviousData,
     });
 
