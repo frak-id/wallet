@@ -27,6 +27,7 @@ COPY packages/client/package.json ./packages/client/
 COPY packages/dev-tooling/package.json ./packages/dev-tooling/
 COPY packages/ui/package.json ./packages/ui/
 COPY packages/wallet-shared/package.json ./packages/wallet-shared/
+COPY packages/test-foundation/package.json ./packages/test-foundation/
 
 # Examples
 COPY example/showcase/package.json ./example/showcase/
