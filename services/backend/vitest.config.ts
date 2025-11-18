@@ -38,6 +38,13 @@ export default mergeConfig(
             // Backend tests need Node environment (not jsdom)
             environment: "node",
 
+            // Backend tests should run sequentially to avoid mock interference
+            // The shared config enables concurrent: true, but backend mocks (viem, drizzle)
+            // are stateful and can't be safely shared across concurrent tests
+            sequence: {
+                concurrent: false,
+            },
+
             // Environment variables for tests
             env: {
                 JWT_SECRET: "test-jwt-secret-for-vitest-testing",

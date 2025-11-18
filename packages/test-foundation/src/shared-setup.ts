@@ -5,6 +5,7 @@
  * - crypto.randomUUID polyfill
  * - Browser API mocks (IntersectionObserver, ResizeObserver, matchMedia)
  * - MessageChannel (for iframe communication)
+ * - localStorage/sessionStorage (jsdom's implementation is file-based and incomplete)
  *
  * Note: JSDOM environment (window, document, navigator) is automatically provided
  * by Vitest's `environment: "jsdom"` config setting in vitest.shared.ts.
@@ -17,6 +18,51 @@
  */
 
 import { beforeAll, vi } from "vitest";
+
+// jsdom's localStorage/sessionStorage require file paths and are incomplete
+// Provide a proper in-memory Storage implementation instead
+class StorageImpl implements Storage {
+    private data = new Map<string, string>();
+
+    get length(): number {
+        return this.data.size;
+    }
+
+    clear(): void {
+        this.data.clear();
+    }
+
+    getItem(key: string): string | null {
+        return this.data.get(key) ?? null;
+    }
+
+    key(index: number): string | null {
+        return Array.from(this.data.keys())[index] ?? null;
+    }
+
+    removeItem(key: string): void {
+        this.data.delete(key);
+    }
+
+    setItem(key: string, value: string): void {
+        this.data.set(key, String(value));
+    }
+}
+
+// Set up storage IMMEDIATELY (before any module imports that use Zustand persist)
+if (typeof window !== "undefined") {
+    Object.defineProperty(window, "localStorage", {
+        value: new StorageImpl(),
+        writable: true,
+        configurable: true,
+    });
+
+    Object.defineProperty(window, "sessionStorage", {
+        value: new StorageImpl(),
+        writable: true,
+        configurable: true,
+    });
+}
 
 // Setup browser API mocks after JSDOM environment is ready
 beforeAll(() => {
