@@ -16,8 +16,8 @@
  */
 
 import { fileURLToPath } from "node:url";
+import sharedConfig from "@frak-labs/test-foundation/vitest.shared";
 import { defineConfig, mergeConfig } from "vitest/config";
-import sharedConfig from "../../test-setup/vitest.shared";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 

@@ -55,6 +55,7 @@
     "whatwg-url": "^15.1.0"
   },
   "devDependencies": {
+    "@frak-labs/test-foundation": "workspace:*",
     "@types/web-push": "^3.6.4",
     "@types/whatwg-url": "^13.0.0",
     "bun-types": "latest",
