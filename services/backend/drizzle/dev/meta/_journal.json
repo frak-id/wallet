@@ -1,104 +1,111 @@
 {
-    "version": "7",
-    "dialect": "postgresql",
-    "entries": [
-        {
-            "idx": 0,
-            "version": "7",
-            "when": 1726618882176,
-            "tag": "0000_lively_mastermind",
-            "breakpoints": true
-        },
-        {
-            "idx": 1,
-            "version": "7",
-            "when": 1727455472009,
-            "tag": "0001_nappy_namor",
-            "breakpoints": true
-        },
-        {
-            "idx": 2,
-            "version": "7",
-            "when": 1727795633012,
-            "tag": "0002_bizarre_alex_power",
-            "breakpoints": true
-        },
-        {
-            "idx": 3,
-            "version": "7",
-            "when": 1727879604990,
-            "tag": "0003_whole_randall",
-            "breakpoints": true
-        },
-        {
-            "idx": 4,
-            "version": "7",
-            "when": 1730116392056,
-            "tag": "0004_tired_mephisto",
-            "breakpoints": true
-        },
-        {
-            "idx": 5,
-            "version": "7",
-            "when": 1730234900586,
-            "tag": "0005_bumpy_odin",
-            "breakpoints": true
-        },
-        {
-            "idx": 6,
-            "version": "7",
-            "when": 1730286897092,
-            "tag": "0006_moaning_mastermind",
-            "breakpoints": true
-        },
-        {
-            "idx": 7,
-            "version": "7",
-            "when": 1730287205572,
-            "tag": "0007_flashy_shinko_yamashiro",
-            "breakpoints": true
-        },
-        {
-            "idx": 8,
-            "version": "7",
-            "when": 1736773801157,
-            "tag": "0008_productive_zarek",
-            "breakpoints": true
-        },
-        {
-            "idx": 9,
-            "version": "7",
-            "when": 1738775509739,
-            "tag": "0009_woozy_krista_starr",
-            "breakpoints": true
-        },
-        {
-            "idx": 10,
-            "version": "7",
-            "when": 1743775947894,
-            "tag": "0010_flashy_nightmare",
-            "breakpoints": true
-        },
-        {
-            "idx": 11,
-            "version": "7",
-            "when": 1745439465176,
-            "tag": "0011_last_ikaris",
-            "breakpoints": true
-        },
-        {
-            "idx": 12,
-            "version": "7",
-            "when": 1747064181268,
-            "tag": "0012_outgoing_sharon_carter",
-            "breakpoints": true
-        },
-        {
-            "idx": 13,
-            "version": "7",
-            "when": 1759916084807,
-            "tag": "0013_flimsy_chronomancer",
-            "breakpoints": true
-        }
-    ]
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1726618882176,
+      "tag": "0000_lively_mastermind",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1727455472009,
+      "tag": "0001_nappy_namor",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1727795633012,
+      "tag": "0002_bizarre_alex_power",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1727879604990,
+      "tag": "0003_whole_randall",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1730116392056,
+      "tag": "0004_tired_mephisto",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1730234900586,
+      "tag": "0005_bumpy_odin",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1730286897092,
+      "tag": "0006_moaning_mastermind",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1730287205572,
+      "tag": "0007_flashy_shinko_yamashiro",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1736773801157,
+      "tag": "0008_productive_zarek",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1738775509739,
+      "tag": "0009_woozy_krista_starr",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1743775947894,
+      "tag": "0010_flashy_nightmare",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1745439465176,
+      "tag": "0011_last_ikaris",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1747064181268,
+      "tag": "0012_outgoing_sharon_carter",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1759916084807,
+      "tag": "0013_flimsy_chronomancer",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1763475009002,
+      "tag": "0014_jittery_mastermind",
+      "breakpoints": true
+    }
+  ]
 }
