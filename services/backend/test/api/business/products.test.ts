@@ -1,96 +1,28 @@
-/**
- * Business Product Routes API Tests
- *
- * Mock Strategy:
- * - Use vi.hoisted() to create mocks that vi.mock() factories can reference
- * - Mock iron-session and middleware modules BEFORE importing routes
- * - The key is adding .as("scoped") to Elysia middleware for .resolve() to execute
- *
- * All 45 tests passing ✅
- * - Mint routes: DNS TXT, domain verification, product minting
- * - Interaction webhook routes: tracker status, setup, deletion
- * - Oracle webhook routes: oracle status, setup, deletion with platform validation
- */
-
-import { Elysia } from "elysia";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { createBusinessSessionContextMock } from "../../mock/common";
 
-// Step 1: Create hoisted mocks that can be safely referenced in vi.mock() factories
-const testMocks = vi.hoisted(() => {
-    const unsealDataMock = vi.fn(() => Promise.resolve(undefined));
-    return { unsealDataMock };
-});
+const testMocks = vi.hoisted(() => ({
+    unsealDataMock: vi.fn(() => Promise.resolve(undefined)),
+}));
 
-// Step 2: Mock iron-session module
 vi.mock("iron-session", () => ({
     unsealData: testMocks.unsealDataMock,
 }));
 
-// Step 3: Mock business session middleware with .as("scoped") - CRITICAL!
-vi.mock("../../../src/api/business/middleware/session", () => {
-    const businessSessionContext = new Elysia({
-        name: "Context.businessSession",
-    })
-        .resolve(async ({ request }) => {
-            const cookieHeader = request.headers.get("Cookie");
-            const cookieValue =
-                cookieHeader?.match(/businessSession=([^;]+)/)?.[1] ||
-                "mock-token";
+vi.mock("../../../src/api/business/middleware/session", () => ({
+    businessSessionContext: createBusinessSessionContextMock(
+        testMocks.unsealDataMock
+    ),
+}));
 
-            const session = await (testMocks.unsealDataMock as any)(
-                cookieValue,
-                { password: "test", ttl: 60 }
-            );
-
-            return { businessSession: session };
-        })
-        .macro({
-            nextAuthenticated: {
-                beforeHandle: async ({ request, set }: any) => {
-                    const cookieHeader = request.headers.get("Cookie");
-                    const cookieValue = cookieHeader?.match(
-                        /businessSession=([^;]+)/
-                    )?.[1];
-
-                    if (!cookieValue) {
-                        set.status = 401;
-                        return "Missing business auth cookie";
-                    }
-
-                    const session = await (testMocks.unsealDataMock as any)(
-                        cookieValue,
-                        { password: "test", ttl: 60 }
-                    );
-
-                    if (!session) {
-                        set.status = 401;
-                        return "Missing business auth cookie";
-                    }
-                },
-            },
-        })
-        .as("scoped"); // Required for .resolve() to execute when composed via .use()
-
-    return { businessSessionContext };
-});
-
-// Step 4: Import product mocks (triggers their vi.mock() calls)
-import "../../mock/products";
-
-// Step 5: Import routes - they will use the mocked middleware
 import { productRoutes } from "../../../src/api/business/routes/products";
-
-// Step 6: Import other test utilities
-import { dbMock, onChainRolesRepositoryMocks } from "../../mock/common";
 import {
+    dbMock,
     dnsCheckRepositoryMocks,
     mintRepositoryMocks,
-    readContractMock,
-    simulateContractMock,
-    writeContractMock,
-} from "../../mock/products";
+    onChainRolesRepositoryMocks,
+} from "../../mock/common";
 
-// Helper functions for managing business session state in tests
 function setMockBusinessSession(
     session: { wallet: `0x${string}` } | null
 ): void {
@@ -114,25 +46,15 @@ describe("Business Product Routes API", () => {
     const mockDomain = "example.com";
 
     beforeEach(() => {
-        // Reset all mocks before each test
         dbMock.__reset();
         onChainRolesRepositoryMocks.hasRoleOrAdminOnProduct.mockClear();
         resetMockBusinessSession();
-
-        // Reset DNS check repository mocks
         dnsCheckRepositoryMocks.getDnsTxtString.mockClear();
         dnsCheckRepositoryMocks.getNormalizedDomain.mockClear();
         dnsCheckRepositoryMocks.isValidDomain.mockClear();
-
-        // Reset mint repository mocks
         mintRepositoryMocks.precomputeProductId.mockClear();
         mintRepositoryMocks.isExistingProduct.mockClear();
         mintRepositoryMocks.mintProduct.mockClear();
-
-        // Reset viem action mocks
-        readContractMock.mockClear();
-        simulateContractMock.mockClear();
-        writeContractMock.mockClear();
     });
 
     /* -------------------------------------------------------------------------- */

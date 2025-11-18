@@ -1,68 +1,25 @@
-/**
- * Business Roles Routes API Tests
- *
- * Mock Strategy:
- * - Use vi.hoisted() to create mocks that vi.mock() factories can reference
- * - Mock iron-session and middleware modules BEFORE importing routes
- * - The key is adding .as("scoped") to Elysia middleware for .resolve() to execute
- *
- * All 13 tests passing ✅
- * - Authentication validation (401 errors)
- * - Parameter validation (400 errors)
- * - Role checking with businessSession.wallet
- * - Role checking with provided wallet parameter
- * - isOwner flag handling
- * - Individual role checks (productAdministrator, interactionManager, campaignManager)
- * - Multiple roles combined
- * - No roles scenario
- * - Large productId values
- * - Bigint to hex conversion
- */
-
-import { Elysia } from "elysia";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import {
+    createBusinessSessionContextMock,
+    onChainRolesRepositoryMocks,
+} from "../../mock/common";
 
-// Step 1: Create hoisted mocks
-const testMocks = vi.hoisted(() => {
-    const unsealDataMock = vi.fn(() => Promise.resolve(undefined));
-    return { unsealDataMock };
-});
+const testMocks = vi.hoisted(() => ({
+    unsealDataMock: vi.fn(() => Promise.resolve(undefined)),
+}));
 
-// Step 2: Mock iron-session
 vi.mock("iron-session", () => ({
     unsealData: testMocks.unsealDataMock,
 }));
 
-// Step 3: Mock business session middleware with .as("scoped")
-vi.mock("../../../src/api/business/middleware/session", () => {
-    const businessSessionContext = new Elysia({
-        name: "Context.businessSession",
-    })
-        .resolve(async ({ request }) => {
-            const cookieHeader = request.headers.get("Cookie");
-            const cookieValue =
-                cookieHeader?.match(/businessSession=([^;]+)/)?.[1] ||
-                "mock-token";
+vi.mock("../../../src/api/business/middleware/session", () => ({
+    businessSessionContext: createBusinessSessionContextMock(
+        testMocks.unsealDataMock
+    ),
+}));
 
-            const session = await (testMocks.unsealDataMock as any)(
-                cookieValue,
-                { password: "test", ttl: 60 }
-            );
-
-            return { businessSession: session };
-        })
-        .as("scoped");
-
-    return { businessSessionContext };
-});
-
-// Step 4: Import routes
 import { rolesRoutes } from "../../../src/api/business/routes/roles";
 
-// Step 5: Import test utilities
-import { onChainRolesRepositoryMocks } from "../../mock/common";
-
-// Helper functions for managing business session state
 function setMockBusinessSession(
     session: { wallet: `0x${string}` } | null
 ): void {

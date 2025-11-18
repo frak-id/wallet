@@ -1,38 +1,3 @@
-/**
- * Business Notifications Send Route API Tests
- *
- * FIXME: Tests requiring authenticated business session are currently disabled
- * due to middleware mock hoisting issues. The businessSessionContext mock in
- * test/mock/common.ts is not being properly applied to routes.
- *
- * To fix, move vi.mock() calls to the top of this file:
- *
- * ```typescript
- * vi.mock("../../../src/api/business/middleware/session", () => ({
- *     businessSessionContext: businessSessionContextMock,
- * }));
- * vi.mock("../../../src/domain/notifications", () => ({
- *     NotificationContext: { services: { notifications: notificationServiceMocks } },
- *     // ... other exports
- * }));
- * ```
- *
- * Tests to add once middleware mock is fixed:
- *
- * 1. POST /send - Authenticated requests:
- *    - should send notification when authenticated with valid wallets target
- *    - should send notification when authenticated with filter target
- *    - should cleanup expired tokens before sending notification
- *    - should accept payload with optional fields (icon, url, actions)
- *    - should accept targets with filter containing productIds
- *    - should accept targets with filter containing all filter fields
- *
- * 2. POST /send - Indexer integration:
- *    - should call indexer API with correct filter parameters
- *    - should handle empty wallet list from indexer
- *    - should handle indexer API errors gracefully
- */
-
 import { beforeEach, describe, expect, it } from "vitest";
 import { sendRoutes } from "../../../src/api/business/routes/notifications/send";
 // Import mocks and routes

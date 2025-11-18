@@ -4,7 +4,7 @@ import { vi } from "vitest";
 import { viemMocks } from "./viem";
 
 /* -------------------------------------------------------------------------- */
-/*                               Backend commons                              */
+/*                            Infrastructure Mocks                            */
 /* -------------------------------------------------------------------------- */
 
 export const indexerApiMocks = {
@@ -76,30 +76,9 @@ export const JwtContextMock = {
 };
 
 /**
- * Flexible database mock for Drizzle ORM that can be customized per test.
- *
- * Uses an object to hold mock functions so they can be reassigned and all references update.
- * This allows tests to configure different responses for different scenarios.
- *
- * @example Basic usage in tests
- * ```typescript
- * beforeEach(() => {
- *     dbMock.__reset();  // Clear previous test configurations
- *     dbMock.__setSelectResponse(() => Promise.resolve([mockData]));
- * });
- *
- * it("should fetch data", async () => {
- *     const result = await db.select().from(table).where(condition);
- *     expect(result).toEqual([mockData]);
- * });
- * ```
- *
- * @example Multiple query types
- * ```typescript
- * dbMock.__setSelectResponse(() => Promise.resolve([{ id: 1 }]));
- * dbMock.__setInsertResponse(() => Promise.resolve([{ id: 2 }]));
- * dbMock.__setFindManyResponse(() => Promise.resolve([{ id: 3 }]));
- * ```
+ * Flexible database mock for Drizzle ORM.
+ * Use __setSelectResponse, __setInsertResponse, etc. to configure responses.
+ * Use __reset() to clear all configurations.
  */
 const mockFunctions = {
     selectMockFn: () => Promise.resolve([]),
@@ -109,54 +88,35 @@ const mockFunctions = {
     findManyMockFn: () => Promise.resolve([]),
 };
 
-// Create separate mocks so tests can verify they were called
 const deleteExecuteMock = vi.fn(() => mockFunctions.deleteMockFn());
-// biome-ignore lint/suspicious/noExplicitAny: Transaction callback needs flexible typing
-const transactionMock = vi.fn(async (fn: any) => {
-    const result = await fn(dbMock);
-    return result;
-});
-// biome-ignore lint/suspicious/noExplicitAny: Update accepts table argument
+// biome-ignore lint/suspicious/noExplicitAny: Mock typing
+const transactionMock = vi.fn(async (fn: any) => fn(dbMock));
+// biome-ignore lint/suspicious/noExplicitAny: Mock typing
 const updateMock = vi.fn((_table?: any) => ({
     set: vi.fn(() => ({
         where: vi.fn(() => ({
             returning: vi.fn(() => mockFunctions.updateMockFn()),
-            // biome-ignore lint/suspicious/noThenProperty: mocked stuff
-            then: (onfulfilled?: (value: unknown) => unknown) => {
-                const promise = mockFunctions.updateMockFn();
-                return promise.then(onfulfilled);
-            },
+            // biome-ignore lint/suspicious/noThenProperty: Promise-like mock
+            then: (onfulfilled?: (value: unknown) => unknown) =>
+                mockFunctions.updateMockFn().then(onfulfilled),
         })),
     })),
 }));
 
-// Helper to create a thenable object that can be awaited or chained
 const createThenable = (
     promiseFn: () => Promise<unknown>,
     chainMethods: Record<string, unknown> = {}
-) => {
-    // Create a lazy thenable that calls promiseFn when awaited
-    const thenable = {
-        // biome-ignore lint/suspicious/noThenProperty: Required for promise-like behavior in mocks
-        then: (
-            onfulfilled?: (value: unknown) => unknown,
-            onrejected?: (reason: unknown) => unknown
-        ) => {
-            const promise = promiseFn();
-            return promise.then(onfulfilled, onrejected);
-        },
-        catch: (onrejected?: (reason: unknown) => unknown) => {
-            const promise = promiseFn();
-            return promise.catch(onrejected);
-        },
-        finally: (onfinally?: () => void) => {
-            const promise = promiseFn();
-            return promise.finally(onfinally);
-        },
-        ...chainMethods,
-    };
-    return thenable;
-};
+) => ({
+    // biome-ignore lint/suspicious/noThenProperty: Promise-like mock
+    then: (
+        onfulfilled?: (value: unknown) => unknown,
+        onrejected?: (reason: unknown) => unknown
+    ) => promiseFn().then(onfulfilled, onrejected),
+    catch: (onrejected?: (reason: unknown) => unknown) =>
+        promiseFn().catch(onrejected),
+    finally: (onfinally?: () => void) => promiseFn().finally(onfinally),
+    ...chainMethods,
+});
 
 export const dbMock = {
     select: vi.fn(() => ({
@@ -254,24 +214,23 @@ export const dbMock = {
             }),
         },
     },
-    // Helper methods to configure mock responses
-    // biome-ignore lint/suspicious/noExplicitAny: Mock configuration requires flexible function types
+    // biome-ignore lint/suspicious/noExplicitAny: Mock configuration
     __setSelectResponse: (fn: any) => {
         mockFunctions.selectMockFn = fn;
     },
-    // biome-ignore lint/suspicious/noExplicitAny: Mock configuration requires flexible function types
+    // biome-ignore lint/suspicious/noExplicitAny: Mock configuration
     __setInsertResponse: (fn: any) => {
         mockFunctions.insertMockFn = fn;
     },
-    // biome-ignore lint/suspicious/noExplicitAny: Mock configuration requires flexible function types
+    // biome-ignore lint/suspicious/noExplicitAny: Mock configuration
     __setUpdateResponse: (fn: any) => {
         mockFunctions.updateMockFn = fn;
     },
-    // biome-ignore lint/suspicious/noExplicitAny: Mock configuration requires flexible function types
+    // biome-ignore lint/suspicious/noExplicitAny: Mock configuration
     __setDeleteResponse: (fn: any) => {
         mockFunctions.deleteMockFn = fn;
     },
-    // biome-ignore lint/suspicious/noExplicitAny: Mock configuration requires flexible function types
+    // biome-ignore lint/suspicious/noExplicitAny: Mock configuration
     __setFindManyResponse: (fn: any) => {
         mockFunctions.findManyMockFn = fn;
     },
@@ -290,7 +249,6 @@ export const dbMock = {
     },
 };
 
-// Mock for sessionContext Elysia plugin
 class UnauthorizedError extends Error {
     constructor(message = "Unauthorized") {
         super(message);
@@ -351,14 +309,12 @@ export const sessionContextMock = new Elysia({ name: "Macro.session" })
 
 /* -------------------------------------------------------------------------- */
 /*                          Iron Session Mock                                 */
-/*  -------------------------------------------------------------------------- */
+/* -------------------------------------------------------------------------- */
 
 export const ironSessionMocks = {
     unsealData: vi.fn(<T>() => Promise.resolve(undefined as T | undefined)),
 };
 
-// Mock iron-session module with proper named export
-// The real middleware imports: import { unsealData } from "iron-session";
 vi.mock("iron-session", () => ({
     unsealData: ironSessionMocks.unsealData,
 }));
@@ -367,9 +323,6 @@ vi.mock("iron-session", () => ({
 /*                      Business Session Middleware Mock                      */
 /* -------------------------------------------------------------------------- */
 
-// Mock for businessSessionContext Elysia plugin
-// Uses manual Cookie header parsing since Elysia's cookie parser doesn't work in tests
-// IMPORTANT: .as("scoped") is required for .resolve() to execute when composed via .use()
 export const businessSessionContextMock = new Elysia({
     name: "Context.businessSession",
 })
@@ -445,25 +398,17 @@ vi.mock("@backend-infrastructure", () => ({
         return dbMock;
     },
     log: {
-        debug: vi.fn(() => {}),
-        info: vi.fn(() => {}),
-        error: vi.fn(() => {}),
-        warn: vi.fn(() => {}),
+        debug: vi.fn(),
+        info: vi.fn(),
+        error: vi.fn(),
+        warn: vi.fn(),
     },
     eventEmitter: {
-        emit: vi.fn(() => {}),
-        on: vi.fn(() => {}),
-        off: vi.fn(() => {}),
+        emit: vi.fn(),
+        on: vi.fn(),
+        off: vi.fn(),
     },
 }));
-
-// Mock the business session middleware module
-// NOTE: This vi.mock() has been moved to individual test files
-// because Vitest doesn't hoist mocks across module boundaries.
-// Each test file must define its own vi.mock() for the middleware.
-// vi.mock("../../src/api/business/middleware/session", () => ({
-//     businessSessionContext: businessSessionContextMock,
-// }));
 
 /* -------------------------------------------------------------------------- */
 /*                                   Webpush                                  */
@@ -471,7 +416,7 @@ vi.mock("@backend-infrastructure", () => ({
 
 export const webPushMocks = {
     sendNotification: vi.fn(() => Promise.resolve()),
-    setVapidDetails: vi.fn(() => {}),
+    setVapidDetails: vi.fn(),
 };
 vi.mock("web-push", () => webPushMocks);
 
@@ -484,15 +429,12 @@ export const notificationServiceMocks = {
     sendNotification: vi.fn(() => Promise.resolve()),
 };
 
-// Mock notification macro
 const notificationMacroMock = new Elysia({ name: "Macro.notification" }).macro({
     cleanupTokens(_isEnabled?: boolean) {
         return {};
     },
 });
 
-// Create proper TypeBox schemas for SendNotificationDto
-// Address pattern for validation
 const AddressPattern = /^0x[a-fA-F0-9]{40}$/;
 
 const SendNotificationTargetsDto = t.Union([
@@ -557,12 +499,9 @@ const SendNotificationPayloadDto = t.Object({
     ),
 });
 
-// Mock the notification domain
 vi.mock("../../src/domain/notifications", () => ({
     NotificationContext: {
-        services: {
-            notifications: notificationServiceMocks,
-        },
+        services: { notifications: notificationServiceMocks },
     },
     notificationMacro: notificationMacroMock,
     pushTokensTable: {},
@@ -578,8 +517,6 @@ export const campaignRewardsServiceMocks = {
     getActiveRewardsForProduct: vi.fn(() => Promise.resolve(undefined)),
 };
 
-// Create a proper mock for InteractionRequestDto that matches the real schema
-// Using Elysia's t (TypeBox wrapper) which is already imported
 const InteractionRequestDto = t.Object({
     wallet: t.String(),
     productId: t.String(),
@@ -590,12 +527,9 @@ const InteractionRequestDto = t.Object({
     signature: t.Optional(t.Union([t.String(), t.Undefined(), t.Null()])),
 });
 
-// Mock the interactions domain
 vi.mock("../../src/domain/interactions", () => ({
     InteractionsContext: {
-        services: {
-            campaignRewards: campaignRewardsServiceMocks,
-        },
+        services: { campaignRewards: campaignRewardsServiceMocks },
     },
     pendingInteractionsTable: {},
     interactionsPurchaseTrackerTable: {},
@@ -604,12 +538,95 @@ vi.mock("../../src/domain/interactions", () => ({
 }));
 
 /* -------------------------------------------------------------------------- */
-/*                     Helper Functions for Business Session                  */
+/*                            Business Domain Mocks                           */
+/* -------------------------------------------------------------------------- */
+
+export const dnsCheckRepositoryMocks = {
+    getNormalizedDomain: vi.fn((domain: string) => domain),
+    getDnsTxtString: vi.fn(
+        (_args: { domain: string; owner: Address }) =>
+            `frak-business; hash=0x123`
+    ),
+    isValidDomain: vi.fn(() => Promise.resolve(false)),
+};
+
+export const mintRepositoryMocks = {
+    precomputeProductId: vi.fn((_domain: string) => BigInt(0)),
+    isExistingProduct: vi.fn((_productId: bigint) => Promise.resolve(false)),
+    mintProduct: vi.fn(() =>
+        Promise.resolve({
+            mintTxHash: "0x123" as `0x${string}`,
+            productId: BigInt(1),
+            interactionResult: undefined,
+            bankResult: undefined,
+        })
+    ),
+};
+
+vi.mock("../../src/domain/business/context", () => ({
+    BusinessContext: {
+        repositories: {
+            dnsCheck: dnsCheckRepositoryMocks,
+            mint: mintRepositoryMocks,
+        },
+    },
+}));
+
+/* -------------------------------------------------------------------------- */
+/*                  Business Session Context Mock Factory                     */
 /* -------------------------------------------------------------------------- */
 
 /**
- * Set the mock business session value
+ * Creates a business session context mock with the given unsealData mock.
+ * Use this in tests via vi.hoisted() to create a mock that can be referenced in vi.mock() factories.
  */
+export function createBusinessSessionContextMock(
+    unsealDataMock: ReturnType<typeof vi.fn>
+) {
+    return new Elysia({ name: "Context.businessSession" })
+        .resolve(async ({ request }) => {
+            const cookieHeader = request.headers.get("Cookie");
+            const cookieValue =
+                cookieHeader?.match(/businessSession=([^;]+)/)?.[1] ||
+                "mock-token";
+            // biome-ignore lint/suspicious/noExplicitAny: Mock function needs flexible typing
+            const session = await (unsealDataMock as any)(cookieValue, {
+                password: "test",
+                ttl: 60,
+            });
+            return { businessSession: session };
+        })
+        .macro({
+            nextAuthenticated: {
+                // biome-ignore lint/suspicious/noExplicitAny: Mock function needs flexible typing
+                beforeHandle: async ({ request, set }: any) => {
+                    const cookieHeader = request.headers.get("Cookie");
+                    const cookieValue = cookieHeader?.match(
+                        /businessSession=([^;]+)/
+                    )?.[1];
+                    if (!cookieValue) {
+                        set.status = 401;
+                        return "Missing business auth cookie";
+                    }
+                    // biome-ignore lint/suspicious/noExplicitAny: Mock function needs flexible typing
+                    const session = await (unsealDataMock as any)(cookieValue, {
+                        password: "test",
+                        ttl: 60,
+                    });
+                    if (!session) {
+                        set.status = 401;
+                        return "Missing business auth cookie";
+                    }
+                },
+            },
+        })
+        .as("scoped");
+}
+
+/* -------------------------------------------------------------------------- */
+/*                     Helper Functions for Business Session                  */
+/* -------------------------------------------------------------------------- */
+
 export function setMockBusinessSession(
     session: { wallet: `0x${string}` } | null
 ): void {
@@ -620,12 +637,7 @@ export function setMockBusinessSession(
     }
 }
 
-/**
- * Reset the mock business session to return undefined
- * This clears any previous mockResolvedValue/mockResolvedValueOnce calls
- */
 export function resetMockBusinessSession(): void {
-    // Use mockReset() to clear all mocks and set default return value to undefined
     ironSessionMocks.unsealData.mockReset();
     ironSessionMocks.unsealData.mockResolvedValue(undefined);
 }
