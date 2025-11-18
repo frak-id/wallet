@@ -1,17 +1,32 @@
-import { beforeEach, describe, expect, it, mock, spyOn } from "bun:test";
-import * as dns from "node:dns";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DnsCheckRepository } from "./DnsCheckRepository";
+
+// Mock the dns module using vi.hoisted to ensure proper hoisting
+const { mockResolveTxt, mockIsRunningInProd } = vi.hoisted(() => ({
+    mockResolveTxt: vi.fn(),
+    mockIsRunningInProd: { value: true },
+}));
+
+vi.mock("node:dns", () => ({
+    resolveTxt: mockResolveTxt,
+}));
+
+// Mock app-essentials with a getter so we can change it per test
+vi.mock("@frak-labs/app-essentials", () => ({
+    get isRunningInProd() {
+        return mockIsRunningInProd.value;
+    },
+}));
 
 describe("DnsCheckRepository", () => {
     let dnsCheckRepository: DnsCheckRepository;
     const mockOwner = "0x1234567890abcdef1234567890abcdef12345678" as const;
-    const resolveTxtSpy = spyOn(dns, "resolveTxt");
 
     beforeEach(() => {
-        mock.module("@frak-labs/app-essentials", () => ({
-            isRunningInProd: true,
-        }));
         dnsCheckRepository = new DnsCheckRepository();
+        mockResolveTxt.mockClear();
+        // Reset to production mode by default
+        mockIsRunningInProd.value = true;
     });
 
     describe("getNormalizedDomain", () => {
@@ -113,8 +128,11 @@ describe("DnsCheckRepository", () => {
         });
 
         it("should return false when invalid setup code is provided", async () => {
-            // Test in non-production mode with an invalid setup code
-            // Since we're not in production, it should still fall back to DNS check which returns true
+            // Mock DNS to return no records so it returns false
+            mockResolveTxt.mockImplementation((_, callback) => {
+                callback(null, []);
+            });
+
             const result = await dnsCheckRepository.isValidDomain({
                 domain: "example.com",
                 owner: mockOwner,
@@ -122,14 +140,13 @@ describe("DnsCheckRepository", () => {
                     "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
             });
 
-            // In non-production mode, this should still return true due to fallback
+            // Invalid setup code should fall back to DNS check, which returns false (no records)
             expect(result).toBe(false);
         });
 
         it("should return true in non-production environment when no setup code", async () => {
-            mock.module("@frak-labs/app-essentials", () => ({
-                isRunningInProd: false,
-            }));
+            // Set to non-production mode
+            mockIsRunningInProd.value = false;
 
             const result = await dnsCheckRepository.isValidDomain({
                 domain: "example.com",
@@ -140,12 +157,17 @@ describe("DnsCheckRepository", () => {
         });
 
         it("should check DNS record when no setup code is provided", async () => {
-            resolveTxtSpy.mockImplementation((_, callback) => {
-                callback(null, [
-                    [
-                        "frak-business; hash=0x006154dba00e3da922ec9194035f0092c269285388a77a5da28f87952cfa6bab",
-                    ],
-                ]);
+            // Ensure we're in production mode so DNS check is actually called
+            mockIsRunningInProd.value = true;
+
+            // Generate the correct DNS TXT record for this domain and owner
+            const expectedTxtRecord = dnsCheckRepository.getDnsTxtString({
+                domain: "example.com",
+                owner: mockOwner,
+            });
+
+            mockResolveTxt.mockImplementation((_, callback) => {
+                callback(null, [[expectedTxtRecord]]);
             });
 
             const result = await dnsCheckRepository.isValidDomain({
@@ -153,8 +175,8 @@ describe("DnsCheckRepository", () => {
                 owner: mockOwner,
             });
 
-            // Should fall back to DNS check, which returns true in non-prod
-            expect(resolveTxtSpy).toHaveBeenCalledWith(
+            // Should call DNS check in production mode
+            expect(mockResolveTxt).toHaveBeenCalledWith(
                 "example.com",
                 expect.any(Function)
             );
@@ -162,7 +184,10 @@ describe("DnsCheckRepository", () => {
         });
 
         it("should check DNS record when no setup code is provided and dns is not set", async () => {
-            resolveTxtSpy.mockImplementation((_, callback) => {
+            // Ensure we're in production mode so DNS check is actually called
+            mockIsRunningInProd.value = true;
+
+            mockResolveTxt.mockImplementation((_, callback) => {
                 callback(null, []);
             });
 
@@ -171,8 +196,8 @@ describe("DnsCheckRepository", () => {
                 owner: mockOwner,
             });
 
-            // Should fall back to DNS check, which returns true in non-prod
-            expect(resolveTxtSpy).toHaveBeenCalledWith(
+            // Should call DNS check in production mode
+            expect(mockResolveTxt).toHaveBeenCalledWith(
                 "example.com",
                 expect.any(Function)
             );

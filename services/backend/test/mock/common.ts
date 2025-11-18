@@ -1,67 +1,56 @@
-import { mock } from "bun:test";
+import { vi } from "vitest";
 import type { Address, LocalAccount } from "viem";
 import { viemMocks } from "./viem";
-
-/* -------------------------------------------------------------------------- */
-/*                                     Env                                    */
-/* -------------------------------------------------------------------------- */
-
-Object.assign(process.env, {
-    JWT_SECRET: "secret",
-    JWT_SDK_SECRET: "secret",
-    PRODUCT_SETUP_CODE_SALT: "salt",
-    MASTER_KEY_SECRET: JSON.stringify({ masterPrivateKey: "123456" }),
-});
 
 /* -------------------------------------------------------------------------- */
 /*                               Backend commons                              */
 /* -------------------------------------------------------------------------- */
 
 export const indexerApiMocks = {
-    get: mock(() => ({
-        json: mock(() => Promise.resolve({})),
+    get: vi.fn(() => ({
+        json: vi.fn(() => Promise.resolve({})),
     })),
 };
 
 export const pricingRepositoryMocks = {
-    getTokenPrice: mock(() =>
+    getTokenPrice: vi.fn(() =>
         Promise.resolve({ eur: 1.2, usd: 1.0, gbp: 0.8 })
     ),
 };
 
 export const adminWalletsRepositoryMocks = {
-    getKeySpecificAccount: mock(() =>
+    getKeySpecificAccount: vi.fn(() =>
         Promise.resolve(undefined as undefined | LocalAccount)
     ),
-    getProductSpecificAccount: mock(() =>
+    getProductSpecificAccount: vi.fn(() =>
         Promise.resolve(undefined as undefined | LocalAccount)
     ),
-    getMutexForAccount: mock(() => ({
-        runExclusive: mock((fn: () => Promise<unknown>) => fn()),
+    getMutexForAccount: vi.fn(() => ({
+        runExclusive: vi.fn((fn: () => Promise<unknown>) => fn()),
     })),
 };
 
 export const interactionDiamondRepositoryMocks = {
-    getDiamondContract: mock(<T = Address | undefined>() =>
+    getDiamondContract: vi.fn(<T = Address | undefined>() =>
         Promise.resolve(undefined as T)
     ),
-    getInteractionDiamond: mock(<T = Address | undefined>() =>
+    getInteractionDiamond: vi.fn(<T = Address | undefined>() =>
         Promise.resolve(undefined as T)
     ),
 };
 
 export const rolesRepositoryMocks = {
-    getRoles: mock(() => Promise.resolve([])),
+    getRoles: vi.fn(() => Promise.resolve([])),
 };
 
 export const JwtContextMock = {
     wallet: {
-        sign: mock(() => Promise.resolve("mock-jwt-token")),
-        verify: mock(() => Promise.resolve({ wallet: "0x123" })),
+        sign: vi.fn(() => Promise.resolve("mock-jwt-token")),
+        verify: vi.fn(() => Promise.resolve({ wallet: "0x123" })),
     },
     walletSdk: {
-        sign: mock(() => Promise.resolve("mock-sdk-jwt-token")),
-        verify: mock(() => Promise.resolve({ wallet: "0x123" })),
+        sign: vi.fn(() => Promise.resolve("mock-sdk-jwt-token")),
+        verify: vi.fn(() => Promise.resolve({ wallet: "0x123" })),
     },
 };
 
@@ -100,17 +89,17 @@ const mockFunctions = {
 };
 
 // Create separate mocks so tests can verify they were called
-const deleteExecuteMock = mock(() => mockFunctions.deleteMockFn());
+const deleteExecuteMock = vi.fn(() => mockFunctions.deleteMockFn());
 // biome-ignore lint/suspicious/noExplicitAny: Transaction callback needs flexible typing
-const transactionMock = mock(async (fn: any) => {
+const transactionMock = vi.fn(async (fn: any) => {
     const result = await fn(dbMock);
     return result;
 });
 // biome-ignore lint/suspicious/noExplicitAny: Update accepts table argument
-const updateMock = mock((_table?: any) => ({
-    set: mock(() => ({
-        where: mock(() => ({
-            returning: mock(() => mockFunctions.updateMockFn()),
+const updateMock = vi.fn((_table?: any) => ({
+    set: vi.fn(() => ({
+        where: vi.fn(() => ({
+            returning: vi.fn(() => mockFunctions.updateMockFn()),
             // biome-ignore lint/suspicious/noThenProperty: mocked stuff
             then: (onfulfilled?: (value: unknown) => unknown) => {
                 const promise = mockFunctions.updateMockFn();
@@ -150,16 +139,16 @@ const createThenable = (
 
 // biome-ignore lint/suspicious/noExplicitAny: Mock object requires flexible typing for Drizzle ORM compatibility
 export const dbMock: any = {
-    select: mock(() => ({
-        from: mock(() => ({
-            where: mock((_condition?: unknown) => {
+    select: vi.fn(() => ({
+        from: vi.fn(() => ({
+            where: vi.fn((_condition?: unknown) => {
                 const chainable = {
-                    limit: mock((_count?: number) =>
+                    limit: vi.fn((_count?: number) =>
                         mockFunctions.selectMockFn()
                     ),
-                    innerJoin: mock(() => ({
-                        where: mock(() => ({
-                            limit: mock(() => mockFunctions.selectMockFn()),
+                    innerJoin: vi.fn(() => ({
+                        where: vi.fn(() => ({
+                            limit: vi.fn(() => mockFunctions.selectMockFn()),
                         })),
                     })),
                 };
@@ -168,26 +157,26 @@ export const dbMock: any = {
                     chainable
                 );
             }),
-            innerJoin: mock(() => ({
-                where: mock(() => ({
-                    limit: mock(() => mockFunctions.selectMockFn()),
+            innerJoin: vi.fn(() => ({
+                where: vi.fn(() => ({
+                    limit: vi.fn(() => mockFunctions.selectMockFn()),
                 })),
             })),
-            limit: mock(() => mockFunctions.selectMockFn()),
+            limit: vi.fn(() => mockFunctions.selectMockFn()),
         })),
     })),
-    insert: mock(() => ({
-        values: mock(() => ({
-            returning: mock(() => mockFunctions.insertMockFn()),
-            onConflictDoUpdate: mock(() => ({
-                returning: mock(() => mockFunctions.insertMockFn()),
+    insert: vi.fn(() => ({
+        values: vi.fn(() => ({
+            returning: vi.fn(() => mockFunctions.insertMockFn()),
+            onConflictDoUpdate: vi.fn(() => ({
+                returning: vi.fn(() => mockFunctions.insertMockFn()),
             })),
-            onConflictDoNothing: mock(() => mockFunctions.insertMockFn()),
+            onConflictDoNothing: vi.fn(() => mockFunctions.insertMockFn()),
         })),
     })),
     update: updateMock,
-    delete: mock(() => ({
-        where: mock(() => {
+    delete: vi.fn(() => ({
+        where: vi.fn(() => {
             // Make it callable directly (returns promise) or with .execute()
             const deleteResult = () => mockFunctions.deleteMockFn();
             return Object.assign(deleteResult, {
@@ -205,11 +194,11 @@ export const dbMock: any = {
     query: {
         purchaseStatusTable: {
             // biome-ignore lint/suspicious/noExplicitAny: Drizzle query options require flexible typing
-            findMany: mock((_opts?: any) => mockFunctions.findManyMockFn()),
+            findMany: vi.fn((_opts?: any) => mockFunctions.findManyMockFn()),
         },
         pushTokensTable: {
             // biome-ignore lint/suspicious/noExplicitAny: Drizzle query options require flexible typing
-            findMany: mock((_opts?: any) => mockFunctions.findManyMockFn()),
+            findMany: vi.fn((_opts?: any) => mockFunctions.findManyMockFn()),
         },
     },
     // Helper methods to configure mock responses
@@ -248,7 +237,7 @@ export const dbMock: any = {
     },
 };
 
-mock.module("@backend-infrastructure", () => ({
+vi.mock("@backend-infrastructure", () => ({
     indexerApi: indexerApiMocks,
     pricingRepository: pricingRepositoryMocks,
     viemClient: viemMocks,
@@ -262,15 +251,15 @@ mock.module("@backend-infrastructure", () => ({
         return dbMock;
     },
     log: {
-        debug: mock(() => {}),
-        info: mock(() => {}),
-        error: mock(() => {}),
-        warn: mock(() => {}),
+        debug: vi.fn(() => {}),
+        info: vi.fn(() => {}),
+        error: vi.fn(() => {}),
+        warn: vi.fn(() => {}),
     },
     eventEmitter: {
-        emit: mock(() => {}),
-        on: mock(() => {}),
-        off: mock(() => {}),
+        emit: vi.fn(() => {}),
+        on: vi.fn(() => {}),
+        off: vi.fn(() => {}),
     },
 }));
 
@@ -279,7 +268,7 @@ mock.module("@backend-infrastructure", () => ({
 /* -------------------------------------------------------------------------- */
 
 export const webPushMocks = {
-    sendNotification: mock(() => Promise.resolve()),
-    setVapidDetails: mock(() => {}),
+    sendNotification: vi.fn(() => Promise.resolve()),
+    setVapidDetails: vi.fn(() => {}),
 };
-mock.module("web-push", () => webPushMocks);
+vi.mock("web-push", () => webPushMocks);

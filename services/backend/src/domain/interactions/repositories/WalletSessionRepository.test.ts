@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { addresses } from "@frak-labs/app-essentials";
 import type { Address } from "viem";
 import { viemActionsMocks } from "../../../../test/mock/viem";
@@ -14,7 +14,7 @@ describe("WalletSessionRepository", () => {
     });
 
     afterEach(() => {
-        mock.restore();
+        vi.restoreAllMocks();
     });
 
     describe("isSessionValid", () => {

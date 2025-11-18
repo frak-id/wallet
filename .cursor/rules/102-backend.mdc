@@ -1,14 +1,24 @@
 ---
 description: This rule apply to backend-elysia package.
-globs: packages/backend-elysia/**/*.ts
+globs: services/backend/**/*.ts
 alwaysApply: false
 ---
 # Backend Elysia Rules
 
 ## Backend Elysia Summary
 
-`@/packages/backend-elysia` is part of Frak monorepo and is designed to provide a comprehensive wallet solution that integrates robust blockchain functionalities and user authentication mechanisms. The project harnesses a modern TypeScript setup.
+`services/backend` is part of Frak monorepo and is designed to provide a comprehensive wallet solution that integrates robust blockchain functionalities and user authentication mechanisms. The project harnesses a modern TypeScript setup.
 Project is written in TypeScript using ElysiaJS framework, PostgreSQL, MongoDB, Drizzle ORM.
+
+## Testing
+
+- **Unit Tests**: Vitest 4.0 with Node environment (not jsdom)
+  - Run tests: `cd services/backend && bun run test`
+  - Watch mode: `bun run test:watch`
+  - All backend tests included when running `bun run test` from root
+- **Mock Strategy**: Mock Viem actions, Drizzle DB, WebAuthn, Bun runtime
+- **Test Location**: Co-located with source files (`*.test.ts`)
+- **Mocks**: Located in `test/mock/` directory (viem.ts, webauthn.ts, common.ts)
 
 ## Key Principles
 

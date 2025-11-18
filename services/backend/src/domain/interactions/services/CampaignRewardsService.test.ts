@@ -1,4 +1,4 @@
-import { afterAll, beforeEach, describe, expect, it, mock } from "bun:test";
+import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Address, Hex } from "viem";
 import {
     indexerApiMocks,
@@ -12,7 +12,7 @@ describe("CampaignRewardsService", () => {
     let service: CampaignRewardsService;
 
     const mockCampaignDataRepository = {
-        getRewardsFromStorage: mock(() =>
+        getRewardsFromStorage: vi.fn(() =>
             Promise.resolve([
                 {
                     interactionTypeKey: "press.created",
@@ -20,13 +20,13 @@ describe("CampaignRewardsService", () => {
                 },
             ])
         ),
-        getChainingConfig: mock(() =>
+        getChainingConfig: vi.fn(() =>
             Promise.resolve({
                 deperditionLevel: 0.8,
                 userPercent: 0.5,
             })
         ),
-        getType: mock(() => Promise.resolve("frak.campaign.affiliation-fixed")),
+        getType: vi.fn(() => Promise.resolve("frak.campaign.affiliation-fixed")),
     };
 
     const mockProductId =
@@ -39,13 +39,13 @@ describe("CampaignRewardsService", () => {
     });
 
     afterAll(() => {
-        mock.restore();
+        vi.restoreAllMocks();
     });
 
     describe("getActiveRewardsForProduct", () => {
         it("should return undefined when no campaigns are found", async () => {
             indexerApiMocks.get.mockReturnValue({
-                json: mock(() =>
+                json: vi.fn(() =>
                     Promise.resolve({ campaigns: [], tokens: [] })
                 ),
             });
@@ -59,7 +59,7 @@ describe("CampaignRewardsService", () => {
 
         it("should return undefined when no campaigns are attached", async () => {
             indexerApiMocks.get.mockReturnValue({
-                json: mock(() =>
+                json: vi.fn(() =>
                     Promise.resolve({
                         campaigns: [
                             {
@@ -94,7 +94,7 @@ describe("CampaignRewardsService", () => {
 
         it("should return undefined when no campaigns are active", async () => {
             indexerApiMocks.get.mockReturnValue({
-                json: mock(() =>
+                json: vi.fn(() =>
                     Promise.resolve({
                         campaigns: [
                             {
@@ -130,7 +130,7 @@ describe("CampaignRewardsService", () => {
 
         it("should return active rewards when campaigns are active and have valid tokens", async () => {
             indexerApiMocks.get.mockReturnValue({
-                json: mock(() =>
+                json: vi.fn(() =>
                     Promise.resolve({
                         campaigns: [
                             {
@@ -194,7 +194,7 @@ describe("CampaignRewardsService", () => {
 
         it("should handle campaigns without valid tokens", async () => {
             indexerApiMocks.get.mockReturnValue({
-                json: mock(() =>
+                json: vi.fn(() =>
                     Promise.resolve({
                         campaigns: [
                             {
@@ -222,7 +222,7 @@ describe("CampaignRewardsService", () => {
 
         it("should handle campaigns without valid token prices", async () => {
             indexerApiMocks.get.mockReturnValue({
-                json: mock(() =>
+                json: vi.fn(() =>
                     Promise.resolve({
                         campaigns: [
                             {
@@ -276,7 +276,7 @@ describe("CampaignRewardsService", () => {
             );
 
             indexerApiMocks.get.mockReturnValue({
-                json: mock(() =>
+                json: vi.fn(() =>
                     Promise.resolve({
                         campaigns: [
                             {

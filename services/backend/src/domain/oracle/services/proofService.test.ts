@@ -6,9 +6,8 @@ import {
     expect,
     it,
     mock,
-} from "bun:test";
+} from "vitest";
 import type { Hex } from "viem";
-import { mockAll } from "../../../../test/mock";
 import { dbMock } from "../../../../test/mock/common";
 import type { MerkleTreeRepository } from "../repositories/MerkleTreeRepository";
 import { OracleProofService } from "./proofService";
@@ -17,14 +16,14 @@ describe("OracleProofService", () => {
     let service: OracleProofService;
 
     const mockMerkleTreeRepository: MerkleTreeRepository = {
-        getMerkleProof: mock(() =>
+        getMerkleProof: vi.fn(() =>
             Promise.resolve({
                 proof: ["0x123", "0x456"] as Hex[],
                 leaf: "0xabc" as Hex,
             })
         ),
-        getMerkleRoot: mock(() => Promise.resolve("0xroot" as Hex)),
-        invalidateProductTrees: mock(() => {}),
+        getMerkleRoot: vi.fn(() => Promise.resolve("0xroot" as Hex)),
+        invalidateProductTrees: vi.fn(() => {}),
     } as unknown as MerkleTreeRepository;
 
     const mockProductId =
@@ -33,7 +32,6 @@ describe("OracleProofService", () => {
         "0xabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcd" as Hex;
 
     beforeAll(() => {
-        mockAll();
 
         service = new OracleProofService(mockMerkleTreeRepository);
     });
@@ -42,7 +40,7 @@ describe("OracleProofService", () => {
         // Reset db mock before each test
         dbMock.__reset();
         // Reset merkle tree repository mock
-        mockMerkleTreeRepository.getMerkleProof = mock(() =>
+        mockMerkleTreeRepository.getMerkleProof = vi.fn(() =>
             Promise.resolve({
                 proof: ["0x123", "0x456"] as Hex[],
                 leaf: "0xabc" as Hex,
@@ -51,7 +49,7 @@ describe("OracleProofService", () => {
     });
 
     afterAll(() => {
-        mock.restore();
+        vi.restoreAllMocks();
     });
 
     describe("getPurchaseProof", () => {
@@ -168,7 +166,7 @@ describe("OracleProofService", () => {
                 return Promise.resolve([mockOracle]);
             });
 
-            mockMerkleTreeRepository.getMerkleProof = mock(() =>
+            mockMerkleTreeRepository.getMerkleProof = vi.fn(() =>
                 Promise.resolve(null)
             );
 
@@ -219,7 +217,7 @@ describe("OracleProofService", () => {
                 return Promise.resolve([mockOracle]);
             });
 
-            mockMerkleTreeRepository.getMerkleProof = mock(() =>
+            mockMerkleTreeRepository.getMerkleProof = vi.fn(() =>
                 Promise.resolve(mockProof)
             );
 

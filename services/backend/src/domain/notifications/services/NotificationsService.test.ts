@@ -6,7 +6,7 @@ import {
     expect,
     it,
     mock,
-} from "bun:test";
+} from "vitest";
 import type { Address } from "viem";
 import { dbMock, webPushMocks } from "../../../../test/mock/common";
 import { NotificationsService } from "./NotificationsService";
@@ -41,7 +41,7 @@ describe("NotificationsService", () => {
     });
 
     afterAll(() => {
-        mock.restore();
+        vi.restoreAllMocks();
     });
 
     describe("sendNotification", () => {

@@ -1,18 +1,21 @@
 # Test Setup Architecture
 
-This directory contains shared test configuration and utilities for all test projects in the Frak Wallet monorepo. The test setup uses **Vitest 4.0 Projects API** with 6 projects running in parallel.
+This directory contains shared test configuration and utilities for all test projects in the Frak Wallet monorepo. The test setup uses **Vitest 4.0 Projects API** with 7 projects running in parallel.
 
 ## Overview
 
 **Test Projects:**
-- `wallet-unit` - Wallet app (React Router v7, 1927 tests)
-- `listener-unit` - Listener iframe app
-- `business-unit` - Business dashboard (TanStack Start)
-- `wallet-shared-unit` - Shared wallet utilities package
-- `core-sdk-unit` - Core SDK (framework-agnostic)
-- `react-sdk-unit` - React SDK (hooks and providers)
+- `wallet-unit` - Wallet app (React Router v7, jsdom environment)
+- `listener-unit` - Listener iframe app (jsdom environment)
+- `business-unit` - Business dashboard (TanStack Start, jsdom environment)
+- `wallet-shared-unit` - Shared wallet utilities package (jsdom environment)
+- `core-sdk-unit` - Core SDK (framework-agnostic, jsdom environment)
+- `react-sdk-unit` - React SDK (hooks and providers, jsdom environment)
+- `backend-unit` - Elysia backend service (Node environment)
 
-**Test Environment:** jsdom (recommended over happy-dom due to better API compatibility)
+**Test Environments:** 
+- Frontend projects: jsdom (recommended over happy-dom due to better API compatibility)
+- Backend project: Node (server-side, no browser APIs needed)
 
 ## Setup File Execution Order
 
@@ -355,6 +358,24 @@ test("should handle multiple sessions", () => {
 - Extends BaseTestFixtures from wallet-shared
 - Core SDK action mocks
 - FrakProvider testing utilities
+
+### backend (services/backend)
+
+**Setup Files:**
+- `test/vitest-setup.ts` - Backend-specific setup (Node environment)
+- `test/mock/viem.ts` - Viem actions, Permissionless, Ox library mocks
+- `test/mock/webauthn.ts` - SimpleWebAuthn server mocks
+- `test/mock/common.ts` - Drizzle DB, backend infrastructure, Bun runtime mocks
+
+**Special Features:**
+- Node environment (not jsdom)
+- Path aliases for `@backend-*` imports
+- Mock Bun runtime APIs for Node.js compatibility
+- Drizzle ORM mock with flexible query builder
+- Viem blockchain interaction mocks
+- WebAuthn signature verification mocks
+
+**Note:** Backend does not use shared frontend mocks (browser APIs, React, Wagmi) as it's a server-side Node.js application.
 
 ## Common Patterns
 

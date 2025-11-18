@@ -21,6 +21,7 @@
  * - wallet-shared-unit: Shared wallet utilities package
  * - core-sdk-unit: Core SDK (framework-agnostic)
  * - react-sdk-unit: React SDK (hooks and providers)
+ * - backend-unit: Elysia backend service (Node environment)
  */
 import { defineConfig } from "vitest/config";
 
@@ -36,6 +37,9 @@ export default defineConfig({
 
             // SDK: core, react
             "sdk/*/vitest.config.ts",
+
+            // Services: backend
+            "services/*/vitest.config.ts",
         ],
     },
 });

@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Address, Hex } from "viem";
 import { interactionDiamondRepositoryMocks } from "../../../../test/mock/common";
 import { viemActionsMocks } from "../../../../test/mock/viem";
@@ -12,7 +12,7 @@ describe("InteractionPackerRepository", () => {
     });
 
     afterEach(() => {
-        mock.restore();
+        vi.restoreAllMocks();
     });
 
     describe("simulateInteraction", () => {

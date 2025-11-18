@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { dbMock } from "../../../../test/mock/common";
 import { ArchiveRepository } from "./ArchiveRepository";
 
@@ -11,7 +11,7 @@ describe("ArchiveRepository", () => {
     });
 
     afterEach(() => {
-        mock.restore();
+        vi.restoreAllMocks();
     });
 
     describe("archiveInteraction", () => {

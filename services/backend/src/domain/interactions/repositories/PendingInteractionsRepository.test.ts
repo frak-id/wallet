@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { dbMock } from "../../../../test/mock/common";
 import { PendingInteractionsRepository } from "./PendingInteractionsRepository";
 
@@ -11,7 +11,7 @@ describe("PendingInteractionsRepository", () => {
     });
 
     afterEach(() => {
-        mock.restore();
+        vi.restoreAllMocks();
     });
 
     describe("getAndLock", () => {
@@ -69,7 +69,7 @@ describe("PendingInteractionsRepository", () => {
         });
 
         it("should respect the limit parameter", async () => {
-            const selectMock = mock(() =>
+            const selectMock = vi.fn(() =>
                 Promise.resolve([{ id: 1 }, { id: 2 }, { id: 3 }])
             );
             dbMock.__setSelectResponse(selectMock);

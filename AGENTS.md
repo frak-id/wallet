@@ -14,13 +14,14 @@ This document provides quick reference guidelines for AI agents working on the F
 - **Typecheck**: `bun run typecheck`
 - **Test**:
   - **CRITICAL**: Use `bun run test`, NOT `bun test`
-  - All unit tests: `bun run test` (runs all 6 Vitest projects in parallel)
+  - All unit tests: `bun run test` (runs all 7 Vitest projects in parallel)
   - Single test file: `bun run test path/to/file.test.ts`
-  - Single project: `bun run test --project wallet-unit`
+  - Single project: `bun run test --project wallet-unit` or `bun run test --project backend-unit`
   - Test patterns: `bun run test -t "test name pattern"`
   - Watch mode: `bun run test:watch`
   - Coverage: `bun run test:coverage`
   - E2E tests: `cd apps/wallet && bun run test:e2e`
+  - Backend tests: `cd services/backend && bun run test`
 
 ## Code Style
 
@@ -61,9 +62,12 @@ This document provides quick reference guidelines for AI agents working on the F
 
 ## Testing
 
-- **Unit Tests**: Vitest 4.0 with Projects API, jsdom environment, co-located with source files
-  - 6 projects: wallet-unit, listener-unit, business-unit, wallet-shared-unit, core-sdk-unit, react-sdk-unit
+- **Unit Tests**: Vitest 4.0 with Projects API, co-located with source files
+  - 7 projects: wallet-unit, listener-unit, business-unit, wallet-shared-unit, core-sdk-unit, react-sdk-unit, backend-unit
+  - Frontend projects use jsdom environment; backend uses Node environment
   - Coverage target: 40% (lines, functions, branches, statements)
 - **E2E Tests**: 13 Playwright specs in `apps/wallet/tests/specs/`
-- **Mock Strategy**: Mock external dependencies (Wagmi, TanStack Query, WebAuthn). See `test-setup/` for shared mocks.
+- **Mock Strategy**: 
+  - Frontend: Mock external dependencies (Wagmi, TanStack Query, WebAuthn). See `test-setup/` for shared mocks.
+  - Backend: Mock Viem actions, Drizzle DB, WebAuthn, Bun runtime. See `services/backend/test/mock/` for mocks.
 - **Test Naming**: "should [expected behavior] when [condition]"
