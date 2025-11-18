@@ -1,4 +1,4 @@
-import Elysia from "elysia";
+import { Elysia } from "elysia";
 import { interactionsJobs } from "./interactions";
 import { oracleJobs } from "./oracle";
 import { pairingJobs } from "./pairing";

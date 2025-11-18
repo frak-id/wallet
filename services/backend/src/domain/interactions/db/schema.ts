@@ -1,6 +1,7 @@
 import {
     boolean,
     index,
+    integer,
     pgEnum,
     pgTable,
     serial,
@@ -13,7 +14,7 @@ import { customHex } from "../../../utils/drizzle/customTypes";
 
 export const interactionSimulationStatus = pgEnum(
     "interactions_simulation_status",
-    ["pending", "no_session", "failed", "succeeded"]
+    ["pending", "no_session", "failed", "succeeded", "execution_failed"]
 );
 
 /**
@@ -29,13 +30,28 @@ export const pendingInteractionsTable = pgTable(
         interactionData: customHex("interaction_data").notNull(),
         signature: customHex("signature"),
         status: interactionSimulationStatus("simulation_status"),
+
+        // Failure tracking
+        failureReason: varchar("failure_reason", { length: 500 }),
+
+        // Retry tracking
+        retryCount: integer("retry_count").default(0).notNull(),
+        lastRetryAt: timestamp("last_retry_at"),
+        nextRetryAt: timestamp("next_retry_at"),
+
+        // Timestamps
         createdAt: timestamp("created_at").defaultNow().notNull(),
         updatedAt: timestamp("updated_at").defaultNow(),
-        locked: boolean("locked").default(false),
+
+        // Locking (null = unlocked, timestamp = locked)
+        lockedAt: timestamp("locked_at"),
     },
     (table) => [
         index("wallet_pending_interactions_idx").on(table.wallet),
         index("product_idx").on(table.productId),
+        index("status_idx").on(table.status),
+        index("next_retry_idx").on(table.nextRetryAt),
+        index("locked_at_idx").on(table.lockedAt),
     ]
 );
 
@@ -102,4 +118,45 @@ export const backendTrackerTable = pgTable(
         source: backendTrackerSourceEnum("source").notNull().default("custom"),
     },
     (table) => [index("unique_tracker_product_id").on(table.productId)]
+);
+
+export const archiveReasonEnum = pgEnum("interactions_archive_reason", [
+    "max_retries",
+    "expired",
+    "manual",
+]);
+
+/**
+ * Table for archived interactions that couldn't be processed
+ */
+export const archivedInteractionsTable = pgTable(
+    "interactions_archived",
+    {
+        id: serial("id").primaryKey(),
+        // Original interaction data
+        wallet: customHex("wallet").notNull().$type<Address>(),
+        productId: customHex("product_id").notNull(),
+        typeDenominator: customHex("type_denominator").notNull(),
+        interactionData: customHex("interaction_data").notNull(),
+        signature: customHex("signature"),
+
+        // Final status before archiving
+        finalStatus: interactionSimulationStatus("final_status").notNull(),
+        failureReason: varchar("failure_reason", { length: 500 }),
+
+        // Retry history
+        totalRetries: integer("total_retries").notNull(),
+
+        // Archive metadata
+        archiveReason: archiveReasonEnum("archive_reason").notNull(),
+        archivedAt: timestamp("archived_at").defaultNow().notNull(),
+
+        // Original timestamps
+        originalCreatedAt: timestamp("original_created_at").notNull(),
+    },
+    (table) => [
+        index("wallet_archived_interactions_idx").on(table.wallet),
+        index("archived_at_idx").on(table.archivedAt),
+        index("archive_reason_idx").on(table.archiveReason),
+    ]
 );

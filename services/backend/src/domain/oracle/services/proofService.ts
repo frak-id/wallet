@@ -1,4 +1,4 @@
-import { db } from "@backend-common";
+import { db } from "@backend-infrastructure";
 import { and, eq } from "drizzle-orm";
 import { type Hex, isHex } from "viem";
 import { productOracleTable, purchaseStatusTable } from "../db/schema";

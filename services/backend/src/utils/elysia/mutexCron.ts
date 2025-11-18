@@ -1,4 +1,4 @@
-import { eventEmitter, log } from "@backend-common";
+import { eventEmitter, log } from "@backend-infrastructure";
 import type { pino } from "@bogeychan/elysia-logger";
 import { Mutex } from "async-mutex";
 import { Cron, type CronOptions } from "croner";
@@ -97,7 +97,10 @@ export const mutexCron = <Name extends string = string>({
                 logger,
             },
             catch: (error, job) =>
-                logger.warn({ error, name: job.name }, "[Cron] error while processing cron"),
+                logger.warn(
+                    { error, name: job.name },
+                    "[Cron] error while processing cron"
+                ),
         };
 
         // And the cron

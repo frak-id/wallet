@@ -1,4 +1,8 @@
-import { adminWalletsRepository, log, viemClient } from "@backend-common";
+import {
+    adminWalletsRepository,
+    log,
+    viemClient,
+} from "@backend-infrastructure";
 import {
     campaignBankFactory_deployCampaignBank,
     interactionManager_deployInteractionContract,

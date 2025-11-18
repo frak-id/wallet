@@ -1,17 +1,11 @@
-import { afterAll, beforeAll, describe, expect, it, mock } from "bun:test";
-import {
-    mockAll,
-    oxMocks,
-    permissionlessActionsMocks,
-} from "../../../../test/mock";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { oxMocks, permissionlessActionsMocks } from "../../../../test/mock";
 import type { AuthenticatorRepository } from "../repositories/AuthenticatorRepository";
 import { WebAuthNService } from "./WebAuthNService";
 
 describe("WebAuthNService", () => {
     // Setup all the mocks needed for this test
     beforeAll(() => {
-        mockAll();
-
         permissionlessActionsMocks.getSenderAddress.mockImplementation(() =>
             Promise.resolve("0x1234567890abcdef1234567890abcdef12345678")
         );
@@ -21,11 +15,11 @@ describe("WebAuthNService", () => {
 
     // Restore all the mocks after the test
     afterAll(() => {
-        mock.restore();
+        vi.restoreAllMocks();
     });
 
     const mockAuthenticatorRepository: AuthenticatorRepository = {
-        getByCredentialId: mock(() =>
+        getByCredentialId: vi.fn(() =>
             Promise.resolve({
                 _id: "test-credential-id",
                 counter: 4,
@@ -34,7 +28,7 @@ describe("WebAuthNService", () => {
                 transports: ["usb", "nfc"],
             })
         ),
-        updateCounter: mock(() => Promise.resolve()),
+        updateCounter: vi.fn(() => Promise.resolve()),
     } as unknown as AuthenticatorRepository;
 
     const webAuthNService = new WebAuthNService(mockAuthenticatorRepository);
@@ -94,7 +88,7 @@ describe("WebAuthNService", () => {
         it("should return false when authenticator is not found", async () => {
             const mockRepo = {
                 ...mockAuthenticatorRepository,
-                getByCredentialId: mock(() => Promise.resolve(null)),
+                getByCredentialId: vi.fn(() => Promise.resolve(null)),
             } as unknown as AuthenticatorRepository;
             const service = new WebAuthNService(mockRepo);
 

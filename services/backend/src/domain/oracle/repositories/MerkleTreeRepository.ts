@@ -1,4 +1,4 @@
-import { db } from "@backend-common";
+import { db } from "@backend-infrastructure";
 import { and, eq, isNotNull } from "drizzle-orm";
 import { LRUCache } from "lru-cache";
 import { MerkleTree } from "merkletreejs";

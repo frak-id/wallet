@@ -1,4 +1,8 @@
-import { indexerApi, pricingRepository, sessionContext } from "@backend-common";
+import {
+    indexerApi,
+    pricingRepository,
+    sessionContext,
+} from "@backend-infrastructure";
 import { t } from "@backend-utils";
 import type { GetRewardResponseDto } from "@frak-labs/app-essentials";
 import { Elysia, status } from "elysia";

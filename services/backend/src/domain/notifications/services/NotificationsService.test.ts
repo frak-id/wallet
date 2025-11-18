@@ -1,3 +1,4 @@
+import type { Address } from "viem";
 import {
     afterAll,
     beforeAll,
@@ -5,9 +6,8 @@ import {
     describe,
     expect,
     it,
-    mock,
-} from "bun:test";
-import type { Address } from "viem";
+    vi,
+} from "vitest";
 import { dbMock, webPushMocks } from "../../../../test/mock/common";
 import { NotificationsService } from "./NotificationsService";
 
@@ -41,7 +41,7 @@ describe("NotificationsService", () => {
     });
 
     afterAll(() => {
-        mock.restore();
+        vi.restoreAllMocks();
     });
 
     describe("sendNotification", () => {

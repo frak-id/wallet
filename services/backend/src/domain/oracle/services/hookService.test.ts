@@ -1,3 +1,4 @@
+import type { Hex } from "viem";
 import {
     afterAll,
     beforeAll,
@@ -5,10 +6,8 @@ import {
     describe,
     expect,
     it,
-    mock,
-} from "bun:test";
-import type { Hex } from "viem";
-import { mockAll } from "../../../../test/mock";
+    vi,
+} from "vitest";
 import { dbMock } from "../../../../test/mock/common";
 import { OracleWebhookService } from "./hookService";
 
@@ -48,7 +47,6 @@ describe("OracleWebhookService", () => {
     ];
 
     beforeAll(() => {
-        mockAll();
         service = new OracleWebhookService();
     });
 
@@ -58,7 +56,7 @@ describe("OracleWebhookService", () => {
     });
 
     afterAll(() => {
-        mock.restore();
+        vi.restoreAllMocks();
     });
 
     describe("upsertPurchase", () => {

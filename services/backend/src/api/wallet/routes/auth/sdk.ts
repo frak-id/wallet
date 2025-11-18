@@ -1,4 +1,4 @@
-import { sessionContext } from "@backend-common";
+import { sessionContext } from "@backend-infrastructure";
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import { isAddressEqual } from "viem";

@@ -1,4 +1,8 @@
-import { adminWalletsRepository, log, viemClient } from "@backend-common";
+import {
+    adminWalletsRepository,
+    log,
+    viemClient,
+} from "@backend-infrastructure";
 import { t } from "@backend-utils";
 import { addresses, currentStablecoins } from "@frak-labs/app-essentials";
 import { mintAbi } from "@frak-labs/app-essentials/blockchain";

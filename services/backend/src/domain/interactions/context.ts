@@ -1,3 +1,4 @@
+import { ArchiveRepository } from "./repositories/ArchiveRepository";
 import { CampaignDataRepository } from "./repositories/CampaignDataRepository";
 import { InteractionPackerRepository } from "./repositories/InteractionPackerRepository";
 import { InteractionSignerRepository } from "./repositories/InteractionSignerRepository";
@@ -9,6 +10,7 @@ import { CampaignRewardsService } from "./services/CampaignRewardsService";
  */
 export namespace InteractionsContext {
     const pendingInteractionsRepository = new PendingInteractionsRepository();
+    const archiveRepository = new ArchiveRepository();
 
     // Build our blockchain repositories
     const interactionPackerRepository = new InteractionPackerRepository();
@@ -22,6 +24,7 @@ export namespace InteractionsContext {
     );
 
     export const repositories = {
+        archive: archiveRepository,
         pendingInteractions: pendingInteractionsRepository,
         interactionPacker: interactionPackerRepository,
         walletSession: walletSessionRepository,

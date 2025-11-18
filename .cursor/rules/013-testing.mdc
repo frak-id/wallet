@@ -11,12 +11,13 @@ globs: **/*.test.ts, **/*.test.tsx, **/*.spec.ts, **/*.spec.tsx, **/vitest.confi
 ### Unit Tests (Vitest 4.0 Projects API)
 
 #### Workspace Mode (All Projects)
-Run all 6 test projects (wallet, listener, business, wallet-shared, core-sdk, react-sdk) in parallel:
+Run all 7 test projects (wallet, listener, business, wallet-shared, core-sdk, react-sdk, backend) in parallel:
 ```bash
-bun run test                  # Run all 179 test files (1927 tests) across all projects
+bun run test                  # Run all tests across all projects
 bun run test:ui               # Run with Vitest UI for all projects
 bun run test:coverage         # Run with coverage report for all projects
 bun run test --project wallet-unit  # Run specific project only
+bun run test --project backend-unit # Run backend tests only
 ```
 
 #### Individual Projects
@@ -46,6 +47,13 @@ bun run test:ui               # Run with Vitest UI
 bun run test:coverage         # Run with coverage report
 ```
 
+**Backend Service**
+```bash
+cd services/backend
+bun run test                  # Run backend unit tests only (Node environment)
+bun run test:watch            # Run in watch mode
+```
+
 ### E2E Tests (Playwright)
 
 #### Wallet App
@@ -59,8 +67,9 @@ bun run test:e2e:ui           # Run with Playwright UI
 
 ## Test Framework
 
-- **Unit Tests**: Vitest 4.0 with Projects API (workspace mode) and jsdom environment
-  - 7 test projects: wallet-unit, listener-unit, business-unit, wallet-shared-unit, ui-unit, core-sdk-unit, react-sdk-unit
+- **Unit Tests**: Vitest 4.0 with Projects API (workspace mode)
+  - 7 test projects: wallet-unit, listener-unit, business-unit, wallet-shared-unit, core-sdk-unit, react-sdk-unit, backend-unit
+  - Frontend projects use jsdom environment; backend uses Node environment
   - Test files across all projects (includes component tests)
   - Parallel execution across all projects from root directory
 - **Coverage**: v8 provider with 40% threshold (lines, functions, branches, statements)
@@ -131,6 +140,7 @@ Each project has its own setup file importing shared configurations:
 - `packages/ui/tests/vitest-setup.ts`
 - `sdk/core/tests/vitest-setup.ts`
 - `sdk/react/tests/vitest-setup.ts`
+- `services/backend/test/vitest-setup.ts` - Backend-specific setup (Node environment, Viem/Drizzle/Bun mocks)
 
 ## Test Organization
 

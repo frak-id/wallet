@@ -55,8 +55,6 @@ export const WalletSdkTokenDto = t.Object({
     // Some potential additionnal stuff we can put in the webauthn token
     additionalData: t.Optional(
         t.Object({
-            // A potential six degrees token if the wallet is routed
-            sixDegreesToken: t.Optional(t.String()),
             // A potential demo pkey if that a demo wallet
             demoPkey: t.Optional(t.Hex()),
         })

@@ -1,4 +1,4 @@
-import { DnsCheckRepository } from "./repositories/DnsCheckRepository";
+import { DnsCheckRepository } from "@backend-infrastructure/dns/DnsCheckRepository";
 import { MintRepository } from "./repositories/MintRepository";
 
 /**

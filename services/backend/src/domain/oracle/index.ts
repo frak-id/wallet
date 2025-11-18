@@ -1,6 +1,7 @@
 export { OracleContext } from "./context";
 export {
     productOracleTable,
+    purchaseItemTable,
     purchaseStatusEnum,
     purchaseStatusTable,
 } from "./db/schema";

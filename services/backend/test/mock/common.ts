@@ -1,87 +1,84 @@
-import { mock } from "bun:test";
-import type { LocalAccount } from "viem";
+import { Elysia, t } from "elysia";
+import type { Address, LocalAccount } from "viem";
+import { vi } from "vitest";
 import { viemMocks } from "./viem";
 
 /* -------------------------------------------------------------------------- */
-/*                                     Env                                    */
-/* -------------------------------------------------------------------------- */
-
-Object.assign(process.env, {
-    JWT_SECRET: "secret",
-    JWT_SDK_SECRET: "secret",
-    PRODUCT_SETUP_CODE_SALT: "salt",
-    MASTER_KEY_SECRET: JSON.stringify({ masterPrivateKey: "123456" }),
-});
-
-/* -------------------------------------------------------------------------- */
-/*                               Backend commons                              */
+/*                            Infrastructure Mocks                            */
 /* -------------------------------------------------------------------------- */
 
 export const indexerApiMocks = {
-    get: mock(() => ({
-        json: mock(() => Promise.resolve({})),
+    get: vi.fn(() => ({
+        json: vi.fn(() => Promise.resolve({})),
+    })),
+    post: vi.fn(() => ({
+        json: vi.fn(() => Promise.resolve({})),
     })),
 };
 
 export const pricingRepositoryMocks = {
-    getTokenPrice: mock(() =>
+    getTokenPrice: vi.fn(() =>
         Promise.resolve({ eur: 1.2, usd: 1.0, gbp: 0.8 })
     ),
 };
 
 export const adminWalletsRepositoryMocks = {
-    getKeySpecificAccount: mock(() =>
+    getKeySpecificAccount: vi.fn(() =>
         Promise.resolve(undefined as undefined | LocalAccount)
     ),
-    getMutexForAccount: mock(() => ({
-        runExclusive: mock((fn: () => Promise<unknown>) => fn()),
+    getProductSpecificAccount: vi.fn(() =>
+        Promise.resolve(undefined as undefined | LocalAccount)
+    ),
+    getMutexForAccount: vi.fn(() => ({
+        runExclusive: vi.fn((fn: () => Promise<unknown>) => fn()),
     })),
 };
 
 export const interactionDiamondRepositoryMocks = {
-    getInteractionDiamond: mock(() => Promise.resolve(undefined)),
+    getDiamondContract: vi.fn(<T = Address | undefined>() =>
+        Promise.resolve(undefined as T)
+    ),
+    getInteractionDiamond: vi.fn(<T = Address | undefined>() =>
+        Promise.resolve(undefined as T)
+    ),
 };
 
 export const rolesRepositoryMocks = {
-    getRoles: mock(() => Promise.resolve([])),
+    getRoles: vi.fn(() => Promise.resolve([])),
+};
+
+export const onChainRolesRepositoryMocks = {
+    getRolesOnProduct: vi.fn(() =>
+        Promise.resolve({ isOwner: false, roles: 0n })
+    ),
+    hasRoleOrAdminOnProduct: vi.fn(() => Promise.resolve(false)),
+    hasRoles: vi.fn(
+        ({ onChainRoles, role }: { onChainRoles: bigint; role: bigint }) =>
+            (onChainRoles & role) !== 0n
+    ),
+    hasRolesOrAdmin: vi.fn(
+        ({ onChainRoles, role }: { onChainRoles: bigint; role: bigint }) => {
+            const productAdministrator = BigInt(1 << 0);
+            return (onChainRoles & (role | productAdministrator)) !== 0n;
+        }
+    ),
 };
 
 export const JwtContextMock = {
     wallet: {
-        sign: mock(() => Promise.resolve("mock-jwt-token")),
-        verify: mock(() => Promise.resolve({ wallet: "0x123" })),
+        sign: vi.fn(() => Promise.resolve("mock-jwt-token")),
+        verify: vi.fn(() => Promise.resolve({ wallet: "0x123" })),
     },
     walletSdk: {
-        sign: mock(() => Promise.resolve("mock-sdk-jwt-token")),
-        verify: mock(() => Promise.resolve({ wallet: "0x123" })),
+        sign: vi.fn(() => Promise.resolve("mock-sdk-jwt-token")),
+        verify: vi.fn(() => Promise.resolve({ wallet: "0x123" })),
     },
 };
 
 /**
- * Flexible database mock for Drizzle ORM that can be customized per test.
- *
- * Uses an object to hold mock functions so they can be reassigned and all references update.
- * This allows tests to configure different responses for different scenarios.
- *
- * @example Basic usage in tests
- * ```typescript
- * beforeEach(() => {
- *     dbMock.__reset();  // Clear previous test configurations
- *     dbMock.__setSelectResponse(() => Promise.resolve([mockData]));
- * });
- *
- * it("should fetch data", async () => {
- *     const result = await db.select().from(table).where(condition);
- *     expect(result).toEqual([mockData]);
- * });
- * ```
- *
- * @example Multiple query types
- * ```typescript
- * dbMock.__setSelectResponse(() => Promise.resolve([{ id: 1 }]));
- * dbMock.__setInsertResponse(() => Promise.resolve([{ id: 2 }]));
- * dbMock.__setFindManyResponse(() => Promise.resolve([{ id: 3 }]));
- * ```
+ * Flexible database mock for Drizzle ORM.
+ * Use __setSelectResponse, __setInsertResponse, etc. to configure responses.
+ * Use __reset() to clear all configurations.
  */
 const mockFunctions = {
     selectMockFn: () => Promise.resolve([]),
@@ -91,60 +88,48 @@ const mockFunctions = {
     findManyMockFn: () => Promise.resolve([]),
 };
 
-// Create separate mocks so tests can verify they were called
-const deleteExecuteMock = mock(() => mockFunctions.deleteMockFn());
-// biome-ignore lint/suspicious/noExplicitAny: Transaction callback needs flexible typing
-const transactionMock = mock(async (fn: any) => {
-    const result = await fn(dbMock);
-    return result;
-});
-// biome-ignore lint/suspicious/noExplicitAny: Update accepts table argument
-const updateMock = mock((_table?: any) => ({
-    set: mock(() => ({
-        where: mock(() => mockFunctions.updateMockFn()),
+const deleteExecuteMock = vi.fn(() => mockFunctions.deleteMockFn());
+// biome-ignore lint/suspicious/noExplicitAny: Mock typing
+const transactionMock = vi.fn(async (fn: any) => fn(dbMock));
+// biome-ignore lint/suspicious/noExplicitAny: Mock typing
+const updateMock = vi.fn((_table?: any) => ({
+    set: vi.fn(() => ({
+        where: vi.fn(() => ({
+            returning: vi.fn(() => mockFunctions.updateMockFn()),
+            // biome-ignore lint/suspicious/noThenProperty: Promise-like mock
+            then: (onfulfilled?: (value: unknown) => unknown) =>
+                mockFunctions.updateMockFn().then(onfulfilled),
+        })),
     })),
 }));
 
-// Helper to create a thenable object that can be awaited or chained
 const createThenable = (
     promiseFn: () => Promise<unknown>,
     chainMethods: Record<string, unknown> = {}
-) => {
-    // Create a lazy thenable that calls promiseFn when awaited
-    const thenable = {
-        // biome-ignore lint/suspicious/noThenProperty: Required for promise-like behavior in mocks
-        then: (
-            onfulfilled?: (value: unknown) => unknown,
-            onrejected?: (reason: unknown) => unknown
-        ) => {
-            const promise = promiseFn();
-            return promise.then(onfulfilled, onrejected);
-        },
-        catch: (onrejected?: (reason: unknown) => unknown) => {
-            const promise = promiseFn();
-            return promise.catch(onrejected);
-        },
-        finally: (onfinally?: () => void) => {
-            const promise = promiseFn();
-            return promise.finally(onfinally);
-        },
-        ...chainMethods,
-    };
-    return thenable;
-};
+) => ({
+    // biome-ignore lint/suspicious/noThenProperty: Promise-like mock
+    then: (
+        onfulfilled?: (value: unknown) => unknown,
+        onrejected?: (reason: unknown) => unknown
+    ) => promiseFn().then(onfulfilled, onrejected),
+    catch: (onrejected?: (reason: unknown) => unknown) =>
+        promiseFn().catch(onrejected),
+    finally: (onfinally?: () => void) => promiseFn().finally(onfinally),
+    ...chainMethods,
+});
 
-// biome-ignore lint/suspicious/noExplicitAny: Mock object requires flexible typing for Drizzle ORM compatibility
-export const dbMock: any = {
-    select: mock(() => ({
-        from: mock(() => ({
-            where: mock((_condition?: unknown) => {
+export const dbMock = {
+    select: vi.fn(() => ({
+        from: vi.fn(() => ({
+            where: vi.fn((_condition?: unknown) => {
                 const chainable = {
-                    limit: mock((_count?: number) =>
+                    limit: vi.fn((_count?: number) =>
                         mockFunctions.selectMockFn()
                     ),
-                    innerJoin: mock(() => ({
-                        where: mock(() => ({
-                            limit: mock(() => mockFunctions.selectMockFn()),
+                    execute: vi.fn(() => mockFunctions.selectMockFn()),
+                    innerJoin: vi.fn(() => ({
+                        where: vi.fn(() => ({
+                            limit: vi.fn(() => mockFunctions.selectMockFn()),
                         })),
                     })),
                 };
@@ -153,58 +138,99 @@ export const dbMock: any = {
                     chainable
                 );
             }),
-            innerJoin: mock(() => ({
-                where: mock(() => ({
-                    limit: mock(() => mockFunctions.selectMockFn()),
+            innerJoin: vi.fn(() => ({
+                where: vi.fn(() => ({
+                    limit: vi.fn(() => mockFunctions.selectMockFn()),
                 })),
             })),
-            limit: mock(() => mockFunctions.selectMockFn()),
+            limit: vi.fn(() => mockFunctions.selectMockFn()),
         })),
     })),
-    insert: mock(() => ({
-        values: mock(() => ({
-            returning: mock(() => mockFunctions.insertMockFn()),
-            onConflictDoUpdate: mock(() => ({
-                returning: mock(() => mockFunctions.insertMockFn()),
+    insert: vi.fn(() => ({
+        values: vi.fn(() => ({
+            returning: vi.fn(() => mockFunctions.insertMockFn()),
+            onConflictDoUpdate: vi.fn(() => ({
+                returning: vi.fn(() => mockFunctions.insertMockFn()),
             })),
-            onConflictDoNothing: mock(() => mockFunctions.insertMockFn()),
+            onConflictDoNothing: vi.fn(() => ({
+                returning: vi.fn(() => mockFunctions.insertMockFn()),
+            })),
         })),
     })),
     update: updateMock,
-    delete: mock(() => ({
-        where: mock(() => ({
-            execute: deleteExecuteMock,
-        })),
+    delete: vi.fn(() => ({
+        where: vi.fn(() => {
+            // Make it callable directly (returns promise) or with .execute()
+            const deleteResult = () => mockFunctions.deleteMockFn();
+            return Object.assign(deleteResult, {
+                execute: deleteExecuteMock,
+                // biome-ignore lint/suspicious/noThenProperty: mocked stuff
+                then: (onfulfilled?: (value: unknown) => unknown) => {
+                    deleteExecuteMock();
+                    const promise = mockFunctions.deleteMockFn();
+                    return promise.then(onfulfilled);
+                },
+            });
+        }),
     })),
     transaction: transactionMock,
     query: {
         purchaseStatusTable: {
-            // biome-ignore lint/suspicious/noExplicitAny: Drizzle query options require flexible typing
-            findMany: mock((_opts?: any) => mockFunctions.findManyMockFn()),
+            findMany: vi.fn((_opts?: unknown) =>
+                mockFunctions.findManyMockFn()
+            ),
         },
         pushTokensTable: {
-            // biome-ignore lint/suspicious/noExplicitAny: Drizzle query options require flexible typing
-            findMany: mock((_opts?: any) => mockFunctions.findManyMockFn()),
+            findMany: vi.fn((_opts?: unknown) =>
+                mockFunctions.findManyMockFn()
+            ),
+            findFirst: vi.fn((_opts?: unknown) => {
+                // findFirst returns a single item or undefined
+                const result = mockFunctions.selectMockFn();
+                return result.then((items: unknown[]) =>
+                    items.length > 0 ? items[0] : undefined
+                );
+            }),
+        },
+        pairingTable: {
+            findMany: vi.fn((_opts?: unknown) =>
+                mockFunctions.findManyMockFn()
+            ),
+            findFirst: vi.fn((_opts?: unknown) => {
+                // findFirst returns a single item or undefined
+                const result = mockFunctions.selectMockFn();
+                return result.then((items: unknown[]) =>
+                    items.length > 0 ? items[0] : undefined
+                );
+            }),
+        },
+        backendTrackerTable: {
+            findFirst: vi.fn((_opts?: unknown) => {
+                // findFirst returns a single item or undefined
+                const result = mockFunctions.selectMockFn();
+                return result.then((items: unknown[]) =>
+                    items.length > 0 ? items[0] : undefined
+                );
+            }),
         },
     },
-    // Helper methods to configure mock responses
-    // biome-ignore lint/suspicious/noExplicitAny: Mock configuration requires flexible function types
+    // biome-ignore lint/suspicious/noExplicitAny: Mock configuration
     __setSelectResponse: (fn: any) => {
         mockFunctions.selectMockFn = fn;
     },
-    // biome-ignore lint/suspicious/noExplicitAny: Mock configuration requires flexible function types
+    // biome-ignore lint/suspicious/noExplicitAny: Mock configuration
     __setInsertResponse: (fn: any) => {
         mockFunctions.insertMockFn = fn;
     },
-    // biome-ignore lint/suspicious/noExplicitAny: Mock configuration requires flexible function types
+    // biome-ignore lint/suspicious/noExplicitAny: Mock configuration
     __setUpdateResponse: (fn: any) => {
         mockFunctions.updateMockFn = fn;
     },
-    // biome-ignore lint/suspicious/noExplicitAny: Mock configuration requires flexible function types
+    // biome-ignore lint/suspicious/noExplicitAny: Mock configuration
     __setDeleteResponse: (fn: any) => {
         mockFunctions.deleteMockFn = fn;
     },
-    // biome-ignore lint/suspicious/noExplicitAny: Mock configuration requires flexible function types
+    // biome-ignore lint/suspicious/noExplicitAny: Mock configuration
     __setFindManyResponse: (fn: any) => {
         mockFunctions.findManyMockFn = fn;
     },
@@ -223,13 +249,148 @@ export const dbMock: any = {
     },
 };
 
-mock.module("@backend-common", () => ({
+class UnauthorizedError extends Error {
+    constructor(message = "Unauthorized") {
+        super(message);
+        this.name = "UnauthorizedError";
+    }
+}
+
+export const sessionContextMock = new Elysia({ name: "Macro.session" })
+    .guard({
+        headers: t.Object({
+            "x-wallet-auth": t.Optional(t.String()),
+            "x-wallet-sdk-auth": t.Optional(t.String()),
+        }),
+    })
+    .error({ UNAUTHORIZED: UnauthorizedError })
+    .onError({ as: "global" }, ({ code, set }) => {
+        if (code === "UNAUTHORIZED") {
+            set.status = 401;
+            return "Unauthorized";
+        }
+    })
+    .macro({
+        withWalletAuthent: {
+            async resolve({ headers }) {
+                const walletAuth = headers["x-wallet-auth"];
+                if (!walletAuth) {
+                    throw new UnauthorizedError();
+                }
+                // biome-ignore lint/suspicious/noExplicitAny: Mock function accepts arguments at runtime
+                const auth = await (JwtContextMock.wallet.verify as any)(
+                    walletAuth
+                );
+                if (!auth) {
+                    throw new UnauthorizedError();
+                }
+                // Return the auth
+                return { walletSession: auth };
+            },
+        },
+        withWalletSdkAuthent: {
+            async resolve({ headers }) {
+                const walletSdkAuth = headers["x-wallet-sdk-auth"];
+                if (!walletSdkAuth) {
+                    throw new UnauthorizedError();
+                }
+                // biome-ignore lint/suspicious/noExplicitAny: Mock function accepts arguments at runtime
+                const auth = await (JwtContextMock.walletSdk.verify as any)(
+                    walletSdkAuth
+                );
+                if (!auth) {
+                    throw new UnauthorizedError();
+                }
+                // Return the auth
+                return { walletSdkSession: auth };
+            },
+        },
+    });
+
+/* -------------------------------------------------------------------------- */
+/*                          Iron Session Mock                                 */
+/* -------------------------------------------------------------------------- */
+
+export const ironSessionMocks = {
+    unsealData: vi.fn(<T>() => Promise.resolve(undefined as T | undefined)),
+};
+
+vi.mock("iron-session", () => ({
+    unsealData: ironSessionMocks.unsealData,
+}));
+
+/* -------------------------------------------------------------------------- */
+/*                      Business Session Middleware Mock                      */
+/* -------------------------------------------------------------------------- */
+
+export const businessSessionContextMock = new Elysia({
+    name: "Context.businessSession",
+})
+    .resolve(async ({ request }) => {
+        // Manually parse Cookie header to get the businessSession value
+        const cookieHeader = request.headers.get("Cookie");
+        let cookieValue = "mock-token"; // Default token for tests
+
+        if (cookieHeader) {
+            const match = cookieHeader.match(/businessSession=([^;]+)/);
+            if (match) {
+                cookieValue = match[1];
+            }
+        }
+
+        // Always call the mocked unsealData function (even without a cookie)
+        // This allows setMockBusinessSession() to work without requiring cookies
+        // biome-ignore lint/suspicious/noExplicitAny: Mock function needs flexible typing
+        const session = await (ironSessionMocks.unsealData as any)(
+            cookieValue,
+            { password: "test", ttl: 60 }
+        );
+
+        return { businessSession: session };
+    })
+    .macro({
+        nextAuthenticated: {
+            // biome-ignore lint/suspicious/noExplicitAny: Mock function needs flexible typing
+            beforeHandle: async ({ request, set }: any) => {
+                const cookieHeader = request.headers.get("Cookie");
+                let cookieValue: string | undefined;
+
+                if (cookieHeader) {
+                    const match = cookieHeader.match(/businessSession=([^;]+)/);
+                    if (match) {
+                        cookieValue = match[1];
+                    }
+                }
+
+                if (!cookieValue) {
+                    set.status = 401;
+                    return "Missing business auth cookie";
+                }
+
+                // biome-ignore lint/suspicious/noExplicitAny: Mock function needs flexible typing
+                const session = await (ironSessionMocks.unsealData as any)(
+                    cookieValue,
+                    { password: "test", ttl: 60 }
+                );
+
+                if (!session) {
+                    set.status = 401;
+                    return "Missing business auth cookie";
+                }
+            },
+        },
+    })
+    .as("scoped");
+
+vi.mock("@backend-infrastructure", () => ({
     indexerApi: indexerApiMocks,
     pricingRepository: pricingRepositoryMocks,
     viemClient: viemMocks,
     adminWalletsRepository: adminWalletsRepositoryMocks,
     interactionDiamondRepository: interactionDiamondRepositoryMocks,
     rolesRepository: rolesRepositoryMocks,
+    onChainRolesRepository: onChainRolesRepositoryMocks,
+    sessionContext: sessionContextMock,
     get JwtContext() {
         return JwtContextMock;
     },
@@ -237,15 +398,15 @@ mock.module("@backend-common", () => ({
         return dbMock;
     },
     log: {
-        debug: mock(() => {}),
-        info: mock(() => {}),
-        error: mock(() => {}),
-        warn: mock(() => {}),
+        debug: vi.fn(),
+        info: vi.fn(),
+        error: vi.fn(),
+        warn: vi.fn(),
     },
     eventEmitter: {
-        emit: mock(() => {}),
-        on: mock(() => {}),
-        off: mock(() => {}),
+        emit: vi.fn(),
+        on: vi.fn(),
+        off: vi.fn(),
     },
 }));
 
@@ -254,7 +415,229 @@ mock.module("@backend-common", () => ({
 /* -------------------------------------------------------------------------- */
 
 export const webPushMocks = {
-    sendNotification: mock(() => Promise.resolve()),
-    setVapidDetails: mock(() => {}),
+    sendNotification: vi.fn(() => Promise.resolve()),
+    setVapidDetails: vi.fn(),
 };
-mock.module("web-push", () => webPushMocks);
+vi.mock("web-push", () => webPushMocks);
+
+/* -------------------------------------------------------------------------- */
+/*                            Notification Context                            */
+/* -------------------------------------------------------------------------- */
+
+export const notificationServiceMocks = {
+    cleanupExpiredTokens: vi.fn(() => Promise.resolve()),
+    sendNotification: vi.fn(() => Promise.resolve()),
+};
+
+const notificationMacroMock = new Elysia({ name: "Macro.notification" }).macro({
+    cleanupTokens(_isEnabled?: boolean) {
+        return {};
+    },
+});
+
+const AddressPattern = /^0x[a-fA-F0-9]{40}$/;
+
+const SendNotificationTargetsDto = t.Union([
+    t.Object({
+        wallets: t.Array(
+            t.String({
+                pattern: AddressPattern.source,
+                minLength: 42,
+                maxLength: 42,
+            })
+        ),
+    }),
+    t.Object({
+        filter: t.Partial(
+            t.Object({
+                productIds: t.Array(t.String()),
+                interactions: t.Partial(
+                    t.Object({
+                        min: t.Number(),
+                        max: t.Number(),
+                    })
+                ),
+                rewards: t.Partial(
+                    t.Object({
+                        min: t.String(),
+                        max: t.String(),
+                    })
+                ),
+                firstInteractionTimestamp: t.Partial(
+                    t.Object({
+                        min: t.Number(),
+                        max: t.Number(),
+                    })
+                ),
+            })
+        ),
+    }),
+]);
+
+const SendNotificationPayloadDto = t.Object({
+    title: t.String(),
+    body: t.String(),
+    badge: t.Optional(t.String()),
+    icon: t.Optional(t.String()),
+    lang: t.Optional(t.String()),
+    requireInteraction: t.Optional(t.Boolean()),
+    silent: t.Optional(t.Boolean()),
+    tag: t.Optional(t.String()),
+    data: t.Optional(
+        t.Object({
+            url: t.Optional(t.String()),
+        })
+    ),
+    actions: t.Optional(
+        t.Array(
+            t.Object({
+                action: t.String(),
+                title: t.String(),
+                icon: t.Optional(t.String()),
+            })
+        )
+    ),
+});
+
+vi.mock("../../src/domain/notifications", () => ({
+    NotificationContext: {
+        services: { notifications: notificationServiceMocks },
+    },
+    notificationMacro: notificationMacroMock,
+    pushTokensTable: {},
+    SendNotificationPayloadDto,
+    SendNotificationTargetsDto,
+}));
+
+/* -------------------------------------------------------------------------- */
+/*                            Interactions Context                            */
+/* -------------------------------------------------------------------------- */
+
+export const campaignRewardsServiceMocks = {
+    getActiveRewardsForProduct: vi.fn(() => Promise.resolve(undefined)),
+};
+
+const InteractionRequestDto = t.Object({
+    wallet: t.String(),
+    productId: t.String(),
+    interaction: t.Object({
+        handlerTypeDenominator: t.String(),
+        interactionData: t.String(),
+    }),
+    signature: t.Optional(t.Union([t.String(), t.Undefined(), t.Null()])),
+});
+
+vi.mock("../../src/domain/interactions", () => ({
+    InteractionsContext: {
+        services: { campaignRewards: campaignRewardsServiceMocks },
+    },
+    pendingInteractionsTable: {},
+    interactionsPurchaseTrackerTable: {},
+    backendTrackerTable: {},
+    InteractionRequestDto,
+}));
+
+/* -------------------------------------------------------------------------- */
+/*                            Business Domain Mocks                           */
+/* -------------------------------------------------------------------------- */
+
+export const dnsCheckRepositoryMocks = {
+    getNormalizedDomain: vi.fn((domain: string) => domain),
+    getDnsTxtString: vi.fn(
+        (_args: { domain: string; owner: Address }) =>
+            `frak-business; hash=0x123`
+    ),
+    isValidDomain: vi.fn(() => Promise.resolve(false)),
+};
+
+export const mintRepositoryMocks = {
+    precomputeProductId: vi.fn((_domain: string) => BigInt(0)),
+    isExistingProduct: vi.fn((_productId: bigint) => Promise.resolve(false)),
+    mintProduct: vi.fn(() =>
+        Promise.resolve({
+            mintTxHash: "0x123" as `0x${string}`,
+            productId: BigInt(1),
+            interactionResult: undefined,
+            bankResult: undefined,
+        })
+    ),
+};
+
+vi.mock("../../src/domain/business/context", () => ({
+    BusinessContext: {
+        repositories: {
+            dnsCheck: dnsCheckRepositoryMocks,
+            mint: mintRepositoryMocks,
+        },
+    },
+}));
+
+/* -------------------------------------------------------------------------- */
+/*                  Business Session Context Mock Factory                     */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Creates a business session context mock with the given unsealData mock.
+ * Use this in tests via vi.hoisted() to create a mock that can be referenced in vi.mock() factories.
+ */
+export function createBusinessSessionContextMock(
+    unsealDataMock: ReturnType<typeof vi.fn>
+) {
+    return new Elysia({ name: "Context.businessSession" })
+        .resolve(async ({ request }) => {
+            const cookieHeader = request.headers.get("Cookie");
+            const cookieValue =
+                cookieHeader?.match(/businessSession=([^;]+)/)?.[1] ||
+                "mock-token";
+            // biome-ignore lint/suspicious/noExplicitAny: Mock function needs flexible typing
+            const session = await (unsealDataMock as any)(cookieValue, {
+                password: "test",
+                ttl: 60,
+            });
+            return { businessSession: session };
+        })
+        .macro({
+            nextAuthenticated: {
+                // biome-ignore lint/suspicious/noExplicitAny: Mock function needs flexible typing
+                beforeHandle: async ({ request, set }: any) => {
+                    const cookieHeader = request.headers.get("Cookie");
+                    const cookieValue = cookieHeader?.match(
+                        /businessSession=([^;]+)/
+                    )?.[1];
+                    if (!cookieValue) {
+                        set.status = 401;
+                        return "Missing business auth cookie";
+                    }
+                    // biome-ignore lint/suspicious/noExplicitAny: Mock function needs flexible typing
+                    const session = await (unsealDataMock as any)(cookieValue, {
+                        password: "test",
+                        ttl: 60,
+                    });
+                    if (!session) {
+                        set.status = 401;
+                        return "Missing business auth cookie";
+                    }
+                },
+            },
+        })
+        .as("scoped");
+}
+
+/* -------------------------------------------------------------------------- */
+/*                     Helper Functions for Business Session                  */
+/* -------------------------------------------------------------------------- */
+
+export function setMockBusinessSession(
+    session: { wallet: `0x${string}` } | null
+): void {
+    if (session === null) {
+        ironSessionMocks.unsealData.mockResolvedValue(undefined);
+    } else {
+        ironSessionMocks.unsealData.mockResolvedValue(session);
+    }
+}
+
+export function resetMockBusinessSession(): void {
+    ironSessionMocks.unsealData.mockReset();
+    ironSessionMocks.unsealData.mockResolvedValue(undefined);
+}

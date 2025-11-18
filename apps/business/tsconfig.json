@@ -26,8 +26,8 @@
       "@/tests/vitest-fixtures": ["./tests/vitest-fixtures.ts"],
       "@frak-labs/wallet-shared/tests/vitest-fixtures": ["../../packages/wallet-shared/tests/vitest-fixtures.ts"],
       "@backend-utils": ["../../services/backend/src/utils/index.ts"],
-      "@backend-common": ["../../services/backend/src/common/index.ts"],
-      "@backend-common/*": ["../../services/backend/src/common/*"]
+      "@backend-infrastructure": ["../../services/backend/src/infrastructure/index.ts"],
+      "@backend-infrastructure/*": ["../../services/backend/src/infrastructure/*"]
     }
   }
 }

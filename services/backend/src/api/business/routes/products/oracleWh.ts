@@ -1,4 +1,4 @@
-import { db, rolesRepository } from "@backend-common";
+import { db, onChainRolesRepository } from "@backend-infrastructure";
 import { t } from "@backend-utils";
 import { productRoles } from "@frak-labs/app-essentials";
 import { count, eq, max, min } from "drizzle-orm";
@@ -106,11 +106,12 @@ export const oracleWhRoutes = new Elysia({ prefix: "/oracleWebhook" })
             if (!businessSession) {
                 return status(401, "Unauthorized");
             }
-            const isAllowed = await rolesRepository.hasRoleOrAdminOnProduct({
-                wallet: businessSession.wallet,
-                productId: BigInt(productId),
-                role: productRoles.interactionManager,
-            });
+            const isAllowed =
+                await onChainRolesRepository.hasRoleOrAdminOnProduct({
+                    wallet: businessSession.wallet,
+                    productId: BigInt(productId),
+                    role: productRoles.interactionManager,
+                });
             if (!isAllowed) {
                 return status(401, "Unauthorized");
             }
@@ -150,7 +151,7 @@ export const oracleWhRoutes = new Elysia({ prefix: "/oracleWebhook" })
         if (!businessSession) {
             return status(401, "Unauthorized");
         }
-        const isAllowed = await rolesRepository.hasRoleOrAdminOnProduct({
+        const isAllowed = await onChainRolesRepository.hasRoleOrAdminOnProduct({
             wallet: businessSession.wallet,
             productId: BigInt(productId),
             role: productRoles.interactionManager,

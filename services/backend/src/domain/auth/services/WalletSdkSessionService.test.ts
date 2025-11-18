@@ -1,6 +1,5 @@
-import { afterAll, beforeAll, describe, expect, it, mock } from "bun:test";
 import type { Address } from "viem";
-import { mockAll } from "../../../../test/mock";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { JwtContextMock } from "../../../../test/mock/common";
 import type { StaticWalletSdkTokenDto } from "../models/WalletSessionDto";
 import { WalletSdkSessionService } from "./WalletSdkSessionService";
@@ -11,7 +10,6 @@ describe("WalletSdkSessionService", () => {
     const mockWallet = "0x1234567890abcdef1234567890abcdef12345678" as Address;
 
     beforeAll(() => {
-        mockAll();
         service = new WalletSdkSessionService();
 
         // Reset the mock to clear any previous calls
@@ -22,14 +20,14 @@ describe("WalletSdkSessionService", () => {
     });
 
     afterAll(() => {
-        mock.restore();
+        vi.restoreAllMocks();
     });
 
     describe("generateSdkJwt", () => {
         it("should generate JWT token with minimal payload", async () => {
             const mockCurrentTime = 1609459200000; // Jan 1, 2021
             const originalDateNow = Date.now;
-            Date.now = mock(() => mockCurrentTime);
+            Date.now = vi.fn(() => mockCurrentTime);
 
             const result = await service.generateSdkJwt({
                 wallet: mockWallet,
@@ -55,7 +53,7 @@ describe("WalletSdkSessionService", () => {
         it("should generate JWT token with additional data", async () => {
             const mockCurrentTime = 1609459200000; // Jan 1, 2021
             const originalDateNow = Date.now;
-            Date.now = mock(() => mockCurrentTime);
+            Date.now = vi.fn(() => mockCurrentTime);
 
             const additionalData: StaticWalletSdkTokenDto["additionalData"] = {
                 customField: "customValue",
@@ -88,7 +86,7 @@ describe("WalletSdkSessionService", () => {
         it("should handle empty additional data object", async () => {
             const mockCurrentTime = 1609459200000;
             const originalDateNow = Date.now;
-            Date.now = mock(() => mockCurrentTime);
+            Date.now = vi.fn(() => mockCurrentTime);
 
             const result = await service.generateSdkJwt({
                 wallet: mockWallet,
@@ -121,7 +119,7 @@ describe("WalletSdkSessionService", () => {
 
             const mockCurrentTime = 1609459200000;
             const originalDateNow = Date.now;
-            Date.now = mock(() => mockCurrentTime);
+            Date.now = vi.fn(() => mockCurrentTime);
 
             for (const wallet of testWallets) {
                 await service.generateSdkJwt({ wallet });
@@ -154,7 +152,7 @@ describe("WalletSdkSessionService", () => {
         it("should calculate correct expiration time", async () => {
             const mockCurrentTime = 1609459200000; // Jan 1, 2021
             const originalDateNow = Date.now;
-            Date.now = mock(() => mockCurrentTime);
+            Date.now = vi.fn(() => mockCurrentTime);
 
             const result = await service.generateSdkJwt({
                 wallet: mockWallet,

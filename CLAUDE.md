@@ -50,7 +50,7 @@ bun run test:e2e:dev          # Run tests against dev environment
 bun run test:e2e:prod         # Run tests against prod environment
 bun run test:e2e:ui           # Run with Playwright UI
 
-# Unit tests with Vitest (workspace mode - runs all 6 projects)
+# Unit tests with Vitest (workspace mode - runs all 7 projects)
 bun run test                  # Run all tests across all projects (IMPORTANT: use "bun run test", not "bun test")
 bun run test:ui               # Run with Vitest UI for all projects
 bun run test:coverage         # Run with coverage report for all projects
@@ -65,12 +65,16 @@ cd apps/listener
 bun run test                  # Run listener app tests only
 bun run test:ui               # Run with Vitest UI
 bun run test:coverage         # Run with coverage report
+
+cd services/backend
+bun run test                  # Run backend tests only (Node environment)
+bun run test:watch            # Run in watch mode
 ```
 
 **Testing Strategy**:
 - **Framework**: Vitest 4.0 with Projects API (workspace mode)
-  - 6 test projects: wallet, listener, business, wallet-shared, core-sdk, react-sdk
-  - 179 test files, 1927 tests total
+  - 7 test projects: wallet, listener, business, wallet-shared, core-sdk, react-sdk, backend
+  - Frontend projects use jsdom environment; backend uses Node environment
   - Run from root with `bun run test` to execute all projects in parallel
 - **E2E Tests**: Comprehensive Playwright tests (19 specs) covering user flows
   - Authentication and registration
@@ -95,6 +99,9 @@ bun run test:coverage         # Run with coverage report
 - `test-setup/wallet-mocks.ts` - Wagmi, WebAuthn, idb-keyval mocks (uses router-mocks)
 - `test-setup/apps-setup.ts` - Environment variables for frontend apps
 - `test-setup/README.md` - Comprehensive test architecture documentation
+- `services/backend/vitest.config.ts` - Backend-specific config (Node environment, path aliases)
+- `services/backend/test/vitest-setup.ts` - Backend mocks (Viem, Drizzle, WebAuthn, Bun runtime)
+- `services/backend/test/mock/` - Backend mock modules (viem.ts, webauthn.ts, common.ts)
 
 ### Deployment
 ```bash

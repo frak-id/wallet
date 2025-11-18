@@ -1,4 +1,4 @@
-import { indexerApi, log } from "@backend-common";
+import { indexerApi, log } from "@backend-infrastructure";
 import { t } from "@backend-utils";
 import type { GetMembersWalletResponseDto } from "@frak-labs/app-essentials";
 import { Elysia } from "elysia";

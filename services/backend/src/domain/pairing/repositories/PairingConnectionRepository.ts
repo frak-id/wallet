@@ -1,9 +1,8 @@
 import { randomUUID } from "node:crypto";
-import { db, JwtContext } from "@backend-common";
+import { db, JwtContext, log } from "@backend-infrastructure";
 import { and, eq, inArray, isNull } from "drizzle-orm";
 import type { ElysiaWS } from "elysia/ws";
 import { UAParser } from "ua-parser-js";
-import { log } from "../../../common";
 import type {
     StaticWalletTokenDto,
     StaticWalletWebauthnTokenDto,
@@ -19,11 +18,6 @@ import {
 
 /**
  * Repository used to manage the pairing database
- * todo: for security consideration we should add a another validation code to the pairing:
- *  - pairing code backend generated
- *  - origin code frontend generated
- *  - target send join event, origin check against his own code, if good, allow the request
- * We will implement that in a 2nd time
  */
 export class PairingConnectionRepository extends PairingRepository {
     constructor(

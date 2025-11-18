@@ -1,3 +1,4 @@
+import type { Hex, LocalAccount } from "viem";
 import {
     afterAll,
     beforeAll,
@@ -5,10 +6,8 @@ import {
     describe,
     expect,
     it,
-    mock,
-} from "bun:test";
-import type { Hex, LocalAccount } from "viem";
-import { mockAll } from "../../../../test/mock";
+    vi,
+} from "vitest";
 import {
     adminWalletsRepositoryMocks,
     dbMock,
@@ -21,25 +20,23 @@ describe("UpdateOracleService", () => {
     let service: UpdateOracleService;
 
     const mockMerkleTreeRepository: MerkleTreeRepository = {
-        getMerkleProof: mock(() => Promise.resolve(null)),
-        getMerkleRoot: mock(() => Promise.resolve("0xnewroot" as Hex)),
-        invalidateProductTrees: mock(() => {}),
+        getMerkleProof: vi.fn(() => Promise.resolve(null)),
+        getMerkleRoot: vi.fn(() => Promise.resolve("0xnewroot" as Hex)),
+        invalidateProductTrees: vi.fn(() => {}),
     } as unknown as MerkleTreeRepository;
 
     const mockProductId = "0x1234567890abcdef1234567890abcdef" as Hex;
     const mockOracleUpdater = {
         address: "0xoracleupdater" as const,
-        signMessage: mock(() => Promise.resolve("0x" as Hex)),
-        signTransaction: mock(() => Promise.resolve("0x" as Hex)),
-        signTypedData: mock(() => Promise.resolve("0x" as Hex)),
+        signMessage: vi.fn(() => Promise.resolve("0x" as Hex)),
+        signTransaction: vi.fn(() => Promise.resolve("0x" as Hex)),
+        signTypedData: vi.fn(() => Promise.resolve("0x" as Hex)),
         publicKey: "0x" as Hex,
         source: "privateKey",
         type: "local",
     } as LocalAccount;
 
     beforeAll(() => {
-        mockAll();
-
         // Mock adminWalletsRepository
         adminWalletsRepositoryMocks.getKeySpecificAccount.mockResolvedValue(
             mockOracleUpdater
@@ -49,7 +46,7 @@ describe("UpdateOracleService", () => {
     });
 
     afterAll(() => {
-        mock.restore();
+        vi.restoreAllMocks();
     });
 
     beforeEach(() => {
@@ -143,7 +140,7 @@ describe("UpdateOracleService", () => {
             ];
 
             dbMock.__setSelectResponse(
-                mock(() => Promise.resolve(mockProducts))
+                vi.fn(() => Promise.resolve(mockProducts))
             );
 
             const result = await service.invalidateOracleTree({
@@ -192,7 +189,7 @@ describe("UpdateOracleService", () => {
             dbMock.__setUpdateResponse(() => Promise.resolve());
 
             // Mock blockchain calls to return same root
-            mockMerkleTreeRepository.getMerkleRoot = mock(() =>
+            mockMerkleTreeRepository.getMerkleRoot = vi.fn(() =>
                 Promise.resolve("0xsameroot" as Hex)
             );
             viemActionsMocks.readContract.mockResolvedValue("0xsameroot");

@@ -1,4 +1,4 @@
-import { db, eventEmitter } from "@backend-common";
+import { db, eventEmitter } from "@backend-infrastructure";
 import { mutexCron } from "@backend-utils";
 import type { pino } from "@bogeychan/elysia-logger";
 import { isRunningInProd } from "@frak-labs/app-essentials";
@@ -9,6 +9,7 @@ import {
     InteractionsContext,
     pendingInteractionsTable,
 } from "../../domain/interactions";
+import { calculateNextRetry } from "../../domain/interactions/config/retryConfig";
 
 export const simulateInteractionJob = new Elysia({
     name: "Job.interactions.simulate",
@@ -22,24 +23,13 @@ export const simulateInteractionJob = new Elysia({
             : // Every 30sec on dev
               "*/30 * * * * *",
         skipIfLocked: true,
-        coolDownInMs: 5_000,
+        coolDownInMs: 1_000,
         run: async ({ context: { logger } }) => {
-            // Get interactions to simulate
+            // Get interactions to simulate (process even 1 interaction immediately)
             const interactions =
                 await InteractionsContext.repositories.pendingInteractions.getAndLock(
                     {
                         status: "pending",
-                        skipProcess: (interactions) => {
-                            // Only execute if we got an interaction older than one min
-                            const minimumDate = new Date(Date.now() - 60_000);
-                            const hasOldInteractions = interactions.some(
-                                (interaction) =>
-                                    interaction.createdAt < minimumDate
-                            );
-                            return (
-                                interactions.length < 2 && !hasOldInteractions
-                            );
-                        },
                     }
                 );
             if (interactions.length === 0) {
@@ -121,36 +111,132 @@ async function simulateAndUpdateInteractions({
                 (state) => state.wallet === interaction.wallet
             )?.isSessionValid ?? false;
         if (!isValidWalletSession) {
-            return { interaction, simulationStatus: "no_session" } as const;
+            return {
+                interaction,
+                simulationStatus: "no_session" as const,
+                failureReason: "Wallet has no active session",
+            };
         }
 
-        // Then perform the simulation
-        const { isSimulationSuccess } =
-            await InteractionsContext.repositories.interactionPacker.simulateInteraction(
-                {
-                    wallet: interaction.wallet,
-                    productId: interaction.productId,
-                    interactionData: {
-                        handlerTypeDenominator: interaction.typeDenominator,
-                        interactionData: interaction.interactionData,
+        // Check if backend signer is authorized for this product
+        try {
+            const { isAllowed, signerAddress } =
+                await InteractionsContext.repositories.interactionSigner.checkSignerAllowedForProduct(
+                    interaction.productId
+                );
+
+            if (!isAllowed) {
+                logger.warn(
+                    {
+                        interactionId: interaction.id,
+                        productId: interaction.productId,
+                        signer: signerAddress,
                     },
-                }
+                    "Backend signer not authorized for product"
+                );
+                return {
+                    interaction,
+                    simulationStatus: "failed" as const,
+                    failureReason:
+                        "Backend signer not authorized for this product",
+                };
+            }
+        } catch (error) {
+            logger.error(
+                {
+                    error,
+                    interactionId: interaction.id,
+                    productId: interaction.productId,
+                },
+                "Failed to check signer permission"
             );
-        return {
-            interaction,
-            simulationStatus: isSimulationSuccess ? "succeeded" : "failed",
-        } as const;
+            return {
+                interaction,
+                simulationStatus: "failed" as const,
+                failureReason: "Unable to validate backend signer permissions",
+            };
+        }
+
+        // Then perform the facet simulation
+        try {
+            const { isSimulationSuccess } =
+                await InteractionsContext.repositories.interactionPacker.simulateInteraction(
+                    {
+                        wallet: interaction.wallet,
+                        productId: interaction.productId,
+                        interactionData: {
+                            handlerTypeDenominator: interaction.typeDenominator,
+                            interactionData: interaction.interactionData,
+                        },
+                    }
+                );
+            return {
+                interaction,
+                simulationStatus: isSimulationSuccess ? "succeeded" : "failed",
+                failureReason: isSimulationSuccess
+                    ? null
+                    : "Simulation reverted on-chain",
+            } as const;
+        } catch (error) {
+            logger.error(
+                { error, interactionId: interaction.id },
+                "Simulation threw error"
+            );
+            return {
+                interaction,
+                simulationStatus: "failed" as const,
+                failureReason: `Simulation error: ${error instanceof Error ? error.message : "Unknown"}`,
+            };
+        }
     });
     const simulationResults = await Promise.all(simulationResultsAsync);
 
     // Then perform the db update accordingly to the simulation results
     try {
         await db.transaction(async (trx) => {
-            for (const { interaction, simulationStatus } of simulationResults) {
-                await trx
-                    .update(pendingInteractionsTable)
-                    .set({ status: simulationStatus })
-                    .where(eq(pendingInteractionsTable.id, interaction.id));
+            for (const {
+                interaction,
+                simulationStatus,
+                failureReason,
+            } of simulationResults) {
+                // For succeeded interactions, just update status
+                if (simulationStatus === "succeeded") {
+                    await trx
+                        .update(pendingInteractionsTable)
+                        .set({
+                            status: simulationStatus,
+                            failureReason: null,
+                        })
+                        .where(eq(pendingInteractionsTable.id, interaction.id));
+                } else {
+                    // For failed interactions, schedule retry with exponential backoff
+                    const retryCount = (interaction.retryCount ?? 0) + 1;
+                    const nextRetryAt = calculateNextRetry(
+                        simulationStatus,
+                        retryCount
+                    );
+
+                    await trx
+                        .update(pendingInteractionsTable)
+                        .set({
+                            status: simulationStatus,
+                            failureReason,
+                            retryCount,
+                            lastRetryAt: new Date(),
+                            nextRetryAt,
+                        })
+                        .where(eq(pendingInteractionsTable.id, interaction.id));
+
+                    logger.debug(
+                        {
+                            interactionId: interaction.id,
+                            status: simulationStatus,
+                            retryCount,
+                            nextRetryAt,
+                        },
+                        "Scheduled retry for failed simulation"
+                    );
+                }
             }
         });
     } catch (e) {

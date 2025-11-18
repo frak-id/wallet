@@ -1,5 +1,5 @@
+import { log } from "@backend-infrastructure";
 import { Elysia } from "elysia";
-import { log } from "../../../../common";
 import { customWebhook } from "./customWebhook";
 import { shopifyWebhook } from "./shopifyWebhook";
 import { wooCommerceWebhook } from "./wooCommerceWebhook";

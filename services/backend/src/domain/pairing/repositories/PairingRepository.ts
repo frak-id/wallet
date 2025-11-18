@@ -1,7 +1,6 @@
-import { db } from "@backend-common";
+import { db, log } from "@backend-infrastructure";
 import { eq } from "drizzle-orm";
 import type { ElysiaWS } from "elysia/ws";
-import { log } from "../../../common";
 import { pairingTable } from "../db/schema";
 import type { WsDirectMessageResponse } from "../dto/WebsocketDirectMessage";
 import type { WsTopicMessage } from "../dto/WebsocketTopicMessage";

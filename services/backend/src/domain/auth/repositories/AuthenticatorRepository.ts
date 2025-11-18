@@ -1,4 +1,4 @@
-import { getMongoDb } from "@backend-common";
+import { getMongoDb } from "@backend-infrastructure";
 import type { Collection } from "mongodb";
 import type { Address } from "viem";
 import type { AuthenticatorDocument } from "../models/dto/AuthenticatorDocument";
