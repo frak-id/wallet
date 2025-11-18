@@ -14,8 +14,9 @@
  * - `bun run test --project backend-unit` - Run only backend tests
  * - `bun run test:watch` - Watch mode
  */
-import { defineConfig, mergeConfig } from "vitest/config";
+
 import { fileURLToPath } from "node:url";
+import { defineConfig, mergeConfig } from "vitest/config";
 import sharedConfig from "../../test-setup/vitest.shared";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));

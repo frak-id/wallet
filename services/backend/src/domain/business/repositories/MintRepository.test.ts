@@ -1,6 +1,6 @@
-import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ProductTypesKey } from "@frak-labs/core-sdk";
 import type { Address, Hex, LocalAccount } from "viem";
+import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { adminWalletsRepositoryMocks } from "../../../../test/mock/common";
 import { viemActionsMocks } from "../../../../test/mock/viem";
 import { MintRepository } from "./MintRepository";
@@ -20,7 +20,6 @@ describe("MintRepository", () => {
         "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd" as Address;
 
     beforeEach(() => {
-
         // Reset all mocks
         viemActionsMocks.readContract.mockReset();
         viemActionsMocks.simulateContract.mockReset();

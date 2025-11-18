@@ -1,5 +1,5 @@
-import { beforeEach, describe, expect, it } from "vitest";
 import { Elysia } from "elysia";
+import { beforeEach, describe, expect, it } from "vitest";
 
 describe("Health Check API", () => {
     let app: Elysia;

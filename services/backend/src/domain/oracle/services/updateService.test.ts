@@ -1,3 +1,4 @@
+import type { Hex, LocalAccount } from "viem";
 import {
     afterAll,
     beforeAll,
@@ -5,9 +6,8 @@ import {
     describe,
     expect,
     it,
-    mock,
+    vi,
 } from "vitest";
-import type { Hex, LocalAccount } from "viem";
 import {
     adminWalletsRepositoryMocks,
     dbMock,
@@ -37,7 +37,6 @@ describe("UpdateOracleService", () => {
     } as LocalAccount;
 
     beforeAll(() => {
-
         // Mock adminWalletsRepository
         adminWalletsRepositoryMocks.getKeySpecificAccount.mockResolvedValue(
             mockOracleUpdater

@@ -1,3 +1,4 @@
+import type { Hex } from "viem";
 import {
     afterAll,
     beforeAll,
@@ -5,9 +6,8 @@ import {
     describe,
     expect,
     it,
-    mock,
+    vi,
 } from "vitest";
-import type { Hex } from "viem";
 import { dbMock } from "../../../../test/mock/common";
 import { OracleWebhookService } from "./hookService";
 

@@ -1,23 +1,23 @@
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
 import {
     backendTrackerTable,
     interactionSimulationStatus,
     interactionsPurchaseTrackerTable,
     pendingInteractionsTable,
     pushedInteractionsTable,
-} from "@backend-domain/interactions";
-import { pushTokensTable } from "@backend-domain/notifications";
+} from "../../domain/interactions";
+import { pushTokensTable } from "../../domain/notifications";
 import {
     productOracleTable,
     purchaseItemTable,
     purchaseStatusEnum,
     purchaseStatusTable,
-} from "@backend-domain/oracle";
+} from "../../domain/oracle";
 import {
     pairingSignatureRequestTable,
     pairingTable,
-} from "@backend-domain/pairing";
-import { drizzle } from "drizzle-orm/postgres-js";
-import postgres from "postgres";
+} from "../../domain/pairing";
 
 /**
  * Postgres master client

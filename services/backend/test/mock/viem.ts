@@ -5,8 +5,8 @@
  * Mocks are created at module level using vi.mock() and exported for test access.
  */
 
-import { vi } from "vitest";
 import type { Address, Hex } from "viem";
+import { vi } from "vitest";
 
 /* -------------------------------------------------------------------------- */
 /*                                    Viem                                    */

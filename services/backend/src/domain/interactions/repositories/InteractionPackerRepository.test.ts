@@ -1,5 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Address, Hex } from "viem";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { interactionDiamondRepositoryMocks } from "../../../../test/mock/common";
 import { viemActionsMocks } from "../../../../test/mock/viem";
 import { InteractionPackerRepository } from "./InteractionPackerRepository";

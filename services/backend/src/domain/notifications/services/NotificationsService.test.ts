@@ -1,3 +1,4 @@
+import type { Address } from "viem";
 import {
     afterAll,
     beforeAll,
@@ -5,9 +6,8 @@ import {
     describe,
     expect,
     it,
-    mock,
+    vi,
 } from "vitest";
-import type { Address } from "viem";
 import { dbMock, webPushMocks } from "../../../../test/mock/common";
 import { NotificationsService } from "./NotificationsService";
 

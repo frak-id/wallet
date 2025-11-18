@@ -111,7 +111,7 @@ export const mintRoutes = new Elysia({ prefix: "/mint" })
 
                 return {
                     txHash: mintTxHash,
-                    productId: toHex(productId),
+                    productId: toHex(productId, { size: 32 }),
                     interactionContract: interactionResult?.interactionContract,
                     bankContract: bankResult?.bank,
                 };

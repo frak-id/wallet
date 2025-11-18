@@ -1,5 +1,5 @@
-import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import type { Address } from "viem";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { JwtContextMock } from "../../../../test/mock/common";
 import type { StaticWalletSdkTokenDto } from "../models/WalletSessionDto";
 import { WalletSdkSessionService } from "./WalletSdkSessionService";

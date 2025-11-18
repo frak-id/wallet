@@ -101,6 +101,26 @@ vi.mock("../src/domain/pairing/context", () => ({
     },
 }));
 
+// Mock Airtable integration (must be before importing mock modules)
+vi.mock("../src/infrastructure/integrations/airtable", async () => {
+    const config = await import(
+        "../src/infrastructure/integrations/airtable/config"
+    );
+
+    // Create a mock class that can be instantiated
+    class MockAirtableRepository {
+        processRequest = vi.fn();
+        checkDuplicateEmail = vi.fn();
+        createRecord = vi.fn();
+        sendSlackNotification = vi.fn();
+    }
+
+    return {
+        ...config,
+        AirtableRepository: MockAirtableRepository,
+    };
+});
+
 // Import mock modules to initialize them
 // These use vi.mock() at module level, so importing them sets up the mocks
 import "./mock/viem";

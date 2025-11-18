@@ -1,5 +1,6 @@
-import { vi } from "vitest";
+import { Elysia, t } from "elysia";
 import type { Address, LocalAccount } from "viem";
+import { vi } from "vitest";
 import { viemMocks } from "./viem";
 
 /* -------------------------------------------------------------------------- */
@@ -8,6 +9,9 @@ import { viemMocks } from "./viem";
 
 export const indexerApiMocks = {
     get: vi.fn(() => ({
+        json: vi.fn(() => Promise.resolve({})),
+    })),
+    post: vi.fn(() => ({
         json: vi.fn(() => Promise.resolve({})),
     })),
 };
@@ -41,6 +45,23 @@ export const interactionDiamondRepositoryMocks = {
 
 export const rolesRepositoryMocks = {
     getRoles: vi.fn(() => Promise.resolve([])),
+};
+
+export const onChainRolesRepositoryMocks = {
+    getRolesOnProduct: vi.fn(() =>
+        Promise.resolve({ isOwner: false, roles: 0n })
+    ),
+    hasRoleOrAdminOnProduct: vi.fn(() => Promise.resolve(false)),
+    hasRoles: vi.fn(
+        ({ onChainRoles, role }: { onChainRoles: bigint; role: bigint }) =>
+            (onChainRoles & role) !== 0n
+    ),
+    hasRolesOrAdmin: vi.fn(
+        ({ onChainRoles, role }: { onChainRoles: bigint; role: bigint }) => {
+            const productAdministrator = BigInt(1 << 0);
+            return (onChainRoles & (role | productAdministrator)) !== 0n;
+        }
+    ),
 };
 
 export const JwtContextMock = {
@@ -137,8 +158,7 @@ const createThenable = (
     return thenable;
 };
 
-// biome-ignore lint/suspicious/noExplicitAny: Mock object requires flexible typing for Drizzle ORM compatibility
-export const dbMock: any = {
+export const dbMock = {
     select: vi.fn(() => ({
         from: vi.fn(() => ({
             where: vi.fn((_condition?: unknown) => {
@@ -146,6 +166,7 @@ export const dbMock: any = {
                     limit: vi.fn((_count?: number) =>
                         mockFunctions.selectMockFn()
                     ),
+                    execute: vi.fn(() => mockFunctions.selectMockFn()),
                     innerJoin: vi.fn(() => ({
                         where: vi.fn(() => ({
                             limit: vi.fn(() => mockFunctions.selectMockFn()),
@@ -171,7 +192,9 @@ export const dbMock: any = {
             onConflictDoUpdate: vi.fn(() => ({
                 returning: vi.fn(() => mockFunctions.insertMockFn()),
             })),
-            onConflictDoNothing: vi.fn(() => mockFunctions.insertMockFn()),
+            onConflictDoNothing: vi.fn(() => ({
+                returning: vi.fn(() => mockFunctions.insertMockFn()),
+            })),
         })),
     })),
     update: updateMock,
@@ -193,12 +216,42 @@ export const dbMock: any = {
     transaction: transactionMock,
     query: {
         purchaseStatusTable: {
-            // biome-ignore lint/suspicious/noExplicitAny: Drizzle query options require flexible typing
-            findMany: vi.fn((_opts?: any) => mockFunctions.findManyMockFn()),
+            findMany: vi.fn((_opts?: unknown) =>
+                mockFunctions.findManyMockFn()
+            ),
         },
         pushTokensTable: {
-            // biome-ignore lint/suspicious/noExplicitAny: Drizzle query options require flexible typing
-            findMany: vi.fn((_opts?: any) => mockFunctions.findManyMockFn()),
+            findMany: vi.fn((_opts?: unknown) =>
+                mockFunctions.findManyMockFn()
+            ),
+            findFirst: vi.fn((_opts?: unknown) => {
+                // findFirst returns a single item or undefined
+                const result = mockFunctions.selectMockFn();
+                return result.then((items: unknown[]) =>
+                    items.length > 0 ? items[0] : undefined
+                );
+            }),
+        },
+        pairingTable: {
+            findMany: vi.fn((_opts?: unknown) =>
+                mockFunctions.findManyMockFn()
+            ),
+            findFirst: vi.fn((_opts?: unknown) => {
+                // findFirst returns a single item or undefined
+                const result = mockFunctions.selectMockFn();
+                return result.then((items: unknown[]) =>
+                    items.length > 0 ? items[0] : undefined
+                );
+            }),
+        },
+        backendTrackerTable: {
+            findFirst: vi.fn((_opts?: unknown) => {
+                // findFirst returns a single item or undefined
+                const result = mockFunctions.selectMockFn();
+                return result.then((items: unknown[]) =>
+                    items.length > 0 ? items[0] : undefined
+                );
+            }),
         },
     },
     // Helper methods to configure mock responses
@@ -237,6 +290,145 @@ export const dbMock: any = {
     },
 };
 
+// Mock for sessionContext Elysia plugin
+class UnauthorizedError extends Error {
+    constructor(message = "Unauthorized") {
+        super(message);
+        this.name = "UnauthorizedError";
+    }
+}
+
+export const sessionContextMock = new Elysia({ name: "Macro.session" })
+    .guard({
+        headers: t.Object({
+            "x-wallet-auth": t.Optional(t.String()),
+            "x-wallet-sdk-auth": t.Optional(t.String()),
+        }),
+    })
+    .error({ UNAUTHORIZED: UnauthorizedError })
+    .onError({ as: "global" }, ({ code, set }) => {
+        if (code === "UNAUTHORIZED") {
+            set.status = 401;
+            return "Unauthorized";
+        }
+    })
+    .macro({
+        withWalletAuthent: {
+            async resolve({ headers }) {
+                const walletAuth = headers["x-wallet-auth"];
+                if (!walletAuth) {
+                    throw new UnauthorizedError();
+                }
+                // biome-ignore lint/suspicious/noExplicitAny: Mock function accepts arguments at runtime
+                const auth = await (JwtContextMock.wallet.verify as any)(
+                    walletAuth
+                );
+                if (!auth) {
+                    throw new UnauthorizedError();
+                }
+                // Return the auth
+                return { walletSession: auth };
+            },
+        },
+        withWalletSdkAuthent: {
+            async resolve({ headers }) {
+                const walletSdkAuth = headers["x-wallet-sdk-auth"];
+                if (!walletSdkAuth) {
+                    throw new UnauthorizedError();
+                }
+                // biome-ignore lint/suspicious/noExplicitAny: Mock function accepts arguments at runtime
+                const auth = await (JwtContextMock.walletSdk.verify as any)(
+                    walletSdkAuth
+                );
+                if (!auth) {
+                    throw new UnauthorizedError();
+                }
+                // Return the auth
+                return { walletSdkSession: auth };
+            },
+        },
+    });
+
+/* -------------------------------------------------------------------------- */
+/*                          Iron Session Mock                                 */
+/*  -------------------------------------------------------------------------- */
+
+export const ironSessionMocks = {
+    unsealData: vi.fn(<T>() => Promise.resolve(undefined as T | undefined)),
+};
+
+// Mock iron-session module with proper named export
+// The real middleware imports: import { unsealData } from "iron-session";
+vi.mock("iron-session", () => ({
+    unsealData: ironSessionMocks.unsealData,
+}));
+
+/* -------------------------------------------------------------------------- */
+/*                      Business Session Middleware Mock                      */
+/* -------------------------------------------------------------------------- */
+
+// Mock for businessSessionContext Elysia plugin
+// Uses manual Cookie header parsing since Elysia's cookie parser doesn't work in tests
+// IMPORTANT: .as("scoped") is required for .resolve() to execute when composed via .use()
+export const businessSessionContextMock = new Elysia({
+    name: "Context.businessSession",
+})
+    .resolve(async ({ request }) => {
+        // Manually parse Cookie header to get the businessSession value
+        const cookieHeader = request.headers.get("Cookie");
+        let cookieValue = "mock-token"; // Default token for tests
+
+        if (cookieHeader) {
+            const match = cookieHeader.match(/businessSession=([^;]+)/);
+            if (match) {
+                cookieValue = match[1];
+            }
+        }
+
+        // Always call the mocked unsealData function (even without a cookie)
+        // This allows setMockBusinessSession() to work without requiring cookies
+        // biome-ignore lint/suspicious/noExplicitAny: Mock function needs flexible typing
+        const session = await (ironSessionMocks.unsealData as any)(
+            cookieValue,
+            { password: "test", ttl: 60 }
+        );
+
+        return { businessSession: session };
+    })
+    .macro({
+        nextAuthenticated: {
+            // biome-ignore lint/suspicious/noExplicitAny: Mock function needs flexible typing
+            beforeHandle: async ({ request, set }: any) => {
+                const cookieHeader = request.headers.get("Cookie");
+                let cookieValue: string | undefined;
+
+                if (cookieHeader) {
+                    const match = cookieHeader.match(/businessSession=([^;]+)/);
+                    if (match) {
+                        cookieValue = match[1];
+                    }
+                }
+
+                if (!cookieValue) {
+                    set.status = 401;
+                    return "Missing business auth cookie";
+                }
+
+                // biome-ignore lint/suspicious/noExplicitAny: Mock function needs flexible typing
+                const session = await (ironSessionMocks.unsealData as any)(
+                    cookieValue,
+                    { password: "test", ttl: 60 }
+                );
+
+                if (!session) {
+                    set.status = 401;
+                    return "Missing business auth cookie";
+                }
+            },
+        },
+    })
+    .as("scoped");
+
 vi.mock("@backend-infrastructure", () => ({
     indexerApi: indexerApiMocks,
     pricingRepository: pricingRepositoryMocks,
@@ -244,6 +436,8 @@ vi.mock("@backend-infrastructure", () => ({
     adminWalletsRepository: adminWalletsRepositoryMocks,
     interactionDiamondRepository: interactionDiamondRepositoryMocks,
     rolesRepository: rolesRepositoryMocks,
+    onChainRolesRepository: onChainRolesRepositoryMocks,
+    sessionContext: sessionContextMock,
     get JwtContext() {
         return JwtContextMock;
     },
@@ -263,6 +457,14 @@ vi.mock("@backend-infrastructure", () => ({
     },
 }));
 
+// Mock the business session middleware module
+// NOTE: This vi.mock() has been moved to individual test files
+// because Vitest doesn't hoist mocks across module boundaries.
+// Each test file must define its own vi.mock() for the middleware.
+// vi.mock("../../src/api/business/middleware/session", () => ({
+//     businessSessionContext: businessSessionContextMock,
+// }));
+
 /* -------------------------------------------------------------------------- */
 /*                                   Webpush                                  */
 /* -------------------------------------------------------------------------- */
@@ -272,3 +474,158 @@ export const webPushMocks = {
     setVapidDetails: vi.fn(() => {}),
 };
 vi.mock("web-push", () => webPushMocks);
+
+/* -------------------------------------------------------------------------- */
+/*                            Notification Context                            */
+/* -------------------------------------------------------------------------- */
+
+export const notificationServiceMocks = {
+    cleanupExpiredTokens: vi.fn(() => Promise.resolve()),
+    sendNotification: vi.fn(() => Promise.resolve()),
+};
+
+// Mock notification macro
+const notificationMacroMock = new Elysia({ name: "Macro.notification" }).macro({
+    cleanupTokens(_isEnabled?: boolean) {
+        return {};
+    },
+});
+
+// Create proper TypeBox schemas for SendNotificationDto
+// Address pattern for validation
+const AddressPattern = /^0x[a-fA-F0-9]{40}$/;
+
+const SendNotificationTargetsDto = t.Union([
+    t.Object({
+        wallets: t.Array(
+            t.String({
+                pattern: AddressPattern.source,
+                minLength: 42,
+                maxLength: 42,
+            })
+        ),
+    }),
+    t.Object({
+        filter: t.Partial(
+            t.Object({
+                productIds: t.Array(t.String()),
+                interactions: t.Partial(
+                    t.Object({
+                        min: t.Number(),
+                        max: t.Number(),
+                    })
+                ),
+                rewards: t.Partial(
+                    t.Object({
+                        min: t.String(),
+                        max: t.String(),
+                    })
+                ),
+                firstInteractionTimestamp: t.Partial(
+                    t.Object({
+                        min: t.Number(),
+                        max: t.Number(),
+                    })
+                ),
+            })
+        ),
+    }),
+]);
+
+const SendNotificationPayloadDto = t.Object({
+    title: t.String(),
+    body: t.String(),
+    badge: t.Optional(t.String()),
+    icon: t.Optional(t.String()),
+    lang: t.Optional(t.String()),
+    requireInteraction: t.Optional(t.Boolean()),
+    silent: t.Optional(t.Boolean()),
+    tag: t.Optional(t.String()),
+    data: t.Optional(
+        t.Object({
+            url: t.Optional(t.String()),
+        })
+    ),
+    actions: t.Optional(
+        t.Array(
+            t.Object({
+                action: t.String(),
+                title: t.String(),
+                icon: t.Optional(t.String()),
+            })
+        )
+    ),
+});
+
+// Mock the notification domain
+vi.mock("../../src/domain/notifications", () => ({
+    NotificationContext: {
+        services: {
+            notifications: notificationServiceMocks,
+        },
+    },
+    notificationMacro: notificationMacroMock,
+    pushTokensTable: {},
+    SendNotificationPayloadDto,
+    SendNotificationTargetsDto,
+}));
+
+/* -------------------------------------------------------------------------- */
+/*                            Interactions Context                            */
+/* -------------------------------------------------------------------------- */
+
+export const campaignRewardsServiceMocks = {
+    getActiveRewardsForProduct: vi.fn(() => Promise.resolve(undefined)),
+};
+
+// Create a proper mock for InteractionRequestDto that matches the real schema
+// Using Elysia's t (TypeBox wrapper) which is already imported
+const InteractionRequestDto = t.Object({
+    wallet: t.String(),
+    productId: t.String(),
+    interaction: t.Object({
+        handlerTypeDenominator: t.String(),
+        interactionData: t.String(),
+    }),
+    signature: t.Optional(t.Union([t.String(), t.Undefined(), t.Null()])),
+});
+
+// Mock the interactions domain
+vi.mock("../../src/domain/interactions", () => ({
+    InteractionsContext: {
+        services: {
+            campaignRewards: campaignRewardsServiceMocks,
+        },
+    },
+    pendingInteractionsTable: {},
+    interactionsPurchaseTrackerTable: {},
+    backendTrackerTable: {},
+    InteractionRequestDto,
+}));
+
+/* -------------------------------------------------------------------------- */
+/*                     Helper Functions for Business Session                  */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Set the mock business session value
+ */
+export function setMockBusinessSession(
+    session: { wallet: `0x${string}` } | null
+): void {
+    if (session === null) {
+        ironSessionMocks.unsealData.mockResolvedValue(undefined);
+    } else {
+        ironSessionMocks.unsealData.mockResolvedValue(session);
+    }
+}
+
+/**
+ * Reset the mock business session to return undefined
+ * This clears any previous mockResolvedValue/mockResolvedValueOnce calls
+ */
+export function resetMockBusinessSession(): void {
+    // Use mockReset() to clear all mocks and set default return value to undefined
+    ironSessionMocks.unsealData.mockReset();
+    ironSessionMocks.unsealData.mockResolvedValue(undefined);
+}

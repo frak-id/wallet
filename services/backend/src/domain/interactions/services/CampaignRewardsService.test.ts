@@ -1,5 +1,5 @@
-import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Address, Hex } from "viem";
+import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import {
     indexerApiMocks,
     pricingRepositoryMocks,
@@ -26,7 +26,9 @@ describe("CampaignRewardsService", () => {
                 userPercent: 0.5,
             })
         ),
-        getType: vi.fn(() => Promise.resolve("frak.campaign.affiliation-fixed")),
+        getType: vi.fn(() =>
+            Promise.resolve("frak.campaign.affiliation-fixed")
+        ),
     };
 
     const mockProductId =

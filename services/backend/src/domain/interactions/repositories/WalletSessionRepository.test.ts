@@ -1,6 +1,6 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { addresses } from "@frak-labs/app-essentials";
 import type { Address } from "viem";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { viemActionsMocks } from "../../../../test/mock/viem";
 import { WalletSessionRepository } from "./WalletSessionRepository";
 
