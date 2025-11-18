@@ -15,8 +15,9 @@ import { openPanel } from "../utils/openPanel";
 
 /**
  * The query client that will be used by tanstack/react-query
+ * Exported for use in TanStack Router loaders
  */
-const queryClient = new QueryClient({
+export const queryClient = new QueryClient({
     defaultOptions: {
         queries: {
             gcTime: Number.POSITIVE_INFINITY,

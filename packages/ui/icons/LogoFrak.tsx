@@ -1,9 +1,11 @@
 import type { SVGProps } from "react";
+import { useId } from "react";
 
 export const LogoFrak = (
     props: SVGProps<SVGSVGElement> & { sizes?: number }
 ) => {
     const { sizes, ...rest } = props;
+    const gradientId = useId();
     return (
         <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -15,12 +17,12 @@ export const LogoFrak = (
         >
             <title>Logo Frak</title>
             <path
-                fill="url(#paint0_linear_8325_839)"
+                fill={`url(#${gradientId})`}
                 d="M12.29 27.878L.46 23.875a.348.348 0 00-.46.33v7.302c0 .149.095.28.236.329l11.83 4.002a.348.348 0 00.46-.33v-7.301a.347.347 0 00-.236-.33zm12.306-14.003l-11.834 4.002a.348.348 0 00-.236.33v7.301c0 .238.234.406.46.33l11.832-4.003a.348.348 0 00.237-.33v-7.301a.348.348 0 00-.46-.33zM35.708.01l-19.81 6.378a.348.348 0 00-.242.331v7.482c0 .148.148.254.292.207l19.81-6.378a.348.348 0 00.242-.33V.218a.222.222 0 00-.292-.208z"
             />
             <defs>
                 <linearGradient
-                    id="paint0_linear_8325_839"
+                    id={gradientId}
                     x1="1.677"
                     x2="36.6"
                     y1="29.793"

@@ -1,28 +1,36 @@
+import { Skeleton } from "@frak-labs/ui/component/Skeleton";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { requireAuth } from "@/middleware/auth";
-import { loadCampaignData } from "@/middleware/campaign";
 import { CampaignDetails } from "@/module/campaigns/component/CampaignDetails";
+import { campaignQueryOptions } from "@/module/campaigns/queries/queryOptions";
 import { RestrictedLayout } from "@/module/common/component/RestrictedLayout";
+import { queryClient } from "@/module/common/provider/RootProvider";
 import { campaignStore } from "@/stores/campaignStore";
-import type { Campaign } from "@/types/Campaign";
 
 export const Route = createFileRoute("/campaigns/$campaignId")({
     // Auth only in beforeLoad
     beforeLoad: requireAuth,
-    // Data fetching in loader with caching
-    loader: async ({ params }) => {
-        return loadCampaignData({ params });
+    // Prefetch into TanStack Query cache
+    loader: ({ params }) => {
+        return queryClient.ensureQueryData(
+            campaignQueryOptions(params.campaignId)
+        );
     },
-    // Cache configuration
-    staleTime: 5 * 60 * 1000, // 5 minutes - data considered fresh
-    gcTime: 30 * 60 * 1000, // 30 minutes - cache retention
     component: CampaignsContentPage,
+    pendingComponent: () => (
+        <RestrictedLayout>
+            <Skeleton />
+        </RestrictedLayout>
+    ),
 });
 
 function CampaignsContentPage() {
     const { campaignId } = Route.useParams();
-    const campaign = Route.useLoaderData() as Campaign;
+    const { data: campaign } = useSuspenseQuery(
+        campaignQueryOptions(campaignId)
+    );
 
     // Use individual selectors to avoid infinite loop
     const setCampaign = campaignStore((state) => state.setCampaign);
