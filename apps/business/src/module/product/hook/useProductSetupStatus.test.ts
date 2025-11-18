@@ -7,6 +7,8 @@ import {
     type TestContext,
     test,
 } from "@/tests/vitest-fixtures";
+import { useGetProductAdministrators } from "./useGetProductAdministrators";
+import { useGetProductFunding } from "./useGetProductFunding";
 import { useProductSetupStatus } from "./useProductSetupStatus";
 
 // Mock the dependencies
@@ -18,34 +20,18 @@ vi.mock("./useGetProductFunding", () => ({
     useGetProductFunding: vi.fn(),
 }));
 
-// Mock demo mode store
-vi.mock("@/stores/demoModeStore", () => ({
-    demoModeStore: vi.fn((selector: any) => {
-        const state = { isDemoMode: false };
-        return selector(state);
-    }),
-}));
-
 describe("useProductSetupStatus", () => {
     const mockProductId = "0x1234567890123456789012345678901234567890" as Hex;
 
     describe("demo mode", () => {
         test("should return mock setup status in demo mode", async ({
             queryWrapper,
+            freshDemoModeStore,
         }: TestContext) => {
-            const { useGetProductAdministrators } = await import(
-                "./useGetProductAdministrators"
-            );
-            const { useGetProductFunding } = await import(
-                "./useGetProductFunding"
-            );
-            const { demoModeStore } = await import("@/stores/demoModeStore");
-
-            // Mock demo mode enabled
-            vi.mocked(demoModeStore).mockImplementation((selector: any) => {
-                const state = { isDemoMode: true };
-                return selector(state);
-            });
+            queryWrapper.client.clear();
+            freshDemoModeStore
+                .getState()
+                .setDemoMode(true, queryWrapper.client);
 
             // Mock dependencies as successful
             vi.mocked(useGetProductAdministrators).mockReturnValue({
@@ -84,19 +70,12 @@ describe("useProductSetupStatus", () => {
 
         test("should replace productId in resolvingPage URLs in demo mode", async ({
             queryWrapper,
+            freshDemoModeStore,
         }: TestContext) => {
-            const { useGetProductAdministrators } = await import(
-                "./useGetProductAdministrators"
-            );
-            const { useGetProductFunding } = await import(
-                "./useGetProductFunding"
-            );
-            const { demoModeStore } = await import("@/stores/demoModeStore");
-
-            vi.mocked(demoModeStore).mockImplementation((selector: any) => {
-                const state = { isDemoMode: true };
-                return selector(state);
-            });
+            queryWrapper.client.clear();
+            freshDemoModeStore
+                .getState()
+                .setDemoMode(true, queryWrapper.client);
 
             vi.mocked(useGetProductAdministrators).mockReturnValue({
                 data: [],
@@ -128,19 +107,12 @@ describe("useProductSetupStatus", () => {
     describe("live mode with administrators", () => {
         test("should detect multiple administrators (hasOtherAdmin = true)", async ({
             queryWrapper,
+            freshDemoModeStore,
         }: TestContext) => {
-            const { useGetProductAdministrators } = await import(
-                "./useGetProductAdministrators"
-            );
-            const { useGetProductFunding } = await import(
-                "./useGetProductFunding"
-            );
-            const { demoModeStore } = await import("@/stores/demoModeStore");
-
-            vi.mocked(demoModeStore).mockImplementation((selector: any) => {
-                const state = { isDemoMode: false };
-                return selector(state);
-            });
+            queryWrapper.client.clear();
+            freshDemoModeStore
+                .getState()
+                .setDemoMode(false, queryWrapper.client);
 
             // Mock multiple administrators
             vi.mocked(useGetProductAdministrators).mockReturnValue({
@@ -173,19 +145,12 @@ describe("useProductSetupStatus", () => {
 
         test("should detect single administrator (hasOtherAdmin = false)", async ({
             queryWrapper,
+            freshDemoModeStore,
         }: TestContext) => {
-            const { useGetProductAdministrators } = await import(
-                "./useGetProductAdministrators"
-            );
-            const { useGetProductFunding } = await import(
-                "./useGetProductFunding"
-            );
-            const { demoModeStore } = await import("@/stores/demoModeStore");
-
-            vi.mocked(demoModeStore).mockImplementation((selector: any) => {
-                const state = { isDemoMode: false };
-                return selector(state);
-            });
+            queryWrapper.client.clear();
+            freshDemoModeStore
+                .getState()
+                .setDemoMode(false, queryWrapper.client);
 
             // Mock single administrator
             vi.mocked(useGetProductAdministrators).mockReturnValue({
@@ -215,19 +180,12 @@ describe("useProductSetupStatus", () => {
 
         test("should handle no administrators", async ({
             queryWrapper,
+            freshDemoModeStore,
         }: TestContext) => {
-            const { useGetProductAdministrators } = await import(
-                "./useGetProductAdministrators"
-            );
-            const { useGetProductFunding } = await import(
-                "./useGetProductFunding"
-            );
-            const { demoModeStore } = await import("@/stores/demoModeStore");
-
-            vi.mocked(demoModeStore).mockImplementation((selector: any) => {
-                const state = { isDemoMode: false };
-                return selector(state);
-            });
+            queryWrapper.client.clear();
+            freshDemoModeStore
+                .getState()
+                .setDemoMode(false, queryWrapper.client);
 
             vi.mocked(useGetProductAdministrators).mockReturnValue({
                 data: [],
@@ -258,19 +216,12 @@ describe("useProductSetupStatus", () => {
     describe("funding status checks", () => {
         test("should detect funding when balance > 0 (hasFunding = true)", async ({
             queryWrapper,
+            freshDemoModeStore,
         }: TestContext) => {
-            const { useGetProductAdministrators } = await import(
-                "./useGetProductAdministrators"
-            );
-            const { useGetProductFunding } = await import(
-                "./useGetProductFunding"
-            );
-            const { demoModeStore } = await import("@/stores/demoModeStore");
-
-            vi.mocked(demoModeStore).mockImplementation((selector: any) => {
-                const state = { isDemoMode: false };
-                return selector(state);
-            });
+            queryWrapper.client.clear();
+            freshDemoModeStore
+                .getState()
+                .setDemoMode(false, queryWrapper.client);
 
             vi.mocked(useGetProductAdministrators).mockReturnValue({
                 data: [],
@@ -299,19 +250,12 @@ describe("useProductSetupStatus", () => {
 
         test("should detect no funding when balance = 0 (hasFunding = false)", async ({
             queryWrapper,
+            freshDemoModeStore,
         }: TestContext) => {
-            const { useGetProductAdministrators } = await import(
-                "./useGetProductAdministrators"
-            );
-            const { useGetProductFunding } = await import(
-                "./useGetProductFunding"
-            );
-            const { demoModeStore } = await import("@/stores/demoModeStore");
-
-            vi.mocked(demoModeStore).mockImplementation((selector: any) => {
-                const state = { isDemoMode: false };
-                return selector(state);
-            });
+            queryWrapper.client.clear();
+            freshDemoModeStore
+                .getState()
+                .setDemoMode(false, queryWrapper.client);
 
             vi.mocked(useGetProductAdministrators).mockReturnValue({
                 data: [],
@@ -340,19 +284,12 @@ describe("useProductSetupStatus", () => {
 
         test("should detect running bank (hasRunningBank = true)", async ({
             queryWrapper,
+            freshDemoModeStore,
         }: TestContext) => {
-            const { useGetProductAdministrators } = await import(
-                "./useGetProductAdministrators"
-            );
-            const { useGetProductFunding } = await import(
-                "./useGetProductFunding"
-            );
-            const { demoModeStore } = await import("@/stores/demoModeStore");
-
-            vi.mocked(demoModeStore).mockImplementation((selector: any) => {
-                const state = { isDemoMode: false };
-                return selector(state);
-            });
+            queryWrapper.client.clear();
+            freshDemoModeStore
+                .getState()
+                .setDemoMode(false, queryWrapper.client);
 
             vi.mocked(useGetProductAdministrators).mockReturnValue({
                 data: [],
@@ -381,19 +318,12 @@ describe("useProductSetupStatus", () => {
 
         test("should detect no running bank (hasRunningBank = false)", async ({
             queryWrapper,
+            freshDemoModeStore,
         }: TestContext) => {
-            const { useGetProductAdministrators } = await import(
-                "./useGetProductAdministrators"
-            );
-            const { useGetProductFunding } = await import(
-                "./useGetProductFunding"
-            );
-            const { demoModeStore } = await import("@/stores/demoModeStore");
-
-            vi.mocked(demoModeStore).mockImplementation((selector: any) => {
-                const state = { isDemoMode: false };
-                return selector(state);
-            });
+            queryWrapper.client.clear();
+            freshDemoModeStore
+                .getState()
+                .setDemoMode(false, queryWrapper.client);
 
             vi.mocked(useGetProductAdministrators).mockReturnValue({
                 data: [],
@@ -424,19 +354,12 @@ describe("useProductSetupStatus", () => {
     describe("hasWarning calculation", () => {
         test("should set hasWarning to true when any step is not good", async ({
             queryWrapper,
+            freshDemoModeStore,
         }: TestContext) => {
-            const { useGetProductAdministrators } = await import(
-                "./useGetProductAdministrators"
-            );
-            const { useGetProductFunding } = await import(
-                "./useGetProductFunding"
-            );
-            const { demoModeStore } = await import("@/stores/demoModeStore");
-
-            vi.mocked(demoModeStore).mockImplementation((selector: any) => {
-                const state = { isDemoMode: false };
-                return selector(state);
-            });
+            queryWrapper.client.clear();
+            freshDemoModeStore
+                .getState()
+                .setDemoMode(false, queryWrapper.client);
 
             vi.mocked(useGetProductAdministrators).mockReturnValue({
                 data: [],
@@ -463,19 +386,12 @@ describe("useProductSetupStatus", () => {
 
         test("should set hasWarning to false when all steps are good", async ({
             queryWrapper,
+            freshDemoModeStore,
         }: TestContext) => {
-            const { useGetProductAdministrators } = await import(
-                "./useGetProductAdministrators"
-            );
-            const { useGetProductFunding } = await import(
-                "./useGetProductFunding"
-            );
-            const { demoModeStore } = await import("@/stores/demoModeStore");
-
-            vi.mocked(demoModeStore).mockImplementation((selector: any) => {
-                const state = { isDemoMode: false };
-                return selector(state);
-            });
+            queryWrapper.client.clear();
+            freshDemoModeStore
+                .getState()
+                .setDemoMode(false, queryWrapper.client);
 
             // Mock optimal setup: multiple admins, funded, distributing
             vi.mocked(useGetProductAdministrators).mockReturnValue({
@@ -516,19 +432,12 @@ describe("useProductSetupStatus", () => {
     describe("query enabled state", () => {
         test("should be disabled when dependencies are not loaded", async ({
             queryWrapper,
+            freshDemoModeStore,
         }: TestContext) => {
-            const { useGetProductAdministrators } = await import(
-                "./useGetProductAdministrators"
-            );
-            const { useGetProductFunding } = await import(
-                "./useGetProductFunding"
-            );
-            const { demoModeStore } = await import("@/stores/demoModeStore");
-
-            vi.mocked(demoModeStore).mockImplementation((selector: any) => {
-                const state = { isDemoMode: false };
-                return selector(state);
-            });
+            queryWrapper.client.clear();
+            freshDemoModeStore
+                .getState()
+                .setDemoMode(false, queryWrapper.client);
 
             // Mock dependencies as not successful yet
             vi.mocked(useGetProductAdministrators).mockReturnValue({
@@ -553,19 +462,12 @@ describe("useProductSetupStatus", () => {
 
         test("should be disabled when no productId provided", async ({
             queryWrapper,
+            freshDemoModeStore,
         }: TestContext) => {
-            const { useGetProductAdministrators } = await import(
-                "./useGetProductAdministrators"
-            );
-            const { useGetProductFunding } = await import(
-                "./useGetProductFunding"
-            );
-            const { demoModeStore } = await import("@/stores/demoModeStore");
-
-            vi.mocked(demoModeStore).mockImplementation((selector: any) => {
-                const state = { isDemoMode: false };
-                return selector(state);
-            });
+            queryWrapper.client.clear();
+            freshDemoModeStore
+                .getState()
+                .setDemoMode(false, queryWrapper.client);
 
             vi.mocked(useGetProductAdministrators).mockReturnValue({
                 data: [],
@@ -592,19 +494,12 @@ describe("useProductSetupStatus", () => {
     describe("step metadata", () => {
         test("should include all required fields for each step", async ({
             queryWrapper,
+            freshDemoModeStore,
         }: TestContext) => {
-            const { useGetProductAdministrators } = await import(
-                "./useGetProductAdministrators"
-            );
-            const { useGetProductFunding } = await import(
-                "./useGetProductFunding"
-            );
-            const { demoModeStore } = await import("@/stores/demoModeStore");
-
-            vi.mocked(demoModeStore).mockImplementation((selector: any) => {
-                const state = { isDemoMode: false };
-                return selector(state);
-            });
+            queryWrapper.client.clear();
+            freshDemoModeStore
+                .getState()
+                .setDemoMode(false, queryWrapper.client);
 
             vi.mocked(useGetProductAdministrators).mockReturnValue({
                 data: [],

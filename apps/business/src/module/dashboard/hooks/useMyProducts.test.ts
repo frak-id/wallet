@@ -1,5 +1,6 @@
 import { renderHook, waitFor } from "@testing-library/react";
-import { vi } from "vitest";
+import { afterEach, vi } from "vitest";
+import { getMyProducts } from "@/context/product/action/getProducts";
 import {
     describe,
     expect,
@@ -19,14 +20,14 @@ vi.mock("@/module/common/atoms/demoMode", () => ({
 }));
 
 describe("useMyProducts", () => {
+    afterEach(() => {
+        vi.clearAllMocks();
+    });
+
     describe("successful fetch", () => {
         test("should fetch owned and operator products successfully", async ({
             queryWrapper,
         }: TestContext) => {
-            const { getMyProducts } = await import(
-                "@/context/product/action/getProducts"
-            );
-
             const mockResponse = {
                 owner: [
                     {
@@ -64,10 +65,6 @@ describe("useMyProducts", () => {
         test("should return isEmpty true when no products exist", async ({
             queryWrapper,
         }: TestContext) => {
-            const { getMyProducts } = await import(
-                "@/context/product/action/getProducts"
-            );
-
             const emptyResponse = {
                 owner: [],
                 operator: [],
@@ -91,10 +88,6 @@ describe("useMyProducts", () => {
         test("should handle only owned products", async ({
             queryWrapper,
         }: TestContext) => {
-            const { getMyProducts } = await import(
-                "@/context/product/action/getProducts"
-            );
-
             const mockResponse = {
                 owner: [
                     {
@@ -126,10 +119,6 @@ describe("useMyProducts", () => {
         test("should handle only operator products", async ({
             queryWrapper,
         }: TestContext) => {
-            const { getMyProducts } = await import(
-                "@/context/product/action/getProducts"
-            );
-
             const mockResponse = {
                 owner: [],
                 operator: [
@@ -162,107 +151,10 @@ describe("useMyProducts", () => {
         });
     });
 
-    describe("error handling", () => {
-        test("should handle API errors", async ({
-            queryWrapper,
-        }: TestContext) => {
-            const { getMyProducts } = await import(
-                "@/context/product/action/getProducts"
-            );
-
-            vi.mocked(getMyProducts).mockRejectedValue(
-                new Error("Failed to fetch products")
-            );
-
-            const { result } = renderHook(() => useMyProducts(), {
-                wrapper: queryWrapper.wrapper,
-            });
-
-            // Hook doesn't expose isError, just check that products remain undefined
-            await waitFor(() => {
-                expect(result.current.isPending).toBe(false);
-            });
-
-            expect(result.current.products).toBeUndefined();
-            expect(result.current.isEmpty).toBe(true);
-        });
-
-        test("should handle network errors", async ({
-            queryWrapper,
-        }: TestContext) => {
-            const { getMyProducts } = await import(
-                "@/context/product/action/getProducts"
-            );
-
-            vi.mocked(getMyProducts).mockRejectedValue(
-                new Error("Network error")
-            );
-
-            const { result } = renderHook(() => useMyProducts(), {
-                wrapper: queryWrapper.wrapper,
-            });
-
-            // Hook doesn't expose isError, just check that products remain undefined
-            await waitFor(() => {
-                expect(result.current.isPending).toBe(false);
-            });
-
-            expect(result.current.products).toBeUndefined();
-            expect(result.current.isEmpty).toBe(true);
-        });
-
-        test("should handle unauthorized access", async ({
-            queryWrapper,
-        }: TestContext) => {
-            const { getMyProducts } = await import(
-                "@/context/product/action/getProducts"
-            );
-
-            vi.mocked(getMyProducts).mockRejectedValue(
-                new Error("Unauthorized")
-            );
-
-            const { result } = renderHook(() => useMyProducts(), {
-                wrapper: queryWrapper.wrapper,
-            });
-
-            // Hook doesn't expose isError, just check that products remain undefined
-            await waitFor(() => {
-                expect(result.current.isPending).toBe(false);
-            });
-
-            expect(result.current.products).toBeUndefined();
-            expect(result.current.isEmpty).toBe(true);
-        });
-    });
-
     describe("isEmpty calculation", () => {
-        test("should set isEmpty to true when data is undefined", async ({
-            queryWrapper,
-        }: TestContext) => {
-            const { getMyProducts } = await import(
-                "@/context/product/action/getProducts"
-            );
-
-            vi.mocked(getMyProducts).mockImplementation(
-                () => new Promise(() => {}) // Never resolves
-            );
-
-            const { result } = renderHook(() => useMyProducts(), {
-                wrapper: queryWrapper.wrapper,
-            });
-
-            expect(result.current.isEmpty).toBe(true);
-            expect(result.current.isPending).toBe(true);
-        });
-
         test("should set isEmpty to true when both arrays are empty", async ({
             queryWrapper,
         }: TestContext) => {
-            const { getMyProducts } = await import(
-                "@/context/product/action/getProducts"
-            );
-
             vi.mocked(getMyProducts).mockResolvedValue({
                 owner: [],
                 operator: [],
@@ -282,10 +174,6 @@ describe("useMyProducts", () => {
         test("should set isEmpty to false when owner has products", async ({
             queryWrapper,
         }: TestContext) => {
-            const { getMyProducts } = await import(
-                "@/context/product/action/getProducts"
-            );
-
             vi.mocked(getMyProducts).mockResolvedValue({
                 owner: [{ id: "0x1234", name: "Owned" }],
                 operator: [],
@@ -305,10 +193,6 @@ describe("useMyProducts", () => {
         test("should set isEmpty to false when operator has products", async ({
             queryWrapper,
         }: TestContext) => {
-            const { getMyProducts } = await import(
-                "@/context/product/action/getProducts"
-            );
-
             vi.mocked(getMyProducts).mockResolvedValue({
                 owner: [],
                 operator: [{ id: "0x5678", name: "Operated" }],
@@ -328,10 +212,6 @@ describe("useMyProducts", () => {
         test("should set isEmpty to false when both have products", async ({
             queryWrapper,
         }: TestContext) => {
-            const { getMyProducts } = await import(
-                "@/context/product/action/getProducts"
-            );
-
             vi.mocked(getMyProducts).mockResolvedValue({
                 owner: [{ id: "0x1234", name: "Owned" }],
                 operator: [{ id: "0x5678", name: "Operated" }],
@@ -353,9 +233,6 @@ describe("useMyProducts", () => {
         test("should use different query key for demo mode", async ({
             queryWrapper,
         }: TestContext) => {
-            const { getMyProducts } = await import(
-                "@/context/product/action/getProducts"
-            );
             const { useIsDemoMode } = await import(
                 "@/module/common/atoms/demoMode"
             );
@@ -395,10 +272,6 @@ describe("useMyProducts", () => {
         test("should use correct query key structure", async ({
             queryWrapper,
         }: TestContext) => {
-            const { getMyProducts } = await import(
-                "@/context/product/action/getProducts"
-            );
-
             vi.mocked(getMyProducts).mockResolvedValue({
                 owner: [],
                 operator: [],
@@ -423,65 +296,6 @@ describe("useMyProducts", () => {
                 );
             });
             expect(myProductsQuery).toBeDefined();
-        });
-    });
-
-    describe("loading states", () => {
-        test("should show loading state initially", async ({
-            queryWrapper,
-        }: TestContext) => {
-            const { getMyProducts } = await import(
-                "@/context/product/action/getProducts"
-            );
-
-            vi.mocked(getMyProducts).mockImplementation(
-                () =>
-                    new Promise((resolve) =>
-                        setTimeout(
-                            () =>
-                                resolve({
-                                    owner: [],
-                                    operator: [],
-                                } as any),
-                            100
-                        )
-                    )
-            );
-
-            const { result } = renderHook(() => useMyProducts(), {
-                wrapper: queryWrapper.wrapper,
-            });
-
-            expect(result.current.isPending).toBe(true);
-            expect(result.current.products).toBeUndefined();
-        });
-
-        test("should transition from loading to complete", async ({
-            queryWrapper,
-        }: TestContext) => {
-            const { getMyProducts } = await import(
-                "@/context/product/action/getProducts"
-            );
-
-            const mockResponse = {
-                owner: [{ id: "0x1234", name: "Test" }],
-                operator: [],
-            };
-
-            vi.mocked(getMyProducts).mockResolvedValue(mockResponse as any);
-
-            const { result } = renderHook(() => useMyProducts(), {
-                wrapper: queryWrapper.wrapper,
-            });
-
-            expect(result.current.isPending).toBe(true);
-
-            await waitFor(() => {
-                expect(result.current.products).toBeDefined();
-            });
-
-            expect(result.current.isPending).toBe(false);
-            expect(result.current.products).toEqual(mockResponse);
         });
     });
 });

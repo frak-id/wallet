@@ -1,3 +1,4 @@
+import { indexerApi } from "@frak-labs/client/server";
 import { renderHook, waitFor } from "@testing-library/react";
 import type { Address, Hex } from "viem";
 import { vi } from "vitest";
@@ -18,27 +19,18 @@ vi.mock("@frak-labs/client/server", () => ({
     },
 }));
 
-// Mock demo mode store
-vi.mock("@/stores/demoModeStore", () => ({
-    demoModeStore: vi.fn((selector: any) => {
-        const state = { isDemoMode: false };
-        return selector(state);
-    }),
-}));
-
 describe("useGetProductAdministrators", () => {
     const mockProductId = "0x1234567890123456789012345678901234567890" as Hex;
 
     describe("demo mode", () => {
         test("should return mock administrators in demo mode", async ({
             queryWrapper,
+            freshDemoModeStore,
         }: TestContext) => {
-            const { demoModeStore } = await import("@/stores/demoModeStore");
-
-            vi.mocked(demoModeStore).mockImplementation((selector: any) => {
-                const state = { isDemoMode: true };
-                return selector(state);
-            });
+            queryWrapper.client.clear();
+            freshDemoModeStore
+                .getState()
+                .setDemoMode(true, queryWrapper.client);
 
             const { result } = renderHook(
                 () => useGetProductAdministrators({ productId: mockProductId }),
@@ -60,13 +52,12 @@ describe("useGetProductAdministrators", () => {
 
         test("should simulate network delay in demo mode", async ({
             queryWrapper,
+            freshDemoModeStore,
         }: TestContext) => {
-            const { demoModeStore } = await import("@/stores/demoModeStore");
-
-            vi.mocked(demoModeStore).mockImplementation((selector: any) => {
-                const state = { isDemoMode: true };
-                return selector(state);
-            });
+            queryWrapper.client.clear();
+            freshDemoModeStore
+                .getState()
+                .setDemoMode(true, queryWrapper.client);
 
             const { result } = renderHook(
                 () => useGetProductAdministrators({ productId: mockProductId }),
@@ -85,14 +76,12 @@ describe("useGetProductAdministrators", () => {
     describe("live mode", () => {
         test("should fetch administrators from indexer API", async ({
             queryWrapper,
+            freshDemoModeStore,
         }: TestContext) => {
-            const { indexerApi } = await import("@frak-labs/client/server");
-            const { demoModeStore } = await import("@/stores/demoModeStore");
-
-            vi.mocked(demoModeStore).mockImplementation((selector: any) => {
-                const state = { isDemoMode: false };
-                return selector(state);
-            });
+            queryWrapper.client.clear();
+            freshDemoModeStore
+                .getState()
+                .setDemoMode(false, queryWrapper.client);
 
             const mockApiResponse = [
                 {
@@ -131,14 +120,12 @@ describe("useGetProductAdministrators", () => {
 
         test("should map roles correctly", async ({
             queryWrapper,
+            freshDemoModeStore,
         }: TestContext) => {
-            const { indexerApi } = await import("@frak-labs/client/server");
-            const { demoModeStore } = await import("@/stores/demoModeStore");
-
-            vi.mocked(demoModeStore).mockImplementation((selector: any) => {
-                const state = { isDemoMode: false };
-                return selector(state);
-            });
+            queryWrapper.client.clear();
+            freshDemoModeStore
+                .getState()
+                .setDemoMode(false, queryWrapper.client);
 
             const mockApiResponse = [
                 {
@@ -170,14 +157,12 @@ describe("useGetProductAdministrators", () => {
 
         test("should filter out purchaseOracleUpdater-only users", async ({
             queryWrapper,
+            freshDemoModeStore,
         }: TestContext) => {
-            const { indexerApi } = await import("@frak-labs/client/server");
-            const { demoModeStore } = await import("@/stores/demoModeStore");
-
-            vi.mocked(demoModeStore).mockImplementation((selector: any) => {
-                const state = { isDemoMode: false };
-                return selector(state);
-            });
+            queryWrapper.client.clear();
+            freshDemoModeStore
+                .getState()
+                .setDemoMode(false, queryWrapper.client);
 
             const mockApiResponse = [
                 {
@@ -236,14 +221,12 @@ describe("useGetProductAdministrators", () => {
     describe("error handling", () => {
         test("should handle API errors", async ({
             queryWrapper,
+            freshDemoModeStore,
         }: TestContext) => {
-            const { indexerApi } = await import("@frak-labs/client/server");
-            const { demoModeStore } = await import("@/stores/demoModeStore");
-
-            vi.mocked(demoModeStore).mockImplementation((selector: any) => {
-                const state = { isDemoMode: false };
-                return selector(state);
-            });
+            queryWrapper.client.clear();
+            freshDemoModeStore
+                .getState()
+                .setDemoMode(false, queryWrapper.client);
 
             const jsonMock = vi
                 .fn()

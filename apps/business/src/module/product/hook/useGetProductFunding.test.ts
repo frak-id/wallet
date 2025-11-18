@@ -1,5 +1,7 @@
+import { indexerApi } from "@frak-labs/client/server";
 import { renderHook, waitFor } from "@testing-library/react";
 import type { Address, Hex } from "viem";
+import { multicall } from "viem/actions";
 import { vi } from "vitest";
 import {
     describe,
@@ -23,27 +25,18 @@ vi.mock("viem/actions", () => ({
     multicall: vi.fn(),
 }));
 
-// Mock demo mode store
-vi.mock("@/stores/demoModeStore", () => ({
-    demoModeStore: vi.fn((selector: any) => {
-        const state = { isDemoMode: false };
-        return selector(state);
-    }),
-}));
-
 describe("useGetProductFunding", () => {
     const mockProductId = "0x1234567890123456789012345678901234567890" as Hex;
 
     describe("demo mode", () => {
         test("should return mock funding data in demo mode", async ({
             queryWrapper,
+            freshDemoModeStore,
         }: TestContext) => {
-            const { demoModeStore } = await import("@/stores/demoModeStore");
-
-            vi.mocked(demoModeStore).mockImplementation((selector: any) => {
-                const state = { isDemoMode: true };
-                return selector(state);
-            });
+            queryWrapper.client.clear();
+            freshDemoModeStore
+                .getState()
+                .setDemoMode(true, queryWrapper.client);
 
             const { result } = renderHook(
                 () => useGetProductFunding({ productId: mockProductId }),
@@ -65,13 +58,12 @@ describe("useGetProductFunding", () => {
 
         test("should simulate network delay in demo mode", async ({
             queryWrapper,
+            freshDemoModeStore,
         }: TestContext) => {
-            const { demoModeStore } = await import("@/stores/demoModeStore");
-
-            vi.mocked(demoModeStore).mockImplementation((selector: any) => {
-                const state = { isDemoMode: true };
-                return selector(state);
-            });
+            queryWrapper.client.clear();
+            freshDemoModeStore
+                .getState()
+                .setDemoMode(true, queryWrapper.client);
 
             const { result } = renderHook(
                 () => useGetProductFunding({ productId: mockProductId }),
@@ -90,15 +82,12 @@ describe("useGetProductFunding", () => {
     describe("live mode", () => {
         test("should fetch funding from indexer API and blockchain", async ({
             queryWrapper,
+            freshDemoModeStore,
         }: TestContext) => {
-            const { indexerApi } = await import("@frak-labs/client/server");
-            const { multicall } = await import("viem/actions");
-            const { demoModeStore } = await import("@/stores/demoModeStore");
-
-            vi.mocked(demoModeStore).mockImplementation((selector: any) => {
-                const state = { isDemoMode: false };
-                return selector(state);
-            });
+            queryWrapper.client.clear();
+            freshDemoModeStore
+                .getState()
+                .setDemoMode(false, queryWrapper.client);
 
             const mockApiResponse = [
                 {
@@ -143,15 +132,12 @@ describe("useGetProductFunding", () => {
 
         test("should map string values to bigint", async ({
             queryWrapper,
+            freshDemoModeStore,
         }: TestContext) => {
-            const { indexerApi } = await import("@frak-labs/client/server");
-            const { multicall } = await import("viem/actions");
-            const { demoModeStore } = await import("@/stores/demoModeStore");
-
-            vi.mocked(demoModeStore).mockImplementation((selector: any) => {
-                const state = { isDemoMode: false };
-                return selector(state);
-            });
+            queryWrapper.client.clear();
+            freshDemoModeStore
+                .getState()
+                .setDemoMode(false, queryWrapper.client);
 
             const mockApiResponse = [
                 {
@@ -198,15 +184,12 @@ describe("useGetProductFunding", () => {
 
         test("should handle multiple funding banks", async ({
             queryWrapper,
+            freshDemoModeStore,
         }: TestContext) => {
-            const { indexerApi } = await import("@frak-labs/client/server");
-            const { multicall } = await import("viem/actions");
-            const { demoModeStore } = await import("@/stores/demoModeStore");
-
-            vi.mocked(demoModeStore).mockImplementation((selector: any) => {
-                const state = { isDemoMode: false };
-                return selector(state);
-            });
+            queryWrapper.client.clear();
+            freshDemoModeStore
+                .getState()
+                .setDemoMode(false, queryWrapper.client);
 
             const mockApiResponse = [
                 {
@@ -283,14 +266,12 @@ describe("useGetProductFunding", () => {
     describe("error handling", () => {
         test("should handle API errors", async ({
             queryWrapper,
+            freshDemoModeStore,
         }: TestContext) => {
-            const { indexerApi } = await import("@frak-labs/client/server");
-            const { demoModeStore } = await import("@/stores/demoModeStore");
-
-            vi.mocked(demoModeStore).mockImplementation((selector: any) => {
-                const state = { isDemoMode: false };
-                return selector(state);
-            });
+            queryWrapper.client.clear();
+            freshDemoModeStore
+                .getState()
+                .setDemoMode(false, queryWrapper.client);
 
             const jsonMock = vi
                 .fn()
@@ -311,15 +292,12 @@ describe("useGetProductFunding", () => {
 
         test("should handle multicall errors", async ({
             queryWrapper,
+            freshDemoModeStore,
         }: TestContext) => {
-            const { indexerApi } = await import("@frak-labs/client/server");
-            const { multicall } = await import("viem/actions");
-            const { demoModeStore } = await import("@/stores/demoModeStore");
-
-            vi.mocked(demoModeStore).mockImplementation((selector: any) => {
-                const state = { isDemoMode: false };
-                return selector(state);
-            });
+            queryWrapper.client.clear();
+            freshDemoModeStore
+                .getState()
+                .setDemoMode(false, queryWrapper.client);
 
             const mockApiResponse = [
                 {
@@ -361,14 +339,14 @@ describe("useGetProductFunding", () => {
     describe("query key", () => {
         test("should use different query key for demo vs live mode", async ({
             queryWrapper,
+            freshDemoModeStore,
         }: TestContext) => {
-            const { demoModeStore } = await import("@/stores/demoModeStore");
+            queryWrapper.client.clear();
 
             // Test demo mode
-            vi.mocked(demoModeStore).mockImplementation((selector: any) => {
-                const state = { isDemoMode: true };
-                return selector(state);
-            });
+            freshDemoModeStore
+                .getState()
+                .setDemoMode(true, queryWrapper.client);
 
             const { result: demoResult } = renderHook(
                 () => useGetProductFunding({ productId: mockProductId }),
@@ -380,13 +358,9 @@ describe("useGetProductFunding", () => {
             });
 
             // Test live mode
-            vi.mocked(demoModeStore).mockImplementation((selector: any) => {
-                const state = { isDemoMode: false };
-                return selector(state);
-            });
-
-            const { indexerApi } = await import("@frak-labs/client/server");
-            const { multicall } = await import("viem/actions");
+            freshDemoModeStore
+                .getState()
+                .setDemoMode(false, queryWrapper.client);
 
             const jsonMock = vi.fn().mockResolvedValue([]);
             vi.mocked(indexerApi.get).mockReturnValue({
