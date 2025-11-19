@@ -19,6 +19,7 @@
         "test:coverage": "vitest --coverage"
     },
     "dependencies": {
+        "@elysiajs/eden": "^1.4.4",
         "@frak-labs/app-essentials": "workspace:*",
         "@frak-labs/client": "workspace:*",
         "@frak-labs/core-sdk": "workspace:*",
