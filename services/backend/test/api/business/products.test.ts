@@ -1,41 +1,22 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { createBusinessSessionContextMock } from "../../mock/common";
-
-const testMocks = vi.hoisted(() => ({
-    unsealDataMock: vi.fn(() => Promise.resolve(undefined)),
-}));
-
-vi.mock("iron-session", () => ({
-    unsealData: testMocks.unsealDataMock,
-}));
-
-vi.mock("../../../src/api/business/middleware/session", () => ({
-    businessSessionContext: createBusinessSessionContextMock(
-        testMocks.unsealDataMock
-    ),
-}));
-
 import { productRoutes } from "../../../src/api/business/routes/products";
 import {
+    JwtContextMock,
     dbMock,
     dnsCheckRepositoryMocks,
     mintRepositoryMocks,
     onChainRolesRepositoryMocks,
+    resetMockBusinessSession,
+    setMockBusinessSession,
 } from "../../mock/common";
 
-function setMockBusinessSession(
-    session: { wallet: `0x${string}` } | null
-): void {
-    if (session === null) {
-        testMocks.unsealDataMock.mockResolvedValue(undefined);
-    } else {
-        testMocks.unsealDataMock.mockResolvedValue(session);
-    }
-}
-
-function resetMockBusinessSession(): void {
-    testMocks.unsealDataMock.mockReset();
-    testMocks.unsealDataMock.mockResolvedValue(undefined);
+/**
+ * Helper to create authenticated request headers
+ */
+function createAuthHeaders(): HeadersInit {
+    return {
+        "x-business-auth": "mock-business-jwt-token",
+    };
 }
 
 describe("Business Product Routes API", () => {
@@ -55,6 +36,7 @@ describe("Business Product Routes API", () => {
         mintRepositoryMocks.precomputeProductId.mockClear();
         mintRepositoryMocks.isExistingProduct.mockClear();
         mintRepositoryMocks.mintProduct.mockClear();
+        JwtContextMock.business.verify.mockClear();
     });
 
     /* -------------------------------------------------------------------------- */
@@ -66,7 +48,7 @@ describe("Business Product Routes API", () => {
             // Arrange: No business session
             setMockBusinessSession(null);
 
-            // Act: Make GET request
+            // Act: Make GET request without auth header
             const response = await productRoutes.handle(
                 new Request(
                     `http://localhost/product/mint/dnsTxt?domain=${mockDomain}`
@@ -90,10 +72,13 @@ describe("Business Product Routes API", () => {
             const mockDnsTxt = "frak-business; hash=0xabc123";
             dnsCheckRepositoryMocks.getDnsTxtString.mockReturnValue(mockDnsTxt);
 
-            // Act: Make GET request
+            // Act: Make GET request with auth header
             const response = await productRoutes.handle(
                 new Request(
-                    `http://localhost/product/mint/dnsTxt?domain=${mockDomain}`
+                    `http://localhost/product/mint/dnsTxt?domain=${mockDomain}`,
+                    {
+                        headers: createAuthHeaders(),
+                    }
                 )
             );
 
@@ -116,7 +101,9 @@ describe("Business Product Routes API", () => {
 
             // Act: Make GET request without domain
             const response = await productRoutes.handle(
-                new Request("http://localhost/product/mint/dnsTxt")
+                new Request("http://localhost/product/mint/dnsTxt", {
+                    headers: createAuthHeaders(),
+                })
             );
 
             // Assert: Should return 422 validation error
@@ -164,7 +151,10 @@ describe("Business Product Routes API", () => {
             // Act: Make GET request
             const response = await productRoutes.handle(
                 new Request(
-                    `http://localhost/product/mint/verify?domain=${mockDomain}`
+                    `http://localhost/product/mint/verify?domain=${mockDomain}`,
+                    {
+                        headers: createAuthHeaders(),
+                    }
                 )
             );
 
@@ -211,7 +201,10 @@ describe("Business Product Routes API", () => {
             // Act: Make GET request with setupCode
             const response = await productRoutes.handle(
                 new Request(
-                    `http://localhost/product/mint/verify?domain=${mockDomain}&setupCode=${setupCode}`
+                    `http://localhost/product/mint/verify?domain=${mockDomain}&setupCode=${setupCode}`,
+                    {
+                        headers: createAuthHeaders(),
+                    }
                 )
             );
 
@@ -240,7 +233,10 @@ describe("Business Product Routes API", () => {
             // Act: Make GET request
             const response = await productRoutes.handle(
                 new Request(
-                    `http://localhost/product/mint/verify?domain=${mockDomain}`
+                    `http://localhost/product/mint/verify?domain=${mockDomain}`,
+                    {
+                        headers: createAuthHeaders(),
+                    }
                 )
             );
 
@@ -259,7 +255,9 @@ describe("Business Product Routes API", () => {
 
             // Act: Make GET request without domain
             const response = await productRoutes.handle(
-                new Request("http://localhost/product/mint/verify")
+                new Request("http://localhost/product/mint/verify", {
+                    headers: createAuthHeaders(),
+                })
             );
 
             // Assert: Should return 422 validation error
@@ -315,7 +313,10 @@ describe("Business Product Routes API", () => {
             const response = await productRoutes.handle(
                 new Request("http://localhost/product/mint", {
                     method: "PUT",
-                    headers: { "Content-Type": "application/json" },
+                    headers: {
+                        "Content-Type": "application/json",
+                        ...createAuthHeaders(),
+                    },
                     body: JSON.stringify(requestBody),
                 })
             );
@@ -356,11 +357,11 @@ describe("Business Product Routes API", () => {
                 interactionResult: {
                     txHash: mockTxHash,
                     interactionContract: mockInteractionContract,
-                },
+                } as any,
                 bankResult: {
                     txHash: mockTxHash,
                     bank: mockBankContract,
-                },
+                } as any,
             });
 
             const requestBody = {
@@ -374,7 +375,10 @@ describe("Business Product Routes API", () => {
             const response = await productRoutes.handle(
                 new Request("http://localhost/product/mint", {
                     method: "PUT",
-                    headers: { "Content-Type": "application/json" },
+                    headers: {
+                        "Content-Type": "application/json",
+                        ...createAuthHeaders(),
+                    },
                     body: JSON.stringify(requestBody),
                 })
             );
@@ -422,7 +426,10 @@ describe("Business Product Routes API", () => {
             const response = await productRoutes.handle(
                 new Request("http://localhost/product/mint", {
                     method: "PUT",
-                    headers: { "Content-Type": "application/json" },
+                    headers: {
+                        "Content-Type": "application/json",
+                        ...createAuthHeaders(),
+                    },
                     body: JSON.stringify(requestBody),
                 })
             );
@@ -446,7 +453,10 @@ describe("Business Product Routes API", () => {
             const response = await productRoutes.handle(
                 new Request("http://localhost/product/mint", {
                     method: "PUT",
-                    headers: { "Content-Type": "application/json" },
+                    headers: {
+                        "Content-Type": "application/json",
+                        ...createAuthHeaders(),
+                    },
                     body: JSON.stringify(requestBody),
                 })
             );
@@ -470,7 +480,10 @@ describe("Business Product Routes API", () => {
             const response = await productRoutes.handle(
                 new Request("http://localhost/product/mint", {
                     method: "PUT",
-                    headers: { "Content-Type": "application/json" },
+                    headers: {
+                        "Content-Type": "application/json",
+                        ...createAuthHeaders(),
+                    },
                     body: JSON.stringify(requestBody),
                 })
             );
@@ -511,7 +524,10 @@ describe("Business Product Routes API", () => {
             const response = await productRoutes.handle(
                 new Request("http://localhost/product/mint", {
                     method: "PUT",
-                    headers: { "Content-Type": "application/json" },
+                    headers: {
+                        "Content-Type": "application/json",
+                        ...createAuthHeaders(),
+                    },
                     body: JSON.stringify(requestBody),
                 })
             );
@@ -555,7 +571,10 @@ describe("Business Product Routes API", () => {
             const response = await productRoutes.handle(
                 new Request("http://localhost/product/mint", {
                     method: "PUT",
-                    headers: { "Content-Type": "application/json" },
+                    headers: {
+                        "Content-Type": "application/json",
+                        ...createAuthHeaders(),
+                    },
                     body: JSON.stringify(requestBody),
                 })
             );
@@ -692,7 +711,10 @@ describe("Business Product Routes API", () => {
                     `http://localhost/product/${mockProductId}/interactionsWebhook/setup`,
                     {
                         method: "POST",
-                        headers: { "Content-Type": "application/json" },
+                        headers: {
+                            "Content-Type": "application/json",
+                            ...createAuthHeaders(),
+                        },
                         body: JSON.stringify(requestBody),
                     }
                 )
@@ -740,7 +762,10 @@ describe("Business Product Routes API", () => {
                     `http://localhost/product/${mockProductId}/interactionsWebhook/setup`,
                     {
                         method: "POST",
-                        headers: { "Content-Type": "application/json" },
+                        headers: {
+                            "Content-Type": "application/json",
+                            ...createAuthHeaders(),
+                        },
                         body: JSON.stringify(requestBody),
                     }
                 )
@@ -769,7 +794,10 @@ describe("Business Product Routes API", () => {
                     `http://localhost/product/${mockProductId}/interactionsWebhook/setup`,
                     {
                         method: "POST",
-                        headers: { "Content-Type": "application/json" },
+                        headers: {
+                            "Content-Type": "application/json",
+                            ...createAuthHeaders(),
+                        },
                         body: JSON.stringify(requestBody),
                     }
                 )
@@ -794,7 +822,10 @@ describe("Business Product Routes API", () => {
                     "http://localhost/product//interactionsWebhook/setup",
                     {
                         method: "POST",
-                        headers: { "Content-Type": "application/json" },
+                        headers: {
+                            "Content-Type": "application/json",
+                            ...createAuthHeaders(),
+                        },
                         body: JSON.stringify(requestBody),
                     }
                 )
@@ -835,7 +866,10 @@ describe("Business Product Routes API", () => {
             const response = await productRoutes.handle(
                 new Request(
                     `http://localhost/product/${mockProductId}/interactionsWebhook/delete`,
-                    { method: "POST" }
+                    {
+                        method: "POST",
+                        headers: createAuthHeaders(),
+                    }
                 )
             );
 
@@ -857,7 +891,10 @@ describe("Business Product Routes API", () => {
             const response = await productRoutes.handle(
                 new Request(
                     `http://localhost/product/${mockProductId}/interactionsWebhook/delete`,
-                    { method: "POST" }
+                    {
+                        method: "POST",
+                        headers: createAuthHeaders(),
+                    }
                 )
             );
 
@@ -889,7 +926,10 @@ describe("Business Product Routes API", () => {
             const response = await productRoutes.handle(
                 new Request(
                     `http://localhost/product/${mockProductId}/interactionsWebhook/delete`,
-                    { method: "POST" }
+                    {
+                        method: "POST",
+                        headers: createAuthHeaders(),
+                    }
                 )
             );
 
@@ -1009,7 +1049,10 @@ describe("Business Product Routes API", () => {
             // Act: Make GET request
             const response = await productRoutes.handle(
                 new Request(
-                    `http://localhost/product/${mockProductId}/oracleWebhook/status`
+                    `http://localhost/product/${mockProductId}/oracleWebhook/status`,
+                    {
+                        headers: createAuthHeaders(),
+                    }
                 )
             );
 
@@ -1081,7 +1124,10 @@ describe("Business Product Routes API", () => {
                     `http://localhost/product/${mockProductId}/oracleWebhook/setup`,
                     {
                         method: "POST",
-                        headers: { "Content-Type": "application/json" },
+                        headers: {
+                            "Content-Type": "application/json",
+                            ...createAuthHeaders(),
+                        },
                         body: JSON.stringify(requestBody),
                     }
                 )
@@ -1129,7 +1175,10 @@ describe("Business Product Routes API", () => {
                     `http://localhost/product/${mockProductId}/oracleWebhook/setup`,
                     {
                         method: "POST",
-                        headers: { "Content-Type": "application/json" },
+                        headers: {
+                            "Content-Type": "application/json",
+                            ...createAuthHeaders(),
+                        },
                         body: JSON.stringify(requestBody),
                     }
                 )
@@ -1184,7 +1233,10 @@ describe("Business Product Routes API", () => {
                         `http://localhost/product/${mockProductId}/oracleWebhook/setup`,
                         {
                             method: "POST",
-                            headers: { "Content-Type": "application/json" },
+                            headers: {
+                                "Content-Type": "application/json",
+                                ...createAuthHeaders(),
+                            },
                             body: JSON.stringify(requestBody),
                         }
                     )
@@ -1210,7 +1262,10 @@ describe("Business Product Routes API", () => {
                     `http://localhost/product/${mockProductId}/oracleWebhook/setup`,
                     {
                         method: "POST",
-                        headers: { "Content-Type": "application/json" },
+                        headers: {
+                            "Content-Type": "application/json",
+                            ...createAuthHeaders(),
+                        },
                         body: JSON.stringify(requestBody),
                     }
                 )
@@ -1234,7 +1289,10 @@ describe("Business Product Routes API", () => {
                     `http://localhost/product/${mockProductId}/oracleWebhook/setup`,
                     {
                         method: "POST",
-                        headers: { "Content-Type": "application/json" },
+                        headers: {
+                            "Content-Type": "application/json",
+                            ...createAuthHeaders(),
+                        },
                         body: JSON.stringify(requestBody),
                     }
                 )
@@ -1257,7 +1315,10 @@ describe("Business Product Routes API", () => {
             const response = await productRoutes.handle(
                 new Request("http://localhost/product//oracleWebhook/setup", {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" },
+                    headers: {
+                        "Content-Type": "application/json",
+                        ...createAuthHeaders(),
+                    },
                     body: JSON.stringify(requestBody),
                 })
             );
@@ -1297,7 +1358,10 @@ describe("Business Product Routes API", () => {
             const response = await productRoutes.handle(
                 new Request(
                     `http://localhost/product/${mockProductId}/oracleWebhook/delete`,
-                    { method: "POST" }
+                    {
+                        method: "POST",
+                        headers: createAuthHeaders(),
+                    }
                 )
             );
 
@@ -1323,7 +1387,10 @@ describe("Business Product Routes API", () => {
             const response = await productRoutes.handle(
                 new Request(
                     `http://localhost/product/${mockProductId}/oracleWebhook/delete`,
-                    { method: "POST" }
+                    {
+                        method: "POST",
+                        headers: createAuthHeaders(),
+                    }
                 )
             );
 
@@ -1362,7 +1429,10 @@ describe("Business Product Routes API", () => {
             const response = await productRoutes.handle(
                 new Request(
                     `http://localhost/product/${mockProductId}/oracleWebhook/delete`,
-                    { method: "POST" }
+                    {
+                        method: "POST",
+                        headers: createAuthHeaders(),
+                    }
                 )
             );
 

@@ -1,38 +1,19 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
+import { rolesRoutes } from "../../../src/api/business/routes/roles";
 import {
-    createBusinessSessionContextMock,
+    JwtContextMock,
     onChainRolesRepositoryMocks,
+    resetMockBusinessSession,
+    setMockBusinessSession,
 } from "../../mock/common";
 
-const testMocks = vi.hoisted(() => ({
-    unsealDataMock: vi.fn(() => Promise.resolve(undefined)),
-}));
-
-vi.mock("iron-session", () => ({
-    unsealData: testMocks.unsealDataMock,
-}));
-
-vi.mock("../../../src/api/business/middleware/session", () => ({
-    businessSessionContext: createBusinessSessionContextMock(
-        testMocks.unsealDataMock
-    ),
-}));
-
-import { rolesRoutes } from "../../../src/api/business/routes/roles";
-
-function setMockBusinessSession(
-    session: { wallet: `0x${string}` } | null
-): void {
-    if (session === null) {
-        testMocks.unsealDataMock.mockResolvedValue(undefined);
-    } else {
-        testMocks.unsealDataMock.mockResolvedValue(session);
-    }
-}
-
-function resetMockBusinessSession(): void {
-    testMocks.unsealDataMock.mockReset();
-    testMocks.unsealDataMock.mockResolvedValue(undefined);
+/**
+ * Helper to create authenticated request headers
+ */
+function createAuthHeaders(): HeadersInit {
+    return {
+        "x-business-auth": "mock-business-jwt-token",
+    };
 }
 
 describe("Business Roles Routes API", () => {
@@ -45,6 +26,7 @@ describe("Business Roles Routes API", () => {
         onChainRolesRepositoryMocks.getRolesOnProduct.mockClear();
         onChainRolesRepositoryMocks.hasRolesOrAdmin.mockClear();
         resetMockBusinessSession();
+        JwtContextMock.business.verify.mockClear();
     });
 
     describe("GET /roles", () => {
@@ -52,7 +34,7 @@ describe("Business Roles Routes API", () => {
             // Arrange: No business session
             setMockBusinessSession(null);
 
-            // Act: Make GET request
+            // Act: Make GET request without auth header
             const response = await rolesRoutes.handle(
                 new Request(
                     `http://localhost/roles?productId=${mockProductId}&wallet=${mockWalletAddress}`
@@ -77,7 +59,10 @@ describe("Business Roles Routes API", () => {
             // Act: Make GET request without productId
             const response = await rolesRoutes.handle(
                 new Request(
-                    `http://localhost/roles?wallet=${mockWalletAddress}`
+                    `http://localhost/roles?wallet=${mockWalletAddress}`,
+                    {
+                        headers: createAuthHeaders(),
+                    }
                 )
             );
 
@@ -107,7 +92,12 @@ describe("Business Roles Routes API", () => {
 
             // Act: Make GET request without wallet param
             const response = await rolesRoutes.handle(
-                new Request(`http://localhost/roles?productId=${mockProductId}`)
+                new Request(
+                    `http://localhost/roles?productId=${mockProductId}`,
+                    {
+                        headers: createAuthHeaders(),
+                    }
+                )
             );
 
             // Assert: Should succeed
@@ -145,7 +135,10 @@ describe("Business Roles Routes API", () => {
             // Act: Make GET request
             const response = await rolesRoutes.handle(
                 new Request(
-                    `http://localhost/roles?productId=${mockProductId}&wallet=${mockWalletAddress}`
+                    `http://localhost/roles?productId=${mockProductId}&wallet=${mockWalletAddress}`,
+                    {
+                        headers: createAuthHeaders(),
+                    }
                 )
             );
 
@@ -188,7 +181,10 @@ describe("Business Roles Routes API", () => {
             // Act: Make GET request
             const response = await rolesRoutes.handle(
                 new Request(
-                    `http://localhost/roles?productId=${mockProductId}&wallet=${mockWalletAddress}`
+                    `http://localhost/roles?productId=${mockProductId}&wallet=${mockWalletAddress}`,
+                    {
+                        headers: createAuthHeaders(),
+                    }
                 )
             );
 
@@ -231,7 +227,10 @@ describe("Business Roles Routes API", () => {
             // Act: Make GET request
             const response = await rolesRoutes.handle(
                 new Request(
-                    `http://localhost/roles?productId=${mockProductId}&wallet=${mockWalletAddress}`
+                    `http://localhost/roles?productId=${mockProductId}&wallet=${mockWalletAddress}`,
+                    {
+                        headers: createAuthHeaders(),
+                    }
                 )
             );
 
@@ -274,7 +273,10 @@ describe("Business Roles Routes API", () => {
             // Act: Make GET request
             const response = await rolesRoutes.handle(
                 new Request(
-                    `http://localhost/roles?productId=${mockProductId}&wallet=${mockWalletAddress}`
+                    `http://localhost/roles?productId=${mockProductId}&wallet=${mockWalletAddress}`,
+                    {
+                        headers: createAuthHeaders(),
+                    }
                 )
             );
 
@@ -319,7 +321,10 @@ describe("Business Roles Routes API", () => {
             // Act: Make GET request
             const response = await rolesRoutes.handle(
                 new Request(
-                    `http://localhost/roles?productId=${mockProductId}&wallet=${mockWalletAddress}`
+                    `http://localhost/roles?productId=${mockProductId}&wallet=${mockWalletAddress}`,
+                    {
+                        headers: createAuthHeaders(),
+                    }
                 )
             );
 
@@ -352,7 +357,10 @@ describe("Business Roles Routes API", () => {
             // Act: Make GET request
             const response = await rolesRoutes.handle(
                 new Request(
-                    `http://localhost/roles?productId=${mockProductId}&wallet=${mockWalletAddress}`
+                    `http://localhost/roles?productId=${mockProductId}&wallet=${mockWalletAddress}`,
+                    {
+                        headers: createAuthHeaders(),
+                    }
                 )
             );
 
@@ -389,7 +397,10 @@ describe("Business Roles Routes API", () => {
             // Act: Make GET request with explicit wallet param
             const response = await rolesRoutes.handle(
                 new Request(
-                    `http://localhost/roles?productId=${mockProductId}&wallet=${queryWallet}`
+                    `http://localhost/roles?productId=${mockProductId}&wallet=${queryWallet}`,
+                    {
+                        headers: createAuthHeaders(),
+                    }
                 )
             );
 
@@ -421,7 +432,10 @@ describe("Business Roles Routes API", () => {
             // Act: Make GET request with large productId
             const response = await rolesRoutes.handle(
                 new Request(
-                    `http://localhost/roles?productId=${largeProductId}&wallet=${mockWalletAddress}`
+                    `http://localhost/roles?productId=${largeProductId}&wallet=${mockWalletAddress}`,
+                    {
+                        headers: createAuthHeaders(),
+                    }
                 )
             );
 
@@ -451,7 +465,10 @@ describe("Business Roles Routes API", () => {
             // Act: Make GET request
             const response = await rolesRoutes.handle(
                 new Request(
-                    `http://localhost/roles?productId=${mockProductId}&wallet=${mockWalletAddress}`
+                    `http://localhost/roles?productId=${mockProductId}&wallet=${mockWalletAddress}`,
+                    {
+                        headers: createAuthHeaders(),
+                    }
                 )
             );
 
@@ -503,7 +520,10 @@ describe("Business Roles Routes API", () => {
             // Act: Make GET request
             const response = await rolesRoutes.handle(
                 new Request(
-                    `http://localhost/roles?productId=${mockProductId}&wallet=${mockWalletAddress}`
+                    `http://localhost/roles?productId=${mockProductId}&wallet=${mockWalletAddress}`,
+                    {
+                        headers: createAuthHeaders(),
+                    }
                 )
             );
 

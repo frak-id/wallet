@@ -73,6 +73,10 @@ export const JwtContextMock = {
         sign: vi.fn(() => Promise.resolve("mock-sdk-jwt-token")),
         verify: vi.fn(() => Promise.resolve({ wallet: "0x123" })),
     },
+    business: {
+        sign: vi.fn(() => Promise.resolve("mock-business-jwt-token")),
+        verify: vi.fn(() => Promise.resolve({ wallet: "0x123" })),
+    },
 };
 
 /**
@@ -308,76 +312,48 @@ export const sessionContextMock = new Elysia({ name: "Macro.session" })
     });
 
 /* -------------------------------------------------------------------------- */
-/*                          Iron Session Mock                                 */
-/* -------------------------------------------------------------------------- */
-
-export const ironSessionMocks = {
-    unsealData: vi.fn(<T>() => Promise.resolve(undefined as T | undefined)),
-};
-
-vi.mock("iron-session", () => ({
-    unsealData: ironSessionMocks.unsealData,
-}));
-
-/* -------------------------------------------------------------------------- */
 /*                      Business Session Middleware Mock                      */
 /* -------------------------------------------------------------------------- */
 
 export const businessSessionContextMock = new Elysia({
     name: "Context.businessSession",
 })
-    .resolve(async ({ request }) => {
-        // Manually parse Cookie header to get the businessSession value
-        const cookieHeader = request.headers.get("Cookie");
-        let cookieValue = "mock-token"; // Default token for tests
-
-        if (cookieHeader) {
-            const match = cookieHeader.match(/businessSession=([^;]+)/);
-            if (match) {
-                cookieValue = match[1];
-            }
+    .guard({
+        headers: t.Object({
+            "x-business-auth": t.Optional(t.String()),
+        }),
+    })
+    .resolve(async ({ headers }) => {
+        const businessAuth = headers["x-business-auth"];
+        if (!businessAuth) {
+            return { businessSession: null };
         }
 
-        // Always call the mocked unsealData function (even without a cookie)
-        // This allows setMockBusinessSession() to work without requiring cookies
-        // biome-ignore lint/suspicious/noExplicitAny: Mock function needs flexible typing
-        const session = await (ironSessionMocks.unsealData as any)(
-            cookieValue,
-            { password: "test", ttl: 60 }
+        // biome-ignore lint/suspicious/noExplicitAny: Mock function accepts arguments at runtime
+        const session = await (JwtContextMock.business.verify as any)(
+            businessAuth
         );
-
-        return { businessSession: session };
+        return {
+            businessSession: session || null,
+        };
     })
     .macro({
-        nextAuthenticated: {
-            // biome-ignore lint/suspicious/noExplicitAny: Mock function needs flexible typing
-            beforeHandle: async ({ request, set }: any) => {
-                const cookieHeader = request.headers.get("Cookie");
-                let cookieValue: string | undefined;
-
-                if (cookieHeader) {
-                    const match = cookieHeader.match(/businessSession=([^;]+)/);
-                    if (match) {
-                        cookieValue = match[1];
-                    }
-                }
-
-                if (!cookieValue) {
-                    set.status = 401;
-                    return "Missing business auth cookie";
-                }
-
+        businessAuthenticated(_skip?: boolean) {
+            return {
                 // biome-ignore lint/suspicious/noExplicitAny: Mock function needs flexible typing
-                const session = await (ironSessionMocks.unsealData as any)(
-                    cookieValue,
-                    { password: "test", ttl: 60 }
-                );
+                beforeHandle: async ({ headers, set }: any) => {
+                    const businessAuth = headers["x-business-auth"];
+                    // biome-ignore lint/suspicious/noExplicitAny: Mock function accepts arguments at runtime
+                    const session = await (
+                        JwtContextMock.business.verify as any
+                    )(businessAuth);
 
-                if (!session) {
-                    set.status = 401;
-                    return "Missing business auth cookie";
-                }
-            },
+                    if (!session) {
+                        set.status = 401;
+                        return "Unauthorized - Invalid business token";
+                    }
+                },
+            };
         },
     })
     .as("scoped");
@@ -411,7 +387,7 @@ vi.mock("@backend-infrastructure", () => ({
 }));
 
 /* -------------------------------------------------------------------------- */
-/*                                   Webpush                                  */
+/*                      Business Session Middleware Mock                      */
 /* -------------------------------------------------------------------------- */
 
 export const webPushMocks = {
@@ -573,57 +549,6 @@ vi.mock("../../src/domain/business/context", () => ({
 }));
 
 /* -------------------------------------------------------------------------- */
-/*                  Business Session Context Mock Factory                     */
-/* -------------------------------------------------------------------------- */
-
-/**
- * Creates a business session context mock with the given unsealData mock.
- * Use this in tests via vi.hoisted() to create a mock that can be referenced in vi.mock() factories.
- */
-export function createBusinessSessionContextMock(
-    unsealDataMock: ReturnType<typeof vi.fn>
-) {
-    return new Elysia({ name: "Context.businessSession" })
-        .resolve(async ({ request }) => {
-            const cookieHeader = request.headers.get("Cookie");
-            const cookieValue =
-                cookieHeader?.match(/businessSession=([^;]+)/)?.[1] ||
-                "mock-token";
-            // biome-ignore lint/suspicious/noExplicitAny: Mock function needs flexible typing
-            const session = await (unsealDataMock as any)(cookieValue, {
-                password: "test",
-                ttl: 60,
-            });
-            return { businessSession: session };
-        })
-        .macro({
-            nextAuthenticated: {
-                // biome-ignore lint/suspicious/noExplicitAny: Mock function needs flexible typing
-                beforeHandle: async ({ request, set }: any) => {
-                    const cookieHeader = request.headers.get("Cookie");
-                    const cookieValue = cookieHeader?.match(
-                        /businessSession=([^;]+)/
-                    )?.[1];
-                    if (!cookieValue) {
-                        set.status = 401;
-                        return "Missing business auth cookie";
-                    }
-                    // biome-ignore lint/suspicious/noExplicitAny: Mock function needs flexible typing
-                    const session = await (unsealDataMock as any)(cookieValue, {
-                        password: "test",
-                        ttl: 60,
-                    });
-                    if (!session) {
-                        set.status = 401;
-                        return "Missing business auth cookie";
-                    }
-                },
-            },
-        })
-        .as("scoped");
-}
-
-/* -------------------------------------------------------------------------- */
 /*                     Helper Functions for Business Session                  */
 /* -------------------------------------------------------------------------- */
 
@@ -631,13 +556,13 @@ export function setMockBusinessSession(
     session: { wallet: `0x${string}` } | null
 ): void {
     if (session === null) {
-        ironSessionMocks.unsealData.mockResolvedValue(undefined);
+        JwtContextMock.business.verify.mockResolvedValue(null as never);
     } else {
-        ironSessionMocks.unsealData.mockResolvedValue(session);
+        JwtContextMock.business.verify.mockResolvedValue(session as never);
     }
 }
 
 export function resetMockBusinessSession(): void {
-    ironSessionMocks.unsealData.mockReset();
-    ironSessionMocks.unsealData.mockResolvedValue(undefined);
+    JwtContextMock.business.verify.mockReset();
+    JwtContextMock.business.verify.mockResolvedValue(null as never);
 }

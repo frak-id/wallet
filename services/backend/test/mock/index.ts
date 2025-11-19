@@ -3,7 +3,6 @@
  */
 
 export {
-    createBusinessSessionContextMock,
     dbMock,
     dnsCheckRepositoryMocks,
     mintRepositoryMocks,

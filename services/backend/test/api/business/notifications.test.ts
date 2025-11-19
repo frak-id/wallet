@@ -2,9 +2,20 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { sendRoutes } from "../../../src/api/business/routes/notifications/send";
 // Import mocks and routes
 import {
+    JwtContextMock,
     notificationServiceMocks,
     resetMockBusinessSession,
+    setMockBusinessSession,
 } from "../../mock/common";
+
+/**
+ * Helper to create authenticated request headers
+ */
+function createAuthHeaders(): HeadersInit {
+    return {
+        "x-business-auth": "mock-business-jwt-token",
+    };
+}
 
 describe("Business Notifications Send Route API", () => {
     beforeEach(() => {
@@ -12,6 +23,7 @@ describe("Business Notifications Send Route API", () => {
         notificationServiceMocks.cleanupExpiredTokens.mockClear();
         notificationServiceMocks.sendNotification.mockClear();
         resetMockBusinessSession();
+        JwtContextMock.business.verify.mockClear();
     });
 
     describe("POST /send", () => {
