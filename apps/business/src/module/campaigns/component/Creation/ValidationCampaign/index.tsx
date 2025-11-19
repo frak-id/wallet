@@ -1,5 +1,5 @@
 import { useSendTransactionAction } from "@frak-labs/react-sdk";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { tryit } from "radash";
 import { useMemo, useState } from "react";
@@ -27,6 +27,7 @@ import styles from "./index.module.css";
 
 export function ValidationCampaign() {
     const navigate = useNavigate();
+    const queryClient = useQueryClient();
     const campaign = campaignStore((state) => state.campaign);
     const setCampaign = campaignStore((state) => state.setCampaign);
     const campaignSuccess = campaignStore((state) => state.success);
@@ -114,11 +115,19 @@ export function ValidationCampaign() {
             if (!txHash) return null;
             // We are waiting for the block with the tx hash to have at least 32 confirmations,
             //  it will leave the time for the indexer to process it + the time for the block to be finalised
-            return await waitForTransactionReceipt(viemClient, {
+            const receipt = await waitForTransactionReceipt(viemClient, {
                 hash: txHash,
                 confirmations: 32,
                 retryCount: 32,
             });
+
+            // Invalidate campaigns list to show the newly created campaign
+            await queryClient.invalidateQueries({
+                queryKey: ["campaigns"],
+                exact: false,
+            });
+
+            return receipt;
         },
     });
 
