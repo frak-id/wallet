@@ -10,6 +10,10 @@ import { useAuthStore } from "@/stores/authStore";
 
 export const Route = createFileRoute("/_restricted/dashboard")({
     loader: () => {
+        // Skip loader during SSR - auth state is only available on client
+        if (typeof window === "undefined") {
+            return;
+        }
         const isDemoMode = useAuthStore.getState().token === "demo-token";
         return queryClient.ensureQueryData(myProductsQueryOptions(isDemoMode));
     },

@@ -9,6 +9,16 @@ import { useAuthStore } from "@/stores/authStore";
  */
 export const authMiddleware = createMiddleware({ type: "function" })
     .client(async ({ next }) => {
+        // During SSR, the client middleware shouldn't run, but if it does,
+        // we return null token which will be handled by the server middleware
+        if (typeof window === "undefined") {
+            return next({
+                sendContext: {
+                    token: null as string | null,
+                },
+            });
+        }
+
         // Get the token from stores on the client
         const authState = useAuthStore.getState();
         const token = authState.token;
@@ -21,7 +31,7 @@ export const authMiddleware = createMiddleware({ type: "function" })
         });
     })
     .server(async ({ next, context }) => {
-        const { token } = context;
+        const token = context?.token;
 
         // Validate token is present
         if (!token) {
