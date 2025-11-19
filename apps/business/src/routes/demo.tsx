@@ -1,5 +1,5 @@
 import { isRunningInProd } from "@frak-labs/app-essentials";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import type { Address } from "viem";
 import { useAuthStore } from "@/stores/authStore";
@@ -16,6 +16,7 @@ export const Route = createFileRoute("/demo")({
 
 function DemoActivation() {
     const [error, setError] = useState<string | null>(null);
+    const navigate = useNavigate();
 
     useEffect(() => {
         async function activateDemo() {
@@ -30,10 +31,7 @@ function DemoActivation() {
                 const store = useAuthStore.getState();
                 store.setAuth(demoToken, demoWallet, expiresAt);
 
-                // Give browser time to process state changes before redirect
-                setTimeout(() => {
-                    window.location.href = "/dashboard";
-                }, 100);
+                await navigate({ to: "/dashboard" });
             } catch (err) {
                 setError(
                     err instanceof Error
@@ -44,7 +42,7 @@ function DemoActivation() {
         }
 
         activateDemo();
-    }, []);
+    }, [navigate]);
 
     if (error) {
         return (

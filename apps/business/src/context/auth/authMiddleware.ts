@@ -9,19 +9,10 @@ import { useAuthStore } from "@/stores/authStore";
  */
 export const authMiddleware = createMiddleware({ type: "function" })
     .client(async ({ next }) => {
-        // During SSR, the client middleware shouldn't run, but if it does,
-        // we return null token which will be handled by the server middleware
-        if (typeof window === "undefined") {
-            return next({
-                sendContext: {
-                    token: null as string | null,
-                },
-            });
-        }
-
         // Get the token from stores on the client
+        // During SSR, this will be undefined/null which is fine
         const authState = useAuthStore.getState();
-        const token = authState.token;
+        const token = authState.token ?? null;
 
         // Send it to the server via context
         return next({
@@ -33,12 +24,7 @@ export const authMiddleware = createMiddleware({ type: "function" })
     .server(async ({ next, context }) => {
         const token = context?.token;
 
-        // Validate token is present
-        if (!token) {
-            throw new Error("No authenticated wallet found");
-        }
-
-        // Check for demo token
+        // Check for demo token first (before validating token presence)
         if (token === "demo-token") {
             return next({
                 context: {
@@ -46,6 +32,11 @@ export const authMiddleware = createMiddleware({ type: "function" })
                     isDemoMode: true,
                 },
             });
+        }
+
+        // Validate token is present
+        if (!token) {
+            throw new Error("No authenticated wallet found");
         }
 
         // Regular token parsing
