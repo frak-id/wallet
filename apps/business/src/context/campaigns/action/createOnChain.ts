@@ -20,7 +20,7 @@ import {
     parseUnits,
 } from "viem";
 import { simulateContract } from "viem/actions";
-import { getSession } from "@/context/auth/session";
+import { authMiddleware } from "@/context/auth/authMiddleware";
 import { viemClient } from "@/context/blockchain/provider";
 import { getBankTokenInfoInternal } from "@/context/campaigns/action/getBankInfo";
 import { getCapPeriod } from "@/context/campaigns/utils/capPeriods";
@@ -36,11 +36,13 @@ import type { Campaign } from "@/types/Campaign";
  * Function to create a new campaign
  * @param campaign
  */
-async function getCreationDataInternal(campaign: Campaign) {
-    const session = await getSession();
-    if (!session) {
-        throw new Error("No current session found");
-    }
+async function getCreationDataInternal({
+    campaign,
+    wallet,
+}: {
+    campaign: Campaign;
+    wallet: Address;
+}) {
     if (!campaign.productId) {
         throw new Error("Product id is required");
     }
@@ -115,7 +117,7 @@ async function getCreationDataInternal(campaign: Campaign) {
     const { result: determinedCampaignAddress } = await simulateContract(
         viemClient,
         {
-            account: session.wallet,
+            account: wallet,
             address: addresses.productInteractionManager,
             abi: productInteractionManagerAbi,
             functionName: "deployCampaign",
@@ -495,7 +497,9 @@ function computeRangeTriggerReward(
  * Server function to get campaign creation data
  */
 export const getCreationData = createServerFn({ method: "POST" })
+    .middleware([authMiddleware])
     .inputValidator((input: { campaign: Campaign }) => input)
-    .handler(async ({ data }) => {
-        return getCreationDataInternal(data.campaign);
+    .handler(async ({ data, context }) => {
+        const { wallet } = context;
+        return getCreationDataInternal({ campaign: data.campaign, wallet });
     });

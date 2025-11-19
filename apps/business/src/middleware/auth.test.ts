@@ -13,8 +13,16 @@ vi.mock("@tanstack/react-router", () => ({
     }),
 }));
 
-vi.mock("@/context/auth/session", () => ({
-    getSession: vi.fn(),
+vi.mock("@/stores/authStore", () => ({
+    useAuthStore: {
+        getState: vi.fn(),
+    },
+}));
+
+vi.mock("@/stores/demoModeStore", () => ({
+    demoModeStore: {
+        getState: vi.fn(),
+    },
 }));
 
 describe("middleware/auth", () => {
@@ -22,23 +30,51 @@ describe("middleware/auth", () => {
         test("should return session when user is authenticated", async ({
             mockAuthSession,
         }: TestContext) => {
-            const { getSession } = await import("@/context/auth/session");
+            const { useAuthStore } = await import("@/stores/authStore");
+            const { demoModeStore } = await import("@/stores/demoModeStore");
             const { requireAuth } = await import("./auth");
 
-            vi.mocked(getSession).mockResolvedValue(mockAuthSession);
+            vi.mocked(useAuthStore.getState).mockReturnValue({
+                isAuthenticated: () => true,
+                wallet: mockAuthSession.wallet,
+                token: "mock-token",
+                expiresAt: Date.now() + 1000000,
+                setAuth: vi.fn(),
+                clearAuth: vi.fn(),
+            });
+
+            vi.mocked(demoModeStore.getState).mockReturnValue({
+                isDemoMode: false,
+                setDemoMode: vi.fn(),
+            });
 
             const result = await requireAuth({
                 location: { href: "/dashboard" },
             });
 
-            expect(result).toEqual({ session: mockAuthSession });
+            expect(result).toEqual({
+                session: { wallet: mockAuthSession.wallet },
+            });
         });
 
-        test("should redirect to login when user is not authenticated", async () => {
-            const { getSession } = await import("@/context/auth/session");
+        test("should redirect to login when user is not authenticated and not in demo mode", async () => {
+            const { useAuthStore } = await import("@/stores/authStore");
+            const { demoModeStore } = await import("@/stores/demoModeStore");
             const { requireAuth } = await import("./auth");
 
-            vi.mocked(getSession).mockResolvedValue(null);
+            vi.mocked(useAuthStore.getState).mockReturnValue({
+                isAuthenticated: () => false,
+                wallet: null,
+                token: null,
+                expiresAt: null,
+                setAuth: vi.fn(),
+                clearAuth: vi.fn(),
+            });
+
+            vi.mocked(demoModeStore.getState).mockReturnValue({
+                isDemoMode: false,
+                setDemoMode: vi.fn(),
+            });
 
             await expect(
                 requireAuth({
@@ -50,10 +86,23 @@ describe("middleware/auth", () => {
         });
 
         test("should preserve redirect URL in search params", async () => {
-            const { getSession } = await import("@/context/auth/session");
+            const { useAuthStore } = await import("@/stores/authStore");
+            const { demoModeStore } = await import("@/stores/demoModeStore");
             const { requireAuth } = await import("./auth");
 
-            vi.mocked(getSession).mockResolvedValue(null);
+            vi.mocked(useAuthStore.getState).mockReturnValue({
+                isAuthenticated: () => false,
+                wallet: null,
+                token: null,
+                expiresAt: null,
+                setAuth: vi.fn(),
+                clearAuth: vi.fn(),
+            });
+
+            vi.mocked(demoModeStore.getState).mockReturnValue({
+                isDemoMode: false,
+                setDemoMode: vi.fn(),
+            });
 
             try {
                 await requireAuth({
@@ -63,14 +112,51 @@ describe("middleware/auth", () => {
                 expect(String(error)).toContain("/protected/page");
             }
         });
+
+        test("should allow access in demo mode even without authentication", async ({
+            mockAuthSession,
+        }: TestContext) => {
+            const { useAuthStore } = await import("@/stores/authStore");
+            const { demoModeStore } = await import("@/stores/demoModeStore");
+            const { requireAuth } = await import("./auth");
+
+            vi.mocked(useAuthStore.getState).mockReturnValue({
+                isAuthenticated: () => false,
+                wallet: mockAuthSession.wallet,
+                token: null,
+                expiresAt: null,
+                setAuth: vi.fn(),
+                clearAuth: vi.fn(),
+            });
+
+            vi.mocked(demoModeStore.getState).mockReturnValue({
+                isDemoMode: true,
+                setDemoMode: vi.fn(),
+            });
+
+            const result = await requireAuth({
+                location: { href: "/dashboard" },
+            });
+
+            expect(result).toEqual({
+                session: { wallet: mockAuthSession.wallet },
+            });
+        });
     });
 
     describe("redirectIfAuthenticated", () => {
         test("should do nothing when user is not authenticated", async () => {
-            const { getSession } = await import("@/context/auth/session");
+            const { useAuthStore } = await import("@/stores/authStore");
             const { redirectIfAuthenticated } = await import("./auth");
 
-            vi.mocked(getSession).mockResolvedValue(null);
+            vi.mocked(useAuthStore.getState).mockReturnValue({
+                isAuthenticated: () => false,
+                wallet: null,
+                token: null,
+                expiresAt: null,
+                setAuth: vi.fn(),
+                clearAuth: vi.fn(),
+            });
 
             await expect(redirectIfAuthenticated()).resolves.toBeUndefined();
         });
@@ -78,10 +164,17 @@ describe("middleware/auth", () => {
         test("should redirect to dashboard when user is authenticated", async ({
             mockAuthSession,
         }: TestContext) => {
-            const { getSession } = await import("@/context/auth/session");
+            const { useAuthStore } = await import("@/stores/authStore");
             const { redirectIfAuthenticated } = await import("./auth");
 
-            vi.mocked(getSession).mockResolvedValue(mockAuthSession);
+            vi.mocked(useAuthStore.getState).mockReturnValue({
+                isAuthenticated: () => true,
+                wallet: mockAuthSession.wallet,
+                token: "mock-token",
+                expiresAt: Date.now() + 1000000,
+                setAuth: vi.fn(),
+                clearAuth: vi.fn(),
+            });
 
             await expect(redirectIfAuthenticated()).rejects.toThrow(
                 'REDIRECT:{"to":"/dashboard"}'

@@ -1,9 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { type Address, type Hex, toHex } from "viem";
 import { indexerApi } from "@/context/api/indexerApi";
-import { getSafeSession } from "@/context/auth/session";
+import { authMiddleware } from "@/context/auth/authMiddleware";
 import { getMyProductsMock } from "@/context/product/action/mock";
-import { isDemoModeActive } from "@/module/common/utils/isDemoMode";
 
 type ApiResult = {
     id: string; // bigint
@@ -55,14 +54,18 @@ async function getProducts({ wallet }: { wallet: Address }) {
 /**
  * Get the products for the current user
  */
-export const getMyProducts = createServerFn({ method: "GET" }).handler(
-    async () => {
+export const getMyProducts = createServerFn({ method: "GET" })
+    .middleware([authMiddleware])
+    .handler(async ({ context }) => {
+        const { wallet, isDemoMode } = context;
+
         // Check if demo mode is active
-        if (await isDemoModeActive()) {
+        if (isDemoMode) {
             return getMyProductsMock();
         }
 
-        const session = await getSafeSession();
-        return getProducts({ wallet: session.wallet });
-    }
-);
+        if (!wallet) {
+            throw new Error("No active session");
+        }
+        return getProducts({ wallet });
+    });

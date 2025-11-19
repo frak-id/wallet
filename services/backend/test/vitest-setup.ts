@@ -10,6 +10,7 @@
  */
 process.env.JWT_SECRET = "test-jwt-secret-for-vitest-testing";
 process.env.JWT_SDK_SECRET = "test-jwt-sdk-secret-for-vitest-testing";
+process.env.JWT_BUSINESS_SECRET = "test-jwt-business-secret-for-vitest-testing";
 process.env.PRODUCT_SETUP_CODE_SALT = "test-salt";
 process.env.MASTER_KEY_SECRET = JSON.stringify({ masterPrivateKey: "123456" });
 

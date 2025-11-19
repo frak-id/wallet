@@ -9,25 +9,26 @@ import { createServerFn } from "@tanstack/react-start";
 import { ObjectId } from "mongodb";
 import { type Address, toHex } from "viem";
 import { multicall, readContract } from "viem/actions";
-import { getSession } from "@/context/auth/session";
+import { authMiddleware } from "@/context/auth/authMiddleware";
 import { viemClient } from "@/context/blockchain/provider";
 import {
     getCampaignDetailsMock,
     getOnChainCampaignsDetailsMock,
 } from "@/context/campaigns/action/mock";
 import { getCampaignRepository } from "@/context/campaigns/repository/CampaignRepository";
-import { isDemoModeActive } from "@/module/common/utils/isDemoMode";
 
 /**
  * Fetch the campaign details from mongodb
  */
 async function getCampaignDetailsInternal({
     campaignId,
+    isDemoMode,
 }: {
     campaignId: string;
+    isDemoMode: boolean;
 }) {
     // Check if demo mode is active
-    if (await isDemoModeActive()) {
+    if (isDemoMode) {
         return getCampaignDetailsMock({ campaignId });
     }
 
@@ -53,17 +54,16 @@ async function getCampaignDetailsInternal({
  */
 async function getOnChainCampaignsDetailsInternal({
     campaignAddress,
+    wallet,
+    isDemoMode,
 }: {
     campaignAddress: Address;
+    wallet: Address;
+    isDemoMode: boolean;
 }) {
     // Check if demo mode is active
-    if (await isDemoModeActive()) {
+    if (isDemoMode) {
         return getOnChainCampaignsDetailsMock({ campaignAddress });
-    }
-
-    const session = await getSession();
-    if (!session) {
-        throw new Error("No current session found");
     }
 
     // Get the campaign product id
@@ -106,11 +106,7 @@ async function getOnChainCampaignsDetailsInternal({
                 abi: productAdministratorRegistryAbi,
                 address: addresses.productAdministratorRegistry,
                 functionName: "hasAllRolesOrOwner",
-                args: [
-                    BigInt(productId),
-                    session.wallet,
-                    productRoles.campaignManager,
-                ],
+                args: [BigInt(productId), wallet, productRoles.campaignManager],
             } as const,
             {
                 abi: productAdministratorRegistryAbi,
@@ -118,7 +114,7 @@ async function getOnChainCampaignsDetailsInternal({
                 functionName: "hasAllRolesOrOwner",
                 args: [
                     BigInt(productId),
-                    session.wallet,
+                    wallet,
                     productRoles.productAdministrator,
                 ],
             } as const,
@@ -147,18 +143,27 @@ async function getOnChainCampaignsDetailsInternal({
  * Server function to fetch campaign details
  */
 export const getCampaignDetails = createServerFn({ method: "GET" })
+    .middleware([authMiddleware])
     .inputValidator((input: { campaignId: string }) => input)
-    .handler(async ({ data }) => {
-        return getCampaignDetailsInternal({ campaignId: data.campaignId });
+    .handler(async ({ data, context }) => {
+        const { isDemoMode } = context;
+        return getCampaignDetailsInternal({
+            campaignId: data.campaignId,
+            isDemoMode,
+        });
     });
 
 /**
  * Server function to get on-chain campaign details
  */
 export const getOnChainCampaignsDetails = createServerFn({ method: "GET" })
+    .middleware([authMiddleware])
     .inputValidator((input: { campaignAddress: Address }) => input)
-    .handler(async ({ data }) => {
+    .handler(async ({ data, context }) => {
+        const { wallet, isDemoMode } = context;
         return getOnChainCampaignsDetailsInternal({
             campaignAddress: data.campaignAddress,
+            wallet,
+            isDemoMode,
         });
     });

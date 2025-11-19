@@ -1,7 +1,9 @@
 import { isRunningInProd } from "@frak-labs/app-essentials";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { createDemoSession } from "@/context/auth/demoSession";
+import type { Address } from "viem";
+import { useAuthStore } from "@/stores/authStore";
+import { demoModeStore } from "@/stores/demoModeStore";
 
 export const Route = createFileRoute("/demo")({
     beforeLoad: () => {
@@ -19,25 +21,24 @@ function DemoActivation() {
     useEffect(() => {
         async function activateDemo() {
             try {
-                // Create demo session with server function
-                await createDemoSession();
+                // Create a mock demo session with a fake wallet address
+                const demoWallet =
+                    "0x0000000000000000000000000000000000000001" as Address;
+                const demoToken = "demo-mode-token";
+                const expiresAt = Date.now() + 7 * 24 * 60 * 60 * 1000; // 1 week
 
-                // Set demo mode in localStorage using Zustand persist format
-                const demoModeState = {
-                    state: {
-                        isDemoMode: true,
-                    },
-                    version: 0,
-                };
-                localStorage.setItem(
-                    "business_demoMode",
-                    JSON.stringify(demoModeState)
-                );
+                // Set auth in store
+                useAuthStore
+                    .getState()
+                    .setAuth(demoToken, demoWallet, expiresAt);
 
-                // Give browser time to process cookies and localStorage before redirect
+                // Set demo mode using the store (this will sync to cookie automatically)
+                demoModeStore.getState().setDemoMode(true);
+
+                // Give browser time to process state changes before redirect
                 setTimeout(() => {
                     window.location.href = "/dashboard";
-                }, 500);
+                }, 100);
             } catch (err) {
                 setError(
                     err instanceof Error

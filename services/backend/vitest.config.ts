@@ -49,6 +49,8 @@ export default mergeConfig(
             env: {
                 JWT_SECRET: "test-jwt-secret-for-vitest-testing",
                 JWT_SDK_SECRET: "test-jwt-sdk-secret-for-vitest-testing",
+                JWT_BUSINESS_SECRET:
+                    "test-jwt-business-secret-for-vitest-testing",
             },
 
             // Setup files - backend-specific mocks

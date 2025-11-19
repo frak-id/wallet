@@ -1,11 +1,11 @@
 import { useSiweAuthenticate, useWalletStatus } from "@frak-labs/react-sdk";
 import { Button } from "@frak-labs/ui/component/Button";
 import { Spinner } from "@frak-labs/ui/component/Spinner";
-import { useQuery } from "@tanstack/react-query";
 import { type ReactNode, useMemo } from "react";
-import { getSession, setSession } from "@/context/auth/session";
+import { authenticatedBackendApi } from "@/context/api/backendClient";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
+import { useAuthStore } from "@/stores/authStore";
 import styles from "../Mint/index.module.css";
 
 /**
@@ -23,37 +23,46 @@ export function AuthenticationGated({
         refetch: refetchWalletStatus,
         isLoading: isLoadingWalletStatus,
     } = useWalletStatus();
-    const {
-        data: session,
-        refetch: refetchSession,
-        isLoading: isLoadingSession,
-    } = useQuery({
-        queryKey: ["session"],
-        queryFn: async () => getSession(),
-    });
+    const isAuthenticatedInStore = useAuthStore((state) =>
+        state.isAuthenticated()
+    );
 
     const { mutate: authenticate, isPending } = useSiweAuthenticate({
         mutations: {
             onSuccess: async (data) => {
-                // Register the session
-                await setSession({ data });
+                // Call backend to exchange SIWE for JWT
+                const response = await authenticatedBackendApi.auth.login.post({
+                    message: data.message,
+                    signature: data.signature,
+                });
 
-                // Refresh the wallet status and session
-                await Promise.allSettled([
-                    refetchWalletStatus(),
-                    refetchSession(),
-                ]);
+                if (response.error) {
+                    console.error("Login failed:", response.error);
+                    return;
+                }
+
+                // Store token in Zustand
+                useAuthStore
+                    .getState()
+                    .setAuth(
+                        response.data.token,
+                        response.data.wallet,
+                        response.data.expiresAt
+                    );
+
+                // Refresh the wallet status
+                await refetchWalletStatus();
             },
         },
     });
 
     const isAuthenticated = useMemo(() => {
-        return walletStatus?.key === "connected" && session;
-    }, [walletStatus, session]);
+        return walletStatus?.key === "connected" && isAuthenticatedInStore;
+    }, [walletStatus, isAuthenticatedInStore]);
 
     const isLoading = useMemo(() => {
-        return isLoadingWalletStatus || isLoadingSession || isPending;
-    }, [isLoadingWalletStatus, isLoadingSession, isPending]);
+        return isLoadingWalletStatus || isPending;
+    }, [isLoadingWalletStatus, isPending]);
 
     if (isLoading || walletStatus === undefined) {
         return (

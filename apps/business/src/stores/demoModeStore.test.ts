@@ -27,23 +27,17 @@ describe("demoModeStore", () => {
             expect(freshDemoModeStore.getState().isDemoMode).toBe(true);
         });
 
-        test("should sync to cookies", ({
+        test("should NOT sync to cookies (demo mode passed via context now)", ({
             freshDemoModeStore,
         }: TestContext) => {
+            // Clear any existing cookies
+            document.cookie =
+                "business_demoMode=; path=/; max-age=0; SameSite=Lax";
+
             freshDemoModeStore.getState().setDemoMode(true);
 
-            // Check cookie was set
-            expect(document.cookie).toContain("business_demoMode=true");
-        });
-
-        test("should update cookie when toggling demo mode", ({
-            freshDemoModeStore,
-        }: TestContext) => {
-            freshDemoModeStore.getState().setDemoMode(true);
-            expect(document.cookie).toContain("business_demoMode=true");
-
-            freshDemoModeStore.getState().setDemoMode(false);
-            expect(document.cookie).toContain("business_demoMode=false");
+            // Cookie should NOT be set (demo mode is now passed via authMiddleware context)
+            expect(document.cookie).not.toContain("business_demoMode=true");
         });
 
         test("should persist demo mode state", ({

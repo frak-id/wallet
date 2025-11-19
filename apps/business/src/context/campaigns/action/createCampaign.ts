@@ -1,9 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
 import { ObjectId } from "mongodb";
 import { first } from "radash";
-import { type Hex, parseAbi, parseEventLogs } from "viem";
+import { type Address, type Hex, parseAbi, parseEventLogs } from "viem";
 import { getTransactionReceipt } from "viem/actions";
-import { getSession } from "@/context/auth/session";
+import { authMiddleware } from "@/context/auth/authMiddleware";
 import { viemClient } from "@/context/blockchain/provider";
 import type { DraftCampaignDocument } from "@/context/campaigns/dto/CampaignDocument";
 import { getCampaignRepository } from "@/context/campaigns/repository/CampaignRepository";
@@ -13,18 +13,17 @@ import type { Campaign } from "@/types/Campaign";
  * Save a campaign draft
  * @param campaign
  */
-async function saveCampaignDraftInternal(
-    campaign: Partial<Campaign>
-): Promise<{ id?: string }> {
-    const session = await getSession();
-    if (!session) {
-        throw new Error("No current session found");
-    }
-
+async function saveCampaignDraftInternal({
+    campaign,
+    wallet,
+}: {
+    campaign: Partial<Campaign>;
+    wallet: Address;
+}): Promise<{ id?: string }> {
     // Build the partial document
     const draftDocument: DraftCampaignDocument = {
         ...campaign,
-        creator: session.wallet,
+        creator: wallet,
         state: {
             key: "draft",
         },
@@ -92,15 +91,18 @@ async function updateCampaignStateInternal({
  * Server function to save a campaign draft
  */
 export const saveCampaignDraft = createServerFn({ method: "POST" })
+    .middleware([authMiddleware])
     .inputValidator((input: { campaign: Partial<Campaign> }) => input)
-    .handler(async ({ data }) => {
-        return saveCampaignDraftInternal(data.campaign);
+    .handler(async ({ data, context }) => {
+        const { wallet } = context;
+        return saveCampaignDraftInternal({ campaign: data.campaign, wallet });
     });
 
 /**
  * Server function to update campaign state
  */
 export const updateCampaignState = createServerFn({ method: "POST" })
+    .middleware([authMiddleware])
     .inputValidator((input: { campaignId: string; txHash?: Hex }) => input)
     .handler(async ({ data }) => {
         return updateCampaignStateInternal({

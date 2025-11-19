@@ -2,12 +2,12 @@ import { useWalletStatus } from "@frak-labs/react-sdk";
 import { Button } from "@frak-labs/ui/component/Button";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { deleteSession } from "@/context/auth/session";
 import { useDemoMode } from "@/module/common/atoms/demoMode";
 import { Head } from "@/module/common/component/Head";
 import { Panel } from "@/module/common/component/Panel";
 import { DemoModeSwitch } from "@/module/settings/DemoModeSwitch";
 import { SelectCurrency } from "@/module/settings/SelectCurrency";
+import { useAuthStore } from "@/stores/authStore";
 import styles from "./settings.module.css";
 
 export const Route = createFileRoute("/_restricted/settings")({
@@ -59,10 +59,9 @@ function Settings() {
                         if (isDemoMode) {
                             setDemoMode(false);
                         }
-                        // Delete session and redirect to login
-                        deleteSession().then(() => {
-                            navigate({ to: "/login" });
-                        });
+                        // Clear auth and redirect to login
+                        useAuthStore.getState().clearAuth();
+                        navigate({ to: "/login" });
                     }}
                 >
                     {isHydrated && isDemoMode ? "Exit Demo Mode" : "Logout"}

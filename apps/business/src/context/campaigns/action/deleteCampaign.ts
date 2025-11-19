@@ -6,7 +6,7 @@ import {
 import { createServerFn } from "@tanstack/react-start";
 import { ObjectId } from "mongodb";
 import { type Address, encodeFunctionData, isAddressEqual } from "viem";
-import { getSession } from "@/context/auth/session";
+import { authMiddleware } from "@/context/auth/authMiddleware";
 import { getAttachedCampaigns } from "@/context/campaigns/action/getAttachedCampaigns";
 import { getCampaignRepository } from "@/context/campaigns/repository/CampaignRepository";
 import { getRolesOnProduct } from "@/context/product/action/roles";
@@ -16,11 +16,13 @@ import { getRolesOnProduct } from "@/context/product/action/roles";
  * @param campaignId
  * @param string
  */
-async function deleteCampaignInternal({ campaignId }: { campaignId: string }) {
-    const session = await getSession();
-    if (!session) {
-        throw new Error("No current session found");
-    }
+async function deleteCampaignInternal({
+    campaignId,
+    wallet,
+}: {
+    campaignId: string;
+    wallet: Address;
+}) {
     const campaignRepository = await getCampaignRepository();
     const id = ObjectId.createFromHexString(campaignId);
 
@@ -36,7 +38,7 @@ async function deleteCampaignInternal({ campaignId }: { campaignId: string }) {
     });
     const isAllowed =
         (roles?.isCampaignManager ?? false) ||
-        isAddressEqual(campaign.creator, session.wallet);
+        isAddressEqual(campaign.creator, wallet);
     if (!isAllowed) {
         throw new Error("You can only delete your own campaigns");
     }
@@ -101,7 +103,9 @@ async function deleteCampaignInternal({ campaignId }: { campaignId: string }) {
  * Server function to delete a campaign
  */
 export const deleteCampaign = createServerFn({ method: "POST" })
+    .middleware([authMiddleware])
     .inputValidator((input: { campaignId: string }) => input)
-    .handler(async ({ data }) => {
-        return deleteCampaignInternal({ campaignId: data.campaignId });
+    .handler(async ({ data, context }) => {
+        const { wallet } = context;
+        return deleteCampaignInternal({ campaignId: data.campaignId, wallet });
     });

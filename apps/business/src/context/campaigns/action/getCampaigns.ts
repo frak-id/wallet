@@ -9,11 +9,10 @@ import { all, sift, unique } from "radash";
 import { type Address, getAddress, isAddress, isAddressEqual } from "viem";
 import { multicall } from "viem/actions";
 import { indexerApi } from "@/context/api/indexerApi";
-import { getSession } from "@/context/auth/session";
+import { authMiddleware } from "@/context/auth/authMiddleware";
 import { viemClient } from "@/context/blockchain/provider";
 import { getMyCampaignsMock } from "@/context/campaigns/action/mock";
 import { getCampaignRepository } from "@/context/campaigns/repository/CampaignRepository";
-import { isDemoModeActive } from "@/module/common/utils/isDemoMode";
 import type { CampaignWithState } from "@/types/Campaign";
 
 type ApiResult = {
@@ -31,28 +30,28 @@ type ApiResult = {
 /**
  * Get the current user campaigns
  */
-async function getMyCampaignsInternal(): Promise<CampaignWithState[]> {
+async function getMyCampaignsInternal({
+    wallet,
+    isDemoMode,
+}: {
+    wallet: Address;
+    isDemoMode: boolean;
+}): Promise<CampaignWithState[]> {
     // Check if demo mode is active
-    if (await isDemoModeActive()) {
+    if (isDemoMode) {
         return getMyCampaignsMock();
-    }
-
-    const session = await getSession();
-    if (!session) {
-        throw new Error("No current session found");
     }
 
     // Perform the request to our api, and fallback to empty array
     const blockchainCampaigns =
-        (await indexerApi
-            .get(`admin/${session.wallet}/campaigns`)
-            .json<ApiResult>()) ?? [];
+        (await indexerApi.get(`admin/${wallet}/campaigns`).json<ApiResult>()) ??
+        [];
 
     // Find the campaigns in the database
     const repository = await getCampaignRepository();
     const campaignDocuments = await repository.findByAddressesOrCreator({
         addresses: blockchainCampaigns.map((campaign) => campaign.id),
-        creator: session.wallet,
+        creator: wallet,
     });
 
     // Create the state of unique addresses we will fetch
@@ -98,16 +97,13 @@ async function getMyCampaignsInternal(): Promise<CampaignWithState[]> {
     // Fetch the onchain state for each campaign
     const onChainStates = await getOnChainStateForCampaigns({
         campaignProductIds,
-        wallet: session.wallet,
+        wallet: wallet,
     });
 
     // Map all of that to campaign with state object
     return campaignDocuments.map((campaign) => {
         // Build initial campaign based on off-chain data
-        const isOffchainCreator = isAddressEqual(
-            campaign.creator,
-            session.wallet
-        );
+        const isOffchainCreator = isAddressEqual(campaign.creator, wallet);
         const mappedCampaign = {
             ...campaign,
             _id: campaign._id.toHexString(),
@@ -255,8 +251,9 @@ async function getOnChainStateForCampaigns({
 /**
  * Server function to get the current user campaigns
  */
-export const getMyCampaigns = createServerFn({ method: "GET" }).handler(
-    async () => {
-        return getMyCampaignsInternal();
-    }
-);
+export const getMyCampaigns = createServerFn({ method: "GET" })
+    .middleware([authMiddleware])
+    .handler(async ({ context }) => {
+        const { wallet, isDemoMode } = context;
+        return getMyCampaignsInternal({ wallet, isDemoMode });
+    });

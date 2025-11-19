@@ -1,11 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
 import { type Address, formatUnits, getAddress, isAddressEqual } from "viem";
 import { indexerApi } from "@/context/api/indexerApi";
-import { getSession } from "@/context/auth/session";
+import { authMiddleware } from "@/context/auth/authMiddleware";
 import { getBankTokenInfoInternal } from "@/context/campaigns/action/getBankInfo";
 import { getMyCampaignsStatsMock } from "@/context/campaigns/action/mock";
 import { getCampaignRepository } from "@/context/campaigns/repository/CampaignRepository";
-import { isDemoModeActive } from "@/module/common/utils/isDemoMode";
 import type { Goal } from "@/types/Campaign";
 
 type CampaignStats = {
@@ -53,20 +52,21 @@ function mapGoalToEventType(goal?: Goal | ""): string {
 /**
  * Get the current user campaigns stats
  */
-async function getMyCampaignsStatsInternal() {
+async function getMyCampaignsStatsInternal({
+    wallet,
+    isDemoMode,
+}: {
+    wallet: Address;
+    isDemoMode: boolean;
+}) {
     // Check if demo mode is active
-    if (await isDemoModeActive()) {
+    if (isDemoMode) {
         return getMyCampaignsStatsMock();
-    }
-
-    const session = await getSession();
-    if (!session) {
-        throw new Error("No current session found");
     }
 
     // Perform the request to our api
     const result = await indexerApi
-        .get(`admin/${session.wallet}/campaignsStats`)
+        .get(`admin/${wallet}/campaignsStats`)
         .json<ApiResult>();
 
     if (!result.stats) {
@@ -178,8 +178,9 @@ async function getMyCampaignsStatsInternal() {
 /**
  * Server function to get campaign stats
  */
-export const getMyCampaignsStats = createServerFn({ method: "GET" }).handler(
-    async () => {
-        return getMyCampaignsStatsInternal();
-    }
-);
+export const getMyCampaignsStats = createServerFn({ method: "GET" })
+    .middleware([authMiddleware])
+    .handler(async ({ context }) => {
+        const { wallet, isDemoMode } = context;
+        return getMyCampaignsStatsInternal({ wallet, isDemoMode });
+    });

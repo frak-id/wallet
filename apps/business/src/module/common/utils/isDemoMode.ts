@@ -1,13 +1,24 @@
-import { getRequestHeader } from "@tanstack/react-start/server";
-
 /**
  * Server-side utility to check if demo mode is active
- * Checks cookies synced from client-side localStorage
+ *
+ * DEPRECATED: This function is no longer needed.
+ * Demo mode is now passed via authMiddleware context.
+ *
+ * Server functions should check context.isDemoMode instead:
+ *
+ * @example
+ * export const myServerFn = createServerFn({ method: "GET" })
+ *     .middleware([authMiddleware])
+ *     .handler(async ({ context }) => {
+ *         const { isDemoMode } = context;
+ *         if (isDemoMode) {
+ *             return getDemoData();
+ *         }
+ *         // ... real data logic
+ *     });
  */
 export async function isDemoModeActive(): Promise<boolean> {
-    const cookies = getRequestHeader("cookie") || "";
-    const demoModeCookie = cookies
-        .split(";")
-        .find((c) => c.trim().startsWith("business_demoMode="));
-    return demoModeCookie?.split("=")[1] === "true";
+    // This function is deprecated but kept for backward compatibility
+    // Always return false to force usage of context-based demo mode
+    return false;
 }

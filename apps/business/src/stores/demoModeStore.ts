@@ -9,7 +9,8 @@ type DemoModeState = {
 
 /**
  * Store for demo mode preference
- * Persists demo mode state and syncs to cookies for server-side access
+ * Persists demo mode state to localStorage
+ * Demo mode is passed to server via authMiddleware context (no cookies needed)
  */
 export const demoModeStore = create<DemoModeState>()(
     persist(
@@ -21,11 +22,6 @@ export const demoModeStore = create<DemoModeState>()(
 
                 // Update state
                 set({ isDemoMode });
-
-                // Sync to cookies for server-side access
-                if (typeof document !== "undefined") {
-                    document.cookie = `business_demoMode=${isDemoMode}; path=/; max-age=31536000; SameSite=Lax`;
-                }
 
                 // Invalidate queries if demo mode changed
                 if (queryClient && previousDemoMode !== isDemoMode) {

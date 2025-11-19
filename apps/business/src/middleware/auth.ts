@@ -1,5 +1,6 @@
 import { redirect } from "@tanstack/react-router";
-import { getSession } from "@/context/auth/session";
+import { useAuthStore } from "@/stores/authStore";
+import { demoModeStore } from "@/stores/demoModeStore";
 
 /**
  * beforeLoad hook for protected routes
@@ -10,8 +11,11 @@ export async function requireAuth({
 }: {
     location: { href: string };
 }) {
-    const session = await getSession();
-    if (!session) {
+    const isAuthenticated = useAuthStore.getState().isAuthenticated();
+    const isDemoMode = demoModeStore.getState().isDemoMode;
+
+    // Allow access if authenticated OR in demo mode
+    if (!isAuthenticated && !isDemoMode) {
         throw redirect({
             to: "/login",
             search: {
@@ -19,7 +23,12 @@ export async function requireAuth({
             },
         });
     }
-    return { session };
+
+    return {
+        session: {
+            wallet: useAuthStore.getState().wallet!,
+        },
+    };
 }
 
 /**
@@ -27,8 +36,9 @@ export async function requireAuth({
  * Redirects to dashboard if already authenticated
  */
 export async function redirectIfAuthenticated() {
-    const session = await getSession();
-    if (session) {
+    const isAuthenticated = useAuthStore.getState().isAuthenticated();
+
+    if (isAuthenticated) {
         throw redirect({
             to: "/dashboard",
         });

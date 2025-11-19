@@ -4,7 +4,8 @@ import { Spinner } from "@frak-labs/ui/component/Spinner";
 import { useMediaQuery } from "@frak-labs/ui/hook/useMediaQuery";
 import { useNavigate } from "@tanstack/react-router";
 import { useTransition } from "react";
-import { setSession } from "@/context/auth/session";
+import { authenticatedBackendApi } from "@/context/api/backendClient";
+import { useAuthStore } from "@/stores/authStore";
 import styles from "./index.module.css";
 import logo from "./logo-frak.svg";
 
@@ -16,8 +17,25 @@ export function Login() {
     const { mutate: authenticate, isPending } = useSiweAuthenticate({
         mutations: {
             onSuccess: async (data) => {
-                // Register the session
-                await setSession({ data });
+                // Call backend to exchange SIWE for JWT
+                const response = await authenticatedBackendApi.auth.login.post({
+                    message: data.message,
+                    signature: data.signature,
+                });
+
+                if (response.error) {
+                    console.error("Login failed:", response.error);
+                    return;
+                }
+
+                // Store token in Zustand
+                useAuthStore
+                    .getState()
+                    .setAuth(
+                        response.data.token,
+                        response.data.wallet,
+                        response.data.expiresAt
+                    );
 
                 // Redirect to /dashboard
                 startTransition(() => {

@@ -5,12 +5,11 @@ import type {
 } from "@frak-labs/app-essentials";
 import { indexerApi } from "@frak-labs/client/server";
 import { createServerFn } from "@tanstack/react-start";
-import { getSafeSession } from "@/context/auth/session";
+import { authMiddleware } from "@/context/auth/authMiddleware";
 import {
     getProductMembersMock,
     getProductsMembersCountMock,
 } from "@/context/members/action/mock";
-import { isDemoModeActive } from "@/module/common/utils/isDemoMode";
 
 export type GetMembersParam = Omit<
     GetMembersRequestDto,
@@ -22,21 +21,24 @@ export type GetMembersParam = Omit<
  * @param params
  */
 export const getProductMembers = createServerFn({ method: "POST" })
+    .middleware([authMiddleware])
     .inputValidator((input: GetMembersParam) => input)
-    .handler(async (ctx): Promise<GetMembersResponseDto> => {
-        const params = ctx.data;
+    .handler(async ({ context, data }): Promise<GetMembersResponseDto> => {
+        const { wallet, isDemoMode } = context;
 
         // Check if demo mode is active
-        if (await isDemoModeActive()) {
-            return getProductMembersMock(params);
+        if (isDemoMode) {
+            return getProductMembersMock(data);
         }
 
         try {
-            const session = await getSafeSession();
+            if (!wallet) {
+                throw new Error("No active session");
+            }
 
             return await indexerApi
-                .post(`members/${session.wallet}`, {
-                    json: params,
+                .post(`members/${wallet}`, {
+                    json: data,
                 })
                 .json<GetMembersResponseDto>();
         } catch (e) {
@@ -53,23 +55,26 @@ export const getProductMembers = createServerFn({ method: "POST" })
  * @param params
  */
 export const getProductsMembersCount = createServerFn({ method: "POST" })
+    .middleware([authMiddleware])
     .inputValidator(
         (input: Omit<GetMembersParam, "limit" | "offset" | "sort">) => input
     )
-    .handler(async (ctx): Promise<number> => {
-        const params = ctx.data;
+    .handler(async ({ context, data }): Promise<number> => {
+        const { wallet, isDemoMode } = context;
 
         // Check if demo mode is active
-        if (await isDemoModeActive()) {
-            return getProductsMembersCountMock(params);
+        if (isDemoMode) {
+            return getProductsMembersCountMock(data);
         }
 
         try {
-            const session = await getSafeSession();
+            if (!wallet) {
+                throw new Error("No active session");
+            }
 
             const result = await indexerApi
-                .post(`members/${session.wallet}`, {
-                    json: { ...params, noData: true },
+                .post(`members/${wallet}`, {
+                    json: { ...data, noData: true },
                 })
                 .json<GetMembersCountResponseDto>();
             return result.totalResult;
