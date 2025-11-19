@@ -1,34 +1,51 @@
 import { redirect } from "@tanstack/react-router";
-import { zeroAddress } from "viem";
 import { useAuthStore } from "@/stores/authStore";
+import { getAuthToken, getWallet, isDemoMode } from "@/context/auth/authEnv";
+
+/**
+ * Check if user is authenticated (works on both server and client)
+ */
+async function isAuthenticated(): Promise<boolean> {
+    const token = getAuthToken();
+    const isDemo = isDemoMode();
+
+    // Demo mode is always "authenticated"
+    if (isDemo) {
+        return true;
+    }
+
+    // No token = not authenticated
+    if (!token) {
+        return false;
+    }
+
+    // Server-side: assume token is valid (will be verified by authMiddleware)
+    if (typeof window === "undefined") {
+        return true;
+    }
+
+    // Client-side: check expiration
+    const expiresAt = useAuthStore.getState().expiresAt;
+    if (!expiresAt) {
+        return false;
+    }
+
+    return Date.now() < expiresAt;
+}
 
 /**
  * beforeLoad hook for protected routes
  * Use this in route definitions to require authentication
+ * Works correctly during both SSR and client-side navigation
  */
 export async function requireAuth({
     location,
 }: {
     location: { href: string };
 }) {
-    // On server, we cannot verify client-side auth (localStorage).
-    // We allow the request to proceed to the client, where the check will run again.
-    // This prevents infinite redirect loops during SSR when using client-side auth.
-    if (typeof window === "undefined") {
-        return {
-            session: {
-                // Return a zero address as a safe placeholder for the server-side render
-                wallet: zeroAddress,
-            },
-        };
-    }
+    const authenticated = await isAuthenticated();
 
-    const authState = useAuthStore.getState();
-    const isAuthenticated = authState.isAuthenticated();
-    const isDemoMode = authState.token === "demo-token";
-
-    // Allow access if authenticated OR in demo mode
-    if (!isAuthenticated && !isDemoMode && !authState.wallet) {
+    if (!authenticated) {
         throw redirect({
             to: "/login",
             search: {
@@ -37,9 +54,11 @@ export async function requireAuth({
         });
     }
 
+    const wallet = await getWallet();
+
     return {
         session: {
-            wallet: authState.wallet,
+            wallet,
         },
     };
 }
@@ -47,15 +66,12 @@ export async function requireAuth({
 /**
  * beforeLoad hook for login route
  * Redirects to dashboard if already authenticated
+ * Works correctly during both SSR and client-side navigation
  */
 export async function redirectIfAuthenticated() {
-    // Skip server-side check as we can't access localStorage
-    if (typeof window === "undefined") {
-        return;
-    }
+    const authenticated = await isAuthenticated();
 
-    const isAuthenticated = useAuthStore.getState().isAuthenticated();
-    if (isAuthenticated) {
+    if (authenticated) {
         throw redirect({
             to: "/dashboard",
         });

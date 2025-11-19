@@ -14,11 +14,20 @@ vi.mock("@tanstack/react-router", () => ({
 }));
 
 const mockGetState = vi.fn();
+const mockGetAuthToken = vi.fn();
+const mockIsDemoMode = vi.fn();
+const mockGetWallet = vi.fn();
 
 vi.mock("@/stores/authStore", () => ({
     useAuthStore: {
         getState: mockGetState,
     },
+}));
+
+vi.mock("@/context/auth/authEnv", () => ({
+    getAuthToken: mockGetAuthToken,
+    isDemoMode: mockIsDemoMode,
+    getWallet: mockGetWallet,
 }));
 
 describe("middleware/auth", () => {
@@ -28,13 +37,14 @@ describe("middleware/auth", () => {
         }: TestContext) => {
             const { requireAuth } = await import("./auth");
 
+            // Mock isomorphic functions
+            mockGetAuthToken.mockReturnValue("mock-token");
+            mockIsDemoMode.mockReturnValue(false);
+            mockGetWallet.mockResolvedValue(mockAuthSession.wallet);
+
+            // Mock client-side auth state for expiration check
             mockGetState.mockReturnValue({
-                isAuthenticated: () => true,
-                wallet: mockAuthSession.wallet,
-                token: "mock-token",
                 expiresAt: Date.now() + 1000000,
-                setAuth: vi.fn(),
-                clearAuth: vi.fn(),
             });
 
             const result = await requireAuth({
@@ -49,14 +59,9 @@ describe("middleware/auth", () => {
         test("should redirect to login when user is not authenticated and not in demo mode", async () => {
             const { requireAuth } = await import("./auth");
 
-            mockGetState.mockReturnValue({
-                isAuthenticated: () => false,
-                wallet: null,
-                token: null,
-                expiresAt: null,
-                setAuth: vi.fn(),
-                clearAuth: vi.fn(),
-            });
+            // Mock no auth
+            mockGetAuthToken.mockReturnValue(null);
+            mockIsDemoMode.mockReturnValue(false);
 
             await expect(
                 requireAuth({
@@ -70,14 +75,8 @@ describe("middleware/auth", () => {
         test("should preserve redirect URL in search params", async () => {
             const { requireAuth } = await import("./auth");
 
-            mockGetState.mockReturnValue({
-                isAuthenticated: () => false,
-                wallet: null,
-                token: null,
-                expiresAt: null,
-                setAuth: vi.fn(),
-                clearAuth: vi.fn(),
-            });
+            mockGetAuthToken.mockReturnValue(null);
+            mockIsDemoMode.mockReturnValue(false);
 
             try {
                 await requireAuth({
@@ -88,19 +87,15 @@ describe("middleware/auth", () => {
             }
         });
 
-        test("should allow access in demo mode even without authentication", async ({
+        test("should allow access in demo mode", async ({
             mockAuthSession,
         }: TestContext) => {
             const { requireAuth } = await import("./auth");
 
-            mockGetState.mockReturnValue({
-                isAuthenticated: () => true,
-                wallet: mockAuthSession.wallet,
-                token: "mock-token",
-                expiresAt: Date.now() + 1000000,
-                setAuth: vi.fn(),
-                clearAuth: vi.fn(),
-            });
+            // Mock demo mode
+            mockGetAuthToken.mockReturnValue("demo-token");
+            mockIsDemoMode.mockReturnValue(true);
+            mockGetWallet.mockResolvedValue(mockAuthSession.wallet);
 
             const result = await requireAuth({
                 location: { href: "/dashboard" },
@@ -116,30 +111,19 @@ describe("middleware/auth", () => {
         test("should do nothing when user is not authenticated", async () => {
             const { redirectIfAuthenticated } = await import("./auth");
 
-            mockGetState.mockReturnValue({
-                isAuthenticated: () => false,
-                wallet: null,
-                token: null,
-                expiresAt: null,
-                setAuth: vi.fn(),
-                clearAuth: vi.fn(),
-            });
+            mockGetAuthToken.mockReturnValue(null);
+            mockIsDemoMode.mockReturnValue(false);
 
             await expect(redirectIfAuthenticated()).resolves.toBeUndefined();
         });
 
-        test("should redirect to dashboard when user is authenticated", async ({
-            mockAuthSession,
-        }: TestContext) => {
+        test("should redirect to dashboard when user is authenticated", async () => {
             const { redirectIfAuthenticated } = await import("./auth");
 
+            mockGetAuthToken.mockReturnValue("mock-token");
+            mockIsDemoMode.mockReturnValue(false);
             mockGetState.mockReturnValue({
-                isAuthenticated: () => true,
-                wallet: mockAuthSession.wallet,
-                token: "mock-token",
                 expiresAt: Date.now() + 1000000,
-                setAuth: vi.fn(),
-                clearAuth: vi.fn(),
             });
 
             await expect(redirectIfAuthenticated()).rejects.toThrow(

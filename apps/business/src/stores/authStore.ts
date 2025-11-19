@@ -1,6 +1,7 @@
 import type { Address } from "viem";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { clearAuthCookie, setAuthCookie } from "@/utils/cookies";
 
 interface AuthState {
     token: string | null;
@@ -18,15 +19,25 @@ export const useAuthStore = create<AuthState>()(
             wallet: null,
             expiresAt: null,
 
-            setAuth: (token, wallet, expiresAt) =>
-                set({ token, wallet, expiresAt }),
+            setAuth: (token, wallet, expiresAt) => {
+                // Update store
+                set({ token, wallet, expiresAt });
 
-            clearAuth: () =>
+                // Sync with cookie for SSR
+                setAuthCookie(token, expiresAt);
+            },
+
+            clearAuth: () => {
+                // Clear store
                 set({
                     token: null,
                     wallet: null,
                     expiresAt: null,
-                }),
+                });
+
+                // Clear cookie
+                clearAuthCookie();
+            },
 
             isAuthenticated: () => {
                 const { token, expiresAt } = get();

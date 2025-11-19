@@ -1,30 +1,27 @@
-import { createMiddleware } from "@tanstack/react-start";
+import { createMiddleware, createServerOnlyFn } from "@tanstack/react-start";
+import { getCookie } from "@tanstack/react-start/server";
 import { type JWTPayload, jwtVerify } from "jose";
 import { type Address, zeroAddress } from "viem";
-import { useAuthStore } from "@/stores/authStore";
+
+const getBusinessSecret = createServerOnlyFn(() =>
+    new TextEncoder().encode(process.env.JWT_BUSINESS_SECRET)
+);
 
 /**
- * Authentication middleware that injects wallet address and demo mode from client to server
- * This allows server functions to access the authenticated wallet and demo mode without cookies
+ * Authentication middleware that reads auth token from cookies
+ * Works for both SSR and client-side server function calls
  */
-export const authMiddleware = createMiddleware({ type: "function" })
-    .client(async ({ next }) => {
-        // Get the token from stores on the client
-        // During SSR, this will be undefined/null which is fine
-        const authState = useAuthStore.getState();
-        const token = authState.token ?? null;
+export const authMiddleware = createMiddleware({ type: "function" }).server(
+    async ({ next }) => {
+        // Read token from cookie (available during SSR and client-side calls)
+        const token = getCookie("business-auth");
 
-        // Send it to the server via context
-        return next({
-            sendContext: {
-                token,
-            },
-        });
-    })
-    .server(async ({ next, context }) => {
-        const token = context?.token;
+        // Validate token is present
+        if (!token) {
+            throw new Error("No authenticated wallet found");
+        }
 
-        // Check for demo token first (before validating token presence)
+        // Check for demo token
         if (token === "demo-token") {
             return next({
                 context: {
@@ -41,12 +38,9 @@ export const authMiddleware = createMiddleware({ type: "function" })
 
         // Regular token parsing
         try {
-            const secret = new TextEncoder().encode(
-                process.env.JWT_BUSINESS_SECRET
-            );
             const { payload } = await jwtVerify<
                 JWTPayload & { wallet: Address }
-            >(token, secret);
+            >(token, getBusinessSecret());
 
             // No need to validate schema as we are doing on the backend, just extract the wallet
             return next({
@@ -60,4 +54,5 @@ export const authMiddleware = createMiddleware({ type: "function" })
             console.error("Auth middleware: Invalid token", e);
             throw new Error("Unable to parse the token");
         }
-    });
+    }
+);

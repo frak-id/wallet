@@ -1,21 +1,18 @@
 import { Spinner } from "@frak-labs/ui/component/Spinner";
 import { createFileRoute } from "@tanstack/react-router";
+import { isDemoMode } from "@/context/auth/authEnv";
 import { Breadcrumb } from "@/module/common/component/Breadcrumb";
 import { Head } from "@/module/common/component/Head";
 import { CriticalError } from "@/module/common/component/RouteError";
 import { queryClient } from "@/module/common/provider/RootProvider";
 import { MyProducts } from "@/module/dashboard/component/Products";
 import { myProductsQueryOptions } from "@/module/dashboard/queries/queryOptions";
-import { useAuthStore } from "@/stores/authStore";
 
 export const Route = createFileRoute("/_restricted/dashboard")({
     loader: () => {
-        // Skip loader during SSR - auth state is only available on client
-        if (typeof window === "undefined") {
-            return;
-        }
-        const isDemoMode = useAuthStore.getState().token === "demo-token";
-        return queryClient.ensureQueryData(myProductsQueryOptions(isDemoMode));
+        // Use isomorphic function - works on both server and client
+        const isDemo = isDemoMode();
+        return queryClient.ensureQueryData(myProductsQueryOptions(isDemo));
     },
     component: Dashboard,
     pendingComponent: () => <Spinner />,
