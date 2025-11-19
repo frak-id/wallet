@@ -1,7 +1,7 @@
 import { renderHook, waitFor } from "@testing-library/react";
 import * as React from "react";
 import { Suspense } from "react";
-import type { Hex } from "viem";
+import type { Address, Hex } from "viem";
 import { readContract } from "viem/actions";
 import { vi } from "vitest";
 import { decodeProductTypesMask } from "@/module/product/utils/productTypes";
@@ -59,18 +59,22 @@ describe("useProductMetadata", () => {
     describe("demo mode", () => {
         test("should return mock data for known product in demo mode", async ({
             queryWrapper,
-            freshDemoModeStore,
+            freshAuthStore,
         }: TestContext) => {
             // Clear all queries to ensure no stale data
             queryWrapper.client.clear();
 
-            // Set demo mode to true BEFORE rendering the hook
-            freshDemoModeStore
+            // Set demo mode to true BEFORE rendering the hook by setting demo token
+            freshAuthStore
                 .getState()
-                .setDemoMode(true, queryWrapper.client);
+                .setAuth(
+                    "demo-token",
+                    "0x0000000000000000000000000000000000000000" as Address,
+                    Date.now() + 1000000
+                );
 
-            // Verify the store value is correct
-            expect(freshDemoModeStore.getState().isDemoMode).toBe(true);
+            // Verify the token is set correctly
+            expect(freshAuthStore.getState().token).toBe("demo-token");
 
             const { result } = renderHook(
                 () => useProductMetadata({ productId: mockProductId }),
@@ -91,12 +95,16 @@ describe("useProductMetadata", () => {
 
         test("should return default mock data for unknown product in demo mode", async ({
             queryWrapper,
-            freshDemoModeStore,
+            freshAuthStore,
         }: TestContext) => {
             queryWrapper.client.clear();
-            freshDemoModeStore
+            freshAuthStore
                 .getState()
-                .setDemoMode(true, queryWrapper.client);
+                .setAuth(
+                    "demo-token",
+                    "0x0000000000000000000000000000000000000000" as Address,
+                    Date.now() + 1000000
+                );
 
             const unknownProductId =
                 "0x9999999999999999999999999999999999999999999999999999999999999999" as Hex;
@@ -120,12 +128,16 @@ describe("useProductMetadata", () => {
 
         test("should return digital media platform metadata in demo mode", async ({
             queryWrapper,
-            freshDemoModeStore,
+            freshAuthStore,
         }: TestContext) => {
             queryWrapper.client.clear();
-            freshDemoModeStore
+            freshAuthStore
                 .getState()
-                .setDemoMode(true, queryWrapper.client);
+                .setAuth(
+                    "demo-token",
+                    "0x0000000000000000000000000000000000000000" as Address,
+                    Date.now() + 1000000
+                );
 
             const mediaProductId =
                 "0x0000000000000000000000000000000000000000000000000000000000000002" as Hex;
@@ -149,12 +161,16 @@ describe("useProductMetadata", () => {
 
         test("should handle multiple product types in demo mode", async ({
             queryWrapper,
-            freshDemoModeStore,
+            freshAuthStore,
         }: TestContext) => {
             queryWrapper.client.clear();
-            freshDemoModeStore
+            freshAuthStore
                 .getState()
-                .setDemoMode(true, queryWrapper.client);
+                .setAuth(
+                    "demo-token",
+                    "0x0000000000000000000000000000000000000000" as Address,
+                    Date.now() + 1000000
+                );
 
             const multiTypeProductId =
                 "0x0000000000000000000000000000000000000000000000000000000000000010" as Hex;
@@ -178,12 +194,10 @@ describe("useProductMetadata", () => {
     describe("live mode", () => {
         test("should fetch metadata from blockchain in live mode", async ({
             queryWrapper,
-            freshDemoModeStore,
+            freshAuthStore,
         }: TestContext) => {
             queryWrapper.client.clear();
-            freshDemoModeStore
-                .getState()
-                .setDemoMode(false, queryWrapper.client);
+            freshAuthStore.getState().clearAuth();
 
             const mockMetadata = {
                 name: new Uint8Array([
@@ -224,12 +238,10 @@ describe("useProductMetadata", () => {
 
         test("should decode product types correctly in live mode", async ({
             queryWrapper,
-            freshDemoModeStore,
+            freshAuthStore,
         }: TestContext) => {
             queryWrapper.client.clear();
-            freshDemoModeStore
-                .getState()
-                .setDemoMode(false, queryWrapper.client);
+            freshAuthStore.getState().clearAuth();
 
             const mockMetadata = {
                 name: new Uint8Array([80, 114, 101, 115, 115]), // "Press"
@@ -254,12 +266,10 @@ describe("useProductMetadata", () => {
 
         test("should handle multiple product types in live mode", async ({
             queryWrapper,
-            freshDemoModeStore,
+            freshAuthStore,
         }: TestContext) => {
             queryWrapper.client.clear();
-            freshDemoModeStore
-                .getState()
-                .setDemoMode(false, queryWrapper.client);
+            freshAuthStore.getState().clearAuth();
 
             const mockMetadata = {
                 name: new Uint8Array([77, 105, 120, 101, 100]), // "Mixed"
@@ -288,14 +298,18 @@ describe("useProductMetadata", () => {
     describe("query key changes", () => {
         test("should use different query key for demo vs live mode", async ({
             queryWrapper,
-            freshDemoModeStore,
+            freshAuthStore,
         }: TestContext) => {
             queryWrapper.client.clear();
 
             // Test in demo mode first
-            freshDemoModeStore
+            freshAuthStore
                 .getState()
-                .setDemoMode(true, queryWrapper.client);
+                .setAuth(
+                    "demo-token",
+                    "0x0000000000000000000000000000000000000000" as Address,
+                    Date.now() + 1000000
+                );
 
             const { result: demoResult } = renderHook(
                 () => useProductMetadata({ productId: mockProductId }),
@@ -307,9 +321,7 @@ describe("useProductMetadata", () => {
             });
 
             // Switch to live mode
-            freshDemoModeStore
-                .getState()
-                .setDemoMode(false, queryWrapper.client);
+            freshAuthStore.getState().clearAuth();
 
             vi.mocked(readContract).mockResolvedValue({
                 name: new Uint8Array([76, 105, 118, 101]), // "Live"
@@ -333,12 +345,16 @@ describe("useProductMetadata", () => {
 
         test("should use different query key for different productIds", async ({
             queryWrapper,
-            freshDemoModeStore,
+            freshAuthStore,
         }: TestContext) => {
             queryWrapper.client.clear();
-            freshDemoModeStore
+            freshAuthStore
                 .getState()
-                .setDemoMode(true, queryWrapper.client);
+                .setAuth(
+                    "demo-token",
+                    "0x0000000000000000000000000000000000000000" as Address,
+                    Date.now() + 1000000
+                );
 
             const productId1 =
                 "0x0000000000000000000000000000000000000000000000000000000000000001" as Hex;
@@ -369,12 +385,16 @@ describe("useProductMetadata", () => {
     describe("data structure", () => {
         test("should have correct data structure in demo mode", async ({
             queryWrapper,
-            freshDemoModeStore,
+            freshAuthStore,
         }: TestContext) => {
             queryWrapper.client.clear();
-            freshDemoModeStore
+            freshAuthStore
                 .getState()
-                .setDemoMode(true, queryWrapper.client);
+                .setAuth(
+                    "demo-token",
+                    "0x0000000000000000000000000000000000000000" as Address,
+                    Date.now() + 1000000
+                );
 
             const { result } = renderHook(
                 () => useProductMetadata({ productId: mockProductId }),
@@ -396,12 +416,10 @@ describe("useProductMetadata", () => {
 
         test("should have correct data structure in live mode", async ({
             queryWrapper,
-            freshDemoModeStore,
+            freshAuthStore,
         }: TestContext) => {
             queryWrapper.client.clear();
-            freshDemoModeStore
-                .getState()
-                .setDemoMode(false, queryWrapper.client);
+            freshAuthStore.getState().clearAuth();
 
             vi.mocked(readContract).mockResolvedValue({
                 name: new Uint8Array([84, 101, 115, 116]), // "Test"

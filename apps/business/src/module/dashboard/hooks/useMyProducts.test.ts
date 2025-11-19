@@ -9,14 +9,20 @@ import {
 } from "@/tests/vitest-fixtures";
 import { useMyProducts } from "./useMyProducts";
 
+// Hoist mocks so they can be used in the mock factory
+const { mockGetMyProducts, mockUseIsDemoMode } = vi.hoisted(() => ({
+    mockGetMyProducts: vi.fn(),
+    mockUseIsDemoMode: vi.fn(() => false),
+}));
+
 // Mock getMyProducts action
 vi.mock("@/context/product/action/getProducts", () => ({
-    getMyProducts: vi.fn(),
+    getMyProducts: mockGetMyProducts,
 }));
 
 // Mock demo mode atom
 vi.mock("@/module/common/atoms/demoMode", () => ({
-    useIsDemoMode: vi.fn(() => false),
+    useIsDemoMode: mockUseIsDemoMode,
 }));
 
 describe("useMyProducts", () => {
@@ -47,7 +53,7 @@ describe("useMyProducts", () => {
                 ],
             };
 
-            vi.mocked(getMyProducts).mockResolvedValue(mockResponse as any);
+            mockGetMyProducts.mockResolvedValue(mockResponse as any);
 
             const { result } = renderHook(() => useMyProducts(), {
                 wrapper: queryWrapper.wrapper,
@@ -70,7 +76,7 @@ describe("useMyProducts", () => {
                 operator: [],
             };
 
-            vi.mocked(getMyProducts).mockResolvedValue(emptyResponse as any);
+            mockGetMyProducts.mockResolvedValue(emptyResponse as any);
 
             const { result } = renderHook(() => useMyProducts(), {
                 wrapper: queryWrapper.wrapper,
@@ -100,7 +106,7 @@ describe("useMyProducts", () => {
                 operator: [],
             };
 
-            vi.mocked(getMyProducts).mockResolvedValue(mockResponse as any);
+            mockGetMyProducts.mockResolvedValue(mockResponse as any);
 
             const { result } = renderHook(() => useMyProducts(), {
                 wrapper: queryWrapper.wrapper,
@@ -135,7 +141,7 @@ describe("useMyProducts", () => {
                 ],
             };
 
-            vi.mocked(getMyProducts).mockResolvedValue(mockResponse as any);
+            mockGetMyProducts.mockResolvedValue(mockResponse as any);
 
             const { result } = renderHook(() => useMyProducts(), {
                 wrapper: queryWrapper.wrapper,
@@ -155,7 +161,7 @@ describe("useMyProducts", () => {
         test("should set isEmpty to true when both arrays are empty", async ({
             queryWrapper,
         }: TestContext) => {
-            vi.mocked(getMyProducts).mockResolvedValue({
+            mockGetMyProducts.mockResolvedValue({
                 owner: [],
                 operator: [],
             } as any);
@@ -174,7 +180,7 @@ describe("useMyProducts", () => {
         test("should set isEmpty to false when owner has products", async ({
             queryWrapper,
         }: TestContext) => {
-            vi.mocked(getMyProducts).mockResolvedValue({
+            mockGetMyProducts.mockResolvedValue({
                 owner: [{ id: "0x1234", name: "Owned" }],
                 operator: [],
             } as any);
@@ -193,7 +199,7 @@ describe("useMyProducts", () => {
         test("should set isEmpty to false when operator has products", async ({
             queryWrapper,
         }: TestContext) => {
-            vi.mocked(getMyProducts).mockResolvedValue({
+            mockGetMyProducts.mockResolvedValue({
                 owner: [],
                 operator: [{ id: "0x5678", name: "Operated" }],
             } as any);
@@ -212,7 +218,7 @@ describe("useMyProducts", () => {
         test("should set isEmpty to false when both have products", async ({
             queryWrapper,
         }: TestContext) => {
-            vi.mocked(getMyProducts).mockResolvedValue({
+            mockGetMyProducts.mockResolvedValue({
                 owner: [{ id: "0x1234", name: "Owned" }],
                 operator: [{ id: "0x5678", name: "Operated" }],
             } as any);
@@ -233,17 +239,13 @@ describe("useMyProducts", () => {
         test("should use different query key for demo mode", async ({
             queryWrapper,
         }: TestContext) => {
-            const { useIsDemoMode } = await import(
-                "@/module/common/atoms/demoMode"
-            );
-
-            vi.mocked(getMyProducts).mockResolvedValue({
+            mockGetMyProducts.mockResolvedValue({
                 owner: [],
                 operator: [],
             } as any);
 
             // Test live mode
-            vi.mocked(useIsDemoMode).mockReturnValue(false);
+            mockUseIsDemoMode.mockReturnValue(false);
 
             const { result: liveResult } = renderHook(() => useMyProducts(), {
                 wrapper: queryWrapper.wrapper,
@@ -254,7 +256,7 @@ describe("useMyProducts", () => {
             });
 
             // Test demo mode
-            vi.mocked(useIsDemoMode).mockReturnValue(true);
+            mockUseIsDemoMode.mockReturnValue(true);
 
             const { result: demoResult } = renderHook(() => useMyProducts(), {
                 wrapper: queryWrapper.wrapper,
@@ -272,7 +274,7 @@ describe("useMyProducts", () => {
         test("should use correct query key structure", async ({
             queryWrapper,
         }: TestContext) => {
-            vi.mocked(getMyProducts).mockResolvedValue({
+            mockGetMyProducts.mockResolvedValue({
                 owner: [],
                 operator: [],
             } as any);

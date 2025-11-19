@@ -8,15 +8,13 @@ import {
 } from "@/tests/vitest-fixtures";
 import { useDemoMode, useIsDemoMode } from "./demoMode";
 
-// Mock auth store
+// Mock auth store with a variable we can control - use vi.hoisted to make it available in the mock factory
+const { mockUseAuthStore } = vi.hoisted(() => ({
+    mockUseAuthStore: vi.fn(),
+}));
+
 vi.mock("@/stores/authStore", () => ({
-    useAuthStore: vi.fn((selector: any) => {
-        const state = {
-            isDemoMode: false,
-            setDemoMode: vi.fn(),
-        };
-        return selector(state);
-    }),
+    useAuthStore: mockUseAuthStore,
 }));
 
 describe("demoMode atoms", () => {
@@ -24,10 +22,8 @@ describe("demoMode atoms", () => {
         test("should return false when demo mode is disabled", async ({
             queryWrapper,
         }: TestContext) => {
-            const { useAuthStore } = await import("@/stores/authStore");
-
-            vi.mocked(useAuthStore).mockImplementation((selector: any) => {
-                const state = { isDemoMode: false };
+            mockUseAuthStore.mockImplementation((selector: any) => {
+                const state = { token: "regular-token" };
                 return selector(state);
             });
 
@@ -41,10 +37,8 @@ describe("demoMode atoms", () => {
         test("should return true when demo mode is enabled", async ({
             queryWrapper,
         }: TestContext) => {
-            const { useAuthStore } = await import("@/stores/authStore");
-
-            vi.mocked(useAuthStore).mockImplementation((selector: any) => {
-                const state = { isDemoMode: true };
+            mockUseAuthStore.mockImplementation((selector: any) => {
+                const state = { token: "demo-token" };
                 return selector(state);
             });
 
@@ -78,88 +72,97 @@ describe("demoMode atoms", () => {
             expect(typeof result.current.setDemoMode).toBe("function");
         });
 
-        test("should call store setDemoMode", async ({
+        test("should enable demo mode when setDemoMode(true) is called", async ({
             queryWrapper,
         }: TestContext) => {
-            const { useAuthStore } = await import("@/stores/authStore");
+            const mockSetAuth = vi.fn();
+            const mockClearAuth = vi.fn();
 
-            const mockSetDemoMode = vi.fn();
-
-            vi.mocked(useAuthStore).mockImplementation((selector: any) => {
+            mockUseAuthStore.mockImplementation((selector: any) => {
                 const state = {
-                    isDemoMode: false,
-                    setDemoMode: mockSetDemoMode,
+                    token: null,
+                    setAuth: mockSetAuth,
+                    clearAuth: mockClearAuth,
                 };
                 return selector(state);
             });
 
-            const { result } = renderHook(() => useDemoMode(), {
-                wrapper: queryWrapper.wrapper,
-            });
-
-            result.current.setDemoMode(true);
-
-            expect(mockSetDemoMode).toHaveBeenCalledWith(true);
-        });
-
-        test("should invalidate queries when demo mode changes", async ({
-            queryWrapper,
-        }: TestContext) => {
-            const { useAuthStore } = await import("@/stores/authStore");
-
-            const mockSetDemoMode = vi.fn();
             const invalidateQueriesSpy = vi.spyOn(
                 queryWrapper.client,
                 "invalidateQueries"
             );
 
-            vi.mocked(useAuthStore).mockImplementation((selector: any) => {
-                const state = {
-                    isDemoMode: false, // Currently false
-                    setDemoMode: mockSetDemoMode,
-                };
-                return selector(state);
-            });
-
             const { result } = renderHook(() => useDemoMode(), {
                 wrapper: queryWrapper.wrapper,
             });
 
-            // Set to true (change)
             result.current.setDemoMode(true);
 
-            expect(mockSetDemoMode).toHaveBeenCalledWith(true);
+            expect(mockSetAuth).toHaveBeenCalledWith(
+                "demo-token",
+                expect.any(String),
+                expect.any(Number)
+            );
             expect(invalidateQueriesSpy).toHaveBeenCalled();
         });
 
-        test("should NOT invalidate queries when demo mode does not change", async ({
+        test("should disable demo mode when setDemoMode(false) is called", async ({
             queryWrapper,
         }: TestContext) => {
-            const { useAuthStore } = await import("@/stores/authStore");
+            const mockSetAuth = vi.fn();
+            const mockClearAuth = vi.fn();
 
-            const mockSetDemoMode = vi.fn();
+            mockUseAuthStore.mockImplementation((selector: any) => {
+                const state = {
+                    token: "demo-token",
+                    setAuth: mockSetAuth,
+                    clearAuth: mockClearAuth,
+                };
+                return selector(state);
+            });
+
             const invalidateQueriesSpy = vi.spyOn(
                 queryWrapper.client,
                 "invalidateQueries"
             );
 
-            vi.mocked(useAuthStore).mockImplementation((selector: any) => {
+            const { result } = renderHook(() => useDemoMode(), {
+                wrapper: queryWrapper.wrapper,
+            });
+
+            result.current.setDemoMode(false);
+
+            expect(mockClearAuth).toHaveBeenCalled();
+            expect(invalidateQueriesSpy).toHaveBeenCalled();
+        });
+
+        test("should always invalidate queries when setDemoMode is called", async ({
+            queryWrapper,
+        }: TestContext) => {
+            const mockSetAuth = vi.fn();
+            const mockClearAuth = vi.fn();
+
+            mockUseAuthStore.mockImplementation((selector: any) => {
                 const state = {
-                    isDemoMode: true, // Currently true
-                    setDemoMode: mockSetDemoMode,
+                    token: "demo-token",
+                    setAuth: mockSetAuth,
+                    clearAuth: mockClearAuth,
                 };
                 return selector(state);
             });
+
+            const invalidateQueriesSpy = vi.spyOn(
+                queryWrapper.client,
+                "invalidateQueries"
+            );
 
             const { result } = renderHook(() => useDemoMode(), {
                 wrapper: queryWrapper.wrapper,
             });
 
-            // Set to true (no change)
             result.current.setDemoMode(true);
 
-            expect(mockSetDemoMode).toHaveBeenCalledWith(true);
-            expect(invalidateQueriesSpy).not.toHaveBeenCalled();
+            expect(invalidateQueriesSpy).toHaveBeenCalled();
         });
     });
 });

@@ -25,12 +25,16 @@ describe("useGetProductAdministrators", () => {
     describe("demo mode", () => {
         test("should return mock administrators in demo mode", async ({
             queryWrapper,
-            freshDemoModeStore,
+            freshAuthStore,
         }: TestContext) => {
             queryWrapper.client.clear();
-            freshDemoModeStore
+            freshAuthStore
                 .getState()
-                .setDemoMode(true, queryWrapper.client);
+                .setAuth(
+                    "demo-token",
+                    "0x0000000000000000000000000000000000000000" as Address,
+                    Date.now() + 1000000
+                );
 
             const { result } = renderHook(
                 () => useGetProductAdministrators({ productId: mockProductId }),
@@ -52,12 +56,16 @@ describe("useGetProductAdministrators", () => {
 
         test("should simulate network delay in demo mode", async ({
             queryWrapper,
-            freshDemoModeStore,
+            freshAuthStore,
         }: TestContext) => {
             queryWrapper.client.clear();
-            freshDemoModeStore
+            freshAuthStore
                 .getState()
-                .setDemoMode(true, queryWrapper.client);
+                .setAuth(
+                    "demo-token",
+                    "0x0000000000000000000000000000000000000000" as Address,
+                    Date.now() + 1000000
+                );
 
             const { result } = renderHook(
                 () => useGetProductAdministrators({ productId: mockProductId }),
@@ -76,12 +84,10 @@ describe("useGetProductAdministrators", () => {
     describe("live mode", () => {
         test("should fetch administrators from indexer API", async ({
             queryWrapper,
-            freshDemoModeStore,
+            freshAuthStore,
         }: TestContext) => {
             queryWrapper.client.clear();
-            freshDemoModeStore
-                .getState()
-                .setDemoMode(false, queryWrapper.client);
+            freshAuthStore.getState().clearAuth();
 
             const mockApiResponse = [
                 {
@@ -120,12 +126,10 @@ describe("useGetProductAdministrators", () => {
 
         test("should map roles correctly", async ({
             queryWrapper,
-            freshDemoModeStore,
+            freshAuthStore,
         }: TestContext) => {
             queryWrapper.client.clear();
-            freshDemoModeStore
-                .getState()
-                .setDemoMode(false, queryWrapper.client);
+            freshAuthStore.getState().clearAuth();
 
             const mockApiResponse = [
                 {
@@ -157,12 +161,10 @@ describe("useGetProductAdministrators", () => {
 
         test("should filter out purchaseOracleUpdater-only users", async ({
             queryWrapper,
-            freshDemoModeStore,
+            freshAuthStore,
         }: TestContext) => {
             queryWrapper.client.clear();
-            freshDemoModeStore
-                .getState()
-                .setDemoMode(false, queryWrapper.client);
+            freshAuthStore.getState().clearAuth();
 
             const mockApiResponse = [
                 {
@@ -221,12 +223,10 @@ describe("useGetProductAdministrators", () => {
     describe("error handling", () => {
         test("should handle API errors", async ({
             queryWrapper,
-            freshDemoModeStore,
+            freshAuthStore,
         }: TestContext) => {
             queryWrapper.client.clear();
-            freshDemoModeStore
-                .getState()
-                .setDemoMode(false, queryWrapper.client);
+            freshAuthStore.getState().clearAuth();
 
             const jsonMock = vi
                 .fn()

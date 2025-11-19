@@ -31,12 +31,16 @@ describe("useGetProductFunding", () => {
     describe("demo mode", () => {
         test("should return mock funding data in demo mode", async ({
             queryWrapper,
-            freshDemoModeStore,
+            freshAuthStore,
         }: TestContext) => {
             queryWrapper.client.clear();
-            freshDemoModeStore
+            freshAuthStore
                 .getState()
-                .setDemoMode(true, queryWrapper.client);
+                .setAuth(
+                    "demo-token",
+                    "0x0000000000000000000000000000000000000000" as Address,
+                    Date.now() + 1000000
+                );
 
             const { result } = renderHook(
                 () => useGetProductFunding({ productId: mockProductId }),
@@ -58,12 +62,16 @@ describe("useGetProductFunding", () => {
 
         test("should simulate network delay in demo mode", async ({
             queryWrapper,
-            freshDemoModeStore,
+            freshAuthStore,
         }: TestContext) => {
             queryWrapper.client.clear();
-            freshDemoModeStore
+            freshAuthStore
                 .getState()
-                .setDemoMode(true, queryWrapper.client);
+                .setAuth(
+                    "demo-token",
+                    "0x0000000000000000000000000000000000000000" as Address,
+                    Date.now() + 1000000
+                );
 
             const { result } = renderHook(
                 () => useGetProductFunding({ productId: mockProductId }),
@@ -82,12 +90,10 @@ describe("useGetProductFunding", () => {
     describe("live mode", () => {
         test("should fetch funding from indexer API and blockchain", async ({
             queryWrapper,
-            freshDemoModeStore,
+            freshAuthStore,
         }: TestContext) => {
             queryWrapper.client.clear();
-            freshDemoModeStore
-                .getState()
-                .setDemoMode(false, queryWrapper.client);
+            freshAuthStore.getState().clearAuth();
 
             const mockApiResponse = [
                 {
@@ -132,12 +138,10 @@ describe("useGetProductFunding", () => {
 
         test("should map string values to bigint", async ({
             queryWrapper,
-            freshDemoModeStore,
+            freshAuthStore,
         }: TestContext) => {
             queryWrapper.client.clear();
-            freshDemoModeStore
-                .getState()
-                .setDemoMode(false, queryWrapper.client);
+            freshAuthStore.getState().clearAuth();
 
             const mockApiResponse = [
                 {
@@ -184,12 +188,10 @@ describe("useGetProductFunding", () => {
 
         test("should handle multiple funding banks", async ({
             queryWrapper,
-            freshDemoModeStore,
+            freshAuthStore,
         }: TestContext) => {
             queryWrapper.client.clear();
-            freshDemoModeStore
-                .getState()
-                .setDemoMode(false, queryWrapper.client);
+            freshAuthStore.getState().clearAuth();
 
             const mockApiResponse = [
                 {
@@ -266,12 +268,10 @@ describe("useGetProductFunding", () => {
     describe("error handling", () => {
         test("should handle API errors", async ({
             queryWrapper,
-            freshDemoModeStore,
+            freshAuthStore,
         }: TestContext) => {
             queryWrapper.client.clear();
-            freshDemoModeStore
-                .getState()
-                .setDemoMode(false, queryWrapper.client);
+            freshAuthStore.getState().clearAuth();
 
             const jsonMock = vi
                 .fn()
@@ -292,12 +292,10 @@ describe("useGetProductFunding", () => {
 
         test("should handle multicall errors", async ({
             queryWrapper,
-            freshDemoModeStore,
+            freshAuthStore,
         }: TestContext) => {
             queryWrapper.client.clear();
-            freshDemoModeStore
-                .getState()
-                .setDemoMode(false, queryWrapper.client);
+            freshAuthStore.getState().clearAuth();
 
             const mockApiResponse = [
                 {
@@ -339,13 +337,17 @@ describe("useGetProductFunding", () => {
     describe("query key", () => {
         test("should use different query key for demo vs live mode", async ({
             queryWrapper,
-            freshDemoModeStore,
+            freshAuthStore,
         }: TestContext) => {
             // Test demo mode
             queryWrapper.client.clear();
-            freshDemoModeStore
+            freshAuthStore
                 .getState()
-                .setDemoMode(true, queryWrapper.client);
+                .setAuth(
+                    "demo-token",
+                    "0x0000000000000000000000000000000000000000" as Address,
+                    Date.now() + 1000000
+                );
 
             const { result: demoResult } = renderHook(
                 () => useGetProductFunding({ productId: mockProductId }),
@@ -360,9 +362,7 @@ describe("useGetProductFunding", () => {
 
             // Test live mode - clear cache and create new wrapper
             queryWrapper.client.clear();
-            freshDemoModeStore
-                .getState()
-                .setDemoMode(false, queryWrapper.client);
+            freshAuthStore.getState().clearAuth();
 
             const jsonMock = vi.fn().mockResolvedValue([]);
             vi.mocked(indexerApi.get).mockReturnValue({

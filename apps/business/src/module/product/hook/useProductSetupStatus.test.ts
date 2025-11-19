@@ -1,5 +1,5 @@
 import { renderHook, waitFor } from "@testing-library/react";
-import type { Hex } from "viem";
+import type { Address, Hex } from "viem";
 import { vi } from "vitest";
 import {
     describe,
@@ -26,12 +26,16 @@ describe("useProductSetupStatus", () => {
     describe("demo mode", () => {
         test("should return mock setup status in demo mode", async ({
             queryWrapper,
-            freshDemoModeStore,
+            freshAuthStore,
         }: TestContext) => {
             queryWrapper.client.clear();
-            freshDemoModeStore
+            freshAuthStore
                 .getState()
-                .setDemoMode(true, queryWrapper.client);
+                .setAuth(
+                    "demo-token",
+                    "0x0000000000000000000000000000000000000000" as Address,
+                    Date.now() + 1000000
+                );
 
             // Mock dependencies as successful
             vi.mocked(useGetProductAdministrators).mockReturnValue({
@@ -70,12 +74,16 @@ describe("useProductSetupStatus", () => {
 
         test("should replace productId in resolvingPage URLs in demo mode", async ({
             queryWrapper,
-            freshDemoModeStore,
+            freshAuthStore,
         }: TestContext) => {
             queryWrapper.client.clear();
-            freshDemoModeStore
+            freshAuthStore
                 .getState()
-                .setDemoMode(true, queryWrapper.client);
+                .setAuth(
+                    "demo-token",
+                    "0x0000000000000000000000000000000000000000" as Address,
+                    Date.now() + 1000000
+                );
 
             vi.mocked(useGetProductAdministrators).mockReturnValue({
                 data: [],
@@ -107,12 +115,10 @@ describe("useProductSetupStatus", () => {
     describe("live mode with administrators", () => {
         test("should detect multiple administrators (hasOtherAdmin = true)", async ({
             queryWrapper,
-            freshDemoModeStore,
+            freshAuthStore,
         }: TestContext) => {
             queryWrapper.client.clear();
-            freshDemoModeStore
-                .getState()
-                .setDemoMode(false, queryWrapper.client);
+            freshAuthStore.getState().clearAuth();
 
             // Mock multiple administrators
             vi.mocked(useGetProductAdministrators).mockReturnValue({
@@ -145,12 +151,10 @@ describe("useProductSetupStatus", () => {
 
         test("should detect single administrator (hasOtherAdmin = false)", async ({
             queryWrapper,
-            freshDemoModeStore,
+            freshAuthStore,
         }: TestContext) => {
             queryWrapper.client.clear();
-            freshDemoModeStore
-                .getState()
-                .setDemoMode(false, queryWrapper.client);
+            freshAuthStore.getState().clearAuth();
 
             // Mock single administrator
             vi.mocked(useGetProductAdministrators).mockReturnValue({
@@ -180,12 +184,10 @@ describe("useProductSetupStatus", () => {
 
         test("should handle no administrators", async ({
             queryWrapper,
-            freshDemoModeStore,
+            freshAuthStore,
         }: TestContext) => {
             queryWrapper.client.clear();
-            freshDemoModeStore
-                .getState()
-                .setDemoMode(false, queryWrapper.client);
+            freshAuthStore.getState().clearAuth();
 
             vi.mocked(useGetProductAdministrators).mockReturnValue({
                 data: [],
@@ -216,12 +218,10 @@ describe("useProductSetupStatus", () => {
     describe("funding status checks", () => {
         test("should detect funding when balance > 0 (hasFunding = true)", async ({
             queryWrapper,
-            freshDemoModeStore,
+            freshAuthStore,
         }: TestContext) => {
             queryWrapper.client.clear();
-            freshDemoModeStore
-                .getState()
-                .setDemoMode(false, queryWrapper.client);
+            freshAuthStore.getState().clearAuth();
 
             vi.mocked(useGetProductAdministrators).mockReturnValue({
                 data: [],
@@ -250,12 +250,10 @@ describe("useProductSetupStatus", () => {
 
         test("should detect no funding when balance = 0 (hasFunding = false)", async ({
             queryWrapper,
-            freshDemoModeStore,
+            freshAuthStore,
         }: TestContext) => {
             queryWrapper.client.clear();
-            freshDemoModeStore
-                .getState()
-                .setDemoMode(false, queryWrapper.client);
+            freshAuthStore.getState().clearAuth();
 
             vi.mocked(useGetProductAdministrators).mockReturnValue({
                 data: [],
@@ -284,12 +282,10 @@ describe("useProductSetupStatus", () => {
 
         test("should detect running bank (hasRunningBank = true)", async ({
             queryWrapper,
-            freshDemoModeStore,
+            freshAuthStore,
         }: TestContext) => {
             queryWrapper.client.clear();
-            freshDemoModeStore
-                .getState()
-                .setDemoMode(false, queryWrapper.client);
+            freshAuthStore.getState().clearAuth();
 
             vi.mocked(useGetProductAdministrators).mockReturnValue({
                 data: [],
@@ -318,12 +314,10 @@ describe("useProductSetupStatus", () => {
 
         test("should detect no running bank (hasRunningBank = false)", async ({
             queryWrapper,
-            freshDemoModeStore,
+            freshAuthStore,
         }: TestContext) => {
             queryWrapper.client.clear();
-            freshDemoModeStore
-                .getState()
-                .setDemoMode(false, queryWrapper.client);
+            freshAuthStore.getState().clearAuth();
 
             vi.mocked(useGetProductAdministrators).mockReturnValue({
                 data: [],
@@ -354,12 +348,10 @@ describe("useProductSetupStatus", () => {
     describe("hasWarning calculation", () => {
         test("should set hasWarning to true when any step is not good", async ({
             queryWrapper,
-            freshDemoModeStore,
+            freshAuthStore,
         }: TestContext) => {
             queryWrapper.client.clear();
-            freshDemoModeStore
-                .getState()
-                .setDemoMode(false, queryWrapper.client);
+            freshAuthStore.getState().clearAuth();
 
             vi.mocked(useGetProductAdministrators).mockReturnValue({
                 data: [],
@@ -386,12 +378,10 @@ describe("useProductSetupStatus", () => {
 
         test("should set hasWarning to false when all steps are good", async ({
             queryWrapper,
-            freshDemoModeStore,
+            freshAuthStore,
         }: TestContext) => {
             queryWrapper.client.clear();
-            freshDemoModeStore
-                .getState()
-                .setDemoMode(false, queryWrapper.client);
+            freshAuthStore.getState().clearAuth();
 
             // Mock optimal setup: multiple admins, funded, distributing
             vi.mocked(useGetProductAdministrators).mockReturnValue({
@@ -432,12 +422,10 @@ describe("useProductSetupStatus", () => {
     describe("query enabled state", () => {
         test("should be disabled when dependencies are not loaded", async ({
             queryWrapper,
-            freshDemoModeStore,
+            freshAuthStore,
         }: TestContext) => {
             queryWrapper.client.clear();
-            freshDemoModeStore
-                .getState()
-                .setDemoMode(false, queryWrapper.client);
+            freshAuthStore.getState().clearAuth();
 
             // Mock dependencies as not successful yet
             vi.mocked(useGetProductAdministrators).mockReturnValue({
@@ -462,12 +450,10 @@ describe("useProductSetupStatus", () => {
 
         test("should be disabled when no productId provided", async ({
             queryWrapper,
-            freshDemoModeStore,
+            freshAuthStore,
         }: TestContext) => {
             queryWrapper.client.clear();
-            freshDemoModeStore
-                .getState()
-                .setDemoMode(false, queryWrapper.client);
+            freshAuthStore.getState().clearAuth();
 
             vi.mocked(useGetProductAdministrators).mockReturnValue({
                 data: [],
@@ -494,12 +480,10 @@ describe("useProductSetupStatus", () => {
     describe("step metadata", () => {
         test("should include all required fields for each step", async ({
             queryWrapper,
-            freshDemoModeStore,
+            freshAuthStore,
         }: TestContext) => {
             queryWrapper.client.clear();
-            freshDemoModeStore
-                .getState()
-                .setDemoMode(false, queryWrapper.client);
+            freshAuthStore.getState().clearAuth();
 
             vi.mocked(useGetProductAdministrators).mockReturnValue({
                 data: [],
