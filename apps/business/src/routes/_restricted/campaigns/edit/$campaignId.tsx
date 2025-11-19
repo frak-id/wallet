@@ -7,6 +7,7 @@ import {
     campaignQueryOptions,
     validateEditCampaign,
 } from "@/module/campaigns/queries/queryOptions";
+import { CampaignError } from "@/module/common/component/RouteError";
 import { queryClient } from "@/module/common/provider/RootProvider";
 import { campaignStore } from "@/stores/campaignStore";
 
@@ -23,6 +24,7 @@ export const Route = createFileRoute("/_restricted/campaigns/edit/$campaignId")(
         },
         component: CampaignsEditPage,
         pendingComponent: () => <Skeleton />,
+        errorComponent: CampaignError,
     }
 );
 

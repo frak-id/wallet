@@ -5,6 +5,7 @@ import { TableCampaignPerformance } from "@/module/campaigns/component/TableCamp
 import { campaignsStatsQueryOptions } from "@/module/campaigns/queries/queryOptions";
 import { Breadcrumb } from "@/module/common/component/Breadcrumb";
 import { Head } from "@/module/common/component/Head";
+import { DataLoadError } from "@/module/common/component/RouteError";
 import { queryClient } from "@/module/common/provider/RootProvider";
 
 export const Route = createFileRoute("/_restricted/campaigns/performance")({
@@ -13,6 +14,9 @@ export const Route = createFileRoute("/_restricted/campaigns/performance")({
     },
     component: CampaignsPerformancePage,
     pendingComponent: () => <Spinner />,
+    errorComponent: (props) => (
+        <DataLoadError {...props} resourceName="campaign performance data" />
+    ),
 });
 
 function CampaignsPerformancePage() {

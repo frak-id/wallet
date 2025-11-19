@@ -2,6 +2,7 @@ import { Spinner } from "@frak-labs/ui/component/Spinner";
 import { createFileRoute } from "@tanstack/react-router";
 import { Breadcrumb } from "@/module/common/component/Breadcrumb";
 import { Head } from "@/module/common/component/Head";
+import { DataLoadError } from "@/module/common/component/RouteError";
 import { queryClient } from "@/module/common/provider/RootProvider";
 import { ButtonSendPush } from "@/module/members/component/ButtonSendPush";
 import { TableMembers } from "@/module/members/component/TableMembers";
@@ -18,6 +19,9 @@ export const Route = createFileRoute("/_restricted/members")({
     },
     component: MembersListPage,
     pendingComponent: () => <Spinner />,
+    errorComponent: (props) => (
+        <DataLoadError {...props} resourceName="members" />
+    ),
 });
 
 function MembersListPage() {

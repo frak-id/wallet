@@ -5,6 +5,7 @@ import { TableCampaigns } from "@/module/campaigns/component/TableCampaigns";
 import { campaignsListQueryOptions } from "@/module/campaigns/queries/queryOptions";
 import { Breadcrumb } from "@/module/common/component/Breadcrumb";
 import { Head } from "@/module/common/component/Head";
+import { DataLoadError } from "@/module/common/component/RouteError";
 import { queryClient } from "@/module/common/provider/RootProvider";
 import { demoModeStore } from "@/stores/demoModeStore";
 
@@ -17,6 +18,9 @@ export const Route = createFileRoute("/_restricted/campaigns/list")({
     },
     component: CampaignsListPage,
     pendingComponent: () => <Skeleton />,
+    errorComponent: (props) => (
+        <DataLoadError {...props} resourceName="campaigns" />
+    ),
 });
 
 function CampaignsListPage() {

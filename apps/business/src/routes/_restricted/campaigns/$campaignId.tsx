@@ -4,6 +4,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { CampaignDetails } from "@/module/campaigns/component/CampaignDetails";
 import { campaignQueryOptions } from "@/module/campaigns/queries/queryOptions";
+import { CampaignError } from "@/module/common/component/RouteError";
 import { queryClient } from "@/module/common/provider/RootProvider";
 import { campaignStore } from "@/stores/campaignStore";
 
@@ -16,6 +17,7 @@ export const Route = createFileRoute("/_restricted/campaigns/$campaignId")({
     },
     component: CampaignsContentPage,
     pendingComponent: () => <Skeleton />,
+    errorComponent: CampaignError,
 });
 
 function CampaignsContentPage() {

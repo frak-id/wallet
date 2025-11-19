@@ -1,6 +1,7 @@
 import { Spinner } from "@frak-labs/ui/component/Spinner";
 import { createFileRoute } from "@tanstack/react-router";
 import type { Hex } from "viem";
+import { RouteError } from "@/module/common/component/RouteError";
 import { queryClient } from "@/module/common/provider/RootProvider";
 import { ProductDetails } from "@/module/product/component/ProductDetails";
 import { productMetadataQueryOptions } from "@/module/product/queries/queryOptions";
@@ -15,6 +16,16 @@ export const Route = createFileRoute("/_restricted/product/$id/")({
     },
     component: ProductPage,
     pendingComponent: () => <Spinner />,
+    errorComponent: (props) => (
+        <RouteError
+            {...props}
+            title="Product Not Found"
+            message="The product you're looking for doesn't exist or you don't have access to it."
+            fallbackPath="/dashboard"
+            fallbackLabel="Back to Dashboard"
+            showRetry={false}
+        />
+    ),
 });
 
 function ProductPage() {

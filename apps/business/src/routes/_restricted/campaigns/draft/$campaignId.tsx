@@ -7,6 +7,7 @@ import {
     campaignQueryOptions,
     validateDraftCampaign,
 } from "@/module/campaigns/queries/queryOptions";
+import { CampaignError } from "@/module/common/component/RouteError";
 import { queryClient } from "@/module/common/provider/RootProvider";
 import { campaignStore } from "@/stores/campaignStore";
 
@@ -24,6 +25,7 @@ export const Route = createFileRoute(
     },
     component: CampaignsDraftPage,
     pendingComponent: () => <Skeleton />,
+    errorComponent: CampaignError,
 });
 
 function CampaignsDraftPage() {
