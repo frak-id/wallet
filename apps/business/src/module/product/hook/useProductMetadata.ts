@@ -7,7 +7,7 @@ import { useAuthStore } from "@/stores/authStore";
  * Hook to get the product metadata
  */
 export function useProductMetadata({ productId }: { productId: Hex }) {
-    const isDemoMode = useAuthStore((state) => state.isDemoMode);
+    const isDemoMode = useAuthStore((state) => state.token === "demo-token");
     return useSuspenseQuery(productMetadataQueryOptions(productId, isDemoMode));
 }
 

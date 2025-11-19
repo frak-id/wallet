@@ -8,7 +8,7 @@ import { useAuthStore } from "@/stores/authStore";
 
 export const Route = createFileRoute("/_restricted/product/$id/setup-status")({
     loader: ({ params }) => {
-        const isDemoMode = useAuthStore.getState().isDemoMode;
+        const isDemoMode = useAuthStore.getState().token === "demo-token";
         return queryClient.ensureQueryData(
             productMetadataQueryOptions(params.id as Hex, isDemoMode)
         );

@@ -126,7 +126,7 @@ const MOCK_SETUP_STATUS: Record<SetupStatusItemKey, boolean> = {
  * Hook to get product setup status with real data integration
  */
 export function useProductSetupStatus({ productId }: { productId: Hex }) {
-    const isDemoMode = useAuthStore((state) => state.isDemoMode);
+    const isDemoMode = useAuthStore((state) => state.token === "demo-token");
 
     // Fetch real data from other hooks
     const { data: administrators, isSuccess: isAdministratorsSuccess } =

@@ -6,12 +6,12 @@ import {
     drpcApiKey,
     erpcUrl,
     indexerUrl,
+    jwtBusinessSecret,
     mongoBusinessDb,
     nexusRpcSecret,
     onRampUrl,
     openPanelApiUrl,
     openPanelBusinessClientId,
-    sessionEncryptionKy,
     walletUrl,
 } from "../config";
 import { baseDomainName, getRegistryPath, walletNamespace } from "./utils";
@@ -26,7 +26,7 @@ const businessEnv = {
     OPEN_PANEL_BUSINESS_CLIENT_ID: openPanelBusinessClientId.value,
     DRPC_API_KEY: drpcApiKey.value,
     NEXUS_RPC_SECRET: nexusRpcSecret.value,
-    SESSION_ENCRYPTION_KEY: sessionEncryptionKy.value,
+    JWT_BUSINESS_SECRET: jwtBusinessSecret.value,
     MONGODB_BUSINESS_URI: mongoBusinessDb.value,
     FUNDING_ON_RAMP_URL: onRampUrl.value,
 };

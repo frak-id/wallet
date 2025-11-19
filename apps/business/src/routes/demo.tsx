@@ -23,13 +23,12 @@ function DemoActivation() {
                 // Create a mock demo session with a fake wallet address
                 const demoWallet =
                     "0x0000000000000000000000000000000000000001" as Address;
-                const demoToken = "demo-mode-token";
+                const demoToken = "demo-token";
                 const expiresAt = Date.now() + 7 * 24 * 60 * 60 * 1000; // 1 week
 
                 // Set auth in store (includes demo mode)
                 const store = useAuthStore.getState();
                 store.setAuth(demoToken, demoWallet, expiresAt);
-                store.setDemoMode(true);
 
                 // Give browser time to process state changes before redirect
                 setTimeout(() => {

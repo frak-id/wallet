@@ -72,7 +72,7 @@ type ApiResult = {
  * Hook to get product administrators with demo mode support
  */
 export function useGetProductAdministrators({ productId }: { productId: Hex }) {
-    const isDemoMode = useAuthStore((state) => state.isDemoMode);
+    const isDemoMode = useAuthStore((state) => state.token === "demo-token");
 
     return useQuery({
         queryKey: ["product", "team", productId, isDemoMode ? "demo" : "live"],

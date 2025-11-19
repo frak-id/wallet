@@ -68,7 +68,7 @@ const MOCK_BANKS: ProductBank[] = [
  * Hook to get product funding banks with demo mode support
  */
 export function useGetProductFunding({ productId }: { productId?: Hex }) {
-    const isDemoMode = useAuthStore((state) => state.isDemoMode);
+    const isDemoMode = useAuthStore((state) => state.token === "demo-token");
 
     return useQuery({
         queryKey: [

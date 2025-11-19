@@ -42,6 +42,7 @@
         "cmdk": "^1.1.1",
         "countries-list": "^3.2.0",
         "date-fns": "^4.1.0",
+        "jose": "^6.1.2",
         "ky": "^1.14.0",
         "lru-cache": "^11.2.2",
         "lucide-react": "^0.553.0",

@@ -16,13 +16,14 @@ export const authRoutes = new Elysia({ prefix: "/auth" }).post(
         }
 
         // Ensure the siwe message is valid
-        const host = request.headers.get("host") ?? "";
+        const origin = request.headers.get("origin") ?? "";
+        const originHost = new URL(origin).host;
         const isValid = validateSiweMessage({
             message: siweMessage,
-            domain: "localhost:3022",
+            domain: originHost,
         });
         if (!isValid) {
-            log.error({ siweMessage, host }, "Invalid SIWE message");
+            log.error({ siweMessage, origin }, "Invalid SIWE message");
             return status(400, "Invalid SIWE message");
         }
 

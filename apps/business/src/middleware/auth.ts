@@ -1,5 +1,5 @@
 import { redirect } from "@tanstack/react-router";
-import type { Address } from "viem";
+import { zeroAddress } from "viem";
 import { useAuthStore } from "@/stores/authStore";
 
 /**
@@ -18,17 +18,17 @@ export async function requireAuth({
         return {
             session: {
                 // Return a zero address as a safe placeholder for the server-side render
-                wallet: "0x0000000000000000000000000000000000000000" as Address,
+                wallet: zeroAddress,
             },
         };
     }
 
     const authState = useAuthStore.getState();
     const isAuthenticated = authState.isAuthenticated();
-    const isDemoMode = authState.isDemoMode;
+    const isDemoMode = authState.token === "demo-token";
 
     // Allow access if authenticated OR in demo mode
-    if (!isAuthenticated && !isDemoMode) {
+    if (!isAuthenticated && !isDemoMode && !authState.wallet) {
         throw redirect({
             to: "/login",
             search: {
@@ -39,7 +39,7 @@ export async function requireAuth({
 
     return {
         session: {
-            wallet: authState.wallet!,
+            wallet: authState.wallet,
         },
     };
 }
@@ -55,7 +55,6 @@ export async function redirectIfAuthenticated() {
     }
 
     const isAuthenticated = useAuthStore.getState().isAuthenticated();
-
     if (isAuthenticated) {
         throw redirect({
             to: "/dashboard",

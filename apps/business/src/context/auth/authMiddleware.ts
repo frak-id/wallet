@@ -1,5 +1,6 @@
 import { createMiddleware } from "@tanstack/react-start";
-import type { Address } from "viem";
+import { type JWTPayload, jwtVerify } from "jose";
+import { type Address, zeroAddress } from "viem";
 import { useAuthStore } from "@/stores/authStore";
 
 /**
@@ -8,37 +9,54 @@ import { useAuthStore } from "@/stores/authStore";
  */
 export const authMiddleware = createMiddleware({ type: "function" })
     .client(async ({ next }) => {
-        // Get the wallet address and demo mode from stores on the client
+        // Get the token from stores on the client
         const authState = useAuthStore.getState();
-        const wallet = authState.wallet;
-        const isDemoMode = authState.isDemoMode;
+        const token = authState.token;
 
-        // Send them to the server via context
+        // Send it to the server via context
         return next({
             sendContext: {
-                wallet: wallet as Address,
-                isDemoMode,
+                token,
             },
         });
     })
     .server(async ({ next, context }) => {
-        // In demo mode, use a demo wallet if no wallet is present
-        const wallet =
-            context.wallet ||
-            (context.isDemoMode
-                ? ("0x0000000000000000000000000000000000000001" as Address)
-                : null);
+        const { token } = context;
 
-        // Validate wallet is present (either real or demo)
-        if (!wallet) {
+        // Validate token is present
+        if (!token) {
             throw new Error("No authenticated wallet found");
         }
 
-        // Pass wallet and demo mode along to server functions
-        return next({
-            context: {
-                wallet,
-                isDemoMode: context.isDemoMode || false,
-            },
-        });
+        // Check for demo token
+        if (token === "demo-token") {
+            return next({
+                context: {
+                    wallet: zeroAddress as Address,
+                    isDemoMode: true,
+                },
+            });
+        }
+
+        // Regular token parsing
+        try {
+            const secret = new TextEncoder().encode(
+                process.env.JWT_BUSINESS_SECRET
+            );
+            const { payload } = await jwtVerify<
+                JWTPayload & { wallet: Address }
+            >(token, secret);
+
+            // No need to validate schema as we are doing on the backend, just extract the wallet
+            return next({
+                context: {
+                    wallet: payload.wallet,
+                    isDemoMode: false,
+                },
+            });
+        } catch (e) {
+            // Token invalid or expired
+            console.error("Auth middleware: Invalid token", e);
+            throw new Error("Unable to parse the token");
+        }
     });

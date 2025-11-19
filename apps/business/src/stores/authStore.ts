@@ -6,9 +6,7 @@ interface AuthState {
     token: string | null;
     wallet: Address | null;
     expiresAt: number | null;
-    isDemoMode: boolean;
     setAuth: (token: string, wallet: Address, expiresAt: number) => void;
-    setDemoMode: (isDemoMode: boolean) => void;
     clearAuth: () => void;
     isAuthenticated: () => boolean;
 }
@@ -19,19 +17,15 @@ export const useAuthStore = create<AuthState>()(
             token: null,
             wallet: null,
             expiresAt: null,
-            isDemoMode: false,
 
             setAuth: (token, wallet, expiresAt) =>
                 set({ token, wallet, expiresAt }),
-
-            setDemoMode: (isDemoMode) => set({ isDemoMode }),
 
             clearAuth: () =>
                 set({
                     token: null,
                     wallet: null,
                     expiresAt: null,
-                    isDemoMode: false,
                 }),
 
             isAuthenticated: () => {
@@ -65,8 +59,8 @@ export function getSafeAuthSession(): {
     wallet: Address;
 } | null {
     const state = useAuthStore.getState();
-    if (!state.isAuthenticated() || !state.wallet) {
+    if (!state.isAuthenticated() || !state.wallet || !state.token) {
         return null;
     }
-    return { token: state.token!, wallet: state.wallet };
+    return { token: state.token, wallet: state.wallet };
 }

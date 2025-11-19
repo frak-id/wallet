@@ -59,6 +59,7 @@ export const vapidPublicKey = new sst.Secret("VAPID_PUBLIC_KEY");
 export const sessionEncryptionKy = new sst.Secret("SESSION_ENCRYPTION_KEY");
 export const mongoBusinessDb = new sst.Secret("MONGODB_BUSINESS_URI");
 export const onRampUrl = new sst.Secret("FUNDING_ON_RAMP_URL");
+export const jwtBusinessSecret = new sst.Secret("JWT_BUSINESS_SECRET");
 
 // Open panel secrets
 export const openPanelWalletClientId = new sst.Secret(

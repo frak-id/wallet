@@ -11,7 +11,7 @@ import { useAuthStore } from "@/stores/authStore";
 
 export const Route = createFileRoute("/_restricted/campaigns/list")({
     loader: () => {
-        const isDemoMode = useAuthStore.getState().isDemoMode;
+        const isDemoMode = useAuthStore.getState().token === "demo-token";
         return queryClient.ensureQueryData(
             campaignsListQueryOptions(isDemoMode)
         );
