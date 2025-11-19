@@ -1,6 +1,6 @@
 import { redirect } from "@tanstack/react-router";
-import { useAuthStore } from "@/stores/authStore";
 import { getAuthToken, getWallet, isDemoMode } from "@/context/auth/authEnv";
+import { useAuthStore } from "@/stores/authStore";
 
 /**
  * Check if user is authenticated (works on both server and client)

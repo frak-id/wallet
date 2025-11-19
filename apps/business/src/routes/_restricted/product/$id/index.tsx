@@ -1,17 +1,16 @@
 import { Spinner } from "@frak-labs/ui/component/Spinner";
 import { createFileRoute } from "@tanstack/react-router";
 import type { Hex } from "viem";
+import { isDemoMode } from "@/context/auth/authEnv";
 import { RouteError } from "@/module/common/component/RouteError";
 import { queryClient } from "@/module/common/provider/RootProvider";
 import { ProductDetails } from "@/module/product/component/ProductDetails";
 import { productMetadataQueryOptions } from "@/module/product/queries/queryOptions";
-import { useAuthStore } from "@/stores/authStore";
 
 export const Route = createFileRoute("/_restricted/product/$id/")({
     loader: ({ params }) => {
-        const isDemoMode = useAuthStore.getState().token === "demo-token";
         return queryClient.ensureQueryData(
-            productMetadataQueryOptions(params.id as Hex, isDemoMode)
+            productMetadataQueryOptions(params.id as Hex, isDemoMode())
         );
     },
     component: ProductPage,
