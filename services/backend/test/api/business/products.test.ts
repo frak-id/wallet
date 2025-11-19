@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { productRoutes } from "../../../src/api/business/routes/products";
 import {
-    JwtContextMock,
     dbMock,
     dnsCheckRepositoryMocks,
+    JwtContextMock,
     mintRepositoryMocks,
     onChainRolesRepositoryMocks,
     resetMockBusinessSession,

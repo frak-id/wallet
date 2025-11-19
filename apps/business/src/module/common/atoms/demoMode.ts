@@ -1,18 +1,23 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { demoModeStore } from "@/stores/demoModeStore";
+import { useAuthStore } from "@/stores/authStore";
 
 /**
  * Hook to get and set demo mode state
- * Syncs state to cookies for server-side access
  * Automatically invalidates queries when demo mode changes
  */
 export function useDemoMode() {
-    const isDemoMode = demoModeStore((state) => state.isDemoMode);
-    const setDemoModeInternal = demoModeStore((state) => state.setDemoMode);
+    const isDemoMode = useAuthStore((state) => state.isDemoMode);
+    const setDemoModeInternal = useAuthStore((state) => state.setDemoMode);
     const queryClient = useQueryClient();
 
     const setDemoMode = (value: boolean) => {
-        setDemoModeInternal(value, queryClient);
+        const previousDemoMode = isDemoMode;
+        setDemoModeInternal(value);
+
+        // Invalidate queries if demo mode changed
+        if (previousDemoMode !== value) {
+            queryClient.invalidateQueries();
+        }
     };
 
     return {

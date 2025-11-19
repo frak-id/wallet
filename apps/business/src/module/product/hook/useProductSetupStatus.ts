@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import type { Hex } from "viem";
-import { demoModeStore } from "@/stores/demoModeStore";
+import { useAuthStore } from "@/stores/authStore";
 import { useGetProductAdministrators } from "./useGetProductAdministrators";
 import { useGetProductFunding } from "./useGetProductFunding";
 
@@ -126,7 +126,7 @@ const MOCK_SETUP_STATUS: Record<SetupStatusItemKey, boolean> = {
  * Hook to get product setup status with real data integration
  */
 export function useProductSetupStatus({ productId }: { productId: Hex }) {
-    const isDemoMode = demoModeStore((state) => state.isDemoMode);
+    const isDemoMode = useAuthStore((state) => state.isDemoMode);
 
     // Fetch real data from other hooks
     const { data: administrators, isSuccess: isAdministratorsSuccess } =

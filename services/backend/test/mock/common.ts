@@ -343,10 +343,9 @@ export const businessSessionContextMock = new Elysia({
                 // biome-ignore lint/suspicious/noExplicitAny: Mock function needs flexible typing
                 beforeHandle: async ({ headers, set }: any) => {
                     const businessAuth = headers["x-business-auth"];
-                    // biome-ignore lint/suspicious/noExplicitAny: Mock function accepts arguments at runtime
-                    const session = await (
-                        JwtContextMock.business.verify as any
-                    )(businessAuth);
+                    const session =
+                        await // biome-ignore lint/suspicious/noExplicitAny: Mock function accepts arguments at runtime
+                        (JwtContextMock.business.verify as any)(businessAuth);
 
                     if (!session) {
                         set.status = 401;

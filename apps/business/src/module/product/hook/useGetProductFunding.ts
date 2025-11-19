@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { type Address, erc20Abi, type Hex } from "viem";
 import { multicall } from "viem/actions";
 import { viemClient } from "@/context/blockchain/provider";
-import { demoModeStore } from "@/stores/demoModeStore";
+import { useAuthStore } from "@/stores/authStore";
 
 export type ProductBank = {
     address: Address;
@@ -68,7 +68,7 @@ const MOCK_BANKS: ProductBank[] = [
  * Hook to get product funding banks with demo mode support
  */
 export function useGetProductFunding({ productId }: { productId?: Hex }) {
-    const isDemoMode = demoModeStore((state) => state.isDemoMode);
+    const isDemoMode = useAuthStore((state) => state.isDemoMode);
 
     return useQuery({
         queryKey: [

@@ -2,7 +2,7 @@ import { type ProductRolesKey, productRoles } from "@frak-labs/app-essentials";
 import { indexerApi } from "@frak-labs/client/server";
 import { useQuery } from "@tanstack/react-query";
 import { type Address, type Hex, toHex } from "viem";
-import { demoModeStore } from "@/stores/demoModeStore";
+import { useAuthStore } from "@/stores/authStore";
 
 /**
  * Mock administrators data for demo mode
@@ -72,7 +72,7 @@ type ApiResult = {
  * Hook to get product administrators with demo mode support
  */
 export function useGetProductAdministrators({ productId }: { productId: Hex }) {
-    const isDemoMode = demoModeStore((state) => state.isDemoMode);
+    const isDemoMode = useAuthStore((state) => state.isDemoMode);
 
     return useQuery({
         queryKey: ["product", "team", productId, isDemoMode ? "demo" : "live"],

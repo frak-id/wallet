@@ -1,7 +1,6 @@
 import { createMiddleware } from "@tanstack/react-start";
 import type { Address } from "viem";
 import { useAuthStore } from "@/stores/authStore";
-import { demoModeStore } from "@/stores/demoModeStore";
 
 /**
  * Authentication middleware that injects wallet address and demo mode from client to server
@@ -10,8 +9,9 @@ import { demoModeStore } from "@/stores/demoModeStore";
 export const authMiddleware = createMiddleware({ type: "function" })
     .client(async ({ next }) => {
         // Get the wallet address and demo mode from stores on the client
-        const wallet = useAuthStore.getState().wallet;
-        const isDemoMode = demoModeStore.getState().isDemoMode;
+        const authState = useAuthStore.getState();
+        const wallet = authState.wallet;
+        const isDemoMode = authState.isDemoMode;
 
         // Send them to the server via context
         return next({

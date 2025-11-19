@@ -8,9 +8,9 @@ import {
 } from "@/tests/vitest-fixtures";
 import { useDemoMode, useIsDemoMode } from "./demoMode";
 
-// Mock demo mode store
-vi.mock("@/stores/demoModeStore", () => ({
-    demoModeStore: vi.fn((selector: any) => {
+// Mock auth store
+vi.mock("@/stores/authStore", () => ({
+    useAuthStore: vi.fn((selector: any) => {
         const state = {
             isDemoMode: false,
             setDemoMode: vi.fn(),
@@ -24,9 +24,9 @@ describe("demoMode atoms", () => {
         test("should return false when demo mode is disabled", async ({
             queryWrapper,
         }: TestContext) => {
-            const { demoModeStore } = await import("@/stores/demoModeStore");
+            const { useAuthStore } = await import("@/stores/authStore");
 
-            vi.mocked(demoModeStore).mockImplementation((selector: any) => {
+            vi.mocked(useAuthStore).mockImplementation((selector: any) => {
                 const state = { isDemoMode: false };
                 return selector(state);
             });
@@ -41,9 +41,9 @@ describe("demoMode atoms", () => {
         test("should return true when demo mode is enabled", async ({
             queryWrapper,
         }: TestContext) => {
-            const { demoModeStore } = await import("@/stores/demoModeStore");
+            const { useAuthStore } = await import("@/stores/authStore");
 
-            vi.mocked(demoModeStore).mockImplementation((selector: any) => {
+            vi.mocked(useAuthStore).mockImplementation((selector: any) => {
                 const state = { isDemoMode: true };
                 return selector(state);
             });
@@ -78,14 +78,14 @@ describe("demoMode atoms", () => {
             expect(typeof result.current.setDemoMode).toBe("function");
         });
 
-        test("should call store setDemoMode with queryClient", async ({
+        test("should call store setDemoMode", async ({
             queryWrapper,
         }: TestContext) => {
-            const { demoModeStore } = await import("@/stores/demoModeStore");
+            const { useAuthStore } = await import("@/stores/authStore");
 
             const mockSetDemoMode = vi.fn();
 
-            vi.mocked(demoModeStore).mockImplementation((selector: any) => {
+            vi.mocked(useAuthStore).mockImplementation((selector: any) => {
                 const state = {
                     isDemoMode: false,
                     setDemoMode: mockSetDemoMode,
@@ -99,22 +99,23 @@ describe("demoMode atoms", () => {
 
             result.current.setDemoMode(true);
 
-            expect(mockSetDemoMode).toHaveBeenCalledWith(
-                true,
-                queryWrapper.client
-            );
+            expect(mockSetDemoMode).toHaveBeenCalledWith(true);
         });
 
-        test("should handle setting demo mode to false", async ({
+        test("should invalidate queries when demo mode changes", async ({
             queryWrapper,
         }: TestContext) => {
-            const { demoModeStore } = await import("@/stores/demoModeStore");
+            const { useAuthStore } = await import("@/stores/authStore");
 
             const mockSetDemoMode = vi.fn();
+            const invalidateQueriesSpy = vi.spyOn(
+                queryWrapper.client,
+                "invalidateQueries"
+            );
 
-            vi.mocked(demoModeStore).mockImplementation((selector: any) => {
+            vi.mocked(useAuthStore).mockImplementation((selector: any) => {
                 const state = {
-                    isDemoMode: true,
+                    isDemoMode: false, // Currently false
                     setDemoMode: mockSetDemoMode,
                 };
                 return selector(state);
@@ -124,23 +125,28 @@ describe("demoMode atoms", () => {
                 wrapper: queryWrapper.wrapper,
             });
 
-            result.current.setDemoMode(false);
+            // Set to true (change)
+            result.current.setDemoMode(true);
 
-            expect(mockSetDemoMode).toHaveBeenCalledWith(
-                false,
-                queryWrapper.client
-            );
+            expect(mockSetDemoMode).toHaveBeenCalledWith(true);
+            expect(invalidateQueriesSpy).toHaveBeenCalled();
         });
 
-        test("should have current isDemoMode value", async ({
+        test("should NOT invalidate queries when demo mode does not change", async ({
             queryWrapper,
         }: TestContext) => {
-            const { demoModeStore } = await import("@/stores/demoModeStore");
+            const { useAuthStore } = await import("@/stores/authStore");
 
-            vi.mocked(demoModeStore).mockImplementation((selector: any) => {
+            const mockSetDemoMode = vi.fn();
+            const invalidateQueriesSpy = vi.spyOn(
+                queryWrapper.client,
+                "invalidateQueries"
+            );
+
+            vi.mocked(useAuthStore).mockImplementation((selector: any) => {
                 const state = {
-                    isDemoMode: true,
-                    setDemoMode: vi.fn(),
+                    isDemoMode: true, // Currently true
+                    setDemoMode: mockSetDemoMode,
                 };
                 return selector(state);
             });
@@ -149,33 +155,11 @@ describe("demoMode atoms", () => {
                 wrapper: queryWrapper.wrapper,
             });
 
-            expect(result.current.isDemoMode).toBe(true);
-        });
-    });
+            // Set to true (no change)
+            result.current.setDemoMode(true);
 
-    describe("integration", () => {
-        test("useIsDemoMode should return same value as useDemoMode().isDemoMode", async ({
-            queryWrapper,
-        }: TestContext) => {
-            const { demoModeStore } = await import("@/stores/demoModeStore");
-
-            vi.mocked(demoModeStore).mockImplementation((selector: any) => {
-                const state = {
-                    isDemoMode: true,
-                    setDemoMode: vi.fn(),
-                };
-                return selector(state);
-            });
-
-            const { result: simpleResult } = renderHook(() => useIsDemoMode(), {
-                wrapper: queryWrapper.wrapper,
-            });
-
-            const { result: fullResult } = renderHook(() => useDemoMode(), {
-                wrapper: queryWrapper.wrapper,
-            });
-
-            expect(simpleResult.current).toBe(fullResult.current.isDemoMode);
+            expect(mockSetDemoMode).toHaveBeenCalledWith(true);
+            expect(invalidateQueriesSpy).not.toHaveBeenCalled();
         });
     });
 });

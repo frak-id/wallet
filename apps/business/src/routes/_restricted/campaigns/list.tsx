@@ -7,11 +7,11 @@ import { Breadcrumb } from "@/module/common/component/Breadcrumb";
 import { Head } from "@/module/common/component/Head";
 import { DataLoadError } from "@/module/common/component/RouteError";
 import { queryClient } from "@/module/common/provider/RootProvider";
-import { demoModeStore } from "@/stores/demoModeStore";
+import { useAuthStore } from "@/stores/authStore";
 
 export const Route = createFileRoute("/_restricted/campaigns/list")({
     loader: () => {
-        const isDemoMode = demoModeStore.getState().isDemoMode;
+        const isDemoMode = useAuthStore.getState().isDemoMode;
         return queryClient.ensureQueryData(
             campaignsListQueryOptions(isDemoMode)
         );

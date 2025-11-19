@@ -5,17 +5,7 @@ import {
     JwtContextMock,
     notificationServiceMocks,
     resetMockBusinessSession,
-    setMockBusinessSession,
 } from "../../mock/common";
-
-/**
- * Helper to create authenticated request headers
- */
-function createAuthHeaders(): HeadersInit {
-    return {
-        "x-business-auth": "mock-business-jwt-token",
-    };
-}
 
 describe("Business Notifications Send Route API", () => {
     beforeEach(() => {

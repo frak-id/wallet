@@ -2,10 +2,6 @@ import { render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 // Mock the layout components
-vi.mock("@/module/common/component/DemoModeSync", () => ({
-    DemoModeSync: () => <div data-testid="demo-mode-sync" />,
-}));
-
 vi.mock("@/module/common/component/Header", () => ({
     Header: () => <header data-testid="header" />,
 }));
@@ -53,7 +49,6 @@ describe("RestrictedLayoutRoute", () => {
     it("should render all required layout components", () => {
         render(<RestrictedLayoutRoute />);
 
-        expect(screen.getByTestId("demo-mode-sync")).toBeInTheDocument();
         expect(screen.getByTestId("header")).toBeInTheDocument();
         expect(screen.getByTestId("navigation")).toBeInTheDocument();
         expect(screen.getByTestId("main-layout")).toBeInTheDocument();

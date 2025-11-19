@@ -51,9 +51,9 @@ export type DashboardTestFixtures = BaseTestFixtures & {
     freshCurrencyStore: typeof import("@/stores/currencyStore").currencyStore;
 
     /**
-     * Fresh demo mode store that auto-resets before and after each test
+     * Fresh auth store that auto-resets before and after each test
      */
-    freshDemoModeStore: typeof import("@/stores/demoModeStore").demoModeStore;
+    freshAuthStore: typeof import("@/stores/authStore").useAuthStore;
 
     /**
      * Fresh members store that auto-resets before and after each test
@@ -88,7 +88,7 @@ export const test = baseTest.extend<
         | "mockAuthSession"
         | "freshCampaignStore"
         | "freshCurrencyStore"
-        | "freshDemoModeStore"
+        | "freshAuthStore"
         | "freshMembersStore"
         | "freshPushCreationStore"
     >
@@ -158,31 +158,29 @@ export const test = baseTest.extend<
     },
 
     /**
-     * Provides a fresh demo mode store that auto-resets
+     * Provides a fresh auth store that auto-resets
      * Store is reset before and after each test
      */
-    freshDemoModeStore: async (
+    freshAuthStore: async (
         // biome-ignore lint/correctness/noEmptyPattern: Vitest requires object destructuring
         {},
         use: (
-            value: typeof import("@/stores/demoModeStore").demoModeStore
+            value: typeof import("@/stores/authStore").useAuthStore
         ) => Promise<void>
     ) => {
-        const { demoModeStore } = await import("@/stores/demoModeStore");
+        const { useAuthStore } = await import("@/stores/authStore");
 
-        // Clear localStorage and cookies to reset persisted state
-        localStorage.removeItem("business_demoMode");
-        document.cookie = "business_demoMode=; path=/; max-age=0";
+        // Clear localStorage to reset persisted state
+        localStorage.removeItem("business-auth");
 
         // Reset to default before use
-        demoModeStore.getState().setDemoMode(false);
+        useAuthStore.getState().clearAuth();
 
-        await use(demoModeStore);
+        await use(useAuthStore);
 
         // Reset after use
-        demoModeStore.getState().setDemoMode(false);
-        localStorage.removeItem("business_demoMode");
-        document.cookie = "business_demoMode=; path=/; max-age=0";
+        useAuthStore.getState().clearAuth();
+        localStorage.removeItem("business-auth");
     },
 
     /**

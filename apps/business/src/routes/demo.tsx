@@ -3,7 +3,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import type { Address } from "viem";
 import { useAuthStore } from "@/stores/authStore";
-import { demoModeStore } from "@/stores/demoModeStore";
 
 export const Route = createFileRoute("/demo")({
     beforeLoad: () => {
@@ -27,13 +26,10 @@ function DemoActivation() {
                 const demoToken = "demo-mode-token";
                 const expiresAt = Date.now() + 7 * 24 * 60 * 60 * 1000; // 1 week
 
-                // Set auth in store
-                useAuthStore
-                    .getState()
-                    .setAuth(demoToken, demoWallet, expiresAt);
-
-                // Set demo mode using the store (this will sync to cookie automatically)
-                demoModeStore.getState().setDemoMode(true);
+                // Set auth in store (includes demo mode)
+                const store = useAuthStore.getState();
+                store.setAuth(demoToken, demoWallet, expiresAt);
+                store.setDemoMode(true);
 
                 // Give browser time to process state changes before redirect
                 setTimeout(() => {

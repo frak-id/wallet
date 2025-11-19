@@ -19,19 +19,12 @@ vi.mock("@/stores/authStore", () => ({
     },
 }));
 
-vi.mock("@/stores/demoModeStore", () => ({
-    demoModeStore: {
-        getState: vi.fn(),
-    },
-}));
-
 describe("middleware/auth", () => {
     describe("requireAuth", () => {
         test("should return session when user is authenticated", async ({
             mockAuthSession,
         }: TestContext) => {
             const { useAuthStore } = await import("@/stores/authStore");
-            const { demoModeStore } = await import("@/stores/demoModeStore");
             const { requireAuth } = await import("./auth");
 
             vi.mocked(useAuthStore.getState).mockReturnValue({
@@ -39,13 +32,10 @@ describe("middleware/auth", () => {
                 wallet: mockAuthSession.wallet,
                 token: "mock-token",
                 expiresAt: Date.now() + 1000000,
-                setAuth: vi.fn(),
-                clearAuth: vi.fn(),
-            });
-
-            vi.mocked(demoModeStore.getState).mockReturnValue({
                 isDemoMode: false,
+                setAuth: vi.fn(),
                 setDemoMode: vi.fn(),
+                clearAuth: vi.fn(),
             });
 
             const result = await requireAuth({
@@ -59,7 +49,6 @@ describe("middleware/auth", () => {
 
         test("should redirect to login when user is not authenticated and not in demo mode", async () => {
             const { useAuthStore } = await import("@/stores/authStore");
-            const { demoModeStore } = await import("@/stores/demoModeStore");
             const { requireAuth } = await import("./auth");
 
             vi.mocked(useAuthStore.getState).mockReturnValue({
@@ -67,13 +56,10 @@ describe("middleware/auth", () => {
                 wallet: null,
                 token: null,
                 expiresAt: null,
-                setAuth: vi.fn(),
-                clearAuth: vi.fn(),
-            });
-
-            vi.mocked(demoModeStore.getState).mockReturnValue({
                 isDemoMode: false,
+                setAuth: vi.fn(),
                 setDemoMode: vi.fn(),
+                clearAuth: vi.fn(),
             });
 
             await expect(
@@ -87,7 +73,6 @@ describe("middleware/auth", () => {
 
         test("should preserve redirect URL in search params", async () => {
             const { useAuthStore } = await import("@/stores/authStore");
-            const { demoModeStore } = await import("@/stores/demoModeStore");
             const { requireAuth } = await import("./auth");
 
             vi.mocked(useAuthStore.getState).mockReturnValue({
@@ -95,13 +80,10 @@ describe("middleware/auth", () => {
                 wallet: null,
                 token: null,
                 expiresAt: null,
-                setAuth: vi.fn(),
-                clearAuth: vi.fn(),
-            });
-
-            vi.mocked(demoModeStore.getState).mockReturnValue({
                 isDemoMode: false,
+                setAuth: vi.fn(),
                 setDemoMode: vi.fn(),
+                clearAuth: vi.fn(),
             });
 
             try {
@@ -117,7 +99,6 @@ describe("middleware/auth", () => {
             mockAuthSession,
         }: TestContext) => {
             const { useAuthStore } = await import("@/stores/authStore");
-            const { demoModeStore } = await import("@/stores/demoModeStore");
             const { requireAuth } = await import("./auth");
 
             vi.mocked(useAuthStore.getState).mockReturnValue({
@@ -125,13 +106,10 @@ describe("middleware/auth", () => {
                 wallet: mockAuthSession.wallet,
                 token: null,
                 expiresAt: null,
-                setAuth: vi.fn(),
-                clearAuth: vi.fn(),
-            });
-
-            vi.mocked(demoModeStore.getState).mockReturnValue({
                 isDemoMode: true,
+                setAuth: vi.fn(),
                 setDemoMode: vi.fn(),
+                clearAuth: vi.fn(),
             });
 
             const result = await requireAuth({
@@ -154,7 +132,9 @@ describe("middleware/auth", () => {
                 wallet: null,
                 token: null,
                 expiresAt: null,
+                isDemoMode: false,
                 setAuth: vi.fn(),
+                setDemoMode: vi.fn(),
                 clearAuth: vi.fn(),
             });
 
@@ -172,7 +152,9 @@ describe("middleware/auth", () => {
                 wallet: mockAuthSession.wallet,
                 token: "mock-token",
                 expiresAt: Date.now() + 1000000,
+                isDemoMode: false,
                 setAuth: vi.fn(),
+                setDemoMode: vi.fn(),
                 clearAuth: vi.fn(),
             });
 

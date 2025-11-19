@@ -5,11 +5,11 @@ import { RouteError } from "@/module/common/component/RouteError";
 import { queryClient } from "@/module/common/provider/RootProvider";
 import { ProductDetails } from "@/module/product/component/ProductDetails";
 import { productMetadataQueryOptions } from "@/module/product/queries/queryOptions";
-import { demoModeStore } from "@/stores/demoModeStore";
+import { useAuthStore } from "@/stores/authStore";
 
 export const Route = createFileRoute("/_restricted/product/$id/")({
     loader: ({ params }) => {
-        const isDemoMode = demoModeStore.getState().isDemoMode;
+        const isDemoMode = useAuthStore.getState().isDemoMode;
         return queryClient.ensureQueryData(
             productMetadataQueryOptions(params.id as Hex, isDemoMode)
         );

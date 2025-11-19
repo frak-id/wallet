@@ -6,11 +6,11 @@ import { CriticalError } from "@/module/common/component/RouteError";
 import { queryClient } from "@/module/common/provider/RootProvider";
 import { MyProducts } from "@/module/dashboard/component/Products";
 import { myProductsQueryOptions } from "@/module/dashboard/queries/queryOptions";
-import { demoModeStore } from "@/stores/demoModeStore";
+import { useAuthStore } from "@/stores/authStore";
 
 export const Route = createFileRoute("/_restricted/dashboard")({
     loader: () => {
-        const isDemoMode = demoModeStore.getState().isDemoMode;
+        const isDemoMode = useAuthStore.getState().isDemoMode;
         return queryClient.ensureQueryData(myProductsQueryOptions(isDemoMode));
     },
     component: Dashboard,
