@@ -11,9 +11,9 @@ import { queryClient } from "@/module/common/provider/RootProvider";
 
 export const Route = createFileRoute("/_restricted/campaigns/list")({
     loader: () => {
-        // Use isomorphic function - works on both server and client
-        const isDemo = isDemoMode();
-        return queryClient.ensureQueryData(campaignsListQueryOptions(isDemo));
+        return queryClient.ensureQueryData(
+            campaignsListQueryOptions(isDemoMode())
+        );
     },
     component: CampaignsListPage,
     pendingComponent: () => <Skeleton />,

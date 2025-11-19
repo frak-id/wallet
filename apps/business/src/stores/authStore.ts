@@ -61,17 +61,3 @@ export function getSafeAuthToken(): string | null {
     }
     return state.token;
 }
-
-/**
- * Get the current session data safely
- */
-export function getSafeAuthSession(): {
-    token: string;
-    wallet: Address;
-} | null {
-    const state = useAuthStore.getState();
-    if (!state.isAuthenticated() || !state.wallet || !state.token) {
-        return null;
-    }
-    return { token: state.token, wallet: state.wallet };
-}

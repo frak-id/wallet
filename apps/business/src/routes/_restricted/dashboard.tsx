@@ -10,9 +10,9 @@ import { myProductsQueryOptions } from "@/module/dashboard/queries/queryOptions"
 
 export const Route = createFileRoute("/_restricted/dashboard")({
     loader: () => {
-        // Use isomorphic function - works on both server and client
-        const isDemo = isDemoMode();
-        return queryClient.ensureQueryData(myProductsQueryOptions(isDemo));
+        return queryClient.ensureQueryData(
+            myProductsQueryOptions(isDemoMode())
+        );
     },
     component: Dashboard,
     pendingComponent: () => <Spinner />,

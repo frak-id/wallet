@@ -5,7 +5,7 @@ import { useAuthStore } from "@/stores/authStore";
 /**
  * Check if user is authenticated (works on both server and client)
  */
-async function isAuthenticated(): Promise<boolean> {
+export function isAuthenticated(): boolean {
     const token = getAuthToken();
     const isDemo = isDemoMode();
 
@@ -25,12 +25,7 @@ async function isAuthenticated(): Promise<boolean> {
     }
 
     // Client-side: check expiration
-    const expiresAt = useAuthStore.getState().expiresAt;
-    if (!expiresAt) {
-        return false;
-    }
-
-    return Date.now() < expiresAt;
+    return useAuthStore.getState().isAuthenticated();
 }
 
 /**
@@ -43,7 +38,7 @@ export async function requireAuth({
 }: {
     location: { href: string };
 }) {
-    const authenticated = await isAuthenticated();
+    const authenticated = isAuthenticated();
 
     if (!authenticated) {
         throw redirect({
@@ -68,8 +63,8 @@ export async function requireAuth({
  * Redirects to dashboard if already authenticated
  * Works correctly during both SSR and client-side navigation
  */
-export async function redirectIfAuthenticated() {
-    const authenticated = await isAuthenticated();
+export function redirectIfAuthenticated() {
+    const authenticated = isAuthenticated();
 
     if (authenticated) {
         throw redirect({

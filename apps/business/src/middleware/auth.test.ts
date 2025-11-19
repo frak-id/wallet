@@ -44,7 +44,7 @@ describe("middleware/auth", () => {
 
             // Mock client-side auth state for expiration check
             mockGetState.mockReturnValue({
-                expiresAt: Date.now() + 1000000,
+                isAuthenticated: () => true,
             });
 
             const result = await requireAuth({
@@ -114,7 +114,7 @@ describe("middleware/auth", () => {
             mockGetAuthToken.mockReturnValue(null);
             mockIsDemoMode.mockReturnValue(false);
 
-            await expect(redirectIfAuthenticated()).resolves.toBeUndefined();
+            expect(redirectIfAuthenticated()).toBeUndefined();
         });
 
         test("should redirect to dashboard when user is authenticated", async () => {
@@ -123,10 +123,10 @@ describe("middleware/auth", () => {
             mockGetAuthToken.mockReturnValue("mock-token");
             mockIsDemoMode.mockReturnValue(false);
             mockGetState.mockReturnValue({
-                expiresAt: Date.now() + 1000000,
+                isAuthenticated: () => true,
             });
 
-            await expect(redirectIfAuthenticated()).rejects.toThrow(
+            expect(() => redirectIfAuthenticated()).toThrowError(
                 'REDIRECT:{"to":"/dashboard"}'
             );
         });
