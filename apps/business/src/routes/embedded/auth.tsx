@@ -1,28 +1,33 @@
 import { useSiweAuthenticate, useWalletStatus } from "@frak-labs/react-sdk";
 import { Button } from "@frak-labs/ui/component/Button";
 import { Spinner } from "@frak-labs/ui/component/Spinner";
-import { type ReactNode, useMemo } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useMemo } from "react";
 import { authenticatedBackendApi } from "@/context/api/backendClient";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
 import { useAuthStore } from "@/stores/authStore";
-import styles from "../Mint/index.module.css";
+import styles from "./auth.module.css";
 
-/**
- * Simple wrapper to ensure that the child component is only rendered when user is authenticated
- */
-export function AuthenticationGated({
-    children,
-    action,
-}: {
-    action: string;
-    children: ReactNode;
-}) {
+export const Route = createFileRoute("/embedded/auth")({
+    component: EmbeddedAuthPage,
+    validateSearch: (search: Record<string, unknown>) => {
+        return {
+            redirect: (search.redirect as string | undefined) ?? "/embedded",
+        };
+    },
+});
+
+function EmbeddedAuthPage() {
+    const navigate = useNavigate();
+    const { redirect } = Route.useSearch();
+
     const {
         data: walletStatus,
         refetch: refetchWalletStatus,
         isLoading: isLoadingWalletStatus,
     } = useWalletStatus();
+
     const isAuthenticatedInStore = useAuthStore((state) =>
         state.isAuthenticated()
     );
@@ -52,6 +57,9 @@ export function AuthenticationGated({
 
                 // Refresh the wallet status
                 await refetchWalletStatus();
+
+                // Redirect to original destination
+                navigate({ to: redirect });
             },
         },
     });
@@ -64,44 +72,46 @@ export function AuthenticationGated({
         return isLoadingWalletStatus || isPending;
     }, [isLoadingWalletStatus, isPending]);
 
+    // If already authenticated, redirect immediately
+    if (isAuthenticated) {
+        navigate({ to: redirect });
+        return null;
+    }
+
     if (isLoading || walletStatus === undefined) {
         return (
-            <div>
+            <div className={styles.container}>
                 <Spinner />
             </div>
         );
     }
 
-    if (!isAuthenticated) {
-        return (
-            <>
-                <Title className={styles.title}>Authentication required</Title>
-                <Panel
-                    withBadge={false}
-                    title={`Please connect your wallet to ${action}`}
+    return (
+        <div className={styles.container}>
+            <Title className={styles.title}>Authentication required</Title>
+            <Panel
+                withBadge={false}
+                title="Please connect your wallet to continue"
+            >
+                <Button
+                    variant="secondary"
+                    size="small"
+                    className={styles.button}
+                    onClick={() =>
+                        authenticate({
+                            siwe: {
+                                // Expire the session after 1 week
+                                expirationTimeTimestamp:
+                                    Date.now() + 1000 * 60 * 60 * 24 * 7,
+                            },
+                        })
+                    }
+                    isLoading={isPending}
+                    disabled={isPending}
                 >
-                    <Button
-                        variant="secondary"
-                        size="small"
-                        className={styles.button}
-                        onClick={() =>
-                            authenticate({
-                                siwe: {
-                                    // Expire the session after 1 week
-                                    expirationTimeTimestamp:
-                                        Date.now() + 1000 * 60 * 60 * 24 * 7,
-                                },
-                            })
-                        }
-                        isLoading={isPending}
-                        disabled={isPending}
-                    >
-                        {isPending && <Spinner />} Authenticate
-                    </Button>
-                </Panel>
-            </>
-        );
-    }
-
-    return <>{children}</>;
+                    {isPending && <Spinner />} Authenticate
+                </Button>
+            </Panel>
+        </div>
+    );
 }

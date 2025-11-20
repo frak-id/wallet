@@ -1,9 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { AuthenticationGated } from "@/module/embedded/component/AuthenticationGated";
 import { EmbeddedMint } from "@/module/embedded/component/Mint";
 
 export const Route = createFileRoute("/embedded/_layout/mint")({
-    component: EmbeddedMintPage,
+    component: EmbeddedMint,
     validateSearch: (search: Record<string, unknown>) => {
         // Required parameters
         const d = search.d as string | undefined;
@@ -23,11 +22,3 @@ export const Route = createFileRoute("/embedded/_layout/mint")({
         };
     },
 });
-
-function EmbeddedMintPage() {
-    return (
-        <AuthenticationGated action="validate your product">
-            <EmbeddedMint />
-        </AuthenticationGated>
-    );
-}

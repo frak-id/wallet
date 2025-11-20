@@ -1,9 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { AuthenticationGated } from "@/module/embedded/component/AuthenticationGated";
 import { EmbeddedPurchaseTracker } from "@/module/embedded/component/PurchaseTracker";
 
 export const Route = createFileRoute("/embedded/_layout/purchase-tracker")({
-    component: EmbeddedPurchaseTrackerPage,
+    component: EmbeddedPurchaseTracker,
     validateSearch: (search: Record<string, unknown>) => {
         // Required parameters
         const pid = search.pid as string | undefined;
@@ -19,11 +18,3 @@ export const Route = createFileRoute("/embedded/_layout/purchase-tracker")({
         };
     },
 });
-
-function EmbeddedPurchaseTrackerPage() {
-    return (
-        <AuthenticationGated action="create your purchase tracker">
-            <EmbeddedPurchaseTracker />
-        </AuthenticationGated>
-    );
-}

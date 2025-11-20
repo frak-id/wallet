@@ -16,6 +16,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as DemoRouteImport } from './routes/demo'
 import { Route as RestrictedRouteImport } from './routes/_restricted'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as EmbeddedAuthRouteImport } from './routes/embedded/auth'
 import { Route as EmbeddedLayoutRouteImport } from './routes/embedded/_layout'
 import { Route as RestrictedSettingsRouteImport } from './routes/_restricted/settings'
 import { Route as RestrictedMintRouteImport } from './routes/_restricted/mint'
@@ -71,6 +72,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const EmbeddedAuthRoute = EmbeddedAuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => EmbeddedRoute,
 } as any)
 const EmbeddedLayoutRoute = EmbeddedLayoutRouteImport.update({
   id: '/_layout',
@@ -215,6 +221,7 @@ export interface FileRoutesByFullPath {
   '/mint': typeof RestrictedMintRoute
   '/settings': typeof RestrictedSettingsRoute
   '/embedded': typeof EmbeddedLayoutRouteWithChildren
+  '/embedded/auth': typeof EmbeddedAuthRoute
   '/campaigns/$campaignId': typeof RestrictedCampaignsCampaignIdRoute
   '/campaigns/list': typeof RestrictedCampaignsListRoute
   '/campaigns/metrics': typeof RestrictedCampaignsMetricsRoute
@@ -245,6 +252,7 @@ export interface FileRoutesByTo {
   '/mint': typeof RestrictedMintRoute
   '/settings': typeof RestrictedSettingsRoute
   '/embedded': typeof EmbeddedLayoutRouteWithChildren
+  '/embedded/auth': typeof EmbeddedAuthRoute
   '/campaigns/$campaignId': typeof RestrictedCampaignsCampaignIdRoute
   '/campaigns/list': typeof RestrictedCampaignsListRoute
   '/campaigns/metrics': typeof RestrictedCampaignsMetricsRoute
@@ -278,6 +286,7 @@ export interface FileRoutesById {
   '/_restricted/settings': typeof RestrictedSettingsRoute
   '/embedded': typeof EmbeddedRouteWithChildren
   '/embedded/_layout': typeof EmbeddedLayoutRouteWithChildren
+  '/embedded/auth': typeof EmbeddedAuthRoute
   '/_restricted/campaigns/$campaignId': typeof RestrictedCampaignsCampaignIdRoute
   '/_restricted/campaigns/list': typeof RestrictedCampaignsListRoute
   '/_restricted/campaigns/metrics': typeof RestrictedCampaignsMetricsRoute
@@ -310,6 +319,7 @@ export interface FileRouteTypes {
     | '/mint'
     | '/settings'
     | '/embedded'
+    | '/embedded/auth'
     | '/campaigns/$campaignId'
     | '/campaigns/list'
     | '/campaigns/metrics'
@@ -340,6 +350,7 @@ export interface FileRouteTypes {
     | '/mint'
     | '/settings'
     | '/embedded'
+    | '/embedded/auth'
     | '/campaigns/$campaignId'
     | '/campaigns/list'
     | '/campaigns/metrics'
@@ -372,6 +383,7 @@ export interface FileRouteTypes {
     | '/_restricted/settings'
     | '/embedded'
     | '/embedded/_layout'
+    | '/embedded/auth'
     | '/_restricted/campaigns/$campaignId'
     | '/_restricted/campaigns/list'
     | '/_restricted/campaigns/metrics'
@@ -445,6 +457,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/embedded/auth': {
+      id: '/embedded/auth'
+      path: '/auth'
+      fullPath: '/embedded/auth'
+      preLoaderRoute: typeof EmbeddedAuthRouteImport
+      parentRoute: typeof EmbeddedRoute
     }
     '/embedded/_layout': {
       id: '/embedded/_layout'
@@ -701,10 +720,12 @@ const EmbeddedLayoutRouteWithChildren = EmbeddedLayoutRoute._addFileChildren(
 
 interface EmbeddedRouteChildren {
   EmbeddedLayoutRoute: typeof EmbeddedLayoutRouteWithChildren
+  EmbeddedAuthRoute: typeof EmbeddedAuthRoute
 }
 
 const EmbeddedRouteChildren: EmbeddedRouteChildren = {
   EmbeddedLayoutRoute: EmbeddedLayoutRouteWithChildren,
+  EmbeddedAuthRoute: EmbeddedAuthRoute,
 }
 
 const EmbeddedRouteWithChildren = EmbeddedRoute._addFileChildren(

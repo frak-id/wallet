@@ -1,9 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { AuthenticationGated } from "@/module/embedded/component/AuthenticationGated";
 import { EmbeddedCreateCampaign } from "@/module/embedded/component/CreateCampaign";
 
 export const Route = createFileRoute("/embedded/_layout/create-campaign")({
-    component: EmbeddedCreateCampaignPage,
+    component: EmbeddedCreateCampaign,
     validateSearch: (search: Record<string, unknown>) => {
         // Required parameters
         const n = search.n as string | undefined;
@@ -31,11 +30,3 @@ export const Route = createFileRoute("/embedded/_layout/create-campaign")({
         };
     },
 });
-
-function EmbeddedCreateCampaignPage() {
-    return (
-        <AuthenticationGated action="validate your product">
-            <EmbeddedCreateCampaign />
-        </AuthenticationGated>
-    );
-}
