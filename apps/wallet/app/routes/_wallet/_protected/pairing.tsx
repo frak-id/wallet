@@ -1,5 +1,4 @@
 import { createFileRoute, lazyRouteComponent } from "@tanstack/react-router";
-import { PageLoader } from "@/module/common/component/PageLoader";
 
 type PairingSearch = {
     id?: string;
@@ -10,7 +9,6 @@ export const Route = createFileRoute("/_wallet/_protected/pairing")({
         () => import("@/module/pairing/page/PairingPage"),
         "PairingPage"
     ),
-    pendingComponent: PageLoader,
     validateSearch: (search: Record<string, unknown>): PairingSearch => {
         return {
             id: (search.id as string) || "",

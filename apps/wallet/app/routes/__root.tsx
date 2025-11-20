@@ -1,8 +1,6 @@
-import { Spinner } from "@frak-labs/ui/component/Spinner";
 import { createRootRoute, Outlet } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import { PwaInstall } from "@/module/common/component/PwaInstall";
-import { TopLoader } from "@/module/common/component/TopLoader";
 import { RootProvider } from "@/module/common/provider/RootProvider";
 import { DetectPWA } from "@/module/wallet/component/DetectPWA";
 // Import open panel to ensure it's initialized
@@ -15,7 +13,6 @@ export const Route = createRootRoute({
     component: RootComponent,
     errorComponent: ErrorComponent,
     notFoundComponent: NotFoundComponent,
-    pendingComponent: PendingComponent,
 });
 
 /**
@@ -28,31 +25,11 @@ function RootComponent() {
         <RootProvider>
             <PwaInstall />
             <Outlet />
-            <TopLoader />
             <DetectPWA />
             {import.meta.env.DEV && (
                 <TanStackRouterDevtools position="bottom-right" />
             )}
         </RootProvider>
-    );
-}
-
-/**
- * Pending component for route transitions
- */
-function PendingComponent() {
-    return (
-        <div
-            style={{
-                position: "fixed",
-                left: "50%",
-                top: "50%",
-                margin: "-8px 0 0 -8px",
-                color: "black",
-            }}
-        >
-            <Spinner />
-        </div>
     );
 }
 

@@ -13,6 +13,7 @@ import I18nextBrowserLanguageDetector from "i18next-browser-languagedetector";
 import { StrictMode, startTransition } from "react";
 import { createRoot } from "react-dom/client";
 import { I18nextProvider, initReactI18next } from "react-i18next";
+import { PendingLoader } from "@/module/common/component/PendingLoader";
 
 // Setup BigInt serialization polyfill
 setupBigIntSerialization();
@@ -24,7 +25,8 @@ import { routeTree } from "./routeTree.gen";
 const router = createRouter({
     routeTree,
     defaultPreload: "intent",
-    defaultPendingMs: 500,
+    defaultPendingMinMs: 500,
+    defaultPendingComponent: PendingLoader,
 });
 
 // Register the router instance for type safety
