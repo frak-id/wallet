@@ -11,10 +11,22 @@ export function onwarn(warning: RollupLog, warn: LoggingFunction) {
         warning.code === "INVALID_ANNOTATION" &&
         warning.url?.includes("#pure")
     ) {
-        // Ignore the warning
         return;
     }
-    warn(warning); // Log other warnings
+
+    /**
+     * Hide warnings about Node.js modules being externalized for browser compatibility
+     * These come from the ws package which has Node.js-specific code paths that won't be used in the browser
+     */
+    if (
+        warning.plugin === "rolldown:vite-resolve" &&
+        warning.message?.includes("externalized for browser compatibility") &&
+        warning.message?.includes("ws/lib/")
+    ) {
+        return;
+    }
+
+    warn(warning);
 }
 
 /**

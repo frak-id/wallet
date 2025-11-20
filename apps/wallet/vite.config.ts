@@ -1,10 +1,10 @@
 import * as process from "node:process";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import viteReact from "@vitejs/plugin-react";
-import type { Drop } from "esbuild";
 import type { ConfigEnv, UserConfig } from "rolldown-vite";
 import { defineConfig } from "rolldown-vite";
 import mkcert from "vite-plugin-mkcert";
+import removeConsole from "vite-plugin-remove-console";
 import tsconfigPaths from "vite-tsconfig-paths";
 import { lightningCssConfig, onwarn } from "../../packages/dev-tooling";
 
@@ -47,10 +47,6 @@ export default defineConfig(({ mode, command }: ConfigEnv): UserConfig => {
                 process.env.OPEN_PANEL_WALLET_CLIENT_ID
             ),
         },
-        // Remove console and debugger on prod
-        esbuild: {
-            drop: isProd ? (["console", "debugger"] as Drop[]) : [],
-        },
     };
 
     // Service worker configuration
@@ -86,6 +82,7 @@ export default defineConfig(({ mode, command }: ConfigEnv): UserConfig => {
             viteReact(),
             mkcert(),
             tsconfigPaths(),
+            ...(isProd ? [removeConsole()] : []),
         ],
         resolve: {
             conditions: ["development"],
