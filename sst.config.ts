@@ -48,14 +48,7 @@ export default $config({
             await import("./infra/dashboard.ts");
             await import("./infra/example.ts");
 
-            return;
-        }
-
-        // Some config
-        await import("./infra/config.ts");
-
-        // Build the sdk on dev env
-        if ($dev) {
+            // SDK build command helper
             new sst.x.DevCommand("sdk:build", {
                 dev: {
                     title: "Build SDK",
@@ -65,12 +58,9 @@ export default $config({
                 },
             });
 
-            // Missing dev stacks (since they didn't matched the previous if)
-            await import("./infra/example.ts");
-            await import("./infra/gcp/dev.ts");
+            return;
         }
 
-        // Add dashboard (remain on AWS for now)
         await import("./infra/dashboard.ts");
     },
 });

@@ -14,7 +14,10 @@ import {
     openPanelBusinessClientId,
     walletUrl,
 } from "../config";
+import { isProd } from "../utils";
 import { baseDomainName, getRegistryPath, walletNamespace } from "./utils";
+
+const subDomain = isProd ? "business" : "business-dev";
 
 const businessEnv = {
     STAGE: $app.stage,
@@ -129,8 +132,9 @@ export const businessService = new KubernetesService(
 
         // Ingress config with path-based routing
         ingress: {
-            host: `business.${baseDomainName}`,
+            host: `${subDomain}.frak.id`,
             tlsSecretName: "business-tls",
+            additionalHosts: [`business.${baseDomainName}`],
         },
     },
     {
