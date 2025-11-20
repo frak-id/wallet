@@ -1,4 +1,3 @@
-import { Skeleton } from "@frak-labs/ui/component/Skeleton";
 import { createFileRoute } from "@tanstack/react-router";
 import { isDemoMode } from "@/context/auth/authEnv";
 import { ButtonNewCampaign } from "@/module/campaigns/component/ButtonNewCampaign";
@@ -16,7 +15,6 @@ export const Route = createFileRoute("/_restricted/campaigns/list")({
         );
     },
     component: CampaignsListPage,
-    pendingComponent: () => <Skeleton />,
     errorComponent: (props) => (
         <DataLoadError {...props} resourceName="campaigns" />
     ),

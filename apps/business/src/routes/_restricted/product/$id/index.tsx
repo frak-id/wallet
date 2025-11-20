@@ -1,4 +1,3 @@
-import { Spinner } from "@frak-labs/ui/component/Spinner";
 import { createFileRoute } from "@tanstack/react-router";
 import type { Hex } from "viem";
 import { isDemoMode } from "@/context/auth/authEnv";
@@ -14,7 +13,6 @@ export const Route = createFileRoute("/_restricted/product/$id/")({
         );
     },
     component: ProductPage,
-    pendingComponent: () => <Spinner />,
     errorComponent: (props) => (
         <RouteError
             {...props}

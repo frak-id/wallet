@@ -1,4 +1,3 @@
-import { Skeleton } from "@frak-labs/ui/component/Skeleton";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect } from "react";
@@ -23,7 +22,6 @@ export const Route = createFileRoute("/_restricted/campaigns/edit/$campaignId")(
             );
         },
         component: CampaignsEditPage,
-        pendingComponent: () => <Skeleton />,
         errorComponent: CampaignError,
     }
 );

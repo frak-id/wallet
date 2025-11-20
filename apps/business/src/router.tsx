@@ -1,3 +1,4 @@
+import { PendingLoader } from "@frak-labs/ui/component/PendingLoader";
 import { createRouter } from "@tanstack/react-router";
 
 // Import the generated route tree
@@ -9,6 +10,7 @@ export const getRouter = () => {
         routeTree,
         scrollRestoration: true,
         defaultPreloadStaleTime: 0,
-        defaultPendingMs: 500,
+        defaultPendingMinMs: 500,
+        defaultPendingComponent: PendingLoader,
     });
 };

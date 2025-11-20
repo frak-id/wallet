@@ -1,4 +1,3 @@
-import { Skeleton } from "@frak-labs/ui/component/Skeleton";
 import { createFileRoute, lazyRouteComponent } from "@tanstack/react-router";
 import {
     campaignQueryOptions,
@@ -22,5 +21,4 @@ export const Route = createFileRoute(
         () => import("@/module/campaigns/page/CampaignsDraftMetricsPage"),
         "CampaignsDraftMetricsPage"
     ),
-    pendingComponent: () => <Skeleton />,
 });

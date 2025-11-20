@@ -1,4 +1,3 @@
-import { Spinner } from "@frak-labs/ui/component/Spinner";
 import { createFileRoute } from "@tanstack/react-router";
 import { Breadcrumb } from "@/module/common/component/Breadcrumb";
 import { Head } from "@/module/common/component/Head";
@@ -18,7 +17,6 @@ export const Route = createFileRoute("/_restricted/members")({
         );
     },
     component: MembersListPage,
-    pendingComponent: () => <Spinner />,
     errorComponent: (props) => (
         <DataLoadError {...props} resourceName="members" />
     ),

@@ -50,6 +50,7 @@
         "mongodb": "^6.20.0",
         "nitro": "3.0.1-alpha.1",
         "normalize.css": "^8.0.1",
+        "nprogress": "^0.2.0",
         "radash": "^12.1.1",
         "react": "catalog:",
         "react-day-picker": "^9.11.1",

@@ -1,4 +1,3 @@
-import { Spinner } from "@frak-labs/ui/component/Spinner";
 import { createFileRoute } from "@tanstack/react-router";
 import { isDemoMode } from "@/context/auth/authEnv";
 import { Breadcrumb } from "@/module/common/component/Breadcrumb";
@@ -15,7 +14,6 @@ export const Route = createFileRoute("/_restricted/dashboard")({
         );
     },
     component: Dashboard,
-    pendingComponent: () => <Spinner />,
     errorComponent: CriticalError,
 });
 

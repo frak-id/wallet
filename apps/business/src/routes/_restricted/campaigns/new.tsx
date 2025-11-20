@@ -1,4 +1,3 @@
-import { Skeleton } from "@frak-labs/ui/component/Skeleton";
 import { createFileRoute, lazyRouteComponent } from "@tanstack/react-router";
 import { RouteError } from "@/module/common/component/RouteError";
 
@@ -7,7 +6,6 @@ export const Route = createFileRoute("/_restricted/campaigns/new")({
         () => import("@/module/campaigns/page/CampaignsNewPage"),
         "CampaignsNewPage"
     ),
-    pendingComponent: () => <Skeleton />,
     errorComponent: (props) => (
         <RouteError
             {...props}

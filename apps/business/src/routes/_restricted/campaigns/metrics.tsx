@@ -1,4 +1,3 @@
-import { Skeleton } from "@frak-labs/ui/component/Skeleton";
 import { createFileRoute, lazyRouteComponent } from "@tanstack/react-router";
 import { DataLoadError } from "@/module/common/component/RouteError";
 
@@ -7,7 +6,6 @@ export const Route = createFileRoute("/_restricted/campaigns/metrics")({
         () => import("@/module/campaigns/page/CampaignsMetricsPage"),
         "CampaignsMetricsPage"
     ),
-    pendingComponent: () => <Skeleton />,
     errorComponent: (props) => (
         <DataLoadError {...props} resourceName="campaign metrics" />
     ),
