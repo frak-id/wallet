@@ -4,7 +4,10 @@ import ReactDOM from "react-dom/client";
 import { routeTree } from "./routeTree.gen";
 import "./styles/global.css";
 
-const router = createRouter({ routeTree });
+const router = createRouter({
+    routeTree,
+    defaultPendingMs: 500,
+});
 
 declare module "@tanstack/react-router" {
     interface Register {
