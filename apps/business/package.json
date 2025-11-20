@@ -1,7 +1,7 @@
 {
     "name": "@frak-labs/nexus-business",
     "version": "0.0.1",
-    "description": "The Frak Nexus Dashboard built with TanStack Start",
+    "description": "The Frak Business Dashboard built with TanStack Start",
     "private": true,
     "type": "module",
     "license": "GNU GPL 3.0",

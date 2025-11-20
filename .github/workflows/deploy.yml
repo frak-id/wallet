@@ -75,6 +75,7 @@ jobs:
             services:
               - 'apps/wallet/**'
               - 'apps/listener/**'
+              - 'apps/business/**'
               - 'packages/wallet-shared/**'
               - 'services/**'
               - 'packages/**'
