@@ -34,7 +34,7 @@ export default defineConfig(({ mode }) => {
                 inject: {
                     data: {
                         walletUrl,
-                        injectScript: `<script type="text/javascript" src="${scriptSrc}" defer></script>`,
+                        injectScript: `<script type="module" src="${scriptSrc}"></script>`,
                     },
                 },
             }),

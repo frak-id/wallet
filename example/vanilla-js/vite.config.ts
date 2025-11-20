@@ -30,7 +30,7 @@ export default defineConfig(({ mode }) => {
             createHtmlPlugin({
                 inject: {
                     data: {
-                        injectScript: `<script defer src="${scriptSrc}"></script>`,
+                        injectScript: `<script type="module" src="${scriptSrc}"></script>`,
                         injectReactScan: DEBUG
                             ? `<script src="//unpkg.com/react-scan/dist/auto.global.js"></script>`
                             : "",
