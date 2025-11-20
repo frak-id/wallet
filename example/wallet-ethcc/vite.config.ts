@@ -5,8 +5,8 @@ import { defineConfig } from "rolldown-vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 import { lightningCssConfig, onwarn } from "../../packages/dev-tooling";
 
+const DEBUG = process.env.DEBUG === "true";
 const isProd = process.env.STAGE?.includes("prod") ?? false;
-const DEBUG = !isProd;
 
 export default defineConfig((): UserConfig => {
     return {
