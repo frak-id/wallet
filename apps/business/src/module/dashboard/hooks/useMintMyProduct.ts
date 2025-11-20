@@ -7,7 +7,7 @@ import {
     productRoles,
     type Stablecoin,
 } from "@frak-labs/app-essentials/blockchain";
-import { backendApi, businessApi } from "@frak-labs/client/server";
+import { backendApi } from "@frak-labs/client/server";
 import type {
     ProductTypesKey,
     SendTransactionModalStepType,
@@ -16,6 +16,7 @@ import { useSendTransactionAction } from "@frak-labs/react-sdk";
 import { type UseMutationOptions, useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { encodeFunctionData, type Hex } from "viem";
+import { authenticatedBackendApi } from "@/context/api/backendClient";
 import { useGetAdminWallet } from "@/module/common/hook/useGetAdminWallet";
 import { useWaitForTxAndInvalidateQueries } from "@/module/common/utils/useWaitForTxAndInvalidateQueries";
 
@@ -59,13 +60,14 @@ export function useMintMyProduct(
         }) {
             // Trigger the backend mint
             setInfoTxt("Registering your product");
-            const { data, error } = await businessApi.product.mint.put({
-                name,
-                domain,
-                setupCode,
-                productTypes,
-                currency,
-            });
+            const { data, error } =
+                await authenticatedBackendApi.product.mint.put({
+                    name,
+                    domain,
+                    setupCode,
+                    productTypes,
+                    currency,
+                });
             if (error) throw error;
 
             // Compute the post mint transaction to be done

@@ -1,4 +1,3 @@
-import { businessApi } from "@frak-labs/client/server";
 import { Button } from "@frak-labs/ui/component/Button";
 import { Column, Columns } from "@frak-labs/ui/component/Columns";
 import { Input } from "@frak-labs/ui/component/forms/Input";
@@ -9,6 +8,7 @@ import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import type { Hex } from "viem";
 import { generatePrivateKey } from "viem/accounts";
+import { authenticatedBackendApi } from "@/context/api/backendClient";
 import { Badge } from "@/module/common/component/Badge";
 import { Row } from "@/module/common/component/Row";
 import { Title } from "@/module/common/component/Title";
@@ -428,10 +428,12 @@ function useWebhookSetup({ productId }: { productId: Hex }) {
             webhookKey: string;
             platform: OraclePlatform;
         }) => {
-            await businessApi.product({ productId }).oracleWebhook.setup.post({
-                hookSignatureKey: webhookKey,
-                platform,
-            });
+            await authenticatedBackendApi
+                .product({ productId })
+                .oracleWebhook.setup.post({
+                    hookSignatureKey: webhookKey,
+                    platform,
+                });
         },
         onSettled: async () => {
             await refetch();

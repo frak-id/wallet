@@ -10,8 +10,8 @@ import {
 import { useFundTestBank } from "./useFundTestBank";
 
 // Mock the business API
-vi.mock("@frak-labs/client/server", () => ({
-    businessApi: {
+vi.mock("@/context/api/backendClient", () => ({
+    authenticatedBackendApi: {
         funding: {
             getTestToken: {
                 post: vi.fn(),
@@ -27,11 +27,13 @@ describe("useFundTestBank", () => {
         test("should fund bank successfully with stablecoin", async ({
             queryWrapper,
         }: TestContext) => {
-            const { businessApi } = await import("@frak-labs/client/server");
-
-            vi.mocked(businessApi.funding.getTestToken.post).mockResolvedValue(
-                undefined as any
+            const { authenticatedBackendApi } = await import(
+                "@/context/api/backendClient"
             );
+
+            vi.mocked(
+                authenticatedBackendApi.funding.getTestToken.post
+            ).mockResolvedValue(undefined as any);
 
             const { result } = renderHook(() => useFundTestBank(), {
                 wrapper: queryWrapper.wrapper,
@@ -46,7 +48,9 @@ describe("useFundTestBank", () => {
                 expect(result.current.isSuccess).toBe(true);
             });
 
-            expect(businessApi.funding.getTestToken.post).toHaveBeenCalledWith({
+            expect(
+                authenticatedBackendApi.funding.getTestToken.post
+            ).toHaveBeenCalledWith({
                 bank: mockBankAddress,
                 stablecoin: "usdc",
             });
@@ -55,11 +59,13 @@ describe("useFundTestBank", () => {
         test("should fund bank without specifying stablecoin", async ({
             queryWrapper,
         }: TestContext) => {
-            const { businessApi } = await import("@frak-labs/client/server");
-
-            vi.mocked(businessApi.funding.getTestToken.post).mockResolvedValue(
-                undefined as any
+            const { authenticatedBackendApi } = await import(
+                "@/context/api/backendClient"
             );
+
+            vi.mocked(
+                authenticatedBackendApi.funding.getTestToken.post
+            ).mockResolvedValue(undefined as any);
 
             const { result } = renderHook(() => useFundTestBank(), {
                 wrapper: queryWrapper.wrapper,
@@ -73,7 +79,9 @@ describe("useFundTestBank", () => {
                 expect(result.current.isSuccess).toBe(true);
             });
 
-            expect(businessApi.funding.getTestToken.post).toHaveBeenCalledWith({
+            expect(
+                authenticatedBackendApi.funding.getTestToken.post
+            ).toHaveBeenCalledWith({
                 bank: mockBankAddress,
                 stablecoin: undefined,
             });
@@ -82,11 +90,13 @@ describe("useFundTestBank", () => {
         test("should handle different stablecoin types", async ({
             queryWrapper,
         }: TestContext) => {
-            const { businessApi } = await import("@frak-labs/client/server");
-
-            vi.mocked(businessApi.funding.getTestToken.post).mockResolvedValue(
-                undefined as any
+            const { authenticatedBackendApi } = await import(
+                "@/context/api/backendClient"
             );
+
+            vi.mocked(
+                authenticatedBackendApi.funding.getTestToken.post
+            ).mockResolvedValue(undefined as any);
 
             const { result } = renderHook(() => useFundTestBank(), {
                 wrapper: queryWrapper.wrapper,
@@ -101,7 +111,7 @@ describe("useFundTestBank", () => {
                 });
 
                 expect(
-                    businessApi.funding.getTestToken.post
+                    authenticatedBackendApi.funding.getTestToken.post
                 ).toHaveBeenCalledWith({
                     bank: mockBankAddress,
                     stablecoin: stablecoin,
@@ -114,11 +124,13 @@ describe("useFundTestBank", () => {
         test("should invalidate product queries after successful funding", async ({
             queryWrapper,
         }: TestContext) => {
-            const { businessApi } = await import("@frak-labs/client/server");
-
-            vi.mocked(businessApi.funding.getTestToken.post).mockResolvedValue(
-                undefined as any
+            const { authenticatedBackendApi } = await import(
+                "@/context/api/backendClient"
             );
+
+            vi.mocked(
+                authenticatedBackendApi.funding.getTestToken.post
+            ).mockResolvedValue(undefined as any);
 
             const { result } = renderHook(() => useFundTestBank(), {
                 wrapper: queryWrapper.wrapper,
@@ -138,11 +150,13 @@ describe("useFundTestBank", () => {
         test("should invalidate all product-related queries", async ({
             queryWrapper,
         }: TestContext) => {
-            const { businessApi } = await import("@frak-labs/client/server");
-
-            vi.mocked(businessApi.funding.getTestToken.post).mockResolvedValue(
-                undefined as any
+            const { authenticatedBackendApi } = await import(
+                "@/context/api/backendClient"
             );
+
+            vi.mocked(
+                authenticatedBackendApi.funding.getTestToken.post
+            ).mockResolvedValue(undefined as any);
 
             const { result } = renderHook(() => useFundTestBank(), {
                 wrapper: queryWrapper.wrapper,
@@ -162,11 +176,13 @@ describe("useFundTestBank", () => {
         test("should handle API errors", async ({
             queryWrapper,
         }: TestContext) => {
-            const { businessApi } = await import("@frak-labs/client/server");
-
-            vi.mocked(businessApi.funding.getTestToken.post).mockRejectedValue(
-                new Error("Failed to fund bank")
+            const { authenticatedBackendApi } = await import(
+                "@/context/api/backendClient"
             );
+
+            vi.mocked(
+                authenticatedBackendApi.funding.getTestToken.post
+            ).mockRejectedValue(new Error("Failed to fund bank"));
 
             const { result } = renderHook(() => useFundTestBank(), {
                 wrapper: queryWrapper.wrapper,
@@ -187,11 +203,13 @@ describe("useFundTestBank", () => {
         test("should handle network errors", async ({
             queryWrapper,
         }: TestContext) => {
-            const { businessApi } = await import("@frak-labs/client/server");
-
-            vi.mocked(businessApi.funding.getTestToken.post).mockRejectedValue(
-                new Error("Network error")
+            const { authenticatedBackendApi } = await import(
+                "@/context/api/backendClient"
             );
+
+            vi.mocked(
+                authenticatedBackendApi.funding.getTestToken.post
+            ).mockRejectedValue(new Error("Network error"));
 
             const { result } = renderHook(() => useFundTestBank(), {
                 wrapper: queryWrapper.wrapper,
@@ -207,11 +225,13 @@ describe("useFundTestBank", () => {
         test("should handle invalid bank address", async ({
             queryWrapper,
         }: TestContext) => {
-            const { businessApi } = await import("@frak-labs/client/server");
-
-            vi.mocked(businessApi.funding.getTestToken.post).mockRejectedValue(
-                new Error("Invalid bank address")
+            const { authenticatedBackendApi } = await import(
+                "@/context/api/backendClient"
             );
+
+            vi.mocked(
+                authenticatedBackendApi.funding.getTestToken.post
+            ).mockRejectedValue(new Error("Invalid bank address"));
 
             const { result } = renderHook(() => useFundTestBank(), {
                 wrapper: queryWrapper.wrapper,
@@ -229,9 +249,13 @@ describe("useFundTestBank", () => {
         test("should track mutation loading state", async ({
             queryWrapper,
         }: TestContext) => {
-            const { businessApi } = await import("@frak-labs/client/server");
+            const { authenticatedBackendApi } = await import(
+                "@/context/api/backendClient"
+            );
 
-            vi.mocked(businessApi.funding.getTestToken.post).mockImplementation(
+            vi.mocked(
+                authenticatedBackendApi.funding.getTestToken.post
+            ).mockImplementation(
                 () =>
                     new Promise((resolve) =>
                         setTimeout(() => resolve(undefined as any), 100)
@@ -263,11 +287,13 @@ describe("useFundTestBank", () => {
         test("should reset mutation state", async ({
             queryWrapper,
         }: TestContext) => {
-            const { businessApi } = await import("@frak-labs/client/server");
-
-            vi.mocked(businessApi.funding.getTestToken.post).mockResolvedValue(
-                undefined as any
+            const { authenticatedBackendApi } = await import(
+                "@/context/api/backendClient"
             );
+
+            vi.mocked(
+                authenticatedBackendApi.funding.getTestToken.post
+            ).mockResolvedValue(undefined as any);
 
             const { result } = renderHook(() => useFundTestBank(), {
                 wrapper: queryWrapper.wrapper,
@@ -309,11 +335,13 @@ describe("useFundTestBank", () => {
         test("should handle sequential funding operations", async ({
             queryWrapper,
         }: TestContext) => {
-            const { businessApi } = await import("@frak-labs/client/server");
-
-            vi.mocked(businessApi.funding.getTestToken.post).mockResolvedValue(
-                undefined as any
+            const { authenticatedBackendApi } = await import(
+                "@/context/api/backendClient"
             );
+
+            vi.mocked(
+                authenticatedBackendApi.funding.getTestToken.post
+            ).mockResolvedValue(undefined as any);
 
             const { result } = renderHook(() => useFundTestBank(), {
                 wrapper: queryWrapper.wrapper,
@@ -333,11 +361,15 @@ describe("useFundTestBank", () => {
             });
 
             // Should have called for both banks
-            expect(businessApi.funding.getTestToken.post).toHaveBeenCalledWith({
+            expect(
+                authenticatedBackendApi.funding.getTestToken.post
+            ).toHaveBeenCalledWith({
                 bank: bank1,
                 stablecoin: "usdc",
             });
-            expect(businessApi.funding.getTestToken.post).toHaveBeenCalledWith({
+            expect(
+                authenticatedBackendApi.funding.getTestToken.post
+            ).toHaveBeenCalledWith({
                 bank: bank2,
                 stablecoin: "usde",
             });
@@ -348,11 +380,13 @@ describe("useFundTestBank", () => {
         test("should handle void response from API", async ({
             queryWrapper,
         }: TestContext) => {
-            const { businessApi } = await import("@frak-labs/client/server");
-
-            vi.mocked(businessApi.funding.getTestToken.post).mockResolvedValue(
-                undefined as any
+            const { authenticatedBackendApi } = await import(
+                "@/context/api/backendClient"
             );
+
+            vi.mocked(
+                authenticatedBackendApi.funding.getTestToken.post
+            ).mockResolvedValue(undefined as any);
 
             const { result } = renderHook(() => useFundTestBank(), {
                 wrapper: queryWrapper.wrapper,

@@ -1,6 +1,6 @@
-import { businessApi } from "@frak-labs/client/server";
 import { useMutation } from "@tanstack/react-query";
 import type { Hex } from "viem";
+import { authenticatedBackendApi } from "@/context/api/backendClient";
 import { useWebhookInteractionStatus } from "@/module/product/hook/useWebhookInteractionStatus";
 
 /**
@@ -17,7 +17,7 @@ export function useWebhookInteractionSetup({ productId }: { productId: Hex }) {
             productId: Hex;
             hookSignatureKey: string;
         }) => {
-            const { data, error } = await businessApi
+            const { data, error } = await authenticatedBackendApi
                 .product({ productId })
                 .interactionsWebhook.setup.post({
                     source: "custom",

@@ -11,8 +11,8 @@ import {
 import { useWebhookInteractionDelete } from "./useWebhookInteractionDelete";
 
 // Mock the business API
-vi.mock("@frak-labs/client/server", () => ({
-    businessApi: {
+vi.mock("@/context/api/backendClient", () => ({
+    authenticatedBackendApi: {
         product: vi.fn(() => ({
             interactionsWebhook: {
                 delete: {
@@ -37,11 +37,13 @@ describe("useWebhookInteractionDelete", () => {
         test("should delete webhook successfully", async ({
             queryWrapper,
         }: TestContext) => {
-            const { businessApi } = await import("@frak-labs/client/server");
+            const { authenticatedBackendApi } = await import(
+                "@/context/api/backendClient"
+            );
 
             const mockResponse = { success: true };
 
-            vi.mocked(businessApi.product).mockReturnValue({
+            vi.mocked(authenticatedBackendApi.product).mockReturnValue({
                 interactionsWebhook: {
                     delete: {
                         post: vi.fn().mockResolvedValue({
@@ -69,14 +71,16 @@ describe("useWebhookInteractionDelete", () => {
         test("should call API with correct productId", async ({
             queryWrapper,
         }: TestContext) => {
-            const { businessApi } = await import("@frak-labs/client/server");
+            const { authenticatedBackendApi } = await import(
+                "@/context/api/backendClient"
+            );
 
             const postMock = vi.fn().mockResolvedValue({
                 data: { success: true },
                 error: null,
             });
 
-            vi.mocked(businessApi.product).mockReturnValue({
+            vi.mocked(authenticatedBackendApi.product).mockReturnValue({
                 interactionsWebhook: {
                     delete: {
                         post: postMock,
@@ -91,7 +95,7 @@ describe("useWebhookInteractionDelete", () => {
 
             await result.current.mutateAsync({ productId: mockProductId });
 
-            expect(businessApi.product).toHaveBeenCalledWith({
+            expect(authenticatedBackendApi.product).toHaveBeenCalledWith({
                 productId: mockProductId,
             });
             expect(postMock).toHaveBeenCalled();
@@ -102,7 +106,9 @@ describe("useWebhookInteractionDelete", () => {
         test("should refetch status after successful deletion", async ({
             queryWrapper,
         }: TestContext) => {
-            const { businessApi } = await import("@frak-labs/client/server");
+            const { authenticatedBackendApi } = await import(
+                "@/context/api/backendClient"
+            );
             const { useWebhookInteractionStatus } = await import(
                 "@/module/product/hook/useWebhookInteractionStatus"
             );
@@ -113,7 +119,7 @@ describe("useWebhookInteractionDelete", () => {
                 refetch: refetchMock,
             } as any);
 
-            vi.mocked(businessApi.product).mockReturnValue({
+            vi.mocked(authenticatedBackendApi.product).mockReturnValue({
                 interactionsWebhook: {
                     delete: {
                         post: vi.fn().mockResolvedValue({
@@ -139,7 +145,9 @@ describe("useWebhookInteractionDelete", () => {
         test("should refetch status even after failure", async ({
             queryWrapper,
         }: TestContext) => {
-            const { businessApi } = await import("@frak-labs/client/server");
+            const { authenticatedBackendApi } = await import(
+                "@/context/api/backendClient"
+            );
             const { useWebhookInteractionStatus } = await import(
                 "@/module/product/hook/useWebhookInteractionStatus"
             );
@@ -150,7 +158,7 @@ describe("useWebhookInteractionDelete", () => {
                 refetch: refetchMock,
             } as any);
 
-            vi.mocked(businessApi.product).mockReturnValue({
+            vi.mocked(authenticatedBackendApi.product).mockReturnValue({
                 interactionsWebhook: {
                     delete: {
                         post: vi.fn().mockResolvedValue({
@@ -180,9 +188,11 @@ describe("useWebhookInteractionDelete", () => {
         test("should throw error when API returns error", async ({
             queryWrapper,
         }: TestContext) => {
-            const { businessApi } = await import("@frak-labs/client/server");
+            const { authenticatedBackendApi } = await import(
+                "@/context/api/backendClient"
+            );
 
-            vi.mocked(businessApi.product).mockReturnValue({
+            vi.mocked(authenticatedBackendApi.product).mockReturnValue({
                 interactionsWebhook: {
                     delete: {
                         post: vi.fn().mockResolvedValue({
@@ -206,9 +216,11 @@ describe("useWebhookInteractionDelete", () => {
         test("should handle network errors", async ({
             queryWrapper,
         }: TestContext) => {
-            const { businessApi } = await import("@frak-labs/client/server");
+            const { authenticatedBackendApi } = await import(
+                "@/context/api/backendClient"
+            );
 
-            vi.mocked(businessApi.product).mockReturnValue({
+            vi.mocked(authenticatedBackendApi.product).mockReturnValue({
                 interactionsWebhook: {
                     delete: {
                         post: vi

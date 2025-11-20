@@ -16,8 +16,8 @@ vi.mock("viem/actions", () => ({
 }));
 
 // Mock business API
-vi.mock("@frak-labs/client/server", () => ({
-    businessApi: {
+vi.mock("@/context/api/backendClient", () => ({
+    authenticatedBackendApi: {
         product: vi.fn(() => ({
             oracleWebhook: {
                 status: {
@@ -42,7 +42,9 @@ describe("useOracleSetupData", () => {
             queryWrapper,
         }: TestContext) => {
             const { readContract } = await import("viem/actions");
-            const { businessApi } = await import("@frak-labs/client/server");
+            const { authenticatedBackendApi } = await import(
+                "@/context/api/backendClient"
+            );
             const { useGetAdminWallet } = await import(
                 "@/module/common/hook/useGetAdminWallet"
             );
@@ -56,7 +58,7 @@ describe("useOracleSetupData", () => {
                 url: "https://webhook.example.com",
             };
 
-            vi.mocked(businessApi.product).mockReturnValue({
+            vi.mocked(authenticatedBackendApi.product).mockReturnValue({
                 oracleWebhook: {
                     status: {
                         get: vi.fn().mockResolvedValue({
@@ -89,7 +91,9 @@ describe("useOracleSetupData", () => {
             queryWrapper,
         }: TestContext) => {
             const { readContract } = await import("viem/actions");
-            const { businessApi } = await import("@frak-labs/client/server");
+            const { authenticatedBackendApi } = await import(
+                "@/context/api/backendClient"
+            );
             const { useGetAdminWallet } = await import(
                 "@/module/common/hook/useGetAdminWallet"
             );
@@ -98,7 +102,7 @@ describe("useOracleSetupData", () => {
                 data: mockOracleUpdater,
             } as any);
 
-            vi.mocked(businessApi.product).mockReturnValue({
+            vi.mocked(authenticatedBackendApi.product).mockReturnValue({
                 oracleWebhook: {
                     status: {
                         get: vi.fn().mockResolvedValue({
@@ -179,7 +183,9 @@ describe("useOracleSetupData", () => {
             queryWrapper,
         }: TestContext) => {
             const { readContract } = await import("viem/actions");
-            const { businessApi } = await import("@frak-labs/client/server");
+            const { authenticatedBackendApi } = await import(
+                "@/context/api/backendClient"
+            );
             const { useGetAdminWallet } = await import(
                 "@/module/common/hook/useGetAdminWallet"
             );
@@ -188,7 +194,7 @@ describe("useOracleSetupData", () => {
                 data: mockOracleUpdater,
             } as any);
 
-            vi.mocked(businessApi.product).mockReturnValue({
+            vi.mocked(authenticatedBackendApi.product).mockReturnValue({
                 oracleWebhook: {
                     status: {
                         get: vi.fn().mockRejectedValue(new Error("API error")),
@@ -212,7 +218,9 @@ describe("useOracleSetupData", () => {
             queryWrapper,
         }: TestContext) => {
             const { readContract } = await import("viem/actions");
-            const { businessApi } = await import("@frak-labs/client/server");
+            const { authenticatedBackendApi } = await import(
+                "@/context/api/backendClient"
+            );
             const { useGetAdminWallet } = await import(
                 "@/module/common/hook/useGetAdminWallet"
             );
@@ -221,7 +229,7 @@ describe("useOracleSetupData", () => {
                 data: mockOracleUpdater,
             } as any);
 
-            vi.mocked(businessApi.product).mockReturnValue({
+            vi.mocked(authenticatedBackendApi.product).mockReturnValue({
                 oracleWebhook: {
                     status: {
                         get: vi.fn().mockResolvedValue({

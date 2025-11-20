@@ -3,10 +3,10 @@ import {
     productAdministratorRegistryAbi,
     productRoles,
 } from "@frak-labs/app-essentials";
-import { businessApi } from "@frak-labs/client/server";
 import { useQuery } from "@tanstack/react-query";
 import type { Hex } from "viem";
 import { readContract } from "viem/actions";
+import { authenticatedBackendApi } from "@/context/api/backendClient";
 import { viemClient } from "@/context/blockchain/provider";
 import { useGetAdminWallet } from "@/module/common/hook/useGetAdminWallet";
 
@@ -27,7 +27,7 @@ export function useOracleSetupData({ productId }: { productId: Hex }) {
             }
 
             // Get the current backend setup status
-            const { data: webhookStatus } = await businessApi
+            const { data: webhookStatus } = await authenticatedBackendApi
                 .product({ productId })
                 .oracleWebhook.status.get();
 

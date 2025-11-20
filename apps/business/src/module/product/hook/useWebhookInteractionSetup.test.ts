@@ -10,8 +10,8 @@ import {
 import { useWebhookInteractionSetup } from "./useWebhookInteractionSetup";
 
 // Mock the business API
-vi.mock("@frak-labs/client/server", () => ({
-    businessApi: {
+vi.mock("@/context/api/backendClient", () => ({
+    authenticatedBackendApi: {
         product: vi.fn(() => ({
             interactionsWebhook: {
                 setup: {
@@ -39,14 +39,16 @@ describe("useWebhookInteractionSetup", () => {
         test("should setup webhook successfully", async ({
             queryWrapper,
         }: TestContext) => {
-            const { businessApi } = await import("@frak-labs/client/server");
+            const { authenticatedBackendApi } = await import(
+                "@/context/api/backendClient"
+            );
 
             const mockResponse = {
                 success: true,
                 webhookUrl: "https://webhook.example.com/interaction",
             };
 
-            vi.mocked(businessApi.product).mockReturnValue({
+            vi.mocked(authenticatedBackendApi.product).mockReturnValue({
                 interactionsWebhook: {
                     setup: {
                         post: vi.fn().mockResolvedValue({
@@ -82,14 +84,16 @@ describe("useWebhookInteractionSetup", () => {
         test("should call API with correct parameters", async ({
             queryWrapper,
         }: TestContext) => {
-            const { businessApi } = await import("@frak-labs/client/server");
+            const { authenticatedBackendApi } = await import(
+                "@/context/api/backendClient"
+            );
 
             const postMock = vi.fn().mockResolvedValue({
                 data: { success: true },
                 error: null,
             });
 
-            vi.mocked(businessApi.product).mockReturnValue({
+            vi.mocked(authenticatedBackendApi.product).mockReturnValue({
                 interactionsWebhook: {
                     setup: {
                         post: postMock,
@@ -112,7 +116,7 @@ describe("useWebhookInteractionSetup", () => {
 
             await result.current.mutateAsync(setupParams);
 
-            expect(businessApi.product).toHaveBeenCalledWith({
+            expect(authenticatedBackendApi.product).toHaveBeenCalledWith({
                 productId: mockProductId,
             });
             expect(postMock).toHaveBeenCalledWith({
@@ -124,14 +128,16 @@ describe("useWebhookInteractionSetup", () => {
         test("should always use custom source", async ({
             queryWrapper,
         }: TestContext) => {
-            const { businessApi } = await import("@frak-labs/client/server");
+            const { authenticatedBackendApi } = await import(
+                "@/context/api/backendClient"
+            );
 
             const postMock = vi.fn().mockResolvedValue({
                 data: { success: true },
                 error: null,
             });
 
-            vi.mocked(businessApi.product).mockReturnValue({
+            vi.mocked(authenticatedBackendApi.product).mockReturnValue({
                 interactionsWebhook: {
                     setup: {
                         post: postMock,
@@ -161,7 +167,9 @@ describe("useWebhookInteractionSetup", () => {
         test("should refetch status after successful setup", async ({
             queryWrapper,
         }: TestContext) => {
-            const { businessApi } = await import("@frak-labs/client/server");
+            const { authenticatedBackendApi } = await import(
+                "@/context/api/backendClient"
+            );
             const { useWebhookInteractionStatus } = await import(
                 "@/module/product/hook/useWebhookInteractionStatus"
             );
@@ -172,7 +180,7 @@ describe("useWebhookInteractionSetup", () => {
                 refetch: refetchMock,
             } as any);
 
-            vi.mocked(businessApi.product).mockReturnValue({
+            vi.mocked(authenticatedBackendApi.product).mockReturnValue({
                 interactionsWebhook: {
                     setup: {
                         post: vi.fn().mockResolvedValue({
@@ -204,7 +212,9 @@ describe("useWebhookInteractionSetup", () => {
         test("should refetch status even after failure", async ({
             queryWrapper,
         }: TestContext) => {
-            const { businessApi } = await import("@frak-labs/client/server");
+            const { authenticatedBackendApi } = await import(
+                "@/context/api/backendClient"
+            );
             const { useWebhookInteractionStatus } = await import(
                 "@/module/product/hook/useWebhookInteractionStatus"
             );
@@ -215,7 +225,7 @@ describe("useWebhookInteractionSetup", () => {
                 refetch: refetchMock,
             } as any);
 
-            vi.mocked(businessApi.product).mockReturnValue({
+            vi.mocked(authenticatedBackendApi.product).mockReturnValue({
                 interactionsWebhook: {
                     setup: {
                         post: vi.fn().mockResolvedValue({
@@ -251,9 +261,11 @@ describe("useWebhookInteractionSetup", () => {
         test("should throw error when API returns error", async ({
             queryWrapper,
         }: TestContext) => {
-            const { businessApi } = await import("@frak-labs/client/server");
+            const { authenticatedBackendApi } = await import(
+                "@/context/api/backendClient"
+            );
 
-            vi.mocked(businessApi.product).mockReturnValue({
+            vi.mocked(authenticatedBackendApi.product).mockReturnValue({
                 interactionsWebhook: {
                     setup: {
                         post: vi.fn().mockResolvedValue({
@@ -283,9 +295,11 @@ describe("useWebhookInteractionSetup", () => {
         test("should handle network errors", async ({
             queryWrapper,
         }: TestContext) => {
-            const { businessApi } = await import("@frak-labs/client/server");
+            const { authenticatedBackendApi } = await import(
+                "@/context/api/backendClient"
+            );
 
-            vi.mocked(businessApi.product).mockReturnValue({
+            vi.mocked(authenticatedBackendApi.product).mockReturnValue({
                 interactionsWebhook: {
                     setup: {
                         post: vi
@@ -314,9 +328,11 @@ describe("useWebhookInteractionSetup", () => {
         test("should transition to error state on failure", async ({
             queryWrapper,
         }: TestContext) => {
-            const { businessApi } = await import("@frak-labs/client/server");
+            const { authenticatedBackendApi } = await import(
+                "@/context/api/backendClient"
+            );
 
-            vi.mocked(businessApi.product).mockReturnValue({
+            vi.mocked(authenticatedBackendApi.product).mockReturnValue({
                 interactionsWebhook: {
                     setup: {
                         post: vi.fn().mockResolvedValue({
@@ -370,9 +386,11 @@ describe("useWebhookInteractionSetup", () => {
         test("should track mutation loading state", async ({
             queryWrapper,
         }: TestContext) => {
-            const { businessApi } = await import("@frak-labs/client/server");
+            const { authenticatedBackendApi } = await import(
+                "@/context/api/backendClient"
+            );
 
-            vi.mocked(businessApi.product).mockReturnValue({
+            vi.mocked(authenticatedBackendApi.product).mockReturnValue({
                 interactionsWebhook: {
                     setup: {
                         post: vi.fn().mockImplementation(
@@ -421,9 +439,11 @@ describe("useWebhookInteractionSetup", () => {
         test("should reset mutation state between calls", async ({
             queryWrapper,
         }: TestContext) => {
-            const { businessApi } = await import("@frak-labs/client/server");
+            const { authenticatedBackendApi } = await import(
+                "@/context/api/backendClient"
+            );
 
-            vi.mocked(businessApi.product).mockReturnValue({
+            vi.mocked(authenticatedBackendApi.product).mockReturnValue({
                 interactionsWebhook: {
                     setup: {
                         post: vi.fn().mockResolvedValue({
@@ -467,14 +487,16 @@ describe("useWebhookInteractionSetup", () => {
         test("should handle different signature key formats", async ({
             queryWrapper,
         }: TestContext) => {
-            const { businessApi } = await import("@frak-labs/client/server");
+            const { authenticatedBackendApi } = await import(
+                "@/context/api/backendClient"
+            );
 
             const postMock = vi.fn().mockResolvedValue({
                 data: { success: true },
                 error: null,
             });
 
-            vi.mocked(businessApi.product).mockReturnValue({
+            vi.mocked(authenticatedBackendApi.product).mockReturnValue({
                 interactionsWebhook: {
                     setup: {
                         post: postMock,

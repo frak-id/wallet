@@ -1,7 +1,7 @@
-import { businessApi } from "@frak-labs/client/server";
 import { renderHook, waitFor } from "@testing-library/react";
 import type { Hex } from "viem";
 import { vi } from "vitest";
+import { authenticatedBackendApi } from "@/context/api/backendClient";
 import {
     createMockAddress,
     describe,
@@ -12,8 +12,8 @@ import {
 import { useHasRoleOnProduct } from "./useHasRoleOnProduct";
 
 // Mock the business API
-vi.mock("@frak-labs/client/server", () => ({
-    businessApi: {
+vi.mock("@/context/api/backendClient", () => ({
+    authenticatedBackendApi: {
         roles: {
             get: vi.fn(),
         },
@@ -39,7 +39,7 @@ describe("useHasRoleOnProduct", () => {
             queryWrapper,
         }: TestContext) => {
             // Mock API to never resolve (simulating loading state)
-            vi.mocked(businessApi.roles.get).mockImplementation(
+            vi.mocked(authenticatedBackendApi.roles.get).mockImplementation(
                 () =>
                     new Promise(() => {
                         /* never resolves */
@@ -70,7 +70,7 @@ describe("useHasRoleOnProduct", () => {
             queryWrapper,
         }: TestContext) => {
             // Mock successful API response with owner role
-            vi.mocked(businessApi.roles.get).mockResolvedValueOnce({
+            vi.mocked(authenticatedBackendApi.roles.get).mockResolvedValueOnce({
                 data: {
                     roles: "0x1" as `0x${string}`,
                     isOwner: true,
@@ -107,7 +107,7 @@ describe("useHasRoleOnProduct", () => {
             queryWrapper,
         }: TestContext) => {
             // Mock response with no roles
-            vi.mocked(businessApi.roles.get).mockResolvedValueOnce({
+            vi.mocked(authenticatedBackendApi.roles.get).mockResolvedValueOnce({
                 data: {
                     roles: "0x0" as `0x${string}`,
                     isOwner: false,
@@ -143,7 +143,7 @@ describe("useHasRoleOnProduct", () => {
             queryWrapper,
         }: TestContext) => {
             // Mock response with only campaign manager role
-            vi.mocked(businessApi.roles.get).mockResolvedValueOnce({
+            vi.mocked(authenticatedBackendApi.roles.get).mockResolvedValueOnce({
                 data: {
                     roles: "0x8" as `0x${string}`,
                     isOwner: false,
@@ -182,7 +182,7 @@ describe("useHasRoleOnProduct", () => {
             queryWrapper,
         }: TestContext) => {
             // Mock successful API response
-            vi.mocked(businessApi.roles.get).mockResolvedValueOnce({
+            vi.mocked(authenticatedBackendApi.roles.get).mockResolvedValueOnce({
                 data: {
                     roles: "0x2" as `0x${string}`,
                     isOwner: false,
@@ -219,7 +219,7 @@ describe("useHasRoleOnProduct", () => {
             queryWrapper,
         }: TestContext) => {
             // Mock API error
-            vi.mocked(businessApi.roles.get).mockResolvedValueOnce({
+            vi.mocked(authenticatedBackendApi.roles.get).mockResolvedValueOnce({
                 data: null,
                 error: { status: 400, value: "Network error" },
                 response: {} as Response,
@@ -250,7 +250,7 @@ describe("useHasRoleOnProduct", () => {
             queryWrapper,
         }: TestContext) => {
             // Mock response with undefined data
-            vi.mocked(businessApi.roles.get).mockResolvedValueOnce({
+            vi.mocked(authenticatedBackendApi.roles.get).mockResolvedValueOnce({
                 data: undefined as any,
                 error: null,
                 response: {} as Response,
@@ -281,7 +281,7 @@ describe("useHasRoleOnProduct", () => {
             queryWrapper,
         }: TestContext) => {
             // Mock initial response
-            vi.mocked(businessApi.roles.get).mockResolvedValueOnce({
+            vi.mocked(authenticatedBackendApi.roles.get).mockResolvedValueOnce({
                 data: {
                     roles: "0x0" as `0x${string}`,
                     isOwner: false,
@@ -316,7 +316,7 @@ describe("useHasRoleOnProduct", () => {
             queryWrapper,
         }: TestContext) => {
             // Mock initial response with no roles
-            vi.mocked(businessApi.roles.get).mockResolvedValueOnce({
+            vi.mocked(authenticatedBackendApi.roles.get).mockResolvedValueOnce({
                 data: {
                     roles: "0x0" as `0x${string}`,
                     isOwner: false,
@@ -346,7 +346,7 @@ describe("useHasRoleOnProduct", () => {
             expect(result.current.isAdministrator).toBe(false);
 
             // Mock updated response with admin role
-            vi.mocked(businessApi.roles.get).mockResolvedValueOnce({
+            vi.mocked(authenticatedBackendApi.roles.get).mockResolvedValueOnce({
                 data: {
                     roles: "0x2" as `0x${string}`,
                     isOwner: false,
@@ -377,7 +377,7 @@ describe("useHasRoleOnProduct", () => {
             const productId2 = createMockAddress("product2") as Hex;
 
             // Mock first product response
-            vi.mocked(businessApi.roles.get).mockResolvedValueOnce({
+            vi.mocked(authenticatedBackendApi.roles.get).mockResolvedValueOnce({
                 data: {
                     roles: "0x1" as `0x${string}`,
                     isOwner: true,
@@ -410,7 +410,7 @@ describe("useHasRoleOnProduct", () => {
             expect(result.current.isOwner).toBe(true);
 
             // Mock second product response (no roles)
-            vi.mocked(businessApi.roles.get).mockResolvedValueOnce({
+            vi.mocked(authenticatedBackendApi.roles.get).mockResolvedValueOnce({
                 data: {
                     roles: "0x0" as `0x${string}`,
                     isOwner: false,

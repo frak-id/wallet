@@ -1,10 +1,10 @@
-import { businessApi } from "@frak-labs/client/server";
 import { Button } from "@frak-labs/ui/component/Button";
 import { Spinner } from "@frak-labs/ui/component/Spinner";
 import { useMutation } from "@tanstack/react-query";
 import { useSearch } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo } from "react";
 import type { Hex } from "viem";
+import { authenticatedBackendApi } from "@/context/api/backendClient";
 import { CallOut } from "@/module/common/component/CallOut";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
@@ -118,7 +118,7 @@ function usePurchaseTrackerSetup({
     return useMutation({
         mutationKey: ["product", "oracle-webhook-internal", "setup", productId],
         mutationFn: async () => {
-            const { error } = await businessApi
+            const { error } = await authenticatedBackendApi
                 .product({ productId })
                 .oracleWebhook.setup.post({
                     hookSignatureKey: secret,

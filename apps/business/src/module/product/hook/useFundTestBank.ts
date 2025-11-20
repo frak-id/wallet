@@ -1,7 +1,7 @@
 import type { Stablecoin } from "@frak-labs/app-essentials";
-import { businessApi } from "@frak-labs/client/server";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Hex } from "viem";
+import { authenticatedBackendApi } from "@/context/api/backendClient";
 
 /**
  * Hook to fund a bank
@@ -18,7 +18,7 @@ export function useFundTestBank() {
             bank: Hex;
             stablecoin?: Stablecoin;
         }) => {
-            await businessApi.funding.getTestToken.post({
+            await authenticatedBackendApi.funding.getTestToken.post({
                 bank,
                 stablecoin,
             });

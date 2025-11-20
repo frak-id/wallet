@@ -1,6 +1,6 @@
-import { businessApi } from "@frak-labs/client/server";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { sleep } from "radash";
+import { authenticatedBackendApi } from "@/context/api/backendClient";
 
 /**
  * Hook to fetch the dns record to be set
@@ -25,9 +25,10 @@ export function useDnsTxtRecordToSet({
             if (signal.aborted) return "";
 
             // Fetch the dns txt string
-            const { data } = await businessApi.product.mint.dnsTxt.get({
-                query: { domain },
-            });
+            const { data } =
+                await authenticatedBackendApi.product.mint.dnsTxt.get({
+                    query: { domain },
+                });
             return data ?? "";
         },
         enabled: enabled && !!domain,
@@ -49,9 +50,10 @@ export function useCheckDomainName() {
             domain: string;
             setupCode?: string;
         }) => {
-            const { data, error } = await businessApi.product.mint.verify.get({
-                query: { domain, setupCode },
-            });
+            const { data, error } =
+                await authenticatedBackendApi.product.mint.verify.get({
+                    query: { domain, setupCode },
+                });
             if (error) throw error;
 
             return data;
@@ -74,9 +76,10 @@ export function useListenToDomainNameSetup({
     return useQuery({
         queryKey: ["mint", "listen-to-domain-name-setup", domain, setupCode],
         queryFn: async () => {
-            const { data, error } = await businessApi.product.mint.verify.get({
-                query: { domain, setupCode },
-            });
+            const { data, error } =
+                await authenticatedBackendApi.product.mint.verify.get({
+                    query: { domain, setupCode },
+                });
             if (error) {
                 console.warn(
                     "Error while listening to domain name setup",

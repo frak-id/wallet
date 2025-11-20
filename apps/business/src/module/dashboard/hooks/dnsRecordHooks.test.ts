@@ -13,8 +13,8 @@ import {
 } from "./dnsRecordHooks";
 
 // Mock the business API
-vi.mock("@frak-labs/client/server", () => ({
-    businessApi: {
+vi.mock("@/context/api/backendClient", () => ({
+    authenticatedBackendApi: {
         product: {
             mint: {
                 dnsTxt: {
@@ -33,10 +33,14 @@ describe("dnsRecordHooks", () => {
         test("should fetch DNS TXT record for valid domain", async ({
             queryWrapper,
         }: TestContext) => {
-            const { businessApi } = await import("@frak-labs/client/server");
+            const { authenticatedBackendApi } = await import(
+                "@/context/api/backendClient"
+            );
 
             const mockDnsTxt = "_frak-verification=abc123";
-            vi.mocked(businessApi.product.mint.dnsTxt.get).mockResolvedValue({
+            vi.mocked(
+                authenticatedBackendApi.product.mint.dnsTxt.get
+            ).mockResolvedValue({
                 data: mockDnsTxt,
                 error: null,
             } as any);
@@ -55,7 +59,9 @@ describe("dnsRecordHooks", () => {
             });
 
             expect(result.current.data).toBe(mockDnsTxt);
-            expect(businessApi.product.mint.dnsTxt.get).toHaveBeenCalledWith({
+            expect(
+                authenticatedBackendApi.product.mint.dnsTxt.get
+            ).toHaveBeenCalledWith({
                 query: { domain: "example.com" },
             });
         });
@@ -63,9 +69,13 @@ describe("dnsRecordHooks", () => {
         test("should not fetch when domain is undefined", async ({
             queryWrapper,
         }: TestContext) => {
-            const { businessApi } = await import("@frak-labs/client/server");
+            const { authenticatedBackendApi } = await import(
+                "@/context/api/backendClient"
+            );
 
-            vi.mocked(businessApi.product.mint.dnsTxt.get).mockClear();
+            vi.mocked(
+                authenticatedBackendApi.product.mint.dnsTxt.get
+            ).mockClear();
 
             const { result } = renderHook(
                 () =>
@@ -81,15 +91,21 @@ describe("dnsRecordHooks", () => {
 
             // Query should be disabled when domain is undefined
             expect(result.current.fetchStatus).toBe("idle");
-            expect(businessApi.product.mint.dnsTxt.get).not.toHaveBeenCalled();
+            expect(
+                authenticatedBackendApi.product.mint.dnsTxt.get
+            ).not.toHaveBeenCalled();
         });
 
         test("should not fetch when disabled", async ({
             queryWrapper,
         }: TestContext) => {
-            const { businessApi } = await import("@frak-labs/client/server");
+            const { authenticatedBackendApi } = await import(
+                "@/context/api/backendClient"
+            );
 
-            vi.mocked(businessApi.product.mint.dnsTxt.get).mockClear();
+            vi.mocked(
+                authenticatedBackendApi.product.mint.dnsTxt.get
+            ).mockClear();
 
             const { result } = renderHook(
                 () =>
@@ -105,15 +121,21 @@ describe("dnsRecordHooks", () => {
 
             // Should not trigger the query
             expect(result.current.fetchStatus).toBe("idle");
-            expect(businessApi.product.mint.dnsTxt.get).not.toHaveBeenCalled();
+            expect(
+                authenticatedBackendApi.product.mint.dnsTxt.get
+            ).not.toHaveBeenCalled();
         });
 
         test("should use correct query key", async ({
             queryWrapper,
         }: TestContext) => {
-            const { businessApi } = await import("@frak-labs/client/server");
+            const { authenticatedBackendApi } = await import(
+                "@/context/api/backendClient"
+            );
 
-            vi.mocked(businessApi.product.mint.dnsTxt.get).mockResolvedValue({
+            vi.mocked(
+                authenticatedBackendApi.product.mint.dnsTxt.get
+            ).mockResolvedValue({
                 data: "test",
                 error: null,
             } as any);
@@ -138,9 +160,13 @@ describe("dnsRecordHooks", () => {
         test("should handle API returning null data", async ({
             queryWrapper,
         }: TestContext) => {
-            const { businessApi } = await import("@frak-labs/client/server");
+            const { authenticatedBackendApi } = await import(
+                "@/context/api/backendClient"
+            );
 
-            vi.mocked(businessApi.product.mint.dnsTxt.get).mockResolvedValue({
+            vi.mocked(
+                authenticatedBackendApi.product.mint.dnsTxt.get
+            ).mockResolvedValue({
                 data: null,
                 error: null,
             } as any);
@@ -166,14 +192,18 @@ describe("dnsRecordHooks", () => {
         test("should verify domain successfully", async ({
             queryWrapper,
         }: TestContext) => {
-            const { businessApi } = await import("@frak-labs/client/server");
+            const { authenticatedBackendApi } = await import(
+                "@/context/api/backendClient"
+            );
 
             const mockVerifyData = {
                 isDomainValid: true,
                 isAlreadyMinted: false,
             };
 
-            vi.mocked(businessApi.product.mint.verify.get).mockResolvedValue({
+            vi.mocked(
+                authenticatedBackendApi.product.mint.verify.get
+            ).mockResolvedValue({
                 data: mockVerifyData,
                 error: null,
             } as any);
@@ -192,7 +222,9 @@ describe("dnsRecordHooks", () => {
             });
 
             expect(result.current.data).toEqual(mockVerifyData);
-            expect(businessApi.product.mint.verify.get).toHaveBeenCalledWith({
+            expect(
+                authenticatedBackendApi.product.mint.verify.get
+            ).toHaveBeenCalledWith({
                 query: { domain: "example.com", setupCode: "code123" },
             });
         });
@@ -200,9 +232,13 @@ describe("dnsRecordHooks", () => {
         test("should verify domain without setup code", async ({
             queryWrapper,
         }: TestContext) => {
-            const { businessApi } = await import("@frak-labs/client/server");
+            const { authenticatedBackendApi } = await import(
+                "@/context/api/backendClient"
+            );
 
-            vi.mocked(businessApi.product.mint.verify.get).mockResolvedValue({
+            vi.mocked(
+                authenticatedBackendApi.product.mint.verify.get
+            ).mockResolvedValue({
                 data: { isDomainValid: false, isAlreadyMinted: true },
                 error: null,
             } as any);
@@ -219,7 +255,9 @@ describe("dnsRecordHooks", () => {
                 expect(result.current.isSuccess).toBe(true);
             });
 
-            expect(businessApi.product.mint.verify.get).toHaveBeenCalledWith({
+            expect(
+                authenticatedBackendApi.product.mint.verify.get
+            ).toHaveBeenCalledWith({
                 query: { domain: "taken.com", setupCode: undefined },
             });
         });
@@ -227,9 +265,13 @@ describe("dnsRecordHooks", () => {
         test("should throw error when API returns error", async ({
             queryWrapper,
         }: TestContext) => {
-            const { businessApi } = await import("@frak-labs/client/server");
+            const { authenticatedBackendApi } = await import(
+                "@/context/api/backendClient"
+            );
 
-            vi.mocked(businessApi.product.mint.verify.get).mockResolvedValue({
+            vi.mocked(
+                authenticatedBackendApi.product.mint.verify.get
+            ).mockResolvedValue({
                 data: null,
                 error: "Domain verification failed",
             } as any);
@@ -248,9 +290,11 @@ describe("dnsRecordHooks", () => {
         test("should handle multiple verification calls", async ({
             queryWrapper,
         }: TestContext) => {
-            const { businessApi } = await import("@frak-labs/client/server");
+            const { authenticatedBackendApi } = await import(
+                "@/context/api/backendClient"
+            );
 
-            vi.mocked(businessApi.product.mint.verify.get)
+            vi.mocked(authenticatedBackendApi.product.mint.verify.get)
                 .mockResolvedValueOnce({
                     data: { isDomainValid: false },
                     error: null,
@@ -280,9 +324,13 @@ describe("dnsRecordHooks", () => {
         test("should return true when domain is valid and not minted", async ({
             queryWrapper,
         }: TestContext) => {
-            const { businessApi } = await import("@frak-labs/client/server");
+            const { authenticatedBackendApi } = await import(
+                "@/context/api/backendClient"
+            );
 
-            vi.mocked(businessApi.product.mint.verify.get).mockResolvedValue({
+            vi.mocked(
+                authenticatedBackendApi.product.mint.verify.get
+            ).mockResolvedValue({
                 data: {
                     isDomainValid: true,
                     isAlreadyMinted: false,
@@ -309,9 +357,13 @@ describe("dnsRecordHooks", () => {
         test("should return false when domain is already minted", async ({
             queryWrapper,
         }: TestContext) => {
-            const { businessApi } = await import("@frak-labs/client/server");
+            const { authenticatedBackendApi } = await import(
+                "@/context/api/backendClient"
+            );
 
-            vi.mocked(businessApi.product.mint.verify.get).mockResolvedValue({
+            vi.mocked(
+                authenticatedBackendApi.product.mint.verify.get
+            ).mockResolvedValue({
                 data: {
                     isDomainValid: true,
                     isAlreadyMinted: true,
@@ -338,9 +390,13 @@ describe("dnsRecordHooks", () => {
         test("should return false when domain is invalid", async ({
             queryWrapper,
         }: TestContext) => {
-            const { businessApi } = await import("@frak-labs/client/server");
+            const { authenticatedBackendApi } = await import(
+                "@/context/api/backendClient"
+            );
 
-            vi.mocked(businessApi.product.mint.verify.get).mockResolvedValue({
+            vi.mocked(
+                authenticatedBackendApi.product.mint.verify.get
+            ).mockResolvedValue({
                 data: {
                     isDomainValid: false,
                     isAlreadyMinted: false,
@@ -367,13 +423,17 @@ describe("dnsRecordHooks", () => {
         test("should return false on API error", async ({
             queryWrapper,
         }: TestContext) => {
-            const { businessApi } = await import("@frak-labs/client/server");
+            const { authenticatedBackendApi } = await import(
+                "@/context/api/backendClient"
+            );
 
             const consoleWarnSpy = vi
                 .spyOn(console, "warn")
                 .mockImplementation(() => {});
 
-            vi.mocked(businessApi.product.mint.verify.get).mockResolvedValue({
+            vi.mocked(
+                authenticatedBackendApi.product.mint.verify.get
+            ).mockResolvedValue({
                 data: null,
                 error: "API error",
             } as any);
@@ -403,9 +463,13 @@ describe("dnsRecordHooks", () => {
         test("should use correct query key", async ({
             queryWrapper,
         }: TestContext) => {
-            const { businessApi } = await import("@frak-labs/client/server");
+            const { authenticatedBackendApi } = await import(
+                "@/context/api/backendClient"
+            );
 
-            vi.mocked(businessApi.product.mint.verify.get).mockResolvedValue({
+            vi.mocked(
+                authenticatedBackendApi.product.mint.verify.get
+            ).mockResolvedValue({
                 data: { isDomainValid: true },
                 error: null,
             } as any);
@@ -435,9 +499,13 @@ describe("dnsRecordHooks", () => {
         test("should be enabled when domain is provided", async ({
             queryWrapper,
         }: TestContext) => {
-            const { businessApi } = await import("@frak-labs/client/server");
+            const { authenticatedBackendApi } = await import(
+                "@/context/api/backendClient"
+            );
 
-            vi.mocked(businessApi.product.mint.verify.get).mockResolvedValue({
+            vi.mocked(
+                authenticatedBackendApi.product.mint.verify.get
+            ).mockResolvedValue({
                 data: { isDomainValid: true },
                 error: null,
             } as any);
@@ -459,9 +527,13 @@ describe("dnsRecordHooks", () => {
         test("should handle missing setupCode", async ({
             queryWrapper,
         }: TestContext) => {
-            const { businessApi } = await import("@frak-labs/client/server");
+            const { authenticatedBackendApi } = await import(
+                "@/context/api/backendClient"
+            );
 
-            vi.mocked(businessApi.product.mint.verify.get).mockResolvedValue({
+            vi.mocked(
+                authenticatedBackendApi.product.mint.verify.get
+            ).mockResolvedValue({
                 data: { isDomainValid: true },
                 error: null,
             } as any);
@@ -479,7 +551,9 @@ describe("dnsRecordHooks", () => {
                 expect(result.current.isSuccess).toBe(true);
             });
 
-            expect(businessApi.product.mint.verify.get).toHaveBeenCalledWith({
+            expect(
+                authenticatedBackendApi.product.mint.verify.get
+            ).toHaveBeenCalledWith({
                 query: { domain: "example.com", setupCode: "" },
             });
         });
@@ -489,9 +563,13 @@ describe("dnsRecordHooks", () => {
         test("useDnsTxtRecordToSet should handle network timeout", async ({
             queryWrapper,
         }: TestContext) => {
-            const { businessApi } = await import("@frak-labs/client/server");
+            const { authenticatedBackendApi } = await import(
+                "@/context/api/backendClient"
+            );
 
-            vi.mocked(businessApi.product.mint.dnsTxt.get).mockImplementation(
+            vi.mocked(
+                authenticatedBackendApi.product.mint.dnsTxt.get
+            ).mockImplementation(
                 () =>
                     new Promise((_, reject) =>
                         setTimeout(() => reject(new Error("Timeout")), 100)
@@ -515,9 +593,13 @@ describe("dnsRecordHooks", () => {
         test("useDnsTxtRecordToSet should handle empty domain string", async ({
             queryWrapper,
         }: TestContext) => {
-            const { businessApi } = await import("@frak-labs/client/server");
+            const { authenticatedBackendApi } = await import(
+                "@/context/api/backendClient"
+            );
 
-            vi.mocked(businessApi.product.mint.dnsTxt.get).mockClear();
+            vi.mocked(
+                authenticatedBackendApi.product.mint.dnsTxt.get
+            ).mockClear();
 
             const { result } = renderHook(
                 () =>
@@ -531,15 +613,21 @@ describe("dnsRecordHooks", () => {
             await new Promise((resolve) => setTimeout(resolve, 100));
 
             expect(result.current.fetchStatus).toBe("idle");
-            expect(businessApi.product.mint.dnsTxt.get).not.toHaveBeenCalled();
+            expect(
+                authenticatedBackendApi.product.mint.dnsTxt.get
+            ).not.toHaveBeenCalled();
         });
 
         test("useCheckDomainName should handle missing data field", async ({
             queryWrapper,
         }: TestContext) => {
-            const { businessApi } = await import("@frak-labs/client/server");
+            const { authenticatedBackendApi } = await import(
+                "@/context/api/backendClient"
+            );
 
-            vi.mocked(businessApi.product.mint.verify.get).mockResolvedValue({
+            vi.mocked(
+                authenticatedBackendApi.product.mint.verify.get
+            ).mockResolvedValue({
                 data: null,
                 error: null,
             } as any);
@@ -559,9 +647,13 @@ describe("dnsRecordHooks", () => {
         test("useListenToDomainNameSetup should handle null isDomainValid", async ({
             queryWrapper,
         }: TestContext) => {
-            const { businessApi } = await import("@frak-labs/client/server");
+            const { authenticatedBackendApi } = await import(
+                "@/context/api/backendClient"
+            );
 
-            vi.mocked(businessApi.product.mint.verify.get).mockResolvedValue({
+            vi.mocked(
+                authenticatedBackendApi.product.mint.verify.get
+            ).mockResolvedValue({
                 data: {
                     isDomainValid: null,
                     isAlreadyMinted: false,
@@ -588,9 +680,13 @@ describe("dnsRecordHooks", () => {
         test("useListenToDomainNameSetup should handle undefined data", async ({
             queryWrapper,
         }: TestContext) => {
-            const { businessApi } = await import("@frak-labs/client/server");
+            const { authenticatedBackendApi } = await import(
+                "@/context/api/backendClient"
+            );
 
-            vi.mocked(businessApi.product.mint.verify.get).mockResolvedValue({
+            vi.mocked(
+                authenticatedBackendApi.product.mint.verify.get
+            ).mockResolvedValue({
                 data: undefined,
                 error: null,
             } as any);

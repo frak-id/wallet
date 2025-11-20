@@ -1,6 +1,6 @@
-import { businessApi } from "@frak-labs/client/server";
 import { useMutation } from "@tanstack/react-query";
 import type { Hex } from "viem";
+import { authenticatedBackendApi } from "@/context/api/backendClient";
 import { useWebhookInteractionStatus } from "@/module/product/hook/useWebhookInteractionStatus";
 
 /**
@@ -11,7 +11,7 @@ export function useWebhookInteractionDelete({ productId }: { productId: Hex }) {
     return useMutation({
         mutationKey: ["product", "webhook-interaction", "delete", productId],
         mutationFn: async ({ productId }: { productId: Hex }) => {
-            const { data, error } = await businessApi
+            const { data, error } = await authenticatedBackendApi
                 .product({ productId })
                 .interactionsWebhook.delete.post();
             if (error) throw error;
