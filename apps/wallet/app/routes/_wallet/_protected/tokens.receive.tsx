@@ -1,21 +1,11 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useTranslation } from "react-i18next";
-import { Back } from "@/module/common/component/Back";
-import { Grid } from "@/module/common/component/Grid";
-import { QRCodeWallet } from "@/module/wallet/component/QRCodeWallet";
+import { createFileRoute, lazyRouteComponent } from "@tanstack/react-router";
+import { PageLoader } from "@/module/common/component/PageLoader";
 
 export const Route = createFileRoute("/_wallet/_protected/tokens/receive")({
-    component: TokensReceive,
+    component: lazyRouteComponent(() =>
+        import("@/module/tokens/page/TokensReceivePage").then((m) => ({
+            default: m.TokensReceivePage,
+        }))
+    ),
+    pendingComponent: PageLoader,
 });
-
-function TokensReceive() {
-    const { t } = useTranslation();
-    return (
-        <>
-            <Back href={"/wallet"}>{t("wallet.tokens.backToWallet")}</Back>
-            <Grid>
-                <QRCodeWallet />
-            </Grid>
-        </>
-    );
-}

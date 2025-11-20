@@ -24,6 +24,7 @@ import { routeTree } from "./routeTree.gen";
 const router = createRouter({
     routeTree,
     defaultPreload: "intent",
+    defaultPendingMs: 500,
 });
 
 // Register the router instance for type safety
