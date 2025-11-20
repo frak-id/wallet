@@ -19,7 +19,8 @@ export const Route = createFileRoute(
         );
     },
     component: lazyRouteComponent(
-        () => import("@/module/campaigns/page/CampaignsDraftValidationPage")
+        () => import("@/module/campaigns/page/CampaignsDraftValidationPage"),
+        "CampaignsDraftValidationPage"
     ),
     pendingComponent: () => <Skeleton />,
 });

@@ -4,7 +4,8 @@ import { DataLoadError } from "@/module/common/component/RouteError";
 
 export const Route = createFileRoute("/_restricted/campaigns/metrics")({
     component: lazyRouteComponent(
-        () => import("@/module/campaigns/page/CampaignsMetricsPage")
+        () => import("@/module/campaigns/page/CampaignsMetricsPage"),
+        "CampaignsMetricsPage"
     ),
     pendingComponent: () => <Skeleton />,
     errorComponent: (props) => (

@@ -6,10 +6,9 @@ type PairingSearch = {
 };
 
 export const Route = createFileRoute("/_wallet/_protected/pairing")({
-    component: lazyRouteComponent(() =>
-        import("@/module/pairing/page/PairingPage").then((m) => ({
-            default: m.PairingPage,
-        }))
+    component: lazyRouteComponent(
+        () => import("@/module/pairing/page/PairingPage"),
+        "PairingPage"
     ),
     pendingComponent: PageLoader,
     validateSearch: (search: Record<string, unknown>): PairingSearch => {

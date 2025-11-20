@@ -4,7 +4,7 @@ import { Route } from "@/routes/_restricted/campaigns/draft/$campaignId/metrics"
 import { campaignStore } from "@/stores/campaignStore";
 import type { Campaign } from "@/types/Campaign";
 
-export default function CampaignsDraftMetricsPage() {
+export function CampaignsDraftMetricsPage() {
     const { campaignId } = Route.useParams();
     const campaign = Route.useLoaderData() as Campaign;
 

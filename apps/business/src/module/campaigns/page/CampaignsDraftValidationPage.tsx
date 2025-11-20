@@ -4,7 +4,7 @@ import { Route } from "@/routes/_restricted/campaigns/draft/$campaignId/validati
 import { campaignStore } from "@/stores/campaignStore";
 import type { Campaign } from "@/types/Campaign";
 
-export default function CampaignsDraftValidationPage() {
+export function CampaignsDraftValidationPage() {
     const { campaignId } = Route.useParams();
     const campaign = Route.useLoaderData() as Campaign;
 

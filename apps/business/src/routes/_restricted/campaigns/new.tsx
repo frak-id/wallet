@@ -4,7 +4,8 @@ import { RouteError } from "@/module/common/component/RouteError";
 
 export const Route = createFileRoute("/_restricted/campaigns/new")({
     component: lazyRouteComponent(
-        () => import("@/module/campaigns/page/CampaignsNewPage")
+        () => import("@/module/campaigns/page/CampaignsNewPage"),
+        "CampaignsNewPage"
     ),
     pendingComponent: () => <Skeleton />,
     errorComponent: (props) => (
