@@ -1,10 +1,10 @@
-import { Button } from "@frak-labs/ui/component/Button";
+import { buttonVariants } from "@frak-labs/ui/component/Button";
 import {
     selectUser,
     selectUserSetupLater,
     userStore,
 } from "@frak-labs/wallet-shared";
-import { useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Grid } from "@/module/common/component/Grid";
@@ -45,9 +45,9 @@ export function MembrsPage() {
                 <p>{t("wallet.membrs.introduction.title")}</p>
             </div>
             <p className={styles.membrs__button}>
-                <Button onClick={() => navigate({ to: "/membrs/fanclub" })}>
+                <Link to="/membrs/fanclub" className={buttonVariants()}>
                     {t("wallet.membrs.introduction.button")}
-                </Button>
+                </Link>
             </p>
         </Grid>
     ) : null;

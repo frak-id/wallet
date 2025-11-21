@@ -1,8 +1,56 @@
-import { createFileRoute, lazyRouteComponent } from "@tanstack/react-router";
+import { Accordion } from "@frak-labs/ui/component/Accordion";
+import { createFileRoute } from "@tanstack/react-router";
+import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
+import { Grid } from "@/module/common/component/Grid";
+import { Title } from "@/module/common/component/Title";
+import { Step1 } from "@/module/recovery/component/Recover/Step1";
+import { Step2 } from "@/module/recovery/component/Recover/Step2";
+import { Step3 } from "@/module/recovery/component/Recover/Step3";
+import { Step4 } from "@/module/recovery/component/Recover/Step4";
+import { Step5 } from "@/module/recovery/component/Recover/Step5";
+import { Step6 } from "@/module/recovery/component/Recover/Step6";
+import {
+    recoveryStore,
+    selectRecoveryStep,
+} from "@/module/stores/recoveryStore";
 
 export const Route = createFileRoute("/_wallet/_auth/recovery")({
-    component: lazyRouteComponent(
-        () => import("@/module/recovery/page/RecoveryPage"),
-        "RecoveryPage"
-    ),
+    component: RecoveryPage,
 });
+
+const MAX_STEPS = 6;
+
+/**
+ * RecoveryPage
+ *
+ * Multi-step recovery page for wallet account recovery
+ *
+ * @returns {JSX.Element} The rendered recovery page
+ */
+function RecoveryPage() {
+    const { t } = useTranslation();
+    const step = recoveryStore(selectRecoveryStep);
+
+    useEffect(() => {
+        return () => {
+            if (step !== MAX_STEPS) return;
+            // Reset the state when leaving the component
+            recoveryStore.getState().reset();
+        };
+    }, [step]);
+
+    return (
+        <Grid>
+            <Title>{t("wallet.recovery.title")}</Title>
+            <Accordion type={"single"} collapsible value={`step-${step}`}>
+                <Step1 />
+                <Step2 />
+                <Step3 />
+                <Step4 />
+                <Step5 />
+                <Step6 />
+            </Accordion>
+        </Grid>
+    );
+}

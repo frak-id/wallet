@@ -28,7 +28,7 @@ import { type UseMutationOptions, useMutation } from "@tanstack/react-query";
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import i18next from "i18next";
 import { CloudUpload } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import type { Hex } from "viem";
 import { AuthenticateWithPhone } from "@/module/authentication/component/AuthenticateWithPhone";
@@ -123,20 +123,6 @@ function Sso() {
     const [error, setError] = useState<Error | null>(
         (routeContext as { error?: Error })?.error ?? null
     );
-
-    /**
-     * Add a data attribute to the root element to style the layout
-     */
-    useEffect(() => {
-        const rootElement = document.querySelector(":root") as HTMLElement;
-        if (rootElement) {
-            rootElement.dataset.page = "sso";
-        }
-
-        return () => {
-            rootElement.removeAttribute("data-page");
-        };
-    }, []);
 
     /**
      * The on success callback

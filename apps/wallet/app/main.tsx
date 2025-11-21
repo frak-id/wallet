@@ -24,9 +24,23 @@ import { routeTree } from "./routeTree.gen";
 // Create a new router instance
 const router = createRouter({
     routeTree,
-    defaultPreload: "intent",
+    // Preload routes when links render for instant navigation
+    defaultPreload: "render",
     defaultPendingMinMs: 500,
     defaultPendingComponent: PendingLoader,
+});
+
+// Subscribe to navigation events to manage root element attributes
+router.subscribe("onResolved", ({ toLocation }) => {
+    const rootElement = document.querySelector(":root") as HTMLElement;
+    if (!rootElement) return;
+
+    // Set data-page attribute based on route
+    if (toLocation.pathname.startsWith("/sso")) {
+        rootElement.dataset.page = "sso";
+    } else {
+        rootElement.removeAttribute("data-page");
+    }
 });
 
 // Register the router instance for type safety
