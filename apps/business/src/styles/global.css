@@ -35,3 +35,7 @@ a {
 .success {
     color: var(--frak-color-green);
 }
+
+.link {
+    color: var(--frak-color-royal-blue);
+}

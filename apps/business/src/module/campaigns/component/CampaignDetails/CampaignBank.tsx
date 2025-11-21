@@ -108,6 +108,7 @@ export function CampaignBank({
                 <Link
                     to="/product/$id/funding"
                     params={{ id: onChainInfos?.productId ?? "" }}
+                    className="link"
                 >
                     Check bank
                 </Link>

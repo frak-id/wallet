@@ -23,10 +23,6 @@
 
 .primary {
     border-radius: 8px;
-
-    & a {
-        color: var(--frak-color-royal-blue);
-    }
 }
 
 .secondary {
