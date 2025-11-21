@@ -1,7 +1,5 @@
-import { Button } from "@frak-labs/ui/component/Button";
 import { Skeleton } from "@frak-labs/ui/component/Skeleton";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { getCampaignDetails } from "@/context/campaigns/action/getDetails";
@@ -12,6 +10,7 @@ import { FormAdvertising } from "@/module/campaigns/component/Creation/Validatio
 import { FormGoal } from "@/module/campaigns/component/Creation/ValidationCampaign/FormGoal";
 import { FormPriceRange } from "@/module/campaigns/component/Creation/ValidationCampaign/FormPriceRange";
 import { ActionsWrapper } from "@/module/common/component/ActionsWrapper";
+import { LinkButton } from "@/module/common/component/LinkButton";
 import { Panel } from "@/module/common/component/Panel";
 import { Form, FormLayout } from "@/module/forms/Form";
 import { campaignStore } from "@/stores/campaignStore";
@@ -30,7 +29,6 @@ export function CampaignDetails({
     campaignId: string;
     campaign?: Campaign;
 }) {
-    const navigate = useNavigate();
     const {
         data: campaign = preloadedCampaign,
         isLoading,
@@ -74,12 +72,9 @@ export function CampaignDetails({
             </Panel>
             <ActionsWrapper
                 right={
-                    <Button
-                        variant={"submit"}
-                        onClick={() => navigate({ to: "/campaigns/list" })}
-                    >
+                    <LinkButton to="/campaigns/list" variant="submit">
                         Close
-                    </Button>
+                    </LinkButton>
                 }
             />
         </FormLayout>

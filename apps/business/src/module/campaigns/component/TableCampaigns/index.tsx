@@ -1,6 +1,6 @@
 import { Button } from "@frak-labs/ui/component/Button";
 import { Skeleton } from "@frak-labs/ui/component/Skeleton";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import type { ColumnDef } from "@tanstack/react-table";
 import {
     type CellContext,
@@ -170,42 +170,28 @@ function CellActions({
     row,
 }: Pick<CellContext<CampaignWithState, unknown>, "row">) {
     const actions = useMemo(() => row.original.actions, [row.original.actions]);
-    const navigate = useNavigate();
     const reset = campaignStore((state) => state.reset);
 
     return (
         <div className={styles.table__actions}>
-            <button
-                type={"button"}
-                onClick={() =>
-                    navigate({
-                        to: "/campaigns/$campaignId",
-                        params: { campaignId: row.original._id },
-                    })
-                }
+            <Link
+                to="/campaigns/$campaignId"
+                params={{ campaignId: row.original._id }}
             >
                 <Eye size={20} absoluteStrokeWidth={true} />
-            </button>
+            </Link>
             {actions.canEdit && (
-                <button
-                    type={"button"}
-                    onClick={() => {
-                        reset();
-                        const action =
-                            row.original.state.key === "draft"
-                                ? "draft"
-                                : "edit";
-                        navigate({
-                            to:
-                                action === "draft"
-                                    ? "/campaigns/draft/$campaignId"
-                                    : "/campaigns/edit/$campaignId",
-                            params: { campaignId: row.original._id },
-                        });
-                    }}
+                <Link
+                    to={
+                        row.original.state.key === "draft"
+                            ? "/campaigns/draft/$campaignId"
+                            : "/campaigns/edit/$campaignId"
+                    }
+                    params={{ campaignId: row.original._id }}
+                    onClick={() => reset()}
                 >
                     <Pencil size={20} absoluteStrokeWidth={true} />
-                </button>
+                </Link>
             )}
             {actions.canDelete && <ModalDelete row={row} />}
         </div>

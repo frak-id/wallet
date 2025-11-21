@@ -1,5 +1,5 @@
 import { mergeElement } from "@frak-labs/ui/utils/mergeElement";
-import { useMatchRoute, useNavigate } from "@tanstack/react-router";
+import { Link, useMatchRoute } from "@tanstack/react-router";
 import { cx } from "class-variance-authority";
 import type { PropsWithChildren, ReactNode } from "react";
 import { Cash } from "@/assets/icons/Cash";
@@ -69,7 +69,6 @@ export function NavigationItem({
     disabled,
     ...props
 }: PropsWithChildren<NavigationItemProps>) {
-    const navigate = useNavigate();
     const matchRoute = useMatchRoute();
     const isRouteActive = url ? matchRoute({ to: url, fuzzy: true }) : false;
 
@@ -78,33 +77,71 @@ export function NavigationItem({
             ? styles["navigationItem__button--active"]
             : "";
 
-    const handleClick = () => {
-        if (!url) return;
+    const buttonClassName = cx(
+        styles.navigationItem__button,
+        !isSub && activeClassName
+    );
 
-        if (url.startsWith("http")) {
-            window.open(url, "_blank", "noopener,noreferrer");
-        } else {
-            navigate({ to: url });
-        }
-    };
+    const content = (
+        <>
+            {children}
+            {rightSection &&
+                mergeElement(rightSection, {
+                    className: styles.navigationItem__rightSection,
+                })}
+        </>
+    );
 
+    // Disabled items render as buttons without navigation
+    if (disabled) {
+        return (
+            <li className={className}>
+                <button
+                    type="button"
+                    className={buttonClassName}
+                    disabled={true}
+                    {...props}
+                >
+                    {content}
+                </button>
+            </li>
+        );
+    }
+
+    // External links open in new tab
+    if (url?.startsWith("http")) {
+        return (
+            <li className={className}>
+                <button
+                    type="button"
+                    className={buttonClassName}
+                    onClick={() =>
+                        window.open(url, "_blank", "noopener,noreferrer")
+                    }
+                    {...props}
+                >
+                    {content}
+                </button>
+            </li>
+        );
+    }
+
+    // Internal links use TanStack Router Link for preloading
+    if (url) {
+        return (
+            <li className={className}>
+                <Link to={url} className={buttonClassName} {...props}>
+                    {content}
+                </Link>
+            </li>
+        );
+    }
+
+    // No URL provided, render as button
     return (
         <li className={className}>
-            <button
-                type="button"
-                className={cx(
-                    styles.navigationItem__button,
-                    !isSub && activeClassName
-                )}
-                disabled={disabled}
-                onClick={handleClick}
-                {...props}
-            >
-                {children}
-                {rightSection &&
-                    mergeElement(rightSection, {
-                        className: styles.navigationItem__rightSection,
-                    })}
+            <button type="button" className={buttonClassName} {...props}>
+                {content}
             </button>
         </li>
     );

@@ -27,7 +27,10 @@ configurePendingLoader();
  *
  * Use as pendingComponent in TanStack Router.
  * Starts NProgress on mount, completes on unmount.
- * TanStack Router unmounts this exactly when the new route is ready.
+ * Shows NProgress bar at the top of the page.
+ *
+ * Note: Returns null to allow the previous route content to remain visible
+ * during navigation, preventing the "empty page flash" effect.
  *
  * @example
  * ```tsx
@@ -51,5 +54,7 @@ export function PendingLoader() {
         };
     }, []);
 
+    // Return null to keep previous route content visible during navigation
+    // This prevents the empty page flash while chunks load
     return null;
 }

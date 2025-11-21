@@ -1,9 +1,10 @@
 import { Button } from "@frak-labs/ui/component/Button";
 import { Spinner } from "@frak-labs/ui/component/Spinner";
-import { useNavigate } from "@tanstack/react-router";
+import type { LinkProps } from "@tanstack/react-router";
 import { AlertCircle, BadgeCheck } from "lucide-react";
 import type { Hex } from "viem";
 import { CallOut } from "@/module/common/component/CallOut";
+import { LinkButton } from "@/module/common/component/LinkButton";
 import { Panel } from "@/module/common/component/Panel";
 import { Row } from "@/module/common/component/Row";
 import { FormLayout } from "@/module/forms/Form";
@@ -123,7 +124,6 @@ function WarningStatusItem({
     item: ProductSetupStatusItem;
     position: number;
 }) {
-    const navigate = useNavigate();
     return (
         <div className={styles.stepItem}>
             <div className={styles.header}>
@@ -135,12 +135,12 @@ function WarningStatusItem({
             </div>
             <p className={styles.description}>{item.description}</p>
             <div className={styles.actions}>
-                <Button
-                    variant={"information"}
-                    onClick={() => navigate({ to: item.resolvingPage })}
+                <LinkButton
+                    to={item.resolvingPage as LinkProps["to"]}
+                    variant="information"
                 >
                     Complete this step
-                </Button>
+                </LinkButton>
                 {item.documentationLink && (
                     <a
                         href={item.documentationLink}

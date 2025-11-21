@@ -9,6 +9,8 @@ export const getRouter = () => {
     return createRouter({
         routeTree,
         scrollRestoration: true,
+        // Preload routes when links render for instant navigation
+        defaultPreload: "render",
         defaultPreloadStaleTime: 0,
         defaultPendingMinMs: 500,
         defaultPendingComponent: PendingLoader,

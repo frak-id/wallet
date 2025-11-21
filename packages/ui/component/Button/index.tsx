@@ -1,6 +1,7 @@
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
 import type { ComponentPropsWithRef, ReactNode, RefObject } from "react";
+import { cloneElement, isValidElement } from "react";
 import { mergeElement } from "../../utils/mergeElement";
 import { Spinner } from "../Spinner";
 import styles from "./index.module.css";
@@ -83,6 +84,64 @@ export const Button = ({
     ...props
 }: ButtonProps) => {
     const Comp = asChild ? Slot : "button";
+
+    if (asChild) {
+        const buttonClassName = buttonVariants({
+            variant,
+            size,
+            blur,
+            width,
+            align,
+            gap,
+            className,
+        });
+
+        // If leftIcon or rightIcon is provided, merge them into the child's children
+        if ((leftIcon || rightIcon) && isValidElement(children)) {
+            const existingChildren =
+                children.props &&
+                typeof children.props === "object" &&
+                "children" in children.props
+                    ? (children.props.children as ReactNode)
+                    : null;
+            const mergedChildren = cloneElement(
+                children,
+                {
+                    className: buttonClassName,
+                } as Partial<typeof children.props>,
+                leftIcon,
+                existingChildren,
+                rightIcon
+            );
+
+            return (
+                <Comp
+                    className={buttonClassName}
+                    ref={ref as RefObject<HTMLButtonElement>}
+                    type={type}
+                    {...props}
+                >
+                    {mergedChildren}
+                </Comp>
+            );
+        }
+
+        const mergedChildren = mergeElement(children, {
+            className: buttonClassName,
+        });
+
+        return (
+            <Comp
+                className={buttonClassName}
+                ref={ref as RefObject<HTMLButtonElement>}
+                type={type}
+                {...props}
+            >
+                {mergedChildren}
+            </Comp>
+        );
+    }
+
     return (
         <Comp
             className={buttonVariants({
@@ -100,15 +159,7 @@ export const Button = ({
         >
             {isLoading && <Spinner />}
             {leftIcon}
-            {asChild
-                ? mergeElement(children, {
-                      className: buttonVariants({
-                          variant,
-                          size,
-                          className,
-                      }),
-                  })
-                : children}
+            {children}
             {rightIcon}
         </Comp>
     );
