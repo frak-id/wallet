@@ -30,12 +30,12 @@
     border: none;
     background: transparent;
     cursor: pointer;
-    color: var(--frak-color-grayText);
+    color: var(--frak-color-grayText) !important;
     transition: color 0.2s;
     text-decoration: none;
 }
 
 .table__actions button:hover,
 .table__actions a:hover {
-    color: var(--frak-color-tuna);
+    color: var(--frak-color-tuna) !important;
 }
