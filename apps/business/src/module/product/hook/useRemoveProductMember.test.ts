@@ -1,6 +1,8 @@
+import { useSendTransactionAction } from "@frak-labs/react-sdk";
 import { renderHook } from "@testing-library/react";
 import type { Hex } from "viem";
 import { vi } from "vitest";
+import { useWaitForTxAndInvalidateQueries } from "@/module/common/utils/useWaitForTxAndInvalidateQueries";
 import {
     createMockAddress,
     describe,
@@ -28,13 +30,6 @@ describe("useRemoveProductMember", () => {
         test("should renounce all roles", async ({
             queryWrapper,
         }: TestContext) => {
-            const { useSendTransactionAction } = await import(
-                "@frak-labs/react-sdk"
-            );
-            const { useWaitForTxAndInvalidateQueries } = await import(
-                "@/module/common/utils/useWaitForTxAndInvalidateQueries"
-            );
-
             const mockHash = "0xabcdef" as Hex;
             const mockSendTx = vi.fn().mockResolvedValue({ hash: mockHash });
             const mockWaitForTx = vi.fn().mockResolvedValue(undefined);
@@ -66,13 +61,6 @@ describe("useRemoveProductMember", () => {
         test("should revoke all roles from wallet", async ({
             queryWrapper,
         }: TestContext) => {
-            const { useSendTransactionAction } = await import(
-                "@frak-labs/react-sdk"
-            );
-            const { useWaitForTxAndInvalidateQueries } = await import(
-                "@/module/common/utils/useWaitForTxAndInvalidateQueries"
-            );
-
             const mockSendTx = vi.fn().mockResolvedValue({ hash: "0xabc" });
             const mockWaitForTx = vi.fn().mockResolvedValue(undefined);
 
@@ -102,13 +90,6 @@ describe("useRemoveProductMember", () => {
         test("should renounce specific roles", async ({
             queryWrapper,
         }: TestContext) => {
-            const { useSendTransactionAction } = await import(
-                "@frak-labs/react-sdk"
-            );
-            const { useWaitForTxAndInvalidateQueries } = await import(
-                "@/module/common/utils/useWaitForTxAndInvalidateQueries"
-            );
-
             const mockSendTx = vi.fn().mockResolvedValue({ hash: "0xabc" });
             const mockWaitForTx = vi.fn().mockResolvedValue(undefined);
 
@@ -136,13 +117,6 @@ describe("useRemoveProductMember", () => {
         test("should revoke specific roles from wallet", async ({
             queryWrapper,
         }: TestContext) => {
-            const { useSendTransactionAction } = await import(
-                "@frak-labs/react-sdk"
-            );
-            const { useWaitForTxAndInvalidateQueries } = await import(
-                "@/module/common/utils/useWaitForTxAndInvalidateQueries"
-            );
-
             const mockSendTx = vi.fn().mockResolvedValue({ hash: "0xabc" });
             const mockWaitForTx = vi.fn().mockResolvedValue(undefined);
 
@@ -173,13 +147,6 @@ describe("useRemoveProductMember", () => {
         test("should handle transaction errors", async ({
             queryWrapper,
         }: TestContext) => {
-            const { useSendTransactionAction } = await import(
-                "@frak-labs/react-sdk"
-            );
-            const { useWaitForTxAndInvalidateQueries } = await import(
-                "@/module/common/utils/useWaitForTxAndInvalidateQueries"
-            );
-
             vi.mocked(useSendTransactionAction).mockReturnValue({
                 mutateAsync: vi
                     .fn()

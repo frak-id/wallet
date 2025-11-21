@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+import { useMyProducts } from "@/module/dashboard/hooks/useMyProducts";
 import { MyProducts } from "./index";
 
 const mockNavigate = vi.fn();
@@ -47,10 +48,11 @@ vi.mock("lucide-react", () => ({
 }));
 
 describe("MyProducts", () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+    });
+
     it("should render products when data is available", async () => {
-        const { useMyProducts } = await import(
-            "@/module/dashboard/hooks/useMyProducts"
-        );
         // useSuspenseQuery always returns data after suspense resolves
         vi.mocked(useMyProducts).mockReturnValue({
             products: {
@@ -66,9 +68,6 @@ describe("MyProducts", () => {
     });
 
     it("should render products list when loaded", async () => {
-        const { useMyProducts } = await import(
-            "@/module/dashboard/hooks/useMyProducts"
-        );
         vi.mocked(useMyProducts).mockReturnValue({
             products: {
                 operator: [
@@ -97,9 +96,6 @@ describe("MyProducts", () => {
     });
 
     it("should render empty list with add product button", async () => {
-        const { useMyProducts } = await import(
-            "@/module/dashboard/hooks/useMyProducts"
-        );
         vi.mocked(useMyProducts).mockReturnValue({
             products: {
                 operator: [],

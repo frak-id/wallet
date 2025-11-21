@@ -1,5 +1,7 @@
+import { useSendTransactionAction } from "@frak-labs/react-sdk";
 import { renderHook, waitFor } from "@testing-library/react";
-import { vi } from "vitest";
+import { beforeEach, vi } from "vitest";
+import { deleteCampaign } from "@/context/campaigns/action/deleteCampaign";
 import {
     createMockAddress,
     describe,
@@ -20,17 +22,14 @@ vi.mock("@frak-labs/react-sdk", () => ({
 }));
 
 describe("useDeleteCampaign", () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+    });
+
     describe("direct deletion (success response)", () => {
         test("should delete campaign successfully without on-chain transaction", async ({
             queryWrapper,
         }: TestContext) => {
-            const { deleteCampaign } = await import(
-                "@/context/campaigns/action/deleteCampaign"
-            );
-            const { useSendTransactionAction } = await import(
-                "@frak-labs/react-sdk"
-            );
-
             const mockSendTx = vi.fn();
             vi.mocked(useSendTransactionAction).mockReturnValue({
                 mutateAsync: mockSendTx,
@@ -57,13 +56,6 @@ describe("useDeleteCampaign", () => {
         test("should invalidate campaigns query after successful deletion", async ({
             queryWrapper,
         }: TestContext) => {
-            const { deleteCampaign } = await import(
-                "@/context/campaigns/action/deleteCampaign"
-            );
-            const { useSendTransactionAction } = await import(
-                "@frak-labs/react-sdk"
-            );
-
             vi.mocked(useSendTransactionAction).mockReturnValue({
                 mutateAsync: vi.fn(),
             } as any);
@@ -95,13 +87,6 @@ describe("useDeleteCampaign", () => {
         test("should handle on-chain deletion flow", async ({
             queryWrapper,
         }: TestContext) => {
-            const { deleteCampaign } = await import(
-                "@/context/campaigns/action/deleteCampaign"
-            );
-            const { useSendTransactionAction } = await import(
-                "@frak-labs/react-sdk"
-            );
-
             const mockSendTx = vi.fn().mockResolvedValue({
                 hash: "0xabcdef",
             });
@@ -161,13 +146,6 @@ describe("useDeleteCampaign", () => {
         test("should include transaction hash in logs", async ({
             queryWrapper,
         }: TestContext) => {
-            const { deleteCampaign } = await import(
-                "@/context/campaigns/action/deleteCampaign"
-            );
-            const { useSendTransactionAction } = await import(
-                "@frak-labs/react-sdk"
-            );
-
             const consoleLogSpy = vi
                 .spyOn(console, "log")
                 .mockImplementation(() => {});
@@ -210,13 +188,6 @@ describe("useDeleteCampaign", () => {
         test("should throw error when deletion fails", async ({
             queryWrapper,
         }: TestContext) => {
-            const { deleteCampaign } = await import(
-                "@/context/campaigns/action/deleteCampaign"
-            );
-            const { useSendTransactionAction } = await import(
-                "@frak-labs/react-sdk"
-            );
-
             vi.mocked(useSendTransactionAction).mockReturnValue({
                 mutateAsync: vi.fn(),
             } as any);
@@ -239,13 +210,6 @@ describe("useDeleteCampaign", () => {
         test("should throw error after on-chain transaction if final result is not success", async ({
             queryWrapper,
         }: TestContext) => {
-            const { deleteCampaign } = await import(
-                "@/context/campaigns/action/deleteCampaign"
-            );
-            const { useSendTransactionAction } = await import(
-                "@frak-labs/react-sdk"
-            );
-
             const mockSendTx = vi.fn().mockResolvedValue({
                 hash: "0xabcdef",
             });
@@ -278,13 +242,6 @@ describe("useDeleteCampaign", () => {
         test("should handle transaction submission errors", async ({
             queryWrapper,
         }: TestContext) => {
-            const { deleteCampaign } = await import(
-                "@/context/campaigns/action/deleteCampaign"
-            );
-            const { useSendTransactionAction } = await import(
-                "@frak-labs/react-sdk"
-            );
-
             const mockSendTx = vi
                 .fn()
                 .mockRejectedValue(new Error("Transaction failed"));
@@ -313,13 +270,6 @@ describe("useDeleteCampaign", () => {
         test("should track mutation loading state", async ({
             queryWrapper,
         }: TestContext) => {
-            const { deleteCampaign } = await import(
-                "@/context/campaigns/action/deleteCampaign"
-            );
-            const { useSendTransactionAction } = await import(
-                "@frak-labs/react-sdk"
-            );
-
             vi.mocked(useSendTransactionAction).mockReturnValue({
                 mutateAsync: vi.fn(),
             } as any);

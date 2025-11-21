@@ -1,6 +1,7 @@
 import { renderHook, waitFor } from "@testing-library/react";
 import type { Address } from "viem";
 import { vi } from "vitest";
+import { getOnChainCampaignsDetails } from "@/context/campaigns/action/getDetails";
 import {
     describe,
     expect,
@@ -22,10 +23,6 @@ describe("useGetOnChainCampaignDetails", () => {
         test("should fetch on-chain campaign details successfully", async ({
             queryWrapper,
         }: TestContext) => {
-            const { getOnChainCampaignsDetails } = await import(
-                "@/context/campaigns/action/getDetails"
-            );
-
             const mockDetails = {
                 isActive: true,
                 isRunning: true,
@@ -65,10 +62,6 @@ describe("useGetOnChainCampaignDetails", () => {
         test("should fetch details for inactive campaign", async ({
             queryWrapper,
         }: TestContext) => {
-            const { getOnChainCampaignsDetails } = await import(
-                "@/context/campaigns/action/getDetails"
-            );
-
             const mockDetails = {
                 isActive: false,
                 isRunning: false,
@@ -102,10 +95,6 @@ describe("useGetOnChainCampaignDetails", () => {
         test("should handle campaign with large distributed amount", async ({
             queryWrapper,
         }: TestContext) => {
-            const { getOnChainCampaignsDetails } = await import(
-                "@/context/campaigns/action/getDetails"
-            );
-
             const mockDetails = {
                 isActive: true,
                 isRunning: true,
@@ -141,10 +130,6 @@ describe("useGetOnChainCampaignDetails", () => {
         test("should use correct query key", async ({
             queryWrapper,
         }: TestContext) => {
-            const { getOnChainCampaignsDetails } = await import(
-                "@/context/campaigns/action/getDetails"
-            );
-
             vi.mocked(getOnChainCampaignsDetails).mockResolvedValue({} as any);
 
             renderHook(
@@ -172,10 +157,6 @@ describe("useGetOnChainCampaignDetails", () => {
         test("should create separate queries for different campaigns", async ({
             queryWrapper,
         }: TestContext) => {
-            const { getOnChainCampaignsDetails } = await import(
-                "@/context/campaigns/action/getDetails"
-            );
-
             const campaign1 =
                 "0x1111111111111111111111111111111111111111" as Address;
             const campaign2 =
@@ -218,10 +199,6 @@ describe("useGetOnChainCampaignDetails", () => {
         test("should handle API errors", async ({
             queryWrapper,
         }: TestContext) => {
-            const { getOnChainCampaignsDetails } = await import(
-                "@/context/campaigns/action/getDetails"
-            );
-
             vi.mocked(getOnChainCampaignsDetails).mockRejectedValue(
                 new Error("Failed to fetch on-chain details")
             );
@@ -247,10 +224,6 @@ describe("useGetOnChainCampaignDetails", () => {
         test("should handle network errors", async ({
             queryWrapper,
         }: TestContext) => {
-            const { getOnChainCampaignsDetails } = await import(
-                "@/context/campaigns/action/getDetails"
-            );
-
             vi.mocked(getOnChainCampaignsDetails).mockRejectedValue(
                 new Error("Network error")
             );
@@ -275,10 +248,6 @@ describe("useGetOnChainCampaignDetails", () => {
         test("should show loading state initially", async ({
             queryWrapper,
         }: TestContext) => {
-            const { getOnChainCampaignsDetails } = await import(
-                "@/context/campaigns/action/getDetails"
-            );
-
             vi.mocked(getOnChainCampaignsDetails).mockImplementation(
                 () =>
                     new Promise((resolve) =>
@@ -301,10 +270,6 @@ describe("useGetOnChainCampaignDetails", () => {
         test("should transition from loading to success", async ({
             queryWrapper,
         }: TestContext) => {
-            const { getOnChainCampaignsDetails } = await import(
-                "@/context/campaigns/action/getDetails"
-            );
-
             const mockDetails = { isActive: true };
 
             vi.mocked(getOnChainCampaignsDetails).mockResolvedValue(
@@ -334,10 +299,6 @@ describe("useGetOnChainCampaignDetails", () => {
         test("should support manual refetch", async ({
             queryWrapper,
         }: TestContext) => {
-            const { getOnChainCampaignsDetails } = await import(
-                "@/context/campaigns/action/getDetails"
-            );
-
             const details1 = { isRunning: false };
             const details2 = { isRunning: true };
 

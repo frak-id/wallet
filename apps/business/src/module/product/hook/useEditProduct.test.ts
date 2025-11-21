@@ -1,6 +1,8 @@
+import { useSendTransactionAction } from "@frak-labs/react-sdk";
 import { renderHook, waitFor } from "@testing-library/react";
 import type { Hex } from "viem";
-import { vi } from "vitest";
+import { beforeEach, vi } from "vitest";
+import { useWaitForTxAndInvalidateQueries } from "@/module/common/utils/useWaitForTxAndInvalidateQueries";
 import {
     createMockAddress,
     describe,
@@ -9,6 +11,7 @@ import {
     test,
 } from "@/tests/vitest-fixtures";
 import { useEditProduct } from "./useEditProduct";
+import { useProductInteractionContract } from "./useProductInteractionContract";
 
 // Mock the dependencies
 vi.mock("@frak-labs/react-sdk", () => ({
@@ -31,20 +34,14 @@ describe("useEditProduct", () => {
     const mockProductId = createMockAddress("product") as Hex;
     const mockTxHash = createMockAddress("tx-hash") as Hex;
 
+    beforeEach(() => {
+        vi.clearAllMocks();
+    });
+
     describe("successful product edit", () => {
         test("should update product metadata without interaction contract", async ({
             queryWrapper,
         }: TestContext) => {
-            const { useSendTransactionAction } = await import(
-                "@frak-labs/react-sdk"
-            );
-            const { useWaitForTxAndInvalidateQueries } = await import(
-                "@/module/common/utils/useWaitForTxAndInvalidateQueries"
-            );
-            const { useProductInteractionContract } = await import(
-                "./useProductInteractionContract"
-            );
-
             const sendTransactionMock = vi.fn().mockResolvedValue({
                 hash: mockTxHash,
             });
@@ -101,16 +98,6 @@ describe("useEditProduct", () => {
         test("should update product with interaction contract", async ({
             queryWrapper,
         }: TestContext) => {
-            const { useSendTransactionAction } = await import(
-                "@frak-labs/react-sdk"
-            );
-            const { useWaitForTxAndInvalidateQueries } = await import(
-                "@/module/common/utils/useWaitForTxAndInvalidateQueries"
-            );
-            const { useProductInteractionContract } = await import(
-                "./useProductInteractionContract"
-            );
-
             const mockInteractionContract =
                 "0x9876543210987654321098765432109876543210" as Hex;
             const sendTransactionMock = vi.fn().mockResolvedValue({
@@ -161,16 +148,6 @@ describe("useEditProduct", () => {
         test("should encode product types correctly", async ({
             queryWrapper,
         }: TestContext) => {
-            const { useSendTransactionAction } = await import(
-                "@frak-labs/react-sdk"
-            );
-            const { useWaitForTxAndInvalidateQueries } = await import(
-                "@/module/common/utils/useWaitForTxAndInvalidateQueries"
-            );
-            const { useProductInteractionContract } = await import(
-                "./useProductInteractionContract"
-            );
-
             const sendTransactionMock = vi.fn().mockResolvedValue({
                 hash: mockTxHash,
             });
@@ -209,16 +186,6 @@ describe("useEditProduct", () => {
         test("should track pending state during mutation", async ({
             queryWrapper,
         }: TestContext) => {
-            const { useSendTransactionAction } = await import(
-                "@frak-labs/react-sdk"
-            );
-            const { useWaitForTxAndInvalidateQueries } = await import(
-                "@/module/common/utils/useWaitForTxAndInvalidateQueries"
-            );
-            const { useProductInteractionContract } = await import(
-                "./useProductInteractionContract"
-            );
-
             let resolveTransaction: (value: any) => void;
             const transactionPromise = new Promise((resolve) => {
                 resolveTransaction = resolve;
@@ -266,16 +233,6 @@ describe("useEditProduct", () => {
         test("should return transaction hash on success", async ({
             queryWrapper,
         }: TestContext) => {
-            const { useSendTransactionAction } = await import(
-                "@frak-labs/react-sdk"
-            );
-            const { useWaitForTxAndInvalidateQueries } = await import(
-                "@/module/common/utils/useWaitForTxAndInvalidateQueries"
-            );
-            const { useProductInteractionContract } = await import(
-                "./useProductInteractionContract"
-            );
-
             vi.mocked(useSendTransactionAction).mockReturnValue({
                 mutateAsync: vi.fn().mockResolvedValue({ hash: mockTxHash }),
             } as any);
@@ -310,16 +267,6 @@ describe("useEditProduct", () => {
         test("should handle transaction send errors", async ({
             queryWrapper,
         }: TestContext) => {
-            const { useSendTransactionAction } = await import(
-                "@frak-labs/react-sdk"
-            );
-            const { useWaitForTxAndInvalidateQueries } = await import(
-                "@/module/common/utils/useWaitForTxAndInvalidateQueries"
-            );
-            const { useProductInteractionContract } = await import(
-                "./useProductInteractionContract"
-            );
-
             vi.mocked(useSendTransactionAction).mockReturnValue({
                 mutateAsync: vi
                     .fn()
@@ -350,16 +297,6 @@ describe("useEditProduct", () => {
         test("should handle wait for transaction errors", async ({
             queryWrapper,
         }: TestContext) => {
-            const { useSendTransactionAction } = await import(
-                "@frak-labs/react-sdk"
-            );
-            const { useWaitForTxAndInvalidateQueries } = await import(
-                "@/module/common/utils/useWaitForTxAndInvalidateQueries"
-            );
-            const { useProductInteractionContract } = await import(
-                "./useProductInteractionContract"
-            );
-
             vi.mocked(useSendTransactionAction).mockReturnValue({
                 mutateAsync: vi.fn().mockResolvedValue({ hash: mockTxHash }),
             } as any);
@@ -390,16 +327,6 @@ describe("useEditProduct", () => {
         test("should include French and English translations", async ({
             queryWrapper,
         }: TestContext) => {
-            const { useSendTransactionAction } = await import(
-                "@frak-labs/react-sdk"
-            );
-            const { useWaitForTxAndInvalidateQueries } = await import(
-                "@/module/common/utils/useWaitForTxAndInvalidateQueries"
-            );
-            const { useProductInteractionContract } = await import(
-                "./useProductInteractionContract"
-            );
-
             const sendTransactionMock = vi.fn().mockResolvedValue({
                 hash: mockTxHash,
             });
@@ -446,16 +373,6 @@ describe("useEditProduct", () => {
         test("should invalidate product queries after edit", async ({
             queryWrapper,
         }: TestContext) => {
-            const { useSendTransactionAction } = await import(
-                "@frak-labs/react-sdk"
-            );
-            const { useWaitForTxAndInvalidateQueries } = await import(
-                "@/module/common/utils/useWaitForTxAndInvalidateQueries"
-            );
-            const { useProductInteractionContract } = await import(
-                "./useProductInteractionContract"
-            );
-
             const waitForTxMock = vi.fn().mockResolvedValue(undefined);
 
             vi.mocked(useSendTransactionAction).mockReturnValue({
@@ -492,16 +409,6 @@ describe("useEditProduct", () => {
         test("should handle single product type", async ({
             queryWrapper,
         }: TestContext) => {
-            const { useSendTransactionAction } = await import(
-                "@frak-labs/react-sdk"
-            );
-            const { useWaitForTxAndInvalidateQueries } = await import(
-                "@/module/common/utils/useWaitForTxAndInvalidateQueries"
-            );
-            const { useProductInteractionContract } = await import(
-                "./useProductInteractionContract"
-            );
-
             const sendTransactionMock = vi.fn().mockResolvedValue({
                 hash: mockTxHash,
             });
@@ -538,16 +445,6 @@ describe("useEditProduct", () => {
         test("should handle long product names", async ({
             queryWrapper,
         }: TestContext) => {
-            const { useSendTransactionAction } = await import(
-                "@frak-labs/react-sdk"
-            );
-            const { useWaitForTxAndInvalidateQueries } = await import(
-                "@/module/common/utils/useWaitForTxAndInvalidateQueries"
-            );
-            const { useProductInteractionContract } = await import(
-                "./useProductInteractionContract"
-            );
-
             const sendTransactionMock = vi.fn().mockResolvedValue({
                 hash: mockTxHash,
             });
@@ -594,16 +491,6 @@ describe("useEditProduct", () => {
         test("should handle all product types", async ({
             queryWrapper,
         }: TestContext) => {
-            const { useSendTransactionAction } = await import(
-                "@frak-labs/react-sdk"
-            );
-            const { useWaitForTxAndInvalidateQueries } = await import(
-                "@/module/common/utils/useWaitForTxAndInvalidateQueries"
-            );
-            const { useProductInteractionContract } = await import(
-                "./useProductInteractionContract"
-            );
-
             const sendTransactionMock = vi.fn().mockResolvedValue({
                 hash: mockTxHash,
             });
@@ -638,16 +525,6 @@ describe("useEditProduct", () => {
         test("should handle rapid successive edits", async ({
             queryWrapper,
         }: TestContext) => {
-            const { useSendTransactionAction } = await import(
-                "@frak-labs/react-sdk"
-            );
-            const { useWaitForTxAndInvalidateQueries } = await import(
-                "@/module/common/utils/useWaitForTxAndInvalidateQueries"
-            );
-            const { useProductInteractionContract } = await import(
-                "./useProductInteractionContract"
-            );
-
             const sendTransactionMock = vi.fn().mockResolvedValue({
                 hash: mockTxHash,
             });

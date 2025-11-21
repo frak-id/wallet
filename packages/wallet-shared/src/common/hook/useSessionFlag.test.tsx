@@ -174,7 +174,11 @@ describe("useSessionFlag", () => {
                 key: "test-key",
                 newValue: "true",
                 oldValue: null,
-                storageArea: sessionStorage,
+            });
+            // Manually set storageArea to bypass jsdom's strict type checking
+            Object.defineProperty(event, "storageArea", {
+                value: sessionStorage,
+                writable: false,
             });
             window.dispatchEvent(event);
         });
@@ -194,7 +198,11 @@ describe("useSessionFlag", () => {
                 key: "other-key",
                 newValue: "true",
                 oldValue: null,
-                storageArea: sessionStorage,
+            });
+            // Manually set storageArea to bypass jsdom's strict type checking
+            Object.defineProperty(event, "storageArea", {
+                value: sessionStorage,
+                writable: false,
             });
             window.dispatchEvent(event);
         });
@@ -214,7 +222,11 @@ describe("useSessionFlag", () => {
                 key: "test-key",
                 newValue: "true",
                 oldValue: null,
-                storageArea: localStorage,
+            });
+            // Manually set storageArea to localStorage (not sessionStorage)
+            Object.defineProperty(event, "storageArea", {
+                value: localStorage,
+                writable: false,
             });
             window.dispatchEvent(event);
         });
@@ -236,7 +248,11 @@ describe("useSessionFlag", () => {
                 key: "test-key",
                 newValue: "false",
                 oldValue: "true",
-                storageArea: sessionStorage,
+            });
+            // Manually set storageArea to bypass jsdom's strict type checking
+            Object.defineProperty(event, "storageArea", {
+                value: sessionStorage,
+                writable: false,
             });
             window.dispatchEvent(event);
         });

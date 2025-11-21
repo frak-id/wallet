@@ -1,6 +1,9 @@
 import { renderHook, waitFor } from "@testing-library/react";
 import type { Hex } from "viem";
 import { vi } from "vitest";
+import { authenticatedBackendApi } from "@/context/api/backendClient";
+import { useWebhookInteractionStatus } from "@/module/product/hook/useWebhookInteractionStatus";
+import { mockProductWebhook } from "@/tests/mocks/backendApi";
 import {
     describe,
     expect,
@@ -12,16 +15,7 @@ import { useWebhookInteractionSetup } from "./useWebhookInteractionSetup";
 // Mock the business API
 vi.mock("@/context/api/backendClient", () => ({
     authenticatedBackendApi: {
-        product: vi.fn(() => ({
-            interactionsWebhook: {
-                setup: {
-                    post: vi.fn(),
-                },
-                status: {
-                    get: vi.fn(),
-                },
-            },
-        })),
+        product: vi.fn(),
     },
 }));
 
@@ -39,17 +33,13 @@ describe("useWebhookInteractionSetup", () => {
         test("should setup webhook successfully", async ({
             queryWrapper,
         }: TestContext) => {
-            const { authenticatedBackendApi } = await import(
-                "@/context/api/backendClient"
-            );
-
             const mockResponse = {
                 success: true,
                 webhookUrl: "https://webhook.example.com/interaction",
             };
 
-            vi.mocked(authenticatedBackendApi.product).mockReturnValue({
-                interactionsWebhook: {
+            vi.mocked(authenticatedBackendApi.product).mockReturnValue(
+                mockProductWebhook({
                     setup: {
                         post: vi.fn().mockResolvedValue({
                             data: mockResponse,
@@ -59,8 +49,8 @@ describe("useWebhookInteractionSetup", () => {
                     status: {
                         get: vi.fn().mockResolvedValue({ data: {} }),
                     },
-                },
-            } as any);
+                })
+            );
 
             const { result } = renderHook(
                 () => useWebhookInteractionSetup({ productId: mockProductId }),
@@ -84,25 +74,21 @@ describe("useWebhookInteractionSetup", () => {
         test("should call API with correct parameters", async ({
             queryWrapper,
         }: TestContext) => {
-            const { authenticatedBackendApi } = await import(
-                "@/context/api/backendClient"
-            );
-
             const postMock = vi.fn().mockResolvedValue({
                 data: { success: true },
                 error: null,
             });
 
-            vi.mocked(authenticatedBackendApi.product).mockReturnValue({
-                interactionsWebhook: {
+            vi.mocked(authenticatedBackendApi.product).mockReturnValue(
+                mockProductWebhook({
                     setup: {
                         post: postMock,
                     },
                     status: {
                         get: vi.fn().mockResolvedValue({ data: {} }),
                     },
-                },
-            } as any);
+                })
+            );
 
             const { result } = renderHook(
                 () => useWebhookInteractionSetup({ productId: mockProductId }),
@@ -128,25 +114,21 @@ describe("useWebhookInteractionSetup", () => {
         test("should always use custom source", async ({
             queryWrapper,
         }: TestContext) => {
-            const { authenticatedBackendApi } = await import(
-                "@/context/api/backendClient"
-            );
-
             const postMock = vi.fn().mockResolvedValue({
                 data: { success: true },
                 error: null,
             });
 
-            vi.mocked(authenticatedBackendApi.product).mockReturnValue({
-                interactionsWebhook: {
+            vi.mocked(authenticatedBackendApi.product).mockReturnValue(
+                mockProductWebhook({
                     setup: {
                         post: postMock,
                     },
                     status: {
                         get: vi.fn().mockResolvedValue({ data: {} }),
                     },
-                },
-            } as any);
+                })
+            );
 
             const { result } = renderHook(
                 () => useWebhookInteractionSetup({ productId: mockProductId }),
@@ -167,21 +149,14 @@ describe("useWebhookInteractionSetup", () => {
         test("should refetch status after successful setup", async ({
             queryWrapper,
         }: TestContext) => {
-            const { authenticatedBackendApi } = await import(
-                "@/context/api/backendClient"
-            );
-            const { useWebhookInteractionStatus } = await import(
-                "@/module/product/hook/useWebhookInteractionStatus"
-            );
-
             const refetchMock = vi.fn();
 
             vi.mocked(useWebhookInteractionStatus).mockReturnValue({
                 refetch: refetchMock,
             } as any);
 
-            vi.mocked(authenticatedBackendApi.product).mockReturnValue({
-                interactionsWebhook: {
+            vi.mocked(authenticatedBackendApi.product).mockReturnValue(
+                mockProductWebhook({
                     setup: {
                         post: vi.fn().mockResolvedValue({
                             data: { success: true },
@@ -191,8 +166,8 @@ describe("useWebhookInteractionSetup", () => {
                     status: {
                         get: vi.fn().mockResolvedValue({ data: {} }),
                     },
-                },
-            } as any);
+                })
+            );
 
             const { result } = renderHook(
                 () => useWebhookInteractionSetup({ productId: mockProductId }),
@@ -212,21 +187,14 @@ describe("useWebhookInteractionSetup", () => {
         test("should refetch status even after failure", async ({
             queryWrapper,
         }: TestContext) => {
-            const { authenticatedBackendApi } = await import(
-                "@/context/api/backendClient"
-            );
-            const { useWebhookInteractionStatus } = await import(
-                "@/module/product/hook/useWebhookInteractionStatus"
-            );
-
             const refetchMock = vi.fn();
 
             vi.mocked(useWebhookInteractionStatus).mockReturnValue({
                 refetch: refetchMock,
             } as any);
 
-            vi.mocked(authenticatedBackendApi.product).mockReturnValue({
-                interactionsWebhook: {
+            vi.mocked(authenticatedBackendApi.product).mockReturnValue(
+                mockProductWebhook({
                     setup: {
                         post: vi.fn().mockResolvedValue({
                             data: null,
@@ -236,8 +204,8 @@ describe("useWebhookInteractionSetup", () => {
                     status: {
                         get: vi.fn().mockResolvedValue({ data: {} }),
                     },
-                },
-            } as any);
+                })
+            );
 
             const { result } = renderHook(
                 () => useWebhookInteractionSetup({ productId: mockProductId }),
@@ -261,12 +229,8 @@ describe("useWebhookInteractionSetup", () => {
         test("should throw error when API returns error", async ({
             queryWrapper,
         }: TestContext) => {
-            const { authenticatedBackendApi } = await import(
-                "@/context/api/backendClient"
-            );
-
-            vi.mocked(authenticatedBackendApi.product).mockReturnValue({
-                interactionsWebhook: {
+            vi.mocked(authenticatedBackendApi.product).mockReturnValue(
+                mockProductWebhook({
                     setup: {
                         post: vi.fn().mockResolvedValue({
                             data: null,
@@ -276,8 +240,8 @@ describe("useWebhookInteractionSetup", () => {
                     status: {
                         get: vi.fn().mockResolvedValue({ data: {} }),
                     },
-                },
-            } as any);
+                })
+            );
 
             const { result } = renderHook(
                 () => useWebhookInteractionSetup({ productId: mockProductId }),
@@ -295,12 +259,8 @@ describe("useWebhookInteractionSetup", () => {
         test("should handle network errors", async ({
             queryWrapper,
         }: TestContext) => {
-            const { authenticatedBackendApi } = await import(
-                "@/context/api/backendClient"
-            );
-
-            vi.mocked(authenticatedBackendApi.product).mockReturnValue({
-                interactionsWebhook: {
+            vi.mocked(authenticatedBackendApi.product).mockReturnValue(
+                mockProductWebhook({
                     setup: {
                         post: vi
                             .fn()
@@ -309,8 +269,8 @@ describe("useWebhookInteractionSetup", () => {
                     status: {
                         get: vi.fn().mockResolvedValue({ data: {} }),
                     },
-                },
-            } as any);
+                })
+            );
 
             const { result } = renderHook(
                 () => useWebhookInteractionSetup({ productId: mockProductId }),
@@ -328,12 +288,8 @@ describe("useWebhookInteractionSetup", () => {
         test("should transition to error state on failure", async ({
             queryWrapper,
         }: TestContext) => {
-            const { authenticatedBackendApi } = await import(
-                "@/context/api/backendClient"
-            );
-
-            vi.mocked(authenticatedBackendApi.product).mockReturnValue({
-                interactionsWebhook: {
+            vi.mocked(authenticatedBackendApi.product).mockReturnValue(
+                mockProductWebhook({
                     setup: {
                         post: vi.fn().mockResolvedValue({
                             data: null,
@@ -343,8 +299,8 @@ describe("useWebhookInteractionSetup", () => {
                     status: {
                         get: vi.fn().mockResolvedValue({ data: {} }),
                     },
-                },
-            } as any);
+                })
+            );
 
             const { result } = renderHook(
                 () => useWebhookInteractionSetup({ productId: mockProductId }),
@@ -386,12 +342,8 @@ describe("useWebhookInteractionSetup", () => {
         test("should track mutation loading state", async ({
             queryWrapper,
         }: TestContext) => {
-            const { authenticatedBackendApi } = await import(
-                "@/context/api/backendClient"
-            );
-
-            vi.mocked(authenticatedBackendApi.product).mockReturnValue({
-                interactionsWebhook: {
+            vi.mocked(authenticatedBackendApi.product).mockReturnValue(
+                mockProductWebhook({
                     setup: {
                         post: vi.fn().mockImplementation(
                             () =>
@@ -410,8 +362,8 @@ describe("useWebhookInteractionSetup", () => {
                     status: {
                         get: vi.fn().mockResolvedValue({ data: {} }),
                     },
-                },
-            } as any);
+                })
+            );
 
             const { result } = renderHook(
                 () => useWebhookInteractionSetup({ productId: mockProductId }),
@@ -439,12 +391,8 @@ describe("useWebhookInteractionSetup", () => {
         test("should reset mutation state between calls", async ({
             queryWrapper,
         }: TestContext) => {
-            const { authenticatedBackendApi } = await import(
-                "@/context/api/backendClient"
-            );
-
-            vi.mocked(authenticatedBackendApi.product).mockReturnValue({
-                interactionsWebhook: {
+            vi.mocked(authenticatedBackendApi.product).mockReturnValue(
+                mockProductWebhook({
                     setup: {
                         post: vi.fn().mockResolvedValue({
                             data: { success: true },
@@ -454,8 +402,8 @@ describe("useWebhookInteractionSetup", () => {
                     status: {
                         get: vi.fn().mockResolvedValue({ data: {} }),
                     },
-                },
-            } as any);
+                })
+            );
 
             const { result } = renderHook(
                 () => useWebhookInteractionSetup({ productId: mockProductId }),
@@ -487,25 +435,21 @@ describe("useWebhookInteractionSetup", () => {
         test("should handle different signature key formats", async ({
             queryWrapper,
         }: TestContext) => {
-            const { authenticatedBackendApi } = await import(
-                "@/context/api/backendClient"
-            );
-
             const postMock = vi.fn().mockResolvedValue({
                 data: { success: true },
                 error: null,
             });
 
-            vi.mocked(authenticatedBackendApi.product).mockReturnValue({
-                interactionsWebhook: {
+            vi.mocked(authenticatedBackendApi.product).mockReturnValue(
+                mockProductWebhook({
                     setup: {
                         post: postMock,
                     },
                     status: {
                         get: vi.fn().mockResolvedValue({ data: {} }),
                     },
-                },
-            } as any);
+                })
+            );
 
             const { result } = renderHook(
                 () => useWebhookInteractionSetup({ productId: mockProductId }),

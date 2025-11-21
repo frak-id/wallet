@@ -1,5 +1,7 @@
 import { renderHook } from "@testing-library/react";
+import { guard } from "radash";
 import type { Hex } from "viem";
+import { waitForTransactionReceipt } from "viem/actions";
 import { vi } from "vitest";
 import {
     describe,
@@ -32,8 +34,6 @@ describe("useWaitForTxAndInvalidateQueries", () => {
         test("should wait for transaction and invalidate queries", async ({
             queryWrapper,
         }: TestContext) => {
-            const { waitForTransactionReceipt } = await import("viem/actions");
-
             vi.mocked(waitForTransactionReceipt).mockResolvedValue({
                 status: "success",
             } as any);
@@ -63,8 +63,6 @@ describe("useWaitForTxAndInvalidateQueries", () => {
         test("should use default 16 confirmations", async ({
             queryWrapper,
         }: TestContext) => {
-            const { waitForTransactionReceipt } = await import("viem/actions");
-
             vi.mocked(waitForTransactionReceipt).mockResolvedValue({
                 status: "success",
             } as any);
@@ -91,8 +89,6 @@ describe("useWaitForTxAndInvalidateQueries", () => {
         test("should accept custom confirmation count", async ({
             queryWrapper,
         }: TestContext) => {
-            const { waitForTransactionReceipt } = await import("viem/actions");
-
             vi.mocked(waitForTransactionReceipt).mockResolvedValue({
                 status: "success",
             } as any);
@@ -120,8 +116,6 @@ describe("useWaitForTxAndInvalidateQueries", () => {
         test("should invalidate queries after confirmation", async ({
             queryWrapper,
         }: TestContext) => {
-            const { waitForTransactionReceipt } = await import("viem/actions");
-
             vi.mocked(waitForTransactionReceipt).mockResolvedValue({
                 status: "success",
             } as any);
@@ -150,8 +144,6 @@ describe("useWaitForTxAndInvalidateQueries", () => {
         test("should invalidate with non-exact matching", async ({
             queryWrapper,
         }: TestContext) => {
-            const { waitForTransactionReceipt } = await import("viem/actions");
-
             vi.mocked(waitForTransactionReceipt).mockResolvedValue({
                 status: "success",
             } as any);
@@ -183,9 +175,6 @@ describe("useWaitForTxAndInvalidateQueries", () => {
         test("should handle transaction wait errors gracefully", async ({
             queryWrapper,
         }: TestContext) => {
-            const { waitForTransactionReceipt } = await import("viem/actions");
-            const { guard } = await import("radash");
-
             vi.mocked(waitForTransactionReceipt).mockRejectedValue(
                 new Error("Transaction failed")
             );
@@ -216,9 +205,6 @@ describe("useWaitForTxAndInvalidateQueries", () => {
         test("should still invalidate queries even if wait fails", async ({
             queryWrapper,
         }: TestContext) => {
-            const { waitForTransactionReceipt } = await import("viem/actions");
-            const { guard } = await import("radash");
-
             vi.mocked(waitForTransactionReceipt).mockRejectedValue(
                 new Error("Transaction timeout")
             );
@@ -255,8 +241,6 @@ describe("useWaitForTxAndInvalidateQueries", () => {
         test("should return stable callback across renders", async ({
             queryWrapper,
         }: TestContext) => {
-            const { waitForTransactionReceipt } = await import("viem/actions");
-
             vi.mocked(waitForTransactionReceipt).mockResolvedValue({
                 status: "success",
             } as any);
@@ -278,8 +262,6 @@ describe("useWaitForTxAndInvalidateQueries", () => {
         test("should handle single-level query keys", async ({
             queryWrapper,
         }: TestContext) => {
-            const { waitForTransactionReceipt } = await import("viem/actions");
-
             vi.mocked(waitForTransactionReceipt).mockResolvedValue({
                 status: "success",
             } as any);
@@ -308,8 +290,6 @@ describe("useWaitForTxAndInvalidateQueries", () => {
         test("should handle nested query keys", async ({
             queryWrapper,
         }: TestContext) => {
-            const { waitForTransactionReceipt } = await import("viem/actions");
-
             vi.mocked(waitForTransactionReceipt).mockResolvedValue({
                 status: "success",
             } as any);
@@ -340,8 +320,6 @@ describe("useWaitForTxAndInvalidateQueries", () => {
         test("should handle 1 confirmation for fast operations", async ({
             queryWrapper,
         }: TestContext) => {
-            const { waitForTransactionReceipt } = await import("viem/actions");
-
             vi.mocked(waitForTransactionReceipt).mockResolvedValue({
                 status: "success",
             } as any);
@@ -369,8 +347,6 @@ describe("useWaitForTxAndInvalidateQueries", () => {
         test("should handle high confirmation count for important operations", async ({
             queryWrapper,
         }: TestContext) => {
-            const { waitForTransactionReceipt } = await import("viem/actions");
-
             vi.mocked(waitForTransactionReceipt).mockResolvedValue({
                 status: "success",
             } as any);
@@ -400,8 +376,6 @@ describe("useWaitForTxAndInvalidateQueries", () => {
         test("should handle campaign creation flow", async ({
             queryWrapper,
         }: TestContext) => {
-            const { waitForTransactionReceipt } = await import("viem/actions");
-
             vi.mocked(waitForTransactionReceipt).mockResolvedValue({
                 status: "success",
             } as any);
@@ -423,8 +397,6 @@ describe("useWaitForTxAndInvalidateQueries", () => {
         test("should handle product update flow", async ({
             queryWrapper,
         }: TestContext) => {
-            const { waitForTransactionReceipt } = await import("viem/actions");
-
             vi.mocked(waitForTransactionReceipt).mockResolvedValue({
                 status: "success",
             } as any);
@@ -446,8 +418,6 @@ describe("useWaitForTxAndInvalidateQueries", () => {
         test("should handle bank funding flow", async ({
             queryWrapper,
         }: TestContext) => {
-            const { waitForTransactionReceipt } = await import("viem/actions");
-
             vi.mocked(waitForTransactionReceipt).mockResolvedValue({
                 status: "success",
             } as any);

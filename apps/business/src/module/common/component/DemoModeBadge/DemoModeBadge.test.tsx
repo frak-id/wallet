@@ -1,5 +1,5 @@
-import { fireEvent, render, screen } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DemoModeBadge } from "./index";
 
 const mockUseIsDemoMode = vi.fn();
@@ -11,6 +11,11 @@ vi.mock("@/module/common/atoms/demoMode", () => ({
 
 vi.mock("@tanstack/react-router", () => ({
     useNavigate: () => mockNavigate,
+    Link: ({ to, children, className, ...props }: any) => (
+        <a href={to} className={className} {...props}>
+            {children}
+        </a>
+    ),
 }));
 
 describe("DemoModeBadge", () => {
@@ -18,12 +23,16 @@ describe("DemoModeBadge", () => {
         vi.clearAllMocks();
     });
 
+    afterEach(() => {
+        cleanup();
+    });
+
     it("should render badge when demo mode is active", () => {
         mockUseIsDemoMode.mockReturnValue(true);
 
         render(<DemoModeBadge />);
 
-        const badge = screen.getByRole("button", { name: /demo/i });
+        const badge = screen.getByRole("link", { name: /demo/i });
         expect(badge).toBeInTheDocument();
         expect(badge).toHaveAttribute(
             "title",
@@ -39,14 +48,13 @@ describe("DemoModeBadge", () => {
         expect(container.firstChild).toBeNull();
     });
 
-    it("should navigate to settings when clicked", () => {
+    it("should render link to settings", () => {
         mockUseIsDemoMode.mockReturnValue(true);
 
-        render(<DemoModeBadge />);
+        const { container } = render(<DemoModeBadge />);
 
-        const badge = screen.getByRole("button", { name: /demo/i });
-        fireEvent.click(badge);
-
-        expect(mockNavigate).toHaveBeenCalledWith({ to: "/settings" });
+        const link = container.querySelector('a[href="/settings"]');
+        expect(link).toBeInTheDocument();
+        expect(link).toHaveTextContent("demo");
     });
 });

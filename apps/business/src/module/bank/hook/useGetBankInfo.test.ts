@@ -1,6 +1,7 @@
 import { renderHook, waitFor } from "@testing-library/react";
 import type { Address } from "viem";
-import { vi } from "vitest";
+import { readContract } from "viem/actions";
+import { beforeEach, vi } from "vitest";
 import {
     createMockAddress,
     describe,
@@ -24,12 +25,14 @@ describe("useGetBankInfo", () => {
     const mockBankAddress = createMockAddress("bank");
     const mockTokenAddress = createMockAddress("token");
 
+    beforeEach(() => {
+        vi.clearAllMocks();
+    });
+
     describe("successful bank info retrieval", () => {
         test("should fetch bank token and decimals successfully", async ({
             queryWrapper,
         }: TestContext) => {
-            const { readContract } = await import("viem/actions");
-
             // Mock getConfig returns token address
             // Mock decimals returns 18
             vi.mocked(readContract)
@@ -56,8 +59,6 @@ describe("useGetBankInfo", () => {
         test("should handle tokens with 6 decimals (USDC-like)", async ({
             queryWrapper,
         }: TestContext) => {
-            const { readContract } = await import("viem/actions");
-
             vi.mocked(readContract)
                 .mockResolvedValueOnce([null, mockTokenAddress] as any)
                 .mockResolvedValueOnce(6);
@@ -77,8 +78,6 @@ describe("useGetBankInfo", () => {
         test("should handle tokens with 0 decimals", async ({
             queryWrapper,
         }: TestContext) => {
-            const { readContract } = await import("viem/actions");
-
             vi.mocked(readContract)
                 .mockResolvedValueOnce([null, mockTokenAddress] as any)
                 .mockResolvedValueOnce(0);
@@ -127,8 +126,6 @@ describe("useGetBankInfo", () => {
         test("should return null for invalid address format", async ({
             queryWrapper,
         }: TestContext) => {
-            const { readContract } = await import("viem/actions");
-
             vi.mocked(readContract).mockResolvedValue([
                 null,
                 mockTokenAddress,
@@ -174,8 +171,6 @@ describe("useGetBankInfo", () => {
         test("should handle contract read errors for getConfig", async ({
             queryWrapper,
         }: TestContext) => {
-            const { readContract } = await import("viem/actions");
-
             const consoleErrorSpy = vi
                 .spyOn(console, "error")
                 .mockImplementation(() => {});
@@ -201,8 +196,6 @@ describe("useGetBankInfo", () => {
         test("should handle contract read errors for decimals", async ({
             queryWrapper,
         }: TestContext) => {
-            const { readContract } = await import("viem/actions");
-
             const consoleErrorSpy = vi
                 .spyOn(console, "error")
                 .mockImplementation(() => {});
@@ -229,8 +222,6 @@ describe("useGetBankInfo", () => {
         test("should handle network errors", async ({
             queryWrapper,
         }: TestContext) => {
-            const { readContract } = await import("viem/actions");
-
             vi.mocked(readContract).mockRejectedValue(
                 new Error("Network error")
             );
@@ -254,8 +245,6 @@ describe("useGetBankInfo", () => {
         test("should log data when successfully fetched", async ({
             queryWrapper,
         }: TestContext) => {
-            const { readContract } = await import("viem/actions");
-
             const consoleLogSpy = vi
                 .spyOn(console, "log")
                 .mockImplementation(() => {});
@@ -284,8 +273,6 @@ describe("useGetBankInfo", () => {
         test("should log errors when fetch fails", async ({
             queryWrapper,
         }: TestContext) => {
-            const { readContract } = await import("viem/actions");
-
             const consoleErrorSpy = vi
                 .spyOn(console, "error")
                 .mockImplementation(() => {});
@@ -312,8 +299,6 @@ describe("useGetBankInfo", () => {
         test("should return bankInfo along with query state", async ({
             queryWrapper,
         }: TestContext) => {
-            const { readContract } = await import("viem/actions");
-
             vi.mocked(readContract)
                 .mockResolvedValueOnce([null, mockTokenAddress] as any)
                 .mockResolvedValueOnce(18);
@@ -352,8 +337,6 @@ describe("useGetBankInfo", () => {
         test("should handle switching between different banks", async ({
             queryWrapper,
         }: TestContext) => {
-            const { readContract } = await import("viem/actions");
-
             const bank1 =
                 "0x1111111111111111111111111111111111111111" as Address;
             const bank2 =
@@ -399,8 +382,6 @@ describe("useGetBankInfo", () => {
         test("should call campaignBankAbi.getConfig", async ({
             queryWrapper,
         }: TestContext) => {
-            const { readContract } = await import("viem/actions");
-
             vi.mocked(readContract)
                 .mockResolvedValueOnce([null, mockTokenAddress] as any)
                 .mockResolvedValueOnce(18);
@@ -423,8 +404,6 @@ describe("useGetBankInfo", () => {
         test("should call erc20Abi.decimals", async ({
             queryWrapper,
         }: TestContext) => {
-            const { readContract } = await import("viem/actions");
-
             vi.mocked(readContract)
                 .mockResolvedValueOnce([null, mockTokenAddress] as any)
                 .mockResolvedValueOnce(18);

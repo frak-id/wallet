@@ -22,9 +22,11 @@
         "@tanstack/react-router": "*",
         "@testing-library/jest-dom": "*",
         "@testing-library/react": "*",
+        "@types/react": "*",
         "@vitejs/plugin-react": "*",
         "idb-keyval": "*",
         "ox": "*",
+        "react": "*",
         "vite-tsconfig-paths": "*",
         "vitest": "*",
         "wagmi": "*"

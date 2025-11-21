@@ -1,5 +1,6 @@
 import { renderHook, waitFor } from "@testing-library/react";
 import type { Address, Hex } from "viem";
+import { readContract } from "viem/actions";
 import { vi } from "vitest";
 import {
     createMockAddress,
@@ -28,8 +29,6 @@ describe("useProductInteractionContract", () => {
         test("should fetch interaction contract successfully", async ({
             queryWrapper,
         }: TestContext) => {
-            const { readContract } = await import("viem/actions");
-
             vi.mocked(readContract).mockResolvedValue(
                 mockContractAddress as any
             );
@@ -52,8 +51,6 @@ describe("useProductInteractionContract", () => {
         test("should handle when no interaction contract exists", async ({
             queryWrapper,
         }: TestContext) => {
-            const { readContract } = await import("viem/actions");
-
             vi.mocked(readContract).mockResolvedValue(undefined as any);
 
             const { result } = renderHook(
@@ -74,8 +71,6 @@ describe("useProductInteractionContract", () => {
         test("should handle contract read errors gracefully", async ({
             queryWrapper,
         }: TestContext) => {
-            const { readContract } = await import("viem/actions");
-
             vi.mocked(readContract).mockRejectedValue(
                 new Error("Contract not found")
             );
@@ -97,8 +92,6 @@ describe("useProductInteractionContract", () => {
         test("should handle network errors gracefully", async ({
             queryWrapper,
         }: TestContext) => {
-            const { readContract } = await import("viem/actions");
-
             vi.mocked(readContract).mockRejectedValue(
                 new Error("Network error")
             );
@@ -139,8 +132,6 @@ describe("useProductInteractionContract", () => {
         test("should use correct query key", async ({
             queryWrapper,
         }: TestContext) => {
-            const { readContract } = await import("viem/actions");
-
             vi.mocked(readContract).mockResolvedValue(
                 mockContractAddress as any
             );
@@ -172,8 +163,6 @@ describe("useProductInteractionContract", () => {
         test("should handle different products independently", async ({
             queryWrapper,
         }: TestContext) => {
-            const { readContract } = await import("viem/actions");
-
             const productId1 =
                 "0x1111111111111111111111111111111111111111" as Hex;
             const productId2 =

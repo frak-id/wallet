@@ -1,5 +1,5 @@
-import { fireEvent, render, screen } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
     Navigation,
     NavigationItem,
@@ -13,6 +13,11 @@ const mockMatchRoute = vi.fn();
 vi.mock("@tanstack/react-router", () => ({
     useNavigate: () => mockNavigate,
     useMatchRoute: () => mockMatchRoute,
+    Link: ({ to, children, className, ...props }: any) => (
+        <a href={to} className={className} {...props}>
+            {children}
+        </a>
+    ),
 }));
 
 vi.mock("@/assets/icons/Home", () => ({
@@ -55,6 +60,10 @@ describe("Navigation", () => {
         mockMatchRoute.mockReturnValue(false);
     });
 
+    afterEach(() => {
+        cleanup();
+    });
+
     it("should render navigation items", () => {
         render(<Navigation />);
 
@@ -64,17 +73,25 @@ describe("Navigation", () => {
     });
 
     it("should render navigation icons", () => {
-        render(<Navigation />);
+        const { container } = render(<Navigation />);
 
-        expect(screen.getByTestId("icon-home")).toBeInTheDocument();
-        expect(screen.getByTestId("icon-users")).toBeInTheDocument();
-        expect(screen.getByTestId("icon-gear")).toBeInTheDocument();
+        expect(
+            container.querySelector('[data-testid="icon-home"]')
+        ).toBeInTheDocument();
+        expect(
+            container.querySelector('[data-testid="icon-users"]')
+        ).toBeInTheDocument();
+        expect(
+            container.querySelector('[data-testid="icon-gear"]')
+        ).toBeInTheDocument();
     });
 
     it("should render campaigns switcher", () => {
-        render(<Navigation />);
+        const { container } = render(<Navigation />);
 
-        expect(screen.getByTestId("campaigns-switcher")).toBeInTheDocument();
+        expect(
+            container.querySelector('[data-testid="campaigns-switcher"]')
+        ).toBeInTheDocument();
     });
 });
 
@@ -82,6 +99,10 @@ describe("NavigationItem", () => {
     beforeEach(() => {
         vi.clearAllMocks();
         mockMatchRoute.mockReturnValue(false);
+    });
+
+    afterEach(() => {
+        cleanup();
     });
 
     it("should render as list item", () => {
@@ -93,13 +114,14 @@ describe("NavigationItem", () => {
         expect(li).toBeInTheDocument();
     });
 
-    it("should navigate when clicked", () => {
-        render(<NavigationItem url="/test">Item</NavigationItem>);
+    it("should render as link for internal URLs", () => {
+        const { container } = render(
+            <NavigationItem url="/test">Item</NavigationItem>
+        );
 
-        const button = screen.getByRole("button", { name: "Item" });
-        fireEvent.click(button);
-
-        expect(mockNavigate).toHaveBeenCalledWith({ to: "/test" });
+        const link = container.querySelector('a[href="/test"]');
+        expect(link).toBeInTheDocument();
+        expect(link).toHaveTextContent("Item");
     });
 
     it("should open external URLs in new window", () => {
@@ -141,8 +163,8 @@ describe("NavigationItem", () => {
             <NavigationItem url="/test">Item</NavigationItem>
         );
 
-        const button = container.querySelector("button");
-        expect(button?.className).toBeTruthy();
+        const link = container.querySelector("a");
+        expect(link?.className).toBeTruthy();
     });
 
     it("should apply active class when isActive is true", () => {
@@ -152,8 +174,8 @@ describe("NavigationItem", () => {
             </NavigationItem>
         );
 
-        const button = container.querySelector("button");
-        expect(button?.className).toBeTruthy();
+        const link = container.querySelector("a");
+        expect(link?.className).toBeTruthy();
     });
 
     it("should render rightSection", () => {
@@ -182,19 +204,23 @@ describe("SubNavigationItem", () => {
         mockMatchRoute.mockReturnValue(false);
     });
 
+    afterEach(() => {
+        cleanup();
+    });
+
     it("should render as sub navigation item", () => {
         render(<SubNavigationItem url="/test">Sub Item</SubNavigationItem>);
 
         expect(screen.getByText("Sub Item")).toBeInTheDocument();
     });
 
-    it("should pass isSub prop", () => {
+    it("should render as link with isSub styling", () => {
         const { container } = render(
             <SubNavigationItem url="/test">Sub Item</SubNavigationItem>
         );
 
-        const button = container.querySelector("button");
-        expect(button).toBeInTheDocument();
+        const link = container.querySelector("a");
+        expect(link).toBeInTheDocument();
     });
 });
 

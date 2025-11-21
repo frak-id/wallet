@@ -7,6 +7,18 @@ const mockSetForm = vi.fn();
 
 vi.mock("@tanstack/react-router", () => ({
     useNavigate: () => mockNavigate,
+    Link: ({ to, children, onClick }: any) => (
+        <a
+            href={to}
+            onClick={(e) => {
+                e.preventDefault();
+                onClick?.();
+                mockNavigate({ to });
+            }}
+        >
+            {children}
+        </a>
+    ),
 }));
 
 vi.mock("@/stores/pushCreationStore", () => ({

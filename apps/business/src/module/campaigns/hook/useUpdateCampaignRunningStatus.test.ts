@@ -1,6 +1,8 @@
+import { useSendTransactionAction } from "@frak-labs/react-sdk";
 import { renderHook, waitFor } from "@testing-library/react";
 import type { Hex } from "viem";
 import { vi } from "vitest";
+import { useWaitForTxAndInvalidateQueries } from "@/module/common/utils/useWaitForTxAndInvalidateQueries";
 import {
     createMockAddress,
     describe,
@@ -27,13 +29,6 @@ describe("useUpdateCampaignRunningStatus", () => {
         test("should pause campaign successfully", async ({
             queryWrapper,
         }: TestContext) => {
-            const { useSendTransactionAction } = await import(
-                "@frak-labs/react-sdk"
-            );
-            const { useWaitForTxAndInvalidateQueries } = await import(
-                "@/module/common/utils/useWaitForTxAndInvalidateQueries"
-            );
-
             const mockHash = "0xabcdef123456789" as Hex;
             const mockSendTx = vi.fn().mockResolvedValue({ hash: mockHash });
             const mockWaitForTx = vi.fn().mockResolvedValue(undefined);
@@ -76,13 +71,6 @@ describe("useUpdateCampaignRunningStatus", () => {
         test("should resume campaign successfully", async ({
             queryWrapper,
         }: TestContext) => {
-            const { useSendTransactionAction } = await import(
-                "@frak-labs/react-sdk"
-            );
-            const { useWaitForTxAndInvalidateQueries } = await import(
-                "@/module/common/utils/useWaitForTxAndInvalidateQueries"
-            );
-
             const mockHash = "0x123abc" as Hex;
             const mockSendTx = vi.fn().mockResolvedValue({ hash: mockHash });
             const mockWaitForTx = vi.fn().mockResolvedValue(undefined);
@@ -116,13 +104,6 @@ describe("useUpdateCampaignRunningStatus", () => {
         test("should include French translation", async ({
             queryWrapper,
         }: TestContext) => {
-            const { useSendTransactionAction } = await import(
-                "@frak-labs/react-sdk"
-            );
-            const { useWaitForTxAndInvalidateQueries } = await import(
-                "@/module/common/utils/useWaitForTxAndInvalidateQueries"
-            );
-
             const mockSendTx = vi.fn().mockResolvedValue({ hash: "0xabc" });
             const mockWaitForTx = vi.fn().mockResolvedValue(undefined);
 
@@ -153,13 +134,6 @@ describe("useUpdateCampaignRunningStatus", () => {
         test("should include English translation", async ({
             queryWrapper,
         }: TestContext) => {
-            const { useSendTransactionAction } = await import(
-                "@frak-labs/react-sdk"
-            );
-            const { useWaitForTxAndInvalidateQueries } = await import(
-                "@/module/common/utils/useWaitForTxAndInvalidateQueries"
-            );
-
             const mockSendTx = vi.fn().mockResolvedValue({ hash: "0xabc" });
             const mockWaitForTx = vi.fn().mockResolvedValue(undefined);
 
@@ -192,13 +166,6 @@ describe("useUpdateCampaignRunningStatus", () => {
         test("should handle transaction errors", async ({
             queryWrapper,
         }: TestContext) => {
-            const { useSendTransactionAction } = await import(
-                "@frak-labs/react-sdk"
-            );
-            const { useWaitForTxAndInvalidateQueries } = await import(
-                "@/module/common/utils/useWaitForTxAndInvalidateQueries"
-            );
-
             const mockSendTx = vi
                 .fn()
                 .mockRejectedValue(new Error("Transaction failed"));
@@ -226,13 +193,6 @@ describe("useUpdateCampaignRunningStatus", () => {
         test("should handle wait for tx errors", async ({
             queryWrapper,
         }: TestContext) => {
-            const { useSendTransactionAction } = await import(
-                "@frak-labs/react-sdk"
-            );
-            const { useWaitForTxAndInvalidateQueries } = await import(
-                "@/module/common/utils/useWaitForTxAndInvalidateQueries"
-            );
-
             const mockSendTx = vi.fn().mockResolvedValue({ hash: "0xabc" });
             const mockWaitForTx = vi
                 .fn()
@@ -263,13 +223,6 @@ describe("useUpdateCampaignRunningStatus", () => {
         test("should track mutation loading state", async ({
             queryWrapper,
         }: TestContext) => {
-            const { useSendTransactionAction } = await import(
-                "@frak-labs/react-sdk"
-            );
-            const { useWaitForTxAndInvalidateQueries } = await import(
-                "@/module/common/utils/useWaitForTxAndInvalidateQueries"
-            );
-
             const mockSendTx = vi
                 .fn()
                 .mockImplementation(
@@ -315,13 +268,6 @@ describe("useUpdateCampaignRunningStatus", () => {
         test("should handle updating different campaigns", async ({
             queryWrapper,
         }: TestContext) => {
-            const { useSendTransactionAction } = await import(
-                "@frak-labs/react-sdk"
-            );
-            const { useWaitForTxAndInvalidateQueries } = await import(
-                "@/module/common/utils/useWaitForTxAndInvalidateQueries"
-            );
-
             const mockSendTx = vi.fn().mockResolvedValue({ hash: "0xabc" });
             const mockWaitForTx = vi.fn().mockResolvedValue(undefined);
 

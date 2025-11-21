@@ -1,6 +1,12 @@
+import {
+    useSendTransactionAction,
+    useWalletStatus,
+} from "@frak-labs/react-sdk";
 import { renderHook } from "@testing-library/react";
 import type { Hex } from "viem";
-import { vi } from "vitest";
+import { simulateContract } from "viem/actions";
+import { beforeEach, vi } from "vitest";
+import { useWaitForTxAndInvalidateQueries } from "@/module/common/utils/useWaitForTxAndInvalidateQueries";
 import {
     createMockAddress,
     describe,
@@ -31,18 +37,14 @@ describe("useAddProductBank", () => {
     const mockWallet = createMockAddress("wallet");
     const mockBankAddress = createMockAddress("bank");
 
+    beforeEach(() => {
+        vi.clearAllMocks();
+    });
+
     describe("successful bank addition", () => {
         test("should add bank with USDC successfully", async ({
             queryWrapper,
         }: TestContext) => {
-            const { simulateContract } = await import("viem/actions");
-            const { useSendTransactionAction, useWalletStatus } = await import(
-                "@frak-labs/react-sdk"
-            );
-            const { useWaitForTxAndInvalidateQueries } = await import(
-                "@/module/common/utils/useWaitForTxAndInvalidateQueries"
-            );
-
             const mockHash = "0xabcdef123456789" as Hex;
             const mockSendTx = vi.fn().mockResolvedValue({ hash: mockHash });
             const mockWaitForTx = vi.fn().mockResolvedValue(undefined);
@@ -84,14 +86,6 @@ describe("useAddProductBank", () => {
         test("should handle different stablecoins", async ({
             queryWrapper,
         }: TestContext) => {
-            const { simulateContract } = await import("viem/actions");
-            const { useSendTransactionAction, useWalletStatus } = await import(
-                "@frak-labs/react-sdk"
-            );
-            const { useWaitForTxAndInvalidateQueries } = await import(
-                "@/module/common/utils/useWaitForTxAndInvalidateQueries"
-            );
-
             vi.mocked(useSendTransactionAction).mockReturnValue({
                 mutateAsync: vi.fn().mockResolvedValue({ hash: "0xabc" }),
             } as any);
@@ -130,13 +124,6 @@ describe("useAddProductBank", () => {
         test("should throw error when wallet is not connected", async ({
             queryWrapper,
         }: TestContext) => {
-            const { useSendTransactionAction, useWalletStatus } = await import(
-                "@frak-labs/react-sdk"
-            );
-            const { useWaitForTxAndInvalidateQueries } = await import(
-                "@/module/common/utils/useWaitForTxAndInvalidateQueries"
-            );
-
             vi.mocked(useSendTransactionAction).mockReturnValue({
                 mutateAsync: vi.fn(),
             } as any);
@@ -164,13 +151,6 @@ describe("useAddProductBank", () => {
         test("should throw error when wallet is null", async ({
             queryWrapper,
         }: TestContext) => {
-            const { useSendTransactionAction, useWalletStatus } = await import(
-                "@frak-labs/react-sdk"
-            );
-            const { useWaitForTxAndInvalidateQueries } = await import(
-                "@/module/common/utils/useWaitForTxAndInvalidateQueries"
-            );
-
             vi.mocked(useSendTransactionAction).mockReturnValue({
                 mutateAsync: vi.fn(),
             } as any);
@@ -200,14 +180,6 @@ describe("useAddProductBank", () => {
         test("should throw error when simulation returns zero address", async ({
             queryWrapper,
         }: TestContext) => {
-            const { simulateContract } = await import("viem/actions");
-            const { useSendTransactionAction, useWalletStatus } = await import(
-                "@frak-labs/react-sdk"
-            );
-            const { useWaitForTxAndInvalidateQueries } = await import(
-                "@/module/common/utils/useWaitForTxAndInvalidateQueries"
-            );
-
             vi.mocked(useSendTransactionAction).mockReturnValue({
                 mutateAsync: vi.fn(),
             } as any);
@@ -239,14 +211,6 @@ describe("useAddProductBank", () => {
         test("should throw error when simulation returns undefined", async ({
             queryWrapper,
         }: TestContext) => {
-            const { simulateContract } = await import("viem/actions");
-            const { useSendTransactionAction, useWalletStatus } = await import(
-                "@frak-labs/react-sdk"
-            );
-            const { useWaitForTxAndInvalidateQueries } = await import(
-                "@/module/common/utils/useWaitForTxAndInvalidateQueries"
-            );
-
             vi.mocked(useSendTransactionAction).mockReturnValue({
                 mutateAsync: vi.fn(),
             } as any);
@@ -280,14 +244,6 @@ describe("useAddProductBank", () => {
         test("should handle simulation errors", async ({
             queryWrapper,
         }: TestContext) => {
-            const { simulateContract } = await import("viem/actions");
-            const { useSendTransactionAction, useWalletStatus } = await import(
-                "@frak-labs/react-sdk"
-            );
-            const { useWaitForTxAndInvalidateQueries } = await import(
-                "@/module/common/utils/useWaitForTxAndInvalidateQueries"
-            );
-
             vi.mocked(useSendTransactionAction).mockReturnValue({
                 mutateAsync: vi.fn(),
             } as any);
@@ -319,14 +275,6 @@ describe("useAddProductBank", () => {
         test("should handle transaction errors", async ({
             queryWrapper,
         }: TestContext) => {
-            const { simulateContract } = await import("viem/actions");
-            const { useSendTransactionAction, useWalletStatus } = await import(
-                "@frak-labs/react-sdk"
-            );
-            const { useWaitForTxAndInvalidateQueries } = await import(
-                "@/module/common/utils/useWaitForTxAndInvalidateQueries"
-            );
-
             vi.mocked(useSendTransactionAction).mockReturnValue({
                 mutateAsync: vi
                     .fn()

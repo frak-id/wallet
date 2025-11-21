@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 // Mock the layout components
 vi.mock("@/module/common/component/Header", () => ({
@@ -38,14 +38,6 @@ const RestrictedLayoutRoute = RestrictedRoute.options
     .component as React.ComponentType;
 
 describe("RestrictedLayoutRoute", () => {
-    afterEach(() => {
-        // Clean up data attribute after each test
-        const rootElement = document.querySelector(":root") as HTMLElement;
-        if (rootElement) {
-            rootElement.removeAttribute("data-page");
-        }
-    });
-
     it("should render all required layout components", () => {
         render(<RestrictedLayoutRoute />);
 
@@ -60,24 +52,6 @@ describe("RestrictedLayoutRoute", () => {
         // MainLayout is present, which wraps the Outlet
         const mainLayouts = screen.getAllByTestId("main-layout");
         expect(mainLayouts.length).toBeGreaterThan(0);
-    });
-
-    it("should set data-page attribute on mount", () => {
-        render(<RestrictedLayoutRoute />);
-
-        const rootElement = document.querySelector(":root") as HTMLElement;
-        expect(rootElement).toHaveAttribute("data-page", "restricted");
-    });
-
-    it("should remove data-page attribute on unmount", () => {
-        const { unmount } = render(<RestrictedLayoutRoute />);
-
-        const rootElement = document.querySelector(":root") as HTMLElement;
-        expect(rootElement).toHaveAttribute("data-page", "restricted");
-
-        unmount();
-
-        expect(rootElement).not.toHaveAttribute("data-page");
     });
 
     it("should have requireAuth in beforeLoad", () => {

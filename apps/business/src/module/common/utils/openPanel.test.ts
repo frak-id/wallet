@@ -1,4 +1,4 @@
-import { describe, expect, test, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 
 // Mock OpenPanel before importing the module
 vi.mock("@openpanel/web", () => {
@@ -13,18 +13,22 @@ vi.mock("@openpanel/web", () => {
 });
 
 describe("openPanel utility", () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+    });
+
     test("should export openPanel variable", async () => {
+        const module = await import("./openPanel");
+
+        expect("openPanel" in module).toBe(true);
+    });
+
+    test("should have correct type", async () => {
         const { openPanel } = await import("./openPanel");
 
         // openPanel can be either an OpenPanel instance or undefined
         expect(openPanel === undefined || typeof openPanel === "object").toBe(
             true
         );
-    });
-
-    test("should have correct type", async () => {
-        const module = await import("./openPanel");
-
-        expect("openPanel" in module).toBe(true);
     });
 });

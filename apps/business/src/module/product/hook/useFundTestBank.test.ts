@@ -1,6 +1,7 @@
 import { renderHook, waitFor } from "@testing-library/react";
 import type { Hex } from "viem";
 import { vi } from "vitest";
+import { authenticatedBackendApi } from "@/context/api/backendClient";
 import {
     describe,
     expect,
@@ -27,10 +28,6 @@ describe("useFundTestBank", () => {
         test("should fund bank successfully with stablecoin", async ({
             queryWrapper,
         }: TestContext) => {
-            const { authenticatedBackendApi } = await import(
-                "@/context/api/backendClient"
-            );
-
             vi.mocked(
                 authenticatedBackendApi.funding.getTestToken.post
             ).mockResolvedValue(undefined as any);
@@ -59,10 +56,6 @@ describe("useFundTestBank", () => {
         test("should fund bank without specifying stablecoin", async ({
             queryWrapper,
         }: TestContext) => {
-            const { authenticatedBackendApi } = await import(
-                "@/context/api/backendClient"
-            );
-
             vi.mocked(
                 authenticatedBackendApi.funding.getTestToken.post
             ).mockResolvedValue(undefined as any);
@@ -90,10 +83,6 @@ describe("useFundTestBank", () => {
         test("should handle different stablecoin types", async ({
             queryWrapper,
         }: TestContext) => {
-            const { authenticatedBackendApi } = await import(
-                "@/context/api/backendClient"
-            );
-
             vi.mocked(
                 authenticatedBackendApi.funding.getTestToken.post
             ).mockResolvedValue(undefined as any);
@@ -124,10 +113,6 @@ describe("useFundTestBank", () => {
         test("should invalidate product queries after successful funding", async ({
             queryWrapper,
         }: TestContext) => {
-            const { authenticatedBackendApi } = await import(
-                "@/context/api/backendClient"
-            );
-
             vi.mocked(
                 authenticatedBackendApi.funding.getTestToken.post
             ).mockResolvedValue(undefined as any);
@@ -150,10 +135,6 @@ describe("useFundTestBank", () => {
         test("should invalidate all product-related queries", async ({
             queryWrapper,
         }: TestContext) => {
-            const { authenticatedBackendApi } = await import(
-                "@/context/api/backendClient"
-            );
-
             vi.mocked(
                 authenticatedBackendApi.funding.getTestToken.post
             ).mockResolvedValue(undefined as any);
@@ -176,10 +157,6 @@ describe("useFundTestBank", () => {
         test("should handle API errors", async ({
             queryWrapper,
         }: TestContext) => {
-            const { authenticatedBackendApi } = await import(
-                "@/context/api/backendClient"
-            );
-
             vi.mocked(
                 authenticatedBackendApi.funding.getTestToken.post
             ).mockRejectedValue(new Error("Failed to fund bank"));
@@ -203,10 +180,6 @@ describe("useFundTestBank", () => {
         test("should handle network errors", async ({
             queryWrapper,
         }: TestContext) => {
-            const { authenticatedBackendApi } = await import(
-                "@/context/api/backendClient"
-            );
-
             vi.mocked(
                 authenticatedBackendApi.funding.getTestToken.post
             ).mockRejectedValue(new Error("Network error"));
@@ -225,10 +198,6 @@ describe("useFundTestBank", () => {
         test("should handle invalid bank address", async ({
             queryWrapper,
         }: TestContext) => {
-            const { authenticatedBackendApi } = await import(
-                "@/context/api/backendClient"
-            );
-
             vi.mocked(
                 authenticatedBackendApi.funding.getTestToken.post
             ).mockRejectedValue(new Error("Invalid bank address"));
@@ -249,10 +218,6 @@ describe("useFundTestBank", () => {
         test("should track mutation loading state", async ({
             queryWrapper,
         }: TestContext) => {
-            const { authenticatedBackendApi } = await import(
-                "@/context/api/backendClient"
-            );
-
             vi.mocked(
                 authenticatedBackendApi.funding.getTestToken.post
             ).mockImplementation(
@@ -287,10 +252,6 @@ describe("useFundTestBank", () => {
         test("should reset mutation state", async ({
             queryWrapper,
         }: TestContext) => {
-            const { authenticatedBackendApi } = await import(
-                "@/context/api/backendClient"
-            );
-
             vi.mocked(
                 authenticatedBackendApi.funding.getTestToken.post
             ).mockResolvedValue(undefined as any);
@@ -335,10 +296,6 @@ describe("useFundTestBank", () => {
         test("should handle sequential funding operations", async ({
             queryWrapper,
         }: TestContext) => {
-            const { authenticatedBackendApi } = await import(
-                "@/context/api/backendClient"
-            );
-
             vi.mocked(
                 authenticatedBackendApi.funding.getTestToken.post
             ).mockResolvedValue(undefined as any);
@@ -380,10 +337,6 @@ describe("useFundTestBank", () => {
         test("should handle void response from API", async ({
             queryWrapper,
         }: TestContext) => {
-            const { authenticatedBackendApi } = await import(
-                "@/context/api/backendClient"
-            );
-
             vi.mocked(
                 authenticatedBackendApi.funding.getTestToken.post
             ).mockResolvedValue(undefined as any);

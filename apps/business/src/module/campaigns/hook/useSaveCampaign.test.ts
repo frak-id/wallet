@@ -1,5 +1,7 @@
+import { useNavigate } from "@tanstack/react-router";
 import { renderHook, waitFor } from "@testing-library/react";
 import { vi } from "vitest";
+import { saveCampaignDraft } from "@/context/campaigns/action/createCampaign";
 import {
     createMockAddress,
     describe,
@@ -78,10 +80,6 @@ describe("useSaveCampaign", () => {
             queryWrapper,
             freshCampaignStore,
         }: TestContext) => {
-            const { saveCampaignDraft } = await import(
-                "@/context/campaigns/action/createCampaign"
-            );
-
             freshCampaignStore.getState().setIsClosing(false);
 
             const { result } = renderHook(() => useSaveCampaign(), {
@@ -117,11 +115,6 @@ describe("useSaveCampaign", () => {
             queryWrapper,
             freshCampaignStore,
         }: TestContext) => {
-            const { saveCampaignDraft } = await import(
-                "@/context/campaigns/action/createCampaign"
-            );
-            const { useNavigate } = await import("@tanstack/react-router");
-
             const mockNavigate = vi.fn();
             vi.mocked(useNavigate).mockReturnValue(mockNavigate);
 
@@ -160,10 +153,6 @@ describe("useSaveCampaign", () => {
             queryWrapper,
             freshCampaignStore,
         }: TestContext) => {
-            const { saveCampaignDraft } = await import(
-                "@/context/campaigns/action/createCampaign"
-            );
-
             freshCampaignStore.getState().setIsClosing(true);
 
             const mockId = "507f1f77bcf86cd799439012";
@@ -188,11 +177,6 @@ describe("useSaveCampaign", () => {
             queryWrapper,
             freshCampaignStore,
         }: TestContext) => {
-            const { saveCampaignDraft } = await import(
-                "@/context/campaigns/action/createCampaign"
-            );
-            const { useNavigate } = await import("@tanstack/react-router");
-
             const mockNavigate = vi.fn();
             vi.mocked(useNavigate).mockReturnValue(mockNavigate);
 
@@ -223,10 +207,6 @@ describe("useSaveCampaign", () => {
             queryWrapper,
             freshCampaignStore,
         }: TestContext) => {
-            const { saveCampaignDraft } = await import(
-                "@/context/campaigns/action/createCampaign"
-            );
-
             freshCampaignStore.getState().setIsClosing(true);
 
             vi.mocked(saveCampaignDraft).mockRejectedValue(
@@ -265,10 +245,6 @@ describe("useSaveCampaign", () => {
             queryWrapper,
             freshCampaignStore,
         }: TestContext) => {
-            const { saveCampaignDraft } = await import(
-                "@/context/campaigns/action/createCampaign"
-            );
-
             freshCampaignStore.getState().setIsClosing(true);
 
             vi.mocked(saveCampaignDraft).mockResolvedValue({

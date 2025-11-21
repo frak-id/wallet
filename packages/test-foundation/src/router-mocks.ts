@@ -18,7 +18,23 @@
  * - @tanstack/react-router: wallet app, business app
  */
 
+import { type ComponentProps, createElement } from "react";
 import { vi } from "vitest";
+
+/**
+ * Mock Link component for TanStack Router
+ *
+ * Renders children inside an anchor tag for testing purposes.
+ * Preserves className and other props for styling tests.
+ */
+export function MockLink({
+    to,
+    children,
+    className,
+    ...props
+}: ComponentProps<"a"> & { to: string }) {
+    return createElement("a", { href: to, className, ...props }, children);
+}
 
 export type RouterMockOptions = {
     pathname?: string;
@@ -45,6 +61,7 @@ export function createTanStackRouterMock(options: RouterMockOptions = {}) {
     const { pathname = "/", search = "", hash = "" } = options;
 
     return {
+        Link: MockLink,
         useNavigate: vi.fn(() => vi.fn()),
         useRouter: vi.fn(() => ({
             navigate: vi.fn(),
@@ -88,6 +105,7 @@ export async function setupTanStackRouterMock(options?: RouterMockOptions) {
         const actual = await vi.importActual<any>("@tanstack/react-router");
         return {
             ...actual,
+            Link: MockLink,
             useNavigate: vi.fn(() => vi.fn()),
             useRouter: vi.fn(() => ({
                 navigate: vi.fn(),

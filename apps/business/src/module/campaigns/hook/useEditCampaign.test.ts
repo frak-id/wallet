@@ -1,6 +1,11 @@
+import { useSendTransactionAction } from "@frak-labs/react-sdk";
 import { renderHook } from "@testing-library/react";
 import type { Hex } from "viem";
+import { readContract } from "viem/actions";
 import { vi } from "vitest";
+
+import { getBankTokenInfoInternal } from "@/context/campaigns/action/getBankInfo";
+import { useWaitForTxAndInvalidateQueries } from "@/module/common/utils/useWaitForTxAndInvalidateQueries";
 import {
     createMockAddress,
     describe,
@@ -38,17 +43,6 @@ describe("useEditCampaign", () => {
         test("should update cap config successfully", async ({
             queryWrapper,
         }: TestContext) => {
-            const { readContract } = await import("viem/actions");
-            const { useSendTransactionAction } = await import(
-                "@frak-labs/react-sdk"
-            );
-            const { getBankTokenInfoInternal } = await import(
-                "@/context/campaigns/action/getBankInfo"
-            );
-            const { useWaitForTxAndInvalidateQueries } = await import(
-                "@/module/common/utils/useWaitForTxAndInvalidateQueries"
-            );
-
             const mockHash = "0xabcdef123456789" as Hex;
             const mockSendTx = vi.fn().mockResolvedValue({ hash: mockHash });
             const mockWaitForTx = vi.fn().mockResolvedValue(undefined);
@@ -96,17 +90,6 @@ describe("useEditCampaign", () => {
         test("should handle different token decimals", async ({
             queryWrapper,
         }: TestContext) => {
-            const { readContract } = await import("viem/actions");
-            const { useSendTransactionAction } = await import(
-                "@frak-labs/react-sdk"
-            );
-            const { getBankTokenInfoInternal } = await import(
-                "@/context/campaigns/action/getBankInfo"
-            );
-            const { useWaitForTxAndInvalidateQueries } = await import(
-                "@/module/common/utils/useWaitForTxAndInvalidateQueries"
-            );
-
             const mockSendTx = vi.fn().mockResolvedValue({ hash: "0xabc" });
             const mockWaitForTx = vi.fn().mockResolvedValue(undefined);
 
@@ -151,13 +134,6 @@ describe("useEditCampaign", () => {
         test("should update activation period with start and end dates", async ({
             queryWrapper,
         }: TestContext) => {
-            const { useSendTransactionAction } = await import(
-                "@frak-labs/react-sdk"
-            );
-            const { useWaitForTxAndInvalidateQueries } = await import(
-                "@/module/common/utils/useWaitForTxAndInvalidateQueries"
-            );
-
             const mockSendTx = vi.fn().mockResolvedValue({ hash: "0xabc" });
             const mockWaitForTx = vi.fn().mockResolvedValue(undefined);
 
@@ -192,13 +168,6 @@ describe("useEditCampaign", () => {
         test("should update activation period with only start date", async ({
             queryWrapper,
         }: TestContext) => {
-            const { useSendTransactionAction } = await import(
-                "@frak-labs/react-sdk"
-            );
-            const { useWaitForTxAndInvalidateQueries } = await import(
-                "@/module/common/utils/useWaitForTxAndInvalidateQueries"
-            );
-
             const mockSendTx = vi.fn().mockResolvedValue({ hash: "0xabc" });
             const mockWaitForTx = vi.fn().mockResolvedValue(undefined);
 
@@ -230,17 +199,6 @@ describe("useEditCampaign", () => {
         test("should update both cap config and activation period", async ({
             queryWrapper,
         }: TestContext) => {
-            const { readContract } = await import("viem/actions");
-            const { useSendTransactionAction } = await import(
-                "@frak-labs/react-sdk"
-            );
-            const { getBankTokenInfoInternal } = await import(
-                "@/context/campaigns/action/getBankInfo"
-            );
-            const { useWaitForTxAndInvalidateQueries } = await import(
-                "@/module/common/utils/useWaitForTxAndInvalidateQueries"
-            );
-
             const mockSendTx = vi.fn().mockResolvedValue({ hash: "0xabc" });
             const mockWaitForTx = vi.fn().mockResolvedValue(undefined);
 
@@ -288,13 +246,6 @@ describe("useEditCampaign", () => {
         test("should do nothing when no updates provided", async ({
             queryWrapper,
         }: TestContext) => {
-            const { useSendTransactionAction } = await import(
-                "@frak-labs/react-sdk"
-            );
-            const { useWaitForTxAndInvalidateQueries } = await import(
-                "@/module/common/utils/useWaitForTxAndInvalidateQueries"
-            );
-
             const mockSendTx = vi.fn().mockResolvedValue({ hash: "0xabc" });
             const mockWaitForTx = vi.fn().mockResolvedValue(undefined);
 
@@ -320,13 +271,6 @@ describe("useEditCampaign", () => {
         test("should not update activation period when start date is missing", async ({
             queryWrapper,
         }: TestContext) => {
-            const { useSendTransactionAction } = await import(
-                "@frak-labs/react-sdk"
-            );
-            const { useWaitForTxAndInvalidateQueries } = await import(
-                "@/module/common/utils/useWaitForTxAndInvalidateQueries"
-            );
-
             const mockSendTx = vi.fn().mockResolvedValue({ hash: "0xabc" });
             const mockWaitForTx = vi.fn().mockResolvedValue(undefined);
 
@@ -357,17 +301,6 @@ describe("useEditCampaign", () => {
         test("should handle transaction errors", async ({
             queryWrapper,
         }: TestContext) => {
-            const { readContract } = await import("viem/actions");
-            const { useSendTransactionAction } = await import(
-                "@frak-labs/react-sdk"
-            );
-            const { getBankTokenInfoInternal } = await import(
-                "@/context/campaigns/action/getBankInfo"
-            );
-            const { useWaitForTxAndInvalidateQueries } = await import(
-                "@/module/common/utils/useWaitForTxAndInvalidateQueries"
-            );
-
             const mockSendTx = vi
                 .fn()
                 .mockRejectedValue(new Error("Transaction failed"));
@@ -406,14 +339,6 @@ describe("useEditCampaign", () => {
         test("should handle contract read errors", async ({
             queryWrapper,
         }: TestContext) => {
-            const { readContract } = await import("viem/actions");
-            const { useSendTransactionAction } = await import(
-                "@frak-labs/react-sdk"
-            );
-            const { useWaitForTxAndInvalidateQueries } = await import(
-                "@/module/common/utils/useWaitForTxAndInvalidateQueries"
-            );
-
             vi.mocked(useSendTransactionAction).mockReturnValue({
                 mutateAsync: vi.fn(),
             } as any);

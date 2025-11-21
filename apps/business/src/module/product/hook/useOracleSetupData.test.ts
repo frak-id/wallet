@@ -1,6 +1,10 @@
 import { renderHook, waitFor } from "@testing-library/react";
 import type { Hex } from "viem";
+import { readContract } from "viem/actions";
 import { vi } from "vitest";
+import { authenticatedBackendApi } from "@/context/api/backendClient";
+import { useGetAdminWallet } from "@/module/common/hook/useGetAdminWallet";
+import { mockProductOracle } from "@/tests/mocks/backendApi";
 import {
     createMockAddress,
     describe,
@@ -18,13 +22,7 @@ vi.mock("viem/actions", () => ({
 // Mock business API
 vi.mock("@/context/api/backendClient", () => ({
     authenticatedBackendApi: {
-        product: vi.fn(() => ({
-            oracleWebhook: {
-                status: {
-                    get: vi.fn(),
-                },
-            },
-        })),
+        product: vi.fn(),
     },
 }));
 
@@ -41,14 +39,6 @@ describe("useOracleSetupData", () => {
         test("should fetch oracle setup data successfully", async ({
             queryWrapper,
         }: TestContext) => {
-            const { readContract } = await import("viem/actions");
-            const { authenticatedBackendApi } = await import(
-                "@/context/api/backendClient"
-            );
-            const { useGetAdminWallet } = await import(
-                "@/module/common/hook/useGetAdminWallet"
-            );
-
             vi.mocked(useGetAdminWallet).mockReturnValue({
                 data: mockOracleUpdater,
             } as any);
@@ -58,15 +48,15 @@ describe("useOracleSetupData", () => {
                 url: "https://webhook.example.com",
             };
 
-            vi.mocked(authenticatedBackendApi.product).mockReturnValue({
-                oracleWebhook: {
+            vi.mocked(authenticatedBackendApi.product).mockReturnValue(
+                mockProductOracle({
                     status: {
                         get: vi.fn().mockResolvedValue({
                             data: mockWebhookStatus,
                         }),
                     },
-                },
-            } as any);
+                })
+            );
 
             vi.mocked(readContract).mockResolvedValue(true);
 
@@ -90,27 +80,19 @@ describe("useOracleSetupData", () => {
         test("should handle oracle updater not allowed", async ({
             queryWrapper,
         }: TestContext) => {
-            const { readContract } = await import("viem/actions");
-            const { authenticatedBackendApi } = await import(
-                "@/context/api/backendClient"
-            );
-            const { useGetAdminWallet } = await import(
-                "@/module/common/hook/useGetAdminWallet"
-            );
-
             vi.mocked(useGetAdminWallet).mockReturnValue({
                 data: mockOracleUpdater,
             } as any);
 
-            vi.mocked(authenticatedBackendApi.product).mockReturnValue({
-                oracleWebhook: {
+            vi.mocked(authenticatedBackendApi.product).mockReturnValue(
+                mockProductOracle({
                     status: {
                         get: vi.fn().mockResolvedValue({
                             data: { setup: false },
                         }),
                     },
-                },
-            } as any);
+                })
+            );
 
             vi.mocked(readContract).mockResolvedValue(false);
 
@@ -132,10 +114,6 @@ describe("useOracleSetupData", () => {
         test("should be disabled when oracle updater is undefined", async ({
             queryWrapper,
         }: TestContext) => {
-            const { useGetAdminWallet } = await import(
-                "@/module/common/hook/useGetAdminWallet"
-            );
-
             vi.mocked(useGetAdminWallet).mockReturnValue({
                 data: undefined,
             } as any);
@@ -152,10 +130,6 @@ describe("useOracleSetupData", () => {
         test("should return null when oracle updater becomes unavailable", async ({
             queryWrapper,
         }: TestContext) => {
-            const { useGetAdminWallet } = await import(
-                "@/module/common/hook/useGetAdminWallet"
-            );
-
             // Initially has oracle updater
             vi.mocked(useGetAdminWallet).mockReturnValue({
                 data: mockOracleUpdater,
@@ -182,25 +156,17 @@ describe("useOracleSetupData", () => {
         test("should handle webhook API errors", async ({
             queryWrapper,
         }: TestContext) => {
-            const { readContract } = await import("viem/actions");
-            const { authenticatedBackendApi } = await import(
-                "@/context/api/backendClient"
-            );
-            const { useGetAdminWallet } = await import(
-                "@/module/common/hook/useGetAdminWallet"
-            );
-
             vi.mocked(useGetAdminWallet).mockReturnValue({
                 data: mockOracleUpdater,
             } as any);
 
-            vi.mocked(authenticatedBackendApi.product).mockReturnValue({
-                oracleWebhook: {
+            vi.mocked(authenticatedBackendApi.product).mockReturnValue(
+                mockProductOracle({
                     status: {
                         get: vi.fn().mockRejectedValue(new Error("API error")),
                     },
-                },
-            } as any);
+                })
+            );
 
             vi.mocked(readContract).mockResolvedValue(true);
 
@@ -217,27 +183,19 @@ describe("useOracleSetupData", () => {
         test("should handle blockchain read errors", async ({
             queryWrapper,
         }: TestContext) => {
-            const { readContract } = await import("viem/actions");
-            const { authenticatedBackendApi } = await import(
-                "@/context/api/backendClient"
-            );
-            const { useGetAdminWallet } = await import(
-                "@/module/common/hook/useGetAdminWallet"
-            );
-
             vi.mocked(useGetAdminWallet).mockReturnValue({
                 data: mockOracleUpdater,
             } as any);
 
-            vi.mocked(authenticatedBackendApi.product).mockReturnValue({
-                oracleWebhook: {
+            vi.mocked(authenticatedBackendApi.product).mockReturnValue(
+                mockProductOracle({
                     status: {
                         get: vi.fn().mockResolvedValue({
                             data: { setup: false },
                         }),
                     },
-                },
-            } as any);
+                })
+            );
 
             vi.mocked(readContract).mockRejectedValue(
                 new Error("Blockchain error")
