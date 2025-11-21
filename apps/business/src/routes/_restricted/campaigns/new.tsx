@@ -1,11 +1,10 @@
-import { createFileRoute, lazyRouteComponent } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
+import { CampaignCreate } from "@/module/campaigns/component/CampaignCreate";
+import { NewCampaign } from "@/module/campaigns/component/Creation/NewCampaign";
 import { RouteError } from "@/module/common/component/RouteError";
 
 export const Route = createFileRoute("/_restricted/campaigns/new")({
-    component: lazyRouteComponent(
-        () => import("@/module/campaigns/page/CampaignsNewPage"),
-        "CampaignsNewPage"
-    ),
+    component: CampaignsNewPage,
     errorComponent: (props) => (
         <RouteError
             {...props}
@@ -15,3 +14,11 @@ export const Route = createFileRoute("/_restricted/campaigns/new")({
         />
     ),
 });
+
+function CampaignsNewPage() {
+    return (
+        <CampaignCreate>
+            <NewCampaign title={"Create a new campaign"} />
+        </CampaignCreate>
+    );
+}
