@@ -10,8 +10,6 @@ import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { RootProvider } from "@/module/common/provider/RootProvider";
 import "@/polyfill/bigint-serialization";
 import allCss from "@/styles/all.css?url";
-import colorsCss from "@/styles/colors-app.css?url";
-import globalCss from "@/styles/global.css?url";
 import "nprogress/nprogress.css";
 
 export const Route = createRootRoute({
@@ -154,14 +152,6 @@ export const Route = createRootRoute({
             {
                 rel: "author",
                 href: "https://github.com/KONFeature",
-            },
-            {
-                rel: "stylesheet",
-                href: globalCss,
-            },
-            {
-                rel: "stylesheet",
-                href: colorsCss,
             },
             {
                 rel: "stylesheet",
