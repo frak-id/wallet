@@ -8,11 +8,6 @@ import "@/styles/restricted.css";
 export const Route = createFileRoute("/_restricted")({
     beforeLoad: requireAuth,
     component: RestrictedLayoutRoute,
-    head: () => ({
-        attrs: {
-            "data-page": "restricted",
-        },
-    }),
 });
 
 function RestrictedLayoutRoute() {
