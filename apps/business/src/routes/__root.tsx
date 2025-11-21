@@ -9,7 +9,7 @@ import {
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { RootProvider } from "@/module/common/provider/RootProvider";
 import "@/polyfill/bigint-serialization";
-import allCss from "@/styles/all.css?url";
+import "@/styles/all.css";
 import "nprogress/nprogress.css";
 
 export const Route = createRootRoute({
@@ -152,10 +152,6 @@ export const Route = createRootRoute({
             {
                 rel: "author",
                 href: "https://github.com/KONFeature",
-            },
-            {
-                rel: "stylesheet",
-                href: allCss,
             },
         ],
     }),
