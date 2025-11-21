@@ -8,7 +8,7 @@ import {
     type Stablecoin,
 } from "@frak-labs/app-essentials/blockchain";
 import { useSendTransactionAction } from "@frak-labs/react-sdk";
-import { Button } from "@frak-labs/ui/component/Button";
+import { Button, buttonVariants } from "@frak-labs/ui/component/Button";
 import { Column, Columns } from "@frak-labs/ui/component/Columns";
 import { IconInfo } from "@frak-labs/ui/component/IconInfo";
 import { Spinner } from "@frak-labs/ui/component/Spinner";
@@ -128,6 +128,7 @@ function FundAction({
                 href={`https://admin.shopify.com/store/${productMetadata?.domain?.replace(".myshopify.com", "")}/apps/frak/app/status`}
                 target="_blank"
                 rel="noopener noreferrer"
+                className={buttonVariants({ variant: "submit" })}
             >
                 Add funds
             </a>
@@ -166,6 +167,7 @@ function FundAction({
             href={process.env.FUNDING_ON_RAMP_URL ?? ""}
             target={"_blank"}
             rel="noopener noreferrer"
+            className={buttonVariants({ variant: "submit" })}
         >
             Add funds
         </a>
