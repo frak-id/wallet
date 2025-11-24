@@ -9,6 +9,7 @@ import {
     PersistQueryClientProvider,
     type PersistQueryClientProviderProps,
 } from "@tanstack/react-query-persist-client";
+import { useRouterState } from "@tanstack/react-router";
 import { type PropsWithChildren, useEffect } from "react";
 import { frakWalletSdkConfig } from "@/context/frak-wallet/config";
 import { openPanel } from "../utils/openPanel";
@@ -46,6 +47,43 @@ const persistOptions: PersistQueryClientProviderProps["persistOptions"] = {
     },
 };
 
+/**
+ * Client component that manages the data-page attribute on the root element
+ * based on the current route
+ */
+function RoutePageAttribute() {
+    const routerState = useRouterState({
+        select: (state) => ({
+            pathname: state.location.pathname,
+            matches: state.matches,
+        }),
+    });
+
+    useEffect(() => {
+        if (typeof document === "undefined") return;
+
+        const rootElement = document.documentElement;
+        if (!rootElement) return;
+
+        const isRestricted = routerState.matches.some(
+            (match) => match.routeId === "/_restricted"
+        );
+        const isAuthentication =
+            routerState.pathname === "/login" ||
+            routerState.matches.some((match) => match.routeId === "/login");
+
+        if (isRestricted) {
+            rootElement.dataset.page = "restricted";
+        } else if (isAuthentication) {
+            rootElement.dataset.page = "authentication";
+        } else {
+            rootElement.removeAttribute("data-page");
+        }
+    }, [routerState.pathname, routerState.matches]);
+
+    return null;
+}
+
 export function RootProvider({ children }: PropsWithChildren) {
     useEffect(() => {
         if (!openPanel) return;
@@ -59,6 +97,7 @@ export function RootProvider({ children }: PropsWithChildren) {
         >
             <FrakConfigProvider config={frakWalletSdkConfig}>
                 <FrakIFrameClientProvider>
+                    <RoutePageAttribute />
                     <ReactQueryDevtools initialIsOpen={false} />
                     {children}
                 </FrakIFrameClientProvider>

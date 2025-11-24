@@ -16,30 +16,5 @@ export const getRouter = () => {
         defaultPendingComponent: PendingLoader,
     });
 
-    // Subscribe to navigation events to manage root element attributes
-    // Only run on client side to avoid SSR issues
-    if (typeof document !== "undefined") {
-        router.subscribe("onResolved", () => {
-            const rootElement = document.querySelector(":root") as HTMLElement;
-            if (!rootElement) return;
-
-            // Set data-page attribute based on matched routes
-            const isRestricted = router.state.matches.some(
-                (match) => match.routeId === "/_restricted"
-            );
-            const isAuthentication = router.state.matches.some(
-                (match) => match.routeId === "/login"
-            );
-
-            if (isRestricted) {
-                rootElement.dataset.page = "restricted";
-            } else if (isAuthentication) {
-                rootElement.dataset.page = "authentication";
-            } else {
-                rootElement.removeAttribute("data-page");
-            }
-        });
-    }
-
     return router;
 };
