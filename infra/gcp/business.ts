@@ -14,13 +14,13 @@ import {
     openPanelBusinessClientId,
     walletUrl,
 } from "../config";
-import { isProd } from "../utils";
+import { isProd, normalizedStageName } from "../utils";
 import { baseDomainName, getRegistryPath, walletNamespace } from "./utils";
 
 const subDomain = isProd ? "business" : "business-dev";
 
 const businessEnv = {
-    STAGE: $app.stage,
+    STAGE: normalizedStageName,
     FRAK_WALLET_URL: walletUrl,
     BACKEND_URL: backendUrl,
     INDEXER_URL: indexerUrl,
