@@ -246,6 +246,7 @@
         "typescript": "^5",
         "vite": "catalog:",
         "vite-plugin-mkcert": "^1.17.9",
+        "vite-plugin-remove-console": "^2.2.0",
         "vite-tsconfig-paths": "^5.1.4",
         "vitest": "^4.0.9",
       },
