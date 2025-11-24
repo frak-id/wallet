@@ -1,7 +1,6 @@
-import { afterAll, beforeEach, describe, expect, it, mock } from "bun:test";
 import type { ProductTypesKey } from "@frak-labs/core-sdk";
 import type { Address, Hex, LocalAccount } from "viem";
-import { mockAll } from "../../../../test/mock";
+import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { adminWalletsRepositoryMocks } from "../../../../test/mock/common";
 import { viemActionsMocks } from "../../../../test/mock/viem";
 import { MintRepository } from "./MintRepository";
@@ -21,8 +20,6 @@ describe("MintRepository", () => {
         "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd" as Address;
 
     beforeEach(() => {
-        mockAll();
-
         // Reset all mocks
         viemActionsMocks.readContract.mockReset();
         viemActionsMocks.simulateContract.mockReset();
@@ -31,7 +28,7 @@ describe("MintRepository", () => {
         viemActionsMocks.getTransactionCount.mockReset();
 
         // Mock app-essentials module
-        mock.module("@frak-labs/app-essentials", () => ({
+        vi.mock("@frak-labs/app-essentials", () => ({
             addresses: {
                 productRegistry: "0xproductregistry" as Address,
                 productInteractionManager: "0xinteractionmanager" as Address,
@@ -39,7 +36,11 @@ describe("MintRepository", () => {
                 mUSDToken: "0xmusdtoken" as Address,
             },
             isRunningInProd: false,
-            stringToBytes32: mock((str: string) => `0x${str.padEnd(64, "0")}`),
+            stringToBytes32: vi.fn((str: string) => `0x${str.padEnd(64, "0")}`),
+            getTokenAddressForStablecoin: vi.fn((_currency: string) => {
+                // Return a mock token address based on currency
+                return "0xmocktokenaddress" as Address;
+            }),
         }));
 
         // Change the admin wallet repository mock
@@ -47,7 +48,7 @@ describe("MintRepository", () => {
             mockMinter as LocalAccount
         );
         adminWalletsRepositoryMocks.getMutexForAccount.mockReturnValue({
-            runExclusive: mock(async (fn: () => Promise<unknown>) => fn()),
+            runExclusive: vi.fn(async (fn: () => Promise<unknown>) => fn()),
         });
 
         // Mock some default viem actions
@@ -62,7 +63,7 @@ describe("MintRepository", () => {
     });
 
     afterAll(() => {
-        mock.restore();
+        vi.restoreAllMocks();
     });
 
     describe("precomputeProductId", () => {
@@ -193,7 +194,7 @@ describe("MintRepository", () => {
                 key: "minter",
             });
             expect(viemActionsMocks.simulateContract).toHaveBeenCalledTimes(3);
-            expect(viemActionsMocks.writeContract).toHaveBeenCalledTimes(4); // mint + interaction + bank + mint tokens
+            expect(viemActionsMocks.writeContract).toHaveBeenCalledTimes(3); // mint + interaction + bank
             expect(
                 viemActionsMocks.waitForTransactionReceipt
             ).toHaveBeenCalledTimes(2); // mint + interaction
@@ -364,8 +365,7 @@ describe("MintRepository", () => {
             viemActionsMocks.writeContract
                 .mockResolvedValueOnce(mockTxHash) // mint
                 .mockResolvedValueOnce(mockTxHash) // interaction
-                .mockResolvedValueOnce(mockTxHash) // bank deployment
-                .mockRejectedValueOnce(new Error("Mint tokens failed")); // mint tokens fails
+                .mockRejectedValueOnce(new Error("Bank deployment failed")); // bank deployment fails
 
             const result = await mintRepository.mintProduct(mintParams);
 
@@ -377,7 +377,7 @@ describe("MintRepository", () => {
     describe("mintProduct in production", () => {
         beforeEach(() => {
             // Mock production environment
-            mock.module("@frak-labs/app-essentials", () => ({
+            vi.mock("@frak-labs/app-essentials", () => ({
                 addresses: {
                     productRegistry: "0xproductregistry" as Address,
                     productInteractionManager:
@@ -387,10 +387,10 @@ describe("MintRepository", () => {
                     usdcToken: "0xusdc" as Address,
                 },
                 isRunningInProd: true,
-                stringToBytes32: mock(
+                stringToBytes32: vi.fn(
                     (str: string) => `0x${str.padEnd(64, "0")}`
                 ),
-                getTokenAddressForStablecoin: mock(() => "0xusdc" as Address),
+                getTokenAddressForStablecoin: vi.fn(() => "0xusdc" as Address),
             }));
 
             // Re-create repository to pick up new mocks

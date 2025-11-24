@@ -1,6 +1,8 @@
 .DS_Store
 /node_modules/
 
-# React Router
-/.react-router/
-/build/
+# Build output
+/dist/
+
+# TanStack Router
+/app/routeTree.gen.ts

@@ -2,11 +2,29 @@
     "files.exclude": {
         "**/.idea": true,
         "**/.react-router": true,
-        "**/.rslib": true,
         "**/.sst": true,
         "**/.turbo": true,
         "**/node_modules": true,
         "packages/backend-elysia": false
+    },
+    "search.exclude": {
+        "**/coverage": true,
+        "**/.vitest": true,
+        "**/node_modules/.vitest": true
+    },
+    "files.watcherExclude": {
+        "**/coverage/**": true,
+        "**/.vitest/**": true,
+        "**/node_modules/.vitest/**": true
+    },
+    "typescript.tsserver.watchOptions": {
+        "excludeDirectories": [
+            "**/node_modules",
+            "**/coverage",
+            "**/.vitest",
+            "**/dist",
+            "**/build"
+        ]
     },
     "workbench.editor.alwaysShowEditorActions": true,
     "workbench.editor.autoLockGroups": {

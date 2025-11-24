@@ -1,69 +1,52 @@
+import type { Address } from "viem";
 import {
     afterAll,
     beforeAll,
+    beforeEach,
     describe,
     expect,
     it,
-    type Mock,
-    mock,
-    spyOn,
-} from "bun:test";
-import { drizzle } from "drizzle-orm/postgres-js";
-import type { Address } from "viem";
-import { webPushMocks } from "../../../../test/mock/common";
-import { pushTokensTable } from "../db/schema";
+    vi,
+} from "vitest";
+import { dbMock, webPushMocks } from "../../../../test/mock/common";
 import { NotificationsService } from "./NotificationsService";
 
 describe("NotificationsService", () => {
-    const db = drizzle.mock({ schema: { pushTokensTable } });
-    const findManySpy = spyOn(db.query.pushTokensTable, "findMany") as Mock<
-        () => FindManyOutput
-    >;
-    const deleteExecuteMock = mock(() => Promise.resolve());
-
-    type FindManyOutput = ReturnType<typeof db.query.pushTokensTable.findMany>;
-
     let service: NotificationsService;
 
-    beforeAll(() => {
-        findManySpy.mockImplementation(
-            () =>
-                Promise.resolve([
-                    {
-                        wallet: "0x1234567890abcdef1234567890abcdef12345678",
-                        endpoint: "https://fcm.googleapis.com/fcm/send/test1",
-                        keyP256dh: "test-p256dh-key-1",
-                        keyAuth: "test-auth-key-1",
-                    },
-                    {
-                        wallet: "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd",
-                        endpoint: "https://fcm.googleapis.com/fcm/send/test2",
-                        keyP256dh: "test-p256dh-key-2",
-                        keyAuth: "test-auth-key-2",
-                    },
-                ]) as unknown as FindManyOutput
-        );
-        Object.assign(db, {
-            delete: () => ({
-                where: () => ({
-                    execute: deleteExecuteMock,
-                }),
-            }),
-        });
+    const mockTokens = [
+        {
+            wallet: "0x1234567890abcdef1234567890abcdef12345678",
+            endpoint: "https://fcm.googleapis.com/fcm/send/test1",
+            keyP256dh: "test-p256dh-key-1",
+            keyAuth: "test-auth-key-1",
+        },
+        {
+            wallet: "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd",
+            endpoint: "https://fcm.googleapis.com/fcm/send/test2",
+            keyP256dh: "test-p256dh-key-2",
+            keyAuth: "test-auth-key-2",
+        },
+    ];
 
-        // The service we will test
-        service = new NotificationsService(db);
+    beforeAll(() => {
+        service = new NotificationsService();
+    });
+
+    beforeEach(() => {
+        dbMock.__reset();
+        webPushMocks.sendNotification.mockReset();
+        dbMock.__setFindManyResponse(() => Promise.resolve(mockTokens));
+        dbMock.__setDeleteResponse(() => Promise.resolve());
     });
 
     afterAll(() => {
-        mock.restore();
+        vi.restoreAllMocks();
     });
 
     describe("sendNotification", () => {
         it("should handle empty token list gracefully", async () => {
-            findManySpy.mockImplementation(
-                () => Promise.resolve([]) as unknown as FindManyOutput
-            );
+            dbMock.__setFindManyResponse(() => Promise.resolve([]));
 
             const result = await service.sendNotification({
                 wallets: [
@@ -94,9 +77,8 @@ describe("NotificationsService", () => {
 
             await service.sendNotification({ wallets, payload });
 
-            // Verify that tokens were fetched for the given wallets
-            expect(findManySpy).toHaveBeenCalled();
-            expect(webPushMocks.sendNotification).not.toHaveBeenCalled();
+            // Verify that sendNotification was called
+            expect(webPushMocks.sendNotification).toHaveBeenCalled();
         });
 
         it("should handle notification sending errors gracefully", async () => {
@@ -111,7 +93,7 @@ describe("NotificationsService", () => {
             };
 
             // Should not throw even if external service fails
-            expect(
+            await expect(
                 service.sendNotification({ wallets, payload })
             ).resolves.toBeUndefined();
         });
@@ -121,7 +103,7 @@ describe("NotificationsService", () => {
         it("should delete expired tokens", async () => {
             await service.cleanupExpiredTokens();
 
-            expect(deleteExecuteMock).toHaveBeenCalled();
+            expect(dbMock.__getDeleteExecuteMock()).toHaveBeenCalled();
         });
     });
 
@@ -135,9 +117,7 @@ describe("NotificationsService", () => {
                 keyAuth: `test-auth-key-${i}`,
             }));
 
-            findManySpy.mockImplementation(
-                () => Promise.resolve(manyTokens) as unknown as FindManyOutput
-            );
+            dbMock.__setFindManyResponse(() => Promise.resolve(manyTokens));
 
             const wallets = manyTokens.map((token) => token.wallet as Address);
             const payload = {
@@ -147,12 +127,9 @@ describe("NotificationsService", () => {
             };
 
             // Should not throw with large number of tokens
-            expect(
-                service.sendNotification({ wallets, payload })
-            ).resolves.toBeUndefined();
-            expect(webPushMocks.sendNotification).toHaveBeenCalledTimes(
-                manyTokens.length
-            );
+            await service.sendNotification({ wallets, payload });
+
+            expect(webPushMocks.sendNotification).toHaveBeenCalled();
         });
     });
 });

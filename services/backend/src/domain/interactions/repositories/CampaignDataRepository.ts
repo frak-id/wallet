@@ -1,4 +1,4 @@
-import { log, viemClient } from "@backend-common";
+import { log, viemClient } from "@backend-infrastructure";
 import {
     baseCampaignTriggerPtr,
     type CampaignType,

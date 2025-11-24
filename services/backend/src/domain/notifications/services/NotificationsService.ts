@@ -1,8 +1,7 @@
-import { db } from "@backend-common";
+import { db, log } from "@backend-infrastructure";
 import { inArray, lt } from "drizzle-orm";
 import type { Address } from "viem";
 import { sendNotification, setVapidDetails } from "web-push";
-import { log } from "../../../common";
 import { pushTokensTable } from "../db/schema";
 import type { SendNotificationPayload } from "../dto/SendNotificationDto";
 

@@ -7,7 +7,7 @@ import type { FullInteractionTypesKey } from "@frak-labs/core-sdk";
 export type ButtonShareProps = {
     /**
      * Text to display on the button
-     *  - To specify where the reward should be displayed, use the placeholder `{REWARD}`, e.g. `Share and earn up to {REWARD}!`
+     *  - To specify where the reward should be displayed, use the placeholder `{REWARD}`, e.g. `Share and earn up to \{REWARD\}!`
      * @defaultValue `"Share and earn!"`
      */
     text?: string;

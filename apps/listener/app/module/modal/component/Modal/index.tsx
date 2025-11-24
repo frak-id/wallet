@@ -15,6 +15,7 @@ import {
     type PropsWithChildren,
     type ReactNode,
     useCallback,
+    useEffect,
     useMemo,
     useState,
 } from "react";
@@ -37,6 +38,7 @@ import {
     selectCurrentStep,
     selectCurrentStepObject,
     selectIsDismissed,
+    selectShouldFinish,
 } from "@/module/stores/modalStore";
 import { ToastLoading } from "../../../component/ToastLoading";
 import styles from "./index.module.css";
@@ -86,6 +88,20 @@ export function ListenerModal({
         },
         [onClose, emitter]
     );
+
+    /**
+     * Method when the user reached the end of the modal
+     */
+    const onFinishResult = modalStore(selectShouldFinish);
+    useEffect(() => {
+        if (!onFinishResult) return;
+
+        // Emit the result and exit
+        emitter({
+            result: onFinishResult,
+        });
+        onClose();
+    }, [onFinishResult, emitter, onClose]);
 
     /**
      * When the modal visibility changes (user manually closes modal)

@@ -1,4 +1,4 @@
-import { db, rolesRepository } from "@backend-common";
+import { db, onChainRolesRepository } from "@backend-infrastructure";
 import { t } from "@backend-utils";
 import { productRoles } from "@frak-labs/app-essentials";
 import { eq } from "drizzle-orm";
@@ -68,11 +68,12 @@ export const interactionsWhRoutes = new Elysia({
                 return status(400, "Invalid product id");
             }
 
-            const isAllowed = await rolesRepository.hasRoleOrAdminOnProduct({
-                wallet: businessSession.wallet,
-                productId: BigInt(productId),
-                role: productRoles.interactionManager,
-            });
+            const isAllowed =
+                await onChainRolesRepository.hasRoleOrAdminOnProduct({
+                    wallet: businessSession.wallet,
+                    productId: BigInt(productId),
+                    role: productRoles.interactionManager,
+                });
             if (!isAllowed) {
                 return status(401, "Unauthorized");
             }
@@ -107,7 +108,7 @@ export const interactionsWhRoutes = new Elysia({
         if (!businessSession) {
             return status(401, "Unauthorized");
         }
-        const isAllowed = await rolesRepository.hasRoleOrAdminOnProduct({
+        const isAllowed = await onChainRolesRepository.hasRoleOrAdminOnProduct({
             wallet: businessSession.wallet,
             productId: BigInt(productId),
             role: productRoles.interactionManager,

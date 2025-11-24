@@ -1,4 +1,4 @@
-import { JwtContext, log } from "@backend-common";
+import { JwtContext, log } from "@backend-infrastructure";
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import { WalletAuthResponseDto } from "../../../../domain/auth";

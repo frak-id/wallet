@@ -1,0 +1,22 @@
+.history__panel {
+    margin-bottom: 20px;
+}
+
+.history__nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+}
+
+.history__button {
+    all: unset;
+    font-size: 18px;
+    font-weight: 600;
+    transition: color 0.3s;
+    cursor: pointer;
+}
+
+.history__active {
+    color: var(--frak-color-black);
+}

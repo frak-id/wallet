@@ -1,0 +1,26 @@
+{
+    "name": "Frak Business Hub | Manage Your Web3 Products",
+    "short_name": "Frak Business Hub",
+    "description": "Frak Business Hub: Deploy, manage, and optimize your Web3 products. Create blockchain-based campaigns, track interactions, and grow your community in the decentralized ecosystem.",
+    "version": "0.0.1",
+    "icons": [
+        {
+            "src": "/favicons/icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "/favicons/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ],
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#001432",
+    "theme_color": "#001432",
+    "launch_handler": {
+        "client_mode": ["focus-existing", "navigate-existing", "auto"]
+    }
+}

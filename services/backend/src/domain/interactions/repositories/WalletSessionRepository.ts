@@ -1,4 +1,4 @@
-import { viemClient } from "@backend-common";
+import { viemClient } from "@backend-infrastructure";
 import { addresses, getExecutionAbi } from "@frak-labs/app-essentials";
 import { LRUCache } from "lru-cache";
 import { type Address, isAddressEqual, toFunctionSelector } from "viem";
@@ -27,9 +27,7 @@ const sendInteractionSelector = toFunctionSelector({
 });
 
 /**
- * The interaction diamonds repositories
- *  - Used to fetch contract address for a given product
- *  - Used to simulate transaction
+ * Used to check the validty of a wallet session
  */
 export class WalletSessionRepository {
     private sessionValidityCache = new LRUCache<Address, boolean>({

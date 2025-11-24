@@ -13,6 +13,8 @@
             "!**/.sst",
             "!**/.open-next",
             "!**/.next",
+            "!**/.output",
+            "!**/.nitro",
             "!**/tsconfig.json",
             "!**/tsconfig.*.json",
             "!**/package.json",
@@ -20,13 +22,11 @@
             "!**/bundle.js",
             "!**/sst-env.d.ts",
             "!example/vanilla-js/index.html",
-            "!**/.react-router",
-            "!**/.rslib",
-            "!**/.svelte-kit",
-            "!**/*.svelte",
+            "!example/showcase/index.html",
             "!**/playwright-report",
             "!**/test-results",
-            "!**/coverage"
+            "!**/coverage",
+            "!**/routeTree.gen.ts"
         ]
     },
     "assist": { "actions": { "source": { "organizeImports": "on" } } },
@@ -104,6 +104,16 @@
                     },
                     "style": {
                         "noNonNullAssertion": "off"
+                    }
+                }
+            }
+        },
+        {
+            "includes": ["packages/test-foundation/**"],
+            "linter": {
+                "rules": {
+                    "suspicious": {
+                        "noExplicitAny": "off"
                     }
                 }
             }

@@ -1,0 +1,6 @@
+.register__grid > div:first-child {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 36px;
+}

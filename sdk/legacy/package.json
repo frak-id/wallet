@@ -42,8 +42,8 @@
     "format:check": "biome check .",
     "format": "biome check --write .",
     "clean": "rimraf dist",
-    "build": "rslib build",
-    "build:watch": "rslib build --watch",
+    "build": "tsdown",
+    "build:watch": "tsdown --watch",
     "prepublish": "bun run lint && bun run build",
     "publish": "echo 'Publishing legacy...'"
   },
@@ -51,14 +51,10 @@
     "@frak-labs/core-sdk": "workspace:*",
     "@frak-labs/ui": "workspace:*"
   },
-  "browserslist": [
-    "extends @frak-labs/browserslist-config"
-  ],
   "devDependencies": {
-    "@frak-labs/browserslist-config": "workspace:*",
     "@frak-labs/dev-tooling": "workspace:*",
-    "@microsoft/api-extractor": "^7.53.3",
-    "@rslib/core": "^0.16.1",
+    "@rolldown/plugin-node-polyfills": "^1.0.0",
+    "tsdown": "^0.16.4",
     "typescript": "catalog:"
   }
 }

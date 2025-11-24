@@ -3,7 +3,7 @@ declare global {
         interface ProcessEnv {
             JWT_SECRET: string;
             JWT_SDK_SECRET: string;
-            SESSION_ENCRYPTION_KEY: string;
+            JWT_BUSINESS_SECRET: string;
             PRODUCT_SETUP_CODE_SALT: string;
             // Mongo URL
             MONGODB_EXAMPLE_URI: string;

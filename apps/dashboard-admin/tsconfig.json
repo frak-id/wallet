@@ -1,9 +1,7 @@
 {
   "include": [
     "**/*",
-    "**/.server/**/*",
-    "**/.client/**/*",
-    ".react-router/types/**/*"
+    "app/routeTree.gen.ts"
   ],
   "compilerOptions": {
     "lib": ["DOM", "DOM.Iterable", "ES2022"],
@@ -12,13 +10,12 @@
     "module": "ES2022",
     "moduleResolution": "bundler",
     "jsx": "react-jsx",
-    "rootDirs": [".", "./.react-router/types"],
     "baseUrl": ".",
     "paths": {
       "~/*": ["./app/*"],
       "@backend-utils": ["../../services/backend/src/utils/index.ts"],
-      "@backend-common": ["../../services/backend/src/common/index.ts"],
-      "@backend-common/*": ["../../services/backend/src/common/*"]
+      "@backend-infrastructure": ["../../services/backend/src/infrastructure/index.ts"],
+      "@backend-infrastructure/*": ["../../services/backend/src/infrastructure/*"]
     },
     "esModuleInterop": true,
     "verbatimModuleSyntax": true,

@@ -1,0 +1,7 @@
+html[data-page="restricted"] {
+    color: var(--frak-text-color);
+    background-color: var(--frak-contrast-background-color);
+    background-image: var(--frak-background-image-dark);
+    background-size: cover;
+    background-attachment: fixed;
+}

@@ -1,36 +1,42 @@
 import { resolve } from "node:path";
+import { isRunningLocally } from "@frak-labs/app-essentials/utils/env";
 import { defineConfig } from "vite";
 import { createHtmlPlugin } from "vite-plugin-html";
 
 const DEBUG = false;
-const USE_CDN = false;
 const projectRootDir = resolve(__dirname);
 const bundleDir = resolve(projectRootDir, "../../sdk/components/cdn");
-const scriptSrc =
-    process.env.NODE_ENV === "production"
-        ? "https://cdn.jsdelivr.net/npm/@frak-labs/components"
-        : `${bundleDir}/components.js`;
 
-export default defineConfig({
-    server: {
-        port: 3013,
-    },
-    publicDir: "public",
-    define: {
-        "process.env.USE_CDN": JSON.stringify(USE_CDN),
-    },
-    plugins: [
-        createHtmlPlugin({
-            inject: {
-                data: {
-                    injectScript: USE_CDN
-                        ? `<script defer src="${scriptSrc}"></script>`
-                        : "",
-                    injectReactScan: DEBUG
-                        ? `<script src="//unpkg.com/react-scan/dist/auto.global.js"></script>`
-                        : "",
+export default defineConfig(({ mode }) => {
+    // Determine if we should use local resources
+    // Use local when: running locally (no SST) OR in development mode
+    const useLocal = isRunningLocally || mode === "development";
+
+    // In local development, use local bundle
+    // Otherwise, use CDN
+    const scriptSrc = useLocal
+        ? `${bundleDir}/components.js`
+        : "https://cdn.jsdelivr.net/npm/@frak-labs/components";
+
+    return {
+        server: {
+            port: 3013,
+        },
+        publicDir: "public",
+        define: {
+            "process.env.USE_CDN": JSON.stringify(mode !== "development"),
+        },
+        plugins: [
+            createHtmlPlugin({
+                inject: {
+                    data: {
+                        injectScript: `<script type="module" src="${scriptSrc}"></script>`,
+                        injectReactScan: DEBUG
+                            ? `<script src="//unpkg.com/react-scan/dist/auto.global.js"></script>`
+                            : "",
+                    },
                 },
-            },
-        }),
-    ],
+            }),
+        ],
+    };
 });

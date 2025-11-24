@@ -87,11 +87,14 @@
     "lint": "biome lint .",
     "format:check": "biome check .",
     "format": "biome check --write .",
-    "clean": "rimraf dist",
-    "build": "rslib build",
-    "build:watch": "rslib build --watch",
+    "clean": "rimraf dist cdn",
+    "build": "tsdown",
+    "build:watch": "tsdown --watch",
     "check-exports": "attw --pack --profile node16 .",
     "typecheck": "tsc --noEmit",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage",
     "prepublish": "bun run lint && bun run build",
     "publish": "echo 'Publishing core...'"
   },
@@ -100,21 +103,21 @@
   },
   "dependencies": {
     "@frak-labs/frame-connector": "workspace:*",
-    "@jsonjoy.com/json-pack": "^1.21.0",
-    "@openpanel/web": "^1.0.1"
+    "@openpanel/web": "^1.0.2"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.2",
-    "@frak-labs/browserslist-config": "workspace:*",
     "@frak-labs/dev-tooling": "workspace:*",
-    "@microsoft/api-extractor": "^7.53.3",
-    "@rsbuild/plugin-node-polyfill": "^1.4.2",
-    "@rslib/core": "0.16.1",
+    "@frak-labs/test-foundation": "workspace:*",
+    "@rolldown/plugin-node-polyfills": "^1.0.0",
+    "@types/jsdom": "^27.0.0",
     "@types/node": "catalog:",
+    "@vitest/coverage-v8": "^4.0.9",
+    "@vitest/ui": "^4.0.9",
+    "jsdom": "^27.2.0",
+    "tsdown": "^0.16.4",
     "typescript": "catalog:",
-    "viem": "catalog:"
-  },
-  "browserslist": [
-    "extends @frak-labs/browserslist-config"
-  ]
+    "viem": "catalog:",
+    "vitest": "^4.0.9"
+  }
 }

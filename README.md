@@ -16,14 +16,19 @@ Visit our comprehensive documentation at **[docs.frak.id](https://docs.frak.id)*
 ## Project Structure
 
 ### 📱 Applications (`/apps`)
-- **`wallet/`** - Main Frak Wallet interface for users
-- **`dashboard/`** - Business dashboard for campaign management
-- **`dashboard-admin/`** - Administrative interface
+- **`wallet/`** - React Router v7 user wallet (SSR disabled, module-based architecture)
+- **`business/`** - TanStack Start business dashboard (SSR enabled, primary dashboard)
+- **`dashboard/`** - Next.js 15 business dashboard (standalone output, legacy)
+- **`dashboard-admin/`** - React Router admin interface
+- **`listener/`** - Iframe communication app for SDK interactions
 
 ### 📦 Core Packages (`/packages`)
-- **`shared/`** - Common utilities and types across the ecosystem
-- **`app-essentials/`** - Essential components and utilities for applications
-- **`browserslist-config/`** - Browser compatibility configuration
+- **`wallet-shared/`** - Shared code exclusively for wallet and listener apps
+- **`ui/`** - Radix UI-based component library (generic, reusable across all apps)
+- **`app-essentials/`** - Core blockchain utilities and WebAuthn configuration
+- **`client/`** - API client abstractions (Elysia Eden Treaty integration)
+- **`dev-tooling/`** - Build configurations (manualChunks, onwarn suppressions)
+- **`rpc/`** - RPC utilities (published as `@frak-labs/frame-connector`)
 
 ### 🛠️ SDK (`/sdk`)
 - **`core/`** - Core SDK functionality and blockchain interactions
@@ -50,10 +55,13 @@ Visit our comprehensive documentation at **[docs.frak.id](https://docs.frak.id)*
 ## Technology Stack
 
 ### Frontend Stack
-- **[Next.js](https://nextjs.org/)** - React framework with SSR
-- **[TanStack Query](https://tanstack.com/)** - Data fetching and state management
+- **[React Router v7](https://reactrouter.com/)** - React framework for wallet and admin apps
+- **[TanStack Start](https://tanstack.com/start)** - Full-stack React framework for business dashboard
+- **[Next.js 15](https://nextjs.org/)** - React framework with SSR (legacy dashboard only)
+- **[TanStack Query](https://tanstack.com/query)** - Data fetching and state management
 - **[Wagmi](https://wagmi.sh/)** - Ethereum hooks for React
 - **[Viem](https://viem.sh/)** - TypeScript interface for Ethereum
+- **[Zustand](https://zustand-demo.pmnd.rs/)** - Global state management across all frontend apps
 
 ### Backend & Infrastructure
 - **[Elysia.js](https://elysiajs.com/)** - Fast and type-safe backend framework

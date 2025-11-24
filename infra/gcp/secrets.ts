@@ -2,9 +2,9 @@ import {
     drpcApiKey,
     erpcUrl,
     indexerUrl,
+    jwtBusinessSecret,
     nexusRpcSecret,
     pimlicoApiKey,
-    sessionEncryptionKy,
     vapidPublicKey,
 } from "../config";
 import { isProd, normalizedStageName } from "../utils";
@@ -51,8 +51,8 @@ export const elysiaEnv = {
     // Sessions
     JWT_SECRET: new sst.Secret("JWT_SECRET").value,
     JWT_SDK_SECRET: new sst.Secret("JWT_SDK_SECRET").value,
+    JWT_BUSINESS_SECRET: jwtBusinessSecret.value,
     PRODUCT_SETUP_CODE_SALT: new sst.Secret("PRODUCT_SETUP_CODE_SALT").value,
-    SESSION_ENCRYPTION_KEY: sessionEncryptionKy.value,
 
     // Notifications
     VAPID_PUBLIC_KEY: vapidPublicKey.value,

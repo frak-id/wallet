@@ -15,7 +15,6 @@ export function HistoryDayGroup<T>({
     group: HistoryGroup<T>;
     innerComponent: (item: T) => ReactNode;
 }) {
-    console.log(group);
     return Object.entries(group).map(([day, items]) => (
         <div key={day} className={styles.historyGroup}>
             <Title>{day}</Title>

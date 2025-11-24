@@ -1,4 +1,4 @@
-import { log } from "@backend-common";
+import { log } from "@backend-infrastructure";
 import { cors } from "@elysiajs/cors";
 import { isRunningLocally } from "@frak-labs/app-essentials";
 import { Elysia } from "elysia";

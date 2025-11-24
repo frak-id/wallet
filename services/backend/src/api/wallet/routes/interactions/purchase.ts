@@ -1,4 +1,4 @@
-import { db, eventEmitter, JwtContext, log } from "@backend-common";
+import { db, eventEmitter, JwtContext, log } from "@backend-infrastructure";
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import { type Address, isHex } from "viem";

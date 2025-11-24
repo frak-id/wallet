@@ -1,6 +1,6 @@
+import { log } from "@backend-infrastructure";
 import type Elysia from "elysia";
 import { status } from "elysia";
-import { log } from "./common";
 
 /**
  * Map legacy routes to the new ones, using the existing controllers

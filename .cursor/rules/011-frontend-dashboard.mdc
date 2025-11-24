@@ -6,7 +6,8 @@ globs: apps/dashboard/**/*.ts, apps/dashboard/**/*.tsx
 
 ## Dashboard Summary
 
-`apps/dashboard` is part of Frak monorepo and is designed to provide a comprehensive dashboard solution that integrates with various blockchain functionalities and user authentication mechanisms.
+`apps/dashboard` is part of Frak monorepo and is the **legacy** Next.js 15 business dashboard (being replaced by `apps/business` built with TanStack Start).
+
 Project is written in TypeScript using React 19, Next.js App Router, Radix UI and Shadcn UI for components, React Query for server state management, Zustand for client state management, Viem and Wagmi for blockchain, i18next for internationalization.
 
 ## State Management

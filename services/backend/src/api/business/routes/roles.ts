@@ -1,4 +1,4 @@
-import { rolesRepository } from "@backend-common";
+import { onChainRolesRepository } from "@backend-infrastructure";
 import { t } from "@backend-utils";
 import { productRoles } from "@frak-labs/app-essentials";
 import { Elysia, status } from "elysia";
@@ -26,10 +26,11 @@ export const rolesRoutes = new Elysia({ prefix: "/roles" })
             }
 
             // Fetch the roles
-            const { isOwner, roles } = await rolesRepository.getRolesOnProduct({
-                wallet,
-                productId: BigInt(productId),
-            });
+            const { isOwner, roles } =
+                await onChainRolesRepository.getRolesOnProduct({
+                    wallet,
+                    productId: BigInt(productId),
+                });
 
             // Map them to a redeable format
             return {
@@ -37,19 +38,19 @@ export const rolesRoutes = new Elysia({ prefix: "/roles" })
                 roles: toHex(roles),
                 isAdministrator:
                     isOwner ||
-                    rolesRepository.hasRolesOrAdmin({
+                    onChainRolesRepository.hasRolesOrAdmin({
                         onChainRoles: roles,
                         role: productRoles.productAdministrator,
                     }),
                 isInteractionManager:
                     isOwner ||
-                    rolesRepository.hasRolesOrAdmin({
+                    onChainRolesRepository.hasRolesOrAdmin({
                         onChainRoles: roles,
                         role: productRoles.interactionManager,
                     }),
                 isCampaignManager:
                     isOwner ||
-                    rolesRepository.hasRolesOrAdmin({
+                    onChainRolesRepository.hasRolesOrAdmin({
                         onChainRoles: roles,
                         role: productRoles.campaignManager,
                     }),

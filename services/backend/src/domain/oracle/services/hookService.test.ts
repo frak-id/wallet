@@ -1,14 +1,17 @@
-import { afterAll, beforeAll, describe, expect, it, mock } from "bun:test";
-import { drizzle } from "drizzle-orm/postgres-js";
 import type { Hex } from "viem";
-import { mockAll } from "../../../../test/mock";
-import { purchaseItemTable, purchaseStatusTable } from "../db/schema";
+import {
+    afterAll,
+    beforeAll,
+    beforeEach,
+    describe,
+    expect,
+    it,
+    vi,
+} from "vitest";
+import { dbMock } from "../../../../test/mock/common";
 import { OracleWebhookService } from "./hookService";
 
 describe("OracleWebhookService", () => {
-    const db = drizzle.mock({
-        schema: { purchaseStatusTable, purchaseItemTable },
-    });
     let service: OracleWebhookService;
 
     const mockPurchase = {
@@ -44,36 +47,16 @@ describe("OracleWebhookService", () => {
     ];
 
     beforeAll(() => {
-        mockAll();
-
-        // Mock database transaction
-        const mockTransaction = mock(async (callback) => {
-            const mockTrx = {
-                insert: mock(() => ({
-                    values: mock(() => ({
-                        onConflictDoUpdate: mock(() => ({
-                            target: [],
-                            set: {},
-                            returning: mock(() =>
-                                Promise.resolve([{ purchaseId: 1 }])
-                            ),
-                        })),
-                        onConflictDoNothing: mock(() => Promise.resolve()),
-                    })),
-                })),
-            };
-            return await callback(mockTrx);
-        });
-
-        Object.assign(db, {
-            transaction: mockTransaction,
-        });
-
         service = new OracleWebhookService();
     });
 
+    beforeEach(() => {
+        dbMock.__reset();
+        dbMock.__setInsertResponse(() => Promise.resolve([{ purchaseId: 1 }]));
+    });
+
     afterAll(() => {
-        mock.restore();
+        vi.restoreAllMocks();
     });
 
     describe("upsertPurchase", () => {
@@ -83,7 +66,7 @@ describe("OracleWebhookService", () => {
                 purchaseItems: mockPurchaseItems,
             });
 
-            expect(db.transaction).toHaveBeenCalled();
+            expect(dbMock.__getTransactionMock()).toHaveBeenCalled();
             expect(result).toBeUndefined(); // Method doesn't return anything
         });
 
@@ -93,7 +76,7 @@ describe("OracleWebhookService", () => {
                 purchaseItems: [],
             });
 
-            expect(db.transaction).toHaveBeenCalled();
+            expect(dbMock.__getTransactionMock()).toHaveBeenCalled();
             expect(result).toBeUndefined();
         });
 
@@ -108,7 +91,7 @@ describe("OracleWebhookService", () => {
                 purchaseItems: mockPurchaseItems,
             });
 
-            expect(db.transaction).toHaveBeenCalled();
+            expect(dbMock.__getTransactionMock()).toHaveBeenCalled();
             expect(result).toBeUndefined();
         });
 

@@ -1,0 +1,41 @@
+.table__budget {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.table__budgetAmount {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--frak-color-tuna);
+}
+
+.table__budgetType {
+    font-size: 0.75rem;
+    color: var(--frak-color-grayText);
+}
+
+.table__actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.table__actions button,
+.table__actions a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: var(--frak-color-grayText) !important;
+    transition: color 0.2s;
+    text-decoration: none;
+}
+
+.table__actions button:hover,
+.table__actions a:hover {
+    color: var(--frak-color-tuna) !important;
+}

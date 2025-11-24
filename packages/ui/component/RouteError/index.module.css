@@ -1,0 +1,99 @@
+.routeError {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    padding: 2rem;
+}
+
+.content {
+    max-width: 560px;
+    text-align: center;
+    background: var(--frak-panel-background-color, #ffffff);
+    border: 1px solid var(--frak-panel-border-color, #e5e7eb);
+    border-radius: 12px;
+    padding: 2.5rem 2rem;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+    animation: fadeIn 0.3s ease-in-out;
+    outline: none;
+}
+
+.content:focus {
+    outline: 2px solid var(--frak-panel-border-color, #e5e7eb);
+    outline-offset: 2px;
+}
+
+.icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    color: var(--frak-error-icon-color, #f59e0b);
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--frak-panel-title-color, #1e293b);
+}
+
+.message {
+    font-size: 0.9375rem;
+    color: var(--frak-panel-text-color, #64748b);
+    margin-bottom: 1.75rem;
+    line-height: 1.5;
+}
+
+.details {
+    margin-bottom: 1.5rem;
+    text-align: left;
+    background-color: var(--frak-input-background-color, #f8fafc);
+    border: 1px solid var(--frak-input-border-color, #e2e8f0);
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.details summary {
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 0.875rem;
+    color: var(--frak-panel-text-color, #64748b);
+    user-select: none;
+}
+
+.details summary:hover {
+    color: var(--frak-panel-title-color, #1e293b);
+}
+
+.stack {
+    margin-top: 0.75rem;
+    padding: 0.75rem;
+    background-color: var(--frak-panel-background-color, #ffffff);
+    border-radius: 6px;
+    overflow-x: auto;
+    font-size: 0.75rem;
+    line-height: 1.5;
+    color: var(--frak-panel-text-color, #64748b);
+    font-family:
+        "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas,
+        "Courier New", monospace;
+}
+
+.actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}

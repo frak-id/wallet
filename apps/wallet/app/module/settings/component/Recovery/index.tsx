@@ -1,7 +1,7 @@
 import { selectWebauthnSession, sessionStore } from "@frak-labs/wallet-shared";
+import { Link } from "@tanstack/react-router";
 import { Shield } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
 import { CurrentRecoverySetupStatus } from "@/module/recovery-setup/component/CurrentSetupStatus";
@@ -24,7 +24,7 @@ export function RecoveryLink() {
                 {t("wallet.recoverySetup.title")}
             </Title>
             <CurrentRecoverySetupStatus />
-            <Link to={"/settings/recovery"} viewTransition>
+            <Link to="/settings/recovery" viewTransition>
                 {t("wallet.recoverySetup.setupNew")}
             </Link>
         </Panel>

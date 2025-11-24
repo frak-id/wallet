@@ -38,7 +38,7 @@ type SsoCompleteHandler = RpcPromiseHandler<
 /**
  * Pending SSO request - stores deferred promise waiting for completion
  */
-export let pendingSsoRequest: Deferred<{ wallet: Hex }> | undefined = undefined;
+let pendingSsoRequest: Deferred<{ wallet: Hex }> | undefined;
 
 /**
  * Process SSO completion - shared logic for both RPC and lifecycle handlers

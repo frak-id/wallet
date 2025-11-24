@@ -10,7 +10,7 @@ export type LoggedOutEmbeddedView = {
         /**
          * The main CTA for the logged out view
          *  - can include some variable, available ones are:
-         *      - {REWARD} -> The maximum reward a user can receive when interacting on your website
+         *      - `{REWARD}` -> The maximum reward a user can receive when interacting on your website
          *  - can be formatted in markdown
          *
          * If not set, it will default to a internationalized message

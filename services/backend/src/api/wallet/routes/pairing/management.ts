@@ -1,4 +1,4 @@
-import { db, sessionContext } from "@backend-common";
+import { db, sessionContext } from "@backend-infrastructure";
 import { t } from "@backend-utils";
 import { eq } from "drizzle-orm";
 import { Elysia, status } from "elysia";

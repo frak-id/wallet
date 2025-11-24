@@ -80,14 +80,11 @@
     },
     "devDependencies": {
         "@arethetypeswrong/cli": "^0.18.2",
-        "@frak-labs/browserslist-config": "workspace:*",
         "@frak-labs/dev-tooling": "workspace:*",
+        "@rolldown/plugin-node-polyfills": "^1.0.0",
         "@types/node": "catalog:",
-        "tsdown": "^0.16.0",
+        "tsdown": "^0.16.4",
         "typescript": "^5",
         "viem": "catalog:"
-    },
-    "browserslist": [
-        "extends @frak-labs/browserslist-config"
-    ]
+    }
 }

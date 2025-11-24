@@ -55,6 +55,27 @@ const nextConfig: NextConfig = {
         removeConsole: isDistant,
     },
     output: "standalone",
+    webpack: (config, { isServer }) => {
+        // Polyfill Node.js modules for browser (client-side only)
+        // Required because @jsonjoy.com/json-pack (used by frame-connector) needs Buffer
+        if (!isServer) {
+            config.resolve.fallback = {
+                ...config.resolve.fallback,
+                buffer: require.resolve("buffer/"),
+                process: require.resolve("process/browser"),
+            };
+
+            // Inject Buffer and process globals
+            const webpack = require("webpack");
+            config.plugins.push(
+                new webpack.ProvidePlugin({
+                    Buffer: ["buffer", "Buffer"],
+                    process: "process/browser",
+                })
+            );
+        }
+        return config;
+    },
 };
 
 export default nextConfig;

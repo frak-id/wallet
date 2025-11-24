@@ -61,7 +61,7 @@ export type ProcessReferralOptions = {
  * @see {@link displayModal} for more details about the displayed modal
  * @see {@link sendInteraction} for more details on the interaction submission part
  * @see {@link ReferralInteractionEncoder} for more details about the referred interaction
- * @see {@link ModalStepTypes} for more details on each modal steps types
+ * @see {@link @frak-labs/core-sdk!ModalStepTypes} for more details on each modal steps types
  */
 export async function processReferral(
     client: FrakClient,

@@ -1,4 +1,4 @@
-import { db, eventEmitter } from "@backend-common";
+import { db, eventEmitter } from "@backend-infrastructure";
 import { mutexCron } from "@backend-utils";
 import { PurchaseInteractionEncoder } from "@frak-labs/core-sdk/interactions";
 import { eq } from "drizzle-orm";

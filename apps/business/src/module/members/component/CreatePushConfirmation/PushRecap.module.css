@@ -1,0 +1,12 @@
+.pushRecap__notificationWrapper {
+    width: 280px;
+}
+
+.pushRecap__notification {
+    margin: 0;
+    background: #5f6b8a4d !important;
+}
+
+.pushRecap__notificationDate {
+    color: #818c9c !important;
+}

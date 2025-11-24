@@ -1,26 +1,29 @@
-import { afterAll, beforeAll, describe, expect, it, mock } from "bun:test";
-import { drizzle } from "drizzle-orm/postgres-js";
 import type { Hex } from "viem";
-import { mockAll } from "../../../../test/mock";
-import { productOracleTable, purchaseStatusTable } from "../db/schema";
+import {
+    afterAll,
+    beforeAll,
+    beforeEach,
+    describe,
+    expect,
+    it,
+    vi,
+} from "vitest";
+import { dbMock } from "../../../../test/mock/common";
 import type { MerkleTreeRepository } from "../repositories/MerkleTreeRepository";
 import { OracleProofService } from "./proofService";
 
 describe("OracleProofService", () => {
-    const db = drizzle.mock({
-        schema: { purchaseStatusTable, productOracleTable },
-    });
     let service: OracleProofService;
 
     const mockMerkleTreeRepository: MerkleTreeRepository = {
-        getMerkleProof: mock(() =>
+        getMerkleProof: vi.fn(() =>
             Promise.resolve({
                 proof: ["0x123", "0x456"] as Hex[],
                 leaf: "0xabc" as Hex,
             })
         ),
-        getMerkleRoot: mock(() => Promise.resolve("0xroot" as Hex)),
-        invalidateProductTrees: mock(() => {}),
+        getMerkleRoot: vi.fn(() => Promise.resolve("0xroot" as Hex)),
+        invalidateProductTrees: vi.fn(() => {}),
     } as unknown as MerkleTreeRepository;
 
     const mockProductId =
@@ -29,32 +32,29 @@ describe("OracleProofService", () => {
         "0xabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcd" as Hex;
 
     beforeAll(() => {
-        mockAll();
-
         service = new OracleProofService(mockMerkleTreeRepository);
     });
 
+    beforeEach(() => {
+        // Reset db mock before each test
+        dbMock.__reset();
+        // Reset merkle tree repository mock
+        mockMerkleTreeRepository.getMerkleProof = vi.fn(() =>
+            Promise.resolve({
+                proof: ["0x123", "0x456"] as Hex[],
+                leaf: "0xabc" as Hex,
+            })
+        );
+    });
+
     afterAll(() => {
-        mock.restore();
+        vi.restoreAllMocks();
     });
 
     describe("getPurchaseProof", () => {
         it("should return purchase-not-found when purchase doesn't exist", async () => {
-            // Mock database query to return empty array
-            Object.assign(db, {
-                select: mock(() => ({
-                    from: mock(() => ({
-                        where: mock(() => ({
-                            limit: mock(() => Promise.resolve([])),
-                        })),
-                        innerJoin: mock(() => ({
-                            where: mock(() => ({
-                                limit: mock(() => Promise.resolve([])),
-                            })),
-                        })),
-                    })),
-                })),
-            });
+            // Mock database query to return empty array (default behavior)
+            dbMock.__setSelectResponse(() => Promise.resolve([]));
 
             const result = await service.getPurchaseProof({
                 productId: mockProductId,
@@ -79,15 +79,7 @@ describe("OracleProofService", () => {
                 updatedAt: new Date(),
             };
 
-            Object.assign(db, {
-                select: mock(() => ({
-                    from: mock(() => ({
-                        where: mock(() => ({
-                            limit: mock(() => Promise.resolve([mockPurchase])),
-                        })),
-                    })),
-                })),
-            });
+            dbMock.__setSelectResponse(() => Promise.resolve([mockPurchase]));
 
             const result = await service.getPurchaseProof({
                 productId: mockProductId,
@@ -123,20 +115,12 @@ describe("OracleProofService", () => {
             };
 
             let callCount = 0;
-            Object.assign(db, {
-                select: mock(() => ({
-                    from: mock(() => ({
-                        where: mock(() => ({
-                            limit: mock(() => {
-                                callCount++;
-                                if (callCount === 1) {
-                                    return Promise.resolve([mockPurchase]);
-                                }
-                                return Promise.resolve([mockOracle]);
-                            }),
-                        })),
-                    })),
-                })),
+            dbMock.__setSelectResponse(() => {
+                callCount++;
+                if (callCount === 1) {
+                    return Promise.resolve([mockPurchase]);
+                }
+                return Promise.resolve([mockOracle]);
             });
 
             const result = await service.getPurchaseProof({
@@ -173,23 +157,15 @@ describe("OracleProofService", () => {
             };
 
             let callCount = 0;
-            Object.assign(db, {
-                select: mock(() => ({
-                    from: mock(() => ({
-                        where: mock(() => ({
-                            limit: mock(() => {
-                                callCount++;
-                                if (callCount === 1) {
-                                    return Promise.resolve([mockPurchase]);
-                                }
-                                return Promise.resolve([mockOracle]);
-                            }),
-                        })),
-                    })),
-                })),
+            dbMock.__setSelectResponse(() => {
+                callCount++;
+                if (callCount === 1) {
+                    return Promise.resolve([mockPurchase]);
+                }
+                return Promise.resolve([mockOracle]);
             });
 
-            mockMerkleTreeRepository.getMerkleProof = mock(() =>
+            mockMerkleTreeRepository.getMerkleProof = vi.fn(() =>
                 Promise.resolve(null)
             );
 
@@ -232,23 +208,15 @@ describe("OracleProofService", () => {
             };
 
             let callCount = 0;
-            Object.assign(db, {
-                select: mock(() => ({
-                    from: mock(() => ({
-                        where: mock(() => ({
-                            limit: mock(() => {
-                                callCount++;
-                                if (callCount === 1) {
-                                    return Promise.resolve([mockPurchase]);
-                                }
-                                return Promise.resolve([mockOracle]);
-                            }),
-                        })),
-                    })),
-                })),
+            dbMock.__setSelectResponse(() => {
+                callCount++;
+                if (callCount === 1) {
+                    return Promise.resolve([mockPurchase]);
+                }
+                return Promise.resolve([mockOracle]);
             });
 
-            mockMerkleTreeRepository.getMerkleProof = mock(() =>
+            mockMerkleTreeRepository.getMerkleProof = vi.fn(() =>
                 Promise.resolve(mockProof)
             );
 
@@ -283,15 +251,7 @@ describe("OracleProofService", () => {
                 updatedAt: new Date(),
             };
 
-            Object.assign(db, {
-                select: mock(() => ({
-                    from: mock(() => ({
-                        where: mock(() => ({
-                            limit: mock(() => Promise.resolve([mockPurchase])),
-                        })),
-                    })),
-                })),
-            });
+            dbMock.__setSelectResponse(() => Promise.resolve([mockPurchase]));
 
             const result = await service.getPurchaseStatus({
                 selector: {
@@ -318,19 +278,11 @@ describe("OracleProofService", () => {
                 updatedAt: new Date(),
             };
 
-            Object.assign(db, {
-                select: mock(() => ({
-                    from: mock(() => ({
-                        where: mock(() => ({
-                            limit: mock(() => Promise.resolve([mockPurchase])),
-                        })),
-                    })),
-                })),
-            });
+            dbMock.__setSelectResponse(() => Promise.resolve([mockPurchase]));
 
             const result = await service.getPurchaseStatus({
+                productId: mockProductId,
                 selector: {
-                    productId: mockProductId,
                     purchaseId: mockPurchaseId,
                 },
             });
@@ -353,29 +305,14 @@ describe("OracleProofService", () => {
                 updatedAt: new Date(),
             };
 
-            Object.assign(db, {
-                select: mock(() => ({
-                    from: mock(() => ({
-                        innerJoin: mock(() => ({
-                            where: mock(() => ({
-                                limit: mock(() =>
-                                    Promise.resolve([
-                                        {
-                                            product_oracle_purchase:
-                                                mockPurchase,
-                                        },
-                                    ])
-                                ),
-                            })),
-                        })),
-                    })),
-                })),
-            });
+            dbMock.__setSelectResponse(() =>
+                Promise.resolve([{ product_oracle_purchase: mockPurchase }])
+            );
 
             const result = await service.getPurchaseStatus({
+                productId: mockProductId,
                 selector: {
-                    productId: mockProductId,
-                    purchaseId: "ext-123", // Non-hex external ID
+                    externalPurchaseId: "ext-purchase-123",
                 },
             });
 
@@ -383,25 +320,12 @@ describe("OracleProofService", () => {
         });
 
         it("should return undefined when purchase is not found", async () => {
-            Object.assign(db, {
-                select: mock(() => ({
-                    from: mock(() => ({
-                        where: mock(() => ({
-                            limit: mock(() => Promise.resolve([])),
-                        })),
-                        innerJoin: mock(() => ({
-                            where: mock(() => ({
-                                limit: mock(() => Promise.resolve([])),
-                            })),
-                        })),
-                    })),
-                })),
-            });
+            dbMock.__setSelectResponse(() => Promise.resolve([]));
 
             const result = await service.getPurchaseStatus({
+                productId: mockProductId,
                 selector: {
-                    productId: mockProductId,
-                    purchaseId: "non-existent",
+                    purchaseId: "non-existent" as Hex,
                 },
             });
 

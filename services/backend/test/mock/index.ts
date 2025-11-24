@@ -1,8 +1,13 @@
-import { mockPermissionlessActions, mockViemActions } from "./viem";
-import { mockWebauthn } from "./webauthn";
+/**
+ * Mock exports for backend tests
+ */
 
-export function mockAll() {
-    mockViemActions();
-    mockPermissionlessActions();
-    mockWebauthn();
-}
+export {
+    dbMock,
+    dnsCheckRepositoryMocks,
+    mintRepositoryMocks,
+    onChainRolesRepositoryMocks,
+    resetMockBusinessSession,
+    setMockBusinessSession,
+} from "./common";
+export { oxMocks, permissionlessActionsMocks, viemActionsMocks } from "./viem";

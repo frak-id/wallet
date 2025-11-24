@@ -40,7 +40,6 @@ export type SdkSessionPayload = {
     sub: Address;
     iat: number;
     additionalData?: {
-        sixDegreesToken?: string;
         demoPkey?: Hex;
     };
 };

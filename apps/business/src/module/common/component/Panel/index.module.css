@@ -1,0 +1,44 @@
+.panel {
+    padding: 24px;
+    border: 1px solid var(--frak-panel-border-color);
+    background: var(--frak-panel-background-color);
+    box-shadow: 0 2px 2px 0 #1018281a;
+    color: var(--frak-panel-text-color);
+    font-weight: 400;
+
+    &[aria-disabled="true"] {
+        opacity: 0.64;
+        cursor: not-allowed;
+    }
+}
+
+.panel + .panel {
+    margin-top: 24px;
+}
+
+.panel__title {
+    margin-bottom: 14px;
+    color: var(--frak-panel-title-color);
+}
+
+.primary {
+    border-radius: 8px;
+}
+
+.secondary {
+    border-radius: 0;
+}
+
+.ghost {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    color: var(--frak-color-white);
+
+    & .panel__title {
+        color: var(--frak-color-white);
+        font-size: 14px;
+        font-weight: 700;
+    }
+}

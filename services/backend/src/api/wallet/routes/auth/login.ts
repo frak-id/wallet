@@ -1,4 +1,4 @@
-import { JwtContext, viemClient } from "@backend-common";
+import { JwtContext, viemClient } from "@backend-infrastructure";
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import { verifyMessage } from "viem/actions";

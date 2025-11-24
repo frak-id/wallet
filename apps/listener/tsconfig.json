@@ -24,8 +24,8 @@
       "@/tests/fixtures": ["./tests/fixtures.ts"],
       "@frak-labs/wallet-shared/*": ["../../packages/wallet-shared/src/*"],
       "@backend-utils": ["../../services/backend/src/utils/index.ts"],
-      "@backend-common": ["../../services/backend/src/common/index.ts"],
-      "@backend-common/*": ["../../services/backend/src/common/*"]
+      "@backend-infrastructure": ["../../services/backend/src/infrastructure/index.ts"],
+      "@backend-infrastructure/*": ["../../services/backend/src/infrastructure/*"]
     },
     "noEmit": true
   }

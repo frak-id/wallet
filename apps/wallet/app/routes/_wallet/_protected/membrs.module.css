@@ -1,0 +1,16 @@
+.membrs__introduction {
+    margin: 140px 20px 160px 20px;
+    font-size: 19px;
+    text-align: center;
+}
+
+.membrs__title {
+    justify-content: center !important;
+    font-size: 31px;
+    margin-bottom: 30px;
+}
+
+.membrs__button {
+    display: flex;
+    justify-content: center;
+}

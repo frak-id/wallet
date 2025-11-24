@@ -9,3 +9,6 @@
 
 # Coverage
 /coverage
+
+# TanStack Router
+/app/routeTree.gen.ts

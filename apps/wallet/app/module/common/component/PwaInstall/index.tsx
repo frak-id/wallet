@@ -11,7 +11,7 @@ import { usePwaInstallRef } from "@/module/common/context/PwaInstallContext";
  *
  * @returns {JSX.Element}
  */
-export function PwaInstallScript() {
+function _PwaInstallScript() {
     return (
         <script
             dangerouslySetInnerHTML={{

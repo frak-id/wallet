@@ -40,14 +40,33 @@
   ],
   "main": "./cdn/components.js",
   "browser": "./cdn/components.js",
+  "exports": {
+    "./buttonWallet": {
+      "development": "./src/components/ButtonWallet/index.ts",
+      "import": "./dist/buttonWallet.js",
+      "types": "./dist/buttonWallet.d.ts"
+    },
+    "./buttonShare": {
+      "development": "./src/components/ButtonShare/index.ts",
+      "import": "./dist/buttonShare.js",
+      "types": "./dist/buttonShare.d.ts"
+    },
+    "./cdn": {
+      "import": "./cdn/components.js"
+    },
+    "./dist/*": "./dist/*"
+  },
   "scripts": {
     "lint": "biome lint .",
     "format:check": "biome check .",
     "format": "biome check --write .",
     "clean": "rimraf cdn dist",
-    "build": "rslib build",
-    "build:watch": "rslib build --watch",
+    "build": "tsdown",
+    "build:watch": "tsdown --watch",
     "typecheck": "tsc --noEmit",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage",
     "prepublish": "bun run lint && bun run build",
     "publish": "echo 'Publishing components...'"
   },
@@ -56,20 +75,28 @@
     "@frak-labs/core-sdk": "workspace:*",
     "class-variance-authority": "^0.7.1",
     "preact": "^10.27.2",
-    "preact-custom-element": "^4.5.1"
+    "preact-custom-element": "^4.6.0"
   },
   "devDependencies": {
-    "@frak-labs/browserslist-config": "workspace:*",
+    "@bosh-code/tsdown-plugin-inject-css": "^2.0.0",
     "@frak-labs/dev-tooling": "workspace:*",
+    "@frak-labs/test-foundation": "workspace:*",
     "@frak-labs/ui": "workspace:*",
-    "@rsbuild/plugin-preact": "^1.5.2",
-    "@rsbuild/plugin-svgr": "^1.2.2",
-    "@rslib/core": "^0.16.1",
+    "@preact/preset-vite": "^2.10.2",
+    "@rolldown/plugin-node-polyfills": "^1.0.0",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/preact": "^3.2.4",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/jsdom": "^27.0.0",
     "@types/node": "catalog:",
     "@types/preact-custom-element": "^4.0.4",
-    "typescript": "^5"
-  },
-  "browserslist": [
-    "extends @frak-labs/browserslist-config"
-  ]
+    "@vitest/coverage-v8": "^4.0.9",
+    "@vitest/ui": "^4.0.9",
+    "jsdom": "^27.2.0",
+    "tsdown": "^0.16.4",
+    "typescript": "^5",
+    "unplugin-lightningcss": "^0.4.3",
+    "vite-tsconfig-paths": "^5.1.4",
+    "vitest": "^4.0.9"
+  }
 }

@@ -1,3 +1,4 @@
+import type { Hex, LocalAccount } from "viem";
 import {
     afterAll,
     beforeAll,
@@ -5,47 +6,37 @@ import {
     describe,
     expect,
     it,
-    mock,
-} from "bun:test";
-import { drizzle } from "drizzle-orm/postgres-js";
-import type { Hex, LocalAccount } from "viem";
-import { mockAll } from "../../../../test/mock";
-import { adminWalletsRepositoryMocks } from "../../../../test/mock/common";
-import { viemActionsMocks } from "../../../../test/mock/viem";
+    vi,
+} from "vitest";
 import {
-    productOracleTable,
-    purchaseItemTable,
-    purchaseStatusTable,
-} from "../db/schema";
+    adminWalletsRepositoryMocks,
+    dbMock,
+} from "../../../../test/mock/common";
+import { viemActionsMocks } from "../../../../test/mock/viem";
 import type { MerkleTreeRepository } from "../repositories/MerkleTreeRepository";
 import { UpdateOracleService } from "./updateService";
 
 describe("UpdateOracleService", () => {
-    const db = drizzle.mock({
-        schema: { purchaseStatusTable, productOracleTable, purchaseItemTable },
-    });
     let service: UpdateOracleService;
 
     const mockMerkleTreeRepository: MerkleTreeRepository = {
-        getMerkleProof: mock(() => Promise.resolve(null)),
-        getMerkleRoot: mock(() => Promise.resolve("0xnewroot" as Hex)),
-        invalidateProductTrees: mock(() => {}),
+        getMerkleProof: vi.fn(() => Promise.resolve(null)),
+        getMerkleRoot: vi.fn(() => Promise.resolve("0xnewroot" as Hex)),
+        invalidateProductTrees: vi.fn(() => {}),
     } as unknown as MerkleTreeRepository;
 
     const mockProductId = "0x1234567890abcdef1234567890abcdef" as Hex;
     const mockOracleUpdater = {
         address: "0xoracleupdater" as const,
-        signMessage: mock(() => Promise.resolve("0x" as Hex)),
-        signTransaction: mock(() => Promise.resolve("0x" as Hex)),
-        signTypedData: mock(() => Promise.resolve("0x" as Hex)),
+        signMessage: vi.fn(() => Promise.resolve("0x" as Hex)),
+        signTransaction: vi.fn(() => Promise.resolve("0x" as Hex)),
+        signTypedData: vi.fn(() => Promise.resolve("0x" as Hex)),
         publicKey: "0x" as Hex,
         source: "privateKey",
         type: "local",
     } as LocalAccount;
 
     beforeAll(() => {
-        mockAll();
-
         // Mock adminWalletsRepository
         adminWalletsRepositoryMocks.getKeySpecificAccount.mockResolvedValue(
             mockOracleUpdater
@@ -55,11 +46,12 @@ describe("UpdateOracleService", () => {
     });
 
     afterAll(() => {
-        mock.restore();
+        vi.restoreAllMocks();
     });
 
     beforeEach(() => {
         // Reset all mocks before each test
+        dbMock.__reset();
         viemActionsMocks.simulateContract.mockReset();
         viemActionsMocks.writeContract.mockReset();
         viemActionsMocks.waitForTransactionReceipt.mockReset();
@@ -69,12 +61,7 @@ describe("UpdateOracleService", () => {
     describe("updateEmptyLeafs", () => {
         it("should return empty set when no purchases need leaf updates", async () => {
             // Mock query to return empty array
-            const mockQuery = {
-                purchaseStatusTable: {
-                    findMany: mock(() => Promise.resolve([])),
-                },
-            };
-            Object.assign(db, { query: mockQuery });
+            dbMock.__setFindManyResponse(() => Promise.resolve([]));
 
             const result = await service.updateEmptyLeafs();
 
@@ -106,33 +93,13 @@ describe("UpdateOracleService", () => {
                 },
             ];
 
-            const mockQuery = {
-                purchaseStatusTable: {
-                    findMany: mock(() => Promise.resolve(mockPurchases)),
-                },
-            };
-            Object.assign(db, { query: mockQuery });
-
-            // Mock database transaction
-            const mockUpdate = mock(() => ({
-                set: mock(() => ({
-                    where: mock(() => Promise.resolve()),
-                })),
-            }));
-            const mockTransaction = mock(
-                async (callback: (trx: unknown) => unknown) => {
-                    const mockTrx = {
-                        update: mock(() => mockUpdate()),
-                    };
-                    return await callback(mockTrx);
-                }
-            );
-            Object.assign(db, { transaction: mockTransaction });
+            dbMock.__setFindManyResponse(() => Promise.resolve(mockPurchases));
+            dbMock.__setUpdateResponse(() => Promise.resolve());
 
             const result = await service.updateEmptyLeafs();
 
             expect(result).toEqual(new Set([1, 2]));
-            expect(db.transaction).toHaveBeenCalled();
+            expect(dbMock.__getTransactionMock()).toHaveBeenCalled();
         });
 
         it("should handle pending status as blockchain status 0", async () => {
@@ -146,30 +113,13 @@ describe("UpdateOracleService", () => {
                 },
             ];
 
-            const mockQuery = {
-                purchaseStatusTable: {
-                    findMany: mock(() => Promise.resolve(mockPurchases)),
-                },
-            };
-            Object.assign(db, { query: mockQuery });
-
-            const mockTransaction = mock(
-                async (callback: (trx: unknown) => unknown) => {
-                    const mockTrx = {
-                        update: mock(() => ({
-                            set: mock(() => ({
-                                where: mock(() => Promise.resolve()),
-                            })),
-                        })),
-                    };
-                    return await callback(mockTrx);
-                }
-            );
-            Object.assign(db, { transaction: mockTransaction });
+            dbMock.__setFindManyResponse(() => Promise.resolve(mockPurchases));
+            dbMock.__setUpdateResponse(() => Promise.resolve());
 
             const result = await service.updateEmptyLeafs();
 
             expect(result).toEqual(new Set([1]));
+            expect(dbMock.__getTransactionMock()).toHaveBeenCalled();
         });
     });
 
@@ -183,18 +133,15 @@ describe("UpdateOracleService", () => {
         });
 
         it("should invalidate trees for provided oracle ids", async () => {
+            // Mock that returns an array
             const mockProducts = [
                 { productId: mockProductId },
                 { productId: "0xother" as Hex },
             ];
 
-            Object.assign(db, {
-                select: mock(() => ({
-                    from: mock(() => ({
-                        where: mock(() => Promise.resolve(mockProducts)),
-                    })),
-                })),
-            });
+            dbMock.__setSelectResponse(
+                vi.fn(() => Promise.resolve(mockProducts))
+            );
 
             const result = await service.invalidateOracleTree({
                 oracleIds: new Set([1, 2]),
@@ -217,14 +164,7 @@ describe("UpdateOracleService", () => {
             ];
 
             // Mock database update
-            const mockUpdate = mock(() => ({
-                set: mock(() => ({
-                    where: mock(() => Promise.resolve()),
-                })),
-            }));
-            Object.assign(db, {
-                update: mock(() => mockUpdate()),
-            });
+            dbMock.__setUpdateResponse(() => Promise.resolve());
 
             // Mock blockchain calls
             viemActionsMocks.readContract.mockResolvedValue("0xoldroot");
@@ -239,24 +179,17 @@ describe("UpdateOracleService", () => {
             expect(
                 mockMerkleTreeRepository.getMerkleRoot
             ).toHaveBeenCalledTimes(2);
-            expect(db.update).toHaveBeenCalled();
+            expect(dbMock.__getUpdateMock()).toHaveBeenCalled();
         });
 
         it("should skip blockchain update when merkle root is already current", async () => {
             const productIds = [mockProductId];
 
             // Mock database update
-            const mockUpdate = mock(() => ({
-                set: mock(() => ({
-                    where: mock(() => Promise.resolve()),
-                })),
-            }));
-            Object.assign(db, {
-                update: mock(() => mockUpdate()),
-            });
+            dbMock.__setUpdateResponse(() => Promise.resolve());
 
             // Mock blockchain calls to return same root
-            mockMerkleTreeRepository.getMerkleRoot = mock(() =>
+            mockMerkleTreeRepository.getMerkleRoot = vi.fn(() =>
                 Promise.resolve("0xsameroot" as Hex)
             );
             viemActionsMocks.readContract.mockResolvedValue("0xsameroot");
@@ -264,20 +197,15 @@ describe("UpdateOracleService", () => {
             await service.updateProductsMerkleRoot({ productIds });
 
             expect(viemActionsMocks.simulateContract).not.toHaveBeenCalled();
+            expect(mockMerkleTreeRepository.getMerkleRoot).toHaveBeenCalled();
+            expect(dbMock.__getUpdateMock()).toHaveBeenCalled();
         });
 
         it("should handle blockchain update failure gracefully", async () => {
             const productIds = [mockProductId];
 
             // Mock database update
-            const mockUpdate = mock(() => ({
-                set: mock(() => ({
-                    where: mock(() => Promise.resolve()),
-                })),
-            }));
-            Object.assign(db, {
-                update: mock(() => mockUpdate()),
-            });
+            dbMock.__setUpdateResponse(() => Promise.resolve());
 
             // Mock blockchain calls to fail
             viemActionsMocks.readContract.mockResolvedValue("0xoldroot");
@@ -288,7 +216,8 @@ describe("UpdateOracleService", () => {
             await service.updateProductsMerkleRoot({ productIds });
 
             // Should still update database even if blockchain fails
-            expect(db.update).toHaveBeenCalled();
+            expect(dbMock.__getUpdateMock()).toHaveBeenCalled();
+            expect(mockMerkleTreeRepository.getMerkleRoot).toHaveBeenCalled();
         });
     });
 

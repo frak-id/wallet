@@ -1,5 +1,9 @@
-import { indexerApi, pricingRepository, viemClient } from "@backend-common";
-import type { TokenPrice } from "@backend-common/repositories/PricingRepository";
+import {
+    indexerApi,
+    pricingRepository,
+    viemClient,
+} from "@backend-infrastructure";
+import type { TokenPrice } from "@backend-infrastructure/pricing/PricingRepository";
 import { referralCampaign_isActive, type TokenAmount } from "@backend-utils";
 import type { GetCampaignResponseDto } from "@frak-labs/app-essentials";
 import { LRUCache } from "lru-cache";

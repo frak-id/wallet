@@ -20,7 +20,7 @@ import {
  * @description This function will automatically handle the referral interaction process
  *
  * @see {@link processReferral} for more details on the automatic referral handling process
- * @see {@link ModalStepTypes} for more details on each modal steps types
+ * @see {@link @frak-labs/core-sdk!ModalStepTypes} for more details on each modal steps types
  */
 export async function referralInteraction(
     client: FrakClient,

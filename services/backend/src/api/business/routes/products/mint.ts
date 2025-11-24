@@ -1,4 +1,4 @@
-import { log } from "@backend-common";
+import { log } from "@backend-infrastructure";
 import { t } from "@backend-utils";
 import type { ProductTypesKey } from "@frak-labs/core-sdk";
 import { productTypes } from "@frak-labs/core-sdk";
@@ -111,7 +111,7 @@ export const mintRoutes = new Elysia({ prefix: "/mint" })
 
                 return {
                     txHash: mintTxHash,
-                    productId: toHex(productId),
+                    productId: toHex(productId, { size: 32 }),
                     interactionContract: interactionResult?.interactionContract,
                     bankContract: bankResult?.bank,
                 };

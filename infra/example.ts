@@ -11,7 +11,7 @@ export const ethccWebsite = new sst.aws.StaticSite("WalletExampleEthCC", {
     },
     build: {
         command: "bun run build",
-        output: "build/client",
+        output: "dist",
     },
     vite: {
         types: "./sst-env.d.ts",
@@ -44,13 +44,20 @@ export const vanillaJsWebsite = new sst.aws.StaticSite("VanillaJsDemo", {
 });
 
 /**
- * Frak components demo website
+ * Frak SDK showcase website
  */
-export const componentsWebsite = new sst.aws.SvelteKit("ComponentsDemo", {
-    path: "example/components",
+export const showcaseWebsite = new sst.aws.StaticSite("ShowcaseDemo", {
+    path: "example/showcase",
     // Set the custom domain
     domain: {
-        name: "components.frak.id",
+        name: "showcase.frak.id",
+    },
+    build: {
+        command: "bun run build",
+        output: "dist",
+    },
+    vite: {
+        types: "./sst-env.d.ts",
     },
     dev: { autostart: false },
 });

@@ -1,14 +1,18 @@
 import * as process from "node:process";
 import react from "@vitejs/plugin-react";
-import type { Drop } from "esbuild";
 import type { UserConfig } from "rolldown-vite";
 import mkcert from "vite-plugin-mkcert";
+import removeConsole from "vite-plugin-remove-console";
 import tsconfigPaths from "vite-tsconfig-paths";
+import { lightningCssConfig, onwarn } from "../../packages/dev-tooling";
 
 const DEBUG = JSON.stringify(false);
 
+const isProd = process.env.STAGE?.includes("prod") ?? false;
+
 export default {
     base: "/listener",
+    css: lightningCssConfig,
     resolve: {
         // CRITICAL: Use production conditions for tree shaking!
         // "development" loads full dev builds with debugging code
@@ -43,14 +47,12 @@ export default {
             process.env.OPEN_PANEL_LISTENER_CLIENT_ID
         ),
     },
-    // Remove console and debugger on prod
-    esbuild: {
-        drop:
-            process.env.STAGE === "prod"
-                ? (["console", "debugger"] as Drop[])
-                : [],
-    },
-    plugins: [react(), mkcert(), tsconfigPaths()],
+    plugins: [
+        react(),
+        mkcert(),
+        tsconfigPaths(),
+        ...(isProd ? [removeConsole()] : []),
+    ],
     server: {
         port: 3002,
         proxy: {},
@@ -96,6 +98,7 @@ export default {
                     ],
                 },
             },
+            onwarn,
         },
         sourcemap: false,
     },

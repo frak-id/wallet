@@ -8,10 +8,13 @@ alwaysApply: false
 ## Frontend Summary
 
 In the repo we have multiple frontend:
- - `apps/dashboard`: Business dashboard for company, a SaaS dashboard with blockchain interaction.
- - `apps/wallet`: User facing SPA application with high workloads, can also be loaded via an iframe.
- - `packages/wallet-shared`: Shared components and utilities between the dashboard and the wallet.
- - `example/*`: Some exemple website showcasing the setup of the Frak SDK.
+ - `apps/business`: Business dashboard built with TanStack Start for companies, SaaS dashboard with blockchain interaction.
+ - `apps/dashboard`: Legacy Next.js business dashboard (being replaced by apps/business).
+ - `apps/wallet`: User facing SPA application with high workloads, can also be loaded via an iframe (uses TanStack Router).
+ - `apps/dashboard-admin`: Admin interface built with TanStack Router.
+ - `apps/listener`: Iframe communication app for SDK interactions.
+ - `packages/wallet-shared`: Shared components and utilities between the wallet and listener apps.
+ - `example/*`: Example websites showcasing the setup of the Frak SDK.
 
 ## Technical Stack
 

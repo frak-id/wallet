@@ -99,6 +99,13 @@
             "when": 1759916084807,
             "tag": "0013_flimsy_chronomancer",
             "breakpoints": true
+        },
+        {
+            "idx": 14,
+            "version": "7",
+            "when": 1763475009002,
+            "tag": "0014_jittery_mastermind",
+            "breakpoints": true
         }
     ]
 }

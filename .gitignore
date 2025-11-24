@@ -8,7 +8,7 @@
 .yarn/install-state.gz
 
 # testing
-/coverage
+**/coverage
 
 # next.js
 /.next/
@@ -20,9 +20,10 @@
 
 # build
 .react-router
-.rslib
 .turbo
 generated-docs/
+.output
+.nitro
 
 # production
 build
@@ -53,6 +54,3 @@ sst-env.d.ts
 
 # IDE
 .idea
-
-# Svelte
-.svelte-kit
