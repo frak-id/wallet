@@ -9,7 +9,7 @@ import {
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { RootProvider } from "@/module/common/provider/RootProvider";
 import "@/polyfill/bigint-serialization";
-import "@/styles/all.css";
+import appCss from "@/styles/all.css?url";
 import "nprogress/nprogress.css";
 
 export const Route = createRootRoute({
@@ -110,6 +110,10 @@ export const Route = createRootRoute({
             },
         ],
         links: [
+            { rel: "stylesheet", href: appCss },
+            // Component CSS bundle from workspace packages (@frak-labs/ui)
+            // Auto-updated by scripts/update-css-refs.ts after each build
+            { rel: "stylesheet", href: "/assets/style-Bdzlc_M0.css" },
             {
                 rel: "preconnect",
                 href: "https://fonts.googleapis.com",

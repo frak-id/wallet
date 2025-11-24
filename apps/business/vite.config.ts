@@ -7,6 +7,9 @@ import { lightningCssConfig } from "../../packages/dev-tooling";
 
 export default defineConfig({
     css: lightningCssConfig,
+    build: {
+        cssCodeSplit: false,
+    },
     plugins: [
         viteTsConfigPaths({
             projects: ["./tsconfig.json"],
