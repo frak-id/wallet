@@ -12,3 +12,7 @@
 
 # TanStack Router
 /app/routeTree.gen.ts
+
+# Rust
+**/*.rs.bk
+Cargo.lock

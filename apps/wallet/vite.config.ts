@@ -11,11 +11,14 @@ import { lightningCssConfig, onwarn } from "../../packages/dev-tooling";
 const DEBUG = JSON.stringify(false);
 
 const isProd = process.env.STAGE?.includes("prod") ?? false;
+const isTauri = !!process.env.TAURI_CLI_RUNNING;
 
 export default defineConfig(({ mode, command }: ConfigEnv): UserConfig => {
     const isSW = mode === "sw";
 
     const baseConfig = {
+        clearScreen: false,
+        envPrefix: ["VITE_", "TAURI_"],
         define: {
             "process.env.STAGE": JSON.stringify(process.env.STAGE),
             "process.env.BACKEND_URL": JSON.stringify(process.env.BACKEND_URL),
@@ -80,7 +83,8 @@ export default defineConfig(({ mode, command }: ConfigEnv): UserConfig => {
                 autoCodeSplitting: true,
             }),
             viteReact(),
-            mkcert(),
+            // Skip HTTPS for Tauri dev (mobile simulators don't trust self-signed certs)
+            ...(isTauri ? [] : [mkcert()]),
             tsconfigPaths(),
             ...(isProd ? [removeConsole()] : []),
         ],
@@ -109,6 +113,10 @@ export default defineConfig(({ mode, command }: ConfigEnv): UserConfig => {
                     secure: false, // Allow self-signed certs in dev
                     ws: true, // Proxy websockets if needed
                 },
+            },
+            watch: {
+                // Tell vite to ignore watching `src-tauri`
+                ignored: ["**/src-tauri/**"],
             },
         },
         build: {
