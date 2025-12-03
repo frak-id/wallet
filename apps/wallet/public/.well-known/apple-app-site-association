@@ -1,0 +1,16 @@
+{
+    "applinks": {
+        "apps": [],
+        "details": [
+            {
+                "appID": "6Y48FFCGMY.id.frak.wallet",
+                "paths": ["*"]
+            }
+        ]
+    },
+    "webcredentials": {
+        "apps": [
+            "6Y48FFCGMY.id.frak.wallet"
+        ]
+    }
+}

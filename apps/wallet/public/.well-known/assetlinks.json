@@ -1,0 +1,15 @@
+[
+    {
+        "relation": [
+            "delegate_permission/common.handle_all_urls",
+            "delegate_permission/common.get_login_creds"
+        ],
+        "target": {
+            "namespace": "android_app",
+            "package_name": "id.frak.wallet",
+            "sha256_cert_fingerprints": [
+                "27:90:64:91:13:5E:40:88:D8:C2:5B:42:6A:AE:56:E0:42:88:E4:18:F8:5F:DA:40:F2:BC:6E:7A:90:F6:E1:24"
+            ]
+        }
+    }
+]

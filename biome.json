@@ -26,7 +26,9 @@
             "!**/playwright-report",
             "!**/test-results",
             "!**/coverage",
-            "!**/routeTree.gen.ts"
+            "!**/routeTree.gen.ts",
+            "!**/src-tauri/gen",
+            "!**/src-tauri/target"
         ]
     },
     "assist": { "actions": { "source": { "organizeImports": "on" } } },

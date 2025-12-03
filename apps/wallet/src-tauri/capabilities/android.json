@@ -1,0 +1,8 @@
+{
+    "$schema": "../gen/schemas/mobile-schema.json",
+    "identifier": "android",
+    "description": "Android-specific permissions including WebAuthn",
+    "platforms": ["android"],
+    "windows": ["main"],
+    "permissions": ["webauthn:default"]
+}

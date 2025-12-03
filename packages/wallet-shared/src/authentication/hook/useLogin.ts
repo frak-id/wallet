@@ -1,7 +1,6 @@
 import { WebAuthN } from "@frak-labs/app-essentials";
 import type { UseMutationOptions } from "@tanstack/react-query";
 import { useMutation } from "@tanstack/react-query";
-import { WebAuthnP256 } from "ox";
 import { generatePrivateKey } from "viem/accounts";
 import { trackAuthCompleted, trackAuthInitiated } from "../../common/analytics";
 import { authenticatedWalletApi } from "../../common/api/backendClient";
@@ -14,6 +13,38 @@ import { sessionStore } from "../../stores/sessionStore";
 import { userStore } from "../../stores/userStore";
 import type { Session } from "../../types/Session";
 import { authKey } from "../queryKeys/auth";
+import { sign as signWebAuthn } from "../webauthn/adapter";
+
+/**
+ * Result type from WebAuthn sign operation
+ */
+type SignResult = {
+    metadata:
+        | {
+              authenticatorData: `0x${string}`;
+              challengeIndex: number;
+              clientDataJSON: string;
+              typeIndex: number;
+              userVerificationRequired: boolean;
+          }
+        | unknown;
+    signature:
+        | {
+              r: bigint;
+              s: bigint;
+              yParity?: number;
+          }
+        | unknown;
+    raw: {
+        id: string;
+        response: {
+            authenticatorData?: string;
+            clientDataJSON?: string;
+            signature?: string;
+            metadata?: unknown;
+        };
+    };
+};
 
 /**
  * Hook that handle the registration process
@@ -46,23 +77,63 @@ export function useLogin(
             ];
 
             // Sign with WebAuthn using ox
-            const challenge = generatePrivateKey();
-            const { metadata, signature, raw } = await WebAuthnP256.sign({
-                credentialId: args?.lastAuthentication?.authenticatorId,
-                rpId: WebAuthN.rpId,
-                userVerification: "required",
-                challenge,
-            });
-            const credentialId = raw.id;
+            console.log("[useLogin] Starting WebAuthn sign...");
+            console.log("[useLogin] WebAuthN.rpId:", WebAuthN.rpId);
+            console.log(
+                "[useLogin] lastAuthentication:",
+                args?.lastAuthentication
+            );
 
-            // Convert ox response to the format expected by backend
-            const authenticationResponse = {
-                id: credentialId,
-                response: {
-                    metadata,
-                    signature,
-                },
-            };
+            const challenge = generatePrivateKey();
+            let metadata: unknown;
+            let signature: unknown;
+            let raw: SignResult["raw"];
+
+            try {
+                const result = (await signWebAuthn({
+                    credentialId: args?.lastAuthentication?.authenticatorId,
+                    rpId: WebAuthN.rpId,
+                    userVerification: "required",
+                    challenge,
+                })) as SignResult;
+                metadata = result.metadata;
+                signature = result.signature;
+                raw = result.raw;
+                console.log("[useLogin] WebAuthn sign successful");
+            } catch (err) {
+                console.error("[useLogin] WebAuthn sign failed:", err);
+                console.error(
+                    "[useLogin] Error details:",
+                    JSON.stringify(err, null, 2)
+                );
+                throw err;
+            }
+
+            const credentialId = raw.id;
+            console.log(
+                "[useLogin] Credential ID from response:",
+                credentialId
+            );
+
+            // Detect if this is Android Tauri format (has authenticatorData as string)
+            const isAndroidTauriFormat =
+                typeof raw.response?.authenticatorData === "string";
+            console.log(
+                "[useLogin] isAndroidTauriFormat:",
+                isAndroidTauriFormat
+            );
+
+            // For Android Tauri, send the raw response directly
+            // For web/iOS (ox format), wrap in metadata/signature structure
+            const authenticationResponse = isAndroidTauriFormat
+                ? raw
+                : {
+                      id: credentialId,
+                      response: {
+                          metadata,
+                          signature,
+                      },
+                  };
 
             // Verify it
             const encodedResponse = btoa(
@@ -80,7 +151,7 @@ export function useLogin(
             // Store this last webauthn action
             authenticationStore.getState().setLastWebAuthNAction({
                 wallet: data.address,
-                signature: authenticationResponse,
+                signature: authenticationResponse as any,
                 challenge: challenge,
             });
 

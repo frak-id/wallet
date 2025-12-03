@@ -1,3 +1,4 @@
+import { isTauri } from "@frak-labs/app-essentials/utils/platform";
 import { createRootRoute, Outlet } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import { PwaInstall } from "@/module/common/component/PwaInstall";
@@ -21,11 +22,18 @@ export const Route = createRootRoute({
  * This component wraps the entire application with providers and global components.
  */
 function RootComponent() {
+    const isNativeApp = isTauri();
+
     return (
         <RootProvider>
-            <PwaInstall />
+            {/* Only show PWA features in web mode */}
+            {!isNativeApp && (
+                <>
+                    <PwaInstall />
+                    <DetectPWA />
+                </>
+            )}
             <Outlet />
-            <DetectPWA />
             {import.meta.env.DEV && (
                 <TanStackRouterDevtools position="bottom-right" />
             )}

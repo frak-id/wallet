@@ -32,6 +32,18 @@ function RegisterPage() {
         {}
     );
 
+    // Debug logging on mount
+    useEffect(() => {
+        console.log("[RegisterPage] Component mounted");
+        console.log("[RegisterPage] isWebAuthNSupported:", isWebAuthNSupported);
+        console.log(
+            "[RegisterPage] window.PublicKeyCredential:",
+            typeof window !== "undefined"
+                ? window.PublicKeyCredential
+                : "undefined"
+        );
+    }, []);
+
     /**
      * Boolean used to know if the error is about a previously used authenticator
      */
@@ -89,6 +101,19 @@ function RegisterPage() {
         }
     }, [isSuccess, navigate]);
 
+    // Debug button state
+    const isButtonDisabled =
+        disabled || isPreviouslyUsedAuthenticatorError || !isWebAuthNSupported;
+    useEffect(() => {
+        console.log("[RegisterPage] Button state:", {
+            disabled,
+            isPreviouslyUsedAuthenticatorError,
+            isWebAuthNSupported,
+            isButtonDisabled,
+            isRegisterInProgress,
+        });
+    }, [disabled, isPreviouslyUsedAuthenticatorError, isRegisterInProgress]);
+
     return (
         <Grid
             className={styles.register__grid}
@@ -110,7 +135,32 @@ function RegisterPage() {
         >
             <PairingInProgress />
             <ButtonAuth
-                onClick={() => register()}
+                onClick={(e) => {
+                    console.log("[Register] ===== BUTTON CLICKED =====");
+                    console.log("[Register] Event:", e);
+                    console.log(
+                        "[Register] isWebAuthNSupported:",
+                        isWebAuthNSupported
+                    );
+                    console.log(
+                        "[Register] Button disabled state:",
+                        disabled ||
+                            isPreviouslyUsedAuthenticatorError ||
+                            !isWebAuthNSupported
+                    );
+                    console.log("[Register] Calling register...");
+                    try {
+                        register();
+                        console.log(
+                            "[Register] register() called successfully"
+                        );
+                    } catch (err) {
+                        console.error(
+                            "[Register] Error calling register():",
+                            err
+                        );
+                    }
+                }}
                 disabled={
                     disabled ||
                     isPreviouslyUsedAuthenticatorError ||

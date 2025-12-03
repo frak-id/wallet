@@ -1,4 +1,9 @@
 <resources>
     <string name="app_name">Frak Wallet</string>
     <string name="main_activity_title">Frak Wallet</string>
+    <string name="asset_statements" translatable="false">
+[{
+\"include\": \"https://wallet-dev.frak.id/.well-known/assetlinks.json\"
+}]
+    </string>
 </resources>
