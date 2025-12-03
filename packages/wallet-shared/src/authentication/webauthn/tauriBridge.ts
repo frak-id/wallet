@@ -15,60 +15,22 @@
 
 import { WebAuthN } from "@frak-labs/app-essentials";
 import { isTauri } from "@frak-labs/app-essentials/utils/platform";
+import type {
+    PublicKeyCredentialCreationOptionsJSON,
+    PublicKeyCredentialJSON,
+    PublicKeyCredentialRequestOptionsJSON,
+    RegistrationResponseJSON,
+} from "@simplewebauthn/types";
 import type { WebAuthnP256 } from "ox";
+import { BaseError } from "ox/Errors";
 
 // ============================================================================
 // Extract ox's internal types to ensure compatibility
 // ============================================================================
 
-type CreateCredentialOptions = Parameters<
-    typeof WebAuthnP256.createCredential
->[0];
-type SignOptions = Parameters<typeof WebAuthnP256.sign>[0];
-
 // Extract the createFn/getFn types from ox options
-type OxCreateFn = CreateCredentialOptions["createFn"];
-type OxGetFn = SignOptions["getFn"];
-
-// ============================================================================
-// Types for Tauri plugin (simplewebauthn JSON format)
-// ============================================================================
-
-/**
- * Tauri plugin registration response (RegistrationResponseJSON from @simplewebauthn/types)
- */
-type TauriRegistrationResponse = {
-    id: string;
-    rawId: string;
-    response: {
-        attestationObject: string;
-        clientDataJSON: string;
-        transports?: string[];
-        publicKeyAlgorithm?: number;
-        publicKey?: string;
-        authenticatorData?: string;
-    };
-    authenticatorAttachment?: string;
-    clientExtensionResults: Record<string, unknown>;
-    type: string;
-};
-
-/**
- * Tauri plugin authentication response (AuthenticationResponseJSON from @simplewebauthn/types)
- */
-type TauriAuthenticationResponse = {
-    id: string;
-    rawId: string;
-    response: {
-        authenticatorData: string;
-        clientDataJSON: string;
-        signature: string;
-        userHandle?: string;
-    };
-    authenticatorAttachment?: string;
-    clientExtensionResults: Record<string, unknown>;
-    type: string;
-};
+type OxCreateFn = WebAuthnP256.createCredential.Options["createFn"];
+type OxGetFn = WebAuthnP256.sign.Options["getFn"];
 
 // ============================================================================
 // Base64URL conversion utilities
@@ -142,35 +104,22 @@ async function invokeTauriPlugin<T>(
  * Convert CredentialCreationOptions to Tauri plugin JSON format
  * Using `unknown` for buffer types to avoid type conflicts between ox and DOM types
  */
-function toTauriCreationOptions(publicKey: {
-    challenge: unknown;
-    rp: { id?: string; name: string };
-    user: { id: unknown; name: string; displayName: string };
-    pubKeyCredParams: Array<{ type: string; alg: number }>;
-    timeout?: number;
-    attestation?: string;
-    authenticatorSelection?: {
-        authenticatorAttachment?: string;
-        residentKey?: string;
-        requireResidentKey?: boolean;
-        userVerification?: string;
-    };
-    excludeCredentials?: Array<{
-        type: string;
-        id: unknown;
-        transports?: string[];
-    }>;
-    extensions?: unknown;
-}): Record<string, unknown> {
+function toTauriCreationOptions({
+    publicKey,
+}: ReturnType<typeof WebAuthnP256.getCredentialCreationOptions>):
+    | PublicKeyCredentialCreationOptionsJSON
+    | undefined {
+    if (!publicKey) return undefined;
+
     return {
         challenge: toBase64Url(publicKey.challenge as ArrayBuffer | Uint8Array),
         rp: publicKey.rp,
         user: {
-            id: toBase64Url(publicKey.user.id as ArrayBuffer | Uint8Array),
-            name: publicKey.user.name,
-            displayName: publicKey.user.displayName,
+            id: toBase64Url(publicKey.user?.id as ArrayBuffer | Uint8Array),
+            name: publicKey.user?.name,
+            displayName: publicKey.user?.displayName,
         },
-        pubKeyCredParams: publicKey.pubKeyCredParams.map((param) => ({
+        pubKeyCredParams: publicKey.pubKeyCredParams?.map((param) => ({
             type: param.type,
             alg: param.alg,
         })),
@@ -200,7 +149,9 @@ function toTauriCreationOptions(publicKey: {
  * Convert Tauri plugin registration response to native Credential-like object
  * This object mimics the structure that ox expects from navigator.credentials.create()
  */
-function fromTauriRegistrationResponse(json: TauriRegistrationResponse) {
+function fromTauriRegistrationResponse(
+    json: RegistrationResponseJSON
+): Awaited<ReturnType<NonNullable<OxCreateFn>>> {
     const attestationObject = fromBase64Url(json.response.attestationObject);
     const clientDataJSON = fromBase64Url(json.response.clientDataJSON);
 
@@ -210,6 +161,7 @@ function fromTauriRegistrationResponse(json: TauriRegistrationResponse) {
         attestationObject,
         // ox calls getPublicKey() to extract the public key
         getPublicKey: (): ArrayBuffer | null => {
+            // todo: android doesn't send back the publicKey here, need to extract it from the attestationObject
             if (json.response.publicKey) {
                 return fromBase64Url(json.response.publicKey);
             }
@@ -246,29 +198,37 @@ function fromTauriRegistrationResponse(json: TauriRegistrationResponse) {
  * Returns undefined if not running in Tauri (ox will use default browser API)
  */
 export function getTauriCreateFn(): OxCreateFn {
+    console.log("Getting tauri create options");
     if (!isTauri()) {
         return undefined;
     }
 
     return async (options) => {
-        if (!options?.publicKey) {
-            return null;
-        }
+        console.log("Initial options", options);
+        if (!options) return null;
 
-        const tauriOptions = toTauriCreationOptions(options.publicKey);
+        const tauriOptions = toTauriCreationOptions(options);
+        if (!tauriOptions) return null;
+
         const origin = WebAuthN.rpOrigin;
 
-        const response = await invokeTauriPlugin<TauriRegistrationResponse>(
-            "register",
-            {
-                origin,
-                options: tauriOptions,
-            }
-        );
+        try {
+            const response = await invokeTauriPlugin<RegistrationResponseJSON>(
+                "register",
+                {
+                    origin,
+                    options: tauriOptions,
+                }
+            );
+            console.log("Tauri response", response)
 
-        return fromTauriRegistrationResponse(response) as Awaited<
-            ReturnType<NonNullable<OxCreateFn>>
-        >;
+            return fromTauriRegistrationResponse(response);
+        } catch (e) {
+            console.warn("Tauri create error", e);
+            throw new BaseError("Tauri create credential error", {
+                cause: e as Error,
+            });
+        }
     };
 }
 
@@ -280,18 +240,12 @@ export function getTauriCreateFn(): OxCreateFn {
  * Convert CredentialRequestOptions to Tauri plugin JSON format
  * Using `unknown` for buffer types to avoid type conflicts between ox and DOM types
  */
-function toTauriRequestOptions(publicKey: {
-    challenge: unknown;
-    rpId?: string;
-    timeout?: number;
-    userVerification?: string;
-    allowCredentials?: Array<{
-        type: string;
-        id: unknown;
-        transports?: string[];
-    }>;
-    extensions?: unknown;
-}): Record<string, unknown> {
+function toTauriRequestOptions({
+    publicKey,
+}: ReturnType<typeof WebAuthnP256.getCredentialRequestOptions>):
+    | PublicKeyCredentialRequestOptionsJSON
+    | undefined {
+    if (!publicKey) return undefined;
     return {
         challenge: toBase64Url(publicKey.challenge as ArrayBuffer | Uint8Array),
         rpId: publicKey.rpId,
@@ -311,19 +265,24 @@ function toTauriRequestOptions(publicKey: {
  * Convert Tauri plugin authentication response to native Credential-like object
  * This object mimics the structure that ox expects from navigator.credentials.get()
  */
-function fromTauriAuthenticationResponse(json: TauriAuthenticationResponse) {
-    const authenticatorData = fromBase64Url(json.response.authenticatorData);
+function fromTauriAuthenticationResponse(json: PublicKeyCredentialJSON) {
+    const authenticatorData = fromBase64Url(
+        json.response.authenticatorData ?? ""
+    );
     const clientDataJSON = fromBase64Url(json.response.clientDataJSON);
-    const signature = fromBase64Url(json.response.signature);
+    const signature = fromBase64Url(
+        "signature" in json.response ? (json.response.signature ?? "") : ""
+    );
 
     // Build the response object
     const response = {
         clientDataJSON,
         authenticatorData,
         signature,
-        userHandle: json.response.userHandle
-            ? fromBase64Url(json.response.userHandle)
-            : null,
+        userHandle:
+            "userHandle" in json.response && json.response.userHandle
+                ? fromBase64Url(json.response.userHandle)
+                : null,
     };
 
     // Return a Credential-like object
@@ -347,23 +306,29 @@ export function getTauriGetFn(): OxGetFn {
     }
 
     return async (options) => {
-        if (!options?.publicKey) {
-            return null;
-        }
+        if (!options) return null;
+        const tauriOptions = toTauriRequestOptions(options);
+        if (!tauriOptions) return null;
 
-        const tauriOptions = toTauriRequestOptions(options.publicKey);
         const origin = WebAuthN.rpOrigin;
+        try {
+            const response = await invokeTauriPlugin<PublicKeyCredentialJSON>(
+                "authenticate",
+                {
+                    origin,
+                    options: tauriOptions,
+                }
+            );
+            console.log("Tauri response", response);
 
-        const response = await invokeTauriPlugin<TauriAuthenticationResponse>(
-            "authenticate",
-            {
-                origin,
-                options: tauriOptions,
-            }
-        );
-
-        return fromTauriAuthenticationResponse(response) as Awaited<
-            ReturnType<NonNullable<OxGetFn>>
-        >;
+            return fromTauriAuthenticationResponse(response) as Awaited<
+                ReturnType<NonNullable<OxGetFn>>
+            >;
+        } catch (e) {
+            console.warn("Tauri get error", e);
+            throw new BaseError("Tauri get credential error", {
+                cause: e as Error,
+            });
+        }
     };
 }

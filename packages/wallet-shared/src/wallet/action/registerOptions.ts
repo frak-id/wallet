@@ -29,8 +29,9 @@ export function getRegisterOptions() {
         timeout: 180_000,
         attestation: "direct",
         authenticatorSelection: {
-            residentKey: "required",
+            residentKey: "preferred",
             userVerification: "required",
+            requireResidentKey: false,
         },
     } as const;
 }
