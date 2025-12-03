@@ -11,6 +11,7 @@ import {
     toHex,
 } from "viem";
 import { readContract } from "viem/actions";
+import { getTauriGetFn } from "../../authentication";
 import { authenticationStore } from "../../stores/authenticationStore";
 import type { WebAuthNWallet } from "../../types/WebAuthN";
 import { formatSignature } from "./webAuthN";
@@ -124,6 +125,8 @@ export async function signHashViaWebAuthN({
         credentialId: wallet.authenticatorId,
         rpId: WebAuthN.rpId,
         userVerification: "required",
+        // Use Tauri plugin if running in Tauri, otherwise use browser API
+        getFn: getTauriGetFn(),
     });
 
     // Store the authentication action
