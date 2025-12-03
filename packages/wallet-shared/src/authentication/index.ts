@@ -12,8 +12,5 @@ export { ssoKey } from "./queryKeys/sso";
 // Utils
 export { compressedSsoToParams } from "./utils/ssoDataCompression";
 
-// WebAuthn adapter
-export {
-    createCredential as createWebAuthnCredential,
-    sign as signWebAuthn,
-} from "./webauthn/adapter";
+// WebAuthn Tauri bridge
+export { getTauriCreateFn, getTauriGetFn } from "./webauthn/tauriBridge";

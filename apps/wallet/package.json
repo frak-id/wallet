@@ -30,11 +30,11 @@
     "test:e2e:prod:ui": "TARGET_ENV=prod playwright test --ui",
     "test:e2e:dev:codegen": "TARGET_ENV=dev playwright codegen wallet-dev.frak.id",
     "tauri": "tauri",
-    "tauri:dev": "sst shell tauri dev",
+    "tauri:dev": "sst dev tauri dev",
     "tauri:build": "sst shell tauri build",
-    "tauri:ios:dev": "sst shell tauri ios dev",
+    "tauri:ios:dev": "sst dev tauri ios dev",
     "tauri:ios:build": "sst shell tauri ios build",
-    "tauri:android:dev": "sst shell tauri android dev",
+    "tauri:android:dev": "sst dev tauri android dev",
     "tauri:android:build": "sst shell tauri android build"
   },
   "dependencies": {

@@ -35,7 +35,6 @@ export const registerRoutes = new Elysia()
                 );
 
             // Verify the registration response
-            // Use arrays to support multiple allowed origins/RP IDs (for Android Tauri)
             const verification = await verifyRegistrationResponse({
                 response:
                     registrationResponse as unknown as RegistrationResponseJSON,
@@ -43,7 +42,7 @@ export const registerRoutes = new Elysia()
                     console.log("Challenge", challenge);
                     return true;
                 },
-                expectedRPID: WebAuthN.rpAllowedIds,
+                expectedRPID: WebAuthN.rpId,
                 expectedOrigin: WebAuthN.rpAllowedOrigins,
             });
             if (!verification.verified) {
@@ -59,15 +58,6 @@ export const registerRoutes = new Elysia()
             // Extract the info we want to store
             const { credential, credentialDeviceType, credentialBackedUp } =
                 verification.registrationInfo;
-
-            log.info(
-                {
-                    requestBodyId: id,
-                    credentialId: credential.id,
-                    idsMatch: id === credential.id,
-                },
-                "[Register] Credential ID comparison"
-            );
 
             // Get the wallet address
             const walletAddress =

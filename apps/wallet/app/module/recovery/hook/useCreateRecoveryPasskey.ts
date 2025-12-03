@@ -2,6 +2,7 @@ import type { RecoveryFileContent } from "@frak-labs/wallet-shared";
 import {
     authenticatedWalletApi,
     getRegisterOptions,
+    getTauriCreateFn,
 } from "@frak-labs/wallet-shared";
 import { useMutation } from "@tanstack/react-query";
 import { WebAuthnP256 } from "ox";
@@ -17,9 +18,10 @@ export function useCreateRecoveryPasskey() {
         gcTime: 0,
         mutationFn: async ({ file }: { file: RecoveryFileContent }) => {
             // Get the registration options and start the registration
-            const { id, publicKey, raw } = await WebAuthnP256.createCredential(
-                getRegisterOptions()
-            );
+            const { id, publicKey, raw } = await WebAuthnP256.createCredential({
+                ...getRegisterOptions(),
+                createFn: getTauriCreateFn(),
+            });
 
             // Verify the registration and return the formatted output
             const encodedResponse = btoa(JSON.stringify(raw));

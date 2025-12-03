@@ -13,7 +13,7 @@ import {
     vapidPublicKey,
     walletUrl,
 } from "../config";
-import { isProd, normalizedStageName } from "../utils";
+import { getLocalIp, isProd, normalizedStageName } from "../utils";
 import { baseDomainName, getRegistryPath, walletNamespace } from "./utils";
 
 // todo: for now on wallet.gcp-dev.frak.id, to test that up a bit, and we wil llater migrate it to the real wallet.frak.id
@@ -309,3 +309,35 @@ export const walletService = new KubernetesService(
         dependsOn: dependency,
     }
 );
+
+// Tauri mobile development commands
+// These run outside of Kubernetes and use local IP for backend connectivity
+if ($dev) {
+    const localIp = getLocalIp();
+    const mobileEnv = {
+        ...walletEnv,
+        // Override backend URL to use local IP instead of localhost
+        // This allows Android/iOS emulators and physical devices to connect
+        BACKEND_URL: `http://${localIp}:3030`,
+    };
+
+    new sst.x.DevCommand("wallet:tauri-android", {
+        dev: {
+            title: "Tauri Android Dev",
+            autostart: false,
+            command: "bun run tauri:android:dev",
+            directory: "./apps/wallet",
+        },
+        environment: mobileEnv,
+    });
+
+    new sst.x.DevCommand("wallet:tauri-ios", {
+        dev: {
+            title: "Tauri iOS Dev",
+            autostart: false,
+            command: "bun run tauri:ios:dev",
+            directory: "./apps/wallet",
+        },
+        environment: mobileEnv,
+    });
+}

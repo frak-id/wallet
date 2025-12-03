@@ -30,6 +30,7 @@
     "@frak-labs/ui": "workspace:*",
     "@openpanel/web": "^1.0.2",
     "@radix-ui/react-alert-dialog": "^1.1.15",
+    "@simplewebauthn/types": "^12.0.0",
     "@tanstack/react-query": "catalog:",
     "@wagmi/core": "catalog:",
     "class-variance-authority": "^0.7.1",
