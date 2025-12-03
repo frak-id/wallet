@@ -53,13 +53,22 @@ export default defineConfig(({ mode, command }: ConfigEnv): UserConfig => {
                 getEnvWithFallback("STAGE", "dev")
             ),
             "process.env.BACKEND_URL": JSON.stringify(
-                getEnvWithFallback("BACKEND_URL", "https://backend.gcp-dev.frak.id")
+                getEnvWithFallback(
+                    "BACKEND_URL",
+                    "https://backend.gcp-dev.frak.id"
+                )
             ),
             "process.env.INDEXER_URL": JSON.stringify(
-                getEnvWithFallback("INDEXER_URL", "https://ponder.gcp-dev.frak.id")
+                getEnvWithFallback(
+                    "INDEXER_URL",
+                    "https://ponder.gcp-dev.frak.id"
+                )
             ),
             "process.env.ERPC_URL": JSON.stringify(
-                getEnvWithFallback("ERPC_URL", "https://erpc.gcp-dev.frak.id/nexus-rpc/evm/")
+                getEnvWithFallback(
+                    "ERPC_URL",
+                    "https://erpc.gcp-dev.frak.id/nexus-rpc/evm/"
+                )
             ),
             "process.env.DRPC_API_KEY": JSON.stringify(
                 getSstSecret("DRPC_API_KEY")
@@ -78,10 +87,16 @@ export default defineConfig(({ mode, command }: ConfigEnv): UserConfig => {
                 process.env.COMMIT_HASH ?? "UNKNOWN"
             ),
             "process.env.FRAK_WALLET_URL": JSON.stringify(
-                getEnvWithFallback("FRAK_WALLET_URL", "https://wallet-dev.frak.id")
+                getEnvWithFallback(
+                    "FRAK_WALLET_URL",
+                    "https://wallet-dev.frak.id"
+                )
             ),
             "process.env.OPEN_PANEL_API_URL": JSON.stringify(
-                getEnvWithFallback("OPEN_PANEL_API_URL", "https://op-api.gcp.frak.id")
+                getEnvWithFallback(
+                    "OPEN_PANEL_API_URL",
+                    "https://op-api.gcp.frak.id"
+                )
             ),
             "process.env.OPEN_PANEL_WALLET_CLIENT_ID": JSON.stringify(
                 getSstSecret("OPEN_PANEL_WALLET_CLIENT_ID")
