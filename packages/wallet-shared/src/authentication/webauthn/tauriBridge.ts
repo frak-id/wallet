@@ -14,7 +14,7 @@
  */
 
 import { WebAuthN } from "@frak-labs/app-essentials";
-import { isTauri } from "@frak-labs/app-essentials/utils/platform";
+import { isAndroid } from "@frak-labs/app-essentials/utils/platform";
 import type {
     PublicKeyCredentialCreationOptionsJSON,
     PublicKeyCredentialJSON,
@@ -149,6 +149,11 @@ function toTauriCreationOptions({
 /**
  * Convert Tauri plugin registration response to native Credential-like object
  * This object mimics the structure that ox expects from navigator.credentials.create()
+ *
+ * IMPORTANT: We include a toJSON() method that returns the original JSON format,
+ * because when the credential is serialized with JSON.stringify(), the native
+ * PublicKeyCredential.toJSON() method is automatically called. Our fake object
+ * needs to behave the same way.
  */
 function fromTauriRegistrationResponse(json: RegistrationResponseJSON) {
     const attestationObject = fromBase64Url(json.response.attestationObject);
@@ -190,6 +195,10 @@ function fromTauriRegistrationResponse(json: RegistrationResponseJSON) {
         response,
         authenticatorAttachment: json.authenticatorAttachment ?? null,
         getClientExtensionResults: () => json.clientExtensionResults ?? {},
+        // toJSON() is called automatically by JSON.stringify() on native PublicKeyCredential.
+        // We need to implement it to return the proper RegistrationResponseJSON format
+        // so the backend receives base64url-encoded strings instead of empty objects.
+        toJSON: () => json,
     };
 }
 
@@ -198,7 +207,7 @@ function fromTauriRegistrationResponse(json: RegistrationResponseJSON) {
  * Returns undefined if not running in Tauri (ox will use default browser API)
  */
 export function getTauriCreateFn(): OxCreateFn {
-    if (!isTauri()) {
+    if (!isAndroid()) {
         return undefined;
     }
 
@@ -260,6 +269,9 @@ function toTauriRequestOptions({
 /**
  * Convert Tauri plugin authentication response to native Credential-like object
  * This object mimics the structure that ox expects from navigator.credentials.get()
+ *
+ * IMPORTANT: We include a toJSON() method for consistency with the registration response,
+ * so that JSON.stringify() returns properly formatted data.
  */
 function fromTauriAuthenticationResponse(json: PublicKeyCredentialJSON) {
     const authenticatorData = fromBase64Url(
@@ -289,6 +301,8 @@ function fromTauriAuthenticationResponse(json: PublicKeyCredentialJSON) {
         response,
         authenticatorAttachment: json.authenticatorAttachment ?? null,
         getClientExtensionResults: () => json.clientExtensionResults ?? {},
+        // toJSON() is called automatically by JSON.stringify() on native PublicKeyCredential
+        toJSON: () => json,
     };
 }
 
@@ -297,7 +311,7 @@ function fromTauriAuthenticationResponse(json: PublicKeyCredentialJSON) {
  * Returns undefined if not running in Tauri (ox will use default browser API)
  */
 export function getTauriGetFn(): OxGetFn {
-    if (!isTauri()) {
+    if (!isAndroid()) {
         return undefined;
     }
 

@@ -43,7 +43,7 @@ export const registerRoutes = new Elysia()
                     return true;
                 },
                 expectedRPID: WebAuthN.rpId,
-                expectedOrigin: WebAuthN.rpOrigin,
+                expectedOrigin: WebAuthN.rpAllowedOrigins,
             });
             if (!verification.verified) {
                 log.error(
