@@ -23,6 +23,7 @@ import type {
 } from "@simplewebauthn/types";
 import type { WebAuthnP256 } from "ox";
 import { BaseError } from "ox/Errors";
+import { extractPublicKeyFromAttestationObject } from "./coseParser";
 
 // ============================================================================
 // Extract ox's internal types to ensure compatibility
@@ -149,9 +150,7 @@ function toTauriCreationOptions({
  * Convert Tauri plugin registration response to native Credential-like object
  * This object mimics the structure that ox expects from navigator.credentials.create()
  */
-function fromTauriRegistrationResponse(
-    json: RegistrationResponseJSON
-): Awaited<ReturnType<NonNullable<OxCreateFn>>> {
+function fromTauriRegistrationResponse(json: RegistrationResponseJSON) {
     const attestationObject = fromBase64Url(json.response.attestationObject);
     const clientDataJSON = fromBase64Url(json.response.clientDataJSON);
 
@@ -161,12 +160,13 @@ function fromTauriRegistrationResponse(
         attestationObject,
         // ox calls getPublicKey() to extract the public key
         getPublicKey: (): ArrayBuffer | null => {
-            // todo: android doesn't send back the publicKey here, need to extract it from the attestationObject
+            // First, check if the Tauri plugin returned the publicKey directly
             if (json.response.publicKey) {
                 return fromBase64Url(json.response.publicKey);
             }
-            // If not provided, ox will fall back to parsing attestationObject
-            return null;
+            // Android Tauri doesn't return publicKey, so we need to extract it
+            // from the attestationObject by parsing the COSE-encoded key
+            return extractPublicKeyFromAttestationObject(attestationObject);
         },
         getAuthenticatorData: (): ArrayBuffer => {
             if (json.response.authenticatorData) {
@@ -182,10 +182,10 @@ function fromTauriRegistrationResponse(
         },
     };
 
-    // Return a Credential-like object
+    // Return a Credential-like object that matches what ox expects
     return {
         id: json.id,
-        type: "public-key",
+        type: "public-key" as const,
         rawId: fromBase64Url(json.rawId),
         response,
         authenticatorAttachment: json.authenticatorAttachment ?? null,
@@ -198,13 +198,11 @@ function fromTauriRegistrationResponse(
  * Returns undefined if not running in Tauri (ox will use default browser API)
  */
 export function getTauriCreateFn(): OxCreateFn {
-    console.log("Getting tauri create options");
     if (!isTauri()) {
         return undefined;
     }
 
     return async (options) => {
-        console.log("Initial options", options);
         if (!options) return null;
 
         const tauriOptions = toTauriCreationOptions(options);
@@ -220,8 +218,6 @@ export function getTauriCreateFn(): OxCreateFn {
                     options: tauriOptions,
                 }
             );
-            console.log("Tauri response", response)
-
             return fromTauriRegistrationResponse(response);
         } catch (e) {
             console.warn("Tauri create error", e);
@@ -319,7 +315,6 @@ export function getTauriGetFn(): OxGetFn {
                     options: tauriOptions,
                 }
             );
-            console.log("Tauri response", response);
 
             return fromTauriAuthenticationResponse(response) as Awaited<
                 ReturnType<NonNullable<OxGetFn>>
