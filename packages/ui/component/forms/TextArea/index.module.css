@@ -29,6 +29,7 @@
     padding: 9px 12px;
     width: 100%;
     line-height: 20px;
+    font-size: 16px;
     color: var(--frak-input-text-color);
     font-weight: 400;
 }
