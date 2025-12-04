@@ -14,7 +14,7 @@
  */
 
 import { WebAuthN } from "@frak-labs/app-essentials";
-import { isAndroid } from "@frak-labs/app-essentials/utils/platform";
+import { isAndroid, isIOS } from "@frak-labs/app-essentials/utils/platform";
 import type {
     PublicKeyCredentialCreationOptionsJSON,
     PublicKeyCredentialJSON,
@@ -95,6 +95,19 @@ async function invokeTauriPlugin<T>(
 ): Promise<T> {
     const { invoke } = await import("@tauri-apps/api/core");
     return invoke(`plugin:webauthn|${command}`, args);
+}
+
+/**
+ * Get the appropriate origin for WebAuthn based on platform
+ */
+function getWebAuthnOrigin(): string {
+    if (isAndroid()) {
+        return WebAuthN.androidApkOrigin;
+    }
+    if (isIOS()) {
+        return WebAuthN.iosTauriOrigin;
+    }
+    return WebAuthN.rpOrigin;
 }
 
 // ============================================================================
@@ -217,7 +230,7 @@ export function getTauriCreateFn(): OxCreateFn {
         const tauriOptions = toTauriCreationOptions(options);
         if (!tauriOptions) return null;
 
-        const origin = WebAuthN.rpOrigin;
+        const origin = getWebAuthnOrigin();
 
         try {
             const response = await invokeTauriPlugin<RegistrationResponseJSON>(
@@ -320,7 +333,7 @@ export function getTauriGetFn(): OxGetFn {
         const tauriOptions = toTauriRequestOptions(options);
         if (!tauriOptions) return null;
 
-        const origin = WebAuthN.rpOrigin;
+        const origin = getWebAuthnOrigin();
         try {
             const response = await invokeTauriPlugin<PublicKeyCredentialJSON>(
                 "authenticate",

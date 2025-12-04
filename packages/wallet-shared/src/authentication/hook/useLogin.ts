@@ -47,14 +47,15 @@ export function useLogin(
             ];
 
             // Sign with WebAuthn using ox
+            // Only pass getFn if defined (Android), omit for iOS/web to use browser default
             const challenge = generatePrivateKey();
+            const tauriGetFn = getTauriGetFn();
             const { metadata, signature, raw } = await WebAuthnP256.sign({
                 credentialId: args?.lastAuthentication?.authenticatorId,
                 rpId: WebAuthN.rpId,
                 userVerification: "required",
                 challenge,
-                // Use Tauri plugin if running in Tauri, otherwise use browser API
-                getFn: getTauriGetFn(),
+                ...(tauriGetFn && { getFn: tauriGetFn }),
             });
             const credentialId = raw.id;
 

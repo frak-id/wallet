@@ -1,10 +1,17 @@
 import { isRunningInProd, isRunningLocally } from "../utils";
+import { isTauri } from "../utils/platform";
 
 /**
  * The RP ID for the webauthn
+ * For Tauri mobile (iOS/Android), use wallet-dev.frak.id to match Associated Domains
  */
 const rpName = "Frak wallet";
-const rpId = isRunningLocally ? "localhost" : "frak.id";
+const rpId = isRunningInProd
+    ? "frak.id"
+    : isRunningLocally && !isTauri()
+      ? "localhost"
+      : "wallet-dev.frak.id";
+
 const rpOrigin = isRunningInProd
     ? "https://wallet.frak.id"
     : isRunningLocally
@@ -27,6 +34,16 @@ const iosTauriOrigin = "tauri://localhost";
 const rpAllowedOrigins = [rpOrigin, androidApkOrigin, iosTauriOrigin];
 
 /**
+ * All allowed RP IDs for backend verification
+ * Include wallet-dev.frak.id for Tauri mobile apps in all environments
+ */
+const rpAllowedIds = isRunningInProd
+    ? ["frak.id"]
+    : isRunningLocally
+      ? ["localhost", "wallet-dev.frak.id"]
+      : ["wallet-dev.frak.id"];
+
+/**
  * The default user name
  */
 const defaultUsername = "Frak Wallet";
@@ -36,5 +53,8 @@ export const WebAuthN = {
     rpName,
     rpOrigin,
     rpAllowedOrigins,
+    rpAllowedIds,
     defaultUsername,
+    androidApkOrigin,
+    iosTauriOrigin,
 };

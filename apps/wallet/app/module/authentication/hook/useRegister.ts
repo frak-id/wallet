@@ -39,13 +39,14 @@ export function useRegister(options?: UseMutationOptions<Session>) {
             const events = [trackAuthInitiated("register")];
 
             // Start the registration with ox
+            // Only pass createFn if defined (Android), omit for iOS/web to use browser default
+            const tauriCreateFn = getTauriCreateFn();
             const { id, publicKey, raw } = await WebAuthnP256.createCredential({
                 ...getRegisterOptions(),
                 excludeCredentialIds: previousAuthenticators?.map(
                     (cred) => cred.authenticatorId
                 ),
-                // Use Tauri plugin if running in Tauri, otherwise use browser API
-                createFn: getTauriCreateFn(),
+                ...(tauriCreateFn && { createFn: tauriCreateFn }),
             });
 
             // Verify it

@@ -120,13 +120,14 @@ export async function signHashViaWebAuthN({
     wallet: WebAuthNWallet;
 }) {
     // Sign with WebAuthn using ox
+    // Only pass getFn if defined (Android), omit for iOS/web to use browser default
+    const tauriGetFn = getTauriGetFn();
     const { metadata, signature, raw } = await WebAuthnP256.sign({
         challenge: hash,
         credentialId: wallet.authenticatorId,
         rpId: WebAuthN.rpId,
         userVerification: "required",
-        // Use Tauri plugin if running in Tauri, otherwise use browser API
-        getFn: getTauriGetFn(),
+        ...(tauriGetFn && { getFn: tauriGetFn }),
     });
 
     // Store the authentication action
