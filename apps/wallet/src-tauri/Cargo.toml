@@ -26,5 +26,8 @@ tauri-plugin-log = "2"
 tauri-plugin-safe-area-insets = "0.1.0"
 
 # Android-only: Native WebAuthn via Credential Manager (iOS uses native WKWebView WebAuthn)
+# Also includes share + fs plugins for file sharing (needed for recovery file download)
 [target.'cfg(target_os = "android")'.dependencies]
 tauri-plugin-webauthn = "0.2"
+tauri-plugin-share = "2.0.5"
+tauri-plugin-fs = "2"

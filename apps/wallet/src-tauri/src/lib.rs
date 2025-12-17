@@ -3,9 +3,13 @@ pub fn run() {
   let builder = tauri::Builder::default()
     .plugin(tauri_plugin_safe_area_insets::init());
 
-  // WebAuthn plugin is Android-only (iOS uses native WKWebView WebAuthn)
+  // Android-only plugins: WebAuthn, Share, and FS
+  // (iOS uses native WKWebView WebAuthn and Web Share API works natively)
   #[cfg(target_os = "android")]
-  let builder = builder.plugin(tauri_plugin_webauthn::init());
+  let builder = builder
+    .plugin(tauri_plugin_webauthn::init())
+    .plugin(tauri_plugin_share::init())
+    .plugin(tauri_plugin_fs::init());
 
   builder
     .setup(|app| {
