@@ -31,6 +31,7 @@
     "@elysiajs/cors": "^1.4.0",
     "@frak-labs/app-essentials": "workspace:*",
     "@frak-labs/core-sdk": "workspace:*",
+    "@simplewebauthn/server": "^13.2.2",
     "@slack/web-api": "^7.12.0",
     "airtable": "^0.12.2",
     "async-mutex": "^0.5.0",
