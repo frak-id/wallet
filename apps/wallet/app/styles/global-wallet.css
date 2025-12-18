@@ -6,6 +6,11 @@
 html {
     transition: background 0.3s;
     background: var(--frak-contrast-background-color);
+    /* Extend html to cover safe areas */
+    min-height: calc(
+        100dvh +
+        var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px))
+    );
 }
 
 body {

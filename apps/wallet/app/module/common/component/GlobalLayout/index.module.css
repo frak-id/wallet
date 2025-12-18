@@ -1,5 +1,12 @@
 .main {
-    margin: 47px 0;
+    margin-top: calc(
+        47px +
+        var(--safe-area-inset-top, env(safe-area-inset-top, 0px))
+    );
+    margin-bottom: calc(
+        47px +
+        var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px))
+    );
     overflow: auto;
     display: flex;
     flex-direction: column;
@@ -11,7 +18,11 @@
 
 .mainNoNav {
     margin-bottom: 0;
-    height: calc(100dvh - 47px);
+    height: calc(
+        100dvh -
+        47px -
+        var(--safe-area-inset-top, env(safe-area-inset-top, 0px))
+    );
 }
 
 .mainNoHeader.mainNoNav {

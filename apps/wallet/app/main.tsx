@@ -1,4 +1,5 @@
 import { isRunningLocally } from "@frak-labs/app-essentials";
+import { isTauri } from "@frak-labs/app-essentials/utils/platform";
 import { PendingLoader } from "@frak-labs/ui/component/PendingLoader";
 import {
     defaultNS,
@@ -14,6 +15,7 @@ import I18nextBrowserLanguageDetector from "i18next-browser-languagedetector";
 import { StrictMode, startTransition } from "react";
 import { createRoot } from "react-dom/client";
 import { I18nextProvider, initReactI18next } from "react-i18next";
+import { initSafeAreaInsets } from "./utils/safeArea";
 
 // Setup BigInt serialization polyfill
 setupBigIntSerialization();
@@ -51,6 +53,11 @@ declare module "@tanstack/react-router" {
 }
 
 async function main() {
+    // Initialize safe area insets for mobile devices
+    if (isTauri()) {
+        await initSafeAreaInsets();
+    }
+
     await i18next
         .use(initReactI18next) // Tell i18next to use the react-i18next plugin
         .use(I18nextBrowserLanguageDetector) // Setup a client-side language detector

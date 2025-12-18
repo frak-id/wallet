@@ -11,24 +11,26 @@ export function Header() {
 
     return (
         <header className={styles.header}>
-            <h1>
-                <Link
-                    to={"/wallet"}
-                    className={styles.header__logo}
-                    viewTransition
-                >
-                    <LogoFrakWithName />
-                </Link>
-            </h1>
-            {isHydrated && session && (
-                <Link
-                    to={"/notifications"}
-                    className={styles.header__notification}
-                    viewTransition
-                >
-                    <Notifications />
-                </Link>
-            )}
+            <div className={styles.header__container}>
+                <h1>
+                    <Link
+                        to={"/wallet"}
+                        className={styles.header__logo}
+                        viewTransition
+                    >
+                        <LogoFrakWithName />
+                    </Link>
+                </h1>
+                {isHydrated && session && (
+                    <Link
+                        to={"/notifications"}
+                        className={styles.header__notification}
+                        viewTransition
+                    >
+                        <Notifications />
+                    </Link>
+                )}
+            </div>
         </header>
     );
 }
