@@ -31,11 +31,16 @@
             "!**/src-tauri/target"
         ]
     },
-    "assist": { "actions": { "source": { "organizeImports": "on" } } },
+    "assist": {
+        "actions": {
+            "source": {
+                "organizeImports": "on"
+            }
+        }
+    },
     "html": {
-        "experimentalFullSupportEnabled": true,
         "formatter": {
-            "indentScriptAndStyle": false
+            "enabled": true
         }
     },
     "linter": {
@@ -71,7 +76,9 @@
                 "useExportType": "error",
                 "useConsistentArrayType": {
                     "level": "error",
-                    "options": { "syntax": "shorthand" }
+                    "options": {
+                        "syntax": "shorthand"
+                    }
                 },
                 "noDescendingSpecificity": "off"
             },
