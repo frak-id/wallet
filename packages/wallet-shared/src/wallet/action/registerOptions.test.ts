@@ -24,8 +24,9 @@ describe("getRegisterOptions", () => {
             timeout: 180_000,
             attestation: "direct",
             authenticatorSelection: {
-                residentKey: "required",
+                residentKey: "preferred",
                 userVerification: "required",
+                requireResidentKey: false,
             },
         });
     });
@@ -52,7 +53,8 @@ describe("getRegisterOptions", () => {
     test("should require resident key and user verification", () => {
         const result = getRegisterOptions();
 
-        expect(result.authenticatorSelection.residentKey).toBe("required");
+        expect(result.authenticatorSelection.residentKey).toBe("preferred");
+        expect(result.authenticatorSelection.requireResidentKey).toBe(false);
         expect(result.authenticatorSelection.userVerification).toBe("required");
     });
 });
