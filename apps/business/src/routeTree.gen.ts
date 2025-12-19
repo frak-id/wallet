@@ -8,8 +8,6 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { createFileRoute } from '@tanstack/react-router'
-
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as NotFoundRouteImport } from './routes/not-found'
 import { Route as LoginRouteImport } from './routes/login'
@@ -42,13 +40,6 @@ import { Route as RestrictedCampaignsDraftCampaignIdRouteImport } from './routes
 import { Route as RestrictedCampaignsDraftCampaignIdValidationRouteImport } from './routes/_restricted/campaigns/draft/$campaignId/validation'
 import { Route as RestrictedCampaignsDraftCampaignIdMetricsRouteImport } from './routes/_restricted/campaigns/draft/$campaignId/metrics'
 
-const EmbeddedRouteImport = createFileRoute('/embedded')()
-
-const EmbeddedRoute = EmbeddedRouteImport.update({
-  id: '/embedded',
-  path: '/embedded',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const NotFoundRoute = NotFoundRouteImport.update({
   id: '/not-found',
   path: '/not-found',
@@ -74,13 +65,14 @@ const IndexRoute = IndexRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const EmbeddedAuthRoute = EmbeddedAuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
-  getParentRoute: () => EmbeddedRoute,
+  id: '/embedded/auth',
+  path: '/embedded/auth',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const EmbeddedLayoutRoute = EmbeddedLayoutRouteImport.update({
-  id: '/_layout',
-  getParentRoute: () => EmbeddedRoute,
+  id: '/embedded/_layout',
+  path: '/embedded',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const RestrictedSettingsRoute = RestrictedSettingsRouteImport.update({
   id: '/settings',
@@ -284,7 +276,6 @@ export interface FileRoutesById {
   '/_restricted/members': typeof RestrictedMembersRoute
   '/_restricted/mint': typeof RestrictedMintRoute
   '/_restricted/settings': typeof RestrictedSettingsRoute
-  '/embedded': typeof EmbeddedRouteWithChildren
   '/embedded/_layout': typeof EmbeddedLayoutRouteWithChildren
   '/embedded/auth': typeof EmbeddedAuthRoute
   '/_restricted/campaigns/$campaignId': typeof RestrictedCampaignsCampaignIdRoute
@@ -381,7 +372,6 @@ export interface FileRouteTypes {
     | '/_restricted/members'
     | '/_restricted/mint'
     | '/_restricted/settings'
-    | '/embedded'
     | '/embedded/_layout'
     | '/embedded/auth'
     | '/_restricted/campaigns/$campaignId'
@@ -411,18 +401,12 @@ export interface RootRouteChildren {
   DemoRoute: typeof DemoRoute
   LoginRoute: typeof LoginRoute
   NotFoundRoute: typeof NotFoundRoute
-  EmbeddedRoute: typeof EmbeddedRouteWithChildren
+  EmbeddedLayoutRoute: typeof EmbeddedLayoutRouteWithChildren
+  EmbeddedAuthRoute: typeof EmbeddedAuthRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/embedded': {
-      id: '/embedded'
-      path: '/embedded'
-      fullPath: '/embedded'
-      preLoaderRoute: typeof EmbeddedRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/not-found': {
       id: '/not-found'
       path: '/not-found'
@@ -460,17 +444,17 @@ declare module '@tanstack/react-router' {
     }
     '/embedded/auth': {
       id: '/embedded/auth'
-      path: '/auth'
+      path: '/embedded/auth'
       fullPath: '/embedded/auth'
       preLoaderRoute: typeof EmbeddedAuthRouteImport
-      parentRoute: typeof EmbeddedRoute
+      parentRoute: typeof rootRouteImport
     }
     '/embedded/_layout': {
       id: '/embedded/_layout'
       path: '/embedded'
       fullPath: '/embedded'
       preLoaderRoute: typeof EmbeddedLayoutRouteImport
-      parentRoute: typeof EmbeddedRoute
+      parentRoute: typeof rootRouteImport
     }
     '/_restricted/settings': {
       id: '/_restricted/settings'
@@ -718,27 +702,14 @@ const EmbeddedLayoutRouteWithChildren = EmbeddedLayoutRoute._addFileChildren(
   EmbeddedLayoutRouteChildren,
 )
 
-interface EmbeddedRouteChildren {
-  EmbeddedLayoutRoute: typeof EmbeddedLayoutRouteWithChildren
-  EmbeddedAuthRoute: typeof EmbeddedAuthRoute
-}
-
-const EmbeddedRouteChildren: EmbeddedRouteChildren = {
-  EmbeddedLayoutRoute: EmbeddedLayoutRouteWithChildren,
-  EmbeddedAuthRoute: EmbeddedAuthRoute,
-}
-
-const EmbeddedRouteWithChildren = EmbeddedRoute._addFileChildren(
-  EmbeddedRouteChildren,
-)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   RestrictedRoute: RestrictedRouteWithChildren,
   DemoRoute: DemoRoute,
   LoginRoute: LoginRoute,
   NotFoundRoute: NotFoundRoute,
-  EmbeddedRoute: EmbeddedRouteWithChildren,
+  EmbeddedLayoutRoute: EmbeddedLayoutRouteWithChildren,
+  EmbeddedAuthRoute: EmbeddedAuthRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

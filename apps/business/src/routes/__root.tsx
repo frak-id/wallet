@@ -111,9 +111,6 @@ export const Route = createRootRoute({
         ],
         links: [
             { rel: "stylesheet", href: appCss },
-            // Component CSS bundle from workspace packages (@frak-labs/ui)
-            // Auto-updated by scripts/update-css-refs.ts after each build
-            { rel: "stylesheet", href: "/assets/style-Bdzlc_M0.css" },
             {
                 rel: "preconnect",
                 href: "https://fonts.googleapis.com",

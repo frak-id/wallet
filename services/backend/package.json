@@ -49,7 +49,7 @@
     "postgres": "^3.4.7",
     "solady": "^0.1.26",
     "sst": "3.17.25",
-    "ua-parser-js": "^2.0.7",
+    "ua-parser-js": "^2.0.5",
     "viem": "catalog:",
     "web-push": "^3.6.7",
     "whatwg-url": "^15.1.0"
