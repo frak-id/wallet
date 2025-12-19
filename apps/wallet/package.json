@@ -95,7 +95,7 @@
     "@types/react": "catalog:",
     "@types/react-avatar-editor": "^13.0.4",
     "@types/react-dom": "catalog:",
-    "@typescript/native-preview": "^7.0.0-dev.20251114.1",
+    "@typescript/native-preview": "^7.0.0-dev.20251219.1",
     "@vitejs/plugin-react": "^5.1.2",
     "@vitest/coverage-v8": "^4.0.16",
     "@vitest/ui": "^4.0.16",
