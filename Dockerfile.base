@@ -1,6 +1,6 @@
 # Base builder image with SDK pre-built
 # This image is used by all app Dockerfiles to avoid rebuilding the SDK multiple times
-FROM oven/bun:1.3.2 AS sdk-builder
+FROM oven/bun:1.3.5 AS sdk-builder
 
 WORKDIR /app
 
