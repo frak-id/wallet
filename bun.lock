@@ -208,7 +208,7 @@
         "@frak-labs/frame-connector": "workspace:*",
         "@frak-labs/ui": "workspace:*",
         "@frak-labs/wallet-shared": "workspace:*",
-        "@khmyznikov/pwa-install": "^0.5.8",
+        "@khmyznikov/pwa-install": "^0.6.1",
         "@radix-ui/react-slot": "^1.2.4",
         "@tanstack/query-sync-storage-persister": "catalog:",
         "@tanstack/react-query": "catalog:",
@@ -1109,7 +1109,7 @@
 
     "@jsonjoy.com/util": ["@jsonjoy.com/util@1.9.0", "", { "dependencies": { "@jsonjoy.com/buffers": "^1.0.0", "@jsonjoy.com/codegen": "^1.0.0" }, "peerDependencies": { "tslib": "2" } }, "sha512-pLuQo+VPRnN8hfPqUTLTHk126wuYdXVxE6aDmjSeV4NCAgyxWbiOIeNJVtID3h1Vzpoi9m4jXezf73I6LgabgQ=="],
 
-    "@khmyznikov/pwa-install": ["@khmyznikov/pwa-install@0.5.8", "", { "peerDependencies": { "@lit/react": "^1.0.7", "@types/dom-chromium-installation-events": "^101.0.4", "@types/web-app-manifest": "^1.0.9", "lit": "^3.3.0" } }, "sha512-ASHTuNefaN3JrhXqcuem1aX8VIeCrGMG+Xz9ocFNAfSLJlbYxXeWXAbvwfRzu4AOmv8ZShJ2OuV4LIIwcG4E/w=="],
+    "@khmyznikov/pwa-install": ["@khmyznikov/pwa-install@0.6.1", "", { "peerDependencies": { "@lit/react": "^1.0.8", "@types/dom-chromium-installation-events": "^101.0.4", "@types/web-app-manifest": "^1.0.9", "lit": "^3.3.1" } }, "sha512-5i5AepT/XSVYr7yEwyro95rNDllYkXm/xKPQTGgcbBv3p84QQG1RUtFLjHxraS5CEK2Jd9zHC11Z/hnZpIPM/g=="],
 
     "@levischuck/tiny-cbor": ["@levischuck/tiny-cbor@0.2.11", "", {}, "sha512-llBRm4dT4Z89aRsm6u2oEZ8tfwL/2l6BwpZ7JcyieouniDECM5AqNgr/y08zalEIvW3RSK4upYyybDcmjXqAow=="],
 

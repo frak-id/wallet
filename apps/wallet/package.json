@@ -44,7 +44,7 @@
     "@frak-labs/frame-connector": "workspace:*",
     "@frak-labs/ui": "workspace:*",
     "@frak-labs/wallet-shared": "workspace:*",
-    "@khmyznikov/pwa-install": "^0.5.8",
+    "@khmyznikov/pwa-install": "^0.6.1",
     "@radix-ui/react-slot": "^1.2.4",
     "@tanstack/query-sync-storage-persister": "catalog:",
     "@tanstack/react-query": "catalog:",
