@@ -18,9 +18,11 @@ export function useCreateRecoveryPasskey() {
         gcTime: 0,
         mutationFn: async ({ file }: { file: RecoveryFileContent }) => {
             // Get the registration options and start the registration
+            // Only pass createFn if defined (Android), omit for iOS/web to use browser default
+            const tauriCreateFn = getTauriCreateFn();
             const { id, publicKey, raw } = await WebAuthnP256.createCredential({
                 ...getRegisterOptions(),
-                createFn: getTauriCreateFn(),
+                ...(tauriCreateFn && { createFn: tauriCreateFn }),
             });
 
             // Verify the registration and return the formatted output

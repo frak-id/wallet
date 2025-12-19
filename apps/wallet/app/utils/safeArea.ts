@@ -9,7 +9,6 @@ export async function initSafeAreaInsets() {
 
     // Only run on Android - iOS has native env() support
     if (!isAndroid()) {
-        console.log("Safe area insets: skipping (not Android)");
         return;
     }
 
@@ -22,8 +21,6 @@ export async function initSafeAreaInsets() {
             left: number;
             right: number;
         };
-
-        console.log("Native safe area insets received:", insets);
 
         // Set CSS variables from native insets
         document.documentElement.style.setProperty(
@@ -42,8 +39,6 @@ export async function initSafeAreaInsets() {
             "--safe-area-inset-right",
             `${insets.right}px`
         );
-
-        console.log("Safe area CSS variables set successfully");
     } catch (error) {
         console.error("Failed to get safe area insets:", error);
     }

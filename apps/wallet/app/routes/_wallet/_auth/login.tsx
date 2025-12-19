@@ -31,28 +31,6 @@ function LoginPage() {
     const navigate = useNavigate();
     const { login, isLoading, isSuccess } = useLogin({});
 
-    // Debug logging on mount
-    useEffect(() => {
-        console.log("[LoginPage] Component mounted");
-        console.log("[LoginPage] isWebAuthNSupported:", isWebAuthNSupported);
-        console.log(
-            "[LoginPage] window.PublicKeyCredential:",
-            typeof window !== "undefined"
-                ? window.PublicKeyCredential
-                : "undefined"
-        );
-    }, []);
-
-    // Debug button state
-    const isButtonDisabled = !isWebAuthNSupported || isLoading;
-    useEffect(() => {
-        console.log("[LoginPage] Button state:", {
-            isWebAuthNSupported,
-            isLoading,
-            isButtonDisabled,
-        });
-    }, [isLoading]);
-
     // Redirect to wallet after successful login
     useEffect(() => {
         if (isSuccess) {
@@ -82,28 +60,7 @@ function LoginPage() {
                 <ButtonAuth
                     disabled={!isWebAuthNSupported || isLoading}
                     isLoading={isLoading}
-                    onClick={(e) => {
-                        console.log("[Login] ===== BUTTON CLICKED =====");
-                        console.log("[Login] Event:", e);
-                        console.log(
-                            "[Login] isWebAuthNSupported:",
-                            isWebAuthNSupported
-                        );
-                        console.log(
-                            "[Login] Button disabled state:",
-                            !isWebAuthNSupported || isLoading
-                        );
-                        console.log("[Login] Calling login...");
-                        try {
-                            login({});
-                            console.log("[Login] login() called successfully");
-                        } catch (err) {
-                            console.error(
-                                "[Login] Error calling login():",
-                                err
-                            );
-                        }
-                    }}
+                    onClick={() => login({})}
                 >
                     <Trans i18nKey={"wallet.login.button"} />
                 </ButtonAuth>

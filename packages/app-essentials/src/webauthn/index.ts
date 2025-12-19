@@ -21,6 +21,10 @@ const rpOrigin = isRunningInProd
 /**
  * Mobile app origins for Tauri
  * - Android: APK signing key hash (changes per signing key)
+ *   ⚠️ IMPORTANT: If the Android APK signing key changes, this hash MUST be updated
+ *   to match the new signing key. The hash is used for WebAuthn Digital Asset Links
+ *   verification. To get the hash: `keytool -list -v -keystore <keystore> -alias <alias>`
+ *   then extract the SHA-256 fingerprint and base64url encode it.
  * - iOS: tauri://localhost
  */
 const androidApkOrigin =
@@ -35,7 +39,6 @@ const rpAllowedOrigins = [rpOrigin, androidApkOrigin, iosTauriOrigin];
 
 /**
  * All allowed RP IDs for backend verification
- * Include wallet-dev.frak.id for Tauri mobile apps in all environments
  */
 const rpAllowedIds = isRunningInProd
     ? ["frak.id"]
