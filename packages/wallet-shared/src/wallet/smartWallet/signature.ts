@@ -147,7 +147,7 @@ export async function signHashViaWebAuthN({
     return formatSignature({
         authenticatorIdHash: keccak256(toHex(wallet.authenticatorId)),
         rs: [signature.r, signature.s],
-        challengeOffset: BigInt(metadata.challengeIndex) + 13n,
+        challengeOffset: BigInt(metadata.challengeIndex ?? 0) + 13n,
         authenticatorData: metadata.authenticatorData,
         clientData: toHex(metadata.clientDataJSON),
     });
