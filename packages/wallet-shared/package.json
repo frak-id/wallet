@@ -37,7 +37,7 @@
     "cuer": "^0.0.3",
     "i18next": "^25.7.3",
     "idb-keyval": "^6.2.2",
-    "lucide-react": "^0.553.0",
+    "lucide-react": "^0.562.0",
     "micromark": "^4.0.2",
     "nanoid": "^5.1.6",
     "ox": "^0.9.14",

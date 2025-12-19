@@ -25,10 +25,10 @@
     "@uidotdev/usehooks": "^2.4.1",
     "class-variance-authority": "^0.7.1",
     "core-js": "^3.46.0",
-    "lucide-react": "^0.553.0",
+    "lucide-react": "^0.562.0",
     "nprogress": "^0.2.0",
     "react-dropzone": "^14.3.8",
-    "react-hook-form": "^7.66.0",
+    "react-hook-form": "^7.68.0",
     "react-loading-skeleton": "^3.5.0",
     "react-scan": "^0.4.3",
     "viem": "catalog:"

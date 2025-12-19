@@ -27,7 +27,7 @@
     "@tanstack/react-query-devtools": "catalog:",
     "@tanstack/react-query-persist-client": "catalog:",
     "@tanstack/react-router": "^1.141.6",
-    "lucide-react": "^0.553.0",
+    "lucide-react": "^0.562.0",
     "normalize.css": "^8.0.1",
     "react": "catalog:",
     "react-dom": "catalog:",
