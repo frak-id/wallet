@@ -115,7 +115,7 @@
     "@vitest/coverage-v8": "^4.0.9",
     "@vitest/ui": "^4.0.9",
     "jsdom": "^27.2.0",
-    "tsdown": "^0.16.4",
+    "tsdown": "^0.18.1",
     "typescript": "catalog:",
     "viem": "catalog:",
     "vitest": "^4.0.9"
