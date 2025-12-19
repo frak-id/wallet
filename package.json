@@ -19,7 +19,7 @@
     "knip": "^5.75.2",
     "npm-check-updates": "^19.2.0",
     "rimraf": "^6.1.2",
-    "sst": "3.17.23",
+    "sst": "3.17.25",
     "tauri-plugin-webauthn-api": "^0.2.0",
     "typedoc": "^0.28.15",
     "typedoc-plugin-frontmatter": "^1.3.1",
