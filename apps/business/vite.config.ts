@@ -6,7 +6,12 @@ import viteTsConfigPaths from "vite-tsconfig-paths";
 import { lightningCssConfig } from "../../packages/dev-tooling";
 
 export default defineConfig({
-    css: lightningCssConfig,
+    css: {
+        ...lightningCssConfig,
+        modules: {
+            localsConvention: "camelCase",
+        },
+    },
     build: {
         cssCodeSplit: false,
     },

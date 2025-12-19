@@ -7,7 +7,7 @@
     "license": "GNU GPL 3.0",
     "scripts": {
         "dev": "vite dev --port 3022",
-        "build": "vite build",
+        "build": "vite build && bun run scripts/ensure-css-linked.ts",
         "start": "PORT=3022 bun run .output/server/index.mjs",
         "start:prod": "PORT=3022 bun run .output/server/index.mjs",
         "lint": "biome lint .",
