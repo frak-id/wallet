@@ -38,11 +38,11 @@
     "@tanstack/router-plugin": "^1.141.7",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
-    "@vitejs/plugin-react": "^5.1.1",
+    "@vitejs/plugin-react": "^5.1.2",
     "lightningcss": "^1.30.2",
-    "rolldown-vite": "^7.2.5",
+    "rolldown-vite": "^7.3.0",
     "typescript": "^5",
     "vite": "catalog:",
-    "vite-tsconfig-paths": "^5.1.4"
+    "vite-tsconfig-paths": "^6.0.3"
   }
 }
