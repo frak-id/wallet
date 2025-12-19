@@ -28,7 +28,7 @@ This document provides quick reference guidelines for AI agents working on the F
 - **Language**: TypeScript. Prefer `type` over `interface`. Avoid enums; use maps.
 - **Formatting**: Biome (indent: 4 spaces, quotes: double, semicolons: always, trailing commas: ES5)
 - **Imports**: Use absolute imports `@/...` for all files
-- **Styling**: CSS Modules only. Lightning CSS (Vite apps) or PostCSS (Next.js legacy). **NO Tailwind**.
+- **Styling**: CSS Modules only. Lightning CSS for all Vite apps. **NO Tailwind**.
   - Use BEM or similar methodology for CSS class names (e.g., `block__element--modifier`)
   - Lightning CSS: 100x faster, centralized config in `packages/dev-tooling/src/vite.ts`
   - Browser targets: Chrome 100+, Safari 14+, Firefox 91+, Edge 100+
@@ -39,7 +39,7 @@ This document provides quick reference guidelines for AI agents working on the F
   - Event handlers: `handle` prefix (e.g., `handleClick`, `handleKeyDown`)
   - Favor named exports for components
 - **Error Handling**: Avoid `try/catch` unless necessary for abstraction or error translation
-- **Performance**: Critical priority. Minimize `use client`, `useEffect`, and `setState` in Next.js
+- **Performance**: Critical priority. Minimize `useEffect` and `setState`. Optimize re-renders.
 - **State Management**: Zustand for client state (always use individual selectors, avoid subscribing to entire store)
 - **Best Practices**: Follow SOLID and DRY principles. Focus on performance and readability.
 
@@ -47,7 +47,6 @@ This document provides quick reference guidelines for AI agents working on the F
 
 - **`apps/wallet/`** - TanStack Router user wallet (SSR disabled, module-based architecture)
 - **`apps/business/`** - TanStack Start business dashboard (SSR enabled, primary dashboard)
-- **`apps/dashboard/`** - Next.js 15 business dashboard (legacy, standalone output)
 - **`apps/listener/`** - Iframe communication app for SDK interactions
 - **`apps/dashboard-admin/`** - TanStack Router admin interface
 

@@ -151,7 +151,6 @@ export const Route = createFileRoute("/campaigns")({
 ## Important Notes
 
 - Always use `bun` as the package manager (never npm, pnpm, or yarn)
-- Add "use client" directive to all Zustand store files
 - Use CSS Modules for styling (Tailwind is NOT used)
 - Run `bun run typecheck` before committing changes
 - Follow module-based architecture for new features

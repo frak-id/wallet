@@ -9,7 +9,7 @@
  * This file imports shared setup files and mocks:
  * - react-testing-library-setup.ts: RTL cleanup and jest-dom matchers
  * - react-setup.ts: BigInt serialization for Zustand
- * - wallet-mocks.ts: Wagmi, React Router, WebAuthn, IndexedDB mocks
+ * - wallet-mocks.ts: Wagmi, TanStack Router, WebAuthn, IndexedDB mocks
  * - shared-setup.ts: Browser API mocks (crypto, IntersectionObserver, MessageChannel)
  * - apps-setup.ts: Environment variables
  *

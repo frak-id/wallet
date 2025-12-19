@@ -252,7 +252,7 @@ bun run build:binary       # Build binary executable
 
 **JWT Strategy:**
 - `JwtContext.wallet` and `JwtContext.walletSdk`
-- Iron Session for Next.js business dashboard
+- Business dashboard authentication via TanStack Start
 
 ## Common Workflows
 

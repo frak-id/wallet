@@ -17,7 +17,7 @@ function useIsClient() {
 }
 
 /**
- * Hack to work around next.js hydration
+ * Wrapper to prevent SSR hydration mismatch issues
  * @see https://github.com/uidotdev/usehooks/issues/218
  */
 export const ClientOnly: FC<ClientOnlyProps> = ({ children }) => {

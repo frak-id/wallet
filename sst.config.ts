@@ -45,7 +45,7 @@ export default $config({
             await import("./infra/gcp/dev.ts");
             await import("./infra/gcp/wallet.ts");
             await import("./infra/gcp/business.ts");
-            await import("./infra/dashboard.ts");
+            await import("./infra/dashboard-admin.ts");
             await import("./infra/example.ts");
 
             // SDK build command helper
@@ -61,6 +61,6 @@ export default $config({
             return;
         }
 
-        await import("./infra/dashboard.ts");
+        await import("./infra/dashboard-admin.ts");
     },
 });

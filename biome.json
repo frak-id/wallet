@@ -11,8 +11,6 @@
             "!**/cdn",
             "!**/node_modules",
             "!**/.sst",
-            "!**/.open-next",
-            "!**/.next",
             "!**/.output",
             "!**/.nitro",
             "!**/tsconfig.json",

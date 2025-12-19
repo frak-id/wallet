@@ -1,6 +1,6 @@
 ---
 description: This rule apply to every frontends in the monorepo
-globs: *.tsx, *.css, apps/dashboard/**/*.ts, apps/wallet/**/*, packages/wallet-shared/**/*.ts, sdk/**/*.ts
+globs: *.tsx, *.css, apps/wallet/**/*, packages/wallet-shared/**/*.ts, sdk/**/*.ts
 alwaysApply: false
 ---
 # Monorepo Frontend Rules
@@ -9,7 +9,6 @@ alwaysApply: false
 
 In the repo we have multiple frontend:
  - `apps/business`: Business dashboard built with TanStack Start for companies, SaaS dashboard with blockchain interaction.
- - `apps/dashboard`: Legacy Next.js business dashboard (being replaced by apps/business).
  - `apps/wallet`: User facing SPA application with high workloads, can also be loaded via an iframe (uses TanStack Router).
  - `apps/dashboard-admin`: Admin interface built with TanStack Router.
  - `apps/listener`: Iframe communication app for SDK interactions.
@@ -67,7 +66,6 @@ Use these tags to find relevant documentation and resources:
 - Use functional components and hooks
 - Follow React best practices
 - Use Zustand for global state management in all frontend apps
-- Always add "use client" directive to store files for Next.js compatibility
 - Use individual selectors for optimal performance: `const value = store((state) => state.value)`
 - Avoid subscribing to entire store: `const store = useStore()` causes unnecessary re-renders
 - Store files should use persist middleware for localStorage synchronization when needed

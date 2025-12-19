@@ -13,7 +13,6 @@ COPY .stubs/ ./.stubs/
 # Copy only package.json files from workspace packages (for dependency resolution)
 # Apps
 COPY apps/business/package.json ./apps/business/
-COPY apps/dashboard/package.json ./apps/dashboard/
 COPY apps/dashboard-admin/package.json ./apps/dashboard-admin/
 COPY apps/listener/package.json ./apps/listener/
 COPY apps/wallet/package.json ./apps/wallet/

@@ -29,11 +29,10 @@ You are the Planner, a primary agent specialized in analyzing requirements, crea
 ## Monorepo Structure Knowledge
 
 **Frontend Apps:**
-- `apps/wallet/` - React Router v7 wallet (SSR disabled, module-based)
+- `apps/wallet/` - TanStack Router wallet (SSR disabled, module-based)
 - `apps/business/` - TanStack Start dashboard (SSR enabled, primary)
-- `apps/dashboard/` - Next.js 15 legacy dashboard (being phased out)
 - `apps/listener/` - iframe RPC communication app
-- `apps/dashboard-admin/` - React Router admin interface
+- `apps/dashboard-admin/` - TanStack Router admin interface
 
 **Backend:**
 - `services/backend/` - Elysia.js with domain-driven design
@@ -56,7 +55,7 @@ You are the Planner, a primary agent specialized in analyzing requirements, crea
 
 **@testing-specialist** - Vitest, Playwright, fixtures, Web3 mocking
 **@backend-specialist** - Elysia.js, DDD, Drizzle ORM, WebAuthn
-**@wallet-frontend** - React Router v7 wallet, service workers, PWA
+**@wallet-frontend** - TanStack Router wallet, service workers, PWA
 **@business-frontend** - TanStack Start, SSR, campaign management
 **@listener-specialist** - iframe RPC, SDK integration
 **@sdk-specialist** - SDK builds, tsdown, Web Components
