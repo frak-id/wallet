@@ -55,17 +55,17 @@
   "devDependencies": {
     "@frak-labs/test-foundation": "workspace:*",
     "@testing-library/jest-dom": "^6.9.1",
-    "@testing-library/react": "^16.3.0",
+    "@testing-library/react": "^16.3.1",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "@vitejs/plugin-react": "^5.1.2",
-    "@vitest/coverage-v8": "^4.0.9",
-    "@vitest/ui": "^4.0.9",
+    "@vitest/coverage-v8": "^4.0.16",
+    "@vitest/ui": "^4.0.16",
     "bun-types": "latest",
-    "jsdom": "^27.2.0",
-    "msw": "^2.12.1",
+    "jsdom": "^27.3.0",
+    "msw": "^2.12.4",
     "typescript": "catalog:",
-    "vitest": "^4.0.9"
+    "vitest": "^4.0.16"
   }
 }

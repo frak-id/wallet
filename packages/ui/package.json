@@ -37,16 +37,16 @@
     "@frak-labs/app-essentials": "workspace:*",
     "@frak-labs/test-foundation": "workspace:*",
     "@testing-library/jest-dom": "^6.9.1",
-    "@testing-library/react": "^16.3.0",
+    "@testing-library/react": "^16.3.1",
     "@types/nprogress": "^0.2.3",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "@vitejs/plugin-react": "^5.1.2",
-    "@vitest/coverage-v8": "^4.0.9",
-    "@vitest/ui": "^4.0.9",
-    "jsdom": "^27.2.0",
+    "@vitest/coverage-v8": "^4.0.16",
+    "@vitest/ui": "^4.0.16",
+    "jsdom": "^27.3.0",
     "react": "catalog:",
     "typescript": "^5",
-    "vitest": "^4.0.9"
+    "vitest": "^4.0.16"
   }
 }

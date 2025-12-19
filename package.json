@@ -12,10 +12,10 @@
     "@pulumi/kubernetes": "^4.23.0",
     "@pulumi/pulumi": "^3.177.0",
     "@testing-library/jest-dom": "^6.9.1",
-    "@testing-library/react": "^16.3.0",
+    "@testing-library/react": "^16.3.1",
     "@types/node": "^24.10.1",
     "@vitejs/plugin-react": "^5.1.2",
-    "@vitest/coverage-v8": "^4.0.9",
+    "@vitest/coverage-v8": "^4.0.16",
     "knip": "^5.69.1",
     "npm-check-updates": "^19.1.2",
     "rimraf": "^6.1.0",
@@ -27,7 +27,7 @@
     "typedoc-plugin-markdown": "^4.9.0",
     "typescript": "^5.9.3",
     "vite-tsconfig-paths": "^6.0.3",
-    "vitest": "^4.0.9"
+    "vitest": "^4.0.16"
   },
   "description": "Frak ecosystem packages",
   "license": "GNU GPL 3.0",
