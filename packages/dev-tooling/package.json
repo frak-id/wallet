@@ -10,7 +10,7 @@
     ".": "./src/index.ts"
   },
   "devDependencies": {
-    "rollup": "^4.53.5",
+    "rollup": "^4.54.0",
     "typescript": "^5"
   }
 }

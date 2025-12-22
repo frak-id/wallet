@@ -91,7 +91,7 @@
     "@vitest/ui": "^4.0.16",
     "jsdom": "^27.3.0",
     "react": "catalog:",
-    "tsdown": "^0.18.1",
+    "tsdown": "^0.18.2",
     "typescript": "^5",
     "viem": "catalog:",
     "vitest": "^4.0.16"
