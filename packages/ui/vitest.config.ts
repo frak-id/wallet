@@ -18,14 +18,16 @@ export default mergeConfig(
             include: [
                 "component/**/*.{test,spec}.{ts,tsx}",
                 "hook/**/*.{test,spec}.{ts,tsx}",
+                "utils/**/*.{test,spec}.{ts,tsx}",
             ],
             coverage: {
-                // Include component and hook source files for coverage
+                // Include component, hook, and utils source files for coverage
                 include: [
                     "component/**/*.tsx",
                     "component/**/*.ts",
                     "hook/**/*.ts",
                     "hook/**/*.tsx",
+                    "utils/**/*.ts",
                 ],
                 // Override shared config exclude - explicitly exclude only what we don't want
                 exclude: [
@@ -40,6 +42,8 @@ export default mergeConfig(
                     "component/**/*.spec.{ts,tsx}",
                     "hook/**/*.test.{ts,tsx}",
                     "hook/**/*.spec.{ts,tsx}",
+                    "utils/**/*.test.{ts,tsx}",
+                    "utils/**/*.spec.{ts,tsx}",
                 ],
             },
         },
