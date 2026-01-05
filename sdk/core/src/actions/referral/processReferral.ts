@@ -79,6 +79,19 @@ export async function processReferral(
         options?: ProcessReferralOptions;
     }
 ) {
+    // Early exit if we don't have any referral informations
+    if (!frakContext?.r) {
+        return "no-referrer";
+    }
+
+    // If we got a context, log an event
+    trackEvent(client, "user_referred_started", {
+        properties: {
+            referrer: frakContext?.r,
+            walletStatus: walletStatus?.key,
+        },
+    });
+
     // Helper to fetch a fresh wallet status
     let walletRequest = false;
     async function getFreshWalletStatus() {
@@ -104,16 +117,7 @@ export async function processReferral(
         const interaction = ReferralInteractionEncoder.referred({
             referrer,
         });
-        await Promise.allSettled([
-            // Send the interaction
-            sendInteraction(client, { productId, interaction }),
-            // Track the event
-            trackEvent(client, "user_referred", {
-                properties: {
-                    referrer: referrer,
-                },
-            }),
-        ]);
+        await sendInteraction(client, { productId, interaction });
     }
 
     try {
@@ -122,7 +126,8 @@ export async function processReferral(
             initialWalletStatus: walletStatus,
             getFreshWalletStatus,
             pushReferralInteraction,
-            frakContext,
+            // We can enforce this type cause of the condition at the start
+            frakContext: frakContext as Pick<FrakContext, "r">,
         });
 
         // Update the current url with the right data
@@ -131,9 +136,32 @@ export async function processReferral(
             context: options?.alwaysAppendUrl ? { r: currentWallet } : null,
         });
 
+        // Track the event
+        trackEvent(client, "user_referred_completed", {
+            properties: {
+                status,
+                referrer: frakContext?.r,
+                wallet: currentWallet,
+            },
+        });
+
         return status;
     } catch (error) {
         console.log("Error processing referral", { error });
+
+        // Track the error event
+        trackEvent(client, "user_referred_error", {
+            properties: {
+                referrer: frakContext?.r,
+                error:
+                    error instanceof FrakRpcError
+                        ? `[${error.code}] ${error.name} - ${error.message}`
+                        : error instanceof Error
+                          ? error.message
+                          : "undefined",
+            },
+        });
+
         // Update the current url with the right data
         FrakContextManager.replaceUrl({
             url: window.location?.href,
@@ -162,16 +190,14 @@ async function processReferralLogic({
     initialWalletStatus?: WalletStatusReturnType;
     getFreshWalletStatus: () => Promise<Address | undefined>;
     pushReferralInteraction: (referrer: Address) => Promise<void>;
-    frakContext?: Partial<FrakContext> | null;
+    frakContext: Pick<FrakContext, "r">;
 }) {
     // Get the current wallet, without auto displaying the modal
     let currentWallet = initialWalletStatus?.wallet;
-    if (!frakContext?.r) {
-        return { status: "no-referrer", currentWallet } as const;
-    }
 
-    // We have a referral, so if we don't have a current wallet, display the modal
+    // If we don't have a current wallet, display the modal
     if (!currentWallet) {
+        // Track the event
         currentWallet = await getFreshWalletStatus();
     }
 

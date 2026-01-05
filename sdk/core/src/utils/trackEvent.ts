@@ -4,7 +4,9 @@ export type FrakEvent =
     | "share_button_clicked"
     | "wallet_button_clicked"
     | "share_modal_error"
-    | "user_referred";
+    | "user_referred_started"
+    | "user_referred_completed"
+    | "user_referred_error";
 
 type EventProps = Record<string, unknown>;
 
