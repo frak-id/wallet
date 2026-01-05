@@ -4,6 +4,7 @@ import { isRunningLocally } from "@frak-labs/app-essentials";
 import { Elysia } from "elysia";
 import { businessApi } from "./api/business";
 import { commonApi } from "./api/common";
+import { wellKnownRoutes } from "./api/common/wellKnown";
 import { externalApi } from "./api/external";
 import { walletApi } from "./api/wallet";
 import { jobs } from "./jobs";
@@ -33,6 +34,7 @@ const app = new Elysia({
         hostname: process.env.HOSTNAME,
         stage: process.env.STAGE,
     }))
+    .use(wellKnownRoutes)
     .use(commonApi)
     .use(businessApi)
     .use(walletApi)
