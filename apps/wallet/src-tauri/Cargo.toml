@@ -25,6 +25,7 @@ tauri = { version = "2.9.5", features = [] }
 tauri-plugin-log = "2.7.1"
 tauri-plugin-safe-area-insets = "0.1.0"
 tauri-plugin-biometric = "2"
+tauri-plugin-deep-link = "2"
 
 # Android-only: Native WebAuthn via Credential Manager (iOS uses native WKWebView WebAuthn)
 # Also includes share + fs plugins for file sharing (needed for recovery file download)

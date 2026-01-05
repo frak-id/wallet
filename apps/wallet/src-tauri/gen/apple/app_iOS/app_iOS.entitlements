@@ -5,6 +5,8 @@
     <key>com.apple.developer.associated-domains</key>
     <array>
         <string>webcredentials:wallet-dev.frak.id</string>
+        <string>applinks:wallet.frak.id</string>
+        <string>applinks:wallet-dev.frak.id</string>
     </array>
 </dict>
 </plist>

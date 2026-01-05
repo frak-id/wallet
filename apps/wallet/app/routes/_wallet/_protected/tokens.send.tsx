@@ -27,8 +27,15 @@ import styles from "@/module/tokens/page/TokensSendPage.module.css";
 import { getUpdatedToken } from "@/module/tokens/utils/getUpdatedToken";
 import { validateAmount } from "@/module/tokens/utils/validateAmount";
 
+type SendSearchParams = {
+    to?: string;
+};
+
 export const Route = createFileRoute("/_wallet/_protected/tokens/send")({
     component: TokensSendPage,
+    validateSearch: (search: Record<string, unknown>): SendSearchParams => ({
+        to: typeof search.to === "string" ? search.to : undefined,
+    }),
 });
 
 type FormInput = {
@@ -159,6 +166,7 @@ const TransactionStatus = memo(function TransactionStatus({
 function TokensSendPage() {
     const { t } = useTranslation();
     const { confirm, isConfirming } = useBiometricConfirm();
+    const { to: prefillAddress } = Route.useSearch();
 
     const {
         register,
@@ -171,6 +179,12 @@ function TokensSendPage() {
         mode: "onChange",
         reValidateMode: "onChange",
     });
+
+    useEffect(() => {
+        if (prefillAddress) {
+            setValue("toAddress", prefillAddress as Hex);
+        }
+    }, [prefillAddress, setValue]);
 
     const { userBalance, refetch } = useGetUserBalance();
 
