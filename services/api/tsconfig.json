@@ -1,0 +1,23 @@
+{
+    "exclude": ["**/*.test.ts", "**/*.spec.ts", "**/__mock__/*"],
+    "compilerOptions": {
+        "baseUrl": "./src",
+        "target": "esnext",
+        "lib": ["es2023", "esnext"],
+        "module": "esnext",
+        "moduleResolution": "bundler",
+        "types": ["bun-types"],
+        "esModuleInterop": true,
+        "forceConsistentCasingInFileNames": true,
+        "strict": true,
+        "skipLibCheck": true,
+        "paths": {
+            "@api-core": ["core/index.ts"],
+            "@api-core/*": ["core/*"],
+            "@api-domains/*": ["domains/*"],
+            "@api-infrastructure": ["infrastructure/index.ts"],
+            "@api-infrastructure/*": ["infrastructure/*"],
+            "@api-interfaces/*": ["interfaces/*"]
+        }
+    }
+}

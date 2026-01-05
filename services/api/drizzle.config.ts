@@ -1,0 +1,17 @@
+import { defineConfig } from "drizzle-kit";
+
+const isProd =
+    process.env.STAGE === "prod" || process.env.STAGE === "production";
+
+export default defineConfig({
+    schema: ["src/domains/*/db/schema.ts"],
+    dialect: "postgresql",
+    dbCredentials: {
+        host: process.env.POSTGRES_HOST ?? "",
+        port: Number.parseInt(process.env.POSTGRES_PORT ?? "5432", 10),
+        database: process.env.POSTGRES_DB ?? "",
+        user: process.env.POSTGRES_USER ?? "",
+        password: process.env.POSTGRES_PASSWORD ?? "",
+    },
+    out: isProd ? "drizzle/prod/" : "drizzle/dev/",
+});
