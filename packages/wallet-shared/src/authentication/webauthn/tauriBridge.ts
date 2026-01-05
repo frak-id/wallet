@@ -26,6 +26,49 @@ import { BaseError } from "ox/Errors";
 import { extractPublicKeyFromAttestationObject } from "./coseParser";
 
 // ============================================================================
+// Android-specific error handling
+// ============================================================================
+
+/**
+ * Android Credential Manager error codes from Google Play Services FIDO2 API
+ * @see https://developers.google.com/android/reference/com/google/android/gms/fido/fido2/api/common/ErrorCode
+ */
+const AndroidCredentialErrors = {
+    /**
+     * Error 11000: SECURITY_ERR - Device security requirements not met
+     * Usually means no screen lock is configured or Google Password Manager
+     * encryption passphrase needs to be verified
+     */
+    SECURITY_ERR: "11000",
+} as const;
+
+/**
+ * User-friendly error messages for Android Credential Manager errors
+ */
+const AndroidErrorMessages: Record<string, string> = {
+    [AndroidCredentialErrors.SECURITY_ERR]:
+        "Device security setup required. Either: (1) Set up a screen lock (PIN, pattern, or password) in Settings → Security, or (2) Verify your Google Password Manager encryption passphrase in Settings → Google → Password Manager.",
+};
+
+/**
+ * Convert Android Credential Manager errors to user-friendly messages
+ * Returns the original error if no specific handling is available
+ */
+function normalizeAndroidError(error: unknown): Error {
+    const errorString = String(error);
+
+    // Check for known Android error codes
+    for (const [code, message] of Object.entries(AndroidErrorMessages)) {
+        if (errorString.includes(code)) {
+            return new Error(message);
+        }
+    }
+
+    // Fallback: wrap non-Error values
+    return error instanceof Error ? error : new Error(errorString);
+}
+
+// ============================================================================
 // Extract ox's internal types to ensure compatibility
 // ============================================================================
 
@@ -244,7 +287,7 @@ export function getTauriCreateFn(): OxCreateFn {
         } catch (e) {
             console.warn("Tauri create error", e);
             throw new BaseError("Tauri create credential error", {
-                cause: e as Error,
+                cause: normalizeAndroidError(e),
             });
         }
     };
@@ -349,7 +392,7 @@ export function getTauriGetFn(): OxGetFn {
         } catch (e) {
             console.warn("Tauri get error", e);
             throw new BaseError("Tauri get credential error", {
-                cause: e as Error,
+                cause: normalizeAndroidError(e),
             });
         }
     };
