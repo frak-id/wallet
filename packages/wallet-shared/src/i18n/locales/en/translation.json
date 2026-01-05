@@ -315,6 +315,25 @@
             "dismiss": "Dismiss inapp browser warning"
         }
     },
+    "biometrics": {
+        "locked": "Wallet Locked",
+        "unlockWith": "Use {{type}} to unlock",
+        "unlockReason": "Authenticate to access your wallet",
+        "unlock": "Unlock",
+        "error": "Authentication failed. Please try again.",
+        "settings": {
+            "title": "Biometric Lock",
+            "description": "Require biometric authentication to access your wallet",
+            "enable": "Enable biometric lock",
+            "timeout": "Lock after",
+            "timeoutImmediate": "Immediately",
+            "timeout1min": "1 minute",
+            "timeout5min": "5 minutes",
+            "timeout15min": "15 minutes",
+            "notAvailable": "Biometrics not available on this device"
+        },
+        "confirmAction": "Confirm with {{type}}"
+    },
     "error": {
         "webauthn": {
             "notAllowed": "You have cancelled the authentication process, please try again.",

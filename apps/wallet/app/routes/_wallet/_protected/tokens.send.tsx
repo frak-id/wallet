@@ -16,6 +16,7 @@ import { useTranslation } from "react-i18next";
 import type { Hex } from "viem";
 import { erc20Abi, parseUnits } from "viem";
 import { useWriteContract } from "wagmi";
+import { useBiometricConfirm } from "@/module/biometrics/hooks/useBiometricConfirm";
 import { Back } from "@/module/common/component/Back";
 import { Grid } from "@/module/common/component/Grid";
 import { TokenMax } from "@/module/tokens/component/TokenMax";
@@ -30,17 +31,11 @@ export const Route = createFileRoute("/_wallet/_protected/tokens/send")({
     component: TokensSendPage,
 });
 
-/**
- * Form input type definition for the token send form
- */
 type FormInput = {
     toAddress: Hex;
     amount: string;
 };
 
-/**
- * AddressInput component for entering the recipient address
- */
 const AddressInput = function AddressInput({
     register,
     errors,
@@ -76,9 +71,6 @@ const AddressInput = function AddressInput({
     );
 };
 
-/**
- * AmountInput component for entering the token amount
- */
 const AmountInput = function AmountInput({
     register,
     errors,
@@ -142,9 +134,6 @@ const AmountInput = function AmountInput({
     );
 };
 
-/**
- * TransactionStatus component to display transaction status
- */
 const TransactionStatus = memo(function TransactionStatus({
     isSuccess,
     isError,
@@ -167,21 +156,10 @@ const TransactionStatus = memo(function TransactionStatus({
     return null;
 });
 
-/**
- * TokensSendPage component
- *
- * This component allows users to send tokens to another address.
- * It includes:
- * - Address input for the recipient
- * - Token selection and amount input
- * - Transaction submission and status display
- *
- * @returns {JSX.Element} The rendered token send form
- */
 function TokensSendPage() {
     const { t } = useTranslation();
+    const { confirm, isConfirming } = useBiometricConfirm();
 
-    // Form control and validation
     const {
         register,
         handleSubmit,
@@ -194,15 +172,12 @@ function TokensSendPage() {
         reValidateMode: "onChange",
     });
 
-    // Get the user tokens
     const { userBalance, refetch } = useGetUserBalance();
 
-    // Set the selected token
     const [selectedToken, setSelectedToken] = useState<
         BalanceItem | undefined
     >();
 
-    // Get the write contract function
     const {
         writeContractAsync,
         data: hash,
@@ -212,19 +187,14 @@ function TokensSendPage() {
         isError,
     } = useWriteContract();
 
-    /**
-     * When the tokens change, check if the selected token has been updated
-     */
     useEffect(() => {
         if (!userBalance) return;
 
-        // If no token is selected, select the FRK token by default
         if (!selectedToken) {
             setSelectedToken(userBalance.balances[0]);
             return;
         }
 
-        // If the selected token has been updated, update the selected token
         const findTokenUpdated = getUpdatedToken({
             tokens: userBalance.balances,
             selectedToken,
@@ -232,14 +202,16 @@ function TokensSendPage() {
         if (findTokenUpdated) setSelectedToken(findTokenUpdated);
     }, [userBalance, selectedToken]);
 
-    // Submit handler that launches the transaction
     const onSubmit: SubmitHandler<FormInput> = useCallback(
         async (data) => {
             if (!selectedToken) return;
+
+            const confirmed = await confirm();
+            if (!confirmed) return;
+
             const { toAddress, amount } = data;
 
             try {
-                // Launch the transaction
                 await writeContractAsync({
                     abi: erc20Abi,
                     address: selectedToken.token,
@@ -250,17 +222,13 @@ function TokensSendPage() {
                     ],
                 });
 
-                // Reset the form
                 reset();
-
-                // Refetch the tokens
                 await refetch();
             } catch (err) {
                 console.error("Transaction failed:", err);
-                // Error is handled by useWriteContract hook
             }
         },
-        [selectedToken, writeContractAsync, reset, refetch]
+        [selectedToken, writeContractAsync, reset, refetch, confirm]
     );
 
     return (
@@ -285,8 +253,8 @@ function TokensSendPage() {
                                 <Button
                                     type={"submit"}
                                     width={"full"}
-                                    disabled={isPending}
-                                    isLoading={isPending}
+                                    disabled={isPending || isConfirming}
+                                    isLoading={isPending || isConfirming}
                                 >
                                     {t("common.send")}
                                 </Button>

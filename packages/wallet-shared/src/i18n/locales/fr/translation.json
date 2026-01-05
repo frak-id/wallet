@@ -315,6 +315,25 @@
             "dismiss": "Masquer le message"
         }
     },
+    "biometrics": {
+        "locked": "Porte-monnaie verrouillé",
+        "unlockWith": "Utilisez {{type}} pour déverrouiller",
+        "unlockReason": "Authentifiez-vous pour accéder à votre porte-monnaie",
+        "unlock": "Déverrouiller",
+        "error": "Authentification échouée. Veuillez réessayer.",
+        "settings": {
+            "title": "Verrouillage biométrique",
+            "description": "Exiger une authentification biométrique pour accéder à votre porte-monnaie",
+            "enable": "Activer le verrouillage biométrique",
+            "timeout": "Verrouiller après",
+            "timeoutImmediate": "Immédiatement",
+            "timeout1min": "1 minute",
+            "timeout5min": "5 minutes",
+            "timeout15min": "15 minutes",
+            "notAvailable": "Biométrie non disponible sur cet appareil"
+        },
+        "confirmAction": "Confirmer avec {{type}}"
+    },
     "error": {
         "webauthn": {
             "notAllowed": "Vous avez annulé le processus d'authentification, veuillez réessayer.",

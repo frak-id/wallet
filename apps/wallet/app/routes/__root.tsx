@@ -1,6 +1,7 @@
 import { isTauri } from "@frak-labs/app-essentials/utils/platform";
 import { createRootRoute, Outlet } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
+import { BiometricLock } from "@/module/biometrics/component/BiometricLock";
 import { PwaInstall } from "@/module/common/component/PwaInstall";
 import { RootProvider } from "@/module/common/provider/RootProvider";
 import { DetectPWA } from "@/module/wallet/component/DetectPWA";
@@ -33,6 +34,7 @@ function RootComponent() {
                     <DetectPWA />
                 </>
             )}
+            {isNativeApp && <BiometricLock />}
             <Outlet />
             {import.meta.env.DEV && (
                 <TanStackRouterDevtools position="bottom-right" />

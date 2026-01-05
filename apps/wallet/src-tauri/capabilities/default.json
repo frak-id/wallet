@@ -3,5 +3,10 @@
     "identifier": "default",
     "description": "enables the default permissions",
     "windows": ["main"],
-    "permissions": ["core:default", "log:default", "safe-area-insets:default"]
+    "permissions": [
+        "core:default",
+        "log:default",
+        "safe-area-insets:default",
+        "biometric:default"
+    ]
 }
