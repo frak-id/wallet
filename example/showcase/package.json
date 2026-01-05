@@ -21,7 +21,7 @@
         "@radix-ui/react-label": "^2.1.8",
         "@radix-ui/react-select": "^2.2.6",
         "@radix-ui/react-slot": "^1.2.4",
-        "@tanstack/react-router": "^1.142.8",
+        "@tanstack/react-router": "^1.144.0",
         "class-variance-authority": "^0.7.1",
         "i18next": "^25.7.3",
         "i18next-browser-languagedetector": "^8.2.0",
@@ -36,7 +36,7 @@
     },
     "devDependencies": {
         "@frak-labs/app-essentials": "workspace:*",
-        "@tanstack/router-plugin": "^1.142.8",
+        "@tanstack/router-plugin": "^1.145.4",
         "@testing-library/jest-dom": "^6.9.1",
         "@testing-library/react": "^16.3.1",
         "@types/react": "catalog:",
