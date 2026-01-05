@@ -15,6 +15,7 @@ import I18nextBrowserLanguageDetector from "i18next-browser-languagedetector";
 import { StrictMode, startTransition } from "react";
 import { createRoot } from "react-dom/client";
 import { I18nextProvider, initReactI18next } from "react-i18next";
+import { initDeepLinks } from "./utils/deepLink";
 import { initSafeAreaInsets } from "./utils/safeArea";
 
 // Setup BigInt serialization polyfill
@@ -53,9 +54,12 @@ declare module "@tanstack/react-router" {
 }
 
 async function main() {
-    // Initialize safe area insets for mobile devices
+    // Initialize Tauri-specific features for mobile devices
     if (isTauri()) {
         await initSafeAreaInsets();
+        await initDeepLinks((options) =>
+            router.navigate(options as Parameters<typeof router.navigate>[0])
+        );
     }
 
     await i18next
