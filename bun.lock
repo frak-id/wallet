@@ -522,6 +522,7 @@
         "@vitest/coverage-v8": "^4.0.16",
         "@vitest/ui": "^4.0.16",
         "bun-types": "latest",
+        "i18next-resources-for-ts": "^2.0.0",
         "jsdom": "^27.3.0",
         "msw": "^2.12.4",
         "typescript": "catalog:",

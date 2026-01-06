@@ -10,7 +10,8 @@
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
     "typecheck": "tsc --noEmit",
-    "format": "biome check --write ."
+    "format": "biome check --write .",
+    "i18n:types": "bun run i18next-resources-for-ts interface -i ./src/i18n/locales/en/ -o src/types/i18n/resources.d.ts"
   },
   "main": "./src/index.ts",
   "module": "./src/index.ts",
@@ -54,6 +55,7 @@
   },
   "devDependencies": {
     "@frak-labs/test-foundation": "workspace:*",
+    "i18next-resources-for-ts": "^2.0.0",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.1",
     "@types/node": "catalog:",

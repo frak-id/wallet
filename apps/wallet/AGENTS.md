@@ -44,7 +44,7 @@ bun run test:e2e     # Playwright E2E tests
 
 - **Module pattern**: Each feature in `app/module/{name}/` with own components, hooks, utils
 - **Route guards**: Use `_wallet` layout for authenticated routes
-- **i18n**: Translations in `public/locales/`, types via `bun run i18n:types`
+- **i18n**: Translations in `@frak-labs/wallet-shared` (`packages/wallet-shared/src/i18n/locales/`), types via `cd packages/wallet-shared && bun run i18n:types`
 - **Service Worker**: Must be built before dev/build (`bun run build:sw`)
 
 ## Anti-Patterns

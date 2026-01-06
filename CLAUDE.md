@@ -156,7 +156,7 @@ bun run changeset:release
       - `types/` - Shared TypeScript type definitions (Session, Balance, WebAuthN, etc.)
       - `common/` - Shared utilities (components, analytics via OpenPanel, storage via idb-keyval)
       - `blockchain/` - Blockchain providers (Viem, Account Abstraction, connectors)
-      - `i18n/` - Internationalization configuration (react-i18next setup)
+      - `i18n/` - Internationalization configuration (react-i18next setup, `bun run i18n:types` to regenerate types)
       - `sdk/` - SDK lifecycle utilities and event handlers
       - `providers/` - React context providers (FrakContext for SDK integration)
       - `polyfills/` - Runtime polyfills (BigInt serialization)
@@ -220,7 +220,6 @@ bun run dev          # Development (builds service worker first, then starts SST
 bun run build        # Production build (builds service worker, then TanStack Router)
 bun run build:sw     # Build service worker separately (vite --mode sw)
 bun run typecheck    # Type checking with TanStack Router typegen (run typegen first)
-bun run i18n:types   # Generate i18n types from locales
 bun run bundle:check # Analyze bundle with vite-bundle-visualizer
 ```
 
