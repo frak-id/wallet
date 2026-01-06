@@ -18,12 +18,10 @@
         "@frak-labs-example/vanilla-js",
         "@frak-labs-example/showcase",
 
-        "@frak-labs/ui",
-        "@frak-labs/backend-elysia",
-        "@frak-labs/nexus-dashboard",
         "@frak-labs/dashboard-admin",
         "@frak-labs/nexus-wallet",
-        "@frak-labs/app-essentials",
+        "@frak-labs/nexus-business",
+        "@frak-labs/nexus-listener",
         "@frak-labs/client"
     ]
 }
