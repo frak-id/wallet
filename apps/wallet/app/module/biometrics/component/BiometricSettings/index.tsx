@@ -27,11 +27,13 @@ export function BiometricSettings() {
     const [isAvailable, setIsAvailable] = useState<boolean | null>(null);
 
     useEffect(() => {
+        console.log("[BiometricSettings] isTauri:", isTauri());
         if (!isTauri()) {
             setIsAvailable(false);
             return;
         }
         checkBiometricStatus().then((status) => {
+            console.log("[BiometricSettings] status:", status);
             setIsAvailable(status.isAvailable);
         });
     }, []);

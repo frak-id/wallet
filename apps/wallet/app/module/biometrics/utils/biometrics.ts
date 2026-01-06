@@ -19,8 +19,15 @@ let biometricModule: typeof import("@tauri-apps/plugin-biometric") | null =
 async function getBiometricModule() {
     if (!isTauri()) return null;
     if (biometricModule) return biometricModule;
-    biometricModule = await import("@tauri-apps/plugin-biometric");
-    return biometricModule;
+    try {
+        console.log("[Biometrics] Loading biometric module...");
+        biometricModule = await import("@tauri-apps/plugin-biometric");
+        console.log("[Biometrics] Module loaded successfully");
+        return biometricModule;
+    } catch (error) {
+        console.error("[Biometrics] Failed to load module:", error);
+        return null;
+    }
 }
 
 export async function checkBiometricStatus(): Promise<BiometricStatus> {

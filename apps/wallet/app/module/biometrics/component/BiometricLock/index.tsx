@@ -17,6 +17,7 @@ import styles from "./index.module.css";
 export function BiometricLock() {
     const { t } = useTranslation();
     const isLocked = biometricsStore(selectIsLocked);
+    const enabled = biometricsStore((s) => s.enabled);
     const unlock = biometricsStore((s) => s.unlock);
 
     useBiometricAutoLock();
@@ -26,7 +27,12 @@ export function BiometricLock() {
     const [biometryLabel, setBiometryLabel] = useState("Biometrics");
 
     useEffect(() => {
+        console.log("[BiometricLock] enabled:", enabled, "isLocked:", isLocked);
+    }, [enabled, isLocked]);
+
+    useEffect(() => {
         checkBiometricStatus().then((status) => {
+            console.log("[BiometricLock] biometric status:", status);
             if (status.biometryType) {
                 setBiometryLabel(getBiometryTypeLabel(status.biometryType));
             }
