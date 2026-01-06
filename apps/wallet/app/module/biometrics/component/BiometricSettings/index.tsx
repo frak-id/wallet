@@ -26,58 +26,27 @@ export function BiometricSettings() {
 
     const [isAvailable, setIsAvailable] = useState<boolean | null>(null);
 
-    const [debugInfo, setDebugInfo] = useState<string>("loading...");
-
     useEffect(() => {
-        const isTauriApp = isTauri();
-        console.log("[BiometricSettings] isTauri:", isTauriApp);
-        setDebugInfo(`isTauri: ${isTauriApp}`);
-
-        if (!isTauriApp) {
+        if (!isTauri()) {
             setIsAvailable(false);
-            setDebugInfo("Not a Tauri app");
             return;
         }
 
         checkBiometricStatus()
             .then((status) => {
-                console.log("[BiometricSettings] status:", status);
-                setDebugInfo(
-                    `available: ${status.isAvailable}, type: ${status.biometryType}, error: ${status.error}`
-                );
                 setIsAvailable(status.isAvailable);
             })
-            .catch((err) => {
-                console.error("[BiometricSettings] error:", err);
-                setDebugInfo(`Error: ${err.message}`);
+            .catch(() => {
                 setIsAvailable(false);
             });
     }, []);
 
     if (isAvailable === null) {
-        return (
-            <Panel size={"small"}>
-                <Title icon={<Fingerprint size={32} />}>
-                    {t("biometrics.settings.title")}
-                </Title>
-                <p className={styles.biometricSettings__notAvailable}>
-                    {debugInfo}
-                </p>
-            </Panel>
-        );
+        return null;
     }
 
     if (!isAvailable) {
-        return (
-            <Panel size={"small"}>
-                <Title icon={<Fingerprint size={32} />}>
-                    {t("biometrics.settings.title")}
-                </Title>
-                <p className={styles.biometricSettings__notAvailable}>
-                    {t("biometrics.settings.notAvailable")} ({debugInfo})
-                </p>
-            </Panel>
-        );
+        return null;
     }
 
     const handleToggle = async (checked: boolean) => {

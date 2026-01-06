@@ -3,41 +3,24 @@ import { LogoFrakWithName } from "@frak-labs/ui/icons/LogoFrakWithName";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useBiometricAutoLock } from "@/module/biometrics/hooks/useBiometricAutoLock";
+import { useBiometryLabel } from "@/module/biometrics/hooks/useBiometryLabel";
 import {
     biometricsStore,
     selectIsLocked,
 } from "@/module/biometrics/stores/biometricsStore";
-import {
-    authenticateWithBiometrics,
-    checkBiometricStatus,
-    getBiometryTypeLabel,
-} from "@/module/biometrics/utils/biometrics";
+import { authenticateWithBiometrics } from "@/module/biometrics/utils/biometrics";
 import styles from "./index.module.css";
 
 export function BiometricLock() {
     const { t } = useTranslation();
     const isLocked = biometricsStore(selectIsLocked);
-    const enabled = biometricsStore((s) => s.enabled);
     const unlock = biometricsStore((s) => s.unlock);
 
     useBiometricAutoLock();
 
     const [isAuthenticating, setIsAuthenticating] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [biometryLabel, setBiometryLabel] = useState("Biometrics");
-
-    useEffect(() => {
-        console.log("[BiometricLock] enabled:", enabled, "isLocked:", isLocked);
-    }, [enabled, isLocked]);
-
-    useEffect(() => {
-        checkBiometricStatus().then((status) => {
-            console.log("[BiometricLock] biometric status:", status);
-            if (status.biometryType) {
-                setBiometryLabel(getBiometryTypeLabel(status.biometryType));
-            }
-        });
-    }, []);
+    const biometryLabel = useBiometryLabel();
 
     const handleUnlock = useCallback(async () => {
         setIsAuthenticating(true);

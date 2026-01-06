@@ -1,14 +1,11 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useBiometryLabel } from "@/module/biometrics/hooks/useBiometryLabel";
 import {
     biometricsStore,
     selectBiometricsEnabled,
 } from "@/module/biometrics/stores/biometricsStore";
-import {
-    authenticateWithBiometrics,
-    checkBiometricStatus,
-    getBiometryTypeLabel,
-} from "@/module/biometrics/utils/biometrics";
+import { authenticateWithBiometrics } from "@/module/biometrics/utils/biometrics";
 
 type UseBiometricConfirmOptions = {
     reason?: string;
@@ -21,15 +18,7 @@ export function useBiometricConfirm(options: UseBiometricConfirmOptions = {}) {
     const { t } = useTranslation();
     const enabled = biometricsStore(selectBiometricsEnabled);
     const [isConfirming, setIsConfirming] = useState(false);
-    const [biometryLabel, setBiometryLabel] = useState("Biometrics");
-
-    useEffect(() => {
-        checkBiometricStatus().then((status) => {
-            if (status.biometryType) {
-                setBiometryLabel(getBiometryTypeLabel(status.biometryType));
-            }
-        });
-    }, []);
+    const biometryLabel = useBiometryLabel();
 
     const confirm = useCallback(async (): Promise<boolean> => {
         if (!enabled) {
