@@ -137,8 +137,7 @@ bun run changeset:release
 ### Monorepo Structure
 - **`apps/`** - Frontend applications
   - `wallet/` - TanStack Router user wallet (SSR disabled, module-based architecture)
-  - `business/` - TanStack Start business dashboard (SSR enabled, formerly dashboard-v2)
-  - `dashboard/` - Next.js 15 business dashboard (standalone output, legacy)
+  - `business/` - TanStack Start business dashboard (SSR enabled)
   - `dashboard-admin/` - TanStack Router admin interface
   - `listener/` - Iframe communication app for SDK interactions
 - **`packages/`** - Shared internal libraries (workspace-only)
@@ -169,7 +168,6 @@ bun run changeset:release
     - **Exports**: Barrel exports in `src/index.ts` for clean imports - use `import { X } from "@frak-labs/wallet-shared"`
     - **Import Pattern**: Used 228 times across wallet (153) and listener (75) apps
     - **Known Issues**:
-      - ⚠️ Stores missing "use client" directives (breaks Next.js compatibility)
       - ⚠️ Component duplication with `ui` package (AlertDialog exists in both)
       - ⚠️ Backend type coupling via dev dependency on `@frak-labs/backend-elysia`
     - **Technical Debt**: See `docs/audit/PACKAGE_SPLIT_OPTIONS.md` for refactoring analysis (conclusion: well-organized, needs targeted fixes not full split)
@@ -190,8 +188,8 @@ bun run changeset:release
 - **`example/`** - Integration examples
 
 ### Key Technologies
-- **Frontend**: React 19, TanStack Query, Zustand, Viem, Wagmi, CSS Modules, TanStack Start, TanStack Router, Next.js 15 (legacy)
-- **Styling**: Lightning CSS for modern Vite apps (wallet, listener, business, showcase), PostCSS for Next.js (dashboard legacy only)
+- **Frontend**: React 19, TanStack Query, Zustand, Viem, Wagmi, CSS Modules, TanStack Start, TanStack Router
+- **Styling**: Lightning CSS for all Vite apps (wallet, listener, business, showcase)
 - **Backend**: Elysia.js, PostgreSQL (Drizzle ORM), MongoDB
 - **Blockchain**: Account Abstraction (ERC-4337), WebAuthn, Multi-chain support, Pimlico, ZeroDev
 - **Infrastructure**: SST v3 (AWS), Pulumi (GCP), hybrid multi-cloud deployment
@@ -207,12 +205,11 @@ bun run changeset:release
 - WebAuthn-first authentication approach with Account Abstraction
 - Wallet app uses module-based architecture (`app/module/` structure)
 - Backend follows domain-driven design (`src/domain/*/` structure)
-- **State Management**: Zustand with persist middleware across all frontend apps (wallet, dashboard, listener) for consistency and performance
+- **State Management**: Zustand with persist middleware across all frontend apps (wallet, business, listener) for consistency and performance
 - **CSS Processing**: Lightning CSS (100x faster than PostCSS) for Vite apps with centralized config in `packages/dev-tooling/src/vite.ts`
   - Targets: Chrome 100+, Safari 14+, Firefox 91+, Edge 100+ (baseline-widely-available)
   - Features: CSS nesting, CSS Modules (camelCase), autoprefixing, minification
   - Apps using Lightning CSS: wallet, listener, business, wallet-ethcc, showcase
-  - Legacy dashboard (Next.js) uses PostCSS + autoprefixer (being phased out)
 
 ### Package-Specific Commands
 
@@ -238,20 +235,10 @@ bun run typecheck    # Type checking
 bun run test         # Run Vitest tests
 ```
 
-**Dashboard Legacy (`apps/dashboard/`)**:
-```bash
-cd apps/dashboard
-bun run dev          # Next.js development with HTTPS (via SST dev)
-bun run build        # Next.js production build (standalone output)
-bun run typecheck    # Type checking
-```
-
 **State Management**:
 - All frontend apps use Zustand for global state management
 - Business stores located in `apps/business/src/stores/`
-- Dashboard (legacy) stores located in `apps/dashboard/src/stores/`
 - Stores use persist middleware for localStorage synchronization
-- Always add "use client" directive to store files for Next.js/React compatibility
 - Use individual selectors for optimal performance: `const value = store((state) => state.value)`
 - Avoid subscribing to entire store: `const store = useStore()` causes unnecessary re-renders
 

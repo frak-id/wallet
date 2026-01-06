@@ -5,7 +5,7 @@ This package (`@frak-labs/test-foundation`) contains shared test configuration a
 ## Overview
 
 **Test Projects:**
-- `wallet-unit` - Wallet app (React Router v7, jsdom environment)
+- `wallet-unit` - Wallet app (TanStack Router, jsdom environment)
 - `listener-unit` - Listener iframe app (jsdom environment)
 - `business-unit` - Business dashboard (TanStack Start, jsdom environment)
 - `wallet-shared-unit` - Shared wallet utilities package (jsdom environment)
@@ -47,7 +47,7 @@ Understanding the order in which setup files execute is critical for debugging t
    **Wallet + wallet-shared only:**
    - `wallet-mocks.ts` - Wallet-specific mocks
      - Wagmi hooks (useAccount, useConnect, useBalance, etc.)
-     - React Router hooks (via `router-mocks.ts`)
+     - TanStack Router hooks (via `router-mocks.ts`)
      - WebAuthn API (ox library)
      - IndexedDB (idb-keyval)
    - `{project}/src/test/setup-msw.ts` - MSW API mocking
@@ -452,7 +452,7 @@ import { createMockSession } from "@frak-labs/wallet-shared/test";
 
 **Special Features:**
 - MSW for API mocking (shared with wallet-shared)
-- React Router v7 mocks
+- TanStack Router mocks
 - Service worker testing support
 
 ### Listener App

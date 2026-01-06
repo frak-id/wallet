@@ -4,6 +4,7 @@ import {
     authenticatedWalletApi,
     authKey,
     getRegisterOptions,
+    getTauriCreateFn,
     sessionStore,
     trackAuthCompleted,
     trackAuthInitiated,
@@ -37,12 +38,15 @@ export function useRegister(options?: UseMutationOptions<Session>) {
             // Identify the user and track the event
             const events = [trackAuthInitiated("register")];
 
-            // Start the registration
+            // Start the registration with ox
+            // Only pass createFn if defined (Android), omit for iOS/web to use browser default
+            const tauriCreateFn = getTauriCreateFn();
             const { id, publicKey, raw } = await WebAuthnP256.createCredential({
                 ...getRegisterOptions(),
                 excludeCredentialIds: previousAuthenticators?.map(
                     (cred) => cred.authenticatorId
                 ),
+                ...(tauriCreateFn && { createFn: tauriCreateFn }),
             });
 
             // Verify it

@@ -1,3 +1,4 @@
+import { isTauri } from "@frak-labs/app-essentials/utils/platform";
 import {
     authenticatedWalletApi,
     setProfileId,
@@ -58,20 +59,30 @@ const persistOptions: PersistQueryClientProviderProps["persistOptions"] = {
 };
 
 export function RootProvider({ children }: PropsWithChildren) {
+    const isNativeApp = isTauri();
+
+    const content = (
+        <NotificationProvider>
+            {/* Only setup service worker in web mode, not in Tauri */}
+            {!isNativeApp && <SetupServiceWorker />}
+            <WagmiProviderWithDynamicConfig>
+                <SessionStateManager />
+                {children}
+            </WagmiProviderWithDynamicConfig>
+        </NotificationProvider>
+    );
+
     return (
         <PersistQueryClientProvider
             client={queryClient}
             persistOptions={persistOptions}
         >
-            <PwaInstallProvider>
-                <NotificationProvider>
-                    <SetupServiceWorker />
-                    <WagmiProviderWithDynamicConfig>
-                        <SessionStateManager />
-                        {children}
-                    </WagmiProviderWithDynamicConfig>
-                </NotificationProvider>
-            </PwaInstallProvider>
+            {/* Only provide PWA install context in web mode, not in Tauri */}
+            {isNativeApp ? (
+                content
+            ) : (
+                <PwaInstallProvider>{content}</PwaInstallProvider>
+            )}
             <ReactQueryDevtools
                 initialIsOpen={false}
                 buttonPosition={"top-right"}

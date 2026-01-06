@@ -103,9 +103,8 @@ Located in `packages/test-foundation/` workspace package (`@frak-labs/test-found
   - BigInt serialization for Zustand persist middleware
 
 - **`router-mocks.ts`** - Router mock factory functions:
-  - `setupReactRouterMock()` - For react-router (wallet, wallet-shared)
-  - `setupTanStackRouterMock()` - For @tanstack/react-router (business)
-  - Factory functions for creating custom router mocks
+  - `setupTanStackRouterMock()` - For @tanstack/react-router (wallet, wallet-shared, business)
+  - `createTanStackRouterMock()` - Factory function for creating custom router mocks
 
 - **`dom-mocks.ts`** - DOM mocking utilities:
   - `mockWindowOrigin()` - Mock window.origin property
@@ -116,7 +115,7 @@ Located in `packages/test-foundation/` workspace package (`@frak-labs/test-found
   - Wagmi hooks (useAccount, useConnect, useBalance, etc.)
   - WebAuthn API (ox library)
   - IndexedDB (idb-keyval)
-  - Uses `router-mocks.ts` for React Router mocking
+  - Uses `router-mocks.ts` for TanStack Router mocking
 
 - **`apps-setup.ts`** - Frontend app-specific setup:
   - Environment variables (STAGE, BACKEND_URL, etc.)
@@ -244,16 +243,12 @@ export default mergeConfig(
 Use router mock factories in project setup files:
 
 ```typescript
-// For react-router (wallet, wallet-shared)
-import { setupReactRouterMock } from "@frak-labs/test-foundation";
-await setupReactRouterMock();
-
-// For @tanstack/react-router (business)
+// For @tanstack/react-router (wallet, wallet-shared, business)
 import { setupTanStackRouterMock } from "@frak-labs/test-foundation";
 await setupTanStackRouterMock();
 
 // With custom state
-await setupReactRouterMock({
+await setupTanStackRouterMock({
     pathname: "/custom",
     search: "?foo=bar"
 });

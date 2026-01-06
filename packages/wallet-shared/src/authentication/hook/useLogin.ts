@@ -14,6 +14,7 @@ import { sessionStore } from "../../stores/sessionStore";
 import { userStore } from "../../stores/userStore";
 import type { Session } from "../../types/Session";
 import { authKey } from "../queryKeys/auth";
+import { getTauriGetFn } from "../webauthn/tauriBridge";
 
 /**
  * Hook that handle the registration process
@@ -46,12 +47,15 @@ export function useLogin(
             ];
 
             // Sign with WebAuthn using ox
+            // Only pass getFn if defined (Android), omit for iOS/web to use browser default
             const challenge = generatePrivateKey();
+            const tauriGetFn = getTauriGetFn();
             const { metadata, signature, raw } = await WebAuthnP256.sign({
                 credentialId: args?.lastAuthentication?.authenticatorId,
                 rpId: WebAuthN.rpId,
                 userVerification: "required",
                 challenge,
+                ...(tauriGetFn && { getFn: tauriGetFn }),
             });
             const credentialId = raw.id;
 

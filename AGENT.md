@@ -18,7 +18,7 @@
 
 ## Architecture
 - **Monorepo**: Bun workspaces with packages in `apps/`, `packages/`, `sdk/`, `services/`
-- **Key Apps**: wallet (TanStack Router), business (TanStack Start), dashboard (Next.js legacy), dashboard-admin (TanStack Router), listener (iframe)
+- **Key Apps**: wallet (TanStack Router), business (TanStack Start), dashboard-admin (TanStack Router), listener (iframe)
 - **Core Packages**: app-essentials (blockchain utils), wallet-shared (wallet/listener), ui (components)
 - **SDK**: core, legacy, react, components (external facing)
   - Uses tsdown (powered by Rolldown): NPM (ESM+CJS+types → `./dist/`) + CDN bundles (→ `./cdn/`)
@@ -28,7 +28,7 @@
 - **Language**: TypeScript only, use `types` over `interfaces`, avoid `enums` (use maps)
 - **Formatting**: Biome (4 spaces, double quotes, semicolons, ES5 trailing commas)
 - **Imports**: Absolute imports with `@/` prefix, organize imports enabled
-- **Styling**: CSS Modules with Lightning CSS (Vite apps: wallet, listener, business) or PostCSS (Next.js dashboard legacy)
+- **Styling**: CSS Modules with Lightning CSS for all Vite apps (wallet, listener, business)
   - Lightning CSS: 100x faster than PostCSS, centralized config in `packages/dev-tooling/src/vite.ts`
   - Browser targets: Chrome 100+, Safari 14+, Firefox 91+, Edge 100+
 - **Functions**: Use `function` keyword for pure functions, `async/await` over callbacks

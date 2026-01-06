@@ -23,7 +23,7 @@ COPY services/backend ./services/backend
 RUN cd services/backend && bun run build
 
 # Start a new stage for the final image
-FROM oven/bun:1.3.2
+FROM oven/bun:1.3.5
 
 WORKDIR /app
 

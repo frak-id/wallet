@@ -74,7 +74,7 @@
     "@frak-labs/frame-connector": "workspace:*",
     "@frak-labs/core-sdk": "workspace:*",
     "class-variance-authority": "^0.7.1",
-    "preact": "^10.27.2",
+    "preact": "^10.28.0",
     "preact-custom-element": "^4.6.0"
   },
   "devDependencies": {
@@ -90,13 +90,13 @@
     "@types/jsdom": "^27.0.0",
     "@types/node": "catalog:",
     "@types/preact-custom-element": "^4.0.4",
-    "@vitest/coverage-v8": "^4.0.9",
-    "@vitest/ui": "^4.0.9",
-    "jsdom": "^27.2.0",
-    "tsdown": "^0.16.4",
+    "@vitest/coverage-v8": "^4.0.16",
+    "@vitest/ui": "^4.0.16",
+    "jsdom": "^27.3.0",
+    "tsdown": "^0.18.2",
     "typescript": "^5",
-    "unplugin-lightningcss": "^0.4.3",
-    "vite-tsconfig-paths": "^5.1.4",
-    "vitest": "^4.0.9"
+    "unplugin-lightningcss": "^0.4.4",
+    "vite-tsconfig-paths": "^6.0.3",
+    "vitest": "^4.0.16"
   }
 }

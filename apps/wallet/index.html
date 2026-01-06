@@ -1,70 +1,111 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <head>
+        <meta charset="utf-8">
+        <meta
+            id="viewport"
+            name="viewport"
+            content="width=device-width, initial-scale=1, viewport-fit=cover"
+        >
+        <script>
+        // Disable pinch-to-zoom only in Tauri (native app) for better native feel
+        if (window.__TAURI_INTERNALS__) {
+            document
+                .getElementById("viewport")
+                ?.setAttribute(
+                    "content",
+                    "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+                );
+        }
+        </script>
 
-    <!-- Primary Meta Tags -->
-    <title>Frak Wallet | Your Web3 Identity & Reward Hub</title>
-    <meta name="application-name" content="Frak Wallet" />
-    <meta name="description" content="Frak Wallet: Your passkey-first smart wallet for a unified web identity. Earn rewards through website interactions, seamlessly integrate with partner sites, and manage your digital assets securely." />
-    <meta name="theme-color" content="#001432" />
-    <meta name="keywords" content="frak, frak-wallet, blockchain wallet, smart wallet, web3 identity, passkey, digital rewards ,user engagement" />
+        <!-- Primary Meta Tags -->
+        <title>Frak Wallet | Your Web3 Identity & Reward Hub</title>
+        <meta name="application-name" content="Frak Wallet">
+        <meta
+            name="description"
+            content="Frak Wallet: Your passkey-first smart wallet for a unified web identity. Earn rewards through website interactions, seamlessly integrate with partner sites, and manage your digital assets securely."
+        >
+        <meta name="theme-color" content="#001432">
+        <meta
+            name="keywords"
+            content="frak, frak-wallet, blockchain wallet, smart wallet, web3 identity, passkey, digital rewards ,user engagement"
+        >
 
-    <!-- Authors -->
-    <meta name="author" content="Frak labs" />
-    <meta name="author" content="Rodolphe Stoclin" />
-    <meta name="author" content="Quentin Nivelais" />
-    <meta name="creator" content="Frak labs" />
-    <meta name="publisher" content="Frak labs" />
+        <!-- Authors -->
+        <meta name="author" content="Frak labs">
+        <meta name="author" content="Rodolphe Stoclin">
+        <meta name="author" content="Quentin Nivelais">
+        <meta name="creator" content="Frak labs">
+        <meta name="publisher" content="Frak labs">
 
-    <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://wallet.frak.id" />
-    <meta property="og:title" content="Frak Wallet | Your Web3 Identity & Reward Hub" />
-    <meta property="og:description" content="Manage your unified web identity, earn rewards, and interact seamlessly with partner websites using our passkey-first blockchain smart wallet." />
-    <meta property="og:site_name" content="Frak Wallet" />
+        <!-- Open Graph / Facebook -->
+        <meta property="og:type" content="website">
+        <meta property="og:url" content="https://wallet.frak.id">
+        <meta
+            property="og:title"
+            content="Frak Wallet | Your Web3 Identity & Reward Hub"
+        >
+        <meta
+            property="og:description"
+            content="Manage your unified web identity, earn rewards, and interact seamlessly with partner websites using our passkey-first blockchain smart wallet."
+        >
+        <meta property="og:site_name" content="Frak Wallet">
 
-    <!-- Twitter -->
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@frak_defi" />
-    <meta name="twitter:title" content="Frak Wallet | Your Web3 Identity & Reward Hub" />
-    <meta name="twitter:description" content="Manage your unified web identity, earn rewards, and interact seamlessly with partner websites using our passkey-first blockchain smart wallet." />
+        <!-- Twitter -->
+        <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:site" content="@frak_defi">
+        <meta
+            name="twitter:title"
+            content="Frak Wallet | Your Web3 Identity & Reward Hub"
+        >
+        <meta
+            name="twitter:description"
+            content="Manage your unified web identity, earn rewards, and interact seamlessly with partner websites using our passkey-first blockchain smart wallet."
+        >
 
-    <!-- PWA -->
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-title" content="Frak Wallet" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="google" content="notranslate" />
+        <!-- PWA -->
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-title" content="Frak Wallet">
+        <meta name="apple-mobile-web-app-status-bar-style" content="default">
+        <meta name="google" content="notranslate">
 
-    <!-- Icons -->
-    <link rel="icon" href="/favicon.ico" sizes="32x32" />
-    <link rel="icon" href="/icon.svg" type="image/svg+xml" />
-    <link rel="apple-touch-icon" href="/icon-192.png" type="image/png" />
-    <link rel="manifest" href="/manifest.json" crossorigin="use-credentials" />
+        <!-- Icons -->
+        <link rel="icon" href="/favicon.ico" sizes="32x32">
+        <link rel="icon" href="/icon.svg" type="image/svg+xml">
+        <link rel="apple-touch-icon" href="/icon-192.png" type="image/png">
+        <link
+            rel="manifest"
+            href="/manifest.json"
+            crossorigin="use-credentials"
+        >
 
-    <!-- Authors -->
-    <link rel="author" href="https://frak.id/" />
-    <link rel="author" href="https://github.com/srod" />
-    <link rel="author" href="https://github.com/KONFeature" />
+        <!-- Authors -->
+        <link rel="author" href="https://frak.id/">
+        <link rel="author" href="https://github.com/srod">
+        <link rel="author" href="https://github.com/KONFeature">
 
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@100..800&display=swap" />
+        <!-- Fonts -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link
+            rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=Sora:wght@100..800&display=swap"
+        >
 
-    <!-- PWA Install Prompt Handler -->
-    <script>
+        <!-- PWA Install Prompt Handler -->
+        <script>
         window.addEventListener("beforeinstallprompt", (e) => {
             e.preventDefault();
             e.stopPropagation();
             e.stopImmediatePropagation();
             window.promptEvent = e;
         });
-    </script>
-</head>
-<body class="scrollbars">
-    <div id="root"></div>
-    <script type="module" src="/app/main.tsx"></script>
-</body>
+        </script>
+    </head>
+
+    <body class="scrollbars">
+        <div id="root"></div>
+        <script type="module" src="/app/main.tsx"></script>
+    </body>
 </html>

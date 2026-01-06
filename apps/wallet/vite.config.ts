@@ -11,40 +11,95 @@ import { lightningCssConfig, onwarn } from "../../packages/dev-tooling";
 const DEBUG = JSON.stringify(false);
 
 const isProd = process.env.STAGE?.includes("prod") ?? false;
+const isTauri = !!process.env.TAURI_CLI_RUNNING;
+
+/**
+ * Get SST secret value - handles both sst dev (plain env) and sst shell (SST_RESOURCE_* JSON format)
+ */
+function getSstSecret(name: string): string | undefined {
+    // First check plain env var (from sst dev)
+    const plainValue = process.env[name];
+    if (plainValue) return plainValue;
+
+    // Then check SST resource format (from sst shell)
+    const resourceValue = process.env[`SST_RESOURCE_${name}`];
+    if (resourceValue) {
+        try {
+            const parsed = JSON.parse(resourceValue);
+            return parsed.value;
+        } catch {
+            return undefined;
+        }
+    }
+
+    return undefined;
+}
+
+/**
+ * Get env var with fallback for Tauri builds (sst shell doesn't provide non-secret env vars)
+ */
+function getEnvWithFallback(name: string, fallback: string): string {
+    return process.env[name] ?? fallback;
+}
 
 export default defineConfig(({ mode, command }: ConfigEnv): UserConfig => {
     const isSW = mode === "sw";
 
     const baseConfig = {
+        clearScreen: false,
+        envPrefix: ["VITE_", "TAURI_"],
         define: {
-            "process.env.STAGE": JSON.stringify(process.env.STAGE),
-            "process.env.BACKEND_URL": JSON.stringify(process.env.BACKEND_URL),
-            "process.env.INDEXER_URL": JSON.stringify(process.env.INDEXER_URL),
-            "process.env.ERPC_URL": JSON.stringify(process.env.ERPC_URL),
+            "process.env.STAGE": JSON.stringify(
+                getEnvWithFallback("STAGE", "dev")
+            ),
+            "process.env.BACKEND_URL": JSON.stringify(
+                getEnvWithFallback(
+                    "BACKEND_URL",
+                    "https://backend.gcp-dev.frak.id"
+                )
+            ),
+            "process.env.INDEXER_URL": JSON.stringify(
+                getEnvWithFallback(
+                    "INDEXER_URL",
+                    "https://ponder.gcp-dev.frak.id"
+                )
+            ),
+            "process.env.ERPC_URL": JSON.stringify(
+                getEnvWithFallback(
+                    "ERPC_URL",
+                    "https://erpc.gcp-dev.frak.id/nexus-rpc/evm/"
+                )
+            ),
             "process.env.DRPC_API_KEY": JSON.stringify(
-                process.env.DRPC_API_KEY
+                getSstSecret("DRPC_API_KEY")
             ),
             "process.env.PIMLICO_API_KEY": JSON.stringify(
-                process.env.PIMLICO_API_KEY
+                getSstSecret("PIMLICO_API_KEY")
             ),
             "process.env.NEXUS_RPC_SECRET": JSON.stringify(
-                process.env.NEXUS_RPC_SECRET
+                getSstSecret("NEXUS_RPC_SECRET")
             ),
             "process.env.VAPID_PUBLIC_KEY": JSON.stringify(
-                process.env.VAPID_PUBLIC_KEY
+                getSstSecret("VAPID_PUBLIC_KEY")
             ),
             "process.env.DEBUG": JSON.stringify(DEBUG),
             "process.env.APP_VERSION": JSON.stringify(
                 process.env.COMMIT_HASH ?? "UNKNOWN"
             ),
             "process.env.FRAK_WALLET_URL": JSON.stringify(
-                process.env.FRAK_WALLET_URL
+                getEnvWithFallback(
+                    "FRAK_WALLET_URL",
+                    "https://wallet-dev.frak.id"
+                )
             ),
             "process.env.OPEN_PANEL_API_URL": JSON.stringify(
-                process.env.OPEN_PANEL_API_URL
+                getEnvWithFallback(
+                    "OPEN_PANEL_API_URL",
+                    "https://op-api.gcp.frak.id"
+                )
             ),
             "process.env.OPEN_PANEL_WALLET_CLIENT_ID": JSON.stringify(
-                process.env.OPEN_PANEL_WALLET_CLIENT_ID
+                getSstSecret("OPEN_PANEL_WALLET_CLIENT_ID")
             ),
         },
     };
@@ -80,7 +135,8 @@ export default defineConfig(({ mode, command }: ConfigEnv): UserConfig => {
                 autoCodeSplitting: true,
             }),
             viteReact(),
-            mkcert(),
+            // Skip HTTPS for Tauri dev (mobile simulators don't trust self-signed certs)
+            ...(isTauri ? [] : [mkcert()]),
             tsconfigPaths(),
             ...(isProd ? [removeConsole()] : []),
         ],
@@ -101,6 +157,16 @@ export default defineConfig(({ mode, command }: ConfigEnv): UserConfig => {
         },
         server: {
             port: 3000,
+            // For Tauri dev: tell Vite the host so HMR WebSocket can connect
+            host: isTauri ? "0.0.0.0" : "localhost",
+            // Enable HMR for Tauri by explicitly setting the WebSocket URL
+            hmr: isTauri
+                ? {
+                      protocol: "ws",
+                      host: "localhost",
+                      port: 3000,
+                  }
+                : undefined,
             proxy: {
                 // Proxy listener app from separate dev server
                 "/listener": {
@@ -109,6 +175,10 @@ export default defineConfig(({ mode, command }: ConfigEnv): UserConfig => {
                     secure: false, // Allow self-signed certs in dev
                     ws: true, // Proxy websockets if needed
                 },
+            },
+            watch: {
+                // Tell vite to ignore watching `src-tauri`
+                ignored: ["**/src-tauri/**"],
             },
         },
         build: {

@@ -8,7 +8,7 @@ import { entryPoint06Address } from "viem/account-abstraction";
 import type { AuthenticatorRepository } from "../repositories/AuthenticatorRepository";
 
 /**
- * WebAuthn authentication response structure (simplified ox format)
+ * WebAuthn authentication response structure (ox format)
  */
 type AuthenticationResponseJSON = {
     id: string;

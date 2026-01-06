@@ -11,6 +11,7 @@ import {
     toHex,
 } from "viem";
 import { readContract } from "viem/actions";
+import { getTauriGetFn } from "../../authentication";
 import { authenticationStore } from "../../stores/authenticationStore";
 import type { WebAuthNWallet } from "../../types/WebAuthN";
 import { formatSignature } from "./webAuthN";
@@ -119,11 +120,14 @@ export async function signHashViaWebAuthN({
     wallet: WebAuthNWallet;
 }) {
     // Sign with WebAuthn using ox
+    // Only pass getFn if defined (Android), omit for iOS/web to use browser default
+    const tauriGetFn = getTauriGetFn();
     const { metadata, signature, raw } = await WebAuthnP256.sign({
         challenge: hash,
         credentialId: wallet.authenticatorId,
         rpId: WebAuthN.rpId,
         userVerification: "required",
+        ...(tauriGetFn && { getFn: tauriGetFn }),
     });
 
     // Store the authentication action
@@ -143,7 +147,7 @@ export async function signHashViaWebAuthN({
     return formatSignature({
         authenticatorIdHash: keccak256(toHex(wallet.authenticatorId)),
         rs: [signature.r, signature.s],
-        challengeOffset: BigInt(metadata.challengeIndex) + 13n,
+        challengeOffset: BigInt(metadata.challengeIndex ?? 0) + 13n,
         authenticatorData: metadata.authenticatorData,
         clientData: toHex(metadata.clientDataJSON),
     });

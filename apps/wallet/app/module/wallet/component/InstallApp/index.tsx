@@ -1,3 +1,4 @@
+import { isTauri } from "@frak-labs/app-essentials/utils/platform";
 import { Button } from "@frak-labs/ui/component/Button";
 import { WebApp } from "@frak-labs/ui/icons/WebApp";
 import {
@@ -17,6 +18,15 @@ type PwaInstallState = {
 };
 
 export function InstallApp() {
+    // PWA install is not relevant for native Tauri apps
+    if (isTauri()) {
+        return null;
+    }
+
+    return <InstallAppContent />;
+}
+
+function InstallAppContent() {
     const { prompt, launchInstallation } = useAddToHomeScreenPrompt();
     const pwaInstallRef = usePwaInstallRef();
     const [pwaState, setPwaState] = useState<PwaInstallState>({

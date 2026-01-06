@@ -1,4 +1,5 @@
 import { Button } from "@frak-labs/ui/component/Button";
+import { X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { AccordionRecoveryItem } from "@/module/common/component/AccordionRecoveryItem";
 import { useDownloadRecoveryFile } from "@/module/recovery-setup/hook/useDownloadRecoveryFile";
@@ -16,7 +17,8 @@ export function Step3() {
     const recoveryOptions = recoveryStore(selectRecoveryOptions);
 
     // Download the recovery file
-    const { downloadRecoveryFileAsync } = useDownloadRecoveryFile();
+    const { downloadRecoveryFileAsync, isPending, isError, error, reset } =
+        useDownloadRecoveryFile();
 
     return (
         <AccordionRecoveryItem
@@ -25,19 +27,39 @@ export function Step3() {
         >
             <Button
                 width={"full"}
-                onClick={async () => {
+                isLoading={isPending}
+                disabled={isPending}
+                leftIcon={isError ? <X /> : undefined}
+                onClick={async (e) => {
+                    // Prevent event propagation to avoid closing accordion
+                    e.stopPropagation();
                     if (!recoveryOptions) return;
-                    await downloadRecoveryFileAsync({
-                        file: recoveryOptions.file,
-                    });
-                    // Slight delay the next step, otherwise it will be too fast
-                    setTimeout(() => {
-                        recoveryStore.getState().setStep(ACTUAL_STEP + 1);
-                    }, 1000);
+
+                    // Reset error state before retrying
+                    if (isError) {
+                        reset();
+                    }
+
+                    try {
+                        await downloadRecoveryFileAsync({
+                            file: recoveryOptions.file,
+                        });
+                        // Slight delay the next step, otherwise it will be too fast
+                        setTimeout(() => {
+                            recoveryStore.getState().setStep(ACTUAL_STEP + 1);
+                        }, 1000);
+                    } catch {
+                        // Error is captured by mutation state, no need to log here
+                    }
                 }}
             >
                 {t("wallet.recoverySetup.download")}
             </Button>
+            {isError && (
+                <span className="error">
+                    {error?.message ?? t("common.error")}
+                </span>
+            )}
         </AccordionRecoveryItem>
     );
 }

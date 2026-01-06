@@ -14,7 +14,6 @@ Project is written in TypeScript using React 19, TanStack Start, TanStack Router
 
 - Business dashboard uses Zustand for global client state
 - Store files located in `apps/business/src/stores/`
-- All stores must include "use client" directive at the top
 - Stores use persist middleware for localStorage synchronization
 - Best practices:
   - Use individual selectors: `const value = store((state) => state.value)`
@@ -54,7 +53,6 @@ Use these tags to find relevant documentation and resources:
 
 ##  Performance Optimization
 
-- Minimize 'use client' directives
 - Use TanStack Router loaders for data fetching
 - Leverage route-level code splitting
 - Optimize bundle size using Vite's built-in features

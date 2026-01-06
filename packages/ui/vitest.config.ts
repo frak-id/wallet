@@ -15,10 +15,20 @@ export default mergeConfig(
                 "./tests/vitest-setup.ts",
                 "@frak-labs/test-foundation/shared-setup",
             ],
-            include: ["component/**/*.{test,spec}.{ts,tsx}"],
+            include: [
+                "component/**/*.{test,spec}.{ts,tsx}",
+                "hook/**/*.{test,spec}.{ts,tsx}",
+                "utils/**/*.{test,spec}.{ts,tsx}",
+            ],
             coverage: {
-                // Include component source files for coverage
-                include: ["component/**/*.tsx", "component/**/*.ts"],
+                // Include component, hook, and utils source files for coverage
+                include: [
+                    "component/**/*.tsx",
+                    "component/**/*.ts",
+                    "hook/**/*.ts",
+                    "hook/**/*.tsx",
+                    "utils/**/*.ts",
+                ],
                 // Override shared config exclude - explicitly exclude only what we don't want
                 exclude: [
                     "node_modules/**",
@@ -30,6 +40,10 @@ export default mergeConfig(
                     "**/*.css", // Exclude CSS files (they can't have code coverage)
                     "component/**/*.test.{ts,tsx}",
                     "component/**/*.spec.{ts,tsx}",
+                    "hook/**/*.test.{ts,tsx}",
+                    "hook/**/*.spec.{ts,tsx}",
+                    "utils/**/*.test.{ts,tsx}",
+                    "utils/**/*.spec.{ts,tsx}",
                 ],
             },
         },

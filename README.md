@@ -16,10 +16,9 @@ Visit our comprehensive documentation at **[docs.frak.id](https://docs.frak.id)*
 ## Project Structure
 
 ### 📱 Applications (`/apps`)
-- **`wallet/`** - React Router v7 user wallet (SSR disabled, module-based architecture)
+- **`wallet/`** - TanStack Router user wallet (SSR disabled, module-based architecture)
 - **`business/`** - TanStack Start business dashboard (SSR enabled, primary dashboard)
-- **`dashboard/`** - Next.js 15 business dashboard (standalone output, legacy)
-- **`dashboard-admin/`** - React Router admin interface
+- **`dashboard-admin/`** - TanStack Router admin interface
 - **`listener/`** - Iframe communication app for SDK interactions
 
 ### 📦 Core Packages (`/packages`)
@@ -55,9 +54,8 @@ Visit our comprehensive documentation at **[docs.frak.id](https://docs.frak.id)*
 ## Technology Stack
 
 ### Frontend Stack
-- **[React Router v7](https://reactrouter.com/)** - React framework for wallet and admin apps
+- **[TanStack Router](https://tanstack.com/router)** - Type-safe routing for wallet and admin apps
 - **[TanStack Start](https://tanstack.com/start)** - Full-stack React framework for business dashboard
-- **[Next.js 15](https://nextjs.org/)** - React framework with SSR (legacy dashboard only)
 - **[TanStack Query](https://tanstack.com/query)** - Data fetching and state management
 - **[Wagmi](https://wagmi.sh/)** - Ethereum hooks for React
 - **[Viem](https://viem.sh/)** - TypeScript interface for Ethereum

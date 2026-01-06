@@ -29,6 +29,11 @@
       "types": "./src/utils/env.ts",
       "import": "./src/utils/env.ts",
       "default": "./src/utils/env.ts"
+    },
+    "./utils/platform": {
+      "types": "./src/utils/platform.ts",
+      "import": "./src/utils/platform.ts",
+      "default": "./src/utils/platform.ts"
     }
   }
 }

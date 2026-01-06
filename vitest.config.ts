@@ -15,7 +15,7 @@
  * - `vitest --coverage` - Generate coverage for all projects
  *
  * Projects:
- * - wallet-unit: Wallet app (React Router v7)
+ * - wallet-unit: Wallet app (TanStack Router)
  * - listener-unit: Listener iframe app
  * - business-unit: Business dashboard (TanStack Start)
  * - wallet-shared-unit: Shared wallet utilities package

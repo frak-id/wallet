@@ -11,3 +11,6 @@ export { ssoKey } from "./queryKeys/sso";
 
 // Utils
 export { compressedSsoToParams } from "./utils/ssoDataCompression";
+
+// WebAuthn Tauri bridge
+export { getTauriCreateFn, getTauriGetFn } from "./webauthn/tauriBridge";

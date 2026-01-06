@@ -1,73 +1,155 @@
-# Frak Wallet Agent Instructions
+# AGENTS.md
 
-This document provides quick reference guidelines for AI agents working on the Frak Wallet monorepo.
+**Generated:** 2026-01-03  
+**Commit:** bdef56f09  
+**Branch:** dev
 
-**Note**: For comprehensive documentation, see [CLAUDE.md](./CLAUDE.md) which contains detailed architecture, testing strategy, and package-specific commands. This file serves as a quick reference.
+## Overview
+
+Frak Wallet monorepo - Web3 referral tracking & rewards infrastructure. TypeScript/React/Bun stack with Account Abstraction (ERC-4337) + WebAuthn authentication.
+
+## Structure
+
+```
+frak-wallet/
+├── apps/
+│   ├── wallet/        # TanStack Router SPA - user wallet (SSR disabled)
+│   ├── business/      # TanStack Start SSR - business dashboard
+│   ├── listener/      # Iframe RPC handler for SDK communication
+│   └── dashboard-admin/  # Admin interface
+├── packages/
+│   ├── wallet-shared/ # Shared code for wallet + listener ONLY
+│   ├── ui/            # Radix-based component library
+│   ├── app-essentials/ # Core blockchain + WebAuthn config
+│   ├── client/        # Elysia Eden Treaty API client
+│   ├── dev-tooling/   # Vite configs, Lightning CSS
+│   ├── rpc/           # Published as @frak-labs/frame-connector
+│   └── test-foundation/ # Vitest shared setup + mocks
+├── sdk/
+│   ├── core/          # @frak-labs/core-sdk (NPM + CDN IIFE)
+│   ├── react/         # @frak-labs/react-sdk (NPM only)
+│   ├── components/    # @frak-labs/components (Preact Web Components)
+│   └── legacy/        # @frak-labs/nexus-sdk (backward compat)
+├── services/
+│   └── backend/       # Elysia.js API with DDD structure
+├── infra/             # SST v3 (AWS) + Pulumi (GCP)
+└── example/           # Integration examples
+```
+
+## Where to Look
+
+| Task | Location | Notes |
+|------|----------|-------|
+| Wallet features | `apps/wallet/app/module/` | Module-based architecture |
+| Business dashboard | `apps/business/src/module/` | SSR-enabled, TanStack Start |
+| SDK iframe communication | `apps/listener/app/module/hooks/` | RPC message handlers |
+| Shared wallet logic | `packages/wallet-shared/src/` | Stores, auth, blockchain |
+| UI components | `packages/ui/component/` | Radix-based, CSS Modules |
+| Core SDK actions | `sdk/core/src/actions/` | Blockchain interactions |
+| React hooks | `sdk/react/src/hook/` | 9 hooks + providers |
+| Backend domains | `services/backend/src/domain/` | auth, wallet, oracle, etc. |
+| Vite/CSS config | `packages/dev-tooling/src/vite.ts` | Lightning CSS central config |
+| Test mocks | `packages/test-foundation/src/` | Wagmi, WebAuthn, router mocks |
 
 ## Commands
 
-- **Package Manager**: Use `bun` for all operations. Never use npm, pnpm, or yarn.
-- **Development**: `bun dev`
-- **Build**: `bun run build:sdk`, `bun run build:infra`
-- **Lint**: `bun run lint`
-- **Format**: `bun run format` (Biome formatter)
-- **Typecheck**: `bun run typecheck`
-- **Test**:
-  - **CRITICAL**: Use `bun run test`, NOT `bun test`
-  - All unit tests: `bun run test` (runs all 7 Vitest projects in parallel)
-  - Single test file: `bun run test path/to/file.test.ts`
-  - Single project: `bun run test --project wallet-unit` or `bun run test --project backend-unit`
-  - Test patterns: `bun run test -t "test name pattern"`
-  - Watch mode: `bun run test:watch`
-  - Coverage: `bun run test:coverage`
-  - E2E tests: `cd apps/wallet && bun run test:e2e`
-  - Backend tests: `cd services/backend && bun run test`
+```bash
+# Package manager: Bun ONLY (never npm/pnpm/yarn)
+bun dev                    # Start SST dev server
+bun run build:sdk          # Build all SDK packages
+bun run build:infra        # Build infrastructure
 
-## Code Style
+# Code quality
+bun run lint               # Biome lint
+bun run format             # Biome format (4-space, double quotes)
+bun run typecheck          # TypeScript check all packages
 
-- **Language**: TypeScript. Prefer `type` over `interface`. Avoid enums; use maps.
-- **Formatting**: Biome (indent: 4 spaces, quotes: double, semicolons: always, trailing commas: ES5)
-- **Imports**: Use absolute imports `@/...` for all files
-- **Styling**: CSS Modules only. Lightning CSS (Vite apps) or PostCSS (Next.js legacy). **NO Tailwind**.
-  - Use BEM or similar methodology for CSS class names (e.g., `block__element--modifier`)
-  - Lightning CSS: 100x faster, centralized config in `packages/dev-tooling/src/vite.ts`
-  - Browser targets: Chrome 100+, Safari 14+, Firefox 91+, Edge 100+
-- **Patterns**: Functional and declarative programming. Avoid classes. Use early returns. Prefer async/await over callbacks.
-- **Naming**:
-  - Directories: `lowercase-with-dashes`
-  - Variables: `camelCase`, use auxiliary verbs (e.g., `isLoading`, `hasError`)
-  - Event handlers: `handle` prefix (e.g., `handleClick`, `handleKeyDown`)
-  - Favor named exports for components
-- **Error Handling**: Avoid `try/catch` unless necessary for abstraction or error translation
-- **Performance**: Critical priority. Minimize `use client`, `useEffect`, and `setState` in Next.js
-- **State Management**: Zustand for client state (always use individual selectors, avoid subscribing to entire store)
-- **Best Practices**: Follow SOLID and DRY principles. Focus on performance and readability.
+# Testing - CRITICAL: use "bun run test", NOT "bun test"
+bun run test               # All 7 Vitest projects in parallel
+bun run test --project wallet-unit  # Single project
+bun run test:coverage      # With coverage (40% target)
+cd apps/wallet && bun run test:e2e  # Playwright E2E
 
-## Key Applications
+# Deployment
+bun run deploy             # AWS dev
+bun run deploy:prod        # AWS prod
+bun run deploy-gcp:prod    # GCP prod (backend)
+```
 
-- **`apps/wallet/`** - TanStack Router user wallet (SSR disabled, module-based architecture)
-- **`apps/business/`** - TanStack Start business dashboard (SSR enabled, primary dashboard)
-- **`apps/dashboard/`** - Next.js 15 business dashboard (legacy, standalone output)
-- **`apps/listener/`** - Iframe communication app for SDK interactions
-- **`apps/dashboard-admin/`** - TanStack Router admin interface
+## Conventions
 
-## SDK Packages
+### TypeScript
+- `type` over `interface`, no enums (use maps)
+- Absolute imports: `@/...` paths
+- No `as any`, `@ts-ignore`, `@ts-expect-error`
 
-- **Build Strategy**: tsdown (powered by Rolldown) - builds NPM packages (ESM+CJS+types) and CDN bundles (IIFE/ESM)
-- **`sdk/core/`** - Core SDK (NPM: ESM+CJS, CDN: IIFE bundle)
-- **`sdk/react/`** - React hooks (NPM: ESM+CJS)
-- **`sdk/components/`** - Web Components built with Preact (NPM: ESM, CDN: ESM with code splitting)
-- **`sdk/legacy/`** - Legacy IIFE bundle for backward compatibility
-- **Build**: `bun run build:sdk` (builds all packages in dependency order)
+### Styling
+- **CSS Modules only** - NO Tailwind
+- Lightning CSS (100x faster than PostCSS)
+- BEM naming: `block__element--modifier`
+- Browser targets: Chrome 100+, Safari 14+, Firefox 91+, Edge 100+
+
+### Formatting (Biome)
+- 4-space indent, double quotes, semicolons
+- ES5 trailing commas
+- Cognitive complexity limit: 16
+
+### Patterns
+- Functional programming, avoid classes
+- Early returns, async/await (no callbacks)
+- Event handlers: `handle` prefix (`handleClick`)
+- Named exports for components
+
+### State Management
+- Zustand everywhere with persist middleware
+- **Always use individual selectors**: `store((s) => s.value)`
+- Never subscribe to entire store
+
+## Anti-Patterns
+
+| Forbidden | Reason |
+|-----------|--------|
+| `npm`, `pnpm`, `yarn` | Bun only |
+| `bun test` | Use `bun run test` (Vitest workspace) |
+| Tailwind | CSS Modules + Lightning CSS |
+| `try/catch` everywhere | Only for abstraction/translation |
+| Classes | Functional patterns preferred |
+| Type suppression | No `as any`, `@ts-ignore` |
+| Entire store subscription | Performance killer |
 
 ## Testing
 
-- **Unit Tests**: Vitest 4.0 with Projects API, co-located with source files
-  - 7 projects: wallet-unit, listener-unit, business-unit, wallet-shared-unit, core-sdk-unit, react-sdk-unit, backend-unit
-  - Frontend projects use jsdom environment; backend uses Node environment
-  - Coverage target: 40% (lines, functions, branches, statements)
-- **E2E Tests**: 13 Playwright specs in `apps/wallet/tests/specs/`
-- **Mock Strategy**: 
-  - Frontend: Mock external dependencies (Wagmi, TanStack Query, WebAuthn). See `test-setup/` for shared mocks.
-  - Backend: Mock Viem actions, Drizzle DB, WebAuthn, Bun runtime. See `services/backend/test/mock/` for mocks.
-- **Test Naming**: "should [expected behavior] when [condition]"
+- **7 Vitest projects**: wallet, listener, business, wallet-shared, core-sdk, react-sdk, backend
+- **Frontend**: jsdom environment, mock Wagmi/WebAuthn/TanStack Query
+- **Backend**: Node environment, mock Viem/Drizzle/Bun runtime
+- **E2E**: Playwright (19 specs) in `apps/wallet/tests/specs/`
+- **Mocks**: Centralized in `packages/test-foundation/src/`
+- **Naming**: "should [behavior] when [condition]"
+
+## SDK Build (tsdown)
+
+All SDK packages use tsdown (Rolldown-powered):
+
+| Package | NPM Output | CDN Output | Global |
+|---------|------------|------------|--------|
+| core | ESM+CJS → `dist/` | IIFE → `cdn/` | `FrakSDK` |
+| react | ESM+CJS → `dist/` | - | - |
+| components | ESM → `dist/` | ESM split → `cdn/` | - |
+| legacy | - | IIFE → `dist/bundle/` | `NexusSDK` |
+
+Build order: `rpc → core → legacy → react → components`
+
+## Infrastructure
+
+- **AWS (SST v3)**: Static sites (admin, examples), dev deployments
+- **GCP (Pulumi)**: Production (backend, wallet, business) on GKE
+- **Stages**: dev, prod, gcp-staging, gcp-production
+- **Docker**: Multi-stage with SDK pre-building optimization
+
+## Notes
+
+- Service worker required before wallet dev/build: `bun run build:sw`
+- TanStack Router typegen before typecheck: runs automatically
+- Drizzle schemas: `src/domain/*/db/schema.ts` pattern
+- Linked packages (Changesets): frame-connector, core-sdk, react-sdk
+- Workspace exports use `development` condition for source in monorepo

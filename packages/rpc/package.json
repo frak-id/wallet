@@ -83,7 +83,7 @@
         "@frak-labs/dev-tooling": "workspace:*",
         "@rolldown/plugin-node-polyfills": "^1.0.0",
         "@types/node": "catalog:",
-        "tsdown": "^0.16.4",
+        "tsdown": "^0.18.2",
         "typescript": "^5",
         "viem": "catalog:"
     }

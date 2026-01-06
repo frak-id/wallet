@@ -56,7 +56,7 @@ export default $config({
 - `prod` - Production environment (AWS)
 
 **Key Resources:**
-- Static sites for frontends (Next.js standalone, React Router, TanStack Start)
+- Static sites for frontends (TanStack Router, TanStack Start)
 - S3 buckets for assets
 - CloudFront distributions for CDN
 - Secrets management via SST Resource
@@ -121,10 +121,9 @@ FROM oven/bun:1.x-alpine
 const dbUrl = new sst.Secret("DatabaseUrl");
 const jwtSecret = new sst.Secret("JwtSecret");
 
-new sst.aws.Nextjs("Dashboard", {
+new sst.aws.StaticSite("Admin", {
   environment: {
     DATABASE_URL: dbUrl.value,
-    JWT_SECRET: jwtSecret.value,
   },
 });
 ```
@@ -162,18 +161,7 @@ bun run deploy-gcp:prod       # GCP production
 
 ## Static Site Deployment
 
-**Next.js Standalone** (`apps/dashboard/`):
-```typescript
-new sst.aws.Nextjs("Dashboard", {
-  path: "apps/dashboard",
-  buildCommand: "bun run build",
-  environment: {
-    // Injected at build time
-  },
-});
-```
-
-**React Router** (`apps/wallet/`, `apps/dashboard-admin/`):
+**TanStack Router** (`apps/wallet/`, `apps/dashboard-admin/`):
 ```typescript
 new sst.aws.StaticSite("Wallet", {
   path: "apps/wallet",

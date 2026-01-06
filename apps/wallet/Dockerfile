@@ -58,6 +58,9 @@ FROM nginx:1.29.1
 # Copy built static files (including pre-compressed .gz files) from builder
 COPY --from=builder /app/apps/wallet/dist /usr/share/nginx/html
 
+# Ensure .well-known files are readable
+RUN chmod -R 644 /usr/share/nginx/html/.well-known/* 2>/dev/null || true
+
 # Copy nginx configuration
 COPY apps/wallet/nginx.conf /etc/nginx/conf.d/default.conf
 

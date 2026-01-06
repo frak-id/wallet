@@ -35,6 +35,7 @@ export const registerRoutes = new Elysia()
                 );
 
             // Verify the registration response
+            // Use rpAllowedIds to accept both web (frak.id) and Tauri mobile (wallet-dev.frak.id) clients
             const verification = await verifyRegistrationResponse({
                 response:
                     registrationResponse as unknown as RegistrationResponseJSON,
@@ -42,8 +43,8 @@ export const registerRoutes = new Elysia()
                     console.log("Challenge", challenge);
                     return true;
                 },
-                expectedRPID: WebAuthN.rpId,
-                expectedOrigin: WebAuthN.rpOrigin,
+                expectedRPID: WebAuthN.rpAllowedIds,
+                expectedOrigin: WebAuthN.rpAllowedOrigins,
             });
             if (!verification.verified) {
                 log.error(
