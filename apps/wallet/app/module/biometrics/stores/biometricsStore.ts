@@ -37,25 +37,18 @@ export const biometricsStore = create<BiometricsState & BiometricsActions>()(
     persist(
         (set) => ({
             ...initialState,
-
             setEnabled: (enabled) =>
                 set({
                     enabled,
                     isLocked: false,
                     lastActiveTimestamp: enabled ? Date.now() : null,
                 }),
-
             setLockTimeout: (lockTimeout) => set({ lockTimeout }),
-
             lock: () => set({ isLocked: true }),
-
             unlock: () =>
                 set({ isLocked: false, lastActiveTimestamp: Date.now() }),
-
             updateLastActive: () => set({ lastActiveTimestamp: Date.now() }),
-
             setAvailable: (available) => set({ isAvailable: available }),
-
             setBiometryType: (biometryType) => set({ biometryType }),
         }),
         {

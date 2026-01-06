@@ -1,6 +1,6 @@
 import { Button } from "@frak-labs/ui/component/Button";
 import { LogoFrakWithName } from "@frak-labs/ui/icons/LogoFrakWithName";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useBiometricAutoLock } from "@/module/biometrics/hooks/useBiometricAutoLock";
 import { useBiometryLabel } from "@/module/biometrics/hooks/useBiometryLabel";
@@ -27,6 +27,7 @@ export function BiometricLock() {
     const [isAuthenticating, setIsAuthenticating] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const biometryLabel = useBiometryLabel();
+    const hasInitiatedUnlock = useRef(false);
 
     useEffect(() => {
         const timeoutId = setTimeout(() => {
@@ -35,14 +36,16 @@ export function BiometricLock() {
                 setBiometryType(status.biometryType);
                 if (!status.isAvailable) {
                     setEnabled(false);
-                    unlock();
                 }
             });
         }, 100);
         return () => clearTimeout(timeoutId);
-    }, [setEnabled, setAvailable, setBiometryType, unlock]);
+    }, [setEnabled, setAvailable, setBiometryType]);
 
     const handleUnlock = useCallback(async () => {
+        if (hasInitiatedUnlock.current) return;
+
+        hasInitiatedUnlock.current = true;
         setIsAuthenticating(true);
         setError(null);
 
@@ -51,6 +54,7 @@ export function BiometricLock() {
         });
 
         setIsAuthenticating(false);
+        hasInitiatedUnlock.current = false;
 
         if (result.success) {
             unlock();
@@ -60,7 +64,7 @@ export function BiometricLock() {
     }, [unlock, t]);
 
     useEffect(() => {
-        if (isLocked) {
+        if (isLocked && !hasInitiatedUnlock.current) {
             handleUnlock();
         }
     }, [isLocked, handleUnlock]);
