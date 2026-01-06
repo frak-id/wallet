@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Logout } from "@/module/authentication/component/Logout";
+import { BiometricSettings } from "@/module/biometrics/component/BiometricSettings";
 import { Grid } from "@/module/common/component/Grid";
 import { RemoveAllNotification } from "@/module/notification/component/RemoveAllNotification";
 import { PairingList } from "@/module/pairing/component/PairingList";
@@ -31,6 +32,7 @@ function SettingsPage() {
         >
             <SessionInfo />
             <CloseSession />
+            <BiometricSettings />
             <RecoveryLink />
             <RemoveAllNotification />
             <PrivateKey />

@@ -26,20 +26,45 @@ export function BiometricSettings() {
 
     const [isAvailable, setIsAvailable] = useState<boolean | null>(null);
 
+    const [debugInfo, setDebugInfo] = useState<string>("loading...");
+
     useEffect(() => {
-        console.log("[BiometricSettings] isTauri:", isTauri());
-        if (!isTauri()) {
+        const isTauriApp = isTauri();
+        console.log("[BiometricSettings] isTauri:", isTauriApp);
+        setDebugInfo(`isTauri: ${isTauriApp}`);
+
+        if (!isTauriApp) {
             setIsAvailable(false);
+            setDebugInfo("Not a Tauri app");
             return;
         }
-        checkBiometricStatus().then((status) => {
-            console.log("[BiometricSettings] status:", status);
-            setIsAvailable(status.isAvailable);
-        });
+
+        checkBiometricStatus()
+            .then((status) => {
+                console.log("[BiometricSettings] status:", status);
+                setDebugInfo(
+                    `available: ${status.isAvailable}, type: ${status.biometryType}, error: ${status.error}`
+                );
+                setIsAvailable(status.isAvailable);
+            })
+            .catch((err) => {
+                console.error("[BiometricSettings] error:", err);
+                setDebugInfo(`Error: ${err.message}`);
+                setIsAvailable(false);
+            });
     }, []);
 
     if (isAvailable === null) {
-        return null;
+        return (
+            <Panel size={"small"}>
+                <Title icon={<Fingerprint size={32} />}>
+                    {t("biometrics.settings.title")}
+                </Title>
+                <p className={styles.biometricSettings__notAvailable}>
+                    {debugInfo}
+                </p>
+            </Panel>
+        );
     }
 
     if (!isAvailable) {
@@ -49,7 +74,7 @@ export function BiometricSettings() {
                     {t("biometrics.settings.title")}
                 </Title>
                 <p className={styles.biometricSettings__notAvailable}>
-                    {t("biometrics.settings.notAvailable")}
+                    {t("biometrics.settings.notAvailable")} ({debugInfo})
                 </p>
             </Panel>
         );

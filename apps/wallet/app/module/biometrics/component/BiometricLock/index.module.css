@@ -8,7 +8,7 @@
     justify-content: center;
     gap: 32px;
     padding: 24px;
-    background: var(--background);
+    background: linear-gradient(208deg, #0d2247 0%, #0a1a36 50%, #061224 100%);
 }
 
 .lockScreen__logo {
