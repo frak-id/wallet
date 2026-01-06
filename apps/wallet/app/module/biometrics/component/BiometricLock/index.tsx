@@ -8,19 +8,39 @@ import {
     biometricsStore,
     selectIsLocked,
 } from "@/module/biometrics/stores/biometricsStore";
-import { authenticateWithBiometrics } from "@/module/biometrics/utils/biometrics";
+import {
+    authenticateWithBiometrics,
+    checkBiometricStatus,
+} from "@/module/biometrics/utils/biometrics";
 import styles from "./index.module.css";
 
 export function BiometricLock() {
     const { t } = useTranslation();
     const isLocked = biometricsStore(selectIsLocked);
     const unlock = biometricsStore((s) => s.unlock);
+    const setEnabled = biometricsStore((s) => s.setEnabled);
+    const setAvailable = biometricsStore((s) => s.setAvailable);
+    const setBiometryType = biometricsStore((s) => s.setBiometryType);
 
     useBiometricAutoLock();
 
     const [isAuthenticating, setIsAuthenticating] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const biometryLabel = useBiometryLabel();
+
+    useEffect(() => {
+        const timeoutId = setTimeout(() => {
+            checkBiometricStatus().then((status) => {
+                setAvailable(status.isAvailable);
+                setBiometryType(status.biometryType);
+                if (!status.isAvailable) {
+                    setEnabled(false);
+                    unlock();
+                }
+            });
+        }, 100);
+        return () => clearTimeout(timeoutId);
+    }, [setEnabled, setAvailable, setBiometryType, unlock]);
 
     const handleUnlock = useCallback(async () => {
         setIsAuthenticating(true);

@@ -104,7 +104,7 @@ SelectContent.displayName = SelectPrimitive.Content.displayName;
 
 const SelectLabel = ({
     ref,
-    className,
+    className = "",
     ...props
 }: ComponentPropsWithRef<typeof SelectPrimitive.Label>) => (
     <SelectPrimitive.Label

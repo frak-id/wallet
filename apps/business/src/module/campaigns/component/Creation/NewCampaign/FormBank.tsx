@@ -1,3 +1,10 @@
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@frak-labs/ui/component/Select";
 import { useEffect, useMemo } from "react";
 import { useFormContext } from "react-hook-form";
 import { toHex } from "viem";
@@ -10,13 +17,6 @@ import {
     FormItem,
     FormMessage,
 } from "@/module/forms/Form";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/module/forms/Select";
 import {
     type ProductBank,
     useGetProductFunding,

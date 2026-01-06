@@ -1,18 +1,21 @@
-import { isTauri } from "@frak-labs/app-essentials/utils/platform";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@frak-labs/ui/component/Select";
 import { Switch } from "@frak-labs/ui/component/Switch";
 import { Fingerprint } from "lucide-react";
-import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
     type BiometricLockTimeout,
     biometricsStore,
     selectBiometricsEnabled,
     selectBiometricsLockTimeout,
+    selectIsAvailable,
 } from "@/module/biometrics/stores/biometricsStore";
-import {
-    authenticateWithBiometrics,
-    checkBiometricStatus,
-} from "@/module/biometrics/utils/biometrics";
+import { authenticateWithBiometrics } from "@/module/biometrics/utils/biometrics";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
 import styles from "./index.module.css";
@@ -21,29 +24,9 @@ export function BiometricSettings() {
     const { t } = useTranslation();
     const enabled = biometricsStore(selectBiometricsEnabled);
     const lockTimeout = biometricsStore(selectBiometricsLockTimeout);
+    const isAvailable = biometricsStore(selectIsAvailable);
     const setEnabled = biometricsStore((s) => s.setEnabled);
     const setLockTimeout = biometricsStore((s) => s.setLockTimeout);
-
-    const [isAvailable, setIsAvailable] = useState<boolean | null>(null);
-
-    useEffect(() => {
-        if (!isTauri()) {
-            setIsAvailable(false);
-            return;
-        }
-
-        checkBiometricStatus()
-            .then((status) => {
-                setIsAvailable(status.isAvailable);
-            })
-            .catch(() => {
-                setIsAvailable(false);
-            });
-    }, []);
-
-    if (isAvailable === null) {
-        return null;
-    }
 
     if (!isAvailable) {
         return null;
@@ -62,8 +45,8 @@ export function BiometricSettings() {
         }
     };
 
-    const handleTimeoutChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        setLockTimeout(e.target.value as BiometricLockTimeout);
+    const handleTimeoutChange = (value: string) => {
+        setLockTimeout(value as BiometricLockTimeout);
     };
 
     return (
@@ -83,24 +66,30 @@ export function BiometricSettings() {
                         <span className={styles.biometricSettings__label}>
                             {t("biometrics.settings.timeout")}
                         </span>
-                        <select
-                            className={styles.biometricSettings__select}
+                        <Select
                             value={lockTimeout}
-                            onChange={handleTimeoutChange}
+                            onValueChange={handleTimeoutChange}
                         >
-                            <option value="immediate">
-                                {t("biometrics.settings.timeoutImmediate")}
-                            </option>
-                            <option value="1min">
-                                {t("biometrics.settings.timeout1min")}
-                            </option>
-                            <option value="5min">
-                                {t("biometrics.settings.timeout5min")}
-                            </option>
-                            <option value="15min">
-                                {t("biometrics.settings.timeout15min")}
-                            </option>
-                        </select>
+                            <SelectTrigger
+                                className={styles.biometricSettings__select}
+                            >
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="immediate">
+                                    {t("biometrics.settings.timeoutImmediate")}
+                                </SelectItem>
+                                <SelectItem value="1min">
+                                    {t("biometrics.settings.timeout1min")}
+                                </SelectItem>
+                                <SelectItem value="5min">
+                                    {t("biometrics.settings.timeout5min")}
+                                </SelectItem>
+                                <SelectItem value="15min">
+                                    {t("biometrics.settings.timeout15min")}
+                                </SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
                 )}
             </div>

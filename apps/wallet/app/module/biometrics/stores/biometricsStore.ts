@@ -3,11 +3,15 @@ import { persist } from "zustand/middleware";
 
 export type BiometricLockTimeout = "immediate" | "1min" | "5min" | "15min";
 
+export type BiometryType = "faceId" | "touchId" | "fingerprint" | "iris" | null;
+
 type BiometricsState = {
     enabled: boolean;
     lockTimeout: BiometricLockTimeout;
     isLocked: boolean;
     lastActiveTimestamp: number | null;
+    isAvailable: boolean | null;
+    biometryType: BiometryType;
 };
 
 type BiometricsActions = {
@@ -16,6 +20,8 @@ type BiometricsActions = {
     lock: () => void;
     unlock: () => void;
     updateLastActive: () => void;
+    setAvailable: (available: boolean) => void;
+    setBiometryType: (type: BiometryType) => void;
 };
 
 const initialState: BiometricsState = {
@@ -23,6 +29,8 @@ const initialState: BiometricsState = {
     lockTimeout: "immediate",
     isLocked: false,
     lastActiveTimestamp: null,
+    isAvailable: null,
+    biometryType: null,
 };
 
 export const biometricsStore = create<BiometricsState & BiometricsActions>()(
@@ -31,7 +39,11 @@ export const biometricsStore = create<BiometricsState & BiometricsActions>()(
             ...initialState,
 
             setEnabled: (enabled) =>
-                set({ enabled, isLocked: enabled, lastActiveTimestamp: null }),
+                set({
+                    enabled,
+                    isLocked: false,
+                    lastActiveTimestamp: enabled ? Date.now() : null,
+                }),
 
             setLockTimeout: (lockTimeout) => set({ lockTimeout }),
 
@@ -41,6 +53,10 @@ export const biometricsStore = create<BiometricsState & BiometricsActions>()(
                 set({ isLocked: false, lastActiveTimestamp: Date.now() }),
 
             updateLastActive: () => set({ lastActiveTimestamp: Date.now() }),
+
+            setAvailable: (available) => set({ isAvailable: available }),
+
+            setBiometryType: (biometryType) => set({ biometryType }),
         }),
         {
             name: "frak_biometrics_store",
@@ -71,6 +87,13 @@ export const selectIsLocked = (state: BiometricsState & BiometricsActions) =>
 export const selectLastActiveTimestamp = (
     state: BiometricsState & BiometricsActions
 ) => state.lastActiveTimestamp;
+
+export const selectIsAvailable = (state: BiometricsState & BiometricsActions) =>
+    state.isAvailable;
+
+export const selectBiometryType = (
+    state: BiometricsState & BiometricsActions
+) => state.biometryType;
 
 export function getLockTimeoutMs(timeout: BiometricLockTimeout): number {
     switch (timeout) {

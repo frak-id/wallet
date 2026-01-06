@@ -13,19 +13,23 @@ type AuthenticateOptions = {
     fallbackTitle?: string;
 };
 
-let biometricModule: typeof import("@tauri-apps/plugin-biometric") | null =
-    null;
+let biometricModulePromise: Promise<
+    typeof import("@tauri-apps/plugin-biometric") | null
+> | null = null;
 
-async function getBiometricModule() {
-    if (!isTauri()) return null;
-    if (biometricModule) return biometricModule;
-    try {
-        biometricModule = await import("@tauri-apps/plugin-biometric");
-        return biometricModule;
-    } catch (error) {
-        console.error("[Biometrics] Failed to load module:", error);
-        return null;
+function getBiometricModule() {
+    if (!isTauri()) return Promise.resolve(null);
+
+    if (!biometricModulePromise) {
+        biometricModulePromise = import("@tauri-apps/plugin-biometric").catch(
+            (error) => {
+                console.error("[Biometrics] Failed to load module:", error);
+                return null;
+            }
+        );
     }
+
+    return biometricModulePromise;
 }
 
 export async function checkBiometricStatus(): Promise<BiometricStatus> {

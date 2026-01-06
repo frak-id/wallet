@@ -5,7 +5,7 @@ import {
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from "@/module/forms/Select";
+} from "@frak-labs/ui/component/Select";
 import { currencyStore } from "@/stores/currencyStore";
 import styles from "./index.module.css";
 
