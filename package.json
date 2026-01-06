@@ -37,7 +37,7 @@
     "build:infra": "sst build --stage dev",
     "build:sdk": "bun run --cwd packages/rpc build && dirs=(core legacy react components); for d in ${dirs[@]}; do bun run --cwd sdk/${d} build; done",
     "changeset": "changeset",
-    "changeset:release": "bun run --cwd packages/rpc publish && bun publish --cwd packages/rpc && dirs=(core legacy react components); for d in ${dirs[@]}; do bun run --cwd sdk/${d} publish && bun publish --cwd sdk/${d}; done",
+    "changeset:release": "bun run --cwd packages/rpc publish && bun publish --tolerate-republish --cwd packages/rpc && dirs=(core legacy react components); for d in ${dirs[@]}; do bun run --cwd sdk/${d} publish && bun publish --tolerate-republish --cwd sdk/${d}; done",
     "changeset:version": "changeset version && bun install --lockfile-only",
     "clean": "rimraf .sst/dist/ .sst/artifacts/",
     "deploy": "sst deploy --stage dev",
