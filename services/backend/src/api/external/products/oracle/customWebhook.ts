@@ -3,12 +3,11 @@ import { t, validateBodyHmac } from "@backend-utils";
 import { isRunningInProd } from "@frak-labs/app-essentials";
 import { eq } from "drizzle-orm";
 import { Elysia } from "elysia";
-import { concatHex, keccak256, toHex } from "viem";
 import {
-    type CustomWebhookDto,
-    OracleContext,
-    productOracleTable,
-} from "../../../../domain/oracle";
+    merchantWebhooksTable,
+    PurchasesContext,
+} from "../../../../domain/purchases";
+import type { CustomWebhookDto } from "../../../../domain/purchases/dto/CustomWebhook";
 
 export const customWebhook = new Elysia()
     .guard({
@@ -22,9 +21,7 @@ export const customWebhook = new Elysia()
             productId: t.Optional(t.Hex()),
         }),
     })
-    // Request pre validation hook
     .onBeforeHandle(({ headers }) => {
-        // If it's a test and not running in prod, early exit
         if (headers["x-test"] && isRunningInProd) {
             throw new Error("Purchase test aren't accepted in production");
         }
@@ -32,51 +29,40 @@ export const customWebhook = new Elysia()
     .post(
         "/custom",
         async ({ params: { productId }, body, headers }) => {
-            // Try to parse the body as a custom webhook type and ensure the type validity
             const webhookData = JSON.parse(body) as CustomWebhookDto;
             if (!webhookData?.id) {
                 throw new Error("Invalid body");
             }
 
-            // Find the product oracle for this product id
             if (!productId) {
                 throw new Error("Missing product id");
             }
-            const oracle = await db.query.productOracleTable.findFirst({
-                where: eq(productOracleTable.productId, productId),
+            const webhook = await db.query.merchantWebhooksTable.findFirst({
+                where: eq(merchantWebhooksTable.productId, productId),
             });
-            if (!oracle) {
-                log.warn({ productId }, "Product oracle not found");
-                throw new Error("Product oracle not found");
+            if (!webhook) {
+                log.warn({ productId }, "Merchant webhook not found");
+                throw new Error("Merchant webhook not found");
             }
 
-            // Validate the body hmac
             validateBodyHmac({
                 body,
-                secret: oracle.hookSignatureKey,
+                secret: webhook.hookSignatureKey,
                 signature: headers["x-hmac-sha256"],
             });
-
-            // Prebuild some data before insert
-            const purchaseId = keccak256(
-                concatHex([oracle.productId, toHex(webhookData.id)])
-            );
 
             log.debug(
                 {
                     productId,
-                    purchaseId,
                     purchaseExternalId: webhookData.id,
                     status: webhookData.status,
                 },
                 "Handling new custom webhook event"
             );
 
-            // Insert purchase and items
-            await OracleContext.services.webhook.upsertPurchase({
+            await PurchasesContext.services.webhook.upsertPurchase({
                 purchase: {
-                    oracleId: oracle.id,
-                    purchaseId,
+                    webhookId: webhook.id,
                     externalId: webhookData.id,
                     externalCustomerId: webhookData.customerId,
                     purchaseToken: webhookData.token,
@@ -86,7 +72,6 @@ export const customWebhook = new Elysia()
                 },
                 purchaseItems:
                     webhookData.items?.map((item) => ({
-                        purchaseId,
                         externalId: item.productId,
                         price: item.price,
                         name: item.name,
@@ -96,7 +81,6 @@ export const customWebhook = new Elysia()
                     })) ?? [],
             });
 
-            // Return the success state
             return "ok";
         },
         {

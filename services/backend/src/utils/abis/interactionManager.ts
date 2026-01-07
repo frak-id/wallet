@@ -16,12 +16,6 @@ export const interactionManager_getInteractionContract = {
     type: "function",
     inputs: [{ name: "_productId", internalType: "uint256", type: "uint256" }],
     name: "getInteractionContract",
-    outputs: [
-        {
-            name: "interactionContract",
-            internalType: "contract ProductInteractionDiamond",
-            type: "address",
-        },
-    ],
+    outputs: [{ name: "", internalType: "address", type: "address" }],
     stateMutability: "view",
 } as const;

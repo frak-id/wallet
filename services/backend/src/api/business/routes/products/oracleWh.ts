@@ -4,9 +4,9 @@ import { productRoles } from "@frak-labs/app-essentials";
 import { count, eq, max, min } from "drizzle-orm";
 import { Elysia, status } from "elysia";
 import {
-    productOracleTable,
-    purchaseStatusTable,
-} from "../../../../domain/oracle";
+    merchantWebhooksTable,
+    purchasesTable,
+} from "../../../../domain/purchases";
 import { businessSessionContext } from "../../middleware/session";
 
 export const oracleWhRoutes = new Elysia({ prefix: "/oracleWebhook" })
@@ -23,39 +23,35 @@ export const oracleWhRoutes = new Elysia({ prefix: "/oracleWebhook" })
 
         return { productId };
     })
-    // Status of the oracle around a product
     .get(
         "/status",
         async ({ productId, businessSession }) => {
-            // Get the current oracle
-            const currentOracles = await db
+            const currentWebhooks = await db
                 .select()
-                .from(productOracleTable)
-                .where(eq(productOracleTable.productId, productId))
+                .from(merchantWebhooksTable)
+                .where(eq(merchantWebhooksTable.productId, productId))
                 .limit(1);
-            const currentOracle = currentOracles[0];
-            if (!currentOracle) {
+            const currentWebhook = currentWebhooks[0];
+            if (!currentWebhook) {
                 return { setup: false };
             }
 
-            // Get some stats about the oracle
             const stats = await db
                 .select({
-                    firstPurchase: min(purchaseStatusTable.createdAt),
-                    lastPurchase: max(purchaseStatusTable.createdAt),
-                    lastUpdate: max(purchaseStatusTable.updatedAt),
+                    firstPurchase: min(purchasesTable.createdAt),
+                    lastPurchase: max(purchasesTable.createdAt),
+                    lastUpdate: max(purchasesTable.updatedAt),
                     totalPurchaseHandled: count(),
                 })
-                .from(purchaseStatusTable)
-                .where(eq(purchaseStatusTable.oracleId, currentOracle.id))
+                .from(purchasesTable)
+                .where(eq(purchasesTable.webhookId, currentWebhook.id))
                 .execute();
 
-            // Return the oracle status
             return {
                 setup: true,
-                platform: currentOracle.platform,
+                platform: currentWebhook.platform,
                 webhookSigninKey: businessSession
-                    ? currentOracle.hookSignatureKey
+                    ? currentWebhook.hookSignatureKey
                     : "redacted",
                 stats: businessSession
                     ? {
@@ -95,7 +91,6 @@ export const oracleWhRoutes = new Elysia({ prefix: "/oracleWebhook" })
             ]),
         }
     )
-    // Setup of an oracle for a product
     .post(
         "/setup",
         async ({ body, productId, businessSession }) => {
@@ -118,16 +113,15 @@ export const oracleWhRoutes = new Elysia({ prefix: "/oracleWebhook" })
 
             const { hookSignatureKey, platform } = body;
 
-            // Insert or update it
             await db
-                .insert(productOracleTable)
+                .insert(merchantWebhooksTable)
                 .values({
                     productId,
                     hookSignatureKey,
                     platform,
                 })
                 .onConflictDoUpdate({
-                    target: [productOracleTable.productId],
+                    target: [merchantWebhooksTable.productId],
                     set: {
                         hookSignatureKey,
                         platform,
@@ -160,20 +154,18 @@ export const oracleWhRoutes = new Elysia({ prefix: "/oracleWebhook" })
             return status(401, "Unauthorized");
         }
 
-        // Check if we already got a setup for this product (we could only have one)
-        const existingOracle = await db.query.productOracleTable.findFirst({
-            with: { productId },
+        const existingWebhook = await db.query.merchantWebhooksTable.findFirst({
+            where: eq(merchantWebhooksTable.productId, productId),
         });
-        if (!existingOracle) {
+        if (!existingWebhook) {
             return status(
                 404,
-                `Product ${productId} have no current oracle setup`
+                `Product ${productId} has no current webhook setup`
             );
         }
 
-        // Remove it
         await db
-            .delete(productOracleTable)
-            .where(eq(productOracleTable.productId, productId))
+            .delete(merchantWebhooksTable)
+            .where(eq(merchantWebhooksTable.productId, productId))
             .execute();
     });

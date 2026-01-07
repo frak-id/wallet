@@ -2,14 +2,15 @@ import { db, log } from "@backend-infrastructure";
 import { t, validateBodyHmac } from "@backend-utils";
 import { eq } from "drizzle-orm";
 import { Elysia } from "elysia";
-import { concatHex, keccak256, toHex } from "viem";
 import {
-    OracleContext,
-    productOracleTable,
+    merchantWebhooksTable,
+    PurchasesContext,
     type purchaseStatusEnum,
-    type WooCommerceOrderStatus,
-    type WooCommerceOrderUpdateWebhookDto,
-} from "../../../../domain/oracle";
+} from "../../../../domain/purchases";
+import type {
+    WooCommerceOrderStatus,
+    WooCommerceOrderUpdateWebhookDto,
+} from "../../../../domain/purchases/dto/WooCommerceWebhook";
 
 export const wooCommerceWebhook = new Elysia()
     .guard({
@@ -28,7 +29,6 @@ export const wooCommerceWebhook = new Elysia()
             productId: t.Optional(t.Hex()),
         }),
     })
-    // Request pre validation hook
     .onBeforeHandle(({ headers }) => {
         if (!headers["x-wc-webhook-signature"]) {
             throw new Error("Missing signature");
@@ -37,51 +37,35 @@ export const wooCommerceWebhook = new Elysia()
             throw new Error("Unsupported woo commerce webhook");
         }
     })
-    // Shopify only give us 5sec to answer, all the heavy logic should be in a cron running elsewhere,
-    //   here we should just validate the request and save it
     .post(
         "/woocommerce",
-        async ({
-            // Query
-            params: { productId },
-            body,
-            headers,
-        }) => {
-            // Try to parse the body as a shopify webhook type and ensure the type validity
+        async ({ params: { productId }, body, headers }) => {
             const webhookData = JSON.parse(
                 body
             ) as WooCommerceOrderUpdateWebhookDto;
 
-            // Find the product oracle for this product id
             if (!productId) {
                 throw new Error("Missing product id");
             }
-            const oracle = await db.query.productOracleTable.findFirst({
-                where: eq(productOracleTable.productId, productId),
+            const webhook = await db.query.merchantWebhooksTable.findFirst({
+                where: eq(merchantWebhooksTable.productId, productId),
             });
-            if (!oracle) {
-                log.warn({ productId }, "Product oracle not found");
-                throw new Error("Product oracle not found");
+            if (!webhook) {
+                log.warn({ productId }, "Merchant webhook not found");
+                throw new Error("Merchant webhook not found");
             }
 
-            // Validate the body hmac
             validateBodyHmac({
                 body,
-                secret: oracle.hookSignatureKey,
+                secret: webhook.hookSignatureKey,
                 signature: headers["x-wc-webhook-signature"],
             });
 
-            // Prebuild some data before insert
             const purchaseStatus = mapOrderStatus(webhookData.status);
-            const purchaseId = keccak256(
-                concatHex([oracle.productId, toHex(webhookData.id)])
-            );
 
-            // Insert purchase and items
-            await OracleContext.services.webhook.upsertPurchase({
+            await PurchasesContext.services.webhook.upsertPurchase({
                 purchase: {
-                    oracleId: oracle.id,
-                    purchaseId,
+                    webhookId: webhook.id,
                     externalId: webhookData.id.toString(),
                     externalCustomerId: webhookData.customer_id.toString(),
                     purchaseToken:
@@ -91,7 +75,6 @@ export const wooCommerceWebhook = new Elysia()
                     currencyCode: webhookData.currency,
                 },
                 purchaseItems: webhookData.line_items.map((item) => ({
-                    purchaseId,
                     externalId: item.product_id.toString(),
                     price: item.price.toString(),
                     name: item.name,
@@ -101,7 +84,6 @@ export const wooCommerceWebhook = new Elysia()
                 })),
             });
 
-            // Return the success state
             return "ok";
         },
         {

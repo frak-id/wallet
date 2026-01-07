@@ -2,20 +2,15 @@ import { log } from "@backend-infrastructure";
 import type Elysia from "elysia";
 import { status } from "elysia";
 
-/**
- * Map legacy routes to the new ones, using the existing controllers
- */
 export const legacyRouteMapper = (app: Elysia) =>
     app.all(
         "*",
         async ({ path, headers, request, body }) => {
-            // Redirect previous domain based routes to the new ones
             const newPath = pathMapper(path);
             if (!newPath) {
                 return status(404, "Not found");
             }
 
-            // Construct the new path for the webhook handler
             const newUrl = new URL(newPath, `http://${headers.host}`);
             log.debug(
                 {
@@ -26,11 +21,9 @@ export const legacyRouteMapper = (app: Elysia) =>
                 "Handling legacy route, calling the new controller via the app invocation"
             );
 
-            // Create a new request with the updated path
             const newRequest = new Request(newUrl.toString(), {
                 method: request.method,
                 headers: request.headers,
-                // TypeScript 5.9 buffer type fix: Cast to string since parse: "text" guarantees string body
                 body: (body as string | null) || null,
                 mode: request.mode,
                 referrer: request.referrer,
@@ -38,11 +31,8 @@ export const legacyRouteMapper = (app: Elysia) =>
                 credentials: request.credentials,
             });
 
-            // Let the external api handle the request
-            console.log("Calliiiiiing");
             const response = await app.handle(newRequest);
 
-            // Strip down CORS related headers from the response since it would clash with the existing CORS handler
             const headersToStrip = [
                 "access-control-allow-origin",
                 "access-control-allow-credentials",
@@ -67,24 +57,7 @@ export const legacyRouteMapper = (app: Elysia) =>
         }
     );
 
-/**
- * Map legacy routes to the new ones
- * @param path - The path to map
- * @returns The new path
- */
 function pathMapper(path: string) {
-    // interactions/listenForPurchase -> wallet/interactions/listenForPurchase
-    if (path.startsWith("/interactions/listenForPurchase")) {
-        return "/wallet/interactions/listenForPurchase";
-    }
-
-    // interactions/webhook/{productId}/{action} -> ext/products/{productId}/webhook/interactions/{action}
-    if (path.startsWith("/interactions/webhook/")) {
-        const productId = path.split("/")[3];
-        const action = path.split("/")[4];
-        return `/ext/products/${productId}/webhook/interactions/${action}`;
-    }
-
     // oracle/{type}/{productId}/hook -> ext/products/{productId}/webhook/oracle/{type}
     if (path.startsWith("/oracle") && path.endsWith("/hook")) {
         const type = path.split("/")[2];
