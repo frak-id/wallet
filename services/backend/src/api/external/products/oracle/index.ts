@@ -6,7 +6,7 @@ import { wooCommerceWebhook } from "./wooCommerceWebhook";
 
 export const oracleWebhook = new Elysia({ prefix: "/oracle" })
     .onBeforeHandle(({ path, headers }) => {
-        log.debug({ path, headers }, "Handling oracle webhook");
+        log.debug({ path, headers }, "Handling purchase webhook");
     })
     .use(shopifyWebhook)
     .use(wooCommerceWebhook)
@@ -21,9 +21,8 @@ export const oracleWebhook = new Elysia({ prefix: "/oracle" })
                 reqPath: path,
                 reqHeaders: headers,
             },
-            "Error while handling oracle webhook"
+            "Error while handling purchase webhook"
         );
-        // We always keep a 200 status code for webhook
         set.status = 200;
         return `ko: ${msg ?? "Unknown error"}`;
     });

@@ -5,7 +5,7 @@ import { Elysia } from "elysia";
 import { businessApi } from "./api/business";
 import { commonApi } from "./api/common";
 import { externalApi } from "./api/external";
-import { walletApi } from "./api/wallet";
+import { userApi } from "./api/user";
 import { jobs } from "./jobs";
 import { legacyRouteMapper } from "./legacyRoutes";
 
@@ -35,7 +35,7 @@ const app = new Elysia({
     }))
     .use(commonApi)
     .use(businessApi)
-    .use(walletApi)
+    .use(userApi)
     .use(externalApi)
     // All the jobs
     .use(jobs)
@@ -51,5 +51,5 @@ log.info(`Running at ${app.server?.hostname}:${app.server?.port}`);
 export type App = typeof app;
 
 export type BusinessApp = typeof businessApi;
-export type WalletApp = typeof walletApi;
+export type UserApp = typeof userApi;
 export type CommonApp = typeof commonApi;

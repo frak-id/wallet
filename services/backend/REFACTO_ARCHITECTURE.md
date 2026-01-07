@@ -140,16 +140,16 @@ The **Identity Graph** resolves multiple identifiers to a single human entity.
 ```
 1. Anonymous User Arrives
    ├── SDK generates fingerprint-based anonymous ID
-   ├── POST /identity/resolve { anonId, merchantId }
+   ├── POST /user/identity/resolve { anonId, merchantId }
    └── Backend creates/returns identityGroupId
 
 2. User Makes Purchase (Guest Checkout)
    ├── Webhook arrives with customer email/ID
-   ├── SDK on order confirmation: POST /identity/link-order { anonId, orderId }
+   ├── SDK on order confirmation: POST /user/identity/link-order { anonId, orderId }
    └── Backend correlates: anonId → identityGroup ← merchantCustomerId
 
 3. User Connects Wallet
-   ├── POST /identity/connect-wallet { identityGroupId, wallet, signature }
+   ├── POST /user/identity/connect-wallet { identityGroupId, wallet, signature }
    ├── Backend sets wallet as anchor on identity group
    ├── Backend calls: RewardsHub.resolveUserId(identityGroupId, wallet)
    └── All locked rewards now assigned to wallet
@@ -459,7 +459,7 @@ type RewardAttestation = Array<{
        │                       │  ─────────────────────►
        │                       │                       │
        │                       │         ┌─────────────────────────────┐
-       │                       │         │ SDK: POST /track/arrival    │
+       │                       │         │ SDK: POST /user/track/arrival│
        │                       │         │ { anonId, ref: 0xAlice }    │
        │                       │         │                             │
        │                       │         │ Backend:                    │
@@ -523,7 +523,7 @@ T0: Click referral link (anonymous)
 T1: Purchase as guest (email: bob@email.com)
     │
     │  Webhook arrives with: { customerId: "shop_123", email: "bob@..." }
-    │  SDK on confirmation: POST /identity/link-order { anonId, orderId }
+    │  SDK on confirmation: POST /user/identity/link-order { anonId, orderId }
     │  Backend links: merchantCustomerId "shop_123" → identityGroup "grp_abc"
     │  
     │  Attribution finds touchpoint from T0
@@ -544,7 +544,7 @@ T2: Next settlement batch (hourly)
 
 T3: Bob connects wallet (weeks later)
     │
-    │  POST /identity/connect-wallet { groupId: "grp_abc", wallet: 0xBob }
+    │  POST /user/identity/connect-wallet { groupId: "grp_abc", wallet: 0xBob }
     │  
     │  Backend:
     │  - Update identityGroup: wallet = 0xBob
@@ -583,7 +583,7 @@ rewards: [5 USDC]            rewards: [3 USDC]
 When Bob connects wallet 0xBob on Device A:
 ─────────────────────────────────────────────
 
-1. POST /identity/connect-wallet { groupId: "grp_A", wallet: 0xBob }
+1. POST /user/identity/connect-wallet { groupId: "grp_A", wallet: 0xBob }
 
 2. Backend checks: does any other group have 0xBob?
    - No → set grp_A.wallet = 0xBob
@@ -595,7 +595,7 @@ When Bob connects wallet 0xBob on Device A:
 Later, Bob connects same wallet on Device B:
 ────────────────────────────────────────────
 
-1. POST /identity/connect-wallet { groupId: "grp_B", wallet: 0xBob }
+1. POST /user/identity/connect-wallet { groupId: "grp_B", wallet: 0xBob }
 
 2. Backend checks: does any other group have 0xBob?
    - Yes! grp_A already has 0xBob

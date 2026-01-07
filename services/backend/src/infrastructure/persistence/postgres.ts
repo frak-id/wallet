@@ -1,27 +1,28 @@
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import {
-    backendTrackerTable,
-    interactionSimulationStatus,
-    interactionsPurchaseTrackerTable,
-    pendingInteractionsTable,
-    pushedInteractionsTable,
-} from "../../domain/interactions";
-import { pushTokensTable } from "../../domain/notifications";
+    touchpointsTable,
+    touchpointSourceEnum,
+} from "../../domain/attribution";
 import {
-    productOracleTable,
-    purchaseItemTable,
-    purchaseStatusEnum,
-    purchaseStatusTable,
-} from "../../domain/oracle";
+    identityGroupsTable,
+    identityNodesTable,
+    identityTypeEnum,
+} from "../../domain/identity";
+import { merchantsTable } from "../../domain/merchant";
+import { pushTokensTable } from "../../domain/notifications";
 import {
     pairingSignatureRequestTable,
     pairingTable,
 } from "../../domain/pairing";
+import {
+    merchantWebhooksTable,
+    purchaseItemsTable,
+    purchaseStatusEnum,
+    purchasesTable,
+    webhookPlatformEnum,
+} from "../../domain/purchases";
 
-/**
- * Postgres master client
- */
 const postgresDb = postgres({
     host: process.env.POSTGRES_HOST,
     port: Number.parseInt(process.env.POSTGRES_PORT ?? "5432", 10),
@@ -30,26 +31,21 @@ const postgresDb = postgres({
     password: process.env.POSTGRES_PASSWORD,
 });
 
-/**
- * Master DB connection
- */
 export const db = drizzle({
     client: postgresDb,
     schema: {
-        // Interaction domain
-        pendingInteractionsTable,
-        interactionSimulationStatus,
-        pushedInteractionsTable,
-        interactionsPurchaseTrackerTable,
-        backendTrackerTable,
-        // Notification domain
+        touchpointsTable,
+        touchpointSourceEnum,
+        identityGroupsTable,
+        identityNodesTable,
+        identityTypeEnum,
+        merchantsTable,
         pushTokensTable,
-        // Oracle domain
-        productOracleTable,
+        merchantWebhooksTable,
         purchaseStatusEnum,
-        purchaseStatusTable,
-        purchaseItemTable,
-        // Pairing domain
+        purchasesTable,
+        purchaseItemsTable,
+        webhookPlatformEnum,
         pairingTable,
         pairingSignatureRequestTable,
     },

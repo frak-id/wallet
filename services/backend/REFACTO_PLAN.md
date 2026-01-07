@@ -253,12 +253,12 @@ export class IdentityResolutionService {
 ### 2.3 Identity API
 
 ```typescript
-// domain/identity/api/routes.ts
-POST /identity/resolve          // Anonymous ID → identity group
-POST /identity/link-customer    // Link merchant customer ID
-POST /identity/link-order       // Link order ID for guest checkout correlation
-POST /identity/connect-wallet   // Set wallet anchor
-GET  /identity/group/:id        // Get group details (authenticated)
+// api/user/identity/routes.ts
+POST /user/identity/resolve          // Anonymous ID → identity group
+POST /user/identity/link-customer    // Link merchant customer ID
+POST /user/identity/link-order       // Link order ID for guest checkout correlation
+POST /user/identity/connect-wallet   // Set wallet anchor
+GET  /user/identity/group/:id        // Get group details (authenticated)
 ```
 
 ### 2.4 SDK Changes for Identity
@@ -357,8 +357,8 @@ interface AttributionResult {
 ### 3.3 Track API
 
 ```typescript
-// domain/attribution/api/routes.ts
-POST /track/arrival    // Record touchpoint (SDK calls this on ?ref=)
+// api/user/track/arrival.ts
+POST /user/track/arrival    // Record touchpoint (SDK calls this on ?ref=)
 ```
 
 ### 3.4 Deliverables
@@ -776,7 +776,7 @@ function buildAttestation(events: Array<{ event: string; timestamp: Date }>): st
    - status: pending → ready_to_claim (locked)
    
 4. Later: user connects wallet
-   - POST /identity/connect-wallet
+   - POST /user/identity/connect-wallet
    - Backend updates identityGroup.wallet
    - Backend calls: RewardsHub.resolveUserId(identityGroupId, wallet)
    - All locked rewards now assigned to wallet
