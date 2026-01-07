@@ -16,12 +16,12 @@ export default defineConfig({
         cssCodeSplit: false,
         rollupOptions: {
             output: {
-                // Use stable CSS filename for SSR (hash changes break deployment)
                 assetFileNames: (assetInfo) => {
-                    if (assetInfo.name?.endsWith(".css")) {
-                        return "assets/styles.css";
+                    // CSS modules bundle gets stable name, others keep hash
+                    if (assetInfo.names?.[0] === "style.css") {
+                        return "assets/modules.css";
                     }
-                    return "assets/[name].[hash][extname]";
+                    return "assets/[name]-[hash][extname]";
                 },
             },
         },

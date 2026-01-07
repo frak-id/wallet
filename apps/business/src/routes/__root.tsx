@@ -111,8 +111,8 @@ export const Route = createRootRoute({
         ],
         links: [
             { rel: "stylesheet", href: appCss },
-            // CSS modules bundle (stable filename, no hash)
-            { rel: "stylesheet", href: "/assets/styles.css" },
+            // CSS modules bundle (stable filename for SSR deployment)
+            { rel: "stylesheet", href: "/assets/modules.css" },
             {
                 rel: "preconnect",
                 href: "https://fonts.googleapis.com",
