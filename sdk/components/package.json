@@ -51,6 +51,11 @@
       "import": "./dist/buttonShare.js",
       "types": "./dist/buttonShare.d.ts"
     },
+    "./openInApp": {
+      "development": "./src/components/OpenInAppButton/index.ts",
+      "import": "./dist/openInApp.js",
+      "types": "./dist/openInApp.d.ts"
+    },
     "./cdn": {
       "import": "./cdn/components.js"
     },
