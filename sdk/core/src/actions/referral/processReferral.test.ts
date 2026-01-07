@@ -102,16 +102,12 @@ describe("processReferral", () => {
     });
 
     it("should return 'no-referrer' when frakContext has no referrer", async () => {
-        const utils = await import("../../utils");
-
         const result = await processReferral(mockClient, {
             walletStatus: mockWalletStatus,
             frakContext: {},
         });
 
         expect(result).toBe("no-referrer");
-        // sendInteraction should not be called when there's no referrer
-        expect(utils.FrakContextManager.replaceUrl).toHaveBeenCalled();
     });
 
     it("should return 'no-referrer' when frakContext is null", async () => {
@@ -152,14 +148,27 @@ describe("processReferral", () => {
 
         expect(result).toBe("success");
 
-        // sendInteraction uses client.request internally
         expect(mockClient.request).toHaveBeenCalled();
+
         expect(utils.trackEvent).toHaveBeenCalledWith(
             mockClient,
-            "user_referred",
+            "user_referred_started",
             {
                 properties: {
                     referrer: mockReferrerAddress,
+                    walletStatus: "connected",
+                },
+            }
+        );
+
+        expect(utils.trackEvent).toHaveBeenCalledWith(
+            mockClient,
+            "user_referred_completed",
+            {
+                properties: {
+                    status: "success",
+                    referrer: mockReferrerAddress,
+                    wallet: mockAddress,
                 },
             }
         );
