@@ -14,6 +14,17 @@ export default defineConfig({
     },
     build: {
         cssCodeSplit: false,
+        rollupOptions: {
+            output: {
+                // Use stable CSS filename for SSR (hash changes break deployment)
+                assetFileNames: (assetInfo) => {
+                    if (assetInfo.name?.endsWith(".css")) {
+                        return "assets/styles.css";
+                    }
+                    return "assets/[name].[hash][extname]";
+                },
+            },
+        },
     },
     plugins: [
         viteTsConfigPaths({
