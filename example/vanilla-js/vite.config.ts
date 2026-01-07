@@ -12,10 +12,10 @@ export default defineConfig(({ mode }) => {
     // Use local when: running locally (no SST) OR in development mode
     const useLocal = isRunningLocally || mode === "development";
 
-    // In local development, use local bundle
-    // Otherwise, use CDN
+    // In local development, use local loader directly
+    // Otherwise, use CDN components.js (which loads from CDN)
     const scriptSrc = useLocal
-        ? `${bundleDir}/components.js`
+        ? `${bundleDir}/loader.js`
         : "https://cdn.jsdelivr.net/npm/@frak-labs/components";
 
     return {

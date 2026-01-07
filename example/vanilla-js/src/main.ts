@@ -8,29 +8,10 @@ async function init() {
             import("@frak-labs/components/dist/buttonWallet.css"),
             import("@frak-labs/components/dist/buttonShare.js"),
             import("@frak-labs/components/dist/buttonShare.css"),
+            import("@frak-labs/components/dist/openInApp.js"),
+            import("@frak-labs/components/dist/openInApp.css"),
         ]);
     }
-
-    const walletUrl =
-        process.env.NODE_ENV === "production"
-            ? "https://wallet-dev.frak.id"
-            : "https://localhost:3000";
-
-    window.FrakSetup = {
-        config: {
-            walletUrl,
-            metadata: {
-                name: "Vanilla JS",
-                lang: "fr",
-                currency: "eur",
-            },
-        },
-        modalWalletConfig: {
-            metadata: {
-                position: "left",
-            },
-        },
-    };
 }
 
 init();

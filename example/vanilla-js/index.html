@@ -5,6 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Example Vanilla JS</title>
     <link rel="icon" href="/favicon.ico" sizes="32x32"/>
+    <script>
+        // Setup FrakSetup
+        window.FrakSetup = {
+            config: {
+                walletUrl: window.location.hostname === 'localhost' ? 'http://localhost:3000' : 'https://wallet-dev.frak.id',
+                metadata: {
+                    name: "Vanilla JS",
+                    lang: "fr",
+                    currency: "eur",
+                },
+            },
+            modalWalletConfig: {
+                metadata: {
+                    position: "left",
+                },
+            },
+        };
+    </script>
     <script type="module" src="/src/main.ts"></script>
     <%- injectScript %>
     <%- injectReactScan %>
@@ -30,6 +48,10 @@
         frak-button-wallet .override {
             background-color: black;
         }
+        frak-open-in-app .override {
+            background-color: black;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -37,6 +59,8 @@
 <frak-button-share classname="button" show-wallet></frak-button-share>
 <br />
 <frak-button-share classname="button" use-reward text="Share! You will earn {REWARD}" no-reward-text="Share and earn!"></frak-button-share>
+<br />
+<frak-open-in-app></frak-open-in-app>
 <frak-button-wallet use-reward></frak-button-wallet>
 </body>
 </html>
