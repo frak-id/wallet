@@ -564,13 +564,16 @@ export { isMobile } from "./common/utils/isMobile";
 - [x] Add tests for auth code generation/validation (8 tests passing)
 
 ### Phase 2: Wallet App
-**Status:** ⏳ Not Started  
-**Completed:** -
+**Status:** ✅ Completed  
+**Completed:** January 8, 2026
 
-- [ ] Create `/open/login` route
-- [ ] Create `OpenLoginFlow` component
-- [ ] Update deep link handler for Tauri
-- [ ] Test on iOS simulator
+- [x] Create `/open/login` route (`apps/wallet/app/routes/open/login.tsx`)
+- [x] Create `OpenLoginFlow` component (`apps/wallet/app/module/open-login/`)
+- [x] Create hooks: `useGenerateMobileAuthCode`, `useMobileLoginRedirect`
+- [x] Update deep link handler for Tauri (`apps/wallet/app/utils/deepLink.ts`)
+- [x] Add i18n translations for EN/FR
+- [x] Add tests (10 tests passing)
+- [ ] Test on iOS simulator (pending manual verification)
 
 ### Phase 3: SDK Integration
 **Status:** ⏳ Not Started  

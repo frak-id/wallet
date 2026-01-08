@@ -1,0 +1,23 @@
+.openLogin__grid {
+    text-align: center;
+    gap: 1rem;
+}
+
+.openLogin__title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.openLogin__subtitle {
+    color: var(--color-text-secondary);
+    margin: 0;
+}
+
+.openLogin__redirecting {
+    color: var(--color-text-secondary);
+}
+
+.openLogin__error {
+    color: var(--color-error);
+}
