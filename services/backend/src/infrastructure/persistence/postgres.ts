@@ -4,6 +4,7 @@ import {
     touchpointsTable,
     touchpointSourceEnum,
 } from "../../domain/attribution";
+import { campaignRulesTable } from "../../domain/campaign";
 import {
     identityGroupsTable,
     identityNodesTable,
@@ -34,6 +35,7 @@ const postgresDb = postgres({
 export const db = drizzle({
     client: postgresDb,
     schema: {
+        campaignRulesTable,
         touchpointsTable,
         touchpointSourceEnum,
         identityGroupsTable,
