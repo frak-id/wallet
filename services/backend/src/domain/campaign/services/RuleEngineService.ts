@@ -1,4 +1,5 @@
 import { log } from "@backend-infrastructure";
+import { ReferralService } from "../../referral";
 import type { CampaignRuleSelect } from "../db/schema";
 import { CampaignRuleRepository } from "../repositories/CampaignRuleRepository";
 import type {
@@ -8,7 +9,7 @@ import type {
     RuleContext,
     TimeContext,
 } from "../types";
-import { RewardCalculator } from "./RewardCalculator";
+import { type ReferralChainMember, RewardCalculator } from "./RewardCalculator";
 import { RuleConditionEvaluator } from "./RuleConditionEvaluator";
 
 type EvaluateRulesParams = {
@@ -32,17 +33,20 @@ export class RuleEngineService {
     private readonly repository: CampaignRuleRepository;
     private readonly conditionEvaluator: RuleConditionEvaluator;
     private readonly rewardCalculator: RewardCalculator;
+    private readonly referralService: ReferralService;
 
     constructor(
         repository?: CampaignRuleRepository,
         conditionEvaluator?: RuleConditionEvaluator,
-        rewardCalculator?: RewardCalculator
+        rewardCalculator?: RewardCalculator,
+        referralService?: ReferralService
     ) {
         this.repository = repository ?? new CampaignRuleRepository();
         this.conditionEvaluator =
             conditionEvaluator ?? new RuleConditionEvaluator();
         this.rewardCalculator =
             rewardCalculator ?? new RewardCalculator(this.conditionEvaluator);
+        this.referralService = referralService ?? new ReferralService();
     }
 
     async evaluateRules(
@@ -76,6 +80,7 @@ export class RuleEngineService {
             const result = await this.evaluateSingleCampaign(
                 campaign,
                 fullContext,
+                params.merchantId,
                 params.referrerIdentityGroupId
             );
 
@@ -107,6 +112,7 @@ export class RuleEngineService {
     private async evaluateSingleCampaign(
         campaign: CampaignRuleSelect,
         context: RuleContext,
+        merchantId: string,
         referrerIdentityGroupId?: string
     ): Promise<{
         matched: boolean;
@@ -128,11 +134,30 @@ export class RuleEngineService {
             };
         }
 
+        const hasChainedReward = campaign.rule.rewards.some(
+            (r) => r.recipient === "referrer" && r.chaining
+        );
+
+        let referralChain: ReferralChainMember[] | undefined;
+        if (hasChainedReward) {
+            const maxDepth = Math.max(
+                ...campaign.rule.rewards
+                    .filter((r) => r.recipient === "referrer" && r.chaining)
+                    .map((r) => r.chaining?.maxDepth ?? 5)
+            );
+            referralChain = await this.referralService.getReferralChain({
+                merchantId,
+                identityGroupId: context.user.identityGroupId,
+                maxDepth,
+            });
+        }
+
         const { calculated, errors } = this.rewardCalculator.calculateAll(
             campaign.rule.rewards,
             context,
             campaign.id,
-            referrerIdentityGroupId
+            referrerIdentityGroupId,
+            referralChain
         );
 
         if (calculated.length === 0) {

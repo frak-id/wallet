@@ -1,8 +1,8 @@
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import {
-    touchpointsTable,
     touchpointSourceEnum,
+    touchpointsTable,
 } from "../../domain/attribution";
 import { campaignRulesTable } from "../../domain/campaign";
 import {
@@ -23,6 +23,7 @@ import {
     purchasesTable,
     webhookPlatformEnum,
 } from "../../domain/purchases";
+import { referralLinksTable } from "../../domain/referral";
 
 const postgresDb = postgres({
     host: process.env.POSTGRES_HOST,
@@ -36,6 +37,7 @@ export const db = drizzle({
     client: postgresDb,
     schema: {
         campaignRulesTable,
+        referralLinksTable,
         touchpointsTable,
         touchpointSourceEnum,
         identityGroupsTable,

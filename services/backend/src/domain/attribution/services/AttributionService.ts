@@ -1,9 +1,10 @@
 import type { Address } from "viem";
+import { ReferralService } from "../../referral";
 import type { TouchpointSourceData } from "../db/schema";
 import {
-    TouchpointRepository,
     type CreateTouchpointParams,
     type Touchpoint,
+    TouchpointRepository,
 } from "../repositories/TouchpointRepository";
 
 export type TouchpointSource =
@@ -19,6 +20,7 @@ export type RecordTouchpointParams = {
     sourceData: TouchpointSourceData;
     landingUrl?: string;
     lookbackDays?: number;
+    referrerIdentityGroupId?: string;
 };
 
 export type AttributionResult = {
@@ -30,10 +32,15 @@ export type AttributionResult = {
 
 export class AttributionService {
     private readonly touchpointRepository: TouchpointRepository;
+    private readonly referralService: ReferralService;
 
-    constructor(touchpointRepository?: TouchpointRepository) {
+    constructor(
+        touchpointRepository?: TouchpointRepository,
+        referralService?: ReferralService
+    ) {
         this.touchpointRepository =
             touchpointRepository ?? new TouchpointRepository();
+        this.referralService = referralService ?? new ReferralService();
     }
 
     async recordTouchpoint(
@@ -48,7 +55,20 @@ export class AttributionService {
             lookbackDays: params.lookbackDays,
         };
 
-        return this.touchpointRepository.create(createParams);
+        const touchpoint = await this.touchpointRepository.create(createParams);
+
+        if (
+            params.source === "referral_link" &&
+            params.referrerIdentityGroupId
+        ) {
+            await this.referralService.registerReferral({
+                merchantId: params.merchantId,
+                referrerIdentityGroupId: params.referrerIdentityGroupId,
+                refereeIdentityGroupId: params.identityGroupId,
+            });
+        }
+
+        return touchpoint;
     }
 
     async attributeConversion(params: {
