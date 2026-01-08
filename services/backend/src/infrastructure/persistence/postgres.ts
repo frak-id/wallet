@@ -24,6 +24,14 @@ import {
     webhookPlatformEnum,
 } from "../../domain/purchases";
 import { referralLinksTable } from "../../domain/referral";
+import {
+    assetLogsTable,
+    assetStatusEnum,
+    assetTypeEnum,
+    interactionLogsTable,
+    interactionTypeEnum,
+    recipientTypeEnum,
+} from "../../domain/rewards";
 
 const postgresDb = postgres({
     host: process.env.POSTGRES_HOST,
@@ -52,5 +60,11 @@ export const db = drizzle({
         webhookPlatformEnum,
         pairingTable,
         pairingSignatureRequestTable,
+        interactionLogsTable,
+        interactionTypeEnum,
+        assetLogsTable,
+        assetStatusEnum,
+        assetTypeEnum,
+        recipientTypeEnum,
     },
 });
