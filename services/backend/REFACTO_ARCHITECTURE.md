@@ -155,7 +155,7 @@ The **Identity Graph** resolves multiple identifiers to a single human entity.
    └── All locked rewards now assigned to wallet
 ```
 
-### 3. Campaign Engine (Web2 Rule Engine)
+### 3. Campaign Engine (Web2 Rule Engine) ✅ IMPLEMENTED
 
 Campaigns define reward rules using a **JSON-based rule engine**.
 
@@ -168,18 +168,20 @@ Campaigns define reward rules using a **JSON-based rule engine**.
 │  name: string                                                           │
 │  priority: int (higher = evaluated first)                               │
 │  rule: JSON {                                                           │
-│      trigger: "purchase" | "referral_purchase" | "signup" | "custom"   │
+│      trigger: "purchase" | "referral_purchase" | "signup" | ...        │
 │      conditions: [                                                      │
 │          { field: "purchase.amount", operator: "gte", value: 50 }      │
 │          { field: "attribution.source", operator: "eq", value: "..." } │
 │      ]                                                                  │
 │      rewards: [                                                         │
-│          { recipient: "referrer", type: "token", amount: 10, ... }     │
+│          { recipient: "referrer", type: "token", amount: 10,           │
+│            chaining: { userPercent: 20, deperditionPerLevel: 50 } }    │
 │          { recipient: "referee", type: "token", percent: 5, ... }      │
 │      ]                                                                  │
 │  }                                                                      │
-│  budget: JSON { daily: 1000, total: 50000, currency: "USDC" }          │
-│  budgetUsed: JSON { daily: 0, total: 0 }  (real-time tracking)         │
+│  metadata: JSON { goal, specialCategories, territories }               │
+│  budgetConfig: JSON [{ label, durationInSeconds, amount }, ...]        │
+│  budgetUsed: JSON { [label]: { resetAt?, used } }                      │
 │  expiresAt: timestamp | null                                            │
 │  deactivatedAt: timestamp | null                                        │
 │                                                                         │
@@ -190,20 +192,67 @@ Campaigns define reward rules using a **JSON-based rule engine**.
 
 | Type | Description | Settlement |
 |------|-------------|------------|
-| `token` | Crypto token (USDC, etc.) | On-chain via RewardsHub |
+| `fixed` | Fixed amount (e.g., 10 USDC) | On-chain via RewardsHub |
+| `percentage` | % of purchase amount | On-chain via RewardsHub |
+| `tiered` | Amount based on thresholds | On-chain via RewardsHub |
+| `range` | Beta distribution (min/max multiplier) | On-chain via RewardsHub |
 | `discount` | Store discount | Soft reward, consumed at checkout |
 | `points` | Loyalty points | Soft reward, tracked in database |
 
 **Recipients**:
-- `referrer`: The user who shared the link (must have wallet)
+- `referrer`: The user who shared the link (with optional chaining for multi-level)
 - `referee`: The user who clicked and converted (may be anonymous)
-- `buyer`: The purchaser (for non-referral rewards)
+- `user`: The current user (for any non-referral rewards)
+
+**Condition Operators** (13 total):
+- Equality: `eq`, `neq`
+- Comparison: `gt`, `gte`, `lt`, `lte`, `between`
+- Array: `in`, `not_in`
+- String: `contains`, `starts_with`, `ends_with`
+- Null: `exists`, `not_exists`
 
 **Budget Enforcement**:
+- **Flexible time periods**: hourly, daily, weekly, monthly, or custom duration
 - **Real-time**: Budget checked and decremented atomically during reward creation
 - **Strict**: Cannot exceed budget by a single cent
-- **Daily reset**: Daily budget resets at midnight UTC
+- **Inline reset**: No cron needed - reset happens on consumption if period expired
 - If budget exceeded → reward not created, event still logged for analytics
+
+### 3.1 Reward Chaining (Multi-Level Referrals)
+
+When `recipient === "referrer"` with `chaining` config:
+
+```
+Total: 100 USDC | userPercent: 20% | deperditionPerLevel: 50%
+
+Chain: C (buyer) → B (referrer) → A (referrer)
+
+Distribution:
+├─ C (referee):  20 USDC (20% of 100)      chainDepth: 0
+├─ B (referrer): 40 USDC (50% of 80)       chainDepth: 1
+└─ A (referrer): 40 USDC (remaining)       chainDepth: 2
+```
+
+### 3.2 Referral Links (Permanent Relationship Graph)
+
+Separate from touchpoints (30-day attribution), referral links are permanent:
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                          REFERRAL LINK                                   │
+│                                                                         │
+│  id: UUID                                                               │
+│  merchantId: UUID                                                       │
+│  referrerIdentityGroupId: UUID (who shared)                            │
+│  refereeIdentityGroupId: UUID (who clicked)                            │
+│  createdAt: timestamp                                                   │
+│                                                                         │
+│  UNIQUE(merchantId, refereeIdentityGroupId) → First referrer wins      │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+Used for chain traversal in reward chaining. Created automatically when recording referral touchpoints.
 
 ### 4. Interaction Logs (Replacing Web3 Interactions)
 
