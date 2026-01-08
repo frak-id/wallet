@@ -4,6 +4,10 @@ type DeepLinkParams = {
     action: string;
     to?: string;
     amount?: string;
+    returnUrl?: string;
+    productId?: string;
+    state?: string;
+    productName?: string;
 };
 
 function parseDeepLink(url: string): DeepLinkParams | null {
@@ -31,6 +35,11 @@ function parseDeepLink(url: string): DeepLinkParams | null {
                 action,
                 to: parsed.searchParams.get("to") ?? undefined,
                 amount: parsed.searchParams.get("amount") ?? undefined,
+                returnUrl: parsed.searchParams.get("returnUrl") ?? undefined,
+                productId: parsed.searchParams.get("productId") ?? undefined,
+                state: parsed.searchParams.get("state") ?? undefined,
+                productName:
+                    parsed.searchParams.get("productName") ?? undefined,
             };
         }
 
@@ -75,6 +84,20 @@ function handleDeepLinkAction(navigate: NavigateFn, params: DeepLinkParams) {
 
         case "history":
             navigate({ to: "/history" });
+            break;
+
+        case "login":
+            navigate({
+                to: "/open/login",
+                search: {
+                    ...(params.returnUrl && { returnUrl: params.returnUrl }),
+                    ...(params.productId && { productId: params.productId }),
+                    ...(params.state && { state: params.state }),
+                    ...(params.productName && {
+                        productName: params.productName,
+                    }),
+                },
+            });
             break;
 
         default:

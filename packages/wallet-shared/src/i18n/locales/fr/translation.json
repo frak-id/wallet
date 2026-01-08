@@ -313,6 +313,13 @@
         "toastLoading": {
             "stuck": "Vous êtes bloqué ? Consulter la section <pLink>Dépannage</pLink> pour plus d'informations.<br /><br />Vous pouvez essayer de <button>nettoyer</button>.<br />(cela vous déconnectera et vous devrez redémarrer une connexion / appairage)",
             "dismiss": "Masquer le message"
+        },
+        "openLogin": {
+            "title": "Connectez votre porte-monnaie",
+            "subtitle": "Se connecter à {{productName}}",
+            "login": "Se connecter avec la biométrie",
+            "redirecting": "Redirection vers {{productName}}",
+            "webauthnNotSupported": "WebAuthn n'est pas pris en charge sur cet appareil"
         }
     },
     "biometrics": {
