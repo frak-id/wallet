@@ -4,6 +4,7 @@ import type {
     FixedRewardDefinition,
     PercentageRewardDefinition,
     RangeRewardDefinition,
+    RewardChaining,
     RewardDefinition,
     RuleContext,
     TieredRewardDefinition,
@@ -13,6 +14,11 @@ import { RuleConditionEvaluator } from "./RuleConditionEvaluator";
 type RewardCalculationResult =
     | { success: true; amount: number; token: Address | null }
     | { success: false; error: string };
+
+export type ReferralChainMember = {
+    identityGroupId: string;
+    depth: number;
+};
 
 function calculateFixedReward(
     reward: FixedRewardDefinition
@@ -153,6 +159,73 @@ function calculateRangeReward(
     };
 }
 
+const PERCENT_BASE = 100;
+
+function roundAmount(amount: number): number {
+    return Math.round(amount * 1_000_000) / 1_000_000;
+}
+
+function distributeChainedRewards(params: {
+    totalAmount: number;
+    token: Address | null;
+    chaining: RewardChaining;
+    refereeIdentityGroupId: string;
+    refereeWallet: Address | null;
+    referralChain: ReferralChainMember[];
+    campaignRuleId: string;
+    rewardType: "token" | "discount" | "points";
+    description?: string;
+}): CalculatedReward[] {
+    const rewards: CalculatedReward[] = [];
+    let remainingAmount = params.totalAmount;
+
+    const userAmount =
+        (remainingAmount * params.chaining.userPercent) / PERCENT_BASE;
+    rewards.push({
+        recipient: "referee",
+        recipientIdentityGroupId: params.refereeIdentityGroupId,
+        recipientWallet: params.refereeWallet,
+        type: params.rewardType,
+        amount: roundAmount(userAmount),
+        token: params.token,
+        campaignRuleId: params.campaignRuleId,
+        description: params.description,
+        chainDepth: 0,
+    });
+    remainingAmount -= userAmount;
+
+    for (let i = 0; i < params.referralChain.length; i++) {
+        const member = params.referralChain[i];
+        const isLast = i === params.referralChain.length - 1;
+
+        let rewardAmount: number;
+        if (isLast) {
+            rewardAmount = remainingAmount;
+        } else {
+            rewardAmount =
+                (remainingAmount * params.chaining.deperditionPerLevel) /
+                PERCENT_BASE;
+            remainingAmount -= rewardAmount;
+        }
+
+        if (rewardAmount > 0) {
+            rewards.push({
+                recipient: "referrer",
+                recipientIdentityGroupId: member.identityGroupId,
+                recipientWallet: null,
+                type: params.rewardType,
+                amount: roundAmount(rewardAmount),
+                token: params.token,
+                campaignRuleId: params.campaignRuleId,
+                description: params.description,
+                chainDepth: member.depth,
+            });
+        }
+    }
+
+    return rewards;
+}
+
 export class RewardCalculator {
     private readonly conditionEvaluator: RuleConditionEvaluator;
 
@@ -189,7 +262,8 @@ export class RewardCalculator {
         rewards: RewardDefinition[],
         context: RuleContext,
         campaignRuleId: string,
-        referrerIdentityGroupId?: string
+        referrerIdentityGroupId?: string,
+        referralChain?: ReferralChainMember[]
     ): {
         calculated: CalculatedReward[];
         errors: string[];
@@ -202,6 +276,29 @@ export class RewardCalculator {
 
             if (!result.success) {
                 errors.push(`${reward.recipient}: ${result.error}`);
+                continue;
+            }
+
+            if (reward.recipient === "referrer" && reward.chaining) {
+                if (!referralChain || referralChain.length === 0) {
+                    errors.push(
+                        "referrer: No referral chain for chained reward"
+                    );
+                    continue;
+                }
+
+                const chainedRewards = distributeChainedRewards({
+                    totalAmount: result.amount,
+                    token: result.token,
+                    chaining: reward.chaining,
+                    refereeIdentityGroupId: context.user.identityGroupId,
+                    refereeWallet: context.user.walletAddress,
+                    referralChain,
+                    campaignRuleId,
+                    rewardType: reward.type,
+                    description: reward.description,
+                });
+                calculated.push(...chainedRewards);
                 continue;
             }
 

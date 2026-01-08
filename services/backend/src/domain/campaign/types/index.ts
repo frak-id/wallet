@@ -82,16 +82,17 @@ export type RewardAssetType =
     | "discount" // Store discount (soft reward)
     | "points"; // Loyalty points (soft reward)
 
-/**
- * Base reward definition.
- */
+export type RewardChaining = {
+    userPercent: number;
+    deperditionPerLevel: number;
+    maxDepth?: number;
+};
+
 type BaseRewardDefinition = {
     recipient: RewardRecipient;
     type: RewardAssetType;
-    /**
-     * Optional description for this reward (e.g., "5% cashback on purchase")
-     */
     description?: string;
+    chaining?: RewardChaining;
 };
 
 /**
@@ -359,40 +360,15 @@ export type RuleContext = {
  * A calculated reward ready for processing.
  */
 export type CalculatedReward = {
-    /**
-     * Who receives this reward.
-     */
     recipient: RewardRecipient;
-    /**
-     * The identity group ID of the recipient.
-     * For "referrer": resolved from attribution.referrerWallet
-     * For "referee" or "user": from user.identityGroupId
-     */
     recipientIdentityGroupId: string;
-    /**
-     * Wallet address if known.
-     */
     recipientWallet: Address | null;
-    /**
-     * Type of reward asset.
-     */
     type: RewardAssetType;
-    /**
-     * Calculated amount.
-     */
     amount: number;
-    /**
-     * Token address for crypto rewards.
-     */
     token: Address | null;
-    /**
-     * Which campaign rule generated this reward.
-     */
     campaignRuleId: string;
-    /**
-     * Human-readable description.
-     */
     description?: string;
+    chainDepth?: number;
 };
 
 /**
