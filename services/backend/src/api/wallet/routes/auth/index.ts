@@ -3,17 +3,16 @@ import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import { WalletAuthResponseDto } from "../../../../domain/auth";
 import { loginRoutes } from "./login";
+import { mobileAuthRoutes } from "./mobile";
 import { registerRoutes } from "./register";
 import { routingRoutes } from "./routing";
 import { walletSdkRoutes } from "./sdk";
 
 export const authRoutes = new Elysia({ prefix: "/auth" })
-    // SSO + sdk sub routes
     .use(walletSdkRoutes)
-    // Login + register routes
+    .use(mobileAuthRoutes)
     .use(loginRoutes)
     .use(registerRoutes)
-    // Routing (only for 6degrees)
     .use(routingRoutes)
     // Logout
     .post("/logout", async ({ cookie: { businessAuth } }) => {

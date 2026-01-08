@@ -12,6 +12,7 @@ import {
     SignJWT,
 } from "jose";
 import { BusinessTokenDto } from "../../domain/auth/models/BusinessSessionDto";
+import { MobileAuthCodeDto } from "../../domain/auth/models/MobileAuthCodeDto";
 import {
     WalletSdkTokenDto,
     WalletTokenDto,
@@ -35,10 +36,14 @@ export namespace JwtContext {
     export const business = buildJwtContext({
         secret: process.env.JWT_BUSINESS_SECRET as string,
         schema: BusinessTokenDto,
-        // One week
         expirationDelayInSecond: 60 * 60 * 24 * 7,
-        // Default jwt payload
         iss: "frak.id",
+    });
+    export const mobileAuthCode = buildJwtContext({
+        secret: process.env.JWT_SDK_SECRET as string,
+        schema: MobileAuthCodeDto,
+        expirationDelayInSecond: 60,
+        iss: "frak-wallet",
     });
 }
 

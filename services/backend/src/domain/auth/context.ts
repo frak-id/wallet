@@ -1,20 +1,19 @@
 import { AuthenticatorRepository } from "./repositories/AuthenticatorRepository";
+import { MobileAuthCodeService } from "./services/MobileAuthCodeService";
 import { WalletSdkSessionService } from "./services/WalletSdkSessionService";
 import { WebAuthNService } from "./services/WebAuthNService";
 
-/**
- * Context for the auth domain
- */
 export namespace AuthContext {
-    // Only repositories are created as instances
     const authenticatorRepository = new AuthenticatorRepository();
+    const walletSdkSessionService = new WalletSdkSessionService();
 
     export const repositories = {
         authenticator: authenticatorRepository,
     };
-    // Services are provided by the Elysia extensions above
+
     export const services = {
-        walletSdkSession: new WalletSdkSessionService(),
+        walletSdkSession: walletSdkSessionService,
         webAuthN: new WebAuthNService(authenticatorRepository),
+        mobileAuthCode: new MobileAuthCodeService(walletSdkSessionService),
     };
 }
