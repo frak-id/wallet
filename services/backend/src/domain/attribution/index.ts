@@ -1,3 +1,4 @@
+export { AttributionContext } from "./context";
 export {
     type TouchpointSourceData,
     touchpointSourceEnum,

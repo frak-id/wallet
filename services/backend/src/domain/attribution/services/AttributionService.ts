@@ -1,9 +1,9 @@
 import type { Address } from "viem";
-import { ReferralService } from "../../referral";
+import type { ReferralService } from "../../referral";
 import type { TouchpointSourceData } from "../db/schema";
-import {
-    type CreateTouchpointParams,
-    type Touchpoint,
+import type {
+    CreateTouchpointParams,
+    Touchpoint,
     TouchpointRepository,
 } from "../repositories/TouchpointRepository";
 
@@ -31,17 +31,10 @@ export type AttributionResult = {
 };
 
 export class AttributionService {
-    private readonly touchpointRepository: TouchpointRepository;
-    private readonly referralService: ReferralService;
-
     constructor(
-        touchpointRepository?: TouchpointRepository,
-        referralService?: ReferralService
-    ) {
-        this.touchpointRepository =
-            touchpointRepository ?? new TouchpointRepository();
-        this.referralService = referralService ?? new ReferralService();
-    }
+        readonly touchpointRepository: TouchpointRepository,
+        readonly referralService: ReferralService
+    ) {}
 
     async recordTouchpoint(
         params: RecordTouchpointParams

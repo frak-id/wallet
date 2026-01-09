@@ -14,7 +14,6 @@ export {
 export { AssetLogRepository } from "./repositories/AssetLogRepository";
 export { InteractionLogRepository } from "./repositories/InteractionLogRepository";
 
-export { RewardProcessingService } from "./services/RewardProcessingService";
 export { SettlementService } from "./services/SettlementService";
 
 export type {

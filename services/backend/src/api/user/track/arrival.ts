@@ -2,10 +2,10 @@ import { Elysia, t } from "elysia";
 import type { Address } from "viem";
 import { isAddress } from "viem";
 import {
-    AttributionService,
+    AttributionContext,
     type TouchpointSourceData,
 } from "../../../domain/attribution";
-import { IdentityResolutionService } from "../../../domain/identity/services/IdentityResolutionService";
+import { IdentityContext } from "../../../domain/identity";
 
 const trackArrivalBodySchema = t.Object({
     merchantId: t.String({ format: "uuid" }),
@@ -29,8 +29,8 @@ export const trackArrivalRoute = new Elysia().post(
             };
         }
 
-        const identityService = new IdentityResolutionService();
-        const attributionService = new AttributionService();
+        const identityService = IdentityContext.services.identityResolution;
+        const attributionService = AttributionContext.services.attribution;
 
         const { identityGroupId } = await identityService.resolveAnonymousId({
             anonId: clientId,

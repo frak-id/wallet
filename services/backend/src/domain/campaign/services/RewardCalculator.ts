@@ -9,7 +9,7 @@ import type {
     RuleContext,
     TieredRewardDefinition,
 } from "../types";
-import { RuleConditionEvaluator } from "./RuleConditionEvaluator";
+import type { RuleConditionEvaluator } from "./RuleConditionEvaluator";
 
 type RewardCalculationResult =
     | { success: true; amount: number; token: Address | null }
@@ -227,12 +227,7 @@ function distributeChainedRewards(params: {
 }
 
 export class RewardCalculator {
-    private readonly conditionEvaluator: RuleConditionEvaluator;
-
-    constructor(conditionEvaluator?: RuleConditionEvaluator) {
-        this.conditionEvaluator =
-            conditionEvaluator ?? new RuleConditionEvaluator();
-    }
+    constructor(readonly conditionEvaluator: RuleConditionEvaluator) {}
 
     calculate(
         reward: RewardDefinition,

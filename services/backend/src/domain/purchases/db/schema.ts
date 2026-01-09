@@ -10,8 +10,8 @@ import {
     uuid,
     varchar,
 } from "drizzle-orm/pg-core";
-import { identityGroupsTable } from "../../identity/db/schema";
 import { customHex } from "../../../utils/drizzle/customTypes";
+import { identityGroupsTable } from "../../identity/db/schema";
 
 export const webhookPlatformEnum = pgEnum("webhook_platform", [
     "shopify",

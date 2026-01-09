@@ -6,4 +6,3 @@ export {
     purchasesTable,
     webhookPlatformEnum,
 } from "./db/schema";
-export { PurchaseLinkingService } from "./services/LinkingService";

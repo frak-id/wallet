@@ -40,13 +40,15 @@ export const trackPurchaseRoute = new Elysia().post(
             );
 
             const result =
-                await PurchasesContext.services.linking.linkPurchaseFromSdk({
-                    clientId,
-                    merchantId: body.merchantId,
-                    customerId,
-                    orderId,
-                    token: body.token,
-                });
+                await PurchasesContext.orchestrators.linking.linkPurchaseFromSdk(
+                    {
+                        clientId,
+                        merchantId: body.merchantId,
+                        customerId,
+                        orderId,
+                        token: body.token,
+                    }
+                );
 
             return result;
         }
@@ -74,14 +76,16 @@ export const trackPurchaseRoute = new Elysia().post(
             );
 
             const result =
-                await PurchasesContext.services.linking.linkPurchaseFromWallet({
-                    wallet: address,
-                    merchantId: body.merchantId,
-                    clientId: headers["x-frak-client-id"],
-                    customerId,
-                    orderId,
-                    token: body.token,
-                });
+                await PurchasesContext.orchestrators.linking.linkPurchaseFromWallet(
+                    {
+                        wallet: address,
+                        merchantId: body.merchantId,
+                        clientId: headers["x-frak-client-id"],
+                        customerId,
+                        orderId,
+                        token: body.token,
+                    }
+                );
 
             return result;
         }

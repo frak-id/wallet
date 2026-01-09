@@ -1,3 +1,4 @@
+export { IdentityContext } from "./context";
 export {
     identityGroupsTable,
     identityNodesTable,

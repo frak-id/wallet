@@ -1,6 +1,9 @@
 import { db, log } from "@backend-infrastructure";
-import { purchaseItemsTable, purchasesTable } from "../db/schema";
-import { PurchaseLinkingService } from "./LinkingService";
+import {
+    purchaseItemsTable,
+    purchasesTable,
+} from "../domain/purchases/db/schema";
+import type { PurchaseLinkingOrchestrator } from "./PurchaseLinkingOrchestrator";
 
 type PurchaseInsert = Omit<typeof purchasesTable.$inferInsert, "id">;
 type PurchaseItemInsert = Omit<
@@ -20,12 +23,8 @@ type UpsertPurchaseResult = {
     rewardsProcessed: boolean;
 };
 
-export class PurchasesWebhookService {
-    private readonly linkingService: PurchaseLinkingService;
-
-    constructor(linkingService?: PurchaseLinkingService) {
-        this.linkingService = linkingService ?? new PurchaseLinkingService();
-    }
+export class PurchaseWebhookOrchestrator {
+    constructor(readonly linkingOrchestrator: PurchaseLinkingOrchestrator) {}
 
     async upsertPurchase({
         purchase,
@@ -33,7 +32,7 @@ export class PurchasesWebhookService {
         merchantId,
     }: UpsertPurchaseParams): Promise<UpsertPurchaseResult> {
         const pendingIdentity =
-            await this.linkingService.checkPendingIdentityForPurchase({
+            await this.linkingOrchestrator.checkPendingIdentityForPurchase({
                 customerId: purchase.externalCustomerId,
                 orderId: purchase.externalId,
                 token: purchase.purchaseToken ?? "",
@@ -100,7 +99,7 @@ export class PurchasesWebhookService {
 
         if (identityGroupId) {
             const result =
-                await this.linkingService.processRewardsForLinkedPurchase(
+                await this.linkingOrchestrator.processRewardsForLinkedPurchase(
                     purchaseId
                 );
             rewardsProcessed = result.rewardsCreated > 0;

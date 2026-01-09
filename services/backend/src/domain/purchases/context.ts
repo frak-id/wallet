@@ -1,9 +1,8 @@
-import { PurchaseLinkingService } from "./services/LinkingService";
-import { PurchasesWebhookService } from "./services/WebhookService";
+import { OrchestrationContext } from "../../orchestration/context";
 
 export namespace PurchasesContext {
-    export const services = {
-        webhook: new PurchasesWebhookService(),
-        linking: new PurchaseLinkingService(),
+    export const orchestrators = {
+        linking: OrchestrationContext.orchestrators.purchaseLinking,
+        webhook: OrchestrationContext.orchestrators.purchaseWebhook,
     };
 }

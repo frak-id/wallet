@@ -1,26 +1,27 @@
 import { log } from "@backend-infrastructure";
-import {
-    type AttributionResult,
+import type { Address } from "viem";
+import type {
+    AttributionResult,
     AttributionService,
-} from "../../attribution/services/AttributionService";
+} from "../domain/attribution/services/AttributionService";
 import type {
     CalculatedReward,
     PurchaseContext,
     RuleContext,
-} from "../../campaign";
-import { RuleEngineService } from "../../campaign/services/RuleEngineService";
-import { IdentityResolutionService } from "../../identity/services/IdentityResolutionService";
-import { ReferralService } from "../../referral";
-import type { AssetLogSelect } from "../db/schema";
-import { AssetLogRepository } from "../repositories/AssetLogRepository";
-import { InteractionLogRepository } from "../repositories/InteractionLogRepository";
+} from "../domain/campaign";
+import type { RuleEngineService } from "../domain/campaign/services/RuleEngineService";
+import type { IdentityResolutionService } from "../domain/identity/services/IdentityResolutionService";
+import type { ReferralService } from "../domain/referral";
+import type { AssetLogSelect } from "../domain/rewards/db/schema";
+import type { AssetLogRepository } from "../domain/rewards/repositories/AssetLogRepository";
+import type { InteractionLogRepository } from "../domain/rewards/repositories/InteractionLogRepository";
 import type {
     CreateAssetLogParams,
-    ProcessPurchaseResult,
     PurchasePayload,
-} from "../types";
+    RecipientType,
+} from "../domain/rewards/types";
 
-type ProcessPurchaseParams = {
+export type ProcessPurchaseParams = {
     merchantId: string;
     identityGroupId: string;
     orderId: string;
@@ -37,35 +38,33 @@ type ProcessPurchaseParams = {
     purchaseId: string;
 };
 
-export class RewardProcessingService {
-    private readonly interactionLogRepository: InteractionLogRepository;
-    private readonly assetLogRepository: AssetLogRepository;
-    private readonly ruleEngineService: RuleEngineService;
-    private readonly attributionService: AttributionService;
-    private readonly identityService: IdentityResolutionService;
-    private readonly referralService: ReferralService;
+export type ProcessPurchaseResult = {
+    interactionLogId: string;
+    rewards: Array<{
+        assetLogId: string;
+        recipient: RecipientType;
+        amount: number;
+        token: Address | null;
+    }>;
+    budgetExceeded: boolean;
+    skippedCampaigns: string[];
+    errors: Array<{
+        campaignRuleId: string;
+        error: string;
+    }>;
+};
 
+export class RewardOrchestrator {
     constructor(
-        interactionLogRepository?: InteractionLogRepository,
-        assetLogRepository?: AssetLogRepository,
-        ruleEngineService?: RuleEngineService,
-        attributionService?: AttributionService,
-        identityService?: IdentityResolutionService,
-        referralService?: ReferralService
-    ) {
-        this.interactionLogRepository =
-            interactionLogRepository ?? new InteractionLogRepository();
-        this.assetLogRepository =
-            assetLogRepository ?? new AssetLogRepository();
-        this.ruleEngineService = ruleEngineService ?? new RuleEngineService();
-        this.attributionService =
-            attributionService ?? new AttributionService();
-        this.identityService =
-            identityService ?? new IdentityResolutionService();
-        this.referralService = referralService ?? new ReferralService();
-    }
+        readonly interactionLogRepository: InteractionLogRepository,
+        readonly assetLogRepository: AssetLogRepository,
+        readonly ruleEngineService: RuleEngineService,
+        readonly attributionService: AttributionService,
+        readonly identityService: IdentityResolutionService,
+        readonly referralService: ReferralService
+    ) {}
 
-    async processPurchase(
+    async processPurchaseRewards(
         params: ProcessPurchaseParams
     ): Promise<ProcessPurchaseResult> {
         const attribution = await this.attributionService.attributeConversion({
@@ -90,11 +89,12 @@ export class RewardProcessingService {
             payload,
         });
 
-        const referrerIdentityGroupId = await this.getReferrerIdentityGroupId(
-            params.merchantId,
-            params.identityGroupId,
-            attribution
-        );
+        const referrerIdentityGroupId =
+            await this.resolveReferrerIdentityGroupId(
+                params.merchantId,
+                params.identityGroupId,
+                attribution
+            );
 
         const purchaseContext: PurchaseContext = {
             orderId: params.orderId,
@@ -164,7 +164,7 @@ export class RewardProcessingService {
                 budgetExceeded: evaluationResult.budgetExceeded,
                 attribution: attribution.source,
             },
-            "Processed purchase event"
+            "Processed purchase rewards"
         );
 
         return {
@@ -181,7 +181,7 @@ export class RewardProcessingService {
         };
     }
 
-    async rollbackPurchase(purchaseId: string): Promise<number> {
+    async rollbackPurchaseRewards(purchaseId: string): Promise<number> {
         const cancelledCount =
             await this.assetLogRepository.cancelByPurchaseId(purchaseId);
 
@@ -195,7 +195,7 @@ export class RewardProcessingService {
         return cancelledCount;
     }
 
-    private async getReferrerIdentityGroupId(
+    private async resolveReferrerIdentityGroupId(
         merchantId: string,
         refereeIdentityGroupId: string,
         attribution: AttributionResult

@@ -63,7 +63,7 @@ export const wooCommerceWebhook = new Elysia()
 
             const purchaseStatus = mapOrderStatus(webhookData.status);
 
-            await PurchasesContext.services.webhook.upsertPurchase({
+            await PurchasesContext.orchestrators.webhook.upsertPurchase({
                 purchase: {
                     webhookId: webhook.id,
                     externalId: webhookData.id.toString(),

@@ -1,15 +1,15 @@
 import { db, log } from "@backend-infrastructure";
 import { and, eq } from "drizzle-orm";
 import type { Address } from "viem";
-import type { PendingPurchaseValidation } from "../../identity";
-import { IdentityRepository } from "../../identity/repositories/IdentityRepository";
-import { IdentityResolutionService } from "../../identity/services/IdentityResolutionService";
-import { RewardProcessingService } from "../../rewards/services/RewardProcessingService";
+import type { PendingPurchaseValidation } from "../domain/identity";
+import type { IdentityRepository } from "../domain/identity/repositories/IdentityRepository";
+import type { IdentityResolutionService } from "../domain/identity/services/IdentityResolutionService";
 import {
     merchantWebhooksTable,
     purchaseItemsTable,
     purchasesTable,
-} from "../db/schema";
+} from "../domain/purchases/db/schema";
+import type { RewardOrchestrator } from "./RewardOrchestrator";
 
 type PurchaseLinkParams = {
     customerId: string;
@@ -26,29 +26,13 @@ type PurchaseLinkResult = {
     error?: string;
 };
 
-export class PurchaseLinkingService {
-    private readonly identityService: IdentityResolutionService;
-    private readonly identityRepository: IdentityRepository;
-    private readonly rewardService: RewardProcessingService;
-
+export class PurchaseLinkingOrchestrator {
     constructor(
-        identityService?: IdentityResolutionService,
-        identityRepository?: IdentityRepository,
-        rewardService?: RewardProcessingService
-    ) {
-        this.identityService =
-            identityService ?? new IdentityResolutionService();
-        this.identityRepository =
-            identityRepository ?? new IdentityRepository();
-        this.rewardService = rewardService ?? new RewardProcessingService();
-    }
+        readonly identityService: IdentityResolutionService,
+        readonly identityRepository: IdentityRepository,
+        readonly rewardOrchestrator: RewardOrchestrator
+    ) {}
 
-    /**
-     * Called by SDK when user completes purchase (thank you page).
-     * Two scenarios:
-     * - Webhook arrived first: Purchase exists, link identity and process rewards
-     * - SDK arrives first: Purchase doesn't exist, create pending merchant_customer node
-     */
     async linkPurchaseFromSdk(
         params: PurchaseLinkParams & {
             clientId: string;
@@ -99,9 +83,6 @@ export class PurchaseLinkingService {
         });
     }
 
-    /**
-     * Called by SDK with wallet auth (legacy flow).
-     */
     async linkPurchaseFromWallet(
         params: PurchaseLinkParams & {
             wallet: Address;
@@ -157,10 +138,6 @@ export class PurchaseLinkingService {
         });
     }
 
-    /**
-     * Called by webhook handler to check for pending identity and link.
-     * Returns identityGroupId if a pending node was found and validated.
-     */
     async checkPendingIdentityForPurchase(params: {
         customerId: string;
         orderId: string;
@@ -208,10 +185,6 @@ export class PurchaseLinkingService {
         return { identityGroupId: pendingNode.groupId };
     }
 
-    /**
-     * Process rewards for a purchase that has been linked to an identity.
-     * Called after webhook stores the purchase with identityGroupId.
-     */
     async processRewardsForLinkedPurchase(purchaseId: string): Promise<{
         rewardsCreated: number;
     }> {
@@ -285,23 +258,6 @@ export class PurchaseLinkingService {
         const { purchase, identityGroupId, customerId } = params;
 
         if (purchase.identityGroupId) {
-            /*
-             * EDGE CASE: Returning customer with new referral link (Scenario C)
-             *
-             * This happens when:
-             * - Customer made a purchase before (merchant_customer exists → old group)
-             * - Customer returns via NEW referral link (touchpoint on NEW anonId group)
-             * - Webhook arrived first and used the old group's identity
-             * - SDK now calls with the new anonId
-             *
-             * Current behavior (V1): We keep the old attribution.
-             * The merge will still happen, combining the identities, but rewards
-             * were already processed with old attribution.
-             *
-             * TODO (V2): Implement delayed processing cron that waits 30-60 seconds
-             * before processing rewards, allowing SDK call to arrive and properly
-             * merge identities first. See REFACTO_FOR_LATER.md for details.
-             */
             if (purchase.identityGroupId !== identityGroupId) {
                 await this.identityService.linkMerchantCustomer({
                     identityGroupId,
@@ -399,22 +355,25 @@ export class PurchaseLinkingService {
         });
 
         try {
-            const result = await this.rewardService.processPurchase({
-                merchantId: webhook.productId,
-                identityGroupId,
-                orderId: purchase.externalId,
-                externalCustomerId: purchase.externalCustomerId,
-                amount: Number.parseFloat(purchase.totalPrice),
-                currency: purchase.currencyCode,
-                items: purchaseItems.map((item) => ({
-                    productId: item.externalId,
-                    name: item.name,
-                    quantity: item.quantity,
-                    unitPrice: Number.parseFloat(item.price),
-                    totalPrice: Number.parseFloat(item.price) * item.quantity,
-                })),
-                purchaseId: purchase.id,
-            });
+            const result = await this.rewardOrchestrator.processPurchaseRewards(
+                {
+                    merchantId: webhook.productId,
+                    identityGroupId,
+                    orderId: purchase.externalId,
+                    externalCustomerId: purchase.externalCustomerId,
+                    amount: Number.parseFloat(purchase.totalPrice),
+                    currency: purchase.currencyCode,
+                    items: purchaseItems.map((item) => ({
+                        productId: item.externalId,
+                        name: item.name,
+                        quantity: item.quantity,
+                        unitPrice: Number.parseFloat(item.price),
+                        totalPrice:
+                            Number.parseFloat(item.price) * item.quantity,
+                    })),
+                    purchaseId: purchase.id,
+                }
+            );
 
             log.info(
                 {

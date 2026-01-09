@@ -7,7 +7,7 @@ import {
     type StaticWalletSdkTokenDto,
     WalletAuthResponseDto,
 } from "../../../../../domain/auth";
-import { IdentityResolutionService } from "../../../../../domain/identity/services/IdentityResolutionService";
+import { IdentityContext } from "../../../../../domain/identity";
 
 const identityHeadersSchema = t.Object({
     "x-frak-client-id": t.Optional(t.String()),
@@ -69,14 +69,13 @@ export const loginRoutes = new Elysia()
 
             const clientId = headers["x-frak-client-id"];
             if (clientId || merchantId) {
-                const identityService = new IdentityResolutionService();
-                await identityService
+                await IdentityContext.services.identityResolution
                     .connectWallet({
                         wallet: walletAddress,
                         clientId,
                         merchantId,
                     })
-                    .catch((err) => {
+                    .catch((err: unknown) => {
                         log.error(
                             { err, walletAddress, clientId, merchantId },
                             "Failed to connect wallet to identity"
@@ -155,14 +154,13 @@ export const loginRoutes = new Elysia()
 
             const clientId = headers["x-frak-client-id"];
             if (clientId || merchantId) {
-                const identityService = new IdentityResolutionService();
-                await identityService
+                await IdentityContext.services.identityResolution
                     .connectWallet({
                         wallet: address,
                         clientId,
                         merchantId,
                     })
-                    .catch((err) => {
+                    .catch((err: unknown) => {
                         log.error(
                             { err, address, clientId, merchantId },
                             "Failed to connect wallet to identity"
