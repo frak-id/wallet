@@ -1,5 +1,6 @@
 import { log } from "@backend-infrastructure";
 import type { Address } from "viem";
+import type { ReferralService } from "../domain/attribution";
 import type {
     AttributionResult,
     AttributionService,
@@ -11,7 +12,6 @@ import type {
 } from "../domain/campaign";
 import type { RuleEngineService } from "../domain/campaign/services/RuleEngineService";
 import type { IdentityResolutionService } from "../domain/identity/services/IdentityResolutionService";
-import type { ReferralService } from "../domain/referral";
 import type { AssetLogSelect } from "../domain/rewards/db/schema";
 import type { AssetLogRepository } from "../domain/rewards/repositories/AssetLogRepository";
 import type { InteractionLogRepository } from "../domain/rewards/repositories/InteractionLogRepository";
@@ -56,12 +56,12 @@ export type ProcessPurchaseResult = {
 
 export class RewardOrchestrator {
     constructor(
-        readonly interactionLogRepository: InteractionLogRepository,
-        readonly assetLogRepository: AssetLogRepository,
-        readonly ruleEngineService: RuleEngineService,
-        readonly attributionService: AttributionService,
-        readonly identityService: IdentityResolutionService,
-        readonly referralService: ReferralService
+        private readonly interactionLogRepository: InteractionLogRepository,
+        private readonly assetLogRepository: AssetLogRepository,
+        private readonly ruleEngineService: RuleEngineService,
+        private readonly attributionService: AttributionService,
+        private readonly identityService: IdentityResolutionService,
+        private readonly referralService: ReferralService
     ) {}
 
     async processPurchaseRewards(
@@ -130,12 +130,15 @@ export class RewardOrchestrator {
         const trigger = attribution.attributed
             ? "referral_purchase"
             : "purchase";
-        const evaluationResult = await this.ruleEngineService.evaluateRules({
-            merchantId: params.merchantId,
-            trigger,
-            context: ruleContext,
-            referrerIdentityGroupId,
-        });
+        const evaluationResult = await this.ruleEngineService.evaluateRules(
+            {
+                merchantId: params.merchantId,
+                trigger,
+                context: ruleContext,
+                referrerIdentityGroupId,
+            },
+            (args) => this.referralService.getReferralChain(args)
+        );
 
         const assetLogs: AssetLogSelect[] = [];
 

@@ -1,6 +1,6 @@
 import { mutexCron } from "@backend-utils";
 import { Elysia } from "elysia";
-import { SettlementService } from "../domain/rewards";
+import { OrchestrationContext } from "../orchestration";
 
 export const settlementJobs = new Elysia({ name: "Job.settlement" }).use(
     mutexCron({
@@ -9,8 +9,8 @@ export const settlementJobs = new Elysia({ name: "Job.settlement" }).use(
         run: async ({ context: { logger } }) => {
             logger.debug("Starting reward settlement batch");
 
-            const settlementService = new SettlementService();
-            const result = await settlementService.settleRewards();
+            const result =
+                await OrchestrationContext.orchestrators.settlement.runSettlement();
 
             logger.info(
                 {

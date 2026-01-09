@@ -9,7 +9,7 @@ type ReferralChainMember = {
 const DEFAULT_MAX_CHAIN_DEPTH = 5;
 
 export class ReferralService {
-    constructor(readonly repository: ReferralLinkRepository) {}
+    constructor(private readonly repository: ReferralLinkRepository) {}
 
     async registerReferral(params: {
         merchantId: string;

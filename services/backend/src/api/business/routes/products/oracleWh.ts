@@ -3,6 +3,7 @@ import { t } from "@backend-utils";
 import { productRoles } from "@frak-labs/app-essentials";
 import { count, eq, max, min } from "drizzle-orm";
 import { Elysia, status } from "elysia";
+import { MerchantContext } from "../../../../domain/merchant/context";
 import {
     merchantWebhooksTable,
     purchasesTable,
@@ -16,20 +17,29 @@ export const oracleWhRoutes = new Elysia({ prefix: "/oracleWebhook" })
             productId: t.Optional(t.Hex()),
         }),
     })
-    .resolve(({ params: { productId } }) => {
+    .resolve(async ({ params: { productId } }) => {
         if (!productId) {
             return status(400, "Invalid product id");
         }
 
-        return { productId };
+        const merchant =
+            await MerchantContext.repositories.merchant.findByProductId(
+                productId
+            );
+
+        return { productId, merchantId: merchant?.id };
     })
     .get(
         "/status",
-        async ({ productId, businessSession }) => {
+        async ({ merchantId, businessSession }) => {
+            if (!merchantId) {
+                return { setup: false };
+            }
+
             const currentWebhooks = await db
                 .select()
                 .from(merchantWebhooksTable)
-                .where(eq(merchantWebhooksTable.productId, productId))
+                .where(eq(merchantWebhooksTable.merchantId, merchantId))
                 .limit(1);
             const currentWebhook = currentWebhooks[0];
             if (!currentWebhook) {
@@ -93,7 +103,7 @@ export const oracleWhRoutes = new Elysia({ prefix: "/oracleWebhook" })
     )
     .post(
         "/setup",
-        async ({ body, productId, businessSession }) => {
+        async ({ body, productId, merchantId, businessSession }) => {
             if (!productId) {
                 return status(400, "Invalid product id");
             }
@@ -111,17 +121,21 @@ export const oracleWhRoutes = new Elysia({ prefix: "/oracleWebhook" })
                 return status(401, "Unauthorized");
             }
 
+            if (!merchantId) {
+                return status(404, "Merchant not found for this product");
+            }
+
             const { hookSignatureKey, platform } = body;
 
             await db
                 .insert(merchantWebhooksTable)
                 .values({
-                    productId,
+                    merchantId,
                     hookSignatureKey,
                     platform,
                 })
                 .onConflictDoUpdate({
-                    target: [merchantWebhooksTable.productId],
+                    target: [merchantWebhooksTable.merchantId],
                     set: {
                         hookSignatureKey,
                         platform,
@@ -141,9 +155,12 @@ export const oracleWhRoutes = new Elysia({ prefix: "/oracleWebhook" })
             }),
         }
     )
-    .post("/delete", async ({ productId, businessSession }) => {
+    .post("/delete", async ({ productId, merchantId, businessSession }) => {
         if (!businessSession) {
             return status(401, "Unauthorized");
+        }
+        if (!productId) {
+            return status(400, "Invalid product id");
         }
         const isAllowed = await onChainRolesRepository.hasRoleOrAdminOnProduct({
             wallet: businessSession.wallet,
@@ -154,8 +171,12 @@ export const oracleWhRoutes = new Elysia({ prefix: "/oracleWebhook" })
             return status(401, "Unauthorized");
         }
 
+        if (!merchantId) {
+            return status(404, "Merchant not found for this product");
+        }
+
         const existingWebhook = await db.query.merchantWebhooksTable.findFirst({
-            where: eq(merchantWebhooksTable.productId, productId),
+            where: eq(merchantWebhooksTable.merchantId, merchantId),
         });
         if (!existingWebhook) {
             return status(
@@ -166,6 +187,6 @@ export const oracleWhRoutes = new Elysia({ prefix: "/oracleWebhook" })
 
         await db
             .delete(merchantWebhooksTable)
-            .where(eq(merchantWebhooksTable.productId, productId))
+            .where(eq(merchantWebhooksTable.merchantId, merchantId))
             .execute();
     });

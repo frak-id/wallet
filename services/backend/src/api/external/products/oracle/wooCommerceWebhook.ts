@@ -1,16 +1,12 @@
-import { db, log } from "@backend-infrastructure";
+import { log } from "@backend-infrastructure";
 import { t, validateBodyHmac } from "@backend-utils";
-import { eq } from "drizzle-orm";
 import { Elysia } from "elysia";
-import {
-    merchantWebhooksTable,
-    PurchasesContext,
-    type purchaseStatusEnum,
-} from "../../../../domain/purchases";
+import type { purchaseStatusEnum } from "../../../../domain/purchases";
 import type {
     WooCommerceOrderStatus,
     WooCommerceOrderUpdateWebhookDto,
 } from "../../../../domain/purchases/dto/WooCommerceWebhook";
+import { OrchestrationContext } from "../../../../orchestration/context";
 
 export const wooCommerceWebhook = new Elysia()
     .guard({
@@ -26,7 +22,7 @@ export const wooCommerceWebhook = new Elysia()
             })
         ),
         params: t.Object({
-            productId: t.Optional(t.Hex()),
+            identifier: t.Optional(t.String()),
         }),
     })
     .onBeforeHandle(({ headers }) => {
@@ -39,21 +35,25 @@ export const wooCommerceWebhook = new Elysia()
     })
     .post(
         "/woocommerce",
-        async ({ params: { productId }, body, headers }) => {
+        async ({ params: { identifier }, body, headers }) => {
             const webhookData = JSON.parse(
                 body
             ) as WooCommerceOrderUpdateWebhookDto;
 
-            if (!productId) {
-                throw new Error("Missing product id");
+            if (!identifier) {
+                throw new Error("Missing merchant identifier");
             }
-            const webhook = await db.query.merchantWebhooksTable.findFirst({
-                where: eq(merchantWebhooksTable.productId, productId),
-            });
-            if (!webhook) {
-                log.warn({ productId }, "Merchant webhook not found");
-                throw new Error("Merchant webhook not found");
+
+            const resolved =
+                await OrchestrationContext.orchestrators.webhookResolver.resolveWebhook(
+                    identifier
+                );
+            if (!resolved) {
+                log.warn({ identifier }, "Webhook not found");
+                throw new Error("Webhook not found");
             }
+
+            const { webhook, merchantId } = resolved;
 
             validateBodyHmac({
                 body,
@@ -63,27 +63,31 @@ export const wooCommerceWebhook = new Elysia()
 
             const purchaseStatus = mapOrderStatus(webhookData.status);
 
-            await PurchasesContext.orchestrators.webhook.upsertPurchase({
-                purchase: {
-                    webhookId: webhook.id,
-                    externalId: webhookData.id.toString(),
-                    externalCustomerId: webhookData.customer_id.toString(),
-                    purchaseToken:
-                        webhookData.order_key ?? webhookData.transaction_id,
-                    status: purchaseStatus,
-                    totalPrice: webhookData.total,
-                    currencyCode: webhookData.currency,
-                },
-                purchaseItems: webhookData.line_items.map((item) => ({
-                    externalId: item.product_id.toString(),
-                    price: item.price.toString(),
-                    name: item.name,
-                    title: item.name,
-                    quantity: item.quantity,
-                    imageUrl: item.image?.src?.length ? item.image.src : null,
-                })),
-                merchantId: productId,
-            });
+            await OrchestrationContext.orchestrators.purchaseWebhook.upsertPurchase(
+                {
+                    purchase: {
+                        webhookId: webhook.id,
+                        externalId: webhookData.id.toString(),
+                        externalCustomerId: webhookData.customer_id.toString(),
+                        purchaseToken:
+                            webhookData.order_key ?? webhookData.transaction_id,
+                        status: purchaseStatus,
+                        totalPrice: webhookData.total,
+                        currencyCode: webhookData.currency,
+                    },
+                    purchaseItems: webhookData.line_items.map((item) => ({
+                        externalId: item.product_id.toString(),
+                        price: item.price.toString(),
+                        name: item.name,
+                        title: item.name,
+                        quantity: item.quantity,
+                        imageUrl: item.image?.src?.length
+                            ? item.image.src
+                            : null,
+                    })),
+                    merchantId,
+                }
+            );
 
             return "ok";
         },
@@ -91,7 +95,7 @@ export const wooCommerceWebhook = new Elysia()
             parse: "text",
             body: t.String(),
             params: t.Object({
-                productId: t.Optional(t.Hex()),
+                identifier: t.Optional(t.String()),
             }),
         }
     );

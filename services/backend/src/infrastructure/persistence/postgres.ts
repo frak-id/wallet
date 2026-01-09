@@ -1,6 +1,7 @@
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import {
+    referralLinksTable,
     touchpointSourceEnum,
     touchpointsTable,
 } from "../../domain/attribution";
@@ -23,7 +24,6 @@ import {
     purchasesTable,
     webhookPlatformEnum,
 } from "../../domain/purchases";
-import { referralLinksTable } from "../../domain/referral";
 import {
     assetLogsTable,
     assetStatusEnum,

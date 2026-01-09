@@ -4,6 +4,7 @@ import type {
     FixedRewardDefinition,
     PercentageRewardDefinition,
     RangeRewardDefinition,
+    ReferralChainMember,
     RewardChaining,
     RewardDefinition,
     RuleContext,
@@ -11,14 +12,11 @@ import type {
 } from "../types";
 import type { RuleConditionEvaluator } from "./RuleConditionEvaluator";
 
+export type { ReferralChainMember };
+
 type RewardCalculationResult =
     | { success: true; amount: number; token: Address | null }
     | { success: false; error: string };
-
-export type ReferralChainMember = {
-    identityGroupId: string;
-    depth: number;
-};
 
 function calculateFixedReward(
     reward: FixedRewardDefinition
@@ -227,7 +225,7 @@ function distributeChainedRewards(params: {
 }
 
 export class RewardCalculator {
-    constructor(readonly conditionEvaluator: RuleConditionEvaluator) {}
+    constructor(private readonly conditionEvaluator: RuleConditionEvaluator) {}
 
     calculate(
         reward: RewardDefinition,

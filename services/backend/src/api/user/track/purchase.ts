@@ -2,7 +2,7 @@ import { JwtContext, log } from "@backend-infrastructure";
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import { type Address, isAddress, isHex } from "viem";
-import { PurchasesContext } from "../../../domain/purchases";
+import { OrchestrationContext } from "../../../orchestration/context";
 
 const purchaseBodySchema = t.Object({
     customerId: t.Union([t.String(), t.Number()]),
@@ -40,7 +40,7 @@ export const trackPurchaseRoute = new Elysia().post(
             );
 
             const result =
-                await PurchasesContext.orchestrators.linking.linkPurchaseFromSdk(
+                await OrchestrationContext.orchestrators.purchaseLinking.linkPurchaseFromSdk(
                     {
                         clientId,
                         merchantId: body.merchantId,
@@ -76,7 +76,7 @@ export const trackPurchaseRoute = new Elysia().post(
             );
 
             const result =
-                await PurchasesContext.orchestrators.linking.linkPurchaseFromWallet(
+                await OrchestrationContext.orchestrators.purchaseLinking.linkPurchaseFromWallet(
                     {
                         wallet: address,
                         merchantId: body.merchantId,

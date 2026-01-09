@@ -1,13 +1,9 @@
-import { db, log } from "@backend-infrastructure";
+import { log } from "@backend-infrastructure";
 import { t, validateBodyHmac } from "@backend-utils";
 import { isRunningInProd } from "@frak-labs/app-essentials";
-import { eq } from "drizzle-orm";
 import { Elysia } from "elysia";
-import {
-    merchantWebhooksTable,
-    PurchasesContext,
-} from "../../../../domain/purchases";
 import type { CustomWebhookDto } from "../../../../domain/purchases/dto/CustomWebhook";
+import { OrchestrationContext } from "../../../../orchestration/context";
 
 export const customWebhook = new Elysia()
     .guard({
@@ -18,7 +14,7 @@ export const customWebhook = new Elysia()
             })
         ),
         params: t.Object({
-            productId: t.Optional(t.Hex()),
+            identifier: t.Optional(t.String()),
         }),
     })
     .onBeforeHandle(({ headers }) => {
@@ -28,22 +24,26 @@ export const customWebhook = new Elysia()
     })
     .post(
         "/custom",
-        async ({ params: { productId }, body, headers }) => {
+        async ({ params: { identifier }, body, headers }) => {
             const webhookData = JSON.parse(body) as CustomWebhookDto;
             if (!webhookData?.id) {
                 throw new Error("Invalid body");
             }
 
-            if (!productId) {
-                throw new Error("Missing product id");
+            if (!identifier) {
+                throw new Error("Missing merchant identifier");
             }
-            const webhook = await db.query.merchantWebhooksTable.findFirst({
-                where: eq(merchantWebhooksTable.productId, productId),
-            });
-            if (!webhook) {
-                log.warn({ productId }, "Merchant webhook not found");
-                throw new Error("Merchant webhook not found");
+
+            const resolved =
+                await OrchestrationContext.orchestrators.webhookResolver.resolveWebhook(
+                    identifier
+                );
+            if (!resolved) {
+                log.warn({ identifier }, "Webhook not found");
+                throw new Error("Webhook not found");
             }
+
+            const { webhook, merchantId } = resolved;
 
             validateBodyHmac({
                 body,
@@ -53,34 +53,36 @@ export const customWebhook = new Elysia()
 
             log.debug(
                 {
-                    productId,
+                    merchantId,
                     purchaseExternalId: webhookData.id,
                     status: webhookData.status,
                 },
                 "Handling new custom webhook event"
             );
 
-            await PurchasesContext.orchestrators.webhook.upsertPurchase({
-                purchase: {
-                    webhookId: webhook.id,
-                    externalId: webhookData.id,
-                    externalCustomerId: webhookData.customerId,
-                    purchaseToken: webhookData.token,
-                    status: webhookData.status,
-                    totalPrice: webhookData.totalPrice ?? "",
-                    currencyCode: webhookData.currency ?? "",
-                },
-                purchaseItems:
-                    webhookData.items?.map((item) => ({
-                        externalId: item.productId,
-                        price: item.price,
-                        name: item.name,
-                        title: item.title,
-                        quantity: item.quantity,
-                        imageUrl: item.image,
-                    })) ?? [],
-                merchantId: productId,
-            });
+            await OrchestrationContext.orchestrators.purchaseWebhook.upsertPurchase(
+                {
+                    purchase: {
+                        webhookId: webhook.id,
+                        externalId: webhookData.id,
+                        externalCustomerId: webhookData.customerId,
+                        purchaseToken: webhookData.token,
+                        status: webhookData.status,
+                        totalPrice: webhookData.totalPrice ?? "",
+                        currencyCode: webhookData.currency ?? "",
+                    },
+                    purchaseItems:
+                        webhookData.items?.map((item) => ({
+                            externalId: item.productId,
+                            price: item.price,
+                            name: item.name,
+                            title: item.title,
+                            quantity: item.quantity,
+                            imageUrl: item.image,
+                        })) ?? [],
+                    merchantId,
+                }
+            );
 
             return "ok";
         },
@@ -88,7 +90,7 @@ export const customWebhook = new Elysia()
             parse: "text",
             body: t.String(),
             params: t.Object({
-                productId: t.Optional(t.Hex()),
+                identifier: t.Optional(t.String()),
             }),
         }
     );

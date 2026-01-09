@@ -10,8 +10,8 @@ import {
     uuid,
     varchar,
 } from "drizzle-orm/pg-core";
-import { customHex } from "../../../utils/drizzle/customTypes";
 import { identityGroupsTable } from "../../identity/db/schema";
+import { merchantsTable } from "../../merchant/db/schema";
 
 export const webhookPlatformEnum = pgEnum("webhook_platform", [
     "shopify",
@@ -24,13 +24,14 @@ export const merchantWebhooksTable = pgTable(
     "merchant_webhooks",
     {
         id: serial("id").primaryKey(),
-        productId: customHex("product_id").unique().notNull(),
+        merchantId: uuid("merchant_id")
+            .references(() => merchantsTable.id)
+            .notNull(),
         hookSignatureKey: varchar("hook_signature_key").notNull(),
         createdAt: timestamp("created_at").defaultNow(),
         platform: webhookPlatformEnum("platform").notNull().default("shopify"),
-        // TODO: Phase 1 - Link to merchants table via merchantId
     },
-    (table) => [index("merchant_webhooks_product_id_idx").on(table.productId)]
+    (table) => [index("merchant_webhooks_merchant_id_idx").on(table.merchantId)]
 );
 
 export const purchaseStatusEnum = pgEnum("purchase_status", [

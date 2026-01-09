@@ -29,6 +29,8 @@ export type {
     PurchaseContext,
     PurchaseItem,
     RangeRewardDefinition,
+    ReferralChainFetcher,
+    ReferralChainMember,
     RewardAssetType,
     RewardChaining,
     RewardDefinition,
