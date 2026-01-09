@@ -1,10 +1,11 @@
 import { db } from "@backend-infrastructure";
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNotNull } from "drizzle-orm";
 import type { Address } from "viem";
 import {
     identityGroupsTable,
     identityNodesTable,
     type identityTypeEnum,
+    type PendingPurchaseValidation,
 } from "../db/schema";
 
 type IdentityType = (typeof identityTypeEnum.enumValues)[number];
@@ -75,6 +76,7 @@ export class IdentityRepository {
         type: IdentityType;
         value: string;
         merchantId?: string;
+        validationData?: PendingPurchaseValidation;
     }): Promise<IdentityNodeSelect> {
         const [result] = await db
             .insert(identityNodesTable)
@@ -83,6 +85,7 @@ export class IdentityRepository {
                 identityType: params.type,
                 identityValue: params.value,
                 merchantId: params.merchantId,
+                validationData: params.validationData,
             })
             .onConflictDoNothing()
             .returning();
@@ -103,6 +106,29 @@ export class IdentityRepository {
             return existing;
         }
         return result;
+    }
+
+    async findNodeWithPendingValidation(params: {
+        type: IdentityType;
+        value: string;
+        merchantId: string;
+    }): Promise<IdentityNodeSelect | null> {
+        const node = await db.query.identityNodesTable.findFirst({
+            where: and(
+                eq(identityNodesTable.identityType, params.type),
+                eq(identityNodesTable.identityValue, params.value),
+                eq(identityNodesTable.merchantId, params.merchantId),
+                isNotNull(identityNodesTable.validationData)
+            ),
+        });
+        return node ?? null;
+    }
+
+    async clearValidationData(nodeId: string): Promise<void> {
+        await db
+            .update(identityNodesTable)
+            .set({ validationData: null })
+            .where(eq(identityNodesTable.id, nodeId));
     }
 
     async getNodesForGroup(groupId: string): Promise<IdentityNodeSelect[]> {

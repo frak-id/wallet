@@ -40,7 +40,7 @@ export const trackPurchaseRoute = new Elysia().post(
             );
 
             const result =
-                await PurchasesContext.services.linking.linkPurchaseByClientId({
+                await PurchasesContext.services.linking.linkPurchaseFromSdk({
                     clientId,
                     merchantId: body.merchantId,
                     customerId,
@@ -74,7 +74,7 @@ export const trackPurchaseRoute = new Elysia().post(
             );
 
             const result =
-                await PurchasesContext.services.linking.linkPurchaseByWallet({
+                await PurchasesContext.services.linking.linkPurchaseFromWallet({
                     wallet: address,
                     merchantId: body.merchantId,
                     clientId: headers["x-frak-client-id"],

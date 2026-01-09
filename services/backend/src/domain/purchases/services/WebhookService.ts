@@ -1,5 +1,6 @@
 import { db, log } from "@backend-infrastructure";
 import { purchaseItemsTable, purchasesTable } from "../db/schema";
+import { PurchaseLinkingService } from "./LinkingService";
 
 type PurchaseInsert = Omit<typeof purchasesTable.$inferInsert, "id">;
 type PurchaseItemInsert = Omit<
@@ -7,18 +8,47 @@ type PurchaseItemInsert = Omit<
     "id" | "purchaseId"
 >;
 
+type UpsertPurchaseParams = {
+    purchase: PurchaseInsert;
+    purchaseItems: PurchaseItemInsert[];
+    merchantId: string;
+};
+
+type UpsertPurchaseResult = {
+    purchaseId: string;
+    identityGroupId?: string;
+    rewardsProcessed: boolean;
+};
+
 export class PurchasesWebhookService {
+    private readonly linkingService: PurchaseLinkingService;
+
+    constructor(linkingService?: PurchaseLinkingService) {
+        this.linkingService = linkingService ?? new PurchaseLinkingService();
+    }
+
     async upsertPurchase({
         purchase,
         purchaseItems,
-    }: {
-        purchase: PurchaseInsert;
-        purchaseItems: PurchaseItemInsert[];
-    }) {
-        const dbId = await db.transaction(async (trx) => {
+        merchantId,
+    }: UpsertPurchaseParams): Promise<UpsertPurchaseResult> {
+        const pendingIdentity =
+            await this.linkingService.checkPendingIdentityForPurchase({
+                customerId: purchase.externalCustomerId,
+                orderId: purchase.externalId,
+                token: purchase.purchaseToken ?? "",
+                merchantId,
+            });
+
+        const identityGroupId = pendingIdentity?.identityGroupId;
+
+        const purchaseId = await db.transaction(async (trx) => {
             const inserted = await trx
                 .insert(purchasesTable)
-                .values(purchase)
+                .values({
+                    ...purchase,
+                    identityGroupId,
+                })
                 .onConflictDoUpdate({
                     target: [
                         purchasesTable.externalId,
@@ -32,12 +62,13 @@ export class PurchasesWebhookService {
                         ...(purchase.purchaseToken
                             ? { purchaseToken: purchase.purchaseToken }
                             : {}),
+                        ...(identityGroupId ? { identityGroupId } : {}),
                     },
                 })
                 .returning({ purchaseId: purchasesTable.id });
 
-            const purchaseId = inserted[0]?.purchaseId;
-            if (!purchaseId) {
+            const dbId = inserted[0]?.purchaseId;
+            if (!dbId) {
                 throw new Error("Failed to insert purchase");
             }
 
@@ -47,17 +78,47 @@ export class PurchasesWebhookService {
                     .values(
                         purchaseItems.map((item) => ({
                             ...item,
-                            purchaseId,
+                            purchaseId: dbId,
                         }))
                     )
                     .onConflictDoNothing();
             }
 
-            return purchaseId;
+            return dbId;
         });
+
         log.debug(
-            { purchase, purchaseItems, insertedId: dbId },
+            {
+                purchaseId,
+                identityGroupId,
+                hasPendingIdentity: !!pendingIdentity,
+            },
             "Purchase upserted"
         );
+
+        let rewardsProcessed = false;
+
+        if (identityGroupId) {
+            const result =
+                await this.linkingService.processRewardsForLinkedPurchase(
+                    purchaseId
+                );
+            rewardsProcessed = result.rewardsCreated > 0;
+
+            log.info(
+                {
+                    purchaseId,
+                    identityGroupId,
+                    rewardsCreated: result.rewardsCreated,
+                },
+                "Processed rewards for purchase with pending identity"
+            );
+        }
+
+        return {
+            purchaseId,
+            identityGroupId,
+            rewardsProcessed,
+        };
     }
 }
