@@ -695,39 +695,64 @@ schedule.every("0 0 * * *", budgetResetJob);
 
 ### 5.5 RewardsHub Contract Integration
 
+The RewardsHub contract uses a unified `batch` function for all reward operations and `resolveUserIds` for batch identity resolution.
+
+**Contract Structs:**
+```solidity
+struct RewardOp {
+    bool isLock;        // true = lock to userId, false = push to wallet
+    bytes32 target;     // userId (if lock) or address padded to bytes32 (if push)
+    uint256 amount;
+    address token;
+    address bank;
+    bytes attestation;
+}
+
+struct ResolveOp {
+    bytes32 userId;
+    address wallet;
+}
+```
+
+**Gas Optimization:** Operations should be sorted by `(bank, token)` for optimal gas usage. The contract aggregates consecutive operations with the same `(bank, token)` pair into a single transfer.
+
 ```typescript
 // infrastructure/blockchain/contracts/RewardsHubRepository.ts
 export class RewardsHubRepository {
-    /**
-     * All methods use the `rewarder` backend key for authorization.
-     * Key managed via adminWalletsRepository.getKeySpecificAccount({ key: "rewarder" })
-     */
+    // All methods use the `rewarder` backend key for authorization
+    // Key managed via adminWalletsRepository.getKeySpecificAccount({ key: "rewarder" })
     
-    async pushReward(params: {
-        wallet: Address;
-        amount: bigint;
-        token: Address;
-        bank: Address;
-        attestation: string;  // base64 encoded JSON
-    }): Promise<TxHash>;
+    // Push rewards to wallets (users with connected wallets)
+    async pushRewards(rewards: PushRewardParams[]): Promise<TxResult>;
     
-    async pushRewards(rewards: PushRewardParams[]): Promise<TxHash>;
+    // Lock rewards for anonymous users (no wallet yet)
+    async lockRewards(locks: LockRewardParams[]): Promise<TxResult>;
     
-    async lockReward(params: {
-        userId: Hex;  // identityGroupId as bytes32
-        amount: bigint;
-        token: Address;
-        bank: Address;
-        attestation: string;
-    }): Promise<TxHash>;
+    // Combined batch - more gas efficient when mixing push + lock
+    async batchRewards(
+        pushRewards: PushRewardParams[],
+        lockRewards: LockRewardParams[]
+    ): Promise<TxResult>;
     
-    async lockRewards(locks: LockRewardParams[]): Promise<TxHash>;
-    
-    async resolveUserId(params: {
-        userId: Hex;
-        wallet: Address;
-    }): Promise<TxHash>;
+    // Batch resolve userIds to wallets (unlocks locked rewards)
+    async resolveUserIds(resolves: ResolveOp[]): Promise<TxResult>;
 }
+
+type PushRewardParams = {
+    wallet: Address;
+    amount: bigint;
+    token: Address;
+    bank: Address;
+    attestation: Hex;
+};
+
+type LockRewardParams = {
+    userId: Hex;  // identityGroupId encoded as bytes32
+    amount: bigint;
+    token: Address;
+    bank: Address;
+    attestation: Hex;
+};
 
 // Attestation helper
 function buildAttestation(events: Array<{ event: string; timestamp: Date }>): string {
@@ -773,14 +798,14 @@ function buildAttestation(events: Array<{ event: string; timestamp: Date }>): st
    
 3. Settlement job runs (hourly)
    - Detects: identityGroup.wallet is null
-   - Calls: RewardsHub.lockReward(identityGroupId, amount, ...)
+   - Calls: RewardsHub.batch([{isLock:true, userId, amount, ...}])
    - status: pending → ready_to_claim (locked)
    
 4. User authenticates with wallet (login or register)
    - POST /user/wallet/auth/login or /register
    - Reads x-frak-client-id header + merchantId from body
    - Merges clientId's identity group into wallet's group
-   - Calls: RewardsHub.resolveUserId(mergedGroupId, wallet)
+   - Calls: RewardsHub.resolveUserIds([{userId, wallet}])
    - Locked rewards now claimable by wallet
    
 5. User claims
@@ -813,7 +838,7 @@ async connectWallet(params: {
 1. Find wallet's existing identity group (if any)
 2. Find clientId's identity group (if provided)
 3. Merge groups if needed (wallet group is anchor)
-4. Call `RewardsHub.resolveUserId()` for merged groups
+4. Call `RewardsHub.resolveUserIds()` for merged groups
 5. Return final identity group ID
 
 ### 6.3 API Changes
@@ -839,7 +864,7 @@ merchantId?: string  // UUID, optional - scopes clientId to merchant
 ### 6.4 Deliverables ✅
 
 - [x] Enhance IdentityResolutionService.connectWallet with clientId support
-- [x] RewardsHub.resolveUserId integration (with error handling)
+- [x] RewardsHub.resolveUserIds integration (with error handling)
 - [x] UserId encoding utilities (in domain/rewards/types)
 - [x] Integrate into login.ts (ecdsaLogin + webauthn login)
 - [x] Integrate into register.ts

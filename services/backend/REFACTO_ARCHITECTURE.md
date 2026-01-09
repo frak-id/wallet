@@ -53,7 +53,7 @@ AFTER (Web2-First)
 │                                          ↓                              │
 │                              [Batch Job: Hourly Settlement]             │
 │                                          ↓                              │
-│                              pushRewards() / lockRewards()              │
+│                              batch() (unified push + lock)              │
 │                                                                         │
 │  Interactions = database writes                                         │
 │  Rewards calculated in backend                                          │
@@ -151,7 +151,7 @@ The **Identity Graph** resolves multiple identifiers to a single human entity.
 3. User Connects Wallet
    ├── POST /user/identity/connect-wallet { identityGroupId, wallet, signature }
    ├── Backend sets wallet as anchor on identity group
-   ├── Backend calls: RewardsHub.resolveUserId(identityGroupId, wallet)
+   ├── Backend calls: RewardsHub.resolveUserIds([{userId, wallet}])
    └── All locked rewards now assigned to wallet
 ```
 
@@ -305,8 +305,7 @@ All user events flow through a unified **interaction log**.
    │
    ├── Fetch all pending rewards
    ├── Group by: has wallet vs anonymous
-   ├── pushRewards() for users with wallets
-   ├── lockRewards() for anonymous users
+├── batch() with unified push + lock operations (sorted by bank, token)
    └── Update status: pending → ready_to_claim
 ```
 
@@ -387,82 +386,87 @@ The **asset log** tracks all rewards from creation to claim.
 
 Single contract for all reward settlement. Replaces per-product interaction contracts.
 
+**Core Structs:**
+```solidity
+struct RewardOp {
+    bool isLock;        // true = lock to userId, false = push to wallet
+    bytes32 target;     // userId (if lock) or address padded to bytes32 (if push)
+    uint256 amount;
+    address token;
+    address bank;       // merchant's bank (source of funds)
+    bytes attestation;  // proof of legitimate reward
+}
+
+struct ResolveOp {
+    bytes32 userId;
+    address wallet;
+}
+```
+
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                           REWARDS HUB                                    │
 │                                                                         │
-│  Functions:                                                              │
+│  Core Functions:                                                         │
 │                                                                         │
-│  // Push reward directly to wallet (referrer with known wallet)         │
-│  pushReward(                                                            │
-│      wallet: Address,                                                   │
-│      amount: uint256,                                                   │
-│      token: Address,                                                    │
-│      bank: Address,        // merchant's bank (source of funds)        │
-│      attestation: bytes    // proof of legitimate reward               │
-│  )                                                                      │
+│  // Unified batch for push + lock (gas optimized)                       │
+│  batch(RewardOp[] calldata _ops)                                        │
+│    - isLock=false: push to wallet (target = padded address)            │
+│    - isLock=true: lock for userId (target = userId bytes32)            │
+│    - SORT by (bank, token) for optimal gas!                            │
 │                                                                         │
-│  // Batch version for gas efficiency                                    │
-│  pushRewards(RewardData[] calldata rewards)                            │
+│  // Batch resolve userIds to wallets                                    │
+│  resolveUserIds(ResolveOp[] calldata _ops)                             │
 │                                                                         │
-│  // Lock reward for anonymous user (no wallet yet)                      │
-│  lockReward(                                                            │
-│      userId: bytes32,      // identityGroupId as bytes32               │
-│      amount: uint256,                                                   │
-│      token: Address,                                                    │
-│      bank: Address,                                                     │
-│      attestation: bytes                                                 │
-│  )                                                                      │
-│                                                                         │
-│  // Batch version                                                       │
-│  lockRewards(LockData[] calldata locks)                                │
-│                                                                         │
-│  // Called when user connects wallet - unlocks all their rewards        │
-│  resolveUserId(                                                         │
-│      userId: bytes32,                                                   │
-│      wallet: Address                                                    │
-│  )                                                                      │
+│  // Single operations (convenience, uses batch internally)              │
+│  pushReward(wallet, amount, token, bank, attestation)                  │
+│  lockReward(userId, amount, token, bank, attestation)                  │
 │                                                                         │
 │  // User claims their available rewards                                 │
-│  claim()                                                                │
-│  claimToken(token: Address)  // claim specific token                   │
+│  claim(token)                                                           │
+│  claimBatch(tokens[])                                                   │
 │                                                                         │
 │  // View functions                                                       │
-│  getClaimable(wallet: Address) returns (TokenAmount[])                 │
-│  getLockedForUser(userId: bytes32) returns (TokenAmount[])             │
+│  getClaimable(wallet, token) returns uint256                           │
+│  getLocked(userId, token) returns uint256                              │
+│  getLockedTokens(userId) returns address[]                             │
+│  getResolution(userId) returns address                                 │
 │                                                                         │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
-**Under the Hood**:
+**Gas Optimization:**
+Operations SHOULD be sorted by `(bank, token)` for optimal gas usage. The contract aggregates consecutive operations with the same `(bank, token)` pair into a single transfer. Unsorted operations still work but may consume more gas.
+
+**Under the Hood:**
 
 ```
-pushReward(wallet, amount, token, bank, attestation):
-    1. Verify caller is `rewarder` role
-    2. Transfer `amount` of `token` from `bank` to this contract
-    3. Credit `wallet` with `amount` in internal ledger
-    4. Emit RewardPushed(wallet, amount, token, bank, attestationHash)
+batch(_ops):
+    1. Verify caller has REWARDER_ROLE
+    2. For each op (sorted by bank, token for efficiency):
+       - If isLock=false: credit wallet (target as address) in claimable ledger
+       - If isLock=true: credit userId (target) in locked ledger
+    3. Aggregate transfers by (bank, token) pair
+    4. Execute batched transfers from banks
+    5. Emit RewardPushed/RewardLocked events
 
-lockReward(userId, amount, token, bank, attestation):
-    1. Verify caller is `rewarder` role
-    2. Transfer `amount` of `token` from `bank` to this contract
-    3. Credit `userId` (not a wallet) in locked ledger
-    4. Emit RewardLocked(userId, amount, token, bank, attestationHash)
+resolveUserIds(_ops):
+    1. Verify caller has RESOLVER_ROLE
+    2. For each op:
+       - Move all locked balances from userId → wallet
+       - Store resolution mapping
+    3. Emit UserIdResolved events
 
-resolveUserId(userId, wallet):
-    1. Verify caller is `rewarder` role
-    2. Move all locked balances from userId → wallet
-    3. Delete userId entry from locked ledger
-    4. Emit UserResolved(userId, wallet, totalAmount)
-
-claim():
-    1. Get caller's balance
-    2. Transfer all tokens to caller
+claim(token):
+    1. Get caller's claimable balance for token
+    2. Transfer tokens to caller
     3. Clear balance
-    4. Emit Claimed(caller, amounts)
+    4. Emit RewardClaimed
 
-**Authorization**: All mutating functions (push, lock, resolve) require the `rewarder` backend key.
-This key is managed in `adminWalletsRepository` alongside existing keys (minter, oracle-updater).
+**Authorization**: 
+- batch() requires REWARDER_ROLE
+- resolveUserIds() requires RESOLVER_ROLE
+- Both managed via `adminWalletsRepository` with the `rewarder` backend key
 ```
 
 ### Attestation Structure
@@ -544,8 +548,10 @@ type RewardAttestation = Array<{
        │         │ - Alice reward: PENDING → push to 0xAlice           │
        │         │ - Bob reward: PENDING → lock by identityGroupId    │
        │         │                                                     │
-       │         │ RewardsHub.pushReward(0xAlice, 10, USDC, bank, att)│
-       │         │ RewardsHub.lockReward(bobGroupId, 5, USDC, bank,..)│
+│         │ RewardsHub.batch([                                  │
+│         │   {isLock:false, target:0xAlice, 10, USDC, bank},  │
+│         │   {isLock:true, target:bobGroupId, 5, USDC, bank}  │
+│         │ ])                                                  │
        │         └─────────────────────────────────────────────────────┘
        │                       │                       │
        │  4. Claim             │                       │
@@ -586,7 +592,7 @@ T2: Next settlement batch (hourly)
     │  Settlement job (uses `rewarder` key):
     │  - Bob has no wallet in identityGroup
     │  - Cannot push to wallet
-    │  - Call: RewardsHub.lockReward("grp_abc", 5, USDC, bank, attestation)
+    │  - Call: RewardsHub.batch([{isLock:true, "grp_abc", 5, USDC, bank, att}])
     │  - Reward status: pending → ready_to_claim (locked)
     │
     ▼
@@ -597,7 +603,7 @@ T3: Bob connects wallet (weeks later)
     │  
     │  Backend:
     │  - Update identityGroup: wallet = 0xBob
-    │  - Call: RewardsHub.resolveUserId("grp_abc", 0xBob)
+    │  - Call: RewardsHub.resolveUserIds([{userId:"grp_abc", wallet:0xBob}])
     │  
     │  Contract:
     │  - Move locked balance from "grp_abc" → 0xBob
@@ -638,7 +644,7 @@ When Bob connects wallet 0xBob on Device A:
    - No → set grp_A.wallet = 0xBob
    - Yes → merge groups (see below)
 
-3. RewardsHub.resolveUserId("grp_A", 0xBob)
+3. RewardsHub.resolveUserIds([{userId:"grp_A", wallet:0xBob}])
 
 
 Later, Bob connects same wallet on Device B:
@@ -653,7 +659,7 @@ Later, Bob connects same wallet on Device B:
    - grp_A is anchor (already has wallet)
    - Move all identity nodes from grp_B → grp_A
    - Move all rewards from grp_B → grp_A
-   - RewardsHub.resolveUserId("grp_B", 0xBob) to unlock grp_B rewards
+   - RewardsHub.resolveUserIds([{userId:"grp_B", wallet:0xBob}]) to unlock grp_B rewards
    - Delete grp_B
 
 4. Result:

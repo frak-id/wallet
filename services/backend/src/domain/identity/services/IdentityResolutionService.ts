@@ -1,6 +1,7 @@
 import { log } from "@backend-infrastructure";
 import type { Address } from "viem";
 import {
+    type ResolveOp,
     type RewardsHubRepository,
     rewardsHubRepository,
 } from "../../../infrastructure/blockchain/contracts/RewardsHubRepository";
@@ -200,36 +201,35 @@ export class IdentityResolutionService {
         groupIds: string[],
         wallet: Address
     ): Promise<void> {
-        for (const groupId of groupIds) {
-            try {
-                const userId = encodeUserId(groupId);
-                const result = await this.rewardsHub.resolveUserId({
-                    userId,
-                    wallet,
-                });
+        if (groupIds.length === 0) return;
 
-                log.info(
-                    {
-                        groupId,
-                        wallet,
-                        txHash: result.txHash,
-                        blockNumber: result.blockNumber,
-                    },
-                    "Resolved userId on RewardsHub"
-                );
-            } catch (error) {
-                log.error(
-                    {
-                        groupId,
-                        wallet,
-                        error:
-                            error instanceof Error
-                                ? error.message
-                                : String(error),
-                    },
-                    "Failed to resolve userId on RewardsHub"
-                );
-            }
+        const resolveOps: ResolveOp[] = groupIds.map((groupId) => ({
+            userId: encodeUserId(groupId),
+            wallet,
+        }));
+
+        try {
+            const result = await this.rewardsHub.resolveUserIds(resolveOps);
+
+            log.info(
+                {
+                    groupIds,
+                    wallet,
+                    txHash: result.txHash,
+                    blockNumber: result.blockNumber,
+                },
+                "Resolved userIds on RewardsHub"
+            );
+        } catch (error) {
+            log.error(
+                {
+                    groupIds,
+                    wallet,
+                    error:
+                        error instanceof Error ? error.message : String(error),
+                },
+                "Failed to resolve userIds on RewardsHub"
+            );
         }
     }
 

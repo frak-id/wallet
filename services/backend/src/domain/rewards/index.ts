@@ -1,11 +1,11 @@
 export {
     type AssetLogInsert,
     type AssetLogSelect,
-    type InteractionLogInsert,
-    type InteractionLogSelect,
     assetLogsTable,
     assetStatusEnum,
     assetTypeEnum,
+    type InteractionLogInsert,
+    type InteractionLogSelect,
     interactionLogsTable,
     interactionTypeEnum,
     recipientTypeEnum,
