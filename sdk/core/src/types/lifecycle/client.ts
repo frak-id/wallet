@@ -10,7 +10,8 @@ export type ClientLifecycleEvent =
     | RestoreBackupEvent
     | HearbeatEvent
     | HandshakeResponse
-    | SsoRedirectCompleteEvent;
+    | SsoRedirectCompleteEvent
+    | MobileAuthCompleteEvent;
 
 type CustomCssEvent = {
     clientLifecycle: "modal-css";
@@ -43,4 +44,12 @@ type HandshakeResponse = {
 type SsoRedirectCompleteEvent = {
     clientLifecycle: "sso-redirect-complete";
     data: { compressed: string };
+};
+
+type MobileAuthCompleteEvent = {
+    clientLifecycle: "mobile-auth-complete";
+    data: {
+        wallet: string;
+        sdkJwt: { token: string; expires: number };
+    };
 };

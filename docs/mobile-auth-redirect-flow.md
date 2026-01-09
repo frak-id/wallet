@@ -545,9 +545,11 @@ export { isMobile } from "./common/utils/isMobile";
 | **Wallet** | `apps/wallet/app/module/open-login/` | Create (new module) |
 | **Wallet** | `apps/wallet/app/utils/deepLink.ts` | Update |
 | **Tauri** | `apps/wallet/src-tauri/tauri.conf.json` | Verify deep link config |
-| **SDK Core** | `sdk/core/src/utils/authCallback.ts` | Create |
-| **SDK Core** | `sdk/core/src/clients/setupClient.ts` | Update |
-| **SDK Core** | `sdk/core/src/index.ts` | Update (export) |
+| **SDK Core** | `sdk/core/src/utils/mobileAuthCallback.ts` | Create ✅ |
+| **SDK Core** | `sdk/core/src/utils/mobileAuthCallback.test.ts` | Create ✅ |
+| **SDK Core** | `sdk/core/src/clients/createIFrameFrakClient.ts` | Update ✅ |
+| **SDK Core** | `sdk/core/src/types/lifecycle/client.ts` | Update ✅ |
+| **SDK Core** | `sdk/core/src/utils/index.ts` | Update (export) ✅ |
 | **Listener** | `apps/listener/app/module/component/SsoButton.tsx` | Update |
 | **Listener** | `apps/listener/app/module/utils/mobileAuth.ts` | Create |
 | **Shared** | `packages/wallet-shared/src/common/utils/isMobile.ts` | Create |
@@ -576,12 +578,14 @@ export { isMobile } from "./common/utils/isMobile";
 - [ ] Test on iOS simulator (pending manual verification)
 
 ### Phase 3: SDK Integration
-**Status:** ⏳ Not Started  
-**Completed:** -
+**Status:** ✅ Completed
+**Completed:** January 9, 2026
 
-- [ ] Create `authCallback` utility in core SDK
-- [ ] Integrate into SDK initialization
-- [ ] Add tests for callback detection
+- [x] Create `mobileAuthCallback` utility in core SDK (`sdk/core/src/utils/mobileAuthCallback.ts`)
+- [x] Integrate into SDK initialization (`createIFrameFrakClient.ts` → `postConnectionSetup`)
+- [x] Add `MobileAuthCompleteEvent` lifecycle type
+- [x] Add tests for callback detection (10 tests passing)
+- [x] Add `productId` to redirect URL for auth code exchange
 
 ### Phase 4: Listener Update
 **Status:** ⏳ Not Started  
