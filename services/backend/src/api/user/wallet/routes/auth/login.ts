@@ -1,4 +1,4 @@
-import { JwtContext, viemClient } from "@backend-infrastructure";
+import { JwtContext, log, viemClient } from "@backend-infrastructure";
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import { verifyMessage } from "viem/actions";
@@ -7,14 +7,27 @@ import {
     type StaticWalletSdkTokenDto,
     WalletAuthResponseDto,
 } from "../../../../../domain/auth";
+import { IdentityResolutionService } from "../../../../../domain/identity/services/IdentityResolutionService";
+
+const identityHeadersSchema = t.Object({
+    "x-frak-client-id": t.Optional(t.String()),
+});
 
 export const loginRoutes = new Elysia()
-    // Ecdsa login
+    .guard({
+        headers: identityHeadersSchema,
+    })
     .post(
         "/ecdsaLogin",
         async ({
-            // Request
-            body: { expectedChallenge, signature, wallet, demoPkey },
+            headers,
+            body: {
+                expectedChallenge,
+                signature,
+                wallet,
+                demoPkey,
+                merchantId,
+            },
         }) => {
             // Rebuild the message that have been signed
             const message = `I want to connect to Frak and I accept the CGU.\n Verification code:${expectedChallenge}`;
@@ -48,12 +61,28 @@ export const loginRoutes = new Elysia()
                 transports: undefined,
             });
 
-            // Finally, generate a JWT token for the SDK
             const sdkJwt =
                 await AuthContext.services.walletSdkSession.generateSdkJwt({
                     wallet: walletAddress,
                     additionalData: { demoPkey },
                 });
+
+            const clientId = headers["x-frak-client-id"];
+            if (clientId || merchantId) {
+                const identityService = new IdentityResolutionService();
+                await identityService
+                    .connectWallet({
+                        wallet: walletAddress,
+                        clientId,
+                        merchantId,
+                    })
+                    .catch((err) => {
+                        log.error(
+                            { err, walletAddress, clientId, merchantId },
+                            "Failed to connect wallet to identity"
+                        );
+                    });
+            }
 
             return {
                 token,
@@ -70,8 +99,8 @@ export const loginRoutes = new Elysia()
                 expectedChallenge: t.String(),
                 wallet: t.Address(),
                 signature: t.Hex(),
-                // potential demo pkey
                 demoPkey: t.Optional(t.Hex()),
+                merchantId: t.Optional(t.String({ format: "uuid" })),
             }),
             response: {
                 404: t.String(),
@@ -79,14 +108,14 @@ export const loginRoutes = new Elysia()
             },
         }
     )
-    // Login
     .post(
         "/login",
         async ({
-            // Request
+            headers,
             body: {
                 authenticatorResponse: rawAuthenticatorResponse,
                 expectedChallenge,
+                merchantId,
             },
         }) => {
             // Check if that's a valid webauthn signature
@@ -118,12 +147,28 @@ export const loginRoutes = new Elysia()
                 iat: Date.now(),
             });
 
-            // Finally, generate a JWT token for the SDK
             const sdkJwt =
                 await AuthContext.services.walletSdkSession.generateSdkJwt({
                     wallet: address,
                     additionalData,
                 });
+
+            const clientId = headers["x-frak-client-id"];
+            if (clientId || merchantId) {
+                const identityService = new IdentityResolutionService();
+                await identityService
+                    .connectWallet({
+                        wallet: address,
+                        clientId,
+                        merchantId,
+                    })
+                    .catch((err) => {
+                        log.error(
+                            { err, address, clientId, merchantId },
+                            "Failed to connect wallet to identity"
+                        );
+                    });
+            }
 
             return {
                 token,
@@ -137,10 +182,9 @@ export const loginRoutes = new Elysia()
         },
         {
             body: t.Object({
-                // Challenge should be on the backend side
                 expectedChallenge: t.Hex(),
-                // b64 + stringified version of the authenticator response
                 authenticatorResponse: t.String(),
+                merchantId: t.Optional(t.String({ format: "uuid" })),
             }),
             response: {
                 404: t.String(),

@@ -1,14 +1,24 @@
 import { log } from "@backend-infrastructure";
 import type { Address } from "viem";
+import {
+    type RewardsHubRepository,
+    rewardsHubRepository,
+} from "../../../infrastructure/blockchain/contracts/RewardsHubRepository";
+import { encodeUserId } from "../../rewards/types";
 import { IdentityRepository } from "../repositories/IdentityRepository";
 
 type IdentityType = "anonymous_fingerprint" | "merchant_customer" | "wallet";
 
 export class IdentityResolutionService {
     private repository: IdentityRepository;
+    private rewardsHub: RewardsHubRepository;
 
-    constructor(repository?: IdentityRepository) {
+    constructor(
+        repository?: IdentityRepository,
+        rewardsHub?: RewardsHubRepository
+    ) {
         this.repository = repository ?? new IdentityRepository();
+        this.rewardsHub = rewardsHub ?? rewardsHubRepository;
     }
 
     async resolveAnonymousId(params: {
@@ -82,48 +92,145 @@ export class IdentityResolutionService {
     }
 
     async connectWallet(params: {
-        identityGroupId: string;
         wallet: Address;
-    }): Promise<{ merged: boolean; mergedFromGroupId?: string }> {
-        const existingGroup = await this.repository.findGroupByWallet(
+        clientId?: string;
+        merchantId?: string;
+    }): Promise<{
+        identityGroupId: string;
+        merged: boolean;
+        mergedGroupIds: string[];
+    }> {
+        const groupsToResolve: string[] = [];
+
+        const walletGroup = await this.repository.findGroupByWallet(
             params.wallet
         );
 
-        if (existingGroup && existingGroup.id !== params.identityGroupId) {
-            await this.mergeGroups({
-                anchorGroupId: existingGroup.id,
-                mergingGroupId: params.identityGroupId,
+        let clientGroup: { id: string; walletAddress: Address | null } | null =
+            null;
+        if (params.clientId && params.merchantId) {
+            clientGroup = await this.repository.findGroupByIdentity({
+                type: "anonymous_fingerprint",
+                value: params.clientId,
+                merchantId: params.merchantId,
             });
-
-            // TODO: Phase 6 - Call RewardsHub.resolveUserId(params.identityGroupId, params.wallet)
-
-            return {
-                merged: true,
-                mergedFromGroupId: params.identityGroupId,
-            };
         }
 
-        await this.repository.updateGroupWallet(
-            params.identityGroupId,
-            params.wallet
-        );
-        await this.repository.addNode({
-            groupId: params.identityGroupId,
-            type: "wallet",
-            value: params.wallet,
-        });
+        let finalGroupId: string;
 
-        // TODO: Phase 6 - Call RewardsHub.resolveUserId(params.identityGroupId, params.wallet)
+        if (walletGroup) {
+            finalGroupId = walletGroup.id;
 
-        log.debug(
-            {
-                groupId: params.identityGroupId,
-                wallet: params.wallet,
-            },
-            "Connected wallet to identity group"
-        );
+            if (clientGroup && clientGroup.id !== walletGroup.id) {
+                await this.mergeGroups({
+                    anchorGroupId: walletGroup.id,
+                    mergingGroupId: clientGroup.id,
+                });
+                groupsToResolve.push(clientGroup.id);
 
-        return { merged: false };
+                log.debug(
+                    {
+                        walletGroupId: walletGroup.id,
+                        clientGroupId: clientGroup.id,
+                        wallet: params.wallet,
+                    },
+                    "Merged clientId group into existing wallet group"
+                );
+            }
+        } else if (clientGroup) {
+            finalGroupId = clientGroup.id;
+            groupsToResolve.push(clientGroup.id);
+
+            await this.repository.updateGroupWallet(
+                clientGroup.id,
+                params.wallet
+            );
+            await this.repository.addNode({
+                groupId: clientGroup.id,
+                type: "wallet",
+                value: params.wallet,
+            });
+
+            log.debug(
+                {
+                    groupId: clientGroup.id,
+                    wallet: params.wallet,
+                },
+                "Connected wallet to existing clientId group"
+            );
+        } else {
+            const newGroup = await this.repository.createGroup(params.wallet);
+            finalGroupId = newGroup.id;
+
+            await this.repository.addNode({
+                groupId: newGroup.id,
+                type: "wallet",
+                value: params.wallet,
+            });
+
+            if (params.clientId && params.merchantId) {
+                await this.repository.addNode({
+                    groupId: newGroup.id,
+                    type: "anonymous_fingerprint",
+                    value: params.clientId,
+                    merchantId: params.merchantId,
+                });
+            }
+
+            log.debug(
+                {
+                    groupId: newGroup.id,
+                    wallet: params.wallet,
+                    clientId: params.clientId,
+                },
+                "Created new identity group for wallet"
+            );
+        }
+
+        await this.resolveLockedRewards(groupsToResolve, params.wallet);
+
+        return {
+            identityGroupId: finalGroupId,
+            merged: groupsToResolve.length > 0,
+            mergedGroupIds: groupsToResolve,
+        };
+    }
+
+    private async resolveLockedRewards(
+        groupIds: string[],
+        wallet: Address
+    ): Promise<void> {
+        for (const groupId of groupIds) {
+            try {
+                const userId = encodeUserId(groupId);
+                const result = await this.rewardsHub.resolveUserId({
+                    userId,
+                    wallet,
+                });
+
+                log.info(
+                    {
+                        groupId,
+                        wallet,
+                        txHash: result.txHash,
+                        blockNumber: result.blockNumber,
+                    },
+                    "Resolved userId on RewardsHub"
+                );
+            } catch (error) {
+                log.error(
+                    {
+                        groupId,
+                        wallet,
+                        error:
+                            error instanceof Error
+                                ? error.message
+                                : String(error),
+                    },
+                    "Failed to resolve userId on RewardsHub"
+                );
+            }
+        }
     }
 
     async findByIdentifier(params: {

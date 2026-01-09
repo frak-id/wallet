@@ -8,7 +8,6 @@ import {
 import { IdentityResolutionService } from "../../../domain/identity/services/IdentityResolutionService";
 
 const trackArrivalBodySchema = t.Object({
-    anonId: t.String({ minLength: 1 }),
     merchantId: t.String({ format: "uuid" }),
     referrerWallet: t.Optional(t.String()),
     landingUrl: t.Optional(t.String()),
@@ -21,12 +20,20 @@ const trackArrivalBodySchema = t.Object({
 
 export const trackArrivalRoute = new Elysia().post(
     "/arrival",
-    async ({ body }) => {
+    async ({ headers, body }) => {
+        const clientId = headers["x-frak-client-id"];
+        if (!clientId) {
+            return {
+                success: false,
+                error: "x-frak-client-id header required",
+            };
+        }
+
         const identityService = new IdentityResolutionService();
         const attributionService = new AttributionService();
 
         const { identityGroupId } = await identityService.resolveAnonymousId({
-            anonId: body.anonId,
+            anonId: clientId,
             merchantId: body.merchantId,
         });
 
@@ -47,6 +54,9 @@ export const trackArrivalRoute = new Elysia().post(
         };
     },
     {
+        headers: t.Object({
+            "x-frak-client-id": t.String({ minLength: 1 }),
+        }),
         body: trackArrivalBodySchema,
     }
 );

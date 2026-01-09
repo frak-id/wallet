@@ -755,117 +755,114 @@ function buildAttestation(events: Array<{ event: string; timestamp: Date }>): st
 
 ---
 
-## Phase 6: Anonymous Lock Mechanism
+## Phase 6: Anonymous Lock Mechanism ✅ COMPLETED
 
 **Goal**: Support rewards for users who don't have wallets yet.
 
-### 6.1 Lock Flow
+### 6.1 Lock Flow (Implemented)
 
 ```
-1. Purchase event arrives for anonymous user
-   - identityGroup exists but wallet is null
+1. Anonymous user arrives via referral link
+   - SDK generates clientId (UUID in localStorage, per merchant)
+   - SDK sends x-frak-client-id header on requests
+   - POST /user/track/arrival creates identity group + touchpoint
    
-2. Reward calculation happens normally
-   - Budget checked (real-time, strict)
-   - asset_log created with status: pending
+2. User makes purchase (anonymous)
+   - Webhook arrives, links purchase to identity group
+   - Rewards calculated, asset_logs created (status: pending)
    
-3. Settlement job runs (next batch)
+3. Settlement job runs (hourly)
    - Detects: identityGroup.wallet is null
    - Calls: RewardsHub.lockReward(identityGroupId, amount, ...)
    - status: pending → ready_to_claim (locked)
    
-4. Later: user connects wallet
-   - POST /user/identity/connect-wallet
-   - Backend updates identityGroup.wallet
-   - Backend calls: RewardsHub.resolveUserId(identityGroupId, wallet)
-   - All locked rewards now assigned to wallet
+4. User authenticates with wallet (login or register)
+   - POST /user/wallet/auth/login or /register
+   - Reads x-frak-client-id header + merchantId from body
+   - Merges clientId's identity group into wallet's group
+   - Calls: RewardsHub.resolveUserId(mergedGroupId, wallet)
+   - Locked rewards now claimable by wallet
    
 5. User claims
    - RewardsHub.claim() from wallet
 ```
 
-> **Note**: No clearance period. Rewards go straight to settlement in next batch.
+### 6.2 Identity Resolution Implementation
 
-### 6.2 Identity Service Enhancement
+**Key Design Decisions:**
+- **No separate endpoint**: Identity resolution integrated into existing auth endpoints
+- **Simple clientId**: localStorage UUID, no fingerprinting (GDPR-safe, ~80% accuracy)
+- **Header-based**: `x-frak-client-id` header for SDK consistency
+- **Graceful failures**: RewardsHub errors logged but don't fail authentication
 
+**Implementation:**
 ```typescript
-// domain/identity/services/IdentityResolutionService.ts
+// IdentityResolutionService.connectWallet()
 async connectWallet(params: {
-    identityGroupId: string;
     wallet: Address;
-    signature: Hex;
-}): Promise<ConnectWalletResult> {
-    // 1. Verify signature (wallet ownership)
-    const isValid = await verifyWalletSignature(wallet, signature);
-    if (!isValid) throw new Error("Invalid signature");
-    
-    // 2. Check if wallet already belongs to another group
-    const existingGroup = await this.findByWallet(wallet);
-    
-    if (existingGroup && existingGroup.id !== identityGroupId) {
-        // MERGE: existingGroup is anchor (has wallet)
-        await this.mergeGroups({
-            anchorGroupId: existingGroup.id,
-            mergingGroupId: identityGroupId,
-        });
-        
-        // Resolve the merging group's locked rewards to wallet
-        await this.rewardsHub.resolveUserId(identityGroupId, wallet);
-        
-        return { merged: true, mergedFromGroupId: identityGroupId };
-    }
-    
-    // 3. Update identity group with wallet
-    await db.update(identityGroupsTable)
-        .set({ walletAddress: wallet, updatedAt: new Date() })
-        .where(eq(identityGroupsTable.id, identityGroupId));
-    
-    // 4. Create wallet identity node
-    await db.insert(identityNodesTable).values({
-        groupId: identityGroupId,
-        identityType: "wallet",
-        identityValue: wallet,
-        merchantId: null,  // Wallet is global
-    });
-    
-    // 5. Resolve any locked rewards on-chain
-    await this.rewardsHub.resolveUserId(identityGroupId, wallet);
-    
-    return { merged: false };
-}
+    clientId?: string;      // From x-frak-client-id header
+    merchantId?: string;    // From request body
+}): Promise<{
+    identityGroupId: string;
+    merged: boolean;
+    mergedGroupIds: string[];
+}>
 ```
 
-### 6.3 UserId Encoding
+**Flow:**
+1. Find wallet's existing identity group (if any)
+2. Find clientId's identity group (if provided)
+3. Merge groups if needed (wallet group is anchor)
+4. Call `RewardsHub.resolveUserId()` for merged groups
+5. Return final identity group ID
 
+### 6.3 API Changes
+
+**Auth Endpoints Updated:**
+- `POST /user/wallet/auth/login` - WebAuthn login
+- `POST /user/wallet/auth/ecdsaLogin` - ECDSA login
+- `POST /user/wallet/auth/register` - New wallet registration
+
+**New Headers:**
+```
+x-frak-client-id: <uuid>  // SDK-generated, stored in localStorage
+```
+
+**New Body Parameters:**
 ```typescript
-// utils/userId.ts
-/**
- * Encode identity group UUID to bytes32 for contract.
- */
-function encodeUserId(identityGroupId: string): Hex {
-    // Remove hyphens, pad to 32 bytes
-    const clean = identityGroupId.replace(/-/g, "");
-    return `0x${clean.padStart(64, "0")}` as Hex;
-}
-
-/**
- * Decode bytes32 back to UUID.
- */
-function decodeUserId(userId: Hex): string {
-    const clean = userId.slice(2).replace(/^0+/, "");
-    // Reformat as UUID
-    return `${clean.slice(0,8)}-${clean.slice(8,12)}-${clean.slice(12,16)}-${clean.slice(16,20)}-${clean.slice(20)}`;
-}
+merchantId?: string  // UUID, optional - scopes clientId to merchant
 ```
 
-### 6.4 Deliverables
+**Track Arrival Updated:**
+- `POST /user/track/arrival` - Now accepts `x-frak-client-id` header OR `clientId` in body
 
-- [ ] Enhance IdentityResolutionService.connectWallet
-- [ ] Add mergeGroups logic
-- [ ] UserId encoding utilities
-- [ ] RewardsHub.resolveUserId integration
-- [ ] Handle merge edge cases
-- [ ] Tests for anonymous → wallet flow
+### 6.4 Deliverables ✅
+
+- [x] Enhance IdentityResolutionService.connectWallet with clientId support
+- [x] RewardsHub.resolveUserId integration (with error handling)
+- [x] UserId encoding utilities (in domain/rewards/types)
+- [x] Integrate into login.ts (ecdsaLogin + webauthn login)
+- [x] Integrate into register.ts
+- [x] Update track/arrival to support header-based clientId
+- [ ] Tests for anonymous → wallet flow (Deferred)
+
+### 6.5 SDK Implementation Notes
+
+**SDK should:**
+```typescript
+// On initialization (per merchant)
+const clientId = localStorage.getItem(`frak_${merchantId}`) ?? crypto.randomUUID();
+localStorage.setItem(`frak_${merchantId}`, clientId);
+
+// On every request
+headers['x-frak-client-id'] = clientId;
+
+// On auth (login/register), include merchantId in body
+body.merchantId = merchantId;
+```
+
+**Expected accuracy:** ~80% (localStorage-based, no fingerprinting)
+**Lost scenarios:** Different browser, cleared storage, incognito mode
 
 ---
 
