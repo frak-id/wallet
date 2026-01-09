@@ -13,19 +13,27 @@ import {
     type StaticWalletSdkTokenDto,
     WalletAuthResponseDto,
 } from "../../../../../domain/auth";
+import { IdentityResolutionService } from "../../../../../domain/identity/services/IdentityResolutionService";
+
+const identityHeadersSchema = t.Object({
+    "x-frak-client-id": t.Optional(t.String()),
+});
 
 export const registerRoutes = new Elysia()
-    // Registration
+    .guard({
+        headers: identityHeadersSchema,
+    })
     .post(
         "/register",
         async ({
-            // Request
+            headers,
             body: {
                 id,
                 publicKey,
                 raw: rawRegistrationResponse,
                 userAgent,
                 previousWallet,
+                merchantId,
             },
         }) => {
             // Decode the registration response
@@ -83,14 +91,12 @@ export const registerRoutes = new Elysia()
             const additionalData: StaticWalletSdkTokenDto["additionalData"] =
                 {};
 
-            // Finally, generate a JWT token for the SDK
             const sdkJwt =
                 await AuthContext.services.walletSdkSession.generateSdkJwt({
                     wallet: walletAddress,
                     additionalData,
                 });
 
-            // Create the token and set the cookie
             const token = await JwtContext.wallet.sign({
                 address: walletAddress,
                 type: "webauthn",
@@ -99,6 +105,23 @@ export const registerRoutes = new Elysia()
                 sub: walletAddress,
                 iat: Date.now(),
             });
+
+            const clientId = headers["x-frak-client-id"];
+            if (clientId || merchantId) {
+                const identityService = new IdentityResolutionService();
+                await identityService
+                    .connectWallet({
+                        wallet: walletAddress,
+                        clientId,
+                        merchantId,
+                    })
+                    .catch((err) => {
+                        log.error(
+                            { err, walletAddress, clientId, merchantId },
+                            "Failed to connect wallet to identity"
+                        );
+                    });
+            }
 
             return {
                 token,
@@ -118,11 +141,11 @@ export const registerRoutes = new Elysia()
                     y: t.Hex(),
                     prefix: t.Number(),
                 }),
-                // b64 + stringified version of the raw registration response
                 raw: t.String(),
                 userAgent: t.String(),
                 previousWallet: t.Optional(t.Address()),
                 setSessionCookie: t.Optional(t.Boolean()),
+                merchantId: t.Optional(t.String({ format: "uuid" })),
             }),
             response: {
                 400: t.String(),
