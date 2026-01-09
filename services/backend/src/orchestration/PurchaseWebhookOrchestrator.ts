@@ -1,15 +1,10 @@
-import { db, log } from "@backend-infrastructure";
-import {
-    purchaseItemsTable,
-    purchasesTable,
-} from "../domain/purchases/db/schema";
+import { log } from "@backend-infrastructure";
+import type {
+    PurchaseInsert,
+    PurchaseItemInsert,
+    PurchaseRepository,
+} from "../domain/purchases";
 import type { PurchaseLinkingOrchestrator } from "./PurchaseLinkingOrchestrator";
-
-type PurchaseInsert = Omit<typeof purchasesTable.$inferInsert, "id">;
-type PurchaseItemInsert = Omit<
-    typeof purchaseItemsTable.$inferInsert,
-    "id" | "purchaseId"
->;
 
 type UpsertPurchaseParams = {
     purchase: PurchaseInsert;
@@ -24,7 +19,10 @@ type UpsertPurchaseResult = {
 };
 
 export class PurchaseWebhookOrchestrator {
-    constructor(readonly linkingOrchestrator: PurchaseLinkingOrchestrator) {}
+    constructor(
+        private readonly purchaseRepository: PurchaseRepository,
+        private readonly linkingOrchestrator: PurchaseLinkingOrchestrator
+    ) {}
 
     async upsertPurchase({
         purchase,
@@ -41,49 +39,10 @@ export class PurchaseWebhookOrchestrator {
 
         const identityGroupId = pendingIdentity?.identityGroupId;
 
-        const purchaseId = await db.transaction(async (trx) => {
-            const inserted = await trx
-                .insert(purchasesTable)
-                .values({
-                    ...purchase,
-                    identityGroupId,
-                })
-                .onConflictDoUpdate({
-                    target: [
-                        purchasesTable.externalId,
-                        purchasesTable.webhookId,
-                    ],
-                    set: {
-                        status: purchase.status,
-                        totalPrice: purchase.totalPrice,
-                        currencyCode: purchase.currencyCode,
-                        updatedAt: new Date(),
-                        ...(purchase.purchaseToken
-                            ? { purchaseToken: purchase.purchaseToken }
-                            : {}),
-                        ...(identityGroupId ? { identityGroupId } : {}),
-                    },
-                })
-                .returning({ purchaseId: purchasesTable.id });
-
-            const dbId = inserted[0]?.purchaseId;
-            if (!dbId) {
-                throw new Error("Failed to insert purchase");
-            }
-
-            if (purchaseItems.length > 0) {
-                await trx
-                    .insert(purchaseItemsTable)
-                    .values(
-                        purchaseItems.map((item) => ({
-                            ...item,
-                            purchaseId: dbId,
-                        }))
-                    )
-                    .onConflictDoNothing();
-            }
-
-            return dbId;
+        const purchaseId = await this.purchaseRepository.upsertWithItems({
+            purchase,
+            items: purchaseItems,
+            identityGroupId,
         });
 
         log.debug(

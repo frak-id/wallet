@@ -1,15 +1,13 @@
 import { log } from "@backend-infrastructure";
 import type { Address, Hex } from "viem";
 import { parseUnits } from "viem";
-import {
-    type LockRewardParams,
-    type PushRewardParams,
-    type RewardsHubRepository,
-    rewardsHubRepository,
+import type {
+    LockRewardParams,
+    PushRewardParams,
+    RewardsHubRepository,
 } from "../../../infrastructure/blockchain/contracts/RewardsHubRepository";
-import { MerchantRepository } from "../../merchant/repositories/MerchantRepository";
 import type { AssetLogSelect } from "../db/schema";
-import { AssetLogRepository } from "../repositories/AssetLogRepository";
+import type { AssetLogRepository } from "../repositories/AssetLogRepository";
 import {
     buildAttestation,
     encodeUserId,
@@ -17,28 +15,32 @@ import {
 } from "../types";
 
 const DEFAULT_TOKEN_DECIMALS = 18;
-const SETTLEMENT_BATCH_SIZE = 100;
 
-type AssetLogWithWallet = AssetLogSelect & { walletAddress: Address | null };
+export type AssetLogWithWallet = AssetLogSelect & {
+    walletAddress: Address | null;
+};
 
+type PreparedSettlement = {
+    pushRewards: PushRewardParams[];
+    lockRewards: LockRewardParams[];
+    validAssetLogIds: string[];
+    errors: Array<{ assetLogId: string; error: string }>;
+};
+
+/**
+ * Pure rewards domain service for settlement.
+ * Cross-domain coordination (merchant bank lookup) is handled by SettlementOrchestrator.
+ */
 export class SettlementService {
-    private readonly assetLogRepository: AssetLogRepository;
-    private readonly merchantRepository: MerchantRepository;
-    private readonly rewardsHub: RewardsHubRepository;
-
     constructor(
-        assetLogRepository?: AssetLogRepository,
-        merchantRepository?: MerchantRepository,
-        rewardsHub?: RewardsHubRepository
-    ) {
-        this.assetLogRepository =
-            assetLogRepository ?? new AssetLogRepository();
-        this.merchantRepository =
-            merchantRepository ?? new MerchantRepository();
-        this.rewardsHub = rewardsHub ?? rewardsHubRepository;
-    }
+        private readonly assetLogRepository: AssetLogRepository,
+        private readonly rewardsHub: RewardsHubRepository
+    ) {}
 
-    async settleRewards(): Promise<SettlementResult> {
+    async settleRewards(
+        rewards: AssetLogWithWallet[],
+        merchantBanks: Map<string, Address>
+    ): Promise<SettlementResult> {
         const result: SettlementResult = {
             pushedCount: 0,
             lockedCount: 0,
@@ -47,39 +49,35 @@ export class SettlementService {
             errors: [],
         };
 
-        const pendingRewards =
-            await this.assetLogRepository.findPendingForSettlement(
-                SETTLEMENT_BATCH_SIZE
-            );
-
-        if (pendingRewards.length === 0) {
-            log.debug("No pending rewards to settle");
+        if (rewards.length === 0) {
+            log.debug("No rewards to settle");
             return result;
         }
 
-        const merchantBanks = await this.getMerchantBanks(pendingRewards);
-        const { pushRewards, lockRewards, validAssetLogIds, errors } =
-            this.prepareRewards(pendingRewards, merchantBanks);
+        const prepared = this.prepareRewards(rewards, merchantBanks);
 
-        result.failedCount = errors.length;
-        result.errors = errors;
+        result.failedCount = prepared.errors.length;
+        result.errors = prepared.errors;
 
-        if (pushRewards.length === 0 && lockRewards.length === 0) {
+        if (
+            prepared.pushRewards.length === 0 &&
+            prepared.lockRewards.length === 0
+        ) {
             return result;
         }
 
         try {
             const txResult = await this.rewardsHub.batchRewards(
-                pushRewards,
-                lockRewards
+                prepared.pushRewards,
+                prepared.lockRewards
             );
 
             result.txHashes.push(txResult.txHash);
-            result.pushedCount = pushRewards.length;
-            result.lockedCount = lockRewards.length;
+            result.pushedCount = prepared.pushRewards.length;
+            result.lockedCount = prepared.lockRewards.length;
 
             await this.assetLogRepository.updateStatusBatch(
-                validAssetLogIds,
+                prepared.validAssetLogIds,
                 "ready_to_claim",
                 { txHash: txResult.txHash, blockNumber: txResult.blockNumber }
             );
@@ -87,17 +85,19 @@ export class SettlementService {
             log.error(
                 {
                     error,
-                    pushCount: pushRewards.length,
-                    lockCount: lockRewards.length,
+                    pushCount: prepared.pushRewards.length,
+                    lockCount: prepared.lockRewards.length,
                 },
                 "Failed to execute batch settlement"
             );
+
             const errorMessage =
                 error instanceof Error ? error.message : "Unknown error";
-            for (const assetLogId of validAssetLogIds) {
+
+            for (const assetLogId of prepared.validAssetLogIds) {
                 result.errors.push({ assetLogId, error: errorMessage });
             }
-            result.failedCount += validAssetLogIds.length;
+            result.failedCount += prepared.validAssetLogIds.length;
             result.pushedCount = 0;
             result.lockedCount = 0;
         }
@@ -115,34 +115,10 @@ export class SettlementService {
         return result;
     }
 
-    private async getMerchantBanks(
-        rewards: AssetLogWithWallet[]
-    ): Promise<Map<string, Address>> {
-        const merchantBanks = new Map<string, Address>();
-
-        for (const reward of rewards) {
-            if (merchantBanks.has(reward.merchantId)) continue;
-
-            const merchant = await this.merchantRepository.findById(
-                reward.merchantId
-            );
-            if (merchant?.bankAddress) {
-                merchantBanks.set(reward.merchantId, merchant.bankAddress);
-            }
-        }
-
-        return merchantBanks;
-    }
-
     private prepareRewards(
         rewards: AssetLogWithWallet[],
         merchantBanks: Map<string, Address>
-    ): {
-        pushRewards: PushRewardParams[];
-        lockRewards: LockRewardParams[];
-        validAssetLogIds: string[];
-        errors: Array<{ assetLogId: string; error: string }>;
-    } {
+    ): PreparedSettlement {
         const pushRewards: PushRewardParams[] = [];
         const lockRewards: LockRewardParams[] = [];
         const validAssetLogIds: string[] = [];

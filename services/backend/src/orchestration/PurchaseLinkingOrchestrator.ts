@@ -1,14 +1,13 @@
-import { db, log } from "@backend-infrastructure";
-import { and, eq } from "drizzle-orm";
+import { log } from "@backend-infrastructure";
 import type { Address } from "viem";
 import type { PendingPurchaseValidation } from "../domain/identity";
 import type { IdentityRepository } from "../domain/identity/repositories/IdentityRepository";
 import type { IdentityResolutionService } from "../domain/identity/services/IdentityResolutionService";
-import {
-    merchantWebhooksTable,
-    purchaseItemsTable,
-    purchasesTable,
-} from "../domain/purchases/db/schema";
+import type {
+    MerchantWebhook,
+    Purchase,
+    PurchaseRepository,
+} from "../domain/purchases";
 import type { RewardOrchestrator } from "./RewardOrchestrator";
 
 type PurchaseLinkParams = {
@@ -28,9 +27,10 @@ type PurchaseLinkResult = {
 
 export class PurchaseLinkingOrchestrator {
     constructor(
-        readonly identityService: IdentityResolutionService,
-        readonly identityRepository: IdentityRepository,
-        readonly rewardOrchestrator: RewardOrchestrator
+        private readonly purchaseRepository: PurchaseRepository,
+        private readonly identityService: IdentityResolutionService,
+        private readonly identityRepository: IdentityRepository,
+        private readonly rewardOrchestrator: RewardOrchestrator
     ) {}
 
     async linkPurchaseFromSdk(
@@ -45,7 +45,7 @@ export class PurchaseLinkingOrchestrator {
                 merchantId: params.merchantId,
             });
 
-        const purchase = await this.findPurchaseByOrderAndToken(
+        const purchase = await this.purchaseRepository.findByOrderAndToken(
             params.orderId,
             params.token
         );
@@ -96,7 +96,7 @@ export class PurchaseLinkingOrchestrator {
             merchantId: params.merchantId,
         });
 
-        const purchase = await this.findPurchaseByOrderAndToken(
+        const purchase = await this.purchaseRepository.findByOrderAndToken(
             params.orderId,
             params.token
         );
@@ -188,26 +188,23 @@ export class PurchaseLinkingOrchestrator {
     async processRewardsForLinkedPurchase(purchaseId: string): Promise<{
         rewardsCreated: number;
     }> {
-        const purchase = await db.query.purchasesTable.findFirst({
-            where: eq(purchasesTable.id, purchaseId),
-        });
+        const result =
+            await this.purchaseRepository.findWithWebhook(purchaseId);
 
-        if (!purchase?.identityGroupId) {
+        if (!result) {
             log.error(
                 { purchaseId },
-                "Cannot process rewards: no identityGroupId"
+                "Cannot process rewards: purchase or webhook not found"
             );
             return { rewardsCreated: 0 };
         }
 
-        const webhook = await db.query.merchantWebhooksTable.findFirst({
-            where: eq(merchantWebhooksTable.id, purchase.webhookId),
-        });
+        const { purchase, webhook } = result;
 
-        if (!webhook) {
+        if (!purchase.identityGroupId) {
             log.error(
                 { purchaseId },
-                "Cannot process rewards: webhook not found"
+                "Cannot process rewards: no identityGroupId"
             );
             return { rewardsCreated: 0 };
         }
@@ -217,15 +214,6 @@ export class PurchaseLinkingOrchestrator {
             webhook,
             purchase.identityGroupId
         );
-    }
-
-    private async findPurchaseByOrderAndToken(orderId: string, token: string) {
-        return db.query.purchasesTable.findFirst({
-            where: and(
-                eq(purchasesTable.externalId, orderId),
-                eq(purchasesTable.purchaseToken, token)
-            ),
-        });
     }
 
     private async createPendingMerchantCustomerNode(params: {
@@ -250,7 +238,7 @@ export class PurchaseLinkingOrchestrator {
     }
 
     private async linkPurchaseToIdentity(params: {
-        purchase: typeof purchasesTable.$inferSelect;
+        purchase: Purchase;
         identityGroupId: string;
         merchantId?: string;
         customerId: string;
@@ -285,9 +273,9 @@ export class PurchaseLinkingOrchestrator {
             };
         }
 
-        const webhook = await db.query.merchantWebhooksTable.findFirst({
-            where: eq(merchantWebhooksTable.id, purchase.webhookId),
-        });
+        const webhook = await this.purchaseRepository.getWebhookById(
+            purchase.webhookId
+        );
 
         if (!webhook) {
             log.error(
@@ -297,15 +285,12 @@ export class PurchaseLinkingOrchestrator {
             return { success: false, error: "webhook_not_found" };
         }
 
-        await db
-            .update(purchasesTable)
-            .set({
-                identityGroupId,
-                updatedAt: new Date(),
-            })
-            .where(eq(purchasesTable.id, purchase.id));
+        await this.purchaseRepository.updateIdentityGroup(
+            purchase.id,
+            identityGroupId
+        );
 
-        const merchantId = params.merchantId ?? webhook.productId;
+        const merchantId = params.merchantId ?? webhook.merchantId;
 
         await this.identityService.linkMerchantCustomer({
             identityGroupId,
@@ -337,27 +322,27 @@ export class PurchaseLinkingOrchestrator {
     }
 
     private async getMerchantIdFromPurchase(
-        purchase: typeof purchasesTable.$inferSelect
+        purchase: Purchase
     ): Promise<string> {
-        const webhook = await db.query.merchantWebhooksTable.findFirst({
-            where: eq(merchantWebhooksTable.id, purchase.webhookId),
-        });
-        return webhook?.productId ?? "";
+        const webhook = await this.purchaseRepository.getWebhookById(
+            purchase.webhookId
+        );
+        return webhook?.merchantId ?? "";
     }
 
     private async processRewardsInternal(
-        purchase: typeof purchasesTable.$inferSelect,
-        webhook: typeof merchantWebhooksTable.$inferSelect,
+        purchase: Purchase,
+        webhook: MerchantWebhook,
         identityGroupId: string
     ): Promise<{ rewardsCreated: number }> {
-        const purchaseItems = await db.query.purchaseItemsTable.findMany({
-            where: eq(purchaseItemsTable.purchaseId, purchase.id),
-        });
+        const purchaseItems = await this.purchaseRepository.findItems(
+            purchase.id
+        );
 
         try {
             const result = await this.rewardOrchestrator.processPurchaseRewards(
                 {
-                    merchantId: webhook.productId,
+                    merchantId: webhook.merchantId,
                     identityGroupId,
                     orderId: purchase.externalId,
                     externalCustomerId: purchase.externalCustomerId,

@@ -1,4 +1,3 @@
-import { ReferralContext } from "../referral/context";
 import { CampaignRuleRepository } from "./repositories/CampaignRuleRepository";
 import { RewardCalculator } from "./services/RewardCalculator";
 import { RuleConditionEvaluator } from "./services/RuleConditionEvaluator";
@@ -10,8 +9,7 @@ const rewardCalculator = new RewardCalculator(ruleConditionEvaluator);
 const ruleEngineService = new RuleEngineService(
     campaignRuleRepository,
     ruleConditionEvaluator,
-    rewardCalculator,
-    ReferralContext.services.referral
+    rewardCalculator
 );
 
 export namespace CampaignContext {

@@ -1,8 +1,9 @@
-import { OrchestrationContext } from "../../orchestration/context";
+import { PurchaseRepository } from "./repositories/PurchaseRepository";
+
+const purchaseRepository = new PurchaseRepository();
 
 export namespace PurchasesContext {
-    export const orchestrators = {
-        linking: OrchestrationContext.orchestrators.purchaseLinking,
-        webhook: OrchestrationContext.orchestrators.purchaseWebhook,
+    export const repositories = {
+        purchase: purchaseRepository,
     };
 }

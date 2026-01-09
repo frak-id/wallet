@@ -1,11 +1,19 @@
 import { AttributionContext } from "../domain/attribution/context";
 import { CampaignContext } from "../domain/campaign/context";
 import { IdentityContext } from "../domain/identity/context";
-import { ReferralContext } from "../domain/referral/context";
+import { MerchantContext } from "../domain/merchant/context";
+import { PurchasesContext } from "../domain/purchases/context";
 import { RewardsContext } from "../domain/rewards/context";
 import { PurchaseLinkingOrchestrator } from "./PurchaseLinkingOrchestrator";
 import { PurchaseWebhookOrchestrator } from "./PurchaseWebhookOrchestrator";
 import { RewardOrchestrator } from "./RewardOrchestrator";
+import { SettlementOrchestrator } from "./SettlementOrchestrator";
+import { WebhookResolverOrchestrator } from "./WebhookResolverOrchestrator";
+
+const webhookResolverOrchestrator = new WebhookResolverOrchestrator(
+    PurchasesContext.repositories.purchase,
+    MerchantContext.repositories.merchant
+);
 
 const rewardOrchestrator = new RewardOrchestrator(
     RewardsContext.repositories.interactionLog,
@@ -13,17 +21,25 @@ const rewardOrchestrator = new RewardOrchestrator(
     CampaignContext.services.ruleEngine,
     AttributionContext.services.attribution,
     IdentityContext.services.identityResolution,
-    ReferralContext.services.referral
+    AttributionContext.services.referral
 );
 
 const purchaseLinkingOrchestrator = new PurchaseLinkingOrchestrator(
+    PurchasesContext.repositories.purchase,
     IdentityContext.services.identityResolution,
     IdentityContext.repositories.identity,
     rewardOrchestrator
 );
 
 const purchaseWebhookOrchestrator = new PurchaseWebhookOrchestrator(
+    PurchasesContext.repositories.purchase,
     purchaseLinkingOrchestrator
+);
+
+const settlementOrchestrator = new SettlementOrchestrator(
+    RewardsContext.services.settlement,
+    RewardsContext.repositories.assetLog,
+    MerchantContext.repositories.merchant
 );
 
 export namespace OrchestrationContext {
@@ -31,5 +47,7 @@ export namespace OrchestrationContext {
         reward: rewardOrchestrator,
         purchaseLinking: purchaseLinkingOrchestrator,
         purchaseWebhook: purchaseWebhookOrchestrator,
+        settlement: settlementOrchestrator,
+        webhookResolver: webhookResolverOrchestrator,
     };
 }

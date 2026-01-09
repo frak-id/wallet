@@ -14,7 +14,10 @@ export {
 export { AssetLogRepository } from "./repositories/AssetLogRepository";
 export { InteractionLogRepository } from "./repositories/InteractionLogRepository";
 
-export { SettlementService } from "./services/SettlementService";
+export {
+    type AssetLogWithWallet,
+    SettlementService,
+} from "./services/SettlementService";
 
 export type {
     AssetStatus,

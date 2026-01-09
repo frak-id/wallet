@@ -1,15 +1,16 @@
 import { log } from "@backend-infrastructure";
-import type { ReferralService } from "../../referral";
 import type { CampaignRuleSelect } from "../db/schema";
 import type { CampaignRuleRepository } from "../repositories/CampaignRuleRepository";
 import type {
     CalculatedReward,
     CampaignTrigger,
     EvaluationResult,
+    ReferralChainFetcher,
+    ReferralChainMember,
     RuleContext,
     TimeContext,
 } from "../types";
-import type { ReferralChainMember, RewardCalculator } from "./RewardCalculator";
+import type { RewardCalculator } from "./RewardCalculator";
 import type { RuleConditionEvaluator } from "./RuleConditionEvaluator";
 
 type EvaluateRulesParams = {
@@ -31,14 +32,14 @@ function buildTimeContext(): TimeContext {
 
 export class RuleEngineService {
     constructor(
-        readonly repository: CampaignRuleRepository,
-        readonly conditionEvaluator: RuleConditionEvaluator,
-        readonly rewardCalculator: RewardCalculator,
-        readonly referralService: ReferralService
+        private readonly repository: CampaignRuleRepository,
+        private readonly conditionEvaluator: RuleConditionEvaluator,
+        private readonly rewardCalculator: RewardCalculator
     ) {}
 
     async evaluateRules(
-        params: EvaluateRulesParams
+        params: EvaluateRulesParams,
+        fetchReferralChain?: ReferralChainFetcher
     ): Promise<EvaluationResult> {
         const fullContext: RuleContext = {
             ...params.context,
@@ -69,7 +70,8 @@ export class RuleEngineService {
                 campaign,
                 fullContext,
                 params.merchantId,
-                params.referrerIdentityGroupId
+                params.referrerIdentityGroupId,
+                fetchReferralChain
             );
 
             if (!result.matched) continue;
@@ -101,7 +103,8 @@ export class RuleEngineService {
         campaign: CampaignRuleSelect,
         context: RuleContext,
         merchantId: string,
-        referrerIdentityGroupId?: string
+        referrerIdentityGroupId?: string,
+        fetchReferralChain?: ReferralChainFetcher
     ): Promise<{
         matched: boolean;
         rewards: CalculatedReward[];
@@ -127,13 +130,13 @@ export class RuleEngineService {
         );
 
         let referralChain: ReferralChainMember[] | undefined;
-        if (hasChainedReward) {
+        if (hasChainedReward && fetchReferralChain) {
             const maxDepth = Math.max(
                 ...campaign.rule.rewards
                     .filter((r) => r.recipient === "referrer" && r.chaining)
                     .map((r) => r.chaining?.maxDepth ?? 5)
             );
-            referralChain = await this.referralService.getReferralChain({
+            referralChain = await fetchReferralChain({
                 merchantId,
                 identityGroupId: context.user.identityGroupId,
                 maxDepth,

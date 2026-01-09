@@ -1,11 +1,11 @@
 import type { Address } from "viem";
-import type { ReferralService } from "../../referral";
 import type { TouchpointSourceData } from "../db/schema";
 import type {
     CreateTouchpointParams,
     Touchpoint,
     TouchpointRepository,
 } from "../repositories/TouchpointRepository";
+import type { ReferralService } from "./ReferralService";
 
 export type TouchpointSource =
     | "referral_link"
@@ -32,8 +32,8 @@ export type AttributionResult = {
 
 export class AttributionService {
     constructor(
-        readonly touchpointRepository: TouchpointRepository,
-        readonly referralService: ReferralService
+        private readonly touchpointRepository: TouchpointRepository,
+        private readonly referralService: ReferralService
     ) {}
 
     async recordTouchpoint(

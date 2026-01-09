@@ -402,3 +402,25 @@ export type BudgetConsumptionResult = {
     exceededBudget?: string;
     reason?: "budget_exceeded" | "campaign_not_found";
 };
+
+// =============================================================================
+// REFERRAL CHAIN (for cross-domain capability injection)
+// =============================================================================
+
+/**
+ * A member of the referral chain for chained rewards.
+ */
+export type ReferralChainMember = {
+    identityGroupId: string;
+    depth: number;
+};
+
+/**
+ * Callback type for fetching referral chains.
+ * Injected by orchestration layer to avoid cross-domain dependencies.
+ */
+export type ReferralChainFetcher = (params: {
+    merchantId: string;
+    identityGroupId: string;
+    maxDepth: number;
+}) => Promise<ReferralChainMember[]>;
