@@ -6,6 +6,9 @@ export {
     // Campaign helper
     type CampaignType,
     campaignAbiForType,
+    // V2 abis
+    campaignBankAbi as campaignBankV2Abi,
+    campaignBankFactoryAbi as campaignBankFactoryV2Abi,
     // Abis
     campaignFactoryAbi,
     currentStablecoins,
@@ -36,6 +39,7 @@ export {
     referralFeatureFacetAbi,
     referralRegistryAbi,
     retailInteractionFacetAbi,
+    rewarderHubAbi,
     type Stablecoin,
     sendInteractionSelector,
     sendInteractionsSelector,

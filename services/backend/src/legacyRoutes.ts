@@ -65,5 +65,10 @@ function pathMapper(path: string) {
         return `/ext/products/${productId}/webhook/oracle/${type}`;
     }
 
+    // /interactions/listenForPurchase -> /user/track/purchase
+    if (path === "/interactions/listenForPurchase") {
+        return "/user/track/purchase";
+    }
+
     return null;
 }

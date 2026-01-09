@@ -1,91 +1,28 @@
 import { log, viemClient } from "@backend-infrastructure";
-import { isRunningInProd } from "@frak-labs/app-essentials";
-import { type Abi, type Address, type Hex, encodeFunctionData } from "viem";
+import { isRunningInProd, rewarderHubAbi } from "@frak-labs/app-essentials";
+import { type Address, encodeFunctionData, type Hex, pad } from "viem";
 import { sendTransaction, waitForTransactionReceipt } from "viem/actions";
 import { adminWalletsRepository } from "../../keys/AdminWalletsRepository";
 
 const REWARDER_KEY = "rewarder" as const;
 
 const REWARDS_HUB_ADDRESS: Address = isRunningInProd
-    ? "0x0000000000000000000000000000000000000000" // TODO: Deploy to mainnet
-    : "0x0000000000000000000000000000000000000000"; // TODO: Deploy to testnet
+    ? "0x0000000000000000000000000000000000000000"
+    : "0x0000000000000000000000000000000000000000";
 
-const RewardsHubAbi = [
-    {
-        name: "pushReward",
-        type: "function",
-        stateMutability: "nonpayable",
-        inputs: [
-            { name: "wallet", type: "address" },
-            { name: "amount", type: "uint256" },
-            { name: "token", type: "address" },
-            { name: "bank", type: "address" },
-            { name: "attestation", type: "bytes" },
-        ],
-        outputs: [],
-    },
-    {
-        name: "pushRewards",
-        type: "function",
-        stateMutability: "nonpayable",
-        inputs: [
-            {
-                name: "rewards",
-                type: "tuple[]",
-                components: [
-                    { name: "wallet", type: "address" },
-                    { name: "amount", type: "uint256" },
-                    { name: "token", type: "address" },
-                    { name: "bank", type: "address" },
-                    { name: "attestation", type: "bytes" },
-                ],
-            },
-        ],
-        outputs: [],
-    },
-    {
-        name: "lockReward",
-        type: "function",
-        stateMutability: "nonpayable",
-        inputs: [
-            { name: "userId", type: "bytes32" },
-            { name: "amount", type: "uint256" },
-            { name: "token", type: "address" },
-            { name: "bank", type: "address" },
-            { name: "attestation", type: "bytes" },
-        ],
-        outputs: [],
-    },
-    {
-        name: "lockRewards",
-        type: "function",
-        stateMutability: "nonpayable",
-        inputs: [
-            {
-                name: "locks",
-                type: "tuple[]",
-                components: [
-                    { name: "userId", type: "bytes32" },
-                    { name: "amount", type: "uint256" },
-                    { name: "token", type: "address" },
-                    { name: "bank", type: "address" },
-                    { name: "attestation", type: "bytes" },
-                ],
-            },
-        ],
-        outputs: [],
-    },
-    {
-        name: "resolveUserId",
-        type: "function",
-        stateMutability: "nonpayable",
-        inputs: [
-            { name: "userId", type: "bytes32" },
-            { name: "wallet", type: "address" },
-        ],
-        outputs: [],
-    },
-] as const satisfies Abi;
+type RewardOp = {
+    isLock: boolean;
+    target: Hex;
+    amount: bigint;
+    token: Address;
+    bank: Address;
+    attestation: Hex;
+};
+
+type ResolveOp = {
+    userId: Hex;
+    wallet: Address;
+};
 
 type PushRewardParams = {
     wallet: Address;
@@ -103,24 +40,25 @@ type LockRewardParams = {
     attestation: Hex;
 };
 
+function addressToBytes32(address: Address): Hex {
+    return pad(address, { size: 32 });
+}
+
+function sortOpsByBankAndToken(ops: RewardOp[]): RewardOp[] {
+    return [...ops].sort((a, b) => {
+        const bankCompare = a.bank
+            .toLowerCase()
+            .localeCompare(b.bank.toLowerCase());
+        if (bankCompare !== 0) return bankCompare;
+        return a.token.toLowerCase().localeCompare(b.token.toLowerCase());
+    });
+}
+
 export class RewardsHubRepository {
     private readonly contractAddress: Address;
 
     constructor(contractAddress?: Address) {
         this.contractAddress = contractAddress ?? REWARDS_HUB_ADDRESS;
-    }
-
-    async pushReward(params: PushRewardParams): Promise<{
-        txHash: Hex;
-        blockNumber: bigint;
-    }> {
-        return this.executeTransaction("pushReward", [
-            params.wallet,
-            params.amount,
-            params.token,
-            params.bank,
-            params.attestation,
-        ]);
     }
 
     async pushRewards(rewards: PushRewardParams[]): Promise<{
@@ -131,32 +69,16 @@ export class RewardsHubRepository {
             throw new Error("No rewards to push");
         }
 
-        if (rewards.length === 1) {
-            return this.pushReward(rewards[0]);
-        }
-
-        const rewardsData = rewards.map((r) => ({
-            wallet: r.wallet,
+        const ops: RewardOp[] = rewards.map((r) => ({
+            isLock: false,
+            target: addressToBytes32(r.wallet),
             amount: r.amount,
             token: r.token,
             bank: r.bank,
             attestation: r.attestation,
         }));
 
-        return this.executeTransaction("pushRewards", [rewardsData]);
-    }
-
-    async lockReward(params: LockRewardParams): Promise<{
-        txHash: Hex;
-        blockNumber: bigint;
-    }> {
-        return this.executeTransaction("lockReward", [
-            params.userId,
-            params.amount,
-            params.token,
-            params.bank,
-            params.attestation,
-        ]);
+        return this.executeBatch(ops);
     }
 
     async lockRewards(locks: LockRewardParams[]): Promise<{
@@ -167,33 +89,72 @@ export class RewardsHubRepository {
             throw new Error("No locks to process");
         }
 
-        if (locks.length === 1) {
-            return this.lockReward(locks[0]);
-        }
-
-        const locksData = locks.map((l) => ({
-            userId: l.userId,
+        const ops: RewardOp[] = locks.map((l) => ({
+            isLock: true,
+            target: l.userId,
             amount: l.amount,
             token: l.token,
             bank: l.bank,
             attestation: l.attestation,
         }));
 
-        return this.executeTransaction("lockRewards", [locksData]);
+        return this.executeBatch(ops);
     }
 
-    async resolveUserId(params: { userId: Hex; wallet: Address }): Promise<{
+    async batchRewards(
+        pushRewards: PushRewardParams[],
+        lockRewards: LockRewardParams[]
+    ): Promise<{
         txHash: Hex;
         blockNumber: bigint;
     }> {
-        return this.executeTransaction("resolveUserId", [
-            params.userId,
-            params.wallet,
-        ]);
+        if (pushRewards.length === 0 && lockRewards.length === 0) {
+            throw new Error("No rewards to process");
+        }
+
+        const ops: RewardOp[] = [
+            ...pushRewards.map((r) => ({
+                isLock: false as const,
+                target: addressToBytes32(r.wallet),
+                amount: r.amount,
+                token: r.token,
+                bank: r.bank,
+                attestation: r.attestation,
+            })),
+            ...lockRewards.map((l) => ({
+                isLock: true as const,
+                target: l.userId,
+                amount: l.amount,
+                token: l.token,
+                bank: l.bank,
+                attestation: l.attestation,
+            })),
+        ];
+
+        return this.executeBatch(ops);
+    }
+
+    async resolveUserIds(resolves: ResolveOp[]): Promise<{
+        txHash: Hex;
+        blockNumber: bigint;
+    }> {
+        if (resolves.length === 0) {
+            throw new Error("No userIds to resolve");
+        }
+
+        return this.executeTransaction("resolveUserIds", [resolves]);
+    }
+
+    private async executeBatch(ops: RewardOp[]): Promise<{
+        txHash: Hex;
+        blockNumber: bigint;
+    }> {
+        const sortedOps = sortOpsByBankAndToken(ops);
+        return this.executeTransaction("batch", [sortedOps]);
     }
 
     private async executeTransaction(
-        functionName: string,
+        functionName: "batch" | "resolveUserIds",
         args: unknown[]
     ): Promise<{
         txHash: Hex;
@@ -209,13 +170,8 @@ export class RewardsHubRepository {
             });
 
             const data = encodeFunctionData({
-                abi: RewardsHubAbi,
-                functionName: functionName as
-                    | "pushReward"
-                    | "pushRewards"
-                    | "lockReward"
-                    | "lockRewards"
-                    | "resolveUserId",
+                abi: rewarderHubAbi,
+                functionName,
                 args: args as never,
             });
 
@@ -224,6 +180,7 @@ export class RewardsHubRepository {
                     functionName,
                     contractAddress: this.contractAddress,
                     account: account.address,
+                    opsCount: Array.isArray(args[0]) ? args[0].length : 1,
                 },
                 "Executing RewardsHub transaction"
             );
@@ -256,4 +213,5 @@ export class RewardsHubRepository {
     }
 }
 
+export type { PushRewardParams, LockRewardParams, ResolveOp };
 export const rewardsHubRepository = new RewardsHubRepository();

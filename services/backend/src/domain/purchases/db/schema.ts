@@ -10,6 +10,7 @@ import {
     uuid,
     varchar,
 } from "drizzle-orm/pg-core";
+import { identityGroupsTable } from "../../identity/db/schema";
 import { customHex } from "../../../utils/drizzle/customTypes";
 
 export const webhookPlatformEnum = pgEnum("webhook_platform", [
@@ -54,7 +55,10 @@ export const purchasesTable = pgTable(
         status: purchaseStatusEnum("status"),
         createdAt: timestamp("created_at").defaultNow(),
         updatedAt: timestamp("updated_at").defaultNow(),
-        // TODO: Phase 2 - Add identityGroupId for identity linking
+        identityGroupId: uuid("identity_group_id").references(
+            () => identityGroupsTable.id,
+            { onDelete: "set null" }
+        ),
         // TODO: Phase 3 - Add touchpointId for attribution
     },
     (table) => [
@@ -66,6 +70,7 @@ export const purchasesTable = pgTable(
             table.externalId,
             table.purchaseToken
         ),
+        index("purchases_identity_group_idx").on(table.identityGroupId),
     ]
 );
 

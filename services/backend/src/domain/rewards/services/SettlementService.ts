@@ -2,6 +2,8 @@ import { log } from "@backend-infrastructure";
 import type { Address, Hex } from "viem";
 import { parseUnits } from "viem";
 import {
+    type LockRewardParams,
+    type PushRewardParams,
     type RewardsHubRepository,
     rewardsHubRepository,
 } from "../../../infrastructure/blockchain/contracts/RewardsHubRepository";
@@ -9,40 +11,15 @@ import { MerchantRepository } from "../../merchant/repositories/MerchantReposito
 import type { AssetLogSelect } from "../db/schema";
 import { AssetLogRepository } from "../repositories/AssetLogRepository";
 import {
-    type SettlementResult,
     buildAttestation,
     encodeUserId,
+    type SettlementResult,
 } from "../types";
 
 const DEFAULT_TOKEN_DECIMALS = 18;
 const SETTLEMENT_BATCH_SIZE = 100;
 
 type AssetLogWithWallet = AssetLogSelect & { walletAddress: Address | null };
-
-type BatchResult = {
-    successCount: number;
-    failedCount: number;
-    txHashes: Hex[];
-    errors: Array<{ assetLogId: string; error: string }>;
-};
-
-type PreparedPushData = {
-    assetLogId: string;
-    wallet: Address;
-    amount: bigint;
-    token: Address;
-    bank: Address;
-    attestation: Hex;
-};
-
-type PreparedLockData = {
-    assetLogId: string;
-    userId: Hex;
-    amount: bigint;
-    token: Address;
-    bank: Address;
-    attestation: Hex;
-};
 
 export class SettlementService {
     private readonly assetLogRepository: AssetLogRepository;
@@ -80,18 +57,49 @@ export class SettlementService {
             return result;
         }
 
-        const { withWallet, withoutWallet } =
-            this.partitionByWalletPresence(pendingRewards);
+        const merchantBanks = await this.getMerchantBanks(pendingRewards);
+        const { pushRewards, lockRewards, validAssetLogIds, errors } =
+            this.prepareRewards(pendingRewards, merchantBanks);
 
-        if (withWallet.length > 0) {
-            const pushResult = await this.pushRewardsToWallets(withWallet);
-            this.mergeResults(result, pushResult, "pushed");
+        result.failedCount = errors.length;
+        result.errors = errors;
+
+        if (pushRewards.length === 0 && lockRewards.length === 0) {
+            return result;
         }
 
-        if (withoutWallet.length > 0) {
-            const lockResult =
-                await this.lockRewardsForAnonymous(withoutWallet);
-            this.mergeResults(result, lockResult, "locked");
+        try {
+            const txResult = await this.rewardsHub.batchRewards(
+                pushRewards,
+                lockRewards
+            );
+
+            result.txHashes.push(txResult.txHash);
+            result.pushedCount = pushRewards.length;
+            result.lockedCount = lockRewards.length;
+
+            await this.assetLogRepository.updateStatusBatch(
+                validAssetLogIds,
+                "ready_to_claim",
+                { txHash: txResult.txHash, blockNumber: txResult.blockNumber }
+            );
+        } catch (error) {
+            log.error(
+                {
+                    error,
+                    pushCount: pushRewards.length,
+                    lockCount: lockRewards.length,
+                },
+                "Failed to execute batch settlement"
+            );
+            const errorMessage =
+                error instanceof Error ? error.message : "Unknown error";
+            for (const assetLogId of validAssetLogIds) {
+                result.errors.push({ assetLogId, error: errorMessage });
+            }
+            result.failedCount += validAssetLogIds.length;
+            result.pushedCount = 0;
+            result.lockedCount = 0;
         }
 
         log.info(
@@ -105,39 +113,6 @@ export class SettlementService {
         );
 
         return result;
-    }
-
-    private partitionByWalletPresence(rewards: AssetLogWithWallet[]): {
-        withWallet: AssetLogWithWallet[];
-        withoutWallet: AssetLogWithWallet[];
-    } {
-        const withWallet: AssetLogWithWallet[] = [];
-        const withoutWallet: AssetLogWithWallet[] = [];
-
-        for (const reward of rewards) {
-            if (reward.walletAddress) {
-                withWallet.push(reward);
-            } else {
-                withoutWallet.push(reward);
-            }
-        }
-
-        return { withWallet, withoutWallet };
-    }
-
-    private mergeResults(
-        target: SettlementResult,
-        source: BatchResult,
-        type: "pushed" | "locked"
-    ): void {
-        if (type === "pushed") {
-            target.pushedCount = source.successCount;
-        } else {
-            target.lockedCount = source.successCount;
-        }
-        target.failedCount += source.failedCount;
-        target.txHashes.push(...source.txHashes);
-        target.errors.push(...source.errors);
     }
 
     private async getMerchantBanks(
@@ -159,144 +134,57 @@ export class SettlementService {
         return merchantBanks;
     }
 
-    private async pushRewardsToWallets(
-        rewards: AssetLogWithWallet[]
-    ): Promise<BatchResult> {
-        const result = this.createEmptyBatchResult();
-        const merchantBanks = await this.getMerchantBanks(rewards);
-        const pushData = this.preparePushData(rewards, merchantBanks, result);
-
-        if (pushData.length === 0) return result;
-
-        return this.executePushTransaction(pushData, result);
-    }
-
-    private preparePushData(
+    private prepareRewards(
         rewards: AssetLogWithWallet[],
-        merchantBanks: Map<string, Address>,
-        result: BatchResult
-    ): PreparedPushData[] {
-        const pushData: PreparedPushData[] = [];
-
-        for (const reward of rewards) {
-            const validationError = this.validateRewardForPush(
-                reward,
-                merchantBanks
-            );
-            if (validationError) {
-                result.errors.push({
-                    assetLogId: reward.id,
-                    error: validationError,
-                });
-                result.failedCount++;
-                continue;
-            }
-
-            pushData.push({
-                assetLogId: reward.id,
-                wallet: reward.walletAddress as Address,
-                amount: parseUnits(reward.amount, DEFAULT_TOKEN_DECIMALS),
-                token: reward.tokenAddress as Address,
-                bank: merchantBanks.get(reward.merchantId) as Address,
-                attestation: this.buildAttestationHex(reward),
-            });
-        }
-
-        return pushData;
-    }
-
-    private validateRewardForPush(
-        reward: AssetLogWithWallet,
         merchantBanks: Map<string, Address>
-    ): string | null {
-        if (!merchantBanks.has(reward.merchantId)) {
-            return "Merchant bank not found";
-        }
-        if (!reward.tokenAddress) {
-            return "Token address not set";
-        }
-        if (!reward.walletAddress) {
-            return "Wallet address not set";
-        }
-        return null;
-    }
-
-    private async executePushTransaction(
-        pushData: PreparedPushData[],
-        result: BatchResult
-    ): Promise<BatchResult> {
-        try {
-            const txResult = await this.rewardsHub.pushRewards(
-                pushData.map((d) => ({
-                    wallet: d.wallet,
-                    amount: d.amount,
-                    token: d.token,
-                    bank: d.bank,
-                    attestation: d.attestation,
-                }))
-            );
-
-            result.txHashes.push(txResult.txHash);
-            await this.assetLogRepository.updateStatusBatch(
-                pushData.map((d) => d.assetLogId),
-                "ready_to_claim",
-                { txHash: txResult.txHash, blockNumber: txResult.blockNumber }
-            );
-            result.successCount = pushData.length;
-        } catch (error) {
-            this.handleBatchError(error, pushData, result, "push rewards");
-        }
-
-        return result;
-    }
-
-    private async lockRewardsForAnonymous(
-        rewards: AssetLogWithWallet[]
-    ): Promise<BatchResult> {
-        const result = this.createEmptyBatchResult();
-        const merchantBanks = await this.getMerchantBanks(rewards);
-        const lockData = this.prepareLockData(rewards, merchantBanks, result);
-
-        if (lockData.length === 0) return result;
-
-        return this.executeLockTransaction(lockData, result);
-    }
-
-    private prepareLockData(
-        rewards: AssetLogWithWallet[],
-        merchantBanks: Map<string, Address>,
-        result: BatchResult
-    ): PreparedLockData[] {
-        const lockData: PreparedLockData[] = [];
+    ): {
+        pushRewards: PushRewardParams[];
+        lockRewards: LockRewardParams[];
+        validAssetLogIds: string[];
+        errors: Array<{ assetLogId: string; error: string }>;
+    } {
+        const pushRewards: PushRewardParams[] = [];
+        const lockRewards: LockRewardParams[] = [];
+        const validAssetLogIds: string[] = [];
+        const errors: Array<{ assetLogId: string; error: string }> = [];
 
         for (const reward of rewards) {
-            const validationError = this.validateRewardForLock(
-                reward,
-                merchantBanks
-            );
+            const validationError = this.validateReward(reward, merchantBanks);
             if (validationError) {
-                result.errors.push({
-                    assetLogId: reward.id,
-                    error: validationError,
-                });
-                result.failedCount++;
+                errors.push({ assetLogId: reward.id, error: validationError });
                 continue;
             }
 
-            lockData.push({
-                assetLogId: reward.id,
-                userId: encodeUserId(reward.identityGroupId),
-                amount: parseUnits(reward.amount, DEFAULT_TOKEN_DECIMALS),
-                token: reward.tokenAddress as Address,
-                bank: merchantBanks.get(reward.merchantId) as Address,
-                attestation: this.buildAttestationHex(reward),
-            });
+            const attestation = this.buildAttestationHex(reward);
+            const amount = parseUnits(reward.amount, DEFAULT_TOKEN_DECIMALS);
+            const token = reward.tokenAddress as Address;
+            const bank = merchantBanks.get(reward.merchantId) as Address;
+
+            validAssetLogIds.push(reward.id);
+
+            if (reward.walletAddress) {
+                pushRewards.push({
+                    wallet: reward.walletAddress,
+                    amount,
+                    token,
+                    bank,
+                    attestation,
+                });
+            } else {
+                lockRewards.push({
+                    userId: encodeUserId(reward.identityGroupId),
+                    amount,
+                    token,
+                    bank,
+                    attestation,
+                });
+            }
         }
 
-        return lockData;
+        return { pushRewards, lockRewards, validAssetLogIds, errors };
     }
 
-    private validateRewardForLock(
+    private validateReward(
         reward: AssetLogWithWallet,
         merchantBanks: Map<string, Address>
     ): string | null {
@@ -307,65 +195,6 @@ export class SettlementService {
             return "Token address not set";
         }
         return null;
-    }
-
-    private async executeLockTransaction(
-        lockData: PreparedLockData[],
-        result: BatchResult
-    ): Promise<BatchResult> {
-        try {
-            const txResult = await this.rewardsHub.lockRewards(
-                lockData.map((d) => ({
-                    userId: d.userId,
-                    amount: d.amount,
-                    token: d.token,
-                    bank: d.bank,
-                    attestation: d.attestation,
-                }))
-            );
-
-            result.txHashes.push(txResult.txHash);
-            await this.assetLogRepository.updateStatusBatch(
-                lockData.map((d) => d.assetLogId),
-                "ready_to_claim",
-                { txHash: txResult.txHash, blockNumber: txResult.blockNumber }
-            );
-            result.successCount = lockData.length;
-        } catch (error) {
-            this.handleBatchError(error, lockData, result, "lock rewards");
-        }
-
-        return result;
-    }
-
-    private createEmptyBatchResult(): BatchResult {
-        return {
-            successCount: 0,
-            failedCount: 0,
-            txHashes: [],
-            errors: [],
-        };
-    }
-
-    private handleBatchError(
-        error: unknown,
-        data: Array<{ assetLogId: string }>,
-        result: BatchResult,
-        operation: string
-    ): void {
-        log.error(
-            { error, count: data.length },
-            `Failed to ${operation} batch`
-        );
-        const errorMessage =
-            error instanceof Error ? error.message : "Unknown error";
-        for (const item of data) {
-            result.errors.push({
-                assetLogId: item.assetLogId,
-                error: errorMessage,
-            });
-        }
-        result.failedCount += data.length;
     }
 
     private buildAttestationHex(reward: AssetLogSelect): Hex {
