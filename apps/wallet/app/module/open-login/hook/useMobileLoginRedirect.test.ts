@@ -111,6 +111,7 @@ describe("useMobileLoginRedirect", () => {
 
         expect(window.location.href).toContain(mockReturnUrl);
         expect(window.location.href).toContain(`frakAuth=${mockAuthCode}`);
+        expect(window.location.href).toContain(`productId=${mockProductId}`);
         expect(window.location.href).toContain(`state=${mockState}`);
     });
 
@@ -127,6 +128,7 @@ describe("useMobileLoginRedirect", () => {
         });
 
         expect(window.location.href).toContain(`frakAuth=${mockAuthCode}`);
+        expect(window.location.href).toContain(`productId=${mockProductId}`);
         expect(window.location.href).not.toContain("state=");
     });
 

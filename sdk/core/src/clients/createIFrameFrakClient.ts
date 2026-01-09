@@ -11,6 +11,7 @@ import type { FrakClient } from "../types/client";
 import type { FrakWalletSdkConfig } from "../types/config";
 import type { IFrameRpcSchema } from "../types/rpc";
 import { BACKUP_KEY } from "../utils/constants";
+import { setupMobileAuthCallback } from "../utils/mobileAuthCallback";
 import { setupSsoUrlListener } from "../utils/ssoUrlListener";
 import { DebugInfoGatherer } from "./DebugInfo";
 import {
@@ -244,6 +245,10 @@ async function postConnectionSetup({
     // Setup SSO URL listener to detect and forward SSO redirects
     // This checks for ?sso= parameter and forwards compressed data to iframe
     setupSsoUrlListener(rpcClient, lifecycleManager.isConnected);
+
+    // Setup mobile auth callback listener to detect and exchange auth codes
+    // This checks for ?frakAuth= parameter and exchanges for session
+    setupMobileAuthCallback(config, rpcClient, lifecycleManager.isConnected);
 
     // Push raw CSS if needed
     async function pushCss() {

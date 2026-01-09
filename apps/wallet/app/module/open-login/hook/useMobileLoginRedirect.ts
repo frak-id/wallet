@@ -47,6 +47,7 @@ export function useMobileLoginRedirect() {
 
             const finalRedirectUrl = new URL(returnUrl);
             finalRedirectUrl.searchParams.set("frakAuth", authCode);
+            finalRedirectUrl.searchParams.set("productId", productId);
             if (state) {
                 finalRedirectUrl.searchParams.set("state", state);
             }
