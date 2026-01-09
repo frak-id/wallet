@@ -2,7 +2,8 @@
 pub fn run() {
   let mut builder = tauri::Builder::default()
     .plugin(tauri_plugin_safe_area_insets::init())
-    .plugin(tauri_plugin_deep_link::init());
+    .plugin(tauri_plugin_deep_link::init())
+    .plugin(tauri_plugin_opener::init());
 
   #[cfg(mobile)]
   {

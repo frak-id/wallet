@@ -1,6 +1,6 @@
 import { isTauri } from "@frak-labs/app-essentials/utils/platform";
 import { sessionStore } from "@frak-labs/wallet-shared";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import type { Hex } from "viem";
 import { useGenerateMobileAuthCode } from "./useGenerateMobileAuthCode";
 
@@ -10,13 +10,25 @@ type MobileLoginRedirectParams = {
     state?: string;
 };
 
-/**
- * Hook for mobile auth redirect flow: authenticate -> generate code -> redirect to partner site.
- * Used by /open/login route for OAuth-like authentication on mobile devices.
- */
+async function openExternalUrl(url: string): Promise<boolean> {
+    if (!isTauri()) {
+        window.location.href = url;
+        return true;
+    }
+
+    try {
+        const { openUrl } = await import("@tauri-apps/plugin-opener");
+        await openUrl(url);
+        return true;
+    } catch {
+        return false;
+    }
+}
+
 export function useMobileLoginRedirect() {
     const { generateAuthCode, isGenerating, error } =
         useGenerateMobileAuthCode();
+    const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
 
     const executeRedirect = useCallback(
         async ({ returnUrl, productId, state }: MobileLoginRedirectParams) => {
@@ -33,27 +45,31 @@ export function useMobileLoginRedirect() {
                 returnOrigin,
             });
 
-            const redirectUrl = new URL(returnUrl);
-            redirectUrl.searchParams.set("frakAuth", authCode);
+            const finalRedirectUrl = new URL(returnUrl);
+            finalRedirectUrl.searchParams.set("frakAuth", authCode);
             if (state) {
-                redirectUrl.searchParams.set("state", state);
+                finalRedirectUrl.searchParams.set("state", state);
             }
 
-            const finalUrl = redirectUrl.toString();
-            console.log("[OpenLogin] Redirecting to:", finalUrl);
+            const finalUrl = finalRedirectUrl.toString();
+            setRedirectUrl(finalUrl);
 
-            if (isTauri()) {
-                const { open } = await import("@tauri-apps/plugin-shell");
-                await open(finalUrl);
-            } else {
-                window.location.href = finalUrl;
-            }
+            await openExternalUrl(finalUrl);
         },
         [generateAuthCode]
     );
 
+    const retryRedirect = useCallback(async (): Promise<boolean> => {
+        if (!redirectUrl) {
+            return false;
+        }
+        return openExternalUrl(redirectUrl);
+    }, [redirectUrl]);
+
     return {
         executeRedirect,
+        retryRedirect,
+        redirectUrl,
         isRedirecting: isGenerating,
         error,
     };

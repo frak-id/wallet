@@ -21,3 +21,7 @@
 .openLogin__error {
     color: var(--color-error);
 }
+
+.openLogin__authActions {
+    width: 100%;
+}

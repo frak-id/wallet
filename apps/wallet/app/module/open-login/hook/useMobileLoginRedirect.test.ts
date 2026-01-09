@@ -154,9 +154,9 @@ describe("useMobileLoginRedirect", () => {
         );
         vi.mocked(isTauri).mockReturnValue(true);
 
-        const mockOpen = vi.fn();
-        vi.doMock("@tauri-apps/plugin-shell", () => ({
-            open: mockOpen,
+        const mockOpenUrl = vi.fn().mockResolvedValue(undefined);
+        vi.doMock("@tauri-apps/plugin-opener", () => ({
+            openUrl: mockOpenUrl,
         }));
 
         const { result } = renderHook(() => useMobileLoginRedirect(), {

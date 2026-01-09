@@ -10,22 +10,31 @@ type DeepLinkParams = {
     productName?: string;
 };
 
+function extractSearchParams(
+    searchParams: URLSearchParams
+): Omit<DeepLinkParams, "action"> {
+    return {
+        to: searchParams.get("to") ?? undefined,
+        amount: searchParams.get("amount") ?? undefined,
+        returnUrl: searchParams.get("returnUrl") ?? undefined,
+        productId: searchParams.get("productId") ?? undefined,
+        state: searchParams.get("state") ?? undefined,
+        productName: searchParams.get("productName") ?? undefined,
+    };
+}
+
 function parseDeepLink(url: string): DeepLinkParams | null {
     try {
         const parsed = new URL(url);
 
-        // frakwallet://send?to=0x... -> hostname is action
+        // frakwallet://login?returnUrl=...
         if (parsed.protocol === "frakwallet:") {
             const action =
                 parsed.hostname || parsed.pathname.replace(/^\//, "") || "home";
-            return {
-                action,
-                to: parsed.searchParams.get("to") ?? undefined,
-                amount: parsed.searchParams.get("amount") ?? undefined,
-            };
+            return { action, ...extractSearchParams(parsed.searchParams) };
         }
 
-        // https://wallet.frak.id/open/send?to=...
+        // https://wallet.frak.id/open/login?returnUrl=...
         if (parsed.pathname.startsWith("/open")) {
             const pathAfterOpen = parsed.pathname
                 .replace("/open/", "")
@@ -33,19 +42,13 @@ function parseDeepLink(url: string): DeepLinkParams | null {
             const action = pathAfterOpen || "home";
             return {
                 action,
-                to: parsed.searchParams.get("to") ?? undefined,
-                amount: parsed.searchParams.get("amount") ?? undefined,
-                returnUrl: parsed.searchParams.get("returnUrl") ?? undefined,
-                productId: parsed.searchParams.get("productId") ?? undefined,
-                state: parsed.searchParams.get("state") ?? undefined,
-                productName:
-                    parsed.searchParams.get("productName") ?? undefined,
+                ...extractSearchParams(parsed.searchParams),
             };
         }
 
         return null;
-    } catch {
-        console.error("Failed to parse deep link:", url);
+    } catch (error) {
+        console.error("[DeepLink] Failed to parse deep link:", url, error);
         return null;
     }
 }
@@ -56,8 +59,6 @@ type NavigateFn = (options: {
 }) => unknown;
 
 function handleDeepLinkAction(navigate: NavigateFn, params: DeepLinkParams) {
-    console.log("[DeepLink] Handling action:", params);
-
     switch (params.action) {
         case "send":
             navigate({
@@ -120,10 +121,6 @@ export async function initDeepLinks(navigate: NavigateFn): Promise<void> {
         try {
             const initialUrls = await getCurrent();
             if (initialUrls && initialUrls.length > 0) {
-                console.log(
-                    "[DeepLink] App opened via deep link:",
-                    initialUrls
-                );
                 const params = parseDeepLink(initialUrls[0]);
                 if (params) {
                     setTimeout(
@@ -133,12 +130,11 @@ export async function initDeepLinks(navigate: NavigateFn): Promise<void> {
                 }
             }
         } catch {
-            console.log("[DeepLink] No initial deep link");
+            // Ignore errors from getCurrent - may not be available on all platforms
         }
 
         // Handle warm/hot start (deep link while app is running)
         await onOpenUrl((urls: string[]) => {
-            console.log("[DeepLink] Received deep link:", urls);
             const url = urls[0];
             if (!url) return;
 
@@ -147,8 +143,6 @@ export async function initDeepLinks(navigate: NavigateFn): Promise<void> {
                 handleDeepLinkAction(navigate, params);
             }
         });
-
-        console.log("[DeepLink] Deep link handler initialized");
     } catch (error) {
         console.error("[DeepLink] Failed to initialize deep links:", error);
     }

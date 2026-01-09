@@ -57,9 +57,11 @@ async function main() {
     // Initialize Tauri-specific features for mobile devices
     if (isTauri()) {
         await initSafeAreaInsets();
-        await initDeepLinks((options) =>
-            router.navigate(options as Parameters<typeof router.navigate>[0])
-        );
+        await initDeepLinks((options) => {
+            return router.navigate(
+                options as Parameters<typeof router.navigate>[0]
+            );
+        });
     }
 
     await i18next
