@@ -23,12 +23,14 @@ type LoginRouteContext = {
 };
 
 export const Route = createFileRoute("/open/login")({
-    validateSearch: (search: Record<string, unknown>): LoginSearchParams => ({
-        returnUrl: search.returnUrl as string | undefined,
-        productId: search.productId as string | undefined,
-        state: search.state as string | undefined,
-        productName: search.productName as string | undefined,
-    }),
+    validateSearch: (search: Record<string, unknown>): LoginSearchParams => {
+        return {
+            returnUrl: search.returnUrl as string | undefined,
+            productId: search.productId as string | undefined,
+            state: search.state as string | undefined,
+            productName: search.productName as string | undefined,
+        };
+    },
     beforeLoad: ({ search }): LoginRouteContext => {
         const { returnUrl, productId, state, productName } = search;
 

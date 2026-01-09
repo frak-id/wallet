@@ -8,6 +8,11 @@
         "log:default",
         "safe-area-insets:default",
         "biometric:default",
-        "deep-link:default"
+        "deep-link:default",
+        "opener:allow-default-urls",
+        {
+            "identifier": "opener:allow-open-url",
+            "allow": [{ "url": "http://*" }, { "url": "https://*" }]
+        }
     ]
 }

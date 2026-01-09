@@ -1,10 +1,10 @@
 import { Button } from "@frak-labs/ui/component/Button";
-import { ButtonAuth } from "@frak-labs/ui/component/ButtonAuth";
-import { isWebAuthNSupported, useLogin } from "@frak-labs/wallet-shared";
+import { HandleErrors, sessionStore } from "@frak-labs/wallet-shared";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { CloudUpload } from "lucide-react";
-import { useEffect } from "react";
-import { Trans, useTranslation } from "react-i18next";
+import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { AuthActions } from "@/module/authentication/component/AuthActions";
 import { AuthenticateWithPhone } from "@/module/authentication/component/AuthenticateWithPhone";
 import { LoginList } from "@/module/authentication/component/LoginList";
 import styles from "@/module/authentication/page/LoginPage.module.css";
@@ -29,14 +29,19 @@ export const Route = createFileRoute("/_wallet/_auth/login")({
 function LoginPage() {
     const { t } = useTranslation();
     const navigate = useNavigate();
-    const { login, isLoading, isSuccess } = useLogin({});
+    const [error, setError] = useState<Error | null>(null);
+    const session = sessionStore((state) => state.session);
 
     // Redirect to wallet after successful login
     useEffect(() => {
-        if (isSuccess) {
+        if (session) {
             navigate({ to: "/wallet", replace: true });
         }
-    }, [isSuccess, navigate]);
+    }, [session, navigate]);
+
+    const handleLoginSuccess = () => {
+        navigate({ to: "/wallet", replace: true });
+    };
 
     return (
         <>
@@ -57,18 +62,20 @@ function LoginPage() {
                 }
             >
                 <PairingInProgress />
-                <ButtonAuth
-                    disabled={!isWebAuthNSupported || isLoading}
-                    isLoading={isLoading}
-                    onClick={() => login({})}
-                >
-                    <Trans i18nKey={"wallet.login.button"} />
-                </ButtonAuth>
+
+                <AuthActions
+                    onSuccess={handleLoginSuccess}
+                    onError={setError}
+                    loginButtonText={t("wallet.login.button")}
+                />
+
                 <AuthenticateWithPhone
                     as={Button}
                     text={t("wallet.login.useQRCode")}
                     width={"full"}
                 />
+
+                {error && <HandleErrors error={error} />}
             </Grid>
         </>
     );

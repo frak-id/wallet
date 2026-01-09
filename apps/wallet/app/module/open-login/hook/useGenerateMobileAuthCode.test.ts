@@ -64,8 +64,8 @@ describe("useGenerateMobileAuthCode", () => {
         ).mockResolvedValue({
             data: { authCode: mockAuthCode },
             error: null,
-        } as unknown as ReturnType<
-            typeof authenticatedWalletApi.auth.mobile.code.post
+        } as unknown as Awaited<
+            ReturnType<typeof authenticatedWalletApi.auth.mobile.code.post>
         >);
 
         const { result } = renderHook(() => useGenerateMobileAuthCode(), {
@@ -100,8 +100,8 @@ describe("useGenerateMobileAuthCode", () => {
         ).mockResolvedValue({
             data: null,
             error: new Error("Failed to generate auth code"),
-        } as unknown as ReturnType<
-            typeof authenticatedWalletApi.auth.mobile.code.post
+        } as unknown as Awaited<
+            ReturnType<typeof authenticatedWalletApi.auth.mobile.code.post>
         >);
 
         const { result } = renderHook(() => useGenerateMobileAuthCode(), {

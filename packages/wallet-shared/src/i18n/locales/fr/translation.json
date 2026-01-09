@@ -319,7 +319,12 @@
             "subtitle": "Se connecter à {{productName}}",
             "login": "Se connecter avec la biométrie",
             "redirecting": "Redirection vers {{productName}}",
-            "webauthnNotSupported": "WebAuthn n'est pas pris en charge sur cet appareil"
+            "webauthnNotSupported": "WebAuthn n'est pas pris en charge sur cet appareil",
+            "complete": {
+                "title": "Connexion réussie !",
+                "message": "Vous pouvez maintenant retourner à {{productName}}.",
+                "backToBrowser": "Continuer"
+            }
         }
     },
     "biometrics": {
