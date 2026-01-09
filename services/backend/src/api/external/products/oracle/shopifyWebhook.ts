@@ -116,6 +116,7 @@ export const shopifyWebhook = new Elysia()
                     title: item.title,
                     quantity: item.quantity,
                 })),
+                merchantId: productId,
             });
 
             return "ok";

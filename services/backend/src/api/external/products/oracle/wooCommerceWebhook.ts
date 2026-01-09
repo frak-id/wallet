@@ -82,6 +82,7 @@ export const wooCommerceWebhook = new Elysia()
                     quantity: item.quantity,
                     imageUrl: item.image?.src?.length ? item.image.src : null,
                 })),
+                merchantId: productId,
             });
 
             return "ok";

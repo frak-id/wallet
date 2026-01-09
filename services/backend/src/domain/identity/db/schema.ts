@@ -1,5 +1,6 @@
 import {
     index,
+    jsonb,
     pgEnum,
     pgTable,
     text,
@@ -9,6 +10,11 @@ import {
 } from "drizzle-orm/pg-core";
 import type { Address } from "viem";
 import { customHex } from "../../../utils/drizzle/customTypes";
+
+export type PendingPurchaseValidation = {
+    orderId: string;
+    purchaseToken: string;
+};
 
 export const identityGroupsTable = pgTable(
     "identity_groups",
@@ -37,6 +43,8 @@ export const identityNodesTable = pgTable(
         identityType: identityTypeEnum("identity_type").notNull(),
         identityValue: text("identity_value").notNull(),
         merchantId: uuid("merchant_id"),
+        validationData:
+            jsonb("validation_data").$type<PendingPurchaseValidation>(),
         createdAt: timestamp("created_at").defaultNow(),
     },
     (table) => [
