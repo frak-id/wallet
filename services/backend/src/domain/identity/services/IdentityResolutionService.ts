@@ -1,26 +1,19 @@
 import { log } from "@backend-infrastructure";
+import { encodeUserId } from "@backend-utils";
 import type { Address } from "viem";
-import {
-    type ResolveOp,
-    type RewardsHubRepository,
-    rewardsHubRepository,
+import type {
+    ResolveOp,
+    RewardsHubRepository,
 } from "../../../infrastructure/blockchain/contracts/RewardsHubRepository";
-import { encodeUserId } from "../../rewards/types";
-import { IdentityRepository } from "../repositories/IdentityRepository";
+import type { IdentityRepository } from "../repositories/IdentityRepository";
 
 type IdentityType = "anonymous_fingerprint" | "merchant_customer" | "wallet";
 
 export class IdentityResolutionService {
-    private repository: IdentityRepository;
-    private rewardsHub: RewardsHubRepository;
-
     constructor(
-        repository?: IdentityRepository,
-        rewardsHub?: RewardsHubRepository
-    ) {
-        this.repository = repository ?? new IdentityRepository();
-        this.rewardsHub = rewardsHub ?? rewardsHubRepository;
-    }
+        readonly repository: IdentityRepository,
+        readonly rewardsHub: RewardsHubRepository
+    ) {}
 
     async resolveAnonymousId(params: {
         anonId: string;

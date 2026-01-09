@@ -98,7 +98,7 @@ export const shopifyWebhook = new Elysia()
                 "Handling new shopify webhook event"
             );
 
-            await PurchasesContext.services.webhook.upsertPurchase({
+            await PurchasesContext.orchestrators.webhook.upsertPurchase({
                 purchase: {
                     webhookId: webhook.id,
                     externalId: webhookData.id.toString(),

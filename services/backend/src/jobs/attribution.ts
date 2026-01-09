@@ -1,6 +1,6 @@
 import { mutexCron } from "@backend-utils";
 import { Elysia } from "elysia";
-import { AttributionService } from "../domain/attribution";
+import { AttributionContext } from "../domain/attribution";
 
 export const attributionJobs = new Elysia({ name: "Job.attribution" }).use(
     mutexCron({
@@ -9,9 +9,8 @@ export const attributionJobs = new Elysia({ name: "Job.attribution" }).use(
         run: async ({ context: { logger } }) => {
             logger.debug("Cleaning up expired touchpoints");
 
-            const attributionService = new AttributionService();
             const deletedCount =
-                await attributionService.cleanupExpiredTouchpoints();
+                await AttributionContext.services.attribution.cleanupExpiredTouchpoints();
 
             logger.info(`Deleted ${deletedCount} expired touchpoints`);
         },

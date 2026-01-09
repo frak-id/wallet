@@ -99,9 +99,6 @@ export type RecipientType =
 // SETTLEMENT TYPES
 // =============================================================================
 
-/**
- * Result of a single reward settlement attempt.
- */
 export type RewardSettlementResult = {
     assetLogId: string;
     success: boolean;
@@ -110,9 +107,6 @@ export type RewardSettlementResult = {
     error?: string;
 };
 
-/**
- * Aggregated result of batch settlement.
- */
 export type SettlementResult = {
     pushedCount: number;
     lockedCount: number;
@@ -124,13 +118,7 @@ export type SettlementResult = {
     }>;
 };
 
-/**
- * Attestation event structure for on-chain proof.
- */
-export type AttestationEvent = {
-    event: string;
-    timestampInSecond: number;
-};
+export { type AttestationEvent, buildAttestation } from "@backend-utils";
 
 // =============================================================================
 // PROCESSING TYPES
@@ -173,32 +161,4 @@ export type CreateAssetLogParams = {
     chainDepth?: number;
 };
 
-// =============================================================================
-// UTILITY TYPES
-// =============================================================================
-
-export function encodeUserId(identityGroupId: string): Hex {
-    const uuidWithoutHyphens = identityGroupId.replace(/-/g, "");
-    return `0x${uuidWithoutHyphens.padStart(64, "0")}` as Hex;
-}
-
-export function decodeUserId(userId: Hex): string {
-    const hex = userId.slice(2).replace(/^0+/, "");
-    if (hex.length !== 32) {
-        throw new Error(`Invalid userId length: ${hex.length}`);
-    }
-    return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
-}
-
-/**
- * Build attestation for on-chain proof.
- */
-export function buildAttestation(
-    events: Array<{ event: string; timestamp: Date }>
-): string {
-    const payload: AttestationEvent[] = events.map((e) => ({
-        event: e.event,
-        timestampInSecond: Math.floor(e.timestamp.getTime() / 1000),
-    }));
-    return Buffer.from(JSON.stringify(payload)).toString("base64");
-}
+export { decodeUserId, encodeUserId } from "@backend-utils";

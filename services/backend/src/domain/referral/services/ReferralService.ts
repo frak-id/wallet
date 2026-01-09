@@ -1,5 +1,5 @@
 import { log } from "@backend-infrastructure";
-import { ReferralLinkRepository } from "../repositories/ReferralLinkRepository";
+import type { ReferralLinkRepository } from "../repositories/ReferralLinkRepository";
 
 type ReferralChainMember = {
     identityGroupId: string;
@@ -9,11 +9,7 @@ type ReferralChainMember = {
 const DEFAULT_MAX_CHAIN_DEPTH = 5;
 
 export class ReferralService {
-    private readonly repository: ReferralLinkRepository;
-
-    constructor(repository?: ReferralLinkRepository) {
-        this.repository = repository ?? new ReferralLinkRepository();
-    }
+    constructor(readonly repository: ReferralLinkRepository) {}
 
     async registerReferral(params: {
         merchantId: string;

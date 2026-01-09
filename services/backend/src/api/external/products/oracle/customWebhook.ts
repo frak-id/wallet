@@ -60,7 +60,7 @@ export const customWebhook = new Elysia()
                 "Handling new custom webhook event"
             );
 
-            await PurchasesContext.services.webhook.upsertPurchase({
+            await PurchasesContext.orchestrators.webhook.upsertPurchase({
                 purchase: {
                     webhookId: webhook.id,
                     externalId: webhookData.id,

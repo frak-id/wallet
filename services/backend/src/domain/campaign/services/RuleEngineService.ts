@@ -1,7 +1,7 @@
 import { log } from "@backend-infrastructure";
-import { ReferralService } from "../../referral";
+import type { ReferralService } from "../../referral";
 import type { CampaignRuleSelect } from "../db/schema";
-import { CampaignRuleRepository } from "../repositories/CampaignRuleRepository";
+import type { CampaignRuleRepository } from "../repositories/CampaignRuleRepository";
 import type {
     CalculatedReward,
     CampaignTrigger,
@@ -9,8 +9,8 @@ import type {
     RuleContext,
     TimeContext,
 } from "../types";
-import { type ReferralChainMember, RewardCalculator } from "./RewardCalculator";
-import { RuleConditionEvaluator } from "./RuleConditionEvaluator";
+import type { ReferralChainMember, RewardCalculator } from "./RewardCalculator";
+import type { RuleConditionEvaluator } from "./RuleConditionEvaluator";
 
 type EvaluateRulesParams = {
     merchantId: string;
@@ -30,24 +30,12 @@ function buildTimeContext(): TimeContext {
 }
 
 export class RuleEngineService {
-    private readonly repository: CampaignRuleRepository;
-    private readonly conditionEvaluator: RuleConditionEvaluator;
-    private readonly rewardCalculator: RewardCalculator;
-    private readonly referralService: ReferralService;
-
     constructor(
-        repository?: CampaignRuleRepository,
-        conditionEvaluator?: RuleConditionEvaluator,
-        rewardCalculator?: RewardCalculator,
-        referralService?: ReferralService
-    ) {
-        this.repository = repository ?? new CampaignRuleRepository();
-        this.conditionEvaluator =
-            conditionEvaluator ?? new RuleConditionEvaluator();
-        this.rewardCalculator =
-            rewardCalculator ?? new RewardCalculator(this.conditionEvaluator);
-        this.referralService = referralService ?? new ReferralService();
-    }
+        readonly repository: CampaignRuleRepository,
+        readonly conditionEvaluator: RuleConditionEvaluator,
+        readonly rewardCalculator: RewardCalculator,
+        readonly referralService: ReferralService
+    ) {}
 
     async evaluateRules(
         params: EvaluateRulesParams
