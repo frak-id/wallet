@@ -1,10 +1,18 @@
+export { CampaignContext } from "./context";
 export {
     type CampaignRuleInsert,
     type CampaignRuleSelect,
+    type CampaignStatus,
     campaignRulesTable,
+    campaignStatusEnum,
 } from "./db/schema";
-
 export { CampaignRuleRepository } from "./repositories/CampaignRuleRepository";
+export {
+    type CampaignCreateInput,
+    CampaignManagementService,
+    type CampaignResult,
+    type CampaignUpdateInput,
+} from "./services/CampaignManagementService";
 export { RewardCalculator } from "./services/RewardCalculator";
 export { RuleConditionEvaluator } from "./services/RuleConditionEvaluator";
 export { RuleEngineService } from "./services/RuleEngineService";

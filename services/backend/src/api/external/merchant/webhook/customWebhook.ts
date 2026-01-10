@@ -14,7 +14,7 @@ export const customWebhook = new Elysia()
             })
         ),
         params: t.Object({
-            identifier: t.Optional(t.String()),
+            merchantId: t.Optional(t.String()),
         }),
     })
     .onBeforeHandle(({ headers }) => {
@@ -24,36 +24,34 @@ export const customWebhook = new Elysia()
     })
     .post(
         "/custom",
-        async ({ params: { identifier }, body, headers }) => {
+        async ({ params: { merchantId }, body, headers }) => {
             const webhookData = JSON.parse(body) as CustomWebhookDto;
             if (!webhookData?.id) {
                 throw new Error("Invalid body");
             }
 
-            if (!identifier) {
+            if (!merchantId) {
                 throw new Error("Missing merchant identifier");
             }
 
             const resolved =
                 await OrchestrationContext.orchestrators.webhookResolver.resolveWebhook(
-                    identifier
+                    merchantId
                 );
             if (!resolved) {
-                log.warn({ identifier }, "Webhook not found");
+                log.warn({ merchantId }, "Webhook not found");
                 throw new Error("Webhook not found");
             }
 
-            const { webhook, merchantId } = resolved;
-
             validateBodyHmac({
                 body,
-                secret: webhook.hookSignatureKey,
+                secret: resolved.webhook.hookSignatureKey,
                 signature: headers["x-hmac-sha256"],
             });
 
             log.debug(
                 {
-                    merchantId,
+                    merchantId: resolved.merchantId,
                     purchaseExternalId: webhookData.id,
                     status: webhookData.status,
                 },
@@ -63,7 +61,7 @@ export const customWebhook = new Elysia()
             await OrchestrationContext.orchestrators.purchaseWebhook.upsertPurchase(
                 {
                     purchase: {
-                        webhookId: webhook.id,
+                        webhookId: resolved.webhook.id,
                         externalId: webhookData.id,
                         externalCustomerId: webhookData.customerId,
                         purchaseToken: webhookData.token,
@@ -80,7 +78,7 @@ export const customWebhook = new Elysia()
                             quantity: item.quantity,
                             imageUrl: item.image,
                         })) ?? [],
-                    merchantId,
+                    merchantId: resolved.merchantId,
                 }
             );
 
@@ -90,7 +88,7 @@ export const customWebhook = new Elysia()
             parse: "text",
             body: t.String(),
             params: t.Object({
-                identifier: t.Optional(t.String()),
+                merchantId: t.Optional(t.String()),
             }),
         }
     );

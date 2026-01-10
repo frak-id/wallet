@@ -34,15 +34,6 @@ export const adminWalletsRepositoryMocks = {
     })),
 };
 
-export const interactionDiamondRepositoryMocks = {
-    getDiamondContract: vi.fn(<T = Address | undefined>() =>
-        Promise.resolve(undefined as T)
-    ),
-    getInteractionDiamond: vi.fn(<T = Address | undefined>() =>
-        Promise.resolve(undefined as T)
-    ),
-};
-
 export const rolesRepositoryMocks = {
     getRoles: vi.fn(() => Promise.resolve([])),
 };
@@ -362,7 +353,6 @@ vi.mock("@backend-infrastructure", () => ({
     pricingRepository: pricingRepositoryMocks,
     viemClient: viemMocks,
     adminWalletsRepository: adminWalletsRepositoryMocks,
-    interactionDiamondRepository: interactionDiamondRepositoryMocks,
     rolesRepository: rolesRepositoryMocks,
     onChainRolesRepository: onChainRolesRepositoryMocks,
     sessionContext: sessionContextMock,

@@ -1,8 +1,10 @@
-import { and, desc, eq, gt, isNull, lt, or } from "drizzle-orm";
+import { and, desc, eq, gt, inArray, isNull, lt, or } from "drizzle-orm";
+import { LRUCache } from "lru-cache";
 import { db } from "../../../infrastructure/persistence/postgres";
 import {
     type CampaignRuleInsert,
     type CampaignRuleSelect,
+    type CampaignStatus,
     campaignRulesTable,
 } from "../db/schema";
 import type {
@@ -69,6 +71,14 @@ function processbudgetUsed(
 }
 
 export class CampaignRuleRepository {
+    private readonly activeRulesCache = new LRUCache<
+        string,
+        CampaignRuleSelect[]
+    >({
+        max: 256,
+        ttl: 5 * 60 * 1000,
+    });
+
     async findById(id: string): Promise<CampaignRuleSelect | null> {
         const [result] = await db
             .select()
@@ -82,6 +92,12 @@ export class CampaignRuleRepository {
         merchantId: string,
         trigger?: CampaignTrigger
     ): Promise<CampaignRuleSelect[]> {
+        const cacheKey = trigger ? `${merchantId}:${trigger}` : merchantId;
+        const cached = this.activeRulesCache.get(cacheKey);
+        if (cached) {
+            return cached;
+        }
+
         const now = new Date();
 
         const results = await db
@@ -90,7 +106,7 @@ export class CampaignRuleRepository {
             .where(
                 and(
                     eq(campaignRulesTable.merchantId, merchantId),
-                    isNull(campaignRulesTable.deactivatedAt),
+                    eq(campaignRulesTable.status, "active"),
                     or(
                         isNull(campaignRulesTable.expiresAt),
                         gt(campaignRulesTable.expiresAt, now)
@@ -100,10 +116,37 @@ export class CampaignRuleRepository {
             .orderBy(desc(campaignRulesTable.priority));
 
         if (trigger) {
-            return results.filter((r) => r.rule.trigger === trigger);
+            const filtered = results.filter((r) => r.rule.trigger === trigger);
+            this.activeRulesCache.set(cacheKey, filtered);
+            return filtered;
         }
 
+        this.activeRulesCache.set(cacheKey, results);
         return results;
+    }
+
+    invalidateMerchantCache(merchantId: string): void {
+        for (const key of this.activeRulesCache.keys()) {
+            if (key === merchantId || key.startsWith(`${merchantId}:`)) {
+                this.activeRulesCache.delete(key);
+            }
+        }
+    }
+
+    async findByMerchantAndStatus(
+        merchantId: string,
+        statuses: CampaignStatus[]
+    ): Promise<CampaignRuleSelect[]> {
+        return db
+            .select()
+            .from(campaignRulesTable)
+            .where(
+                and(
+                    eq(campaignRulesTable.merchantId, merchantId),
+                    inArray(campaignRulesTable.status, statuses)
+                )
+            )
+            .orderBy(desc(campaignRulesTable.priority));
     }
 
     async create(rule: CampaignRuleInsert): Promise<CampaignRuleSelect> {
@@ -114,6 +157,7 @@ export class CampaignRuleRepository {
         if (!result) {
             throw new Error("Failed to create campaign rule");
         }
+        this.invalidateMerchantCache(rule.merchantId);
         return result;
     }
 
@@ -131,32 +175,59 @@ export class CampaignRuleRepository {
             .set({ ...updates, updatedAt: new Date() })
             .where(eq(campaignRulesTable.id, id))
             .returning();
+        if (result) {
+            this.invalidateMerchantCache(result.merchantId);
+        }
         return result ?? null;
     }
 
-    async deactivate(id: string): Promise<CampaignRuleSelect | null> {
+    async updateStatus(
+        id: string,
+        status: CampaignStatus,
+        extras?: { publishedAt?: Date; deactivatedAt?: Date | null }
+    ): Promise<CampaignRuleSelect | null> {
         const [result] = await db
             .update(campaignRulesTable)
-            .set({ deactivatedAt: new Date(), updatedAt: new Date() })
+            .set({
+                status,
+                updatedAt: new Date(),
+                ...extras,
+            })
             .where(eq(campaignRulesTable.id, id))
             .returning();
+        if (result) {
+            this.invalidateMerchantCache(result.merchantId);
+        }
         return result ?? null;
     }
 
-    async reactivate(id: string): Promise<CampaignRuleSelect | null> {
-        const [result] = await db
-            .update(campaignRulesTable)
-            .set({ deactivatedAt: null, updatedAt: new Date() })
-            .where(eq(campaignRulesTable.id, id))
-            .returning();
-        return result ?? null;
+    async publish(id: string): Promise<CampaignRuleSelect | null> {
+        return this.updateStatus(id, "active", { publishedAt: new Date() });
+    }
+
+    async pause(id: string): Promise<CampaignRuleSelect | null> {
+        return this.updateStatus(id, "paused", { deactivatedAt: new Date() });
+    }
+
+    async resume(id: string): Promise<CampaignRuleSelect | null> {
+        return this.updateStatus(id, "active", { deactivatedAt: null });
+    }
+
+    async archive(id: string): Promise<CampaignRuleSelect | null> {
+        return this.updateStatus(id, "archived", { deactivatedAt: new Date() });
     }
 
     async delete(id: string): Promise<boolean> {
         const result = await db
             .delete(campaignRulesTable)
             .where(eq(campaignRulesTable.id, id))
-            .returning({ id: campaignRulesTable.id });
+            .returning({
+                id: campaignRulesTable.id,
+                merchantId: campaignRulesTable.merchantId,
+            });
+        if (result[0]) {
+            this.invalidateMerchantCache(result[0].merchantId);
+        }
         return result.length > 0;
     }
 
@@ -308,7 +379,7 @@ export class CampaignRuleRepository {
             .from(campaignRulesTable)
             .where(
                 and(
-                    isNull(campaignRulesTable.deactivatedAt),
+                    eq(campaignRulesTable.status, "active"),
                     lt(campaignRulesTable.expiresAt, now)
                 )
             );

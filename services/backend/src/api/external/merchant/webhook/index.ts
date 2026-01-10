@@ -4,7 +4,7 @@ import { customWebhook } from "./customWebhook";
 import { shopifyWebhook } from "./shopifyWebhook";
 import { wooCommerceWebhook } from "./wooCommerceWebhook";
 
-export const oracleWebhook = new Elysia({ prefix: "/oracle" })
+export const webhookRoutes = new Elysia()
     .onBeforeHandle(({ path, headers }) => {
         log.debug({ path, headers }, "Handling purchase webhook");
     })

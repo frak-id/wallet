@@ -22,7 +22,7 @@ export const shopifyWebhook = new Elysia()
             })
         ),
         params: t.Object({
-            identifier: t.Optional(t.String()),
+            merchantId: t.Optional(t.String()),
         }),
     })
     .onBeforeHandle(({ headers }) => {
@@ -49,7 +49,7 @@ export const shopifyWebhook = new Elysia()
     })
     .post(
         "/shopify",
-        async ({ params: { identifier }, body, headers }) => {
+        async ({ params: { merchantId }, body, headers }) => {
             const webhookData = JSON.parse(
                 body
             ) as ShopifyOrderUpdateWebhookDto;
@@ -63,24 +63,22 @@ export const shopifyWebhook = new Elysia()
                 throw new Error("Test field mismatch");
             }
 
-            if (!identifier) {
+            if (!merchantId) {
                 throw new Error("Missing merchant identifier");
             }
 
             const resolved =
                 await OrchestrationContext.orchestrators.webhookResolver.resolveWebhook(
-                    identifier
+                    merchantId
                 );
             if (!resolved) {
-                log.warn({ identifier }, "Webhook not found");
+                log.warn({ merchantId }, "Webhook not found");
                 throw new Error("Webhook not found");
             }
 
-            const { webhook, merchantId } = resolved;
-
             validateBodyHmac({
                 body,
-                secret: webhook.hookSignatureKey,
+                secret: resolved.webhook.hookSignatureKey,
                 signature: headers["x-shopify-hmac-sha256"],
             });
 
@@ -90,7 +88,7 @@ export const shopifyWebhook = new Elysia()
 
             log.debug(
                 {
-                    merchantId,
+                    merchantId: resolved.merchantId,
                     purchaseStatus,
                     purchaseExternalId: webhookData.id,
                     status: webhookData.financial_status,
@@ -101,7 +99,7 @@ export const shopifyWebhook = new Elysia()
             await OrchestrationContext.orchestrators.purchaseWebhook.upsertPurchase(
                 {
                     purchase: {
-                        webhookId: webhook.id,
+                        webhookId: resolved.webhook.id,
                         externalId: webhookData.id.toString(),
                         externalCustomerId: webhookData.customer.id.toString(),
                         purchaseToken:
@@ -117,7 +115,7 @@ export const shopifyWebhook = new Elysia()
                         title: item.title,
                         quantity: item.quantity,
                     })),
-                    merchantId,
+                    merchantId: resolved.merchantId,
                 }
             );
 
@@ -127,7 +125,7 @@ export const shopifyWebhook = new Elysia()
             parse: "text",
             body: t.String(),
             params: t.Object({
-                identifier: t.Optional(t.String()),
+                merchantId: t.Optional(t.String()),
             }),
         }
     );

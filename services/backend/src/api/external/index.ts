@@ -1,4 +1,4 @@
 import { Elysia } from "elysia";
-import { productsApi } from "./products";
+import { merchantApi } from "./merchant";
 
-export const externalApi = new Elysia({ prefix: "/ext" }).use(productsApi);
+export const externalApi = new Elysia({ prefix: "/ext" }).use(merchantApi);

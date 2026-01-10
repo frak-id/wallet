@@ -58,11 +58,20 @@ export const legacyRouteMapper = (app: Elysia) =>
     );
 
 function pathMapper(path: string) {
-    // oracle/{type}/{productId}/hook -> ext/products/{productId}/webhook/oracle/{type}
+    // Legacy: oracle/{type}/{productId}/hook -> ext/merchant/{productId}/webhook/{type}
     if (path.startsWith("/oracle") && path.endsWith("/hook")) {
         const type = path.split("/")[2];
         const productId = path.split("/")[3];
-        return `/ext/products/${productId}/webhook/oracle/${type}`;
+        return `/ext/merchant/${productId}/webhook/${type}`;
+    }
+
+    // Legacy: /ext/products/{productId}/webhook/oracle/{type} -> /ext/merchant/{productId}/webhook/{type}
+    const productsWebhookMatch = path.match(
+        /^\/ext\/products\/([^/]+)\/webhook\/oracle\/(.+)$/
+    );
+    if (productsWebhookMatch) {
+        const [, productId, type] = productsWebhookMatch;
+        return `/ext/merchant/${productId}/webhook/${type}`;
     }
 
     // /interactions/listenForPurchase -> /user/track/purchase
