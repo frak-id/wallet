@@ -168,7 +168,7 @@ Campaigns define reward rules using a **JSON-based rule engine**.
 │  name: string                                                           │
 │  priority: int (higher = evaluated first)                               │
 │  rule: JSON {                                                           │
-│      trigger: "purchase" | "referral_purchase" | "signup" | ...        │
+│      trigger: "purchase" | "signup" | "wallet_connect" | "custom"      │
 │      conditions: [                                                      │
 │          { field: "purchase.amount", operator: "gte", value: 50 }      │
 │          { field: "attribution.source", operator: "eq", value: "..." } │

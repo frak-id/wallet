@@ -1,9 +1,11 @@
-import { log } from "@backend-infrastructure";
+import { eventEmitter, log } from "@backend-infrastructure";
 import type {
     PurchaseInsert,
     PurchaseItemInsert,
     PurchaseRepository,
 } from "../domain/purchases";
+import type { InteractionLogRepository } from "../domain/rewards/repositories/InteractionLogRepository";
+import type { PurchasePayload } from "../domain/rewards/types";
 import type { PurchaseLinkingOrchestrator } from "./PurchaseLinkingOrchestrator";
 
 type UpsertPurchaseParams = {
@@ -15,13 +17,14 @@ type UpsertPurchaseParams = {
 type UpsertPurchaseResult = {
     purchaseId: string;
     identityGroupId?: string;
-    rewardsProcessed: boolean;
+    interactionLogId?: string;
 };
 
 export class PurchaseWebhookOrchestrator {
     constructor(
         private readonly purchaseRepository: PurchaseRepository,
-        private readonly linkingOrchestrator: PurchaseLinkingOrchestrator
+        private readonly linkingOrchestrator: PurchaseLinkingOrchestrator,
+        private readonly interactionLogRepository: InteractionLogRepository
     ) {}
 
     async upsertPurchase({
@@ -54,29 +57,49 @@ export class PurchaseWebhookOrchestrator {
             "Purchase upserted"
         );
 
-        let rewardsProcessed = false;
+        let interactionLogId: string | undefined;
 
         if (identityGroupId) {
-            const result =
-                await this.linkingOrchestrator.processRewardsForLinkedPurchase(
-                    purchaseId
-                );
-            rewardsProcessed = result.rewardsCreated > 0;
+            const payload: PurchasePayload = {
+                orderId: purchase.externalId,
+                externalCustomerId: purchase.externalCustomerId,
+                amount: Number(purchase.totalPrice),
+                currency: purchase.currencyCode,
+                items: purchaseItems.map((item) => ({
+                    productId: item.externalId,
+                    name: item.name,
+                    quantity: item.quantity,
+                    unitPrice: Number(item.price),
+                    totalPrice: Number(item.price) * item.quantity,
+                })),
+                purchaseId,
+            };
+
+            const interactionLog = await this.interactionLogRepository.create({
+                type: "purchase",
+                identityGroupId,
+                merchantId,
+                payload,
+            });
+
+            interactionLogId = interactionLog.id;
+
+            eventEmitter.emit("newInteraction", { type: "purchase" });
 
             log.info(
                 {
                     purchaseId,
                     identityGroupId,
-                    rewardsCreated: result.rewardsCreated,
+                    interactionLogId,
                 },
-                "Processed rewards for purchase with pending identity"
+                "Created interaction log for purchase (reward calculation deferred to batch job)"
             );
         }
 
         return {
             purchaseId,
             identityGroupId,
-            rewardsProcessed,
+            interactionLogId,
         };
     }
 }

@@ -8,8 +8,7 @@ import type { Address } from "viem";
  * Events that can trigger campaign rule evaluation.
  */
 export type CampaignTrigger =
-    | "purchase" // Any purchase event
-    | "referral_purchase" // Purchase with referral attribution
+    | "purchase" // Purchase event (use conditions for referral vs organic)
     | "signup" // User registration
     | "wallet_connect" // Wallet connection
     | "custom"; // Custom trigger for future extensibility

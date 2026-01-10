@@ -38,7 +38,6 @@ export type PurchasePayload = {
         totalPrice: number;
     }>;
     purchaseId: string;
-    touchpointId?: string;
 };
 
 /**

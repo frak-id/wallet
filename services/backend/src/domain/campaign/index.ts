@@ -15,7 +15,10 @@ export {
 } from "./services/CampaignManagementService";
 export { RewardCalculator } from "./services/RewardCalculator";
 export { RuleConditionEvaluator } from "./services/RuleConditionEvaluator";
-export { RuleEngineService } from "./services/RuleEngineService";
+export {
+    buildTimeContext,
+    RuleEngineService,
+} from "./services/RuleEngineService";
 
 export type {
     AttributionContext,

@@ -4,9 +4,9 @@ import { IdentityContext } from "../domain/identity/context";
 import { MerchantContext } from "../domain/merchant/context";
 import { PurchasesContext } from "../domain/purchases/context";
 import { RewardsContext } from "../domain/rewards/context";
+import { BatchRewardOrchestrator } from "./BatchRewardOrchestrator";
 import { PurchaseLinkingOrchestrator } from "./PurchaseLinkingOrchestrator";
 import { PurchaseWebhookOrchestrator } from "./PurchaseWebhookOrchestrator";
-import { RewardOrchestrator } from "./RewardOrchestrator";
 import { SettlementOrchestrator } from "./SettlementOrchestrator";
 import { WebhookResolverOrchestrator } from "./WebhookResolverOrchestrator";
 
@@ -15,12 +15,12 @@ const webhookResolverOrchestrator = new WebhookResolverOrchestrator(
     MerchantContext.repositories.merchant
 );
 
-const rewardOrchestrator = new RewardOrchestrator(
+const batchRewardOrchestrator = new BatchRewardOrchestrator(
     RewardsContext.repositories.interactionLog,
     RewardsContext.repositories.assetLog,
+    IdentityContext.repositories.identity,
     CampaignContext.services.ruleEngine,
     AttributionContext.services.attribution,
-    IdentityContext.services.identityResolution,
     AttributionContext.services.referral
 );
 
@@ -28,12 +28,13 @@ const purchaseLinkingOrchestrator = new PurchaseLinkingOrchestrator(
     PurchasesContext.repositories.purchase,
     IdentityContext.services.identityResolution,
     IdentityContext.repositories.identity,
-    rewardOrchestrator
+    RewardsContext.repositories.interactionLog
 );
 
 const purchaseWebhookOrchestrator = new PurchaseWebhookOrchestrator(
     PurchasesContext.repositories.purchase,
-    purchaseLinkingOrchestrator
+    purchaseLinkingOrchestrator,
+    RewardsContext.repositories.interactionLog
 );
 
 const settlementOrchestrator = new SettlementOrchestrator(
@@ -44,7 +45,7 @@ const settlementOrchestrator = new SettlementOrchestrator(
 
 export namespace OrchestrationContext {
     export const orchestrators = {
-        reward: rewardOrchestrator,
+        batchReward: batchRewardOrchestrator,
         purchaseLinking: purchaseLinkingOrchestrator,
         purchaseWebhook: purchaseWebhookOrchestrator,
         settlement: settlementOrchestrator,

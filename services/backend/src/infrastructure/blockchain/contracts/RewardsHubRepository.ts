@@ -193,6 +193,7 @@ export class RewardsHubRepository {
 
             const receipt = await waitForTransactionReceipt(viemClient, {
                 hash: txHash,
+                confirmations: 4,
             });
 
             log.info(

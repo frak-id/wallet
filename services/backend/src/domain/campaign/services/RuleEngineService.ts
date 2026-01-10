@@ -18,15 +18,16 @@ type EvaluateRulesParams = {
     trigger: CampaignTrigger;
     context: Omit<RuleContext, "time">;
     referrerIdentityGroupId?: string;
+    time?: TimeContext;
 };
 
-function buildTimeContext(): TimeContext {
-    const now = new Date();
+export function buildTimeContext(date?: Date): TimeContext {
+    const d = date ?? new Date();
     return {
-        dayOfWeek: now.getUTCDay(),
-        hourOfDay: now.getUTCHours(),
-        date: now.toISOString().split("T")[0],
-        timestamp: Math.floor(now.getTime() / 1000),
+        dayOfWeek: d.getUTCDay(),
+        hourOfDay: d.getUTCHours(),
+        date: d.toISOString().split("T")[0],
+        timestamp: Math.floor(d.getTime() / 1000),
     };
 }
 
@@ -43,7 +44,7 @@ export class RuleEngineService {
     ): Promise<EvaluationResult> {
         const fullContext: RuleContext = {
             ...params.context,
-            time: buildTimeContext(),
+            time: params.time ?? buildTimeContext(),
         };
 
         const activeCampaigns = await this.repository.findActiveByMerchant(

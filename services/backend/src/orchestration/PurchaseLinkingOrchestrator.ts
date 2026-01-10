@@ -1,14 +1,11 @@
-import { log } from "@backend-infrastructure";
+import { eventEmitter, log } from "@backend-infrastructure";
 import type { Address } from "viem";
 import type { PendingPurchaseValidation } from "../domain/identity";
 import type { IdentityRepository } from "../domain/identity/repositories/IdentityRepository";
 import type { IdentityResolutionService } from "../domain/identity/services/IdentityResolutionService";
-import type {
-    MerchantWebhook,
-    Purchase,
-    PurchaseRepository,
-} from "../domain/purchases";
-import type { RewardOrchestrator } from "./RewardOrchestrator";
+import type { Purchase, PurchaseRepository } from "../domain/purchases";
+import type { InteractionLogRepository } from "../domain/rewards/repositories/InteractionLogRepository";
+import type { PurchasePayload } from "../domain/rewards/types";
 
 type PurchaseLinkParams = {
     customerId: string;
@@ -20,7 +17,7 @@ type PurchaseLinkResult = {
     success: boolean;
     purchaseId?: string;
     identityGroupId?: string;
-    rewardsCreated?: number;
+    interactionLogId?: string;
     pendingWebhook?: boolean;
     error?: string;
 };
@@ -30,7 +27,7 @@ export class PurchaseLinkingOrchestrator {
         private readonly purchaseRepository: PurchaseRepository,
         private readonly identityService: IdentityResolutionService,
         private readonly identityRepository: IdentityRepository,
-        private readonly rewardOrchestrator: RewardOrchestrator
+        private readonly interactionLogRepository: InteractionLogRepository
     ) {}
 
     async linkPurchaseFromSdk(
@@ -185,37 +182,6 @@ export class PurchaseLinkingOrchestrator {
         return { identityGroupId: pendingNode.groupId };
     }
 
-    async processRewardsForLinkedPurchase(purchaseId: string): Promise<{
-        rewardsCreated: number;
-    }> {
-        const result =
-            await this.purchaseRepository.findWithWebhook(purchaseId);
-
-        if (!result) {
-            log.error(
-                { purchaseId },
-                "Cannot process rewards: purchase or webhook not found"
-            );
-            return { rewardsCreated: 0 };
-        }
-
-        const { purchase, webhook } = result;
-
-        if (!purchase.identityGroupId) {
-            log.error(
-                { purchaseId },
-                "Cannot process rewards: no identityGroupId"
-            );
-            return { rewardsCreated: 0 };
-        }
-
-        return this.processRewardsInternal(
-            purchase,
-            webhook,
-            purchase.identityGroupId
-        );
-    }
-
     private async createPendingMerchantCustomerNode(params: {
         identityGroupId: string;
         merchantId: string;
@@ -263,13 +229,14 @@ export class PurchaseLinkingOrchestrator {
                     },
                     "Purchase already linked - merged identity groups (Scenario C edge case)"
                 );
+
+                eventEmitter.emit("newInteraction", { type: "identity_merge" });
             }
 
             return {
                 success: true,
                 purchaseId: purchase.id,
                 identityGroupId: purchase.identityGroupId,
-                rewardsCreated: 0,
             };
         }
 
@@ -307,17 +274,17 @@ export class PurchaseLinkingOrchestrator {
             "Linked purchase to identity group"
         );
 
-        const rewardResult = await this.processRewardsInternal(
+        const interactionLogId = await this.createInteractionLog(
             purchase,
-            webhook,
-            identityGroupId
+            identityGroupId,
+            merchantId
         );
 
         return {
             success: true,
             purchaseId: purchase.id,
             identityGroupId,
-            rewardsCreated: rewardResult.rewardsCreated,
+            interactionLogId,
         };
     }
 
@@ -330,56 +297,48 @@ export class PurchaseLinkingOrchestrator {
         return webhook?.merchantId ?? "";
     }
 
-    private async processRewardsInternal(
+    private async createInteractionLog(
         purchase: Purchase,
-        webhook: MerchantWebhook,
-        identityGroupId: string
-    ): Promise<{ rewardsCreated: number }> {
+        identityGroupId: string,
+        merchantId: string
+    ): Promise<string> {
         const purchaseItems = await this.purchaseRepository.findItems(
             purchase.id
         );
 
-        try {
-            const result = await this.rewardOrchestrator.processPurchaseRewards(
-                {
-                    merchantId: webhook.merchantId,
-                    identityGroupId,
-                    orderId: purchase.externalId,
-                    externalCustomerId: purchase.externalCustomerId,
-                    amount: Number.parseFloat(purchase.totalPrice),
-                    currency: purchase.currencyCode,
-                    items: purchaseItems.map((item) => ({
-                        productId: item.externalId,
-                        name: item.name,
-                        quantity: item.quantity,
-                        unitPrice: Number.parseFloat(item.price),
-                        totalPrice:
-                            Number.parseFloat(item.price) * item.quantity,
-                    })),
-                    purchaseId: purchase.id,
-                }
-            );
+        const payload: PurchasePayload = {
+            orderId: purchase.externalId,
+            externalCustomerId: purchase.externalCustomerId,
+            amount: Number.parseFloat(purchase.totalPrice),
+            currency: purchase.currencyCode,
+            items: purchaseItems.map((item) => ({
+                productId: item.externalId,
+                name: item.name,
+                quantity: item.quantity,
+                unitPrice: Number.parseFloat(item.price),
+                totalPrice: Number.parseFloat(item.price) * item.quantity,
+            })),
+            purchaseId: purchase.id,
+        };
 
-            log.info(
-                {
-                    purchaseId: purchase.id,
-                    rewardsCreated: result.rewards.length,
-                    budgetExceeded: result.budgetExceeded,
-                },
-                "Processed rewards for linked purchase"
-            );
+        const interactionLog = await this.interactionLogRepository.create({
+            type: "purchase",
+            identityGroupId,
+            merchantId,
+            payload,
+        });
 
-            return { rewardsCreated: result.rewards.length };
-        } catch (error) {
-            log.error(
-                {
-                    purchaseId: purchase.id,
-                    error:
-                        error instanceof Error ? error.message : String(error),
-                },
-                "Failed to process rewards for purchase"
-            );
-            return { rewardsCreated: 0 };
-        }
+        eventEmitter.emit("newInteraction", { type: "purchase" });
+
+        log.info(
+            {
+                purchaseId: purchase.id,
+                identityGroupId,
+                interactionLogId: interactionLog.id,
+            },
+            "Created interaction log for linked purchase (reward calculation deferred to batch job)"
+        );
+
+        return interactionLog.id;
     }
 }
