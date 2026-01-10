@@ -38,23 +38,6 @@ export const rolesRepositoryMocks = {
     getRoles: vi.fn(() => Promise.resolve([])),
 };
 
-export const onChainRolesRepositoryMocks = {
-    getRolesOnProduct: vi.fn(() =>
-        Promise.resolve({ isOwner: false, roles: 0n })
-    ),
-    hasRoleOrAdminOnProduct: vi.fn(() => Promise.resolve(false)),
-    hasRoles: vi.fn(
-        ({ onChainRoles, role }: { onChainRoles: bigint; role: bigint }) =>
-            (onChainRoles & role) !== 0n
-    ),
-    hasRolesOrAdmin: vi.fn(
-        ({ onChainRoles, role }: { onChainRoles: bigint; role: bigint }) => {
-            const productAdministrator = BigInt(1 << 0);
-            return (onChainRoles & (role | productAdministrator)) !== 0n;
-        }
-    ),
-};
-
 export const JwtContextMock = {
     wallet: {
         sign: vi.fn(() => Promise.resolve("mock-jwt-token")),
@@ -354,7 +337,6 @@ vi.mock("@backend-infrastructure", () => ({
     viemClient: viemMocks,
     adminWalletsRepository: adminWalletsRepositoryMocks,
     rolesRepository: rolesRepositoryMocks,
-    onChainRolesRepository: onChainRolesRepositoryMocks,
     sessionContext: sessionContextMock,
     get JwtContext() {
         return JwtContextMock;

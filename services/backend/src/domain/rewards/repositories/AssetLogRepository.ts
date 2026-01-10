@@ -6,8 +6,14 @@ import {
     type AssetLogInsert,
     type AssetLogSelect,
     assetLogsTable,
+    interactionLogsTable,
 } from "../db/schema";
-import type { AssetStatus, AssetType, CreateAssetLogParams } from "../types";
+import type {
+    AssetStatus,
+    AssetType,
+    CreateAssetLogParams,
+    InteractionType,
+} from "../types";
 
 export class AssetLogRepository {
     async create(params: CreateAssetLogParams): Promise<AssetLogSelect> {
@@ -22,7 +28,6 @@ export class AssetLogRepository {
             recipientWallet: params.recipientWallet,
             chainDepth: params.chainDepth,
             touchpointId: params.touchpointId,
-            purchaseId: params.purchaseId,
             interactionLogId: params.interactionLogId,
             status: "pending",
             statusChangedAt: new Date(),
@@ -55,7 +60,6 @@ export class AssetLogRepository {
             recipientWallet: p.recipientWallet,
             chainDepth: p.chainDepth,
             touchpointId: p.touchpointId,
-            purchaseId: p.purchaseId,
             interactionLogId: p.interactionLogId,
             status: "pending" as const,
             statusChangedAt: new Date(),
@@ -132,9 +136,14 @@ export class AssetLogRepository {
         return query;
     }
 
-    async findPendingForSettlement(
-        limit?: number
-    ): Promise<Array<AssetLogSelect & { walletAddress: Address | null }>> {
+    async findPendingForSettlement(limit?: number): Promise<
+        Array<
+            AssetLogSelect & {
+                walletAddress: Address | null;
+                interactionType: InteractionType | null;
+            }
+        >
+    > {
         const query = db
             .select({
                 id: assetLogsTable.id,
@@ -150,17 +159,21 @@ export class AssetLogRepository {
                 status: assetLogsTable.status,
                 statusChangedAt: assetLogsTable.statusChangedAt,
                 touchpointId: assetLogsTable.touchpointId,
-                purchaseId: assetLogsTable.purchaseId,
                 interactionLogId: assetLogsTable.interactionLogId,
                 onchainTxHash: assetLogsTable.onchainTxHash,
                 onchainBlock: assetLogsTable.onchainBlock,
                 createdAt: assetLogsTable.createdAt,
                 walletAddress: identityGroupsTable.walletAddress,
+                interactionType: interactionLogsTable.type,
             })
             .from(assetLogsTable)
             .leftJoin(
                 identityGroupsTable,
                 eq(assetLogsTable.identityGroupId, identityGroupsTable.id)
+            )
+            .leftJoin(
+                interactionLogsTable,
+                eq(assetLogsTable.interactionLogId, interactionLogsTable.id)
             )
             .where(
                 and(
@@ -177,13 +190,22 @@ export class AssetLogRepository {
         return query;
     }
 
-    async findPendingWithWallet(
-        limit?: number
-    ): Promise<Array<AssetLogSelect & { walletAddress: Address }>> {
+    async findPendingWithWallet(limit?: number): Promise<
+        Array<
+            AssetLogSelect & {
+                walletAddress: Address;
+                interactionType: InteractionType | null;
+            }
+        >
+    > {
         const results = await this.findPendingForSettlement(limit);
         return results.filter(
-            (r): r is AssetLogSelect & { walletAddress: Address } =>
-                r.walletAddress !== null
+            (
+                r
+            ): r is AssetLogSelect & {
+                walletAddress: Address;
+                interactionType: InteractionType | null;
+            } => r.walletAddress !== null
         );
     }
 
@@ -345,23 +367,5 @@ export class AssetLogRepository {
             .from(assetLogsTable)
             .where(eq(assetLogsTable.interactionLogId, interactionLogId))
             .orderBy(assetLogsTable.createdAt);
-    }
-
-    async cancelByPurchaseId(purchaseId: string): Promise<number> {
-        const results = await db
-            .update(assetLogsTable)
-            .set({
-                status: "cancelled",
-                statusChangedAt: new Date(),
-            })
-            .where(
-                and(
-                    eq(assetLogsTable.purchaseId, purchaseId),
-                    eq(assetLogsTable.status, "pending")
-                )
-            )
-            .returning({ id: assetLogsTable.id });
-
-        return results.length;
     }
 }

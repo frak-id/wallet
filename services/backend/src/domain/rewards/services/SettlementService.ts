@@ -11,6 +11,7 @@ import type { AssetLogRepository } from "../repositories/AssetLogRepository";
 import {
     buildAttestation,
     encodeUserId,
+    type InteractionType,
     type SettlementResult,
 } from "../types";
 
@@ -18,6 +19,7 @@ const DEFAULT_TOKEN_DECIMALS = 18;
 
 export type AssetLogWithWallet = AssetLogSelect & {
     walletAddress: Address | null;
+    interactionType: InteractionType | null;
 };
 
 type PreparedSettlement = {
@@ -173,13 +175,16 @@ export class SettlementService {
         return null;
     }
 
-    private buildAttestationHex(reward: AssetLogSelect): Hex {
+    private buildAttestationHex(reward: AssetLogWithWallet): Hex {
         const events = [
             { event: "reward_created", timestamp: reward.createdAt },
         ];
 
-        if (reward.purchaseId) {
-            events.unshift({ event: "purchase", timestamp: reward.createdAt });
+        if (reward.interactionType) {
+            events.unshift({
+                event: reward.interactionType,
+                timestamp: reward.createdAt,
+            });
         }
 
         const base64 = buildAttestation(events);

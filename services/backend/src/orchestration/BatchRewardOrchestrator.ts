@@ -153,7 +153,7 @@ export class BatchRewardOrchestrator {
 
             const time = buildTimeContext(interaction.createdAt);
 
-            const { trigger, context, referrerIdentityGroupId, purchaseId } =
+            const { trigger, context, referrerIdentityGroupId } =
                 await this.buildContextForInteraction(
                     interaction,
                     merchantId,
@@ -182,8 +182,7 @@ export class BatchRewardOrchestrator {
                     evaluationResult.rewards,
                     merchantId,
                     interaction.id,
-                    touchpointId,
-                    purchaseId
+                    touchpointId
                 );
 
                 const createdAssets =
@@ -236,7 +235,6 @@ export class BatchRewardOrchestrator {
         trigger: CampaignTrigger;
         context: Omit<RuleContext, "time">;
         referrerIdentityGroupId?: string;
-        purchaseId?: string;
     }> {
         const attribution = await this.attributionService.attributeConversion({
             identityGroupId,
@@ -250,12 +248,8 @@ export class BatchRewardOrchestrator {
                 attribution
             );
 
-        const { trigger, typeContext, purchaseId, walletAddressOverride } =
-            this.buildTypeSpecificContext(
-                interaction,
-                attribution,
-                walletAddress
-            );
+        const { trigger, typeContext, walletAddressOverride } =
+            this.buildTypeSpecificContext(interaction, walletAddress);
 
         return {
             trigger,
@@ -272,18 +266,15 @@ export class BatchRewardOrchestrator {
                 },
             },
             referrerIdentityGroupId,
-            purchaseId,
         };
     }
 
     private buildTypeSpecificContext(
         interaction: InteractionLogSelect,
-        attribution: AttributionResult,
         walletAddress: Address | null
     ): {
         trigger: CampaignTrigger;
         typeContext: { purchase?: PurchaseContext };
-        purchaseId?: string;
         walletAddressOverride?: Address | null;
     } {
         switch (interaction.type) {
@@ -305,7 +296,6 @@ export class BatchRewardOrchestrator {
                             })),
                         },
                     },
-                    purchaseId: payload.purchaseId,
                 };
             }
 
@@ -355,8 +345,7 @@ export class BatchRewardOrchestrator {
         rewards: CalculatedReward[],
         merchantId: string,
         interactionLogId: string,
-        touchpointId: string | undefined,
-        purchaseId: string | undefined
+        touchpointId: string | undefined
     ): CreateAssetLogParams[] {
         return rewards.map((reward) => ({
             identityGroupId: reward.recipientIdentityGroupId,
@@ -368,7 +357,6 @@ export class BatchRewardOrchestrator {
             recipientType: reward.recipient as RecipientType,
             recipientWallet: reward.recipientWallet ?? undefined,
             touchpointId,
-            purchaseId,
             interactionLogId,
             chainDepth: reward.chainDepth,
         }));

@@ -6,7 +6,6 @@ import {
     numeric,
     pgEnum,
     pgTable,
-    text,
     timestamp,
     uuid,
 } from "drizzle-orm/pg-core";
@@ -99,7 +98,6 @@ export const assetLogsTable = pgTable(
         statusChangedAt: timestamp("status_changed_at").defaultNow().notNull(),
 
         touchpointId: uuid("touchpoint_id"),
-        purchaseId: text("purchase_id"),
         interactionLogId: uuid("interaction_log_id").references(
             () => interactionLogsTable.id,
             { onDelete: "set null" }

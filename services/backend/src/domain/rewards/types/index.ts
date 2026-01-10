@@ -155,7 +155,6 @@ export type CreateAssetLogParams = {
     recipientType: RecipientType;
     recipientWallet?: Address;
     touchpointId?: string;
-    purchaseId?: string;
     interactionLogId: string;
     chainDepth?: number;
 };
