@@ -1,4 +1,13 @@
-import { and, desc, eq, isNotNull, isNull, lt, sql } from "drizzle-orm";
+import {
+    and,
+    desc,
+    eq,
+    inArray,
+    isNotNull,
+    isNull,
+    lt,
+    sql,
+} from "drizzle-orm";
 import { db } from "../../../infrastructure/persistence/postgres";
 import {
     type InteractionLogInsert,
@@ -136,17 +145,13 @@ export class InteractionLogRepository {
     async markProcessedBatch(ids: string[]): Promise<number> {
         if (ids.length === 0) return 0;
 
-        const results = await Promise.all(
-            ids.map((id) =>
-                db
-                    .update(interactionLogsTable)
-                    .set({ processedAt: new Date() })
-                    .where(eq(interactionLogsTable.id, id))
-                    .returning({ id: interactionLogsTable.id })
-            )
-        );
+        const results = await db
+            .update(interactionLogsTable)
+            .set({ processedAt: new Date() })
+            .where(inArray(interactionLogsTable.id, ids))
+            .returning({ id: interactionLogsTable.id });
 
-        return results.flat().length;
+        return results.length;
     }
 
     async countByType(

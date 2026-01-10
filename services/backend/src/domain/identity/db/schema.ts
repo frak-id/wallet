@@ -8,24 +8,23 @@ import {
     unique,
     uuid,
 } from "drizzle-orm/pg-core";
-import type { Address } from "viem";
-import { customHex } from "../../../utils/drizzle/customTypes";
 
 export type PendingPurchaseValidation = {
     orderId: string;
     purchaseToken: string;
 };
 
-export const identityGroupsTable = pgTable(
-    "identity_groups",
-    {
-        id: uuid("id").primaryKey().defaultRandom(),
-        walletAddress: customHex("wallet_address").$type<Address>().unique(),
-        createdAt: timestamp("created_at").defaultNow(),
-        updatedAt: timestamp("updated_at").defaultNow(),
-    },
-    (table) => [index("identity_groups_wallet_idx").on(table.walletAddress)]
-);
+export type MergedGroup = {
+    groupId: string;
+    mergedAt: string;
+};
+
+export const identityGroupsTable = pgTable("identity_groups", {
+    id: uuid("id").primaryKey().defaultRandom(),
+    mergedGroups: jsonb("merged_groups").$type<MergedGroup[]>(),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+});
 
 export const identityTypeEnum = pgEnum("identity_type", [
     "anonymous_fingerprint",

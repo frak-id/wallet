@@ -2,10 +2,10 @@ import { eventEmitter, log } from "@backend-infrastructure";
 import type { Address } from "viem";
 import type { PendingPurchaseValidation } from "../domain/identity";
 import type { IdentityRepository } from "../domain/identity/repositories/IdentityRepository";
-import type { IdentityResolutionService } from "../domain/identity/services/IdentityResolutionService";
 import type { Purchase, PurchaseRepository } from "../domain/purchases";
 import type { InteractionLogRepository } from "../domain/rewards/repositories/InteractionLogRepository";
 import type { PurchasePayload } from "../domain/rewards/types";
+import type { IdentityNode, IdentityOrchestrator } from "./identity";
 
 type PurchaseLinkParams = {
     customerId: string;
@@ -25,9 +25,9 @@ type PurchaseLinkResult = {
 export class PurchaseLinkingOrchestrator {
     constructor(
         private readonly purchaseRepository: PurchaseRepository,
-        private readonly identityService: IdentityResolutionService,
         private readonly identityRepository: IdentityRepository,
-        private readonly interactionLogRepository: InteractionLogRepository
+        private readonly interactionLogRepository: InteractionLogRepository,
+        private readonly identityOrchestrator: IdentityOrchestrator
     ) {}
 
     async linkPurchaseFromSdk(
@@ -36,9 +36,10 @@ export class PurchaseLinkingOrchestrator {
             merchantId: string;
         }
     ): Promise<PurchaseLinkResult> {
-        const { identityGroupId } =
-            await this.identityService.resolveAnonymousId({
-                anonId: params.clientId,
+        const { groupId: identityGroupId } =
+            await this.identityOrchestrator.resolve({
+                type: "anonymous_fingerprint",
+                value: params.clientId,
                 merchantId: params.merchantId,
             });
 
@@ -87,11 +88,20 @@ export class PurchaseLinkingOrchestrator {
             clientId?: string;
         }
     ): Promise<PurchaseLinkResult> {
-        const { identityGroupId } = await this.identityService.connectWallet({
-            wallet: params.wallet,
-            clientId: params.clientId,
-            merchantId: params.merchantId,
-        });
+        const nodes: IdentityNode[] = [
+            { type: "wallet", value: params.wallet },
+        ];
+
+        if (params.clientId && params.merchantId) {
+            nodes.push({
+                type: "anonymous_fingerprint",
+                value: params.clientId,
+                merchantId: params.merchantId,
+            });
+        }
+
+        const { finalGroupId: identityGroupId } =
+            await this.identityOrchestrator.resolveAndAssociate(nodes);
 
         const purchase = await this.purchaseRepository.findByOrderAndToken(
             params.orderId,
@@ -213,13 +223,22 @@ export class PurchaseLinkingOrchestrator {
 
         if (purchase.identityGroupId) {
             if (purchase.identityGroupId !== identityGroupId) {
-                await this.identityService.linkMerchantCustomer({
-                    identityGroupId,
-                    merchantId:
-                        params.merchantId ??
-                        (await this.getMerchantIdFromPurchase(purchase)),
-                    customerId,
-                });
+                const merchantId =
+                    params.merchantId ??
+                    (await this.getMerchantIdFromPurchase(purchase));
+
+                await this.identityOrchestrator.resolveAndAssociate([
+                    {
+                        type: "merchant_customer",
+                        value: customerId,
+                        merchantId,
+                    },
+                ]);
+
+                await this.identityOrchestrator.associate(
+                    purchase.identityGroupId,
+                    identityGroupId
+                );
 
                 log.info(
                     {
@@ -259,11 +278,18 @@ export class PurchaseLinkingOrchestrator {
 
         const merchantId = params.merchantId ?? webhook.merchantId;
 
-        await this.identityService.linkMerchantCustomer({
-            identityGroupId,
+        const customerResult = await this.identityOrchestrator.resolve({
+            type: "merchant_customer",
+            value: customerId,
             merchantId,
-            customerId,
         });
+
+        if (customerResult.groupId !== identityGroupId) {
+            await this.identityOrchestrator.associate(
+                identityGroupId,
+                customerResult.groupId
+            );
+        }
 
         log.info(
             {

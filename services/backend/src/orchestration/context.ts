@@ -4,7 +4,9 @@ import { IdentityContext } from "../domain/identity/context";
 import { MerchantContext } from "../domain/merchant/context";
 import { PurchasesContext } from "../domain/purchases/context";
 import { RewardsContext } from "../domain/rewards/context";
+import { rewardsHubRepository } from "../infrastructure/blockchain/contracts/RewardsHubRepository";
 import { BatchRewardOrchestrator } from "./BatchRewardOrchestrator";
+import { IdentityOrchestrator } from "./identity";
 import { PurchaseLinkingOrchestrator } from "./PurchaseLinkingOrchestrator";
 import { PurchaseWebhookOrchestrator } from "./PurchaseWebhookOrchestrator";
 import { SettlementOrchestrator } from "./SettlementOrchestrator";
@@ -15,20 +17,25 @@ const webhookResolverOrchestrator = new WebhookResolverOrchestrator(
     MerchantContext.repositories.merchant
 );
 
+const identityOrchestrator = new IdentityOrchestrator(
+    IdentityContext.repositories.identity,
+    rewardsHubRepository
+);
+
 const batchRewardOrchestrator = new BatchRewardOrchestrator(
     RewardsContext.repositories.interactionLog,
     RewardsContext.repositories.assetLog,
-    IdentityContext.repositories.identity,
     CampaignContext.services.ruleEngine,
     AttributionContext.services.attribution,
-    AttributionContext.services.referral
+    AttributionContext.services.referral,
+    identityOrchestrator
 );
 
 const purchaseLinkingOrchestrator = new PurchaseLinkingOrchestrator(
     PurchasesContext.repositories.purchase,
-    IdentityContext.services.identityResolution,
     IdentityContext.repositories.identity,
-    RewardsContext.repositories.interactionLog
+    RewardsContext.repositories.interactionLog,
+    identityOrchestrator
 );
 
 const purchaseWebhookOrchestrator = new PurchaseWebhookOrchestrator(
@@ -46,6 +53,7 @@ const settlementOrchestrator = new SettlementOrchestrator(
 export namespace OrchestrationContext {
     export const orchestrators = {
         batchReward: batchRewardOrchestrator,
+        identity: identityOrchestrator,
         purchaseLinking: purchaseLinkingOrchestrator,
         purchaseWebhook: purchaseWebhookOrchestrator,
         settlement: settlementOrchestrator,

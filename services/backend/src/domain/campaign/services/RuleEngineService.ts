@@ -17,7 +17,6 @@ type EvaluateRulesParams = {
     merchantId: string;
     trigger: CampaignTrigger;
     context: Omit<RuleContext, "time">;
-    referrerIdentityGroupId?: string;
     time?: TimeContext;
 };
 
@@ -71,7 +70,6 @@ export class RuleEngineService {
                 campaign,
                 fullContext,
                 params.merchantId,
-                params.referrerIdentityGroupId,
                 fetchReferralChain
             );
 
@@ -104,7 +102,6 @@ export class RuleEngineService {
         campaign: CampaignRuleSelect,
         context: RuleContext,
         merchantId: string,
-        referrerIdentityGroupId?: string,
         fetchReferralChain?: ReferralChainFetcher
     ): Promise<{
         matched: boolean;
@@ -148,7 +145,6 @@ export class RuleEngineService {
             campaign.rule.rewards,
             context,
             campaign.id,
-            referrerIdentityGroupId,
             referralChain
         );
 
