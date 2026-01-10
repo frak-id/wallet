@@ -5,13 +5,17 @@ import {
     touchpointSourceEnum,
     touchpointsTable,
 } from "../../domain/attribution";
-import { campaignRulesTable } from "../../domain/campaign";
+import { campaignRulesTable, campaignStatusEnum } from "../../domain/campaign";
 import {
     identityGroupsTable,
     identityNodesTable,
     identityTypeEnum,
 } from "../../domain/identity";
-import { merchantsTable } from "../../domain/merchant";
+import {
+    merchantAdminsTable,
+    merchantOwnershipTransfersTable,
+    merchantsTable,
+} from "../../domain/merchant";
 import { pushTokensTable } from "../../domain/notifications";
 import {
     pairingSignatureRequestTable,
@@ -45,6 +49,7 @@ export const db = drizzle({
     client: postgresDb,
     schema: {
         campaignRulesTable,
+        campaignStatusEnum,
         referralLinksTable,
         touchpointsTable,
         touchpointSourceEnum,
@@ -52,6 +57,8 @@ export const db = drizzle({
         identityNodesTable,
         identityTypeEnum,
         merchantsTable,
+        merchantAdminsTable,
+        merchantOwnershipTransfersTable,
         pushTokensTable,
         merchantWebhooksTable,
         purchaseStatusEnum,

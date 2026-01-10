@@ -1,11 +1,5 @@
-// Logging
-
 // Blockchain
 export { viemClient } from "./blockchain/client";
-export {
-    InteractionDiamondRepository,
-    interactionDiamondRepository,
-} from "./blockchain/contracts/InteractionDiamondRepository";
 export {
     OnChainRolesRepository,
     onChainRolesRepository,

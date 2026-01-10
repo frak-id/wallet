@@ -1,4 +1,5 @@
 import { and, eq } from "drizzle-orm";
+import { LRUCache } from "lru-cache";
 import { db } from "../../../infrastructure/persistence/postgres";
 import {
     type ReferralLinkInsert,
@@ -12,6 +13,18 @@ type ReferralChainItem = {
 };
 
 export class ReferralLinkRepository {
+    private readonly chainCache = new LRUCache<string, ReferralChainItem[]>({
+        max: 1024,
+        ttl: 10 * 60 * 1000,
+    });
+
+    private readonly refereeCache = new LRUCache<
+        string,
+        { value: ReferralLinkSelect | null }
+    >({
+        max: 2048,
+        ttl: 5 * 60 * 1000,
+    });
     async create(
         link: Omit<ReferralLinkInsert, "id" | "createdAt">
     ): Promise<ReferralLinkSelect | null> {
@@ -34,6 +47,12 @@ export class ReferralLinkRepository {
         merchantId: string,
         refereeIdentityGroupId: string
     ): Promise<ReferralLinkSelect | null> {
+        const cacheKey = `${merchantId}:${refereeIdentityGroupId}`;
+        const cached = this.refereeCache.get(cacheKey);
+        if (cached) {
+            return cached.value;
+        }
+
         const [result] = await db
             .select()
             .from(referralLinksTable)
@@ -47,7 +66,10 @@ export class ReferralLinkRepository {
                 )
             )
             .limit(1);
-        return result ?? null;
+
+        const value = result ?? null;
+        this.refereeCache.set(cacheKey, { value });
+        return value;
     }
 
     async findChain(
@@ -55,6 +77,12 @@ export class ReferralLinkRepository {
         startIdentityGroupId: string,
         maxDepth: number
     ): Promise<ReferralChainItem[]> {
+        const cacheKey = `${merchantId}:${startIdentityGroupId}:${maxDepth}`;
+        const cached = this.chainCache.get(cacheKey);
+        if (cached) {
+            return cached;
+        }
+
         const chain: ReferralChainItem[] = [];
         let currentId = startIdentityGroupId;
         let depth = 0;
@@ -71,6 +99,7 @@ export class ReferralLinkRepository {
             currentId = link.referrerIdentityGroupId;
         }
 
+        this.chainCache.set(cacheKey, chain);
         return chain;
     }
 

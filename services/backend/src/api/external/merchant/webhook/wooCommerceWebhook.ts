@@ -22,7 +22,7 @@ export const wooCommerceWebhook = new Elysia()
             })
         ),
         params: t.Object({
-            identifier: t.Optional(t.String()),
+            merchantId: t.Optional(t.String()),
         }),
     })
     .onBeforeHandle(({ headers }) => {
@@ -35,29 +35,27 @@ export const wooCommerceWebhook = new Elysia()
     })
     .post(
         "/woocommerce",
-        async ({ params: { identifier }, body, headers }) => {
+        async ({ params: { merchantId }, body, headers }) => {
             const webhookData = JSON.parse(
                 body
             ) as WooCommerceOrderUpdateWebhookDto;
 
-            if (!identifier) {
+            if (!merchantId) {
                 throw new Error("Missing merchant identifier");
             }
 
             const resolved =
                 await OrchestrationContext.orchestrators.webhookResolver.resolveWebhook(
-                    identifier
+                    merchantId
                 );
             if (!resolved) {
-                log.warn({ identifier }, "Webhook not found");
+                log.warn({ merchantId }, "Webhook not found");
                 throw new Error("Webhook not found");
             }
 
-            const { webhook, merchantId } = resolved;
-
             validateBodyHmac({
                 body,
-                secret: webhook.hookSignatureKey,
+                secret: resolved.webhook.hookSignatureKey,
                 signature: headers["x-wc-webhook-signature"],
             });
 
@@ -66,7 +64,7 @@ export const wooCommerceWebhook = new Elysia()
             await OrchestrationContext.orchestrators.purchaseWebhook.upsertPurchase(
                 {
                     purchase: {
-                        webhookId: webhook.id,
+                        webhookId: resolved.webhook.id,
                         externalId: webhookData.id.toString(),
                         externalCustomerId: webhookData.customer_id.toString(),
                         purchaseToken:
@@ -85,7 +83,7 @@ export const wooCommerceWebhook = new Elysia()
                             ? item.image.src
                             : null,
                     })),
-                    merchantId,
+                    merchantId: resolved.merchantId,
                 }
             );
 
@@ -95,7 +93,7 @@ export const wooCommerceWebhook = new Elysia()
             parse: "text",
             body: t.String(),
             params: t.Object({
-                identifier: t.Optional(t.String()),
+                merchantId: t.Optional(t.String()),
             }),
         }
     );
