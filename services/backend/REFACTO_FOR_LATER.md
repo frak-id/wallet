@@ -4,7 +4,13 @@ This document tracks architectural improvements and optimizations to be implemen
 
 ---
 
-## 1. Delayed Purchase Processing Cron (Priority: High)
+## 1. Delayed Purchase Processing Cron (Priority: High) ✅ IMPLEMENTED
+
+> **Status**: Implemented via event-driven batch processing architecture.
+> See `BatchRewardOrchestrator` and `rewardCalculation.ts` job.
+> - Webhooks now create `interaction_log` entries and emit `newInteraction` event
+> - Batch job processes after 60s delay (configurable via `MIN_AGE_SECONDS`)
+> - 15s cooldown between batches for efficient batch processing
 
 ### Problem
 

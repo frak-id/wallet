@@ -6,6 +6,9 @@ export const settlementJobs = new Elysia({ name: "Job.settlement" }).use(
     mutexCron({
         name: "settleRewards",
         pattern: "0 * * * *",
+        triggerKeys: ["newPendingRewards"],
+        coolDownInMs: 60_000,
+        skipIfLocked: true,
         run: async ({ context: { logger } }) => {
             logger.debug("Starting reward settlement batch");
 

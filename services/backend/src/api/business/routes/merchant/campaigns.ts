@@ -61,7 +61,6 @@ const RewardDefinitionSchema = t.Object({
 const RuleDefinitionSchema = t.Object({
     trigger: t.Union([
         t.Literal("purchase"),
-        t.Literal("referral_purchase"),
         t.Literal("signup"),
         t.Literal("wallet_connect"),
         t.Literal("custom"),
