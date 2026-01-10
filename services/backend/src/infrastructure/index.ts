@@ -1,9 +1,5 @@
 // Blockchain
 export { viemClient } from "./blockchain/client";
-export {
-    OnChainRolesRepository,
-    onChainRolesRepository,
-} from "./blockchain/contracts/OnChainRolesRepository";
 // External services
 export { indexerApi } from "./external/indexer";
 export { JwtContext } from "./external/jwt";
