@@ -20,15 +20,6 @@ export class IdentityRepository {
         return result ?? null;
     }
 
-    async findGroupByWallet(
-        wallet: Address
-    ): Promise<IdentityGroupSelect | null> {
-        const result = await db.query.identityGroupsTable.findFirst({
-            where: eq(identityGroupsTable.walletAddress, wallet),
-        });
-        return result ?? null;
-    }
-
     async findGroupByIdentity(params: {
         type: IdentityType;
         value: string;
@@ -48,27 +39,30 @@ export class IdentityRepository {
         return this.findGroupById(node.groupId);
     }
 
-    async createGroup(wallet?: Address): Promise<IdentityGroupSelect> {
+    async getWalletForGroup(groupId: string): Promise<Address | null> {
+        const walletNode = await db.query.identityNodesTable.findFirst({
+            where: and(
+                eq(identityNodesTable.groupId, groupId),
+                eq(identityNodesTable.identityType, "wallet")
+            ),
+        });
+        return (walletNode?.identityValue as Address) ?? null;
+    }
+
+    async hasWallet(groupId: string): Promise<boolean> {
+        const wallet = await this.getWalletForGroup(groupId);
+        return wallet !== null;
+    }
+
+    async createGroup(): Promise<IdentityGroupSelect> {
         const [result] = await db
             .insert(identityGroupsTable)
-            .values({ walletAddress: wallet })
+            .values({})
             .returning();
         if (!result) {
             throw new Error("Failed to create identity group");
         }
         return result;
-    }
-
-    async updateGroupWallet(
-        groupId: string,
-        wallet: Address
-    ): Promise<IdentityGroupSelect | null> {
-        const [result] = await db
-            .update(identityGroupsTable)
-            .set({ walletAddress: wallet, updatedAt: new Date() })
-            .where(eq(identityGroupsTable.id, groupId))
-            .returning();
-        return result ?? null;
     }
 
     async addNode(params: {

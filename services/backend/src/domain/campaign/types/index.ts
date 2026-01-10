@@ -290,6 +290,7 @@ export type AttributionContext = {
     source: "referral_link" | "organic" | "paid_ad" | "direct" | null;
     touchpointId: string | null;
     referrerWallet: Address | null;
+    referrerIdentityGroupId: string | null;
     /**
      * UTM parameters if available.
      */

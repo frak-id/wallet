@@ -1,10 +1,7 @@
 import { log } from "@backend-infrastructure";
 import type { Address } from "viem";
 import type { ReferralService } from "../domain/attribution";
-import type {
-    AttributionResult,
-    AttributionService,
-} from "../domain/attribution/services/AttributionService";
+import type { AttributionService } from "../domain/attribution/services/AttributionService";
 import {
     buildTimeContext,
     type CalculatedReward,
@@ -13,7 +10,6 @@ import {
     type RuleContext,
 } from "../domain/campaign";
 import type { RuleEngineService } from "../domain/campaign/services/RuleEngineService";
-import type { IdentityRepository } from "../domain/identity/repositories/IdentityRepository";
 import type { InteractionLogSelect } from "../domain/rewards/db/schema";
 import type { AssetLogRepository } from "../domain/rewards/repositories/AssetLogRepository";
 import type { InteractionLogRepository } from "../domain/rewards/repositories/InteractionLogRepository";
@@ -23,6 +19,7 @@ import type {
     RecipientType,
     WalletConnectPayload,
 } from "../domain/rewards/types";
+import type { IdentityOrchestrator } from "./identity";
 
 type BatchProcessResult = {
     processedCount: number;
@@ -43,10 +40,10 @@ export class BatchRewardOrchestrator {
     constructor(
         private readonly interactionLogRepository: InteractionLogRepository,
         private readonly assetLogRepository: AssetLogRepository,
-        private readonly identityRepository: IdentityRepository,
         private readonly ruleEngineService: RuleEngineService,
         private readonly attributionService: AttributionService,
-        private readonly referralService: ReferralService
+        private readonly referralService: ReferralService,
+        private readonly identityOrchestrator: IdentityOrchestrator
     ) {}
 
     async processPendingInteractions(options: {
@@ -74,6 +71,7 @@ export class BatchRewardOrchestrator {
             errors: [],
         };
 
+        const processedIds: string[] = [];
         const interactionsByMerchant = this.groupByMerchant(interactions);
 
         for (const [
@@ -87,6 +85,7 @@ export class BatchRewardOrchestrator {
                 );
 
                 if (processResult.success) {
+                    processedIds.push(interaction.id);
                     result.processedCount++;
                     result.rewardsCreated += processResult.rewardsCreated;
                 } else if (processResult.error) {
@@ -96,6 +95,12 @@ export class BatchRewardOrchestrator {
                     });
                 }
             }
+        }
+
+        if (processedIds.length > 0) {
+            await this.interactionLogRepository.markProcessedBatch(
+                processedIds
+            );
         }
 
         log.info(
@@ -139,34 +144,25 @@ export class BatchRewardOrchestrator {
                 };
             }
 
-            const identityGroup = await this.identityRepository.findGroupById(
-                interaction.identityGroupId
-            );
-
-            if (!identityGroup) {
-                return {
-                    success: false,
-                    rewardsCreated: 0,
-                    error: "Identity group not found",
-                };
-            }
+            const walletAddress =
+                await this.identityOrchestrator.getWalletForGroup(
+                    interaction.identityGroupId
+                );
 
             const time = buildTimeContext(interaction.createdAt);
 
-            const { trigger, context, referrerIdentityGroupId } =
-                await this.buildContextForInteraction(
-                    interaction,
-                    merchantId,
-                    interaction.identityGroupId,
-                    identityGroup.walletAddress
-                );
+            const { trigger, context } = await this.buildContextForInteraction(
+                interaction,
+                merchantId,
+                interaction.identityGroupId,
+                walletAddress
+            );
 
             const evaluationResult = await this.ruleEngineService.evaluateRules(
                 {
                     merchantId,
                     trigger,
                     context,
-                    referrerIdentityGroupId,
                     time,
                 },
                 this.referralService.getReferralChain
@@ -189,8 +185,6 @@ export class BatchRewardOrchestrator {
                     await this.assetLogRepository.createBatch(assetParams);
                 rewardsCreated = createdAssets.length;
             }
-
-            await this.interactionLogRepository.markProcessed(interaction.id);
 
             log.debug(
                 {
@@ -234,19 +228,17 @@ export class BatchRewardOrchestrator {
     ): Promise<{
         trigger: CampaignTrigger;
         context: Omit<RuleContext, "time">;
-        referrerIdentityGroupId?: string;
     }> {
         const attribution = await this.attributionService.attributeConversion({
             identityGroupId,
             merchantId,
         });
 
-        const referrerIdentityGroupId =
-            await this.resolveReferrerIdentityGroupId(
-                merchantId,
-                identityGroupId,
-                attribution
-            );
+        const referrerIdentityGroupId = attribution.referrerWallet
+            ? await this.identityOrchestrator.findGroupIdByWallet(
+                  attribution.referrerWallet
+              )
+            : null;
 
         const { trigger, typeContext, walletAddressOverride } =
             this.buildTypeSpecificContext(interaction, walletAddress);
@@ -259,13 +251,13 @@ export class BatchRewardOrchestrator {
                     source: attribution.source,
                     touchpointId: attribution.touchpointId,
                     referrerWallet: attribution.referrerWallet,
+                    referrerIdentityGroupId,
                 },
                 user: {
                     identityGroupId,
                     walletAddress: walletAddressOverride ?? walletAddress,
                 },
             },
-            referrerIdentityGroupId,
         };
     }
 
@@ -314,31 +306,6 @@ export class BatchRewardOrchestrator {
                     typeContext: {},
                 };
         }
-    }
-
-    private async resolveReferrerIdentityGroupId(
-        merchantId: string,
-        refereeIdentityGroupId: string,
-        attribution: AttributionResult
-    ): Promise<string | undefined> {
-        if (!attribution.attributed || !attribution.referrerWallet) {
-            return undefined;
-        }
-
-        const referrerGroup = await this.identityRepository.findGroupByWallet(
-            attribution.referrerWallet
-        );
-
-        if (referrerGroup) {
-            return referrerGroup.id;
-        }
-
-        const referrerId = await this.referralService.getDirectReferrer({
-            merchantId,
-            identityGroupId: refereeIdentityGroupId,
-        });
-
-        return referrerId ?? undefined;
     }
 
     private buildAssetLogParams(

@@ -1,7 +1,7 @@
 import { and, desc, eq, inArray, isNull, sql, sum } from "drizzle-orm";
 import type { Address, Hex } from "viem";
 import { db } from "../../../infrastructure/persistence/postgres";
-import { identityGroupsTable } from "../../identity/db/schema";
+import { identityNodesTable } from "../../identity/db/schema";
 import {
     type AssetLogInsert,
     type AssetLogSelect,
@@ -163,13 +163,22 @@ export class AssetLogRepository {
                 onchainTxHash: assetLogsTable.onchainTxHash,
                 onchainBlock: assetLogsTable.onchainBlock,
                 createdAt: assetLogsTable.createdAt,
-                walletAddress: identityGroupsTable.walletAddress,
+                walletAddress:
+                    sql<Address | null>`${identityNodesTable.identityValue}`.as(
+                        "walletAddress"
+                    ),
                 interactionType: interactionLogsTable.type,
             })
             .from(assetLogsTable)
             .leftJoin(
-                identityGroupsTable,
-                eq(assetLogsTable.identityGroupId, identityGroupsTable.id)
+                identityNodesTable,
+                and(
+                    eq(
+                        assetLogsTable.identityGroupId,
+                        identityNodesTable.groupId
+                    ),
+                    eq(identityNodesTable.identityType, "wallet")
+                )
             )
             .leftJoin(
                 interactionLogsTable,
@@ -216,14 +225,20 @@ export class AssetLogRepository {
             })
             .from(assetLogsTable)
             .leftJoin(
-                identityGroupsTable,
-                eq(assetLogsTable.identityGroupId, identityGroupsTable.id)
+                identityNodesTable,
+                and(
+                    eq(
+                        assetLogsTable.identityGroupId,
+                        identityNodesTable.groupId
+                    ),
+                    eq(identityNodesTable.identityType, "wallet")
+                )
             )
             .where(
                 and(
                     eq(assetLogsTable.status, "pending"),
                     eq(assetLogsTable.assetType, "token"),
-                    isNull(identityGroupsTable.walletAddress)
+                    isNull(identityNodesTable.id)
                 )
             )
             .orderBy(assetLogsTable.createdAt);

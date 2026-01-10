@@ -13,17 +13,12 @@ type ReferralChainItem = {
 };
 
 export class ReferralLinkRepository {
-    private readonly chainCache = new LRUCache<string, ReferralChainItem[]>({
-        max: 1024,
-        ttl: 10 * 60 * 1000,
-    });
-
-    private readonly refereeCache = new LRUCache<
+    private readonly referrerCache = new LRUCache<
         string,
-        { value: ReferralLinkSelect | null }
+        { referrerId: string | null }
     >({
-        max: 2048,
-        ttl: 5 * 60 * 1000,
+        max: 4096,
+        ttl: 10 * 60 * 1000,
     });
     async create(
         link: Omit<ReferralLinkInsert, "id" | "createdAt">
@@ -47,12 +42,6 @@ export class ReferralLinkRepository {
         merchantId: string,
         refereeIdentityGroupId: string
     ): Promise<ReferralLinkSelect | null> {
-        const cacheKey = `${merchantId}:${refereeIdentityGroupId}`;
-        const cached = this.refereeCache.get(cacheKey);
-        if (cached) {
-            return cached.value;
-        }
-
         const [result] = await db
             .select()
             .from(referralLinksTable)
@@ -67,9 +56,7 @@ export class ReferralLinkRepository {
             )
             .limit(1);
 
-        const value = result ?? null;
-        this.refereeCache.set(cacheKey, { value });
-        return value;
+        return result ?? null;
     }
 
     async findChain(
@@ -77,29 +64,30 @@ export class ReferralLinkRepository {
         startIdentityGroupId: string,
         maxDepth: number
     ): Promise<ReferralChainItem[]> {
-        const cacheKey = `${merchantId}:${startIdentityGroupId}:${maxDepth}`;
-        const cached = this.chainCache.get(cacheKey);
-        if (cached) {
-            return cached;
-        }
-
         const chain: ReferralChainItem[] = [];
         let currentId = startIdentityGroupId;
         let depth = 0;
 
         while (depth < maxDepth) {
-            const link = await this.findByReferee(merchantId, currentId);
-            if (!link) break;
+            const cacheKey = `${merchantId}:${currentId}`;
+            const cached = this.referrerCache.get(cacheKey);
+
+            let referrerId: string | null;
+            if (cached !== undefined) {
+                referrerId = cached.referrerId;
+            } else {
+                const link = await this.findByReferee(merchantId, currentId);
+                referrerId = link?.referrerIdentityGroupId ?? null;
+                this.referrerCache.set(cacheKey, { referrerId });
+            }
+
+            if (!referrerId) break;
 
             depth++;
-            chain.push({
-                identityGroupId: link.referrerIdentityGroupId,
-                depth,
-            });
-            currentId = link.referrerIdentityGroupId;
+            chain.push({ identityGroupId: referrerId, depth });
+            currentId = referrerId;
         }
 
-        this.chainCache.set(cacheKey, chain);
         return chain;
     }
 

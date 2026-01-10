@@ -13,7 +13,8 @@ import {
     type StaticWalletSdkTokenDto,
     WalletAuthResponseDto,
 } from "../../../../../domain/auth";
-import { IdentityContext } from "../../../../../domain/identity";
+import { OrchestrationContext } from "../../../../../orchestration/context";
+import type { IdentityNode } from "../../../../../orchestration/identity/types";
 
 const identityHeadersSchema = t.Object({
     "x-frak-client-id": t.Optional(t.String()),
@@ -108,18 +109,28 @@ export const registerRoutes = new Elysia()
 
             const clientId = headers["x-frak-client-id"];
             if (clientId || merchantId) {
-                await IdentityContext.services.identityResolution
-                    .connectWallet({
-                        wallet: walletAddress,
-                        clientId,
-                        merchantId,
-                    })
-                    .catch((err: unknown) => {
-                        log.error(
-                            { err, walletAddress, clientId, merchantId },
-                            "Failed to connect wallet to identity"
-                        );
-                    });
+                try {
+                    const nodes: IdentityNode[] = [
+                        { type: "wallet", value: walletAddress },
+                    ];
+
+                    if (clientId && merchantId) {
+                        nodes.push({
+                            type: "anonymous_fingerprint",
+                            value: clientId,
+                            merchantId,
+                        });
+                    }
+
+                    await OrchestrationContext.orchestrators.identity.resolveAndAssociate(
+                        nodes
+                    );
+                } catch (err: unknown) {
+                    log.error(
+                        { err, walletAddress, clientId, merchantId },
+                        "Failed to connect wallet to identity"
+                    );
+                }
             }
 
             return {

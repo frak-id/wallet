@@ -255,7 +255,6 @@ export class RewardCalculator {
         rewards: RewardDefinition[],
         context: RuleContext,
         campaignRuleId: string,
-        referrerIdentityGroupId?: string,
         referralChain?: ReferralChainMember[]
     ): {
         calculated: CalculatedReward[];
@@ -297,8 +296,7 @@ export class RewardCalculator {
 
             const recipientData = this.resolveRecipient(
                 reward.recipient,
-                context,
-                referrerIdentityGroupId
+                context
             );
 
             if (!recipientData) {
@@ -323,14 +321,14 @@ export class RewardCalculator {
 
     private resolveRecipient(
         recipient: "referrer" | "referee" | "user",
-        context: RuleContext,
-        referrerIdentityGroupId?: string
+        context: RuleContext
     ): { identityGroupId: string; wallet: Address | null } | null {
         switch (recipient) {
             case "referrer": {
-                if (!referrerIdentityGroupId) return null;
+                const groupId = context.attribution?.referrerIdentityGroupId;
+                if (!groupId) return null;
                 return {
-                    identityGroupId: referrerIdentityGroupId,
+                    identityGroupId: groupId,
                     wallet: context.attribution?.referrerWallet ?? null,
                 };
             }
