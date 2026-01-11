@@ -1,3 +1,4 @@
+import { log } from "@backend-infrastructure";
 import { addresses } from "@frak-labs/app-essentials";
 import {
     currentStablecoins,
@@ -84,17 +85,6 @@ export class PricingRepository {
             finalToken = usdcArbitrumAddress;
         }
 
-        // For stablecoins, return fixed rates
-        if (isAddressEqual(token, currentStablecoins.usde)) {
-            return { usd: 1, eur: 0.85, gbp: 0.75 }; // Approximate rates
-        }
-        if (isAddressEqual(token, currentStablecoins.eure)) {
-            return { usd: 1.18, eur: 1, gbp: 0.88 }; // Approximate rates
-        }
-        if (isAddressEqual(token, currentStablecoins.gbpe)) {
-            return { usd: 1.33, eur: 1.14, gbp: 1 }; // Approximate rates
-        }
-
         // Check if we have the token in cache
         const cached = this.cache.get(finalToken);
         if (cached === "unknown") {
@@ -104,29 +94,44 @@ export class PricingRepository {
             return cached;
         }
 
-        // Perform the query
-        const response = await this.client.get<{
-            [key: string]:
-                | {
-                      usd: number;
-                      eur: number;
-                      gbp: number;
-                  }
-                | undefined;
-        }>("simple/token_price/arbitrum-one", {
-            searchParams: {
-                contract_addresses: finalToken,
-                vs_currencies: "usd,eur,gbp",
-            },
-        });
+        try {
+            // Perform the query
+            const response = await this.client.get<{
+                [key: string]:
+                    | {
+                          usd: number;
+                          eur: number;
+                          gbp: number;
+                      }
+                    | undefined;
+            }>("simple/token_price/arbitrum-one", {
+                searchParams: {
+                    contract_addresses: finalToken,
+                    vs_currencies: "usd,eur,gbp",
+                },
+            });
 
-        // Extract the token price
-        const prices = await response.json();
-        const tokenPrice = Object.values(prices)[0];
+            // Extract the token price
+            const prices = await response.json();
+            const tokenPrice = Object.values(prices)[0];
 
-        // Cache the result
-        this.cache.set(finalToken, tokenPrice ?? "unknown");
-        return tokenPrice ?? undefined;
+            // Cache the result
+            this.cache.set(finalToken, tokenPrice ?? "unknown");
+            return tokenPrice ?? undefined;
+        } catch (error) {
+            log.warn({ error }, "[PricingRepository] Unable to get toke price");
+
+            // Fallback to fixed rate for stablecoin
+            if (isAddressEqual(token, currentStablecoins.usde)) {
+                return { usd: 1, eur: 0.85, gbp: 0.75 }; // Approximate rates
+            }
+            if (isAddressEqual(token, currentStablecoins.eure)) {
+                return { usd: 1.18, eur: 1, gbp: 0.88 }; // Approximate rates
+            }
+            if (isAddressEqual(token, currentStablecoins.gbpe)) {
+                return { usd: 1.33, eur: 1.14, gbp: 1 }; // Approximate rates
+            }
+        }
     }
 }
 

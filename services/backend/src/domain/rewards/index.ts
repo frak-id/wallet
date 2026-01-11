@@ -36,4 +36,4 @@ export type {
     WalletConnectPayload,
 } from "./types";
 
-export { buildAttestation, decodeUserId, encodeUserId } from "./types";
+export { buildAttestation, encodeUserId } from "./types";

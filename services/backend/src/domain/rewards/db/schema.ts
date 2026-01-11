@@ -6,6 +6,7 @@ import {
     numeric,
     pgEnum,
     pgTable,
+    text,
     timestamp,
     uuid,
 } from "drizzle-orm/pg-core";
@@ -53,6 +54,7 @@ export type InteractionLogSelect = typeof interactionLogsTable.$inferSelect;
 
 export const assetStatusEnum = pgEnum("asset_status", [
     "pending",
+    "processing",
     "ready_to_claim",
     "claimed",
     "consumed",
@@ -106,6 +108,9 @@ export const assetLogsTable = pgTable(
         onchainTxHash: customHex("onchain_tx_hash").$type<Hex>(),
         onchainBlock: bigint("onchain_block", { mode: "bigint" }),
 
+        settlementAttempts: integer("settlement_attempts").notNull().default(0),
+        lastSettlementError: text("last_settlement_error"),
+
         createdAt: timestamp("created_at").defaultNow().notNull(),
     },
     (table) => [
@@ -120,6 +125,10 @@ export const assetLogsTable = pgTable(
         index("asset_logs_recipient_wallet_idx").on(table.recipientWallet),
         index("asset_logs_interaction_log_idx").on(table.interactionLogId),
         index("asset_logs_created_at_idx").on(table.createdAt),
+        index("asset_logs_settlement_retry_idx").on(
+            table.status,
+            table.settlementAttempts
+        ),
     ]
 );
 
