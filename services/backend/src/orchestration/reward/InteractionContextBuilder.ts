@@ -1,12 +1,12 @@
 import type { Address } from "viem";
 import type { AttributionService } from "../../domain/attribution/services/AttributionService";
 import type { PurchaseContext } from "../../domain/campaign";
+import type { IdentityRepository } from "../../domain/identity";
 import type { InteractionLogSelect } from "../../domain/rewards/db/schema";
 import type {
     PurchasePayload,
     WalletConnectPayload,
 } from "../../domain/rewards/types";
-import type { IdentityOrchestrator } from "../identity";
 import type {
     InteractionContextResult,
     TypeSpecificContextResult,
@@ -15,7 +15,7 @@ import type {
 export class InteractionContextBuilder {
     constructor(
         private readonly attributionService: AttributionService,
-        private readonly identityOrchestrator: IdentityOrchestrator
+        private readonly identityRepositpry: IdentityRepository
     ) {}
 
     async build(
@@ -29,10 +29,11 @@ export class InteractionContextBuilder {
             merchantId,
         });
 
-        const referrerIdentityGroupId = attribution.referrerWallet
-            ? await this.identityOrchestrator.findGroupIdByWallet(
-                  attribution.referrerWallet
-              )
+        const referrerIdentityGroup = attribution.referrerWallet
+            ? await this.identityRepositpry.findGroupByIdentity({
+                  type: "wallet",
+                  value: attribution.referrerWallet,
+              })
             : null;
 
         const { trigger, typeContext, walletAddressOverride } =
@@ -46,7 +47,7 @@ export class InteractionContextBuilder {
                     source: attribution.source,
                     touchpointId: attribution.touchpointId,
                     referrerWallet: attribution.referrerWallet,
-                    referrerIdentityGroupId,
+                    referrerIdentityGroupId: referrerIdentityGroup?.id ?? null,
                 },
                 user: {
                     identityGroupId,

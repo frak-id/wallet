@@ -1,4 +1,4 @@
-import { Elysia, t } from "elysia";
+import { Elysia, status, t } from "elysia";
 import type { Address } from "viem";
 import { isAddress } from "viem";
 import {
@@ -6,6 +6,21 @@ import {
     type TouchpointSourceData,
 } from "../../../domain/attribution";
 import { IdentityContext } from "../../../domain/identity";
+import { resolveSdkIdentity, sdkIdentityHeaderSchema } from "./sdkIdentity";
+
+async function resolveReferrerGroupId(
+    referrerWallet: string | undefined
+): Promise<string | undefined> {
+    if (!referrerWallet || !isAddress(referrerWallet)) {
+        return undefined;
+    }
+    const group =
+        await IdentityContext.repositories.identity.findGroupByIdentity({
+            type: "wallet",
+            value: referrerWallet,
+        });
+    return group?.id ?? undefined;
+}
 
 const trackArrivalBodySchema = t.Object({
     merchantId: t.String({ format: "uuid" }),
@@ -21,31 +36,35 @@ const trackArrivalBodySchema = t.Object({
 export const trackArrivalRoute = new Elysia().post(
     "/arrival",
     async ({ headers, body }) => {
-        const clientId = headers["x-frak-client-id"];
-        if (!clientId) {
-            return {
-                success: false,
-                error: "x-frak-client-id header required",
-            };
-        }
-
-        const identityService = IdentityContext.services.identityResolution;
-        const attributionService = AttributionContext.services.attribution;
-
-        const { identityGroupId } = await identityService.resolveAnonymousId({
-            anonId: clientId,
+        const identityResult = await resolveSdkIdentity({
+            headers,
             merchantId: body.merchantId,
         });
+
+        if (!identityResult.success) {
+            return status(identityResult.statusCode, {
+                success: false,
+                error: identityResult.error,
+            });
+        }
+
+        const { identityGroupId } = identityResult;
 
         const sourceData = buildSourceData(body);
 
-        const touchpoint = await attributionService.recordTouchpoint({
-            identityGroupId,
-            merchantId: body.merchantId,
-            source: sourceData.type,
-            sourceData,
-            landingUrl: body.landingUrl,
-        });
+        const referrerIdentityGroupId = await resolveReferrerGroupId(
+            body.referrerWallet
+        );
+
+        const touchpoint =
+            await AttributionContext.services.attribution.recordTouchpoint({
+                identityGroupId,
+                merchantId: body.merchantId,
+                source: sourceData.type,
+                sourceData,
+                landingUrl: body.landingUrl,
+                referrerIdentityGroupId,
+            });
 
         return {
             success: true,
@@ -54,9 +73,7 @@ export const trackArrivalRoute = new Elysia().post(
         };
     },
     {
-        headers: t.Object({
-            "x-frak-client-id": t.String({ minLength: 1 }),
-        }),
+        headers: sdkIdentityHeaderSchema,
         body: trackArrivalBodySchema,
     }
 );
