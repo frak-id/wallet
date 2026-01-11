@@ -73,6 +73,7 @@ export type InteractionPayload =
  */
 export type AssetStatus =
     | "pending" // Reward created, waiting for settlement batch
+    | "processing" // Settlement batch processing it
     | "ready_to_claim" // Pushed/locked on blockchain, user can claim
     | "claimed" // User claimed on-chain
     | "consumed" // Soft reward used (discount redeemed)

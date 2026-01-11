@@ -1,17 +1,15 @@
 import { eventEmitter } from "@backend-infrastructure";
 import { mutexCron } from "@backend-utils";
 import { Elysia } from "elysia";
+import { RewardConfig } from "../domain/rewards/config";
 import { OrchestrationContext } from "../orchestration";
-
-const BATCH_SIZE = 100;
-const MIN_AGE_SECONDS = 60;
 
 export const rewardCalculationJobs = new Elysia({
     name: "Job.rewardCalculation",
 }).use(
     mutexCron({
         name: "processRewards",
-        pattern: "0 */5 * * * *",
+        pattern: RewardConfig.cron.rewardCalculation,
         triggerKeys: ["newInteraction"],
         coolDownInMs: 15_000,
         skipIfLocked: true,
@@ -21,8 +19,8 @@ export const rewardCalculationJobs = new Elysia({
             const result =
                 await OrchestrationContext.orchestrators.batchReward.processPendingInteractions(
                     {
-                        limit: BATCH_SIZE,
-                        minAgeSeconds: MIN_AGE_SECONDS,
+                        limit: RewardConfig.batch.size,
+                        minAgeSeconds: RewardConfig.batch.minAgeSeconds,
                     }
                 );
 

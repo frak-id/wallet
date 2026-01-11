@@ -1,5 +1,5 @@
 import { db } from "@backend-infrastructure";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { LRUCache } from "lru-cache";
 import type { Address, Hex } from "viem";
 import { type MerchantConfig, merchantsTable } from "../db/schema";
@@ -33,6 +33,14 @@ export class MerchantRepository {
         max: 256,
         ttl: 60 * 60 * 1000,
     });
+
+    private readonly bankAddressCache = new LRUCache<
+        string,
+        { value: Address | null }
+    >({
+        max: 512,
+        ttl: 5 * 60 * 1000,
+    });
     async findById(id: string): Promise<MerchantSelect | null> {
         const cached = this.idCache.get(id);
         if (cached) {
@@ -45,6 +53,88 @@ export class MerchantRepository {
         const value = result ?? null;
         this.idCache.set(id, { value });
         return value;
+    }
+
+    async findByIds(ids: string[]): Promise<MerchantSelect[]> {
+        if (ids.length === 0) return [];
+
+        const uncachedIds: string[] = [];
+        const cachedResults: MerchantSelect[] = [];
+
+        for (const id of ids) {
+            const cached = this.idCache.get(id);
+            if (cached?.value) {
+                cachedResults.push(cached.value);
+            } else if (!cached) {
+                uncachedIds.push(id);
+            }
+        }
+
+        if (uncachedIds.length === 0) {
+            return cachedResults;
+        }
+
+        const dbResults = await db
+            .select()
+            .from(merchantsTable)
+            .where(inArray(merchantsTable.id, uncachedIds));
+
+        for (const merchant of dbResults) {
+            this.idCache.set(merchant.id, { value: merchant });
+        }
+
+        const fetchedIds = new Set(dbResults.map((m) => m.id));
+        for (const id of uncachedIds) {
+            if (!fetchedIds.has(id)) {
+                this.idCache.set(id, { value: null });
+            }
+        }
+
+        return [...cachedResults, ...dbResults];
+    }
+
+    async getBankAddresses(
+        merchantIds: string[]
+    ): Promise<Map<string, Address>> {
+        if (merchantIds.length === 0) return new Map();
+
+        const result = new Map<string, Address>();
+        const uncachedIds: string[] = [];
+
+        for (const id of merchantIds) {
+            const cached = this.bankAddressCache.get(id);
+            if (cached) {
+                if (cached.value) {
+                    result.set(id, cached.value);
+                }
+            } else {
+                uncachedIds.push(id);
+            }
+        }
+
+        if (uncachedIds.length === 0) {
+            return result;
+        }
+
+        const merchants = await this.findByIds(uncachedIds);
+
+        for (const merchant of merchants) {
+            this.bankAddressCache.set(merchant.id, {
+                value: merchant.bankAddress,
+            });
+            if (merchant.bankAddress) {
+                result.set(merchant.id, merchant.bankAddress);
+            }
+        }
+
+        const foundIds = new Set(merchants.map((m) => m.id));
+        for (const id of uncachedIds) {
+            if (!foundIds.has(id)) {
+                this.bankAddressCache.set(id, { value: null });
+            }
+        }
+
+        return result;
     }
 
     async findByDomain(domain: string): Promise<MerchantSelect | null> {
@@ -84,6 +174,7 @@ export class MerchantRepository {
     private invalidateCache(merchant: MerchantSelect): void {
         this.idCache.delete(merchant.id);
         this.domainCache.delete(merchant.domain);
+        this.bankAddressCache.delete(merchant.id);
         if (merchant.productId) {
             this.productIdCache.delete(merchant.productId);
         }

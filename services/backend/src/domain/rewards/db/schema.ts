@@ -8,6 +8,7 @@ import {
     pgTable,
     text,
     timestamp,
+    uniqueIndex,
     uuid,
 } from "drizzle-orm/pg-core";
 import type { Address, Hex } from "viem";
@@ -29,6 +30,7 @@ export const interactionLogsTable = pgTable(
         type: interactionTypeEnum("type").notNull(),
         identityGroupId: uuid("identity_group_id"),
         merchantId: uuid("merchant_id"),
+        externalEventId: text("external_event_id"),
         payload: jsonb("payload").$type<InteractionPayload>().notNull(),
         processedAt: timestamp("processed_at"),
         createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -39,6 +41,11 @@ export const interactionLogsTable = pgTable(
         index("interaction_logs_type_idx").on(table.type),
         index("interaction_logs_created_at_idx").on(table.createdAt),
         index("interaction_logs_processed_at_idx").on(table.processedAt),
+        uniqueIndex("interaction_logs_external_event_unique_idx").on(
+            table.merchantId,
+            table.type,
+            table.externalEventId
+        ),
     ]
 );
 
@@ -111,6 +118,12 @@ export const assetLogsTable = pgTable(
         index("asset_logs_settlement_retry_idx").on(
             table.status,
             table.settlementAttempts
+        ),
+        index("asset_logs_settlement_pending_idx").on(
+            table.status,
+            table.assetType,
+            table.settlementAttempts,
+            table.createdAt
         ),
     ]
 );

@@ -19,7 +19,8 @@ type UpsertPurchaseParams = {
 type UpsertPurchaseResult = {
     purchaseId: string;
     identityGroupId: string;
-    interactionLogId: string;
+    interactionLogId: string | null;
+    isDuplicate: boolean;
 };
 
 export class PurchaseWebhookOrchestrator {
@@ -64,12 +65,28 @@ export class PurchaseWebhookOrchestrator {
             purchaseId,
         };
 
-        const interactionLog = await this.interactionLogRepository.create({
-            type: "purchase",
-            identityGroupId,
-            merchantId,
-            payload,
-        });
+        const externalEventId = `purchase:${purchase.externalId}`;
+        const interactionLog =
+            await this.interactionLogRepository.createIdempotent({
+                type: "purchase",
+                identityGroupId,
+                merchantId,
+                externalEventId,
+                payload,
+            });
+
+        if (!interactionLog) {
+            log.debug(
+                { purchaseId, externalEventId },
+                "Duplicate purchase webhook, skipping interaction creation"
+            );
+            return {
+                purchaseId,
+                identityGroupId,
+                interactionLogId: null,
+                isDuplicate: true,
+            };
+        }
 
         eventEmitter.emit("newInteraction", { type: "purchase" });
 
@@ -86,6 +103,7 @@ export class PurchaseWebhookOrchestrator {
             purchaseId,
             identityGroupId,
             interactionLogId: interactionLog.id,
+            isDuplicate: false,
         };
     }
 

@@ -15,7 +15,7 @@ import type {
 export class InteractionContextBuilder {
     constructor(
         private readonly attributionService: AttributionService,
-        private readonly identityRepositpry: IdentityRepository
+        private readonly identityRepository: IdentityRepository
     ) {}
 
     async build(
@@ -30,7 +30,7 @@ export class InteractionContextBuilder {
         });
 
         const referrerIdentityGroup = attribution.referrerWallet
-            ? await this.identityRepositpry.findGroupByIdentity({
+            ? await this.identityRepository.findGroupByIdentity({
                   type: "wallet",
                   value: attribution.referrerWallet,
               })

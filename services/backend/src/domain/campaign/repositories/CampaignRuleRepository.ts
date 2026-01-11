@@ -235,47 +235,53 @@ export class CampaignRuleRepository {
         campaignRuleId: string,
         amount: number
     ): Promise<BudgetConsumptionResult> {
-        const [campaign] = await db
-            .select({
-                budgetConfig: campaignRulesTable.budgetConfig,
-                budgetUsed: campaignRulesTable.budgetUsed,
-            })
-            .from(campaignRulesTable)
-            .where(eq(campaignRulesTable.id, campaignRuleId))
-            .limit(1);
+        return db.transaction(async (tx) => {
+            const [campaign] = await tx
+                .select({
+                    budgetConfig: campaignRulesTable.budgetConfig,
+                    budgetUsed: campaignRulesTable.budgetUsed,
+                })
+                .from(campaignRulesTable)
+                .where(eq(campaignRulesTable.id, campaignRuleId))
+                .limit(1)
+                .for("update");
 
-        if (!campaign) {
-            return { success: false, reason: "campaign_not_found" };
-        }
+            if (!campaign) {
+                return {
+                    success: false,
+                    reason: "campaign_not_found" as const,
+                };
+            }
 
-        if (!campaign.budgetConfig || campaign.budgetConfig.length === 0) {
-            return { success: true, remaining: {} };
-        }
+            if (!campaign.budgetConfig || campaign.budgetConfig.length === 0) {
+                return { success: true, remaining: {} };
+            }
 
-        const currentUsed = campaign.budgetUsed ?? {};
-        const result = processbudgetUsed(
-            campaign.budgetConfig,
-            currentUsed,
-            amount
-        );
+            const currentUsed = campaign.budgetUsed ?? {};
+            const result = processbudgetUsed(
+                campaign.budgetConfig,
+                currentUsed,
+                amount
+            );
 
-        if (!result.canConsume) {
-            return {
-                success: false,
-                reason: "budget_exceeded",
-                exceededBudget: result.exceededLabel,
-            };
-        }
+            if (!result.canConsume) {
+                return {
+                    success: false,
+                    reason: "budget_exceeded" as const,
+                    exceededBudget: result.exceededLabel,
+                };
+            }
 
-        await db
-            .update(campaignRulesTable)
-            .set({
-                budgetUsed: result.updatedUsed,
-                updatedAt: new Date(),
-            })
-            .where(eq(campaignRulesTable.id, campaignRuleId));
+            await tx
+                .update(campaignRulesTable)
+                .set({
+                    budgetUsed: result.updatedUsed,
+                    updatedAt: new Date(),
+                })
+                .where(eq(campaignRulesTable.id, campaignRuleId));
 
-        return { success: true, remaining: result.remaining };
+            return { success: true, remaining: result.remaining };
+        });
     }
 
     async getBudgetStatus(campaignRuleId: string): Promise<{

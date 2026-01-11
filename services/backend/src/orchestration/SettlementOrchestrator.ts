@@ -1,15 +1,13 @@
 import { log } from "@backend-infrastructure";
 import type { Address } from "viem";
 import type { MerchantRepository } from "../domain/merchant/repositories/MerchantRepository";
+import { RewardConfig } from "../domain/rewards/config";
 import type { AssetLogRepository } from "../domain/rewards/repositories/AssetLogRepository";
 import type {
     AssetLogWithWallet,
     SettlementService,
 } from "../domain/rewards/services/SettlementService";
 import type { SettlementResult } from "../domain/rewards/types";
-
-const SETTLEMENT_BATCH_SIZE = 100;
-const STUCK_PROCESSING_THRESHOLD_MINUTES = 30;
 
 export class SettlementOrchestrator {
     constructor(
@@ -21,7 +19,7 @@ export class SettlementOrchestrator {
     async runSettlement(): Promise<SettlementResult> {
         const resetCount =
             await this.assetLogRepository.resetStuckSettlementProcessing(
-                STUCK_PROCESSING_THRESHOLD_MINUTES
+                RewardConfig.settlement.stuckThresholdMinutes
             );
         if (resetCount > 0) {
             log.info({ resetCount }, "Reset stuck settlement processing items");
@@ -29,7 +27,7 @@ export class SettlementOrchestrator {
 
         const pendingRewards =
             await this.assetLogRepository.findPendingForSettlement(
-                SETTLEMENT_BATCH_SIZE
+                RewardConfig.settlement.batchSize
             );
 
         if (pendingRewards.length === 0) {
@@ -54,16 +52,7 @@ export class SettlementOrchestrator {
     private async getMerchantBanks(
         rewards: AssetLogWithWallet[]
     ): Promise<Map<string, Address>> {
-        const merchantBanks = new Map<string, Address>();
         const merchantIds = [...new Set(rewards.map((r) => r.merchantId))];
-
-        for (const merchantId of merchantIds) {
-            const merchant = await this.merchantRepository.findById(merchantId);
-            if (merchant?.bankAddress) {
-                merchantBanks.set(merchantId, merchant.bankAddress);
-            }
-        }
-
-        return merchantBanks;
+        return this.merchantRepository.getBankAddresses(merchantIds);
     }
 }

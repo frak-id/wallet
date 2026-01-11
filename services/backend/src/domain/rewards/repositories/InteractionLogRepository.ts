@@ -28,6 +28,23 @@ export class InteractionLogRepository {
         return result;
     }
 
+    async createIdempotent(
+        log: InteractionLogInsert & { externalEventId: string }
+    ): Promise<InteractionLogSelect | null> {
+        const [result] = await db
+            .insert(interactionLogsTable)
+            .values(log)
+            .onConflictDoNothing({
+                target: [
+                    interactionLogsTable.merchantId,
+                    interactionLogsTable.type,
+                    interactionLogsTable.externalEventId,
+                ],
+            })
+            .returning();
+        return result ?? null;
+    }
+
     async findById(id: string): Promise<InteractionLogSelect | null> {
         const [result] = await db
             .select()

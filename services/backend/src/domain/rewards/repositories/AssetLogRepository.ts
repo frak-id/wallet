@@ -2,6 +2,7 @@ import { and, desc, eq, inArray, isNull, lt, sql, sum } from "drizzle-orm";
 import type { Address, Hex } from "viem";
 import { db } from "../../../infrastructure/persistence/postgres";
 import { identityNodesTable } from "../../identity/db/schema";
+import { RewardConfig } from "../config";
 import {
     type AssetLogInsert,
     type AssetLogSelect,
@@ -14,8 +15,6 @@ import type {
     CreateAssetLogParams,
     InteractionType,
 } from "../types";
-
-const MAX_SETTLEMENT_ATTEMPTS = 5;
 
 export class AssetLogRepository {
     async create(params: CreateAssetLogParams): Promise<AssetLogSelect> {
@@ -194,7 +193,7 @@ export class AssetLogRepository {
                     eq(assetLogsTable.assetType, "token"),
                     lt(
                         assetLogsTable.settlementAttempts,
-                        MAX_SETTLEMENT_ATTEMPTS
+                        RewardConfig.settlement.maxAttempts
                     )
                 )
             )
