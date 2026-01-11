@@ -1,25 +1,16 @@
 import { log } from "@backend-infrastructure";
-import type { Address } from "viem";
 import type { ReferralService } from "../domain/attribution";
-import type { AttributionService } from "../domain/attribution/services/AttributionService";
-import {
-    buildTimeContext,
-    type CalculatedReward,
-    type CampaignTrigger,
-    type PurchaseContext,
-    type RuleContext,
-} from "../domain/campaign";
+import { buildTimeContext, type CalculatedReward } from "../domain/campaign";
 import type { RuleEngineService } from "../domain/campaign/services/RuleEngineService";
 import type { InteractionLogSelect } from "../domain/rewards/db/schema";
 import type { AssetLogRepository } from "../domain/rewards/repositories/AssetLogRepository";
 import type { InteractionLogRepository } from "../domain/rewards/repositories/InteractionLogRepository";
 import type {
     CreateAssetLogParams,
-    PurchasePayload,
     RecipientType,
-    WalletConnectPayload,
 } from "../domain/rewards/types";
 import type { IdentityOrchestrator } from "./identity";
+import type { InteractionContextBuilder } from "./reward";
 
 type BatchProcessResult = {
     processedCount: number;
@@ -41,9 +32,9 @@ export class BatchRewardOrchestrator {
         private readonly interactionLogRepository: InteractionLogRepository,
         private readonly assetLogRepository: AssetLogRepository,
         private readonly ruleEngineService: RuleEngineService,
-        private readonly attributionService: AttributionService,
         private readonly referralService: ReferralService,
-        private readonly identityOrchestrator: IdentityOrchestrator
+        private readonly identityOrchestrator: IdentityOrchestrator,
+        private readonly contextBuilder: InteractionContextBuilder
     ) {}
 
     async processPendingInteractions(options: {
@@ -151,7 +142,7 @@ export class BatchRewardOrchestrator {
 
             const time = buildTimeContext(interaction.createdAt);
 
-            const { trigger, context } = await this.buildContextForInteraction(
+            const { trigger, context } = await this.contextBuilder.build(
                 interaction,
                 merchantId,
                 interaction.identityGroupId,
@@ -217,94 +208,6 @@ export class BatchRewardOrchestrator {
                 rewardsCreated: 0,
                 error: errorMessage,
             };
-        }
-    }
-
-    private async buildContextForInteraction(
-        interaction: InteractionLogSelect,
-        merchantId: string,
-        identityGroupId: string,
-        walletAddress: Address | null
-    ): Promise<{
-        trigger: CampaignTrigger;
-        context: Omit<RuleContext, "time">;
-    }> {
-        const attribution = await this.attributionService.attributeConversion({
-            identityGroupId,
-            merchantId,
-        });
-
-        const referrerIdentityGroupId = attribution.referrerWallet
-            ? await this.identityOrchestrator.findGroupIdByWallet(
-                  attribution.referrerWallet
-              )
-            : null;
-
-        const { trigger, typeContext, walletAddressOverride } =
-            this.buildTypeSpecificContext(interaction, walletAddress);
-
-        return {
-            trigger,
-            context: {
-                ...typeContext,
-                attribution: {
-                    source: attribution.source,
-                    touchpointId: attribution.touchpointId,
-                    referrerWallet: attribution.referrerWallet,
-                    referrerIdentityGroupId,
-                },
-                user: {
-                    identityGroupId,
-                    walletAddress: walletAddressOverride ?? walletAddress,
-                },
-            },
-        };
-    }
-
-    private buildTypeSpecificContext(
-        interaction: InteractionLogSelect,
-        walletAddress: Address | null
-    ): {
-        trigger: CampaignTrigger;
-        typeContext: { purchase?: PurchaseContext };
-        walletAddressOverride?: Address | null;
-    } {
-        switch (interaction.type) {
-            case "purchase": {
-                const payload = interaction.payload as PurchasePayload;
-                return {
-                    trigger: "purchase",
-                    typeContext: {
-                        purchase: {
-                            orderId: payload.orderId,
-                            amount: payload.amount,
-                            currency: payload.currency,
-                            items: payload.items.map((item) => ({
-                                productId: item.productId,
-                                name: item.name,
-                                quantity: item.quantity,
-                                unitPrice: item.unitPrice,
-                                totalPrice: item.totalPrice,
-                            })),
-                        },
-                    },
-                };
-            }
-
-            case "wallet_connect": {
-                const payload = interaction.payload as WalletConnectPayload;
-                return {
-                    trigger: "wallet_connect",
-                    typeContext: {},
-                    walletAddressOverride: payload.wallet ?? walletAddress,
-                };
-            }
-
-            default:
-                return {
-                    trigger: "custom",
-                    typeContext: {},
-                };
         }
     }
 

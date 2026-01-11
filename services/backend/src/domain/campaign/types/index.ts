@@ -120,7 +120,7 @@ export type PercentageRewardDefinition = BaseRewardDefinition & {
     /**
      * What the percentage is calculated from.
      */
-    percentOf: "purchase_amount" | "purchase_subtotal" | "purchase_profit";
+    percentOf: "purchase_amount" | "purchase_subtotal";
     /**
      * Maximum amount cap (optional)
      */
@@ -160,23 +160,10 @@ export type TieredRewardDefinition = BaseRewardDefinition & {
     token?: Address;
 };
 
-/**
- * Range-based reward using beta distribution.
- * The base amount is multiplied by a random factor between minMultiplier and maxMultiplier.
- */
-export type RangeRewardDefinition = BaseRewardDefinition & {
-    amountType: "range";
-    baseAmount: number;
-    minMultiplier: number;
-    maxMultiplier: number;
-    token?: Address;
-};
-
 export type RewardDefinition =
     | FixedRewardDefinition
     | PercentageRewardDefinition
-    | TieredRewardDefinition
-    | RangeRewardDefinition;
+    | TieredRewardDefinition;
 
 // =============================================================================
 // CAMPAIGN RULE

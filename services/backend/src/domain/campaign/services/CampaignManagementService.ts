@@ -4,17 +4,13 @@ import type {
     CampaignStatus,
 } from "../db/schema";
 import type { CampaignRuleRepository } from "../repositories/CampaignRuleRepository";
-import type {
-    BudgetConfig,
-    CampaignMetadata,
-    CampaignRuleDefinition,
-} from "../types";
+import type { BudgetConfig, CampaignRuleDefinition } from "../types";
 
 export type CampaignCreateInput = {
     merchantId: string;
     name: string;
     rule: CampaignRuleDefinition;
-    metadata?: CampaignMetadata;
+    metadata?: Record<string, unknown>;
     budgetConfig?: BudgetConfig;
     expiresAt?: Date;
     priority?: number;
@@ -23,7 +19,7 @@ export type CampaignCreateInput = {
 export type CampaignUpdateInput = {
     name?: string;
     rule?: CampaignRuleDefinition;
-    metadata?: CampaignMetadata;
+    metadata?: Record<string, unknown>;
     budgetConfig?: BudgetConfig;
     expiresAt?: Date | null;
     priority?: number;
@@ -287,14 +283,6 @@ export class CampaignManagementService {
             case "tiered":
                 if (!reward.tiers || reward.tiers.length === 0) {
                     return "Tiered reward must have at least one tier";
-                }
-                break;
-            case "range":
-                if (
-                    typeof reward.baseAmount !== "number" ||
-                    reward.baseAmount <= 0
-                ) {
-                    return "Range reward must have a positive base amount";
                 }
                 break;
         }

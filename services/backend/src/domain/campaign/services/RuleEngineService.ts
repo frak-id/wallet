@@ -194,26 +194,6 @@ export class RuleEngineService {
         };
     }
 
-    async rollbackRewards(rewards: CalculatedReward[]): Promise<void> {
-        const amountsByCampaign = new Map<string, number>();
-
-        for (const reward of rewards) {
-            const current = amountsByCampaign.get(reward.campaignRuleId) ?? 0;
-            amountsByCampaign.set(
-                reward.campaignRuleId,
-                current + reward.amount
-            );
-        }
-
-        for (const [campaignId, amount] of amountsByCampaign) {
-            await this.repository.rollbackBudget(campaignId, amount);
-            log.debug(
-                { campaignId, amount },
-                "Rolled back budget for campaign"
-            );
-        }
-    }
-
     async getActiveCampaigns(
         merchantId: string,
         trigger?: CampaignTrigger

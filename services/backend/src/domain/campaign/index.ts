@@ -39,7 +39,6 @@ export type {
     PercentageRewardDefinition,
     PurchaseContext,
     PurchaseItem,
-    RangeRewardDefinition,
     ReferralChainFetcher,
     ReferralChainMember,
     RewardAssetType,
