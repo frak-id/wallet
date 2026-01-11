@@ -1,11 +1,7 @@
-import { log } from "@backend-infrastructure";
-import { encodeUserId } from "@backend-utils";
+import { eventEmitter, log } from "@backend-infrastructure";
 import type { Address } from "viem";
 import type { IdentityRepository } from "../../domain/identity/repositories/IdentityRepository";
-import type {
-    ResolveOp,
-    RewardsHubRepository,
-} from "../../infrastructure/blockchain/contracts/RewardsHubRepository";
+import type { PendingIdentityResolutionRepository } from "../../domain/identity/repositories/PendingIdentityResolutionRepository";
 import { IdentityMergeService } from "./IdentityMergeService";
 import { IdentityWeightService } from "./IdentityWeightService";
 import type { AssociateResult, IdentityNode, ResolveResult } from "./types";
@@ -16,7 +12,7 @@ export class IdentityOrchestrator {
 
     constructor(
         private readonly identityRepository: IdentityRepository,
-        private readonly rewardsHub: RewardsHubRepository
+        private readonly pendingResolutionRepository: PendingIdentityResolutionRepository
     ) {}
 
     async resolve(node: IdentityNode): Promise<ResolveResult> {
@@ -53,11 +49,9 @@ export class IdentityOrchestrator {
         groupId2: string
     ): Promise<AssociateResult> {
         if (groupId1 === groupId2) {
-            const wallet = await this.weightService.getWalletForGroup(groupId1);
             return {
                 finalGroupId: groupId1,
                 merged: false,
-                groupIdsToResolveOnchain: wallet ? [] : [groupId1],
             };
         }
 
@@ -74,14 +68,17 @@ export class IdentityOrchestrator {
 
         await this.mergeService.mergeGroups({ anchorGroupId, mergingGroupId });
 
-        const groupIdsToResolveOnchain = anchorWallet
-            ? [mergingGroupId, ...previousMergedGroups]
-            : [];
+        if (anchorWallet) {
+            const groupIdsToResolve = [mergingGroupId, ...previousMergedGroups];
+            await this.queueIdentityResolutions(
+                groupIdsToResolve,
+                anchorWallet
+            );
+        }
 
         return {
             finalGroupId: anchorGroupId,
             merged: true,
-            groupIdsToResolveOnchain,
         };
     }
 
@@ -99,18 +96,13 @@ export class IdentityOrchestrator {
         ];
 
         if (uniqueGroupIds.length === 1) {
-            const wallet = await this.weightService.getWalletForGroup(
-                uniqueGroupIds[0]
-            );
             return {
                 finalGroupId: uniqueGroupIds[0],
                 merged: false,
-                groupIdsToResolveOnchain: wallet ? [] : [],
             };
         }
 
         let currentGroupId = uniqueGroupIds[0];
-        let allGroupIdsToResolve: string[] = [];
         let anyMerged = false;
 
         for (let i = 1; i < uniqueGroupIds.length; i++) {
@@ -119,49 +111,37 @@ export class IdentityOrchestrator {
                 uniqueGroupIds[i]
             );
             currentGroupId = result.finalGroupId;
-            allGroupIdsToResolve = [
-                ...allGroupIdsToResolve,
-                ...result.groupIdsToResolveOnchain,
-            ];
             anyMerged = anyMerged || result.merged;
-        }
-
-        const finalWallet =
-            await this.weightService.getWalletForGroup(currentGroupId);
-        if (finalWallet && allGroupIdsToResolve.length > 0) {
-            await this.resolveLockedRewards(allGroupIdsToResolve, finalWallet);
         }
 
         return {
             finalGroupId: currentGroupId,
             merged: anyMerged,
-            groupIdsToResolveOnchain: allGroupIdsToResolve,
         };
     }
 
-    async resolveLockedRewards(
+    private async queueIdentityResolutions(
         groupIds: string[],
         wallet: Address
     ): Promise<void> {
         if (groupIds.length === 0) return;
 
-        const resolveOps: ResolveOp[] = groupIds.map((groupId) => ({
-            userId: encodeUserId(groupId),
-            wallet,
+        const queueParams = groupIds.map((groupId) => ({
+            groupId,
+            walletAddress: wallet,
         }));
 
         try {
-            const result = await this.rewardsHub.resolveUserIds(resolveOps);
+            await this.pendingResolutionRepository.queueBatch(queueParams);
 
-            log.info(
-                {
-                    groupIds,
-                    wallet,
-                    txHash: result.txHash,
-                    blockNumber: result.blockNumber,
-                },
-                "Resolved userIds on RewardsHub"
+            log.debug(
+                { groupIds, wallet, count: groupIds.length },
+                "Queued identity resolutions for async processing"
             );
+
+            eventEmitter.emit("newPendingIdentityResolution", {
+                count: groupIds.length,
+            });
         } catch (error) {
             log.error(
                 {
@@ -170,7 +150,7 @@ export class IdentityOrchestrator {
                     error:
                         error instanceof Error ? error.message : String(error),
                 },
-                "Failed to resolve userIds on RewardsHub"
+                "Failed to queue identity resolutions"
             );
         }
     }

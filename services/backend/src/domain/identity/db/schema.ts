@@ -1,5 +1,6 @@
 import {
     index,
+    integer,
     jsonb,
     pgEnum,
     pgTable,
@@ -8,6 +9,8 @@ import {
     unique,
     uuid,
 } from "drizzle-orm/pg-core";
+import type { Address, Hex } from "viem";
+import { customHex } from "../../../utils/drizzle/customTypes";
 
 export type PendingPurchaseValidation = {
     orderId: string;
@@ -59,3 +62,42 @@ export const identityNodesTable = pgTable(
         ),
     ]
 );
+
+export const identityResolutionStatusEnum = pgEnum(
+    "identity_resolution_status",
+    ["pending", "processing", "completed", "failed"]
+);
+
+export const pendingIdentityResolutionsTable = pgTable(
+    "pending_identity_resolutions",
+    {
+        id: uuid("id").primaryKey().defaultRandom(),
+        groupId: uuid("group_id").notNull(),
+        walletAddress: customHex("wallet_address").$type<Address>().notNull(),
+        status: identityResolutionStatusEnum("status")
+            .notNull()
+            .default("pending"),
+        attempts: integer("attempts").notNull().default(0),
+        lastError: text("last_error"),
+        onchainTxHash: customHex("onchain_tx_hash").$type<Hex>(),
+        onchainBlock: text("onchain_block"),
+        createdAt: timestamp("created_at").defaultNow().notNull(),
+        processedAt: timestamp("processed_at"),
+    },
+    (table) => [
+        index("pending_identity_resolutions_status_idx").on(table.status),
+        index("pending_identity_resolutions_created_at_idx").on(
+            table.createdAt
+        ),
+        index("pending_identity_resolutions_wallet_idx").on(
+            table.walletAddress
+        ),
+    ]
+);
+
+export type PendingIdentityResolutionInsert =
+    typeof pendingIdentityResolutionsTable.$inferInsert;
+export type PendingIdentityResolutionSelect =
+    typeof pendingIdentityResolutionsTable.$inferSelect;
+export type IdentityResolutionStatus =
+    PendingIdentityResolutionSelect["status"];
