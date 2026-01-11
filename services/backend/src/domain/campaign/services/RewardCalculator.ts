@@ -3,7 +3,6 @@ import type {
     CalculatedReward,
     FixedRewardDefinition,
     PercentageRewardDefinition,
-    RangeRewardDefinition,
     ReferralChainMember,
     RewardChaining,
     RewardDefinition,
@@ -42,25 +41,10 @@ function calculatePercentageReward(
         };
     }
 
-    let baseAmount: number;
-    switch (reward.percentOf) {
-        case "purchase_amount":
-            baseAmount = context.purchase.amount;
-            break;
-        case "purchase_subtotal":
-            baseAmount = context.purchase.subtotal ?? context.purchase.amount;
-            break;
-        case "purchase_profit":
-            return {
-                success: false,
-                error: "purchase_profit not yet supported",
-            };
-        default:
-            return {
-                success: false,
-                error: `Unknown percentOf: ${reward.percentOf}`,
-            };
-    }
+    const baseAmount =
+        reward.percentOf === "purchase_subtotal"
+            ? (context.purchase.subtotal ?? context.purchase.amount)
+            : context.purchase.amount;
 
     let amount = (baseAmount * reward.percent) / 100;
 
@@ -121,40 +105,6 @@ function calculateTieredReward(
     }
 
     return { success: false, error: "No matching tier found" };
-}
-
-function generateBetaRandom(alpha: number, beta: number): number {
-    const u = Math.random();
-    const v = Math.random();
-    const x = u ** (1 / alpha);
-    const y = v ** (1 / beta);
-    return x / (x + y);
-}
-
-function calculateRangeReward(
-    reward: RangeRewardDefinition
-): RewardCalculationResult {
-    if (reward.baseAmount <= 0) {
-        return { success: false, error: "Base amount must be positive" };
-    }
-    if (reward.minMultiplier > reward.maxMultiplier) {
-        return {
-            success: false,
-            error: "minMultiplier must be <= maxMultiplier",
-        };
-    }
-
-    const betaValue = generateBetaRandom(2, 5);
-    const multiplier =
-        reward.minMultiplier +
-        betaValue * (reward.maxMultiplier - reward.minMultiplier);
-    const amount = reward.baseAmount * multiplier;
-
-    return {
-        success: true,
-        amount: Math.round(amount * 1_000_000) / 1_000_000,
-        token: reward.token ?? null,
-    };
 }
 
 const PERCENT_BASE = 100;
@@ -242,8 +192,6 @@ export class RewardCalculator {
                     context,
                     this.conditionEvaluator
                 );
-            case "range":
-                return calculateRangeReward(reward);
             default: {
                 const _exhaustive: never = reward;
                 return { success: false, error: "Unknown reward amount type" };

@@ -9,6 +9,7 @@ import { BatchRewardOrchestrator } from "./BatchRewardOrchestrator";
 import { IdentityOrchestrator } from "./identity";
 import { PurchaseLinkingOrchestrator } from "./PurchaseLinkingOrchestrator";
 import { PurchaseWebhookOrchestrator } from "./PurchaseWebhookOrchestrator";
+import { InteractionContextBuilder } from "./reward";
 import { SettlementOrchestrator } from "./SettlementOrchestrator";
 import { WebhookResolverOrchestrator } from "./WebhookResolverOrchestrator";
 
@@ -22,13 +23,18 @@ const identityOrchestrator = new IdentityOrchestrator(
     rewardsHubRepository
 );
 
+const interactionContextBuilder = new InteractionContextBuilder(
+    AttributionContext.services.attribution,
+    identityOrchestrator
+);
+
 const batchRewardOrchestrator = new BatchRewardOrchestrator(
     RewardsContext.repositories.interactionLog,
     RewardsContext.repositories.assetLog,
     CampaignContext.services.ruleEngine,
-    AttributionContext.services.attribution,
     AttributionContext.services.referral,
-    identityOrchestrator
+    identityOrchestrator,
+    interactionContextBuilder
 );
 
 const purchaseLinkingOrchestrator = new PurchaseLinkingOrchestrator(
