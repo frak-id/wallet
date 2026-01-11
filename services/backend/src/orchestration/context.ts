@@ -25,7 +25,7 @@ const identityOrchestrator = new IdentityOrchestrator(
 
 const interactionContextBuilder = new InteractionContextBuilder(
     AttributionContext.services.attribution,
-    identityOrchestrator
+    IdentityContext.repositories.identity
 );
 
 const batchRewardOrchestrator = new BatchRewardOrchestrator(

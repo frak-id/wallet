@@ -1,9 +1,13 @@
-import { JwtContext, log } from "@backend-infrastructure";
+import { log } from "@backend-infrastructure";
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
-import { type Address, isAddress, isHex } from "viem";
+import type { Address } from "viem";
 import { OrchestrationContext } from "../../../orchestration/context";
-import type { IdentityNode } from "../../../orchestration/identity";
+import {
+    buildIdentityNodes,
+    resolveWalletAddress,
+    sdkIdentityHeaderSchema,
+} from "./sdkIdentity";
 
 const purchaseBodySchema = t.Object({
     customerId: t.Union([t.String(), t.Number()]),
@@ -11,42 +15,6 @@ const purchaseBodySchema = t.Object({
     token: t.String(),
     merchantId: t.Optional(t.String({ format: "uuid" })),
 });
-
-async function resolveWalletAddress(
-    walletSdkAuth: string
-): Promise<Address | null> {
-    if (isHex(walletSdkAuth) && isAddress(walletSdkAuth)) {
-        return walletSdkAuth;
-    }
-
-    const session = await JwtContext.walletSdk.verify(walletSdkAuth);
-    if (!session) {
-        return null;
-    }
-    return session.address;
-}
-
-function buildIdentityNodes(params: {
-    walletAddress?: Address;
-    clientId?: string;
-    merchantId?: string;
-}): IdentityNode[] {
-    const nodes: IdentityNode[] = [];
-
-    if (params.walletAddress) {
-        nodes.push({ type: "wallet", value: params.walletAddress });
-    }
-
-    if (params.clientId && params.merchantId) {
-        nodes.push({
-            type: "anonymous_fingerprint",
-            value: params.clientId,
-            merchantId: params.merchantId,
-        });
-    }
-
-    return nodes;
-}
 
 export const trackPurchaseRoute = new Elysia().post(
     "/purchase",
@@ -121,12 +89,7 @@ export const trackPurchaseRoute = new Elysia().post(
         return result;
     },
     {
-        headers: t.Partial(
-            t.Object({
-                "x-frak-client-id": t.String(),
-                "x-wallet-sdk-auth": t.String(),
-            })
-        ),
+        headers: sdkIdentityHeaderSchema,
         body: purchaseBodySchema,
     }
 );

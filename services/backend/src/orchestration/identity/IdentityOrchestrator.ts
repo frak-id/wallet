@@ -178,16 +178,4 @@ export class IdentityOrchestrator {
     async getWalletForGroup(groupId: string): Promise<Address | null> {
         return this.weightService.getWalletForGroup(groupId);
     }
-
-    async getMergedGroupIds(groupId: string): Promise<string[]> {
-        return this.mergeService.getMergedGroupIds(groupId);
-    }
-
-    async findGroupIdByWallet(wallet: Address): Promise<string | null> {
-        const group = await this.identityRepository.findGroupByIdentity({
-            type: "wallet",
-            value: wallet,
-        });
-        return group?.id ?? null;
-    }
 }
