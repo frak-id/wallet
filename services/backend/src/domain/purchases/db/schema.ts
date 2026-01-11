@@ -98,3 +98,42 @@ export const purchaseItemsTable = pgTable(
         ),
     ]
 );
+
+/**
+ * Purchase claims table - tracks SDK claims awaiting webhook validation.
+ *
+ * Flow:
+ * 1. SDK calls /track/purchase → creates claim with (order_id, token) → claiming_identity_group_id
+ * 2. Webhook arrives → looks up claim by (merchant_id, order_id, token)
+ *    - If found: validates claim, links purchase to claiming group, deletes claim
+ *    - If not found: resolves merchant_customer directly (returning user or no SDK)
+ *
+ * Security: Claims are keyed by (merchant_id, order_id, token) - attackers can't guess order_id + token
+ */
+export const purchaseClaimsTable = pgTable(
+    "purchase_claims",
+    {
+        id: uuid("id").primaryKey().defaultRandom(),
+        merchantId: uuid("merchant_id")
+            .references(() => merchantsTable.id)
+            .notNull(),
+        customerId: varchar("customer_id").notNull(),
+        orderId: varchar("order_id").notNull(),
+        purchaseToken: varchar("purchase_token").notNull(),
+        claimingIdentityGroupId: uuid("claiming_identity_group_id")
+            .references(() => identityGroupsTable.id, { onDelete: "cascade" })
+            .notNull(),
+        createdAt: timestamp("created_at").defaultNow(),
+    },
+    (table) => [
+        // Only one claim per purchase (prevents race conditions)
+        uniqueIndex("purchase_claims_unique_purchase").on(
+            table.merchantId,
+            table.orderId,
+            table.purchaseToken
+        ),
+        index("purchase_claims_identity_group_idx").on(
+            table.claimingIdentityGroupId
+        ),
+    ]
+);

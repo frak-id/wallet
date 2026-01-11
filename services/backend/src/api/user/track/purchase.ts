@@ -3,6 +3,7 @@ import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import { type Address, isAddress, isHex } from "viem";
 import { OrchestrationContext } from "../../../orchestration/context";
+import type { IdentityNode } from "../../../orchestration/identity";
 
 const purchaseBodySchema = t.Object({
     customerId: t.Union([t.String(), t.Number()]),
@@ -11,11 +12,48 @@ const purchaseBodySchema = t.Object({
     merchantId: t.Optional(t.String({ format: "uuid" })),
 });
 
+async function resolveWalletAddress(
+    walletSdkAuth: string
+): Promise<Address | null> {
+    if (isHex(walletSdkAuth) && isAddress(walletSdkAuth)) {
+        return walletSdkAuth;
+    }
+
+    const session = await JwtContext.walletSdk.verify(walletSdkAuth);
+    if (!session) {
+        return null;
+    }
+    return session.address;
+}
+
+function buildIdentityNodes(params: {
+    walletAddress?: Address;
+    clientId?: string;
+    merchantId?: string;
+}): IdentityNode[] {
+    const nodes: IdentityNode[] = [];
+
+    if (params.walletAddress) {
+        nodes.push({ type: "wallet", value: params.walletAddress });
+    }
+
+    if (params.clientId && params.merchantId) {
+        nodes.push({
+            type: "anonymous_fingerprint",
+            value: params.clientId,
+            merchantId: params.merchantId,
+        });
+    }
+
+    return nodes;
+}
+
 export const trackPurchaseRoute = new Elysia().post(
     "/purchase",
     async ({ headers, body }) => {
         const clientId = headers["x-frak-client-id"];
         const walletSdkAuth = headers["x-wallet-sdk-auth"];
+        const merchantId = body.merchantId;
 
         const customerId =
             typeof body.customerId === "string"
@@ -26,80 +64,66 @@ export const trackPurchaseRoute = new Elysia().post(
                 ? body.orderId
                 : body.orderId.toString();
 
-        if (clientId) {
-            if (!body.merchantId) {
+        let walletAddress: Address | undefined;
+        if (walletSdkAuth) {
+            const resolved = await resolveWalletAddress(walletSdkAuth);
+            if (!resolved) {
+                return status(401, {
+                    success: false,
+                    error: "Invalid wallet SDK JWT",
+                });
+            }
+            walletAddress = resolved;
+        }
+
+        const identityNodes = buildIdentityNodes({
+            walletAddress,
+            clientId,
+            merchantId,
+        });
+
+        if (identityNodes.length === 0) {
+            if (clientId && !merchantId) {
                 return status(400, {
                     success: false,
                     error: "merchantId required when using x-frak-client-id",
                 });
             }
-
-            log.debug(
-                { clientId, customerId, orderId },
-                "Linking purchase via clientId"
-            );
-
-            const result =
-                await OrchestrationContext.orchestrators.purchaseLinking.linkPurchaseFromSdk(
-                    {
-                        clientId,
-                        merchantId: body.merchantId,
-                        customerId,
-                        orderId,
-                        token: body.token,
-                    }
-                );
-
-            return result;
+            return status(401, {
+                success: false,
+                error: "x-frak-client-id or x-wallet-sdk-auth header required",
+            });
         }
 
-        if (walletSdkAuth) {
-            let address: Address;
+        if (!merchantId) {
+            return status(400, {
+                success: false,
+                error: "merchantId is required",
+            });
+        }
 
-            if (isHex(walletSdkAuth) && isAddress(walletSdkAuth)) {
-                address = walletSdkAuth;
-            } else {
-                const session =
-                    await JwtContext.walletSdk.verify(walletSdkAuth);
-                if (!session) {
-                    return status(401, {
-                        success: false,
-                        error: "Invalid wallet SDK JWT",
-                    });
+        log.debug(
+            { customerId, orderId, nodeCount: identityNodes.length },
+            "Claiming purchase"
+        );
+
+        const result =
+            await OrchestrationContext.orchestrators.purchaseLinking.claimPurchase(
+                {
+                    identityNodes,
+                    merchantId,
+                    customerId,
+                    orderId,
+                    token: body.token,
                 }
-                address = session.address;
-            }
-
-            log.debug(
-                { wallet: address, customerId, orderId },
-                "Linking purchase via wallet"
             );
 
-            const result =
-                await OrchestrationContext.orchestrators.purchaseLinking.linkPurchaseFromWallet(
-                    {
-                        wallet: address,
-                        merchantId: body.merchantId,
-                        clientId: headers["x-frak-client-id"],
-                        customerId,
-                        orderId,
-                        token: body.token,
-                    }
-                );
-
-            return result;
-        }
-
-        return status(401, {
-            success: false,
-            error: "x-frak-client-id or x-wallet-sdk-auth header required",
-        });
+        return result;
     },
     {
         headers: t.Partial(
             t.Object({
                 "x-frak-client-id": t.String(),
-                // For legacy version
                 "x-wallet-sdk-auth": t.String(),
             })
         ),
