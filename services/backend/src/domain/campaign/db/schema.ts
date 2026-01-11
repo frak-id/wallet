@@ -8,7 +8,7 @@ import {
     timestamp,
     uuid,
 } from "drizzle-orm/pg-core";
-import { merchantsTable } from "../../merchant/db/schema";
+
 import type {
     BudgetConfig,
     BudgetUsed,
@@ -29,9 +29,7 @@ export const campaignRulesTable = pgTable(
     "campaign_rules",
     {
         id: uuid("id").primaryKey().defaultRandom(),
-        merchantId: uuid("merchant_id")
-            .references(() => merchantsTable.id, { onDelete: "cascade" })
-            .notNull(),
+        merchantId: uuid("merchant_id").notNull(),
         name: text("name").notNull(),
         status: campaignStatusEnum("status").notNull().default("draft"),
         priority: integer("priority").notNull().default(0),

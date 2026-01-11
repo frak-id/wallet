@@ -42,9 +42,7 @@ export const merchantAdminsTable = pgTable(
     "merchant_admins",
     {
         id: uuid("id").primaryKey().defaultRandom(),
-        merchantId: uuid("merchant_id")
-            .references(() => merchantsTable.id, { onDelete: "cascade" })
-            .notNull(),
+        merchantId: uuid("merchant_id").notNull(),
         wallet: customHex("wallet").$type<Address>().notNull(),
         addedBy: customHex("added_by").$type<Address>().notNull(),
         addedAt: timestamp("added_at").defaultNow().notNull(),

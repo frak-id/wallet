@@ -115,10 +115,4 @@ export class IdentityRepository {
             .where(eq(identityNodesTable.groupId, fromGroupId));
         return result.count;
     }
-
-    async deleteGroup(groupId: string): Promise<void> {
-        await db
-            .delete(identityGroupsTable)
-            .where(eq(identityGroupsTable.id, groupId));
-    }
 }

@@ -8,8 +8,12 @@ import {
     identityGroupsTable,
     identityNodesTable,
     type MergedGroup,
+    pendingIdentityResolutionsTable,
 } from "../../domain/identity/db/schema";
-import { purchasesTable } from "../../domain/purchases/db/schema";
+import {
+    purchaseClaimsTable,
+    purchasesTable,
+} from "../../domain/purchases/db/schema";
 import {
     assetLogsTable,
     interactionLogsTable,
@@ -19,12 +23,14 @@ type MergeResult = {
     success: boolean;
     movedNodes: number;
     migratedPurchases: number;
+    migratedPurchaseClaims: number;
     migratedInteractionLogs: number;
     migratedAssetLogs: number;
     migratedTouchpoints: number;
     migratedReferralLinksReferrer: number;
     migratedReferralLinksReferee: number;
     deletedConflictingReferralLinks: number;
+    deletedPendingResolutions: number;
 };
 
 export class IdentityMergeService {
@@ -101,6 +107,24 @@ export class IdentityMergeService {
                 )
                 .returning({ id: referralLinksTable.id });
 
+            const migratedPurchaseClaimsResult = await trx
+                .update(purchaseClaimsTable)
+                .set({ claimingIdentityGroupId: anchorGroupId })
+                .where(
+                    eq(
+                        purchaseClaimsTable.claimingIdentityGroupId,
+                        mergingGroupId
+                    )
+                )
+                .returning({ id: purchaseClaimsTable.id });
+
+            const deletedPendingResolutionsResult = await trx
+                .delete(pendingIdentityResolutionsTable)
+                .where(
+                    eq(pendingIdentityResolutionsTable.groupId, mergingGroupId)
+                )
+                .returning({ id: pendingIdentityResolutionsTable.id });
+
             await this.updateAnchorMergedGroupsInTrx(
                 trx,
                 anchorGroupId,
@@ -116,12 +140,15 @@ export class IdentityMergeService {
                 success: true,
                 movedNodes: movedNodesResult.length,
                 migratedPurchases: migratedPurchasesResult.length,
+                migratedPurchaseClaims: migratedPurchaseClaimsResult.length,
                 migratedInteractionLogs: migratedInteractionLogsResult.length,
                 migratedAssetLogs: migratedAssetLogsResult.length,
                 migratedTouchpoints: migratedTouchpointsResult.length,
                 migratedReferralLinksReferrer: migratedReferrerResult.length,
                 migratedReferralLinksReferee: migratedRefereeResult.length,
                 deletedConflictingReferralLinks: deletedConflicts,
+                deletedPendingResolutions:
+                    deletedPendingResolutionsResult.length,
             };
 
             log.info(

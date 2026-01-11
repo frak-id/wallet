@@ -9,8 +9,6 @@ import {
     uuid,
 } from "drizzle-orm/pg-core";
 import type { Address } from "viem";
-import { identityGroupsTable } from "../../identity/db/schema";
-import { merchantsTable } from "../../merchant/db/schema";
 
 export const touchpointSourceEnum = pgEnum("touchpoint_source", [
     "referral_link",
@@ -43,9 +41,7 @@ export const touchpointsTable = pgTable(
     "touchpoints",
     {
         id: uuid("id").primaryKey().defaultRandom(),
-        identityGroupId: uuid("identity_group_id")
-            .references(() => identityGroupsTable.id, { onDelete: "cascade" })
-            .notNull(),
+        identityGroupId: uuid("identity_group_id").notNull(),
         merchantId: uuid("merchant_id").notNull(),
         source: touchpointSourceEnum("source").notNull(),
         sourceData: jsonb("source_data")
@@ -70,15 +66,9 @@ export const referralLinksTable = pgTable(
     "referral_links",
     {
         id: uuid("id").primaryKey().defaultRandom(),
-        merchantId: uuid("merchant_id")
-            .references(() => merchantsTable.id, { onDelete: "cascade" })
-            .notNull(),
-        referrerIdentityGroupId: uuid("referrer_identity_group_id")
-            .references(() => identityGroupsTable.id, { onDelete: "cascade" })
-            .notNull(),
-        refereeIdentityGroupId: uuid("referee_identity_group_id")
-            .references(() => identityGroupsTable.id, { onDelete: "cascade" })
-            .notNull(),
+        merchantId: uuid("merchant_id").notNull(),
+        referrerIdentityGroupId: uuid("referrer_identity_group_id").notNull(),
+        refereeIdentityGroupId: uuid("referee_identity_group_id").notNull(),
         createdAt: timestamp("created_at").defaultNow().notNull(),
     },
     (table) => [

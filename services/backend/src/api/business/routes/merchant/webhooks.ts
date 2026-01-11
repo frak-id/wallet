@@ -172,6 +172,17 @@ export const merchantWebhooksRoutes = new Elysia({
                 return status(404, "No webhook configured for this merchant");
             }
 
+            const hasPurchases = await db.query.purchasesTable.findFirst({
+                where: eq(purchasesTable.webhookId, existingWebhook.id),
+                columns: { id: true },
+            });
+            if (hasPurchases) {
+                return status(
+                    409,
+                    "Cannot delete webhook with existing purchases"
+                );
+            }
+
             await db
                 .delete(merchantWebhooksTable)
                 .where(eq(merchantWebhooksTable.merchantId, merchantId))
@@ -186,6 +197,7 @@ export const merchantWebhooksRoutes = new Elysia({
                 401: t.String(),
                 403: t.String(),
                 404: t.String(),
+                409: t.String(),
             },
         }
     );
