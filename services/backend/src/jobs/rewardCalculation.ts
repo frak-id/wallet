@@ -38,7 +38,7 @@ export const rewardCalculationJobs = new Elysia({
             if (result.errors.length > 0) {
                 logger.warn(
                     {
-                        errors: result.errors.slice(0, 10),
+                        errors: result.errors,
                         totalErrors: result.errors.length,
                     },
                     "Reward calculation job had errors"

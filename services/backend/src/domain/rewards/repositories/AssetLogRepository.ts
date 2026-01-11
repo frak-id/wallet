@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray, isNull, sql, sum } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, lt, sql, sum } from "drizzle-orm";
 import type { Address, Hex } from "viem";
 import { db } from "../../../infrastructure/persistence/postgres";
 import { identityNodesTable } from "../../identity/db/schema";
@@ -14,6 +14,8 @@ import type {
     CreateAssetLogParams,
     InteractionType,
 } from "../types";
+
+const MAX_SETTLEMENT_ATTEMPTS = 5;
 
 export class AssetLogRepository {
     async create(params: CreateAssetLogParams): Promise<AssetLogSelect> {
@@ -162,6 +164,8 @@ export class AssetLogRepository {
                 interactionLogId: assetLogsTable.interactionLogId,
                 onchainTxHash: assetLogsTable.onchainTxHash,
                 onchainBlock: assetLogsTable.onchainBlock,
+                settlementAttempts: assetLogsTable.settlementAttempts,
+                lastSettlementError: assetLogsTable.lastSettlementError,
                 createdAt: assetLogsTable.createdAt,
                 walletAddress:
                     sql<Address | null>`${identityNodesTable.identityValue}`.as(
@@ -187,7 +191,11 @@ export class AssetLogRepository {
             .where(
                 and(
                     eq(assetLogsTable.status, "pending"),
-                    eq(assetLogsTable.assetType, "token")
+                    eq(assetLogsTable.assetType, "token"),
+                    lt(
+                        assetLogsTable.settlementAttempts,
+                        MAX_SETTLEMENT_ATTEMPTS
+                    )
                 )
             )
             .orderBy(assetLogsTable.createdAt);
@@ -382,5 +390,62 @@ export class AssetLogRepository {
             .from(assetLogsTable)
             .where(eq(assetLogsTable.interactionLogId, interactionLogId))
             .orderBy(assetLogsTable.createdAt);
+    }
+
+    async markSettlementProcessing(ids: string[]): Promise<number> {
+        if (ids.length === 0) return 0;
+
+        const results = await db
+            .update(assetLogsTable)
+            .set({
+                status: "processing",
+                statusChangedAt: new Date(),
+                settlementAttempts: sql`${assetLogsTable.settlementAttempts} + 1`,
+            })
+            .where(inArray(assetLogsTable.id, ids))
+            .returning({ id: assetLogsTable.id });
+
+        return results.length;
+    }
+
+    async revertSettlementToPending(
+        ids: string[],
+        error: string
+    ): Promise<number> {
+        if (ids.length === 0) return 0;
+
+        const results = await db
+            .update(assetLogsTable)
+            .set({
+                status: "pending",
+                statusChangedAt: new Date(),
+                lastSettlementError: error,
+            })
+            .where(inArray(assetLogsTable.id, ids))
+            .returning({ id: assetLogsTable.id });
+
+        return results.length;
+    }
+
+    async resetStuckSettlementProcessing(
+        olderThanMinutes: number
+    ): Promise<number> {
+        const cutoff = new Date(Date.now() - olderThanMinutes * 60 * 1000);
+
+        const results = await db
+            .update(assetLogsTable)
+            .set({
+                status: "pending",
+                statusChangedAt: new Date(),
+            })
+            .where(
+                and(
+                    eq(assetLogsTable.status, "processing"),
+                    lt(assetLogsTable.statusChangedAt, cutoff)
+                )
+            )
+            .returning({ id: assetLogsTable.id });
+
+        return results.length;
     }
 }

@@ -29,7 +29,7 @@ export const settlementJobs = new Elysia({ name: "Job.settlement" }).use(
             if (result.errors.length > 0) {
                 logger.warn(
                     {
-                        errors: result.errors.slice(0, 10),
+                        errors: result.errors,
                         totalErrors: result.errors.length,
                     },
                     "Settlement job had errors"

@@ -68,6 +68,10 @@ export class SettlementService {
             return result;
         }
 
+        await this.assetLogRepository.markSettlementProcessing(
+            prepared.validAssetLogIds
+        );
+
         try {
             const txResult = await this.rewardsHub.batchRewards(
                 prepared.pushRewards,
@@ -90,11 +94,16 @@ export class SettlementService {
                     pushCount: prepared.pushRewards.length,
                     lockCount: prepared.lockRewards.length,
                 },
-                "Failed to execute batch settlement"
+                "Failed to execute batch settlement, will retry on next run"
             );
 
             const errorMessage =
                 error instanceof Error ? error.message : "Unknown error";
+
+            await this.assetLogRepository.revertSettlementToPending(
+                prepared.validAssetLogIds,
+                errorMessage
+            );
 
             for (const assetLogId of prepared.validAssetLogIds) {
                 result.errors.push({ assetLogId, error: errorMessage });

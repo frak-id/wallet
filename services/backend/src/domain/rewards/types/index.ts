@@ -159,4 +159,4 @@ export type CreateAssetLogParams = {
     chainDepth?: number;
 };
 
-export { decodeUserId, encodeUserId } from "@backend-utils";
+export { encodeUserId } from "@backend-utils";

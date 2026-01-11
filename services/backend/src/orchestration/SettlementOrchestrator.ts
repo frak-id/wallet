@@ -9,6 +9,7 @@ import type {
 import type { SettlementResult } from "../domain/rewards/types";
 
 const SETTLEMENT_BATCH_SIZE = 100;
+const STUCK_PROCESSING_THRESHOLD_MINUTES = 30;
 
 export class SettlementOrchestrator {
     constructor(
@@ -18,6 +19,14 @@ export class SettlementOrchestrator {
     ) {}
 
     async runSettlement(): Promise<SettlementResult> {
+        const resetCount =
+            await this.assetLogRepository.resetStuckSettlementProcessing(
+                STUCK_PROCESSING_THRESHOLD_MINUTES
+            );
+        if (resetCount > 0) {
+            log.info({ resetCount }, "Reset stuck settlement processing items");
+        }
+
         const pendingRewards =
             await this.assetLogRepository.findPendingForSettlement(
                 SETTLEMENT_BATCH_SIZE
