@@ -39,9 +39,7 @@ export const identityNodesTable = pgTable(
     "identity_nodes",
     {
         id: uuid("id").primaryKey().defaultRandom(),
-        groupId: uuid("group_id")
-            .references(() => identityGroupsTable.id, { onDelete: "cascade" })
-            .notNull(),
+        groupId: uuid("group_id").notNull(),
         identityType: identityTypeEnum("identity_type").notNull(),
         identityValue: text("identity_value").notNull(),
         merchantId: uuid("merchant_id"),
@@ -60,6 +58,7 @@ export const identityNodesTable = pgTable(
             table.identityType,
             table.identityValue
         ),
+        index("identity_nodes_merchant_idx").on(table.merchantId),
     ]
 );
 
@@ -92,6 +91,7 @@ export const pendingIdentityResolutionsTable = pgTable(
         index("pending_identity_resolutions_wallet_idx").on(
             table.walletAddress
         ),
+        index("pending_identity_resolutions_group_idx").on(table.groupId),
     ]
 );
 

@@ -12,9 +12,7 @@ import {
 } from "drizzle-orm/pg-core";
 import type { Address, Hex } from "viem";
 import { customHex } from "../../../utils/drizzle/customTypes";
-import { campaignRulesTable } from "../../campaign/db/schema";
-import { identityGroupsTable } from "../../identity/db/schema";
-import { merchantsTable } from "../../merchant/db/schema";
+
 import type { InteractionPayload } from "../types";
 
 export const interactionTypeEnum = pgEnum("interaction_type", [
@@ -29,13 +27,8 @@ export const interactionLogsTable = pgTable(
     {
         id: uuid("id").primaryKey().defaultRandom(),
         type: interactionTypeEnum("type").notNull(),
-        identityGroupId: uuid("identity_group_id").references(
-            () => identityGroupsTable.id,
-            { onDelete: "set null" }
-        ),
-        merchantId: uuid("merchant_id").references(() => merchantsTable.id, {
-            onDelete: "set null",
-        }),
+        identityGroupId: uuid("identity_group_id"),
+        merchantId: uuid("merchant_id"),
         payload: jsonb("payload").$type<InteractionPayload>().notNull(),
         processedAt: timestamp("processed_at"),
         createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -77,16 +70,9 @@ export const assetLogsTable = pgTable(
     "asset_logs",
     {
         id: uuid("id").primaryKey().defaultRandom(),
-        identityGroupId: uuid("identity_group_id")
-            .references(() => identityGroupsTable.id, { onDelete: "set null" })
-            .notNull(),
-        merchantId: uuid("merchant_id")
-            .references(() => merchantsTable.id, { onDelete: "set null" })
-            .notNull(),
-        campaignRuleId: uuid("campaign_rule_id").references(
-            () => campaignRulesTable.id,
-            { onDelete: "set null" }
-        ),
+        identityGroupId: uuid("identity_group_id").notNull(),
+        merchantId: uuid("merchant_id").notNull(),
+        campaignRuleId: uuid("campaign_rule_id"),
 
         assetType: assetTypeEnum("asset_type").notNull(),
         amount: numeric("amount", { precision: 36, scale: 18 }).notNull(),
@@ -100,10 +86,7 @@ export const assetLogsTable = pgTable(
         statusChangedAt: timestamp("status_changed_at").defaultNow().notNull(),
 
         touchpointId: uuid("touchpoint_id"),
-        interactionLogId: uuid("interaction_log_id").references(
-            () => interactionLogsTable.id,
-            { onDelete: "set null" }
-        ),
+        interactionLogId: uuid("interaction_log_id"),
 
         onchainTxHash: customHex("onchain_tx_hash").$type<Hex>(),
         onchainBlock: bigint("onchain_block", { mode: "bigint" }),

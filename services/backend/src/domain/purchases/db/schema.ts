@@ -10,8 +10,6 @@ import {
     uuid,
     varchar,
 } from "drizzle-orm/pg-core";
-import { identityGroupsTable } from "../../identity/db/schema";
-import { merchantsTable } from "../../merchant/db/schema";
 
 export const webhookPlatformEnum = pgEnum("webhook_platform", [
     "shopify",
@@ -24,9 +22,7 @@ export const merchantWebhooksTable = pgTable(
     "merchant_webhooks",
     {
         id: serial("id").primaryKey(),
-        merchantId: uuid("merchant_id")
-            .references(() => merchantsTable.id)
-            .notNull(),
+        merchantId: uuid("merchant_id").notNull(),
         hookSignatureKey: varchar("hook_signature_key").notNull(),
         createdAt: timestamp("created_at").defaultNow(),
         platform: webhookPlatformEnum("platform").notNull().default("shopify"),
@@ -45,9 +41,7 @@ export const purchasesTable = pgTable(
     "purchases",
     {
         id: uuid("id").primaryKey().defaultRandom(),
-        webhookId: integer("webhook_id")
-            .references(() => merchantWebhooksTable.id)
-            .notNull(),
+        webhookId: integer("webhook_id").notNull(),
         externalId: varchar("external_id").notNull(),
         externalCustomerId: varchar("external_customer_id").notNull(),
         purchaseToken: varchar("purchase_token"),
@@ -56,10 +50,7 @@ export const purchasesTable = pgTable(
         status: purchaseStatusEnum("status"),
         createdAt: timestamp("created_at").defaultNow(),
         updatedAt: timestamp("updated_at").defaultNow(),
-        identityGroupId: uuid("identity_group_id").references(
-            () => identityGroupsTable.id,
-            { onDelete: "set null" }
-        ),
+        identityGroupId: uuid("identity_group_id"),
         // TODO: Phase 3 - Add touchpointId for attribution
     },
     (table) => [
@@ -72,6 +63,7 @@ export const purchasesTable = pgTable(
             table.purchaseToken
         ),
         index("purchases_identity_group_idx").on(table.identityGroupId),
+        index("purchases_webhook_id_idx").on(table.webhookId),
     ]
 );
 
@@ -79,9 +71,7 @@ export const purchaseItemsTable = pgTable(
     "purchase_items",
     {
         id: uuid("id").primaryKey().defaultRandom(),
-        purchaseId: uuid("purchase_id")
-            .references(() => purchasesTable.id)
-            .notNull(),
+        purchaseId: uuid("purchase_id").notNull(),
         externalId: varchar("external_id").notNull(),
         price: decimal("price").notNull(),
         name: varchar("name").notNull(),
@@ -114,15 +104,11 @@ export const purchaseClaimsTable = pgTable(
     "purchase_claims",
     {
         id: uuid("id").primaryKey().defaultRandom(),
-        merchantId: uuid("merchant_id")
-            .references(() => merchantsTable.id)
-            .notNull(),
+        merchantId: uuid("merchant_id").notNull(),
         customerId: varchar("customer_id").notNull(),
         orderId: varchar("order_id").notNull(),
         purchaseToken: varchar("purchase_token").notNull(),
-        claimingIdentityGroupId: uuid("claiming_identity_group_id")
-            .references(() => identityGroupsTable.id, { onDelete: "cascade" })
-            .notNull(),
+        claimingIdentityGroupId: uuid("claiming_identity_group_id").notNull(),
         createdAt: timestamp("created_at").defaultNow(),
     },
     (table) => [
@@ -135,5 +121,6 @@ export const purchaseClaimsTable = pgTable(
         index("purchase_claims_identity_group_idx").on(
             table.claimingIdentityGroupId
         ),
+        index("purchase_claims_merchant_idx").on(table.merchantId),
     ]
 );
