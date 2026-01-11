@@ -13,7 +13,6 @@ export type ResolveResult = {
 export type AssociateResult = {
     finalGroupId: string;
     merged: boolean;
-    groupIdsToResolveOnchain: string[];
 };
 
 export type GroupWeight = {

@@ -18,6 +18,12 @@ export type FrakEvents = {
      * Triggers the settlement job to push rewards to blockchain.
      */
     newPendingRewards: [{ count: number }];
+
+    /**
+     * Emitted when identity resolutions are queued for blockchain processing.
+     * Triggers the identity resolution job to batch resolve userIds on-chain.
+     */
+    newPendingIdentityResolution: [{ count: number }];
 };
 
 /**

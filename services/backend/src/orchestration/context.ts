@@ -4,7 +4,6 @@ import { IdentityContext } from "../domain/identity/context";
 import { MerchantContext } from "../domain/merchant/context";
 import { PurchasesContext } from "../domain/purchases/context";
 import { RewardsContext } from "../domain/rewards/context";
-import { rewardsHubRepository } from "../infrastructure/blockchain/contracts/RewardsHubRepository";
 import { BatchRewardOrchestrator } from "./BatchRewardOrchestrator";
 import { IdentityOrchestrator } from "./identity";
 import { PurchaseLinkingOrchestrator } from "./PurchaseLinkingOrchestrator";
@@ -20,7 +19,7 @@ const webhookResolverOrchestrator = new WebhookResolverOrchestrator(
 
 const identityOrchestrator = new IdentityOrchestrator(
     IdentityContext.repositories.identity,
-    rewardsHubRepository
+    IdentityContext.repositories.pendingResolution
 );
 
 const interactionContextBuilder = new InteractionContextBuilder(
