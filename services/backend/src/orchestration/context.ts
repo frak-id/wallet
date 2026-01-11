@@ -39,14 +39,15 @@ const batchRewardOrchestrator = new BatchRewardOrchestrator(
 
 const purchaseLinkingOrchestrator = new PurchaseLinkingOrchestrator(
     PurchasesContext.repositories.purchase,
-    IdentityContext.repositories.identity,
-    RewardsContext.repositories.interactionLog,
+    PurchasesContext.repositories.purchaseClaim,
     identityOrchestrator
 );
 
 const purchaseWebhookOrchestrator = new PurchaseWebhookOrchestrator(
     PurchasesContext.repositories.purchase,
-    purchaseLinkingOrchestrator,
+    PurchasesContext.repositories.purchaseClaim,
+    IdentityContext.repositories.identity,
+    identityOrchestrator,
     RewardsContext.repositories.interactionLog
 );
 

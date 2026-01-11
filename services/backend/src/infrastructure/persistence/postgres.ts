@@ -23,6 +23,7 @@ import {
 } from "../../domain/pairing";
 import {
     merchantWebhooksTable,
+    purchaseClaimsTable,
     purchaseItemsTable,
     purchaseStatusEnum,
     purchasesTable,
@@ -61,6 +62,7 @@ export const db = drizzle({
         merchantOwnershipTransfersTable,
         pushTokensTable,
         merchantWebhooksTable,
+        purchaseClaimsTable,
         purchaseStatusEnum,
         purchasesTable,
         purchaseItemsTable,
