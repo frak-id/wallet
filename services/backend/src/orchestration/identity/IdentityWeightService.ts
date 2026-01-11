@@ -1,10 +1,12 @@
 import { db } from "@backend-infrastructure";
 import { count, eq, or } from "drizzle-orm";
+import { LRUCache } from "lru-cache";
 import type { Address } from "viem";
 import {
     referralLinksTable,
     touchpointsTable,
 } from "../../domain/attribution/db/schema";
+import type { IdentityRepository } from "../../domain/identity/repositories/IdentityRepository";
 import {
     assetLogsTable,
     interactionLogsTable,
@@ -12,7 +14,23 @@ import {
 import type { GroupWeight } from "./types";
 
 export class IdentityWeightService {
+    private readonly weightCache = new LRUCache<string, GroupWeight>({
+        max: 5_000,
+        ttl: 30_000,
+    });
+
+    constructor(private readonly identityRepository: IdentityRepository) {}
+
+    invalidateWeight(groupId: string): void {
+        this.weightCache.delete(groupId);
+    }
+
     async getGroupWeight(groupId: string): Promise<GroupWeight> {
+        const cached = this.weightCache.get(groupId);
+        if (cached) {
+            return cached;
+        }
+
         const [
             walletResult,
             assetsResult,
@@ -20,14 +38,14 @@ export class IdentityWeightService {
             interactionsResult,
             touchpointsResult,
         ] = await Promise.all([
-            this.getWalletForGroup(groupId),
+            this.identityRepository.getWalletForGroup(groupId),
             this.countAssets(groupId),
             this.countReferrals(groupId),
             this.countInteractions(groupId),
             this.countTouchpoints(groupId),
         ]);
 
-        return {
+        const weight: GroupWeight = {
             groupId,
             hasWallet: walletResult !== null,
             wallet: walletResult,
@@ -36,17 +54,9 @@ export class IdentityWeightService {
             interactionsCount: interactionsResult,
             touchpointsCount: touchpointsResult,
         };
-    }
 
-    async getWalletForGroup(groupId: string): Promise<Address | null> {
-        const walletNode = await db.query.identityNodesTable.findFirst({
-            where: (table, { and, eq }) =>
-                and(
-                    eq(table.groupId, groupId),
-                    eq(table.identityType, "wallet")
-                ),
-        });
-        return (walletNode?.identityValue as Address) ?? null;
+        this.weightCache.set(groupId, weight);
+        return weight;
     }
 
     private async countAssets(groupId: string): Promise<number> {
@@ -105,6 +115,57 @@ export class IdentityWeightService {
                     ? weight2.groupId
                     : weight1.groupId,
             anchorWallet: null,
+        };
+    }
+
+    determineAnchorFromMultiple(weights: GroupWeight[]): {
+        anchorGroupId: string;
+        mergingGroupIds: string[];
+        anchorWallet: Address | null;
+    } {
+        if (weights.length === 0) {
+            throw new Error("At least one weight required");
+        }
+        if (weights.length === 1) {
+            return {
+                anchorGroupId: weights[0].groupId,
+                mergingGroupIds: [],
+                anchorWallet: weights[0].wallet,
+            };
+        }
+
+        const walletsWithGroups = weights.filter((w) => w.hasWallet);
+        const uniqueWallets = new Set(
+            walletsWithGroups.map((w) => w.wallet).filter(Boolean)
+        );
+
+        if (uniqueWallets.size > 1) {
+            throw new Error(
+                `Cannot merge groups with different wallets: ${[...uniqueWallets].join(", ")}`
+            );
+        }
+
+        let anchor: GroupWeight;
+        if (walletsWithGroups.length > 0) {
+            anchor = walletsWithGroups.reduce((best, current) =>
+                this.compareHistoryWeight(best, current) === best
+                    ? best
+                    : current
+            );
+        } else {
+            anchor = weights.reduce((best, current) =>
+                this.compareHistoryWeight(best, current) === best
+                    ? best
+                    : current
+            );
+        }
+
+        return {
+            anchorGroupId: anchor.groupId,
+            mergingGroupIds: weights
+                .filter((w) => w.groupId !== anchor.groupId)
+                .map((w) => w.groupId),
+            anchorWallet: anchor.wallet,
         };
     }
 

@@ -2,15 +2,10 @@ import { rewardsHubRepository } from "../../infrastructure/blockchain/contracts/
 import { IdentityRepository } from "./repositories/IdentityRepository";
 import { PendingIdentityResolutionRepository } from "./repositories/PendingIdentityResolutionRepository";
 import { IdentityResolutionBatchService } from "./services/IdentityResolutionBatchService";
-import { IdentityResolutionService } from "./services/IdentityResolutionService";
 
 const identityRepository = new IdentityRepository();
 const pendingIdentityResolutionRepository =
     new PendingIdentityResolutionRepository();
-
-const identityResolutionService = new IdentityResolutionService(
-    identityRepository
-);
 
 const identityResolutionBatchService = new IdentityResolutionBatchService(
     pendingIdentityResolutionRepository,
@@ -24,7 +19,6 @@ export namespace IdentityContext {
     };
 
     export const services = {
-        identityResolution: identityResolutionService,
         identityResolutionBatch: identityResolutionBatchService,
     };
 }

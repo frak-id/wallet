@@ -5,7 +5,11 @@ import { MerchantContext } from "../domain/merchant/context";
 import { PurchasesContext } from "../domain/purchases/context";
 import { RewardsContext } from "../domain/rewards/context";
 import { BatchRewardOrchestrator } from "./BatchRewardOrchestrator";
-import { IdentityOrchestrator } from "./identity";
+import {
+    IdentityMergeService,
+    IdentityOrchestrator,
+    IdentityWeightService,
+} from "./identity";
 import { PurchaseLinkingOrchestrator } from "./PurchaseLinkingOrchestrator";
 import { PurchaseWebhookOrchestrator } from "./PurchaseWebhookOrchestrator";
 import { InteractionContextBuilder } from "./reward";
@@ -17,9 +21,17 @@ const webhookResolverOrchestrator = new WebhookResolverOrchestrator(
     MerchantContext.repositories.merchant
 );
 
+const identityWeightService = new IdentityWeightService(
+    IdentityContext.repositories.identity
+);
+
+const identityMergeService = new IdentityMergeService();
+
 const identityOrchestrator = new IdentityOrchestrator(
     IdentityContext.repositories.identity,
-    IdentityContext.repositories.pendingResolution
+    IdentityContext.repositories.pendingResolution,
+    identityWeightService,
+    identityMergeService
 );
 
 const interactionContextBuilder = new InteractionContextBuilder(

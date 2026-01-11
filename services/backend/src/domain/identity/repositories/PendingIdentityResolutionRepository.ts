@@ -63,6 +63,7 @@ export class PendingIdentityResolutionRepository {
             .set({
                 status: "processing",
                 attempts: sql`${pendingIdentityResolutionsTable.attempts} + 1`,
+                updatedAt: new Date(),
             })
             .where(inArray(pendingIdentityResolutionsTable.id, ids))
             .returning({ id: pendingIdentityResolutionsTable.id });
@@ -76,11 +77,13 @@ export class PendingIdentityResolutionRepository {
     ): Promise<number> {
         if (ids.length === 0) return 0;
 
+        const now = new Date();
         const results = await db
             .update(pendingIdentityResolutionsTable)
             .set({
                 status: "completed",
-                processedAt: new Date(),
+                processedAt: now,
+                updatedAt: now,
                 onchainTxHash: onchainData.txHash,
                 onchainBlock: onchainData.blockNumber.toString(),
             })
@@ -93,12 +96,14 @@ export class PendingIdentityResolutionRepository {
     async markFailed(ids: string[], error: string): Promise<number> {
         if (ids.length === 0) return 0;
 
+        const now = new Date();
         const results = await db
             .update(pendingIdentityResolutionsTable)
             .set({
                 status: "failed",
                 lastError: error,
-                processedAt: new Date(),
+                processedAt: now,
+                updatedAt: now,
             })
             .where(inArray(pendingIdentityResolutionsTable.id, ids))
             .returning({ id: pendingIdentityResolutionsTable.id });
@@ -113,11 +118,12 @@ export class PendingIdentityResolutionRepository {
             .update(pendingIdentityResolutionsTable)
             .set({
                 status: "pending",
+                updatedAt: new Date(),
             })
             .where(
                 and(
                     eq(pendingIdentityResolutionsTable.status, "processing"),
-                    lt(pendingIdentityResolutionsTable.createdAt, cutoff)
+                    lt(pendingIdentityResolutionsTable.updatedAt, cutoff)
                 )
             )
             .returning({ id: pendingIdentityResolutionsTable.id });
@@ -132,6 +138,7 @@ export class PendingIdentityResolutionRepository {
             .update(pendingIdentityResolutionsTable)
             .set({
                 status: "pending",
+                updatedAt: new Date(),
             })
             .where(inArray(pendingIdentityResolutionsTable.id, ids))
             .returning({ id: pendingIdentityResolutionsTable.id });

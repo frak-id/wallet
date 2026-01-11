@@ -81,6 +81,7 @@ export const pendingIdentityResolutionsTable = pgTable(
         onchainTxHash: customHex("onchain_tx_hash").$type<Hex>(),
         onchainBlock: text("onchain_block"),
         createdAt: timestamp("created_at").defaultNow().notNull(),
+        updatedAt: timestamp("updated_at").defaultNow().notNull(),
         processedAt: timestamp("processed_at"),
     },
     (table) => [

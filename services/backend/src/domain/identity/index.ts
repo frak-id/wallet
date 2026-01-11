@@ -6,4 +6,3 @@ export {
     type MergedGroup,
 } from "./db/schema";
 export { IdentityRepository } from "./repositories/IdentityRepository";
-export { IdentityResolutionService } from "./services/IdentityResolutionService";

@@ -2,17 +2,16 @@ import { eventEmitter, log } from "@backend-infrastructure";
 import type { Address } from "viem";
 import type { IdentityRepository } from "../../domain/identity/repositories/IdentityRepository";
 import type { PendingIdentityResolutionRepository } from "../../domain/identity/repositories/PendingIdentityResolutionRepository";
-import { IdentityMergeService } from "./IdentityMergeService";
-import { IdentityWeightService } from "./IdentityWeightService";
+import type { IdentityMergeService } from "./IdentityMergeService";
+import type { IdentityWeightService } from "./IdentityWeightService";
 import type { AssociateResult, IdentityNode, ResolveResult } from "./types";
 
 export class IdentityOrchestrator {
-    private readonly weightService = new IdentityWeightService();
-    private readonly mergeService = new IdentityMergeService();
-
     constructor(
         private readonly identityRepository: IdentityRepository,
-        private readonly pendingResolutionRepository: PendingIdentityResolutionRepository
+        private readonly pendingResolutionRepository: PendingIdentityResolutionRepository,
+        private readonly weightService: IdentityWeightService,
+        private readonly mergeService: IdentityMergeService
     ) {}
 
     async resolve(node: IdentityNode): Promise<ResolveResult> {
@@ -76,6 +75,9 @@ export class IdentityOrchestrator {
             );
         }
 
+        this.weightService.invalidateWeight(mergingGroupId);
+        this.identityRepository.invalidateCachesForGroup(mergingGroupId);
+
         return {
             finalGroupId: anchorGroupId,
             merged: true,
@@ -102,22 +104,39 @@ export class IdentityOrchestrator {
             };
         }
 
-        let currentGroupId = uniqueGroupIds[0];
-        let anyMerged = false;
+        const weights = await Promise.all(
+            uniqueGroupIds.map((id) => this.weightService.getGroupWeight(id))
+        );
 
-        for (let i = 1; i < uniqueGroupIds.length; i++) {
-            const result = await this.associate(
-                currentGroupId,
-                uniqueGroupIds[i]
-            );
-            currentGroupId = result.finalGroupId;
-            anyMerged = anyMerged || result.merged;
+        const { anchorGroupId, mergingGroupIds, anchorWallet } =
+            this.weightService.determineAnchorFromMultiple(weights);
+
+        if (mergingGroupIds.length === 0) {
+            return { finalGroupId: anchorGroupId, merged: false };
         }
 
-        return {
-            finalGroupId: currentGroupId,
-            merged: anyMerged,
-        };
+        const mergeResult = await this.mergeService.mergeMultipleGroups({
+            anchorGroupId,
+            mergingGroupIds,
+        });
+
+        if (anchorWallet) {
+            const groupIdsToResolve = [
+                ...mergingGroupIds,
+                ...mergeResult.previouslyMergedGroupIds,
+            ];
+            await this.queueIdentityResolutions(
+                groupIdsToResolve,
+                anchorWallet
+            );
+        }
+
+        for (const groupId of mergingGroupIds) {
+            this.weightService.invalidateWeight(groupId);
+            this.identityRepository.invalidateCachesForGroup(groupId);
+        }
+
+        return { finalGroupId: anchorGroupId, merged: true };
     }
 
     private async queueIdentityResolutions(
@@ -156,6 +175,6 @@ export class IdentityOrchestrator {
     }
 
     async getWalletForGroup(groupId: string): Promise<Address | null> {
-        return this.weightService.getWalletForGroup(groupId);
+        return this.identityRepository.getWalletForGroup(groupId);
     }
 }
