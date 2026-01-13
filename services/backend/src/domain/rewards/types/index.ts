@@ -16,7 +16,7 @@ export type InteractionType =
 /**
  * Payload for referral arrival interaction.
  */
-export type ReferralArrivalPayload = {
+type ReferralArrivalPayload = {
     referrerWallet: Address;
     landingUrl?: string;
     touchpointId: string;
@@ -51,7 +51,7 @@ export type WalletConnectPayload = {
 /**
  * Payload for identity merge interaction.
  */
-export type IdentityMergePayload = {
+type IdentityMergePayload = {
     sourceGroupId: string;
     targetGroupId: string;
     mergedNodeCount: number;
@@ -82,7 +82,7 @@ export type AssetStatus =
 /**
  * Type of asset/reward.
  */
-export type AssetType =
+type AssetType =
     | "token" // Crypto token (USDC, etc.)
     | "discount" // Store discount (soft reward)
     | "points"; // Loyalty points (soft reward)
@@ -99,14 +99,6 @@ export type RecipientType =
 // SETTLEMENT TYPES
 // =============================================================================
 
-export type RewardSettlementResult = {
-    assetLogId: string;
-    success: boolean;
-    txHash?: Hex;
-    blockNumber?: bigint;
-    error?: string;
-};
-
 export type SettlementResult = {
     settledCount: number;
     failedCount: number;
@@ -117,30 +109,11 @@ export type SettlementResult = {
     }>;
 };
 
-export { type AttestationEvent, buildAttestation } from "@backend-utils";
+export { buildAttestation } from "@backend-utils";
 
 // =============================================================================
 // PROCESSING TYPES
 // =============================================================================
-
-/**
- * Result of processing a purchase event.
- */
-export type ProcessPurchaseResult = {
-    interactionLogId: string;
-    rewards: Array<{
-        assetLogId: string;
-        recipient: RecipientType;
-        amount: number;
-        token: Address | null;
-    }>;
-    budgetExceeded: boolean;
-    skippedCampaigns: string[];
-    errors: Array<{
-        campaignRuleId: string;
-        error: string;
-    }>;
-};
 
 /**
  * Parameters for creating an asset log entry.
@@ -159,5 +132,3 @@ export type CreateAssetLogParams = {
     chainDepth?: number;
     expirationDays?: number;
 };
-
-export { encodeUserId } from "@backend-utils";

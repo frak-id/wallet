@@ -4,14 +4,9 @@ export { PurchaseLinkingOrchestrator } from "./PurchaseLinkingOrchestrator";
 export { PurchaseWebhookOrchestrator } from "./PurchaseWebhookOrchestrator";
 export { RewardExpirationOrchestrator } from "./RewardExpirationOrchestrator";
 export {
-    type AttributionForContext,
     InteractionContextBuilder,
     type InteractionContextResult,
     type TypeSpecificContextResult,
-    type UserForContext,
 } from "./reward";
 export { SettlementOrchestrator } from "./SettlementOrchestrator";
-export {
-    type ResolvedWebhook,
-    WebhookResolverOrchestrator,
-} from "./WebhookResolverOrchestrator";
+export { WebhookResolverOrchestrator } from "./WebhookResolverOrchestrator";

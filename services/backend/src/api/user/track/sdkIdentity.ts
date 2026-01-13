@@ -12,29 +12,29 @@ export const sdkIdentityHeaderSchema = t.Partial(
     })
 );
 
-export type SdkIdentityHeaders = {
+type SdkIdentityHeaders = {
     "x-frak-client-id"?: string;
     "x-wallet-sdk-auth"?: string;
 };
 
-export type SdkIdentityParams = {
+type SdkIdentityParams = {
     headers: SdkIdentityHeaders;
     merchantId?: string;
 };
 
-export type SdkIdentitySuccess = {
+type SdkIdentitySuccess = {
     success: true;
     identityGroupId: string;
     walletAddress?: Address;
 };
 
-export type SdkIdentityError = {
+type SdkIdentityError = {
     success: false;
     error: string;
     statusCode: number;
 };
 
-export type SdkIdentityResult = SdkIdentitySuccess | SdkIdentityError;
+type SdkIdentityResult = SdkIdentitySuccess | SdkIdentityError;
 
 export async function resolveWalletAddress(
     walletSdkAuth: string

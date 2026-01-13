@@ -359,19 +359,6 @@ export class IdentityMergeService {
         });
     }
 
-    async getMergedGroupIds(groupId: string): Promise<string[]> {
-        const group = await db.query.identityGroupsTable.findFirst({
-            where: eq(identityGroupsTable.id, groupId),
-        });
-
-        if (!group?.mergedGroups) {
-            return [];
-        }
-
-        const mergedGroups = group.mergedGroups as MergedGroup[];
-        return mergedGroups.map((mg) => mg.groupId);
-    }
-
     private async deleteConflictingRefereeLinksInTrx(
         trx: Parameters<Parameters<typeof db.transaction>[0]>[0],
         anchorGroupId: string,

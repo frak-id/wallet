@@ -5,8 +5,6 @@ import { merchantAdminsTable } from "../db/schema";
 
 type MerchantAdminSelect = typeof merchantAdminsTable.$inferSelect;
 
-export type { MerchantAdminSelect };
-
 export class MerchantAdminRepository {
     async findByMerchantAndWallet(
         merchantId: string,
@@ -76,12 +74,5 @@ export class MerchantAdminRepository {
                 )
             );
         return result.count > 0;
-    }
-
-    async removeAllForMerchant(merchantId: string): Promise<number> {
-        const result = await db
-            .delete(merchantAdminsTable)
-            .where(eq(merchantAdminsTable.merchantId, merchantId));
-        return result.count;
     }
 }

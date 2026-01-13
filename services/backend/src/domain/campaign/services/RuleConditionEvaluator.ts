@@ -166,10 +166,6 @@ export class RuleConditionEvaluator {
         return evaluateConditionGroup(conditions, context);
     }
 
-    evaluateSingle(condition: RuleCondition, context: RuleContext): boolean {
-        return evaluateSingleCondition(condition, context);
-    }
-
     getFieldValue(context: RuleContext, field: string): unknown {
         return getNestedValue(context, field);
     }

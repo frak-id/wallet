@@ -1,6 +1,5 @@
 import {
     and,
-    desc,
     eq,
     gt,
     inArray,
@@ -9,7 +8,6 @@ import {
     lt,
     or,
     sql,
-    sum,
 } from "drizzle-orm";
 import type { Address, Hex } from "viem";
 import { db } from "../../../infrastructure/persistence/postgres";
@@ -23,7 +21,6 @@ import {
 } from "../db/schema";
 import type {
     AssetStatus,
-    AssetType,
     CreateAssetLogParams,
     InteractionType,
 } from "../types";
@@ -59,74 +56,6 @@ export class AssetLogRepository {
         }));
 
         return db.insert(assetLogsTable).values(inserts).returning();
-    }
-
-    async findById(id: string): Promise<AssetLogSelect | null> {
-        const [result] = await db
-            .select()
-            .from(assetLogsTable)
-            .where(eq(assetLogsTable.id, id))
-            .limit(1);
-        return result ?? null;
-    }
-
-    async findByIdentityGroup(
-        identityGroupId: string,
-        options?: {
-            status?: AssetStatus;
-            assetType?: AssetType;
-            limit?: number;
-        }
-    ): Promise<AssetLogSelect[]> {
-        const conditions = [
-            eq(assetLogsTable.identityGroupId, identityGroupId),
-        ];
-
-        if (options?.status) {
-            conditions.push(eq(assetLogsTable.status, options.status));
-        }
-
-        if (options?.assetType) {
-            conditions.push(eq(assetLogsTable.assetType, options.assetType));
-        }
-
-        const query = db
-            .select()
-            .from(assetLogsTable)
-            .where(and(...conditions))
-            .orderBy(desc(assetLogsTable.createdAt));
-
-        if (options?.limit) {
-            return query.limit(options.limit);
-        }
-
-        return query;
-    }
-
-    async findByMerchant(
-        merchantId: string,
-        options?: {
-            status?: AssetStatus;
-            limit?: number;
-        }
-    ): Promise<AssetLogSelect[]> {
-        const conditions = [eq(assetLogsTable.merchantId, merchantId)];
-
-        if (options?.status) {
-            conditions.push(eq(assetLogsTable.status, options.status));
-        }
-
-        const query = db
-            .select()
-            .from(assetLogsTable)
-            .where(and(...conditions))
-            .orderBy(desc(assetLogsTable.createdAt));
-
-        if (options?.limit) {
-            return query.limit(options.limit);
-        }
-
-        return query;
     }
 
     async findPendingForSettlement(limit?: number): Promise<
@@ -206,59 +135,6 @@ export class AssetLogRepository {
         return query;
     }
 
-    async findPendingWithoutWallet(limit?: number): Promise<AssetLogSelect[]> {
-        const query = db
-            .select({
-                asset: assetLogsTable,
-            })
-            .from(assetLogsTable)
-            .leftJoin(
-                identityNodesTable,
-                and(
-                    eq(
-                        assetLogsTable.identityGroupId,
-                        identityNodesTable.groupId
-                    ),
-                    eq(identityNodesTable.identityType, "wallet")
-                )
-            )
-            .where(
-                and(
-                    eq(assetLogsTable.status, "pending"),
-                    eq(assetLogsTable.assetType, "token"),
-                    isNull(identityNodesTable.id)
-                )
-            )
-            .orderBy(assetLogsTable.createdAt);
-
-        const results = limit ? await query.limit(limit) : await query;
-        return results.map((r) => r.asset);
-    }
-
-    async updateStatus(
-        id: string,
-        status: AssetStatus,
-        onchainData?: { txHash: Hex; blockNumber: bigint }
-    ): Promise<AssetLogSelect | null> {
-        const updateData: Partial<AssetLogInsert> = {
-            status,
-            statusChangedAt: new Date(),
-        };
-
-        if (onchainData) {
-            updateData.onchainTxHash = onchainData.txHash;
-            updateData.onchainBlock = onchainData.blockNumber;
-        }
-
-        const [result] = await db
-            .update(assetLogsTable)
-            .set(updateData)
-            .where(eq(assetLogsTable.id, id))
-            .returning();
-
-        return result ?? null;
-    }
-
     async updateStatusBatch(
         ids: string[],
         status: AssetStatus,
@@ -288,93 +164,6 @@ export class AssetLogRepository {
             .returning({ id: assetLogsTable.id });
 
         return results.length;
-    }
-
-    async updateRecipientWallet(
-        identityGroupId: string,
-        wallet: Address
-    ): Promise<number> {
-        const results = await db
-            .update(assetLogsTable)
-            .set({
-                recipientWallet: wallet,
-                statusChangedAt: new Date(),
-            })
-            .where(
-                and(
-                    eq(assetLogsTable.identityGroupId, identityGroupId),
-                    isNull(assetLogsTable.recipientWallet)
-                )
-            )
-            .returning({ id: assetLogsTable.id });
-
-        return results.length;
-    }
-
-    async getTotalByStatus(
-        merchantId: string,
-        status: AssetStatus
-    ): Promise<{ total: number; count: number }> {
-        const [result] = await db
-            .select({
-                total: sum(assetLogsTable.amount),
-                count: sql<number>`count(*)::int`,
-            })
-            .from(assetLogsTable)
-            .where(
-                and(
-                    eq(assetLogsTable.merchantId, merchantId),
-                    eq(assetLogsTable.status, status)
-                )
-            );
-
-        return {
-            total: result?.total ? Number.parseFloat(result.total) : 0,
-            count: result?.count ?? 0,
-        };
-    }
-
-    async getTotalByIdentityGroup(
-        identityGroupId: string,
-        options?: {
-            status?: AssetStatus;
-            assetType?: AssetType;
-        }
-    ): Promise<{ total: number; count: number }> {
-        const conditions = [
-            eq(assetLogsTable.identityGroupId, identityGroupId),
-        ];
-
-        if (options?.status) {
-            conditions.push(eq(assetLogsTable.status, options.status));
-        }
-
-        if (options?.assetType) {
-            conditions.push(eq(assetLogsTable.assetType, options.assetType));
-        }
-
-        const [result] = await db
-            .select({
-                total: sum(assetLogsTable.amount),
-                count: sql<number>`count(*)::int`,
-            })
-            .from(assetLogsTable)
-            .where(and(...conditions));
-
-        return {
-            total: result?.total ? Number.parseFloat(result.total) : 0,
-            count: result?.count ?? 0,
-        };
-    }
-
-    async findByInteractionLog(
-        interactionLogId: string
-    ): Promise<AssetLogSelect[]> {
-        return db
-            .select()
-            .from(assetLogsTable)
-            .where(eq(assetLogsTable.interactionLogId, interactionLogId))
-            .orderBy(assetLogsTable.createdAt);
     }
 
     async markSettlementProcessing(ids: string[]): Promise<number> {

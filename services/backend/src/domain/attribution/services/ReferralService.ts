@@ -77,26 +77,4 @@ export class ReferralService {
             params.maxDepth ?? DEFAULT_MAX_CHAIN_DEPTH
         );
     }
-
-    async getDirectReferrer(params: {
-        merchantId: string;
-        identityGroupId: string;
-    }): Promise<string | null> {
-        const link = await this.repository.findByReferee(
-            params.merchantId,
-            params.identityGroupId
-        );
-        return link?.referrerIdentityGroupId ?? null;
-    }
-
-    async getReferees(params: {
-        merchantId: string;
-        referrerIdentityGroupId: string;
-    }): Promise<string[]> {
-        const links = await this.repository.findByReferrer(
-            params.merchantId,
-            params.referrerIdentityGroupId
-        );
-        return links.map((l) => l.refereeIdentityGroupId);
-    }
 }

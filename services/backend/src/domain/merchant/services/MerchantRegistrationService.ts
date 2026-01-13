@@ -6,7 +6,7 @@ import { parseSiweMessage, validateSiweMessage } from "viem/siwe";
 import type { DnsCheckRepository } from "../../../infrastructure/dns/DnsCheckRepository";
 import type { MerchantRepository } from "../repositories/MerchantRepository";
 
-export type RegistrationResult =
+type RegistrationResult =
     | { success: true; merchantId: string }
     | { success: false; error: string };
 

@@ -6,7 +6,7 @@ import type {
     PurchaseRepository,
 } from "../domain/purchases/repositories/PurchaseRepository";
 
-export type ResolvedWebhook = {
+type ResolvedWebhook = {
     webhook: MerchantWebhook;
     merchantId: string;
 };

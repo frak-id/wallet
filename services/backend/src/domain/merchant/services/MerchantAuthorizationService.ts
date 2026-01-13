@@ -2,9 +2,9 @@ import { type Address, isAddressEqual } from "viem";
 import type { MerchantAdminRepository } from "../repositories/MerchantAdminRepository";
 import type { MerchantRepository } from "../repositories/MerchantRepository";
 
-export type MerchantRole = "owner" | "admin" | "none";
+type MerchantRole = "owner" | "admin" | "none";
 
-export type MerchantAccess = {
+type MerchantAccess = {
     hasAccess: boolean;
     isOwner: boolean;
     isAdmin: boolean;
@@ -65,27 +65,5 @@ export class MerchantAuthorizationService {
     async hasAccess(merchantId: string, wallet: Address): Promise<boolean> {
         const access = await this.checkAccess(merchantId, wallet);
         return access.hasAccess;
-    }
-
-    async isOwner(merchantId: string, wallet: Address): Promise<boolean> {
-        const merchant = await this.merchantRepository.findById(merchantId);
-        if (!merchant) {
-            return false;
-        }
-        return isAddressEqual(merchant.ownerWallet, wallet);
-    }
-
-    async requireAccess(merchantId: string, wallet: Address): Promise<void> {
-        const hasAccess = await this.hasAccess(merchantId, wallet);
-        if (!hasAccess) {
-            throw new Error("Access denied: not owner or admin of merchant");
-        }
-    }
-
-    async requireOwner(merchantId: string, wallet: Address): Promise<void> {
-        const isOwner = await this.isOwner(merchantId, wallet);
-        if (!isOwner) {
-            throw new Error("Access denied: not owner of merchant");
-        }
     }
 }

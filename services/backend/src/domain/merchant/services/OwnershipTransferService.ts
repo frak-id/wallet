@@ -5,9 +5,7 @@ import { parseSiweMessage, validateSiweMessage } from "viem/siwe";
 import type { MerchantOwnershipTransferRepository } from "../repositories/MerchantOwnershipTransferRepository";
 import type { MerchantRepository } from "../repositories/MerchantRepository";
 
-export type TransferResult =
-    | { success: true }
-    | { success: false; error: string };
+type TransferResult = { success: true } | { success: false; error: string };
 
 export class OwnershipTransferService {
     constructor(
@@ -135,10 +133,6 @@ export class OwnershipTransferService {
 
     async getPendingTransfer(merchantId: string) {
         return this.transferRepository.findActiveByMerchant(merchantId);
-    }
-
-    async getPendingTransfersForWallet(wallet: Address) {
-        return this.transferRepository.findPendingForWallet(wallet);
     }
 
     private async verifySiweMessage(params: {

@@ -194,20 +194,4 @@ export class RuleEngineService {
             errors,
         };
     }
-
-    async getActiveCampaigns(
-        merchantId: string,
-        trigger?: CampaignTrigger
-    ): Promise<CampaignRuleSelect[]> {
-        return this.repository.findActiveByMerchant(merchantId, trigger);
-    }
-
-    async getCampaignBudgetStatus(campaignRuleId: string): Promise<{
-        budgets: Record<
-            string,
-            { used: number; limit: number; remaining: number; resetAt?: string }
-        >;
-    } | null> {
-        return this.repository.getBudgetStatus(campaignRuleId);
-    }
 }

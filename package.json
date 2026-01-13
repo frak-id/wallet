@@ -49,6 +49,7 @@
     "format": "biome check --write .",
     "format:check": "biome check .",
     "knip": "knip",
+    "knip:backend": "knip -W services/backend --include classMembers",
     "lint": "biome lint .",
     "test": "vitest run",
     "test:watch": "vitest",

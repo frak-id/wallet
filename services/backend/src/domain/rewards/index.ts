@@ -21,19 +21,13 @@ export {
 
 export type {
     AssetStatus,
-    AssetType,
-    AttestationEvent,
     CreateAssetLogParams,
-    IdentityMergePayload,
     InteractionPayload,
     InteractionType,
-    ProcessPurchaseResult,
     PurchasePayload,
     RecipientType,
-    ReferralArrivalPayload,
-    RewardSettlementResult,
     SettlementResult,
     WalletConnectPayload,
 } from "./types";
 
-export { buildAttestation, encodeUserId } from "./types";
+export { buildAttestation } from "./types";

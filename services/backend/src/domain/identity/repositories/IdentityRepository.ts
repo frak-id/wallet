@@ -41,14 +41,6 @@ export class IdentityRepository {
         this.walletByGroupCache.delete(groupId);
     }
 
-    invalidateIdentityCache(
-        type: IdentityType,
-        value: string,
-        merchantId?: string
-    ): void {
-        const key = this.buildIdentityCacheKey(type, value, merchantId);
-        this.identityGroupIdCache.delete(key);
-    }
     async findGroupById(id: string): Promise<IdentityGroupSelect | null> {
         const result = await db.query.identityGroupsTable.findFirst({
             where: eq(identityGroupsTable.id, id),
@@ -110,23 +102,6 @@ export class IdentityRepository {
         return wallet;
     }
 
-    async hasWallet(groupId: string): Promise<boolean> {
-        const wallet = await this.getWalletForGroup(groupId);
-        return wallet !== null;
-    }
-
-    async findGroupWithWallet(params: {
-        type: IdentityType;
-        value: string;
-        merchantId?: string;
-    }): Promise<{ id: string; wallet: Address | null } | null> {
-        const group = await this.findGroupByIdentity(params);
-        if (!group) return null;
-
-        const wallet = await this.getWalletForGroup(group.id);
-        return { id: group.id, wallet };
-    }
-
     async createGroup(): Promise<IdentityGroupSelect> {
         const [result] = await db
             .insert(identityGroupsTable)
@@ -171,22 +146,5 @@ export class IdentityRepository {
             return existing;
         }
         return result;
-    }
-
-    async getNodesForGroup(groupId: string): Promise<IdentityNodeSelect[]> {
-        return db.query.identityNodesTable.findMany({
-            where: eq(identityNodesTable.groupId, groupId),
-        });
-    }
-
-    async moveNodesToGroup(
-        fromGroupId: string,
-        toGroupId: string
-    ): Promise<number> {
-        const result = await db
-            .update(identityNodesTable)
-            .set({ groupId: toGroupId })
-            .where(eq(identityNodesTable.groupId, fromGroupId));
-        return result.count;
     }
 }

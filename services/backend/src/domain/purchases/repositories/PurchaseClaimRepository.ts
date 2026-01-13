@@ -1,8 +1,8 @@
 import { db } from "@backend-infrastructure";
-import { and, eq, lt } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { purchaseClaimsTable } from "../db/schema";
 
-export type PurchaseClaim = typeof purchaseClaimsTable.$inferSelect;
+type PurchaseClaim = typeof purchaseClaimsTable.$inferSelect;
 
 type ClaimKey = {
     merchantId: string;
@@ -55,13 +55,5 @@ export class PurchaseClaimRepository {
         await db
             .delete(purchaseClaimsTable)
             .where(eq(purchaseClaimsTable.id, id));
-    }
-
-    async deleteStale(olderThan: Date): Promise<number> {
-        const result = await db
-            .delete(purchaseClaimsTable)
-            .where(lt(purchaseClaimsTable.createdAt, olderThan))
-            .returning({ id: purchaseClaimsTable.id });
-        return result.length;
     }
 }

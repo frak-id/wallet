@@ -7,13 +7,9 @@ import type {
 } from "../repositories/TouchpointRepository";
 import type { ReferralService } from "./ReferralService";
 
-export type TouchpointSource =
-    | "referral_link"
-    | "organic"
-    | "paid_ad"
-    | "direct";
+type TouchpointSource = "referral_link" | "organic" | "paid_ad" | "direct";
 
-export type RecordTouchpointParams = {
+type RecordTouchpointParams = {
     identityGroupId: string;
     merchantId: string;
     source: TouchpointSource;
@@ -23,7 +19,7 @@ export type RecordTouchpointParams = {
     referrerIdentityGroupId?: string;
 };
 
-export type AttributionResult = {
+type AttributionResult = {
     attributed: boolean;
     source: TouchpointSource | null;
     touchpointId: string | null;

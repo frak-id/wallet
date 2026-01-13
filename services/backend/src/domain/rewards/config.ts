@@ -41,5 +41,3 @@ export const RewardConfig = {
         expiration: "0 3 * * *",
     },
 } as const;
-
-export type RewardConfigType = typeof RewardConfig;

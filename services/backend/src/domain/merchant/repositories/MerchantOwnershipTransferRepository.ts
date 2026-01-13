@@ -1,30 +1,14 @@
 import { db } from "@backend-infrastructure";
-import { and, eq, gt, lt } from "drizzle-orm";
+import { and, eq, gt } from "drizzle-orm";
 import type { Address } from "viem";
 import { merchantOwnershipTransfersTable } from "../db/schema";
 
 type OwnershipTransferSelect =
     typeof merchantOwnershipTransfersTable.$inferSelect;
 
-export type { OwnershipTransferSelect };
-
 const TRANSFER_EXPIRY_DAYS = 7;
 
 export class MerchantOwnershipTransferRepository {
-    async findByMerchant(
-        merchantId: string
-    ): Promise<OwnershipTransferSelect | null> {
-        const result = await db.query.merchantOwnershipTransfersTable.findFirst(
-            {
-                where: eq(
-                    merchantOwnershipTransfersTable.merchantId,
-                    merchantId
-                ),
-            }
-        );
-        return result ?? null;
-    }
-
     async findActiveByMerchant(
         merchantId: string
     ): Promise<OwnershipTransferSelect | null> {
@@ -37,17 +21,6 @@ export class MerchantOwnershipTransferRepository {
             }
         );
         return result ?? null;
-    }
-
-    async findPendingForWallet(
-        wallet: Address
-    ): Promise<OwnershipTransferSelect[]> {
-        return db.query.merchantOwnershipTransfersTable.findMany({
-            where: and(
-                eq(merchantOwnershipTransfersTable.toWallet, wallet),
-                gt(merchantOwnershipTransfersTable.expiresAt, new Date())
-            ),
-        });
     }
 
     async create(params: {
@@ -88,12 +61,5 @@ export class MerchantOwnershipTransferRepository {
             .delete(merchantOwnershipTransfersTable)
             .where(eq(merchantOwnershipTransfersTable.merchantId, merchantId));
         return result.count > 0;
-    }
-
-    async deleteExpired(): Promise<number> {
-        const result = await db
-            .delete(merchantOwnershipTransfersTable)
-            .where(lt(merchantOwnershipTransfersTable.expiresAt, new Date()));
-        return result.count;
     }
 }

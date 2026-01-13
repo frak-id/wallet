@@ -14,7 +14,7 @@ export { sessionContext } from "./macro";
 // Events
 export { eventEmitter } from "./messaging/events";
 // Database
-export { type GetMongoDb, getMongoDb } from "./persistence/mongodb";
+export { getMongoDb } from "./persistence/mongodb";
 export { db } from "./persistence/postgres";
 export {
     PricingRepository,

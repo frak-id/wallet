@@ -1,7 +1,7 @@
 /**
  * Attestation event structure for on-chain proof.
  */
-export type AttestationEvent = {
+type AttestationEvent = {
     event: string;
     timestampInSecond: number;
 };

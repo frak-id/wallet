@@ -37,16 +37,6 @@ export class TouchpointRepository {
         return touchpoint;
     }
 
-    async findById(id: string): Promise<Touchpoint | null> {
-        const [touchpoint] = await db
-            .select()
-            .from(touchpointsTable)
-            .where(eq(touchpointsTable.id, id))
-            .limit(1);
-
-        return touchpoint ?? null;
-    }
-
     async findValidForAttribution(params: {
         identityGroupId: string;
         merchantId: string;
@@ -119,11 +109,5 @@ export class TouchpointRepository {
             .returning({ id: touchpointsTable.id });
 
         return result.length;
-    }
-
-    async deleteByIdentityGroup(identityGroupId: string): Promise<void> {
-        await db
-            .delete(touchpointsTable)
-            .where(eq(touchpointsTable.identityGroupId, identityGroupId));
     }
 }

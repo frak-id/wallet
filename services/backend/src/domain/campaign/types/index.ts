@@ -68,7 +68,7 @@ export type ConditionGroup = {
 /**
  * Who receives the reward.
  */
-export type RewardRecipient =
+type RewardRecipient =
     | "referrer" // The user who shared the referral link
     | "referee" // The user who clicked the referral link and converted
     | "user"; // The current user (for any non-referral rewards)
@@ -76,7 +76,7 @@ export type RewardRecipient =
 /**
  * Type of reward asset.
  */
-export type RewardAssetType =
+type RewardAssetType =
     | "token" // Crypto token (USDC, etc.)
     | "discount" // Store discount (soft reward)
     | "points"; // Loyalty points (soft reward)
@@ -197,14 +197,14 @@ export type CampaignRuleDefinition = {
 // METADATA
 // =============================================================================
 
-export type CampaignGoal =
+type CampaignGoal =
     | "awareness"
     | "traffic"
     | "registration"
     | "sales"
     | "retention";
 
-export type SpecialCategory = "credit" | "jobs" | "housing" | "social";
+type SpecialCategory = "credit" | "jobs" | "housing" | "social";
 
 export type CampaignMetadata = {
     goal?: CampaignGoal;
@@ -216,7 +216,7 @@ export type CampaignMetadata = {
 // BUDGET
 // =============================================================================
 
-export type BudgetConfigItem = {
+type BudgetConfigItem = {
     label: string;
     durationInSeconds: number | null;
     amount: number;
@@ -224,7 +224,7 @@ export type BudgetConfigItem = {
 
 export type BudgetConfig = BudgetConfigItem[];
 
-export type BudgetUsedItem = {
+type BudgetUsedItem = {
     resetAt?: string;
     used: number;
 };
@@ -238,7 +238,7 @@ export type BudgetUsed = Record<string, BudgetUsedItem>;
 /**
  * Purchase item in the context.
  */
-export type PurchaseItem = {
+type PurchaseItem = {
     productId?: string;
     name?: string;
     quantity: number;
@@ -278,7 +278,7 @@ export type PurchaseContext = {
 /**
  * Attribution data in the context.
  */
-export type AttributionContext = {
+type AttributionContext = {
     source: "referral_link" | "organic" | "paid_ad" | "direct" | null;
     touchpointId: string | null;
     referrerWallet: Address | null;
@@ -291,14 +291,14 @@ export type AttributionContext = {
     utmCampaign?: string;
 };
 
-export type UserRewardHistory = {
+type UserRewardHistory = {
     campaignRewardCount?: number;
     campaignRewardAmount?: number;
     merchantRewardCount?: number;
     merchantRewardAmount?: number;
 };
 
-export type UserContext = {
+type UserContext = {
     identityGroupId: string;
     walletAddress: Address | null;
     countryCode?: string;

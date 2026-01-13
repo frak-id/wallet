@@ -5,18 +5,6 @@ import type {
     RuleContext,
 } from "../../domain/campaign";
 
-export type AttributionForContext = {
-    source: "referral_link" | "organic" | "paid_ad" | "direct" | null;
-    touchpointId: string | null;
-    referrerWallet: Address | null;
-    referrerIdentityGroupId: string | null;
-};
-
-export type UserForContext = {
-    identityGroupId: string;
-    walletAddress: Address | null;
-};
-
 export type InteractionContextResult = {
     trigger: CampaignTrigger;
     context: Omit<RuleContext, "time">;

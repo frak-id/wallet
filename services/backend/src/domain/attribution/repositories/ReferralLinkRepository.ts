@@ -90,41 +90,4 @@ export class ReferralLinkRepository {
 
         return chain;
     }
-
-    async findByReferrer(
-        merchantId: string,
-        referrerIdentityGroupId: string
-    ): Promise<ReferralLinkSelect[]> {
-        return db
-            .select()
-            .from(referralLinksTable)
-            .where(
-                and(
-                    eq(referralLinksTable.merchantId, merchantId),
-                    eq(
-                        referralLinksTable.referrerIdentityGroupId,
-                        referrerIdentityGroupId
-                    )
-                )
-            );
-    }
-
-    async delete(
-        merchantId: string,
-        refereeIdentityGroupId: string
-    ): Promise<boolean> {
-        const result = await db
-            .delete(referralLinksTable)
-            .where(
-                and(
-                    eq(referralLinksTable.merchantId, merchantId),
-                    eq(
-                        referralLinksTable.refereeIdentityGroupId,
-                        refereeIdentityGroupId
-                    )
-                )
-            )
-            .returning({ id: referralLinksTable.id });
-        return result.length > 0;
-    }
 }

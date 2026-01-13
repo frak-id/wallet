@@ -1,5 +1,4 @@
 import { t } from "@backend-utils";
-import type { Static } from "elysia";
 
 export const BusinessTokenDto = t.Object({
     wallet: t.Address(),
@@ -16,8 +15,3 @@ export const BusinessAuthResponseDto = t.Object({
     wallet: t.Address(),
     expiresAt: t.Number(),
 });
-
-export type StaticBusinessTokenDto = Static<typeof BusinessTokenDto>;
-export type StaticBusinessAuthResponseDto = Static<
-    typeof BusinessAuthResponseDto
->;

@@ -6,7 +6,7 @@ import type {
 import type { CampaignRuleRepository } from "../repositories/CampaignRuleRepository";
 import type { BudgetConfig, CampaignRuleDefinition } from "../types";
 
-export type CampaignCreateInput = {
+type CampaignCreateInput = {
     merchantId: string;
     name: string;
     rule: CampaignRuleDefinition;
@@ -16,7 +16,7 @@ export type CampaignCreateInput = {
     priority?: number;
 };
 
-export type CampaignUpdateInput = {
+type CampaignUpdateInput = {
     name?: string;
     rule?: CampaignRuleDefinition;
     metadata?: Record<string, unknown>;
@@ -25,7 +25,7 @@ export type CampaignUpdateInput = {
     priority?: number;
 };
 
-export type CampaignResult<T = CampaignRuleSelect> =
+type CampaignResult<T = CampaignRuleSelect> =
     | { success: true; campaign: T }
     | { success: false; error: string };
 

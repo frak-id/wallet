@@ -38,9 +38,12 @@ const config: KnipConfig = {
             entry: ["src/router.tsx", "src/routes/**/*.tsx"],
             project: ["src/**/*.{ts,tsx}"],
         },
-        "packages/backend-elysia": {
-            entry: "src/index.ts",
+        "services/backend": {
+            entry: ["src/index.ts", "src/jobs/*.ts"],
             project: "src/**/*.ts",
+            ignore: ["test/**", "scripts/**"],
+            // Enable class member detection for backend (DDD with repositories/services)
+            includeEntryExports: true,
         },
         "sdk/core": {
             entry: ["src/**/index.ts"],

@@ -3,7 +3,7 @@ export type FrakEvents = {
     newPendingRewards: [{ count: number }];
 };
 
-export type InteractionEventType =
+type InteractionEventType =
     | "referral_arrival"
     | "purchase"
     | "wallet_connect"

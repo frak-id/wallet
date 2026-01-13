@@ -1,4 +1,4 @@
-import { and, desc, eq, gt, inArray, isNull, lt, or } from "drizzle-orm";
+import { and, desc, eq, gt, inArray, isNull, or } from "drizzle-orm";
 import { LRUCache } from "lru-cache";
 import { db } from "../../../infrastructure/persistence/postgres";
 import {
@@ -319,75 +319,11 @@ export class CampaignRuleRepository {
         });
     }
 
-    async getBudgetStatus(campaignRuleId: string): Promise<{
-        budgets: Record<
-            string,
-            { used: number; limit: number; remaining: number; resetAt?: string }
-        >;
-    } | null> {
-        const [result] = await db
-            .select({
-                budgetConfig: campaignRulesTable.budgetConfig,
-                budgetUsed: campaignRulesTable.budgetUsed,
-            })
-            .from(campaignRulesTable)
-            .where(eq(campaignRulesTable.id, campaignRuleId))
-            .limit(1);
-
-        if (!result) return null;
-
-        const budgets: Record<
-            string,
-            { used: number; limit: number; remaining: number; resetAt?: string }
-        > = {};
-
-        if (!result.budgetConfig) {
-            return { budgets };
-        }
-
-        const now = new Date().toISOString();
-
-        for (const config of result.budgetConfig) {
-            const usedEntry = result.budgetUsed?.[config.label];
-            let used = usedEntry?.used ?? 0;
-
-            if (
-                config.durationInSeconds !== null &&
-                usedEntry?.resetAt &&
-                usedEntry.resetAt < now
-            ) {
-                used = 0;
-            }
-
-            budgets[config.label] = {
-                used,
-                limit: config.amount,
-                remaining: config.amount - used,
-                resetAt: usedEntry?.resetAt,
-            };
-        }
-
-        return { budgets };
-    }
-
     async findByMerchant(merchantId: string): Promise<CampaignRuleSelect[]> {
         return db
             .select()
             .from(campaignRulesTable)
             .where(eq(campaignRulesTable.merchantId, merchantId))
             .orderBy(desc(campaignRulesTable.priority));
-    }
-
-    async findExpired(): Promise<CampaignRuleSelect[]> {
-        const now = new Date();
-        return db
-            .select()
-            .from(campaignRulesTable)
-            .where(
-                and(
-                    eq(campaignRulesTable.status, "active"),
-                    lt(campaignRulesTable.expiresAt, now)
-                )
-            );
     }
 }

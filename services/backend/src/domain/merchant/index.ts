@@ -5,28 +5,9 @@ export {
     merchantOwnershipTransfersTable,
     merchantsTable,
 } from "./db/schema";
-export {
-    MerchantAdminRepository,
-    type MerchantAdminSelect,
-} from "./repositories/MerchantAdminRepository";
-export {
-    MerchantOwnershipTransferRepository,
-    type OwnershipTransferSelect,
-} from "./repositories/MerchantOwnershipTransferRepository";
-export {
-    MerchantRepository,
-    type MerchantSelect,
-} from "./repositories/MerchantRepository";
-export {
-    type MerchantAccess,
-    MerchantAuthorizationService,
-    type MerchantRole,
-} from "./services/MerchantAuthorizationService";
-export {
-    MerchantRegistrationService,
-    type RegistrationResult,
-} from "./services/MerchantRegistrationService";
-export {
-    OwnershipTransferService,
-    type TransferResult,
-} from "./services/OwnershipTransferService";
+export { MerchantAdminRepository } from "./repositories/MerchantAdminRepository";
+export { MerchantOwnershipTransferRepository } from "./repositories/MerchantOwnershipTransferRepository";
+export { MerchantRepository } from "./repositories/MerchantRepository";
+export { MerchantAuthorizationService } from "./services/MerchantAuthorizationService";
+export { MerchantRegistrationService } from "./services/MerchantRegistrationService";
+export { OwnershipTransferService } from "./services/OwnershipTransferService";
