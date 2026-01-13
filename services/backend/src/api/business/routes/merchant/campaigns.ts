@@ -65,6 +65,7 @@ const RuleDefinitionSchema = t.Object({
         t.Literal("wallet_connect"),
         t.Literal("custom"),
     ]),
+    // todo: fix that
     conditions: t.Any(),
     rewards: t.Array(RewardDefinitionSchema),
 });
@@ -83,6 +84,7 @@ const CampaignResponseSchema = t.Object({
     name: t.String(),
     status: CampaignStatusSchema,
     priority: t.Number(),
+    // todo: fix that
     rule: t.Any(),
     metadata: t.Union([t.Object({}), t.Null()]),
     budgetConfig: t.Union([BudgetConfigSchema, t.Null()]),
