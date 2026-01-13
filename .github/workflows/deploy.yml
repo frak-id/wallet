@@ -48,8 +48,9 @@ jobs:
             .sst/platform/
             .sst/provider-lock.json
             .sst/esbuild.json
-          key: ${{ runner.os }}-sst-${{ hashFiles('./sst.config.ts') }}
-          restore-keys: ${{ runner.os }}-sst-
+          # Bump v2 when Pulumi/SST updates require cache invalidation
+          key: ${{ runner.os }}-sst-v2-${{ hashFiles('./sst.config.ts') }}
+          restore-keys: ${{ runner.os }}-sst-v2-
 
       - uses: dorny/paths-filter@v3
         name: Check changes
@@ -131,6 +132,10 @@ jobs:
           fi
 
           echo "Deployment stage  : ${{ env.STAGE }}"
+
+      - name: "🔧 Remove old system Pulumi"
+        if: steps.changes.outputs.deployRequired == 'true' || github.event.inputs.force_deploy == 'true'
+        run: sudo rm -rf /usr/local/bin/pulumi* /home/runner/.pulumi
 
       - name: "🚀 Deploy Services"
         if: steps.changes.outputs.services == 'true' || github.event.inputs.force_deploy == 'true'
