@@ -217,7 +217,9 @@ async function handleMobileAuthComplete(data: {
     const session: Session = {
         type: "mobile-auth",
         address: data.wallet as `0x${string}`,
-        token: data.sdkJwt.token,
+        // Important: mobile-auth sessions must not masquerade as wallet-auth sessions.
+        // Use sdkSession for SDK-authenticated endpoints instead.
+        token: "",
         authenticatorId: `mobile-${data.wallet}` as `mobile-${string}`,
         transports: undefined,
     };

@@ -13,6 +13,7 @@ import {
 import { type ReactNode, useState } from "react";
 import type { Hex } from "viem";
 import { useListenerWithRequestUI } from "@/module/providers/ListenerUiProvider";
+import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 
 /**
  * Button used to launch an SSO registration
@@ -164,8 +165,13 @@ function MobileSsoButton({
 
         const state = generateState();
 
-        // Use document.referrer as return URL (the page that loaded this iframe)
-        const returnUrl = document.referrer || window.location.href;
+        // Prefer resolving context (handshake-derived) as return URL.
+        // This is more reliable than document.referrer under strict Referrer-Policy.
+        const resolvingContext = resolvingContextStore.getState().context;
+        const returnUrl =
+            resolvingContext?.sourceUrl ??
+            document.referrer ??
+            window.location.href;
         const deepLinkUrl = buildMobileLoginUrl({
             returnUrl,
             productId,
@@ -175,7 +181,12 @@ function MobileSsoButton({
 
         // Use iframe lifecycle redirect event (handled by SDK)
         // Use parent origin from referrer for security (avoid "*")
-        const targetOrigin = new URL(returnUrl).origin;
+        const targetOrigin =
+            resolvingContext?.origin ?? safeGetOrigin(returnUrl);
+        if (!targetOrigin) {
+            trackAuthFailed("sso", "invalid-return-url");
+            return;
+        }
 
         // Send redirect event with state so parent can store it in its sessionStorage
         window.parent.postMessage(
@@ -218,4 +229,12 @@ function buildMobileLoginUrl({
     if (productName) params.set("productName", productName);
 
     return `${DEEP_LINK_SCHEME}login?${params.toString()}`;
+}
+
+function safeGetOrigin(url: string): string | null {
+    try {
+        return new URL(url).origin;
+    } catch {
+        return null;
+    }
 }

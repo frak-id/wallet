@@ -36,13 +36,17 @@ export function setupMobileAuthCallback(
     // Validate state to prevent CSRF attacks
     // Use localStorage because mobile app opens new tab (sessionStorage is per-tab)
     const savedState = localStorage.getItem(AUTH_STATE_KEY);
-    if (state && savedState && state !== savedState) {
-        cleanupAuthParams(url);
-        return;
+    const hasSavedState =
+        typeof savedState === "string" && savedState.length > 0;
+    if (hasSavedState) {
+        // If a state was stored, it must be present and match.
+        // This prevents accepting callbacks missing state while a flow is in progress.
+        if (state !== savedState) {
+            cleanupAuthParams(url);
+            return;
+        }
+        localStorage.removeItem(AUTH_STATE_KEY);
     }
-
-    // Clean up state from localStorage
-    localStorage.removeItem(AUTH_STATE_KEY);
 
     // Clean URL immediately to prevent exposure in browser history
     cleanupAuthParams(url);

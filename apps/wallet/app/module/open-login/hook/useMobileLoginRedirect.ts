@@ -55,7 +55,10 @@ export function useMobileLoginRedirect() {
             const finalUrl = finalRedirectUrl.toString();
             setRedirectUrl(finalUrl);
 
-            await openExternalUrl(finalUrl);
+            const didOpen = await openExternalUrl(finalUrl);
+            if (!didOpen) {
+                throw new Error("Failed to open browser for redirect");
+            }
         },
         [generateAuthCode]
     );
