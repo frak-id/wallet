@@ -108,7 +108,7 @@ function RegularSsoButton({
                 // If we got a window, focus it and save the clicked state
                 if (openedWindow) {
                     openedWindow.focus();
-                    trackAuthInitiated("sso");
+                    trackAuthInitiated("sso", { method: "popup" });
                 } else {
                     // Otherwise, mark that we fail to open it
                     setFailToOpen(true);
@@ -140,7 +140,7 @@ function LinkSsoButton({
             target="frak-sso"
             rel="noreferrer"
             onClick={() => {
-                trackAuthInitiated("sso");
+                trackAuthInitiated("sso", { method: "link" });
             }}
         >
             {text}
@@ -160,7 +160,7 @@ function MobileSsoButton({
     className?: string;
 }) {
     const handleClick = () => {
-        trackAuthInitiated("sso");
+        trackAuthInitiated("sso", { method: "mobile" });
 
         const state = generateState();
 
