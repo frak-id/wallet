@@ -6,6 +6,7 @@ import {
 } from "@frak-labs/wallet-shared";
 import { Trans, useTranslation } from "react-i18next";
 import { SsoLoginComponent } from "./Sso/SsoLogin";
+import { SsoRegisterComponent } from "./Sso/SsoRegister";
 
 type AuthActionsProps = {
     onSuccess: () => void;
@@ -57,16 +58,25 @@ export function AuthActions({
     }
 
     return (
-        <ButtonAuth
-            disabled={loading}
-            isLoading={loading}
-            onClick={() => {
-                onError(null);
-                login({});
-            }}
-            className={className}
-        >
-            <Trans i18nKey={loginButtonText ?? t("wallet.openLogin.login")} />
-        </ButtonAuth>
+        <>
+            <ButtonAuth
+                disabled={loading}
+                isLoading={loading}
+                onClick={() => {
+                    onError(null);
+                    login({});
+                }}
+                className={className}
+            >
+                <Trans
+                    i18nKey={loginButtonText ?? t("wallet.openLogin.login")}
+                />
+            </ButtonAuth>
+            <SsoRegisterComponent
+                isPrimary={false}
+                onSuccess={onSuccess}
+                onError={onError}
+            />
+        </>
     );
 }

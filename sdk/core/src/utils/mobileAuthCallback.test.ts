@@ -48,8 +48,8 @@ describe("setupMobileAuthCallback", () => {
         // Mock history.replaceState
         window.history.replaceState = vi.fn();
 
-        // Clear sessionStorage
-        sessionStorage.clear();
+        // Clear localStorage
+        localStorage.clear();
 
         // Mock fetch
         global.fetch = vi.fn().mockResolvedValue({
@@ -62,7 +62,7 @@ describe("setupMobileAuthCallback", () => {
     afterEach(() => {
         vi.clearAllMocks();
         consoleErrorSpy.mockRestore();
-        sessionStorage.clear();
+        localStorage.clear();
 
         // Restore original values
         Object.defineProperty(window, "location", {
@@ -132,8 +132,8 @@ describe("setupMobileAuthCallback", () => {
     });
 
     it("should reject when state does not match saved state", () => {
-        // Set saved state in sessionStorage
-        sessionStorage.setItem("frak_auth_state", mockState);
+        // Set saved state in localStorage (mobile app opens new tab)
+        localStorage.setItem("frak_auth_state", mockState);
 
         Object.defineProperty(window, "location", {
             value: {
@@ -148,17 +148,15 @@ describe("setupMobileAuthCallback", () => {
             Promise.resolve(true)
         );
 
-        expect(consoleErrorSpy).toHaveBeenCalledWith(
-            "[Frak SDK] Mobile auth callback state mismatch"
-        );
+        // State mismatch should NOT call fetch (main behavior to verify)
         expect(global.fetch).not.toHaveBeenCalled();
         // URL should still be cleaned
         expect(window.history.replaceState).toHaveBeenCalled();
     });
 
     it("should initiate exchange when valid params are present", () => {
-        // Set saved state
-        sessionStorage.setItem("frak_auth_state", mockState);
+        // Set saved state in localStorage (mobile app opens new tab)
+        localStorage.setItem("frak_auth_state", mockState);
 
         Object.defineProperty(window, "location", {
             value: {
@@ -181,7 +179,7 @@ describe("setupMobileAuthCallback", () => {
     });
 
     it("should clean URL immediately after detecting auth params", () => {
-        sessionStorage.setItem("frak_auth_state", mockState);
+        localStorage.setItem("frak_auth_state", mockState);
 
         Object.defineProperty(window, "location", {
             value: {
@@ -205,7 +203,7 @@ describe("setupMobileAuthCallback", () => {
     });
 
     it("should call fetch with correct parameters", () => {
-        sessionStorage.setItem("frak_auth_state", mockState);
+        localStorage.setItem("frak_auth_state", mockState);
 
         Object.defineProperty(window, "location", {
             value: {
@@ -222,7 +220,7 @@ describe("setupMobileAuthCallback", () => {
 
         // Verify fetch was called with correct URL and body
         expect(global.fetch).toHaveBeenCalledWith(
-            "https://wallet.frak.id/api/wallet/auth/mobile/exchange",
+            "https://backend.frak.id/wallet/auth/mobile/exchange",
             {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -235,7 +233,7 @@ describe("setupMobileAuthCallback", () => {
     });
 
     it("should preserve other URL parameters when cleaning", () => {
-        sessionStorage.setItem("frak_auth_state", mockState);
+        localStorage.setItem("frak_auth_state", mockState);
 
         Object.defineProperty(window, "location", {
             value: {
@@ -258,7 +256,7 @@ describe("setupMobileAuthCallback", () => {
     });
 
     it("should use default walletUrl when not provided in config", () => {
-        sessionStorage.setItem("frak_auth_state", mockState);
+        localStorage.setItem("frak_auth_state", mockState);
 
         Object.defineProperty(window, "location", {
             value: {
@@ -279,13 +277,13 @@ describe("setupMobileAuthCallback", () => {
 
         // Default URL should be used
         expect(global.fetch).toHaveBeenCalledWith(
-            "https://wallet.frak.id/api/wallet/auth/mobile/exchange",
+            "https://backend.frak.id/wallet/auth/mobile/exchange",
             expect.any(Object)
         );
     });
 
     it("should work without state parameter when no saved state", () => {
-        // Don't set any state in sessionStorage
+        // Don't set any state in localStorage
 
         Object.defineProperty(window, "location", {
             value: {

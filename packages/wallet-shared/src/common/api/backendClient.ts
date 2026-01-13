@@ -3,9 +3,7 @@ import type { App } from "@frak-labs/backend-elysia";
 import { sessionStore } from "../../stores/sessionStore";
 import { getSafeSdkSession, getSafeSession } from "../utils/safeSession";
 
-// Log backend URL for debugging
 const backendUrl = process.env.BACKEND_URL ?? "http://localhost:3030";
-console.log("[Backend Client] Using backend URL:", backendUrl);
 
 /**
  * Treaty client with authentication tokens if present
@@ -30,9 +28,18 @@ export const authenticatedBackendApi = treaty<App>(backendUrl, {
         // Return the new headers
         return headers;
     },
-    // Auto cleanup session on 401 response
+    // Auto cleanup session on 401 response (only for auth-critical endpoints)
     onResponse(response) {
         if (response.status === 401) {
+            const url = response.url;
+            // Don't clear session for balance/tokens endpoints - they may fail with mobile auth
+            // token which is an SDK JWT, not a wallet auth token
+            const isNonAuthEndpoint =
+                url.includes("/wallet/balance") ||
+                url.includes("/wallet/tokens");
+            if (isNonAuthEndpoint) {
+                return;
+            }
             sessionStore.getState().clearSession();
         }
     },

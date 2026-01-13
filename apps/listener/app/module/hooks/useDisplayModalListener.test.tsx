@@ -40,6 +40,7 @@ const mockWalletStore: any = Object.assign(
 );
 
 const mockTrackGenericEvent = vi.fn();
+const mockGetSafeSession = vi.fn<any>(() => undefined);
 
 vi.mock("@frak-labs/wallet-shared", () => ({
     get sessionStore() {
@@ -50,6 +51,9 @@ vi.mock("@frak-labs/wallet-shared", () => ({
     },
     get trackGenericEvent() {
         return mockTrackGenericEvent;
+    },
+    get getSafeSession() {
+        return mockGetSafeSession;
     },
 }));
 
@@ -87,6 +91,7 @@ describe("useDisplayModalListener", () => {
         mockWalletStore.getState.mockReturnValue({
             interactionSession: undefined,
         });
+        mockGetSafeSession.mockReturnValue(undefined);
     });
 
     test("should throw error for empty steps", async ({ mockProductId }) => {
@@ -170,9 +175,11 @@ describe("useDisplayModalListener", () => {
         mockAddress,
         mockProductId,
     }) => {
+        const mockSession = { address: mockAddress, type: "ecdsa" };
         mockSessionStore.getState.mockReturnValue({
-            session: { address: mockAddress },
+            session: mockSession,
         });
+        mockGetSafeSession.mockReturnValue(mockSession);
 
         let subscribeCb: ((state: any) => void) | undefined;
         (mockModalStore.subscribe as any).mockImplementation(
@@ -225,9 +232,11 @@ describe("useDisplayModalListener", () => {
     }) => {
         const futureTime = Date.now() + 3600000;
 
+        const mockSession = { address: mockAddress, type: "ecdsa" };
         mockSessionStore.getState.mockReturnValue({
-            session: { address: mockAddress },
+            session: mockSession,
         });
+        mockGetSafeSession.mockReturnValue(mockSession);
         mockWalletStore.getState.mockReturnValue({
             interactionSession: {
                 sessionStart: Date.now(),
@@ -289,9 +298,11 @@ describe("useDisplayModalListener", () => {
     }) => {
         const pastTime = Date.now() - 1000;
 
+        const mockSession = { address: mockAddress, type: "ecdsa" };
         mockSessionStore.getState.mockReturnValue({
-            session: { address: mockAddress },
+            session: mockSession,
         });
+        mockGetSafeSession.mockReturnValue(mockSession);
         mockWalletStore.getState.mockReturnValue({
             interactionSession: {
                 sessionStart: Date.now() - 3600000,

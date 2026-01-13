@@ -68,9 +68,18 @@ export function createIFrameLifecycleManager({
             }
             // Redirect handling
             case "redirect": {
+                // Store state in localStorage for cross-tab CSRF validation
+                // (sessionStorage doesn't persist when mobile app opens new tab)
+                if ("state" in data && data.state) {
+                    localStorage.setItem(
+                        "frak_auth_state",
+                        data.state as string
+                    );
+                }
+
                 const redirectUrl = new URL(data.baseRedirectUrl);
 
-                // If we got a u append the current location dynamicly
+                // If we got a u append the current location dynamically
                 if (redirectUrl.searchParams.has("u")) {
                     redirectUrl.searchParams.delete("u");
                     redirectUrl.searchParams.append("u", window.location.href);

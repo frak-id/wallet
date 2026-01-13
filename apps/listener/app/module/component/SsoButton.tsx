@@ -162,7 +162,6 @@ function MobileSsoButton({
         trackAuthInitiated("sso");
 
         const state = generateState();
-        sessionStorage.setItem("frak_auth_state", state);
 
         // Use document.referrer as return URL (the page that loaded this iframe)
         const returnUrl = document.referrer || window.location.href;
@@ -176,10 +175,12 @@ function MobileSsoButton({
         // Use iframe lifecycle redirect event (handled by SDK)
         // Use parent origin from referrer for security (avoid "*")
         const targetOrigin = new URL(returnUrl).origin;
+
+        // Send redirect event with state so parent can store it in its sessionStorage
         window.parent.postMessage(
             {
                 iframeLifecycle: "redirect",
-                data: { baseRedirectUrl: deepLinkUrl },
+                data: { baseRedirectUrl: deepLinkUrl, state },
             },
             targetOrigin
         );

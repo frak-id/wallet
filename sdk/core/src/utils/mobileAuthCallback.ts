@@ -2,18 +2,6 @@ import type { RpcClient } from "@frak-labs/frame-connector";
 import type { FrakLifecycleEvent, FrakWalletSdkConfig } from "../types";
 import type { IFrameRpcSchema } from "../types/rpc";
 
-/**
- * Result of processing a mobile auth callback
- */
-export type MobileAuthCallbackResult = {
-    success: boolean;
-    wallet?: string;
-    error?: string;
-};
-
-/**
- * State stored in sessionStorage for CSRF protection
- */
 const AUTH_STATE_KEY = "frak_auth_state";
 
 /**
@@ -46,15 +34,15 @@ export function setupMobileAuthCallback(
     }
 
     // Validate state to prevent CSRF attacks
-    const savedState = sessionStorage.getItem(AUTH_STATE_KEY);
+    // Use localStorage because mobile app opens new tab (sessionStorage is per-tab)
+    const savedState = localStorage.getItem(AUTH_STATE_KEY);
     if (state && savedState && state !== savedState) {
-        console.error("[Frak SDK] Mobile auth callback state mismatch");
         cleanupAuthParams(url);
         return;
     }
 
-    // Clean up state from sessionStorage
-    sessionStorage.removeItem(AUTH_STATE_KEY);
+    // Clean up state from localStorage
+    localStorage.removeItem(AUTH_STATE_KEY);
 
     // Clean URL immediately to prevent exposure in browser history
     cleanupAuthParams(url);
@@ -76,11 +64,8 @@ export function setupMobileAuthCallback(
                 },
             });
         })
-        .catch((error) => {
-            console.error(
-                "[Frak SDK] Failed to exchange mobile auth code:",
-                error
-            );
+        .catch(() => {
+            // Silent fail - mobile auth is opportunistic
         });
 }
 
@@ -92,6 +77,26 @@ function cleanupAuthParams(url: URL): void {
     url.searchParams.delete("productId");
     url.searchParams.delete("state");
     window.history.replaceState({}, "", url.toString());
+}
+
+/**
+ * Get backend URL from wallet URL
+ * Maps wallet URLs to their corresponding backend URLs
+ */
+function getBackendUrl(walletUrl: string): string {
+    // Local development
+    if (walletUrl.includes("localhost:3000")) {
+        return "http://localhost:3030";
+    }
+    // Dev environment
+    if (
+        walletUrl.includes("wallet-dev.frak.id") ||
+        walletUrl.includes("wallet.gcp-dev.frak.id")
+    ) {
+        return "https://backend.gcp-dev.frak.id";
+    }
+    // Production
+    return "https://backend.frak.id";
 }
 
 /**
@@ -109,14 +114,14 @@ async function exchangeAuthCode({
     wallet: string;
     sdkJwt: { token: string; expires: number };
 }> {
-    const response = await fetch(
-        `${walletUrl}/api/wallet/auth/mobile/exchange`,
-        {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ authCode, productId }),
-        }
-    );
+    const backendUrl = getBackendUrl(walletUrl);
+    const endpoint = `${backendUrl}/wallet/auth/mobile/exchange`;
+
+    const response = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ authCode, productId }),
+    });
 
     if (!response.ok) {
         const errorText = await response.text();

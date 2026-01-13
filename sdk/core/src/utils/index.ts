@@ -12,7 +12,6 @@ export {
     createIframe,
     findIframeInOpener,
 } from "./iframeHelper";
-export type { MobileAuthCallbackResult } from "./mobileAuthCallback";
 export { setupMobileAuthCallback } from "./mobileAuthCallback";
 export {
     type AppSpecificSsoMetadata,

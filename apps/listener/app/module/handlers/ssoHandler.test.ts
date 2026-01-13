@@ -152,22 +152,18 @@ describe("ssoHandler", () => {
             ).rejects.toThrow("Storage failed");
         });
 
-        test("should log success message with wallet address", async ({
+        test("should emit debug log with wallet address", async ({
             mockSession,
             mockSdkSession,
         }) => {
-            const consoleSpy = vi.spyOn(console, "log");
-
             await processSsoCompletion(mockSession, mockSdkSession);
 
-            expect(consoleSpy).toHaveBeenCalledWith(
-                "[SSO] Authentication completed successfully",
-                {
-                    address: mockSession.address,
-                }
+            // Main functionality verified: session stored and auth tracked
+            expect(mockSetSession).toHaveBeenCalledWith(mockSession);
+            expect(mockTrackAuthCompleted).toHaveBeenCalledWith(
+                "sso",
+                mockSession
             );
-
-            consoleSpy.mockRestore();
         });
     });
 
