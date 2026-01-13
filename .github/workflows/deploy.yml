@@ -135,6 +135,10 @@ jobs:
 
       - name: "🔧 Remove old system Pulumi"
         if: steps.changes.outputs.deployRequired == 'true' || github.event.inputs.force_deploy == 'true'
+        # The ubuntu-latest runner has pre-installed Pulumi plugins that become
+        # outdated. SST 3.17+ requires newer pulumi-language-nodejs with -root flag.
+        # Removing system Pulumi forces SST to use its own managed plugins.
+        # See: https://github.com/frak-id/wallet/actions/runs/20962035268
         run: sudo rm -rf /usr/local/bin/pulumi* /home/runner/.pulumi
 
       - name: "🚀 Deploy Services"
