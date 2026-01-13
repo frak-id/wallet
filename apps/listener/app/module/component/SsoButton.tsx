@@ -1,4 +1,5 @@
 import {
+    DEEP_LINK_SCHEME,
     type SsoMetadata,
     ssoPopupFeatures,
     ssoPopupName,
@@ -216,5 +217,5 @@ function buildMobileLoginUrl({
     params.set("state", state);
     if (productName) params.set("productName", productName);
 
-    return `frakwallet://login?${params.toString()}`;
+    return `${DEEP_LINK_SCHEME}login?${params.toString()}`;
 }

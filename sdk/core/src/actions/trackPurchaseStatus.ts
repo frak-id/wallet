@@ -1,3 +1,5 @@
+import { getBackendUrl } from "../utils/backendUrl";
+
 /**
  * Function used to track the status of a purchase
  * when a purchase is tracked, the `purchaseCompleted` interactions will be automatically send for the user when we receive the purchase confirmation via webhook.
@@ -41,7 +43,8 @@ export async function trackPurchaseStatus(args: {
     }
 
     // Submit the listening request
-    await fetch("https://backend.frak.id/interactions/listenForPurchase", {
+    const backendUrl = getBackendUrl();
+    await fetch(`${backendUrl}/interactions/listenForPurchase`, {
         method: "POST",
         headers: {
             Accept: "application/json",

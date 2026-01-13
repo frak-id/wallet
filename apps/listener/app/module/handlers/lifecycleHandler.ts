@@ -215,11 +215,10 @@ async function handleMobileAuthComplete(data: {
     sdkJwt: { token: string; expires: number };
 }): Promise<void> {
     const session: Session = {
-        type: "ecdsa",
+        type: "mobile-auth",
         address: data.wallet as `0x${string}`,
         token: data.sdkJwt.token,
-        publicKey: "0x" as `0x${string}`,
-        authenticatorId: `ecdsa-mobile-${data.wallet}` as `ecdsa-${string}`,
+        authenticatorId: `mobile-${data.wallet}` as `mobile-${string}`,
         transports: undefined,
     };
 

@@ -1,7 +1,9 @@
 export { Deferred } from "@frak-labs/frame-connector";
+export { getBackendUrl } from "./backendUrl";
 export { base64urlDecode, base64urlEncode } from "./compression/b64";
 export { compressJsonToB64 } from "./compression/compress";
 export { decompressJsonFromB64 } from "./compression/decompress";
+export { AUTH_STATE_KEY, DEEP_LINK_SCHEME } from "./constants";
 export { FrakContextManager } from "./FrakContext";
 export { formatAmount } from "./formatAmount";
 export { getCurrencyAmountKey } from "./getCurrencyAmountKey";
@@ -19,4 +21,4 @@ export {
     type FullSsoParams,
     generateSsoUrl,
 } from "./sso";
-export { trackEvent } from "./trackEvent";
+export { type FrakEvent, trackEvent } from "./trackEvent";

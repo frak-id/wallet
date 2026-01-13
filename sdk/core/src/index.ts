@@ -82,20 +82,25 @@ export type {
 // Utils
 export {
     type AppSpecificSsoMetadata,
+    AUTH_STATE_KEY,
     base64urlDecode,
     base64urlEncode,
     baseIframeProps,
     type CompressedSsoData,
     compressJsonToB64,
     createIframe,
+    DEEP_LINK_SCHEME,
     decompressJsonFromB64,
     FrakContextManager,
+    type FrakEvent,
     type FullSsoParams,
     findIframeInOpener,
     formatAmount,
     generateSsoUrl,
+    getBackendUrl,
     getCurrencyAmountKey,
     getSupportedCurrency,
     getSupportedLocale,
     trackEvent,
 } from "./utils";
+export { computeProductId } from "./utils/computeProductId";

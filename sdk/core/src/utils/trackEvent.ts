@@ -4,6 +4,7 @@ export type FrakEvent =
     | "share_button_clicked"
     | "wallet_button_clicked"
     | "open_in_app_clicked"
+    | "open_in_app_login_clicked"
     | "share_modal_error"
     | "user_referred_started"
     | "user_referred_completed"

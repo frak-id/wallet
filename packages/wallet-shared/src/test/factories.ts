@@ -1,6 +1,13 @@
-import type { Address } from "viem";
+import type { Address, Hex } from "viem";
 import type { NotificationModel } from "../common/storage/NotificationModel";
-import type { InteractionSession, SdkSession, Session } from "../types/Session";
+import type {
+    DistantWebAuthnWallet,
+    EcdsaWallet,
+    InteractionSession,
+    MobileAuthWallet,
+    SdkSession,
+} from "../types/Session";
+import type { WebAuthNWallet } from "../types/WebAuthN";
 
 /**
  * Test factory functions for creating mock objects with sensible defaults.
@@ -18,75 +25,93 @@ export function createMockAddress(seed = "1234"): Address {
 /**
  * Creates a mock WebAuthN session with default values
  */
-export function createMockSession(overrides?: Partial<Session>): Session {
+export function createMockSession(
+    overrides?: Partial<Omit<WebAuthNWallet & { token: string }, "type">>
+): WebAuthNWallet & { token: string } {
     return {
         type: "webauthn",
         address: createMockAddress(),
         publicKey: {
-            x: "0x1234567890123456789012345678901234567890123456789012345678901234" as `0x${string}`,
-            y: "0xabcdef1234567890123456789012345678901234567890123456789012345678" as `0x${string}`,
+            x: "0x1234567890123456789012345678901234567890123456789012345678901234" as Hex,
+            y: "0xabcdef1234567890123456789012345678901234567890123456789012345678" as Hex,
         },
         authenticatorId: "auth-123",
         token: "test-token",
         ...overrides,
-    } as Session;
+    };
+}
+
+/**
+ * Creates a mock MobileAuth session with default values
+ */
+export function createMockMobileAuthSession(
+    overrides?: Partial<Omit<MobileAuthWallet & { token: string }, "type">>
+): MobileAuthWallet & { token: string } {
+    return {
+        type: "mobile-auth",
+        address: createMockAddress(),
+        authenticatorId: "mobile-123",
+        token: "test-token",
+        transports: undefined,
+        ...overrides,
+    };
 }
 
 /**
  * Creates a mock ECDSA session with default values
  */
 export function createMockEcdsaSession(
-    overrides?: Partial<Omit<Session, "type">>
-): Session {
+    overrides?: Partial<Omit<EcdsaWallet & { token: string }, "type">>
+): EcdsaWallet & { token: string } {
     return {
         type: "ecdsa",
         address: createMockAddress(),
-        publicKey: "0x123456" as Address,
+        publicKey: "0x123456" as Hex,
         authenticatorId: "ecdsa-123",
         token: "test-token",
         transports: undefined,
         ...overrides,
-    } as Session;
+    };
 }
 
 /**
  * Creates a mock Distant WebAuthN session with default values
  */
 export function createMockDistantWebAuthNSession(
-    overrides?: Partial<Omit<Session, "type">>
-): Session {
+    overrides?: Partial<Omit<DistantWebAuthnWallet & { token: string }, "type">>
+): DistantWebAuthnWallet & { token: string } {
     return {
         type: "distant-webauthn",
         address: createMockAddress(),
         publicKey: {
-            x: "0x1234567890123456789012345678901234567890123456789012345678901234" as `0x${string}`,
-            y: "0xabcdef1234567890123456789012345678901234567890123456789012345678" as `0x${string}`,
+            x: "0x1234567890123456789012345678901234567890123456789012345678901234" as Hex,
+            y: "0xabcdef1234567890123456789012345678901234567890123456789012345678" as Hex,
         },
         authenticatorId: "auth-123",
         pairingId: "pairing-123",
         token: "test-token",
         transports: undefined,
         ...overrides,
-    } as Session;
+    };
 }
 
 /**
  * Creates a mock WebAuthN wallet with default values
  */
 export function createMockWebAuthNWallet(
-    overrides?: Partial<Omit<Session, "type">>
-): Session {
+    overrides?: Partial<Omit<WebAuthNWallet & { token: string }, "type">>
+): WebAuthNWallet & { token: string } {
     return {
         type: "webauthn",
         address: createMockAddress(),
         publicKey: {
-            x: "0xabc" as `0x${string}`,
-            y: "0xdef" as `0x${string}`,
+            x: "0xabc" as Hex,
+            y: "0xdef" as Hex,
         },
         authenticatorId: "auth-id",
         token: "wallet-token",
         ...overrides,
-    } as Session;
+    };
 }
 
 /**

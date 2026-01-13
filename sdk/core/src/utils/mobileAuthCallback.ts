@@ -1,8 +1,8 @@
 import type { RpcClient } from "@frak-labs/frame-connector";
 import type { FrakLifecycleEvent, FrakWalletSdkConfig } from "../types";
 import type { IFrameRpcSchema } from "../types/rpc";
-
-const AUTH_STATE_KEY = "frak_auth_state";
+import { getBackendUrl } from "./backendUrl";
+import { AUTH_STATE_KEY } from "./constants";
 
 /**
  * Listen for mobile auth redirect with auth code in URL
@@ -48,9 +48,9 @@ export function setupMobileAuthCallback(
     cleanupAuthParams(url);
 
     // Exchange auth code for session
-    const walletUrl = config.walletUrl ?? "https://wallet.frak.id";
+    const backendUrl = getBackendUrl(config.walletUrl);
 
-    exchangeAuthCode({ walletUrl, authCode, productId })
+    exchangeAuthCode({ backendUrl, authCode, productId })
         .then(async (result) => {
             // Wait for iframe connection before sending lifecycle event
             await waitForConnection;
@@ -80,41 +80,20 @@ function cleanupAuthParams(url: URL): void {
 }
 
 /**
- * Get backend URL from wallet URL
- * Maps wallet URLs to their corresponding backend URLs
- */
-function getBackendUrl(walletUrl: string): string {
-    // Local development
-    if (walletUrl.includes("localhost:3000")) {
-        return "http://localhost:3030";
-    }
-    // Dev environment
-    if (
-        walletUrl.includes("wallet-dev.frak.id") ||
-        walletUrl.includes("wallet.gcp-dev.frak.id")
-    ) {
-        return "https://backend.gcp-dev.frak.id";
-    }
-    // Production
-    return "https://backend.frak.id";
-}
-
-/**
  * Exchange auth code with backend for session
  */
 async function exchangeAuthCode({
-    walletUrl,
+    backendUrl,
     authCode,
     productId,
 }: {
-    walletUrl: string;
+    backendUrl: string;
     authCode: string;
     productId: string;
 }): Promise<{
     wallet: string;
     sdkJwt: { token: string; expires: number };
 }> {
-    const backendUrl = getBackendUrl(walletUrl);
     const endpoint = `${backendUrl}/wallet/auth/mobile/exchange`;
 
     const response = await fetch(endpoint, {

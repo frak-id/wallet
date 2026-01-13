@@ -3,7 +3,7 @@ import type { P256PubKey, WebAuthNWallet } from "./WebAuthN";
 
 export type Session = {
     token: string;
-} & (WebAuthNWallet | EcdsaWallet | DistantWebAuthnWallet);
+} & (WebAuthNWallet | EcdsaWallet | DistantWebAuthnWallet | MobileAuthWallet);
 
 export type EcdsaWallet = {
     type: "ecdsa";
@@ -20,6 +20,21 @@ export type DistantWebAuthnWallet = {
     pairingId: string;
     transports: undefined;
 };
+
+export type MobileAuthWallet = {
+    type: "mobile-auth";
+    address: Address;
+    authenticatorId: `mobile-${string}`;
+    transports: undefined;
+};
+
+/**
+ * Sessions that have signing capabilities (excludes mobile-auth)
+ * Used for smart wallet operations that require WebAuthn or ECDSA signing
+ */
+export type SignableSession = {
+    token: string;
+} & (WebAuthNWallet | EcdsaWallet | DistantWebAuthnWallet);
 
 export type InteractionSession = {
     sessionStart: number;

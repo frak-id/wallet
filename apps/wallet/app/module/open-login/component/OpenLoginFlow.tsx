@@ -2,7 +2,7 @@ import { Button } from "@frak-labs/ui/component/Button";
 import { Spinner } from "@frak-labs/ui/component/Spinner";
 import { HandleErrors, sessionStore } from "@frak-labs/wallet-shared";
 import { useNavigate } from "@tanstack/react-router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useReducer } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import type { Hex } from "viem";
 import { AuthActions } from "@/module/authentication/component/AuthActions";
@@ -17,7 +17,41 @@ type OpenLoginFlowProps = {
     productName?: string;
 };
 
-type RedirectState = "idle" | "redirecting" | "complete";
+type FlowState = {
+    status: "idle" | "redirecting" | "complete";
+    error: Error | null;
+    hasAttempted: boolean;
+};
+
+type FlowAction =
+    | { type: "RESET" }
+    | { type: "START_REDIRECT" }
+    | { type: "REDIRECT_SUCCESS" }
+    | { type: "REDIRECT_ERROR"; error: Error }
+    | { type: "SET_ERROR"; error: Error | null };
+
+function flowReducer(state: FlowState, action: FlowAction): FlowState {
+    switch (action.type) {
+        case "RESET":
+            return { status: "idle", error: null, hasAttempted: false };
+        case "START_REDIRECT":
+            return { ...state, status: "redirecting", hasAttempted: true };
+        case "REDIRECT_SUCCESS":
+            return { ...state, status: "complete", error: null };
+        case "REDIRECT_ERROR":
+            return { status: "idle", error: action.error, hasAttempted: true };
+        case "SET_ERROR":
+            return { ...state, error: action.error };
+        default:
+            return state;
+    }
+}
+
+const initialState: FlowState = {
+    status: "idle",
+    error: null,
+    hasAttempted: false,
+};
 
 export function OpenLoginFlow({
     returnUrl,
@@ -34,25 +68,23 @@ export function OpenLoginFlow({
         error: redirectError,
     } = useMobileLoginRedirect();
 
-    const [error, setError] = useState<Error | null>(null);
-    const [redirectState, setRedirectState] = useState<RedirectState>("idle");
-    const hasAttemptedRedirect = useRef(false);
-    const session = sessionStore((state) => state.session);
+    const [flowState, dispatch] = useReducer(flowReducer, initialState);
+    const session = sessionStore((s) => s.session);
 
+    // Reset when params change
     useEffect(() => {
-        hasAttemptedRedirect.current = false;
-        setRedirectState("idle");
+        dispatch({ type: "RESET" });
     }, [returnUrl, productId, state]);
 
+    // Reset on visibility change (user returns to page)
     useEffect(() => {
         const handleVisibilityChange = () => {
             if (
                 document.visibilityState === "visible" &&
                 session &&
-                redirectState !== "redirecting"
+                flowState.status !== "redirecting"
             ) {
-                hasAttemptedRedirect.current = false;
-                setRedirectState("idle");
+                dispatch({ type: "RESET" });
             }
         };
         document.addEventListener("visibilitychange", handleVisibilityChange);
@@ -61,33 +93,39 @@ export function OpenLoginFlow({
                 "visibilitychange",
                 handleVisibilityChange
             );
-    }, [session, redirectState]);
+    }, [session, flowState.status]);
 
     const handleLoginSuccess = useCallback(async () => {
-        if (hasAttemptedRedirect.current) {
-            return;
-        }
-        hasAttemptedRedirect.current = true;
-        setRedirectState("redirecting");
+        if (flowState.hasAttempted) return;
+
+        dispatch({ type: "START_REDIRECT" });
         try {
             await executeRedirect({ returnUrl, productId, state });
-            setRedirectState("complete");
-            setTimeout(() => {
-                navigate({ to: "/" });
-            }, 500);
+            dispatch({ type: "REDIRECT_SUCCESS" });
+            setTimeout(() => navigate({ to: "/" }), 500);
         } catch (err) {
-            setError(err instanceof Error ? err : new Error(String(err)));
-            setRedirectState("idle");
+            dispatch({
+                type: "REDIRECT_ERROR",
+                error: err instanceof Error ? err : new Error(String(err)),
+            });
         }
-    }, [executeRedirect, returnUrl, productId, state, navigate]);
+    }, [
+        flowState.hasAttempted,
+        executeRedirect,
+        returnUrl,
+        productId,
+        state,
+        navigate,
+    ]);
 
+    // Auto-redirect when session exists
     useEffect(() => {
-        if (session && !hasAttemptedRedirect.current) {
+        if (session && !flowState.hasAttempted) {
             handleLoginSuccess();
         }
-    }, [session, handleLoginSuccess]);
+    }, [session, flowState.hasAttempted, handleLoginSuccess]);
 
-    if (redirectState === "complete") {
+    if (flowState.status === "complete") {
         return (
             <Grid className={styles.openLogin__grid}>
                 <h2 className={styles.openLogin__title}>
@@ -106,7 +144,7 @@ export function OpenLoginFlow({
         );
     }
 
-    if (redirectState === "redirecting" || isRedirecting) {
+    if (flowState.status === "redirecting" || isRedirecting) {
         return (
             <Grid className={styles.openLogin__grid}>
                 <Spinner />
@@ -121,7 +159,7 @@ export function OpenLoginFlow({
         );
     }
 
-    const displayError = error ?? redirectError;
+    const displayError = flowState.error ?? redirectError;
 
     return (
         <Grid className={styles.openLogin__grid}>
@@ -139,7 +177,7 @@ export function OpenLoginFlow({
 
             <AuthActions
                 onSuccess={handleLoginSuccess}
-                onError={setError}
+                onError={(err) => dispatch({ type: "SET_ERROR", error: err })}
                 className={styles.openLogin__authActions}
             />
 

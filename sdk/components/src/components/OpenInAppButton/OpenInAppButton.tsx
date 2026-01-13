@@ -2,7 +2,7 @@ import { cx } from "class-variance-authority";
 import { Spinner } from "@/components/Spinner";
 import { useClientReady } from "@/hooks/useClientReady";
 import { useIsMobile } from "@/hooks/useIsMobile";
-import { openFrakWalletApp } from "@/utils/openInApp";
+import { openFrakWalletApp, openFrakWalletLogin } from "@/utils/openInApp";
 import styles from "./OpenInAppButton.module.css";
 import type { OpenInAppButtonProps } from "./types";
 
@@ -27,6 +27,12 @@ import type { OpenInAppButtonProps } from "./types";
  * ```
  *
  * @example
+ * With login action:
+ * ```html
+ * <frak-open-in-app action="login" text="Login with Frak"></frak-open-in-app>
+ * ```
+ *
+ * @example
  * Using a custom class:
  * ```html
  * <frak-open-in-app classname="button button-primary"></frak-open-in-app>
@@ -35,6 +41,8 @@ import type { OpenInAppButtonProps } from "./types";
 export function OpenInAppButton({
     text = "Open in App",
     classname = "",
+    action = "open",
+    productId,
 }: OpenInAppButtonProps) {
     const { isClientReady } = useClientReady();
     const { isMobile } = useIsMobile();
@@ -43,13 +51,21 @@ export function OpenInAppButton({
         return null;
     }
 
+    const handleClick = () => {
+        if (action === "login") {
+            openFrakWalletLogin(productId);
+        } else {
+            openFrakWalletApp();
+        }
+    };
+
     return (
         <button
             type="button"
             aria-label="Open in Frak Wallet app"
             className={cx(styles.button, classname, "override")}
             disabled={!isClientReady}
-            onClick={() => openFrakWalletApp()}
+            onClick={handleClick}
         >
             {!isClientReady && <Spinner />} {text}
         </button>
