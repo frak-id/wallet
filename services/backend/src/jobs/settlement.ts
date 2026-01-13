@@ -18,8 +18,7 @@ export const settlementJobs = new Elysia({ name: "Job.settlement" }).use(
 
             logger.info(
                 {
-                    pushed: result.pushedCount,
-                    locked: result.lockedCount,
+                    settled: result.settledCount,
                     failed: result.failedCount,
                     txCount: result.txHashes.length,
                     errorCount: result.errors.length,

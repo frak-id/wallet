@@ -229,6 +229,7 @@ export class BatchRewardOrchestrator {
             touchpointId,
             interactionLogId,
             chainDepth: reward.chainDepth,
+            expirationDays: reward.expirationDays,
         }));
     }
 }

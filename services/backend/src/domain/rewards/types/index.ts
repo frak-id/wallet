@@ -69,15 +69,15 @@ export type InteractionPayload =
 
 /**
  * Status of an asset log entry.
- * See state machine in REFACTO_ARCHITECTURE.md
+ * Simplified flow: pending → processing → settled
  */
 export type AssetStatus =
-    | "pending" // Reward created, waiting for settlement batch
+    | "pending" // Reward created, waiting for wallet + settlement
     | "processing" // Settlement batch processing it
-    | "ready_to_claim" // Pushed/locked on blockchain, user can claim
-    | "claimed" // User claimed on-chain
+    | "settled" // Pushed on blockchain, user can claim via smart contract
     | "consumed" // Soft reward used (discount redeemed)
-    | "cancelled"; // Refunded or fraud detected
+    | "cancelled" // Refunded or fraud detected
+    | "expired"; // Pending reward expired (no wallet connected in time)
 
 /**
  * Type of asset/reward.
@@ -108,8 +108,7 @@ export type RewardSettlementResult = {
 };
 
 export type SettlementResult = {
-    pushedCount: number;
-    lockedCount: number;
+    settledCount: number;
     failedCount: number;
     txHashes: Hex[];
     errors: Array<{
@@ -158,6 +157,7 @@ export type CreateAssetLogParams = {
     touchpointId?: string;
     interactionLogId: string;
     chainDepth?: number;
+    expirationDays?: number;
 };
 
 export { encodeUserId } from "@backend-utils";

@@ -1,7 +1,6 @@
-import { eventEmitter, log } from "@backend-infrastructure";
+import { log } from "@backend-infrastructure";
 import type { Address } from "viem";
 import type { IdentityRepository } from "../../domain/identity/repositories/IdentityRepository";
-import type { PendingIdentityResolutionRepository } from "../../domain/identity/repositories/PendingIdentityResolutionRepository";
 import type { IdentityMergeService } from "./IdentityMergeService";
 import type { IdentityWeightService } from "./IdentityWeightService";
 import type { AssociateResult, IdentityNode, ResolveResult } from "./types";
@@ -9,7 +8,6 @@ import type { AssociateResult, IdentityNode, ResolveResult } from "./types";
 export class IdentityOrchestrator {
     constructor(
         private readonly identityRepository: IdentityRepository,
-        private readonly pendingResolutionRepository: PendingIdentityResolutionRepository,
         private readonly weightService: IdentityWeightService,
         private readonly mergeService: IdentityMergeService
     ) {}
@@ -59,21 +57,10 @@ export class IdentityOrchestrator {
             this.weightService.getGroupWeight(groupId2),
         ]);
 
-        const { anchorGroupId, mergingGroupId, anchorWallet } =
+        const { anchorGroupId, mergingGroupId } =
             this.weightService.determineAnchor(weight1, weight2);
 
-        const previousMergedGroups =
-            await this.mergeService.getMergedGroupIds(mergingGroupId);
-
         await this.mergeService.mergeGroups({ anchorGroupId, mergingGroupId });
-
-        if (anchorWallet) {
-            const groupIdsToResolve = [mergingGroupId, ...previousMergedGroups];
-            await this.queueIdentityResolutions(
-                groupIdsToResolve,
-                anchorWallet
-            );
-        }
 
         this.weightService.invalidateWeight(mergingGroupId);
         this.identityRepository.invalidateCachesForGroup(mergingGroupId);
@@ -108,28 +95,17 @@ export class IdentityOrchestrator {
             uniqueGroupIds.map((id) => this.weightService.getGroupWeight(id))
         );
 
-        const { anchorGroupId, mergingGroupIds, anchorWallet } =
+        const { anchorGroupId, mergingGroupIds } =
             this.weightService.determineAnchorFromMultiple(weights);
 
         if (mergingGroupIds.length === 0) {
             return { finalGroupId: anchorGroupId, merged: false };
         }
 
-        const mergeResult = await this.mergeService.mergeMultipleGroups({
+        await this.mergeService.mergeMultipleGroups({
             anchorGroupId,
             mergingGroupIds,
         });
-
-        if (anchorWallet) {
-            const groupIdsToResolve = [
-                ...mergingGroupIds,
-                ...mergeResult.previouslyMergedGroupIds,
-            ];
-            await this.queueIdentityResolutions(
-                groupIdsToResolve,
-                anchorWallet
-            );
-        }
 
         for (const groupId of mergingGroupIds) {
             this.weightService.invalidateWeight(groupId);
@@ -137,41 +113,6 @@ export class IdentityOrchestrator {
         }
 
         return { finalGroupId: anchorGroupId, merged: true };
-    }
-
-    private async queueIdentityResolutions(
-        groupIds: string[],
-        wallet: Address
-    ): Promise<void> {
-        if (groupIds.length === 0) return;
-
-        const queueParams = groupIds.map((groupId) => ({
-            groupId,
-            walletAddress: wallet,
-        }));
-
-        try {
-            await this.pendingResolutionRepository.queueBatch(queueParams);
-
-            log.debug(
-                { groupIds, wallet, count: groupIds.length },
-                "Queued identity resolutions for async processing"
-            );
-
-            eventEmitter.emit("newPendingIdentityResolution", {
-                count: groupIds.length,
-            });
-        } catch (error) {
-            log.error(
-                {
-                    groupIds,
-                    wallet,
-                    error:
-                        error instanceof Error ? error.message : String(error),
-                },
-                "Failed to queue identity resolutions"
-            );
-        }
     }
 
     async getWalletForGroup(groupId: string): Promise<Address | null> {

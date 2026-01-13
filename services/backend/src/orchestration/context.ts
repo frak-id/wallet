@@ -12,6 +12,7 @@ import {
 } from "./identity";
 import { PurchaseLinkingOrchestrator } from "./PurchaseLinkingOrchestrator";
 import { PurchaseWebhookOrchestrator } from "./PurchaseWebhookOrchestrator";
+import { RewardExpirationOrchestrator } from "./RewardExpirationOrchestrator";
 import { InteractionContextBuilder } from "./reward";
 import { SettlementOrchestrator } from "./SettlementOrchestrator";
 import { WebhookResolverOrchestrator } from "./WebhookResolverOrchestrator";
@@ -29,7 +30,6 @@ const identityMergeService = new IdentityMergeService();
 
 const identityOrchestrator = new IdentityOrchestrator(
     IdentityContext.repositories.identity,
-    IdentityContext.repositories.pendingResolution,
     identityWeightService,
     identityMergeService
 );
@@ -68,12 +68,18 @@ const settlementOrchestrator = new SettlementOrchestrator(
     MerchantContext.repositories.merchant
 );
 
+const rewardExpirationOrchestrator = new RewardExpirationOrchestrator(
+    RewardsContext.repositories.assetLog,
+    CampaignContext.repositories.campaignRule
+);
+
 export namespace OrchestrationContext {
     export const orchestrators = {
         batchReward: batchRewardOrchestrator,
         identity: identityOrchestrator,
         purchaseLinking: purchaseLinkingOrchestrator,
         purchaseWebhook: purchaseWebhookOrchestrator,
+        rewardExpiration: rewardExpirationOrchestrator,
         settlement: settlementOrchestrator,
         webhookResolver: webhookResolverOrchestrator,
     };

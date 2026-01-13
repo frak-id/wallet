@@ -2,6 +2,7 @@ export { BatchRewardOrchestrator } from "./BatchRewardOrchestrator";
 export { OrchestrationContext } from "./context";
 export { PurchaseLinkingOrchestrator } from "./PurchaseLinkingOrchestrator";
 export { PurchaseWebhookOrchestrator } from "./PurchaseWebhookOrchestrator";
+export { RewardExpirationOrchestrator } from "./RewardExpirationOrchestrator";
 export {
     type AttributionForContext,
     InteractionContextBuilder,

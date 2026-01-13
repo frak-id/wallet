@@ -145,7 +145,8 @@ export class RuleEngineService {
             campaign.rule.rewards,
             context,
             campaign.id,
-            referralChain
+            referralChain,
+            campaign.rule.pendingRewardExpirationDays
         );
 
         if (calculated.length === 0) {

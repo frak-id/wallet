@@ -19,21 +19,8 @@ type RewardOp = {
     attestation: Hex;
 };
 
-type ResolveOp = {
-    userId: Hex;
-    wallet: Address;
-};
-
 type PushRewardParams = {
     wallet: Address;
-    amount: bigint;
-    token: Address;
-    bank: Address;
-    attestation: Hex;
-};
-
-type LockRewardParams = {
-    userId: Hex;
     amount: bigint;
     token: Address;
     bank: Address;
@@ -81,82 +68,15 @@ export class RewardsHubRepository {
         return this.executeBatch(ops);
     }
 
-    async lockRewards(locks: LockRewardParams[]): Promise<{
-        txHash: Hex;
-        blockNumber: bigint;
-    }> {
-        if (locks.length === 0) {
-            throw new Error("No locks to process");
-        }
-
-        const ops: RewardOp[] = locks.map((l) => ({
-            isLock: true,
-            target: l.userId,
-            amount: l.amount,
-            token: l.token,
-            bank: l.bank,
-            attestation: l.attestation,
-        }));
-
-        return this.executeBatch(ops);
-    }
-
-    async batchRewards(
-        pushRewards: PushRewardParams[],
-        lockRewards: LockRewardParams[]
-    ): Promise<{
-        txHash: Hex;
-        blockNumber: bigint;
-    }> {
-        if (pushRewards.length === 0 && lockRewards.length === 0) {
-            throw new Error("No rewards to process");
-        }
-
-        const ops: RewardOp[] = [
-            ...pushRewards.map((r) => ({
-                isLock: false as const,
-                target: addressToBytes32(r.wallet),
-                amount: r.amount,
-                token: r.token,
-                bank: r.bank,
-                attestation: r.attestation,
-            })),
-            ...lockRewards.map((l) => ({
-                isLock: true as const,
-                target: l.userId,
-                amount: l.amount,
-                token: l.token,
-                bank: l.bank,
-                attestation: l.attestation,
-            })),
-        ];
-
-        return this.executeBatch(ops);
-    }
-
-    async resolveUserIds(resolves: ResolveOp[]): Promise<{
-        txHash: Hex;
-        blockNumber: bigint;
-    }> {
-        if (resolves.length === 0) {
-            throw new Error("No userIds to resolve");
-        }
-
-        return this.executeTransaction("resolveUserIds", [resolves]);
-    }
-
     private async executeBatch(ops: RewardOp[]): Promise<{
         txHash: Hex;
         blockNumber: bigint;
     }> {
         const sortedOps = sortOpsByBankAndToken(ops);
-        return this.executeTransaction("batch", [sortedOps]);
+        return this.executeTransaction([sortedOps]);
     }
 
-    private async executeTransaction(
-        functionName: "batch" | "resolveUserIds",
-        args: unknown[]
-    ): Promise<{
+    private async executeTransaction(args: unknown[]): Promise<{
         txHash: Hex;
         blockNumber: bigint;
     }> {
@@ -171,13 +91,13 @@ export class RewardsHubRepository {
 
             const data = encodeFunctionData({
                 abi: rewarderHubAbi,
-                functionName,
+                functionName: "batch",
                 args: args as never,
             });
 
             log.debug(
                 {
-                    functionName,
+                    functionName: "batch",
                     contractAddress: this.contractAddress,
                     account: account.address,
                     opsCount: Array.isArray(args[0]) ? args[0].length : 1,
@@ -198,7 +118,7 @@ export class RewardsHubRepository {
 
             log.info(
                 {
-                    functionName,
+                    functionName: "batch",
                     txHash,
                     blockNumber: receipt.blockNumber,
                     gasUsed: receipt.gasUsed,
@@ -214,5 +134,5 @@ export class RewardsHubRepository {
     }
 }
 
-export type { PushRewardParams, LockRewardParams, ResolveOp };
+export type { PushRewardParams };
 export const rewardsHubRepository = new RewardsHubRepository();

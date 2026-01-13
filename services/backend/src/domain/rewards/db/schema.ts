@@ -55,10 +55,10 @@ export type InteractionLogSelect = typeof interactionLogsTable.$inferSelect;
 export const assetStatusEnum = pgEnum("asset_status", [
     "pending",
     "processing",
-    "ready_to_claim",
-    "claimed",
+    "settled",
     "consumed",
     "cancelled",
+    "expired",
 ]);
 
 export const assetTypeEnum = pgEnum("asset_type", [
@@ -102,6 +102,8 @@ export const assetLogsTable = pgTable(
         lastSettlementError: text("last_settlement_error"),
 
         createdAt: timestamp("created_at").defaultNow().notNull(),
+        settledAt: timestamp("settled_at"),
+        expiresAt: timestamp("expires_at"),
     },
     (table) => [
         index("asset_logs_identity_group_idx").on(table.identityGroupId),
@@ -125,6 +127,7 @@ export const assetLogsTable = pgTable(
             table.settlementAttempts,
             table.createdAt
         ),
+        index("asset_logs_expires_at_idx").on(table.expiresAt),
     ]
 );
 

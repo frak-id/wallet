@@ -2,7 +2,6 @@ import { log } from "@backend-infrastructure";
 import type { Address, Hex } from "viem";
 import { parseUnits } from "viem";
 import type {
-    LockRewardParams,
     PushRewardParams,
     RewardsHubRepository,
 } from "../../../infrastructure/blockchain/contracts/RewardsHubRepository";
@@ -10,7 +9,6 @@ import type { AssetLogSelect } from "../db/schema";
 import type { AssetLogRepository } from "../repositories/AssetLogRepository";
 import {
     buildAttestation,
-    encodeUserId,
     type InteractionType,
     type SettlementResult,
 } from "../types";
@@ -18,21 +16,16 @@ import {
 const DEFAULT_TOKEN_DECIMALS = 18;
 
 export type AssetLogWithWallet = AssetLogSelect & {
-    walletAddress: Address | null;
+    walletAddress: Address;
     interactionType: InteractionType | null;
 };
 
 type PreparedSettlement = {
-    pushRewards: PushRewardParams[];
-    lockRewards: LockRewardParams[];
+    rewards: PushRewardParams[];
     validAssetLogIds: string[];
     errors: Array<{ assetLogId: string; error: string }>;
 };
 
-/**
- * Pure rewards domain service for settlement.
- * Cross-domain coordination (merchant bank lookup) is handled by SettlementOrchestrator.
- */
 export class SettlementService {
     constructor(
         private readonly assetLogRepository: AssetLogRepository,
@@ -44,8 +37,7 @@ export class SettlementService {
         merchantBanks: Map<string, Address>
     ): Promise<SettlementResult> {
         const result: SettlementResult = {
-            pushedCount: 0,
-            lockedCount: 0,
+            settledCount: 0,
             failedCount: 0,
             txHashes: [],
             errors: [],
@@ -61,10 +53,7 @@ export class SettlementService {
         result.failedCount = prepared.errors.length;
         result.errors = prepared.errors;
 
-        if (
-            prepared.pushRewards.length === 0 &&
-            prepared.lockRewards.length === 0
-        ) {
+        if (prepared.rewards.length === 0) {
             return result;
         }
 
@@ -73,28 +62,25 @@ export class SettlementService {
         );
 
         try {
-            const txResult = await this.rewardsHub.batchRewards(
-                prepared.pushRewards,
-                prepared.lockRewards
+            const txResult = await this.rewardsHub.pushRewards(
+                prepared.rewards
             );
 
             result.txHashes.push(txResult.txHash);
-            result.pushedCount = prepared.pushRewards.length;
-            result.lockedCount = prepared.lockRewards.length;
+            result.settledCount = prepared.rewards.length;
 
             await this.assetLogRepository.updateStatusBatch(
                 prepared.validAssetLogIds,
-                "ready_to_claim",
+                "settled",
                 { txHash: txResult.txHash, blockNumber: txResult.blockNumber }
             );
         } catch (error) {
             log.error(
                 {
                     error,
-                    pushCount: prepared.pushRewards.length,
-                    lockCount: prepared.lockRewards.length,
+                    count: prepared.rewards.length,
                 },
-                "Failed to execute batch settlement, will retry on next run"
+                "Failed to execute settlement, will retry on next run"
             );
 
             const errorMessage =
@@ -109,14 +95,12 @@ export class SettlementService {
                 result.errors.push({ assetLogId, error: errorMessage });
             }
             result.failedCount += prepared.validAssetLogIds.length;
-            result.pushedCount = 0;
-            result.lockedCount = 0;
+            result.settledCount = 0;
         }
 
         log.info(
             {
-                pushed: result.pushedCount,
-                locked: result.lockedCount,
+                settled: result.settledCount,
                 failed: result.failedCount,
                 txCount: result.txHashes.length,
             },
@@ -130,8 +114,7 @@ export class SettlementService {
         rewards: AssetLogWithWallet[],
         merchantBanks: Map<string, Address>
     ): PreparedSettlement {
-        const pushRewards: PushRewardParams[] = [];
-        const lockRewards: LockRewardParams[] = [];
+        const preparedRewards: PushRewardParams[] = [];
         const validAssetLogIds: string[] = [];
         const errors: Array<{ assetLogId: string; error: string }> = [];
 
@@ -149,26 +132,16 @@ export class SettlementService {
 
             validAssetLogIds.push(reward.id);
 
-            if (reward.walletAddress) {
-                pushRewards.push({
-                    wallet: reward.walletAddress,
-                    amount,
-                    token,
-                    bank,
-                    attestation,
-                });
-            } else {
-                lockRewards.push({
-                    userId: encodeUserId(reward.identityGroupId),
-                    amount,
-                    token,
-                    bank,
-                    attestation,
-                });
-            }
+            preparedRewards.push({
+                wallet: reward.walletAddress,
+                amount,
+                token,
+                bank,
+                attestation,
+            });
         }
 
-        return { pushRewards, lockRewards, validAssetLogIds, errors };
+        return { rewards: preparedRewards, validAssetLogIds, errors };
     }
 
     private validateReward(

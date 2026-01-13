@@ -123,6 +123,7 @@ function distributeChainedRewards(params: {
     campaignRuleId: string;
     rewardType: "token" | "discount" | "points";
     description?: string;
+    expirationDays?: number;
 }): CalculatedReward[] {
     const rewards: CalculatedReward[] = [];
     let remainingAmount = params.totalAmount;
@@ -139,6 +140,7 @@ function distributeChainedRewards(params: {
         campaignRuleId: params.campaignRuleId,
         description: params.description,
         chainDepth: 0,
+        expirationDays: params.expirationDays,
     });
     remainingAmount -= userAmount;
 
@@ -167,6 +169,7 @@ function distributeChainedRewards(params: {
                 campaignRuleId: params.campaignRuleId,
                 description: params.description,
                 chainDepth: member.depth,
+                expirationDays: params.expirationDays,
             });
         }
     }
@@ -203,7 +206,8 @@ export class RewardCalculator {
         rewards: RewardDefinition[],
         context: RuleContext,
         campaignRuleId: string,
-        referralChain?: ReferralChainMember[]
+        referralChain?: ReferralChainMember[],
+        expirationDays?: number
     ): {
         calculated: CalculatedReward[];
         errors: string[];
@@ -237,6 +241,7 @@ export class RewardCalculator {
                     campaignRuleId,
                     rewardType: reward.type,
                     description: reward.description,
+                    expirationDays,
                 });
                 calculated.push(...chainedRewards);
                 continue;
@@ -261,6 +266,7 @@ export class RewardCalculator {
                 token: result.token,
                 campaignRuleId,
                 description: reward.description,
+                expirationDays,
             });
         }
 

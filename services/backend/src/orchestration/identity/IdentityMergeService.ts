@@ -8,7 +8,6 @@ import {
     identityGroupsTable,
     identityNodesTable,
     type MergedGroup,
-    pendingIdentityResolutionsTable,
 } from "../../domain/identity/db/schema";
 import {
     purchaseClaimsTable,
@@ -30,7 +29,6 @@ type MergeResult = {
     migratedReferralLinksReferrer: number;
     migratedReferralLinksReferee: number;
     deletedConflictingReferralLinks: number;
-    deletedPendingResolutions: number;
 };
 
 type BatchMergeResult = MergeResult & {
@@ -57,7 +55,6 @@ export class IdentityMergeService {
                 migratedReferralLinksReferrer: 0,
                 migratedReferralLinksReferee: 0,
                 deletedConflictingReferralLinks: 0,
-                deletedPendingResolutions: 0,
                 mergedGroupIds: [],
                 previouslyMergedGroupIds: [],
             };
@@ -161,16 +158,6 @@ export class IdentityMergeService {
                 )
                 .returning({ id: purchaseClaimsTable.id });
 
-            const deletedPendingResolutionsResult = await trx
-                .delete(pendingIdentityResolutionsTable)
-                .where(
-                    inArray(
-                        pendingIdentityResolutionsTable.groupId,
-                        mergingGroupIds
-                    )
-                )
-                .returning({ id: pendingIdentityResolutionsTable.id });
-
             await this.updateAnchorMergedGroupsBatchInTrx(
                 trx,
                 anchorGroupId,
@@ -192,8 +179,6 @@ export class IdentityMergeService {
                 migratedReferralLinksReferrer: migratedReferrerResult.length,
                 migratedReferralLinksReferee: migratedRefereeResult.length,
                 deletedConflictingReferralLinks: deletedConflicts,
-                deletedPendingResolutions:
-                    deletedPendingResolutionsResult.length,
                 mergedGroupIds: mergingGroupIds,
                 previouslyMergedGroupIds,
             };
@@ -337,13 +322,6 @@ export class IdentityMergeService {
                 )
                 .returning({ id: purchaseClaimsTable.id });
 
-            const deletedPendingResolutionsResult = await trx
-                .delete(pendingIdentityResolutionsTable)
-                .where(
-                    eq(pendingIdentityResolutionsTable.groupId, mergingGroupId)
-                )
-                .returning({ id: pendingIdentityResolutionsTable.id });
-
             await this.updateAnchorMergedGroupsInTrx(
                 trx,
                 anchorGroupId,
@@ -366,8 +344,6 @@ export class IdentityMergeService {
                 migratedReferralLinksReferrer: migratedReferrerResult.length,
                 migratedReferralLinksReferee: migratedRefereeResult.length,
                 deletedConflictingReferralLinks: deletedConflicts,
-                deletedPendingResolutions:
-                    deletedPendingResolutionsResult.length,
             };
 
             log.info(

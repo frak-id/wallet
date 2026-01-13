@@ -284,6 +284,41 @@ export class CampaignRuleRepository {
         });
     }
 
+    async restoreBudget(campaignRuleId: string, amount: number): Promise<void> {
+        await db.transaction(async (tx) => {
+            const [campaign] = await tx
+                .select({
+                    budgetConfig: campaignRulesTable.budgetConfig,
+                    budgetUsed: campaignRulesTable.budgetUsed,
+                })
+                .from(campaignRulesTable)
+                .where(eq(campaignRulesTable.id, campaignRuleId))
+                .limit(1)
+                .for("update");
+
+            if (!campaign?.budgetConfig || campaign.budgetConfig.length === 0) {
+                return;
+            }
+
+            const updatedUsed: BudgetUsed = { ...campaign.budgetUsed };
+
+            for (const budget of campaign.budgetConfig) {
+                const current = updatedUsed[budget.label];
+                if (current) {
+                    current.used = Math.max(0, current.used - amount);
+                }
+            }
+
+            await tx
+                .update(campaignRulesTable)
+                .set({
+                    budgetUsed: updatedUsed,
+                    updatedAt: new Date(),
+                })
+                .where(eq(campaignRulesTable.id, campaignRuleId));
+        });
+    }
+
     async getBudgetStatus(campaignRuleId: string): Promise<{
         budgets: Record<
             string,

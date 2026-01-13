@@ -186,6 +186,11 @@ export type CampaignRuleDefinition = {
      * Rewards to issue when the rule matches.
      */
     rewards: RewardDefinition[];
+    /**
+     * When does a pendng reward expire (in days)
+     *  -> Used for user with no rewards yets, they rewards will be in the pending state and will expire after the defined days.
+     */
+    pendingRewardExpirationDays?: number;
 };
 
 // =============================================================================
@@ -356,6 +361,7 @@ export type CalculatedReward = {
     campaignRuleId: string;
     description?: string;
     chainDepth?: number;
+    expirationDays?: number;
 };
 
 /**

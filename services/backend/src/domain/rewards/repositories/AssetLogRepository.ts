@@ -1,4 +1,16 @@
-import { and, desc, eq, inArray, isNull, lt, sql, sum } from "drizzle-orm";
+import {
+    and,
+    desc,
+    eq,
+    gt,
+    inArray,
+    isNotNull,
+    isNull,
+    lt,
+    or,
+    sql,
+    sum,
+} from "drizzle-orm";
 import type { Address, Hex } from "viem";
 import { db } from "../../../infrastructure/persistence/postgres";
 import { identityNodesTable } from "../../identity/db/schema";
@@ -16,33 +28,12 @@ import type {
     InteractionType,
 } from "../types";
 
+const DEFAULT_EXPIRATION_DAYS = 60;
+
 export class AssetLogRepository {
-    async create(params: CreateAssetLogParams): Promise<AssetLogSelect> {
-        const insert: AssetLogInsert = {
-            identityGroupId: params.identityGroupId,
-            merchantId: params.merchantId,
-            campaignRuleId: params.campaignRuleId,
-            assetType: params.assetType,
-            amount: params.amount.toString(),
-            tokenAddress: params.tokenAddress,
-            recipientType: params.recipientType,
-            recipientWallet: params.recipientWallet,
-            chainDepth: params.chainDepth,
-            touchpointId: params.touchpointId,
-            interactionLogId: params.interactionLogId,
-            status: "pending",
-            statusChangedAt: new Date(),
-        };
-
-        const [result] = await db
-            .insert(assetLogsTable)
-            .values(insert)
-            .returning();
-
-        if (!result) {
-            throw new Error("Failed to create asset log");
-        }
-        return result;
+    private calculateExpiresAt(expirationDays?: number): Date {
+        const days = expirationDays ?? DEFAULT_EXPIRATION_DAYS;
+        return new Date(Date.now() + days * 24 * 60 * 60 * 1000);
     }
 
     async createBatch(
@@ -64,6 +55,7 @@ export class AssetLogRepository {
             interactionLogId: p.interactionLogId,
             status: "pending" as const,
             statusChangedAt: new Date(),
+            expiresAt: this.calculateExpiresAt(p.expirationDays),
         }));
 
         return db.insert(assetLogsTable).values(inserts).returning();
@@ -140,11 +132,12 @@ export class AssetLogRepository {
     async findPendingForSettlement(limit?: number): Promise<
         Array<
             AssetLogSelect & {
-                walletAddress: Address | null;
+                walletAddress: Address;
                 interactionType: InteractionType | null;
             }
         >
     > {
+        const now = new Date();
         const query = db
             .select({
                 id: assetLogsTable.id,
@@ -166,14 +159,16 @@ export class AssetLogRepository {
                 settlementAttempts: assetLogsTable.settlementAttempts,
                 lastSettlementError: assetLogsTable.lastSettlementError,
                 createdAt: assetLogsTable.createdAt,
+                settledAt: assetLogsTable.settledAt,
+                expiresAt: assetLogsTable.expiresAt,
                 walletAddress:
-                    sql<Address | null>`${identityNodesTable.identityValue}`.as(
+                    sql<Address>`${identityNodesTable.identityValue}`.as(
                         "walletAddress"
                     ),
                 interactionType: interactionLogsTable.type,
             })
             .from(assetLogsTable)
-            .leftJoin(
+            .innerJoin(
                 identityNodesTable,
                 and(
                     eq(
@@ -194,35 +189,21 @@ export class AssetLogRepository {
                     lt(
                         assetLogsTable.settlementAttempts,
                         RewardConfig.settlement.maxAttempts
+                    ),
+                    or(
+                        isNull(assetLogsTable.expiresAt),
+                        gt(assetLogsTable.expiresAt, now)
                     )
                 )
             )
-            .orderBy(assetLogsTable.createdAt);
+            .orderBy(assetLogsTable.createdAt)
+            .for("update", { skipLocked: true });
 
         if (limit) {
             return query.limit(limit);
         }
 
         return query;
-    }
-
-    async findPendingWithWallet(limit?: number): Promise<
-        Array<
-            AssetLogSelect & {
-                walletAddress: Address;
-                interactionType: InteractionType | null;
-            }
-        >
-    > {
-        const results = await this.findPendingForSettlement(limit);
-        return results.filter(
-            (
-                r
-            ): r is AssetLogSelect & {
-                walletAddress: Address;
-                interactionType: InteractionType | null;
-            } => r.walletAddress !== null
-        );
     }
 
     async findPendingWithoutWallet(limit?: number): Promise<AssetLogSelect[]> {
@@ -285,10 +266,15 @@ export class AssetLogRepository {
     ): Promise<number> {
         if (ids.length === 0) return 0;
 
+        const now = new Date();
         const updateData: Partial<AssetLogInsert> = {
             status,
-            statusChangedAt: new Date(),
+            statusChangedAt: now,
         };
+
+        if (status === "settled") {
+            updateData.settledAt = now;
+        }
 
         if (onchainData) {
             updateData.onchainTxHash = onchainData.txHash;
@@ -446,5 +432,35 @@ export class AssetLogRepository {
             .returning({ id: assetLogsTable.id });
 
         return results.length;
+    }
+
+    async expirePendingRewards(): Promise<
+        Array<{ campaignRuleId: string; amount: string }>
+    > {
+        const now = new Date();
+
+        const results = await db
+            .update(assetLogsTable)
+            .set({
+                status: "expired",
+                statusChangedAt: now,
+            })
+            .where(
+                and(
+                    eq(assetLogsTable.status, "pending"),
+                    isNotNull(assetLogsTable.expiresAt),
+                    isNotNull(assetLogsTable.campaignRuleId),
+                    lt(assetLogsTable.expiresAt, now)
+                )
+            )
+            .returning({
+                campaignRuleId: assetLogsTable.campaignRuleId,
+                amount: assetLogsTable.amount,
+            });
+
+        return results.filter(
+            (r): r is { campaignRuleId: string; amount: string } =>
+                r.campaignRuleId !== null
+        );
     }
 }

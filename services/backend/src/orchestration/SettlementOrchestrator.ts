@@ -33,8 +33,7 @@ export class SettlementOrchestrator {
         if (pendingRewards.length === 0) {
             log.debug("No pending rewards to settle");
             return {
-                pushedCount: 0,
-                lockedCount: 0,
+                settledCount: 0,
                 failedCount: 0,
                 txHashes: [],
                 errors: [],

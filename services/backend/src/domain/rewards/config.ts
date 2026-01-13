@@ -37,6 +37,8 @@ export const RewardConfig = {
         rewardCalculation: "0 */5 * * * *",
         /** Settlement job pattern (every hour) */
         settlement: "0 * * * *",
+        /** Expiration job pattern (daily at 3am UTC) */
+        expiration: "0 3 * * *",
     },
 } as const;
 
