@@ -1,12 +1,21 @@
+import { useQuery } from "@tanstack/react-query";
 import {
+    AlertTriangle,
     MousePointer,
     RotateCw,
     ShoppingBag,
     User,
     Volume2,
 } from "lucide-react";
-import { type ReactElement, useEffect, useState } from "react";
+import { type ReactElement, useEffect, useMemo, useState } from "react";
 import type { UseFormReturn } from "react-hook-form";
+import type { Hex } from "viem";
+import {
+    getGoalLabel,
+    getProductTypeLabel,
+    getProductTypesForGoal,
+    isGoalCompatible,
+} from "@/module/campaigns/utils/goalCompatibility";
 import { Badge } from "@/module/common/component/Badge";
 import { Column } from "@/module/common/component/Column";
 import { Panel } from "@/module/common/component/Panel";
@@ -20,6 +29,8 @@ import {
     FormMessage,
 } from "@/module/forms/Form";
 import { RadioGroup, RadioGroupItem } from "@/module/forms/RadioGroup";
+import { productMetadataQueryOptions } from "@/module/product/queries/queryOptions";
+import { useAuthStore } from "@/stores/authStore";
 import type { Campaign } from "@/types/Campaign";
 import styles from "./FormGoals.module.css";
 
@@ -98,6 +109,42 @@ const itemsGoals: ItemGoals[] = [
 export function FormGoals(form: UseFormReturn<Campaign>) {
     const [goal, setGoal] = useState<ItemGoals | undefined>();
     const watchType = form.watch("type");
+
+    // Get productId from form state (reacts to changes immediately)
+    const productId = form.watch("productId");
+    const isDemoMode = useAuthStore((state) => state.token === "demo-token");
+
+    // Fetch product metadata to get product types
+    const { data: productMetadata } = useQuery({
+        ...productMetadataQueryOptions(productId as Hex, isDemoMode),
+        enabled: !!productId,
+    });
+
+    // Check goal compatibility and generate warning message
+    const warningMessage = useMemo(() => {
+        // No warning if no product selected or no goal selected
+        if (!productId || !watchType) return null;
+
+        // No warning if product metadata not loaded yet
+        if (!productMetadata?.productTypes) return null;
+
+        const selectedGoal = watchType;
+        const productTypes = productMetadata.productTypes;
+
+        // Check if the selected goal is compatible with the product types
+        if (isGoalCompatible(selectedGoal, productTypes)) return null;
+
+        // Generate warning message
+        const requiredTypes = getProductTypesForGoal(selectedGoal);
+        const requiredTypesLabels = requiredTypes
+            .map(getProductTypeLabel)
+            .join(", ");
+        const currentTypesLabels = productTypes
+            .map(getProductTypeLabel)
+            .join(", ");
+
+        return `The "${getGoalLabel(selectedGoal)}" goal requires a product with ${requiredTypesLabels} type${requiredTypes.length > 1 ? "s" : ""}. Your product uses ${currentTypesLabels}.`;
+    }, [productId, watchType, productMetadata]);
 
     /**
      * Set goal when we have a type
@@ -181,6 +228,12 @@ export function FormGoals(form: UseFormReturn<Campaign>) {
                                 </div>
                             </Row>
                             <FormMessage />
+                            {warningMessage && (
+                                <div className={styles.formGoals__warning}>
+                                    <AlertTriangle size={18} />
+                                    <span>{warningMessage}</span>
+                                </div>
+                            )}
                         </FormItem>
                     )}
                 />

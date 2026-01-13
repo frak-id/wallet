@@ -6,6 +6,10 @@ import {
 import { Button } from "@frak-labs/ui/component/Button";
 import { useMemo } from "react";
 import { useFormContext } from "react-hook-form";
+import {
+    getProductTypeLabel,
+    getProductTypesForGoal,
+} from "@/module/campaigns/utils/goalCompatibility";
 import { Panel } from "@/module/common/component/Panel";
 import { FormDescription } from "@/module/forms/Form";
 import { interactionTypesInfo } from "@/module/product/utils/interactionTypes";
@@ -45,6 +49,12 @@ export function FormTriggersCac({
             }));
     }, [productTypes, currentGoal]);
 
+    // Get product types that support the current goal (for error message)
+    const requiredProductTypes = useMemo(() => {
+        if (!currentGoal) return [];
+        return getProductTypesForGoal(currentGoal);
+    }, [currentGoal]);
+
     const { getFieldState } = useFormContext();
     const triggerState = getFieldState("triggers");
 
@@ -57,6 +67,16 @@ export function FormTriggersCac({
                             No interactions available for the current goal,
                             please select another goal at previous step.
                         </span>
+                        {requiredProductTypes.length > 0 && (
+                            <span className={styles.notice}>
+                                This goal requires a product with one of these
+                                types:{" "}
+                                {requiredProductTypes
+                                    .map(getProductTypeLabel)
+                                    .join(", ")}
+                                .
+                            </span>
+                        )}
                     </FormDescription>
                     <FormDescription>
                         <Button
