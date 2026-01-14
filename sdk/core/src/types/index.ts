@@ -16,6 +16,7 @@ export type {
 } from "./config";
 // Utils
 export type { FrakContext } from "./context";
+export type { PreparedInteraction } from "./interaction";
 export type {
     ClientLifecycleEvent,
     IFrameLifecycleEvent,

@@ -62,6 +62,8 @@ export type {
     ModalStepTypes,
     OpenSsoParamsType,
     OpenSsoReturnType,
+    // Interaction
+    PreparedInteraction,
     PrepareSsoParamsType,
     PrepareSsoReturnType,
     SendTransactionModalStepType,
