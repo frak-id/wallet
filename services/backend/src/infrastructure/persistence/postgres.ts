@@ -1,16 +1,8 @@
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
-import {
-    referralLinksTable,
-    touchpointSourceEnum,
-    touchpointsTable,
-} from "../../domain/attribution";
-import { campaignRulesTable, campaignStatusEnum } from "../../domain/campaign";
-import {
-    identityGroupsTable,
-    identityNodesTable,
-    identityTypeEnum,
-} from "../../domain/identity";
+import { referralLinksTable, touchpointsTable } from "../../domain/attribution";
+import { campaignRulesTable } from "../../domain/campaign";
+import { identityGroupsTable, identityNodesTable } from "../../domain/identity";
 import {
     merchantAdminsTable,
     merchantOwnershipTransfersTable,
@@ -25,18 +17,9 @@ import {
     merchantWebhooksTable,
     purchaseClaimsTable,
     purchaseItemsTable,
-    purchaseStatusEnum,
     purchasesTable,
-    webhookPlatformEnum,
 } from "../../domain/purchases";
-import {
-    assetLogsTable,
-    assetStatusEnum,
-    assetTypeEnum,
-    interactionLogsTable,
-    interactionTypeEnum,
-    recipientTypeEnum,
-} from "../../domain/rewards";
+import { assetLogsTable, interactionLogsTable } from "../../domain/rewards";
 
 const schemaName = process.env.POSTGRES_SCHEMA || "public";
 
@@ -55,30 +38,21 @@ export const db = drizzle({
     client: postgresDb,
     schema: {
         campaignRulesTable,
-        campaignStatusEnum,
         referralLinksTable,
         touchpointsTable,
-        touchpointSourceEnum,
         identityGroupsTable,
         identityNodesTable,
-        identityTypeEnum,
         merchantsTable,
         merchantAdminsTable,
         merchantOwnershipTransfersTable,
         pushTokensTable,
         merchantWebhooksTable,
         purchaseClaimsTable,
-        purchaseStatusEnum,
         purchasesTable,
         purchaseItemsTable,
-        webhookPlatformEnum,
         pairingTable,
         pairingSignatureRequestTable,
         interactionLogsTable,
-        interactionTypeEnum,
         assetLogsTable,
-        assetStatusEnum,
-        assetTypeEnum,
-        recipientTypeEnum,
     },
 });

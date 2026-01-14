@@ -2,21 +2,22 @@ import {
     decimal,
     index,
     integer,
-    pgEnum,
     pgTable,
     serial,
+    text,
     timestamp,
     uniqueIndex,
     uuid,
     varchar,
 } from "drizzle-orm/pg-core";
 
-export const webhookPlatformEnum = pgEnum("webhook_platform", [
+export const WebhookPlatforms = [
     "shopify",
     "woocommerce",
     "custom",
     "internal",
-]);
+] as const;
+export type WebhookPlatform = (typeof WebhookPlatforms)[number];
 
 export const merchantWebhooksTable = pgTable(
     "merchant_webhooks",
@@ -25,17 +26,21 @@ export const merchantWebhooksTable = pgTable(
         merchantId: uuid("merchant_id").notNull(),
         hookSignatureKey: varchar("hook_signature_key").notNull(),
         createdAt: timestamp("created_at").defaultNow(),
-        platform: webhookPlatformEnum("platform").notNull().default("shopify"),
+        platform: text("platform")
+            .$type<WebhookPlatform>()
+            .notNull()
+            .default("shopify"),
     },
     (table) => [index("merchant_webhooks_merchant_id_idx").on(table.merchantId)]
 );
 
-export const purchaseStatusEnum = pgEnum("purchase_status", [
+export const PurchaseStatuses = [
     "pending",
     "confirmed",
     "cancelled",
     "refunded",
-]);
+] as const;
+export type PurchaseStatus = (typeof PurchaseStatuses)[number];
 
 export const purchasesTable = pgTable(
     "purchases",
@@ -47,7 +52,7 @@ export const purchasesTable = pgTable(
         purchaseToken: varchar("purchase_token"),
         totalPrice: decimal("total_price").notNull(),
         currencyCode: varchar("currency_code", { length: 4 }).notNull(),
-        status: purchaseStatusEnum("status"),
+        status: text("status").$type<PurchaseStatus>(),
         createdAt: timestamp("created_at").defaultNow(),
         updatedAt: timestamp("updated_at").defaultNow(),
         identityGroupId: uuid("identity_group_id"),

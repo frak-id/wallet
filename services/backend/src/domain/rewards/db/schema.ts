@@ -4,7 +4,6 @@ import {
     integer,
     jsonb,
     numeric,
-    pgEnum,
     pgTable,
     text,
     timestamp,
@@ -14,20 +13,19 @@ import {
 import type { Address, Hex } from "viem";
 import { customHex } from "../../../utils/drizzle/customTypes";
 
-import type { InteractionPayload } from "../types";
-
-export const interactionTypeEnum = pgEnum("interaction_type", [
-    "referral_arrival",
-    "purchase",
-    "wallet_connect",
-    "identity_merge",
-]);
+import type {
+    AssetStatus,
+    AssetType,
+    InteractionPayload,
+    InteractionType,
+    RecipientType,
+} from "../types";
 
 export const interactionLogsTable = pgTable(
     "interaction_logs",
     {
         id: uuid("id").primaryKey().defaultRandom(),
-        type: interactionTypeEnum("type").notNull(),
+        type: text("type").$type<InteractionType>().notNull(),
         identityGroupId: uuid("identity_group_id"),
         merchantId: uuid("merchant_id"),
         externalEventId: text("external_event_id"),
@@ -52,27 +50,6 @@ export const interactionLogsTable = pgTable(
 export type InteractionLogInsert = typeof interactionLogsTable.$inferInsert;
 export type InteractionLogSelect = typeof interactionLogsTable.$inferSelect;
 
-export const assetStatusEnum = pgEnum("asset_status", [
-    "pending",
-    "processing",
-    "settled",
-    "consumed",
-    "cancelled",
-    "expired",
-]);
-
-export const assetTypeEnum = pgEnum("asset_type", [
-    "token",
-    "discount",
-    "points",
-]);
-
-export const recipientTypeEnum = pgEnum("recipient_type", [
-    "referrer",
-    "referee",
-    "user",
-]);
-
 export const assetLogsTable = pgTable(
     "asset_logs",
     {
@@ -81,15 +58,18 @@ export const assetLogsTable = pgTable(
         merchantId: uuid("merchant_id").notNull(),
         campaignRuleId: uuid("campaign_rule_id"),
 
-        assetType: assetTypeEnum("asset_type").notNull(),
+        assetType: text("asset_type").$type<AssetType>().notNull(),
         amount: numeric("amount", { precision: 36, scale: 18 }).notNull(),
         tokenAddress: customHex("token_address").$type<Address>(),
 
-        recipientType: recipientTypeEnum("recipient_type").notNull(),
+        recipientType: text("recipient_type").$type<RecipientType>().notNull(),
         recipientWallet: customHex("recipient_wallet").$type<Address>(),
         chainDepth: integer("chain_depth"),
 
-        status: assetStatusEnum("status").notNull().default("pending"),
+        status: text("status")
+            .$type<AssetStatus>()
+            .notNull()
+            .default("pending"),
         statusChangedAt: timestamp("status_changed_at").defaultNow().notNull(),
 
         touchpointId: uuid("touchpoint_id"),

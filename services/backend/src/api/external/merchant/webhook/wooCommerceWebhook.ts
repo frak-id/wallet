@@ -1,7 +1,7 @@
 import { log } from "@backend-infrastructure";
 import { t, validateBodyHmac } from "@backend-utils";
 import { Elysia } from "elysia";
-import type { purchaseStatusEnum } from "../../../../domain/purchases";
+import type { PurchaseStatus } from "../../../../domain/purchases";
 import type {
     WooCommerceOrderStatus,
     WooCommerceOrderUpdateWebhookDto,
@@ -98,9 +98,7 @@ export const wooCommerceWebhook = new Elysia()
         }
     );
 
-function mapOrderStatus(
-    orderStatus: WooCommerceOrderStatus
-): (typeof purchaseStatusEnum.enumValues)[number] {
+function mapOrderStatus(orderStatus: WooCommerceOrderStatus): PurchaseStatus {
     if (orderStatus === "completed") {
         return "confirmed";
     }

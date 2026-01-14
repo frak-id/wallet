@@ -2,7 +2,6 @@ import {
     index,
     integer,
     jsonb,
-    pgEnum,
     pgTable,
     text,
     timestamp,
@@ -16,14 +15,13 @@ import type {
     CampaignRuleDefinition,
 } from "../types";
 
-export const campaignStatusEnum = pgEnum("campaign_status", [
+export const CampaignStatuses = [
     "draft",
     "active",
     "paused",
     "archived",
-]);
-
-export type CampaignStatus = (typeof campaignStatusEnum.enumValues)[number];
+] as const;
+export type CampaignStatus = (typeof CampaignStatuses)[number];
 
 export const campaignRulesTable = pgTable(
     "campaign_rules",
@@ -31,7 +29,10 @@ export const campaignRulesTable = pgTable(
         id: uuid("id").primaryKey().defaultRandom(),
         merchantId: uuid("merchant_id").notNull(),
         name: text("name").notNull(),
-        status: campaignStatusEnum("status").notNull().default("draft"),
+        status: text("status")
+            .$type<CampaignStatus>()
+            .notNull()
+            .default("draft"),
         priority: integer("priority").notNull().default(0),
         rule: jsonb("rule").$type<CampaignRuleDefinition>().notNull(),
         metadata: jsonb("metadata").$type<CampaignMetadata>(),

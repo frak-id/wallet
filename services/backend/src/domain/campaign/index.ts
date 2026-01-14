@@ -3,8 +3,8 @@ export {
     type CampaignRuleInsert,
     type CampaignRuleSelect,
     type CampaignStatus,
+    CampaignStatuses,
     campaignRulesTable,
-    campaignStatusEnum,
 } from "./db/schema";
 export { CampaignRuleRepository } from "./repositories/CampaignRuleRepository";
 export { CampaignManagementService } from "./services/CampaignManagementService";

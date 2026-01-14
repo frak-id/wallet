@@ -2,7 +2,7 @@ import { log } from "@backend-infrastructure";
 import { t, validateBodyHmac } from "@backend-utils";
 import { isRunningInProd } from "@frak-labs/app-essentials";
 import { Elysia } from "elysia";
-import type { purchaseStatusEnum } from "../../../../domain/purchases";
+import type { PurchaseStatus } from "../../../../domain/purchases";
 import type {
     OrderFinancialStatus,
     ShopifyOrderUpdateWebhookDto,
@@ -132,7 +132,7 @@ export const shopifyWebhook = new Elysia()
 
 function mapFinancialStatus(
     financialStatus: OrderFinancialStatus
-): (typeof purchaseStatusEnum.enumValues)[number] {
+): PurchaseStatus {
     if (financialStatus === "paid") {
         return "confirmed";
     }

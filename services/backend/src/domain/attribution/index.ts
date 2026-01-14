@@ -3,8 +3,9 @@ export {
     type ReferralLinkInsert,
     type ReferralLinkSelect,
     referralLinksTable,
+    type TouchpointSource,
     type TouchpointSourceData,
-    touchpointSourceEnum,
+    TouchpointSources,
     touchpointsTable,
 } from "./db/schema";
 export { ReferralLinkRepository } from "./repositories/ReferralLinkRepository";

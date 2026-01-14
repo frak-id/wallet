@@ -1,7 +1,6 @@
 import {
     index,
     jsonb,
-    pgEnum,
     pgTable,
     text,
     timestamp,
@@ -10,12 +9,13 @@ import {
 } from "drizzle-orm/pg-core";
 import type { Address } from "viem";
 
-export const touchpointSourceEnum = pgEnum("touchpoint_source", [
+export const TouchpointSources = [
     "referral_link",
     "organic",
     "paid_ad",
     "direct",
-]);
+] as const;
+export type TouchpointSource = (typeof TouchpointSources)[number];
 
 export type TouchpointSourceData =
     | {
@@ -43,7 +43,7 @@ export const touchpointsTable = pgTable(
         id: uuid("id").primaryKey().defaultRandom(),
         identityGroupId: uuid("identity_group_id").notNull(),
         merchantId: uuid("merchant_id").notNull(),
-        source: touchpointSourceEnum("source").notNull(),
+        source: text("source").$type<TouchpointSource>().notNull(),
         sourceData: jsonb("source_data")
             .$type<TouchpointSourceData>()
             .notNull(),

@@ -2,13 +2,9 @@ export {
     type AssetLogInsert,
     type AssetLogSelect,
     assetLogsTable,
-    assetStatusEnum,
-    assetTypeEnum,
     type InteractionLogInsert,
     type InteractionLogSelect,
     interactionLogsTable,
-    interactionTypeEnum,
-    recipientTypeEnum,
 } from "./db/schema";
 
 export { AssetLogRepository } from "./repositories/AssetLogRepository";
@@ -21,6 +17,7 @@ export {
 
 export type {
     AssetStatus,
+    AssetType,
     CreateAssetLogParams,
     InteractionPayload,
     InteractionType,

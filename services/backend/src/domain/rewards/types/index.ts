@@ -79,13 +79,7 @@ export type AssetStatus =
     | "cancelled" // Refunded or fraud detected
     | "expired"; // Pending reward expired (no wallet connected in time)
 
-/**
- * Type of asset/reward.
- */
-type AssetType =
-    | "token" // Crypto token (USDC, etc.)
-    | "discount" // Store discount (soft reward)
-    | "points"; // Loyalty points (soft reward)
+export type AssetType = "token" | "discount" | "points";
 
 /**
  * Who receives the reward (denormalized from campaign rule for queries).

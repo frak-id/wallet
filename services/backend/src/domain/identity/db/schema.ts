@@ -1,7 +1,6 @@
 import {
     index,
     jsonb,
-    pgEnum,
     pgTable,
     text,
     timestamp,
@@ -26,18 +25,19 @@ export const identityGroupsTable = pgTable("identity_groups", {
     updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-export const identityTypeEnum = pgEnum("identity_type", [
+export const IdentityTypes = [
     "anonymous_fingerprint",
     "merchant_customer",
     "wallet",
-]);
+] as const;
+export type IdentityType = (typeof IdentityTypes)[number];
 
 export const identityNodesTable = pgTable(
     "identity_nodes",
     {
         id: uuid("id").primaryKey().defaultRandom(),
         groupId: uuid("group_id").notNull(),
-        identityType: identityTypeEnum("identity_type").notNull(),
+        identityType: text("identity_type").$type<IdentityType>().notNull(),
         identityValue: text("identity_value").notNull(),
         merchantId: uuid("merchant_id"),
         validationData:

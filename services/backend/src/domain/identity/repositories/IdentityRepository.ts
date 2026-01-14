@@ -3,12 +3,11 @@ import { and, eq, isNull } from "drizzle-orm";
 import { LRUCache } from "lru-cache";
 import type { Address } from "viem";
 import {
+    type IdentityType,
     identityGroupsTable,
     identityNodesTable,
-    type identityTypeEnum,
 } from "../db/schema";
 
-type IdentityType = (typeof identityTypeEnum.enumValues)[number];
 type IdentityGroupSelect = typeof identityGroupsTable.$inferSelect;
 type IdentityNodeSelect = typeof identityNodesTable.$inferSelect;
 
