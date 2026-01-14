@@ -1,15 +1,16 @@
-import { campaignBankAbi } from "@frak-labs/app-essentials/blockchain";
-import { Button } from "@frak-labs/ui/component/Button";
+import { viemClient } from "@backend-infrastructure";
 import {
-    authenticatedBackendApi,
-    balanceKey,
-    claimableKey,
-    encodeWalletMulticall,
-} from "@frak-labs/wallet-shared";
+    addresses,
+    currentStablecoins,
+    rewarderHubAbi,
+} from "@frak-labs/app-essentials/blockchain";
+import { Button } from "@frak-labs/ui/component/Button";
+import { balanceKey, claimableKey } from "@frak-labs/wallet-shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CircleDollarSign } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { encodeFunctionData } from "viem";
+import { multicall } from "viem/actions";
 import { useAccount, useSendTransaction } from "wagmi";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
@@ -27,9 +28,27 @@ export function PendingReferral() {
     const { data: pendingReward, refetch: refetchPendingReward } = useQuery({
         queryKey: claimableKey.pending.byAddress(address),
         queryFn: async () => {
-            const { data, error } =
-                await authenticatedBackendApi.wallet.balance.claimable.get();
-            if (error) throw error;
+            const stablecoinAddresses = Object.values(currentStablecoins);
+            const result = await multicall(viemClient, {
+                contracts: stablecoinAddresses.map(
+                    (address) =>
+                        ({
+                            address: addresses.rewarderHub,
+                            abi: rewarderHubAbi,
+                            functionName: "getClaimable",
+                            args: [address, address],
+                        }) as const
+                ),
+                allowFailure: false,
+            });
+
+            // Return a map of stablecoin address => claimable amount
+            const data = stablecoinAddresses
+                .map((address, index) => ({
+                    token: address,
+                    amount: result[index],
+                }))
+                .filter((item) => item.amount > 0n);
 
             return data;
         },
@@ -44,26 +63,19 @@ export function PendingReferral() {
     } = useMutation({
         mutationKey: claimableKey.claim.byAddress(address),
         mutationFn: async () => {
-            if (!(pendingReward?.claimables && address)) return;
+            if (!(pendingReward?.length && address)) return;
 
             // Build each claim tx
-            const claimTxs = pendingReward.claimables.map((claimable) => ({
-                to: claimable.contract,
-                data: encodeFunctionData({
-                    abi: campaignBankAbi,
-                    functionName: "pullReward",
-                    args: [address],
-                }),
-                value: 0n,
-            }));
-
-            // For each pending rewards, launch a tx
-            const txs = encodeWalletMulticall(claimTxs);
+            const data = encodeFunctionData({
+                abi: rewarderHubAbi,
+                functionName: "claimBatch",
+                args: [pendingReward.map(({ token }) => token)],
+            });
 
             // Send the user op
             const txHash = await sendTransactionAsync({
-                to: address,
-                data: txs,
+                to: addresses.rewarderHub,
+                data: data,
             });
 
             // Refetch the pending reward
