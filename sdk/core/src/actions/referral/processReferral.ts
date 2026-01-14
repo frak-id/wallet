@@ -1,6 +1,5 @@
 import { FrakRpcError, RpcErrorCodes } from "@frak-labs/frame-connector";
-import { type Address, type Hex, isAddressEqual } from "viem";
-import { ReferralInteractionEncoder } from "../../interactions";
+import { type Address, isAddressEqual } from "viem";
 import type {
     DisplayEmbeddedWalletParamsType,
     FrakClient,
@@ -8,7 +7,7 @@ import type {
     WalletStatusReturnType,
 } from "../../types";
 import { FrakContextManager, trackEvent } from "../../utils";
-import { displayEmbeddedWallet, sendInteraction } from "../index";
+import { displayEmbeddedWallet } from "../index";
 
 /**
  * The different states of the referral process
@@ -19,7 +18,6 @@ type ReferralState =
     | "processing"
     | "success"
     | "no-wallet"
-    | "no-session"
     | "error"
     | "no-referrer"
     | "self-referral";
@@ -41,11 +39,9 @@ export type ProcessReferralOptions = {
  *  2. Then check if the user is logged in or not
  *  2.1 If not logged in, try a soft login, if it fail, display a modal for the user to login
  *  3. Check if that's not a self-referral (if yes, early exit)
- *  4. Check if the user has an interaction session or not
- *  4.1 If not, display a modal for the user to open a session
- *  5. Push the referred interaction
- *  6. Update the current url with the right data
- *  7. Return the resulting referral state
+ *  4. Track the referral event
+ *  5. Update the current url with the right data
+ *  6. Return the resulting referral state
  *
  *  If any error occurs during the process, the function will catch it and return an error state
  *
@@ -54,13 +50,10 @@ export type ProcessReferralOptions = {
  * @param args.walletStatus - The current user wallet status
  * @param args.frakContext - The current frak context
  * @param args.modalConfig - The modal configuration to display if the user is not logged in
- * @param args.productId - The product id to interact with (if not specified will be recomputed from the current domain)
  * @param args.options - Some options for the referral interaction
  * @returns  A promise with the resulting referral state
  *
  * @see {@link displayModal} for more details about the displayed modal
- * @see {@link sendInteraction} for more details on the interaction submission part
- * @see {@link ReferralInteractionEncoder} for more details about the referred interaction
  * @see {@link @frak-labs/core-sdk!ModalStepTypes} for more details on each modal steps types
  */
 export async function processReferral(
@@ -69,13 +62,11 @@ export async function processReferral(
         walletStatus,
         frakContext,
         modalConfig,
-        productId,
         options,
     }: {
         walletStatus?: WalletStatusReturnType;
         frakContext?: Partial<FrakContext> | null;
         modalConfig?: DisplayEmbeddedWalletParamsType;
-        productId?: Hex;
         options?: ProcessReferralOptions;
     }
 ) {
@@ -112,20 +103,11 @@ export async function processReferral(
         });
     }
 
-    // Helper function to push the interaction
-    async function pushReferralInteraction(referrer: Address) {
-        const interaction = ReferralInteractionEncoder.referred({
-            referrer,
-        });
-        await sendInteraction(client, { productId, interaction });
-    }
-
     try {
         // Do the core processing logic
         const { status, currentWallet } = await processReferralLogic({
             initialWalletStatus: walletStatus,
             getFreshWalletStatus,
-            pushReferralInteraction,
             // We can enforce this type cause of the condition at the start
             frakContext: frakContext as Pick<FrakContext, "r">,
         });
@@ -176,42 +158,35 @@ export async function processReferral(
 }
 
 /**
- * Automatically submit a referral interaction when detected
- *   -> And automatically set the referral context in the url
- * @param walletStatus
- * @param frakContext
+ * Process referral logic - ensure user is logged in and track the referral
+ * @param initialWalletStatus - The current wallet status
+ * @param getFreshWalletStatus - Function to display modal and get wallet
+ * @param frakContext - The frak context containing referrer info
  */
 async function processReferralLogic({
     initialWalletStatus,
     getFreshWalletStatus,
-    pushReferralInteraction,
     frakContext,
 }: {
     initialWalletStatus?: WalletStatusReturnType;
     getFreshWalletStatus: () => Promise<Address | undefined>;
-    pushReferralInteraction: (referrer: Address) => Promise<void>;
     frakContext: Pick<FrakContext, "r">;
 }) {
     // Get the current wallet, without auto displaying the modal
     let currentWallet = initialWalletStatus?.wallet;
 
-    // If we don't have a current wallet, display the modal
+    // If we don't have a current wallet, display the modal to log in
     if (!currentWallet) {
-        // Track the event
         currentWallet = await getFreshWalletStatus();
     }
 
+    // Check for self-referral
     if (currentWallet && isAddressEqual(frakContext.r, currentWallet)) {
         return { status: "self-referral", currentWallet } as const;
     }
 
-    // If the current wallet doesn't have an interaction session, display the modal
-    if (!initialWalletStatus?.interactionSession) {
-        currentWallet = await getFreshWalletStatus();
-    }
-
-    // Push the referred interaction
-    await pushReferralInteraction(frakContext.r);
+    // Referral is tracked via the backend when user logs in with a referral context
+    // The interactionToken is sent with requests and backend handles attribution
     return { status: "success", currentWallet } as const;
 }
 
@@ -228,8 +203,8 @@ async function ensureWalletConnected(
         walletStatus?: WalletStatusReturnType;
     }
 ) {
-    // If wallet not connected, or no interaction session
-    if (!walletStatus?.interactionSession) {
+    // If wallet not connected, display modal
+    if (walletStatus?.key !== "connected") {
         const result = await displayEmbeddedWallet(client, modalConfig ?? {});
         return result?.wallet ?? undefined;
     }
@@ -246,8 +221,6 @@ function mapErrorToState(error: unknown): ReferralState {
         switch (error.code) {
             case RpcErrorCodes.walletNotConnected:
                 return "no-wallet";
-            case RpcErrorCodes.serverErrorForInteractionDelegation:
-                return "no-session";
             default:
                 return "error";
         }

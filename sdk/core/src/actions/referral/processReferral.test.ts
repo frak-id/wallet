@@ -1,5 +1,5 @@
 import { FrakRpcError, RpcErrorCodes } from "@frak-labs/frame-connector";
-import type { Address, Hex } from "viem";
+import type { Address } from "viem";
 import { vi } from "vitest"; // Keep vi from vitest for vi.mock() hoisting
 import {
     afterEach,
@@ -15,18 +15,9 @@ import type {
 } from "../../types";
 import { processReferral } from "./processReferral";
 
-// Mock computeProductId first
-vi.mock("../../utils/computeProductId", () => ({
-    computeProductId: vi.fn(
-        () =>
-            "0x0000000000000000000000000000000000000000000000000000000000000001" as Hex
-    ),
-}));
-
 // Mock dependencies
-vi.mock("../../index", () => ({
+vi.mock("../index", () => ({
     displayEmbeddedWallet: vi.fn(),
-    sendInteraction: vi.fn(),
 }));
 
 vi.mock("../../utils", () => ({
@@ -36,20 +27,10 @@ vi.mock("../../utils", () => ({
     trackEvent: vi.fn(),
 }));
 
-vi.mock("../../interactions", () => ({
-    ReferralInteractionEncoder: {
-        referred: vi.fn(({ referrer }: { referrer: Address }) => ({
-            interactionData: `0x${referrer.slice(2)}` as Hex,
-            handlerTypeDenominator: "0x01" as Hex,
-        })),
-    },
-}));
-
 describe("processReferral", () => {
     let mockClient: FrakClient;
     let mockAddress: Address;
     let mockReferrerAddress: Address;
-    let mockProductId: Hex;
     let mockWalletStatus: WalletStatusReturnType;
     let mockFrakContext: Partial<FrakContext>;
 
@@ -59,8 +40,6 @@ describe("processReferral", () => {
         mockAddress = "0x1234567890123456789012345678901234567890" as Address;
         mockReferrerAddress =
             "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd" as Address;
-        mockProductId =
-            "0x0000000000000000000000000000000000000000000000000000000000000001" as Hex;
 
         mockClient = {
             openPanel: {
@@ -78,10 +57,6 @@ describe("processReferral", () => {
         mockWalletStatus = {
             key: "connected" as const,
             wallet: mockAddress,
-            interactionSession: {
-                startTimestamp: Date.now() - 3600000,
-                endTimestamp: Date.now() + 3600000,
-            },
         };
 
         mockFrakContext = {
@@ -117,7 +92,6 @@ describe("processReferral", () => {
         });
 
         expect(result).toBe("no-referrer");
-        // sendInteraction should not be called when there's no referrer
     });
 
     it("should return 'self-referral' when referrer equals current wallet", async () => {
@@ -129,26 +103,17 @@ describe("processReferral", () => {
         });
 
         expect(result).toBe("self-referral");
-        // sendInteraction should not be called for self-referrals
     });
 
     it("should successfully process referral when all conditions are met", async () => {
         const utils = await import("../../utils");
 
-        // Mock client.request for sendInteraction
-        vi.mocked(mockClient.request).mockResolvedValue({
-            delegationId: "delegation-123",
-        } as any);
-
         const result = await processReferral(mockClient, {
             walletStatus: mockWalletStatus,
             frakContext: mockFrakContext,
-            productId: mockProductId,
         });
 
         expect(result).toBe("success");
-
-        expect(mockClient.request).toHaveBeenCalled();
 
         expect(utils.trackEvent).toHaveBeenCalledWith(
             mockClient,
@@ -175,14 +140,12 @@ describe("processReferral", () => {
     });
 
     it("should handle wallet not connected scenario", async () => {
-        // Mock client.request for displayEmbeddedWallet and sendInteraction
-        vi.mocked(mockClient.request)
-            .mockResolvedValueOnce({
-                wallet: mockAddress,
-            } as any)
-            .mockResolvedValueOnce({
-                delegationId: "delegation-123",
-            } as any);
+        const { displayEmbeddedWallet } = await import("../index");
+
+        // Mock displayEmbeddedWallet to return a wallet
+        vi.mocked(displayEmbeddedWallet).mockResolvedValue({
+            wallet: mockAddress,
+        } as any);
 
         const result = await processReferral(mockClient, {
             walletStatus: undefined,
@@ -190,91 +153,42 @@ describe("processReferral", () => {
         });
 
         expect(result).toBe("success");
-        expect(mockClient.request).toHaveBeenCalled();
+        expect(displayEmbeddedWallet).toHaveBeenCalled();
     });
 
-    it("should handle missing interaction session", async () => {
-        const statusWithoutSession: WalletStatusReturnType = {
-            key: "connected" as const,
-            wallet: mockAddress,
-            interactionSession: undefined,
-        };
+    it("should return 'no-wallet' when wallet connection fails", async () => {
+        const { displayEmbeddedWallet } = await import("../index");
 
-        // Mock client.request for displayEmbeddedWallet and sendInteraction
-        vi.mocked(mockClient.request)
-            .mockResolvedValueOnce({
-                wallet: mockAddress,
-            } as any)
-            .mockResolvedValueOnce({
-                delegationId: "delegation-123",
-            } as any);
-
-        const result = await processReferral(mockClient, {
-            walletStatus: statusWithoutSession,
-            frakContext: mockFrakContext,
-        });
-
-        expect(result).toBe("success");
-        expect(mockClient.request).toHaveBeenCalled();
-    });
-
-    it("should return 'error' when wallet connection fails", async () => {
         const error = new FrakRpcError(
             RpcErrorCodes.walletNotConnected,
             "Wallet not connected"
         );
-        // Mock client.request to throw error for displayEmbeddedWallet
-        vi.mocked(mockClient.request).mockRejectedValue(error);
+        vi.mocked(displayEmbeddedWallet).mockRejectedValue(error);
 
         const result = await processReferral(mockClient, {
             walletStatus: undefined,
             frakContext: mockFrakContext,
         });
 
-        // The error gets caught and mapped
-        expect(["error", "no-wallet", "success"]).toContain(result);
-    });
-
-    it("should return 'no-session' when interaction delegation fails", async () => {
-        const error = new FrakRpcError(
-            RpcErrorCodes.serverErrorForInteractionDelegation,
-            "Server error"
-        );
-        // Mock client.request to throw error for sendInteraction
-        vi.mocked(mockClient.request).mockRejectedValue(error);
-
-        const result = await processReferral(mockClient, {
-            walletStatus: mockWalletStatus,
-            frakContext: mockFrakContext,
-        });
-
-        // sendInteraction is in Promise.allSettled, so errors are caught
-        // The function might still succeed or return error depending on implementation
-        expect(["no-session", "error", "success"]).toContain(result);
+        expect(result).toBe("no-wallet");
     });
 
     it("should return 'error' for unknown errors", async () => {
+        const { displayEmbeddedWallet } = await import("../index");
+
         const error = new Error("Unknown error");
-        // Mock client.request to throw error for sendInteraction
-        vi.mocked(mockClient.request).mockRejectedValue(error);
+        vi.mocked(displayEmbeddedWallet).mockRejectedValue(error);
 
         const result = await processReferral(mockClient, {
-            walletStatus: mockWalletStatus,
+            walletStatus: undefined,
             frakContext: mockFrakContext,
         });
 
-        // sendInteraction is called inside pushReferralInteraction which is inside Promise.allSettled
-        // So the error might be caught and the function might still succeed
-        expect(["error", "success"]).toContain(result);
+        expect(result).toBe("error");
     });
 
     it("should update URL context when alwaysAppendUrl is true", async () => {
         const utils = await import("../../utils");
-
-        // Mock client.request for sendInteraction
-        vi.mocked(mockClient.request).mockResolvedValue({
-            delegationId: "delegation-123",
-        } as any);
 
         await processReferral(mockClient, {
             walletStatus: mockWalletStatus,
@@ -293,11 +207,6 @@ describe("processReferral", () => {
     it("should remove URL context when alwaysAppendUrl is false", async () => {
         const utils = await import("../../utils");
 
-        // Mock client.request for sendInteraction
-        vi.mocked(mockClient.request).mockResolvedValue({
-            delegationId: "delegation-123",
-        } as any);
-
         await processReferral(mockClient, {
             walletStatus: mockWalletStatus,
             frakContext: mockFrakContext,
@@ -315,11 +224,6 @@ describe("processReferral", () => {
     it("should remove URL context by default", async () => {
         const utils = await import("../../utils");
 
-        // Mock client.request for sendInteraction
-        vi.mocked(mockClient.request).mockResolvedValue({
-            delegationId: "delegation-123",
-        } as any);
-
         await processReferral(mockClient, {
             walletStatus: mockWalletStatus,
             frakContext: mockFrakContext,
@@ -329,38 +233,5 @@ describe("processReferral", () => {
             url: window.location.href,
             context: null,
         });
-    });
-
-    it("should handle sendInteraction failures gracefully", async () => {
-        const utils = await import("../../utils");
-
-        // Mock client.request to throw error only for sendInteraction call
-        // Note: sendInteraction uses Promise.allSettled, so errors are caught
-        // We use mockImplementation to ensure the rejection is properly handled
-        // by returning a rejected promise that will be caught by Promise.allSettled
-        vi.mocked(mockClient.request).mockImplementation(async (request) => {
-            // Only reject for frak_sendInteraction calls (sendInteraction)
-            if (request.method === "frak_sendInteraction") {
-                // Return a rejected promise that will be caught by Promise.allSettled
-                return Promise.reject(new Error("Network error"));
-            }
-            // For any other calls (e.g., displayEmbeddedWallet), resolve successfully
-            return { delegationId: "delegation-123" } as any;
-        });
-        // trackEvent errors are also caught in Promise.allSettled
-        // Even though trackEvent is synchronous (returns void), we return a rejected promise
-        // so that Promise.allSettled can properly catch it without causing unhandled rejections
-        vi.mocked(utils.trackEvent).mockImplementation(() => {
-            return Promise.reject(new Error("Track failed")) as any;
-        });
-
-        const result = await processReferral(mockClient, {
-            walletStatus: mockWalletStatus,
-            frakContext: mockFrakContext,
-        });
-
-        // sendInteraction is in Promise.allSettled, so errors are caught
-        // The function might still succeed or return error depending on implementation
-        expect(["error", "success"]).toContain(result);
     });
 });

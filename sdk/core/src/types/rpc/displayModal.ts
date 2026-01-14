@@ -3,7 +3,6 @@ import type { I18nConfig } from "../config";
 import type {
     FinalModalStepType,
     LoginModalStepType,
-    OpenInteractionSessionModalStepType,
     SendTransactionModalStepType,
     SiweAuthenticateModalStepType,
 } from "./modal";
@@ -16,7 +15,6 @@ export type ModalStepTypes =
     | LoginModalStepType
     | SiweAuthenticateModalStepType
     | SendTransactionModalStepType
-    | OpenInteractionSessionModalStepType
     | FinalModalStepType;
 
 /**

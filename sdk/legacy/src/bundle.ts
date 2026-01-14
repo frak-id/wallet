@@ -8,7 +8,6 @@ import { websiteOverrides } from "./specifics";
 
 export * from "@frak-labs/core-sdk";
 export * from "@frak-labs/core-sdk/actions";
-export * from "@frak-labs/core-sdk/interactions";
 
 // Export old `createIFrameNexusClient` to be retro compatible
 export const createIFrameNexusClient = createIFrameFrakClient;

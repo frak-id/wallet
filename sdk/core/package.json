@@ -61,17 +61,6 @@
         "default": "./dist/actions.cjs"
       }
     },
-    "./interactions": {
-      "development": "./src/interactions/index.ts",
-      "import": {
-        "types": "./dist/interactions.d.ts",
-        "default": "./dist/interactions.js"
-      },
-      "require": {
-        "types": "./dist/interactions.d.cts",
-        "default": "./dist/interactions.cjs"
-      }
-    },
     "./bundle": {
       "import": {
         "types": "./dist/bundle.d.ts",

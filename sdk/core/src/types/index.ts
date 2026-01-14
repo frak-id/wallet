@@ -38,17 +38,10 @@ export type {
     LoggedOutEmbeddedView,
 } from "./rpc/embedded";
 export type {
-    PreparedInteraction,
-    SendInteractionParamsType,
-    SendInteractionReturnType,
-} from "./rpc/interaction";
-export type {
     FinalActionType,
     FinalModalStepType,
     LoginModalStepType,
     ModalStepMetadata,
-    OpenInteractionSessionModalStepType,
-    OpenInteractionSessionReturnType,
     SendTransactionModalStepType,
     SendTransactionReturnType,
     SendTransactionTxType,

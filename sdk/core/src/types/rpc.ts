@@ -1,4 +1,3 @@
-import type { Hex } from "viem";
 import type { FrakWalletSdkConfig } from "./config";
 import type {
     ModalRpcMetadata,
@@ -9,10 +8,7 @@ import type {
     DisplayEmbeddedWalletParamsType,
     DisplayEmbeddedWalletResultType,
 } from "./rpc/embedded";
-import type {
-    PreparedInteraction,
-    SendInteractionReturnType,
-} from "./rpc/interaction";
+
 import type { GetProductInformationReturnType } from "./rpc/productInformation";
 import type {
     OpenSsoParamsType,
@@ -45,11 +41,6 @@ import type { WalletStatusReturnType } from "./rpc/walletStatus";
  * - Params: [requests: {@link ModalRpcStepsInput}, metadata?: {@link ModalRpcMetadata}, configMetadata: {@link FrakWalletSdkConfig}["metadata"]]
  * - Returns: {@link ModalRpcStepsResultType}
  * - Response Type: promise (one-shot)
- *
- * #### frak_sendInteraction
- *  - Params: [productId: Hex, interaction: {@link PreparedInteraction}, signature?: Hex]
- *  - Returns: {@link SendInteractionReturnType}
- *  - Response Type: promise (one-shot)
  *
  * #### frak_sso
  *  - Params: [params: {@link OpenSsoParamsType}, name: string, customCss?: string]
@@ -88,19 +79,6 @@ export type IFrameRpcSchema = [
             configMetadata: FrakWalletSdkConfig["metadata"],
         ];
         ReturnType: ModalRpcStepsResultType;
-    },
-    /**
-     * Method to transmit a user interaction
-     * This is a one-shot request
-     */
-    {
-        Method: "frak_sendInteraction";
-        Parameters: [
-            productId: Hex,
-            interaction: PreparedInteraction,
-            signature?: Hex,
-        ];
-        ReturnType: SendInteractionReturnType;
     },
     /**
      * Method to prepare SSO (generate URL for popup)

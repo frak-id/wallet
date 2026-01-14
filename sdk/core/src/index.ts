@@ -6,11 +6,7 @@ export {
     DebugInfoGatherer,
     setupClient,
 } from "./clients";
-export {
-    type FullInteractionTypesKey,
-    type InteractionTypesKey,
-    interactionTypes,
-} from "./constants/interactionTypes";
+
 export { type LocalesKey, locales } from "./constants/locales";
 // Constants
 export {
@@ -59,15 +55,10 @@ export type {
     ModalStepMetadata,
     // RPC Modal generics
     ModalStepTypes,
-    OpenInteractionSessionModalStepType,
-    OpenInteractionSessionReturnType,
     OpenSsoParamsType,
     OpenSsoReturnType,
-    PreparedInteraction,
     PrepareSsoParamsType,
     PrepareSsoReturnType,
-    SendInteractionParamsType,
-    SendInteractionReturnType,
     SendTransactionModalStepType,
     SendTransactionReturnType,
     SendTransactionTxType,

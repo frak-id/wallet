@@ -7,7 +7,6 @@ import type {
     ModalRpcMetadata,
     ModalRpcStepsResultType,
     ModalStepTypes,
-    OpenInteractionSessionModalStepType,
     SendTransactionModalStepType,
 } from "../../types";
 import { displayModal } from "../displayModal";
@@ -58,9 +57,7 @@ export type ModalStepBuilder<
 /**
  * Represent the output type of the modal builder
  */
-export type ModalBuilder = ModalStepBuilder<
-    [LoginModalStepType, OpenInteractionSessionModalStepType]
->;
+export type ModalBuilder = ModalStepBuilder<[LoginModalStepType]>;
 
 /**
  * Helper to craft Frak modal, and share a base initial config
@@ -68,9 +65,8 @@ export type ModalBuilder = ModalStepBuilder<
  * @param args
  * @param args.metadata - Common modal metadata (customisation, language etc)
  * @param args.login - Login step parameters
- * @param args.openSession - Open session step parameters
  *
- * @description This function will create a modal builder with the provided metadata, login and open session parameters.
+ * @description This function will create a modal builder with the provided metadata and login parameters.
  *
  * @example
  * Here is an example of how to use the `modalBuilder` to create and display a sharing modal:
@@ -102,20 +98,15 @@ export function modalBuilder(
     {
         metadata,
         login,
-        openSession,
     }: {
         metadata?: ModalRpcMetadata;
         login?: LoginModalStepType["params"];
-        openSession?: OpenInteractionSessionModalStepType["params"];
     }
 ): ModalBuilder {
     // Build the initial modal params
-    const baseParams: DisplayModalParamsType<
-        [LoginModalStepType, OpenInteractionSessionModalStepType]
-    > = {
+    const baseParams: DisplayModalParamsType<[LoginModalStepType]> = {
         steps: {
             login: login ?? {},
-            openSession: openSession ?? {},
         },
         metadata,
     };
