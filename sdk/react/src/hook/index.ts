@@ -5,7 +5,6 @@ export { useFrakConfig } from "./useFrakConfig";
 export { useGetProductInformation } from "./useGetProductInformation";
 export { useOpenSso } from "./useOpenSso";
 export { usePrepareSso } from "./usePrepareSso";
-export { useSendInteraction } from "./useSendInteraction";
 export { useSendTransactionAction } from "./useSendTransaction";
 export { useSiweAuthenticate } from "./useSiweAuthenticate";
 export { useWalletStatus } from "./useWalletStatus";

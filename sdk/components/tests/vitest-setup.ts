@@ -95,8 +95,7 @@ vi.mock("@frak-labs/core-sdk", async () => {
             rewards: [],
         }),
 
-        // Interaction actions
-        sendInteraction: vi.fn(),
+        // Purchase tracking
         trackPurchaseStatus: vi.fn(),
 
         // Wallet status
@@ -134,7 +133,6 @@ vi.mock("@frak-labs/core-sdk/actions", async () => {
         }),
         openSso: vi.fn(),
         prepareSso: vi.fn(),
-        sendInteraction: vi.fn(),
         trackPurchaseStatus: vi.fn(),
         watchWalletStatus: vi.fn(),
     };

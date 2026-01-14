@@ -7,6 +7,11 @@ export {
     setupClient,
 } from "./clients";
 
+export {
+    type FullInteractionTypesKey,
+    type InteractionTypesKey,
+    interactionTypes,
+} from "./constants/interactionTypes";
 export { type LocalesKey, locales } from "./constants/locales";
 // Constants
 export {

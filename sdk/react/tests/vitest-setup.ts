@@ -48,8 +48,7 @@ vi.mock("@frak-labs/core-sdk", async () => {
         // Product actions
         getProductInformation: vi.fn(),
 
-        // Interaction actions
-        sendInteraction: vi.fn(),
+        // Purchase tracking
         trackPurchaseStatus: vi.fn(),
 
         // Wallet status

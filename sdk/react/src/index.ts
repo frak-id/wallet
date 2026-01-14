@@ -9,7 +9,6 @@ export {
     useOpenSso,
     usePrepareSso,
     useReferralInteraction,
-    useSendInteraction,
     useSendTransactionAction,
     useSiweAuthenticate,
     useWalletStatus,
