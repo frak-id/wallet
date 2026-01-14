@@ -18,9 +18,6 @@ export const addresses = {
     rewarderHub: "0xBaf28A2214856E864D9d89Ae3377140358FA5fa8",
     campaignBankFactory: "0x4bD5CFDF64bB6ab0c439F36ba2C324338F15BF28",
     // Kernel
-    interactionDelegator: "0x0000000000915Bae6248227914666Afd11Ad706e",
-    interactionDelegatorAction: "0x00000000001BF7FE0EEBf7c66E1e624D52a12FAD",
-    interactionDelegatorValidator: "0x00000000002f84e026BbA7983F3c189D0C6dc8Fa",
     p256Wrapper: "0x00e4005A00007384000000B0a8A0F300DD9fCAFA",
     webAuthNRecoveryAction: "0x000000000093c960bC9F9Dc93509E394a96c7FD9",
     webAuthNValidator: "0x0000000000Fb9604350a25E826B050D859FE7b77",

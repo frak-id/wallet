@@ -30,9 +30,6 @@ export {
     KernelInitAbi,
 } from "./abis/kernelAccountAbis";
 export {
-    interactionDelegatorAbi,
-    interactionDelegatorActionAbi,
-    interactionDelegatorValidatorAbi,
     multiWebAuthNRecoveryActionAbi,
     multiWebAuthNValidatorV2Abi,
 } from "./abis/kernelV2Abis";
@@ -42,10 +39,6 @@ export {
     purchaseOracleAbi,
     referralRegistryAbi,
 } from "./abis/registryAbis";
-export {
-    sendInteractionSelector,
-    sendInteractionsSelector,
-} from "./abis/selectors";
 export {
     addresses,
     currentStablecoins,
