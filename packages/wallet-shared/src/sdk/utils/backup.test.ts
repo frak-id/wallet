@@ -174,11 +174,11 @@ describe("backup utilities", () => {
             });
             vi.mocked(walletStore.getState).mockReturnValue({
                 pendingInteractions: { interactions: [] },
-                interactionSession: null,
+
                 addPendingInteraction: vi.fn(),
                 addPendingInteractions: mockAddPendingInteractions,
                 cleanPendingInteractions: vi.fn(),
-                setInteractionSession: vi.fn(),
+
                 clearWallet: vi.fn(),
             });
 
@@ -379,11 +379,11 @@ describe("backup utilities", () => {
             });
             vi.mocked(walletStore.getState).mockReturnValue({
                 pendingInteractions: { interactions: [] },
-                interactionSession: null,
+
                 addPendingInteraction: vi.fn(),
                 addPendingInteractions: vi.fn(),
                 cleanPendingInteractions: vi.fn(),
-                setInteractionSession: vi.fn(),
+
                 clearWallet: vi.fn(),
             });
 
@@ -425,11 +425,11 @@ describe("backup utilities", () => {
             });
             vi.mocked(walletStore.getState).mockReturnValue({
                 pendingInteractions: { interactions: [] },
-                interactionSession: null,
+
                 addPendingInteraction: vi.fn(),
                 addPendingInteractions: vi.fn(),
                 cleanPendingInteractions: vi.fn(),
-                setInteractionSession: vi.fn(),
+
                 clearWallet: vi.fn(),
             });
 
@@ -471,11 +471,11 @@ describe("backup utilities", () => {
             });
             vi.mocked(walletStore.getState).mockReturnValue({
                 pendingInteractions: { interactions: mockPendingInteractions },
-                interactionSession: null,
+
                 addPendingInteraction: vi.fn(),
                 addPendingInteractions: vi.fn(),
                 cleanPendingInteractions: vi.fn(),
-                setInteractionSession: vi.fn(),
+
                 clearWallet: vi.fn(),
             });
 
@@ -508,11 +508,11 @@ describe("backup utilities", () => {
             });
             vi.mocked(walletStore.getState).mockReturnValue({
                 pendingInteractions: { interactions: [] },
-                interactionSession: null,
+
                 addPendingInteraction: vi.fn(),
                 addPendingInteractions: vi.fn(),
                 cleanPendingInteractions: vi.fn(),
-                setInteractionSession: vi.fn(),
+
                 clearWallet: vi.fn(),
             });
 
@@ -544,11 +544,11 @@ describe("backup utilities", () => {
             });
             vi.mocked(walletStore.getState).mockReturnValue({
                 pendingInteractions: { interactions: [] },
-                interactionSession: null,
+
                 addPendingInteraction: vi.fn(),
                 addPendingInteractions: vi.fn(),
                 cleanPendingInteractions: vi.fn(),
-                setInteractionSession: vi.fn(),
+
                 clearWallet: vi.fn(),
             });
 
@@ -589,11 +589,11 @@ describe("backup utilities", () => {
             });
             vi.mocked(walletStore.getState).mockReturnValue({
                 pendingInteractions: { interactions: [] },
-                interactionSession: null,
+
                 addPendingInteraction: vi.fn(),
                 addPendingInteractions: vi.fn(),
                 cleanPendingInteractions: vi.fn(),
-                setInteractionSession: vi.fn(),
+
                 clearWallet: vi.fn(),
             });
 

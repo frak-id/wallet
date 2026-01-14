@@ -2,13 +2,7 @@
 export { getRegisterOptions } from "./action/registerOptions";
 
 // Hooks
-export { useCloseSession } from "./hook/useCloseSession";
 export { useConsumePendingInteractions } from "./hook/useConsumePendingInteractions";
-export {
-    interactionSessionStatusQuery,
-    useInteractionSessionStatus,
-} from "./hook/useInteractionSessionStatus";
-export { useOpenSession } from "./hook/useOpenSession";
 export { usePushInteraction } from "./hook/usePushInteraction";
 
 // Query Keys

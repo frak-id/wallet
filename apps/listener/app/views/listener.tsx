@@ -20,7 +20,6 @@ import { useDisplayEmbeddedWallet } from "@/module/hooks/useDisplayEmbeddedWalle
 import { useDisplayModalListener } from "@/module/hooks/useDisplayModalListener";
 import { useListenerDataPreload } from "@/module/hooks/useListenerDataPreload";
 import { useOnGetProductInformation } from "@/module/hooks/useOnGetProductInformation";
-import { useSendInteractionListener } from "@/module/hooks/useSendInteractionListener";
 import { useSendPing } from "@/module/hooks/useSendPing";
 import { useWalletStatusListener } from "@/module/hooks/useWalletStatusListener";
 import {
@@ -54,9 +53,6 @@ export default function Listener() {
 function ListenerContent() {
     // Hook used when a wallet status is requested
     const onWalletListenRequest = useWalletStatusListener();
-
-    // Hook used when a dashboard action is requested
-    const onInteractionRequest = useSendInteractionListener();
 
     // Hook when a modal display is asked
     const onDisplayModalRequest = useDisplayModalListener();
@@ -121,7 +117,6 @@ function ListenerContent() {
         });
 
         // Register promise-based handlers (IFrameRpcSchema)
-        listener.handle("frak_sendInteraction", onInteractionRequest);
         listener.handle("frak_displayModal", onDisplayModalRequest);
         listener.handle("frak_prepareSso", handlePrepareSso);
         listener.handle("frak_openSso", handleOpenSso);
@@ -146,7 +141,6 @@ function ListenerContent() {
         };
     }, [
         onWalletListenRequest,
-        onInteractionRequest,
         onDisplayModalRequest,
         onGetProductInformation,
         onDisplayEmbeddedWallet,

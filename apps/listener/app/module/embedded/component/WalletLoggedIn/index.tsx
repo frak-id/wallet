@@ -6,28 +6,22 @@ import {
 } from "@frak-labs/core-sdk";
 import { useCopyToClipboardWithState } from "@frak-labs/ui/hook/useCopyToClipboardWithState";
 import { Copy } from "@frak-labs/ui/icons/Copy";
-import { Power } from "@frak-labs/ui/icons/Power";
 import { Share } from "@frak-labs/ui/icons/Share";
 import { prefixWalletCss } from "@frak-labs/ui/utils/prefixWalletCss";
 import {
     OriginPairingState,
     trackGenericEvent,
-    useCloseSession,
     useGetUserBalance,
     useGetUserPendingBalance,
-    useInteractionSessionStatus,
-    useOpenSession,
 } from "@frak-labs/wallet-shared";
 import { cx } from "class-variance-authority";
 import { toast } from "sonner";
 import { useAccount } from "wagmi";
 import { ButtonWallet } from "@/module/embedded/component/ButtonWallet";
 import {
-    OnboardingActivate,
     OnboardingShare,
     OnboardingWelcome,
 } from "@/module/embedded/component/Onboarding";
-import { useTriggerPushInterraction } from "@/module/hooks/useTriggerPushInterraction";
 import {
     useEmbeddedListenerUI,
     useListenerTranslation,
@@ -140,7 +134,6 @@ function ActionButtons({
                 prefixWalletCss("modalListenerWallet__actionButtons")
             )}
         >
-            <ButtonOpenSession refetchPendingBalance={refetchPendingBalance} />
             <ButtonCopyLink
                 finalSharingLink={finalSharingLink}
                 refetchPendingBalance={refetchPendingBalance}
@@ -153,50 +146,6 @@ function ActionButtons({
     );
 }
 
-function ButtonOpenSession({
-    refetchPendingBalance,
-}: {
-    refetchPendingBalance: () => void;
-}) {
-    const { data: currentSession } = useInteractionSessionStatus();
-    const { t } = useListenerTranslation();
-    const { mutateAsync: openSession, isPending: isOpeningSession } =
-        useOpenSession();
-    const { mutateAsync: closeSession, isPending: isClosingSession } =
-        useCloseSession();
-
-    return (
-        <div
-            className={cx(
-                styles.modalListenerWallet__wrapperButton,
-                prefixWalletCss("modalListenerWallet__wrapperButton")
-            )}
-        >
-            <ButtonWallet
-                variant={currentSession ? "success" : "danger"}
-                icon={<Power />}
-                onClick={() => {
-                    if (currentSession) {
-                        closeSession().then(() => {
-                            refetchPendingBalance();
-                        });
-                        return;
-                    }
-
-                    openSession().then(() => {
-                        refetchPendingBalance();
-                    });
-                }}
-                isLoading={isOpeningSession || isClosingSession}
-                disabled={isOpeningSession || isClosingSession}
-            >
-                {currentSession ? t("common.activated") : t("common.disabled")}
-            </ButtonWallet>
-            <OnboardingActivate isReverse={true} isHidden={!!currentSession} />
-        </div>
-    );
-}
-
 function ButtonCopyLink({
     finalSharingLink,
     refetchPendingBalance,
@@ -204,19 +153,13 @@ function ButtonCopyLink({
     finalSharingLink: string | null;
     refetchPendingBalance: () => void;
 }) {
-    const { data: currentSession } = useInteractionSessionStatus();
     const { copied, copy } = useCopyToClipboardWithState();
     const { t } = useListenerTranslation();
 
-    // Listen to copied to trigger the interaction push
-    useTriggerPushInterraction({
-        conditionToTrigger: copied,
-    });
-
     return (
         <ButtonWallet
-            variant={!currentSession ? "disabled" : "primary"}
-            disabled={!currentSession || copied}
+            variant="primary"
+            disabled={copied}
             isLoading={copied}
             icon={<Copy />}
             onClick={async () => {
@@ -241,25 +184,18 @@ function ButtonSharingLink({
     finalSharingLink: string | null;
     refetchPendingBalance: () => void;
 }) {
-    const { data: currentSession } = useInteractionSessionStatus();
     const { t } = useListenerTranslation();
 
     // Trigger native sharing
-    const {
-        data: shareResult,
-        mutate: triggerSharing,
-        isPending: isSharing,
-    } = useShareLink(finalSharingLink, {
-        onSuccess: (message) => {
-            refetchPendingBalance();
-            message && toast.success(message as string);
-        },
-    });
-
-    // Listen to shareResult to trigger the interaction push
-    useTriggerPushInterraction({
-        conditionToTrigger: !!shareResult,
-    });
+    const { mutate: triggerSharing, isPending: isSharing } = useShareLink(
+        finalSharingLink,
+        {
+            onSuccess: (message) => {
+                refetchPendingBalance();
+                message && toast.success(message as string);
+            },
+        }
+    );
 
     return (
         <div
@@ -269,8 +205,8 @@ function ButtonSharingLink({
             )}
         >
             <ButtonWallet
-                variant={!currentSession ? "disabled" : "primary"}
-                disabled={!currentSession || isSharing}
+                variant="primary"
+                disabled={isSharing}
                 isLoading={isSharing}
                 icon={<Share />}
                 onClick={() => {
@@ -283,7 +219,7 @@ function ButtonSharingLink({
             >
                 {t("sharing.btn.share")}
             </ButtonWallet>
-            <OnboardingShare isHidden={!currentSession} />
+            <OnboardingShare />
         </div>
     );
 }

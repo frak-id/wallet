@@ -6,7 +6,6 @@ import { Balance } from "@/module/tokens/component/Balance";
 import { DemoAccount } from "@/module/wallet/component/DemoAccount";
 import { HomeNavigation } from "@/module/wallet/component/HomeNavigation";
 import { InstallApp } from "@/module/wallet/component/InstallApp";
-import { OpenSession } from "@/module/wallet/component/OpenSession";
 import { PendingReferral } from "@/module/wallet/component/PendingReferral";
 import { Welcome } from "@/module/wallet/component/Welcome";
 
@@ -44,7 +43,6 @@ export function WalletPage() {
     return (
         <Grid>
             <DemoAccount />
-            <OpenSession />
             <Balance />
             <HomeNavigation />
             <Welcome />

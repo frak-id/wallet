@@ -1,10 +1,8 @@
-import { useInteractionSessionStatus } from "@frak-labs/wallet-shared";
 import { cx } from "class-variance-authority";
 import {
     type CSSProperties,
     type PropsWithChildren,
     useEffect,
-    useRef,
     useState,
 } from "react";
 import { Trans } from "react-i18next";
@@ -53,24 +51,13 @@ function OnboardingArrow({ style }: { style?: CSSProperties }) {
 
 export function OnboardingWelcome() {
     const { lang, i18n } = useListenerTranslation();
-    const { data: currentSession } = useInteractionSessionStatus();
     const [hidden, setHidden] = useState(false);
-    const calledOnce = useRef(false);
 
     useEffect(() => {
         // Hide the onboarding after 2.5 seconds
-        setTimeout(() => setHidden(true), 2_500);
+        const timer = setTimeout(() => setHidden(true), 2_500);
+        return () => clearTimeout(timer);
     }, []);
-
-    useEffect(() => {
-        if (calledOnce.current) return;
-        // Hide the onboarding if the session is active
-        const isSessionActive = !!currentSession;
-        setHidden(isSessionActive);
-        if (isSessionActive) {
-            calledOnce.current = true;
-        }
-    }, [currentSession]);
 
     return (
         <div

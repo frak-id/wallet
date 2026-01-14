@@ -12,11 +12,7 @@ import {
     type RpcPromiseHandler,
     type RpcResponse,
 } from "@frak-labs/frame-connector";
-import {
-    sessionStore,
-    trackGenericEvent,
-    walletStore,
-} from "@frak-labs/wallet-shared";
+import { sessionStore, trackGenericEvent } from "@frak-labs/wallet-shared";
 import { useCallback, useRef } from "react";
 import { useListenerUI } from "@/module/providers/ListenerUiProvider";
 import { modalStore, selectShouldFinish } from "@/module/stores/modalStore";
@@ -220,7 +216,6 @@ function filterStepsToDo({
     stepsPrepared: Pick<ModalStepTypes, "key" | "params">[];
 }) {
     const session = sessionStore.getState().session;
-    const interactionSession = walletStore.getState().interactionSession;
 
     // The current result (if already authenticated + session)
     let currentResult: ModalRpcStepsResultType<[]> = {};
@@ -237,31 +232,12 @@ function filterStepsToDo({
         currentStep++;
     }
 
-    // If the steps include openSession, check if user got a current session and an openSession
-    if (
-        stepsPrepared.find((step) => step.key === "openSession") &&
-        session &&
-        interactionSession &&
-        interactionSession.sessionEnd > Date.now()
-    ) {
-        // Add the openSession result
-        currentResult = {
-            ...currentResult,
-            openSession: {
-                startTimestamp: interactionSession.sessionStart,
-                endTimestamp: interactionSession.sessionEnd,
-            },
-        };
-        currentStep++;
-    }
-
     return { currentStep, currentResult };
 }
 
 const stepImportanceMap: Record<ModalStepTypes["key"], number> = {
     // Jumpable steps
     login: -2,
-    openSession: -1,
     // Normal steps
     siweAuthenticate: 5,
     sendTransaction: 10,

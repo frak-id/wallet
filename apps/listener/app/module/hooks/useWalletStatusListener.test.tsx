@@ -7,10 +7,6 @@ import { useWalletStatusListener } from "./useWalletStatusListener";
 const mockGetSafeSession = vi.fn(() => undefined);
 const mockGetSafeSdkSession = vi.fn(() => undefined);
 const mockPushBackupData = vi.fn(async () => {});
-const mockInteractionSessionStatusQuery = vi.fn(() => ({
-    queryKey: ["interaction-session"],
-    queryFn: async () => undefined,
-}));
 
 // Create a mock Zustand store that works as both a hook and an object
 const mockSessionStore: any = Object.assign(
@@ -33,9 +29,6 @@ vi.mock("@frak-labs/wallet-shared", () => ({
     getSafeSdkSession: () => mockGetSafeSdkSession(),
     get pushBackupData() {
         return mockPushBackupData;
-    },
-    get interactionSessionStatusQuery() {
-        return mockInteractionSessionStatusQuery;
     },
 }));
 
@@ -94,8 +87,6 @@ describe("useWalletStatusListener", () => {
         });
         mockGetSafeSession.mockReturnValue(undefined);
 
-        queryWrapper.client.setQueryData(["interaction-session"], undefined);
-
         const { result } = renderHook(() => useWalletStatusListener(), {
             wrapper: queryWrapper.wrapper,
         });
@@ -110,7 +101,6 @@ describe("useWalletStatusListener", () => {
                 key: "connected",
                 wallet: mockAddress,
                 interactionToken: undefined,
-                interactionSession: undefined,
             });
         });
 
@@ -140,8 +130,6 @@ describe("useWalletStatusListener", () => {
         mockGetSafeSession.mockReturnValue(undefined);
         mockGetSafeSdkSession.mockReturnValue(undefined);
 
-        queryWrapper.client.setQueryData(["interaction-session"], undefined);
-
         const { result } = renderHook(() => useWalletStatusListener(), {
             wrapper: queryWrapper.wrapper,
         });
@@ -156,108 +144,6 @@ describe("useWalletStatusListener", () => {
                 key: "connected",
                 wallet: mockAddress,
                 interactionToken: mockSdkToken,
-                interactionSession: undefined,
-            });
-        });
-    });
-
-    test("should include interaction session when cached", async ({
-        queryWrapper,
-        mockAddress,
-        mockProductId,
-    }) => {
-        const mockInteractionSession = {
-            sessionStart: Date.now(),
-            sessionEnd: Date.now() + 3600000,
-        };
-
-        // Update the hook selector to return undefined for sdkSession
-        mockSessionStore.mockImplementation((selector: any) => {
-            const state = {
-                session: { address: mockAddress },
-                sdkSession: undefined,
-            };
-            return selector(state);
-        });
-
-        mockSessionStore.getState.mockReturnValue({
-            session: { address: mockAddress },
-            sdkSession: undefined,
-        });
-        mockGetSafeSession.mockReturnValue(undefined);
-        mockGetSafeSdkSession.mockReturnValue(undefined);
-
-        // Set cached query data
-        queryWrapper.client.setQueryData(
-            ["interaction-session"],
-            mockInteractionSession
-        );
-
-        const { result } = renderHook(() => useWalletStatusListener(), {
-            wrapper: queryWrapper.wrapper,
-        });
-
-        const mockEmitter = vi.fn();
-        const context = { productId: mockProductId };
-
-        await result.current([] as any, mockEmitter, context as any);
-
-        await waitFor(() => {
-            expect(mockEmitter).toHaveBeenCalledWith({
-                key: "connected",
-                wallet: mockAddress,
-                interactionToken: undefined,
-                interactionSession: {
-                    startTimestamp: mockInteractionSession.sessionStart,
-                    endTimestamp: mockInteractionSession.sessionEnd,
-                },
-            });
-        });
-    });
-
-    test("should handle interaction session query error gracefully", async ({
-        queryWrapper,
-        mockAddress,
-        mockProductId,
-    }) => {
-        // Update the hook selector to return undefined for sdkSession
-        mockSessionStore.mockImplementation((selector: any) => {
-            const state = {
-                session: { address: mockAddress },
-                sdkSession: undefined,
-            };
-            return selector(state);
-        });
-
-        mockSessionStore.getState.mockReturnValue({
-            session: { address: mockAddress },
-            sdkSession: undefined,
-        });
-        mockGetSafeSession.mockReturnValue(undefined);
-        mockGetSafeSdkSession.mockReturnValue(undefined);
-
-        // Set query to fail
-        queryWrapper.client.setQueryDefaults(["interaction-session"], {
-            queryFn: async () => {
-                throw new Error("Query failed");
-            },
-        });
-
-        const { result } = renderHook(() => useWalletStatusListener(), {
-            wrapper: queryWrapper.wrapper,
-        });
-
-        const mockEmitter = vi.fn();
-        const context = { productId: mockProductId };
-
-        await result.current([] as any, mockEmitter, context as any);
-
-        await waitFor(() => {
-            expect(mockEmitter).toHaveBeenCalledWith({
-                key: "connected",
-                wallet: mockAddress,
-                interactionToken: undefined,
-                interactionSession: undefined,
             });
         });
     });

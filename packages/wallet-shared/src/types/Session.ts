@@ -36,11 +36,6 @@ export type SignableSession = {
     token: string;
 } & (WebAuthNWallet | EcdsaWallet | DistantWebAuthnWallet);
 
-export type InteractionSession = {
-    sessionStart: number;
-    sessionEnd: number;
-};
-
 export type SdkSession = {
     token: string;
     expires: number;

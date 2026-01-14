@@ -1,11 +1,5 @@
 import { prefixModalCss } from "@frak-labs/ui/utils/prefixModalCss";
-import {
-    Fingerprint,
-    HandCoins,
-    SendHorizonal,
-    Share,
-    WalletMinimal,
-} from "lucide-react";
+import { Fingerprint, HandCoins, SendHorizonal, Share } from "lucide-react";
 import { type PropsWithChildren, useMemo } from "react";
 import styles from "@/module/modal/component/Modal/index.module.css";
 import { useListenerTranslation } from "@/module/providers/ListenerUiProvider";
@@ -25,8 +19,6 @@ function getStepIcon(step: DisplayedModalStep<AnyModalKey>) {
         case "login":
         case "siweAuthenticate":
             return <Fingerprint size={20} />;
-        case "openSession":
-            return <WalletMinimal size={20} />;
         case "sendTransaction":
             return <SendHorizonal size={20} />;
         case "final":

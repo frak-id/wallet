@@ -3,7 +3,6 @@ import type { NotificationModel } from "../common/storage/NotificationModel";
 import type {
     DistantWebAuthnWallet,
     EcdsaWallet,
-    InteractionSession,
     MobileAuthWallet,
     SdkSession,
 } from "../types/Session";
@@ -123,19 +122,6 @@ export function createMockSdkSession(
     return {
         token: "sdk-token",
         expires: Date.now() + 3600000, // 1 hour from now
-        ...overrides,
-    };
-}
-
-/**
- * Creates a mock interaction session with default values
- */
-export function createMockInteractionSession(
-    overrides?: Partial<InteractionSession>
-): InteractionSession {
-    return {
-        sessionStart: Date.now(),
-        sessionEnd: Date.now() + 3600000, // 1 hour from now
         ...overrides,
     };
 }

@@ -29,25 +29,12 @@ const mockSessionStore: any = Object.assign(
     }
 );
 
-const mockWalletStore: any = Object.assign(
-    vi.fn((selector: any) => {
-        const state = { interactionSession: undefined };
-        return selector(state);
-    }),
-    {
-        getState: vi.fn(() => ({ interactionSession: undefined })),
-    }
-);
-
 const mockTrackGenericEvent = vi.fn();
 const mockGetSafeSession = vi.fn<any>(() => undefined);
 
 vi.mock("@frak-labs/wallet-shared", () => ({
     get sessionStore() {
         return mockSessionStore;
-    },
-    get walletStore() {
-        return mockWalletStore;
     },
     get trackGenericEvent() {
         return mockTrackGenericEvent;
@@ -88,9 +75,6 @@ describe("useDisplayModalListener", () => {
             clearModal: vi.fn(),
         });
         mockSessionStore.getState.mockReturnValue({ session: undefined });
-        mockWalletStore.getState.mockReturnValue({
-            interactionSession: undefined,
-        });
         mockGetSafeSession.mockReturnValue(undefined);
     });
 
@@ -136,7 +120,7 @@ describe("useDisplayModalListener", () => {
         const steps = {
             final: { action: { key: "success" } },
             login: {},
-            openSession: {},
+            siweAuthenticate: { siwe: { domain: "test.com" } },
         };
         const params = [steps, {}, {}] as any;
         const context = { productId: mockProductId };
@@ -153,10 +137,10 @@ describe("useDisplayModalListener", () => {
             .mock.calls[0][0];
         stateSnapshot = setNewModalCall;
 
-        // Steps should be sorted: login (-2) < openSession (-1) < final (100)
+        // Steps should be sorted: login (-2) < siweAuthenticate (5) < final (100)
         expect(stateSnapshot.steps).toHaveLength(3);
         expect(stateSnapshot.steps[0].key).toBe("login");
-        expect(stateSnapshot.steps[1].key).toBe("openSession");
+        expect(stateSnapshot.steps[1].key).toBe("siweAuthenticate");
         expect(stateSnapshot.steps[2].key).toBe("final");
 
         // Complete the modal to resolve promise
@@ -213,134 +197,6 @@ describe("useDisplayModalListener", () => {
         expect(setNewModalCall.initialResult.login).toEqual({
             wallet: mockAddress,
         });
-
-        // Complete the modal
-        if (subscribeCb) {
-            subscribeCb({
-                steps: setNewModalCall.steps,
-                results: { final: { action: { key: "success" } } },
-                dismissed: false,
-            });
-        }
-
-        await promise.catch(() => {});
-    });
-
-    test("should skip openSession step if user has active session", async ({
-        mockAddress,
-        mockProductId,
-    }) => {
-        const futureTime = Date.now() + 3600000;
-
-        const mockSession = { address: mockAddress, type: "ecdsa" };
-        mockSessionStore.getState.mockReturnValue({
-            session: mockSession,
-        });
-        mockGetSafeSession.mockReturnValue(mockSession);
-        mockWalletStore.getState.mockReturnValue({
-            interactionSession: {
-                sessionStart: Date.now(),
-                sessionEnd: futureTime,
-            },
-        });
-
-        let subscribeCb: ((state: any) => void) | undefined;
-        (mockModalStore.subscribe as any).mockImplementation(
-            (cb: (state: any) => void) => {
-                subscribeCb = cb;
-                return vi.fn();
-            }
-        );
-
-        const { result } = renderHook(() => useDisplayModalListener());
-
-        const steps = {
-            login: {},
-            openSession: {},
-            final: { action: { key: "success" } },
-        };
-        const params = [steps, {}, {}] as any;
-        const context = { productId: mockProductId };
-
-        const promise = result.current(params, context as any);
-
-        await waitFor(() => {
-            expect(mockModalStore.getState().setNewModal).toHaveBeenCalled();
-        });
-
-        const setNewModalCall = (mockModalStore.getState().setNewModal as any)
-            .mock.calls[0][0];
-
-        // Should start at step 2 (skipping login and openSession)
-        expect(setNewModalCall.currentStep).toBe(2);
-        // Should have both results pre-filled
-        expect(setNewModalCall.initialResult.login).toBeDefined();
-        expect(setNewModalCall.initialResult.openSession).toEqual({
-            startTimestamp: expect.any(Number),
-            endTimestamp: futureTime,
-        });
-
-        // Complete the modal
-        if (subscribeCb) {
-            subscribeCb({
-                steps: setNewModalCall.steps,
-                results: { final: { action: { key: "success" } } },
-                dismissed: false,
-            });
-        }
-
-        await promise.catch(() => {});
-    });
-
-    test("should not skip openSession if session is expired", async ({
-        mockAddress,
-        mockProductId,
-    }) => {
-        const pastTime = Date.now() - 1000;
-
-        const mockSession = { address: mockAddress, type: "ecdsa" };
-        mockSessionStore.getState.mockReturnValue({
-            session: mockSession,
-        });
-        mockGetSafeSession.mockReturnValue(mockSession);
-        mockWalletStore.getState.mockReturnValue({
-            interactionSession: {
-                sessionStart: Date.now() - 3600000,
-                sessionEnd: pastTime,
-            },
-        });
-
-        let subscribeCb: ((state: any) => void) | undefined;
-        (mockModalStore.subscribe as any).mockImplementation(
-            (cb: (state: any) => void) => {
-                subscribeCb = cb;
-                return vi.fn();
-            }
-        );
-
-        const { result } = renderHook(() => useDisplayModalListener());
-
-        const steps = {
-            login: {},
-            openSession: {},
-            final: { action: { key: "success" } },
-        };
-        const params = [steps, {}, {}] as any;
-        const context = { productId: mockProductId };
-
-        const promise = result.current(params, context as any);
-
-        await waitFor(() => {
-            expect(mockModalStore.getState().setNewModal).toHaveBeenCalled();
-        });
-
-        const setNewModalCall = (mockModalStore.getState().setNewModal as any)
-            .mock.calls[0][0];
-
-        // Should skip login but NOT openSession (expired)
-        expect(setNewModalCall.currentStep).toBe(1);
-        expect(setNewModalCall.initialResult.login).toBeDefined();
-        expect(setNewModalCall.initialResult.openSession).toBeUndefined();
 
         // Complete the modal
         if (subscribeCb) {

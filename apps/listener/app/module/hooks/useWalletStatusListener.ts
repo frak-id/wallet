@@ -9,11 +9,9 @@ import type {
 import {
     getSafeSdkSession,
     getSafeSession,
-    interactionSessionStatusQuery,
     pushBackupData,
     sessionStore,
 } from "@frak-labs/wallet-shared";
-import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef } from "react";
 import type { WalletRpcContext } from "@/module/types/context";
 
@@ -35,9 +33,6 @@ export function useWalletStatusListener(): OnListenToWallet {
         sdk: typeof sdkSession;
     }>({ wallet: session, sdk: sdkSession });
     const unsubscribeRef = useRef<(() => void) | null>(null);
-
-    // Get our query client, to check if we got some cached data
-    const queryClient = useQueryClient();
 
     useEffect(() => {
         sessionsRef.current = { wallet: session, sdk: sdkSession };
@@ -80,19 +75,6 @@ export function useWalletStatusListener(): OnListenToWallet {
                 return;
             }
 
-            // Get the on chain status (or a cached version if present)
-            const interactionSession = await queryClient
-                .ensureQueryData(interactionSessionStatusQuery(wallet.address))
-                .catch(() => undefined)
-                .then((interactionSession) =>
-                    interactionSession
-                        ? {
-                              startTimestamp: interactionSession.sessionStart,
-                              endTimestamp: interactionSession.sessionEnd,
-                          }
-                        : undefined
-                );
-
             // Check again if aborted before emitting
             if (signal?.aborted) {
                 console.info("emitCurrentStatus operation aborted");
@@ -104,7 +86,6 @@ export function useWalletStatusListener(): OnListenToWallet {
                 key: "connected",
                 wallet: wallet.address,
                 interactionToken: sdk?.token,
-                interactionSession,
             });
 
             // Check again if aborted before pushing backup data
@@ -116,7 +97,7 @@ export function useWalletStatusListener(): OnListenToWallet {
             // And push some backup data if we got ones
             await pushBackupData({ productId });
         },
-        [queryClient]
+        []
     );
 
     // Clean up on unmount

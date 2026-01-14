@@ -14,7 +14,6 @@ export type { RewardHistory } from "./RewardHistory";
 export type {
     DistantWebAuthnWallet,
     EcdsaWallet,
-    InteractionSession,
     SdkSession,
     SdkSessionPayload,
     Session,

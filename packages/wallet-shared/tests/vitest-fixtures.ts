@@ -6,14 +6,9 @@
  * App-specific fixtures should extend these base fixtures in their own files.
  */
 
-import type {
-    InteractionSession,
-    SdkSession,
-    Session,
-} from "@frak-labs/wallet-shared";
+import type { SdkSession, Session } from "@frak-labs/wallet-shared";
 import {
     createMockAddress,
-    createMockInteractionSession,
     createMockSdkSession,
     createMockSession,
 } from "@frak-labs/wallet-shared/test";
@@ -39,11 +34,6 @@ export type BaseTestFixtures = {
      * Mock SDK session with default values
      */
     mockSdkSession: SdkSession;
-
-    /**
-     * Mock interaction session with default values
-     */
-    mockInteractionSession: InteractionSession;
 
     /**
      * Fresh QueryClient instance for each test
@@ -90,7 +80,6 @@ export type BaseTestFixtures = {
             clearUser: ReturnType<typeof import("vitest").vi.fn>;
         };
         wallet: {
-            setInteractionSession: ReturnType<typeof import("vitest").vi.fn>;
             addPendingInteraction: ReturnType<typeof import("vitest").vi.fn>;
             cleanPendingInteractions: ReturnType<typeof import("vitest").vi.fn>;
         };
@@ -185,18 +174,6 @@ export const test = baseTest.extend<BaseTestFixtures>({
     },
 
     /**
-     * Provides a mock interaction session for each test
-     */
-    // biome-ignore lint/correctness/noEmptyPattern: Vitest requires object destructuring
-    mockInteractionSession: async ({}, use) => {
-        const interactionSession = createMockInteractionSession({
-            sessionStart: Date.now() - 3600000, // 1 hour ago
-            sessionEnd: Date.now() + 3600000, // 1 hour from now
-        });
-        await use(interactionSession);
-    },
-
-    /**
      * Provides a fresh QueryClient for each test
      * Automatically cleaned up after the test
      */
@@ -272,7 +249,6 @@ export const test = baseTest.extend<BaseTestFixtures>({
         const { walletStore } = await import("@frak-labs/wallet-shared");
         await use(walletStore);
         walletStore.getState().cleanPendingInteractions();
-        walletStore.getState().setInteractionSession(null);
     },
 
     /**
@@ -321,7 +297,6 @@ export const test = baseTest.extend<BaseTestFixtures>({
                 clearUser: vi.fn(),
             },
             wallet: {
-                setInteractionSession: vi.fn(),
                 addPendingInteraction: vi.fn(),
                 cleanPendingInteractions: vi.fn(),
             },

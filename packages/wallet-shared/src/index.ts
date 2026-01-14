@@ -8,8 +8,6 @@ export * from "./blockchain";
 export * from "./common";
 // i18n
 export * from "./i18n";
-// Interaction
-export * from "./interaction";
 // Pairing
 export * from "./pairing";
 // Polyfills

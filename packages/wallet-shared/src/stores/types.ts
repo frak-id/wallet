@@ -7,7 +7,7 @@ import type { Signature } from "ox";
 import type { SignMetadata } from "ox/WebAuthnP256";
 import type { Address, Hex } from "viem";
 import type { PendingInteraction } from "../types/Interaction";
-import type { InteractionSession, SdkSession, Session } from "../types/Session";
+import type { SdkSession, Session } from "../types/Session";
 import type { User } from "../types/User";
 
 /**
@@ -97,11 +97,9 @@ export type PendingInteractionsStorage = {
 
 export type WalletStore = {
     // State
-    interactionSession: InteractionSession | null;
     pendingInteractions: PendingInteractionsStorage;
 
     // Actions
-    setInteractionSession: (session: InteractionSession | null) => void;
     addPendingInteraction: (interaction: PendingInteraction) => void;
     addPendingInteractions: (interactions: PendingInteraction[]) => void;
     cleanPendingInteractions: () => void;

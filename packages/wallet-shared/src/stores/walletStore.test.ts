@@ -6,9 +6,7 @@ import {
     test,
 } from "../../tests/vitest-fixtures";
 import type { PendingInteraction } from "../types/Interaction";
-import type { InteractionSession } from "../types/Session";
 import {
-    selectInteractionSession,
     selectPendingInteractions,
     selectPendingInteractionsArray,
     walletStore,
@@ -34,45 +32,7 @@ describe("walletStore", () => {
         test("should have correct initial values", () => {
             const state = walletStore.getState();
 
-            expect(state.interactionSession).toBeNull();
             expect(state.pendingInteractions).toEqual({ interactions: [] });
-        });
-    });
-
-    describe("setInteractionSession", () => {
-        test("should set interaction session", () => {
-            const mockSession: InteractionSession = {
-                sessionStart: Date.now(),
-                sessionEnd: Date.now() + 3600000, // 1 hour later
-            };
-
-            walletStore.getState().setInteractionSession(mockSession);
-            expect(walletStore.getState().interactionSession).toEqual(
-                mockSession
-            );
-        });
-
-        test("should clear interaction session when null", () => {
-            const mockSession: InteractionSession = {
-                sessionStart: Date.now(),
-                sessionEnd: Date.now() + 3600000,
-            };
-
-            walletStore.getState().setInteractionSession(mockSession);
-            walletStore.getState().setInteractionSession(null);
-            expect(walletStore.getState().interactionSession).toBeNull();
-        });
-
-        test("should work with selector", () => {
-            const mockSession: InteractionSession = {
-                sessionStart: Date.now(),
-                sessionEnd: Date.now() + 3600000,
-            };
-
-            walletStore.getState().setInteractionSession(mockSession);
-            expect(selectInteractionSession(walletStore.getState())).toEqual(
-                mockSession
-            );
         });
     });
 
@@ -195,16 +155,11 @@ describe("walletStore", () => {
 
     describe("clearWallet", () => {
         test("should clear all wallet data", () => {
-            const mockSession: InteractionSession = {
-                sessionStart: Date.now(),
-                sessionEnd: Date.now() + 3600000,
-            };
             const mockInteractions: PendingInteraction[] = [
                 createMockInteraction("product-1"),
             ];
 
             // Set values
-            walletStore.getState().setInteractionSession(mockSession);
             walletStore.getState().addPendingInteractions(mockInteractions);
 
             // Clear
@@ -212,25 +167,11 @@ describe("walletStore", () => {
 
             // Verify all cleared
             const state = walletStore.getState();
-            expect(state.interactionSession).toBeNull();
             expect(state.pendingInteractions.interactions).toHaveLength(0);
         });
     });
 
     describe("selectors", () => {
-        test("should select interaction session", () => {
-            const mockSession: InteractionSession = {
-                sessionStart: Date.now(),
-                sessionEnd: Date.now() + 3600000,
-            };
-
-            walletStore.getState().setInteractionSession(mockSession);
-
-            expect(selectInteractionSession(walletStore.getState())).toEqual(
-                mockSession
-            );
-        });
-
         test("should select pending interactions object", () => {
             const interactions: PendingInteraction[] = [
                 createMockInteraction("product-1"),

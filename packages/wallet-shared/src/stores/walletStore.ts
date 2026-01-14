@@ -21,22 +21,18 @@ const filterDuplicateInteractions = (
     );
 
 /**
- * Wallet store managing interaction sessions and pending interactions
+ * Wallet store managing pending interactions for backend push
  * Uses persist middleware with SSR-safe storage
  */
 export const walletStore = create<WalletStore>()(
     persist(
         (set) => ({
             // Initial state
-            interactionSession: null,
             pendingInteractions: {
                 interactions: [],
             },
 
             // Actions
-            setInteractionSession: (interactionSession) =>
-                set({ interactionSession }),
-
             addPendingInteraction: (interaction) =>
                 set((state) => ({
                     pendingInteractions: {
@@ -64,7 +60,6 @@ export const walletStore = create<WalletStore>()(
 
             clearWallet: () =>
                 set({
-                    interactionSession: null,
                     pendingInteractions: { interactions: [] },
                 }),
         }),
@@ -74,7 +69,6 @@ export const walletStore = create<WalletStore>()(
                 typeof window !== "undefined" ? localStorage : noopStorage
             ),
             partialize: (state) => ({
-                interactionSession: state.interactionSession,
                 pendingInteractions: state.pendingInteractions,
             }),
         }
@@ -84,10 +78,6 @@ export const walletStore = create<WalletStore>()(
 /**
  * Selector functions for computed values
  */
-
-// Get the interaction session
-export const selectInteractionSession = (state: WalletStore) =>
-    state.interactionSession;
 
 // Get pending interactions
 export const selectPendingInteractions = (state: WalletStore) =>
