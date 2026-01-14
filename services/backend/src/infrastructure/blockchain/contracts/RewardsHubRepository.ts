@@ -1,14 +1,10 @@
 import { log, viemClient } from "@backend-infrastructure";
-import { isRunningInProd, rewarderHubAbi } from "@frak-labs/app-essentials";
+import { addresses, rewarderHubAbi } from "@frak-labs/app-essentials";
 import { type Address, encodeFunctionData, type Hex, pad } from "viem";
 import { sendTransaction, waitForTransactionReceipt } from "viem/actions";
 import { adminWalletsRepository } from "../../keys/AdminWalletsRepository";
 
 const REWARDER_KEY = "rewarder" as const;
-
-const REWARDS_HUB_ADDRESS: Address = isRunningInProd
-    ? "0x0000000000000000000000000000000000000000"
-    : "0x0000000000000000000000000000000000000000";
 
 type RewardOp = {
     isLock: boolean;
@@ -42,12 +38,6 @@ function sortOpsByBankAndToken(ops: RewardOp[]): RewardOp[] {
 }
 
 export class RewardsHubRepository {
-    private readonly contractAddress: Address;
-
-    constructor(contractAddress?: Address) {
-        this.contractAddress = contractAddress ?? REWARDS_HUB_ADDRESS;
-    }
-
     async pushRewards(rewards: PushRewardParams[]): Promise<{
         txHash: Hex;
         blockNumber: bigint;
@@ -73,10 +63,10 @@ export class RewardsHubRepository {
         blockNumber: bigint;
     }> {
         const sortedOps = sortOpsByBankAndToken(ops);
-        return this.executeTransaction([sortedOps]);
+        return this.executeTransaction(sortedOps);
     }
 
-    private async executeTransaction(args: unknown[]): Promise<{
+    private async executeTransaction(args: RewardOp[]): Promise<{
         txHash: Hex;
         blockNumber: bigint;
     }> {
@@ -92,13 +82,24 @@ export class RewardsHubRepository {
             const data = encodeFunctionData({
                 abi: rewarderHubAbi,
                 functionName: "batch",
-                args: args as never,
+                args: [
+                    args.map(
+                        (op) =>
+                            ({
+                                wallet: op.target,
+                                amount: op.amount,
+                                token: op.token,
+                                bank: op.bank,
+                                attestation: op.attestation,
+                            }) as const
+                    ),
+                ],
             });
 
             log.debug(
                 {
                     functionName: "batch",
-                    contractAddress: this.contractAddress,
+                    contractAddress: addresses.rewarderHub,
                     account: account.address,
                     opsCount: Array.isArray(args[0]) ? args[0].length : 1,
                 },
@@ -107,7 +108,7 @@ export class RewardsHubRepository {
 
             const txHash = await sendTransaction(viemClient, {
                 account,
-                to: this.contractAddress,
+                to: addresses.rewarderHub,
                 data,
             });
 

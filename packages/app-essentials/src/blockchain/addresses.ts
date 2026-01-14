@@ -4,8 +4,8 @@ import { isRunningInProd } from "../utils/env";
  * The Frak ecosystem addresses
  */
 export const addresses = {
-    // nexus
-    campaignBankFactory: "0x00000000003604CF2d09f4Aa3B878843A765015d",
+    // nexus - Legacy
+    campaignBankFactoryOld: "0x00000000003604CF2d09f4Aa3B878843A765015d",
     campaignFactory: "0xfE0D3FD4ed50CE828b8192fc5D547Ee609Abe1eC",
     facetFactory: "0x5Dcb1bB90Fc25ceFe9815bbd0c710F0496Fe946B",
     mUSDToken: "0x43838DCb58a61325eC5F31FD70aB8cd3540733d1",
@@ -14,6 +14,9 @@ export const addresses = {
     productRegistry: "0x9100000000290000D9a49572110030ba00E0F40b",
     purchaseOracle: "0x0000EC17000000e783CA00Ee06890000114C100d",
     referralRegistry: "0x5439e7b27500f7000A6DCD00006D000082510000",
+    // Frak
+    rewarderHub: "0xBaf28A2214856E864D9d89Ae3377140358FA5fa8",
+    campaignBankFactory: "0x4bD5CFDF64bB6ab0c439F36ba2C324338F15BF28",
     // Kernel
     interactionDelegator: "0x0000000000915Bae6248227914666Afd11Ad706e",
     interactionDelegatorAction: "0x00000000001BF7FE0EEBf7c66E1e624D52a12FAD",
