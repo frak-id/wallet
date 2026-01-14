@@ -1,0 +1,137 @@
+import { t } from "@backend-utils";
+import { Elysia, status } from "elysia";
+import { CampaignBankContext } from "../../../../domain/campaign-bank";
+import { MerchantContext } from "../../../../domain/merchant";
+import { businessSessionContext } from "../../middleware/session";
+
+export const merchantBankRoutes = new Elysia({
+    prefix: "/:merchantId/bank",
+})
+    .use(businessSessionContext)
+    .get(
+        "",
+        async ({ params: { merchantId }, businessSession }) => {
+            if (!businessSession) {
+                return status(401, "Authentication required");
+            }
+
+            const hasAccess =
+                await MerchantContext.services.authorization.hasAccess(
+                    merchantId,
+                    businessSession.wallet
+                );
+            if (!hasAccess) {
+                return status(403, "Access denied");
+            }
+
+            return CampaignBankContext.services.campaignBank.getBankStatus(
+                merchantId
+            );
+        },
+        {
+            params: t.Object({
+                merchantId: t.String(),
+            }),
+            response: {
+                200: t.Object({
+                    deployed: t.Boolean(),
+                    bankAddress: t.Union([t.Hex(), t.Null()]),
+                    ownerHasManagerRole: t.Boolean(),
+                }),
+                401: t.String(),
+                403: t.String(),
+            },
+        }
+    )
+    .post(
+        "/sync",
+        async ({ params: { merchantId }, businessSession }) => {
+            if (!businessSession) {
+                return status(401, "Authentication required");
+            }
+
+            const hasAccess =
+                await MerchantContext.services.authorization.hasAccess(
+                    merchantId,
+                    businessSession.wallet
+                );
+            if (!hasAccess) {
+                return status(403, "Access denied");
+            }
+
+            const result =
+                await CampaignBankContext.services.campaignBank.syncBankRoles(
+                    merchantId
+                );
+
+            if (!result.success) {
+                return status(400, result.error);
+            }
+
+            return {
+                success: true,
+                rolesGranted: result.rolesGranted,
+                rolesRevoked: result.rolesRevoked,
+            };
+        },
+        {
+            params: t.Object({
+                merchantId: t.String(),
+            }),
+            response: {
+                200: t.Object({
+                    success: t.Boolean(),
+                    rolesGranted: t.Boolean(),
+                    rolesRevoked: t.Boolean(),
+                }),
+                400: t.String(),
+                401: t.String(),
+                403: t.String(),
+            },
+        }
+    )
+    .post(
+        "/deploy",
+        async ({ params: { merchantId }, businessSession }) => {
+            if (!businessSession) {
+                return status(401, "Authentication required");
+            }
+
+            const hasAccess =
+                await MerchantContext.services.authorization.hasAccess(
+                    merchantId,
+                    businessSession.wallet
+                );
+            if (!hasAccess) {
+                return status(403, "Access denied");
+            }
+
+            const result =
+                await CampaignBankContext.services.campaignBank.deployAndSetupBank(
+                    merchantId
+                );
+
+            if (!result.success) {
+                return status(400, result.error);
+            }
+
+            return {
+                success: true,
+                bankAddress: result.bankAddress,
+            };
+        },
+        {
+            params: t.Object({
+                merchantId: t.String(),
+            }),
+            response: {
+                200: t.Object({
+                    success: t.Boolean(),
+                    bankAddress: t.Hex(),
+                }),
+                400: t.String(),
+                401: t.String(),
+                403: t.String(),
+            },
+        }
+    );

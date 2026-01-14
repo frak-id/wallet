@@ -4,8 +4,6 @@ import { type Address, encodeFunctionData, type Hex, pad } from "viem";
 import { sendTransaction, waitForTransactionReceipt } from "viem/actions";
 import { adminWalletsRepository } from "../../keys/AdminWalletsRepository";
 
-const REWARDER_KEY = "rewarder" as const;
-
 type RewardOp = {
     isLock: boolean;
     target: Hex;
@@ -71,12 +69,12 @@ export class RewardsHubRepository {
         blockNumber: bigint;
     }> {
         const mutex = adminWalletsRepository.getMutexForAccount({
-            key: REWARDER_KEY,
+            key: "rewarder",
         });
 
         return mutex.runExclusive(async () => {
             const account = await adminWalletsRepository.getKeySpecificAccount({
-                key: REWARDER_KEY,
+                key: "rewarder",
             });
 
             const data = encodeFunctionData({

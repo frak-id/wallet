@@ -1,5 +1,7 @@
+import { log } from "@backend-infrastructure";
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
+import { CampaignBankContext } from "../../../../domain/campaign-bank";
 import { MerchantContext } from "../../../../domain/merchant";
 import { businessSessionContext } from "../../middleware/session";
 
@@ -104,6 +106,11 @@ export const merchantTransferRoutes = new Elysia({
         async ({ params: { merchantId }, body, request }) => {
             const origin = request.headers.get("origin") ?? "";
 
+            const pendingTransfer =
+                await MerchantContext.services.ownershipTransfer.getPendingTransfer(
+                    merchantId
+                );
+
             const result =
                 await MerchantContext.services.ownershipTransfer.acceptTransfer(
                     {
@@ -116,6 +123,42 @@ export const merchantTransferRoutes = new Elysia({
 
             if (!result.success) {
                 return status(400, result.error);
+            }
+
+            if (pendingTransfer) {
+                CampaignBankContext.services.campaignBank
+                    .transferBankRoles(
+                        merchantId,
+                        pendingTransfer.fromWallet,
+                        pendingTransfer.toWallet
+                    )
+                    .then((roleResult) => {
+                        if (!roleResult.success) {
+                            log.warn(
+                                {
+                                    merchantId,
+                                    fromWallet: pendingTransfer.fromWallet,
+                                    toWallet: pendingTransfer.toWallet,
+                                    error: roleResult.error,
+                                },
+                                "Failed to transfer bank roles after ownership change"
+                            );
+                        }
+                    })
+                    .catch((error) => {
+                        log.error(
+                            {
+                                merchantId,
+                                fromWallet: pendingTransfer.fromWallet,
+                                toWallet: pendingTransfer.toWallet,
+                                error:
+                                    error instanceof Error
+                                        ? error.message
+                                        : String(error),
+                            },
+                            "Error transferring bank roles after ownership change"
+                        );
+                    });
             }
 
             return { success: true };

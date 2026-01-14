@@ -1,5 +1,7 @@
+import { log } from "@backend-infrastructure";
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
+import { CampaignBankContext } from "../../../../domain/campaign-bank";
 import { MerchantContext } from "../../../../domain/merchant";
 import { businessSessionContext } from "../../middleware/session";
 
@@ -88,6 +90,32 @@ export const merchantRegistrationRoutes = new Elysia({ prefix: "/register" })
             if (!result.success) {
                 return status(400, result.error);
             }
+
+            CampaignBankContext.services.campaignBank
+                .deployAndSetupBank(result.merchantId)
+                .then((bankResult) => {
+                    if (!bankResult.success) {
+                        log.warn(
+                            {
+                                merchantId: result.merchantId,
+                                error: bankResult.error,
+                            },
+                            "Failed to deploy campaign bank during registration"
+                        );
+                    }
+                })
+                .catch((error) => {
+                    log.error(
+                        {
+                            merchantId: result.merchantId,
+                            error:
+                                error instanceof Error
+                                    ? error.message
+                                    : String(error),
+                        },
+                        "Error deploying campaign bank during registration"
+                    );
+                });
 
             return { merchantId: result.merchantId };
         },

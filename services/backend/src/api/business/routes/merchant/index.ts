@@ -3,6 +3,7 @@ import { Elysia, status } from "elysia";
 import { MerchantContext } from "../../../../domain/merchant";
 import { businessSessionContext } from "../../middleware/session";
 import { merchantAdminsRoutes } from "./admins";
+import { merchantBankRoutes } from "./bank";
 import { merchantCampaignsRoutes } from "./campaigns";
 import { merchantRegistrationRoutes } from "./registration";
 import { merchantTransferRoutes } from "./transfer";
@@ -135,6 +136,7 @@ export const merchantRoutes = new Elysia({ prefix: "/merchant" })
         }
     )
     .use(merchantAdminsRoutes)
+    .use(merchantBankRoutes)
     .use(merchantTransferRoutes)
     .use(merchantCampaignsRoutes)
     .use(merchantWebhooksRoutes);

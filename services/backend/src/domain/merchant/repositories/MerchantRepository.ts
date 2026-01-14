@@ -203,4 +203,19 @@ export class MerchantRepository {
         }
         return result ?? null;
     }
+
+    async updateBankAddress(
+        id: string,
+        bankAddress: Address
+    ): Promise<MerchantSelect | null> {
+        const [result] = await db
+            .update(merchantsTable)
+            .set({ bankAddress, updatedAt: new Date() })
+            .where(eq(merchantsTable.id, id))
+            .returning();
+        if (result) {
+            this.invalidateCache(result);
+        }
+        return result ?? null;
+    }
 }

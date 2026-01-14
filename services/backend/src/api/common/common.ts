@@ -4,7 +4,7 @@ import {
 } from "@backend-infrastructure";
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
-import { isAddress, isHex } from "viem";
+import { isAddress } from "viem";
 
 /**
  * Common utility routes used across the ecosystem
@@ -14,19 +14,6 @@ export const commonRoutes = new Elysia({ name: "Routes.common" })
     .get(
         "/adminWallet",
         async ({ query }) => {
-            // Case of a product id
-            if (query.productId) {
-                if (!isHex(query.productId)) {
-                    return status(400, "Invalid productId");
-                }
-
-                const account =
-                    await adminWalletsRepository.getProductSpecificAccount({
-                        productId: BigInt(query.productId),
-                    });
-                return { pubKey: account.address };
-            }
-
             // Case of a requested type
             if (query.key) {
                 const account =
@@ -41,7 +28,6 @@ export const commonRoutes = new Elysia({ name: "Routes.common" })
         {
             query: t.Partial(
                 t.Object({
-                    productId: t.Hex(),
                     key: t.String(),
                 })
             ),
