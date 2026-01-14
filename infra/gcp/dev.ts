@@ -19,12 +19,12 @@ const tunnelCmd = new sst.x.DevCommand("db-tunnel", {
     },
 });
 
-// Get the db parameters
+// Get the db parameters for local development (uses separate 'local' schema)
 const dbEnv = {
     ...postgresEnv,
     POSTGRES_HOST: "localhost",
     POSTGRES_PORT: localPort,
-    STAGE: "staging",
+    POSTGRES_SCHEMA: "local",
 };
 
 // Helpers command

@@ -3,13 +3,10 @@ export {
     affiliationFixedCampaignAbi,
     affiliationRangeCampaignAbi,
     baseCampaignTriggerPtr,
-    // Campaign helper
     type CampaignType,
     campaignAbiForType,
-    // V2 abis
-    campaignBankAbi as campaignBankV2Abi,
-    campaignBankFactoryAbi as campaignBankFactoryV2Abi,
-    // Abis
+    campaignBankAbi as campaignBankV2Abi, // v2 abi
+    campaignBankFactoryAbi as campaignBankFactoryV2Abi, // v2 abi
     campaignFactoryAbi,
     currentStablecoins,
     dappInteractionFacetAbi,
@@ -21,7 +18,6 @@ export {
     interactionValidatorRoles,
     KernelExecuteAbi,
     KernelInitAbi,
-    // Wallet
     KernelWallet,
     kernelAddresses,
     multiWebAuthNRecoveryActionAbi,
@@ -32,7 +28,6 @@ export {
     productInteractionDiamondAbi,
     productInteractionManagerAbi,
     productRegistryAbi,
-    // Roles
     productRoles,
     purchaseFeatureFacetAbi,
     referralCampaignAbi,

@@ -38,12 +38,17 @@ import {
     recipientTypeEnum,
 } from "../../domain/rewards";
 
+const schemaName = process.env.POSTGRES_SCHEMA || "public";
+
 const postgresDb = postgres({
     host: process.env.POSTGRES_HOST,
     port: Number.parseInt(process.env.POSTGRES_PORT ?? "5432", 10),
     database: process.env.POSTGRES_DB,
     username: process.env.POSTGRES_USER,
     password: process.env.POSTGRES_PASSWORD,
+    connection: {
+        search_path: schemaName,
+    },
 });
 
 export const db = drizzle({

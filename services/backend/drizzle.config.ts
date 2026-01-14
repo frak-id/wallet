@@ -1,7 +1,23 @@
 import { defineConfig } from "drizzle-kit";
 
-const isProd =
-    process.env.STAGE === "prod" || process.env.STAGE === "production";
+const schemaName = process.env.POSTGRES_SCHEMA || "public";
+
+function getMigrationConfig(): { out: string; table: string } {
+    if (schemaName === "local") {
+        return { out: "drizzle/local/", table: "__drizzle_migrations_local" };
+    }
+    if (schemaName.endsWith("_v2")) {
+        return { out: "drizzle/v2/", table: "__drizzle_migrations_v2" };
+    }
+    const isProd =
+        process.env.STAGE === "prod" || process.env.STAGE === "production";
+    return {
+        out: isProd ? "drizzle/prod/" : "drizzle/dev/",
+        table: "__drizzle_migrations",
+    };
+}
+
+const migrationConfig = getMigrationConfig();
 
 export default defineConfig({
     schema: ["src/domain/*/db/schema.ts"],
@@ -13,5 +29,9 @@ export default defineConfig({
         user: process.env.POSTGRES_USER ?? "",
         password: process.env.POSTGRES_PASSWORD ?? "",
     },
-    out: isProd ? "drizzle/prod/" : "drizzle/dev/",
+    migrations: {
+        table: migrationConfig.table,
+    },
+    schemaFilter: [schemaName],
+    out: migrationConfig.out,
 });

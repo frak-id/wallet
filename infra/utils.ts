@@ -6,16 +6,22 @@ import os from "node:os";
 export const isGcp = $app?.stage?.startsWith("gcp") ?? false;
 
 /**
+ * Check if we are in v2 environment
+ */
+export const isV2 = $app?.stage?.endsWith("-v2") ?? false;
+
+/**
  * Check if we are in production
  */
 export const isProd =
-    ($app.stage.endsWith("production") ?? false) || $app.stage === "prod";
+    $app.stage.includes("production") || $app.stage === "prod";
 
 /**
- * The normalized stage name
+ * The normalized stage name (strips gcp-, aws- prefix and -v2 suffix)
  */
 export const normalizedStageName =
-    $app?.stage?.replace("gcp-", "")?.replace("aws-", "") ?? "";
+    $app?.stage?.replace("gcp-", "")?.replace("aws-", "")?.replace("-v2", "") ??
+    "";
 
 /**
  * Get the local IP address for mobile development
