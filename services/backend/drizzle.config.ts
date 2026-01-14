@@ -17,21 +17,26 @@ function getMigrationConfig(): { out: string; table: string } {
     };
 }
 
+function buildDatabaseUrl(): string {
+    const host = process.env.POSTGRES_HOST ?? "";
+    const port = process.env.POSTGRES_PORT ?? "5432";
+    const database = process.env.POSTGRES_DB ?? "";
+    const user = process.env.POSTGRES_USER ?? "";
+    const password = process.env.POSTGRES_PASSWORD ?? "";
+    return `postgresql://${user}:${password}@${host}:${port}/${database}?search_path=${schemaName}`;
+}
+
 const migrationConfig = getMigrationConfig();
 
 export default defineConfig({
     schema: ["src/domain/*/db/schema.ts"],
     dialect: "postgresql",
     dbCredentials: {
-        host: process.env.POSTGRES_HOST ?? "",
-        port: Number.parseInt(process.env.POSTGRES_PORT ?? "5432", 10),
-        database: process.env.POSTGRES_DB ?? "",
-        user: process.env.POSTGRES_USER ?? "",
-        password: process.env.POSTGRES_PASSWORD ?? "",
+        url: buildDatabaseUrl(),
     },
     migrations: {
         table: migrationConfig.table,
     },
-    schemaFilter: [schemaName],
+    schemaFilter: schemaName,
     out: migrationConfig.out,
 });

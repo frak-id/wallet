@@ -58,10 +58,7 @@ export const merchantOwnershipTransfersTable = pgTable(
     "merchant_ownership_transfers",
     {
         id: uuid("id").primaryKey().defaultRandom(),
-        merchantId: uuid("merchant_id")
-            .references(() => merchantsTable.id, { onDelete: "cascade" })
-            .notNull()
-            .unique(),
+        merchantId: uuid("merchant_id").notNull().unique(),
         fromWallet: customHex("from_wallet").$type<Address>().notNull(),
         toWallet: customHex("to_wallet").$type<Address>().notNull(),
         initiatedAt: timestamp("initiated_at").defaultNow().notNull(),
