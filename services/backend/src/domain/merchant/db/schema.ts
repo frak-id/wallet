@@ -9,11 +9,7 @@ import {
 } from "drizzle-orm/pg-core";
 import type { Address } from "viem";
 import { customHex } from "../../../utils/drizzle/customTypes";
-
-export type MerchantConfig = {
-    sdkConfig?: Record<string, unknown>;
-    appearance?: Record<string, unknown>;
-};
+import type { MerchantConfig } from "../schemas";
 
 export const merchantsTable = pgTable(
     "merchants",

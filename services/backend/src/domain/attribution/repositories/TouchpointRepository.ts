@@ -1,12 +1,13 @@
 import { and, desc, eq, gt, isNull, lt, or } from "drizzle-orm";
 import type { Address } from "viem";
 import { db } from "../../../infrastructure/persistence/postgres";
-import { type TouchpointSourceData, touchpointsTable } from "../db/schema";
+import { touchpointsTable } from "../db/schema";
+import type { TouchpointSource, TouchpointSourceData } from "../schemas/index";
 
 export type CreateTouchpointParams = {
     identityGroupId: string;
     merchantId: string;
-    source: "referral_link" | "organic" | "paid_ad" | "direct";
+    source: TouchpointSource;
     sourceData: TouchpointSourceData;
     landingUrl?: string;
     lookbackDays?: number;

@@ -1,13 +1,11 @@
 import type { Address } from "viem";
-import type { TouchpointSourceData } from "../db/schema";
 import type {
     CreateTouchpointParams,
     Touchpoint,
     TouchpointRepository,
 } from "../repositories/TouchpointRepository";
+import type { TouchpointSource, TouchpointSourceData } from "../schemas/index";
 import type { ReferralService } from "./ReferralService";
-
-type TouchpointSource = "referral_link" | "organic" | "paid_ad" | "direct";
 
 type RecordTouchpointParams = {
     identityGroupId: string;

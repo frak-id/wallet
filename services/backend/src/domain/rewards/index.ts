@@ -9,20 +9,25 @@ export {
 
 export { AssetLogRepository } from "./repositories/AssetLogRepository";
 export { InteractionLogRepository } from "./repositories/InteractionLogRepository";
-
+export {
+    type AssetStatus,
+    AssetStatusSchema,
+    type AssetType,
+    AssetTypeSchema,
+    type InteractionType,
+    InteractionTypeSchema,
+    type RecipientType,
+    RecipientTypeSchema,
+} from "./schemas";
 export {
     type AssetLogWithWallet,
     SettlementService,
 } from "./services/SettlementService";
 
 export type {
-    AssetStatus,
-    AssetType,
     CreateAssetLogParams,
     InteractionPayload,
-    InteractionType,
     PurchasePayload,
-    RecipientType,
     SettlementResult,
     WalletConnectPayload,
 } from "./types";

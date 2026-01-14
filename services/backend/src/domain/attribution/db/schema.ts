@@ -7,7 +7,7 @@ import {
     unique,
     uuid,
 } from "drizzle-orm/pg-core";
-import type { Address } from "viem";
+import type { TouchpointSource, TouchpointSourceData } from "../schemas/index";
 
 export const TouchpointSources = [
     "referral_link",
@@ -15,27 +15,6 @@ export const TouchpointSources = [
     "paid_ad",
     "direct",
 ] as const;
-export type TouchpointSource = (typeof TouchpointSources)[number];
-
-export type TouchpointSourceData =
-    | {
-          type: "referral_link";
-          referrerWallet: Address;
-      }
-    | {
-          type: "organic";
-      }
-    | {
-          type: "paid_ad";
-          utmSource?: string;
-          utmMedium?: string;
-          utmCampaign?: string;
-          utmTerm?: string;
-          utmContent?: string;
-      }
-    | {
-          type: "direct";
-      };
 
 export const touchpointsTable = pgTable(
     "touchpoints",

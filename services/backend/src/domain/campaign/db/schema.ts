@@ -10,18 +10,11 @@ import {
 
 import type {
     BudgetConfig,
-    BudgetUsed,
     CampaignMetadata,
     CampaignRuleDefinition,
-} from "../types";
-
-export const CampaignStatuses = [
-    "draft",
-    "active",
-    "paused",
-    "archived",
-] as const;
-export type CampaignStatus = (typeof CampaignStatuses)[number];
+    CampaignStatus,
+} from "../schemas";
+import type { BudgetUsed } from "../types";
 
 export const campaignRulesTable = pgTable(
     "campaign_rules",

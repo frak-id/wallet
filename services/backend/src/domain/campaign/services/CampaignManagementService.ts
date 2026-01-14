@@ -1,9 +1,6 @@
-import type {
-    CampaignRuleInsert,
-    CampaignRuleSelect,
-    CampaignStatus,
-} from "../db/schema";
+import type { CampaignRuleInsert, CampaignRuleSelect } from "../db/schema";
 import type { CampaignRuleRepository } from "../repositories/CampaignRuleRepository";
+import type { CampaignStatus } from "../schemas";
 import type { BudgetConfig, CampaignRuleDefinition } from "../types";
 
 type CampaignCreateInput = {

@@ -7,6 +7,7 @@ import {
     unique,
     uuid,
 } from "drizzle-orm/pg-core";
+import type { IdentityType } from "../schemas";
 
 export type PendingPurchaseValidation = {
     orderId: string;
@@ -24,13 +25,6 @@ export const identityGroupsTable = pgTable("identity_groups", {
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow(),
 });
-
-export const IdentityTypes = [
-    "anonymous_fingerprint",
-    "merchant_customer",
-    "wallet",
-] as const;
-export type IdentityType = (typeof IdentityTypes)[number];
 
 export const identityNodesTable = pgTable(
     "identity_nodes",

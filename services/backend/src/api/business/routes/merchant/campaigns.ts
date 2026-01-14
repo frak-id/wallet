@@ -1,99 +1,16 @@
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import {
+    BudgetConfigSchema,
     CampaignContext,
+    CampaignMetadataSchema,
+    CampaignResponseSchema,
     type CampaignRuleDefinition,
+    CampaignRuleDefinitionSchema,
     type CampaignStatus,
 } from "../../../../domain/campaign";
 import { MerchantContext } from "../../../../domain/merchant";
 import { businessSessionContext } from "../../middleware/session";
-
-const CampaignStatusSchema = t.Union([
-    t.Literal("draft"),
-    t.Literal("active"),
-    t.Literal("paused"),
-    t.Literal("archived"),
-]);
-
-const RewardDefinitionSchema = t.Object({
-    recipient: t.Union([
-        t.Literal("referrer"),
-        t.Literal("referee"),
-        t.Literal("user"),
-    ]),
-    type: t.Union([
-        t.Literal("token"),
-        t.Literal("discount"),
-        t.Literal("points"),
-    ]),
-    amountType: t.Union([
-        t.Literal("fixed"),
-        t.Literal("percentage"),
-        t.Literal("tiered"),
-        t.Literal("range"),
-    ]),
-    amount: t.Optional(t.Number()),
-    percent: t.Optional(t.Number()),
-    percentOf: t.Optional(t.String()),
-    tiers: t.Optional(
-        t.Array(
-            t.Object({
-                minValue: t.Number(),
-                maxValue: t.Optional(t.Number()),
-                amount: t.Number(),
-            })
-        )
-    ),
-    baseAmount: t.Optional(t.Number()),
-    minMultiplier: t.Optional(t.Number()),
-    maxMultiplier: t.Optional(t.Number()),
-    token: t.Optional(t.Hex()),
-    description: t.Optional(t.String()),
-    chaining: t.Optional(
-        t.Object({
-            userPercent: t.Number(),
-            deperditionPerLevel: t.Number(),
-            maxDepth: t.Optional(t.Number()),
-        })
-    ),
-});
-
-const RuleDefinitionSchema = t.Object({
-    trigger: t.Union([
-        t.Literal("purchase"),
-        t.Literal("signup"),
-        t.Literal("wallet_connect"),
-        t.Literal("custom"),
-    ]),
-    // todo: fix that
-    conditions: t.Any(),
-    rewards: t.Array(RewardDefinitionSchema),
-});
-
-const BudgetConfigSchema = t.Array(
-    t.Object({
-        label: t.String(),
-        durationInSeconds: t.Union([t.Number(), t.Null()]),
-        amount: t.Number(),
-    })
-);
-
-const CampaignResponseSchema = t.Object({
-    id: t.String(),
-    merchantId: t.String(),
-    name: t.String(),
-    status: CampaignStatusSchema,
-    priority: t.Number(),
-    // todo: fix that
-    rule: t.Any(),
-    metadata: t.Union([t.Object({}), t.Null()]),
-    budgetConfig: t.Union([BudgetConfigSchema, t.Null()]),
-    budgetUsed: t.Union([t.Object({}), t.Null()]),
-    expiresAt: t.Union([t.String(), t.Null()]),
-    publishedAt: t.Union([t.String(), t.Null()]),
-    createdAt: t.String(),
-    updatedAt: t.String(),
-});
 
 function formatCampaign(campaign: {
     id: string;
@@ -117,7 +34,7 @@ function formatCampaign(campaign: {
         campaign.budgetUsed &&
         typeof campaign.budgetUsed === "object" &&
         Object.keys(campaign.budgetUsed).length > 0
-            ? campaign.budgetUsed
+            ? (campaign.budgetUsed as Record<string, unknown>)
             : null;
 
     return {
@@ -256,8 +173,8 @@ export const merchantCampaignsRoutes = new Elysia({
             params: t.Object({ merchantId: t.String() }),
             body: t.Object({
                 name: t.String(),
-                rule: RuleDefinitionSchema,
-                metadata: t.Optional(t.Object({})),
+                rule: CampaignRuleDefinitionSchema,
+                metadata: t.Optional(CampaignMetadataSchema),
                 budgetConfig: t.Optional(BudgetConfigSchema),
                 expiresAt: t.Optional(t.String()),
                 priority: t.Optional(t.Number()),
@@ -325,8 +242,8 @@ export const merchantCampaignsRoutes = new Elysia({
             }),
             body: t.Object({
                 name: t.Optional(t.String()),
-                rule: t.Optional(RuleDefinitionSchema),
-                metadata: t.Optional(t.Object({})),
+                rule: t.Optional(CampaignRuleDefinitionSchema),
+                metadata: t.Optional(CampaignMetadataSchema),
                 budgetConfig: t.Optional(BudgetConfigSchema),
                 expiresAt: t.Optional(t.Union([t.String(), t.Null()])),
                 priority: t.Optional(t.Number()),

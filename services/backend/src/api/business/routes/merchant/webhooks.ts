@@ -6,6 +6,7 @@ import { MerchantContext } from "../../../../domain/merchant";
 import {
     merchantWebhooksTable,
     purchasesTable,
+    WebhookPlatformSchema,
 } from "../../../../domain/purchases";
 import { businessSessionContext } from "../../middleware/session";
 
@@ -72,12 +73,7 @@ export const merchantWebhooksRoutes = new Elysia({
                     }),
                     t.Object({
                         setup: t.Literal(true),
-                        platform: t.Union([
-                            t.Literal("shopify"),
-                            t.Literal("woocommerce"),
-                            t.Literal("custom"),
-                            t.Literal("internal"),
-                        ]),
+                        platform: WebhookPlatformSchema,
                         webhookSigninKey: t.String(),
                         stats: t.Partial(
                             t.Object({
@@ -134,12 +130,7 @@ export const merchantWebhooksRoutes = new Elysia({
             params: t.Object({ merchantId: t.String() }),
             body: t.Object({
                 hookSignatureKey: t.String(),
-                platform: t.Union([
-                    t.Literal("shopify"),
-                    t.Literal("woocommerce"),
-                    t.Literal("custom"),
-                    t.Literal("internal"),
-                ]),
+                platform: WebhookPlatformSchema,
             }),
             response: {
                 200: t.Object({ success: t.Boolean() }),

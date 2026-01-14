@@ -12,14 +12,13 @@ import {
 } from "drizzle-orm/pg-core";
 import type { Address, Hex } from "viem";
 import { customHex } from "../../../utils/drizzle/customTypes";
-
 import type {
     AssetStatus,
     AssetType,
-    InteractionPayload,
     InteractionType,
     RecipientType,
-} from "../types";
+} from "../schemas";
+import type { InteractionPayload } from "../types";
 
 export const interactionLogsTable = pgTable(
     "interaction_logs",

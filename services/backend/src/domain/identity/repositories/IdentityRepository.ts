@@ -2,11 +2,8 @@ import { db } from "@backend-infrastructure";
 import { and, eq, isNull } from "drizzle-orm";
 import { LRUCache } from "lru-cache";
 import type { Address } from "viem";
-import {
-    type IdentityType,
-    identityGroupsTable,
-    identityNodesTable,
-} from "../db/schema";
+import { identityGroupsTable, identityNodesTable } from "../db/schema";
+import type { IdentityType } from "../schemas";
 
 type IdentityGroupSelect = typeof identityGroupsTable.$inferSelect;
 type IdentityNodeSelect = typeof identityNodesTable.$inferSelect;

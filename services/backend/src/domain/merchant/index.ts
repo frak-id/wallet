@@ -1,6 +1,5 @@
 export { MerchantContext } from "./context";
 export {
-    type MerchantConfig,
     merchantAdminsTable,
     merchantOwnershipTransfersTable,
     merchantsTable,
@@ -8,6 +7,7 @@ export {
 export { MerchantAdminRepository } from "./repositories/MerchantAdminRepository";
 export { MerchantOwnershipTransferRepository } from "./repositories/MerchantOwnershipTransferRepository";
 export { MerchantRepository } from "./repositories/MerchantRepository";
+export { type MerchantConfig, MerchantConfigSchema } from "./schemas";
 export { MerchantAuthorizationService } from "./services/MerchantAuthorizationService";
 export { MerchantRegistrationService } from "./services/MerchantRegistrationService";
 export { OwnershipTransferService } from "./services/OwnershipTransferService";

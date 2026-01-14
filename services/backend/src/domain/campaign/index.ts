@@ -2,11 +2,24 @@ export { CampaignContext } from "./context";
 export {
     type CampaignRuleInsert,
     type CampaignRuleSelect,
-    type CampaignStatus,
-    CampaignStatuses,
     campaignRulesTable,
 } from "./db/schema";
 export { CampaignRuleRepository } from "./repositories/CampaignRuleRepository";
+export {
+    BudgetConfigSchema,
+    CampaignMetadataSchema,
+    CampaignResponseSchema,
+    CampaignRuleDefinitionSchema,
+    CampaignStatus,
+    CampaignStatusSchema,
+    CampaignTriggerSchema,
+    ConditionGroupSchema,
+    ConditionOperatorSchema,
+    RewardChainingSchema,
+    RewardDefinitionSchema,
+    RuleConditionSchema,
+    RuleConditionsSchema,
+} from "./schemas";
 export { CampaignManagementService } from "./services/CampaignManagementService";
 export { RewardCalculator } from "./services/RewardCalculator";
 export { RuleConditionEvaluator } from "./services/RuleConditionEvaluator";

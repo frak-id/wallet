@@ -4,9 +4,9 @@ import { db } from "../../../infrastructure/persistence/postgres";
 import {
     type CampaignRuleInsert,
     type CampaignRuleSelect,
-    type CampaignStatus,
     campaignRulesTable,
 } from "../db/schema";
+import type { CampaignStatus } from "../schemas";
 import type {
     BudgetConfig,
     BudgetConsumptionResult,

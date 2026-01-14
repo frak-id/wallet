@@ -1,17 +1,16 @@
 import type { Address, Hex } from "viem";
+import type {
+    AssetStatus,
+    AssetType,
+    InteractionType,
+    RecipientType,
+} from "../schemas";
+
+export type { AssetStatus, AssetType, InteractionType, RecipientType };
 
 // =============================================================================
 // INTERACTION LOG TYPES
 // =============================================================================
-
-/**
- * Types of interactions that can be logged.
- */
-export type InteractionType =
-    | "referral_arrival" // User lands via referral link
-    | "purchase" // Purchase event from webhook
-    | "wallet_connect" // User connects wallet
-    | "identity_merge"; // Two identity groups combined
 
 /**
  * Payload for referral arrival interaction.
@@ -66,28 +65,6 @@ export type InteractionPayload =
 // =============================================================================
 // ASSET LOG TYPES
 // =============================================================================
-
-/**
- * Status of an asset log entry.
- * Simplified flow: pending → processing → settled
- */
-export type AssetStatus =
-    | "pending" // Reward created, waiting for wallet + settlement
-    | "processing" // Settlement batch processing it
-    | "settled" // Pushed on blockchain, user can claim via smart contract
-    | "consumed" // Soft reward used (discount redeemed)
-    | "cancelled" // Refunded or fraud detected
-    | "expired"; // Pending reward expired (no wallet connected in time)
-
-export type AssetType = "token";
-
-/**
- * Who receives the reward (denormalized from campaign rule for queries).
- */
-export type RecipientType =
-    | "referrer" // The user who shared the referral link
-    | "referee" // The user who clicked and converted
-    | "user"; // The current user (non-referral rewards)
 
 // =============================================================================
 // SETTLEMENT TYPES

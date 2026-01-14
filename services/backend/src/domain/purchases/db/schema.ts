@@ -10,14 +10,7 @@ import {
     uuid,
     varchar,
 } from "drizzle-orm/pg-core";
-
-export const WebhookPlatforms = [
-    "shopify",
-    "woocommerce",
-    "custom",
-    "internal",
-] as const;
-export type WebhookPlatform = (typeof WebhookPlatforms)[number];
+import type { PurchaseStatus, WebhookPlatform } from "../schemas";
 
 export const merchantWebhooksTable = pgTable(
     "merchant_webhooks",
@@ -33,14 +26,6 @@ export const merchantWebhooksTable = pgTable(
     },
     (table) => [index("merchant_webhooks_merchant_id_idx").on(table.merchantId)]
 );
-
-export const PurchaseStatuses = [
-    "pending",
-    "confirmed",
-    "cancelled",
-    "refunded",
-] as const;
-export type PurchaseStatus = (typeof PurchaseStatuses)[number];
 
 export const purchasesTable = pgTable(
     "purchases",

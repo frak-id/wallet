@@ -1,13 +1,9 @@
 export { PurchasesContext } from "./context";
 export {
     merchantWebhooksTable,
-    type PurchaseStatus,
-    PurchaseStatuses,
     purchaseClaimsTable,
     purchaseItemsTable,
     purchasesTable,
-    type WebhookPlatform,
-    WebhookPlatforms,
 } from "./db/schema";
 export { PurchaseClaimRepository } from "./repositories/PurchaseClaimRepository";
 export {
@@ -16,3 +12,9 @@ export {
     type PurchaseItemInsert,
     PurchaseRepository,
 } from "./repositories/PurchaseRepository";
+export {
+    type PurchaseStatus,
+    PurchaseStatusSchema,
+    type WebhookPlatform,
+    WebhookPlatformSchema,
+} from "./schemas";
