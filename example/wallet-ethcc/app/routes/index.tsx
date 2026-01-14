@@ -1,7 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { FullDialog } from "@/module/full/component/FullDialog";
-import { SendInteraction } from "@/module/interaction/component/SendInteraction";
-import { SendReferralInteraction } from "@/module/interaction/component/SendReferralInteraction";
 import { ProductInfo } from "@/module/productInfo/component/WalletStatus";
 import { Sso } from "@/module/sso/component/WalletStatus";
 import { SendTransaction } from "@/module/transaction/component/SendTx";
@@ -23,8 +21,6 @@ function Home() {
             <Sso />
             <WalletLogin />
             <SendTransaction />
-            <SendReferralInteraction />
-            <SendInteraction />
         </div>
     );
 }

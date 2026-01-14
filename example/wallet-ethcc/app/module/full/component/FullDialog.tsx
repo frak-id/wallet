@@ -5,7 +5,6 @@ import {
 import type {
     LoginModalStepType,
     ModalRpcStepsResultType,
-    OpenInteractionSessionModalStepType,
     SendTransactionModalStepType,
     SiweAuthenticateModalStepType,
 } from "@frak-labs/core-sdk";
@@ -65,7 +64,6 @@ export function FullDialog() {
                                     }),
                                 },
                             },
-                            openSession: {},
                             login: {
                                 allowSso: true,
                                 ssoMetadata: {
@@ -111,7 +109,6 @@ function ActionResult({
     data: ModalRpcStepsResultType<
         [
             LoginModalStepType,
-            OpenInteractionSessionModalStepType,
             SiweAuthenticateModalStepType,
             SendTransactionModalStepType,
         ]
@@ -130,11 +127,6 @@ function ActionResult({
 
             <h5>Login data</h5>
             <p>Address: {data.login.wallet}</p>
-            <hr />
-
-            <h5>Open session data</h5>
-            <p>Session start: {data.openSession.startTimestamp}</p>
-            <p>Session end: {data.openSession.endTimestamp}</p>
             <hr />
 
             <h5>Siwe data</h5>
