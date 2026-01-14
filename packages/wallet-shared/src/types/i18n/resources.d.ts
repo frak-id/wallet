@@ -27,11 +27,6 @@ interface Resources {
                     success: "Connection successful";
                     title: "Connection";
                 };
-                openSession: {
-                    description: "Congratulations, your wallet has been created! Click on the button below to activate it and receive your winnings.";
-                    primaryAction: "Activate my wallet";
-                    title: "Activation";
-                };
                 sendTransaction: {
                     description: "To complete, authorize this transaction in your wallet. This ensures secure processing.";
                     primaryAction_one: "Send transaction";
@@ -47,8 +42,6 @@ interface Resources {
             wallet: {
                 loggedIn: {
                     onboarding: {
-                        activate: "💫 Enable it to be able to share.";
-                        activate_referred: "💫 Enable it to receive your gains.";
                         share: "🚀 Let's go! Share this product and receive your rewards directly.";
                         share_referred: "🚀 Share your turn to win more!";
                         welcome: "🥳 Congratulations! Your wallet is created.";
@@ -115,7 +108,6 @@ interface Resources {
             unlockWith: "Use {{type}} to unlock";
         };
         common: {
-            activated: "Activated";
             added: "added";
             amountRequired: "Amount is required";
             at: "at";
@@ -125,7 +117,6 @@ interface Resources {
             claimed: "claimed";
             copied: "Copied!";
             copyAddress: "Copy address";
-            disabled: "Disabled";
             enterAddress: "Enter address";
             interactions: "Interactions";
             logout: "Logout";
@@ -228,6 +219,18 @@ interface Resources {
             };
             notifications: {
                 noNotifications: "No notifications";
+            };
+            openLogin: {
+                complete: {
+                    backToBrowser: "Continue";
+                    message: "You can now return to {{productName}}.";
+                    title: "Login successful!";
+                };
+                login: "Connect with biometrics";
+                redirecting: "Redirecting to {{productName}}";
+                subtitle: "Connect to {{productName}}";
+                title: "Connect your wallet";
+                webauthnNotSupported: "WebAuthn is not supported on this device";
             };
             pairing: {
                 cancel: "Cancel";
@@ -368,17 +371,6 @@ interface Resources {
                     create: "Create your demo <strong>wallet</strong>";
                     error: "Error during registration, please try again";
                     inProgress: "Wallet creation in progress";
-                };
-            };
-            session: {
-                closed: "Your wallet is not activated. You can’t be rewarded.";
-                open: "Your wallet is activated";
-                openSession: "Activate your wallet";
-                titleActivated: "Wallet is activated";
-                titleNotActivated: "Wallet not activated";
-                tooltip: {
-                    active: "You got an active wallet since {{sessionStart}} and until {{sessionEnd}}";
-                    inactive: "The wallet activation will permit us to send interaction data";
                 };
             };
             settings: {

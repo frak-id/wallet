@@ -30,7 +30,6 @@
         }
     },
     "common": {
-        "activated": "Activé",
         "amountRequired": "Le montant est requis",
         "added": "ajouté",
         "at": "à",
@@ -40,7 +39,6 @@
         "claimed": "réclamé",
         "copied": "Copié !",
         "copyAddress": "Copier l'adresse",
-        "disabled": "Désactivé",
         "enterAddress": "Entrez l'adresse",
         "interactions": "Interactions",
         "logout": "Déconnexion",
@@ -52,9 +50,9 @@
         "send": "Envoyer",
         "submit": "Envoyer",
         "to": "À",
-        "transactionHash": "Hash de transaction :",
+        "transactionHash": "Hash de transaction :",
         "transactionLink": "Lien de transaction",
-        "transactionSuccess": "Transaction réussie !",
+        "transactionSuccess": "Transaction réussie !",
         "wallet": "Porte-monnaie :",
         "walletAddress": "Adresse du porte-monnaie :",
         "walletAddressRequired": "L'adresse du porte-monnaie est requise",
@@ -172,17 +170,6 @@
                 "create": "Créez votre <strong>porte-monnaie</strong> de démonstration",
                 "error": "Erreur lors de l'inscription, veuillez réessayer",
                 "inProgress": "Création du porte-monnaie en cours"
-            }
-        },
-        "session": {
-            "closed": "Votre porte-monnaie n’est pas activé. Vous ne pouvez pas recevoir vos gains",
-            "open": "Votre porte-monnaie est activé",
-            "openSession": "Activez votre porte-monnaie",
-            "titleActivated": "Porte-monnaie est activé",
-            "titleNotActivated": "Porte-monnaie non activé",
-            "tooltip": {
-                "active": "Vous avez un porte-monnaie actif depuis {{sessionStart}} et jusqu'à {{sessionEnd}}",
-                "inactive": "L'activation du porte-monnaie nous permettra d'envoyer des données d'interaction"
             }
         },
         "share-and-earn": "Partagez<br />& gagnez",

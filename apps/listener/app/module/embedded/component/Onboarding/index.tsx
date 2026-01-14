@@ -84,60 +84,6 @@ export function OnboardingWelcome() {
     );
 }
 
-export function OnboardingActivate({
-    isReverse,
-    isHidden = true,
-}: {
-    isReverse?: boolean;
-    isHidden?: boolean;
-}) {
-    const { lang, i18n } = useListenerTranslation();
-    const DELAY_MS = 1_500;
-
-    const [isVisible, setIsVisible] = useState(false);
-
-    useEffect(() => {
-        const showOnboardingTimer = setTimeout(() => {
-            setIsVisible(true);
-        }, DELAY_MS);
-
-        // Cleanup timer on component unmount
-        return () => clearTimeout(showOnboardingTimer);
-    }, []);
-
-    useEffect(() => {
-        if (!isVisible) return;
-        setIsVisible(!isHidden);
-    }, [isHidden, isVisible]);
-
-    return (
-        <div
-            className={cx(
-                styles.onboardingWrapper,
-                !isVisible && styles["onboardingWrapper--hidden"]
-            )}
-        >
-            <Onboarding
-                style={{ top: "-68px", left: "0px" }}
-                isReverse={isReverse}
-            >
-                <Trans
-                    i18nKey={"sdk.wallet.loggedIn.onboarding.activate"}
-                    tOptions={{ lng: lang }}
-                    i18n={i18n}
-                />
-            </Onboarding>
-            <OnboardingArrow
-                style={{
-                    top: "-34px",
-                    left: "-33px",
-                    transform: "scaleY(-1) rotate(185deg)",
-                }}
-            />
-        </div>
-    );
-}
-
 export function OnboardingShare({ isHidden = true }: { isHidden?: boolean }) {
     const { lang, i18n } = useListenerTranslation();
     const [hidden, setHidden] = useState(isHidden);
