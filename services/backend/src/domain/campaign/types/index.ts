@@ -75,11 +75,9 @@ type RewardRecipient =
 
 /**
  * Type of reward asset.
+ * Later could include discount code, points, loyalty stuff etc.
  */
-type RewardAssetType =
-    | "token" // Crypto token (USDC, etc.)
-    | "discount" // Store discount (soft reward)
-    | "points"; // Loyalty points (soft reward)
+type RewardAssetType = "token"; // Crypto token (USDC, etc.);
 
 export type RewardChaining = {
     userPercent: number;

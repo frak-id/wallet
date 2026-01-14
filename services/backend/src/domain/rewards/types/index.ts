@@ -79,7 +79,7 @@ export type AssetStatus =
     | "cancelled" // Refunded or fraud detected
     | "expired"; // Pending reward expired (no wallet connected in time)
 
-export type AssetType = "token" | "discount" | "points";
+export type AssetType = "token";
 
 /**
  * Who receives the reward (denormalized from campaign rule for queries).

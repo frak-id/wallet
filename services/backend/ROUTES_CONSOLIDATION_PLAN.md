@@ -26,6 +26,17 @@ The business dashboard (TanStack Start) currently contains server-side logic tha
 
 **Goal**: Consolidate all business logic in the Elysia backend and transform the dashboard into a pure API client.
 
+### Important: merchantId is Source of Truth
+
+**`productId` is deprecated** as the primary identifier. The source of truth for merchants is now `merchantId` (the database UUID).
+
+| Field | Status | Notes |
+|-------|--------|-------|
+| `merchantId` | **Primary** | Database UUID, used in all API routes |
+| `productId` | Computed | `keccak256(domain)` - still needed for blockchain interactions but derived from merchant |
+
+All new endpoints use `/:merchantId/` paths instead of `/:productId/`.
+
 ---
 
 ## Phase 1: User Reward History (CURRENT PRIORITY)
@@ -51,11 +62,21 @@ This endpoint is backed by `asset_logs`, which supports multiple asset types (`t
 
 > **Recommendation**: Implement Option A for Phase 1, and extend to Option B later once soft reward UX is confirmed.
 
+### Scope: `/user/rewards/history` (not `/user/wallet`)
+
+This endpoint lives under `/user` (not `/user/wallet`) to support **both authenticated and anonymous users**:
+- **Authenticated users**: Use `walletSession` to resolve identity group from wallet
+- **Anonymous users** (SDK context): Use `walletSdkSession` with `x-wallet-sdk-auth` header to resolve identity via fingerprint/merchant
+
+This allows anonymous users with pending rewards to see their reward history before connecting a wallet.
+
+> **Note on onchain data**: Direct onchain rewards and claims will later come from the **Ponder indexer**. This endpoint focuses on backend-tracked reward history from `asset_logs`. The Ponder integration can be added as a separate data source.
+
 ### Files to Create/Modify
 
-1. **`services/backend/src/api/user/wallet/routes/rewards.ts`** (new)
-   - Route `GET /rewards/history` with pagination
-   - Uses `sessionContext` for auth (same pattern as `balance.ts`)
+1. **`services/backend/src/api/user/rewards.ts`** (new)
+   - Route `GET /rewards/history` - returns all rewards (no pagination for MVP, KISS)
+   - Supports both `walletSession` and `walletSdkSession` for identity resolution
 
 2. **`services/backend/src/domain/rewards/repositories/AssetLogRepository.ts`** (modify)
    - Add import: `import { merchantsTable } from "../../merchant/db/schema";`
@@ -63,7 +84,7 @@ This endpoint is backed by `asset_logs`, which supports multiple asset types (`t
    - Join on `interaction_logs` for interaction type (pattern: see `findPendingForSettlement`)
    - Join on `merchants` for name/domain
 
-3. **`services/backend/src/api/user/wallet/index.ts`** (modify)
+3. **`services/backend/src/api/user/index.ts`** (modify)
    - Import and `.use(rewardsRoutes)`
 
 ### Query Implementation (AssetLogRepository)
@@ -71,14 +92,19 @@ This endpoint is backed by `asset_logs`, which supports multiple asset types (`t
 ```typescript
 async findByIdentityGroup(
   identityGroupId: string,
-  options: { limit?: number; offset?: number; status?: AssetStatus[] }
+  options?: { status?: AssetStatus[] }
 ): Promise<RewardHistoryItem[]> {
-  // Build conditions array
-  const conditions = [eq(assetLogsTable.identityGroupId, identityGroupId)];
-  if (options.status?.length) {
+  // Build conditions array - token rewards only for MVP
+  const conditions = [
+    eq(assetLogsTable.identityGroupId, identityGroupId),
+    eq(assetLogsTable.assetType, "token"),
+    isNotNull(assetLogsTable.tokenAddress),
+  ];
+  if (options?.status?.length) {
     conditions.push(inArray(assetLogsTable.status, options.status));
   }
 
+  // No pagination for MVP (KISS) - return all rewards
   return db
     .select({
       id: assetLogsTable.id,
@@ -100,35 +126,46 @@ async findByIdentityGroup(
     .leftJoin(interactionLogsTable, eq(assetLogsTable.interactionLogId, interactionLogsTable.id))
     .innerJoin(merchantsTable, eq(assetLogsTable.merchantId, merchantsTable.id))
     .where(and(...conditions))
-    .orderBy(desc(assetLogsTable.createdAt))
-    .limit(options.limit ?? 50)
-    .offset(options.offset ?? 0);
+    .orderBy(desc(assetLogsTable.createdAt));
 }
 ```
 
 ### Route Implementation
 
 ```typescript
-// services/backend/src/api/user/wallet/routes/rewards.ts
+// services/backend/src/api/user/rewards.ts
 export const rewardsRoutes = new Elysia({ prefix: "/rewards" })
   .use(sessionContext)
   .get(
     "/history",
-    async ({ walletSession, query }) => {
-      const { limit = 50, offset = 0, status } = query;
+    async ({ walletSession, walletSdkSession, query }) => {
+      const { status } = query;
 
-      // Get identity group from wallet (uses existing IdentityRepository method)
-      const identityGroup = await identityRepository.findGroupByIdentity({
-        type: "wallet",
-        value: walletSession.address,
-      });
-      if (!identityGroup) return { rewards: [], pagination: { total: 0, offset, limit } };
+      // Resolve identity group from either wallet or SDK session
+      let identityGroup: IdentityGroup | null = null;
+      
+      if (walletSession) {
+        // Authenticated user - resolve from wallet
+        identityGroup = await identityRepository.findGroupByIdentity({
+          type: "wallet",
+          value: walletSession.address,
+        });
+      } else if (walletSdkSession) {
+        // Anonymous user - resolve from SDK fingerprint
+        identityGroup = await identityRepository.findGroupByIdentity({
+          type: "anonymous_fingerprint",
+          value: walletSdkSession.fingerprint,
+          merchantId: walletSdkSession.merchantId,
+        });
+      }
+      
+      if (!identityGroup) return { rewards: [] };
 
-      // Fetch rewards and total count in parallel
-      const [rewards, total] = await Promise.all([
-        assetLogRepository.findByIdentityGroup(identityGroup.id, { limit, offset, status }),
-        assetLogRepository.countByIdentityGroup(identityGroup.id, { status }),
-      ]);
+      // Fetch rewards (no pagination for MVP - KISS)
+      const rewards = await assetLogRepository.findByIdentityGroup(
+        identityGroup.id, 
+        { status }
+      );
 
       // Batch fetch token metadata to avoid N+1
       const uniqueTokens = [...new Set(rewards.map((r) => r.tokenAddress))] as Address[];
@@ -151,13 +188,11 @@ export const rewardsRoutes = new Elysia({ prefix: "/rewards" })
         txHash: r.onchainTxHash,
       }));
 
-      return { rewards: enriched, pagination: { total, offset, limit } };
+      return { rewards: enriched };
     },
     {
-      withWalletAuthent: true,
+      // Accepts either wallet auth OR SDK auth (for anonymous users)
       query: t.Object({
-        limit: t.Optional(t.Number({ minimum: 1, maximum: 100 })),
-        offset: t.Optional(t.Number({ minimum: 0 })),
         status: t.Optional(t.Array(t.Union([
           t.Literal("pending"),
           t.Literal("processing"),
@@ -168,7 +203,6 @@ export const rewardsRoutes = new Elysia({ prefix: "/rewards" })
         ]))),
       }),
       response: {
-        401: t.String(),
         200: t.Object({
           rewards: t.Array(t.Object({
             id: t.String(),
@@ -207,11 +241,6 @@ export const rewardsRoutes = new Elysia({ prefix: "/rewards" })
             settledAt: t.Optional(t.String()),
             txHash: t.Optional(t.Hex()),
           })),
-          pagination: t.Object({
-            total: t.Number(),
-            offset: t.Number(),
-            limit: t.Number(),
-          }),
         }),
       },
     }
@@ -234,7 +263,7 @@ export const rewardsRoutes = new Elysia({ prefix: "/rewards" })
     settledAt?: string; // ISO date
     txHash?: Hex;
   }>;
-  pagination: { total: number; offset: number; limit: number };
+  // No pagination for MVP (KISS) - will add later if needed
 }
 ```
 
@@ -290,52 +319,17 @@ Per ANONYMOUS_REWARDS_SIMPLIFICATION.md and `assetStatusEnum`:
 
 > **Important**: There is NO `claimed` status in DB. On-chain claiming is tracked by the RewardsHub smart contract, not the backend.
 
-### Known Issues & Fixes Required
+### Implementation Notes
 
-> **Status**: Issues 1, 3, 4, 5 are now addressed in the code snippets above.
-> Issues 2 and 6 require creating new files during implementation.
+#### Token-only for MVP
 
-#### 0. Scope mismatch (Token-only vs All asset types)
+The query enforces `assetType="token"` and `tokenAddress IS NOT NULL` to keep the response shape simple. Extend to other asset types (discount, points) once soft reward UX is confirmed.
 
-The current response schema requires `token` for every reward item, but `asset_logs.tokenAddress` is nullable and `assetType` can be `discount` or `points`.
+#### No Pagination (KISS)
 
-- If Phase 1 is **token-only**: enforce `assetType="token"` and `tokenAddress IS NOT NULL` in both:
-  - `findByIdentityGroup(...)`
-  - `countByIdentityGroup(...)`
-- If Phase 1 includes **all asset types**: update the response shape to be polymorphic (see Decision section above).
+For MVP, we return all rewards without pagination. This simplifies implementation and is sufficient for initial use cases. Add pagination later if performance becomes an issue with large reward sets.
 
-#### 1. Pagination Total Count (CRITICAL)
-
-Line 122 returns `enriched.length` as total, which is just the page size. Need separate COUNT query:
-
-```typescript
-// In AssetLogRepository - add count method
-async countByIdentityGroup(
-  identityGroupId: string,
-  options?: { status?: AssetStatus[] }
-): Promise<number> {
-  const conditions = [eq(assetLogsTable.identityGroupId, identityGroupId)];
-  if (options?.status?.length) {
-    conditions.push(inArray(assetLogsTable.status, options.status));
-  }
-
-  const [result] = await db
-    .select({ count: sql<number>`count(*)::int` })
-    .from(assetLogsTable)
-    .where(and(...conditions));
-  return result?.count ?? 0;
-}
-
-// In route handler - use count
-const [rewards, total] = await Promise.all([
-  assetLogRepository.findByIdentityGroup(identityGroup.id, { limit, offset, status }),
-  assetLogRepository.countByIdentityGroup(identityGroup.id, { status }),
-]);
-// ...
-return { rewards: enriched, pagination: { total, offset, limit } };
-```
-
-#### 2. Missing Helper Functions
+#### Missing Helper Functions
 
 `getTokenMetadata` and `mapInteractionType` are referenced but undefined.
 
@@ -354,124 +348,11 @@ return { rewards: enriched, pagination: { total, offset, limit } };
 
 > Note: Avoid `async map()` patterns here (same as the N+1 note below); keep enrichment synchronous after batching.
 
-#### 3. N+1 Query Risk
+#### N+1 Query Optimization
 
-`Promise.all(rewards.map(getTokenMetadata))` fires N queries. Optimize:
+Token metadata is batched by unique token addresses before enrichment (see code above). This avoids N+1 queries.
 
-```typescript
-// Batch token addresses first - preserve Address type
-const uniqueTokens = [...new Set(rewards.map((r) => r.tokenAddress))] as Address[];
-const tokenMetadata = await Promise.all(
-  uniqueTokens.map((addr) => getTokenMetadata(addr))
-);
-const tokenMap = new Map(uniqueTokens.map((addr, i) => [addr, tokenMetadata[i]]));
-
-// Then map without async
-const enriched = rewards.map((r) => ({
-  // ...
-  token: tokenMap.get(r.tokenAddress),
-  // ...
-}));
-```
-
-#### 4. Add Status Filter to Query Params
-
-The repository signature has `status?: AssetStatus[]` but query params don't expose it. Add filtering:
-
-```typescript
-// In route config - add status filter
-query: t.Object({
-  limit: t.Optional(t.Number({ minimum: 1, maximum: 100 })),
-  offset: t.Optional(t.Number({ minimum: 0 })),
-  status: t.Optional(t.Array(t.Union([
-    t.Literal("pending"),
-    t.Literal("processing"),
-    t.Literal("settled"),
-    t.Literal("consumed"),
-    t.Literal("cancelled"),
-    t.Literal("expired"),
-  ]))),
-}),
-
-// In handler
-const { limit = 50, offset = 0, status } = query;
-// Pass status to repository calls
-```
-
-#### 5. Response Schema with Error Handling
-
-Follow `balance.ts` pattern with proper error responses and custom type helpers:
-
-```typescript
-// Use existing custom type helpers from @backend-utils
-import { t } from "@backend-utils";
-
-// Response schema following balance.ts pattern
-{
-  withWalletAuthent: true,
-  query: t.Object({
-    limit: t.Optional(t.Number({ minimum: 1, maximum: 100 })),
-    offset: t.Optional(t.Number({ minimum: 0 })),
-    status: t.Optional(t.Array(t.Union([
-      t.Literal("pending"),
-      t.Literal("processing"),
-      t.Literal("settled"),
-      t.Literal("consumed"),
-      t.Literal("cancelled"),
-      t.Literal("expired"),
-    ]))),
-  }),
-  response: {
-    401: t.String(),
-    200: t.Object({
-      rewards: t.Array(t.Object({
-        id: t.String(),
-        amount: t.String(),
-        token: t.Object({
-          address: t.Address(),
-          symbol: t.String(),
-          decimals: t.Number(),
-        }),
-        status: t.Union([
-          t.Literal("pending"),
-          t.Literal("processing"),
-          t.Literal("settled"),
-          t.Literal("consumed"),
-          t.Literal("cancelled"),
-          t.Literal("expired"),
-        ]),
-        trigger: t.Union([
-          t.Literal("referral"),
-          t.Literal("purchase"),
-          t.Literal("wallet_connect"),
-          t.Literal("identity_merge"),
-          t.Null(),
-        ]),
-        recipientType: t.Union([
-          t.Literal("referrer"),
-          t.Literal("referee"),
-          t.Literal("user"),
-        ]),
-        merchant: t.Object({
-          id: t.String(),
-          name: t.String(),
-          domain: t.String(),
-        }),
-        earnedAt: t.String(),
-        settledAt: t.Optional(t.String()),
-        txHash: t.Optional(t.Hex()),
-      })),
-      pagination: t.Object({
-        total: t.Number(),
-        offset: t.Number(),
-        limit: t.Number(),
-      }),
-    }),
-  },
-}
-```
-
-#### 6. Consider Extracting Shared Status/Type Enums
+#### Consider Extracting Shared Status/Type Enums
 
 To avoid duplication, consider extracting shared enums to `@backend-utils`:
 
@@ -557,11 +438,7 @@ export type CampaignStats = {
         total: string;
         pending: string;
         settled: string;
-        byRecipient: {
-            referrer: string;
-            referee: string;
-            user: string;
-        };
+        // Per-recipient breakdown moved to members endpoint
     };
     budgetUsed: Record<string, { used: number; limit: number }>;
 };
@@ -629,7 +506,6 @@ export class CampaignStatsRepository {
             .select({
                 campaignRuleId: assetLogsTable.campaignRuleId,
                 status: assetLogsTable.status,
-                recipientType: assetLogsTable.recipientType,
                 totalAmount: sum(assetLogsTable.amount),
                 count: count(),
             })
@@ -637,8 +513,7 @@ export class CampaignStatsRepository {
             .where(and(...rewardConditions))
             .groupBy(
                 assetLogsTable.campaignRuleId,
-                assetLogsTable.status,
-                assetLogsTable.recipientType
+                assetLogsTable.status
             );
 
         // 5. Aggregate into campaign stats
@@ -689,12 +564,10 @@ export class CampaignStatsRepository {
     private aggregateRewards(
         rewards: Array<{
             status: string;
-            recipientType: string;
             totalAmount: string | null;
         }>
     ) {
         const byStatus = { pending: 0n, settled: 0n };
-        const byRecipient = { referrer: 0n, referee: 0n, user: 0n };
 
         for (const r of rewards) {
             const amount = BigInt(r.totalAmount ?? "0");
@@ -702,9 +575,6 @@ export class CampaignStatsRepository {
                 byStatus.pending += amount;
             } else if (r.status === "settled") {
                 byStatus.settled += amount;
-            }
-            if (r.recipientType in byRecipient) {
-                byRecipient[r.recipientType as keyof typeof byRecipient] += amount;
             }
         }
 
@@ -714,11 +584,7 @@ export class CampaignStatsRepository {
             total: total.toString(),
             pending: byStatus.pending.toString(),
             settled: byStatus.settled.toString(),
-            byRecipient: {
-                referrer: byRecipient.referrer.toString(),
-                referee: byRecipient.referee.toString(),
-                user: byRecipient.user.toString(),
-            },
+            // Per-recipient breakdown available in members endpoint
         };
     }
 
@@ -756,11 +622,7 @@ const RewardStatsSchema = t.Object({
     total: t.String(),
     pending: t.String(),
     settled: t.String(),
-    byRecipient: t.Object({
-        referrer: t.String(),
-        referee: t.String(),
-        user: t.String(),
-    }),
+    // Per-recipient breakdown available in members endpoint
 });
 
 const CampaignStatsSchema = t.Object({
@@ -907,11 +769,7 @@ export const campaignStatsRoutes = new Elysia({ prefix: "/:merchantId/campaigns"
             total: string;      // BigInt as string
             pending: string;
             settled: string;
-            byRecipient: {
-                referrer: string;
-                referee: string;
-                user: string;
-            };
+            // Per-recipient breakdown available in GET /:merchantId/members
         };
         budgetUsed: Record<string, { used: number; limit: number }>;
     }>;
@@ -951,18 +809,20 @@ export const campaignStatsRoutes = new Elysia({ prefix: "/:merchantId/campaigns"
 ### 2.2 Member Management
 
 **Routes**:
-- `GET /business/merchant/:merchantId/members` - Paginated list
+- `GET /business/merchant/:merchantId/members` - Member list (no pagination for MVP, KISS)
 - `GET /business/merchant/:merchantId/members/count` - Quick count
+
+> **Note**: Per-recipient reward breakdown (referrer/referee/user totals) will be included here, gathered across all campaigns for this merchant.
 
 #### Files to Create/Modify
 
 1. **`services/backend/src/api/business/routes/merchant/members.ts`** (new)
-   - Paginated member list with filters
+   - Member list with filters (no pagination for MVP)
    - Count endpoint for dashboard widgets
 
 2. **`services/backend/src/domain/identity/repositories/MemberRepository.ts`** (new)
    - Query members by merchant via `interaction_logs` and `identity_nodes`
-   - Aggregate per-member stats
+   - Aggregate per-member stats including reward breakdown by recipient type
 
 3. **`services/backend/src/api/business/routes/merchant/index.ts`** (modify)
    - Import and `.use(memberRoutes)`
@@ -1080,14 +940,12 @@ export class MemberRepository {
     }
 
     /**
-     * Get paginated list of members with stats
+     * Get list of members with stats (no pagination for MVP - KISS)
      */
     async findByMerchant(
         merchantId: string,
-        options: { limit: number; offset: number; filter?: MemberFilter }
+        filter?: MemberFilter
     ): Promise<MemberSummary[]> {
-        const { limit, offset, filter } = options;
-
         // Get distinct identity groups with interaction stats
         const conditions = [
             eq(interactionLogsTable.merchantId, merchantId),
@@ -1104,7 +962,7 @@ export class MemberRepository {
             conditions.push(lte(interactionLogsTable.createdAt, filter.until));
         }
 
-        // Step 1: Get member groups with interaction stats
+        // Step 1: Get member groups with interaction stats (no pagination for MVP)
         const memberGroups = await db
             .select({
                 identityGroupId: interactionLogsTable.identityGroupId,
@@ -1115,9 +973,7 @@ export class MemberRepository {
             .from(interactionLogsTable)
             .where(and(...conditions))
             .groupBy(interactionLogsTable.identityGroupId)
-            .orderBy(desc(sql`max(${interactionLogsTable.createdAt})`))
-            .limit(limit)
-            .offset(offset);
+            .orderBy(desc(sql`max(${interactionLogsTable.createdAt})`));
 
         if (memberGroups.length === 0) return [];
 
@@ -1234,18 +1090,15 @@ export const memberRoutes = new Elysia({ prefix: "/:merchantId/members" })
                 return status(403, "Access denied");
             }
 
-            const { limit = 50, offset = 0, ...filterParams } = query;
             const filter = {
-                hasWallet: filterParams.hasWallet,
-                interactionType: filterParams.interactionType,
-                since: filterParams.since ? new Date(filterParams.since) : undefined,
-                until: filterParams.until ? new Date(filterParams.until) : undefined,
+                hasWallet: query.hasWallet,
+                interactionType: query.interactionType,
+                since: query.since ? new Date(query.since) : undefined,
+                until: query.until ? new Date(query.until) : undefined,
             };
 
-            const [members, total] = await Promise.all([
-                memberRepository.findByMerchant(merchantId, { limit, offset, filter }),
-                memberRepository.countByMerchant(merchantId, filter),
-            ]);
+            // No pagination for MVP (KISS)
+            const members = await memberRepository.findByMerchant(merchantId, filter);
 
             return {
                 members: members.map((m) => ({
@@ -1253,26 +1106,15 @@ export const memberRoutes = new Elysia({ prefix: "/:merchantId/members" })
                     firstInteractionAt: m.firstInteractionAt.toISOString(),
                     lastInteractionAt: m.lastInteractionAt.toISOString(),
                 })),
-                pagination: { total, offset, limit },
             };
         },
         {
             params: t.Object({ merchantId: t.String() }),
-            query: t.Composite([
-                t.Object({
-                    limit: t.Optional(t.Number({ minimum: 1, maximum: 100 })),
-                    offset: t.Optional(t.Number({ minimum: 0 })),
-                }),
-                MemberFilterSchema,
-            ]),
+            query: MemberFilterSchema,
             response: {
                 200: t.Object({
                     members: t.Array(MemberSummarySchema),
-                    pagination: t.Object({
-                        total: t.Number(),
-                        offset: t.Number(),
-                        limit: t.Number(),
-                    }),
+                    // No pagination for MVP (KISS)
                 }),
                 401: t.String(),
                 403: t.String(),
@@ -1339,7 +1181,7 @@ export const memberRoutes = new Elysia({ prefix: "/:merchantId/members" })
         totalRewards: string;       // BigInt as string
         hasWallet: boolean;
     }>;
-    pagination: { total: number; offset: number; limit: number };
+    // No pagination for MVP (KISS) - add later if needed
 }
 
 // GET /business/merchant/:merchantId/members/count
@@ -1350,74 +1192,23 @@ export const memberRoutes = new Elysia({ prefix: "/:merchantId/members" })
 }
 ```
 
-#### Known Issues & Considerations
+#### Implementation Notes
 
-1. **Performance**: Multiple queries for wallet/reward enrichment. Consider:
-   - Using a single CTE/subquery approach
-   - Adding indexes on `(merchantId, identityGroupId)` for interaction_logs
-   - Caching count results
+1. **No Pagination (KISS)**: For MVP, we return all members without pagination. This simplifies implementation and is sufficient for initial use cases.
 
-2. **Privacy**: Wallet addresses are exposed. Consider:
-   - Adding permission check for wallet visibility
-   - Masking addresses (show first/last chars only)
+2. **Privacy**: Wallet addresses are exposed. Consider masking addresses (show first/last chars only) if privacy becomes a concern.
 
-3. **Pagination after filtering**: Current `hasWallet` filter happens in-memory after DB fetch. For large datasets, push to DB:
-   ```sql
-   SELECT DISTINCT il.identity_group_id
-   FROM interaction_logs il
-   LEFT JOIN identity_nodes n ON n.group_id = il.identity_group_id AND n.identity_type = 'wallet'
-   WHERE il.merchant_id = ? AND n.id IS [NOT] NULL
-   ```
+3. **Performance**: For large datasets, consider adding indexes on `(merchantId, identityGroupId)` for interaction_logs and caching count results.
 
 ---
 
-### 2.3 Attached Campaigns
+### ~~2.3 Attached Campaigns~~ (REMOVED)
 
-**Route**: `GET /business/merchant/:merchantId/products/:productId/campaigns`
-
-> **Note**: In the current data model, merchants have a single `productId` (blockchain product). This endpoint may be for future multi-product support or for filtering campaigns by product association.
-
-#### Files to Modify
-
-1. **`services/backend/src/api/business/routes/merchant/campaigns.ts`** (modify)
-   - Add route for product-specific campaigns
-   - Filter by product association (if campaigns support this)
-
-#### Current Limitation
-
-The current `campaign_rules` table doesn't have a `productId` field - campaigns belong to merchants, not products. Options:
-
-**Option A**: Add `productId` to campaigns (requires migration)
-```sql
-ALTER TABLE campaign_rules ADD COLUMN product_id UUID;
-```
-
-**Option B**: Use merchant's single productId as filter
-```typescript
-// campaigns.ts - add route
-.get(
-    "/:merchantId/products/:productId/campaigns",
-    async ({ params, businessSession }) => {
-        // Verify productId matches merchant
-        const merchant = await MerchantContext.repositories.merchants.findById(params.merchantId);
-        if (!merchant || merchant.productId !== params.productId) {
-            return status(404, "Product not found");
-        }
-
-        // Return all campaigns for this merchant (since 1:1 with product)
-        return CampaignContext.services.management.getByMerchant(params.merchantId);
-    }
-)
-```
-
-**Option C**: Defer until multi-product support is needed
-
-#### Recommendation
-
-Defer Phase 2.3 implementation until product-campaign relationship is clarified. Current priority should be:
-1. Campaign Stats (2.1) ✅ documented
-2. Member Management (2.2) ✅ documented
-3. Attached Campaigns (2.3) - needs product model clarification
+> **Removed**: This section was deleted. The existing `GET /business/merchant/:merchantId/campaigns` endpoint with `status` filter already covers this use case:
+> - `status=active` → "attached" campaigns
+> - `status=draft|paused|archived` → other states
+>
+> No separate "attached campaigns" endpoint needed.
 
 ---
 
@@ -1450,13 +1241,221 @@ curl -X GET "http://localhost:3000/business/merchant/{id}/members/count?hasWalle
 #### Validation criteria
 - [ ] Campaign stats return correct aggregations from interaction_logs/asset_logs
 - [ ] Date range filtering works for stats
-- [ ] Member list pagination works correctly
+- [ ] Member list returns all members (no pagination for MVP)
 - [ ] Member count matches distinct identity groups
 - [ ] hasWallet filter correctly identifies wallet-linked users
 - [ ] Authorization checks pass/fail appropriately
 - [ ] Response schemas match Eden Treaty types
 - [ ] New endpoints avoid ad-hoc DI (repositories/services wired via domain `context.ts`)
 - [ ] Basic performance sanity: p95 latency stays within target thresholds for expected dataset sizes (add caching/indexes if not)
+
+---
+
+## Phase 2.5: Campaign Bank Auto-Creation
+
+### Overview
+
+When a merchant registers their product, the backend automatically creates a campaign bank for them. This simplifies onboarding and ensures merchants can start creating campaigns immediately.
+
+### Flow
+
+```
+Merchant Registration Flow:
+1. Merchant calls POST /business/register with SIWE auth
+2. Backend validates DNS + SIWE signature
+3. Backend creates merchant record with merchantId
+4. Backend deploys CampaignBank contract (if not existing)
+   - Authorizes: merchant wallet, all admins, backend rewarder key
+5. Backend stores bankAddress in merchant record
+6. Returns { merchantId, bankAddress }
+```
+
+### Implementation
+
+#### Modify Registration Service
+
+```typescript
+// services/backend/src/domain/merchant/services/MerchantRegistrationService.ts
+
+type RegistrationResult =
+    | { success: true; merchantId: string; bankAddress: Address }
+    | { success: false; error: string };
+
+async register(params: { ... }): Promise<RegistrationResult> {
+    // ... existing validation ...
+
+    // Create merchant record first
+    const merchant = await this.merchantRepository.create({
+        domain: normalizedDomain,
+        name: params.name,
+        ownerWallet: wallet,
+        productId: this.computeProductId(normalizedDomain),
+        verifiedAt: new Date(),
+    });
+
+    // Deploy campaign bank (async, non-blocking for response)
+    const bankAddress = await this.campaignBankService.getOrCreateBank({
+        merchantId: merchant.id,
+        ownerWallet: wallet,
+    });
+
+    // Update merchant with bank address
+    await this.merchantRepository.update(merchant.id, { bankAddress });
+
+    return { success: true, merchantId: merchant.id, bankAddress };
+}
+```
+
+#### New CampaignBankService
+
+```typescript
+// services/backend/src/domain/campaign/services/CampaignBankService.ts
+
+export class CampaignBankService {
+    constructor(
+        private readonly merchantRepository: MerchantRepository,
+        private readonly adminWalletsRepository: AdminWalletsRepository,
+    ) {}
+
+    async getOrCreateBank(params: {
+        merchantId: string;
+        ownerWallet: Address;
+    }): Promise<Address> {
+        const merchant = await this.merchantRepository.findById(params.merchantId);
+        
+        // Return existing bank if already created
+        if (merchant?.bankAddress) {
+            return merchant.bankAddress;
+        }
+
+        // Deploy new campaign bank via factory
+        const productId = merchant!.productId;
+        const bankAddress = await this.deployBank(productId);
+
+        // Authorize wallets on the bank
+        await this.authorizeWallets(bankAddress, {
+            merchantWallet: params.ownerWallet,
+            merchantId: params.merchantId,
+        });
+
+        return bankAddress;
+    }
+
+    private async deployBank(productId: Hex): Promise<Address> {
+        const rewarderKey = this.adminWalletsRepository.getRewarderAccount();
+        
+        // Call CampaignBankFactory.createCampaignBank(productId, tokenAddress)
+        // Use default token (USDC/pFRK) for MVP
+        const { result: bankAddress } = await simulateContract(viemClient, {
+            account: rewarderKey,
+            address: addresses.campaignBankFactory,
+            abi: campaignBankFactoryAbi,
+            functionName: "createCampaignBank",
+            args: [productId, defaultTokenAddress],
+        });
+
+        // Execute transaction
+        const txHash = await rewarderKey.sendTransaction({ ... });
+        await waitForTransactionReceipt(viemClient, { hash: txHash });
+
+        return bankAddress;
+    }
+
+    private async authorizeWallets(
+        bankAddress: Address,
+        params: { merchantWallet: Address; merchantId: string }
+    ) {
+        const rewarderKey = this.adminWalletsRepository.getRewarderAccount();
+
+        // Get merchant admins
+        const admins = await this.merchantRepository.getAdmins(params.merchantId);
+        
+        // Build authorization transactions
+        const walletsToAuthorize = [
+            params.merchantWallet,
+            ...admins.map((a) => a.wallet),
+            rewarderKey.address, // Backend key for settlements
+        ];
+
+        // Batch authorize all wallets
+        for (const wallet of walletsToAuthorize) {
+            await rewarderKey.sendTransaction({
+                to: bankAddress,
+                data: encodeFunctionData({
+                    abi: campaignBankAbi,
+                    functionName: "updateDistributorAuthorisation",
+                    args: [wallet, true],
+                }),
+            });
+        }
+    }
+}
+```
+
+#### Update Registration Response
+
+```typescript
+// services/backend/src/api/business/routes/merchant/registration.ts
+
+.post(
+    "",
+    async ({ body, request }) => {
+        // ... existing code ...
+
+        if (!result.success) {
+            return status(400, result.error);
+        }
+
+        return { 
+            merchantId: result.merchantId,
+            bankAddress: result.bankAddress, // NEW: Return bank address
+        };
+    },
+    {
+        // ... existing body schema ...
+        response: {
+            200: t.Object({
+                merchantId: t.String(),
+                bankAddress: t.Address(), // NEW
+            }),
+            400: t.String(),
+        },
+    }
+)
+```
+
+### Authorization Model
+
+| Wallet | Role | Permissions |
+|--------|------|-------------|
+| Merchant owner | Full control | Deploy campaigns, manage admins, withdraw funds |
+| Merchant admins | Delegated | Deploy campaigns, view stats |
+| Backend rewarder key | Settlement | Push rewards to bank (via SettlementService) |
+
+### Files to Create/Modify
+
+1. **`services/backend/src/domain/campaign/services/CampaignBankService.ts`** (new)
+   - `getOrCreateBank()` - Deploy or return existing bank
+   - `authorizeWallets()` - Manage bank permissions
+
+2. **`services/backend/src/domain/merchant/services/MerchantRegistrationService.ts`** (modify)
+   - Inject `CampaignBankService`
+   - Call `getOrCreateBank()` during registration
+   - Return `bankAddress` in response
+
+3. **`services/backend/src/api/business/routes/merchant/registration.ts`** (modify)
+   - Update response schema to include `bankAddress`
+
+4. **`services/backend/src/domain/campaign/context.ts`** (modify)
+   - Wire `CampaignBankService` singleton
+
+### Notes
+
+- Bank deployment uses backend rewarder key (derived from master private key)
+- Default token (USDC/pFRK) used for MVP; multi-token support later
+- Bank authorization is synchronous during registration (blocking)
+- If bank deployment fails, registration still succeeds but without `bankAddress`
+  - Retry mechanism can be added later
 
 ---
 
