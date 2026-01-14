@@ -44,4 +44,4 @@ export const authenticatedBackendApi = treaty<App>(backendUrl, {
     },
 });
 
-export const authenticatedWalletApi = authenticatedBackendApi.wallet;
+export const authenticatedWalletApi = authenticatedBackendApi.user.wallet;

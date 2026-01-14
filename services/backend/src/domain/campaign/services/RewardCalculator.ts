@@ -121,7 +121,7 @@ function distributeChainedRewards(params: {
     refereeWallet: Address | null;
     referralChain: ReferralChainMember[];
     campaignRuleId: string;
-    rewardType: "token" | "discount" | "points";
+    rewardType: "token";
     description?: string;
     expirationDays?: number;
 }): CalculatedReward[] {

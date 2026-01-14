@@ -55,4 +55,3 @@ export type App = typeof app;
 export type BusinessApp = typeof businessApi;
 export type UserApp = typeof userApi;
 export type CommonApp = typeof commonApi;
-export type MerchantApp = typeof merchantApi;
