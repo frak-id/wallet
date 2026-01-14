@@ -6,6 +6,7 @@ import { businessApi } from "./api/business";
 import { commonApi } from "./api/common";
 import { wellKnownRoutes } from "./api/common/wellKnown";
 import { externalApi } from "./api/external";
+import { merchantApi } from "./api/merchant";
 import { userApi } from "./api/user";
 import { jobs } from "./jobs";
 import { legacyRouteMapper } from "./legacyRoutes";
@@ -36,6 +37,7 @@ const app = new Elysia({
     }))
     .use(wellKnownRoutes)
     .use(commonApi)
+    .use(merchantApi)
     .use(businessApi)
     .use(userApi)
     .use(externalApi)
@@ -55,3 +57,4 @@ export type App = typeof app;
 export type BusinessApp = typeof businessApi;
 export type UserApp = typeof userApi;
 export type CommonApp = typeof commonApi;
+export type MerchantApp = typeof merchantApi;
