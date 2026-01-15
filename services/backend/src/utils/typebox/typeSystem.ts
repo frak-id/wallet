@@ -51,13 +51,22 @@ const TokenAmountType = elysiaTypes.Object({
 
 type TokenAmount = Static<typeof TokenAmountType>;
 
+const ErrorResponseType = elysiaTypes.Object({
+    success: elysiaTypes.Literal(false),
+    error: elysiaTypes.String(),
+    code: elysiaTypes.String(),
+});
+
+type ErrorResponse = Static<typeof ErrorResponseType>;
+
 const t = Object.assign(elysiaTypes, {
     Address: FrakType.AddressType,
     Hex: FrakType.HexType,
     TokenAmount: TokenAmountType,
+    ErrorResponse: ErrorResponseType,
 });
 
 /**
  * Export our new type system
  */
-export { t, type TokenAmount };
+export { t, type TokenAmount, type ErrorResponse };

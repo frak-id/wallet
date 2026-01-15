@@ -55,6 +55,10 @@ export const JwtContextMock = {
         sign: vi.fn(() => Promise.resolve("mock-mobile-auth-code")),
         verify: vi.fn(() => Promise.resolve(null)),
     },
+    anonymousMerge: {
+        sign: vi.fn(() => Promise.resolve("mock-anonymous-merge-token")),
+        verify: vi.fn(() => Promise.resolve(null)),
+    },
 };
 
 /**

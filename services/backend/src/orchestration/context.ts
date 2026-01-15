@@ -6,6 +6,7 @@ import { PurchasesContext } from "../domain/purchases/context";
 import { RewardsContext } from "../domain/rewards/context";
 import { BatchRewardOrchestrator } from "./BatchRewardOrchestrator";
 import {
+    AnonymousMergeOrchestrator,
     IdentityMergeService,
     IdentityOrchestrator,
     IdentityWeightService,
@@ -73,8 +74,16 @@ const rewardExpirationOrchestrator = new RewardExpirationOrchestrator(
     CampaignContext.repositories.campaignRule
 );
 
+const anonymousMergeOrchestrator = new AnonymousMergeOrchestrator(
+    IdentityContext.services.anonymousMerge,
+    IdentityContext.repositories.identity,
+    identityWeightService,
+    identityMergeService
+);
+
 export namespace OrchestrationContext {
     export const orchestrators = {
+        anonymousMerge: anonymousMergeOrchestrator,
         batchReward: batchRewardOrchestrator,
         identity: identityOrchestrator,
         purchaseLinking: purchaseLinkingOrchestrator,
