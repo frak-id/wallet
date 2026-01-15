@@ -146,6 +146,38 @@ Build order: `rpc → core → legacy → react → components`
 - **Stages**: dev, prod, gcp-staging, gcp-production
 - **Docker**: Multi-stage with SDK pre-building optimization
 
+## Custom Agents
+
+Purpose-based agents in `.opencode/agent/`:
+
+### Orchestrator
+
+| Agent | Purpose | Activation |
+|-------|---------|------------|
+| `frak-builder` | Plans, delegates, executes complex tasks | Include `frakwork` or `fw` in prompt |
+
+**FrakBuilder** auto-delegates to specialists, runs parallel tasks, and enforces todo completion (Sisyphus mode).
+
+### Specialists
+
+| Agent | Purpose | When to Use |
+|-------|---------|-------------|
+| `explore` | Fast codebase search | Finding files, patterns, quick navigation |
+| `architect` | Strategic thinking | Complex bugs, design decisions, code review |
+| `librarian` | Knowledge research | Documentation, implementation examples |
+| `frontend-builder` | UI/UX implementation | Components, styling, accessibility |
+| `backend-builder` | API & data work | Endpoints, schemas, business logic |
+| `infra-ops` | Infrastructure | Deployment, config, CI/CD |
+
+**Domain-specific context** in `AGENTS.md` files per directory:
+- `services/backend/AGENTS.md` - Backend patterns
+- `apps/wallet/AGENTS.md` - Wallet app patterns
+- `apps/business/AGENTS.md` - Business dashboard patterns
+- `apps/listener/AGENTS.md` - Listener patterns
+- `sdk/AGENTS.md` - SDK architecture
+- `packages/AGENTS.md` - Shared packages
+- `infra/AGENTS.md` - Infrastructure patterns
+
 ## Notes
 
 - Service worker required before wallet dev/build: `bun run build:sw`
