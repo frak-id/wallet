@@ -74,6 +74,11 @@ export type {
     SiweAuthenticationParams,
     SsoMetadata,
     TokenAmountType,
+    // Tracking
+    TrackArrivalInternalParams,
+    TrackArrivalParams,
+    TrackArrivalResult,
+    UtmParams,
     // Rpc
     WalletStatusReturnType,
 } from "./types";
@@ -85,20 +90,26 @@ export {
     base64urlEncode,
     baseIframeProps,
     type CompressedSsoData,
+    clearClientId,
+    clearMerchantIdCache,
     compressJsonToB64,
     createIframe,
     DEEP_LINK_SCHEME,
     decompressJsonFromB64,
+    extractUtmParams,
     FrakContextManager,
     type FrakEvent,
     type FullSsoParams,
+    fetchMerchantId,
     findIframeInOpener,
     formatAmount,
     generateSsoUrl,
     getBackendUrl,
+    getClientId,
     getCurrencyAmountKey,
     getSupportedCurrency,
     getSupportedLocale,
+    resolveMerchantId,
     trackEvent,
 } from "./utils";
 export { computeProductId } from "./utils/computeProductId";

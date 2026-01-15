@@ -66,6 +66,7 @@ export type ReactSdkTestFixtures = {
         siweAuthenticate: ReturnType<typeof import("vitest").vi.fn>;
         processReferral: ReturnType<typeof import("vitest").vi.fn>;
         referralInteraction: ReturnType<typeof import("vitest").vi.fn>;
+        trackArrival: ReturnType<typeof import("vitest").vi.fn>;
     };
 };
 
@@ -189,6 +190,7 @@ export const test = baseTest.extend<ReactSdkTestFixtures>({
             siweAuthenticate: vi.fn(),
             processReferral: vi.fn(),
             referralInteraction: vi.fn(),
+            trackArrival: vi.fn(),
         };
 
         await use(actions);

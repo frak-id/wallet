@@ -7,4 +7,5 @@ export { useOpenSso } from "./useOpenSso";
 export { usePrepareSso } from "./usePrepareSso";
 export { useSendTransactionAction } from "./useSendTransaction";
 export { useSiweAuthenticate } from "./useSiweAuthenticate";
+export { useTrackArrival } from "./useTrackArrival";
 export { useWalletStatus } from "./useWalletStatus";

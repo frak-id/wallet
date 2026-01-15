@@ -29,6 +29,12 @@ export type FrakWalletSdkConfig = {
          */
         name: string;
         /**
+         * Your merchant ID from the Frak dashboard (UUID format)
+         * Used for referral tracking and analytics
+         * If not provided, will be auto-fetched from the backend using your domain
+         */
+        merchantId?: string;
+        /**
          * Language to display in the modal
          * If undefined, will default to the browser language
          */

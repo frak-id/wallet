@@ -62,4 +62,11 @@ export type {
     SsoMetadata,
 } from "./rpc/sso";
 export type { WalletStatusReturnType } from "./rpc/walletStatus";
+// Tracking
+export type {
+    TrackArrivalInternalParams,
+    TrackArrivalParams,
+    TrackArrivalResult,
+    UtmParams,
+} from "./tracking";
 export type { FrakLifecycleEvent, IFrameTransport } from "./transport";

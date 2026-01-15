@@ -18,6 +18,7 @@ import { processReferral } from "./processReferral";
 // Mock dependencies
 vi.mock("../index", () => ({
     displayEmbeddedWallet: vi.fn(),
+    trackArrival: vi.fn().mockResolvedValue({ success: true }),
 }));
 
 vi.mock("../../utils", () => ({
@@ -25,6 +26,7 @@ vi.mock("../../utils", () => ({
         replaceUrl: vi.fn(),
     },
     trackEvent: vi.fn(),
+    resolveMerchantId: vi.fn().mockResolvedValue(undefined), // No merchantId = no arrival tracking
 }));
 
 describe("processReferral", () => {

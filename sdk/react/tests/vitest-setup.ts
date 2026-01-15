@@ -62,6 +62,9 @@ vi.mock("@frak-labs/core-sdk", async () => {
         processReferral: vi.fn(),
         referralInteraction: vi.fn(),
 
+        // Arrival tracking
+        trackArrival: vi.fn(),
+
         // Client creation (keep original implementation)
         createIFrameFrakClient: actual.createIFrameFrakClient,
         setupClient: actual.setupClient,

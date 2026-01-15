@@ -9,6 +9,8 @@ export {
 } from "./referral/processReferral";
 // Referral interaction
 export { referralInteraction } from "./referral/referralInteraction";
+// Arrival tracking for referral attribution
+export { trackArrival } from "./trackArrival";
 // Helper to track the purchase status
 export { trackPurchaseStatus } from "./trackPurchaseStatus";
 export { watchWalletStatus } from "./watchWalletStatus";
