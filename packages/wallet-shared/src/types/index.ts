@@ -1,7 +1,6 @@
 // Types
 export type { BalanceItem } from "./Balance";
 export type { HistoryGroup } from "./HistoryGroup";
-export type { PendingInteraction } from "./Interaction";
 export type { InteractionHistory } from "./InteractionHistory";
 // i18n types are ambient declarations (i18n.d.ts, resources.d.ts)
 // and are automatically included by TypeScript

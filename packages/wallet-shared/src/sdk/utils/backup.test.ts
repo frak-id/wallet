@@ -1,6 +1,5 @@
 import type { Address, Hex } from "viem";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { PendingInteraction } from "../../types/Interaction";
 import type { SdkSession, Session } from "../../types/Session";
 import { pushBackupData, restoreBackupData } from "./backup";
 
@@ -22,18 +21,6 @@ vi.mock("../../stores/sessionStore", async () => {
     return {
         ...actual,
         sessionStore: {
-            getState: vi.fn(),
-        },
-    };
-});
-
-vi.mock("../../stores/walletStore", async () => {
-    const actual = await vi.importActual<
-        typeof import("../../stores/walletStore")
-    >("../../stores/walletStore");
-    return {
-        ...actual,
-        walletStore: {
             getState: vi.fn(),
         },
     };
@@ -152,64 +139,6 @@ describe("backup utilities", () => {
             });
 
             expect(mockSetSdkSession).toHaveBeenCalledWith(mockSdkSession);
-        });
-
-        it("should restore pending interactions from valid backup", async () => {
-            const { base64urlDecode } = await import("@frak-labs/core-sdk");
-            const { decompressDataAndCheckHash } = await import(
-                "@frak-labs/frame-connector"
-            );
-            const { sessionStore } = await import("../../stores/sessionStore");
-            const { walletStore } = await import("../../stores/walletStore");
-
-            const mockAddPendingInteractions = vi.fn();
-            vi.mocked(sessionStore.getState).mockReturnValue({
-                session: null,
-                sdkSession: null,
-                demoPrivateKey: null,
-                setSession: vi.fn(),
-                setSdkSession: vi.fn(),
-                setDemoPrivateKey: vi.fn(),
-                clearSession: vi.fn(),
-            });
-            vi.mocked(walletStore.getState).mockReturnValue({
-                pendingInteractions: { interactions: [] },
-
-                addPendingInteraction: vi.fn(),
-                addPendingInteractions: mockAddPendingInteractions,
-                cleanPendingInteractions: vi.fn(),
-
-                clearWallet: vi.fn(),
-            });
-
-            const mockPendingInteractions: PendingInteraction[] = [
-                {
-                    productId: mockProductId,
-                    interaction: { type: "test" },
-                } as unknown as PendingInteraction,
-            ];
-
-            const mockBackupData = {
-                productId: mockProductId,
-                pendingInteractions: mockPendingInteractions,
-                expireAtTimestamp: Date.now() + 86400000,
-            };
-
-            vi.mocked(base64urlDecode).mockReturnValue(
-                "decompressed-data" as never
-            );
-            vi.mocked(decompressDataAndCheckHash).mockReturnValue(
-                mockBackupData as never
-            );
-
-            await restoreBackupData({
-                backup: "backup-string",
-                productId: mockProductId,
-            });
-
-            expect(mockAddPendingInteractions).toHaveBeenCalledWith(
-                mockPendingInteractions
-            );
         });
 
         it("should not restore data if productId does not match", async () => {
@@ -365,7 +294,6 @@ describe("backup utilities", () => {
             );
             const { base64urlEncode } = await import("@frak-labs/core-sdk");
             const { sessionStore } = await import("../../stores/sessionStore");
-            const { walletStore } = await import("../../stores/walletStore");
             const { emitLifecycleEvent } = await import("./lifecycleEvents");
 
             vi.mocked(sessionStore.getState).mockReturnValue({
@@ -376,15 +304,6 @@ describe("backup utilities", () => {
                 setSdkSession: vi.fn(),
                 setDemoPrivateKey: vi.fn(),
                 clearSession: vi.fn(),
-            });
-            vi.mocked(walletStore.getState).mockReturnValue({
-                pendingInteractions: { interactions: [] },
-
-                addPendingInteraction: vi.fn(),
-                addPendingInteractions: vi.fn(),
-                cleanPendingInteractions: vi.fn(),
-
-                clearWallet: vi.fn(),
             });
 
             vi.mocked(hashAndCompressData).mockReturnValue(
@@ -412,7 +331,6 @@ describe("backup utilities", () => {
                 "@frak-labs/frame-connector"
             );
             const { sessionStore } = await import("../../stores/sessionStore");
-            const { walletStore } = await import("../../stores/walletStore");
 
             vi.mocked(sessionStore.getState).mockReturnValue({
                 session: null,
@@ -422,15 +340,6 @@ describe("backup utilities", () => {
                 setSdkSession: vi.fn(),
                 setDemoPrivateKey: vi.fn(),
                 clearSession: vi.fn(),
-            });
-            vi.mocked(walletStore.getState).mockReturnValue({
-                pendingInteractions: { interactions: [] },
-
-                addPendingInteraction: vi.fn(),
-                addPendingInteractions: vi.fn(),
-                cleanPendingInteractions: vi.fn(),
-
-                clearWallet: vi.fn(),
             });
 
             vi.mocked(hashAndCompressData).mockReturnValue(
@@ -446,55 +355,8 @@ describe("backup utilities", () => {
             );
         });
 
-        it("should push backup data with pending interactions", async () => {
-            const { hashAndCompressData } = await import(
-                "@frak-labs/frame-connector"
-            );
-            const { sessionStore } = await import("../../stores/sessionStore");
-            const { walletStore } = await import("../../stores/walletStore");
-
-            const mockPendingInteractions: PendingInteraction[] = [
-                {
-                    productId: mockProductId,
-                    interaction: { type: "test" },
-                } as unknown as PendingInteraction,
-            ];
-
-            vi.mocked(sessionStore.getState).mockReturnValue({
-                session: null,
-                sdkSession: null,
-                demoPrivateKey: null,
-                setSession: vi.fn(),
-                setSdkSession: vi.fn(),
-                setDemoPrivateKey: vi.fn(),
-                clearSession: vi.fn(),
-            });
-            vi.mocked(walletStore.getState).mockReturnValue({
-                pendingInteractions: { interactions: mockPendingInteractions },
-
-                addPendingInteraction: vi.fn(),
-                addPendingInteractions: vi.fn(),
-                cleanPendingInteractions: vi.fn(),
-
-                clearWallet: vi.fn(),
-            });
-
-            vi.mocked(hashAndCompressData).mockReturnValue(
-                "compressed-data" as never
-            );
-
-            await pushBackupData({ productId: mockProductId });
-
-            expect(hashAndCompressData).toHaveBeenCalledWith(
-                expect.objectContaining({
-                    pendingInteractions: mockPendingInteractions,
-                })
-            );
-        });
-
         it("should emit remove-backup when no data to back up", async () => {
             const { sessionStore } = await import("../../stores/sessionStore");
-            const { walletStore } = await import("../../stores/walletStore");
             const { emitLifecycleEvent } = await import("./lifecycleEvents");
 
             vi.mocked(sessionStore.getState).mockReturnValue({
@@ -506,15 +368,6 @@ describe("backup utilities", () => {
                 setDemoPrivateKey: vi.fn(),
                 clearSession: vi.fn(),
             });
-            vi.mocked(walletStore.getState).mockReturnValue({
-                pendingInteractions: { interactions: [] },
-
-                addPendingInteraction: vi.fn(),
-                addPendingInteractions: vi.fn(),
-                cleanPendingInteractions: vi.fn(),
-
-                clearWallet: vi.fn(),
-            });
 
             await pushBackupData({ productId: mockProductId });
 
@@ -525,7 +378,6 @@ describe("backup utilities", () => {
 
         it("should not backup session without token", async () => {
             const { sessionStore } = await import("../../stores/sessionStore");
-            const { walletStore } = await import("../../stores/walletStore");
             const { emitLifecycleEvent } = await import("./lifecycleEvents");
 
             const sessionWithoutToken = {
@@ -541,15 +393,6 @@ describe("backup utilities", () => {
                 setSdkSession: vi.fn(),
                 setDemoPrivateKey: vi.fn(),
                 clearSession: vi.fn(),
-            });
-            vi.mocked(walletStore.getState).mockReturnValue({
-                pendingInteractions: { interactions: [] },
-
-                addPendingInteraction: vi.fn(),
-                addPendingInteractions: vi.fn(),
-                cleanPendingInteractions: vi.fn(),
-
-                clearWallet: vi.fn(),
             });
 
             await pushBackupData({ productId: mockProductId });
@@ -576,7 +419,6 @@ describe("backup utilities", () => {
                 "@frak-labs/frame-connector"
             );
             const { sessionStore } = await import("../../stores/sessionStore");
-            const { walletStore } = await import("../../stores/walletStore");
 
             vi.mocked(sessionStore.getState).mockReturnValue({
                 session: mockSession,
@@ -586,15 +428,6 @@ describe("backup utilities", () => {
                 setSdkSession: vi.fn(),
                 setDemoPrivateKey: vi.fn(),
                 clearSession: vi.fn(),
-            });
-            vi.mocked(walletStore.getState).mockReturnValue({
-                pendingInteractions: { interactions: [] },
-
-                addPendingInteraction: vi.fn(),
-                addPendingInteractions: vi.fn(),
-                cleanPendingInteractions: vi.fn(),
-
-                clearWallet: vi.fn(),
             });
 
             vi.mocked(hashAndCompressData).mockReturnValue(

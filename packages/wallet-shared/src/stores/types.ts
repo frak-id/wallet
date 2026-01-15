@@ -6,7 +6,6 @@ import type { SsoMetadata } from "@frak-labs/core-sdk";
 import type { Signature } from "ox";
 import type { SignMetadata } from "ox/WebAuthnP256";
 import type { Address, Hex } from "viem";
-import type { PendingInteraction } from "../types/Interaction";
 import type { SdkSession, Session } from "../types/Session";
 import type { User } from "../types/User";
 
@@ -86,22 +85,4 @@ export type AuthenticationStore = {
     setLastWebAuthNAction: (action: LastWebAuthNAction | null) => void;
     setSsoContext: (context: SsoContext | null) => void;
     clearAuthentication: () => void;
-};
-
-/**
- * Wallet Store Types
- */
-export type PendingInteractionsStorage = {
-    interactions: PendingInteraction[];
-};
-
-export type WalletStore = {
-    // State
-    pendingInteractions: PendingInteractionsStorage;
-
-    // Actions
-    addPendingInteraction: (interaction: PendingInteraction) => void;
-    addPendingInteractions: (interactions: PendingInteraction[]) => void;
-    cleanPendingInteractions: () => void;
-    clearWallet: () => void;
 };

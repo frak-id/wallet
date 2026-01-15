@@ -21,7 +21,6 @@ export * from "./sdk";
 export * from "./stores/authenticationStore";
 export * from "./stores/sessionStore";
 export * from "./stores/userStore";
-export * from "./stores/walletStore";
 // Tokens
 export * from "./tokens";
 // Types

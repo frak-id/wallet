@@ -1,13 +1,8 @@
 // Actions
 export { getRegisterOptions } from "./action/registerOptions";
 
-// Hooks
-export { useConsumePendingInteractions } from "./hook/useConsumePendingInteractions";
-export { usePushInteraction } from "./hook/usePushInteraction";
-
 // Query Keys
 export { claimableKey } from "./queryKeys/claimable";
-export { interactionsKey } from "./queryKeys/interactions";
 
 // Smart Wallet
 export type { BaseFrakSmartAccount } from "./smartWallet/baseFrakWallet";

@@ -6,7 +6,6 @@ import {
 } from "@frak-labs/frame-connector";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
-import { estimatedInteractionRewardQuery } from "@/module/hooks/useEstimatedInteractionReward";
 import { getProductMetadataQuery } from "@/module/hooks/useGetProductMetadata";
 import type { WalletRpcContext } from "@/module/types/context";
 
@@ -29,12 +28,9 @@ export function useOnGetProductInformation(): OnGetProductInformation {
             // ProductId is available directly from context (augmented by middleware)
             const { productId } = context;
 
-            const [estimatedReward, productMetadata] = await Promise.all([
-                queryClient.fetchQuery(
-                    estimatedInteractionRewardQuery({ productId })
-                ),
-                queryClient.fetchQuery(getProductMetadataQuery({ productId })),
-            ]);
+            const productMetadata = await queryClient.fetchQuery(
+                getProductMetadataQuery({ productId })
+            );
 
             if (!(productId && productMetadata)) {
                 throw new FrakRpcError(
@@ -45,9 +41,9 @@ export function useOnGetProductInformation(): OnGetProductInformation {
 
             return {
                 id: productId,
-                maxReferrer: estimatedReward?.maxReferrer,
-                maxReferee: estimatedReward?.maxReferee,
-                rewards: estimatedReward?.rewards ?? [],
+                maxReferrer: undefined,
+                maxReferee: undefined,
+                rewards: [],
                 onChainMetadata: productMetadata,
             };
         },

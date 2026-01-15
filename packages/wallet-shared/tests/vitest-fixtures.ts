@@ -57,7 +57,6 @@ export type BaseTestFixtures = {
      * Fresh Zustand stores that auto-reset before/after each test
      */
     freshSessionStore: typeof import("@frak-labs/wallet-shared").sessionStore;
-    freshWalletStore: typeof import("@frak-labs/wallet-shared").walletStore;
     freshUserStore: typeof import("@frak-labs/wallet-shared").userStore;
     freshAuthenticationStore: typeof import("@frak-labs/wallet-shared").authenticationStore;
 
@@ -78,10 +77,6 @@ export type BaseTestFixtures = {
         user: {
             setUser: ReturnType<typeof import("vitest").vi.fn>;
             clearUser: ReturnType<typeof import("vitest").vi.fn>;
-        };
-        wallet: {
-            addPendingInteraction: ReturnType<typeof import("vitest").vi.fn>;
-            cleanPendingInteractions: ReturnType<typeof import("vitest").vi.fn>;
         };
     };
 
@@ -106,9 +101,6 @@ export type BaseTestFixtures = {
             login: {
                 post: ReturnType<typeof import("vitest").vi.fn>;
             };
-        };
-        interactions: {
-            push: ReturnType<typeof import("vitest").vi.fn>;
         };
     };
 
@@ -241,17 +233,6 @@ export const test = baseTest.extend<BaseTestFixtures>({
     },
 
     /**
-     * Provides fresh walletStore that auto-resets after each test
-     * Note: Only resets after use to avoid redundant overhead
-     */
-    // biome-ignore lint/correctness/noEmptyPattern: Vitest requires object destructuring
-    freshWalletStore: async ({}, use) => {
-        const { walletStore } = await import("@frak-labs/wallet-shared");
-        await use(walletStore);
-        walletStore.getState().cleanPendingInteractions();
-    },
-
-    /**
      * Provides fresh userStore that auto-resets after each test
      * Note: Only resets after use to avoid redundant overhead
      */
@@ -295,10 +276,6 @@ export const test = baseTest.extend<BaseTestFixtures>({
             user: {
                 setUser: vi.fn(),
                 clearUser: vi.fn(),
-            },
-            wallet: {
-                addPendingInteraction: vi.fn(),
-                cleanPendingInteractions: vi.fn(),
             },
         };
         await use(actions);
@@ -365,12 +342,6 @@ export const test = baseTest.extend<BaseTestFixtures>({
                         error: null,
                     }),
                 },
-            },
-            interactions: {
-                push: vi.fn().mockResolvedValue({
-                    data: [],
-                    error: null,
-                }),
             },
         };
         await use(mocks);

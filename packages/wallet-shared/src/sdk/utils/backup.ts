@@ -5,8 +5,6 @@ import {
 } from "@frak-labs/frame-connector";
 import type { Hex } from "viem";
 import { sessionStore } from "../../stores/sessionStore";
-import { walletStore } from "../../stores/walletStore";
-import type { PendingInteraction } from "../../types/Interaction";
 import type { SdkSession, Session } from "../../types/Session";
 import { emitLifecycleEvent } from "./lifecycleEvents";
 
@@ -16,7 +14,6 @@ import { emitLifecycleEvent } from "./lifecycleEvents";
 type BackupData = {
     productId: Hex;
     session?: Session;
-    pendingInteractions?: PendingInteraction[];
     sdkSession?: SdkSession;
     expireAtTimestamp: number;
 };
@@ -69,9 +66,6 @@ export async function restoreBackupData({
     if (data.sdkSession) {
         sessionStore.getState().setSdkSession(data.sdkSession);
     }
-    if (data.pendingInteractions) {
-        walletStore.getState().addPendingInteractions(data.pendingInteractions);
-    }
 }
 
 /**
@@ -86,17 +80,14 @@ export async function pushBackupData(args?: { productId?: Hex }) {
     }
     // Get the current backup data from stores
     const sessionState = sessionStore.getState();
-    const walletState = walletStore.getState();
 
     const session = sessionState.session;
     const sdkSession = sessionState.sdkSession;
-    const pendingInteractions = walletState.pendingInteractions.interactions;
 
     // Build backup datas
     const backup: BackupData = {
         session: session?.token ? session : undefined,
         sdkSession: sdkSession?.token ? sdkSession : undefined,
-        pendingInteractions,
         productId,
         // Backup will expire in a week
         expireAtTimestamp: Date.now() + 7 * 24 * 60 * 60_000,
@@ -104,11 +95,7 @@ export async function pushBackupData(args?: { productId?: Hex }) {
     console.log("Pushing new backup data to parent client", { backup });
 
     // If nothing to back up, just remove it
-    if (
-        !backup.session?.token &&
-        !backup.sdkSession?.token &&
-        !backup.pendingInteractions?.length
-    ) {
+    if (!backup.session?.token && !backup.sdkSession?.token) {
         emitLifecycleEvent({
             iframeLifecycle: "remove-backup",
         });
