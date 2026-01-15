@@ -1,4 +1,5 @@
 import { Elysia, status, t } from "elysia";
+import { keccak256, toHex } from "viem";
 import { MerchantContext } from "../../../domain/merchant/context";
 
 export const userMerchantApi = new Elysia({ prefix: "/merchant" }).get(
@@ -7,7 +8,8 @@ export const userMerchantApi = new Elysia({ prefix: "/merchant" }).get(
         const normalizedDomain = domain
             .toLowerCase()
             .replace(/^https?:\/\//, "")
-            .replace(/\/$/, "");
+            .replace(/\/$/, "")
+            .replace(/^www\./, "");
 
         const merchant =
             await MerchantContext.repositories.merchant.findByDomain(
@@ -18,10 +20,15 @@ export const userMerchantApi = new Elysia({ prefix: "/merchant" }).get(
             return status(404, { error: "Merchant not found" });
         }
 
+        // Compute productId from domain if not stored (legacy support)
+        const productId =
+            merchant.productId ?? keccak256(toHex(normalizedDomain));
+
         return {
-            id: merchant.id,
+            merchantId: merchant.id,
+            productId,
             name: merchant.name,
-            config: merchant.config,
+            domain: merchant.domain,
         };
     },
     {

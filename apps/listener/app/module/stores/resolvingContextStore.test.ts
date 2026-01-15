@@ -1,16 +1,42 @@
 import type { ClientLifecycleEvent } from "@frak-labs/core-sdk";
 import { vi } from "vitest"; // Keep vi from vitest for vi.mock() hoisting
 import { beforeEach, describe, expect, test } from "@/tests/fixtures";
-import { resolvingContextStore } from "./resolvingContextStore";
+import {
+    clearMerchantCache,
+    resolvingContextStore,
+} from "./resolvingContextStore";
 
-// Mock wallet-shared imports
-vi.mock("@frak-labs/wallet-shared", () => ({
-    emitLifecycleEvent: vi.fn(),
-    sessionStore: {
-        getState: vi.fn(() => ({ session: undefined })),
-    },
-    updateGlobalProperties: vi.fn(),
-}));
+// Mock wallet-shared imports with hoisted mock function
+vi.mock("@frak-labs/wallet-shared", async () => {
+    const mockResolve = vi.fn().mockResolvedValue({
+        data: {
+            merchantId: "mock-merchant-id",
+            productId:
+                "0x02438d3405cadd648e08dbff51bdbeb415913e642189100dc4a012064c870883",
+        },
+        error: null,
+    });
+
+    // Store the mock on globalThis so tests can access it
+    (globalThis as any).__mockMerchantResolve = mockResolve;
+
+    return {
+        emitLifecycleEvent: vi.fn(),
+        sessionStore: {
+            getState: vi.fn(() => ({ session: undefined })),
+        },
+        updateGlobalProperties: vi.fn(),
+        authenticatedBackendApi: {
+            user: {
+                merchant: {
+                    resolve: {
+                        get: mockResolve,
+                    },
+                },
+            },
+        },
+    };
+});
 
 // Mock FrakContextManager
 vi.mock("@frak-labs/core-sdk", () => ({
@@ -19,14 +45,44 @@ vi.mock("@frak-labs/core-sdk", () => ({
     },
 }));
 
+// Helper to get the mock function
+const getMockMerchantResolve = () =>
+    (globalThis as any).__mockMerchantResolve as ReturnType<typeof vi.fn>;
+
+/**
+ * Helper to wait for async context resolution
+ */
+async function waitForContext(timeout = 100): Promise<void> {
+    await vi.waitFor(
+        () => {
+            if (!resolvingContextStore.getState().context) {
+                throw new Error("Context not set yet");
+            }
+        },
+        { timeout }
+    );
+}
+
 describe("resolvingContextStore", () => {
-    beforeEach(() => {
+    beforeEach(async () => {
         // Reset store state
         resolvingContextStore.setState({
             context: undefined,
             handshakeTokens: new Set(),
         });
+        // Clear the merchant cache to ensure fresh lookups
+        clearMerchantCache();
         vi.clearAllMocks();
+
+        // Reset default mock for successful merchant lookup
+        getMockMerchantResolve().mockResolvedValue({
+            data: {
+                merchantId: "mock-merchant-id",
+                productId:
+                    "0x02438d3405cadd648e08dbff51bdbeb415913e642189100dc4a012064c870883",
+            },
+            error: null,
+        });
     });
 
     describe("startHandshake", () => {
@@ -161,7 +217,7 @@ describe("resolvingContextStore", () => {
             consoleSpy.mockRestore();
         });
 
-        test("should accept valid handshake response and set context", () => {
+        test("should accept valid handshake response and set context", async () => {
             const { startHandshake, handleHandshakeResponse } =
                 resolvingContextStore.getState();
 
@@ -184,6 +240,10 @@ describe("resolvingContextStore", () => {
             const result = handleHandshakeResponse(event);
 
             expect(result).toBe(true);
+
+            // Wait for async context resolution
+            await waitForContext();
+
             const context = resolvingContextStore.getState().context;
             expect(context).toBeDefined();
             expect(context?.sourceUrl).toBe("https://example.com/page");
@@ -218,7 +278,7 @@ describe("resolvingContextStore", () => {
             expect(updatedTokens.size).toBe(0);
         });
 
-        test("should compute productId from normalized domain", () => {
+        test("should fetch productId from backend", async () => {
             const { startHandshake, handleHandshakeResponse } =
                 resolvingContextStore.getState();
 
@@ -240,9 +300,13 @@ describe("resolvingContextStore", () => {
 
             handleHandshakeResponse(event);
 
+            // Wait for async context resolution
+            await waitForContext();
+
             const context = resolvingContextStore.getState().context;
             expect(context?.productId).toBeDefined();
             expect(context?.productId).toMatch(/^0x[a-f0-9]{64}$/);
+            expect(context?.merchantId).toBe("mock-merchant-id");
         });
 
         test("should update global properties on context change", async () => {
@@ -270,6 +334,9 @@ describe("resolvingContextStore", () => {
 
             handleHandshakeResponse(event);
 
+            // Wait for async context resolution
+            await waitForContext();
+
             expect(updateGlobalProperties).toHaveBeenCalledWith({
                 isIframe: true,
                 productId: expect.any(String),
@@ -285,6 +352,7 @@ describe("resolvingContextStore", () => {
 
             // Set initial context
             const initialContext = {
+                merchantId: "merchant-123",
                 productId: "0x123" as `0x${string}`,
                 origin: "https://example.com",
                 sourceUrl: "https://example.com",
@@ -324,6 +392,7 @@ describe("resolvingContextStore", () => {
             const { setContext } = resolvingContextStore.getState();
 
             const context = {
+                merchantId: "merchant-abc",
                 productId: "0xabc" as `0x${string}`,
                 origin: "https://test.com",
                 sourceUrl: "https://test.com",
@@ -340,6 +409,7 @@ describe("resolvingContextStore", () => {
 
             // Set a context first
             setContext({
+                merchantId: "merchant-abc",
                 productId: "0xabc" as `0x${string}`,
                 origin: "https://test.com",
                 sourceUrl: "https://test.com",
@@ -360,6 +430,7 @@ describe("resolvingContextStore", () => {
 
             // Set a context first
             setContext({
+                merchantId: "merchant-abc",
                 productId: "0xabc" as `0x${string}`,
                 origin: "https://test.com",
                 sourceUrl: "https://test.com",
@@ -376,7 +447,7 @@ describe("resolvingContextStore", () => {
     });
 
     describe("Edge cases", () => {
-        test("should handle event with origin but no currentUrl", () => {
+        test("should handle event with origin but no currentUrl", async () => {
             const { startHandshake, handleHandshakeResponse } =
                 resolvingContextStore.getState();
 
@@ -396,11 +467,15 @@ describe("resolvingContextStore", () => {
             const result = handleHandshakeResponse(event);
 
             expect(result).toBe(true);
+
+            // Wait for async context resolution
+            await waitForContext();
+
             const context = resolvingContextStore.getState().context;
             expect(context?.sourceUrl).toBe("https://fallback.com");
         });
 
-        test("should handle www prefix correctly", () => {
+        test("should handle www prefix correctly", async () => {
             const { startHandshake, handleHandshakeResponse } =
                 resolvingContextStore.getState();
 
@@ -421,6 +496,10 @@ describe("resolvingContextStore", () => {
             } as any;
 
             handleHandshakeResponse(event1);
+
+            // Wait for async context resolution
+            await waitForContext();
+
             const productId1 =
                 resolvingContextStore.getState().context?.productId;
 
@@ -430,7 +509,12 @@ describe("resolvingContextStore", () => {
                 handshakeTokens: new Set(),
             });
 
-            startHandshake();
+            const {
+                startHandshake: startHandshake2,
+                handleHandshakeResponse: handleHandshakeResponse2,
+            } = resolvingContextStore.getState();
+
+            startHandshake2();
             const token2 = Array.from(
                 resolvingContextStore.getState().handshakeTokens
             )[0];
@@ -446,11 +530,15 @@ describe("resolvingContextStore", () => {
                 origin: "https://example.com",
             } as any;
 
-            handleHandshakeResponse(event2);
+            handleHandshakeResponse2(event2);
+
+            // Wait for async context resolution
+            await waitForContext();
+
             const productId2 =
                 resolvingContextStore.getState().context?.productId;
 
-            // ProductIds should be the same (www is normalized)
+            // ProductIds should be the same (www is normalized via backend)
             expect(productId1).toBe(productId2);
         });
     });

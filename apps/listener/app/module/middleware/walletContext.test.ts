@@ -59,6 +59,7 @@ describe("walletContextMiddleware", () => {
         test("should handle same-origin messages from wallet window", () => {
             resolvingContextStore.setState({
                 context: {
+                    merchantId: "merchant-123",
                     productId: "0x123" as `0x${string}`,
                     origin: "https://example.com",
                     sourceUrl: "https://example.com",
@@ -80,14 +81,16 @@ describe("walletContextMiddleware", () => {
 
             expect(result).toEqual({
                 ...context,
+                merchantId: "",
                 productId: "0x",
                 sourceUrl: context.origin,
                 isAutoContext: false,
             });
         });
 
-        test("should augment context with wallet fields when productId matches", () => {
+        test("should augment context with wallet fields when origin matches", () => {
             const storedContext = {
+                merchantId: "merchant-123",
                 productId:
                     "0x02438d3405cadd648e08dbff51bdbeb415913e642189100dc4a012064c870883" as `0x${string}`,
                 origin: "https://example.com",
@@ -110,6 +113,7 @@ describe("walletContextMiddleware", () => {
 
             expect(result).toEqual({
                 ...context,
+                merchantId: storedContext.merchantId,
                 productId: storedContext.productId,
                 sourceUrl: storedContext.sourceUrl,
                 isAutoContext: storedContext.isAutoContext,
@@ -119,6 +123,7 @@ describe("walletContextMiddleware", () => {
 
         test("should include walletReferrer if present in stored context", () => {
             const storedContext = {
+                merchantId: "merchant-123",
                 productId:
                     "0x02438d3405cadd648e08dbff51bdbeb415913e642189100dc4a012064c870883" as `0x${string}`,
                 origin: "https://example.com",
@@ -144,8 +149,9 @@ describe("walletContextMiddleware", () => {
         });
 
         test("should handle www prefix in origin correctly", () => {
-            // Store context for example.com (normalized)
+            // Store context for www.example.com
             const storedContext = {
+                merchantId: "merchant-123",
                 productId:
                     "0x02438d3405cadd648e08dbff51bdbeb415913e642189100dc4a012064c870883" as `0x${string}`,
                 origin: "https://www.example.com",
@@ -159,7 +165,7 @@ describe("walletContextMiddleware", () => {
                 topic: "frak_sendInteraction" as const,
                 data: {},
             };
-            // Request from www.example.com should compute same productId as example.com
+            // Request from www.example.com should match stored origin
             const context = { origin: "https://www.example.com" };
 
             const result = walletContextMiddleware.onRequest?.(
@@ -169,6 +175,7 @@ describe("walletContextMiddleware", () => {
 
             expect(result).toEqual({
                 ...context,
+                merchantId: storedContext.merchantId,
                 productId: storedContext.productId,
                 sourceUrl: storedContext.sourceUrl,
                 isAutoContext: storedContext.isAutoContext,
@@ -176,10 +183,11 @@ describe("walletContextMiddleware", () => {
             });
         });
 
-        test("should throw error for productId mismatch in production", () => {
+        test("should throw error for origin mismatch in production", () => {
             mockIsRunningLocally = false; // Already set in beforeEach, but being explicit
 
             const storedContext = {
+                merchantId: "merchant-123",
                 productId: "0x123" as `0x${string}`,
                 origin: "https://example.com",
                 sourceUrl: "https://example.com",
@@ -215,24 +223,26 @@ describe("walletContextMiddleware", () => {
                     RpcErrorCodes.configError
                 );
                 expect((error as FrakRpcError).message).toContain(
-                    "Product ID mismatch"
+                    "Origin mismatch"
                 );
             }
 
             expect(consoleSpy).toHaveBeenCalledWith(
-                "Mismatching product id, rejecting RPC request",
+                "Origin mismatch, rejecting RPC request",
                 expect.objectContaining({
-                    origin: "https://different-domain.com",
+                    requestOrigin: "https://different-domain.com",
+                    storedOrigin: "https://example.com",
                 })
             );
 
             consoleSpy.mockRestore();
         });
 
-        test("should allow productId mismatch in local development", () => {
+        test("should allow origin mismatch in local development", () => {
             mockIsRunningLocally = true;
 
             const storedContext = {
+                merchantId: "merchant-123",
                 productId: "0x123" as `0x${string}`,
                 origin: "https://example.com",
                 sourceUrl: "https://example.com",
@@ -258,13 +268,15 @@ describe("walletContextMiddleware", () => {
             ) as any;
 
             expect(result).toBeDefined();
+            expect(result?.merchantId).toBe("merchant-123");
             expect(result?.productId).toBe("0x123");
 
             consoleSpy.mockRestore();
         });
 
-        test("should handle subdomain variations correctly", () => {
+        test("should reject subdomain origin mismatch", () => {
             const storedContext = {
+                merchantId: "merchant-123",
                 productId:
                     "0x02438d3405cadd648e08dbff51bdbeb415913e642189100dc4a012064c870883" as `0x${string}`,
                 origin: "https://example.com",
@@ -278,7 +290,7 @@ describe("walletContextMiddleware", () => {
                 topic: "frak_sendInteraction" as const,
                 data: {},
             };
-            // Subdomain should compute different productId
+            // Subdomain has different origin
             const context = { origin: "https://subdomain.example.com" };
 
             const consoleSpy = vi
@@ -298,6 +310,7 @@ describe("walletContextMiddleware", () => {
         test("should log debug message for same-origin requests", () => {
             resolvingContextStore.setState({
                 context: {
+                    merchantId: "merchant-123",
                     productId: "0x123" as `0x${string}`,
                     origin: "https://example.com",
                     sourceUrl: "https://example.com",

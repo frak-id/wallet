@@ -68,6 +68,7 @@ describe("lifecycleHandler", () => {
         test("should return true if context exists and is not auto", () => {
             resolvingContextStore.setState({
                 context: {
+                    merchantId: "merchant-123",
                     productId: "0x123" as `0x${string}`,
                     origin: "https://example.com",
                     sourceUrl: "https://example.com",
@@ -88,6 +89,7 @@ describe("lifecycleHandler", () => {
         test("should return true if context is auto context", () => {
             resolvingContextStore.setState({
                 context: {
+                    merchantId: "merchant-123",
                     productId: "0x123" as `0x${string}`,
                     origin: "https://example.com",
                     sourceUrl: "https://example.com",
@@ -142,6 +144,7 @@ describe("lifecycleHandler", () => {
 
             resolvingContextStore.setState({
                 context: {
+                    merchantId: "merchant-123",
                     productId: "0x123" as `0x${string}`,
                     origin: "https://example.com",
                     sourceUrl: "https://example.com",
@@ -165,6 +168,7 @@ describe("lifecycleHandler", () => {
 
             resolvingContextStore.setState({
                 context: {
+                    merchantId: "merchant-123",
                     productId: "0x123" as `0x${string}`,
                     origin: "https://example.com",
                     sourceUrl: "https://example.com",
@@ -289,6 +293,7 @@ describe("lifecycleHandler", () => {
             // Set up context
             resolvingContextStore.setState({
                 context: {
+                    merchantId: "merchant-123",
                     productId: "0x123" as `0x${string}`,
                     origin: "https://example.com",
                     sourceUrl: "https://example.com",

@@ -21,8 +21,15 @@ export type WalletRpcContext = {
     source: MessageEventSource | null;
 
     /**
-     * The product ID (derived from domain)
-     * Already validated to match the message origin
+     * The merchant ID (UUID from backend)
+     * Primary identifier for the merchant
+     */
+    merchantId: string;
+
+    /**
+     * The product ID (derived from domain) - LEGACY
+     * Kept for on-chain queries compatibility
+     * @deprecated Use merchantId for new integrations
      */
     productId: Hex;
 

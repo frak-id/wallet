@@ -5,12 +5,12 @@ export {
     campaignRulesTable,
 } from "./db/schema";
 export { CampaignRuleRepository } from "./repositories/CampaignRuleRepository";
+export type { CampaignStatus } from "./schemas";
 export {
     BudgetConfigSchema,
     CampaignMetadataSchema,
     CampaignResponseSchema,
     CampaignRuleDefinitionSchema,
-    CampaignStatus,
     CampaignStatusSchema,
     CampaignTriggerSchema,
     ConditionGroupSchema,
