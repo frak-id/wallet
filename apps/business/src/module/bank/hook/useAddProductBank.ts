@@ -11,7 +11,7 @@ import {
     useSendTransactionAction,
     useWalletStatus,
 } from "@frak-labs/react-sdk";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
     type Address,
     encodeFunctionData,
@@ -20,6 +20,7 @@ import {
 } from "viem";
 import { simulateContract } from "viem/actions";
 import { viemClient } from "@/context/blockchain/provider";
+import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { useWaitForTxAndInvalidateQueries } from "@/module/common/utils/useWaitForTxAndInvalidateQueries";
 
 export type AddProductBankParams = {
@@ -31,6 +32,8 @@ export type AddProductBankParams = {
  * Hook to add a new bank to a product
  */
 export function useAddProductBank() {
+    const isDemoMode = useIsDemoMode();
+    const queryClient = useQueryClient();
     const waitForTxAndInvalidateQueries = useWaitForTxAndInvalidateQueries();
     const { mutateAsync: sendTransaction } = useSendTransactionAction();
     const { data: walletStatus } = useWalletStatus();
@@ -38,6 +41,12 @@ export function useAddProductBank() {
     return useMutation({
         mutationKey: ["product", "bank", "add"],
         mutationFn: async ({ productId, stablecoin }: AddProductBankParams) => {
+            // In demo mode, simulate success
+            if (isDemoMode) {
+                await new Promise((resolve) => setTimeout(resolve, 500));
+                return "0xdemo-tx-hash" as const;
+            }
+
             if (!walletStatus?.wallet) {
                 throw new Error("Wallet is not connected");
             }
@@ -82,6 +91,15 @@ export function useAddProductBank() {
             return hash;
         },
         onSuccess: async (hash) => {
+            // In demo mode, just invalidate queries directly
+            if (isDemoMode) {
+                await queryClient.invalidateQueries({
+                    queryKey: ["product"],
+                    exact: false,
+                });
+                return;
+            }
+
             // Invalidate product related queries
             //  this also reset the top level `useGetProductFunding` query
             await waitForTxAndInvalidateQueries({

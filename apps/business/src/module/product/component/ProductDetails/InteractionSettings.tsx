@@ -22,19 +22,24 @@ import { Panel } from "@/module/common/component/Panel";
 import { PanelAccordion } from "@/module/common/component/PanelAccordion";
 import { Title } from "@/module/common/component/Title";
 import { useGetAdminWallet } from "@/module/common/hook/useGetAdminWallet";
-import { useHasRoleOnProduct } from "@/module/common/hook/useHasRoleOnProduct";
+import { useHasRoleOnMerchant } from "@/module/common/hook/useHasRoleOnProduct";
 import { useProductInteractionContract } from "@/module/product/hook/useProductInteractionContract";
 import { useSetupInteractionContract } from "@/module/product/hook/useSetupInteractionContract";
 import styles from "./InteractionSettings.module.css";
 
 /**
  * Component to manage the interaction settings
- * @constructor
+ * @param merchantId - The merchant UUID for role checks
+ * @param productId - The on-chain product ID for blockchain operations (optional)
  */
-export function InteractionSettings({ productId }: { productId: Hex }) {
-    const { isInteractionManager } = useHasRoleOnProduct({
-        productId,
-    });
+export function InteractionSettings({
+    merchantId,
+    productId,
+}: {
+    merchantId: string;
+    productId?: Hex;
+}) {
+    const { hasAccess } = useHasRoleOnMerchant({ merchantId });
     const { mutateAsync: setupInteractionContract } =
         useSetupInteractionContract();
 
@@ -80,7 +85,8 @@ export function InteractionSettings({ productId }: { productId: Hex }) {
                     )}
 
                     {detailsData?.interactionContract &&
-                        isInteractionManager && (
+                        hasAccess &&
+                        productId && (
                             <ModalDelete
                                 productId={productId}
                                 refreshDetails={async () => {
@@ -90,7 +96,8 @@ export function InteractionSettings({ productId }: { productId: Hex }) {
                         )}
 
                     {!detailsData?.interactionContract &&
-                        isInteractionManager && (
+                        hasAccess &&
+                        productId && (
                             <Button
                                 variant={"submit"}
                                 onClick={() =>
@@ -117,7 +124,7 @@ export function InteractionSettings({ productId }: { productId: Hex }) {
 
             <Columns>
                 <Column size={"full"}>
-                    {detailsData?.interactionContract && (
+                    {detailsData?.interactionContract && productId && (
                         <ManagedInteractionValidator
                             productId={productId}
                             interactionContract={
@@ -153,7 +160,10 @@ function ManagedInteractionValidator({
     interactionContract: Address;
 }) {
     const { mutateAsync: sendTransaction } = useSendTransactionAction();
-    const { data: productValidator } = useGetAdminWallet({ productId });
+    // Use key-based lookup for the interaction validator
+    const { data: productValidator } = useGetAdminWallet({
+        key: "interaction-validator",
+    });
     const { data: interactionExecutor } = useGetAdminWallet({
         key: "interaction-executor",
     });

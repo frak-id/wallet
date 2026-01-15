@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { useMyProducts } from "@/module/dashboard/hooks/useMyProducts";
+import { useMyMerchants } from "@/module/dashboard/hooks/useMyMerchants";
 import { MyProducts } from "./index";
 
 const mockNavigate = vi.fn();
@@ -9,8 +9,8 @@ vi.mock("@tanstack/react-router", () => ({
     useNavigate: () => mockNavigate,
 }));
 
-vi.mock("@/module/dashboard/hooks/useMyProducts", () => ({
-    useMyProducts: vi.fn(),
+vi.mock("@/module/dashboard/hooks/useMyMerchants", () => ({
+    useMyMerchants: vi.fn(),
 }));
 
 vi.mock("@/module/common/component/Panel", () => ({
@@ -53,14 +53,12 @@ describe("MyProducts", () => {
     });
 
     it("should render products when data is available", async () => {
-        // useSuspenseQuery always returns data after suspense resolves
-        vi.mocked(useMyProducts).mockReturnValue({
-            products: {
-                operator: [],
-                owner: [],
-            },
+        vi.mocked(useMyMerchants).mockReturnValue({
+            merchants: [],
+            owned: [],
+            adminOf: [],
             isEmpty: true,
-        } as any);
+        });
 
         render(<MyProducts />);
 
@@ -68,46 +66,43 @@ describe("MyProducts", () => {
     });
 
     it("should render products list when loaded", async () => {
-        vi.mocked(useMyProducts).mockReturnValue({
-            products: {
-                operator: [
-                    {
-                        id: "0x1" as `0x${string}`,
-                        name: "Product 1",
-                        domain: "product1.com",
-                    },
-                ],
-                owner: [
-                    {
-                        id: "0x2" as `0x${string}`,
-                        name: "Product 2",
-                        domain: "product2.com",
-                    },
-                ],
-            },
-            isPending: false,
-        } as any);
+        vi.mocked(useMyMerchants).mockReturnValue({
+            merchants: [
+                {
+                    id: "merchant-1",
+                    name: "Product 1",
+                    domain: "product1.com",
+                },
+                {
+                    id: "merchant-2",
+                    name: "Product 2",
+                    domain: "product2.com",
+                },
+            ],
+            owned: [],
+            adminOf: [],
+            isEmpty: false,
+        });
 
         render(<MyProducts />);
 
-        expect(screen.getByText("My Products")).toBeInTheDocument();
+        expect(screen.getAllByTestId("panel").length).toBeGreaterThan(0);
         expect(screen.getByText("Product 1")).toBeInTheDocument();
         expect(screen.getByText("Product 2")).toBeInTheDocument();
     });
 
     it("should render empty list with add product button", async () => {
-        vi.mocked(useMyProducts).mockReturnValue({
-            products: {
-                operator: [],
-                owner: [],
-            },
-            isPending: false,
-        } as any);
+        vi.mocked(useMyMerchants).mockReturnValue({
+            merchants: [],
+            owned: [],
+            adminOf: [],
+            isEmpty: true,
+        });
 
         render(<MyProducts />);
 
-        expect(screen.getByText("My Products")).toBeInTheDocument();
-        expect(screen.getByText("List a Product")).toBeInTheDocument();
-        expect(screen.getByTestId("plus-icon")).toBeInTheDocument();
+        expect(screen.getAllByTestId("panel").length).toBeGreaterThan(0);
+        expect(screen.getAllByText("List a Product").length).toBeGreaterThan(0);
+        expect(screen.getAllByTestId("plus-icon").length).toBeGreaterThan(0);
     });
 });

@@ -11,22 +11,25 @@ import { type Address, encodeFunctionData, type Hex } from "viem";
 import { Badge } from "@/module/common/component/Badge";
 import { PanelAccordion } from "@/module/common/component/PanelAccordion";
 import { Title } from "@/module/common/component/Title";
-import { useHasRoleOnProduct } from "@/module/common/hook/useHasRoleOnProduct";
+import { useHasRoleOnMerchant } from "@/module/common/hook/useHasRoleOnProduct";
 import { useOracleSetupData } from "../../hook/useOracleSetupData";
-import { useProductMetadata } from "../../hook/useProductMetadata";
 import styles from "./PurchaseTracker.module.css";
 import { PurchaseTrackerWebhook } from "./PurchaseTrackerWebhook";
 
 /**
  * Setup data for the purchase oracle
+ * @param merchantId - The merchant UUID for role checks
+ * @param productId - The on-chain product ID for blockchain operations (optional)
  */
-export function PurchasseTrackerSetup({ productId }: { productId: Hex }) {
-    const { data: product } = useProductMetadata({ productId });
-
-    // Early exit if the product is not a purchase
-    if (!product?.productTypes.includes("purchase")) {
-        return null;
-    }
+export function PurchasseTrackerSetup({
+    merchantId,
+    productId,
+}: {
+    merchantId: string;
+    productId?: Hex;
+}) {
+    // Note: We can't check productTypes without productId, so we always show the panel
+    // The backend merchant data should include this info in the future
 
     return (
         <PanelAccordion
@@ -38,7 +41,10 @@ export function PurchasseTrackerSetup({ productId }: { productId: Hex }) {
                 The purchase tracker will permit to create campaigns and
                 distribute rewards based on user purchase on your website.
             </p>
-            <PurchasseTrackerAccordionContent productId={productId} />
+            <PurchasseTrackerAccordionContent
+                merchantId={merchantId}
+                productId={productId}
+            />
         </PanelAccordion>
     );
 }
@@ -46,10 +52,17 @@ export function PurchasseTrackerSetup({ productId }: { productId: Hex }) {
 /**
  * The content of the accordion
  */
-function PurchasseTrackerAccordionContent({ productId }: { productId: Hex }) {
-    const { isAdministrator } = useHasRoleOnProduct({ productId });
+function PurchasseTrackerAccordionContent({
+    merchantId,
+    productId,
+}: {
+    merchantId: string;
+    productId?: Hex;
+}) {
+    const { hasAccess } = useHasRoleOnMerchant({ merchantId });
     // Fetch some data about the current oracle setup
     const { data: oracleSetupData, refetch: refresh } = useOracleSetupData({
+        merchantId,
         productId,
     });
 
@@ -59,7 +72,10 @@ function PurchasseTrackerAccordionContent({ productId }: { productId: Hex }) {
 
     return (
         <div className={styles.purchaseTrackerAccordionContent}>
-            <PurchaseTrackerWebhook productId={productId} />
+            <PurchaseTrackerWebhook
+                merchantId={merchantId}
+                productId={productId}
+            />
             <Columns>
                 <Column size={"full"}>
                     <Title as={"h3"}>Oracle</Title>
@@ -77,14 +93,19 @@ function PurchasseTrackerAccordionContent({ productId }: { productId: Hex }) {
                         </Badge>
                     </p>
 
-                    <p>
-                        <ToggleOracleUpdaterRole
-                            {...oracleSetupData}
-                            disabled={!isAdministrator}
-                            productId={productId}
-                            refresh={refresh}
-                        />
-                    </p>
+                    {productId && oracleSetupData.oracleUpdater && (
+                        <p>
+                            <ToggleOracleUpdaterRole
+                                oracleUpdater={oracleSetupData.oracleUpdater}
+                                isOracleUpdaterAllowed={
+                                    oracleSetupData.isOracleUpdaterAllowed
+                                }
+                                disabled={!hasAccess}
+                                productId={productId}
+                                refresh={refresh}
+                            />
+                        </p>
+                    )}
                 </Column>
             </Columns>
             <WebhookStats stats={oracleSetupData.webhookStatus} />

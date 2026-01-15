@@ -3,18 +3,30 @@ import { useQuery } from "@tanstack/react-query";
 import { type Address, erc20Abi, isAddress } from "viem";
 import { readContract } from "viem/actions";
 import { viemClient } from "@/context/blockchain/provider";
+import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 
 /**
  * Get the bank information
  */
 export function useGetBankInfo({ bank }: { bank?: Address | "" }) {
+    const isDemoMode = useIsDemoMode();
+
     const query = useQuery({
         enabled: !!bank,
-        queryKey: ["bank", "info", bank],
+        queryKey: ["bank", "info", bank, isDemoMode ? "demo" : "live"],
         queryFn: async () => {
             if (!bank || !isAddress(bank)) {
                 return null;
             }
+
+            // In demo mode, return mock bank info
+            if (isDemoMode) {
+                return {
+                    token: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831" as Address, // USDC on Arbitrum
+                    decimals: 6,
+                };
+            }
+
             // Get the bank token
             const [, token] = await readContract(viemClient, {
                 abi: campaignBankAbi,

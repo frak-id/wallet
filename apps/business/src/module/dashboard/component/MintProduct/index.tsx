@@ -48,7 +48,7 @@ export function MintProduct() {
             mutate: triggerMint,
             isPending,
             error,
-            data: { mintTxHash } = {},
+            data: { merchantId } = {},
         },
         infoTxt,
     } = useMintMyProduct({
@@ -71,13 +71,14 @@ export function MintProduct() {
         }
 
         try {
-            const { isAlreadyMinted, isDomainValid } = await checkDomainSetup({
-                domain,
-                setupCode,
-            });
+            const { isAlreadyRegistered, isDomainValid } =
+                await checkDomainSetup({
+                    domain,
+                    setupCode,
+                });
             setOpenAccordion("validation");
 
-            if (isAlreadyMinted) {
+            if (isAlreadyRegistered) {
                 setDomainError(
                     `A product already exists for the domain ${domain}`
                 );
@@ -100,9 +101,7 @@ export function MintProduct() {
         triggerMint({
             name: formData.name,
             domain: formData.domain,
-            productTypes: formData.productTypes,
             setupCode: formData.setupCode,
-            currency: formData.currency,
         });
     };
 
@@ -148,7 +147,7 @@ export function MintProduct() {
                 isPending={isPending}
                 error={error}
                 infoTxt={infoTxt}
-                mintTxHash={mintTxHash}
+                merchantId={merchantId}
                 onSubmit={handleSubmit}
                 isOpen={openAccordion === "registration"}
                 onOpenChange={(value: boolean) =>

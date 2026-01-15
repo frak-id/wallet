@@ -100,14 +100,19 @@ async function getCreationDataInternal({
     };
 
     // Build the args depending on the distribution types
+    // Type narrowing: productId is guaranteed to be defined at this point (checked above)
+    const campaignWithProductId = campaign as Campaign & {
+        bank: Address;
+        productId: Hex;
+    };
     const args =
         campaign.distribution?.type === "range"
-            ? getCampaignRangeArgs(campaign as Campaign & { bank: Address }, {
+            ? getCampaignRangeArgs(campaignWithProductId, {
                   capPeriod,
                   activationPeriod: { start, end },
                   fiatToTokenMapper,
               })
-            : getFixedCampaignArgs(campaign as Campaign & { bank: Address }, {
+            : getFixedCampaignArgs(campaignWithProductId, {
                   capPeriod,
                   activationPeriod: { start, end },
                   fiatToTokenMapper,
@@ -170,7 +175,7 @@ function getHexValueForKey(key: InteractionTypesKey): Hex | undefined {
 /* -------------------------------------------------------------------------- */
 
 function getFixedCampaignArgs(
-    campaign: Campaign & { bank: Address },
+    campaign: Campaign & { bank: Address; productId: Hex },
     {
         activationPeriod,
         capPeriod,
@@ -310,7 +315,7 @@ function extractFixedTriggers(
 /* -------------------------------------------------------------------------- */
 
 function getCampaignRangeArgs(
-    campaign: Campaign & { bank: Address },
+    campaign: Campaign & { bank: Address; productId: Hex },
     {
         activationPeriod,
         capPeriod,

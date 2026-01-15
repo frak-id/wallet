@@ -96,8 +96,6 @@ function DoMintComponent({
     name,
     domain,
     setupCode,
-    productTypes,
-    currency,
 }: {
     name?: string;
     domain: string;
@@ -116,16 +114,6 @@ function DoMintComponent({
         },
     });
 
-    // Map the product types to the correct type
-    const productTypesArray = productTypes.split(",") as (
-        | "dapp"
-        | "press"
-        | "webshop"
-        | "retail"
-        | "referral"
-        | "purchase"
-    )[];
-
     return (
         <>
             <Button
@@ -137,8 +125,6 @@ function DoMintComponent({
                         name: name ?? domain,
                         domain,
                         setupCode,
-                        productTypes: productTypesArray,
-                        currency,
                     })
                 }
                 isLoading={isPending}

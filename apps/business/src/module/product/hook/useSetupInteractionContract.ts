@@ -60,20 +60,20 @@ export function useSetupInteractionContract() {
                     }),
                 });
             }
-            // Get the manager validator address
+            // Get the interaction validator address (using key-based lookup)
             const { data } = await backendApi.common.adminWallet.get({
                 query: {
-                    productId: productId,
+                    key: "interaction-validator",
                 },
             });
             if (!data?.pubKey) {
                 console.log(
-                    "Error getting the product pub key or the predicted interaction address",
+                    "Error getting the interaction validator pub key or the predicted interaction address",
                     { data, interactionContract }
                 );
                 return;
             }
-            const productPubKey = data.pubKey;
+            const validatorPubKey = data.pubKey;
 
             // Add the second tx to allow the managed validator
             tx.push({
@@ -81,7 +81,7 @@ export function useSetupInteractionContract() {
                 data: encodeFunctionData({
                     abi: productInteractionManagerAbi,
                     functionName: "grantRoles",
-                    args: [productPubKey, interactionValidatorRoles],
+                    args: [validatorPubKey, interactionValidatorRoles],
                 }),
             });
 
@@ -108,7 +108,7 @@ export function useSetupInteractionContract() {
             // Wait for the tx to be done, and invalidate product and campaigns related queries
             await waitForTxAndInvalidateQueries({
                 hash,
-                queryKey: ["product"],
+                queryKey: ["merchant"],
             });
         },
     });

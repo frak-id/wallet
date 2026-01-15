@@ -14,7 +14,8 @@ import styles from "../Mint/index.module.css";
 export function EmbeddedPurchaseTracker() {
     const search = useSearch({ from: "/embedded/_layout/purchase-tracker" });
 
-    const { productId, platform, secret } = useMemo(() => {
+    const { merchantId, productId, platform, secret } = useMemo(() => {
+        const merchantId = search.mid;
         const productId = search.pid;
 
         // Default to shopify values
@@ -28,12 +29,13 @@ export function EmbeddedPurchaseTracker() {
             throw new Error("Invalid platform");
         }
 
-        if (!productId) {
-            throw new Error("Missing required parameters");
+        if (!merchantId) {
+            throw new Error("Missing required parameter: merchantId (mid)");
         }
 
         return {
-            productId,
+            merchantId,
+            productId: productId as Hex | undefined,
             platform: platform as
                 | "internal"
                 | "custom"
@@ -49,15 +51,16 @@ export function EmbeddedPurchaseTracker() {
         isSuccess,
         isError,
     } = usePurchaseTrackerSetup({
-        productId: productId as Hex,
+        merchantId,
+        productId,
         platform,
         secret,
     });
 
     useEffect(() => {
-        if (!productId) return;
+        if (!merchantId) return;
         setupPurchaseTracker();
-    }, [setupPurchaseTracker, productId]);
+    }, [setupPurchaseTracker, merchantId]);
 
     // Button to exit
     const close = useCallback(() => {
@@ -106,21 +109,28 @@ export function EmbeddedPurchaseTracker() {
 }
 
 function usePurchaseTrackerSetup({
+    merchantId,
     productId,
     platform,
     secret,
 }: {
-    productId: Hex;
+    merchantId: string;
+    productId?: Hex;
     platform: "internal" | "custom" | "shopify" | "woocommerce";
     secret: string;
 }) {
-    const { refetch } = useOracleSetupData({ productId });
+    const { refetch } = useOracleSetupData({ merchantId, productId });
     return useMutation({
-        mutationKey: ["product", "oracle-webhook-internal", "setup", productId],
+        mutationKey: [
+            "merchant",
+            merchantId,
+            "oracle-webhook-internal",
+            "setup",
+        ],
         mutationFn: async () => {
             const { error } = await authenticatedBackendApi
-                .product({ productId })
-                .oracleWebhook.setup.post({
+                .merchant({ merchantId })
+                .webhooks.post({
                     hookSignatureKey: secret,
                     platform,
                 });

@@ -1,5 +1,4 @@
 import { ButtonAuth } from "@frak-labs/ui/component/ButtonAuth";
-import type { Hex } from "viem";
 import { PanelAccordion } from "@/module/common/component/PanelAccordion";
 import styles from "./index.module.css";
 
@@ -8,7 +7,7 @@ interface RegistrationPanelProps {
     isPending: boolean;
     error?: Error | null;
     infoTxt?: string;
-    mintTxHash?: Hex;
+    merchantId?: string;
     onSubmit: () => void;
     isOpen: boolean;
     onOpenChange: (isOpen: boolean) => void;
@@ -19,7 +18,7 @@ export function RegistrationPanel({
     isPending,
     error,
     infoTxt,
-    mintTxHash,
+    merchantId,
     onSubmit,
     isOpen,
     onOpenChange,
@@ -62,9 +61,9 @@ export function RegistrationPanel({
             ) : (
                 <div className={styles.successSection}>
                     <p className="success">
-                        Your product has been successfully listed!
+                        Your product has been successfully registered!
                     </p>
-                    {mintTxHash && <p>Transaction hash: {mintTxHash}</p>}
+                    {merchantId && <p>Merchant ID: {merchantId}</p>}
                 </div>
             )}
         </PanelAccordion>

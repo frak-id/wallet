@@ -60,6 +60,7 @@ export function extractSearchParams(search: {
     n: string;
     bid: string;
     d: string;
+    mid: string;
     cac: string;
     r: string;
     sc?: string;
@@ -68,10 +69,11 @@ export function extractSearchParams(search: {
     gb?: string;
 }) {
     // Params:
-    // - name, bank id, domain, weekly budget, cac brut, ratio
+    // - name, bank id, domain, merchant id, weekly budget, cac brut, ratio
     const name = search.n;
     const bankId = search.bid;
     const domain = search.d;
+    const merchantId = search.mid;
     const cacBrut = search.cac;
     const ratio = search.r;
     const setupCurrency = search.sc;
@@ -80,7 +82,7 @@ export function extractSearchParams(search: {
     const monthlyBudget = search.mb ?? null;
     const globalBudget = search.gb ?? null;
 
-    if (!name || !bankId || !domain || !cacBrut || !ratio) {
+    if (!name || !bankId || !domain || !merchantId || !cacBrut || !ratio) {
         throw new Error("Missing required parameters");
     }
     if (!isAddress(bankId)) {
@@ -102,13 +104,14 @@ export function extractSearchParams(search: {
         throw new Error("Invalid setup currency");
     }
 
-    // Compute product id
+    // Compute product id from domain (for on-chain operations)
     const productId = keccak256(toHex(domain.replace("www.", "")));
 
     return {
         name,
         bankId,
         domain,
+        merchantId,
         budget: getBudget({
             weeklyBudget,
             monthlyBudget,
@@ -129,6 +132,7 @@ export function extractSearchParams(search: {
 export function createCampaignDraft({
     name,
     bankId,
+    merchantId,
     productId,
     budget,
     cacBrut,
@@ -137,7 +141,8 @@ export function createCampaignDraft({
 }: {
     name: string;
     bankId: Address;
-    productId: Hex;
+    merchantId: string;
+    productId?: Hex;
     budget: Campaign["budget"];
     cacBrut: number;
     ratio: number;
@@ -145,7 +150,8 @@ export function createCampaignDraft({
 }) {
     const campaign: Campaign = {
         title: name,
-        productId: productId,
+        merchantId,
+        productId,
         type: "sales", // always sales for shopify embedded campaign
         specialCategories: [],
         budget,

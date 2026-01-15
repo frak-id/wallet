@@ -1,6 +1,8 @@
 import { describe, expect, test } from "vitest";
 import { createCampaignDraft, extractSearchParams } from "./utils";
 
+const mockMerchantId = "test-merchant-uuid-123";
+
 describe("CreateCampaign utils", () => {
     describe("extractSearchParams", () => {
         describe("successful parsing", () => {
@@ -9,6 +11,7 @@ describe("CreateCampaign utils", () => {
                     n: "Test Campaign",
                     bid: "0x1234567890123456789012345678901234567890",
                     d: "example.com",
+                    mid: mockMerchantId,
                     cac: "10",
                     r: "50",
                     wb: "1000",
@@ -18,6 +21,7 @@ describe("CreateCampaign utils", () => {
                     name: "Test Campaign",
                     bankId: "0x1234567890123456789012345678901234567890",
                     domain: "example.com",
+                    merchantId: mockMerchantId,
                     budget: {
                         type: "weekly",
                         maxEuroDaily: 1000,
@@ -34,6 +38,7 @@ describe("CreateCampaign utils", () => {
                     n: "Test Campaign",
                     bid: "0x1234567890123456789012345678901234567890",
                     d: "example.com",
+                    mid: mockMerchantId,
                     cac: "15",
                     r: "60",
                     mb: "5000",
@@ -50,6 +55,7 @@ describe("CreateCampaign utils", () => {
                     n: "Test Campaign",
                     bid: "0x1234567890123456789012345678901234567890",
                     d: "example.com",
+                    mid: mockMerchantId,
                     cac: "20",
                     r: "70",
                     gb: "10000",
@@ -66,6 +72,7 @@ describe("CreateCampaign utils", () => {
                     n: "Test",
                     bid: "0x1234567890123456789012345678901234567890",
                     d: "example.com",
+                    mid: mockMerchantId,
                     cac: "10",
                     r: "50",
                     wb: "1000",
@@ -80,6 +87,7 @@ describe("CreateCampaign utils", () => {
                     n: "Test",
                     bid: "0x1234567890123456789012345678901234567890",
                     d: "example.com",
+                    mid: mockMerchantId,
                     cac: "10",
                     r: "50",
                     wb: "1000",
@@ -94,6 +102,7 @@ describe("CreateCampaign utils", () => {
                     n: "Test",
                     bid: "0x1234567890123456789012345678901234567890",
                     d: "example.com",
+                    mid: mockMerchantId,
                     cac: "10",
                     r: "50",
                     wb: "1000",
@@ -108,6 +117,7 @@ describe("CreateCampaign utils", () => {
                     n: "Test",
                     bid: "0x1234567890123456789012345678901234567890",
                     d: "example.com",
+                    mid: mockMerchantId,
                     cac: "10",
                     r: "50",
                     wb: "1000",
@@ -122,6 +132,7 @@ describe("CreateCampaign utils", () => {
                     n: "Test",
                     bid: "0x1234567890123456789012345678901234567890",
                     d: "www.example.com",
+                    mid: mockMerchantId,
                     cac: "10",
                     r: "50",
                     wb: "1000",
@@ -131,6 +142,7 @@ describe("CreateCampaign utils", () => {
                     n: "Test",
                     bid: "0x1234567890123456789012345678901234567890",
                     d: "example.com",
+                    mid: mockMerchantId,
                     cac: "10",
                     r: "50",
                     wb: "1000",
@@ -149,6 +161,7 @@ describe("CreateCampaign utils", () => {
                         n: "",
                         bid: "0x1234567890123456789012345678901234567890",
                         d: "example.com",
+                        mid: mockMerchantId,
                         cac: "10",
                         r: "50",
                         wb: "1000",
@@ -162,6 +175,7 @@ describe("CreateCampaign utils", () => {
                         n: "Test",
                         bid: "",
                         d: "example.com",
+                        mid: mockMerchantId,
                         cac: "10",
                         r: "50",
                         wb: "1000",
@@ -175,6 +189,7 @@ describe("CreateCampaign utils", () => {
                         n: "Test",
                         bid: "0x1234567890123456789012345678901234567890",
                         d: "",
+                        mid: mockMerchantId,
                         cac: "10",
                         r: "50",
                         wb: "1000",
@@ -188,6 +203,7 @@ describe("CreateCampaign utils", () => {
                         n: "Test",
                         bid: "0x1234567890123456789012345678901234567890",
                         d: "example.com",
+                        mid: mockMerchantId,
                         cac: "",
                         r: "50",
                         wb: "1000",
@@ -201,6 +217,7 @@ describe("CreateCampaign utils", () => {
                         n: "Test",
                         bid: "0x1234567890123456789012345678901234567890",
                         d: "example.com",
+                        mid: mockMerchantId,
                         cac: "10",
                         r: "",
                         wb: "1000",
@@ -214,6 +231,7 @@ describe("CreateCampaign utils", () => {
                         n: "Test",
                         bid: "invalid-address",
                         d: "example.com",
+                        mid: mockMerchantId,
                         cac: "10",
                         r: "50",
                         wb: "1000",
@@ -227,6 +245,7 @@ describe("CreateCampaign utils", () => {
                         n: "Test",
                         bid: "0x1234567890123456789012345678901234567890",
                         d: "example.com",
+                        mid: mockMerchantId,
                         cac: "not-a-number",
                         r: "50",
                         wb: "1000",
@@ -240,6 +259,7 @@ describe("CreateCampaign utils", () => {
                         n: "Test",
                         bid: "0x1234567890123456789012345678901234567890",
                         d: "example.com",
+                        mid: mockMerchantId,
                         cac: "10",
                         r: "not-a-number",
                         wb: "1000",
@@ -253,6 +273,7 @@ describe("CreateCampaign utils", () => {
                         n: "Test",
                         bid: "0x1234567890123456789012345678901234567890",
                         d: "example.com",
+                        mid: mockMerchantId,
                         cac: "10",
                         r: "50",
                         wb: "1000",
@@ -267,6 +288,7 @@ describe("CreateCampaign utils", () => {
                         n: "Test",
                         bid: "0x1234567890123456789012345678901234567890",
                         d: "example.com",
+                        mid: mockMerchantId,
                         cac: "10",
                         r: "50",
                         wb: "not-a-number",
@@ -280,6 +302,7 @@ describe("CreateCampaign utils", () => {
                         n: "Test",
                         bid: "0x1234567890123456789012345678901234567890",
                         d: "example.com",
+                        mid: mockMerchantId,
                         cac: "10",
                         r: "50",
                         mb: "not-a-number",
@@ -293,6 +316,7 @@ describe("CreateCampaign utils", () => {
                         n: "Test",
                         bid: "0x1234567890123456789012345678901234567890",
                         d: "example.com",
+                        mid: mockMerchantId,
                         cac: "10",
                         r: "50",
                         gb: "not-a-number",
@@ -306,6 +330,7 @@ describe("CreateCampaign utils", () => {
                         n: "Test",
                         bid: "0x1234567890123456789012345678901234567890",
                         d: "example.com",
+                        mid: mockMerchantId,
                         cac: "10",
                         r: "50",
                     })
@@ -318,6 +343,7 @@ describe("CreateCampaign utils", () => {
                         n: "Test",
                         bid: "0x1234567890123456789012345678901234567890",
                         d: "example.com",
+                        mid: mockMerchantId,
                         cac: "10",
                         r: "50",
                         wb: "1000",
@@ -333,6 +359,7 @@ describe("CreateCampaign utils", () => {
             const campaign = createCampaignDraft({
                 name: "Test Campaign",
                 bankId: "0x1234567890123456789012345678901234567890",
+                merchantId: mockMerchantId,
                 productId:
                     "0xabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcd",
                 budget: {
@@ -345,6 +372,7 @@ describe("CreateCampaign utils", () => {
 
             expect(campaign).toEqual({
                 title: "Test Campaign",
+                merchantId: mockMerchantId,
                 productId:
                     "0xabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcd",
                 type: "sales",
@@ -374,6 +402,7 @@ describe("CreateCampaign utils", () => {
             const campaign = createCampaignDraft({
                 name: "Test",
                 bankId: "0x1234567890123456789012345678901234567890",
+                merchantId: mockMerchantId,
                 productId:
                     "0xabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcd",
                 budget: {
@@ -392,6 +421,7 @@ describe("CreateCampaign utils", () => {
             const campaign = createCampaignDraft({
                 name: "Test",
                 bankId: "0x1234567890123456789012345678901234567890",
+                merchantId: mockMerchantId,
                 productId:
                     "0xabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcd",
                 budget: {
@@ -410,6 +440,7 @@ describe("CreateCampaign utils", () => {
             const campaign = createCampaignDraft({
                 name: "Test",
                 bankId: "0x1234567890123456789012345678901234567890",
+                merchantId: mockMerchantId,
                 productId:
                     "0xabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcd",
                 budget: {
@@ -428,6 +459,7 @@ describe("CreateCampaign utils", () => {
             const campaign = createCampaignDraft({
                 name: "Test",
                 bankId: "0x1234567890123456789012345678901234567890",
+                merchantId: mockMerchantId,
                 productId:
                     "0xabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcd",
                 budget: {
@@ -445,6 +477,7 @@ describe("CreateCampaign utils", () => {
             const campaign1 = createCampaignDraft({
                 name: "Test",
                 bankId: "0x1234567890123456789012345678901234567890",
+                merchantId: mockMerchantId,
                 productId:
                     "0xabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcd",
                 budget: { type: "weekly", maxEuroDaily: 1000 },
@@ -456,6 +489,7 @@ describe("CreateCampaign utils", () => {
             const campaign2 = createCampaignDraft({
                 name: "Test",
                 bankId: "0x1234567890123456789012345678901234567890",
+                merchantId: mockMerchantId,
                 productId:
                     "0xabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcd",
                 budget: { type: "weekly", maxEuroDaily: 1000 },
@@ -469,6 +503,7 @@ describe("CreateCampaign utils", () => {
             const campaign = createCampaignDraft({
                 name: "Test",
                 bankId: "0x1234567890123456789012345678901234567890",
+                merchantId: mockMerchantId,
                 productId:
                     "0xabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcd",
                 budget: { type: "weekly", maxEuroDaily: 1000 },
@@ -483,6 +518,7 @@ describe("CreateCampaign utils", () => {
             const campaign = createCampaignDraft({
                 name: "Test",
                 bankId: "0x1234567890123456789012345678901234567890",
+                merchantId: mockMerchantId,
                 productId:
                     "0xabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcd",
                 budget: { type: "weekly", maxEuroDaily: 1000 },

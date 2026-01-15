@@ -16,7 +16,8 @@ const flattenedKeys: InteractionTypesKey[] = Object.values(
 const initialValues: Campaign = {
     title: "",
     type: "",
-    productId: "",
+    merchantId: "",
+    productId: undefined,
     specialCategories: [],
     budget: {
         type: "global",

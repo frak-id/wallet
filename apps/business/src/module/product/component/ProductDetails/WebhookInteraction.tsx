@@ -4,7 +4,6 @@ import { Column, Columns } from "@frak-labs/ui/component/Columns";
 import { Spinner } from "@frak-labs/ui/component/Spinner";
 import { TextWithCopy } from "@frak-labs/ui/component/TextWithCopy";
 import { useMemo, useState } from "react";
-import type { Hex } from "viem";
 import { generatePrivateKey } from "viem/accounts";
 import {
     ActionsMessageError,
@@ -21,14 +20,18 @@ import styles from "./WebhookInteraction.module.css";
 /**
  * Setup for the Webhook interaction
  */
-export function WebhookInteractionSetup({ productId }: { productId: Hex }) {
+export function WebhookInteractionSetup({
+    merchantId,
+}: {
+    merchantId: string;
+}) {
     return (
         <PanelAccordion title="Webhook Interaction" id={"purchaseTracker"}>
             <p className={styles.purchaseTracker__description}>
                 The Webhook interaction will permit to create campaigns and
                 distribute rewards based on user purchase on your website.
             </p>
-            <WebhookInteractionAccordionContent productId={productId} />
+            <WebhookInteractionAccordionContent merchantId={merchantId} />
         </PanelAccordion>
     );
 }
@@ -36,19 +39,23 @@ export function WebhookInteractionSetup({ productId }: { productId: Hex }) {
 /**
  * The content of the accordion
  */
-function WebhookInteractionAccordionContent({ productId }: { productId: Hex }) {
+function WebhookInteractionAccordionContent({
+    merchantId,
+}: {
+    merchantId: string;
+}) {
     return (
         <div className={styles.purchaseTrackerAccordionContent}>
-            <WebhookInteraction productId={productId} />
+            <WebhookInteraction merchantId={merchantId} />
         </div>
     );
 }
 
-function WebhookInteraction({ productId }: { productId: Hex }) {
+function WebhookInteraction({ merchantId }: { merchantId: string }) {
     // Fetch some data about the current webhook interaction setup
     const { data: webhookInteractionStatus, isLoading } =
         useWebhookInteractionStatus({
-            productId,
+            merchantId,
         });
 
     const {
@@ -57,11 +64,11 @@ function WebhookInteraction({ productId }: { productId: Hex }) {
         isPending: pendingWebhookInteraction,
         isError: isErrorWebhookInteraction,
         reset: resetWebhookInteraction,
-    } = useWebhookInteractionSetup({ productId });
+    } = useWebhookInteractionSetup({ merchantId });
     // Current webhook url and signinKey to setup
     const webhookUrl = useMemo(() => {
-        return `${process.env.BACKEND_URL}/ext/products/${productId}/webhook/interactions/pushRaw`;
-    }, [productId]);
+        return `${process.env.BACKEND_URL}/ext/merchant/${merchantId}/webhook/purchases`;
+    }, [merchantId]);
 
     // The key that will be used for webhook
     const signinKey = useMemo(() => {
@@ -116,7 +123,7 @@ function WebhookInteraction({ productId }: { productId: Hex }) {
                     {isErrorWebhookInteraction && <ActionsMessageError />}
                     {webhookInteractionStatus?.setup && (
                         <ModalDelete
-                            productId={productId}
+                            merchantId={merchantId}
                             resetWebhookInteraction={resetWebhookInteraction}
                         />
                     )}
@@ -129,7 +136,6 @@ function WebhookInteraction({ productId }: { productId: Hex }) {
                             isLoading={pendingWebhookInteraction}
                             onClick={() =>
                                 setupWebhookInteraction({
-                                    productId,
                                     hookSignatureKey: signinKey,
                                 })
                             }
@@ -145,15 +151,14 @@ function WebhookInteraction({ productId }: { productId: Hex }) {
 
 /**
  * Component representing the delete modal for the webhook interaction
- * @param productId
+ * @param merchantId
  * @param resetWebhookInteraction
- * @constructor
  */
 function ModalDelete({
-    productId,
+    merchantId,
     resetWebhookInteraction,
 }: {
-    productId: Hex;
+    merchantId: string;
     resetWebhookInteraction: () => void;
 }) {
     const {
@@ -161,7 +166,7 @@ function ModalDelete({
         isPending: isDeleting,
         isError,
     } = useWebhookInteractionDelete({
-        productId,
+        merchantId,
     });
     const [open, setOpen] = useState(false);
 
@@ -192,7 +197,7 @@ function ModalDelete({
                     disabled={isDeleting}
                     onClick={async () => {
                         resetWebhookInteraction();
-                        await deleteWebhook({ productId });
+                        await deleteWebhook();
                         setOpen(false);
                     }}
                 >

@@ -42,6 +42,7 @@ export function CampaignStatus({ campaign }: { campaign: CampaignDocument }) {
                 <OnChainCampaignStatus
                     campaignAddress={campaign.state.address}
                     deploymentTxHash={campaign.state.txHash}
+                    merchantId={campaign.merchantId}
                 />
             )}
         </Panel>
@@ -81,9 +82,11 @@ function OffChainCampaignStatus({
 function OnChainCampaignStatus({
     campaignAddress,
     deploymentTxHash,
+    merchantId,
 }: {
     campaignAddress: Address;
     deploymentTxHash: Hex;
+    merchantId?: string;
 }) {
     const { data: onChainInfos, isLoading } = useGetOnChainCampaignDetails({
         campaignAddress,
@@ -162,7 +165,10 @@ function OnChainCampaignStatus({
                 </div>
             </Column>
             <Column fullWidth={true}>
-                <CampaignBank campaignAddress={campaignAddress} />
+                <CampaignBank
+                    campaignAddress={campaignAddress}
+                    merchantId={merchantId}
+                />
             </Column>
             <Column fullWidth={true}>
                 <CampaignDates campaignAddress={campaignAddress} />

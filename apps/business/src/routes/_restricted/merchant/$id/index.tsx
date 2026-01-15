@@ -1,23 +1,23 @@
 import { createFileRoute } from "@tanstack/react-router";
-import type { Hex } from "viem";
 import { isDemoMode } from "@/context/auth/authEnv";
 import { RouteError } from "@/module/common/component/RouteError";
 import { queryClient } from "@/module/common/provider/RootProvider";
-import { ProductDetails } from "@/module/product/component/ProductDetails";
-import { productMetadataQueryOptions } from "@/module/product/queries/queryOptions";
+import { MerchantDetails } from "@/module/merchant/component/MerchantDetails";
+import { merchantQueryOptions } from "@/module/merchant/queries/queryOptions";
 
-export const Route = createFileRoute("/_restricted/product/$id/")({
+export const Route = createFileRoute("/_restricted/merchant/$id/")({
     loader: ({ params }) => {
+        const demoMode = isDemoMode();
         return queryClient.ensureQueryData(
-            productMetadataQueryOptions(params.id as Hex, isDemoMode())
+            merchantQueryOptions(params.id, demoMode)
         );
     },
-    component: ProductPage,
+    component: MerchantPage,
     errorComponent: (props) => (
         <RouteError
             {...props}
-            title="Product Not Found"
-            message="The product you're looking for doesn't exist or you don't have access to it."
+            title="Merchant Not Found"
+            message="The merchant you're looking for doesn't exist or you don't have access to it."
             fallbackPath="/dashboard"
             fallbackLabel="Back to Dashboard"
             showRetry={false}
@@ -25,8 +25,8 @@ export const Route = createFileRoute("/_restricted/product/$id/")({
     ),
 });
 
-function ProductPage() {
+function MerchantPage() {
     const { id } = Route.useParams();
 
-    return <ProductDetails productId={id as Hex} />;
+    return <MerchantDetails merchantId={id} />;
 }

@@ -11,12 +11,15 @@ import { useConvertToPreferredCurrency } from "../../../common/hook/useConversio
 /**
  * Display the campaign balance
  * @param campaignAddress
+ * @param merchantId - Optional merchant ID to link to funding page
  * @constructor
  */
 export function CampaignBank({
     campaignAddress,
+    merchantId,
 }: {
     campaignAddress: Address;
+    merchantId?: string;
 }) {
     const { data: onChainInfos } = useGetOnChainCampaignDetails({
         campaignAddress,
@@ -104,15 +107,17 @@ export function CampaignBank({
                 {bankInfo.canDistributeToken ? "Yes" : "No"}
             </p>
             <p>Current bank balance: {formattedBalance}</p>
-            <p>
-                <Link
-                    to="/product/$id/funding"
-                    params={{ id: onChainInfos?.productId ?? "" }}
-                    className="link"
-                >
-                    Check bank
-                </Link>
-            </p>
+            {merchantId && (
+                <p>
+                    <Link
+                        to="/merchant/$id/funding"
+                        params={{ id: merchantId }}
+                        className="link"
+                    >
+                        Check bank
+                    </Link>
+                </p>
+            )}
         </>
     );
 }

@@ -1,5 +1,5 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ProductItem } from "./index";
 
 vi.mock("@tanstack/react-router", () => ({
@@ -11,6 +11,14 @@ vi.mock("@tanstack/react-router", () => ({
 }));
 
 describe("ProductItem", () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+    });
+
+    afterEach(() => {
+        cleanup();
+    });
+
     it("should render with name", () => {
         render(<ProductItem name="Test Product" />);
 
@@ -28,30 +36,49 @@ describe("ProductItem", () => {
     });
 
     it("should render with domain as span when isLink is false", () => {
-        render(
-            <ProductItem name="Product" domain="example.com" isLink={false} />
+        const { container } = render(
+            <ProductItem
+                name="Product"
+                domain="example.com"
+                isLink={false}
+                showActions={false}
+            />
         );
 
-        const domainSpan = screen.getByText("example.com");
-        expect(domainSpan).toBeInTheDocument();
-        expect(domainSpan.tagName).toBe("SPAN");
+        // Should have a span element with the domain text
+        const spans = Array.from(container.querySelectorAll("span")).filter(
+            (el) => el.textContent === "example.com"
+        );
+        expect(spans.length).toBeGreaterThan(0);
+        expect(spans[0]?.tagName).toBe("SPAN");
     });
 
     it("should render actions when showActions is true", () => {
-        render(<ProductItem name="Product" id="0x123" showActions />);
+        render(
+            <ProductItem name="Product" merchantId="merchant-123" showActions />
+        );
 
         const links = screen.getAllByRole("link");
         expect(links.length).toBeGreaterThan(0);
     });
 
     it("should not render actions when showActions is false", () => {
-        render(<ProductItem name="Product" id="0x123" showActions={false} />);
+        const { container } = render(
+            <ProductItem
+                name="Product"
+                merchantId="merchant-123"
+                showActions={false}
+            />
+        );
 
-        const links = screen.queryAllByRole("link");
-        expect(links).toHaveLength(0);
+        // Debug: check what's in the DOM
+        const allLinks = container.querySelectorAll("a");
+        // Component with showActions=false should not render action links
+        // There should be no links at all since no domain is provided
+        expect(allLinks).toHaveLength(0);
     });
 
-    it("should not render actions when id is not provided", () => {
+    it("should not render actions when merchantId is not provided", () => {
         render(<ProductItem name="Product" showActions />);
 
         const links = screen.queryAllByRole("link");

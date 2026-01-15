@@ -1,7 +1,8 @@
 import { campaignBankAbi } from "@frak-labs/app-essentials/blockchain";
 import { useSendTransactionAction } from "@frak-labs/react-sdk";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { type Address, encodeFunctionData, type Hex } from "viem";
+import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { useWaitForTxAndInvalidateQueries } from "@/module/common/utils/useWaitForTxAndInvalidateQueries";
 
 /**
@@ -16,6 +17,8 @@ export function useSetBankDistributionStatus({
     productId: Hex;
     bank: Address;
 }) {
+    const isDemoMode = useIsDemoMode();
+    const queryClient = useQueryClient();
     const waitForTxAndInvalidateQueries = useWaitForTxAndInvalidateQueries();
     const { mutateAsync: sendTx } = useSendTransactionAction();
 
@@ -25,6 +28,16 @@ export function useSetBankDistributionStatus({
     } = useMutation({
         mutationKey: ["product", "funding", productId, "toggle", bank],
         mutationFn: async ({ isDistributing }: { isDistributing: boolean }) => {
+            // In demo mode, simulate success
+            if (isDemoMode) {
+                await new Promise((resolve) => setTimeout(resolve, 300));
+                await queryClient.invalidateQueries({
+                    queryKey: ["product"],
+                    exact: false,
+                });
+                return;
+            }
+
             // Toggle the distribution state
             const { hash } = await sendTx({
                 tx: {

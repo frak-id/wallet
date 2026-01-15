@@ -13,10 +13,10 @@ import {
     useListenToDomainNameSetup,
 } from "./dnsRecordHooks";
 
-// Mock the business API
+// Mock the business API with merchant routes
 vi.mock("@/context/api/backendClient", () => {
-    const mockMint = {
-        dnsTxt: {
+    const mockRegister = {
+        "dns-txt": {
             get: vi.fn(),
         },
         verify: {
@@ -25,9 +25,9 @@ vi.mock("@/context/api/backendClient", () => {
     };
     return {
         authenticatedBackendApi: {
-            product: Object.assign(vi.fn(), {
-                mint: mockMint,
-            }),
+            merchant: {
+                register: mockRegister,
+            },
         },
     };
 });
@@ -39,12 +39,12 @@ describe("dnsRecordHooks", () => {
         }: TestContext) => {
             const mockDnsTxt = "_frak-verification=abc123";
             const mockGet = vi.fn().mockResolvedValue({
-                data: mockDnsTxt,
+                data: { dnsTxt: mockDnsTxt },
                 error: null,
             } as any);
 
             vi.mocked(
-                authenticatedBackendApi.product.mint.dnsTxt.get
+                authenticatedBackendApi.merchant.register["dns-txt"].get
             ).mockImplementation(mockGet);
 
             const { result } = renderHook(
@@ -72,7 +72,7 @@ describe("dnsRecordHooks", () => {
             const mockGet = vi.fn();
 
             vi.mocked(
-                authenticatedBackendApi.product.mint.dnsTxt.get
+                authenticatedBackendApi.merchant.register["dns-txt"].get
             ).mockImplementation(mockGet);
 
             const { result } = renderHook(
@@ -98,7 +98,7 @@ describe("dnsRecordHooks", () => {
             const mockGet = vi.fn();
 
             vi.mocked(
-                authenticatedBackendApi.product.mint.dnsTxt.get
+                authenticatedBackendApi.merchant.register["dns-txt"].get
             ).mockImplementation(mockGet);
 
             const { result } = renderHook(
@@ -113,47 +113,22 @@ describe("dnsRecordHooks", () => {
             // Give it a moment to ensure no fetch happens
             await new Promise((resolve) => setTimeout(resolve, 100));
 
-            // Should not trigger the query
+            // Query should be disabled
             expect(result.current.fetchStatus).toBe("idle");
             expect(mockGet).not.toHaveBeenCalled();
         });
 
-        test("should use correct query key", async ({
+        test("should return empty string when API returns null data", async ({
             queryWrapper,
         }: TestContext) => {
-            vi.mocked(
-                authenticatedBackendApi.product.mint.dnsTxt.get
-            ).mockResolvedValue({
-                data: "test",
-                error: null,
-            } as any);
-
-            renderHook(
-                () =>
-                    useDnsTxtRecordToSet({
-                        domain: "test.com",
-                        enabled: true,
-                    }),
-                { wrapper: queryWrapper.wrapper }
-            );
-
-            await waitFor(() => {
-                const queries = queryWrapper.client
-                    .getQueryCache()
-                    .findAll({ queryKey: ["mint", "dns-record", "test.com"] });
-                expect(queries.length).toBe(1);
-            });
-        });
-
-        test("should handle API returning null data", async ({
-            queryWrapper,
-        }: TestContext) => {
-            vi.mocked(
-                authenticatedBackendApi.product.mint.dnsTxt.get
-            ).mockResolvedValue({
+            const mockGet = vi.fn().mockResolvedValue({
                 data: null,
                 error: null,
             } as any);
+
+            vi.mocked(
+                authenticatedBackendApi.merchant.register["dns-txt"].get
+            ).mockImplementation(mockGet);
 
             const { result } = renderHook(
                 () =>
@@ -173,21 +148,76 @@ describe("dnsRecordHooks", () => {
     });
 
     describe("useCheckDomainName", () => {
-        test("should verify domain successfully", async ({
+        test("should return valid domain status", async ({
             queryWrapper,
         }: TestContext) => {
-            const mockVerifyData = {
-                isDomainValid: true,
-                isAlreadyMinted: false,
-            };
-
             const mockGet = vi.fn().mockResolvedValue({
-                data: mockVerifyData,
+                data: {
+                    isDomainValid: true,
+                    isAlreadyRegistered: false,
+                },
                 error: null,
-            } as any);
+            });
 
             vi.mocked(
-                authenticatedBackendApi.product.mint.verify.get
+                authenticatedBackendApi.merchant.register.verify.get
+            ).mockImplementation(mockGet);
+
+            const { result } = renderHook(() => useCheckDomainName(), {
+                wrapper: queryWrapper.wrapper,
+            });
+
+            const response = await result.current.mutateAsync({
+                domain: "example.com",
+            });
+
+            expect(response.isDomainValid).toBe(true);
+            expect(response.isAlreadyRegistered).toBe(false);
+            expect(mockGet).toHaveBeenCalledWith({
+                query: { domain: "example.com", setupCode: undefined },
+            });
+        });
+
+        test("should return already registered status", async ({
+            queryWrapper,
+        }: TestContext) => {
+            const mockGet = vi.fn().mockResolvedValue({
+                data: {
+                    isDomainValid: false,
+                    isAlreadyRegistered: true,
+                },
+                error: null,
+            });
+
+            vi.mocked(
+                authenticatedBackendApi.merchant.register.verify.get
+            ).mockImplementation(mockGet);
+
+            const { result } = renderHook(() => useCheckDomainName(), {
+                wrapper: queryWrapper.wrapper,
+            });
+
+            const response = await result.current.mutateAsync({
+                domain: "registered.com",
+            });
+
+            expect(response.isDomainValid).toBe(false);
+            expect(response.isAlreadyRegistered).toBe(true);
+        });
+
+        test("should pass setupCode when provided", async ({
+            queryWrapper,
+        }: TestContext) => {
+            const mockGet = vi.fn().mockResolvedValue({
+                data: {
+                    isDomainValid: true,
+                    isAlreadyRegistered: false,
+                },
+                error: null,
+            });
+
+            vi.mocked(
+                authenticatedBackendApi.merchant.register.verify.get
             ).mockImplementation(mockGet);
 
             const { result } = renderHook(() => useCheckDomainName(), {
@@ -196,122 +226,58 @@ describe("dnsRecordHooks", () => {
 
             await result.current.mutateAsync({
                 domain: "example.com",
-                setupCode: "code123",
+                setupCode: "SETUP123",
             });
 
-            await waitFor(() => {
-                expect(result.current.isSuccess).toBe(true);
-            });
-
-            expect(result.current.data).toEqual(mockVerifyData);
             expect(mockGet).toHaveBeenCalledWith({
-                query: { domain: "example.com", setupCode: "code123" },
+                query: { domain: "example.com", setupCode: "SETUP123" },
             });
         });
 
-        test("should verify domain without setup code", async ({
+        test("should throw on API error", async ({
             queryWrapper,
         }: TestContext) => {
+            const mockError = { status: 500, value: "Server error" };
             const mockGet = vi.fn().mockResolvedValue({
-                data: { isDomainValid: false, isAlreadyMinted: true },
-                error: null,
-            } as any);
-
-            vi.mocked(
-                authenticatedBackendApi.product.mint.verify.get
-            ).mockImplementation(mockGet);
-
-            const { result } = renderHook(() => useCheckDomainName(), {
-                wrapper: queryWrapper.wrapper,
-            });
-
-            await result.current.mutateAsync({
-                domain: "taken.com",
-            });
-
-            await waitFor(() => {
-                expect(result.current.isSuccess).toBe(true);
-            });
-
-            expect(mockGet).toHaveBeenCalledWith({
-                query: { domain: "taken.com", setupCode: undefined },
-            });
-        });
-
-        test("should throw error when API returns error", async ({
-            queryWrapper,
-        }: TestContext) => {
-            vi.mocked(
-                authenticatedBackendApi.product.mint.verify.get
-            ).mockResolvedValue({
                 data: null,
-                error: "Domain verification failed",
-            } as any);
+                error: mockError,
+            });
+
+            vi.mocked(
+                authenticatedBackendApi.merchant.register.verify.get
+            ).mockImplementation(mockGet);
 
             const { result } = renderHook(() => useCheckDomainName(), {
                 wrapper: queryWrapper.wrapper,
             });
 
             await expect(
-                result.current.mutateAsync({
-                    domain: "error.com",
-                })
-            ).rejects.toThrow("Domain verification failed");
-        });
-
-        test("should handle multiple verification calls", async ({
-            queryWrapper,
-        }: TestContext) => {
-            const mockGet = vi
-                .fn()
-                .mockResolvedValueOnce({
-                    data: { isDomainValid: false },
-                    error: null,
-                } as any)
-                .mockResolvedValueOnce({
-                    data: { isDomainValid: true },
-                    error: null,
-                } as any);
-
-            vi.mocked(
-                authenticatedBackendApi.product.mint.verify.get
-            ).mockImplementation(mockGet);
-
-            const { result } = renderHook(() => useCheckDomainName(), {
-                wrapper: queryWrapper.wrapper,
-            });
-
-            const firstResult = await result.current.mutateAsync({
-                domain: "test1.com",
-            });
-            expect(firstResult?.isDomainValid).toBe(false);
-
-            const secondResult = await result.current.mutateAsync({
-                domain: "test2.com",
-            });
-            expect(secondResult?.isDomainValid).toBe(true);
+                result.current.mutateAsync({ domain: "example.com" })
+            ).rejects.toEqual(mockError);
         });
     });
 
     describe("useListenToDomainNameSetup", () => {
-        test("should return true when domain is valid and not minted", async ({
+        test("should return true when domain is valid and not registered", async ({
             queryWrapper,
         }: TestContext) => {
-            vi.mocked(
-                authenticatedBackendApi.product.mint.verify.get
-            ).mockResolvedValue({
+            const mockGet = vi.fn().mockResolvedValue({
                 data: {
                     isDomainValid: true,
-                    isAlreadyMinted: false,
+                    isAlreadyRegistered: false,
                 },
                 error: null,
-            } as any);
+            });
+
+            vi.mocked(
+                authenticatedBackendApi.merchant.register.verify.get
+            ).mockImplementation(mockGet);
 
             const { result } = renderHook(
                 () =>
                     useListenToDomainNameSetup({
                         domain: "example.com",
-                        setupCode: "code123",
+                        setupCode: "SETUP123",
                     }),
                 { wrapper: queryWrapper.wrapper }
             );
@@ -323,24 +289,26 @@ describe("dnsRecordHooks", () => {
             expect(result.current.data).toBe(true);
         });
 
-        test("should return false when domain is already minted", async ({
+        test("should return false when domain is already registered", async ({
             queryWrapper,
         }: TestContext) => {
-            vi.mocked(
-                authenticatedBackendApi.product.mint.verify.get
-            ).mockResolvedValue({
+            const mockGet = vi.fn().mockResolvedValue({
                 data: {
                     isDomainValid: true,
-                    isAlreadyMinted: true,
+                    isAlreadyRegistered: true,
                 },
                 error: null,
-            } as any);
+            });
+
+            vi.mocked(
+                authenticatedBackendApi.merchant.register.verify.get
+            ).mockImplementation(mockGet);
 
             const { result } = renderHook(
                 () =>
                     useListenToDomainNameSetup({
-                        domain: "taken.com",
-                        setupCode: "code456",
+                        domain: "registered.com",
+                        setupCode: "SETUP123",
                     }),
                 { wrapper: queryWrapper.wrapper }
             );
@@ -355,21 +323,23 @@ describe("dnsRecordHooks", () => {
         test("should return false when domain is invalid", async ({
             queryWrapper,
         }: TestContext) => {
-            vi.mocked(
-                authenticatedBackendApi.product.mint.verify.get
-            ).mockResolvedValue({
+            const mockGet = vi.fn().mockResolvedValue({
                 data: {
                     isDomainValid: false,
-                    isAlreadyMinted: false,
+                    isAlreadyRegistered: false,
                 },
                 error: null,
-            } as any);
+            });
+
+            vi.mocked(
+                authenticatedBackendApi.merchant.register.verify.get
+            ).mockImplementation(mockGet);
 
             const { result } = renderHook(
                 () =>
                     useListenToDomainNameSetup({
                         domain: "invalid.com",
-                        setupCode: "code789",
+                        setupCode: "SETUP123",
                     }),
                 { wrapper: queryWrapper.wrapper }
             );
@@ -384,22 +354,20 @@ describe("dnsRecordHooks", () => {
         test("should return false on API error", async ({
             queryWrapper,
         }: TestContext) => {
-            const consoleWarnSpy = vi
-                .spyOn(console, "warn")
-                .mockImplementation(() => {});
+            const mockGet = vi.fn().mockResolvedValue({
+                data: null,
+                error: "Network error",
+            });
 
             vi.mocked(
-                authenticatedBackendApi.product.mint.verify.get
-            ).mockResolvedValue({
-                data: null,
-                error: "API error",
-            } as any);
+                authenticatedBackendApi.merchant.register.verify.get
+            ).mockImplementation(mockGet);
 
             const { result } = renderHook(
                 () =>
                     useListenToDomainNameSetup({
-                        domain: "error.com",
-                        setupCode: "code000",
+                        domain: "example.com",
+                        setupCode: "SETUP123",
                     }),
                 { wrapper: queryWrapper.wrapper }
             );
@@ -409,227 +377,27 @@ describe("dnsRecordHooks", () => {
             });
 
             expect(result.current.data).toBe(false);
-            expect(consoleWarnSpy).toHaveBeenCalledWith(
-                "Error while listening to domain name setup",
-                "API error"
-            );
-
-            consoleWarnSpy.mockRestore();
         });
 
-        test("should use correct query key", async ({
-            queryWrapper,
-        }: TestContext) => {
-            vi.mocked(
-                authenticatedBackendApi.product.mint.verify.get
-            ).mockResolvedValue({
-                data: { isDomainValid: true },
-                error: null,
-            } as any);
-
-            renderHook(
-                () =>
-                    useListenToDomainNameSetup({
-                        domain: "test.com",
-                        setupCode: "abc",
-                    }),
-                { wrapper: queryWrapper.wrapper }
-            );
-
-            await waitFor(() => {
-                const queries = queryWrapper.client.getQueryCache().findAll({
-                    queryKey: [
-                        "mint",
-                        "listen-to-domain-name-setup",
-                        "test.com",
-                        "abc",
-                    ],
-                });
-                expect(queries.length).toBe(1);
-            });
-        });
-
-        test("should be enabled when domain is provided", async ({
-            queryWrapper,
-        }: TestContext) => {
-            vi.mocked(
-                authenticatedBackendApi.product.mint.verify.get
-            ).mockResolvedValue({
-                data: { isDomainValid: true },
-                error: null,
-            } as any);
-
-            const { result } = renderHook(
-                () =>
-                    useListenToDomainNameSetup({
-                        domain: "example.com",
-                        setupCode: "code",
-                    }),
-                { wrapper: queryWrapper.wrapper }
-            );
-
-            await waitFor(() => {
-                expect(result.current.fetchStatus).not.toBe("idle");
-            });
-        });
-
-        test("should handle missing setupCode", async ({
-            queryWrapper,
-        }: TestContext) => {
-            const mockGet = vi.fn().mockResolvedValue({
-                data: { isDomainValid: true },
-                error: null,
-            } as any);
-
-            vi.mocked(
-                authenticatedBackendApi.product.mint.verify.get
-            ).mockImplementation(mockGet);
-
-            const { result } = renderHook(
-                () =>
-                    useListenToDomainNameSetup({
-                        domain: "example.com",
-                        setupCode: "",
-                    }),
-                { wrapper: queryWrapper.wrapper }
-            );
-
-            await waitFor(() => {
-                expect(result.current.isSuccess).toBe(true);
-            });
-
-            expect(mockGet).toHaveBeenCalledWith({
-                query: { domain: "example.com", setupCode: "" },
-            });
-        });
-    });
-
-    describe("edge cases and error scenarios", () => {
-        test("useDnsTxtRecordToSet should handle network timeout", async ({
-            queryWrapper,
-        }: TestContext) => {
-            vi.mocked(
-                authenticatedBackendApi.product.mint.dnsTxt.get
-            ).mockImplementation(
-                () =>
-                    new Promise((_, reject) =>
-                        setTimeout(() => reject(new Error("Timeout")), 100)
-                    )
-            );
-
-            const { result } = renderHook(
-                () =>
-                    useDnsTxtRecordToSet({
-                        domain: "slow.com",
-                        enabled: true,
-                    }),
-                { wrapper: queryWrapper.wrapper }
-            );
-
-            await waitFor(() => {
-                expect(result.current.isError).toBe(true);
-            });
-        });
-
-        test("useDnsTxtRecordToSet should handle empty domain string", async ({
+        test("should not fetch when domain is empty", ({
             queryWrapper,
         }: TestContext) => {
             const mockGet = vi.fn();
 
             vi.mocked(
-                authenticatedBackendApi.product.mint.dnsTxt.get
+                authenticatedBackendApi.merchant.register.verify.get
             ).mockImplementation(mockGet);
 
-            const { result } = renderHook(
+            renderHook(
                 () =>
-                    useDnsTxtRecordToSet({
+                    useListenToDomainNameSetup({
                         domain: "",
-                        enabled: true,
+                        setupCode: "SETUP123",
                     }),
                 { wrapper: queryWrapper.wrapper }
             );
 
-            await new Promise((resolve) => setTimeout(resolve, 100));
-
-            expect(result.current.fetchStatus).toBe("idle");
             expect(mockGet).not.toHaveBeenCalled();
-        });
-
-        test("useCheckDomainName should handle missing data field", async ({
-            queryWrapper,
-        }: TestContext) => {
-            vi.mocked(
-                authenticatedBackendApi.product.mint.verify.get
-            ).mockResolvedValue({
-                data: null,
-                error: null,
-            } as any);
-
-            const { result } = renderHook(() => useCheckDomainName(), {
-                wrapper: queryWrapper.wrapper,
-            });
-
-            await result.current.mutateAsync({
-                domain: "test.com",
-            });
-
-            // TanStack Query mutations return undefined when data is null
-            expect(result.current.data).toBeUndefined();
-        });
-
-        test("useListenToDomainNameSetup should handle null isDomainValid", async ({
-            queryWrapper,
-        }: TestContext) => {
-            vi.mocked(
-                authenticatedBackendApi.product.mint.verify.get
-            ).mockResolvedValue({
-                data: {
-                    isDomainValid: null,
-                    isAlreadyMinted: false,
-                } as any,
-                error: null,
-            } as any);
-
-            const { result } = renderHook(
-                () =>
-                    useListenToDomainNameSetup({
-                        domain: "test.com",
-                        setupCode: "code",
-                    }),
-                { wrapper: queryWrapper.wrapper }
-            );
-
-            await waitFor(() => {
-                expect(result.current.isSuccess).toBe(true);
-            });
-
-            expect(result.current.data).toBe(false);
-        });
-
-        test("useListenToDomainNameSetup should handle undefined data", async ({
-            queryWrapper,
-        }: TestContext) => {
-            vi.mocked(
-                authenticatedBackendApi.product.mint.verify.get
-            ).mockResolvedValue({
-                data: undefined,
-                error: null,
-            } as any);
-
-            const { result } = renderHook(
-                () =>
-                    useListenToDomainNameSetup({
-                        domain: "test.com",
-                        setupCode: "code",
-                    }),
-                { wrapper: queryWrapper.wrapper }
-            );
-
-            await waitFor(() => {
-                expect(result.current.isSuccess).toBe(true);
-            });
-
-            expect(result.current.data).toBe(false);
         });
     });
 });

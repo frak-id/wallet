@@ -1,6 +1,5 @@
 import { backendApi } from "@frak-labs/client/server";
 import { renderHook, waitFor } from "@testing-library/react";
-import type { Hex } from "viem";
 import { vi } from "vitest";
 import {
     describe,
@@ -21,14 +20,12 @@ vi.mock("@frak-labs/client/server", () => ({
     },
 }));
 
-const mockProductId =
-    "0x0000000000000000000000000000000000000000000000000000000000000001" as Hex;
 const mockAdminWallet =
-    "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd0000000000000000000000000000000000000000000000000000000000000000" as Hex;
+    "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd0000000000000000000000000000000000000000000000000000000000000000";
 
 describe("useGetAdminWallet", () => {
-    describe("fetch by product ID", () => {
-        test("should fetch admin wallet for product ID", async ({
+    describe("fetch by key", () => {
+        test("should fetch admin wallet for key", async ({
             queryWrapper,
         }: TestContext) => {
             // Mock successful API response
@@ -43,7 +40,7 @@ describe("useGetAdminWallet", () => {
             });
 
             const { result } = renderHook(
-                () => useGetAdminWallet({ productId: mockProductId }),
+                () => useGetAdminWallet({ key: "test-admin-key" }),
                 { wrapper: queryWrapper.wrapper }
             );
 
@@ -67,7 +64,7 @@ describe("useGetAdminWallet", () => {
             });
 
             const { result } = renderHook(
-                () => useGetAdminWallet({ productId: mockProductId }),
+                () => useGetAdminWallet({ key: "test-admin-key" }),
                 { wrapper: queryWrapper.wrapper }
             );
 
@@ -91,7 +88,7 @@ describe("useGetAdminWallet", () => {
             });
 
             const { result } = renderHook(
-                () => useGetAdminWallet({ productId: mockProductId }),
+                () => useGetAdminWallet({ key: "test-admin-key" }),
                 { wrapper: queryWrapper.wrapper }
             );
 
@@ -179,7 +176,7 @@ describe("useGetAdminWallet", () => {
             });
 
             const { result } = renderHook(
-                () => useGetAdminWallet({ productId: mockProductId }),
+                () => useGetAdminWallet({ key: "test-admin-key" }),
                 { wrapper: queryWrapper.wrapper }
             );
 
@@ -202,7 +199,7 @@ describe("useGetAdminWallet", () => {
             );
 
             const { result } = renderHook(
-                () => useGetAdminWallet({ productId: mockProductId }),
+                () => useGetAdminWallet({ key: "test-admin-key" }),
                 { wrapper: queryWrapper.wrapper }
             );
 
@@ -227,7 +224,7 @@ describe("useGetAdminWallet", () => {
             );
 
             const { result } = renderHook(
-                () => useGetAdminWallet({ productId: mockProductId }),
+                () => useGetAdminWallet({ key: "test-admin-key" }),
                 { wrapper: queryWrapper.wrapper }
             );
 
@@ -237,39 +234,9 @@ describe("useGetAdminWallet", () => {
     });
 
     describe("query key generation", () => {
-        test("should use product ID in query key when provided", async ({
-            queryWrapper,
-        }: TestContext) => {
-            vi.mocked(backendApi.common.adminWallet.get).mockResolvedValueOnce({
-                data: {
-                    pubKey: mockAdminWallet,
-                },
-                error: null,
-                response: {} as Response,
-                status: 200,
-                headers: {},
-            });
-
-            const { result } = renderHook(
-                () => useGetAdminWallet({ productId: mockProductId }),
-                { wrapper: queryWrapper.wrapper }
-            );
-
-            await waitFor(() => {
-                expect(result.current.isSuccess).toBe(true);
-            });
-
-            // Verify the API was called with productId
-            expect(backendApi.common.adminWallet.get).toHaveBeenCalledWith({
-                query: { productId: mockProductId },
-            });
-        });
-
         test("should use key in query key when provided", async ({
             queryWrapper,
         }: TestContext) => {
-            const mockKey = "admin-123";
-
             vi.mocked(backendApi.common.adminWallet.get).mockResolvedValueOnce({
                 data: {
                     pubKey: mockAdminWallet,
@@ -281,7 +248,7 @@ describe("useGetAdminWallet", () => {
             });
 
             const { result } = renderHook(
-                () => useGetAdminWallet({ key: mockKey }),
+                () => useGetAdminWallet({ key: "test-admin-key" }),
                 { wrapper: queryWrapper.wrapper }
             );
 
@@ -291,13 +258,11 @@ describe("useGetAdminWallet", () => {
 
             // Verify the API was called with key
             expect(backendApi.common.adminWallet.get).toHaveBeenCalledWith({
-                query: { key: mockKey },
+                query: { key: "test-admin-key" },
             });
         });
-    });
 
-    describe("query key generation", () => {
-        test("should return same data for same product ID across multiple hook instances", async ({
+        test("should return same data for same key across multiple hook instances", async ({
             queryWrapper,
         }: TestContext) => {
             vi.mocked(backendApi.common.adminWallet.get).mockResolvedValue({
@@ -312,7 +277,7 @@ describe("useGetAdminWallet", () => {
 
             // First hook instance
             const { result: result1 } = renderHook(
-                () => useGetAdminWallet({ productId: mockProductId }),
+                () => useGetAdminWallet({ key: "test-admin-key" }),
                 { wrapper: queryWrapper.wrapper }
             );
 
@@ -324,7 +289,7 @@ describe("useGetAdminWallet", () => {
 
             // Second hook instance with same productId should get same data
             const { result: result2 } = renderHook(
-                () => useGetAdminWallet({ productId: mockProductId }),
+                () => useGetAdminWallet({ key: "test-admin-key" }),
                 { wrapper: queryWrapper.wrapper }
             );
 
@@ -336,19 +301,17 @@ describe("useGetAdminWallet", () => {
             expect(result2.current.data).toBe(mockAdminWallet);
         });
 
-        test("should fetch different data for different product IDs", async ({
+        test("should fetch different data for different keys", async ({
             queryWrapper,
         }: TestContext) => {
-            const productId1 =
-                "0x0000000000000000000000000000000000000000000000000000000000000001" as Hex;
-            const productId2 =
-                "0x0000000000000000000000000000000000000000000000000000000000000002" as Hex;
+            const key1 = "admin-key-1";
+            const key2 = "admin-key-2";
             const wallet1 =
-                "0x1111111111111111111111111111111111111111000000000000000000000000000000000000000000000000000000000000" as Hex;
+                "0x1111111111111111111111111111111111111111000000000000000000000000000000000000000000000000000000000000";
             const wallet2 =
-                "0x2222222222222222222222222222222222222222000000000000000000000000000000000000000000000000000000000000" as Hex;
+                "0x2222222222222222222222222222222222222222000000000000000000000000000000000000000000000000000000000000";
 
-            // Mock different responses for different product IDs
+            // Mock different responses for different keys
             vi.mocked(backendApi.common.adminWallet.get)
                 .mockResolvedValueOnce({
                     data: { pubKey: wallet1 },
@@ -365,9 +328,9 @@ describe("useGetAdminWallet", () => {
                     headers: {},
                 });
 
-            // Fetch for first product
+            // Fetch for first key
             const { result: result1 } = renderHook(
-                () => useGetAdminWallet({ productId: productId1 }),
+                () => useGetAdminWallet({ key: key1 }),
                 { wrapper: queryWrapper.wrapper }
             );
 
@@ -377,9 +340,9 @@ describe("useGetAdminWallet", () => {
 
             expect(result1.current.data).toBe(wallet1);
 
-            // Fetch for second product
+            // Fetch for second key
             const { result: result2 } = renderHook(
-                () => useGetAdminWallet({ productId: productId2 }),
+                () => useGetAdminWallet({ key: key2 }),
                 { wrapper: queryWrapper.wrapper }
             );
 
@@ -389,7 +352,7 @@ describe("useGetAdminWallet", () => {
 
             expect(result2.current.data).toBe(wallet2);
 
-            // Different data for different IDs
+            // Different data for different keys
             expect(result1.current.data).not.toBe(result2.current.data);
         });
     });

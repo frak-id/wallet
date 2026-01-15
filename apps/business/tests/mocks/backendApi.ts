@@ -5,6 +5,26 @@
 import { vi } from "vitest";
 
 /**
+ * Mock for merchant webhook endpoints (new merchant-based API)
+ * Used by: useWebhookInteractionStatus, useWebhookInteractionSetup, useWebhookInteractionDelete
+ */
+export function mockMerchantWebhooks(options?: {
+    get?: ReturnType<typeof vi.fn>;
+    post?: ReturnType<typeof vi.fn>;
+    delete?: ReturnType<typeof vi.fn>;
+}) {
+    return {
+        webhooks: {
+            get: options?.get ?? vi.fn(),
+            post: options?.post ?? vi.fn(),
+            delete: options?.delete ?? vi.fn(),
+        },
+        // biome-ignore lint/suspicious/noExplicitAny: Mock needs any for partial type compatibility
+    } as any;
+}
+
+/**
+ * @deprecated Use mockMerchantWebhooks instead - kept for backward compatibility during migration
  * Mock for product webhook endpoints
  * Used by: useWebhookInteractionStatus, useWebhookInteractionSetup, useWebhookInteractionDelete
  */
@@ -19,39 +39,16 @@ export function mockProductWebhook(options?: {
         post?: ReturnType<typeof vi.fn>;
     };
 }) {
-    return {
-        interactionsWebhook: {
-            status: {
-                // biome-ignore lint/suspicious/noExplicitAny: Mock function needs any for type compatibility
-                get: options?.status?.get ?? (vi.fn() as any),
-            },
-            setup: {
-                // biome-ignore lint/suspicious/noExplicitAny: Mock function needs any for type compatibility
-                post: options?.setup?.post ?? (vi.fn() as any),
-            },
-            delete: {
-                // biome-ignore lint/suspicious/noExplicitAny: Mock function needs any for type compatibility
-                post: options?.delete?.post ?? (vi.fn() as any),
-            },
-        },
-        oracleWebhook: {
-            status: {
-                // biome-ignore lint/suspicious/noExplicitAny: Mock function needs any for type compatibility
-                get: vi.fn() as any,
-            },
-            setup: {
-                // biome-ignore lint/suspicious/noExplicitAny: Mock function needs any for type compatibility
-                post: vi.fn() as any,
-            },
-            delete: {
-                // biome-ignore lint/suspicious/noExplicitAny: Mock function needs any for type compatibility
-                post: vi.fn() as any,
-            },
-        },
-    };
+    // Translate old options format to new merchant webhook format
+    return mockMerchantWebhooks({
+        get: options?.status?.get,
+        post: options?.setup?.post,
+        delete: options?.delete?.post,
+    });
 }
 
 /**
+ * @deprecated Use mockMerchantWebhooks instead - kept for backward compatibility during migration
  * Mock for product oracle endpoints
  * Used by: useOracleSetupData
  */
@@ -60,36 +57,9 @@ export function mockProductOracle(options?: {
         get?: ReturnType<typeof vi.fn>;
     };
 }) {
-    return {
-        interactionsWebhook: {
-            status: {
-                // biome-ignore lint/suspicious/noExplicitAny: Mock function needs any for type compatibility
-                get: vi.fn() as any,
-            },
-            setup: {
-                // biome-ignore lint/suspicious/noExplicitAny: Mock function needs any for type compatibility
-                post: vi.fn() as any,
-            },
-            delete: {
-                // biome-ignore lint/suspicious/noExplicitAny: Mock function needs any for type compatibility
-                post: vi.fn() as any,
-            },
-        },
-        oracleWebhook: {
-            status: {
-                // biome-ignore lint/suspicious/noExplicitAny: Mock function needs any for type compatibility
-                get: options?.status?.get ?? (vi.fn() as any),
-            },
-            setup: {
-                // biome-ignore lint/suspicious/noExplicitAny: Mock function needs any for type compatibility
-                post: vi.fn() as any,
-            },
-            delete: {
-                // biome-ignore lint/suspicious/noExplicitAny: Mock function needs any for type compatibility
-                post: vi.fn() as any,
-            },
-        },
-    };
+    return mockMerchantWebhooks({
+        get: options?.status?.get,
+    });
 }
 
 /**
@@ -119,6 +89,15 @@ export function mockProductMint(options?: {
 }
 
 /**
+ * Create a base mock for authenticatedBackendApi.merchant function
+ * Returns a function that can be mocked to return different endpoint structures
+ */
+export function createMerchantMock() {
+    return vi.fn();
+}
+
+/**
+ * @deprecated Use createMerchantMock instead
  * Create a base mock for authenticatedBackendApi.product function
  * Returns a function that can be mocked to return different endpoint structures
  */
@@ -154,6 +133,7 @@ export function createFundingMock() {
  */
 export function createBackendApiMock() {
     return {
+        merchant: createMerchantMock(),
         product: createProductMock(),
         roles: createRolesMock(),
         funding: createFundingMock(),
@@ -161,6 +141,21 @@ export function createBackendApiMock() {
 }
 
 /**
+ * Helper to create a merchant mock that returns webhook endpoints
+ * Reduces boilerplate in webhook-related tests
+ */
+export function setupMerchantWebhookMock(options?: {
+    get?: ReturnType<typeof vi.fn>;
+    post?: ReturnType<typeof vi.fn>;
+    delete?: ReturnType<typeof vi.fn>;
+}) {
+    const merchantMock = createMerchantMock();
+    merchantMock.mockReturnValue(mockMerchantWebhooks(options));
+    return merchantMock;
+}
+
+/**
+ * @deprecated Use setupMerchantWebhookMock instead
  * Helper to create a product mock that returns webhook endpoints
  * Reduces boilerplate in webhook-related tests
  */
@@ -175,12 +170,19 @@ export function setupWebhookProductMock(options?: {
         post?: ReturnType<typeof vi.fn>;
     };
 }) {
-    const productMock = createProductMock();
-    productMock.mockReturnValue(mockProductWebhook(options));
-    return productMock;
+    const merchantMock = createMerchantMock();
+    merchantMock.mockReturnValue(
+        mockMerchantWebhooks({
+            get: options?.status?.get,
+            post: options?.setup?.post,
+            delete: options?.delete?.post,
+        })
+    );
+    return merchantMock;
 }
 
 /**
+ * @deprecated Use setupMerchantWebhookMock instead
  * Helper to create a product mock that returns oracle endpoints
  */
 export function setupOracleProductMock(options?: {
@@ -188,9 +190,13 @@ export function setupOracleProductMock(options?: {
         get?: ReturnType<typeof vi.fn>;
     };
 }) {
-    const productMock = createProductMock();
-    productMock.mockReturnValue(mockProductOracle(options));
-    return productMock;
+    const merchantMock = createMerchantMock();
+    merchantMock.mockReturnValue(
+        mockMerchantWebhooks({
+            get: options?.status?.get,
+        })
+    );
+    return merchantMock;
 }
 
 /**

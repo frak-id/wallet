@@ -8,6 +8,7 @@ export const Route = createFileRoute("/embedded/_layout/create-campaign")({
         const n = search.n as string | undefined;
         const bid = search.bid as string | undefined;
         const d = search.d as string | undefined;
+        const mid = search.mid as string | undefined;
         const cac = search.cac as string | undefined;
         const r = search.r as string | undefined;
 
@@ -21,6 +22,7 @@ export const Route = createFileRoute("/embedded/_layout/create-campaign")({
             n: n ?? "",
             bid: bid ?? "",
             d: d ?? "",
+            mid: mid ?? "",
             cac: cac ?? "",
             r: r ?? "",
             sc,

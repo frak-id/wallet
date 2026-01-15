@@ -4,7 +4,7 @@ import { readContract } from "viem/actions";
 import { vi } from "vitest";
 import { authenticatedBackendApi } from "@/context/api/backendClient";
 import { useGetAdminWallet } from "@/module/common/hook/useGetAdminWallet";
-import { mockProductOracle } from "@/tests/mocks/backendApi";
+import { mockMerchantWebhooks } from "@/tests/mocks/backendApi";
 import {
     createMockAddress,
     describe,
@@ -22,7 +22,7 @@ vi.mock("viem/actions", () => ({
 // Mock business API
 vi.mock("@/context/api/backendClient", () => ({
     authenticatedBackendApi: {
-        product: vi.fn(),
+        merchant: vi.fn(),
     },
 }));
 
@@ -32,6 +32,7 @@ vi.mock("@/module/common/hook/useGetAdminWallet", () => ({
 }));
 
 describe("useOracleSetupData", () => {
+    const mockMerchantId = "test-merchant-uuid-123";
     const mockProductId = createMockAddress("product") as Hex;
     const mockOracleUpdater = createMockAddress("oracle-updater");
 
@@ -48,20 +49,22 @@ describe("useOracleSetupData", () => {
                 url: "https://webhook.example.com",
             };
 
-            vi.mocked(authenticatedBackendApi.product).mockReturnValue(
-                mockProductOracle({
-                    status: {
-                        get: vi.fn().mockResolvedValue({
-                            data: mockWebhookStatus,
-                        }),
-                    },
+            vi.mocked(authenticatedBackendApi.merchant).mockReturnValue(
+                mockMerchantWebhooks({
+                    get: vi.fn().mockResolvedValue({
+                        data: mockWebhookStatus,
+                    }),
                 })
             );
 
             vi.mocked(readContract).mockResolvedValue(true);
 
             const { result } = renderHook(
-                () => useOracleSetupData({ productId: mockProductId }),
+                () =>
+                    useOracleSetupData({
+                        merchantId: mockMerchantId,
+                        productId: mockProductId,
+                    }),
                 { wrapper: queryWrapper.wrapper }
             );
 
@@ -84,20 +87,22 @@ describe("useOracleSetupData", () => {
                 data: mockOracleUpdater,
             } as any);
 
-            vi.mocked(authenticatedBackendApi.product).mockReturnValue(
-                mockProductOracle({
-                    status: {
-                        get: vi.fn().mockResolvedValue({
-                            data: { setup: false },
-                        }),
-                    },
+            vi.mocked(authenticatedBackendApi.merchant).mockReturnValue(
+                mockMerchantWebhooks({
+                    get: vi.fn().mockResolvedValue({
+                        data: { setup: false },
+                    }),
                 })
             );
 
             vi.mocked(readContract).mockResolvedValue(false);
 
             const { result } = renderHook(
-                () => useOracleSetupData({ productId: mockProductId }),
+                () =>
+                    useOracleSetupData({
+                        merchantId: mockMerchantId,
+                        productId: mockProductId,
+                    }),
                 { wrapper: queryWrapper.wrapper }
             );
 
@@ -119,7 +124,11 @@ describe("useOracleSetupData", () => {
             } as any);
 
             const { result } = renderHook(
-                () => useOracleSetupData({ productId: mockProductId }),
+                () =>
+                    useOracleSetupData({
+                        merchantId: mockMerchantId,
+                        productId: mockProductId,
+                    }),
                 { wrapper: queryWrapper.wrapper }
             );
 
@@ -136,7 +145,11 @@ describe("useOracleSetupData", () => {
             } as any);
 
             const { result, rerender } = renderHook(
-                () => useOracleSetupData({ productId: mockProductId }),
+                () =>
+                    useOracleSetupData({
+                        merchantId: mockMerchantId,
+                        productId: mockProductId,
+                    }),
                 { wrapper: queryWrapper.wrapper }
             );
 
@@ -160,18 +173,20 @@ describe("useOracleSetupData", () => {
                 data: mockOracleUpdater,
             } as any);
 
-            vi.mocked(authenticatedBackendApi.product).mockReturnValue(
-                mockProductOracle({
-                    status: {
-                        get: vi.fn().mockRejectedValue(new Error("API error")),
-                    },
+            vi.mocked(authenticatedBackendApi.merchant).mockReturnValue(
+                mockMerchantWebhooks({
+                    get: vi.fn().mockRejectedValue(new Error("API error")),
                 })
             );
 
             vi.mocked(readContract).mockResolvedValue(true);
 
             const { result } = renderHook(
-                () => useOracleSetupData({ productId: mockProductId }),
+                () =>
+                    useOracleSetupData({
+                        merchantId: mockMerchantId,
+                        productId: mockProductId,
+                    }),
                 { wrapper: queryWrapper.wrapper }
             );
 
@@ -187,13 +202,11 @@ describe("useOracleSetupData", () => {
                 data: mockOracleUpdater,
             } as any);
 
-            vi.mocked(authenticatedBackendApi.product).mockReturnValue(
-                mockProductOracle({
-                    status: {
-                        get: vi.fn().mockResolvedValue({
-                            data: { setup: false },
-                        }),
-                    },
+            vi.mocked(authenticatedBackendApi.merchant).mockReturnValue(
+                mockMerchantWebhooks({
+                    get: vi.fn().mockResolvedValue({
+                        data: { setup: false },
+                    }),
                 })
             );
 
@@ -202,7 +215,11 @@ describe("useOracleSetupData", () => {
             );
 
             const { result } = renderHook(
-                () => useOracleSetupData({ productId: mockProductId }),
+                () =>
+                    useOracleSetupData({
+                        merchantId: mockMerchantId,
+                        productId: mockProductId,
+                    }),
                 { wrapper: queryWrapper.wrapper }
             );
 

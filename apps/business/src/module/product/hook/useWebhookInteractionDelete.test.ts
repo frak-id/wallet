@@ -1,11 +1,9 @@
 import { renderHook, waitFor } from "@testing-library/react";
-import type { Hex } from "viem";
 import { vi } from "vitest";
 import { authenticatedBackendApi } from "@/context/api/backendClient";
 import { useWebhookInteractionStatus } from "@/module/product/hook/useWebhookInteractionStatus";
-import { mockProductWebhook } from "@/tests/mocks/backendApi";
+import { mockMerchantWebhooks } from "@/tests/mocks/backendApi";
 import {
-    createMockAddress,
     describe,
     expect,
     type TestContext,
@@ -16,7 +14,7 @@ import { useWebhookInteractionDelete } from "./useWebhookInteractionDelete";
 // Mock the business API
 vi.mock("@/context/api/backendClient", () => ({
     authenticatedBackendApi: {
-        product: vi.fn(),
+        merchant: vi.fn(),
     },
 }));
 
@@ -28,7 +26,7 @@ vi.mock("@/module/product/hook/useWebhookInteractionStatus", () => ({
 }));
 
 describe("useWebhookInteractionDelete", () => {
-    const mockProductId = createMockAddress("product") as Hex;
+    const mockMerchantId = "test-merchant-uuid-123";
 
     describe("successful deletion", () => {
         test("should delete webhook successfully", async ({
@@ -36,23 +34,22 @@ describe("useWebhookInteractionDelete", () => {
         }: TestContext) => {
             const mockResponse = { success: true };
 
-            vi.mocked(authenticatedBackendApi.product).mockReturnValue(
-                mockProductWebhook({
-                    delete: {
-                        post: vi.fn().mockResolvedValue({
-                            data: mockResponse,
-                            error: null,
-                        }),
-                    },
+            vi.mocked(authenticatedBackendApi.merchant).mockReturnValue(
+                mockMerchantWebhooks({
+                    delete: vi.fn().mockResolvedValue({
+                        data: mockResponse,
+                        error: null,
+                    }),
                 })
             );
 
             const { result } = renderHook(
-                () => useWebhookInteractionDelete({ productId: mockProductId }),
+                () =>
+                    useWebhookInteractionDelete({ merchantId: mockMerchantId }),
                 { wrapper: queryWrapper.wrapper }
             );
 
-            await result.current.mutateAsync({ productId: mockProductId });
+            await result.current.mutateAsync();
 
             await waitFor(() => {
                 expect(result.current.isSuccess).toBe(true);
@@ -61,33 +58,32 @@ describe("useWebhookInteractionDelete", () => {
             expect(result.current.data).toEqual(mockResponse);
         });
 
-        test("should call API with correct productId", async ({
+        test("should call API with correct merchantId", async ({
             queryWrapper,
         }: TestContext) => {
-            const postMock = vi.fn().mockResolvedValue({
+            const deleteMock = vi.fn().mockResolvedValue({
                 data: { success: true },
                 error: null,
             });
 
-            vi.mocked(authenticatedBackendApi.product).mockReturnValue(
-                mockProductWebhook({
-                    delete: {
-                        post: postMock,
-                    },
+            vi.mocked(authenticatedBackendApi.merchant).mockReturnValue(
+                mockMerchantWebhooks({
+                    delete: deleteMock,
                 })
             );
 
             const { result } = renderHook(
-                () => useWebhookInteractionDelete({ productId: mockProductId }),
+                () =>
+                    useWebhookInteractionDelete({ merchantId: mockMerchantId }),
                 { wrapper: queryWrapper.wrapper }
             );
 
-            await result.current.mutateAsync({ productId: mockProductId });
+            await result.current.mutateAsync();
 
-            expect(authenticatedBackendApi.product).toHaveBeenCalledWith({
-                productId: mockProductId,
+            expect(authenticatedBackendApi.merchant).toHaveBeenCalledWith({
+                merchantId: mockMerchantId,
             });
-            expect(postMock).toHaveBeenCalled();
+            expect(deleteMock).toHaveBeenCalled();
         });
     });
 
@@ -101,23 +97,22 @@ describe("useWebhookInteractionDelete", () => {
                 refetch: refetchMock,
             } as any);
 
-            vi.mocked(authenticatedBackendApi.product).mockReturnValue(
-                mockProductWebhook({
-                    delete: {
-                        post: vi.fn().mockResolvedValue({
-                            data: { success: true },
-                            error: null,
-                        }),
-                    },
+            vi.mocked(authenticatedBackendApi.merchant).mockReturnValue(
+                mockMerchantWebhooks({
+                    delete: vi.fn().mockResolvedValue({
+                        data: { success: true },
+                        error: null,
+                    }),
                 })
             );
 
             const { result } = renderHook(
-                () => useWebhookInteractionDelete({ productId: mockProductId }),
+                () =>
+                    useWebhookInteractionDelete({ merchantId: mockMerchantId }),
                 { wrapper: queryWrapper.wrapper }
             );
 
-            await result.current.mutateAsync({ productId: mockProductId });
+            await result.current.mutateAsync();
 
             await waitFor(() => {
                 expect(refetchMock).toHaveBeenCalled();
@@ -133,25 +128,22 @@ describe("useWebhookInteractionDelete", () => {
                 refetch: refetchMock,
             } as any);
 
-            vi.mocked(authenticatedBackendApi.product).mockReturnValue(
-                mockProductWebhook({
-                    delete: {
-                        post: vi.fn().mockResolvedValue({
-                            data: null,
-                            error: "Deletion failed",
-                        }),
-                    },
+            vi.mocked(authenticatedBackendApi.merchant).mockReturnValue(
+                mockMerchantWebhooks({
+                    delete: vi.fn().mockResolvedValue({
+                        data: null,
+                        error: "Deletion failed",
+                    }),
                 })
             );
 
             const { result } = renderHook(
-                () => useWebhookInteractionDelete({ productId: mockProductId }),
+                () =>
+                    useWebhookInteractionDelete({ merchantId: mockMerchantId }),
                 { wrapper: queryWrapper.wrapper }
             );
 
-            await expect(
-                result.current.mutateAsync({ productId: mockProductId })
-            ).rejects.toThrow();
+            await expect(result.current.mutateAsync()).rejects.toThrow();
 
             await waitFor(() => {
                 expect(refetchMock).toHaveBeenCalled();
@@ -163,48 +155,46 @@ describe("useWebhookInteractionDelete", () => {
         test("should throw error when API returns error", async ({
             queryWrapper,
         }: TestContext) => {
-            vi.mocked(authenticatedBackendApi.product).mockReturnValue(
-                mockProductWebhook({
-                    delete: {
-                        post: vi.fn().mockResolvedValue({
-                            data: null,
-                            error: "Webhook not found",
-                        }),
-                    },
+            vi.mocked(authenticatedBackendApi.merchant).mockReturnValue(
+                mockMerchantWebhooks({
+                    delete: vi.fn().mockResolvedValue({
+                        data: null,
+                        error: "Webhook not found",
+                    }),
                 })
             );
 
             const { result } = renderHook(
-                () => useWebhookInteractionDelete({ productId: mockProductId }),
+                () =>
+                    useWebhookInteractionDelete({ merchantId: mockMerchantId }),
                 { wrapper: queryWrapper.wrapper }
             );
 
-            await expect(
-                result.current.mutateAsync({ productId: mockProductId })
-            ).rejects.toThrow("Webhook not found");
+            await expect(result.current.mutateAsync()).rejects.toThrow(
+                "Webhook not found"
+            );
         });
 
         test("should handle network errors", async ({
             queryWrapper,
         }: TestContext) => {
-            vi.mocked(authenticatedBackendApi.product).mockReturnValue(
-                mockProductWebhook({
-                    delete: {
-                        post: vi
-                            .fn()
-                            .mockRejectedValue(new Error("Network error")),
-                    },
+            vi.mocked(authenticatedBackendApi.merchant).mockReturnValue(
+                mockMerchantWebhooks({
+                    delete: vi
+                        .fn()
+                        .mockRejectedValue(new Error("Network error")),
                 })
             );
 
             const { result } = renderHook(
-                () => useWebhookInteractionDelete({ productId: mockProductId }),
+                () =>
+                    useWebhookInteractionDelete({ merchantId: mockMerchantId }),
                 { wrapper: queryWrapper.wrapper }
             );
 
-            await expect(
-                result.current.mutateAsync({ productId: mockProductId })
-            ).rejects.toThrow("Network error");
+            await expect(result.current.mutateAsync()).rejects.toThrow(
+                "Network error"
+            );
         });
     });
 });

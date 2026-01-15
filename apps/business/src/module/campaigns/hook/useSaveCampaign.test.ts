@@ -32,6 +32,7 @@ describe("useSaveCampaign", () => {
     const mockCampaign: Campaign = {
         title: "Test Campaign",
         type: "awareness",
+        merchantId: "mock-merchant-id",
         productId: createMockAddress("product"),
         specialCategories: [],
         budget: {

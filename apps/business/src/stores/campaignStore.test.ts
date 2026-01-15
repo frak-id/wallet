@@ -10,6 +10,7 @@ import type { Campaign } from "@/types/Campaign";
 const mockCampaign: Campaign = {
     title: "Test Campaign",
     type: "awareness",
+    merchantId: "mock-merchant-id",
     productId: createMockAddress("product"),
     specialCategories: [],
     budget: {

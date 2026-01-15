@@ -11,12 +11,15 @@ import { viemClient } from "@/context/blockchain/provider";
 export function useProductInteractionContract({
     productId,
 }: {
-    productId: Hex;
+    productId?: Hex;
 }) {
     return useQuery({
         enabled: !!productId,
-        queryKey: ["product", "interaction-contract", productId],
+        queryKey: ["product", "interaction-contract", productId ?? "none"],
         queryFn: async () => {
+            if (!productId) {
+                return { interactionContract: undefined };
+            }
             // Fetch the on chain interaction contract
             const [, interactionContract] = await tryit(() =>
                 readContract(viemClient, {

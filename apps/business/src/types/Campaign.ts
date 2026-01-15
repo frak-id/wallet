@@ -45,7 +45,16 @@ export type CampaignTrigger =
 export type Campaign = {
     id?: string;
     title: string;
-    productId: Hex | "";
+    /**
+     * The merchant this campaign belongs to (UUID from backend)
+     */
+    merchantId: string;
+    /**
+     * On-chain product identifier (keccak256 hash of domain)
+     * Used for blockchain operations. Can be fetched from backend.
+     * @deprecated Use merchantId for new integrations, productId only for on-chain calls
+     */
+    productId?: Hex;
     type: Goal | "" | undefined;
     specialCategories: SpecialCategory[];
     // The distribution cap of the campaign

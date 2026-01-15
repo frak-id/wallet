@@ -7,6 +7,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import type { Hex } from "viem";
+// Note: Hex type is still needed for the productId optional prop
 import { generatePrivateKey } from "viem/accounts";
 import { authenticatedBackendApi } from "@/context/api/backendClient";
 import { Badge } from "@/module/common/component/Badge";
@@ -17,9 +18,16 @@ import { useOracleSetupData } from "../../hook/useOracleSetupData";
 
 type OraclePlatform = "shopify" | "woocommerce" | "custom" | "internal";
 
-export function PurchaseTrackerWebhook({ productId }: { productId: Hex }) {
+export function PurchaseTrackerWebhook({
+    merchantId,
+    productId,
+}: {
+    merchantId: string;
+    productId?: Hex;
+}) {
     // Fetch some data about the current oracle setup
     const { data: oracleSetupData } = useOracleSetupData({
+        merchantId,
         productId,
     });
 
@@ -35,8 +43,8 @@ export function PurchaseTrackerWebhook({ productId }: { productId: Hex }) {
     const [currentPlatform, setCurrentPlatform] =
         useState<OraclePlatform>(initialState);
     const webhookUrl = useMemo(() => {
-        return `${process.env.BACKEND_URL}/ext/products/${productId}/webhook/oracle/${currentPlatform}`;
-    }, [productId, currentPlatform]);
+        return `${process.env.BACKEND_URL}/ext/merchant/${merchantId}/webhook/purchases/${currentPlatform}`;
+    }, [merchantId, currentPlatform]);
 
     if (!oracleSetupData) {
         return <Spinner />;
@@ -82,7 +90,7 @@ export function PurchaseTrackerWebhook({ productId }: { productId: Hex }) {
                     <PlatformRegistration
                         platform={currentPlatform}
                         webhookUrl={webhookUrl}
-                        productId={productId}
+                        merchantId={merchantId}
                         currentSigninKey={
                             oracleSetupData.webhookStatus?.setup
                                 ? oracleSetupData.webhookStatus.webhookSigninKey
@@ -166,18 +174,18 @@ function PlatformSelector({
 function PlatformRegistration({
     platform,
     webhookUrl,
-    productId,
+    merchantId,
     currentSigninKey,
 }: {
     platform: OraclePlatform;
     webhookUrl: string;
-    productId: Hex;
+    merchantId: string;
     currentSigninKey?: string;
 }) {
     if (platform === "woocommerce") {
         return (
             <WooCommerceRegistrationForm
-                productId={productId}
+                merchantId={merchantId}
                 webhookUrl={webhookUrl}
                 currentSigninKey={currentSigninKey}
             />
@@ -187,7 +195,7 @@ function PlatformRegistration({
     if (platform === "custom") {
         return (
             <CustomRegistrationForm
-                productId={productId}
+                merchantId={merchantId}
                 webhookUrl={webhookUrl}
                 currentSigninKey={currentSigninKey}
             />
@@ -200,7 +208,7 @@ function PlatformRegistration({
 
     return (
         <ShopifyRegistrationForm
-            productId={productId}
+            merchantId={merchantId}
             webhookUrl={webhookUrl}
             currentSigninKey={currentSigninKey}
         />
@@ -208,16 +216,16 @@ function PlatformRegistration({
 }
 
 function CustomRegistrationForm({
-    productId,
+    merchantId,
     webhookUrl,
     currentSigninKey,
 }: {
-    productId: Hex;
+    merchantId: string;
     webhookUrl: string;
     currentSigninKey?: string;
 }) {
     const { mutate: setupWebhook, isPending } = useWebhookSetup({
-        productId,
+        merchantId,
     });
 
     // The key that will be used for the woocommerce webhook
@@ -268,16 +276,16 @@ function CustomRegistrationForm({
 }
 
 function WooCommerceRegistrationForm({
-    productId,
+    merchantId,
     webhookUrl,
     currentSigninKey,
 }: {
-    productId: Hex;
+    merchantId: string;
     webhookUrl: string;
     currentSigninKey?: string;
 }) {
     const { mutate: setupWebhook, isPending } = useWebhookSetup({
-        productId,
+        merchantId,
     });
 
     // The key that will be used for the woocommerce webhook
@@ -327,15 +335,15 @@ function WooCommerceRegistrationForm({
 }
 
 function ShopifyRegistrationForm({
-    productId,
+    merchantId,
     currentSigninKey,
     webhookUrl,
 }: {
-    productId: Hex;
+    merchantId: string;
     currentSigninKey?: string;
     webhookUrl?: string;
 }) {
-    const { mutate: setupWebhook, isPending } = useWebhookSetup({ productId });
+    const { mutate: setupWebhook, isPending } = useWebhookSetup({ merchantId });
 
     const [error, setError] = useState<string | undefined>();
 
@@ -417,10 +425,10 @@ function InternalRegistrationForm() {
     );
 }
 
-function useWebhookSetup({ productId }: { productId: Hex }) {
-    const { refetch } = useOracleSetupData({ productId });
+function useWebhookSetup({ merchantId }: { merchantId: string }) {
+    const { refetch } = useOracleSetupData({ merchantId });
     return useMutation({
-        mutationKey: ["product", "oracle-webhook", "setup", productId],
+        mutationKey: ["merchant", "webhook", "setup", merchantId],
         mutationFn: async ({
             webhookKey,
             platform,
@@ -429,8 +437,8 @@ function useWebhookSetup({ productId }: { productId: Hex }) {
             platform: OraclePlatform;
         }) => {
             await authenticatedBackendApi
-                .product({ productId })
-                .oracleWebhook.setup.post({
+                .merchant({ merchantId })
+                .webhooks.post({
                     hookSignatureKey: webhookKey,
                     platform,
                 });

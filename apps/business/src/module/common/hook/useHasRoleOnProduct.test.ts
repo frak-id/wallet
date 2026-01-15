@@ -9,87 +9,71 @@ import {
     type TestContext,
     test,
 } from "@/tests/vitest-fixtures";
-import { useHasRoleOnProduct } from "./useHasRoleOnProduct";
+import {
+    useHasRoleOnMerchant,
+    useHasRoleOnProduct,
+} from "./useHasRoleOnProduct";
 
 // Mock the business API
 vi.mock("@/context/api/backendClient", () => ({
     authenticatedBackendApi: {
-        roles: {
+        merchant: vi.fn(() => ({
             get: vi.fn(),
-        },
+        })),
     },
 }));
 
-// Mock the Frak SDK wallet status hook
-vi.mock("@frak-labs/react-sdk", () => ({
-    useWalletStatus: vi.fn(() => ({
-        data: {
-            wallet: createMockAddress("sdk-wallet"),
-            status: "connected",
-        },
-    })),
-}));
-
+const mockMerchantId = "mock-merchant-id";
 const mockProductId = createMockAddress("product") as Hex;
-const mockWallet = createMockAddress("wallet");
 
-describe("useHasRoleOnProduct", () => {
+describe("useHasRoleOnMerchant", () => {
     describe("default state", () => {
-        test("should return default roles when no data", ({
+        test("should return default roles when loading", ({
             queryWrapper,
         }: TestContext) => {
             // Mock API to never resolve (simulating loading state)
-            vi.mocked(authenticatedBackendApi.roles.get).mockImplementation(
+            const mockGet = vi.fn(
                 () =>
                     new Promise(() => {
                         /* never resolves */
                     })
             );
+            vi.mocked(authenticatedBackendApi.merchant).mockReturnValue({
+                get: mockGet,
+            } as any);
 
             const { result } = renderHook(
-                () =>
-                    useHasRoleOnProduct({
-                        productId: mockProductId,
-                        wallet: mockWallet,
-                    }),
+                () => useHasRoleOnMerchant({ merchantId: mockMerchantId }),
                 { wrapper: queryWrapper.wrapper }
             );
 
             // Should have default values
-            expect(result.current.roles).toBe(0n);
+            expect(result.current.role).toBe("none");
             expect(result.current.isOwner).toBe(false);
-            expect(result.current.isAdministrator).toBe(false);
-            expect(result.current.isInteractionManager).toBe(false);
-            expect(result.current.isCampaignManager).toBe(false);
+            expect(result.current.isAdmin).toBe(false);
+            expect(result.current.hasAccess).toBe(false);
             expect(result.current.rolesReady).toBe(false);
         });
     });
 
-    describe("with explicit wallet", () => {
-        test("should fetch roles for specific wallet", async ({
+    describe("with owner role", () => {
+        test("should return owner access when merchant role is owner", async ({
             queryWrapper,
         }: TestContext) => {
             // Mock successful API response with owner role
-            vi.mocked(authenticatedBackendApi.roles.get).mockResolvedValueOnce({
+            const mockGet = vi.fn().mockResolvedValueOnce({
                 data: {
-                    roles: "0x1" as `0x${string}`,
-                    isOwner: true,
-                    isAdministrator: true,
-                    isInteractionManager: true,
-                    isCampaignManager: true,
+                    id: mockMerchantId,
+                    role: "owner",
                 },
                 error: null,
-                response: {} as Response,
-                status: 200,
-                headers: {},
             });
+            vi.mocked(authenticatedBackendApi.merchant).mockReturnValue({
+                get: mockGet,
+            } as any);
 
             const { result } = renderHook(
-                () =>
-                    useHasRoleOnProduct({
-                        productId: mockProductId,
-                        wallet: mockWallet,
-                    }),
+                () => useHasRoleOnMerchant({ merchantId: mockMerchantId }),
                 { wrapper: queryWrapper.wrapper }
             );
 
@@ -97,36 +81,35 @@ describe("useHasRoleOnProduct", () => {
                 expect(result.current.rolesReady).toBe(true);
             });
 
+            expect(result.current.role).toBe("owner");
             expect(result.current.isOwner).toBe(true);
+            expect(result.current.isAdmin).toBe(false);
+            expect(result.current.hasAccess).toBe(true);
+            // Legacy fields
             expect(result.current.isAdministrator).toBe(true);
             expect(result.current.isInteractionManager).toBe(true);
             expect(result.current.isCampaignManager).toBe(true);
         });
+    });
 
-        test("should handle wallet with no roles", async ({
+    describe("with admin role", () => {
+        test("should return admin access when merchant role is admin", async ({
             queryWrapper,
         }: TestContext) => {
-            // Mock response with no roles
-            vi.mocked(authenticatedBackendApi.roles.get).mockResolvedValueOnce({
+            // Mock successful API response with admin role
+            const mockGet = vi.fn().mockResolvedValueOnce({
                 data: {
-                    roles: "0x0" as `0x${string}`,
-                    isOwner: false,
-                    isAdministrator: false,
-                    isInteractionManager: false,
-                    isCampaignManager: false,
+                    id: mockMerchantId,
+                    role: "admin",
                 },
                 error: null,
-                response: {} as Response,
-                status: 200,
-                headers: {},
             });
+            vi.mocked(authenticatedBackendApi.merchant).mockReturnValue({
+                get: mockGet,
+            } as any);
 
             const { result } = renderHook(
-                () =>
-                    useHasRoleOnProduct({
-                        productId: mockProductId,
-                        wallet: mockWallet,
-                    }),
+                () => useHasRoleOnMerchant({ merchantId: mockMerchantId }),
                 { wrapper: queryWrapper.wrapper }
             );
 
@@ -134,74 +117,35 @@ describe("useHasRoleOnProduct", () => {
                 expect(result.current.rolesReady).toBe(true);
             });
 
-            expect(result.current.roles).toBe("0x0");
+            expect(result.current.role).toBe("admin");
             expect(result.current.isOwner).toBe(false);
-            expect(result.current.isAdministrator).toBe(false);
-        });
-
-        test("should handle partial roles (campaign manager only)", async ({
-            queryWrapper,
-        }: TestContext) => {
-            // Mock response with only campaign manager role
-            vi.mocked(authenticatedBackendApi.roles.get).mockResolvedValueOnce({
-                data: {
-                    roles: "0x8" as `0x${string}`,
-                    isOwner: false,
-                    isAdministrator: false,
-                    isInteractionManager: false,
-                    isCampaignManager: true,
-                },
-                error: null,
-                response: {} as Response,
-                status: 200,
-                headers: {},
-            });
-
-            const { result } = renderHook(
-                () =>
-                    useHasRoleOnProduct({
-                        productId: mockProductId,
-                        wallet: mockWallet,
-                    }),
-                { wrapper: queryWrapper.wrapper }
-            );
-
-            await waitFor(() => {
-                expect(result.current.rolesReady).toBe(true);
-            });
-
+            expect(result.current.isAdmin).toBe(true);
+            expect(result.current.hasAccess).toBe(true);
+            // Legacy fields
+            expect(result.current.isAdministrator).toBe(true);
+            expect(result.current.isInteractionManager).toBe(true);
             expect(result.current.isCampaignManager).toBe(true);
-            expect(result.current.isOwner).toBe(false);
-            expect(result.current.isAdministrator).toBe(false);
-            expect(result.current.isInteractionManager).toBe(false);
         });
     });
 
-    describe("with Frak wallet (no explicit wallet)", () => {
-        test("should use Frak wallet when no wallet provided", async ({
+    describe("with no role", () => {
+        test("should return no access when merchant role is none", async ({
             queryWrapper,
         }: TestContext) => {
-            // Mock successful API response
-            vi.mocked(authenticatedBackendApi.roles.get).mockResolvedValueOnce({
+            // Mock successful API response with no role
+            const mockGet = vi.fn().mockResolvedValueOnce({
                 data: {
-                    roles: "0x2" as `0x${string}`,
-                    isOwner: false,
-                    isAdministrator: true,
-                    isInteractionManager: false,
-                    isCampaignManager: false,
+                    id: mockMerchantId,
+                    role: "none",
                 },
                 error: null,
-                response: {} as Response,
-                status: 200,
-                headers: {},
             });
+            vi.mocked(authenticatedBackendApi.merchant).mockReturnValue({
+                get: mockGet,
+            } as any);
 
             const { result } = renderHook(
-                () =>
-                    useHasRoleOnProduct({
-                        productId: mockProductId,
-                        // No wallet parameter - should use Frak wallet
-                    }),
+                () => useHasRoleOnMerchant({ merchantId: mockMerchantId }),
                 { wrapper: queryWrapper.wrapper }
             );
 
@@ -209,30 +153,32 @@ describe("useHasRoleOnProduct", () => {
                 expect(result.current.rolesReady).toBe(true);
             });
 
-            expect(result.current.isAdministrator).toBe(true);
+            expect(result.current.role).toBe("none");
             expect(result.current.isOwner).toBe(false);
+            expect(result.current.isAdmin).toBe(false);
+            expect(result.current.hasAccess).toBe(false);
+            // Legacy fields
+            expect(result.current.isAdministrator).toBe(false);
+            expect(result.current.isInteractionManager).toBe(false);
+            expect(result.current.isCampaignManager).toBe(false);
         });
     });
 
     describe("error handling", () => {
-        test("should return default roles on API error", async ({
+        test("should return default access on API error", async ({
             queryWrapper,
         }: TestContext) => {
             // Mock API error
-            vi.mocked(authenticatedBackendApi.roles.get).mockResolvedValueOnce({
+            const mockGet = vi.fn().mockResolvedValueOnce({
                 data: null,
-                error: { status: 400, value: "Network error" },
-                response: {} as Response,
-                status: 400,
-                headers: {},
+                error: "Network error",
             });
+            vi.mocked(authenticatedBackendApi.merchant).mockReturnValue({
+                get: mockGet,
+            } as any);
 
             const { result } = renderHook(
-                () =>
-                    useHasRoleOnProduct({
-                        productId: mockProductId,
-                        wallet: mockWallet,
-                    }),
+                () => useHasRoleOnMerchant({ merchantId: mockMerchantId }),
                 { wrapper: queryWrapper.wrapper }
             );
 
@@ -240,196 +186,51 @@ describe("useHasRoleOnProduct", () => {
                 expect(result.current.rolesReady).toBe(true);
             });
 
-            // Should fall back to default roles
-            expect(result.current.roles).toBe(0n);
-            expect(result.current.isOwner).toBe(false);
-            expect(result.current.isAdministrator).toBe(false);
-        });
-
-        test("should handle undefined data gracefully", async ({
-            queryWrapper,
-        }: TestContext) => {
-            // Mock response with undefined data
-            vi.mocked(authenticatedBackendApi.roles.get).mockResolvedValueOnce({
-                data: undefined as any,
-                error: null,
-                response: {} as Response,
-                status: 200,
-                headers: {},
-            });
-
-            const { result } = renderHook(
-                () =>
-                    useHasRoleOnProduct({
-                        productId: mockProductId,
-                        wallet: mockWallet,
-                    }),
-                { wrapper: queryWrapper.wrapper }
-            );
-
-            await waitFor(() => {
-                expect(result.current.rolesReady).toBe(true);
-            });
-
-            // Should use default roles
-            expect(result.current.roles).toBe(0n);
+            expect(result.current.role).toBe("none");
+            expect(result.current.hasAccess).toBe(false);
         });
     });
 
-    describe("refresh functionality", () => {
-        test("should provide refresh function", async ({
+    describe("disabled query", () => {
+        test("should not fetch when merchantId is empty", ({
             queryWrapper,
         }: TestContext) => {
-            // Mock initial response
-            vi.mocked(authenticatedBackendApi.roles.get).mockResolvedValueOnce({
-                data: {
-                    roles: "0x0" as `0x${string}`,
-                    isOwner: false,
-                    isAdministrator: false,
-                    isInteractionManager: false,
-                    isCampaignManager: false,
-                },
-                error: null,
-                response: {} as Response,
-                status: 200,
-                headers: {},
+            const mockGet = vi.fn();
+            vi.mocked(authenticatedBackendApi.merchant).mockReturnValue({
+                get: mockGet,
+            } as any);
+
+            renderHook(() => useHasRoleOnMerchant({ merchantId: "" }), {
+                wrapper: queryWrapper.wrapper,
             });
 
-            const { result } = renderHook(
-                () =>
-                    useHasRoleOnProduct({
-                        productId: mockProductId,
-                        wallet: mockWallet,
-                    }),
-                { wrapper: queryWrapper.wrapper }
-            );
-
-            await waitFor(() => {
-                expect(result.current.rolesReady).toBe(true);
-            });
-
-            expect(result.current.refresh).toBeDefined();
-            expect(typeof result.current.refresh).toBe("function");
-        });
-
-        test("should refetch roles when refresh is called", async ({
-            queryWrapper,
-        }: TestContext) => {
-            // Mock initial response with no roles
-            vi.mocked(authenticatedBackendApi.roles.get).mockResolvedValueOnce({
-                data: {
-                    roles: "0x0" as `0x${string}`,
-                    isOwner: false,
-                    isAdministrator: false,
-                    isInteractionManager: false,
-                    isCampaignManager: false,
-                },
-                error: null,
-                response: {} as Response,
-                status: 200,
-                headers: {},
-            });
-
-            const { result } = renderHook(
-                () =>
-                    useHasRoleOnProduct({
-                        productId: mockProductId,
-                        wallet: mockWallet,
-                    }),
-                { wrapper: queryWrapper.wrapper }
-            );
-
-            await waitFor(() => {
-                expect(result.current.rolesReady).toBe(true);
-            });
-
-            expect(result.current.isAdministrator).toBe(false);
-
-            // Mock updated response with admin role
-            vi.mocked(authenticatedBackendApi.roles.get).mockResolvedValueOnce({
-                data: {
-                    roles: "0x2" as `0x${string}`,
-                    isOwner: false,
-                    isAdministrator: true,
-                    isInteractionManager: false,
-                    isCampaignManager: false,
-                },
-                error: null,
-                response: {} as Response,
-                status: 200,
-                headers: {},
-            });
-
-            // Call refresh
-            await result.current.refresh();
-
-            await waitFor(() => {
-                expect(result.current.isAdministrator).toBe(true);
-            });
+            // Query should not be called when merchantId is empty
+            expect(mockGet).not.toHaveBeenCalled();
         });
     });
+});
 
-    describe("query key changes", () => {
-        test("should refetch when productId changes", async ({
-            queryWrapper,
-        }: TestContext) => {
-            const productId1 = createMockAddress("product1") as Hex;
-            const productId2 = createMockAddress("product2") as Hex;
+describe("useHasRoleOnProduct (deprecated stub)", () => {
+    test("should return static admin access", () => {
+        const { result } = renderHook(() =>
+            useHasRoleOnProduct({ productId: mockProductId })
+        );
 
-            // Mock first product response
-            vi.mocked(authenticatedBackendApi.roles.get).mockResolvedValueOnce({
-                data: {
-                    roles: "0x1" as `0x${string}`,
-                    isOwner: true,
-                    isAdministrator: true,
-                    isInteractionManager: true,
-                    isCampaignManager: true,
-                },
-                error: null,
-                response: {} as Response,
-                status: 200,
-                headers: {},
-            });
+        expect(result.current.rolesReady).toBe(true);
+        expect(result.current.role).toBe("admin");
+        expect(result.current.isOwner).toBe(true);
+        expect(result.current.hasAccess).toBe(true);
+        expect(result.current.isAdministrator).toBe(true);
+        expect(result.current.isInteractionManager).toBe(true);
+        expect(result.current.isCampaignManager).toBe(true);
+    });
 
-            const { result, rerender } = renderHook(
-                ({ productId }) =>
-                    useHasRoleOnProduct({
-                        productId,
-                        wallet: mockWallet,
-                    }),
-                {
-                    wrapper: queryWrapper.wrapper,
-                    initialProps: { productId: productId1 },
-                }
-            );
+    test("should provide a noop refresh function", async () => {
+        const { result } = renderHook(() =>
+            useHasRoleOnProduct({ productId: mockProductId })
+        );
 
-            await waitFor(() => {
-                expect(result.current.rolesReady).toBe(true);
-            });
-
-            expect(result.current.isOwner).toBe(true);
-
-            // Mock second product response (no roles)
-            vi.mocked(authenticatedBackendApi.roles.get).mockResolvedValueOnce({
-                data: {
-                    roles: "0x0" as `0x${string}`,
-                    isOwner: false,
-                    isAdministrator: false,
-                    isInteractionManager: false,
-                    isCampaignManager: false,
-                },
-                error: null,
-                response: {} as Response,
-                status: 200,
-                headers: {},
-            });
-
-            // Change productId
-            rerender({ productId: productId2 });
-
-            await waitFor(() => {
-                expect(result.current.isOwner).toBe(false);
-            });
-        });
+        // Should not throw
+        await expect(result.current.refresh()).resolves.toBeUndefined();
     });
 });

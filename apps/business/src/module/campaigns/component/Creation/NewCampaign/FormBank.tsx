@@ -30,7 +30,7 @@ export function FormBank() {
     const selectedBankAddress = watch("bank");
 
     const { data, isLoading } = useGetProductFunding({
-        productId: productId !== "" ? toHex(BigInt(productId)) : undefined,
+        productId: productId ? toHex(BigInt(productId)) : undefined,
     });
     const isDisabled = isLoading || !data || data.length === 0;
 

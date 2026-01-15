@@ -1,12 +1,14 @@
 import { Link } from "@tanstack/react-router";
 import { Pen, Users, WalletMinimal } from "lucide-react";
 import type { HTMLAttributes, PropsWithChildren, ReactElement } from "react";
-import type { Hex } from "viem";
 import styles from "./index.module.css";
 
 interface ProductItemProps
     extends Omit<HTMLAttributes<HTMLSpanElement>, "className"> {
-    id?: Hex;
+    /**
+     * Merchant UUID for navigation
+     */
+    merchantId?: string;
     name?: string | ReactElement<unknown>;
     domain?: string;
     showActions?: boolean;
@@ -14,7 +16,7 @@ interface ProductItemProps
 }
 
 export function ProductItem({
-    id,
+    merchantId,
     name,
     domain,
     showActions = true,
@@ -40,38 +42,38 @@ export function ProductItem({
                     <span className={styles.productItem__domain}>{domain}</span>
                 )}
             </p>
-            {showActions && <ProductActions id={id} />}
+            {showActions && <ProductActions merchantId={merchantId} />}
         </span>
     );
 }
 
-function ProductActions({ id }: { id?: Hex }) {
-    if (!id) return null;
+function ProductActions({ merchantId }: { merchantId?: string }) {
+    if (!merchantId) return null;
 
     return (
         <ul className={styles.productItem__actions}>
             <li>
                 <Link
-                    to="/product/$id/funding"
-                    params={{ id }}
-                    title={"Manage the product balance"}
+                    to="/merchant/$id/funding"
+                    params={{ id: merchantId }}
+                    title={"Manage the merchant balance"}
                 >
                     <WalletMinimal />
                 </Link>
             </li>
             <li>
                 <Link
-                    to="/product/$id"
-                    params={{ id }}
-                    title={"Edit your product"}
+                    to="/merchant/$id"
+                    params={{ id: merchantId }}
+                    title={"Edit your merchant"}
                 >
                     <Pen />
                 </Link>
             </li>
             <li>
                 <Link
-                    to="/product/$id/team"
-                    params={{ id }}
+                    to="/merchant/$id/team"
+                    params={{ id: merchantId }}
                     title={"Manage your team"}
                 >
                     <Users />

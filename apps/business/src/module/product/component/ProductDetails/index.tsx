@@ -34,7 +34,13 @@ type FormProduct = {
     productTypes: ProductTypesKey[];
 };
 
-export function ProductDetails({ productId }: { productId: Hex }) {
+export function ProductDetails({
+    productId,
+    merchantId,
+}: {
+    productId: Hex;
+    merchantId?: string;
+}) {
     const { data: product } = useProductMetadata({ productId });
     const {
         mutate: editProduct,
@@ -196,9 +202,19 @@ export function ProductDetails({ productId }: { productId: Hex }) {
                         </Columns>
                     </Panel>
                 )}
-                <WebhookInteractionSetup productId={productId} />
-                <PurchasseTrackerSetup productId={productId} />
-                <InteractionSettings productId={productId} />
+                {merchantId && (
+                    <>
+                        <WebhookInteractionSetup merchantId={merchantId} />
+                        <PurchasseTrackerSetup
+                            merchantId={merchantId}
+                            productId={productId}
+                        />
+                        <InteractionSettings
+                            merchantId={merchantId}
+                            productId={productId}
+                        />
+                    </>
+                )}
             </Form>
         </FormLayout>
     );

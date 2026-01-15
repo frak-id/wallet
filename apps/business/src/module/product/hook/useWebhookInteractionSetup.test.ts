@@ -1,9 +1,8 @@
 import { renderHook, waitFor } from "@testing-library/react";
-import type { Hex } from "viem";
 import { vi } from "vitest";
 import { authenticatedBackendApi } from "@/context/api/backendClient";
 import { useWebhookInteractionStatus } from "@/module/product/hook/useWebhookInteractionStatus";
-import { mockProductWebhook } from "@/tests/mocks/backendApi";
+import { mockMerchantWebhooks } from "@/tests/mocks/backendApi";
 import {
     describe,
     expect,
@@ -15,7 +14,7 @@ import { useWebhookInteractionSetup } from "./useWebhookInteractionSetup";
 // Mock the business API
 vi.mock("@/context/api/backendClient", () => ({
     authenticatedBackendApi: {
-        product: vi.fn(),
+        merchant: vi.fn(),
     },
 }));
 
@@ -27,7 +26,7 @@ vi.mock("@/module/product/hook/useWebhookInteractionStatus", () => ({
 }));
 
 describe("useWebhookInteractionSetup", () => {
-    const mockProductId = "0x1234567890123456789012345678901234567890" as Hex;
+    const mockMerchantId = "test-merchant-uuid-123";
 
     describe("successful setup", () => {
         test("should setup webhook successfully", async ({
@@ -38,27 +37,23 @@ describe("useWebhookInteractionSetup", () => {
                 webhookUrl: "https://webhook.example.com/interaction",
             };
 
-            vi.mocked(authenticatedBackendApi.product).mockReturnValue(
-                mockProductWebhook({
-                    setup: {
-                        post: vi.fn().mockResolvedValue({
-                            data: mockResponse,
-                            error: null,
-                        }),
-                    },
-                    status: {
-                        get: vi.fn().mockResolvedValue({ data: {} }),
-                    },
+            vi.mocked(authenticatedBackendApi.merchant).mockReturnValue(
+                mockMerchantWebhooks({
+                    post: vi.fn().mockResolvedValue({
+                        data: mockResponse,
+                        error: null,
+                    }),
+                    get: vi.fn().mockResolvedValue({ data: {} }),
                 })
             );
 
             const { result } = renderHook(
-                () => useWebhookInteractionSetup({ productId: mockProductId }),
+                () =>
+                    useWebhookInteractionSetup({ merchantId: mockMerchantId }),
                 { wrapper: queryWrapper.wrapper }
             );
 
             const setupParams = {
-                productId: mockProductId,
                 hookSignatureKey: "secret-key-123",
             };
 
@@ -79,39 +74,35 @@ describe("useWebhookInteractionSetup", () => {
                 error: null,
             });
 
-            vi.mocked(authenticatedBackendApi.product).mockReturnValue(
-                mockProductWebhook({
-                    setup: {
-                        post: postMock,
-                    },
-                    status: {
-                        get: vi.fn().mockResolvedValue({ data: {} }),
-                    },
+            vi.mocked(authenticatedBackendApi.merchant).mockReturnValue(
+                mockMerchantWebhooks({
+                    post: postMock,
+                    get: vi.fn().mockResolvedValue({ data: {} }),
                 })
             );
 
             const { result } = renderHook(
-                () => useWebhookInteractionSetup({ productId: mockProductId }),
+                () =>
+                    useWebhookInteractionSetup({ merchantId: mockMerchantId }),
                 { wrapper: queryWrapper.wrapper }
             );
 
             const setupParams = {
-                productId: mockProductId,
                 hookSignatureKey: "my-secret-key",
             };
 
             await result.current.mutateAsync(setupParams);
 
-            expect(authenticatedBackendApi.product).toHaveBeenCalledWith({
-                productId: mockProductId,
+            expect(authenticatedBackendApi.merchant).toHaveBeenCalledWith({
+                merchantId: mockMerchantId,
             });
             expect(postMock).toHaveBeenCalledWith({
-                source: "custom",
+                platform: "custom",
                 hookSignatureKey: "my-secret-key",
             });
         });
 
-        test("should always use custom source", async ({
+        test("should always use custom platform by default", async ({
             queryWrapper,
         }: TestContext) => {
             const postMock = vi.fn().mockResolvedValue({
@@ -119,29 +110,25 @@ describe("useWebhookInteractionSetup", () => {
                 error: null,
             });
 
-            vi.mocked(authenticatedBackendApi.product).mockReturnValue(
-                mockProductWebhook({
-                    setup: {
-                        post: postMock,
-                    },
-                    status: {
-                        get: vi.fn().mockResolvedValue({ data: {} }),
-                    },
+            vi.mocked(authenticatedBackendApi.merchant).mockReturnValue(
+                mockMerchantWebhooks({
+                    post: postMock,
+                    get: vi.fn().mockResolvedValue({ data: {} }),
                 })
             );
 
             const { result } = renderHook(
-                () => useWebhookInteractionSetup({ productId: mockProductId }),
+                () =>
+                    useWebhookInteractionSetup({ merchantId: mockMerchantId }),
                 { wrapper: queryWrapper.wrapper }
             );
 
             await result.current.mutateAsync({
-                productId: mockProductId,
                 hookSignatureKey: "test-key",
             });
 
             const callArgs = postMock.mock.calls[0][0];
-            expect(callArgs.source).toBe("custom");
+            expect(callArgs.platform).toBe("custom");
         });
     });
 
@@ -155,27 +142,23 @@ describe("useWebhookInteractionSetup", () => {
                 refetch: refetchMock,
             } as any);
 
-            vi.mocked(authenticatedBackendApi.product).mockReturnValue(
-                mockProductWebhook({
-                    setup: {
-                        post: vi.fn().mockResolvedValue({
-                            data: { success: true },
-                            error: null,
-                        }),
-                    },
-                    status: {
-                        get: vi.fn().mockResolvedValue({ data: {} }),
-                    },
+            vi.mocked(authenticatedBackendApi.merchant).mockReturnValue(
+                mockMerchantWebhooks({
+                    post: vi.fn().mockResolvedValue({
+                        data: { success: true },
+                        error: null,
+                    }),
+                    get: vi.fn().mockResolvedValue({ data: {} }),
                 })
             );
 
             const { result } = renderHook(
-                () => useWebhookInteractionSetup({ productId: mockProductId }),
+                () =>
+                    useWebhookInteractionSetup({ merchantId: mockMerchantId }),
                 { wrapper: queryWrapper.wrapper }
             );
 
             await result.current.mutateAsync({
-                productId: mockProductId,
                 hookSignatureKey: "test-key",
             });
 
@@ -193,28 +176,24 @@ describe("useWebhookInteractionSetup", () => {
                 refetch: refetchMock,
             } as any);
 
-            vi.mocked(authenticatedBackendApi.product).mockReturnValue(
-                mockProductWebhook({
-                    setup: {
-                        post: vi.fn().mockResolvedValue({
-                            data: null,
-                            error: "Setup failed",
-                        }),
-                    },
-                    status: {
-                        get: vi.fn().mockResolvedValue({ data: {} }),
-                    },
+            vi.mocked(authenticatedBackendApi.merchant).mockReturnValue(
+                mockMerchantWebhooks({
+                    post: vi.fn().mockResolvedValue({
+                        data: null,
+                        error: "Setup failed",
+                    }),
+                    get: vi.fn().mockResolvedValue({ data: {} }),
                 })
             );
 
             const { result } = renderHook(
-                () => useWebhookInteractionSetup({ productId: mockProductId }),
+                () =>
+                    useWebhookInteractionSetup({ merchantId: mockMerchantId }),
                 { wrapper: queryWrapper.wrapper }
             );
 
             await expect(
                 result.current.mutateAsync({
-                    productId: mockProductId,
                     hookSignatureKey: "test-key",
                 })
             ).rejects.toThrow();
@@ -229,28 +208,24 @@ describe("useWebhookInteractionSetup", () => {
         test("should throw error when API returns error", async ({
             queryWrapper,
         }: TestContext) => {
-            vi.mocked(authenticatedBackendApi.product).mockReturnValue(
-                mockProductWebhook({
-                    setup: {
-                        post: vi.fn().mockResolvedValue({
-                            data: null,
-                            error: "Invalid signature key",
-                        }),
-                    },
-                    status: {
-                        get: vi.fn().mockResolvedValue({ data: {} }),
-                    },
+            vi.mocked(authenticatedBackendApi.merchant).mockReturnValue(
+                mockMerchantWebhooks({
+                    post: vi.fn().mockResolvedValue({
+                        data: null,
+                        error: "Invalid signature key",
+                    }),
+                    get: vi.fn().mockResolvedValue({ data: {} }),
                 })
             );
 
             const { result } = renderHook(
-                () => useWebhookInteractionSetup({ productId: mockProductId }),
+                () =>
+                    useWebhookInteractionSetup({ merchantId: mockMerchantId }),
                 { wrapper: queryWrapper.wrapper }
             );
 
             await expect(
                 result.current.mutateAsync({
-                    productId: mockProductId,
                     hookSignatureKey: "invalid-key",
                 })
             ).rejects.toThrow("Invalid signature key");
@@ -259,27 +234,21 @@ describe("useWebhookInteractionSetup", () => {
         test("should handle network errors", async ({
             queryWrapper,
         }: TestContext) => {
-            vi.mocked(authenticatedBackendApi.product).mockReturnValue(
-                mockProductWebhook({
-                    setup: {
-                        post: vi
-                            .fn()
-                            .mockRejectedValue(new Error("Network error")),
-                    },
-                    status: {
-                        get: vi.fn().mockResolvedValue({ data: {} }),
-                    },
+            vi.mocked(authenticatedBackendApi.merchant).mockReturnValue(
+                mockMerchantWebhooks({
+                    post: vi.fn().mockRejectedValue(new Error("Network error")),
+                    get: vi.fn().mockResolvedValue({ data: {} }),
                 })
             );
 
             const { result } = renderHook(
-                () => useWebhookInteractionSetup({ productId: mockProductId }),
+                () =>
+                    useWebhookInteractionSetup({ merchantId: mockMerchantId }),
                 { wrapper: queryWrapper.wrapper }
             );
 
             await expect(
                 result.current.mutateAsync({
-                    productId: mockProductId,
                     hookSignatureKey: "test-key",
                 })
             ).rejects.toThrow("Network error");
@@ -288,28 +257,24 @@ describe("useWebhookInteractionSetup", () => {
         test("should transition to error state on failure", async ({
             queryWrapper,
         }: TestContext) => {
-            vi.mocked(authenticatedBackendApi.product).mockReturnValue(
-                mockProductWebhook({
-                    setup: {
-                        post: vi.fn().mockResolvedValue({
-                            data: null,
-                            error: "Setup error",
-                        }),
-                    },
-                    status: {
-                        get: vi.fn().mockResolvedValue({ data: {} }),
-                    },
+            vi.mocked(authenticatedBackendApi.merchant).mockReturnValue(
+                mockMerchantWebhooks({
+                    post: vi.fn().mockResolvedValue({
+                        data: null,
+                        error: "Setup error",
+                    }),
+                    get: vi.fn().mockResolvedValue({ data: {} }),
                 })
             );
 
             const { result } = renderHook(
-                () => useWebhookInteractionSetup({ productId: mockProductId }),
+                () =>
+                    useWebhookInteractionSetup({ merchantId: mockMerchantId }),
                 { wrapper: queryWrapper.wrapper }
             );
 
             try {
                 await result.current.mutateAsync({
-                    productId: mockProductId,
                     hookSignatureKey: "test-key",
                 });
             } catch {
@@ -327,7 +292,8 @@ describe("useWebhookInteractionSetup", () => {
             queryWrapper,
         }: TestContext) => {
             const { result } = renderHook(
-                () => useWebhookInteractionSetup({ productId: mockProductId }),
+                () =>
+                    useWebhookInteractionSetup({ merchantId: mockMerchantId }),
                 { wrapper: queryWrapper.wrapper }
             );
 
@@ -342,38 +308,34 @@ describe("useWebhookInteractionSetup", () => {
         test("should track mutation loading state", async ({
             queryWrapper,
         }: TestContext) => {
-            vi.mocked(authenticatedBackendApi.product).mockReturnValue(
-                mockProductWebhook({
-                    setup: {
-                        post: vi.fn().mockImplementation(
-                            () =>
-                                new Promise((resolve) =>
-                                    setTimeout(
-                                        () =>
-                                            resolve({
-                                                data: { success: true },
-                                                error: null,
-                                            }),
-                                        100
-                                    )
+            vi.mocked(authenticatedBackendApi.merchant).mockReturnValue(
+                mockMerchantWebhooks({
+                    post: vi.fn().mockImplementation(
+                        () =>
+                            new Promise((resolve) =>
+                                setTimeout(
+                                    () =>
+                                        resolve({
+                                            data: { success: true },
+                                            error: null,
+                                        }),
+                                    100
                                 )
-                        ),
-                    },
-                    status: {
-                        get: vi.fn().mockResolvedValue({ data: {} }),
-                    },
+                            )
+                    ),
+                    get: vi.fn().mockResolvedValue({ data: {} }),
                 })
             );
 
             const { result } = renderHook(
-                () => useWebhookInteractionSetup({ productId: mockProductId }),
+                () =>
+                    useWebhookInteractionSetup({ merchantId: mockMerchantId }),
                 { wrapper: queryWrapper.wrapper }
             );
 
             expect(result.current.isPending).toBe(false);
 
             const mutationPromise = result.current.mutateAsync({
-                productId: mockProductId,
                 hookSignatureKey: "test-key",
             });
 
@@ -391,28 +353,24 @@ describe("useWebhookInteractionSetup", () => {
         test("should reset mutation state between calls", async ({
             queryWrapper,
         }: TestContext) => {
-            vi.mocked(authenticatedBackendApi.product).mockReturnValue(
-                mockProductWebhook({
-                    setup: {
-                        post: vi.fn().mockResolvedValue({
-                            data: { success: true },
-                            error: null,
-                        }),
-                    },
-                    status: {
-                        get: vi.fn().mockResolvedValue({ data: {} }),
-                    },
+            vi.mocked(authenticatedBackendApi.merchant).mockReturnValue(
+                mockMerchantWebhooks({
+                    post: vi.fn().mockResolvedValue({
+                        data: { success: true },
+                        error: null,
+                    }),
+                    get: vi.fn().mockResolvedValue({ data: {} }),
                 })
             );
 
             const { result } = renderHook(
-                () => useWebhookInteractionSetup({ productId: mockProductId }),
+                () =>
+                    useWebhookInteractionSetup({ merchantId: mockMerchantId }),
                 { wrapper: queryWrapper.wrapper }
             );
 
             // First mutation
             await result.current.mutateAsync({
-                productId: mockProductId,
                 hookSignatureKey: "key1",
             });
 
@@ -440,19 +398,16 @@ describe("useWebhookInteractionSetup", () => {
                 error: null,
             });
 
-            vi.mocked(authenticatedBackendApi.product).mockReturnValue(
-                mockProductWebhook({
-                    setup: {
-                        post: postMock,
-                    },
-                    status: {
-                        get: vi.fn().mockResolvedValue({ data: {} }),
-                    },
+            vi.mocked(authenticatedBackendApi.merchant).mockReturnValue(
+                mockMerchantWebhooks({
+                    post: postMock,
+                    get: vi.fn().mockResolvedValue({ data: {} }),
                 })
             );
 
             const { result } = renderHook(
-                () => useWebhookInteractionSetup({ productId: mockProductId }),
+                () =>
+                    useWebhookInteractionSetup({ merchantId: mockMerchantId }),
                 { wrapper: queryWrapper.wrapper }
             );
 
@@ -466,12 +421,11 @@ describe("useWebhookInteractionSetup", () => {
 
             for (const key of testKeys) {
                 await result.current.mutateAsync({
-                    productId: mockProductId,
                     hookSignatureKey: key,
                 });
 
                 expect(postMock).toHaveBeenCalledWith({
-                    source: "custom",
+                    platform: "custom",
                     hookSignatureKey: key,
                 });
             }
