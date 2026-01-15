@@ -1,20 +1,26 @@
-import { viemClient } from "@backend-infrastructure";
+import { isRunningInProd } from "@frak-labs/app-essentials";
 import {
     addresses,
     currentStablecoins,
+    getViemClientFromChain,
     rewarderHubAbi,
 } from "@frak-labs/app-essentials/blockchain";
 import { Button } from "@frak-labs/ui/component/Button";
 import { balanceKey, claimableKey } from "@frak-labs/wallet-shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CircleDollarSign } from "lucide-react";
+import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { encodeFunctionData } from "viem";
+import { encodeFunctionData, formatUnits } from "viem";
 import { multicall } from "viem/actions";
+import { arbitrum, arbitrumSepolia } from "viem/chains";
 import { useAccount, useSendTransaction } from "wagmi";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
 import styles from "./index.module.css";
+
+// Stablecoins use 6 decimals
+const STABLECOIN_DECIMALS = 6;
 
 export function PendingReferral() {
     const queryClient = useQueryClient();
@@ -24,19 +30,29 @@ export function PendingReferral() {
 
     const { sendTransactionAsync } = useSendTransaction();
 
+    // Create viem client for the current chain
+    const viemClient = useMemo(
+        () =>
+            getViemClientFromChain({
+                chain: isRunningInProd ? arbitrum : arbitrumSepolia,
+            }),
+        []
+    );
+
     // Fetch the pending reward
     const { data: pendingReward, refetch: refetchPendingReward } = useQuery({
         queryKey: claimableKey.pending.byAddress(address),
         queryFn: async () => {
+            if (!address) return [];
             const stablecoinAddresses = Object.values(currentStablecoins);
             const result = await multicall(viemClient, {
                 contracts: stablecoinAddresses.map(
-                    (address) =>
+                    (token) =>
                         ({
                             address: addresses.rewarderHub,
                             abi: rewarderHubAbi,
                             functionName: "getClaimable",
-                            args: [address, address],
+                            args: [token, address],
                         }) as const
                 ),
                 allowFailure: false,
@@ -44,8 +60,8 @@ export function PendingReferral() {
 
             // Return a map of stablecoin address => claimable amount
             const data = stablecoinAddresses
-                .map((address, index) => ({
-                    token: address,
+                .map((token, index) => ({
+                    token,
                     amount: result[index],
                 }))
                 .filter((item) => item.amount > 0n);
@@ -54,6 +70,16 @@ export function PendingReferral() {
         },
         enabled: !!address,
     });
+
+    // Calculate total claimable in EUR (stablecoins are ~1:1 with fiat)
+    const totalClaimable = useMemo(() => {
+        if (!pendingReward?.length) return 0;
+        const total = pendingReward.reduce(
+            (sum, item) => sum + item.amount,
+            0n
+        );
+        return Number(formatUnits(total, STABLECOIN_DECIMALS));
+    }, [pendingReward]);
 
     // Mutation to send the claim txs
     const {
@@ -91,7 +117,7 @@ export function PendingReferral() {
         },
     });
 
-    if (!pendingReward?.total?.eurAmount) {
+    if (!pendingReward?.length || totalClaimable <= 0) {
         return null;
     }
 
@@ -109,8 +135,7 @@ export function PendingReferral() {
                 <>
                     <p>
                         {t("wallet.pendingReferral.text", {
-                            eurClaimable:
-                                pendingReward?.total?.eurAmount?.toFixed(2),
+                            eurClaimable: totalClaimable.toFixed(2),
                         })}
                     </p>
                     <Button
