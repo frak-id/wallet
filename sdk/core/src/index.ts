@@ -103,13 +103,16 @@ export {
     fetchMerchantId,
     findIframeInOpener,
     formatAmount,
+    generateMergeToken,
     generateSsoUrl,
     getBackendUrl,
     getClientId,
     getCurrencyAmountKey,
     getSupportedCurrency,
     getSupportedLocale,
+    redirectWithMerge,
     resolveMerchantId,
+    setupMergeTokenListener,
     trackEvent,
 } from "./utils";
 export { computeProductId } from "./utils/computeProductId";

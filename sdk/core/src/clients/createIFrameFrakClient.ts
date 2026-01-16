@@ -13,6 +13,8 @@ import type { IFrameRpcSchema } from "../types/rpc";
 import { BACKUP_KEY } from "../utils/constants";
 import { setupMobileAuthCallback } from "../utils/mobileAuthCallback";
 import { setupSsoUrlListener } from "../utils/ssoUrlListener";
+import { setupMergeTokenListener } from "../utils/mergeToken";
+
 import { DebugInfoGatherer } from "./DebugInfo";
 import {
     createIFrameLifecycleManager,
@@ -247,6 +249,11 @@ async function postConnectionSetup({
     setupSsoUrlListener(rpcClient, lifecycleManager.isConnected);
 
     // Setup mobile auth callback listener to detect and exchange auth codes
+
+    // Setup merge token listener to detect and process identity merge tokens
+    // This checks for ?fmt= parameter and executes merge in background
+    setupMergeTokenListener(config, lifecycleManager.isConnected);
+
     // This checks for ?frakAuth= parameter and exchanges for session
     setupMobileAuthCallback(config, rpcClient, lifecycleManager.isConnected);
 

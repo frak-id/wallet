@@ -29,3 +29,8 @@ export {
 } from "./sso";
 export { type FrakEvent, trackEvent } from "./trackEvent";
 export { extractUtmParams } from "./utmParams";
+export {
+    generateMergeToken,
+    redirectWithMerge,
+    setupMergeTokenListener,
+} from "./mergeToken";
