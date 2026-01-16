@@ -72,9 +72,7 @@
         "prepublish": "bun run lint && bun run build",
         "publish": "echo 'Publishing rpc...'"
     },
-    "dependencies": {
-        "@jsonjoy.com/json-pack": "^1.21.0"
-    },
+    "dependencies": {},
     "peerDependencies": {
         "viem": "^2.x"
     },
