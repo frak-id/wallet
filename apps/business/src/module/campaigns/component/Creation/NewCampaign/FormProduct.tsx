@@ -32,7 +32,8 @@ export function FormProduct() {
 
         const productId = keccak256(toHex(merchant.domain.replace("www.", "")));
         setValue("productId", productId);
-    }, [merchants, setValue]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [merchants]);
 
     return (
         <Panel title="Product" aria-disabled={isDisabled}>

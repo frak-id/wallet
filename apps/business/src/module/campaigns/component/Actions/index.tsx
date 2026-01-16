@@ -44,7 +44,8 @@ export const Actions = memo(function Actions({
     useEffect(() => {
         if (!pages) return;
         navigate({ to: pages[step - 1] });
-    }, [step, navigate, pages]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [step, campaignAction, campaignId]);
 
     return (
         <ActionsWrapper

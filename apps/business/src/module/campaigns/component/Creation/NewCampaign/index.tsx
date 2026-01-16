@@ -42,7 +42,8 @@ export function NewCampaign({ title }: { title: string }) {
      */
     useEffect(() => {
         form.reset(campaign);
-    }, [campaign, form.reset, form]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [campaign]);
 
     async function onSubmit(values: Campaign) {
         await saveCampaign(values);
