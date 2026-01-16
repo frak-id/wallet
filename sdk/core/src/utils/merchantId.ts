@@ -74,7 +74,7 @@ async function fetchMerchantIdInternal(
     try {
         const backendUrl = getBackendUrl(walletUrl);
         const response = await fetch(
-            `${backendUrl}/user/merchant/by-domain?domain=${encodeURIComponent(targetDomain)}`
+            `${backendUrl}/user/merchant/resolve?domain=${encodeURIComponent(targetDomain)}`
         );
 
         if (!response.ok) {

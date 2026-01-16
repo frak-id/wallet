@@ -44,7 +44,7 @@ describe("merchantId", () => {
             expect(result).toBe("test-merchant-id");
             expect(fetchMock).toHaveBeenCalledWith(
                 expect.stringContaining(
-                    "/user/merchant/by-domain?domain=example.com"
+                    "/user/merchant/resolve?domain=example.com"
                 )
             );
         });
