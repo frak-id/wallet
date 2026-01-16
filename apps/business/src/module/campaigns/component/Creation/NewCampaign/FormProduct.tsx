@@ -7,6 +7,7 @@ import {
 } from "@frak-labs/ui/component/Select";
 import { useEffect } from "react";
 import { useFormContext } from "react-hook-form";
+import { keccak256, toHex } from "viem";
 import { Panel } from "@/module/common/component/Panel";
 import { useMyMerchants } from "@/module/dashboard/hooks/useMyMerchants";
 import {
@@ -23,10 +24,14 @@ export function FormProduct() {
     const { isEmpty, merchants } = useMyMerchants();
     const isDisabled = isEmpty || merchants.length === 0;
 
-    // Auto select merchant if there is only one
     useEffect(() => {
         if (merchants.length !== 1) return;
-        setValue("merchantId", merchants[0].id);
+        const merchant = merchants[0];
+
+        setValue("merchantId", merchant.id);
+
+        const productId = keccak256(toHex(merchant.domain.replace("www.", "")));
+        setValue("productId", productId);
     }, [merchants, setValue]);
 
     return (
@@ -40,9 +45,21 @@ export function FormProduct() {
                         <FormControl>
                             <Select
                                 name={field.name}
-                                onValueChange={(value) => {
-                                    if (value === "") return;
-                                    field.onChange(value);
+                                onValueChange={(merchantId) => {
+                                    if (merchantId === "") return;
+                                    field.onChange(merchantId);
+
+                                    const merchant = merchants.find(
+                                        (m) => m.id === merchantId
+                                    );
+                                    if (!merchant) return;
+
+                                    const productId = keccak256(
+                                        toHex(
+                                            merchant.domain.replace("www.", "")
+                                        )
+                                    );
+                                    setValue("productId", productId);
                                 }}
                                 value={field.value}
                                 disabled={isDisabled}
