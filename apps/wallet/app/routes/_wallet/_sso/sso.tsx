@@ -4,10 +4,7 @@ import {
     decompressJsonFromB64,
     findIframeInOpener,
 } from "@frak-labs/core-sdk";
-import {
-    createClientCompressionMiddleware,
-    createRpcClient,
-} from "@frak-labs/frame-connector";
+import { createRpcClient } from "@frak-labs/frame-connector";
 import { ButtonAuth } from "@frak-labs/ui/component/ButtonAuth";
 import { formatHash } from "@frak-labs/ui/component/HashDisplay";
 import { Spinner } from "@frak-labs/ui/component/Spinner";
@@ -144,7 +141,6 @@ function Sso() {
                         emittingTransport: listenerIframe,
                         listeningTransport: window,
                         targetOrigin: window.location.origin,
-                        middleware: [createClientCompressionMiddleware()],
                     });
 
                     console.log(
