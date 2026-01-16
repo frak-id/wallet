@@ -18,7 +18,7 @@ vi.mock("../../../../src/orchestration/context", () => ({
     },
 }));
 
-import { identityMergeRoutes } from "../../../../src/api/user/identity/mergeRoutes";
+import { identityMergeRoutes } from "../../../../src/api/user/identity/merge";
 
 describe("Identity Merge Routes API", () => {
     beforeEach(() => {
@@ -39,7 +39,7 @@ describe("Identity Merge Routes API", () => {
             });
 
             const response = await identityMergeRoutes.handle(
-                new Request("http://localhost/identity/merge/initiate", {
+                new Request("http://localhost/merge/initiate", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -71,7 +71,7 @@ describe("Identity Merge Routes API", () => {
             });
 
             const response = await identityMergeRoutes.handle(
-                new Request("http://localhost/identity/merge/initiate", {
+                new Request("http://localhost/merge/initiate", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -102,7 +102,7 @@ describe("Identity Merge Routes API", () => {
             });
 
             const response = await identityMergeRoutes.handle(
-                new Request("http://localhost/identity/merge/execute", {
+                new Request("http://localhost/merge/execute", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -132,7 +132,7 @@ describe("Identity Merge Routes API", () => {
             });
 
             const response = await identityMergeRoutes.handle(
-                new Request("http://localhost/identity/merge/execute", {
+                new Request("http://localhost/merge/execute", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -158,7 +158,7 @@ describe("Identity Merge Routes API", () => {
             });
 
             const response = await identityMergeRoutes.handle(
-                new Request("http://localhost/identity/merge/execute", {
+                new Request("http://localhost/merge/execute", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -184,7 +184,7 @@ describe("Identity Merge Routes API", () => {
             });
 
             const response = await identityMergeRoutes.handle(
-                new Request("http://localhost/identity/merge/execute", {
+                new Request("http://localhost/merge/execute", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -210,7 +210,7 @@ describe("Identity Merge Routes API", () => {
             });
 
             const response = await identityMergeRoutes.handle(
-                new Request("http://localhost/identity/merge/execute", {
+                new Request("http://localhost/merge/execute", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -236,7 +236,7 @@ describe("Identity Merge Routes API", () => {
             });
 
             const response = await identityMergeRoutes.handle(
-                new Request("http://localhost/identity/merge/execute", {
+                new Request("http://localhost/merge/execute", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -262,7 +262,7 @@ describe("Identity Merge Routes API", () => {
             });
 
             const response = await identityMergeRoutes.handle(
-                new Request("http://localhost/identity/merge/execute", {
+                new Request("http://localhost/merge/execute", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
