@@ -107,6 +107,8 @@ export {
     decompressJson,
     type HashProtectedData,
     hashAndCompressData,
+    jsonDecode,
+    jsonEncode,
 } from "./utils/compression";
 // Utils helpers
 export { Deferred } from "./utils/deferred-promise";

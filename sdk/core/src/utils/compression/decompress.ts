@@ -1,4 +1,4 @@
-import { decompressJson } from "@frak-labs/frame-connector";
+import { jsonDecode } from "@frak-labs/frame-connector";
 import { base64urlDecode } from "./b64";
 
 /**
@@ -7,5 +7,5 @@ import { base64urlDecode } from "./b64";
  * @ignore
  */
 export function decompressJsonFromB64<T>(data: string): T | null {
-    return decompressJson(base64urlDecode(data));
+    return jsonDecode<T>(base64urlDecode(data));
 }
