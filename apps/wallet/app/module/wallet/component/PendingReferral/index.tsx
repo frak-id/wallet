@@ -1,17 +1,21 @@
-import { isRunningInProd } from "@frak-labs/app-essentials";
+import {
+    type GetRewardHistoryResponseDto,
+    isRunningInProd,
+} from "@frak-labs/app-essentials";
 import {
     addresses,
     currentStablecoins,
     getViemClientFromChain,
     rewarderHubAbi,
 } from "@frak-labs/app-essentials/blockchain";
+import { indexerApi } from "@frak-labs/client/server";
 import { Button } from "@frak-labs/ui/component/Button";
 import { balanceKey, claimableKey } from "@frak-labs/wallet-shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CircleDollarSign } from "lucide-react";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { encodeFunctionData, formatUnits } from "viem";
+import { type Address, encodeFunctionData, formatUnits } from "viem";
 import { multicall } from "viem/actions";
 import { arbitrum, arbitrumSepolia } from "viem/chains";
 import { useAccount, useSendTransaction } from "wagmi";
@@ -44,22 +48,38 @@ export function PendingReferral() {
         queryKey: claimableKey.pending.byAddress(address),
         queryFn: async () => {
             if (!address) return [];
-            const stablecoinAddresses = Object.values(currentStablecoins);
+
+            const rewardsHistory = await indexerApi
+                .get(`rewards/${address}/history`)
+                .json<GetRewardHistoryResponseDto>();
+
+            const tokenSet = new Set<Address>();
+            for (const item of rewardsHistory?.added ?? []) {
+                tokenSet.add(item.token);
+            }
+            for (const item of rewardsHistory?.claimed ?? []) {
+                tokenSet.add(item.token);
+            }
+
+            const tokens =
+                tokenSet.size > 0
+                    ? Array.from(tokenSet)
+                    : Object.values(currentStablecoins);
+
             const result = await multicall(viemClient, {
-                contracts: stablecoinAddresses.map(
+                contracts: tokens.map(
                     (token) =>
                         ({
                             address: addresses.rewarderHub,
                             abi: rewarderHubAbi,
                             functionName: "getClaimable",
-                            args: [token, address],
+                            args: [address, token],
                         }) as const
                 ),
                 allowFailure: false,
             });
 
-            // Return a map of stablecoin address => claimable amount
-            const data = stablecoinAddresses
+            const data = tokens
                 .map((token, index) => ({
                     token,
                     amount: result[index],
