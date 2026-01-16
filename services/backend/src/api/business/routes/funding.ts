@@ -50,6 +50,7 @@ export const fundingRoutes = new Elysia({ prefix: "/funding" }).post(
                     abi: erc20Abi,
                     functionName: "transfer",
                     args: [bank, parseUnits("11", 18)],
+                    chain: viemClient.chain,
                 });
                 log.info(
                     { txHash, stablecoin },
@@ -86,6 +87,7 @@ export const fundingRoutes = new Elysia({ prefix: "/funding" }).post(
                 abi: [mintAbi],
                 functionName: "mint",
                 args: [bank, parseEther("1000")],
+                chain: viemClient.chain,
             });
             log.info(
                 { txHash },

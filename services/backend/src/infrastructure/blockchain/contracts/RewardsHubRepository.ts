@@ -108,6 +108,7 @@ export class RewardsHubRepository {
                 account,
                 to: addresses.rewarderHub,
                 data,
+                chain: viemClient.chain,
             });
 
             const receipt = await waitForTransactionReceipt(viemClient, {

@@ -59,6 +59,7 @@ export class CampaignBankRepository {
                 account: bankOwnerAccount,
                 to: addresses.campaignBankFactory,
                 data,
+                chain: viemClient.chain,
             });
 
             const receipt = await waitForTransactionReceipt(viemClient, {
@@ -150,6 +151,7 @@ export class CampaignBankRepository {
                 account: bankOwnerAccount,
                 to: bankAddress,
                 data,
+                chain: viemClient.chain,
             });
 
             const receipt = await waitForTransactionReceipt(viemClient, {
@@ -210,6 +212,7 @@ export class CampaignBankRepository {
                 account: bankOwnerAccount,
                 to: bankAddress,
                 data,
+                chain: viemClient.chain,
             });
 
             const receipt = await waitForTransactionReceipt(viemClient, {
