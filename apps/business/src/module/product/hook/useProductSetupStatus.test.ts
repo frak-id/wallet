@@ -22,6 +22,7 @@ vi.mock("./useGetProductFunding", () => ({
 
 describe("useProductSetupStatus", () => {
     const mockProductId = "0x1234567890123456789012345678901234567890" as Hex;
+    const mockMerchantId = "11111111-1111-1111-1111-111111111111";
 
     describe("demo mode", () => {
         test("should return mock setup status in demo mode", async ({
@@ -48,7 +49,11 @@ describe("useProductSetupStatus", () => {
             } as any);
 
             const { result } = renderHook(
-                () => useProductSetupStatus({ productId: mockProductId }),
+                () =>
+                    useProductSetupStatus({
+                        merchantId: mockMerchantId,
+                        productId: mockProductId,
+                    }),
                 { wrapper: queryWrapper.wrapper }
             );
 
@@ -72,7 +77,7 @@ describe("useProductSetupStatus", () => {
             expect(stepKeys).toContain("add-campaign");
         });
 
-        test("should replace productId in resolvingPage URLs in demo mode", async ({
+        test("should replace merchantId in resolvingPage URLs in demo mode", async ({
             queryWrapper,
             freshAuthStore,
         }: TestContext) => {
@@ -95,7 +100,11 @@ describe("useProductSetupStatus", () => {
             } as any);
 
             const { result } = renderHook(
-                () => useProductSetupStatus({ productId: mockProductId }),
+                () =>
+                    useProductSetupStatus({
+                        merchantId: mockMerchantId,
+                        productId: mockProductId,
+                    }),
                 { wrapper: queryWrapper.wrapper }
             );
 
@@ -103,12 +112,12 @@ describe("useProductSetupStatus", () => {
                 expect(result.current.isSuccess).toBe(true);
             });
 
-            // Check that productId was replaced in URLs
+            // Check that merchantId was replaced in URLs
             const teamItem = result.current.data?.items.find(
                 (item) => item.key === "other-admin"
             );
-            expect(teamItem?.resolvingPage).toContain(mockProductId);
-            expect(teamItem?.resolvingPage).not.toContain("[productId]");
+            expect(teamItem?.resolvingPage).toContain(mockMerchantId);
+            expect(teamItem?.resolvingPage).not.toContain("[merchantId]");
         });
     });
 
@@ -135,7 +144,11 @@ describe("useProductSetupStatus", () => {
             } as any);
 
             const { result } = renderHook(
-                () => useProductSetupStatus({ productId: mockProductId }),
+                () =>
+                    useProductSetupStatus({
+                        merchantId: mockMerchantId,
+                        productId: mockProductId,
+                    }),
                 { wrapper: queryWrapper.wrapper }
             );
 
@@ -168,7 +181,11 @@ describe("useProductSetupStatus", () => {
             } as any);
 
             const { result } = renderHook(
-                () => useProductSetupStatus({ productId: mockProductId }),
+                () =>
+                    useProductSetupStatus({
+                        merchantId: mockMerchantId,
+                        productId: mockProductId,
+                    }),
                 { wrapper: queryWrapper.wrapper }
             );
 
@@ -200,7 +217,11 @@ describe("useProductSetupStatus", () => {
             } as any);
 
             const { result } = renderHook(
-                () => useProductSetupStatus({ productId: mockProductId }),
+                () =>
+                    useProductSetupStatus({
+                        merchantId: mockMerchantId,
+                        productId: mockProductId,
+                    }),
                 { wrapper: queryWrapper.wrapper }
             );
 
@@ -234,7 +255,11 @@ describe("useProductSetupStatus", () => {
             } as any);
 
             const { result } = renderHook(
-                () => useProductSetupStatus({ productId: mockProductId }),
+                () =>
+                    useProductSetupStatus({
+                        merchantId: mockMerchantId,
+                        productId: mockProductId,
+                    }),
                 { wrapper: queryWrapper.wrapper }
             );
 
@@ -266,7 +291,11 @@ describe("useProductSetupStatus", () => {
             } as any);
 
             const { result } = renderHook(
-                () => useProductSetupStatus({ productId: mockProductId }),
+                () =>
+                    useProductSetupStatus({
+                        merchantId: mockMerchantId,
+                        productId: mockProductId,
+                    }),
                 { wrapper: queryWrapper.wrapper }
             );
 
@@ -298,7 +327,11 @@ describe("useProductSetupStatus", () => {
             } as any);
 
             const { result } = renderHook(
-                () => useProductSetupStatus({ productId: mockProductId }),
+                () =>
+                    useProductSetupStatus({
+                        merchantId: mockMerchantId,
+                        productId: mockProductId,
+                    }),
                 { wrapper: queryWrapper.wrapper }
             );
 
@@ -330,7 +363,11 @@ describe("useProductSetupStatus", () => {
             } as any);
 
             const { result } = renderHook(
-                () => useProductSetupStatus({ productId: mockProductId }),
+                () =>
+                    useProductSetupStatus({
+                        merchantId: mockMerchantId,
+                        productId: mockProductId,
+                    }),
                 { wrapper: queryWrapper.wrapper }
             );
 
@@ -364,7 +401,11 @@ describe("useProductSetupStatus", () => {
             } as any);
 
             const { result } = renderHook(
-                () => useProductSetupStatus({ productId: mockProductId }),
+                () =>
+                    useProductSetupStatus({
+                        merchantId: mockMerchantId,
+                        productId: mockProductId,
+                    }),
                 { wrapper: queryWrapper.wrapper }
             );
 
@@ -398,7 +439,11 @@ describe("useProductSetupStatus", () => {
             } as any);
 
             const { result } = renderHook(
-                () => useProductSetupStatus({ productId: mockProductId }),
+                () =>
+                    useProductSetupStatus({
+                        merchantId: mockMerchantId,
+                        productId: mockProductId,
+                    }),
                 { wrapper: queryWrapper.wrapper }
             );
 
@@ -439,7 +484,11 @@ describe("useProductSetupStatus", () => {
             } as any);
 
             const { result } = renderHook(
-                () => useProductSetupStatus({ productId: mockProductId }),
+                () =>
+                    useProductSetupStatus({
+                        merchantId: mockMerchantId,
+                        productId: mockProductId,
+                    }),
                 { wrapper: queryWrapper.wrapper }
             );
 
@@ -468,7 +517,37 @@ describe("useProductSetupStatus", () => {
             const { result } = renderHook(
                 () =>
                     useProductSetupStatus({
+                        merchantId: mockMerchantId,
                         productId: undefined as unknown as Hex,
+                    }),
+                { wrapper: queryWrapper.wrapper }
+            );
+
+            expect(result.current.isPending).toBe(true);
+        });
+
+        test("should be disabled when no merchantId provided", async ({
+            queryWrapper,
+            freshAuthStore,
+        }: TestContext) => {
+            queryWrapper.client.clear();
+            freshAuthStore.getState().clearAuth();
+
+            vi.mocked(useGetProductAdministrators).mockReturnValue({
+                data: [],
+                isSuccess: true,
+            } as any);
+
+            vi.mocked(useGetProductFunding).mockReturnValue({
+                data: [],
+                isSuccess: true,
+            } as any);
+
+            const { result } = renderHook(
+                () =>
+                    useProductSetupStatus({
+                        merchantId: undefined as unknown as string,
+                        productId: mockProductId,
                     }),
                 { wrapper: queryWrapper.wrapper }
             );
@@ -496,7 +575,11 @@ describe("useProductSetupStatus", () => {
             } as any);
 
             const { result } = renderHook(
-                () => useProductSetupStatus({ productId: mockProductId }),
+                () =>
+                    useProductSetupStatus({
+                        merchantId: mockMerchantId,
+                        productId: mockProductId,
+                    }),
                 { wrapper: queryWrapper.wrapper }
             );
 
@@ -511,7 +594,7 @@ describe("useProductSetupStatus", () => {
                 expect(item.description).toBeTruthy();
                 expect(typeof item.isGood).toBe("boolean");
                 expect(item.resolvingPage).toBeTruthy();
-                expect(item.resolvingPage).not.toContain("[productId]");
+                expect(item.resolvingPage).not.toContain("[merchantId]");
             }
         });
     });

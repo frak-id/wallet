@@ -5,11 +5,10 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@frak-labs/ui/component/Select";
-import { useEffect, useMemo } from "react";
+import { useEffect } from "react";
 import { useFormContext } from "react-hook-form";
-import type { Hex } from "viem";
 import { Panel } from "@/module/common/component/Panel";
-import { useMyProducts } from "@/module/dashboard/hooks/useMyProducts";
+import { useMyMerchants } from "@/module/dashboard/hooks/useMyMerchants";
 import {
     FormControl,
     FormField,
@@ -21,25 +20,20 @@ import type { Campaign } from "@/types/Campaign";
 export function FormProduct() {
     const { setValue, control } = useFormContext<Campaign>();
 
-    const { isEmpty, products } = useMyProducts();
-    const contentList = useMemo(
-        () => [...(products?.operator ?? []), ...(products?.owner ?? [])],
-        [products]
-    );
-    const isDisabled = isEmpty || !products || contentList.length === 0;
+    const { isEmpty, merchants } = useMyMerchants();
+    const isDisabled = isEmpty || merchants.length === 0;
 
-    // Small hook to auto select a product if there is only one
+    // Auto select merchant if there is only one
     useEffect(() => {
-        if (contentList.length === 0) return;
-        if (contentList.length > 1) return;
-        setValue("productId", contentList[0].id);
-    }, [contentList, setValue]);
+        if (merchants.length !== 1) return;
+        setValue("merchantId", merchants[0].id);
+    }, [merchants, setValue]);
 
     return (
         <Panel title="Product" aria-disabled={isDisabled}>
             <FormField
                 control={control}
-                name="productId"
+                name="merchantId"
                 rules={{ required: "Select a product" }}
                 render={({ field }) => (
                     <FormItem>
@@ -48,7 +42,7 @@ export function FormProduct() {
                                 name={field.name}
                                 onValueChange={(value) => {
                                     if (value === "") return;
-                                    field.onChange(value as Hex);
+                                    field.onChange(value);
                                 }}
                                 value={field.value}
                                 disabled={isDisabled}
@@ -57,12 +51,12 @@ export function FormProduct() {
                                     <SelectValue placeholder="Select a product" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {contentList.map((content) => (
+                                    {merchants.map((merchant) => (
                                         <SelectItem
-                                            key={content.id}
-                                            value={content.id}
+                                            key={merchant.id}
+                                            value={merchant.id}
                                         >
-                                            {content.name}
+                                            {merchant.name}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>

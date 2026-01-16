@@ -17,7 +17,6 @@ const initialValues: Campaign = {
     title: "",
     type: "",
     merchantId: "",
-    productId: undefined,
     specialCategories: [],
     budget: {
         type: "global",

@@ -7,7 +7,6 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { type CellContext, createColumnHelper } from "@tanstack/react-table";
 import { useMemo } from "react";
 import { type Hex, isAddressEqual, zeroAddress } from "viem";
-import type { getProductAdministrators } from "@/context/product/action/getAdministrators";
 import { Badge } from "@/module/common/component/Badge";
 import { Table } from "@/module/common/component/Table";
 import { useHasRoleOnProduct } from "@/module/common/hook/useHasRoleOnProduct";
@@ -16,13 +15,14 @@ import {
     DeleteTeamMemberModal,
     UpdateRoleTeamMemberModal,
 } from "@/module/product/component/TableTeam/Modal";
-import { useGetProductAdministrators } from "@/module/product/hook/useGetProductAdministrators";
+import {
+    type ProductAdministrator,
+    useGetProductAdministrators,
+} from "@/module/product/hook/useGetProductAdministrators";
 import { permissionLabels } from "@/module/product/utils/permissions";
 import styles from "./index.module.css";
 
-export type ManageTeamTableData = Awaited<
-    ReturnType<typeof getProductAdministrators>
->[number] & { isMe: boolean };
+export type ManageTeamTableData = ProductAdministrator;
 
 const columnHelper = createColumnHelper<ManageTeamTableData>();
 

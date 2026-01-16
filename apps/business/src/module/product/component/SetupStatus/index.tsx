@@ -17,11 +17,17 @@ import styles from "./index.module.css";
 
 /**
  * Page containing basic product setup status overview
- *
- * @constructor
+ * @param merchantId - The merchant UUID for URL generation
+ * @param productId - The on-chain product ID for blockchain queries
  */
-export function ProductSetupStatus({ productId }: { productId: Hex }) {
-    const { data } = useProductSetupStatus({ productId });
+export function ProductSetupStatus({
+    merchantId,
+    productId,
+}: {
+    merchantId: string;
+    productId: Hex;
+}) {
+    const { data } = useProductSetupStatus({ merchantId, productId });
 
     return (
         <FormLayout>

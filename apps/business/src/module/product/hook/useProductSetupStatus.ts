@@ -30,6 +30,7 @@ export type ProductSetupStatus = {
 
 /**
  * Base steps info with all setup requirements
+ * URLs use [merchantId] placeholder which is replaced at runtime
  */
 const BASE_STEPS: Record<
     SetupStatusItemKey,
@@ -42,7 +43,7 @@ const BASE_STEPS: Record<
             "Enhance your product's security and manageability by adding another admin. This will help ensure multiple team members can oversee the product's settings, campaigns, and integrations, maintaining continuity and strengthening access control.",
         documentationLink:
             "https://docs.frak.id/business/product/config/team#adding-a-new-member",
-        resolvingPage: "/product/[productId]/team",
+        resolvingPage: "/merchant/[merchantId]/team",
     },
     "interaction-setup": {
         key: "interaction-setup",
@@ -51,7 +52,7 @@ const BASE_STEPS: Record<
             "Deploy an on-chain CRM event contract to enable this product to record and manage interactions securely on the blockchain. This setup allows you to capture real-time user engagement data, facilitating insights for targeted campaigns and rewards.",
         documentationLink:
             "https://docs.frak.id/business/product/config/edit#interaction-settings",
-        resolvingPage: "/product/[productId]#interactionSettings",
+        resolvingPage: "/merchant/[merchantId]#interactionSettings",
     },
     "delegated-interaction": {
         key: "delegated-interaction",
@@ -60,7 +61,7 @@ const BASE_STEPS: Record<
             "Grant Frak the ability to log and manage interactions on your behalf, simplifying the process of tracking engagement for this product. By authorizing Frak as an Interaction/CRM validator, you'll streamline data management for your campaigns.",
         documentationLink:
             "https://docs.frak.id/business/product/config/edit#interaction-settings",
-        resolvingPage: "/product/[productId]#interactionSettings",
+        resolvingPage: "/merchant/[merchantId]#interactionSettings",
     },
     "oracle-updater-allowed": {
         key: "oracle-updater-allowed",
@@ -69,7 +70,7 @@ const BASE_STEPS: Record<
             "Enable Frak to validate each purchase made by users on the blockchain. By authorizing purchase validation, you can automate reward distribution and ensure secure, tamper-proof tracking of user transactions for your product.",
         documentationLink:
             "https://docs.frak.id/business/product/config/edit#interaction-settings",
-        resolvingPage: "/product/[productId]#purchaseTracker",
+        resolvingPage: "/merchant/[merchantId]#purchaseTracker",
     },
     "webhook-setup": {
         key: "webhook-setup",
@@ -78,7 +79,7 @@ const BASE_STEPS: Record<
             "Configure a webhook between your purchase platform and Frak to seamlessly relay purchase events. This setup lets Frak validate purchases and initiate rewards, ensuring a smooth experience for your users when they make qualifying purchases.",
         documentationLink:
             "https://docs.frak.id/business/product/config/edit#interaction-settings",
-        resolvingPage: "/product/[productId]#purchaseTracker",
+        resolvingPage: "/merchant/[merchantId]#purchaseTracker",
     },
     "add-funding": {
         key: "add-funding",
@@ -87,7 +88,7 @@ const BASE_STEPS: Record<
             "Fund your product to activate campaigns and provide rewards for successful engagements. By adding funds, you set up the financial backbone for your campaigns, ensuring users are rewarded for their interactions and contributions.",
         documentationLink:
             "https://docs.frak.id/business/product/config/funds#adding-funds",
-        resolvingPage: "/product/[productId]/funding",
+        resolvingPage: "/merchant/[merchantId]/funding",
     },
     "running-bank": {
         key: "running-bank",
@@ -96,7 +97,7 @@ const BASE_STEPS: Record<
             "Initialize the funding bank to make funds available for campaigns, allowing the system to allocate rewards automatically. Activating your funding bank ensures that your campaigns are ready to incentivize users as soon as they engage with your product.",
         documentationLink:
             "https://docs.frak.id/business/product/config/funds#campaigns-funding-status",
-        resolvingPage: "/product/[productId]/funding",
+        resolvingPage: "/merchant/[merchantId]/funding",
     },
     "add-campaign": {
         key: "add-campaign",
@@ -124,8 +125,16 @@ const MOCK_SETUP_STATUS: Record<SetupStatusItemKey, boolean> = {
 
 /**
  * Hook to get product setup status with real data integration
+ * @param merchantId - The merchant UUID for URL generation
+ * @param productId - The on-chain product ID for blockchain queries
  */
-export function useProductSetupStatus({ productId }: { productId: Hex }) {
+export function useProductSetupStatus({
+    merchantId,
+    productId,
+}: {
+    merchantId: string;
+    productId: Hex;
+}) {
     const isDemoMode = useAuthStore((state) => state.token === "demo-token");
 
     // Fetch real data from other hooks
@@ -136,7 +145,8 @@ export function useProductSetupStatus({ productId }: { productId: Hex }) {
 
     return useQuery({
         queryKey: [
-            "product",
+            "merchant",
+            merchantId,
             "setup-status",
             productId,
             isDemoMode ? "demo" : "live",
@@ -153,8 +163,8 @@ export function useProductSetupStatus({ productId }: { productId: Hex }) {
                     isGood:
                         MOCK_SETUP_STATUS[key as SetupStatusItemKey] ?? false,
                     resolvingPage: step.resolvingPage.replace(
-                        "[productId]",
-                        productId
+                        "[merchantId]",
+                        merchantId
                     ),
                 }));
 
@@ -175,8 +185,8 @@ export function useProductSetupStatus({ productId }: { productId: Hex }) {
                 ...BASE_STEPS["other-admin"],
                 isGood: hasOtherAdmin,
                 resolvingPage: BASE_STEPS["other-admin"].resolvingPage.replace(
-                    "[productId]",
-                    productId
+                    "[merchantId]",
+                    merchantId
                 ),
             });
 
@@ -187,14 +197,14 @@ export function useProductSetupStatus({ productId }: { productId: Hex }) {
                 isGood: false, // Placeholder
                 resolvingPage: BASE_STEPS[
                     "interaction-setup"
-                ].resolvingPage.replace("[productId]", productId),
+                ].resolvingPage.replace("[merchantId]", merchantId),
             });
             steps.push({
                 ...BASE_STEPS["delegated-interaction"],
                 isGood: false, // Placeholder
                 resolvingPage: BASE_STEPS[
                     "delegated-interaction"
-                ].resolvingPage.replace("[productId]", productId),
+                ].resolvingPage.replace("[merchantId]", merchantId),
             });
 
             // Purchase-related steps (placeholder - requires backend API integration)
@@ -204,14 +214,14 @@ export function useProductSetupStatus({ productId }: { productId: Hex }) {
                 isGood: false, // Placeholder
                 resolvingPage: BASE_STEPS[
                     "oracle-updater-allowed"
-                ].resolvingPage.replace("[productId]", productId),
+                ].resolvingPage.replace("[merchantId]", merchantId),
             });
             steps.push({
                 ...BASE_STEPS["webhook-setup"],
                 isGood: false, // Placeholder
                 resolvingPage: BASE_STEPS[
                     "webhook-setup"
-                ].resolvingPage.replace("[productId]", productId),
+                ].resolvingPage.replace("[merchantId]", merchantId),
             });
 
             // Check funding status (real data)
@@ -221,8 +231,8 @@ export function useProductSetupStatus({ productId }: { productId: Hex }) {
                 ...BASE_STEPS["add-funding"],
                 isGood: hasFunding,
                 resolvingPage: BASE_STEPS["add-funding"].resolvingPage.replace(
-                    "[productId]",
-                    productId
+                    "[merchantId]",
+                    merchantId
                 ),
             });
 
@@ -232,8 +242,8 @@ export function useProductSetupStatus({ productId }: { productId: Hex }) {
                 ...BASE_STEPS["running-bank"],
                 isGood: hasRunningBank,
                 resolvingPage: BASE_STEPS["running-bank"].resolvingPage.replace(
-                    "[productId]",
-                    productId
+                    "[merchantId]",
+                    merchantId
                 ),
             });
 
@@ -243,8 +253,8 @@ export function useProductSetupStatus({ productId }: { productId: Hex }) {
                 ...BASE_STEPS["add-campaign"],
                 isGood: false, // Placeholder
                 resolvingPage: BASE_STEPS["add-campaign"].resolvingPage.replace(
-                    "[productId]",
-                    productId
+                    "[merchantId]",
+                    merchantId
                 ),
             });
 
@@ -253,6 +263,10 @@ export function useProductSetupStatus({ productId }: { productId: Hex }) {
                 hasWarning: steps.some((step) => !step.isGood),
             };
         },
-        enabled: !!productId && isAdministratorsSuccess && isFundingsSuccess,
+        enabled:
+            !!merchantId &&
+            !!productId &&
+            isAdministratorsSuccess &&
+            isFundingsSuccess,
     });
 }

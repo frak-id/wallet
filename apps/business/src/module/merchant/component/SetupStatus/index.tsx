@@ -24,5 +24,10 @@ export function MerchantSetupStatus({ merchantId }: { merchantId: string }) {
         );
     }
 
-    return <ProductSetupStatus productId={merchant.productId} />;
+    return (
+        <ProductSetupStatus
+            merchantId={merchantId}
+            productId={merchant.productId}
+        />
+    );
 }
