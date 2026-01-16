@@ -25,11 +25,10 @@ export function useOnGetProductInformation(): OnGetProductInformation {
 
     return useCallback(
         async (_params, context) => {
-            // ProductId is available directly from context (augmented by middleware)
-            const { productId } = context;
+            const { merchantId, productId } = context;
 
             const productMetadata = await queryClient.fetchQuery(
-                getProductMetadataQuery({ productId })
+                getProductMetadataQuery({ merchantId, productId })
             );
 
             if (!(productId && productMetadata)) {

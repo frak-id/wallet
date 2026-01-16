@@ -14,13 +14,16 @@ import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
  *  In a perfect world, we would have a `prefetchQuery`, that would allow use to load the query before the component is mounted.
  */
 export function useListenerDataPreload() {
+    const merchantId = resolvingContextStore(
+        (state) => state.context?.merchantId
+    );
     const productId = resolvingContextStore(
         (state) => state.context?.productId
     );
 
     const queries = useMemo(
-        () => [getProductMetadataQuery({ productId })],
-        [productId]
+        () => [getProductMetadataQuery({ merchantId, productId })],
+        [merchantId, productId]
     );
 
     /**

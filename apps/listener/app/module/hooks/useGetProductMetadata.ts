@@ -3,19 +3,17 @@ import { type ProductTypesKey, productTypesMask } from "@frak-labs/core-sdk";
 import { currentViemClient } from "@frak-labs/wallet-shared";
 import type { Hex } from "viem";
 import { readContract } from "viem/actions";
-import { listenerProductKey } from "@/module/queryKeys/product";
+import { listenerMerchantKey } from "@/module/queryKeys/product";
 
-/**
- * The query data to get the product metadata
- * @param productId
- */
 export const getProductMetadataQuery = ({
+    merchantId,
     productId,
 }: {
+    merchantId?: string;
     productId?: Hex;
 }) => ({
     enabled: !!productId,
-    queryKey: listenerProductKey.metadata.byId(productId),
+    queryKey: listenerMerchantKey.metadata.byId(merchantId),
     async queryFn() {
         if (!productId) {
             return null;

@@ -1,20 +1,12 @@
-import type { Hex } from "viem";
-
 /**
- * Query keys for listener-related product queries
+ * Query keys for listener-related merchant queries
  */
-export namespace listenerProductKey {
-    /**
-     * The base key
-     */
-    const base = "product" as const;
+export namespace listenerMerchantKey {
+    const base = "merchant" as const;
 
-    /**
-     * Query keys for metadata
-     */
     const metadataBase = "metadata" as const;
     export const metadata = {
-        byId: (productId?: Hex) =>
-            [base, metadataBase, productId ?? "no-product-id"] as const,
+        byId: (merchantId?: string) =>
+            [base, metadataBase, merchantId ?? "no-merchant-id"] as const,
     };
 }
