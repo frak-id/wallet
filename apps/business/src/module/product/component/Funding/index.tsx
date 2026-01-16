@@ -543,7 +543,6 @@ function AddNewBank({
                 },
                 onError: (error) => {
                     console.error("Failed to add bank:", error);
-                    alert(`Failed to create bank: ${error.message}`);
                 },
             }
         );
