@@ -65,7 +65,6 @@ export {
 } from "./error";
 export type { RpcListener, RpcListenerConfig } from "./listener";
 export { createRpcListener } from "./listener";
-// Built-in middleware removed
 // Generic RPC Schema types
 export type {
     ExtractedParametersFromRpc,

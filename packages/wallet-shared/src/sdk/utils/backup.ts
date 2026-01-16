@@ -59,11 +59,6 @@ export async function restoreBackupData({
         return;
     }
 
-    if (!data) {
-        console.log("restoreBackupData - invalid backup data", { data });
-        return;
-    }
-
     // Ensure that the backup data is for the current product
     if (data.productId !== productId) {
         throw new Error("Invalid backup data");
@@ -93,7 +88,7 @@ export async function pushBackupData(args?: { productId?: Hex }) {
     // Get the product ID from args (optional for cleanup scenarios)
     const productId = args?.productId;
     if (!productId) {
-        console.log("No productId provided - skipping backup");
+        console.log("[Backup] No productId provided - skipping backup");
         return;
     }
     // Get the current backup data from stores
@@ -110,7 +105,9 @@ export async function pushBackupData(args?: { productId?: Hex }) {
         // Backup will expire in a week
         expireAtTimestamp: Date.now() + 7 * 24 * 60 * 60_000,
     };
-    console.log("Pushing new backup data to parent client", { backup });
+    console.log("[Backup] Pushing new backup data to parent client", {
+        backup,
+    });
 
     // If nothing to back up, just remove it
     if (!backup.session?.token && !backup.sdkSession?.token) {

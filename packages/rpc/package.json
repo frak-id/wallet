@@ -48,16 +48,6 @@
                 "types": "./dist/index.d.cts",
                 "default": "./dist/index.cjs"
             }
-        },
-        "./middleware": {
-            "import": {
-                "types": "./dist/middleware.d.ts",
-                "default": "./dist/middleware.js"
-            },
-            "require": {
-                "types": "./dist/middleware.d.cts",
-                "default": "./dist/middleware.cjs"
-            }
         }
     },
     "scripts": {
@@ -72,7 +62,6 @@
         "prepublish": "bun run lint && bun run build",
         "publish": "echo 'Publishing rpc...'"
     },
-    "dependencies": {},
     "peerDependencies": {
         "viem": "^2.x"
     },
