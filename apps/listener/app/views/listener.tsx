@@ -1,8 +1,5 @@
 import type { FrakLifecycleEvent } from "@frak-labs/core-sdk";
-import {
-    createListenerCompressionMiddleware,
-    createRpcListener,
-} from "@frak-labs/frame-connector";
+import { createRpcListener } from "@frak-labs/frame-connector";
 import { loadPolyfills } from "@frak-labs/ui/utils/polyfills";
 import { useEffect } from "react";
 import { ListenerUiRenderer } from "@/module/component/ListenerUiRenderer";
@@ -92,13 +89,12 @@ function ListenerContent() {
         // against stored iframeResolvingContext)
         //
         // Message routing:
-        // 1. Lifecycle messages -> clientLifecycleHandler (no middleware, no compression)
+        // 1. Lifecycle messages -> clientLifecycleHandler (no middleware)
         // 2. RPC messages -> middleware stack -> handlers
         //
         // Middleware stack order (RPC messages only):
-        // 1. compressionMiddleware - Decompresses incoming CBOR data with hash validation
-        // 2. loggingMiddleware - Logs requests/responses (development only)
-        // 3. walletContextMiddleware - Augments context with productId, sourceUrl, etc.
+        // 1. loggingMiddleware - Logs requests/responses (development only)
+        // 2. walletContextMiddleware - Augments context with productId, sourceUrl, etc.
         const listener = createRpcListener<
             CombinedRpcSchema,
             WalletRpcContext,
@@ -106,11 +102,7 @@ function ListenerContent() {
         >({
             transport: window,
             allowedOrigins: "*",
-            middleware: [
-                createListenerCompressionMiddleware(),
-                loggingMiddleware,
-                walletContextMiddleware,
-            ],
+            middleware: [loggingMiddleware, walletContextMiddleware],
             lifecycleHandlers: {
                 clientLifecycle: clientLifecycleHandler,
             },
