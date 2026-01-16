@@ -65,11 +65,7 @@ export {
 } from "./error";
 export type { RpcListener, RpcListenerConfig } from "./listener";
 export { createRpcListener } from "./listener";
-// Built-in middleware
-export {
-    createClientCompressionMiddleware,
-    createListenerCompressionMiddleware,
-} from "./middleware";
+// Built-in middleware removed
 // Generic RPC Schema types
 export type {
     ExtractedParametersFromRpc,
@@ -100,15 +96,6 @@ export type {
     StreamEmitter,
     TypedRpcRequest,
 } from "./types";
-export {
-    type CompressedData,
-    compressJson,
-    decompressDataAndCheckHash,
-    decompressJson,
-    type HashProtectedData,
-    hashAndCompressData,
-    jsonDecode,
-    jsonEncode,
-} from "./utils/compression";
 // Utils helpers
 export { Deferred } from "./utils/deferred-promise";
+export { jsonDecode, jsonEncode } from "./utils/json";

@@ -7,7 +7,4 @@
  * @module middleware
  */
 
-export {
-    createClientCompressionMiddleware,
-    createListenerCompressionMiddleware,
-} from "./compression";
+// Compression middleware removed - no longer needed
