@@ -5,13 +5,33 @@ import { pushBackupData, restoreBackupData } from "./backup";
 
 // Mock external dependencies
 vi.mock("@frak-labs/core-sdk", () => ({
-    base64urlDecode: vi.fn((input: string) => input),
-    base64urlEncode: vi.fn((input: unknown) => String(input)),
+    base64urlDecode: vi.fn((input: string) => {
+        // Decode base64url string to Uint8Array
+        const binaryString = atob(input.replace(/-/g, "+").replace(/_/g, "/"));
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+        }
+        return bytes;
+    }),
+    base64urlEncode: vi.fn((input: Uint8Array) => {
+        // Encode Uint8Array to base64url string
+        const binaryString = String.fromCharCode(...input);
+        return btoa(binaryString)
+            .replace(/\+/g, "-")
+            .replace(/\//g, "_")
+            .replace(/=/g, "");
+    }),
 }));
 
-vi.mock("@frak-labs/frame-connector", () => ({
-    decompressDataAndCheckHash: vi.fn(<T>(input: unknown): T => input as T),
-    hashAndCompressData: vi.fn((input: unknown) => input),
+vi.mock("viem", () => ({
+    sha256: vi.fn((input: Uint8Array) => {
+        // Simple mock hash - just return a deterministic hex string
+        return `0x${Array.from(input)
+            .reduce((acc, byte) => acc + byte, 0)
+            .toString(16)
+            .padStart(64, "0")}`;
+    }),
 }));
 
 vi.mock("../../stores/sessionStore", async () => {
@@ -60,10 +80,8 @@ describe("backup utilities", () => {
 
     describe("restoreBackupData", () => {
         it("should restore session data from valid backup", async () => {
-            const { base64urlDecode } = await import("@frak-labs/core-sdk");
-            const { decompressDataAndCheckHash } = await import(
-                "@frak-labs/frame-connector"
-            );
+            const { base64urlEncode } = await import("@frak-labs/core-sdk");
+            const { sha256 } = await import("viem");
             const { sessionStore } = await import("../../stores/sessionStore");
 
             const mockSetSession = vi.fn();
@@ -83,30 +101,30 @@ describe("backup utilities", () => {
                 expireAtTimestamp: Date.now() + 86400000,
             };
 
-            vi.mocked(base64urlDecode).mockReturnValue(
-                "decompressed-data" as never
-            );
-            vi.mocked(decompressDataAndCheckHash).mockReturnValue(
-                mockBackupData as never
+            // Create hash-protected backup
+            const jsonData = JSON.stringify(mockBackupData);
+            const hash = vi.mocked(sha256)(new TextEncoder().encode(jsonData));
+            const hashProtected = {
+                ...mockBackupData,
+                validationHash: hash,
+            };
+
+            // Encode as JSON + base64url
+            const encoded = vi.mocked(base64urlEncode)(
+                new TextEncoder().encode(JSON.stringify(hashProtected))
             );
 
             await restoreBackupData({
-                backup: "backup-string",
+                backup: encoded,
                 productId: mockProductId,
             });
 
-            expect(base64urlDecode).toHaveBeenCalledWith("backup-string");
-            expect(decompressDataAndCheckHash).toHaveBeenCalledWith(
-                "decompressed-data"
-            );
             expect(mockSetSession).toHaveBeenCalledWith(mockSession);
         });
 
         it("should restore SDK session from valid backup", async () => {
-            const { base64urlDecode } = await import("@frak-labs/core-sdk");
-            const { decompressDataAndCheckHash } = await import(
-                "@frak-labs/frame-connector"
-            );
+            const { base64urlEncode } = await import("@frak-labs/core-sdk");
+            const { sha256 } = await import("viem");
             const { sessionStore } = await import("../../stores/sessionStore");
 
             const mockSetSdkSession = vi.fn();
@@ -126,15 +144,19 @@ describe("backup utilities", () => {
                 expireAtTimestamp: Date.now() + 86400000,
             };
 
-            vi.mocked(base64urlDecode).mockReturnValue(
-                "decompressed-data" as never
-            );
-            vi.mocked(decompressDataAndCheckHash).mockReturnValue(
-                mockBackupData as never
+            const jsonData = JSON.stringify(mockBackupData);
+            const hash = vi.mocked(sha256)(new TextEncoder().encode(jsonData));
+            const hashProtected = {
+                ...mockBackupData,
+                validationHash: hash,
+            };
+
+            const encoded = vi.mocked(base64urlEncode)(
+                new TextEncoder().encode(JSON.stringify(hashProtected))
             );
 
             await restoreBackupData({
-                backup: "backup-string",
+                backup: encoded,
                 productId: mockProductId,
             });
 
@@ -142,10 +164,20 @@ describe("backup utilities", () => {
         });
 
         it("should not restore data if productId does not match", async () => {
-            const { base64urlDecode } = await import("@frak-labs/core-sdk");
-            const { decompressDataAndCheckHash } = await import(
-                "@frak-labs/frame-connector"
-            );
+            const { base64urlEncode } = await import("@frak-labs/core-sdk");
+            const { sha256 } = await import("viem");
+            const { sessionStore } = await import("../../stores/sessionStore");
+
+            const mockSetSession = vi.fn();
+            vi.mocked(sessionStore.getState).mockReturnValue({
+                session: null,
+                sdkSession: null,
+                demoPrivateKey: null,
+                setSession: mockSetSession,
+                setSdkSession: vi.fn(),
+                setDemoPrivateKey: vi.fn(),
+                clearSession: vi.fn(),
+            });
 
             const mockBackupData = {
                 productId: "0x5678" as Hex,
@@ -153,100 +185,114 @@ describe("backup utilities", () => {
                 expireAtTimestamp: Date.now() + 86400000,
             };
 
-            vi.mocked(base64urlDecode).mockReturnValue(
-                "decompressed-data" as never
-            );
-            vi.mocked(decompressDataAndCheckHash).mockReturnValue(
-                mockBackupData as never
+            const jsonData = JSON.stringify(mockBackupData);
+            const hash = vi.mocked(sha256)(new TextEncoder().encode(jsonData));
+            const hashProtected = {
+                ...mockBackupData,
+                validationHash: hash,
+            };
+
+            const encoded = vi.mocked(base64urlEncode)(
+                new TextEncoder().encode(JSON.stringify(hashProtected))
             );
 
             await expect(
                 restoreBackupData({
-                    backup: "backup-string",
+                    backup: encoded,
                     productId: mockProductId,
                 })
             ).rejects.toThrow("Invalid backup data");
+
+            expect(mockSetSession).not.toHaveBeenCalled();
         });
 
         it("should emit remove-backup event if backup is expired", async () => {
-            const { base64urlDecode } = await import("@frak-labs/core-sdk");
-            const { decompressDataAndCheckHash } = await import(
-                "@frak-labs/frame-connector"
-            );
+            const { base64urlEncode } = await import("@frak-labs/core-sdk");
+            const { sha256 } = await import("viem");
             const { emitLifecycleEvent } = await import("./lifecycleEvents");
+            const { sessionStore } = await import("../../stores/sessionStore");
+
+            vi.mocked(sessionStore.getState).mockReturnValue({
+                session: null,
+                sdkSession: null,
+                demoPrivateKey: null,
+                setSession: vi.fn(),
+                setSdkSession: vi.fn(),
+                setDemoPrivateKey: vi.fn(),
+                clearSession: vi.fn(),
+            });
 
             const mockBackupData = {
                 productId: mockProductId,
                 session: mockSession,
-                expireAtTimestamp: Date.now() - 86400000, // Expired
+                expireAtTimestamp: Date.now() - 86400000,
             };
 
-            vi.mocked(base64urlDecode).mockReturnValue(
-                "decompressed-data" as never
-            );
-            vi.mocked(decompressDataAndCheckHash).mockReturnValue(
-                mockBackupData as never
+            const jsonData = JSON.stringify(mockBackupData);
+            const hash = vi.mocked(sha256)(new TextEncoder().encode(jsonData));
+            const hashProtected = {
+                ...mockBackupData,
+                validationHash: hash,
+            };
+
+            const encoded = vi.mocked(base64urlEncode)(
+                new TextEncoder().encode(JSON.stringify(hashProtected))
             );
 
             await restoreBackupData({
-                backup: "backup-string",
+                backup: encoded,
                 productId: mockProductId,
             });
 
-            expect(emitLifecycleEvent).toHaveBeenCalledWith({
+            expect(vi.mocked(emitLifecycleEvent)).toHaveBeenCalledWith({
                 iframeLifecycle: "remove-backup",
             });
         });
 
         it("should handle decompression errors gracefully", async () => {
-            const { base64urlDecode } = await import("@frak-labs/core-sdk");
-
-            vi.mocked(base64urlDecode).mockImplementation(() => {
-                throw new Error("Decompression failed");
-            });
-
             await restoreBackupData({
                 backup: "invalid-backup",
                 productId: mockProductId,
             });
 
             expect(console.error).toHaveBeenCalledWith(
-                "Error decompressing backup data",
-                expect.objectContaining({
-                    backup: "invalid-backup",
-                })
+                "[Backup] Failed to restore:",
+                expect.any(Error)
             );
         });
 
-        it("should handle invalid backup data", async () => {
-            const { base64urlDecode } = await import("@frak-labs/core-sdk");
-            const { decompressDataAndCheckHash } = await import(
-                "@frak-labs/frame-connector"
-            );
+        it("should handle invalid backup hash", async () => {
+            const { base64urlEncode } = await import("@frak-labs/core-sdk");
 
-            vi.mocked(base64urlDecode).mockReturnValue(
-                "decompressed-data" as never
-            );
-            vi.mocked(decompressDataAndCheckHash).mockReturnValue(
-                undefined as never
+            const mockBackupData = {
+                productId: mockProductId,
+                session: mockSession,
+                expireAtTimestamp: Date.now() + 86400000,
+            };
+
+            const hashProtected = {
+                ...mockBackupData,
+                validationHash: "0xinvalidhash",
+            };
+
+            const encoded = vi.mocked(base64urlEncode)(
+                new TextEncoder().encode(JSON.stringify(hashProtected))
             );
 
             await restoreBackupData({
-                backup: "backup-string",
+                backup: encoded,
                 productId: mockProductId,
             });
 
-            expect(console.log).toHaveBeenCalledWith(
-                "restoreBackupData - invalid backup data",
-                { data: undefined }
+            expect(console.error).toHaveBeenCalledWith(
+                "[Backup] Failed to restore:",
+                expect.any(Error)
             );
         });
 
         it("should not restore session without token", async () => {
-            const { base64urlDecode } = await import("@frak-labs/core-sdk");
-            const { decompressDataAndCheckHash } = await import(
-                "@frak-labs/frame-connector"
-            );
+            const { base64urlEncode } = await import("@frak-labs/core-sdk");
+            const { sha256 } = await import("viem");
             const { sessionStore } = await import("../../stores/sessionStore");
 
             const mockSetSession = vi.fn();
@@ -271,15 +317,19 @@ describe("backup utilities", () => {
                 expireAtTimestamp: Date.now() + 86400000,
             };
 
-            vi.mocked(base64urlDecode).mockReturnValue(
-                "decompressed-data" as never
-            );
-            vi.mocked(decompressDataAndCheckHash).mockReturnValue(
-                mockBackupData as never
+            const jsonData = JSON.stringify(mockBackupData);
+            const hash = vi.mocked(sha256)(new TextEncoder().encode(jsonData));
+            const hashProtected = {
+                ...mockBackupData,
+                validationHash: hash,
+            };
+
+            const encoded = vi.mocked(base64urlEncode)(
+                new TextEncoder().encode(JSON.stringify(hashProtected))
             );
 
             await restoreBackupData({
-                backup: "backup-string",
+                backup: encoded,
                 productId: mockProductId,
             });
 
@@ -289,10 +339,6 @@ describe("backup utilities", () => {
 
     describe("pushBackupData", () => {
         it("should push backup data with session", async () => {
-            const { hashAndCompressData } = await import(
-                "@frak-labs/frame-connector"
-            );
-            const { base64urlEncode } = await import("@frak-labs/core-sdk");
             const { sessionStore } = await import("../../stores/sessionStore");
             const { emitLifecycleEvent } = await import("./lifecycleEvents");
 
@@ -306,31 +352,17 @@ describe("backup utilities", () => {
                 clearSession: vi.fn(),
             });
 
-            vi.mocked(hashAndCompressData).mockReturnValue(
-                "compressed-data" as never
-            );
-            vi.mocked(base64urlEncode).mockReturnValue("encoded-backup");
-
             await pushBackupData({ productId: mockProductId });
 
-            expect(hashAndCompressData).toHaveBeenCalledWith(
-                expect.objectContaining({
-                    session: mockSession,
-                    productId: mockProductId,
-                })
-            );
-            expect(base64urlEncode).toHaveBeenCalledWith("compressed-data");
             expect(emitLifecycleEvent).toHaveBeenCalledWith({
                 iframeLifecycle: "do-backup",
-                data: { backup: "encoded-backup" },
+                data: { backup: expect.any(String) },
             });
         });
 
         it("should push backup data with SDK session", async () => {
-            const { hashAndCompressData } = await import(
-                "@frak-labs/frame-connector"
-            );
             const { sessionStore } = await import("../../stores/sessionStore");
+            const { emitLifecycleEvent } = await import("./lifecycleEvents");
 
             vi.mocked(sessionStore.getState).mockReturnValue({
                 session: null,
@@ -342,17 +374,12 @@ describe("backup utilities", () => {
                 clearSession: vi.fn(),
             });
 
-            vi.mocked(hashAndCompressData).mockReturnValue(
-                "compressed-data" as never
-            );
-
             await pushBackupData({ productId: mockProductId });
 
-            expect(hashAndCompressData).toHaveBeenCalledWith(
-                expect.objectContaining({
-                    sdkSession: mockSdkSession,
-                })
-            );
+            expect(emitLifecycleEvent).toHaveBeenCalledWith({
+                iframeLifecycle: "do-backup",
+                data: { backup: expect.any(String) },
+            });
         });
 
         it("should emit remove-backup when no data to back up", async () => {
@@ -397,8 +424,7 @@ describe("backup utilities", () => {
 
             await pushBackupData({ productId: mockProductId });
 
-            // Should emit remove-backup since there's no valid data
-            expect(emitLifecycleEvent).toHaveBeenCalledWith({
+            expect(vi.mocked(emitLifecycleEvent)).toHaveBeenCalledWith({
                 iframeLifecycle: "remove-backup",
             });
         });
@@ -414,11 +440,10 @@ describe("backup utilities", () => {
             expect(emitLifecycleEvent).not.toHaveBeenCalled();
         });
 
-        it("should include expiration timestamp in backup", async () => {
-            const { hashAndCompressData } = await import(
-                "@frak-labs/frame-connector"
-            );
+        it("should include expiration timestamp and hash in backup", async () => {
+            const { base64urlDecode } = await import("@frak-labs/core-sdk");
             const { sessionStore } = await import("../../stores/sessionStore");
+            const { emitLifecycleEvent } = await import("./lifecycleEvents");
 
             vi.mocked(sessionStore.getState).mockReturnValue({
                 session: mockSession,
@@ -430,22 +455,34 @@ describe("backup utilities", () => {
                 clearSession: vi.fn(),
             });
 
-            vi.mocked(hashAndCompressData).mockReturnValue(
-                "compressed-data" as never
-            );
-
             const beforeCall = Date.now();
             await pushBackupData({ productId: mockProductId });
             const afterCall = Date.now();
 
-            // Verify expireAtTimestamp is approximately one week from now
-            const callArgs = vi.mocked(hashAndCompressData).mock.calls[0][0];
-            const expireAt = (callArgs as { expireAtTimestamp: number })
-                .expireAtTimestamp;
-            const oneWeekMs = 7 * 24 * 60 * 60_000;
+            const emitCall = vi.mocked(emitLifecycleEvent).mock.calls[0][0];
+            const backupString = (
+                emitCall as {
+                    iframeLifecycle: string;
+                    data: { backup: string };
+                }
+            ).data.backup;
 
-            expect(expireAt).toBeGreaterThanOrEqual(beforeCall + oneWeekMs);
-            expect(expireAt).toBeLessThanOrEqual(afterCall + oneWeekMs);
+            const decoded = JSON.parse(
+                new TextDecoder().decode(
+                    vi.mocked(base64urlDecode)(backupString)
+                )
+            );
+
+            expect(decoded).toHaveProperty("validationHash");
+            expect(decoded.validationHash).toMatch(/^0x[0-9a-f]+$/);
+
+            const oneWeekMs = 7 * 24 * 60 * 60_000;
+            expect(decoded.expireAtTimestamp).toBeGreaterThanOrEqual(
+                beforeCall + oneWeekMs
+            );
+            expect(decoded.expireAtTimestamp).toBeLessThanOrEqual(
+                afterCall + oneWeekMs
+            );
         });
     });
 });

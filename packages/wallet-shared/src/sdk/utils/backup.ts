@@ -1,9 +1,5 @@
 import { base64urlDecode, base64urlEncode } from "@frak-labs/core-sdk";
-import {
-    decompressDataAndCheckHash,
-    hashAndCompressData,
-} from "@frak-labs/frame-connector";
-import type { Hex } from "viem";
+import { type Hex, sha256 } from "viem";
 import { sessionStore } from "../../stores/sessionStore";
 import type { SdkSession, Session } from "../../types/Session";
 import { emitLifecycleEvent } from "./lifecycleEvents";
@@ -19,6 +15,20 @@ type BackupData = {
 };
 
 /**
+ * Backup data with hash validation
+ */
+type HashProtectedBackup = BackupData & { validationHash: string };
+
+/**
+ * Hash JSON data with SHA256
+ * @param data - Data to hash
+ * @returns SHA256 hash as hex string
+ */
+function hashJson(data: unknown): string {
+    return sha256(new TextEncoder().encode(JSON.stringify(data)));
+}
+
+/**
  * Restore received backup data
  * @param backup
  * @param productId
@@ -30,17 +40,25 @@ export async function restoreBackupData({
     backup: string;
     productId: Hex;
 }) {
-    // Decompress the backup data and
     let data: BackupData | undefined;
     try {
-        const decompressed = base64urlDecode(backup);
-        data = decompressDataAndCheckHash<BackupData>(decompressed);
+        // Decode base64url + JSON
+        const decoded = JSON.parse(
+            new TextDecoder().decode(base64urlDecode(backup))
+        ) as HashProtectedBackup;
+
+        // Extract and verify hash
+        const { validationHash, ...backupData } = decoded;
+        if (hashJson(backupData) !== validationHash) {
+            throw new Error("Invalid backup hash");
+        }
+
+        data = backupData;
     } catch (e) {
-        console.error("Error decompressing backup data", {
-            e,
-            backup,
-        });
+        console.error("[Backup] Failed to restore:", e);
+        return;
     }
+
     if (!data) {
         console.log("restoreBackupData - invalid backup data", { data });
         return;
@@ -102,12 +120,20 @@ export async function pushBackupData(args?: { productId?: Hex }) {
         return;
     }
 
-    // Create a compressed backup
-    const compressedBackup = hashAndCompressData(backup);
+    // Add hash to backup data
+    const hashProtected: HashProtectedBackup = {
+        ...backup,
+        validationHash: hashJson(backup),
+    };
+
+    // Encode as JSON + base64url
+    const encoded = base64urlEncode(
+        new TextEncoder().encode(JSON.stringify(hashProtected))
+    );
 
     // And then push the event
     emitLifecycleEvent({
         iframeLifecycle: "do-backup",
-        data: { backup: base64urlEncode(compressedBackup) },
+        data: { backup: encoded },
     });
 }
