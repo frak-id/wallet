@@ -1,8 +1,15 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "../../tests/vitest-fixtures";
+import {
+    afterEach,
+    beforeEach,
+    describe,
+    expect,
+    it,
+    vi,
+} from "../../tests/vitest-fixtures";
 import type { FrakWalletSdkConfig } from "../types/config";
+import * as backendUrlModule from "./backendUrl";
 import * as clientIdModule from "./clientId";
 import * as merchantIdModule from "./merchantId";
-import * as backendUrlModule from "./backendUrl";
 import {
     generateMergeToken,
     redirectWithMerge,
@@ -26,9 +33,15 @@ describe("mergeToken", () => {
         globalThis.fetch = vi.fn();
 
         // Mock module functions
-        vi.spyOn(clientIdModule, "getClientId").mockReturnValue("test-client-id");
-        vi.spyOn(merchantIdModule, "resolveMerchantId").mockResolvedValue("test-merchant-id");
-        vi.spyOn(backendUrlModule, "getBackendUrl").mockReturnValue("https://backend.test");
+        vi.spyOn(clientIdModule, "getClientId").mockReturnValue(
+            "test-client-id"
+        );
+        vi.spyOn(merchantIdModule, "resolveMerchantId").mockResolvedValue(
+            "test-merchant-id"
+        );
+        vi.spyOn(backendUrlModule, "getBackendUrl").mockReturnValue(
+            "https://backend.test"
+        );
     });
 
     afterEach(() => {
@@ -47,7 +60,9 @@ describe("mergeToken", () => {
         });
 
         it("should generate merge token successfully", async () => {
-            (globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+            (
+                globalThis.fetch as ReturnType<typeof vi.fn>
+            ).mockResolvedValueOnce({
                 ok: true,
                 json: async () => ({
                     mergeToken: "test-token",
@@ -72,7 +87,9 @@ describe("mergeToken", () => {
         });
 
         it("should return undefined when backend returns error", async () => {
-            (globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+            (
+                globalThis.fetch as ReturnType<typeof vi.fn>
+            ).mockResolvedValueOnce({
                 ok: false,
                 status: 400,
             });
@@ -97,7 +114,9 @@ describe("mergeToken", () => {
                 location: { assign: mockAssign } as any,
             } as any;
 
-            (globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+            (
+                globalThis.fetch as ReturnType<typeof vi.fn>
+            ).mockResolvedValueOnce({
                 ok: true,
                 json: async () => ({
                     mergeToken: "test-token",
@@ -118,7 +137,9 @@ describe("mergeToken", () => {
                 location: { assign: mockAssign } as any,
             } as any;
 
-            (globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+            (
+                globalThis.fetch as ReturnType<typeof vi.fn>
+            ).mockResolvedValueOnce({
                 ok: true,
                 json: async () => ({
                     mergeToken: "test-token",
@@ -163,7 +184,9 @@ describe("mergeToken", () => {
                 history: { replaceState: mockReplaceState } as any,
             } as any;
 
-            (globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+            (
+                globalThis.fetch as ReturnType<typeof vi.fn>
+            ).mockResolvedValueOnce({
                 ok: true,
                 json: async () => ({
                     success: true,

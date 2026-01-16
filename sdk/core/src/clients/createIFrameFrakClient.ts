@@ -11,9 +11,9 @@ import type { FrakClient } from "../types/client";
 import type { FrakWalletSdkConfig } from "../types/config";
 import type { IFrameRpcSchema } from "../types/rpc";
 import { BACKUP_KEY } from "../utils/constants";
+import { setupMergeTokenListener } from "../utils/mergeToken";
 import { setupMobileAuthCallback } from "../utils/mobileAuthCallback";
 import { setupSsoUrlListener } from "../utils/ssoUrlListener";
-import { setupMergeTokenListener } from "../utils/mergeToken";
 
 import { DebugInfoGatherer } from "./DebugInfo";
 import {

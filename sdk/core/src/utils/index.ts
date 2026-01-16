@@ -20,6 +20,11 @@ export {
     fetchMerchantId,
     resolveMerchantId,
 } from "./merchantId";
+export {
+    generateMergeToken,
+    redirectWithMerge,
+    setupMergeTokenListener,
+} from "./mergeToken";
 export { setupMobileAuthCallback } from "./mobileAuthCallback";
 export {
     type AppSpecificSsoMetadata,
@@ -29,8 +34,3 @@ export {
 } from "./sso";
 export { type FrakEvent, trackEvent } from "./trackEvent";
 export { extractUtmParams } from "./utmParams";
-export {
-    generateMergeToken,
-    redirectWithMerge,
-    setupMergeTokenListener,
-} from "./mergeToken";

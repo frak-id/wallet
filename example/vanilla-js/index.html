@@ -30,16 +30,19 @@
         body {
             font-family: Arial, sans-serif;
             margin: 0;
-            padding: 0;
+            padding: 20px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            height: 100vh;
+            min-height: 100vh;
             background-color: #3a3f47;
         }
-        h1 {
+        h1, h2 {
             color: #fff;
+        }
+        h2 {
+            font-size: 1.2rem;
+            margin-top: 2rem;
         }
         frak-button-share .override {
             background-color: black;
@@ -52,6 +55,80 @@
             background-color: black;
             color: white;
         }
+        
+        /* Merge Token Demo Styles */
+        .merge-demo {
+            background: #2d3139;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 30px;
+            max-width: 600px;
+            width: 100%;
+        }
+        .merge-demo h2 {
+            margin-top: 0;
+            color: #4CAF50;
+        }
+        .merge-demo p {
+            color: #aaa;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+        .merge-demo button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 0.9rem;
+        }
+        .merge-demo button:hover {
+            background: #45a049;
+        }
+        .merge-demo button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        .merge-demo .secondary {
+            background: #666;
+        }
+        .merge-demo .secondary:hover {
+            background: #777;
+        }
+        .status-box {
+            background: #1e2127;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            font-family: monospace;
+            font-size: 0.85rem;
+            color: #0f0;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .status-box .info { color: #0af; }
+        .status-box .warn { color: #fa0; }
+        .status-box .error { color: #f55; }
+        .status-box .success { color: #4CAF50; }
+        .token-display {
+            background: #1e2127;
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 10px;
+            word-break: break-all;
+            font-family: monospace;
+            font-size: 0.75rem;
+            color: #888;
+            max-height: 60px;
+            overflow-y: auto;
+        }
+        .current-id {
+            color: #4CAF50;
+            font-family: monospace;
+            font-size: 0.85rem;
+        }
     </style>
 </head>
 <body>
@@ -62,5 +139,30 @@
 <br />
 <frak-open-in-app></frak-open-in-app>
 <frak-button-wallet use-reward></frak-button-wallet>
+
+<!-- Merge Token Demo Section -->
+<div class="merge-demo">
+    <h2>Identity Merge Demo</h2>
+    <p>
+        This demonstrates cross-browser identity linking. Useful when users navigate from 
+        social app browsers (Instagram, TikTok) to external browsers via SSO/OAuth flows.
+    </p>
+    
+    <p><strong>Note:</strong> Token generation requires backend running with a merchant configured for "localhost".</p>
+    
+    <p><strong>Your anonymousId:</strong> <span id="current-client-id" class="current-id">Loading...</span></p>
+    
+    <div>
+        <button id="btn-generate-token">Generate Merge Token</button>
+        <button id="btn-simulate-redirect" class="secondary">Simulate Redirect</button>
+        <button id="btn-clear-id" class="secondary">Clear ID (New Identity)</button>
+    </div>
+    
+    <div id="token-display" class="token-display" style="display: none;"></div>
+    
+    <div id="merge-status" class="status-box">
+        <div class="info">[Ready] Merge token demo initialized</div>
+    </div>
+</div>
 </body>
 </html>
