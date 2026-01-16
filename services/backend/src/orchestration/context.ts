@@ -74,11 +74,14 @@ const rewardExpirationOrchestrator = new RewardExpirationOrchestrator(
     CampaignContext.repositories.campaignRule
 );
 
+// Anonymous merge orchestrator needs identityOrchestrator to auto-create
+// identity groups on merge token generation (same pattern as /track/arrival)
 const anonymousMergeOrchestrator = new AnonymousMergeOrchestrator(
     IdentityContext.services.anonymousMerge,
     IdentityContext.repositories.identity,
     identityWeightService,
-    identityMergeService
+    identityMergeService,
+    identityOrchestrator
 );
 
 export namespace OrchestrationContext {

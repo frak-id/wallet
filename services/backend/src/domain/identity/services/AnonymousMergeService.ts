@@ -19,39 +19,33 @@ export class AnonymousMergeService {
 
     /**
      * Generate a merge token for the source anonymous identity
+     *
+     * @param sourceGroupId - Pre-resolved identity group ID from orchestrator
+     *
+     * NOTE: This service was simplified to receive sourceGroupId directly
+     * instead of looking it up. The orchestrator handles identity creation
+     * via identityOrchestrator.resolveAndAssociate() before calling this.
+     * This separates concerns: orchestrator handles identity lifecycle,
+     * service handles token generation.
      */
     async generateToken(params: {
         sourceAnonymousId: string;
         merchantId: string;
+        sourceGroupId: string;
     }): Promise<GenerateTokenResult> {
-        const { sourceAnonymousId, merchantId } = params;
-
-        // Find the source group
-        const sourceGroup = await this.identityRepository.findGroupByIdentity({
-            type: "anonymous_fingerprint",
-            value: sourceAnonymousId,
-            merchantId,
-        });
-
-        if (!sourceGroup) {
-            return {
-                success: false,
-                error: "Source anonymous identity not found",
-                code: "SOURCE_NOT_FOUND",
-            };
-        }
+        const { sourceAnonymousId, merchantId, sourceGroupId } = params;
 
         // Generate the JWT (60-min expiration is configured in JwtContext)
         const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
 
         const mergeToken = await JwtContext.anonymousMerge.sign({
-            sourceGroupId: sourceGroup.id,
+            sourceGroupId,
             sourceMerchantId: merchantId,
             sourceAnonymousId,
         });
 
         log.info(
-            { sourceGroupId: sourceGroup.id, merchantId },
+            { sourceGroupId, merchantId },
             "Anonymous merge token generated"
         );
 

@@ -2,6 +2,7 @@ import { log } from "@backend-infrastructure";
 import type { IdentityRepository } from "../../domain/identity/repositories/IdentityRepository";
 import type { AnonymousMergeService } from "../../domain/identity/services/AnonymousMergeService";
 import type { IdentityMergeService } from "./IdentityMergeService";
+import type { IdentityOrchestrator } from "./IdentityOrchestrator";
 import type { IdentityWeightService } from "./IdentityWeightService";
 
 type InitiateMergeResult =
@@ -17,17 +18,44 @@ export class AnonymousMergeOrchestrator {
         private readonly anonymousMergeService: AnonymousMergeService,
         private readonly identityRepository: IdentityRepository,
         private readonly weightService: IdentityWeightService,
-        private readonly mergeService: IdentityMergeService
+        private readonly mergeService: IdentityMergeService,
+        private readonly identityOrchestrator: IdentityOrchestrator
     ) {}
 
     /**
      * Initiate anonymous identity merge by generating a JWT token
+     *
+     * IMPORTANT: This auto-creates the source identity if it doesn't exist yet.
+     * This is necessary because the SDK generates clientId on first page load,
+     * but the identity group is only created when user performs an action
+     * (tracking, auth, etc.). Without this, merge token generation would fail
+     * with "Source not found" error.
+     *
+     * Pattern matches: /track/arrival, /wallet/auth/register, /wallet/auth/login
+     * All use identityOrchestrator.resolveAndAssociate() to create-or-get identity.
      */
     async initiateMerge(params: {
         sourceAnonymousId: string;
         merchantId: string;
     }): Promise<InitiateMergeResult> {
-        return this.anonymousMergeService.generateToken(params);
+        const { sourceAnonymousId, merchantId } = params;
+
+        // Create source identity if it doesn't exist (idempotent)
+        // Same pattern as /track/arrival and auth endpoints
+        const { finalGroupId: sourceGroupId } =
+            await this.identityOrchestrator.resolveAndAssociate([
+                {
+                    type: "anonymous_fingerprint",
+                    value: sourceAnonymousId,
+                    merchantId,
+                },
+            ]);
+
+        return this.anonymousMergeService.generateToken({
+            sourceAnonymousId,
+            merchantId,
+            sourceGroupId,
+        });
     }
 
     /**
