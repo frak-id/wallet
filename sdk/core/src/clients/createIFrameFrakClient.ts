@@ -4,7 +4,6 @@ import {
     type RpcClient,
     RpcErrorCodes,
 } from "@frak-labs/frame-connector";
-import { createClientCompressionMiddleware } from "@frak-labs/frame-connector/middleware";
 import { OpenPanel } from "@openpanel/web";
 import type { FrakLifecycleEvent } from "../types";
 import type { FrakClient } from "../types/client";
@@ -67,7 +66,6 @@ export function createIFrameFrakClient({
         emittingTransport: iframe.contentWindow,
         listeningTransport: window,
         targetOrigin: frakWalletUrl,
-        // Add compression middleware to handle request/response compression
         middleware: [
             // Ensure we are connected before sending request
             {
@@ -83,7 +81,6 @@ export function createIFrameFrakClient({
                     return ctx;
                 },
             },
-            createClientCompressionMiddleware(),
             // Save debug info
             {
                 onRequest(message, ctx) {
