@@ -195,10 +195,8 @@ export class RewardCalculator {
                     context,
                     this.conditionEvaluator
                 );
-            default: {
-                const _exhaustive: never = reward;
+            default:
                 return { success: false, error: "Unknown reward amount type" };
-            }
         }
     }
 
@@ -292,10 +290,8 @@ export class RewardCalculator {
                     identityGroupId: context.user.identityGroupId,
                     wallet: context.user.walletAddress,
                 };
-            default: {
-                const _exhaustive: never = recipient;
+            default:
                 return null;
-            }
         }
     }
 }
