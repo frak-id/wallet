@@ -20,29 +20,34 @@ const MOCK_PRODUCTS: Record<
     "0x0000000000000000000000000000000000000000000000000000000000000001": {
         name: "E-Commerce Store",
         domain: "shop.example.com",
-        productTypes: ["webshop"],
+        productTypes: ["webshop", "press", "referral", "purchase"],
     },
     "0x0000000000000000000000000000000000000000000000000000000000000002": {
         name: "Digital Media Platform",
         domain: "media.example.com",
-        productTypes: ["press"],
+        productTypes: ["press", "webshop", "referral", "purchase"],
     },
     "0x0000000000000000000000000000000000000000000000000000000000000003": {
         name: "SaaS Application",
         domain: "app.example.com",
-        productTypes: ["dapp"],
+        productTypes: ["dapp", "webshop", "referral", "purchase"],
     },
     "0x0000000000000000000000000000000000000000000000000000000000000010": {
         name: "Demo Product",
         domain: "demo.example.com",
-        productTypes: ["webshop", "press"],
+        productTypes: ["webshop", "press", "referral", "purchase"],
     },
 };
 
 const DEFAULT_MOCK_PRODUCT = {
     name: "Demo Product",
     domain: "demo.example.com",
-    productTypes: ["webshop"] as ProductTypesKey[],
+    productTypes: [
+        "webshop",
+        "press",
+        "referral",
+        "purchase",
+    ] as ProductTypesKey[],
 };
 
 /**

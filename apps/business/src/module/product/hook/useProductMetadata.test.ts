@@ -88,7 +88,7 @@ describe("useProductMetadata", () => {
             expect(result.current.data).toEqual({
                 name: "E-Commerce Store",
                 domain: "shop.example.com",
-                productTypes: ["webshop"],
+                productTypes: ["webshop", "press", "referral", "purchase"],
                 productTypes_raw: 0n,
             });
         });
@@ -121,7 +121,7 @@ describe("useProductMetadata", () => {
             expect(result.current.data).toEqual({
                 name: "Demo Product",
                 domain: "demo.example.com",
-                productTypes: ["webshop"],
+                productTypes: ["webshop", "press", "referral", "purchase"],
                 productTypes_raw: 0n,
             });
         });
@@ -154,7 +154,7 @@ describe("useProductMetadata", () => {
             expect(result.current.data).toEqual({
                 name: "Digital Media Platform",
                 domain: "media.example.com",
-                productTypes: ["press"],
+                productTypes: ["press", "webshop", "referral", "purchase"],
                 productTypes_raw: 0n,
             });
         });
@@ -187,6 +187,8 @@ describe("useProductMetadata", () => {
             expect(result.current.data.productTypes).toEqual([
                 "webshop",
                 "press",
+                "referral",
+                "purchase",
             ]);
         });
     });
