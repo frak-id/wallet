@@ -1,5 +1,6 @@
 import {
     and,
+    desc,
     eq,
     gt,
     inArray,
@@ -12,6 +13,7 @@ import {
 import type { Address, Hex } from "viem";
 import { db } from "../../../infrastructure/persistence/postgres";
 import { identityNodesTable } from "../../identity/db/schema";
+import { merchantsTable } from "../../merchant/db/schema";
 import { RewardConfig } from "../config";
 import {
     type AssetLogInsert,
@@ -251,5 +253,64 @@ export class AssetLogRepository {
             (r): r is { campaignRuleId: string; amount: string } =>
                 r.campaignRuleId !== null
         );
+    }
+
+    async findByIdentityGroup(
+        identityGroupId: string,
+        options?: { status?: AssetStatus[] }
+    ): Promise<
+        Array<{
+            id: string;
+            amount: string;
+            tokenAddress: Address | null;
+            status: AssetStatus;
+            recipientType: string;
+            createdAt: Date;
+            settledAt: Date | null;
+            onchainTxHash: Hex | null;
+            interactionType: InteractionType | null;
+            merchantId: string;
+            merchantName: string;
+            merchantDomain: string;
+        }>
+    > {
+        const whereConditions = [
+            eq(assetLogsTable.identityGroupId, identityGroupId),
+            eq(assetLogsTable.assetType, "token"),
+            isNotNull(assetLogsTable.tokenAddress),
+        ];
+
+        if (options?.status && options.status.length > 0) {
+            whereConditions.push(
+                inArray(assetLogsTable.status, options.status)
+            );
+        }
+
+        return db
+            .select({
+                id: assetLogsTable.id,
+                amount: assetLogsTable.amount,
+                tokenAddress: assetLogsTable.tokenAddress,
+                status: assetLogsTable.status,
+                recipientType: assetLogsTable.recipientType,
+                createdAt: assetLogsTable.createdAt,
+                settledAt: assetLogsTable.settledAt,
+                onchainTxHash: assetLogsTable.onchainTxHash,
+                interactionType: interactionLogsTable.type,
+                merchantId: merchantsTable.id,
+                merchantName: merchantsTable.name,
+                merchantDomain: merchantsTable.domain,
+            })
+            .from(assetLogsTable)
+            .leftJoin(
+                interactionLogsTable,
+                eq(assetLogsTable.interactionLogId, interactionLogsTable.id)
+            )
+            .innerJoin(
+                merchantsTable,
+                eq(assetLogsTable.merchantId, merchantsTable.id)
+            )
+            .where(and(...whereConditions))
+            .orderBy(desc(assetLogsTable.createdAt));
     }
 }
