@@ -435,7 +435,7 @@ describe("backup utilities", () => {
             await pushBackupData();
 
             expect(console.log).toHaveBeenCalledWith(
-                "No productId provided - skipping backup"
+                "[Backup] No productId provided - skipping backup"
             );
             expect(emitLifecycleEvent).not.toHaveBeenCalled();
         });

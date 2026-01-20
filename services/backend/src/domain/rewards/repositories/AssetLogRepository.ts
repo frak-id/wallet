@@ -25,6 +25,7 @@ import type {
     AssetStatus,
     CreateAssetLogParams,
     InteractionType,
+    RecipientType,
 } from "../types";
 
 const DEFAULT_EXPIRATION_DAYS = 60;
@@ -264,7 +265,7 @@ export class AssetLogRepository {
             amount: string;
             tokenAddress: Address | null;
             status: AssetStatus;
-            recipientType: string;
+            recipientType: RecipientType;
             createdAt: Date;
             settledAt: Date | null;
             onchainTxHash: Hex | null;

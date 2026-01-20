@@ -1,14 +1,19 @@
+import { t } from "@backend-utils";
+import type { Static } from "elysia";
 import type { InteractionType } from "../schemas";
+
+export const TriggerTypeSchema = t.Union([
+    t.Literal("referral"),
+    t.Literal("purchase"),
+    t.Literal("wallet_connect"),
+    t.Literal("identity_merge"),
+]);
 
 /**
  * API trigger type for reward interactions.
  * Maps database interaction types to trigger types.
  */
-export type TriggerType =
-    | "referral"
-    | "purchase"
-    | "wallet_connect"
-    | "identity_merge";
+export type TriggerType = Static<typeof TriggerTypeSchema>;
 
 /**
  * Maps database interaction types to API trigger types.

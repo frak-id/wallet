@@ -345,15 +345,27 @@
             "pending": "Pending",
             "processing": "Processing",
             "settled": "Settled",
-            "error": "Error",
+            "consumed": "Consumed",
             "cancelled": "Cancelled",
-            "timeout": "Timeout"
+            "expired": "Expired"
         },
         "trigger": {
             "referral": "Referral",
             "purchase": "Purchase",
             "wallet_connect": "Wallet Connect",
             "identity_merge": "Identity Merge"
+        }
+    },
+    "rewards": {
+        "history": {
+            "title": "Recent Rewards",
+            "trigger": {
+                "unknown": "Reward",
+                "referral": "Referral",
+                "purchase": "Purchase",
+                "walletConnect": "Wallet Connect",
+                "identityMerge": "Identity Merge"
+            }
         }
     }
 }

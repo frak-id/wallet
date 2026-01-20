@@ -2,9 +2,9 @@ export type RewardStatus =
     | "pending"
     | "processing"
     | "settled"
-    | "error"
+    | "consumed"
     | "cancelled"
-    | "timeout";
+    | "expired";
 
 export type TriggerType =
     | "referral"
@@ -12,7 +12,7 @@ export type TriggerType =
     | "wallet_connect"
     | "identity_merge";
 
-export type RecipientType = "referral" | "referrer";
+export type RecipientType = "referee" | "referrer" | "user";
 
 export type MerchantInfo = {
     name: string;

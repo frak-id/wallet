@@ -5,7 +5,14 @@ import type { Address } from "viem";
 import { formatUnits } from "viem";
 import { IdentityContext } from "../../../../domain/identity";
 import { RewardsContext } from "../../../../domain/rewards/context";
-import { mapInteractionType } from "../../../../domain/rewards/utils/interactionTypeMapper";
+import {
+    AssetStatusSchema,
+    RecipientTypeSchema,
+} from "../../../../domain/rewards/schemas";
+import {
+    mapInteractionType,
+    TriggerTypeSchema,
+} from "../../../../domain/rewards/utils/interactionTypeMapper";
 import { WalletContext } from "../../../../domain/wallet";
 
 async function resolveIdentityGroupId(
@@ -74,19 +81,24 @@ async function fetchTokenMetadata(
 async function buildTokenMetadataMap(
     assetLogs: Array<{ tokenAddress: Address | null }>
 ): Promise<Map<string, { symbol: string; decimals: number; logo?: string }>> {
-    const tokenMetadataMap = new Map<
-        string,
-        { symbol: string; decimals: number; logo?: string }
-    >();
+    const uniqueTokens = [
+        ...new Set(
+            assetLogs
+                .map((log) => log.tokenAddress)
+                .filter((addr): addr is Address => addr !== null)
+        ),
+    ];
 
-    for (const log of assetLogs) {
-        if (log.tokenAddress && !tokenMetadataMap.has(log.tokenAddress)) {
-            const metadata = await fetchTokenMetadata(log.tokenAddress);
-            tokenMetadataMap.set(log.tokenAddress, metadata);
-        }
-    }
+    const metadataResults = await Promise.all(
+        uniqueTokens.map(async (token) => ({
+            token,
+            metadata: await fetchTokenMetadata(token),
+        }))
+    );
 
-    return tokenMetadataMap;
+    return new Map(
+        metadataResults.map(({ token, metadata }) => [token, metadata])
+    );
 }
 
 export const rewardsRoutes = new Elysia({ prefix: "/rewards" }).get(
@@ -156,12 +168,12 @@ export const rewardsRoutes = new Elysia({ prefix: "/rewards" }).get(
                         id: t.String(),
                         amount: t.Number(),
                         tokenAddress: t.Optional(t.String()),
-                        status: t.String(),
-                        recipientType: t.String(),
+                        status: AssetStatusSchema,
+                        recipientType: RecipientTypeSchema,
                         createdAt: t.Date(),
                         settledAt: t.Optional(t.Date()),
                         onchainTxHash: t.Optional(t.String()),
-                        trigger: t.Optional(t.String()),
+                        trigger: t.Optional(TriggerTypeSchema),
                         merchant: t.Object({
                             name: t.String(),
                             domain: t.String(),

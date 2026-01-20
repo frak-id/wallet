@@ -128,8 +128,8 @@
 }
 
 .rewardItem--processing,
-.rewardItem--error,
-.rewardItem--timeout {
+.rewardItem--consumed,
+.rewardItem--expired {
     background-color: var(--frak-color-grayBg, #f5f5f5);
     border-left: 2px solid var(--frak-color-grayBorder, #e0e0e0);
 }

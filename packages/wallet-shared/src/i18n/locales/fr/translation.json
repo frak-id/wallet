@@ -345,15 +345,27 @@
             "pending": "En attente",
             "processing": "En cours de traitement",
             "settled": "Réglé",
-            "error": "Erreur",
+            "consumed": "Consommé",
             "cancelled": "Annulé",
-            "timeout": "Délai dépassé"
+            "expired": "Expiré"
         },
         "trigger": {
             "referral": "Parrainage",
             "purchase": "Achat",
             "wallet_connect": "Connexion Wallet",
             "identity_merge": "Fusion d'identité"
+        }
+    },
+    "rewards": {
+        "history": {
+            "title": "Récompenses récentes",
+            "trigger": {
+                "unknown": "Récompense",
+                "referral": "Parrainage",
+                "purchase": "Achat",
+                "walletConnect": "Connexion Wallet",
+                "identityMerge": "Fusion d'identité"
+            }
         }
     }
 }
