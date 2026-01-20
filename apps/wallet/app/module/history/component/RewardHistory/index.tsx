@@ -1,47 +1,62 @@
-import type { RewardHistory } from "@frak-labs/wallet-shared";
+import type { RewardHistoryItem as RewardHistoryItemType } from "@frak-labs/wallet-shared";
 import { formatUsd } from "@frak-labs/wallet-shared";
 import { useTranslation } from "react-i18next";
 import { Skeleton } from "@/module/common/component/Skeleton";
 import { Title } from "@/module/common/component/Title";
-import { HistoryDayGroup } from "@/module/history/component/DayGroup";
 import { useGetRewardHistory } from "@/module/history/hook/useGetRewardHistory";
 import styles from "./index.module.css";
 
 export function RewardHistoryList() {
-    const { history } = useGetRewardHistory();
+    const { rewards, isLoading } = useGetRewardHistory();
 
-    if (!history) return <Skeleton count={3} height={110} />;
+    if (isLoading) return <Skeleton count={3} height={110} />;
+
+    if (!rewards || rewards.length === 0) {
+        return <div className={styles.empty}>No rewards yet</div>;
+    }
 
     return (
-        <HistoryDayGroup
-            group={history}
-            innerComponent={(reward) => <RewardHistoryItem reward={reward} />}
-        />
+        <div className={styles.list}>
+            {rewards.map((reward) => (
+                <RewardHistoryItem key={reward.id} reward={reward} />
+            ))}
+        </div>
     );
 }
 
-/**
- * Item for a reward history
- * @param reward
- * @constructor
- */
-function RewardHistoryItem({ reward }: { reward: RewardHistory }) {
+function RewardHistoryItem({ reward }: { reward: RewardHistoryItemType }) {
     const { t } = useTranslation();
     const amount = formatUsd(Number(reward.amount));
-    const label =
-        reward.type === "claim" ? t("common.claimed") : t("common.added");
+    const statusLabel = t(`reward.status.${reward.status}`, reward.status);
+    const triggerLabel = reward.trigger
+        ? t(`reward.trigger.${reward.trigger}`, reward.trigger)
+        : null;
 
     return (
-        <>
-            <div>
-                <Title className={styles.reward__title}>
-                    {reward.productName} - {label}
+        <div className={styles.item}>
+            <div className={styles.item__header}>
+                <Title className={styles.item__title}>
+                    {reward.merchant.name}
                 </Title>
-                <span className={styles.reward__date}>
-                    {new Date(reward.timestamp * 1000).toLocaleString()}
-                </span>
+                <div className={styles.item__amount}>{amount}</div>
             </div>
-            <div className={styles.reward__amount}>{amount}</div>
-        </>
+            <div className={styles.item__meta}>
+                <span className={styles.item__date}>
+                    {new Date(reward.timestamp).toLocaleString()}
+                </span>
+                <span className={styles.item__status}>{statusLabel}</span>
+                {triggerLabel && (
+                    <span className={styles.item__trigger}>{triggerLabel}</span>
+                )}
+            </div>
+            {reward.txHash && (
+                <div className={styles.item__tx}>
+                    <span className={styles.item__txLabel}>Tx:</span>
+                    <span className={styles.item__txHash}>
+                        {reward.txHash.slice(0, 10)}...
+                    </span>
+                </div>
+            )}
+        </div>
     );
 }

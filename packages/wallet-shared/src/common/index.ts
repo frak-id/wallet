@@ -41,6 +41,7 @@ export { isWebAuthNSupported } from "./lib/webauthn";
 // Query Keys
 export { balanceKey } from "./queryKeys/balance";
 export { pendingBalanceKey } from "./queryKeys/pendingBalance";
+export { rewardsKey } from "./queryKeys/rewards";
 export { sdkKey } from "./queryKeys/sdk";
 
 // Storage

@@ -22,6 +22,7 @@ import {
     OnboardingShare,
     OnboardingWelcome,
 } from "@/module/embedded/component/Onboarding";
+import { RewardHistory } from "@/module/embedded/component/RewardHistory";
 import {
     useEmbeddedListenerUI,
     useListenerTranslation,
@@ -70,6 +71,7 @@ export function LoggedInComponent() {
                 currency={configMetadata?.currency ?? "eur"}
             />
             <ActionButtons refetchPendingBalance={refetchPendingBalance} />
+            <RewardHistory />
             {footer}
         </>
     );

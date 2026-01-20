@@ -339,5 +339,21 @@
             "userOperationExecution": "Une erreur est survenue lors de l'exécution de la transaction. Veuillez réessayer.",
             "generic": "Une erreur est survenue. Veuillez réessayer."
         }
+    },
+    "reward": {
+        "status": {
+            "pending": "En attente",
+            "processing": "En cours de traitement",
+            "settled": "Réglé",
+            "error": "Erreur",
+            "cancelled": "Annulé",
+            "timeout": "Délai dépassé"
+        },
+        "trigger": {
+            "referral": "Parrainage",
+            "purchase": "Achat",
+            "wallet_connect": "Connexion Wallet",
+            "identity_merge": "Fusion d'identité"
+        }
     }
 }

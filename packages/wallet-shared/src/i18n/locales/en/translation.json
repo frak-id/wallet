@@ -339,5 +339,21 @@
             "userOperationExecution": "An error occurred while executing the transaction. Please try again.",
             "generic": "An error occurred. Please try again."
         }
+    },
+    "reward": {
+        "status": {
+            "pending": "Pending",
+            "processing": "Processing",
+            "settled": "Settled",
+            "error": "Error",
+            "cancelled": "Cancelled",
+            "timeout": "Timeout"
+        },
+        "trigger": {
+            "referral": "Referral",
+            "purchase": "Purchase",
+            "wallet_connect": "Wallet Connect",
+            "identity_merge": "Identity Merge"
+        }
     }
 }

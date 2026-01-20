@@ -1,0 +1,135 @@
+.rewardHistory {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin-top: 20px;
+    border-top: 1px solid var(--frak-color-grayBorder, #e0e0e0);
+}
+
+.rewardHistory__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--frak-color-grayText);
+    font-size: 14px;
+    font-weight: 500;
+    text-align: left;
+    transition: color 0.2s ease;
+}
+
+.rewardHistory__header:hover {
+    color: var(--frak-color-text);
+}
+
+.rewardHistory__title {
+    flex: 1;
+}
+
+.rewardHistory__toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    font-size: 10px;
+    transition: transform 0.2s ease;
+    flex-shrink: 0;
+}
+
+.rewardHistory__toggle--expanded {
+    transform: rotate(180deg);
+}
+
+.rewardHistory__content {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 8px 0;
+}
+
+.rewardItem {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 8px;
+    border-radius: 4px;
+    background-color: var(--frak-color-grayBg, #f5f5f5);
+    font-size: 12px;
+}
+
+.rewardItem__main {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.rewardItem__info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+}
+
+.rewardItem__trigger {
+    margin: 0;
+    font-weight: 500;
+    color: var(--frak-color-text);
+}
+
+.rewardItem__time {
+    margin: 0;
+    font-size: 11px;
+    color: var(--frak-color-grayText);
+}
+
+.rewardItem__amount {
+    margin: 0;
+    font-weight: 600;
+    color: var(--frak-color-success, #34ff34);
+    white-space: nowrap;
+}
+
+.rewardItem--pending {
+    background-color: var(--frak-color-warningBg, #fff3cd);
+    border-left: 2px solid var(--frak-color-warning, #ffc107);
+}
+
+.rewardItem--pending .rewardItem__trigger {
+    color: var(--frak-color-warningText, #856404);
+}
+
+.rewardItem--settled {
+    background-color: var(--frak-color-successBg, #d4edda);
+    border-left: 2px solid var(--frak-color-success, #34ff34);
+}
+
+.rewardItem--settled .rewardItem__trigger {
+    color: var(--frak-color-successText, #155724);
+}
+
+.rewardItem--cancelled {
+    background-color: var(--frak-color-errorBg, #f8d7da);
+    border-left: 2px solid var(--frak-color-error, #dc3545);
+}
+
+.rewardItem--cancelled .rewardItem__trigger {
+    text-decoration: line-through;
+    color: var(--frak-color-errorText, #721c24);
+}
+
+.rewardItem--cancelled .rewardItem__amount {
+    text-decoration: line-through;
+    color: var(--frak-color-errorText, #721c24);
+}
+
+.rewardItem--processing,
+.rewardItem--error,
+.rewardItem--timeout {
+    background-color: var(--frak-color-grayBg, #f5f5f5);
+    border-left: 2px solid var(--frak-color-grayBorder, #e0e0e0);
+}

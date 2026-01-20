@@ -11,6 +11,14 @@ export type {
 } from "./Recovery";
 export type { RewardHistory } from "./RewardHistory";
 export type {
+    MerchantInfo,
+    RecipientType,
+    RewardHistoryItem,
+    RewardStatus,
+    TokenInfo,
+    TriggerType,
+} from "./RewardHistoryItem";
+export type {
     DistantWebAuthnWallet,
     EcdsaWallet,
     SdkSession,
