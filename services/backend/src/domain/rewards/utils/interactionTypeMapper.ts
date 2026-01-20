@@ -44,9 +44,8 @@ export function mapInteractionType(
             return "wallet_connect";
         case "identity_merge":
             return "identity_merge";
-        default: {
-            const _exhaustive: never = dbType;
-            return _exhaustive;
-        }
+        default:
+            console.warn(`[mapInteractionType] Unknown type: ${dbType}`);
+            return null;
     }
 }

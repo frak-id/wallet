@@ -350,21 +350,19 @@
             "expired": "Expired"
         },
         "trigger": {
+            "unknown": "Reward",
             "referral": "Referral",
             "purchase": "Purchase",
             "wallet_connect": "Wallet Connect",
             "identity_merge": "Identity Merge"
-        }
-    },
-    "rewards": {
+        },
         "history": {
             "title": "Recent Rewards",
-            "trigger": {
-                "unknown": "Reward",
-                "referral": "Referral",
-                "purchase": "Purchase",
-                "walletConnect": "Wallet Connect",
-                "identityMerge": "Identity Merge"
+            "time": {
+                "justNow": "just now",
+                "minutesAgo": "{{count}}m ago",
+                "hoursAgo": "{{count}}h ago",
+                "daysAgo": "{{count}}d ago"
             }
         }
     }

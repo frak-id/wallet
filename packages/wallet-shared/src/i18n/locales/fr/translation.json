@@ -350,21 +350,19 @@
             "expired": "Expiré"
         },
         "trigger": {
+            "unknown": "Récompense",
             "referral": "Parrainage",
             "purchase": "Achat",
             "wallet_connect": "Connexion Wallet",
             "identity_merge": "Fusion d'identité"
-        }
-    },
-    "rewards": {
+        },
         "history": {
             "title": "Récompenses récentes",
-            "trigger": {
-                "unknown": "Récompense",
-                "referral": "Parrainage",
-                "purchase": "Achat",
-                "walletConnect": "Connexion Wallet",
-                "identityMerge": "Fusion d'identité"
+            "time": {
+                "justNow": "à l'instant",
+                "minutesAgo": "il y a {{count}}min",
+                "hoursAgo": "il y a {{count}}h",
+                "daysAgo": "il y a {{count}}j"
             }
         }
     }

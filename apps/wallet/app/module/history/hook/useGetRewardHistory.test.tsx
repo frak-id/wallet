@@ -9,11 +9,53 @@ vi.mock("wagmi", () => ({
     useAccount: vi.fn(),
 }));
 
+// Mock backend client used by wallet-shared
+vi.mock("@frak-labs/wallet-shared/common/api/backendClient", () => ({
+    authenticatedWalletApi: {
+        rewards: {
+            history: {
+                get: vi.fn(),
+            },
+        },
+    },
+}));
+
 describe("useGetRewardHistory", () => {
     beforeEach(({ queryWrapper }) => {
         vi.clearAllMocks();
         queryWrapper.client.clear();
     });
+
+    function createSuccessResponse<T>(data: T) {
+        return {
+            data,
+            error: null,
+            response: new Response(),
+            status: 200,
+            headers: new Headers(),
+        };
+    }
+
+    const mockReward = {
+        id: "reward-1",
+        amount: 12.5,
+        tokenAddress: "0x1111111111111111111111111111111111111111",
+        status: "pending" as const,
+        recipientType: "user" as const,
+        createdAt: new Date("2026-01-20T10:00:00.000Z"),
+        settledAt: undefined,
+        onchainTxHash: "0xabc123",
+        trigger: "purchase" as const,
+        merchant: {
+            name: "Frak",
+            domain: "frak.id",
+        },
+        token: {
+            symbol: "USDC",
+            decimals: 6,
+            logo: undefined,
+        },
+    };
 
     test("should return initial loading state", async ({
         queryWrapper,
@@ -22,6 +64,13 @@ describe("useGetRewardHistory", () => {
         const { useAccount } = await import("wagmi");
         vi.mocked(useAccount).mockImplementation(
             mockWagmiHooks.useAccount as any
+        );
+
+        const { authenticatedWalletApi } = await import(
+            "@frak-labs/wallet-shared/common/api/backendClient"
+        );
+        vi.mocked(authenticatedWalletApi.rewards.history.get).mockResolvedValue(
+            createSuccessResponse({ rewards: [mockReward] })
         );
 
         const { result } = renderHook(() => useGetRewardHistory(), {
@@ -41,6 +90,13 @@ describe("useGetRewardHistory", () => {
             mockWagmiHooks.useAccount as any
         );
 
+        const { authenticatedWalletApi } = await import(
+            "@frak-labs/wallet-shared/common/api/backendClient"
+        );
+        vi.mocked(authenticatedWalletApi.rewards.history.get).mockResolvedValue(
+            createSuccessResponse({ rewards: [mockReward] })
+        );
+
         const { result } = renderHook(() => useGetRewardHistory(), {
             wrapper: queryWrapper.wrapper,
         });
@@ -51,6 +107,9 @@ describe("useGetRewardHistory", () => {
 
         expect(result.current.rewards).toBeDefined();
         expect(Array.isArray(result.current.rewards)).toBe(true);
+        expect(result.current.rewards[0]?.timestamp).toBe(
+            mockReward.createdAt.getTime()
+        );
     });
 
     test("should not fetch when address is missing", async ({
@@ -68,7 +127,14 @@ describe("useGetRewardHistory", () => {
             wrapper: queryWrapper.wrapper,
         });
 
+        const { authenticatedWalletApi } = await import(
+            "@frak-labs/wallet-shared/common/api/backendClient"
+        );
+
         expect(result.current.rewards).toEqual([]);
+        expect(
+            authenticatedWalletApi.rewards.history.get
+        ).not.toHaveBeenCalled();
     });
 
     test("should return correct reward structure", async ({
@@ -78,6 +144,13 @@ describe("useGetRewardHistory", () => {
         const { useAccount } = await import("wagmi");
         vi.mocked(useAccount).mockImplementation(
             mockWagmiHooks.useAccount as any
+        );
+
+        const { authenticatedWalletApi } = await import(
+            "@frak-labs/wallet-shared/common/api/backendClient"
+        );
+        vi.mocked(authenticatedWalletApi.rewards.history.get).mockResolvedValue(
+            createSuccessResponse({ rewards: [mockReward] })
         );
 
         const { result } = renderHook(() => useGetRewardHistory(), {
@@ -109,6 +182,13 @@ describe("useGetRewardHistory", () => {
             mockWagmiHooks.useAccount as any
         );
 
+        const { authenticatedWalletApi } = await import(
+            "@frak-labs/wallet-shared/common/api/backendClient"
+        );
+        vi.mocked(authenticatedWalletApi.rewards.history.get).mockResolvedValue(
+            createSuccessResponse({ rewards: [mockReward] })
+        );
+
         const { result } = renderHook(() => useGetRewardHistory(), {
             wrapper: queryWrapper.wrapper,
         });
@@ -117,6 +197,6 @@ describe("useGetRewardHistory", () => {
             expect(result.current.isLoading).toBe(false);
         });
 
-        expect(result.current.total).toBeGreaterThanOrEqual(0);
+        expect(result.current.total).toBe(1);
     });
 });

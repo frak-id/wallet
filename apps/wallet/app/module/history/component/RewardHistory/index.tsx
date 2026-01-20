@@ -1,5 +1,4 @@
 import type { RewardHistoryItem as RewardHistoryItemType } from "@frak-labs/wallet-shared";
-import { formatUsd } from "@frak-labs/wallet-shared";
 import { useTranslation } from "react-i18next";
 import { Skeleton } from "@/module/common/component/Skeleton";
 import { Title } from "@/module/common/component/Title";
@@ -26,7 +25,7 @@ export function RewardHistoryList() {
 
 function RewardHistoryItem({ reward }: { reward: RewardHistoryItemType }) {
     const { t } = useTranslation();
-    const amount = formatUsd(Number(reward.amount));
+    const amount = `${reward.amount.toFixed(2)} ${reward.token.symbol}`;
     const statusLabel = t(`reward.status.${reward.status}`, reward.status);
     const triggerLabel = reward.trigger
         ? t(`reward.trigger.${reward.trigger}`, reward.trigger)

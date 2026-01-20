@@ -28,7 +28,7 @@ export function RewardHistory() {
                 aria-expanded={isExpanded}
             >
                 <span className={styles.rewardHistory__title}>
-                    {t("rewards.history.title")}
+                    {t("reward.history.title")}
                 </span>
                 <span
                     className={cx(
@@ -57,7 +57,7 @@ function RewardItem({
     reward: ReturnType<typeof useGetRewardHistory>["rewards"][number];
 }) {
     const { t } = useListenerTranslation();
-    const timeAgo = getRelativeTime(reward.timestamp);
+    const timeAgo = getRelativeTime(reward.timestamp, t);
 
     return (
         <div
@@ -85,19 +85,17 @@ function getTriggerLabel(
     trigger: string | null | undefined,
     t: (key: string) => string
 ): string {
-    if (!trigger) return t("rewards.history.trigger.unknown");
+    if (!trigger) return t("reward.trigger.unknown");
 
-    const triggerMap: Record<string, string> = {
-        referral: t("rewards.history.trigger.referral"),
-        purchase: t("rewards.history.trigger.purchase"),
-        wallet_connect: t("rewards.history.trigger.walletConnect"),
-        identity_merge: t("rewards.history.trigger.identityMerge"),
-    };
-
-    return triggerMap[trigger] || t("rewards.history.trigger.unknown");
+    const key = `reward.trigger.${trigger}`;
+    const translated = t(key);
+    return translated === key ? t("reward.trigger.unknown") : translated;
 }
 
-function getRelativeTime(timestamp: number): string {
+function getRelativeTime(
+    timestamp: number,
+    t: (key: string, options?: Record<string, unknown>) => string
+): string {
     const now = Date.now();
     const diff = now - timestamp;
 
@@ -106,14 +104,15 @@ function getRelativeTime(timestamp: number): string {
     const hours = Math.floor(minutes / 60);
     const days = Math.floor(hours / 24);
 
-    if (seconds < 60) return "just now";
-    if (minutes < 60) return `${minutes}m ago`;
-    if (hours < 24) return `${hours}h ago`;
-    if (days < 7) return `${days}d ago`;
+    if (seconds < 60) return t("reward.history.time.justNow");
+    if (minutes < 60)
+        return t("reward.history.time.minutesAgo", { count: minutes });
+    if (hours < 24) return t("reward.history.time.hoursAgo", { count: hours });
+    if (days < 7) return t("reward.history.time.daysAgo", { count: days });
 
-    // Fallback to date format for older rewards
+    // Fallback to localized date for older rewards
     const date = new Date(timestamp);
-    return date.toLocaleDateString("en-US", {
+    return date.toLocaleDateString(undefined, {
         month: "short",
         day: "numeric",
     });

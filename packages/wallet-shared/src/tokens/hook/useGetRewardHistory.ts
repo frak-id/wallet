@@ -2,18 +2,23 @@ import { useQuery } from "@tanstack/react-query";
 import { useAccount } from "wagmi";
 import { authenticatedWalletApi } from "../../common/api/backendClient";
 import { rewardsKey } from "../../common/queryKeys/rewards";
-import type { RewardHistoryItem } from "../../types/RewardHistoryItem";
+import type {
+    RecipientType,
+    RewardHistoryItem,
+    RewardStatus,
+    TriggerType,
+} from "../../types/RewardHistoryItem";
 
 type BackendRewardItem = {
     id: string;
     amount: number;
     tokenAddress?: string;
-    status: string;
-    recipientType: string;
-    createdAt: Date;
-    settledAt?: Date;
+    status: RewardStatus;
+    recipientType: RecipientType;
+    createdAt: Date | string;
+    settledAt?: Date | string;
     onchainTxHash?: string;
-    trigger?: string;
+    trigger?: TriggerType;
     merchant: {
         name: string;
         domain: string;
@@ -24,6 +29,12 @@ type BackendRewardItem = {
         logo?: string;
     };
 };
+
+function getTimestamp(value: Date | string): number {
+    const date = value instanceof Date ? value : new Date(value);
+    const time = date.getTime();
+    return Number.isNaN(time) ? 0 : time;
+}
 
 export function useGetRewardHistory() {
     const { address } = useAccount();
@@ -44,22 +55,24 @@ export function useGetRewardHistory() {
             const total = rewards.length;
 
             return {
-                rewards: rewards.map((item: BackendRewardItem) => ({
-                    id: item.id,
-                    amount: item.amount,
-                    timestamp: item.createdAt.getTime(),
-                    txHash: item.onchainTxHash ?? undefined,
-                    status: item.status,
-                    trigger: item.trigger ?? undefined,
-                    recipientType: item.recipientType,
-                    merchant: item.merchant,
-                    token: {
-                        address: item.tokenAddress ?? "",
-                        symbol: item.token.symbol,
-                        decimals: item.token.decimals,
-                        logo: item.token.logo,
-                    },
-                })) as RewardHistoryItem[],
+                rewards: rewards.map(
+                    (item: BackendRewardItem): RewardHistoryItem => ({
+                        id: item.id,
+                        amount: item.amount,
+                        timestamp: getTimestamp(item.createdAt),
+                        txHash: item.onchainTxHash,
+                        status: item.status,
+                        trigger: item.trigger ?? null,
+                        recipientType: item.recipientType,
+                        merchant: item.merchant,
+                        token: {
+                            address: item.tokenAddress ?? "",
+                            symbol: item.token.symbol,
+                            decimals: item.token.decimals,
+                            logo: item.token.logo,
+                        },
+                    })
+                ),
                 total,
             };
         },
