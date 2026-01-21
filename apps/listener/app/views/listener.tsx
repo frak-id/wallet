@@ -70,8 +70,9 @@ function ListenerContent() {
         let isReady = false;
         const setReadyToHandleRequest = () => {
             if (isReady) return;
-            isReady = true;
-            checkContextAndEmitReady();
+            if (checkContextAndEmitReady()) {
+                isReady = true;
+            }
         };
 
         // Create lifecycle handler

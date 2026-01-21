@@ -159,15 +159,22 @@ export function checkContextAndEmitReady(): boolean {
     // Get the context
     const currentContext = resolvingContextStore.getState().context;
 
-    // If we don't have one, initiate the handshake
+    // Prevent handshake spam: each heartbeat could trigger a new handshake
+    // while waiting for the async context resolution. Only start a handshake
+    // if none is already in progress.
+    const hasPendingHandshake =
+        resolvingContextStore.getState().handshakeTokens.size > 0;
+
     if (!currentContext) {
-        resolvingContextStore.getState().startHandshake();
-        console.warn("Not ready to handle request yet - no context");
+        if (!hasPendingHandshake) {
+            resolvingContextStore.getState().startHandshake();
+        }
         return false;
     }
 
-    // We have an auto context, try to fetch a more precise one using the handshake
-    if (currentContext.isAutoContext) {
+    // Auto-context (from document.referrer) works but we prefer a precise
+    // context from the handshake. Only upgrade if no handshake pending.
+    if (currentContext.isAutoContext && !hasPendingHandshake) {
         resolvingContextStore.getState().startHandshake();
     }
 
