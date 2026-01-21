@@ -1,4 +1,4 @@
-import type { Address } from "viem";
+import type { Address, Hex } from "viem";
 import type { SsoMetadata } from "../sso";
 import type { GenericModalStepType } from "./generic";
 
@@ -28,5 +28,9 @@ export type LoginModalStepType = GenericModalStepType<
     LoginWithSso | LoginWithoutSso,
     {
         wallet: Address;
+        webauthnProof?: {
+            challenge: Hex;
+            authenticatorResponse: string;
+        };
     }
 >;

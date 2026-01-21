@@ -1,8 +1,10 @@
-import { useSiweAuthenticate, useWalletStatus } from "@frak-labs/react-sdk";
+import { WebAuthN } from "@frak-labs/app-essentials";
 import { Button } from "@frak-labs/ui/component/Button";
 import { Spinner } from "@frak-labs/ui/component/Spinner";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { WebAuthnP256 } from "ox";
+import { useTransition } from "react";
+import { generatePrivateKey } from "viem/accounts";
 import { authenticatedBackendApi } from "@/context/api/backendClient";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
@@ -21,24 +23,37 @@ export const Route = createFileRoute("/embedded/auth")({
 function EmbeddedAuthPage() {
     const navigate = useNavigate();
     const { redirect } = Route.useSearch();
-
-    const {
-        data: walletStatus,
-        refetch: refetchWalletStatus,
-        isLoading: isLoadingWalletStatus,
-    } = useWalletStatus();
+    const [isPending, startTransition] = useTransition();
 
     const isAuthenticatedInStore = useAuthStore((state) =>
         state.isAuthenticated()
     );
 
-    const { mutate: authenticate, isPending } = useSiweAuthenticate({
-        mutations: {
-            onSuccess: async (data) => {
-                // Call backend to exchange SIWE for JWT
+    const handleAuthenticate = async () => {
+        startTransition(async () => {
+            try {
+                const challenge = generatePrivateKey();
+                const { metadata, signature, raw } = await WebAuthnP256.sign({
+                    rpId: WebAuthN.rpId,
+                    userVerification: "required",
+                    challenge,
+                });
+
+                const authenticationResponse = {
+                    id: raw.id,
+                    response: {
+                        metadata,
+                        signature,
+                    },
+                };
+
+                const encodedResponse = btoa(
+                    JSON.stringify(authenticationResponse)
+                );
+
                 const response = await authenticatedBackendApi.auth.login.post({
-                    message: data.message,
-                    signature: data.signature,
+                    expectedChallenge: challenge,
+                    authenticatorResponse: encodedResponse,
                 });
 
                 if (response.error) {
@@ -46,7 +61,6 @@ function EmbeddedAuthPage() {
                     return;
                 }
 
-                // Store token in Zustand
                 useAuthStore
                     .getState()
                     .setAuth(
@@ -55,30 +69,19 @@ function EmbeddedAuthPage() {
                         response.data.expiresAt
                     );
 
-                // Refresh the wallet status
-                await refetchWalletStatus();
-
-                // Redirect to original destination
                 navigate({ to: redirect });
-            },
-        },
-    });
+            } catch (error) {
+                console.error("WebAuthn authentication error:", error);
+            }
+        });
+    };
 
-    const isAuthenticated = useMemo(() => {
-        return walletStatus?.key === "connected" && isAuthenticatedInStore;
-    }, [walletStatus, isAuthenticatedInStore]);
-
-    const isLoading = useMemo(() => {
-        return isLoadingWalletStatus || isPending;
-    }, [isLoadingWalletStatus, isPending]);
-
-    // If already authenticated, redirect immediately
-    if (isAuthenticated) {
+    if (isAuthenticatedInStore) {
         navigate({ to: redirect });
         return null;
     }
 
-    if (isLoading || walletStatus === undefined) {
+    if (isPending) {
         return (
             <div className={styles.container}>
                 <Spinner />
@@ -97,15 +100,7 @@ function EmbeddedAuthPage() {
                     variant="secondary"
                     size="small"
                     className={styles.button}
-                    onClick={() =>
-                        authenticate({
-                            siwe: {
-                                // Expire the session after 1 week
-                                expirationTimeTimestamp:
-                                    Date.now() + 1000 * 60 * 60 * 24 * 7,
-                            },
-                        })
-                    }
+                    onClick={handleAuthenticate}
                     isLoading={isPending}
                     disabled={isPending}
                 >

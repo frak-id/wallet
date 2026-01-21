@@ -54,3 +54,4 @@ sst-env.d.ts
 
 # IDE
 .idea
+.sisyphus/
