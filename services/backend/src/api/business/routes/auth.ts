@@ -1,63 +1,25 @@
-import { JwtContext, log, viemClient } from "@backend-infrastructure";
+import { JwtContext } from "@backend-infrastructure";
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
-import { keccak256, toHex } from "viem";
-import { verifyMessage } from "viem/actions";
-import { parseSiweMessage, validateSiweMessage } from "viem/siwe";
-import { BusinessAuthResponseDto } from "../../../domain/auth";
+import { AuthContext, BusinessAuthResponseDto } from "../../../domain/auth";
 
 export const authRoutes = new Elysia({ prefix: "/auth" }).post(
     "/login",
-    async ({ body: { message, signature }, request }) => {
-        // Parse the siwe message
-        const siweMessage = parseSiweMessage(message);
-        if (!siweMessage?.address) {
-            return status(400, "Invalid SIWE message");
+    async ({ body: { expectedChallenge, authenticatorResponse } }) => {
+        const verificationResult =
+            await AuthContext.services.webAuthN.isValidSignature({
+                compressedSignature: authenticatorResponse,
+                challenge: expectedChallenge,
+            });
+        if (!verificationResult) {
+            return status(404, "Invalid signature");
         }
 
-        // Ensure the siwe message is valid
-        const origin = request.headers.get("origin") ?? "";
-        const originHost = new URL(origin).host;
-        const isValid = validateSiweMessage({
-            message: siweMessage,
-            domain: originHost,
-        });
-        if (!isValid) {
-            log.error({ siweMessage, origin }, "Invalid SIWE message");
-            return status(400, "Invalid SIWE message");
-        }
+        const { address } = verificationResult;
 
-        // Ensure the siwe message matches the given signature
-        const isValidSignature = await verifyMessage(viemClient, {
-            message,
-            signature,
-            address: siweMessage.address,
-        });
-        console.log("isValidSignature:", {
-            isValidSignature,
-            signature,
-            siweMessage,
-        });
-        if (!isValidSignature) {
-            log.error(
-                {
-                    signature,
-                    message,
-                    formattedHash: keccak256(toHex(message)),
-                },
-                "Invalid SIWE signature"
-            );
-            return status(400, "Invalid signature");
-        }
-
-        // Generate JWT token
         const token = await JwtContext.business.sign({
-            wallet: siweMessage.address,
-            siwe: {
-                message,
-                signature,
-            },
-            sub: siweMessage.address,
+            wallet: address,
+            sub: address,
             iat: Date.now(),
         });
 
@@ -66,18 +28,18 @@ export const authRoutes = new Elysia({ prefix: "/auth" }).post(
 
         return {
             token,
-            wallet: siweMessage.address,
+            wallet: address,
             expiresAt,
         };
     },
     {
         body: t.Object({
-            message: t.String(),
-            signature: t.Hex(),
+            expectedChallenge: t.Hex(),
+            authenticatorResponse: t.String(),
         }),
         response: {
             200: BusinessAuthResponseDto,
-            400: t.String(),
+            404: t.String(),
         },
     }
 );
