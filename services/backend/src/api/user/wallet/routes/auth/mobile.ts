@@ -1,13 +1,13 @@
 import { sessionContext } from "@backend-infrastructure";
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
-import { AuthContext } from "../../../../domain/auth";
+import { AuthContext } from "../../../../../domain/auth";
 import {
     ExchangeMobileAuthCodeRequestDto,
     ExchangeMobileAuthCodeResponseDto,
     GenerateMobileAuthCodeRequestDto,
     GenerateMobileAuthCodeResponseDto,
-} from "../../../../domain/auth/models/MobileAuthCodeDto";
+} from "../../../../../domain/auth/models/MobileAuthCodeDto";
 
 export const mobileAuthRoutes = new Elysia({ prefix: "/mobile" })
     .use(sessionContext)
