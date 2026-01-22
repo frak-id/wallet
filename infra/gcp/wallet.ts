@@ -325,7 +325,8 @@ if ($dev) {
         dev: {
             title: "Tauri Android Dev",
             autostart: false,
-            command: "bun run tauri:android:dev",
+            command:
+                "sh -c 'lsof -ti:3000 | xargs kill -9 2>/dev/null || true; bun run tauri:android:dev'",
             directory: "./apps/wallet",
         },
         environment: mobileEnv,
@@ -335,7 +336,8 @@ if ($dev) {
         dev: {
             title: "Tauri iOS Dev",
             autostart: false,
-            command: "bun run tauri:ios:dev",
+            command:
+                "sh -c 'lsof -ti:3000 | xargs kill -9 2>/dev/null || true; bun run tauri:ios:dev'",
             directory: "./apps/wallet",
         },
         environment: mobileEnv,
