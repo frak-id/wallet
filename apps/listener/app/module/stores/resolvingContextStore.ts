@@ -78,14 +78,8 @@ export const resolvingContextStore = create<ResolvingContextStore>(
                 return false;
             }
 
-            // Remove the token first
-            set((state) => {
-                const newTokens = new Set(state.handshakeTokens);
-                newTokens.delete(responseToken);
-                return { handshakeTokens: newTokens };
-            });
-
             // Resolve context async (fetches merchantId from backend)
+            // Token stays in handshakeTokens until resolution to block concurrent heartbeats
             resolveIFrameContext(
                 event as MessageEvent<
                     Extract<
@@ -94,6 +88,13 @@ export const resolvingContextStore = create<ResolvingContextStore>(
                     >
                 >
             ).then((context) => {
+                // Token removal must happen after fetch to prevent heartbeat race condition
+                set((state) => {
+                    const newTokens = new Set(state.handshakeTokens);
+                    newTokens.delete(responseToken);
+                    return { handshakeTokens: newTokens };
+                });
+
                 if (!context) return;
 
                 const currentContext = get().context;

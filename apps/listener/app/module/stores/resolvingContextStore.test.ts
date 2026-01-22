@@ -251,7 +251,7 @@ describe("resolvingContextStore", () => {
             expect(context?.isAutoContext).toBe(false);
         });
 
-        test("should remove token after successful handshake", () => {
+        test("should remove token after successful handshake", async () => {
             const { startHandshake, handleHandshakeResponse } =
                 resolvingContextStore.getState();
 
@@ -273,9 +273,11 @@ describe("resolvingContextStore", () => {
 
             handleHandshakeResponse(event);
 
-            const updatedTokens =
-                resolvingContextStore.getState().handshakeTokens;
-            expect(updatedTokens.size).toBe(0);
+            await vi.waitFor(() => {
+                const updatedTokens =
+                    resolvingContextStore.getState().handshakeTokens;
+                expect(updatedTokens.size).toBe(0);
+            });
         });
 
         test("should fetch productId from backend", async () => {
