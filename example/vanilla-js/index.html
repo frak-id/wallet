@@ -55,7 +55,7 @@
             background-color: black;
             color: white;
         }
-        
+
         /* Merge Token Demo Styles */
         .merge-demo {
             background: #2d3139;
@@ -144,22 +144,22 @@
 <div class="merge-demo">
     <h2>Identity Merge Demo</h2>
     <p>
-        This demonstrates cross-browser identity linking. Useful when users navigate from 
+        This demonstrates cross-browser identity linking. Useful when users navigate from
         social app browsers (Instagram, TikTok) to external browsers via SSO/OAuth flows.
     </p>
-    
+
     <p><strong>Note:</strong> Token generation requires backend running with a merchant configured for "localhost".</p>
-    
+
     <p><strong>Your anonymousId:</strong> <span id="current-client-id" class="current-id">Loading...</span></p>
-    
+
     <div>
         <button id="btn-generate-token">Generate Merge Token</button>
         <button id="btn-simulate-redirect" class="secondary">Simulate Redirect</button>
         <button id="btn-clear-id" class="secondary">Clear ID (New Identity)</button>
     </div>
-    
+
     <div id="token-display" class="token-display" style="display: none;"></div>
-    
+
     <div id="merge-status" class="status-box">
         <div class="info">[Ready] Merge token demo initialized</div>
     </div>

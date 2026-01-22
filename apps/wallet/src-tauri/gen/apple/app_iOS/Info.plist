@@ -45,12 +45,12 @@
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
+			<key>CFBundleURLName</key>
+			<string>id.frak.wallet</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>frakwallet</string>
 			</array>
-			<key>CFBundleURLName</key>
-			<string>id.frak.wallet</string>
 		</dict>
 	</array>
 </dict>
