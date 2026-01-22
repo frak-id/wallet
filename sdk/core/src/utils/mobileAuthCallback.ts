@@ -98,7 +98,7 @@ async function exchangeAuthCode({
     wallet: string;
     sdkJwt: { token: string; expires: number };
 }> {
-    const endpoint = `${backendUrl}/wallet/auth/mobile/exchange`;
+    const endpoint = `${backendUrl}/user/wallet/auth/mobile/exchange`;
 
     const response = await fetch(endpoint, {
         method: "POST",

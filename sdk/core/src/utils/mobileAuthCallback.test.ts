@@ -220,7 +220,7 @@ describe("setupMobileAuthCallback", () => {
 
         // Verify fetch was called with correct URL and body
         expect(global.fetch).toHaveBeenCalledWith(
-            "https://backend.frak.id/wallet/auth/mobile/exchange",
+            "https://backend.frak.id/user/wallet/auth/mobile/exchange",
             {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -277,7 +277,7 @@ describe("setupMobileAuthCallback", () => {
 
         // Default URL should be used
         expect(global.fetch).toHaveBeenCalledWith(
-            "https://backend.frak.id/wallet/auth/mobile/exchange",
+            "https://backend.frak.id/user/wallet/auth/mobile/exchange",
             expect.any(Object)
         );
     });
