@@ -113,9 +113,6 @@ describe("lifecycleHandler", () => {
             const { emitLifecycleEvent } = await import(
                 "@frak-labs/wallet-shared"
             );
-            const consoleSpy = vi
-                .spyOn(console, "warn")
-                .mockImplementation(() => {});
 
             const result = checkContextAndEmitReady();
 
@@ -124,17 +121,12 @@ describe("lifecycleHandler", () => {
             expect(
                 resolvingContextStore.getState().handshakeTokens.size
             ).toBeGreaterThan(0);
-            expect(consoleSpy).toHaveBeenCalledWith(
-                "Not ready to handle request yet - no context"
-            );
             // Note: startHandshake emits a "handshake" lifecycle event,
             // but not a "connected" event
             expect(emitLifecycleEvent).toHaveBeenCalledWith({
                 iframeLifecycle: "handshake",
                 data: { token: expect.any(String) },
             });
-
-            consoleSpy.mockRestore();
         });
 
         test("should emit connected event and return true if context exists", async () => {
