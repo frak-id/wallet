@@ -326,7 +326,7 @@ if ($dev) {
             title: "Tauri Android Dev",
             autostart: false,
             command:
-                "sh -c 'lsof -ti:3000 | xargs kill -9 2>/dev/null || true; bun run tauri:android:dev'",
+                "sh -c 'curl -sk --connect-timeout 1 https://localhost:3000 >/dev/null 2>&1 && lsof -ti:3000 | xargs kill -9 2>/dev/null || true; bun run tauri:android:dev'",
             directory: "./apps/wallet",
         },
         environment: mobileEnv,
@@ -337,7 +337,7 @@ if ($dev) {
             title: "Tauri iOS Dev",
             autostart: false,
             command:
-                "sh -c 'lsof -ti:3000 | xargs kill -9 2>/dev/null || true; bun run tauri:ios:dev'",
+                "sh -c 'curl -sk --connect-timeout 1 https://localhost:3000 >/dev/null 2>&1 && lsof -ti:3000 | xargs kill -9 2>/dev/null || true; bun run tauri:ios:dev'",
             directory: "./apps/wallet",
         },
         environment: mobileEnv,
