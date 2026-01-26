@@ -11,32 +11,47 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <script>
-        const config = localStorage.getItem("frak-wallet-sdk-config");
+        const detectWalletUrl = <%- detectWalletUrl %>;
 
-        if (config) {
-            window.FrakSetup = {
-                config: {
-                    walletUrl: "<%- walletUrl %>",
-                    ...JSON.parse(config),
-                },
-            };
-        } else {
-            window.FrakSetup = {
-                config: {
-                    walletUrl: "<%- walletUrl %>",
-                    metadata: {
-                        name: "Example components",
+        (async () => {
+            const walletUrl = await detectWalletUrl(<%= useLocal %>);
+            const config = localStorage.getItem("frak-wallet-sdk-config");
+
+            if (config) {
+                window.FrakSetup = {
+                    config: {
+                        walletUrl,
+                        ...JSON.parse(config),
                     },
-                },
+                };
+            } else {
+                window.FrakSetup = {
+                    config: {
+                        walletUrl,
+                        metadata: {
+                            name: "Example components",
+                        },
+                    },
+                };
+            }
+
+            // Load SDK first, then React app after SDK is ready
+            const sdkScript = document.createElement('script');
+            sdkScript.type = 'module';
+            sdkScript.src = '<%- sdkScriptSrc %>';
+            sdkScript.onload = () => {
+                const appScript = document.createElement('script');
+                appScript.type = 'module';
+                appScript.src = '/src/main.tsx';
+                document.body.appendChild(appScript);
             };
-        }
+            document.head.appendChild(sdkScript);
+        })();
     </script>
-    <%- injectScript %>
 </head>
 
 <body>
     <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
 </body>
 
 </html>

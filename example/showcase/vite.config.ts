@@ -5,6 +5,7 @@ import viteReact from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 import { createHtmlPlugin } from "vite-plugin-html";
 import tsconfigPaths from "vite-tsconfig-paths";
+import { detectWalletUrl } from "../shared/detectWalletUrl";
 
 const projectRootDir = resolve(__dirname);
 const bundleDir = resolve(projectRootDir, "../../sdk/components/cdn");
@@ -13,13 +14,6 @@ export default defineConfig(({ mode }) => {
     // Determine if we should use local resources
     // Use local when: running locally (no SST) OR in development mode
     const useLocal = isRunningLocally || mode === "development";
-
-    // Determine wallet URL based on environment
-    // In local development, use localhost
-    // Otherwise, use the dev URL
-    const walletUrl = useLocal
-        ? "https://localhost:3000"
-        : "https://wallet-dev.frak.id";
 
     // In local development, use local bundle
     // Otherwise, use CDN
@@ -33,8 +27,9 @@ export default defineConfig(({ mode }) => {
             createHtmlPlugin({
                 inject: {
                     data: {
-                        walletUrl,
-                        injectScript: `<script type="module" src="${scriptSrc}"></script>`,
+                        useLocal,
+                        detectWalletUrl: detectWalletUrl.toString(),
+                        sdkScriptSrc: scriptSrc,
                     },
                 },
             }),

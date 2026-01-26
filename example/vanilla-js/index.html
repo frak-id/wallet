@@ -6,25 +6,40 @@
     <title>Example Vanilla JS</title>
     <link rel="icon" href="/favicon.ico" sizes="32x32"/>
     <script>
-        // Setup FrakSetup
-        window.FrakSetup = {
-            config: {
-                walletUrl: window.location.hostname === 'localhost' ? 'https://localhost:3000' : 'https://wallet-dev.frak.id',
-                metadata: {
-                    name: "Vanilla JS",
-                    lang: "fr",
-                    currency: "eur",
+        const detectWalletUrl = <%- detectWalletUrl %>;
+
+        (async () => {
+            const walletUrl = await detectWalletUrl(<%= useLocal %>);
+
+            window.FrakSetup = {
+                config: {
+                    walletUrl,
+                    metadata: {
+                        name: "Vanilla JS",
+                        lang: "fr",
+                        currency: "eur",
+                    },
                 },
-            },
-            modalWalletConfig: {
-                metadata: {
-                    position: "left",
+                modalWalletConfig: {
+                    metadata: {
+                        position: "left",
+                    },
                 },
-            },
-        };
+            };
+
+            // Load SDK first, then app script after SDK is ready
+            const sdkScript = document.createElement('script');
+            sdkScript.type = 'module';
+            sdkScript.src = '<%- sdkScriptSrc %>';
+            sdkScript.onload = () => {
+                const appScript = document.createElement('script');
+                appScript.type = 'module';
+                appScript.src = '/src/main.ts';
+                document.body.appendChild(appScript);
+            };
+            document.head.appendChild(sdkScript);
+        })();
     </script>
-    <script type="module" src="/src/main.ts"></script>
-    <%- injectScript %>
     <%- injectReactScan %>
     <style>
         body {

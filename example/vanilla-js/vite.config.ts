@@ -2,6 +2,7 @@ import { resolve } from "node:path";
 import { isRunningLocally } from "@frak-labs/app-essentials/utils/env";
 import { defineConfig } from "vite";
 import { createHtmlPlugin } from "vite-plugin-html";
+import { detectWalletUrl } from "../shared/detectWalletUrl";
 
 const DEBUG = false;
 const projectRootDir = resolve(__dirname);
@@ -30,7 +31,9 @@ export default defineConfig(({ mode }) => {
             createHtmlPlugin({
                 inject: {
                     data: {
-                        injectScript: `<script type="module" src="${scriptSrc}"></script>`,
+                        useLocal,
+                        detectWalletUrl: detectWalletUrl.toString(),
+                        sdkScriptSrc: scriptSrc,
                         injectReactScan: DEBUG
                             ? `<script src="//unpkg.com/react-scan/dist/auto.global.js"></script>`
                             : "",

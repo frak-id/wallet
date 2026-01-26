@@ -319,14 +319,24 @@ if ($dev) {
         // Override backend URL to use local IP instead of localhost
         // This allows Android/iOS emulators and physical devices to connect
         BACKEND_URL: `http://${localIp}:3030`,
+        TAURI_CLI_RUNNING: "1",
     };
+
+    new sst.x.DevCommand("wallet:tauri", {
+        dev: {
+            title: "Wallet Tauri Dev Server",
+            autostart: false,
+            command: "./scripts/tauri-dev.sh dev",
+            directory: "./apps/wallet",
+        },
+        environment: mobileEnv,
+    });
 
     new sst.x.DevCommand("wallet:tauri-android", {
         dev: {
-            title: "Tauri Android Dev",
+            title: "Tauri Android",
             autostart: false,
-            command:
-                "sh -c 'curl -sk --connect-timeout 1 https://localhost:3000 >/dev/null 2>&1 && lsof -ti:3000 | xargs kill -9 2>/dev/null || true; bun run tauri:android:dev'",
+            command: "./scripts/tauri-dev.sh android",
             directory: "./apps/wallet",
         },
         environment: mobileEnv,
@@ -334,10 +344,9 @@ if ($dev) {
 
     new sst.x.DevCommand("wallet:tauri-ios", {
         dev: {
-            title: "Tauri iOS Dev",
+            title: "Tauri iOS",
             autostart: false,
-            command:
-                "sh -c 'curl -sk --connect-timeout 1 https://localhost:3000 >/dev/null 2>&1 && lsof -ti:3000 | xargs kill -9 2>/dev/null || true; bun run tauri:ios:dev'",
+            command: "./scripts/tauri-dev.sh ios",
             directory: "./apps/wallet",
         },
         environment: mobileEnv,

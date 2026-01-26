@@ -156,7 +156,7 @@ export default defineConfig(({ mode, command }: ConfigEnv): UserConfig => {
             },
         },
         server: {
-            port: 3000,
+            port: isTauri ? 3010 : 3000,
             // For Tauri dev: tell Vite the host so HMR WebSocket can connect
             host: isTauri ? "0.0.0.0" : "localhost",
             // Enable HMR for Tauri by explicitly setting the WebSocket URL
@@ -164,7 +164,7 @@ export default defineConfig(({ mode, command }: ConfigEnv): UserConfig => {
                 ? {
                       protocol: "ws",
                       host: "localhost",
-                      port: 3000,
+                      port: 3010,
                   }
                 : undefined,
             proxy: {

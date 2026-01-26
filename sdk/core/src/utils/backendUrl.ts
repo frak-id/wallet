@@ -4,12 +4,21 @@
 const DEFAULT_BACKEND_URL = "https://backend.frak.id";
 
 /**
+ * Check if wallet URL is local development (port 3000 or 3010)
+ */
+function isLocalDevelopment(walletUrl: string): boolean {
+    return (
+        walletUrl.includes("localhost:3000") ||
+        walletUrl.includes("localhost:3010")
+    );
+}
+
+/**
  * Derive backend URL from wallet URL
  * Maps wallet URLs to their corresponding backend URLs
  */
 function deriveBackendUrl(walletUrl: string): string {
-    // Local development
-    if (walletUrl.includes("localhost:3000")) {
+    if (isLocalDevelopment(walletUrl)) {
         return "http://localhost:3030";
     }
     // Dev environment
