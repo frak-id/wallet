@@ -41,8 +41,30 @@ start_dev_server() {
     echo "[tauri-dev] Dev server ready"
 }
 
+setup_adb_reverse() {
+    echo "[tauri-dev] Setting up ADB reverse port forwarding..."
+    
+    if ! command -v adb &> /dev/null; then
+        echo "[tauri-dev] WARNING: adb not found, skipping port forwarding"
+        return 0
+    fi
+    
+    if ! adb devices | grep -q "device$"; then
+        echo "[tauri-dev] WARNING: No Android device connected, skipping port forwarding"
+        return 0
+    fi
+    
+    adb reverse tcp:3010 tcp:3010
+    adb reverse tcp:3013 tcp:3013
+    adb reverse tcp:3014 tcp:3014
+    adb reverse tcp:3030 tcp:3030
+    
+    echo "[tauri-dev] ADB reverse ports configured (3010=wallet, 3013-3014=examples, 3030=backend)"
+}
+
 run_android() {
     start_dev_server
+    setup_adb_reverse
     cd "$WALLET_DIR"
     bun run tauri android dev --no-dev-server -c '{"build":{"beforeDevCommand":""}}'
 }

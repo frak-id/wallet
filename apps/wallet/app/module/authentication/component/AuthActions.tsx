@@ -68,9 +68,7 @@ export function AuthActions({
                 }}
                 className={className}
             >
-                <Trans
-                    i18nKey={loginButtonText ?? t("wallet.openLogin.login")}
-                />
+                <Trans i18nKey={loginButtonText ?? "wallet.openLogin.login"} />
             </ButtonAuth>
             <SsoRegisterComponent
                 isPrimary={false}
