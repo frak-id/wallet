@@ -12,27 +12,18 @@ import {
 import { getCreationData } from "@/context/campaigns/action/createOnChain";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
-import { useHasRoleOnProduct } from "@/module/common/hook/useHasRoleOnProduct";
+import { useHasRoleOnMerchant } from "@/module/common/hook/useHasRoleOnProduct";
 import type { Campaign } from "@/types/Campaign";
 import styles from "../Mint/index.module.css";
 import { createCampaignDraft, extractSearchParams } from "./utils";
 
-/**
- * Multi steps components
- *  -> Validate everything (and thus creating campaign draft)
- *  -> Trigger creation via wallet
- *  -> Success page
- * @returns
- */
 export function EmbeddedCreateCampaign() {
     const search = useSearch({ from: "/embedded/_layout/create-campaign" });
     const extracted = extractSearchParams(search);
 
-    // Hook used to send transaction via the nexus wallet
     const { mutateAsync: sendTransaction, isPending: isPendingTransaction } =
         useSendTransactionAction();
 
-    // Button to exit
     const handleClose = useCallback(() => {
         window.close();
     }, []);
@@ -47,7 +38,7 @@ export function EmbeddedCreateCampaign() {
             "embedded",
             "create-campaign",
             extracted.name,
-            extracted.productId,
+            extracted.merchantId,
             extracted.cacBrut,
         ],
         mutationFn: async () => {
@@ -84,13 +75,11 @@ export function EmbeddedCreateCampaign() {
         },
     });
 
-    const { isOwner, isAdministrator, isCampaignManager } = useHasRoleOnProduct(
-        {
-            productId: extracted.productId,
-        }
-    );
+    const { isOwner, isAdministrator, isCampaignManager } =
+        useHasRoleOnMerchant({
+            merchantId: extracted.merchantId ?? extracted.productId ?? "",
+        });
 
-    // Step 0: Check if the product is deployed and if the user is allowed on this product
     if (!isOwner && !isAdministrator && !isCampaignManager) {
         return (
             <>
@@ -118,7 +107,6 @@ export function EmbeddedCreateCampaign() {
         );
     }
 
-    // Step 1: No createCampaignData
     if (!createCampaignData) {
         return (
             <>
@@ -214,7 +202,6 @@ export function EmbeddedCreateCampaign() {
         );
     }
 
-    // Step 2: Success state when createCampaignData is present
     return (
         <>
             <Title className={styles.title}>Campaign Created!</Title>

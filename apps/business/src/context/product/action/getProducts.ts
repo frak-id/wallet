@@ -1,54 +1,36 @@
 import { createServerFn } from "@tanstack/react-start";
-import { type Address, type Hex, toHex } from "viem";
-import { indexerApi } from "@/context/api/indexerApi";
+import { authenticatedBackendApi } from "@/context/api/backendClient";
 import { authMiddleware } from "@/context/auth/authMiddleware";
 import { getMyProductsMock } from "@/context/product/action/mock";
 
-type ApiResult = {
-    id: string; // bigint
-    isOwner: boolean;
-    roles: string; // bigint
-    domain: string;
-    name: string;
-    productTypes: string; //bigint
-}[];
-
-type GetProductResult = {
-    owner: { id: Hex; name: string; domain: string }[];
-    operator: { id: Hex; name: string; domain: string }[];
+export type GetProductResult = {
+    owner: { id: string; name: string; domain: string }[];
+    operator: { id: string; name: string; domain: string }[];
 };
 
 /**
- * Get all the user products
+ * Get all the user products (merchants) from the backend API
  */
-async function getProducts({ wallet }: { wallet: Address }) {
-    // Get our api results
-    const json = await indexerApi
-        .get(`admin/${wallet}/products`)
-        .json<ApiResult>();
+async function getProducts(): Promise<GetProductResult> {
+    const { data, error } = await authenticatedBackendApi.merchant.my.get();
 
-    // Map it to the form: { owner: [contents], operator: [contents] }
-    return (
-        json.reduce(
-            (acc: GetProductResult, item: ApiResult[number]) => {
-                // Map our product
-                const mappedProduct = {
-                    id: toHex(BigInt(item.id)),
-                    name: item.name,
-                    domain: item.domain,
-                };
+    if (!data || error) {
+        console.warn("Error when fetching products", error);
+        return { owner: [], operator: [] };
+    }
 
-                // Push it in the right list
-                if (item.isOwner) {
-                    acc.owner.push(mappedProduct);
-                } else if (BigInt(item.roles) !== 0n) {
-                    acc.operator.push(mappedProduct);
-                }
-                return acc;
-            },
-            { owner: [], operator: [] }
-        ) ?? { owner: [], operator: [] }
-    );
+    return {
+        owner: data.owned.map((m) => ({
+            id: m.id,
+            name: m.name,
+            domain: m.domain,
+        })),
+        operator: data.adminOf.map((m) => ({
+            id: m.id,
+            name: m.name,
+            domain: m.domain,
+        })),
+    };
 }
 
 /**
@@ -57,15 +39,12 @@ async function getProducts({ wallet }: { wallet: Address }) {
 export const getMyProducts = createServerFn({ method: "GET" })
     .middleware([authMiddleware])
     .handler(async ({ context }) => {
-        const { wallet, isDemoMode } = context;
+        const { isDemoMode } = context;
 
         // Check if demo mode is active
         if (isDemoMode) {
             return getMyProductsMock();
         }
 
-        if (!wallet) {
-            throw new Error("No active session");
-        }
-        return getProducts({ wallet });
+        return getProducts();
     });

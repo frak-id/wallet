@@ -1,10 +1,5 @@
-import type { Hex } from "viem";
+import type { GetProductResult } from "@/context/product/action/getProducts";
 import productsData from "@/mock/products.json";
-
-type GetProductResult = {
-    owner: { id: Hex; name: string; domain: string }[];
-    operator: { id: Hex; name: string; domain: string }[];
-};
 
 /**
  * Mock implementation of getMyProducts for demo mode

@@ -9,16 +9,10 @@ import { type Address, encodeFunctionData, isAddressEqual } from "viem";
 import { authMiddleware } from "@/context/auth/authMiddleware";
 import { getAttachedCampaigns } from "@/context/campaigns/action/getAttachedCampaigns";
 import { getCampaignRepository } from "@/context/campaigns/repository/CampaignRepository";
-import { getRolesOnProduct } from "@/context/product/action/roles";
 
-/**
- * Function used to delete a campaign
- * @param campaignId
- * @param string
- */
 async function deleteCampaignInternal({
     campaignId,
-    wallet,
+    wallet: _wallet,
 }: {
     campaignId: string;
     wallet: Address;
@@ -26,21 +20,9 @@ async function deleteCampaignInternal({
     const campaignRepository = await getCampaignRepository();
     const id = ObjectId.createFromHexString(campaignId);
 
-    // Get the campaign
     const campaign = await campaignRepository.getOneById(id);
     if (!campaign) {
         throw new Error("Campaign not found");
-    }
-
-    // Ensure the user is allowed on to manage campaign on this product
-    const roles = await getRolesOnProduct({
-        data: { productId: campaign.productId },
-    });
-    const isAllowed =
-        (roles?.isCampaignManager ?? false) ||
-        isAddressEqual(campaign.creator, wallet);
-    if (!isAllowed) {
-        throw new Error("You can only delete your own campaigns");
     }
 
     // If the campaign isn't attached, we can just delete it and return
@@ -59,7 +41,6 @@ async function deleteCampaignInternal({
         data: { productId },
     });
 
-    // Check if it's in the active ones
     const isActive =
         activeCampaigns.findIndex((a) => isAddressEqual(a, campaignAddress)) !==
         -1;
@@ -67,7 +48,6 @@ async function deleteCampaignInternal({
     // If it's active, return the call-data required to detach the campaign
     if (isActive) {
         const tx = [
-            // Set the campaign to not running
             {
                 to: campaignAddress,
                 data: encodeFunctionData({
@@ -76,7 +56,6 @@ async function deleteCampaignInternal({
                     args: [false],
                 }),
             },
-            // Detach the campaign
             {
                 to: addresses.productInteractionManager as Address,
                 data: encodeFunctionData({
@@ -85,7 +64,6 @@ async function deleteCampaignInternal({
                     args: [BigInt(productId), [campaignAddress]],
                 }),
             },
-            // todo: update the campaign authorization on the banking contract
         ];
 
         return {
@@ -94,14 +72,10 @@ async function deleteCampaignInternal({
         } as const;
     }
 
-    // Otherwise, just delete it
     await campaignRepository.delete(id);
     return { key: "success" } as const;
 }
 
-/**
- * Server function to delete a campaign
- */
 export const deleteCampaign = createServerFn({ method: "POST" })
     .middleware([authMiddleware])
     .inputValidator((input: { campaignId: string }) => input)

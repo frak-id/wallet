@@ -1,4 +1,7 @@
-import { addresses, campaignBankAbi, currentStablecoins } from "@frak-labs/app-essentials/blockchain";
+import {
+    campaignBankAbi,
+    currentStablecoins,
+} from "@frak-labs/app-essentials/blockchain";
 import { useQuery } from "@tanstack/react-query";
 import { type Address, erc20Abi, isAddress } from "viem";
 import { readContract } from "viem/actions";

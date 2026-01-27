@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import type { Hex } from "viem";
 import { useAuthStore } from "@/stores/authStore";
 import { useGetProductAdministrators } from "./useGetProductAdministrators";
 import { useGetProductFunding } from "./useGetProductFunding";
@@ -28,10 +27,6 @@ export type ProductSetupStatus = {
     hasWarning: boolean;
 };
 
-/**
- * Base steps info with all setup requirements
- * URLs use [merchantId] placeholder which is replaced at runtime
- */
 const BASE_STEPS: Record<
     SetupStatusItemKey,
     Omit<ProductSetupStatusItem, "isGood">
@@ -109,50 +104,33 @@ const BASE_STEPS: Record<
     },
 };
 
-/**
- * Mock setup status - some steps complete, some need attention
- */
 const MOCK_SETUP_STATUS: Record<SetupStatusItemKey, boolean> = {
-    "other-admin": true, // Complete
-    "interaction-setup": true, // Complete
-    "delegated-interaction": true, // Complete
-    "oracle-updater-allowed": false, // Needs attention
-    "webhook-setup": false, // Needs attention
-    "add-funding": true, // Complete
-    "running-bank": false, // Needs attention
-    "add-campaign": false, // Needs attention
+    "other-admin": true,
+    "interaction-setup": true,
+    "delegated-interaction": true,
+    "oracle-updater-allowed": false,
+    "webhook-setup": false,
+    "add-funding": true,
+    "running-bank": false,
+    "add-campaign": false,
 };
 
-/**
- * Hook to get product setup status with real data integration
- * @param merchantId - The merchant UUID for URL generation
- * @param productId - The on-chain product ID for blockchain queries
- */
-export function useProductSetupStatus({
-    merchantId,
-    productId,
-}: {
-    merchantId: string;
-    productId: Hex;
-}) {
+export function useProductSetupStatus({ merchantId }: { merchantId: string }) {
     const isDemoMode = useAuthStore((state) => state.token === "demo-token");
 
-    // Fetch real data from other hooks
     const { data: administrators, isSuccess: isAdministratorsSuccess } =
-        useGetProductAdministrators({ productId });
+        useGetProductAdministrators({ merchantId });
     const { data: fundings, isSuccess: isFundingsSuccess } =
-        useGetProductFunding({ productId });
+        useGetProductFunding({ productId: merchantId });
 
     return useQuery({
         queryKey: [
             "merchant",
             merchantId,
             "setup-status",
-            productId,
             isDemoMode ? "demo" : "live",
         ],
         queryFn: async (): Promise<ProductSetupStatus> => {
-            // In demo mode, use mock data
             if (isDemoMode) {
                 await new Promise((resolve) => setTimeout(resolve, 300));
 
@@ -174,13 +152,11 @@ export function useProductSetupStatus({
                 };
             }
 
-            // Build steps with real data checks
             const steps: ProductSetupStatusItem[] = [];
 
-            // Check if product has other admins (real data)
             const hasOtherAdmin =
-                (administrators?.filter((admin) => admin.roleDetails.admin)
-                    .length ?? 0) > 1;
+                (administrators?.filter((admin) => admin.isOwner).length ?? 0) >
+                1;
             steps.push({
                 ...BASE_STEPS["other-admin"],
                 isGood: hasOtherAdmin,
@@ -190,41 +166,36 @@ export function useProductSetupStatus({
                 ),
             });
 
-            // Interaction-related steps (placeholder - requires blockchain integration)
-            // TODO: Implement interaction contract checks
             steps.push({
                 ...BASE_STEPS["interaction-setup"],
-                isGood: false, // Placeholder
+                isGood: false,
                 resolvingPage: BASE_STEPS[
                     "interaction-setup"
                 ].resolvingPage.replace("[merchantId]", merchantId),
             });
             steps.push({
                 ...BASE_STEPS["delegated-interaction"],
-                isGood: false, // Placeholder
+                isGood: false,
                 resolvingPage: BASE_STEPS[
                     "delegated-interaction"
                 ].resolvingPage.replace("[merchantId]", merchantId),
             });
 
-            // Purchase-related steps (placeholder - requires backend API integration)
-            // TODO: Implement webhook status check
             steps.push({
                 ...BASE_STEPS["oracle-updater-allowed"],
-                isGood: false, // Placeholder
+                isGood: false,
                 resolvingPage: BASE_STEPS[
                     "oracle-updater-allowed"
                 ].resolvingPage.replace("[merchantId]", merchantId),
             });
             steps.push({
                 ...BASE_STEPS["webhook-setup"],
-                isGood: false, // Placeholder
+                isGood: false,
                 resolvingPage: BASE_STEPS[
                     "webhook-setup"
                 ].resolvingPage.replace("[merchantId]", merchantId),
             });
 
-            // Check funding status (real data)
             const hasFunding =
                 fundings?.some((funding) => funding.balance > 0n) ?? false;
             steps.push({
@@ -247,11 +218,9 @@ export function useProductSetupStatus({
                 ),
             });
 
-            // Campaign check (placeholder - requires blockchain integration)
-            // TODO: Implement campaign count check
             steps.push({
                 ...BASE_STEPS["add-campaign"],
-                isGood: false, // Placeholder
+                isGood: false,
                 resolvingPage: BASE_STEPS["add-campaign"].resolvingPage.replace(
                     "[merchantId]",
                     merchantId
@@ -263,10 +232,6 @@ export function useProductSetupStatus({
                 hasWarning: steps.some((step) => !step.isGood),
             };
         },
-        enabled:
-            !!merchantId &&
-            !!productId &&
-            isAdministratorsSuccess &&
-            isFundingsSuccess,
+        enabled: !!merchantId && isAdministratorsSuccess && isFundingsSuccess,
     });
 }

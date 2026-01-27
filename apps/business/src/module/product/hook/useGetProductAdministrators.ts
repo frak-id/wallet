@@ -1,84 +1,77 @@
-import type { ProductRolesKey } from "@frak-labs/app-essentials";
 import { useQuery } from "@tanstack/react-query";
-import type { Address, Hex } from "viem";
+import type { Address } from "viem";
+import { authenticatedBackendApi } from "@/context/api/backendClient";
 import { useAuthStore } from "@/stores/authStore";
 
-/**
- * Mock administrators data for demo mode
- */
-const MOCK_ADMINISTRATORS = [
+const MOCK_ADMINISTRATORS: ProductAdministrator[] = [
     {
+        id: "admin-1",
         wallet: "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0" as Address,
+        addedBy: "0x0000000000000000000000000000000000000000" as Address,
+        addedAt: "2024-01-01T00:00:00.000Z",
         isOwner: true,
-        roles: "0x0" as Hex,
-        addedTimestamp: BigInt(1704067200),
-        roleDetails: {
-            admin: true,
-            productAdministrator: false,
-            interactionManager: false,
-            campaignManager: false,
-            purchaseOracleUpdater: false,
-        },
         isMe: false,
     },
     {
+        id: "admin-2",
         wallet: "0x8626f6940E2eb28930eFb4CeF49B2d1F2C9C1199" as Address,
+        addedBy: "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0" as Address,
+        addedAt: "2024-01-15T00:00:00.000Z",
         isOwner: false,
-        roles: "0x03" as Hex,
-        addedTimestamp: BigInt(1705276800),
-        roleDetails: {
-            admin: false,
-            productAdministrator: true,
-            interactionManager: false,
-            campaignManager: true,
-            purchaseOracleUpdater: false,
-        },
         isMe: false,
     },
     {
+        id: "admin-3",
         wallet: "0x90F8bf6A479f320ead074411a4B0e7944Ea8c9C1" as Address,
+        addedBy: "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0" as Address,
+        addedAt: "2024-01-29T00:00:00.000Z",
         isOwner: false,
-        roles: "0x04" as Hex,
-        addedTimestamp: BigInt(1706486400),
-        roleDetails: {
-            admin: false,
-            productAdministrator: false,
-            interactionManager: true,
-            campaignManager: false,
-            purchaseOracleUpdater: false,
-        },
         isMe: false,
     },
 ];
 
 export type ProductAdministrator = {
+    id: string;
     wallet: Address;
+    addedBy: Address;
+    addedAt: string;
     isOwner: boolean;
-    roles: Hex;
-    addedTimestamp: bigint;
-    roleDetails: Record<"admin" | ProductRolesKey, boolean>;
     isMe: boolean;
 };
 
-/**
- * Hook to get product administrators with demo mode support
- */
-export function useGetProductAdministrators({ productId }: { productId: Hex }) {
+export function useGetProductAdministrators({
+    merchantId,
+}: {
+    merchantId: string;
+}) {
     const isDemoMode = useAuthStore((state) => state.token === "demo-token");
 
     return useQuery({
-        queryKey: ["product", "team", productId, isDemoMode ? "demo" : "live"],
-        queryFn: async () => {
-            // Return mock data in demo mode
+        queryKey: ["product", "team", merchantId, isDemoMode ? "demo" : "live"],
+        queryFn: async (): Promise<ProductAdministrator[]> => {
             if (isDemoMode) {
-                // Simulate network delay
                 await new Promise((resolve) => setTimeout(resolve, 200));
                 return MOCK_ADMINISTRATORS;
             }
 
-            // TODO: Migrate to DB-based administrator query once indexer is fully removed
-            return [] as ProductAdministrator[];
+            const { data, error } = await authenticatedBackendApi
+                .merchant({ merchantId })
+                .admins.get();
+
+            if (!data || error) {
+                console.warn("Error fetching admins", error);
+                return [];
+            }
+
+            return data.admins.map((admin) => ({
+                id: admin.id,
+                wallet: admin.wallet as Address,
+                addedBy: admin.addedBy as Address,
+                addedAt: admin.addedAt,
+                isOwner: false,
+                isMe: false,
+            }));
         },
-        enabled: !!productId,
+        enabled: !!merchantId,
     });
 }

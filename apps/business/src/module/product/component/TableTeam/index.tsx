@@ -2,34 +2,29 @@ import { useWalletStatus } from "@frak-labs/react-sdk";
 import { Button } from "@frak-labs/ui/component/Button";
 import { WalletAddress } from "@frak-labs/ui/component/HashDisplay";
 import { Skeleton } from "@frak-labs/ui/component/Skeleton";
-import { Tooltip } from "@frak-labs/ui/component/Tooltip";
 import type { ColumnDef } from "@tanstack/react-table";
 import { type CellContext, createColumnHelper } from "@tanstack/react-table";
 import { useMemo } from "react";
-import { type Hex, isAddressEqual, zeroAddress } from "viem";
+import { isAddressEqual, zeroAddress } from "viem";
 import { Badge } from "@/module/common/component/Badge";
 import { Table } from "@/module/common/component/Table";
-import { useHasRoleOnProduct } from "@/module/common/hook/useHasRoleOnProduct";
+import { useHasRoleOnMerchant } from "@/module/common/hook/useHasRoleOnProduct";
 import { ButtonAddTeam } from "@/module/product/component/ButtonAddTeam";
-import {
-    DeleteTeamMemberModal,
-    UpdateRoleTeamMemberModal,
-} from "@/module/product/component/TableTeam/Modal";
+import { DeleteTeamMemberModal } from "@/module/product/component/TableTeam/Modal";
 import {
     type ProductAdministrator,
     useGetProductAdministrators,
 } from "@/module/product/hook/useGetProductAdministrators";
-import { permissionLabels } from "@/module/product/utils/permissions";
 import styles from "./index.module.css";
 
 export type ManageTeamTableData = ProductAdministrator;
 
 const columnHelper = createColumnHelper<ManageTeamTableData>();
 
-export function TableTeam({ productId }: { productId: Hex }) {
-    const { isAdministrator } = useHasRoleOnProduct({ productId });
+export function TableTeam({ merchantId }: { merchantId: string }) {
+    const { isAdministrator } = useHasRoleOnMerchant({ merchantId });
     const { data: administrators, isLoading } = useGetProductAdministrators({
-        productId,
+        merchantId,
     });
 
     const columns = useMemo(
@@ -45,21 +40,23 @@ export function TableTeam({ productId }: { productId: Hex }) {
                         </>
                     ),
                 }),
-                columnHelper.accessor("roleDetails", {
+                columnHelper.accessor("isOwner", {
                     enableSorting: false,
-                    header: "Permission",
+                    header: "Role",
                     cell: ({ getValue }) => (
-                        <PermissionsBadge roleDetails={getValue()} />
+                        <Badge variant={getValue() ? "success" : "warning"}>
+                            {getValue() ? "Owner" : "Admin"}
+                        </Badge>
                     ),
                 }),
                 columnHelper.display({
                     header: "Action",
                     cell: ({ row }) => (
-                        <CellActions row={row} productId={productId} />
+                        <CellActions row={row} merchantId={merchantId} />
                     ),
                 }),
             ] as ColumnDef<ManageTeamTableData>[],
-        [productId]
+        [merchantId]
     );
 
     if (!administrators || isLoading) {
@@ -72,7 +69,7 @@ export function TableTeam({ productId }: { productId: Hex }) {
             columns={columns}
             preTable={
                 isAdministrator && (
-                    <ButtonAddTeam productId={productId}>
+                    <ButtonAddTeam merchantId={merchantId}>
                         <Button variant={"submit"}>Add Team Member</Button>
                     </ButtonAddTeam>
                 )
@@ -81,89 +78,30 @@ export function TableTeam({ productId }: { productId: Hex }) {
     );
 }
 
-/**
- * Component representing the possible cell actions
- * @param row
- * @param productId
- * @constructor
- */
 function CellActions({
     row,
-    productId,
+    merchantId,
 }: Pick<CellContext<ManageTeamTableData, unknown>, "row"> & {
-    productId: Hex;
+    merchantId: string;
 }) {
     const { data: wallletStatus } = useWalletStatus();
-    const { isAdministrator } = useHasRoleOnProduct({ productId });
+    const { isAdministrator } = useHasRoleOnMerchant({ merchantId });
 
-    // Check if the user can do actions
-    const { canDoActions, isSelfAction } = useMemo(() => {
-        // If it's the admin role, disable permissions
-        if (row.original.isOwner)
-            return {
-                canDoActions: false,
-                isSelfAction: false,
-            };
+    const canDoActions = useMemo(() => {
+        if (row.original.isOwner) return false;
+        if (isAdministrator) return true;
 
-        // If we are the product admin, we can do everything
-        if (isAdministrator)
-            return {
-                canDoActions: true,
-                isSelfAction: false,
-            };
-
-        // Otherwise, check if the user is the current cell
-        const isCurrentUser = isAddressEqual(
+        return isAddressEqual(
             row.original.wallet,
             wallletStatus?.wallet ?? zeroAddress
         );
-        return {
-            canDoActions: isCurrentUser,
-            isSelfAction: isCurrentUser,
-        };
     }, [isAdministrator, row, wallletStatus]);
 
-    // Directly exit if the user can't do actions
     if (!canDoActions) return null;
 
-    // const actions = useMemo(() => row.original.actions, [row.original.actions]);
     return (
         <div className={styles.table__actions}>
-            <UpdateRoleTeamMemberModal
-                productId={productId}
-                row={row}
-                isRenouncing={isSelfAction}
-            />
-            <DeleteTeamMemberModal
-                row={row}
-                productId={productId}
-                isRenouncing={isSelfAction}
-            />
+            <DeleteTeamMemberModal row={row} merchantId={merchantId} />
         </div>
     );
-}
-
-function PermissionsBadge({
-    roleDetails,
-}: {
-    roleDetails: ManageTeamTableData["roleDetails"];
-}) {
-    if (roleDetails.admin) {
-        return <Badge variant={"success"}>Owner</Badge>;
-    }
-
-    const badges = [];
-
-    for (const [role, value] of Object.entries(roleDetails)) {
-        const info = permissionLabels[role as keyof typeof permissionLabels];
-        if (role === "admin" || !value || !info) continue;
-        badges.push(
-            <Tooltip content={info.description} key={role}>
-                <Badge variant={info.color ?? "warning"}>
-                    {info.shortLabel}
-                </Badge>
-            </Tooltip>
-        );
-    }
-    return <span className={styles.table__badges}>{badges}</span>;
 }
