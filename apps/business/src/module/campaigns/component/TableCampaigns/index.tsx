@@ -139,13 +139,7 @@ function CellBudget({
     row,
     getValue,
 }: Pick<CellContext<CampaignWithState, undefined>, "row" | "getValue">) {
-    // const { bankInfo } = useGetBankInfo({ bank: row.original.bank });
-    // const converted = useConvertToPreferredCurrency({
-    //     amount: getValue(),
-    //     token: bankInfo?.token,
-    // });
-
-    // if (!converted) return <Spinner />;
+    // TODO: Re-implement with useGetMerchantBank when budget display is needed
 
     return (
         <span className={styles.table__budget}>

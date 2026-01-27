@@ -1,4 +1,4 @@
-import { campaignBankAbi } from "@frak-labs/app-essentials/blockchain";
+import { campaignBankAbiLegacy } from "@frak-labs/app-essentials/blockchain";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { type Address, erc20Abi } from "viem";
@@ -39,12 +39,12 @@ export function CampaignBank({
                 {
                     contracts: [
                         {
-                            abi: campaignBankAbi,
+                            abi: campaignBankAbiLegacy,
                             address: bank,
                             functionName: "getToken",
                         },
                         {
-                            abi: campaignBankAbi,
+                            abi: campaignBankAbiLegacy,
                             address: bank,
                             functionName: "canDistributeToken",
                             args: [campaignAddress],

@@ -1,79 +1,69 @@
 import { campaignBankAbi } from "@frak-labs/app-essentials/blockchain";
 import { useSendTransactionAction } from "@frak-labs/react-sdk";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { type Address, encodeFunctionData, type Hex } from "viem";
+import { type Address, encodeFunctionData } from "viem";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { useWaitForTxAndInvalidateQueries } from "@/module/common/utils/useWaitForTxAndInvalidateQueries";
 
-/**
- * Hook to toggle the distribution status of a bank
- * @param productId
- * @param bank
- */
-export function useSetBankDistributionStatus({
-    productId,
-    bank,
+export function useUpdateBankAllowance({
+    bankAddress,
+    merchantId,
 }: {
-    productId: Hex;
-    bank: Address;
+    bankAddress: Address;
+    merchantId: string;
 }) {
     const isDemoMode = useIsDemoMode();
     const queryClient = useQueryClient();
     const waitForTxAndInvalidateQueries = useWaitForTxAndInvalidateQueries();
     const { mutateAsync: sendTx } = useSendTransactionAction();
 
-    const {
-        mutate: setDistributionStatus,
-        isPending: isSettingDistributionStatus,
-    } = useMutation({
-        mutationKey: ["product", "funding", productId, "toggle", bank],
-        mutationFn: async ({ isDistributing }: { isDistributing: boolean }) => {
-            // In demo mode, simulate success
+    return useMutation({
+        mutationKey: ["merchant", merchantId, "bank", "updateAllowance"],
+        mutationFn: async ({
+            token,
+            amount,
+        }: {
+            token: Address;
+            amount: bigint;
+        }) => {
             if (isDemoMode) {
                 await new Promise((resolve) => setTimeout(resolve, 300));
                 await queryClient.invalidateQueries({
-                    queryKey: ["product"],
-                    exact: false,
+                    queryKey: ["merchant", merchantId, "bank"],
                 });
                 return;
             }
 
-            // Toggle the distribution state
             const { hash } = await sendTx({
                 tx: {
-                    to: bank,
+                    to: bankAddress,
                     data: encodeFunctionData({
                         abi: campaignBankAbi,
-                        functionName: "updateDistributionState",
-                        args: [isDistributing],
+                        functionName: "updateAllowance",
+                        args: [token, amount],
                     }),
                 },
                 metadata: {
                     header: {
-                        title: "Toggle distribution state",
+                        title: "Update allowance",
                     },
                     i18n: {
                         fr: {
-                            "sdk.modal.sendTransaction.description": `Basculer le statut de distribution de la banque ${bank}`,
+                            "sdk.modal.sendTransaction.description":
+                                "Mettre à jour l'allocation de distribution",
                         },
                         en: {
-                            "sdk.modal.sendTransaction.description": `Toggle distribution state of bank ${bank}`,
+                            "sdk.modal.sendTransaction.description":
+                                "Update distribution allowance",
                         },
                     },
                 },
             });
 
-            // Invalidate product related queries
-            //  this also reset the top level `useGetProductFunding` query
             await waitForTxAndInvalidateQueries({
                 hash,
-                queryKey: ["product"],
+                queryKey: ["merchant", merchantId, "bank"],
             });
         },
     });
-
-    return {
-        setDistributionStatus,
-        isSettingDistributionStatus,
-    };
 }

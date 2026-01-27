@@ -3,7 +3,7 @@ import {
     productInteractionManagerAbi,
     stringToBytes32,
 } from "@frak-labs/app-essentials";
-import { campaignBankAbi } from "@frak-labs/app-essentials/blockchain";
+import { campaignBankAbiLegacy } from "@frak-labs/app-essentials/blockchain";
 import {
     type InteractionTypesKey,
     interactionTypes,
@@ -138,7 +138,7 @@ async function getCreationDataInternal({
     });
 
     const allowRewardData = encodeFunctionData({
-        abi: campaignBankAbi,
+        abi: campaignBankAbiLegacy,
         functionName: "updateCampaignAuthorisation",
         args: [determinedCampaignAddress, true],
     });

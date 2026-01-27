@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "@/stores/authStore";
+import { useGetMerchantBank } from "./useGetMerchantBank";
 import { useGetProductAdministrators } from "./useGetProductAdministrators";
-import { useGetProductFunding } from "./useGetProductFunding";
 
 type SetupStatusItemKey =
     | "other-admin"
@@ -120,8 +120,9 @@ export function useProductSetupStatus({ merchantId }: { merchantId: string }) {
 
     const { data: administrators, isSuccess: isAdministratorsSuccess } =
         useGetProductAdministrators({ merchantId });
-    const { data: fundings, isSuccess: isFundingsSuccess } =
-        useGetProductFunding({ productId: merchantId });
+    const { data: bankData, isSuccess: isBankSuccess } = useGetMerchantBank({
+        merchantId,
+    });
 
     return useQuery({
         queryKey: [
@@ -197,7 +198,7 @@ export function useProductSetupStatus({ merchantId }: { merchantId: string }) {
             });
 
             const hasFunding =
-                fundings?.some((funding) => funding.balance > 0n) ?? false;
+                bankData?.tokens?.some((token) => token.balance > 0n) ?? false;
             steps.push({
                 ...BASE_STEPS["add-funding"],
                 isGood: hasFunding,
@@ -207,8 +208,7 @@ export function useProductSetupStatus({ merchantId }: { merchantId: string }) {
                 ),
             });
 
-            const hasRunningBank =
-                fundings?.some((funding) => funding.isDistributing) ?? false;
+            const hasRunningBank = bankData?.isOpen === true;
             steps.push({
                 ...BASE_STEPS["running-bank"],
                 isGood: hasRunningBank,
@@ -232,6 +232,6 @@ export function useProductSetupStatus({ merchantId }: { merchantId: string }) {
                 hasWarning: steps.some((step) => !step.isGood),
             };
         },
-        enabled: !!merchantId && isAdministratorsSuccess && isFundingsSuccess,
+        enabled: !!merchantId && isAdministratorsSuccess && isBankSuccess,
     });
 }

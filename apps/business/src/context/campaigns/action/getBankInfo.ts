@@ -1,4 +1,4 @@
-import { campaignBankAbi } from "@frak-labs/app-essentials/blockchain";
+import { campaignBankAbiLegacy } from "@frak-labs/app-essentials/blockchain";
 import { LRUCache } from "lru-cache";
 import { type Address, erc20Abi } from "viem";
 import { readContract } from "viem/actions";
@@ -28,7 +28,7 @@ export async function getBankTokenInfoInternal({ bank }: { bank: Address }) {
     }
     // Get the bank token
     const [, token] = await readContract(viemClient, {
-        abi: campaignBankAbi,
+        abi: campaignBankAbiLegacy,
         address: bank,
         functionName: "getConfig",
     });
