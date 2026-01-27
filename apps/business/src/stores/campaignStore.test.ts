@@ -1,34 +1,28 @@
 import {
-    createMockAddress,
     describe,
     expect,
     type TestContext,
     test,
 } from "@/tests/vitest-fixtures";
-import type { Campaign } from "@/types/Campaign";
 
-const mockCampaign: Campaign = {
-    title: "Test Campaign",
-    type: "awareness",
+const mockCampaignFormData = {
+    name: "Test Campaign",
     merchantId: "mock-merchant-id",
-    productId: createMockAddress("product"),
+    goal: "awareness" as const,
     specialCategories: [],
-    budget: {
-        type: "daily",
-        maxEuroDaily: 100,
-    },
     territories: ["US", "FR"],
-    bank: createMockAddress("bank"),
+    budget: {
+        label: "Monthly",
+        durationInSeconds: 2592000,
+        amount: 100,
+    },
     scheduled: {
         dateStart: new Date("2024-01-01"),
     },
-    distribution: {
-        type: "fixed",
-    },
-    rewardChaining: {
-        userPercent: 0.1,
-    },
-    triggers: {},
+    trigger: "purchase" as const,
+    rewardAmount: 10,
+    rewardRecipient: "referrer" as const,
+    priority: 0,
 };
 
 describe("campaignStore", () => {
@@ -43,8 +37,8 @@ describe("campaignStore", () => {
             expect(state.isClosing).toBe(false);
             expect(state.isFetched).toBe(false);
             expect(state.action).toBe("create");
-            expect(state.campaign.title).toBe("");
-            expect(state.campaign.type).toBe("");
+            expect(state.campaign.name).toBe("");
+            expect(state.campaign.trigger).toBe("purchase");
         });
     });
 
@@ -52,35 +46,35 @@ describe("campaignStore", () => {
         test("should update campaign data", ({
             freshCampaignStore,
         }: TestContext) => {
-            freshCampaignStore.getState().setCampaign(mockCampaign);
+            freshCampaignStore.getState().setCampaign(mockCampaignFormData);
 
             expect(freshCampaignStore.getState().campaign).toEqual(
-                mockCampaign
+                mockCampaignFormData
             );
         });
 
         test("should persist campaign data", ({
             freshCampaignStore,
         }: TestContext) => {
-            freshCampaignStore.getState().setCampaign(mockCampaign);
+            freshCampaignStore.getState().setCampaign(mockCampaignFormData);
 
             // Check localStorage
-            const stored = localStorage.getItem("campaign");
+            const stored = localStorage.getItem("campaign-v2");
             expect(stored).toBeTruthy();
         });
 
         test("should update partial campaign data", ({
             freshCampaignStore,
         }: TestContext) => {
-            freshCampaignStore.getState().setCampaign(mockCampaign);
+            freshCampaignStore.getState().setCampaign(mockCampaignFormData);
 
-            const updatedCampaign: Campaign = {
-                ...mockCampaign,
-                title: "Updated Title",
+            const updatedCampaign = {
+                ...mockCampaignFormData,
+                name: "Updated Title",
             };
             freshCampaignStore.getState().setCampaign(updatedCampaign);
 
-            expect(freshCampaignStore.getState().campaign.title).toBe(
+            expect(freshCampaignStore.getState().campaign.name).toBe(
                 "Updated Title"
             );
         });
@@ -213,7 +207,7 @@ describe("campaignStore", () => {
             freshCampaignStore,
         }: TestContext) => {
             // Set various state values
-            freshCampaignStore.getState().setCampaign(mockCampaign);
+            freshCampaignStore.getState().setCampaign(mockCampaignFormData);
             freshCampaignStore.getState().setStep(5);
             freshCampaignStore.getState().setSuccess(true);
             freshCampaignStore.getState().setIsClosing(true);
@@ -230,19 +224,19 @@ describe("campaignStore", () => {
             expect(state.isClosing).toBe(false);
             expect(state.isFetched).toBe(false);
             expect(state.action).toBe("create");
-            expect(state.campaign.title).toBe("");
-            expect(state.campaign.type).toBe("");
+            expect(state.campaign.name).toBe("");
+            expect(state.campaign.trigger).toBe("purchase");
         });
 
         test("should reset persisted state", ({
             freshCampaignStore,
         }: TestContext) => {
-            freshCampaignStore.getState().setCampaign(mockCampaign);
+            freshCampaignStore.getState().setCampaign(mockCampaignFormData);
             freshCampaignStore.getState().setStep(3);
             freshCampaignStore.getState().reset();
 
             // Verify localStorage is cleared/reset
-            const stored = localStorage.getItem("campaign");
+            const stored = localStorage.getItem("campaign-v2");
             // After reset, persisted state should reflect initial values
             expect(stored).toBeTruthy();
         });
@@ -252,12 +246,12 @@ describe("campaignStore", () => {
         test("should persist campaign, step, success, and isClosing", ({
             freshCampaignStore,
         }: TestContext) => {
-            freshCampaignStore.getState().setCampaign(mockCampaign);
+            freshCampaignStore.getState().setCampaign(mockCampaignFormData);
             freshCampaignStore.getState().setStep(2);
             freshCampaignStore.getState().setSuccess(true);
             freshCampaignStore.getState().setIsClosing(true);
 
-            const stored = localStorage.getItem("campaign");
+            const stored = localStorage.getItem("campaign-v2");
             expect(stored).toBeTruthy();
 
             const parsed = JSON.parse(stored || "{}");
@@ -273,7 +267,7 @@ describe("campaignStore", () => {
             freshCampaignStore.getState().setIsFetched(true);
             freshCampaignStore.getState().setAction("edit");
 
-            const stored = localStorage.getItem("campaign");
+            const stored = localStorage.getItem("campaign-v2");
             if (stored) {
                 const parsed = JSON.parse(stored);
                 expect(parsed.state.isFetched).toBeUndefined();

@@ -1,46 +1,55 @@
-import {
-    type InteractionTypesKey,
-    interactionTypes,
-} from "@frak-labs/core-sdk";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { Campaign } from "@/types/Campaign";
+import type {
+    BudgetConfigItem,
+    CampaignGoal,
+    CampaignTrigger,
+    RewardChaining,
+    RewardRecipient,
+    SpecialCategory,
+} from "@/types/Campaign";
 
 /**
- * Get all the keys from the interaction types
+ * Campaign form state for creation wizard
+ * Holds in-progress form data, not the full backend response
  */
-const flattenedKeys: InteractionTypesKey[] = Object.values(
-    interactionTypes
-).flatMap(Object.keys) as InteractionTypesKey[];
+type CampaignFormData = {
+    name: string;
+    merchantId: string;
+    goal: CampaignGoal | undefined;
+    specialCategories: SpecialCategory[];
+    territories: string[];
+    budget: BudgetConfigItem | undefined;
+    scheduled: {
+        dateStart: Date;
+        dateEnd?: Date;
+    };
+    trigger: CampaignTrigger;
+    rewardAmount: number;
+    rewardRecipient: RewardRecipient;
+    rewardChaining?: RewardChaining;
+    priority: number;
+};
 
-const initialValues: Campaign = {
-    title: "",
-    type: "",
+const initialValues: CampaignFormData = {
+    name: "",
     merchantId: "",
+    goal: undefined,
     specialCategories: [],
-    budget: {
-        type: "global",
-        maxEuroDaily: 0,
-    },
     territories: [],
-    bank: "",
+    budget: undefined,
     scheduled: {
         dateStart: new Date(),
     },
-    distribution: {
-        type: "fixed",
-    },
-    rewardChaining: {
-        userPercent: 0.1,
-    },
-    triggers: Object.fromEntries(
-        flattenedKeys.map((key) => [key, { cac: 0 }])
-    ) as Record<InteractionTypesKey, { cac: number }>,
+    trigger: "purchase",
+    rewardAmount: 0,
+    rewardRecipient: "referrer",
+    priority: 0,
 };
 
 type CampaignState = {
     // State
-    campaign: Campaign;
+    campaign: CampaignFormData;
     step: number;
     success: boolean;
     isClosing: boolean;
@@ -48,7 +57,7 @@ type CampaignState = {
     action: "create" | "edit" | "draft";
 
     // Actions
-    setCampaign: (campaign: Campaign) => void;
+    setCampaign: (campaign: CampaignFormData) => void;
     setStep: (step: number | ((prev: number) => number)) => void;
     setSuccess: (success: boolean) => void;
     setIsClosing: (isClosing: boolean) => void;
@@ -59,7 +68,7 @@ type CampaignState = {
 
 /**
  * Store for campaign creation workflow
- * Combines campaign data, step navigation, and UI state
+ * Combines campaign form data, step navigation, and UI state
  */
 export const campaignStore = create<CampaignState>()(
     persist(
@@ -99,7 +108,7 @@ export const campaignStore = create<CampaignState>()(
                 }),
         }),
         {
-            name: "campaign",
+            name: "campaign-v2",
             partialize: (state) => ({
                 campaign: state.campaign,
                 step: state.step,
