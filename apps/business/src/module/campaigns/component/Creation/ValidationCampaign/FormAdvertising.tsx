@@ -1,13 +1,13 @@
 import type { UseFormReturn } from "react-hook-form";
+import type { CampaignFormValues } from "@/module/campaigns/component/Creation/NewCampaign/types";
 import { FormDescription, FormItem } from "@/module/forms/Form";
-import type { Campaign } from "@/types/Campaign";
 
 /**
  * Display the campaign special advertising category
  * @param form
  * @constructor
  */
-export function FormAdvertising(form: UseFormReturn<Campaign>) {
+export function FormAdvertising(form: UseFormReturn<CampaignFormValues>) {
     const advertising = form.getValues("specialCategories");
     return (
         <FormItem>

@@ -17,7 +17,8 @@ export const Actions = memo(function Actions({
     const campaignSuccess = campaignStore((state) => state.success);
     const campaignAction = campaignStore((state) => state.action);
     const setIsClosing = campaignStore((state) => state.setIsClosing);
-    const campaignId = campaignStore((state) => state.campaign.id);
+    // biome-ignore lint/suspicious/noExplicitAny: campaign store type is incomplete
+    const campaignId = campaignStore((state) => (state.campaign as any).id);
 
     const getPages = useCallback(
         (campaignId?: string) => {
@@ -55,7 +56,7 @@ export const Actions = memo(function Actions({
                     variant={"outline"}
                     onClick={() => setIsClosing(true)}
                 >
-                    Close
+                    Save Draft
                 </Button>
             }
             right={
