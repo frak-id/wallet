@@ -1,52 +1,62 @@
 import { Button } from "@frak-labs/ui/component/Button";
 import { useMemo } from "react";
 import { useForm } from "react-hook-form";
-import { getCapPeriod } from "@/context/campaigns/utils/capPeriods";
 import { ActionsMessageSuccess } from "@/module/campaigns/component/Actions";
 import { FormBudget } from "@/module/campaigns/component/Creation/NewCampaign/FormBudget";
 import { FormSchedule } from "@/module/campaigns/component/Creation/NewCampaign/FormSchedule";
-import { useEditCampaign } from "@/module/campaigns/hook/useEditCampaign";
+import type { CampaignFormValues } from "@/module/campaigns/component/Creation/NewCampaign/types";
+import { useSaveCampaign } from "@/module/campaigns/hook/useSaveCampaign";
 import { ActionsWrapper } from "@/module/common/component/ActionsWrapper";
 import { Head } from "@/module/common/component/Head";
 import { Form, FormLayout } from "@/module/forms/Form";
 import { campaignStore } from "@/stores/campaignStore";
-import type { Campaign, FinalizedCampaignWithState } from "@/types/Campaign";
 
 /**
  * Campaign edit component
  * @constructor
  */
-export function CampaignEdit() {
+export function CampaignEdit({ campaignId }: { campaignId: string }) {
     const campaign = campaignStore((state) => state.campaign);
 
     const {
-        mutate: onEditCampaign,
-        isPending: isEditingCampaign,
-        isSuccess: isSuccessCampaign,
-    } = useEditCampaign();
+        mutate: onSaveCampaign,
+        isPending: isSaving,
+        isSuccess,
+    } = useSaveCampaign();
 
-    const form = useForm<Campaign>({
+    const form = useForm<CampaignFormValues>({
         values: useMemo(() => campaign, [campaign]),
     });
 
-    async function onSubmit(values: Campaign) {
-        const { budget, state } = values as FinalizedCampaignWithState;
+    async function onSubmit(values: CampaignFormValues) {
+        if (!values.budget) return;
 
-        if (state.key !== "created") return;
-
-        // Compute the cap period
-        const capPeriod = getCapPeriod(budget.type);
-
-        onEditCampaign({
-            campaign: state.address,
-            activationPeriod: {
-                start: values.scheduled?.dateStart,
-                end: values.scheduled?.dateEnd,
+        onSaveCampaign({
+            merchantId: values.merchantId,
+            campaignId: campaignId,
+            name: values.name,
+            rule: {
+                trigger: values.trigger,
+                // TODO: restore conditions if they were part of the form
+                conditions: [],
+                rewards: [
+                    {
+                        type: "token",
+                        recipient: values.rewardRecipient,
+                        amountType: "fixed",
+                        amount: values.rewardAmount,
+                        chaining: values.rewardChaining,
+                    },
+                ],
             },
-            capConfig: {
-                period: capPeriod,
-                amount: budget.maxEuroDaily,
+            metadata: {
+                goal: values.goal,
+                specialCategories: values.specialCategories,
+                territories: values.territories,
             },
+            budgetConfig: [values.budget],
+            expiresAt: values.scheduled?.dateEnd?.toISOString(),
+            priority: values.priority,
         });
     }
 
@@ -63,15 +73,15 @@ export function CampaignEdit() {
                     <FormBudget />
                     <FormSchedule {...form} />
                     <ActionsWrapper
-                        left={isSuccessCampaign && <ActionsMessageSuccess />}
+                        left={isSuccess && <ActionsMessageSuccess />}
                         right={
                             <Button
                                 type={"submit"}
                                 variant={"submit"}
-                                disabled={isEditingCampaign}
-                                isLoading={isEditingCampaign}
+                                disabled={isSaving}
+                                isLoading={isSaving}
                             >
-                                Publish
+                                Save Changes
                             </Button>
                         }
                     />

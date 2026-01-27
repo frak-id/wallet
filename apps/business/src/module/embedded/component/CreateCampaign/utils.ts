@@ -1,7 +1,14 @@
-import { type Address, type Hex, isAddress, keccak256, toHex } from "viem";
-import type { Campaign } from "../../../../types/Campaign";
+import type {
+    BudgetConfig,
+    CampaignRule,
+    CampaignTrigger,
+    FixedReward,
+} from "@/types/Campaign";
 
-function getBudget({
+const WEEK_IN_SECONDS = 7 * 24 * 60 * 60;
+const MONTH_IN_SECONDS = 30 * 24 * 60 * 60;
+
+function parseBudgetConfig({
     weeklyBudget,
     monthlyBudget,
     globalBudget,
@@ -9,52 +16,67 @@ function getBudget({
     weeklyBudget: string | null;
     monthlyBudget: string | null;
     globalBudget: string | null;
-}): Campaign["budget"] {
-    // Check each budget
+}): BudgetConfig {
     if (weeklyBudget && Number.isNaN(Number(weeklyBudget))) {
         throw new Error("Invalid weekly budget");
     }
-
     if (monthlyBudget && Number.isNaN(Number(monthlyBudget))) {
         throw new Error("Invalid monthly budget");
     }
-
     if (globalBudget && Number.isNaN(Number(globalBudget))) {
         throw new Error("Invalid global budget");
     }
 
-    // Count how many budgets are provided and ensure exactly one
     const budgetCount = [weeklyBudget, monthlyBudget, globalBudget].filter(
         Boolean
     ).length;
 
     if (budgetCount === 0) {
-        throw new Error("Missing required parameters");
+        throw new Error("Missing required budget parameters");
     }
-
     if (budgetCount > 1) {
         throw new Error("Only one budget can be provided");
     }
 
     if (weeklyBudget) {
-        return {
-            type: "weekly",
-            maxEuroDaily: Number(weeklyBudget),
-        };
+        return [
+            {
+                label: "weekly",
+                durationInSeconds: WEEK_IN_SECONDS,
+                amount: Number(weeklyBudget),
+            },
+        ];
     }
 
     if (monthlyBudget) {
-        return {
-            type: "monthly",
-            maxEuroDaily: Number(monthlyBudget),
-        };
+        return [
+            {
+                label: "monthly",
+                durationInSeconds: MONTH_IN_SECONDS,
+                amount: Number(monthlyBudget),
+            },
+        ];
     }
 
-    return {
-        type: "global",
-        maxEuroDaily: Number(globalBudget),
-    };
+    return [
+        {
+            label: "global",
+            durationInSeconds: null,
+            amount: Number(globalBudget),
+        },
+    ];
 }
+
+export type ExtractedSearchParams = {
+    name: string;
+    bankId: string;
+    domain: string;
+    merchantId: string;
+    budgetConfig: BudgetConfig;
+    cacBrut: number;
+    ratio: number;
+    setupCurrency?: "eur" | "usd" | "gbp" | "raw";
+};
 
 export function extractSearchParams(search: {
     n: string;
@@ -67,26 +89,21 @@ export function extractSearchParams(search: {
     wb?: string;
     mb?: string;
     gb?: string;
-}) {
-    // Params:
-    // - name, bank id, domain, merchant id, weekly budget, cac brut, ratio
+}): ExtractedSearchParams {
     const name = search.n;
+    // bid: bank address for fiat conversion — kept for backwards compat, not sent to backend
     const bankId = search.bid;
     const domain = search.d;
     const merchantId = search.mid;
     const cacBrut = search.cac;
     const ratio = search.r;
     const setupCurrency = search.sc;
-    // Budget props
     const weeklyBudget = search.wb ?? null;
     const monthlyBudget = search.mb ?? null;
     const globalBudget = search.gb ?? null;
 
-    if (!name || !bankId || !domain || !merchantId || !cacBrut || !ratio) {
+    if (!name || !domain || !merchantId || !cacBrut || !ratio) {
         throw new Error("Missing required parameters");
-    }
-    if (!isAddress(bankId)) {
-        throw new Error("Invalid bank id");
     }
 
     if (Number.isNaN(Number(cacBrut))) {
@@ -104,22 +121,18 @@ export function extractSearchParams(search: {
         throw new Error("Invalid setup currency");
     }
 
-    // Compute product id from domain (for on-chain operations)
-    const productId = keccak256(toHex(domain.replace("www.", "")));
-
     return {
         name,
-        bankId,
+        bankId: bankId ?? "",
         domain,
         merchantId,
-        budget: getBudget({
+        budgetConfig: parseBudgetConfig({
             weeklyBudget,
             monthlyBudget,
             globalBudget,
         }),
         cacBrut: Number(cacBrut),
         ratio: Number(ratio),
-        productId,
         setupCurrency: setupCurrency as
             | "eur"
             | "usd"
@@ -129,48 +142,43 @@ export function extractSearchParams(search: {
     };
 }
 
-export function createCampaignDraft({
-    name,
-    bankId,
-    merchantId,
-    productId,
-    budget,
+export function buildCampaignRule({
     cacBrut,
     ratio,
-    setupCurrency,
 }: {
-    name: string;
-    bankId: Address;
-    merchantId: string;
-    productId?: Hex;
-    budget: Campaign["budget"];
     cacBrut: number;
     ratio: number;
-    setupCurrency?: "eur" | "usd" | "gbp" | "raw";
-}) {
-    const campaign: Campaign = {
-        title: name,
-        merchantId,
-        productId,
-        type: "sales", // always sales for shopify embedded campaign
-        specialCategories: [],
-        budget,
-        territories: ["FR", "BE", "SH", "GB", "US"], // Wide coverage for simplified setup
-        bank: bankId,
-        scheduled: {
-            dateStart: new Date(),
-        },
-        rewardChaining: {
-            userPercent: 1 - ratio / 100,
-        },
-        triggers: {
-            started: {
-                cac: cacBrut,
-            },
-        },
-        // On shopify we directly use the token symbol for the setup
-        setupCurrency: setupCurrency ?? "raw",
-    };
+}): CampaignRule {
+    const referrerPercent = ratio / 100;
+    const refereePercent = 1 - referrerPercent;
 
-    return campaign;
+    const rewards: FixedReward[] = [];
+
+    if (referrerPercent > 0) {
+        const referrerReward: FixedReward = {
+            recipient: "referrer",
+            type: "token",
+            amountType: "fixed",
+            amount: Math.round(cacBrut * referrerPercent * 100) / 100,
+            description: "Referrer reward",
+        };
+        rewards.push(referrerReward);
+    }
+
+    if (refereePercent > 0) {
+        const refereeReward: FixedReward = {
+            recipient: "referee",
+            type: "token",
+            amountType: "fixed",
+            amount: Math.round(cacBrut * refereePercent * 100) / 100,
+            description: "Referee reward",
+        };
+        rewards.push(refereeReward);
+    }
+
+    return {
+        trigger: "purchase" as CampaignTrigger,
+        conditions: [],
+        rewards,
+    };
 }

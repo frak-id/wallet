@@ -43,7 +43,7 @@ export const campaignsStatsQueryOptions = () =>
  */
 export const campaignQueryOptions = (
     campaignId: string,
-    merchantId: string,
+    merchantId?: string,
     validateState?: CampaignStateValidator
 ) =>
     queryOptions({

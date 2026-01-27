@@ -1,18 +1,18 @@
 import type { Address } from "viem";
 import campaignStatsData from "@/mock/campaignStats.json";
 import campaignsData from "@/mock/campaigns.json";
-import type { CampaignWithState } from "@/types/Campaign";
+import type { CampaignWithActions } from "@/types/Campaign";
 
 /**
  * Mock implementation of getMyCampaigns for demo mode
  * Returns mock campaign data with a realistic delay
  */
-export async function getMyCampaignsMock(): Promise<CampaignWithState[]> {
+export async function getMyCampaignsMock(): Promise<CampaignWithActions[]> {
     // Simulate network delay
     await new Promise((resolve) => setTimeout(resolve, 300));
 
     // Return the mock data with proper typing
-    return campaignsData as unknown as CampaignWithState[];
+    return campaignsData as unknown as CampaignWithActions[];
 }
 
 /**
@@ -92,27 +92,38 @@ export async function getOnChainCampaignsDetailsMock({
     await new Promise((resolve) => setTimeout(resolve, 300));
 
     // Find the campaign by address
+    // biome-ignore lint/suspicious/noExplicitAny: Casting for mock data
     const campaign = campaignsData.find(
-        (c) =>
-            c.state.key === "created" &&
-            c.state.address?.toLowerCase() === campaignAddress.toLowerCase()
+        (c: any) =>
+            c.state?.key === "created" &&
+            c.state?.address?.toLowerCase() === campaignAddress.toLowerCase()
     );
 
-    if (!campaign || campaign.state.key !== "created") {
+    // biome-ignore lint/suspicious/noExplicitAny: Casting for mock data
+    if (!campaign || (campaign as any).state?.key !== "created") {
         return null;
     }
 
     // Convert dates to timestamps (as numbers for JavaScript compatibility)
-    const dateStart = campaign.scheduled?.dateStart
-        ? Math.floor(new Date(campaign.scheduled.dateStart).getTime() / 1000)
+    // biome-ignore lint/suspicious/noExplicitAny: Casting for mock data
+    const dateStart = (campaign as any).scheduled?.dateStart
+        ? // biome-ignore lint/suspicious/noExplicitAny: Casting for mock data
+          Math.floor(
+              new Date((campaign as any).scheduled.dateStart).getTime() / 1000
+          )
         : 0;
-    const dateEnd = campaign.scheduled?.dateEnd
-        ? Math.floor(new Date(campaign.scheduled.dateEnd).getTime() / 1000)
+    // biome-ignore lint/suspicious/noExplicitAny: Casting for mock data
+    const dateEnd = (campaign as any).scheduled?.dateEnd
+        ? // biome-ignore lint/suspicious/noExplicitAny: Casting for mock data
+          Math.floor(
+              new Date((campaign as any).scheduled.dateEnd).getTime() / 1000
+          )
         : 0;
 
     const capConfig = {
         period: 86400, // 1 day in seconds
-        amount: BigInt(campaign.budget.maxEuroDaily * 1000000), // Mock amount
+        // biome-ignore lint/suspicious/noExplicitAny: Casting for mock data
+        amount: BigInt((campaign as any).budget.maxEuroDaily * 1000000), // Mock amount
     };
 
     const activationPeriod = {
@@ -120,20 +131,26 @@ export async function getOnChainCampaignsDetailsMock({
         end: dateEnd,
     };
 
-    const bankAddress = (campaign.bank ||
+    // biome-ignore lint/suspicious/noExplicitAny: Casting for mock data
+    const bankAddress = ((campaign as any).bank ||
         "0x0000000000000000000000000000000000000000") as Address;
 
     // Return mock on-chain data matching the referralCampaignAbi.getConfig structure
     // Config is a tuple with 3 elements: [capConfig, activationPeriod, bank]
     return {
-        productId: campaign.productId,
+        // biome-ignore lint/suspicious/noExplicitAny: Casting for mock data
+        productId: (campaign as any).productId,
         metadata: {
-            name: campaign.title,
+            // biome-ignore lint/suspicious/noExplicitAny: Casting for mock data
+            name: (campaign as any).title,
             version: "1.0.0",
         },
-        isActive: campaign.state.isActive ?? false,
-        isRunning: campaign.state.isRunning ?? false,
-        isAllowedToEdit: campaign.actions.canEdit,
+        // biome-ignore lint/suspicious/noExplicitAny: Casting for mock data
+        isActive: (campaign as any).state.isActive ?? false,
+        // biome-ignore lint/suspicious/noExplicitAny: Casting for mock data
+        isRunning: (campaign as any).state.isRunning ?? false,
+        // biome-ignore lint/suspicious/noExplicitAny: Casting for mock data
+        isAllowedToEdit: (campaign as any).actions.canEdit,
         // biome-ignore lint/suspicious/noExplicitAny: Type assertion needed to match Viem's ABI-inferred tuple type from multicall
         config: [capConfig, activationPeriod, bankAddress] as any,
     };

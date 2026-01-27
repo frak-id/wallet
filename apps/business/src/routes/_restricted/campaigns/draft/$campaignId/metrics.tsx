@@ -5,6 +5,7 @@ import {
     campaignQueryOptions,
     validateDraftCampaign,
 } from "@/module/campaigns/queries/queryOptions";
+import { mapCampaignToFormData } from "@/module/campaigns/utils/mapper";
 import { queryClient } from "@/module/common/provider/RootProvider";
 import { campaignStore } from "@/stores/campaignStore";
 import type { Campaign } from "@/types/Campaign";
@@ -17,6 +18,7 @@ export const Route = createFileRoute(
         return queryClient.ensureQueryData(
             campaignQueryOptions(
                 params.campaignId,
+                "",
                 validateDraftCampaign(params.campaignId)
             )
         );
@@ -35,7 +37,8 @@ function CampaignsDraftMetricsPage() {
 
     // Set campaign in store on mount (maintaining existing behavior from CampaignLoad)
     useEffect(() => {
-        setCampaign({ ...campaign, id: campaignId });
+        const formData = mapCampaignToFormData(campaign);
+        setCampaign(formData);
         setAction("draft");
         setIsFetched(true);
     }, [campaign, campaignId, setCampaign, setAction, setIsFetched]);

@@ -6,6 +6,7 @@ import {
     campaignQueryOptions,
     validateDraftCampaign,
 } from "@/module/campaigns/queries/queryOptions";
+import { mapCampaignToFormData } from "@/module/campaigns/utils/mapper";
 import { CampaignError } from "@/module/common/component/RouteError";
 import { queryClient } from "@/module/common/provider/RootProvider";
 import { campaignStore } from "@/stores/campaignStore";
@@ -18,6 +19,7 @@ export const Route = createFileRoute(
         return queryClient.ensureQueryData(
             campaignQueryOptions(
                 params.campaignId,
+                "",
                 validateDraftCampaign(params.campaignId)
             )
         );
@@ -29,7 +31,7 @@ export const Route = createFileRoute(
 function CampaignsDraftPage() {
     const { campaignId } = Route.useParams();
     const { data: campaign } = useSuspenseQuery(
-        campaignQueryOptions(campaignId, validateDraftCampaign(campaignId))
+        campaignQueryOptions(campaignId, "", validateDraftCampaign(campaignId))
     );
 
     // Use individual selectors to avoid infinite loop
@@ -39,7 +41,8 @@ function CampaignsDraftPage() {
 
     // Set campaign in store on mount (maintaining existing behavior from CampaignLoad)
     useEffect(() => {
-        setCampaign({ ...campaign, id: campaignId });
+        const formData = mapCampaignToFormData(campaign);
+        setCampaign(formData);
         setAction("draft");
         setIsFetched(true);
     }, [campaign, campaignId, setCampaign, setAction, setIsFetched]);

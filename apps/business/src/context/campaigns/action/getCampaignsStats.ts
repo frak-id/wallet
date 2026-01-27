@@ -1,11 +1,12 @@
 import { createServerFn } from "@tanstack/react-start";
-import { type Address, formatUnits, getAddress, isAddressEqual } from "viem";
+import { type Address, formatUnits } from "viem";
 import { indexerApi } from "@/context/api/indexerApi";
 import { authMiddleware } from "@/context/auth/authMiddleware";
 import { getBankTokenInfoInternal } from "@/context/campaigns/action/getBankInfo";
 import { getMyCampaignsStatsMock } from "@/context/campaigns/action/mock";
-import { getCampaignRepository } from "@/context/campaigns/repository/CampaignRepository";
-import type { Goal } from "@/types/Campaign";
+
+// import { getCampaignRepository } from "@/context/campaigns/repository/CampaignRepository";
+// import type { CampaignGoal } from "@/types/Campaign";
 
 type CampaignStats = {
     productId: string;
@@ -22,6 +23,7 @@ type CampaignStats = {
     purchaseCompletedInteractions: string;
     totalRewards: string;
     customerMeetingInteractions: string;
+    customerMeetingCompletedInteractions?: string;
 };
 
 type ApiResult = {
@@ -35,19 +37,19 @@ type ApiResult = {
 /**
  * Map campaign goal types to display labels for the Event column
  */
-function mapGoalToEventType(goal?: Goal | ""): string {
-    if (!goal) return "Unknown";
-
-    const goalMap: Record<Goal, string> = {
-        sales: "Purchase",
-        awareness: "Share",
-        traffic: "Opt-in",
-        retention: "Repeat Purchase",
-        registration: "Registration",
-    };
-
-    return goalMap[goal] || "Unknown";
-}
+// function mapGoalToEventType(goal?: CampaignGoal | ""): string {
+//     if (!goal) return "Unknown";
+//
+//     const goalMap: Record<CampaignGoal, string> = {
+//         sales: "Purchase",
+//         awareness: "Share",
+//         traffic: "Opt-in",
+//         retention: "Repeat Purchase",
+//         registration: "Registration",
+//     };
+//
+//     return goalMap[goal] || "Unknown";
+// }
 
 /**
  * Get the current user campaigns stats
@@ -73,23 +75,12 @@ async function getMyCampaignsStatsInternal({
         return [];
     }
 
-    // Get the readable mongodb campaign names
-    const campaignRepository = await getCampaignRepository();
-    const campaignDocuments = await campaignRepository.findByAddressesOrCreator(
-        {
-            addresses: result.stats.map((campaign) => getAddress(campaign.id)),
-        }
-    );
-
     // Cleanly format all of the stats from string to bigint
     const mappedAsync = result.stats.map(async (campaign) => {
-        // Get the matching campaign name and id
-        const campaignDoc = campaignDocuments.find(
-            (doc) =>
-                doc.state.key === "created" &&
-                isAddressEqual(doc.state.address, campaign.id)
-        );
-        const title = campaignDoc?.title ?? campaign.name ?? "Unknown campaign";
+        // TODO: Restore campaign enrichment when repository is available or use backend API
+        // const campaignDoc = campaignDocuments.find(...)
+        const title = campaign.name ?? "Unknown campaign";
+        const eventType = "Unknown"; // mapGoalToEventType(campaignDoc?.type)
 
         // Map a few stuff we will use for computation
         const totalRewards = BigInt(campaign.totalRewards);
@@ -143,10 +134,10 @@ async function getMyCampaignsStatsInternal({
 
         return {
             title,
-            id: campaignDoc?._id?.toHexString() ?? campaign.id,
+            id: campaign.id,
             bank: campaign.bank,
             token: token,
-            eventType: mapGoalToEventType(campaignDoc?.type),
+            eventType,
             // Raw stats
             openInteractions: Number(campaign.openInteractions),
             readInteractions: Number(campaign.readInteractions),

@@ -1,38 +1,29 @@
-import { useSendTransactionAction } from "@frak-labs/react-sdk";
 import { Button } from "@frak-labs/ui/component/Button";
 import { Spinner } from "@frak-labs/ui/component/Spinner";
 import { useMutation } from "@tanstack/react-query";
 import { useSearch } from "@tanstack/react-router";
-import { tryit } from "radash";
 import { useCallback } from "react";
-import {
-    saveCampaignDraft,
-    updateCampaignState,
-} from "@/context/campaigns/action/createCampaign";
-import { getCreationData } from "@/context/campaigns/action/createOnChain";
+import { createCampaign } from "@/context/campaigns/action/createCampaign";
+import { publishCampaign } from "@/context/campaigns/action/statusTransitions";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
 import { useHasRoleOnMerchant } from "@/module/common/hook/useHasRoleOnProduct";
-import type { Campaign } from "@/types/Campaign";
 import styles from "../Mint/index.module.css";
-import { createCampaignDraft, extractSearchParams } from "./utils";
+import { buildCampaignRule, extractSearchParams } from "./utils";
 
 export function EmbeddedCreateCampaign() {
     const search = useSearch({ from: "/embedded/_layout/create-campaign" });
     const extracted = extractSearchParams(search);
-
-    const { mutateAsync: sendTransaction, isPending: isPendingTransaction } =
-        useSendTransactionAction();
 
     const handleClose = useCallback(() => {
         window.close();
     }, []);
 
     const {
-        mutate: createCampaign,
-        isPending: isCreatingCampaign,
-        data: createCampaignData,
-        error: createCampaignError,
+        mutate: handleCreateCampaign,
+        isPending,
+        data: result,
+        error,
     } = useMutation({
         mutationKey: [
             "embedded",
@@ -42,42 +33,34 @@ export function EmbeddedCreateCampaign() {
             extracted.cacBrut,
         ],
         mutationFn: async () => {
-            const campaignDraft = createCampaignDraft(extracted);
-            const { id } = await saveCampaignDraft({
-                data: { campaign: campaignDraft },
+            const rule = buildCampaignRule({
+                cacBrut: extracted.cacBrut,
+                ratio: extracted.ratio,
             });
-            const campaign = { ...campaignDraft, id } as Campaign;
-            const creationData = await getCreationData({ data: { campaign } });
-            const [, result] = await tryit(() =>
-                sendTransaction({
-                    metadata: {
-                        i18n: {
-                            fr: {
-                                "sdk.modal.sendTransaction.description": `Créer la campagne ${campaign.title}`,
-                            },
-                            en: {
-                                "sdk.modal.sendTransaction.description": `Create campaign ${campaign.title}`,
-                            },
-                        },
-                    },
-                    tx: creationData.tx,
-                })
-            )();
-            if (campaign.id) {
-                await updateCampaignState({
-                    data: {
-                        campaignId: campaign.id,
-                        txHash: result?.hash,
-                    },
-                });
-            }
-            return { campaign, creationData, hash: result?.hash };
+
+            const campaign = await createCampaign({
+                data: {
+                    merchantId: extracted.merchantId,
+                    name: extracted.name,
+                    rule,
+                    budgetConfig: extracted.budgetConfig,
+                },
+            });
+
+            const published = await publishCampaign({
+                data: {
+                    merchantId: extracted.merchantId,
+                    campaignId: campaign.id,
+                },
+            });
+
+            return { campaign: published };
         },
     });
 
     const { isOwner, isAdministrator, isCampaignManager } =
         useHasRoleOnMerchant({
-            merchantId: extracted.merchantId ?? extracted.productId ?? "",
+            merchantId: extracted.merchantId,
         });
 
     if (!isOwner && !isAdministrator && !isCampaignManager) {
@@ -107,7 +90,7 @@ export function EmbeddedCreateCampaign() {
         );
     }
 
-    if (!createCampaignData) {
+    if (!result) {
         return (
             <>
                 <Title className={styles.title}>Create Campaign</Title>
@@ -121,11 +104,8 @@ export function EmbeddedCreateCampaign() {
                     </p>
                     <ul className={styles.list}>
                         <li className={styles.listItem}>
-                            <b>Budget type:</b> {extracted.budget.type}
-                        </li>
-                        <li className={styles.listItem}>
-                            <b>Budget amount:</b>{" "}
-                            {extracted.budget.maxEuroDaily}
+                            <b>Budget:</b> {extracted.budgetConfig[0]?.label} —{" "}
+                            {extracted.budgetConfig[0]?.amount}
                         </li>
                         <li className={styles.listItem}>
                             <b>CAC:</b> {extracted.cacBrut}
@@ -141,13 +121,13 @@ export function EmbeddedCreateCampaign() {
                                 : extracted.setupCurrency}
                         </li>
                     </ul>
-                    {createCampaignError && (
+                    {error && (
                         <div className={styles.error}>
                             <p>
                                 Error:{" "}
-                                {createCampaignError instanceof Error
-                                    ? createCampaignError.message
-                                    : String(createCampaignError)}
+                                {error instanceof Error
+                                    ? error.message
+                                    : String(error)}
                             </p>
                             <Button
                                 variant="secondary"
@@ -162,40 +142,17 @@ export function EmbeddedCreateCampaign() {
                     <Button
                         variant="secondary"
                         className={styles.button}
-                        onClick={() => createCampaign()}
-                        disabled={isCreatingCampaign || isPendingTransaction}
+                        onClick={() => handleCreateCampaign()}
+                        disabled={isPending}
                     >
-                        {isCreatingCampaign || isPendingTransaction ? (
+                        {isPending ? (
                             <>
                                 <Spinner />
-                                {isCreatingCampaign && "Creating campaign..."}
-                                {isPendingTransaction &&
-                                    "Waiting for wallet transaction confirmation..."}
+                                Creating campaign...
                             </>
                         ) : (
                             "Validate and Create"
                         )}
-                    </Button>
-                </Panel>
-            </>
-        );
-    }
-
-    if (!createCampaignData?.hash) {
-        return (
-            <>
-                <Title className={styles.title}>Campaign not deployed!</Title>
-                <Panel
-                    withBadge={false}
-                    title={"Campaign created but not deployed"}
-                >
-                    <Button
-                        variant="secondary"
-                        size="small"
-                        className={styles.button}
-                        onClick={handleClose}
-                    >
-                        Close
                     </Button>
                 </Panel>
             </>
@@ -207,10 +164,10 @@ export function EmbeddedCreateCampaign() {
             <Title className={styles.title}>Campaign Created!</Title>
             <Panel
                 withBadge={false}
-                title={"Campaign created and deployed on the transaction:"}
+                title={"Campaign created and published successfully"}
             >
                 <p>
-                    <b>{createCampaignData.hash}</b>
+                    Campaign <b>{result.campaign.name}</b> is now active.
                 </p>
                 <Button
                     variant="secondary"
