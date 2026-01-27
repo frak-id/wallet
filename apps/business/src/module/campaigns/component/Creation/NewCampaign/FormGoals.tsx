@@ -132,7 +132,6 @@ export function FormGoals(form: UseFormReturn<CampaignFormValues>) {
                                     <FormControl>
                                         <RadioGroup
                                             onValueChange={(value) => {
-                                                // @ts-expect-error - value is string, goal expects CampaignGoal
                                                 // This is necessary because RadioGroup returns string but our form expects enum-like union
                                                 field.onChange(value);
                                                 setGoal(

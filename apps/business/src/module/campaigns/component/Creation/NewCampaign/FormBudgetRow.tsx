@@ -1,55 +1,139 @@
 import { CircleDollarSign, Wallet } from "lucide-react";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useFormContext } from "react-hook-form";
+import { getCapPeriod } from "@/context/campaigns/utils/capPeriods";
+import type { CampaignFormValues } from "@/module/campaigns/component/Creation/NewCampaign/types";
 import { Column } from "@/module/common/component/Column";
-import { InputAmountCampaign } from "@/module/common/component/InputAmount";
+import { InputAmount } from "@/module/common/component/InputAmount";
 import { Row } from "@/module/common/component/Row";
 import {
     FormControl,
     FormDescription,
     FormField,
     FormItem,
+    FormLabel,
     FormMessage,
 } from "@/module/forms/Form";
-import type { Campaign } from "@/types/Campaign";
+import { RadioGroup, RadioGroupItem } from "@/module/forms/RadioGroup";
 import styles from "./FormBudgetRow.module.css";
 
-export function FormBudgetRow({ disabled }: { disabled?: boolean }) {
-    const { control, watch } = useFormContext<Campaign>();
+type BudgetPeriod = "daily" | "weekly" | "monthly" | "global";
 
-    const maxEuroDaily = watch("budget.maxEuroDaily");
+const periods: { value: BudgetPeriod; label: string }[] = [
+    { value: "daily", label: "Daily" },
+    { value: "weekly", label: "Weekly" },
+    { value: "monthly", label: "Monthly" },
+    { value: "global", label: "Global" },
+];
+
+export function FormBudgetRow({ disabled }: { disabled?: boolean }) {
+    const { control, setValue, watch } = useFormContext<CampaignFormValues>();
+    const budget = watch("budget");
+
+    const [period, setPeriod] = useState<BudgetPeriod>("global");
+
+    // Initialize period from existing budget
+    useEffect(() => {
+        if (budget?.durationInSeconds) {
+            const matched = periods.find(
+                (p) => getCapPeriod(p.value as any) === budget.durationInSeconds
+            );
+            if (matched) {
+                setPeriod(matched.value);
+            }
+        }
+    }, [budget?.durationInSeconds]);
+
+    const currentAmount = budget?.amount || 0;
+
+    const updateBudget = (newPeriod: BudgetPeriod, newAmount: number) => {
+        const duration = getCapPeriod(newPeriod as any);
+        const label =
+            periods.find((p) => p.value === newPeriod)?.label || "Global";
+
+        setValue(
+            "budget",
+            {
+                label,
+                durationInSeconds: duration,
+                amount: newAmount,
+            },
+            { shouldValidate: true, shouldDirty: true }
+        );
+    };
+
     const [frakCommission, remainingBudget] = useMemo(() => {
-        const commission = Number(maxEuroDaily) * 0.2;
-        return [commission, Number(maxEuroDaily) - commission];
-    }, [maxEuroDaily]);
+        const commission = currentAmount * 0.2;
+        return [commission, currentAmount - commission];
+    }, [currentAmount]);
 
     return (
         <Column>
+            <FormItem>
+                <FormLabel>Budget Period</FormLabel>
+                <RadioGroup
+                    value={period}
+                    onValueChange={(val) => {
+                        const newPeriod = val as BudgetPeriod;
+                        setPeriod(newPeriod);
+                        updateBudget(newPeriod, currentAmount);
+                    }}
+                    className={styles.periodGroup}
+                >
+                    <Row>
+                        {periods.map((p) => (
+                            <FormItem
+                                key={p.value}
+                                variant="radio"
+                                className={styles.periodItem}
+                            >
+                                <FormControl>
+                                    <RadioGroupItem
+                                        value={p.value}
+                                        disabled={disabled}
+                                    />
+                                </FormControl>
+                                <FormLabel variant="radio">{p.label}</FormLabel>
+                            </FormItem>
+                        ))}
+                    </Row>
+                </RadioGroup>
+            </FormItem>
+
             <Row>
                 <FormField
                     control={control}
-                    name="budget.maxEuroDaily"
+                    name="budget"
                     rules={{
                         validate: {
-                            required: (value) => value > 0 || "Invalid amount",
+                            required: (value) =>
+                                (value && value.amount > 0) || "Invalid amount",
                         },
                     }}
-                    render={({ field }) => (
+                    render={() => (
                         <FormItem>
-                            <FormDescription label={"Global budget"} />
+                            <FormDescription label={"Budget Amount"} />
                             <FormMessage />
                             <FormControl>
-                                <InputAmountCampaign
+                                <InputAmount
                                     placeholder={"25,00 €"}
                                     length={"medium"}
                                     disabled={disabled}
-                                    {...field}
+                                    value={currentAmount}
+                                    // @ts-expect-error - InputAmount expects onChange from ControllerRenderProps but we pass raw handler
+                                    onChange={(val: number | string) => {
+                                        const num =
+                                            typeof val === "number" ? val : 0;
+                                        updateBudget(period, num);
+                                    }}
+                                    name="budgetAmount"
                                 />
                             </FormControl>
                         </FormItem>
                     )}
                 />
             </Row>
+
             <div>
                 <div className={styles.budget__section}>
                     <div className={styles.budget__iconGroup}>
