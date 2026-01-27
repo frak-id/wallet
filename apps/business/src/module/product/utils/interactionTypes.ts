@@ -1,5 +1,5 @@
 import type { InteractionTypesKey } from "@frak-labs/core-sdk";
-import type { Goal } from "@/types/Campaign";
+import type { CampaignGoal } from "@/types/Campaign";
 
 /**
  * The keys for each interaction types
@@ -8,7 +8,7 @@ export const interactionTypesInfo: Record<
     InteractionTypesKey,
     {
         name: string;
-        relatedGoal?: Goal;
+        relatedGoal?: CampaignGoal;
         hidden?: boolean;
     }
 > = {

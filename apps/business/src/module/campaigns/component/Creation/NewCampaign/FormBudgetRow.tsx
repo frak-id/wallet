@@ -36,7 +36,7 @@ export function FormBudgetRow({ disabled }: { disabled?: boolean }) {
     useEffect(() => {
         if (budget?.durationInSeconds) {
             const matched = periods.find(
-                (p) => getCapPeriod(p.value as any) === budget.durationInSeconds
+                (p) => getCapPeriod(p.value) === budget.durationInSeconds
             );
             if (matched) {
                 setPeriod(matched.value);
@@ -47,7 +47,7 @@ export function FormBudgetRow({ disabled }: { disabled?: boolean }) {
     const currentAmount = budget?.amount || 0;
 
     const updateBudget = (newPeriod: BudgetPeriod, newAmount: number) => {
-        const duration = getCapPeriod(newPeriod as any);
+        const duration = getCapPeriod(newPeriod);
         const label =
             periods.find((p) => p.value === newPeriod)?.label || "Global";
 

@@ -24,5 +24,5 @@ export function MerchantTeam({ merchantId }: { merchantId: string }) {
         );
     }
 
-    return <Team productId={merchant.productId} />;
+    return <Team merchantId={merchantId} />;
 }

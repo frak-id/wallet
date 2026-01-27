@@ -120,7 +120,8 @@ export function MetricsCampaign() {
                                                 onChange={(e) =>
                                                     field.onChange(
                                                         parseInt(
-                                                            e.target.value
+                                                            e.target.value,
+                                                            10
                                                         ) || 0
                                                     )
                                                 }
@@ -272,7 +273,8 @@ export function MetricsCampaign() {
                                                 onChange={(e) =>
                                                     field.onChange(
                                                         parseInt(
-                                                            e.target.value
+                                                            e.target.value,
+                                                            10
                                                         ) || 0
                                                     )
                                                 }

@@ -2,13 +2,11 @@ import { Button } from "@frak-labs/ui/component/Button";
 import { Spinner } from "@frak-labs/ui/component/Spinner";
 import type { LinkProps } from "@tanstack/react-router";
 import { AlertCircle, BadgeCheck } from "lucide-react";
-import type { Hex } from "viem";
 import { CallOut } from "@/module/common/component/CallOut";
 import { LinkButton } from "@/module/common/component/LinkButton";
 import { Panel } from "@/module/common/component/Panel";
 import { Row } from "@/module/common/component/Row";
 import { FormLayout } from "@/module/forms/Form";
-import { ProductHead } from "@/module/product/component/ProductHead";
 import {
     type ProductSetupStatusItem,
     useProductSetupStatus,
@@ -18,20 +16,12 @@ import styles from "./index.module.css";
 /**
  * Page containing basic product setup status overview
  * @param merchantId - The merchant UUID for URL generation
- * @param productId - The on-chain product ID for blockchain queries
  */
-export function ProductSetupStatus({
-    merchantId,
-    productId,
-}: {
-    merchantId: string;
-    productId: Hex;
-}) {
-    const { data } = useProductSetupStatus({ merchantId, productId });
+export function ProductSetupStatus({ merchantId }: { merchantId: string }) {
+    const { data } = useProductSetupStatus({ merchantId });
 
     return (
         <FormLayout>
-            <ProductHead productId={productId} />
             <Panel title={"Product setup status"} withBadge={false}>
                 {!data ? (
                     <Spinner />

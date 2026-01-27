@@ -1,18 +1,13 @@
 import { renderHook, waitFor } from "@testing-library/react";
-import type { Hex } from "viem";
 import { vi } from "vitest";
 import { authenticatedBackendApi } from "@/context/api/backendClient";
 import {
-    createMockAddress,
     describe,
     expect,
     type TestContext,
     test,
 } from "@/tests/vitest-fixtures";
-import {
-    useHasRoleOnMerchant,
-    useHasRoleOnProduct,
-} from "./useHasRoleOnProduct";
+import { useHasRoleOnMerchant } from "./useHasRoleOnProduct";
 
 // Mock the business API
 vi.mock("@/context/api/backendClient", () => ({
@@ -24,7 +19,6 @@ vi.mock("@/context/api/backendClient", () => ({
 }));
 
 const mockMerchantId = "mock-merchant-id";
-const mockProductId = createMockAddress("product") as Hex;
 
 describe("useHasRoleOnMerchant", () => {
     describe("default state", () => {
@@ -207,30 +201,5 @@ describe("useHasRoleOnMerchant", () => {
             // Query should not be called when merchantId is empty
             expect(mockGet).not.toHaveBeenCalled();
         });
-    });
-});
-
-describe("useHasRoleOnProduct (deprecated stub)", () => {
-    test("should return static admin access", () => {
-        const { result } = renderHook(() =>
-            useHasRoleOnProduct({ productId: mockProductId })
-        );
-
-        expect(result.current.rolesReady).toBe(true);
-        expect(result.current.role).toBe("admin");
-        expect(result.current.isOwner).toBe(true);
-        expect(result.current.hasAccess).toBe(true);
-        expect(result.current.isAdministrator).toBe(true);
-        expect(result.current.isInteractionManager).toBe(true);
-        expect(result.current.isCampaignManager).toBe(true);
-    });
-
-    test("should provide a noop refresh function", async () => {
-        const { result } = renderHook(() =>
-            useHasRoleOnProduct({ productId: mockProductId })
-        );
-
-        // Should not throw
-        await expect(result.current.refresh()).resolves.toBeUndefined();
     });
 });
