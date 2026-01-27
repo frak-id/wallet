@@ -1,144 +1,216 @@
-import type { InteractionTypesKey } from "@frak-labs/core-sdk";
-import type { TCountryCode } from "countries-list";
-import type { Address, Hex } from "viem";
+/**
+ * Campaign status aligned with backend API
+ * - draft: Campaign created but not yet published
+ * - active: Campaign is running and distributing rewards
+ * - paused: Campaign temporarily paused
+ * - archived: Campaign archived and no longer active
+ */
+export type CampaignStatus = "draft" | "active" | "paused" | "archived";
 
-export type Goal =
+/**
+ * Campaign trigger types
+ */
+export type CampaignTrigger =
+    | "purchase"
+    | "signup"
+    | "wallet_connect"
+    | "custom";
+
+/**
+ * Condition operator for rule conditions
+ */
+export type ConditionOperator =
+    | "eq"
+    | "neq"
+    | "gt"
+    | "gte"
+    | "lt"
+    | "lte"
+    | "in"
+    | "not_in"
+    | "contains"
+    | "starts_with"
+    | "ends_with"
+    | "exists"
+    | "not_exists"
+    | "between";
+
+/**
+ * Single rule condition
+ */
+export type RuleCondition = {
+    field: string;
+    operator: ConditionOperator;
+    value: unknown;
+    valueTo?: unknown;
+};
+
+/**
+ * Recursive condition group for complex rule logic
+ */
+export type ConditionGroup = {
+    logic: "all" | "any" | "none";
+    conditions: Array<RuleCondition | ConditionGroup>;
+};
+
+/**
+ * Rule conditions can be a flat array or nested groups
+ */
+export type RuleConditions = RuleCondition[] | ConditionGroup;
+
+/**
+ * Reward recipient type
+ */
+export type RewardRecipient = "referrer" | "referee" | "user";
+
+/**
+ * Reward chaining configuration
+ */
+export type RewardChaining = {
+    userPercent: number;
+    deperditionPerLevel: number;
+    maxDepth?: number;
+};
+
+/**
+ * Reward tier for tiered rewards
+ */
+export type RewardTier = {
+    minValue: number;
+    maxValue?: number;
+    amount: number;
+};
+
+/**
+ * Fixed reward definition
+ */
+export type FixedReward = {
+    recipient: RewardRecipient;
+    type: "token";
+    amountType: "fixed";
+    amount: number;
+    token?: string;
+    description?: string;
+    chaining?: RewardChaining;
+};
+
+/**
+ * Percentage reward definition
+ */
+export type PercentageReward = {
+    recipient: RewardRecipient;
+    type: "token";
+    amountType: "percentage";
+    percent: number;
+    percentOf: "purchase_amount" | "purchase_subtotal";
+    maxAmount?: number;
+    minAmount?: number;
+    token?: string;
+    description?: string;
+    chaining?: RewardChaining;
+};
+
+/**
+ * Tiered reward definition
+ */
+export type TieredReward = {
+    recipient: RewardRecipient;
+    type: "token";
+    amountType: "tiered";
+    tierField: string;
+    tiers: RewardTier[];
+    token?: string;
+    description?: string;
+    chaining?: RewardChaining;
+};
+
+/**
+ * Union of all reward types
+ */
+export type RewardDefinition = FixedReward | PercentageReward | TieredReward;
+
+/**
+ * Campaign rule definition
+ */
+export type CampaignRule = {
+    trigger: CampaignTrigger;
+    conditions: RuleConditions;
+    rewards: RewardDefinition[];
+    pendingRewardExpirationDays?: number;
+};
+
+/**
+ * Budget configuration item
+ */
+export type BudgetConfigItem = {
+    label: string;
+    durationInSeconds: number | null;
+    amount: number;
+};
+
+/**
+ * Budget configuration (array of budget items)
+ */
+export type BudgetConfig = BudgetConfigItem[];
+
+/**
+ * Campaign goal
+ */
+export type CampaignGoal =
     | "awareness"
     | "traffic"
     | "registration"
     | "sales"
     | "retention";
-type SpecialCategory = "credit" | "jobs" | "housing" | "social";
-export type Budget = "daily" | "weekly" | "monthly" | "global";
 
 /**
- * The type of reward for a campaign:
- *  - fixed: Distribute a fixed amount to each users
- *  - range: Distribute a range of rewards following a beta distribution curve
+ * Special category for campaigns
  */
-export type CampaignRewardType = "fixed" | "range";
-
-export type CampaignTrigger =
-    | {
-          // Reward range (for the old schema)
-          // @deprecated use the cac properties with `multiplier` instead
-          from: number;
-          // @deprecated use the cac properties with `multiplier` instead
-          to: number;
-          // Reward distribution config
-          maxCountPerUser?: number;
-
-          cac?: never;
-      }
-    | {
-          // New schema for the trigger
-          cac: number;
-          maxCountPerUser?: number;
-
-          from?: never;
-          to?: never;
-      };
+export type SpecialCategory = "credit" | "jobs" | "housing" | "social";
 
 /**
- * Direct campaign type
+ * Campaign metadata
+ */
+export type CampaignMetadata = {
+    goal?: CampaignGoal;
+    specialCategories?: SpecialCategory[];
+    territories?: string[];
+};
+
+/**
+ * Campaign actions available to the user
+ */
+export type CampaignActions = {
+    canEdit: boolean;
+    canDelete: boolean;
+    canPublish: boolean;
+    canPause: boolean;
+    canResume: boolean;
+    canArchive: boolean;
+};
+
+/**
+ * Campaign type aligned with backend API response
  */
 export type Campaign = {
-    id?: string;
-    title: string;
-    /**
-     * The merchant this campaign belongs to (UUID from backend)
-     */
+    id: string;
     merchantId: string;
-    /**
-     * On-chain product identifier (keccak256 hash of domain)
-     * Used for blockchain operations. Can be fetched from backend.
-     * @deprecated Use merchantId for new integrations, productId only for on-chain calls
-     */
-    productId?: Hex;
-    type: Goal | "" | undefined;
-    specialCategories: SpecialCategory[];
-    // The distribution cap of the campaign
-    budget: {
-        type: Budget | undefined;
-        maxEuroDaily: number; // Named `maxEuroDaily` but it's basicly the budget associated with the `type` period, in the fiat `setupCurrency`. We keep it that way to reduce migrations needed.
-    };
-    territories: TCountryCode[];
-    // The campaign bank address (that will distribute rewards to the end users)
-    bank: Address | "";
-    // The activation period of the campaign
-    scheduled?: {
-        dateStart: Date;
-        dateEnd?: Date;
-    };
-    // How is the reward chained across multiple user
-    rewardChaining?: {
-        userPercent?: number;
-        deperditionPerLevel?: number;
-    };
-    // The type of distribution for the campaign
-    distribution?:
-        | {
-              type: "fixed";
-              minMultiplier?: never;
-              maxMultiplier?: never;
-          }
-        | {
-              type: "range";
-              minMultiplier: number; // Between 0.7 and 1.3
-              maxMultiplier: number; // Between 1 and 5
-          };
-    // Trigger for the campaign
-    triggers: Partial<Record<InteractionTypesKey, CampaignTrigger>>;
-    // The currency used to setup the campaign (if undefined, that's `eur`, if `raw` that's directly the token)
-    setupCurrency?: "eur" | "usd" | "gbp" | "raw";
+    name: string;
+    status: CampaignStatus;
+    priority: number;
+    rule: CampaignRule;
+    metadata: CampaignMetadata | null;
+    budgetConfig: BudgetConfig | null;
+    budgetUsed: Record<string, unknown> | null;
+    expiresAt: string | null;
+    publishedAt: string | null;
+    createdAt: string;
+    updatedAt: string;
 };
 
 /**
- * Campaign with a state
+ * Campaign with available actions
  */
-export type CampaignState =
-    | {
-          key: "draft";
-      }
-    | {
-          key: "creationFailed";
-      }
-    | {
-          key: "created";
-          // Interaction link only present if blockchain campaign fetched
-          interactionLink?: {
-              isAttached: boolean;
-              attachTimestamp: string;
-              detachTimestamp?: string;
-          };
-          // Active = can distribute rewards
-          isActive?: boolean;
-          // Running = is paused or not
-          isRunning?: boolean;
-          // Campaign deployed address
-          address: Address;
-      };
-
-export type CampaignWithState =
-    | DraftCampaignWithState
-    | FinalizedCampaignWithState;
-
-export type FinalizedCampaignWithState = Campaign & {
-    _id: string;
-    state: Extract<CampaignState, { key: "created" | "creationFailed" }>;
-    actions: {
-        canEdit: boolean;
-        canDelete: boolean;
-        canToggleRunningStatus: boolean;
-    };
-};
-
-export type DraftCampaignWithState = Partial<Campaign> & {
-    _id: string;
-    state: Extract<CampaignState, { key: "draft" }>;
-    actions: {
-        canEdit: boolean;
-        canDelete: boolean;
-        canToggleRunningStatus: boolean;
-    };
+export type CampaignWithActions = Campaign & {
+    actions: CampaignActions;
 };
