@@ -1,21 +1,12 @@
 import { capitalize } from "radash";
-import type { CampaignDocument } from "@/context/campaigns/dto/CampaignDocument";
 import { Badge } from "@/module/common/component/Badge";
 import { Column } from "@/module/common/component/Column";
 import { Row } from "@/module/common/component/Row";
 import { Title } from "@/module/common/component/Title";
+import type { Campaign } from "@/types/Campaign";
 
-/**
- * Display the campaign territory
- * @param campaign
- * @constructor
- */
-export function CampaignTerritory({
-    campaign,
-}: {
-    campaign: CampaignDocument | null;
-}) {
-    if (!campaign?.territories?.length) return null;
+export function CampaignTerritory({ campaign }: { campaign: Campaign | null }) {
+    if (!campaign?.metadata?.territories?.length) return null;
 
     return (
         <Column fullWidth={true}>
@@ -23,7 +14,7 @@ export function CampaignTerritory({
                 Territory
             </Title>
             <Row align={"start"}>
-                {campaign.territories.map((territory) => (
+                {campaign.metadata.territories.map((territory) => (
                     <Badge key={territory} variant={"secondary"}>
                         {capitalize(territory)}
                     </Badge>

@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { CampaignDetails } from "@/module/campaigns/component/CampaignDetails";
 import { campaignQueryOptions } from "@/module/campaigns/queries/queryOptions";
+import { mapCampaignToFormData } from "@/module/campaigns/utils/mapper";
 import { CampaignError } from "@/module/common/component/RouteError";
 import { queryClient } from "@/module/common/provider/RootProvider";
 import { campaignStore } from "@/stores/campaignStore";
@@ -11,7 +12,7 @@ export const Route = createFileRoute("/_restricted/campaigns/$campaignId")({
     // Prefetch into TanStack Query cache
     loader: ({ params }) => {
         return queryClient.ensureQueryData(
-            campaignQueryOptions(params.campaignId)
+            campaignQueryOptions(params.campaignId, "")
         );
     },
     component: CampaignsContentPage,
@@ -21,7 +22,7 @@ export const Route = createFileRoute("/_restricted/campaigns/$campaignId")({
 function CampaignsContentPage() {
     const { campaignId } = Route.useParams();
     const { data: campaign } = useSuspenseQuery(
-        campaignQueryOptions(campaignId)
+        campaignQueryOptions(campaignId, "")
     );
 
     // Use individual selectors to avoid infinite loop
@@ -30,9 +31,10 @@ function CampaignsContentPage() {
 
     // Set campaign in store on mount (maintaining existing behavior from CampaignLoad)
     useEffect(() => {
-        setCampaign({ ...campaign, id: campaignId });
+        const formData = mapCampaignToFormData(campaign);
+        setCampaign(formData);
         setIsFetched(true);
-    }, [campaign, campaignId, setCampaign, setIsFetched]);
+    }, [campaign, setCampaign, setIsFetched]);
 
     return <CampaignDetails campaignId={campaignId} campaign={campaign} />;
 }

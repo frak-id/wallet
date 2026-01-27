@@ -8,105 +8,70 @@ import {
     createColumnHelper,
 } from "@tanstack/react-table";
 import { Eye, Pencil, Trash2 } from "lucide-react";
-import { capitalize } from "radash";
 import { useMemo, useState } from "react";
 import { CampaignStateTag } from "@/module/campaigns/component/TableCampaigns/CampaignStateTag";
 import { TableCampaignFilters } from "@/module/campaigns/component/TableCampaigns/Filter";
 import { useDeleteCampaign } from "@/module/campaigns/hook/useDeleteCampaign";
 import { useGetCampaigns } from "@/module/campaigns/hook/useGetCampaigns";
-import { useUpdateCampaignRunningStatus } from "@/module/campaigns/hook/useUpdateCampaignRunningStatus";
 import { AlertDialog } from "@/module/common/component/AlertDialog";
 import { Table } from "@/module/common/component/Table";
 import { formatDate } from "@/module/common/utils/formatDate";
 import { formatPrice } from "@/module/common/utils/formatPrice";
-import { Switch } from "@/module/forms/Switch";
 import { campaignStore } from "@/stores/campaignStore";
-import type { CampaignWithState } from "@/types/Campaign";
+import type { CampaignWithActions } from "@/types/Campaign";
 import styles from "./index.module.css";
 
-const columnHelper = createColumnHelper<CampaignWithState>();
+const columnHelper = createColumnHelper<CampaignWithActions>();
 
 export function TableCampaigns() {
     const { data } = useGetCampaigns();
-    const {
-        mutate: onUpdateCampaignRunningStatus,
-        isPending: isUpdatingCampaignState,
-    } = useUpdateCampaignRunningStatus();
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
     const columns = useMemo(
         () =>
             [
-                columnHelper.accessor("state", {
-                    enableSorting: false,
-                    header: "On/Off",
-                    id: "state-running",
-                    cell: ({ getValue, row }) => {
-                        const state = getValue();
-                        const isCreated = state.key === "created";
-                        return (
-                            <Switch
-                                checked={isCreated && state.isRunning}
-                                disabled={
-                                    !isCreated ||
-                                    isUpdatingCampaignState ||
-                                    !row.original.actions.canToggleRunningStatus
-                                }
-                                onCheckedChange={() => {
-                                    if (!isCreated || isUpdatingCampaignState)
-                                        return;
-                                    onUpdateCampaignRunningStatus({
-                                        campaign: state.address,
-                                        newRunningStatus: !state.isRunning,
-                                    });
-                                }}
-                            />
-                        );
-                    },
-                }),
-                columnHelper.accessor("title", {
+                columnHelper.accessor("name", {
                     enableSorting: false,
                     header: () => "Campaign",
                     cell: ({ getValue, row }) => (
                         <Link
                             to="/campaigns/$campaignId"
-                            params={{ campaignId: row.original._id }}
+                            params={{ campaignId: row.original.id }}
                         >
                             {getValue()}
                         </Link>
                     ),
                 }),
-                columnHelper.accessor("state", {
+                columnHelper.accessor("status", {
                     enableSorting: true,
                     header: () => "Status",
-                    id: "state",
+                    id: "status",
                     cell: ({ getValue }) => (
-                        <CampaignStateTag state={getValue()} />
+                        <CampaignStateTag status={getValue()} />
                     ),
                 }),
                 {
                     id: "date",
                     header: () => "Date",
                     accessorFn: (row) =>
-                        row?.scheduled?.dateStart &&
-                        formatDate(new Date(row.scheduled.dateStart)),
-                    filterFn: (row, _, value) =>
-                        row?.original?.scheduled?.dateStart &&
-                        new Date(row.original.scheduled.dateStart).getDate() >
-                            new Date(value).getDate(),
+                        formatDate(new Date(row.publishedAt || row.createdAt)),
+                    filterFn: (row, _, value) => {
+                        const date = new Date(
+                            row.original.publishedAt || row.original.createdAt
+                        );
+                        return date.getDate() > new Date(value).getDate();
+                    },
                 },
-                columnHelper.accessor("budget.maxEuroDaily", {
+                columnHelper.accessor("budgetConfig", {
                     header: () => "Budget",
-                    cell: ({ row, getValue }) => (
-                        <CellBudget row={row} getValue={getValue} />
-                    ),
+                    cell: ({ row }) => <CellBudget row={row} />,
                 }),
                 columnHelper.display({
                     header: "Action",
                     cell: ({ row }) => <CellActions row={row} />,
                 }),
-            ] as ColumnDef<CampaignWithState>[],
-        [onUpdateCampaignRunningStatus, isUpdatingCampaignState]
+            ] as ColumnDef<CampaignWithActions>[],
+        []
     );
 
     if (!data) {
@@ -132,37 +97,31 @@ export function TableCampaigns() {
     );
 }
 
-/**
- * todo: we need to review the campaign object for a better support of each currencies
- */
 function CellBudget({
     row,
-    getValue,
-}: Pick<CellContext<CampaignWithState, undefined>, "row" | "getValue">) {
-    // TODO: Re-implement with useGetMerchantBank when budget display is needed
+}: Pick<CellContext<CampaignWithActions, unknown>, "row">) {
+    const budgetConfig = row.original.budgetConfig;
+    const firstBudget = budgetConfig?.[0];
+
+    if (!firstBudget) {
+        return <span className={styles.table__budget}>-</span>;
+    }
 
     return (
         <span className={styles.table__budget}>
             <span className={styles.table__budgetAmount}>
-                {formatPrice(getValue(), undefined, "EUR")}
+                {formatPrice(firstBudget.amount, undefined, "EUR")}
             </span>
-            {row.original.budget?.type && (
-                <span className={styles.table__budgetType}>
-                    {capitalize(row.original.budget.type)}
-                </span>
-            )}
+            <span className={styles.table__budgetType}>
+                {firstBudget.label || "Daily"}
+            </span>
         </span>
     );
 }
 
-/**
- * Component representing the possible cell actions
- * @param row
- * @constructor
- */
 function CellActions({
     row,
-}: Pick<CellContext<CampaignWithState, unknown>, "row">) {
+}: Pick<CellContext<CampaignWithActions, unknown>, "row">) {
     const actions = useMemo(() => row.original.actions, [row.original.actions]);
     const reset = campaignStore((state) => state.reset);
 
@@ -170,18 +129,14 @@ function CellActions({
         <div className={styles.table__actions}>
             <Link
                 to="/campaigns/$campaignId"
-                params={{ campaignId: row.original._id }}
+                params={{ campaignId: row.original.id }}
             >
                 <Eye size={20} absoluteStrokeWidth={true} />
             </Link>
             {actions.canEdit && (
                 <Link
-                    to={
-                        row.original.state.key === "draft"
-                            ? "/campaigns/draft/$campaignId"
-                            : "/campaigns/edit/$campaignId"
-                    }
-                    params={{ campaignId: row.original._id }}
+                    to="/campaigns/edit/$campaignId"
+                    params={{ campaignId: row.original.id }}
                     onClick={() => reset()}
                 >
                     <Pencil size={20} absoluteStrokeWidth={true} />
@@ -192,14 +147,9 @@ function CellActions({
     );
 }
 
-/**
- * Component representing the delete modal
- * @param row
- * @constructor
- */
 function ModalDelete({
     row,
-}: Pick<CellContext<CampaignWithState, unknown>, "row">) {
+}: Pick<CellContext<CampaignWithActions, unknown>, "row">) {
     const [open, setOpen] = useState(false);
     const {
         mutateAsync: onDeleteClick,
@@ -220,7 +170,7 @@ function ModalDelete({
             description={
                 <>
                     Are you sure you want to delete the campaign{" "}
-                    <strong>{row.original.title}</strong>?
+                    <strong>{row.original.name}</strong>?
                 </>
             }
             text={
@@ -236,7 +186,8 @@ function ModalDelete({
                     disabled={isDeleting}
                     onClick={async () => {
                         await onDeleteClick({
-                            campaignId: row.original._id,
+                            campaignId: row.original.id,
+                            merchantId: row.original.merchantId,
                         });
                         setOpen(false);
                     }}
