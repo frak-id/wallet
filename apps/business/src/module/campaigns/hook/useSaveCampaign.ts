@@ -1,38 +1,56 @@
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { saveCampaignDraft } from "@/context/campaigns/action/createCampaign";
+import {
+    createCampaign,
+    updateCampaign,
+} from "@/context/campaigns/action/createCampaign";
 import { campaignStore } from "@/stores/campaignStore";
-import type { Campaign } from "@/types/Campaign";
+import type {
+    BudgetConfig,
+    Campaign,
+    CampaignMetadata,
+    CampaignRule,
+} from "@/types/Campaign";
+
+type SaveCampaignInput = {
+    merchantId: string;
+    campaignId?: string;
+    name: string;
+    rule: CampaignRule;
+    metadata?: CampaignMetadata;
+    budgetConfig?: BudgetConfig;
+    expiresAt?: string;
+    priority?: number;
+};
 
 export function useSaveCampaign() {
-    const setCampaign = campaignStore((state) => state.setCampaign);
-    const setStep = campaignStore((state) => state.setStep);
-    const campaignIsClosing = campaignStore((state) => state.isClosing);
     const queryClient = useQueryClient();
     const navigate = useNavigate();
 
-    return async function save(values: Campaign) {
-        setCampaign(values);
+    return useMutation({
+        mutationKey: ["campaigns", "save"],
+        mutationFn: async (input: SaveCampaignInput): Promise<Campaign> => {
+            const { campaignId, ...rest } = input;
 
-        if (campaignIsClosing) {
-            const { id } = await saveCampaignDraft({
-                data: { campaign: values },
-            });
-            if (id) {
-                setCampaign({ ...values, id });
-                // Invalidate my campaigns query
-                await queryClient.invalidateQueries({
-                    queryKey: ["campaigns", "my-campaigns"],
-                });
-                // Invalidate campaign query
-                await queryClient.invalidateQueries({
-                    queryKey: ["campaign", id],
+            if (campaignId) {
+                return await updateCampaign({
+                    data: { campaignId, ...rest },
                 });
             }
-            setTimeout(() => navigate({ to: "/campaigns/list" }), 0);
-            return;
-        }
 
-        setStep((prev) => prev + 1);
-    };
+            return await createCampaign({ data: rest });
+        },
+        onSuccess: async (campaign) => {
+            campaignStore.getState().reset();
+
+            await queryClient.invalidateQueries({
+                queryKey: ["campaigns"],
+            });
+            await queryClient.invalidateQueries({
+                queryKey: ["campaign", campaign.id],
+            });
+
+            navigate({ to: "/campaigns/list" });
+        },
+    });
 }

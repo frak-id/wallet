@@ -1,19 +1,20 @@
 import { queryOptions } from "@tanstack/react-query";
 import { redirect } from "@tanstack/react-router";
 import { getMyCampaigns } from "@/context/campaigns/action/getCampaigns";
-import { getCampaignDetails } from "@/context/campaigns/action/getDetails";
-import type { CampaignDocument } from "@/context/campaigns/dto/CampaignDocument";
+import { getCampaignDetail } from "@/context/campaigns/action/getDetails";
+import type { Campaign, CampaignWithActions } from "@/types/Campaign";
 
-type CampaignStateValidator = (campaign: CampaignDocument) => {
+type CampaignStateValidator = (campaign: Campaign) => {
     shouldRedirect: boolean;
     redirectTo?: { to: string; params: { campaignId: string } };
 };
 
 /**
  * Query options for fetching all campaigns for the current user
+ * @returns CampaignWithActions[] — campaigns with available action flags
  */
 export const campaignsListQueryOptions = (isDemoMode: boolean) =>
-    queryOptions({
+    queryOptions<CampaignWithActions[]>({
         queryKey: ["campaigns", "my-campaigns", isDemoMode ? "demo" : "live"],
         queryFn: async () => {
             return await getMyCampaigns();
@@ -42,13 +43,14 @@ export const campaignsStatsQueryOptions = () =>
  */
 export const campaignQueryOptions = (
     campaignId: string,
+    merchantId: string,
     validateState?: CampaignStateValidator
 ) =>
     queryOptions({
         queryKey: ["campaign", campaignId],
         queryFn: async () => {
-            const campaign = await getCampaignDetails({
-                data: { campaignId },
+            const campaign = await getCampaignDetail({
+                data: { merchantId, campaignId },
             });
 
             if (!campaign) {
@@ -72,8 +74,8 @@ export const campaignQueryOptions = (
  * Validator for draft route - redirects if campaign is in "created" state
  */
 export function validateDraftCampaign(campaignId: string) {
-    return (campaign: CampaignDocument): ReturnType<CampaignStateValidator> => {
-        const shouldBeInEditMode = campaign.state.key === "created";
+    return (campaign: Campaign): ReturnType<CampaignStateValidator> => {
+        const shouldBeInEditMode = campaign.status === "draft";
         if (shouldBeInEditMode) {
             return {
                 shouldRedirect: true,
@@ -91,8 +93,8 @@ export function validateDraftCampaign(campaignId: string) {
  * Validator for edit route - redirects if campaign is NOT in "created" state
  */
 export function validateEditCampaign(campaignId: string) {
-    return (campaign: CampaignDocument): ReturnType<CampaignStateValidator> => {
-        const shouldBeInDraftMode = campaign.state.key !== "created";
+    return (campaign: Campaign): ReturnType<CampaignStateValidator> => {
+        const shouldBeInDraftMode = campaign.status !== "draft";
         if (shouldBeInDraftMode) {
             return {
                 shouldRedirect: true,

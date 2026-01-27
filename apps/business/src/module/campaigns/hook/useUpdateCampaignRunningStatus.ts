@@ -1,56 +1,39 @@
-import { interactionCampaignAbi } from "@frak-labs/app-essentials";
-import { useSendTransactionAction } from "@frak-labs/react-sdk";
-import { useMutation } from "@tanstack/react-query";
-import { type Address, encodeFunctionData } from "viem";
-import { useWaitForTxAndInvalidateQueries } from "@/module/common/utils/useWaitForTxAndInvalidateQueries";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+    pauseCampaign,
+    resumeCampaign,
+} from "@/context/campaigns/action/statusTransitions";
+import type { Campaign } from "@/types/Campaign";
 
-/**
- * Update the running status of a campaign
- */
 export function useUpdateCampaignRunningStatus() {
-    const { mutateAsync: sendTx } = useSendTransactionAction();
-    const waitForTxAndInvalidateQueries = useWaitForTxAndInvalidateQueries();
+    const queryClient = useQueryClient();
 
     return useMutation({
-        mutationKey: ["campaign", "pause"],
+        mutationKey: ["campaign", "running-status"],
         mutationFn: async ({
-            campaign,
-            newRunningStatus,
+            merchantId,
+            campaignId,
+            shouldRun,
         }: {
-            campaign: Address;
-            newRunningStatus: boolean;
-        }) => {
-            // Send the transaction to the blockchain
-            const { hash } = await sendTx({
-                tx: {
-                    to: campaign,
-                    data: encodeFunctionData({
-                        abi: interactionCampaignAbi,
-                        functionName: "setRunningStatus",
-                        args: [newRunningStatus],
-                    }),
-                },
-                metadata: {
-                    header: {
-                        title: "Update campaign",
-                    },
-                    i18n: {
-                        fr: {
-                            "sdk.modal.sendTransaction.description":
-                                "Mettre à jour le statut d'exécution de la campagne",
-                        },
-                        en: {
-                            "sdk.modal.sendTransaction.description":
-                                "Update the running status of the campaign",
-                        },
-                    },
-                },
+            merchantId: string;
+            campaignId: string;
+            shouldRun: boolean;
+        }): Promise<Campaign> => {
+            if (shouldRun) {
+                return await resumeCampaign({
+                    data: { merchantId, campaignId },
+                });
+            }
+            return await pauseCampaign({
+                data: { merchantId, campaignId },
             });
-
-            // Wait for transaction confirmation
-            await waitForTxAndInvalidateQueries({
-                hash,
+        },
+        onSuccess: async (_data, { campaignId }) => {
+            await queryClient.invalidateQueries({
                 queryKey: ["campaigns"],
+            });
+            await queryClient.invalidateQueries({
+                queryKey: ["campaign", campaignId],
             });
         },
     });
