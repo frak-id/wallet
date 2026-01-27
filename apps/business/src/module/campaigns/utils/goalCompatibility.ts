@@ -3,8 +3,7 @@ import {
     interactionTypes,
 } from "@frak-labs/core-sdk";
 import { interactionTypesInfo } from "@/module/product/utils/interactionTypes";
-import type { ProductTypesKey } from "@/module/product/utils/productTypes";
-import type { Goal } from "@/types/Campaign";
+import type { CampaignGoal } from "@/types/Campaign";
 
 /**
  * Mapping from product types to their available interaction types
@@ -28,7 +27,7 @@ const productTypeToInteractions: Record<
  * @param goal - The goal to check
  * @returns Array of product types that support this goal
  */
-export function getProductTypesForGoal(goal: Goal): ProductTypesKey[] {
+export function getProductTypesForGoal(goal: CampaignGoal): ProductTypesKey[] {
     const supportingProductTypes: Set<ProductTypesKey> = new Set();
 
     // For each product type, check if any of its interactions support this goal
@@ -54,7 +53,7 @@ export function getProductTypesForGoal(goal: Goal): ProductTypesKey[] {
  * @returns true if at least one product type supports the goal
  */
 export function isGoalCompatible(
-    goal: Goal,
+    goal: CampaignGoal,
     productTypes: ProductTypesKey[]
 ): boolean {
     const supportingProductTypes = getProductTypesForGoal(goal);
@@ -83,8 +82,8 @@ export function getProductTypeLabel(productType: ProductTypesKey): string {
  * @param goal - The goal
  * @returns Human-readable label
  */
-export function getGoalLabel(goal: Goal): string {
-    const labels: Record<Goal, string> = {
+export function getGoalLabel(goal: CampaignGoal): string {
+    const labels: Record<CampaignGoal, string> = {
         traffic: "Traffic",
         registration: "Registration",
         sales: "Sales",
