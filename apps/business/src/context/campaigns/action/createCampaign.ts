@@ -1,112 +1,94 @@
 import { createServerFn } from "@tanstack/react-start";
-import { ObjectId } from "mongodb";
-import { first } from "radash";
-import { type Address, type Hex, parseAbi, parseEventLogs } from "viem";
-import { getTransactionReceipt } from "viem/actions";
+import { authenticatedBackendApi } from "@/context/api/backendClient";
 import { authMiddleware } from "@/context/auth/authMiddleware";
-import { viemClient } from "@/context/blockchain/provider";
-import type { DraftCampaignDocument } from "@/context/campaigns/dto/CampaignDocument";
-import { getCampaignRepository } from "@/context/campaigns/repository/CampaignRepository";
-import type { Campaign } from "@/types/Campaign";
+import type {
+    BudgetConfig,
+    Campaign,
+    CampaignMetadata,
+    CampaignRule,
+} from "@/types/Campaign";
 
-/**
- * Save a campaign draft
- * @param campaign
- */
-async function saveCampaignDraftInternal({
-    campaign,
-    wallet,
-}: {
-    campaign: Partial<Campaign>;
-    wallet: Address;
-}): Promise<{ id?: string }> {
-    // Build the partial document
-    const draftDocument: DraftCampaignDocument = {
-        ...campaign,
-        creator: wallet,
-        state: {
-            key: "draft",
-        },
-    };
+// ============================================================================
+// FIAT CONVERSION PIPELINE:
+// 1. Form collects fiat amount (e.g., €5.00)
+// 2. getBankInfo() fetches token exchange rate and decimals
+// 3. Apply 20% Frak commission: fiatAmount * 0.8
+// 4. Convert to token: (fiatAmount * 0.8) * exchangeRate * 10^decimals
+// 5. Final token amount sent to backend as reward.amount
+//
+// Fiat-to-token conversion happens in the form/UI layer BEFORE
+// calling createCampaign(). The reward amounts arriving here are already
+// converted to token amounts. See getBankInfo.ts for the conversion utils.
+// ============================================================================
 
-    // Insert it
-    const repository = await getCampaignRepository();
-    const finalDraft = await repository.upsertDraft(draftDocument);
-    return {
-        id: finalDraft?._id?.toHexString(),
-    };
-}
+type CreateCampaignInput = {
+    merchantId: string;
+    name: string;
+    rule: CampaignRule;
+    metadata?: CampaignMetadata;
+    budgetConfig?: BudgetConfig;
+    expiresAt?: string;
+    priority?: number;
+};
 
-/**
- * Action used to update the campaign state
- * @param campaignId
- * @param txHash
- */
-async function updateCampaignStateInternal({
-    campaignId,
-    txHash,
-}: {
-    campaignId: string;
-    txHash?: Hex;
-}) {
-    const id = ObjectId.createFromHexString(campaignId);
-    const repository = await getCampaignRepository();
+async function createCampaignInternal(
+    input: CreateCampaignInput
+): Promise<Campaign> {
+    const { merchantId, ...body } = input;
 
-    // If no tx hash, just insert it with creation failed status'
-    if (!txHash) {
-        await repository.updateState(id, {
-            key: "creationFailed",
-        });
-        return;
+    const { data, error } = await authenticatedBackendApi
+        .merchant({ merchantId })
+        .campaigns.post(body);
+
+    if (!data || error) {
+        throw new Error(
+            `Failed to create campaign: ${error?.toString() ?? "Unknown error"}`
+        );
     }
 
-    // Otherwise, find the deployed address in the logs of the transaction
-    const receipt = await getTransactionReceipt(viemClient, {
-        hash: txHash,
-    });
-    const parsedLogs = parseEventLogs({
-        abi: parseAbi(["event CampaignCreated(address campaign)"]),
-        eventName: "CampaignCreated",
-        logs: receipt.logs,
-        strict: true,
-    });
-    const address = first(parsedLogs)?.args?.campaign;
-    if (!address) {
-        console.error("No address found in the logs", receipt.logs);
-        await repository.updateState(id, {
-            key: "creationFailed",
-        });
-        return;
-    }
-
-    // Set the success state
-    await repository.updateState(id, {
-        key: "created",
-        txHash,
-        address,
-    });
+    return data as Campaign;
 }
 
-/**
- * Server function to save a campaign draft
- */
-export const saveCampaignDraft = createServerFn({ method: "POST" })
+export const createCampaign = createServerFn({ method: "POST" })
     .middleware([authMiddleware])
-    .inputValidator((input: { campaign: Partial<Campaign> }) => input)
-    .handler(async ({ data, context }) => {
-        const { wallet } = context;
-        return saveCampaignDraftInternal({ campaign: data.campaign, wallet });
-    });
-
-/**
- * Server function to update campaign state
- */
-export const updateCampaignState = createServerFn({ method: "POST" })
-    .middleware([authMiddleware])
-    .inputValidator((input: { campaignId: string; txHash?: Hex }) => input)
+    .inputValidator((input: CreateCampaignInput) => input)
     .handler(async ({ data }) => {
-        return updateCampaignStateInternal({
-            campaignId: data.campaignId,
-            txHash: data.txHash,
-        });
+        return createCampaignInternal(data);
+    });
+
+type UpdateCampaignInput = {
+    merchantId: string;
+    campaignId: string;
+    name?: string;
+    rule?: CampaignRule;
+    metadata?: CampaignMetadata;
+    budgetConfig?: BudgetConfig;
+    expiresAt?: string | null;
+    priority?: number;
+};
+
+async function updateCampaignInternal(
+    input: UpdateCampaignInput
+): Promise<Campaign> {
+    const { merchantId, campaignId, ...body } = input;
+
+    const { data, error } = await authenticatedBackendApi
+        .merchant({ merchantId })
+        .campaigns({ campaignId })
+        .put(body);
+
+    if (!data || error) {
+        throw new Error(
+            `Failed to update campaign: ${error?.toString() ?? "Unknown error"}`
+        );
+    }
+
+    return data as Campaign;
+}
+
+export const updateCampaign = createServerFn({ method: "POST" })
+    .middleware([authMiddleware])
+    .inputValidator((input: UpdateCampaignInput) => input)
+    .handler(async ({ data }) => {
+        return updateCampaignInternal(data);
     });

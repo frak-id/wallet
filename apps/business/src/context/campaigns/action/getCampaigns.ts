@@ -1,53 +1,24 @@
 import { createServerFn } from "@tanstack/react-start";
 import { authenticatedBackendApi } from "@/context/api/backendClient";
 import { authMiddleware } from "@/context/auth/authMiddleware";
-import { getMyCampaignsMock } from "@/context/campaigns/action/mock";
-import type { CampaignWithState } from "@/types/Campaign";
+import type {
+    CampaignActions,
+    CampaignStatus,
+    CampaignWithActions,
+} from "@/types/Campaign";
 
-type BackendCampaignStatus = "draft" | "published" | "paused" | "archived";
-
-function mapStatusToState(status: BackendCampaignStatus) {
-    switch (status) {
-        case "draft":
-            return { key: "draft" as const };
-        case "published":
-            return {
-                key: "created" as const,
-                isActive: true,
-                isRunning: true,
-            };
-        case "paused":
-            return {
-                key: "created" as const,
-                isActive: true,
-                isRunning: false,
-            };
-        case "archived":
-            return {
-                key: "created" as const,
-                isActive: false,
-                isRunning: false,
-            };
-    }
-}
-
-function mapStatusToActions(status: BackendCampaignStatus) {
+function mapStatusToActions(status: CampaignStatus): CampaignActions {
     return {
-        canEdit: status === "draft" || status === "paused",
+        canEdit: status === "draft",
         canDelete: status === "draft",
-        canToggleRunningStatus: status === "published" || status === "paused",
+        canPublish: status === "draft",
+        canPause: status === "active",
+        canResume: status === "paused",
+        canArchive: status === "active" || status === "paused",
     };
 }
 
-async function getMyCampaignsInternal({
-    isDemoMode,
-}: {
-    isDemoMode: boolean;
-}): Promise<CampaignWithState[]> {
-    if (isDemoMode) {
-        return getMyCampaignsMock();
-    }
-
+async function getMyCampaignsInternal(): Promise<CampaignWithActions[]> {
     const { data: merchantsData, error: merchantsError } =
         await authenticatedBackendApi.merchant.my.get();
 
@@ -67,30 +38,24 @@ async function getMyCampaignsInternal({
                 .merchant({ merchantId })
                 .campaigns.get();
             if (!data || error) return [];
-            return data.campaigns.map((campaign) => ({
-                ...campaign,
-                merchantId,
-            }));
+            return data.campaigns.map(
+                (campaign) =>
+                    ({
+                        ...campaign,
+                        merchantId,
+                        actions: mapStatusToActions(
+                            campaign.status as CampaignStatus
+                        ),
+                    }) as CampaignWithActions
+            );
         })
     );
 
-    const allCampaigns = campaignResults.flat();
-
-    return allCampaigns.map((campaign) => {
-        const status = (campaign.status ?? "draft") as BackendCampaignStatus;
-        return {
-            _id: campaign.id,
-            title: campaign.name,
-            merchantId: campaign.merchantId,
-            state: mapStatusToState(status),
-            actions: mapStatusToActions(status),
-        } as CampaignWithState;
-    });
+    return campaignResults.flat();
 }
 
 export const getMyCampaigns = createServerFn({ method: "GET" })
     .middleware([authMiddleware])
-    .handler(async ({ context }) => {
-        const { isDemoMode } = context;
-        return getMyCampaignsInternal({ isDemoMode });
+    .handler(async () => {
+        return getMyCampaignsInternal();
     });

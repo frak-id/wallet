@@ -41,8 +41,10 @@ export type ConditionOperator =
 export type RuleCondition = {
     field: string;
     operator: ConditionOperator;
-    value: unknown;
-    valueTo?: unknown;
+    // biome-ignore lint/suspicious/noExplicitAny: Eden Treaty infers condition values as {} which is incompatible with unknown
+    value: any;
+    // biome-ignore lint/suspicious/noExplicitAny: Eden Treaty infers condition values as {} which is incompatible with unknown
+    valueTo?: any;
 };
 
 /**
@@ -89,7 +91,7 @@ export type FixedReward = {
     type: "token";
     amountType: "fixed";
     amount: number;
-    token?: string;
+    token?: `0x${string}`;
     description?: string;
     chaining?: RewardChaining;
 };
@@ -105,7 +107,7 @@ export type PercentageReward = {
     percentOf: "purchase_amount" | "purchase_subtotal";
     maxAmount?: number;
     minAmount?: number;
-    token?: string;
+    token?: `0x${string}`;
     description?: string;
     chaining?: RewardChaining;
 };
@@ -119,7 +121,7 @@ export type TieredReward = {
     amountType: "tiered";
     tierField: string;
     tiers: RewardTier[];
-    token?: string;
+    token?: `0x${string}`;
     description?: string;
     chaining?: RewardChaining;
 };
@@ -201,7 +203,8 @@ export type Campaign = {
     rule: CampaignRule;
     metadata: CampaignMetadata | null;
     budgetConfig: BudgetConfig | null;
-    budgetUsed: Record<string, unknown> | null;
+    // biome-ignore lint/suspicious/noExplicitAny: Eden Treaty infers Record values as {} which is incompatible with unknown
+    budgetUsed: Record<string, any> | null;
     expiresAt: string | null;
     publishedAt: string | null;
     createdAt: string;
