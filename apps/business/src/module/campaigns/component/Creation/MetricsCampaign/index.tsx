@@ -1,15 +1,10 @@
-import { Skeleton } from "@frak-labs/ui/component/Skeleton";
 import { useMemo } from "react";
-import {
-    type ResolverResult,
-    type UseFormReturn,
-    useForm,
-} from "react-hook-form";
-import { toHex } from "viem";
+import { useForm } from "react-hook-form";
 import { Actions } from "@/module/campaigns/component/Actions";
 import { ButtonCancel } from "@/module/campaigns/component/Creation/NewCampaign/ButtonCancel";
 import { useSaveCampaign } from "@/module/campaigns/hook/useSaveCampaign";
 import { Head } from "@/module/common/component/Head";
+import { InputAmountCampaign } from "@/module/common/component/InputAmount";
 import { Panel } from "@/module/common/component/Panel";
 import { Row } from "@/module/common/component/Row";
 import {
@@ -22,60 +17,47 @@ import {
     FormMessage,
 } from "@/module/forms/Form";
 import { RadioGroup, RadioGroupItem } from "@/module/forms/RadioGroup";
-import { useProductMetadata } from "@/module/product/hook/useProductMetadata";
 import { campaignStore } from "@/stores/campaignStore";
-import type { Campaign } from "@/types/Campaign";
-import { DistributionConfiguration } from "./DistributionConfig";
-import { FormTriggersCac } from "./FormTriggersCac";
-import styles from "./index.module.css";
+import { FormTrigger } from "../Generic/FormTrigger";
+
+// FIAT CONVERSION PIPELINE:
+// 1. User enters fiat amount (e.g., €5.00)
+// 2. On save, getBankInfo() fetches token exchange rate
+// 3. Commission applied: fiatAmount * 0.8 (20% Frak fee)
+// 4. Converted to token: (fiatAmount * 0.8) * exchangeRate * 10^decimals
+// 5. Final token amount sent to backend as reward.amount
 
 export function MetricsCampaign() {
     const campaign = campaignStore((state) => state.campaign);
     const saveCampaign = useSaveCampaign();
 
-    const pId = useMemo(() => {
-        if (!campaign.productId) return "0x0" as const;
-        return toHex(BigInt(campaign.productId));
-    }, [campaign.productId]);
-
-    const { data: product } = useProductMetadata({
-        productId: pId,
-    });
-    const form = useForm<Campaign>({
+    const form = useForm({
         values: useMemo(() => campaign, [campaign]),
-        resolver: (values): ResolverResult<Campaign> => {
-            // Check that we have at least one trigger set with a CAC greater than 0
-            const hasTrigger = Object.values(values.triggers).some(
-                (trigger) => trigger.cac && trigger.cac > 0
-            );
-            if (!hasTrigger) {
-                return {
-                    values: {},
-                    errors: {
-                        triggers: {
-                            message: "At least one trigger should be set",
-                        },
-                    },
-                };
-            }
-            return {
-                values,
-                errors: {},
-            };
-        },
     });
-    const distributionType = form.watch("distribution.type") ?? "fixed";
 
-    function handleSave(newCampaign: Campaign) {
-        saveCampaign({
-            ...campaign,
-            ...newCampaign,
-        });
-    }
+    function handleSave(values: typeof campaign) {
+        campaignStore.getState().setCampaign({ ...campaign, ...values });
 
-    // Show skeleton if no productId is set yet
-    if (!campaign.productId) {
-        return <Skeleton />;
+        const payload = {
+            merchantId: values.merchantId,
+            name: values.name,
+            priority: values.priority,
+            rule: {
+                trigger: values.trigger,
+                conditions: { logic: "all" as const, conditions: [] },
+                rewards: [
+                    {
+                        recipient: values.rewardRecipient,
+                        type: "token" as const,
+                        amountType: "fixed" as const,
+                        amount: values.rewardAmount,
+                        chaining: values.rewardChaining,
+                    },
+                ],
+            },
+        };
+
+        saveCampaign.mutate(payload);
     }
 
     return (
@@ -83,7 +65,7 @@ export function MetricsCampaign() {
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(handleSave)}>
                     <Head
-                        title={{ content: "Campaign Metrics", size: "small" }}
+                        title={{ content: "Campaign Rules", size: "small" }}
                         rightSection={
                             <ButtonCancel
                                 onClick={() => {
@@ -92,91 +74,220 @@ export function MetricsCampaign() {
                             />
                         }
                     />
-                    <DistributionTypeToggle form={form} />
-                    <FormTriggersCac
-                        productTypes={product?.productTypes ?? []}
-                    />
-                    <DistributionConfiguration
-                        distributionType={distributionType}
-                        form={form}
-                    />
+
+                    <Panel title="Rule Configuration">
+                        <FormTrigger />
+
+                        <Row>
+                            <FormField
+                                control={form.control}
+                                name="rewardAmount"
+                                rules={{ required: "Required", min: 0 }}
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Reward Amount</FormLabel>
+                                        <FormControl>
+                                            <InputAmountCampaign
+                                                placeholder="5.00"
+                                                {...field}
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="priority"
+                                rules={{ required: "Required", min: 0 }}
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Priority</FormLabel>
+                                        <FormControl>
+                                            <input
+                                                type="number"
+                                                style={{
+                                                    height: "40px",
+                                                    width: "100%",
+                                                    borderRadius:
+                                                        "var(--frak-radius-2)",
+                                                    border: "1px solid var(--frak-color-gray-4)",
+                                                    padding: "0 12px",
+                                                    fontSize: "14px",
+                                                }}
+                                                {...field}
+                                                onChange={(e) =>
+                                                    field.onChange(
+                                                        parseInt(
+                                                            e.target.value
+                                                        ) || 0
+                                                    )
+                                                }
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </Row>
+
+                        <FormField
+                            control={form.control}
+                            name="rewardRecipient"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Reward Recipient</FormLabel>
+                                    <FormControl>
+                                        <RadioGroup
+                                            onValueChange={field.onChange}
+                                            defaultValue={field.value}
+                                            value={field.value}
+                                            style={{
+                                                display: "flex",
+                                                gap: "16px",
+                                            }}
+                                        >
+                                            <FormItem variant="radio">
+                                                <FormControl>
+                                                    <RadioGroupItem value="referrer" />
+                                                </FormControl>
+                                                <FormLabel variant="radio">
+                                                    Referrer
+                                                </FormLabel>
+                                            </FormItem>
+                                            <FormItem variant="radio">
+                                                <FormControl>
+                                                    <RadioGroupItem value="referee" />
+                                                </FormControl>
+                                                <FormLabel variant="radio">
+                                                    Referee
+                                                </FormLabel>
+                                            </FormItem>
+                                            <FormItem variant="radio">
+                                                <FormControl>
+                                                    <RadioGroupItem value="user" />
+                                                </FormControl>
+                                                <FormLabel variant="radio">
+                                                    User
+                                                </FormLabel>
+                                            </FormItem>
+                                        </RadioGroup>
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </Panel>
+
+                    <Panel title="Reward Chaining (Optional)">
+                        <Row>
+                            <FormField
+                                control={form.control}
+                                name="rewardChaining.userPercent"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>User Percent</FormLabel>
+                                        <FormControl>
+                                            <input
+                                                type="number"
+                                                step="0.01"
+                                                style={{
+                                                    height: "40px",
+                                                    width: "100%",
+                                                    borderRadius:
+                                                        "var(--frak-radius-2)",
+                                                    border: "1px solid var(--frak-color-gray-4)",
+                                                    padding: "0 12px",
+                                                    fontSize: "14px",
+                                                }}
+                                                {...field}
+                                                onChange={(e) =>
+                                                    field.onChange(
+                                                        parseFloat(
+                                                            e.target.value
+                                                        ) || 0
+                                                    )
+                                                }
+                                                value={field.value ?? ""}
+                                            />
+                                        </FormControl>
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="rewardChaining.deperditionPerLevel"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>
+                                            Deperdition / Level
+                                        </FormLabel>
+                                        <FormControl>
+                                            <input
+                                                type="number"
+                                                step="0.01"
+                                                style={{
+                                                    height: "40px",
+                                                    width: "100%",
+                                                    borderRadius:
+                                                        "var(--frak-radius-2)",
+                                                    border: "1px solid var(--frak-color-gray-4)",
+                                                    padding: "0 12px",
+                                                    fontSize: "14px",
+                                                }}
+                                                {...field}
+                                                onChange={(e) =>
+                                                    field.onChange(
+                                                        parseFloat(
+                                                            e.target.value
+                                                        ) || 0
+                                                    )
+                                                }
+                                                value={field.value ?? ""}
+                                            />
+                                        </FormControl>
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="rewardChaining.maxDepth"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Max Depth</FormLabel>
+                                        <FormControl>
+                                            <input
+                                                type="number"
+                                                style={{
+                                                    height: "40px",
+                                                    width: "100%",
+                                                    borderRadius:
+                                                        "var(--frak-radius-2)",
+                                                    border: "1px solid var(--frak-color-gray-4)",
+                                                    padding: "0 12px",
+                                                    fontSize: "14px",
+                                                }}
+                                                {...field}
+                                                onChange={(e) =>
+                                                    field.onChange(
+                                                        parseInt(
+                                                            e.target.value
+                                                        ) || 0
+                                                    )
+                                                }
+                                                value={field.value ?? ""}
+                                            />
+                                        </FormControl>
+                                    </FormItem>
+                                )}
+                            />
+                        </Row>
+                    </Panel>
 
                     <Actions isLoading={form.formState.isSubmitting} />
                 </form>
             </Form>
         </FormLayout>
-    );
-}
-
-function DistributionTypeToggle({ form }: { form: UseFormReturn<Campaign> }) {
-    return (
-        <Panel title="Define the type of rewards">
-            <FormField
-                control={form.control}
-                name="distribution.type"
-                rules={{ required: "Select a distribution type" }}
-                render={({ field }) => (
-                    <FormItem>
-                        <Row align={"start"}>
-                            <div>
-                                <FormControl>
-                                    <RadioGroup
-                                        onValueChange={(value) =>
-                                            field.onChange(value)
-                                        }
-                                        defaultValue={field.value}
-                                        {...field}
-                                    >
-                                        <div className={styles.radio__group}>
-                                            <FormItem variant={"radio"}>
-                                                <FormControl>
-                                                    <RadioGroupItem
-                                                        value={"fixed"}
-                                                    />
-                                                </FormControl>
-                                                <FormLabel variant={"radio"}>
-                                                    Fixed rewards
-                                                </FormLabel>
-                                            </FormItem>
-                                            <span className={styles.notice}>
-                                                Each time your goal is reached,
-                                                a fixed amount that you define
-                                                is automatically distributed to
-                                                the business introducer and the
-                                                new customer
-                                            </span>
-                                        </div>
-                                        <div className={styles.radio__group}>
-                                            <FormItem variant={"radio"}>
-                                                <FormControl>
-                                                    <RadioGroupItem
-                                                        value={"range"}
-                                                    />
-                                                </FormControl>
-                                                <FormLabel variant={"radio"}>
-                                                    Variable rewards
-                                                </FormLabel>
-                                            </FormItem>
-                                            <span className={styles.notice}>
-                                                Each time your goal is reached,
-                                                an amount within a range you
-                                                define is automatically
-                                                distributed to the business
-                                                introducer and the new customer.
-                                                The amount of rewards
-                                                distributed is determined
-                                                randomly. Your CPA at the end of
-                                                the campaign is respected.
-                                            </span>
-                                        </div>
-                                    </RadioGroup>
-                                </FormControl>
-                            </div>
-                        </Row>
-                        <FormMessage />
-                    </FormItem>
-                )}
-            />
-        </Panel>
     );
 }
