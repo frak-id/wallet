@@ -8,6 +8,7 @@ import type {
     PathValue,
     UseFormReturn,
 } from "react-hook-form";
+import type { CampaignFormValues } from "@/module/campaigns/component/Creation/NewCampaign/types";
 import { ButtonCalendar } from "@/module/common/component/ButtonCalendar";
 import { Calendar } from "@/module/common/component/Calendar";
 import { Panel } from "@/module/common/component/Panel";
@@ -24,10 +25,9 @@ import {
     FormLabel,
     FormMessage,
 } from "@/module/forms/Form";
-import type { Campaign } from "@/types/Campaign";
 import styles from "./FormSchedule.module.css";
 
-export function FormSchedule(form: UseFormReturn<Campaign>) {
+export function FormSchedule(form: UseFormReturn<CampaignFormValues>) {
     return (
         <Panel title="Schedule">
             <FormDescription>

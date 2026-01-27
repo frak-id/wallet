@@ -1,5 +1,6 @@
 import { Checkbox } from "@frak-labs/ui/component/forms/Checkbox";
 import type { UseFormReturn } from "react-hook-form";
+import type { CampaignFormValues } from "@/module/campaigns/component/Creation/NewCampaign/types";
 import { Panel } from "@/module/common/component/Panel";
 import {
     FormControl,
@@ -9,7 +10,6 @@ import {
     FormLabel,
     FormMessage,
 } from "@/module/forms/Form";
-import type { Campaign } from "@/types/Campaign";
 import styles from "./FormSpecialAdvertising.module.css";
 
 const itemsSpecialAdvertising = [
@@ -64,7 +64,9 @@ const itemsSpecialAdvertising = [
     },
 ] as const;
 
-export function FormSpecialAdvertising(form: UseFormReturn<Campaign>) {
+export function FormSpecialAdvertising(
+    form: UseFormReturn<CampaignFormValues>
+) {
     return (
         <Panel title="Special advertising categories">
             <FormField

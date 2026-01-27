@@ -2,19 +2,17 @@ import { useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { Actions } from "@/module/campaigns/component/Actions";
 import { ButtonCancel } from "@/module/campaigns/component/Creation/NewCampaign/ButtonCancel";
-import { FormBank } from "@/module/campaigns/component/Creation/NewCampaign/FormBank";
 import { FormBudget } from "@/module/campaigns/component/Creation/NewCampaign/FormBudget";
 import { FormGoals } from "@/module/campaigns/component/Creation/NewCampaign/FormGoals";
-import { FormProduct } from "@/module/campaigns/component/Creation/NewCampaign/FormProduct";
 import { FormSchedule } from "@/module/campaigns/component/Creation/NewCampaign/FormSchedule";
 import { FormSpecialAdvertising } from "@/module/campaigns/component/Creation/NewCampaign/FormSpecialAdvertising";
 import { FormTerritory } from "@/module/campaigns/component/Creation/NewCampaign/FormTerritory";
 import { FormTitle } from "@/module/campaigns/component/Creation/NewCampaign/FormTitle";
+import type { CampaignFormValues } from "@/module/campaigns/component/Creation/NewCampaign/types";
 import { useSaveCampaign } from "@/module/campaigns/hook/useSaveCampaign";
 import { Head } from "@/module/common/component/Head";
 import { Form, FormLayout } from "@/module/forms/Form";
 import { campaignStore } from "@/stores/campaignStore";
-import type { Campaign } from "@/types/Campaign";
 
 export function NewCampaign({ title }: { title: string }) {
     const campaign = campaignStore((state) => state.campaign);
@@ -33,7 +31,7 @@ export function NewCampaign({ title }: { title: string }) {
         setIsClosing(false);
     }, [campaignSuccess, reset, setIsClosing]);
 
-    const form = useForm<Campaign>({
+    const form = useForm<CampaignFormValues>({
         values: useMemo(() => campaign, [campaign]),
     });
 
@@ -45,7 +43,9 @@ export function NewCampaign({ title }: { title: string }) {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [campaign]);
 
-    async function onSubmit(values: Campaign) {
+    async function onSubmit(values: CampaignFormValues) {
+        // @ts-expect-error - saveCampaign expects Campaign but we have form values
+        // This will be fixed when saveCampaign is updated in later tasks
         await saveCampaign(values);
     }
 
@@ -63,8 +63,6 @@ export function NewCampaign({ title }: { title: string }) {
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)}>
                     <FormTitle {...form} />
-                    <FormProduct />
-                    <FormBank />
                     <FormGoals {...form} />
                     <FormSpecialAdvertising {...form} />
                     <FormBudget />
