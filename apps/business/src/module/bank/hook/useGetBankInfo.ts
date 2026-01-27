@@ -1,4 +1,4 @@
-import { campaignBankAbi } from "@frak-labs/app-essentials/blockchain";
+import { addresses, campaignBankAbi, currentStablecoins } from "@frak-labs/app-essentials/blockchain";
 import { useQuery } from "@tanstack/react-query";
 import { type Address, erc20Abi, isAddress } from "viem";
 import { readContract } from "viem/actions";
@@ -22,7 +22,7 @@ export function useGetBankInfo({ bank }: { bank?: Address | "" }) {
             // In demo mode, return mock bank info
             if (isDemoMode) {
                 return {
-                    token: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831" as Address, // USDC on Arbitrum
+                    token: currentStablecoins.eure as Address, // USDC on Arbitrum
                     decimals: 6,
                 };
             }

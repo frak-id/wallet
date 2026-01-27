@@ -8,8 +8,6 @@ import type { Static } from "elysia";
 export const MobileAuthCodeDto = t.Object({
     // Wallet address
     address: t.Address(),
-    // Product ID this code is valid for
-    productId: t.Hex(),
     // Origin allowed to exchange this code
     origin: t.String(),
     // Unique code ID for one-time use tracking
@@ -25,7 +23,6 @@ export type StaticMobileAuthCodeDto = Static<typeof MobileAuthCodeDto>;
  * Request to generate a mobile auth code
  */
 export const GenerateMobileAuthCodeRequestDto = t.Object({
-    productId: t.Hex(),
     returnOrigin: t.String(),
 });
 
@@ -50,7 +47,6 @@ export type StaticGenerateMobileAuthCodeResponseDto = Static<
  */
 export const ExchangeMobileAuthCodeRequestDto = t.Object({
     authCode: t.String(),
-    productId: t.Hex(),
 });
 
 export type StaticExchangeMobileAuthCodeRequestDto = Static<

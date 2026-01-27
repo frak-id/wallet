@@ -1,6 +1,5 @@
 import { authenticatedWalletApi } from "@frak-labs/wallet-shared";
 import { useMutation } from "@tanstack/react-query";
-import type { Hex } from "viem";
 
 type GenerateMobileAuthCodeParams = {
     merchantId: Hex;
