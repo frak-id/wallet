@@ -12,9 +12,9 @@ import styles from "./OpenLoginFlow.module.css";
 
 type OpenLoginFlowProps = {
     returnUrl: string;
-    productId: Hex;
+    merchantId: Hex;
     state?: string;
-    productName?: string;
+    merchantName?: string;
 };
 
 type FlowState = {
@@ -55,9 +55,9 @@ const initialState: FlowState = {
 
 export function OpenLoginFlow({
     returnUrl,
-    productId,
+    merchantId,
     state,
-    productName,
+    merchantName,
 }: OpenLoginFlowProps) {
     const { t } = useTranslation();
     const navigate = useNavigate();
@@ -74,7 +74,7 @@ export function OpenLoginFlow({
     // Reset when params change
     useEffect(() => {
         dispatch({ type: "RESET" });
-    }, [returnUrl, productId, state]);
+    }, [returnUrl, merchantId, state]);
 
     // Reset on visibility change (user returns to page)
     useEffect(() => {
@@ -100,7 +100,7 @@ export function OpenLoginFlow({
 
         dispatch({ type: "START_REDIRECT" });
         try {
-            await executeRedirect({ returnUrl, productId, state });
+            await executeRedirect({ returnUrl, merchantId, state });
             dispatch({ type: "REDIRECT_SUCCESS" });
             setTimeout(() => navigate({ to: "/" }), 500);
         } catch (err) {
@@ -113,7 +113,7 @@ export function OpenLoginFlow({
         flowState.hasAttempted,
         executeRedirect,
         returnUrl,
-        productId,
+        merchantId,
         state,
         navigate,
     ]);
@@ -134,7 +134,7 @@ export function OpenLoginFlow({
                 <p className={styles.openLogin__subtitle}>
                     <Trans
                         i18nKey="wallet.openLogin.complete.message"
-                        values={{ productName: productName ?? "the app" }}
+                        values={{ merchantName: merchantName ?? "the app" }}
                     />
                 </p>
                 <Button variant="primary" onClick={retryRedirect}>
@@ -151,7 +151,7 @@ export function OpenLoginFlow({
                 <p className={styles.openLogin__redirecting}>
                     <Trans
                         i18nKey="wallet.openLogin.redirecting"
-                        values={{ productName: productName ?? "the app" }}
+                        values={{ merchantName: merchantName ?? "the app" }}
                     />
                     <span className="dotsLoading">...</span>
                 </p>
@@ -166,11 +166,11 @@ export function OpenLoginFlow({
             <h2 className={styles.openLogin__title}>
                 {t("wallet.openLogin.title")}
             </h2>
-            {productName && (
+            {merchantName && (
                 <p className={styles.openLogin__subtitle}>
                     <Trans
                         i18nKey="wallet.openLogin.subtitle"
-                        values={{ productName }}
+                        values={{ merchantName }}
                     />
                 </p>
             )}

@@ -3,7 +3,7 @@ import { useMutation } from "@tanstack/react-query";
 import type { Hex } from "viem";
 
 type GenerateMobileAuthCodeParams = {
-    productId: Hex;
+    merchantId: Hex;
     returnOrigin: string;
 };
 
@@ -18,12 +18,12 @@ export function useGenerateMobileAuthCode() {
     const { mutateAsync, isPending, isSuccess, isError, error } = useMutation({
         mutationKey: ["mobile-auth", "generate-code"],
         async mutationFn({
-            productId,
+            merchantId,
             returnOrigin,
         }: GenerateMobileAuthCodeParams): Promise<GenerateMobileAuthCodeResult> {
             const { data, error } =
                 await authenticatedWalletApi.auth.mobile.code.post({
-                    productId,
+                    productId: merchantId,
                     returnOrigin,
                 });
 

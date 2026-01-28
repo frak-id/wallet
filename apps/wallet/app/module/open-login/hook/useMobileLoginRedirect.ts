@@ -6,7 +6,7 @@ import { useGenerateMobileAuthCode } from "./useGenerateMobileAuthCode";
 
 type MobileLoginRedirectParams = {
     returnUrl: string;
-    productId: Hex;
+    merchantId: Hex;
     state?: string;
 };
 
@@ -31,7 +31,7 @@ export function useMobileLoginRedirect() {
     const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
 
     const executeRedirect = useCallback(
-        async ({ returnUrl, productId, state }: MobileLoginRedirectParams) => {
+        async ({ returnUrl, merchantId, state }: MobileLoginRedirectParams) => {
             const session = sessionStore.getState().session;
             if (!session) {
                 throw new Error("No active session - user must be logged in");
@@ -41,13 +41,13 @@ export function useMobileLoginRedirect() {
             const returnOrigin = parsedReturnUrl.origin;
 
             const { authCode } = await generateAuthCode({
-                productId,
+                merchantId,
                 returnOrigin,
             });
 
             const finalRedirectUrl = new URL(returnUrl);
             finalRedirectUrl.searchParams.set("frakAuth", authCode);
-            finalRedirectUrl.searchParams.set("productId", productId);
+            finalRedirectUrl.searchParams.set("merchantId", merchantId);
             if (state) {
                 finalRedirectUrl.searchParams.set("state", state);
             }

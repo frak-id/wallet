@@ -58,12 +58,6 @@ export default defineConfig(({ mode, command }: ConfigEnv): UserConfig => {
                     "https://backend.gcp-dev.frak.id"
                 )
             ),
-            "process.env.INDEXER_URL": JSON.stringify(
-                getEnvWithFallback(
-                    "INDEXER_URL",
-                    "https://ponder.gcp-dev.frak.id"
-                )
-            ),
             "process.env.ERPC_URL": JSON.stringify(
                 getEnvWithFallback(
                     "ERPC_URL",

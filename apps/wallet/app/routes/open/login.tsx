@@ -7,17 +7,17 @@ import { OpenLoginFlow } from "@/module/open-login/component/OpenLoginFlow";
 
 type LoginSearchParams = {
     returnUrl?: string;
-    productId?: string;
+    merchantId?: string;
     state?: string;
-    productName?: string;
+    merchantName?: string;
 };
 
 type LoginRouteContext = {
     validatedParams?: {
         returnUrl: string;
-        productId: `0x${string}`;
+        merchantId: `0x${string}`;
         state?: string;
-        productName?: string;
+        merchantName?: string;
     };
     error?: Error;
 };
@@ -26,22 +26,22 @@ export const Route = createFileRoute("/open/login")({
     validateSearch: (search: Record<string, unknown>): LoginSearchParams => {
         return {
             returnUrl: search.returnUrl as string | undefined,
-            productId: search.productId as string | undefined,
+            merchantId: search.merchantId as string | undefined,
             state: search.state as string | undefined,
-            productName: search.productName as string | undefined,
+            merchantName: search.merchantName as string | undefined,
         };
     },
     beforeLoad: ({ search }): LoginRouteContext => {
-        const { returnUrl, productId, state, productName } = search;
+        const { returnUrl, merchantId, state, merchantName } = search;
 
         if (!returnUrl) {
             return {
                 error: new Error("Missing required parameter: returnUrl"),
             };
         }
-        if (!productId) {
+        if (!merchantId) {
             return {
-                error: new Error("Missing required parameter: productId"),
+                error: new Error("Missing required parameter: merchantId"),
             };
         }
 
@@ -53,18 +53,18 @@ export const Route = createFileRoute("/open/login")({
             };
         }
 
-        if (!isHex(productId)) {
+        if (!isHex(merchantId)) {
             return {
-                error: new Error("Invalid productId: must be a hex string"),
+                error: new Error("Invalid merchantId: must be a hex string"),
             };
         }
 
         return {
             validatedParams: {
                 returnUrl,
-                productId,
+                merchantId,
                 state,
-                productName,
+                merchantName,
             },
         };
     },
@@ -91,15 +91,15 @@ function OpenLoginPage() {
         );
     }
 
-    const { returnUrl, productId, state, productName } =
+    const { returnUrl, merchantId, state, merchantName } =
         context.validatedParams;
 
     return (
         <OpenLoginFlow
             returnUrl={returnUrl}
-            productId={productId}
+            merchantId={merchantId}
             state={state}
-            productName={productName}
+            merchantName={merchantName}
         />
     );
 }

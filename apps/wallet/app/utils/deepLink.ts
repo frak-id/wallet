@@ -5,9 +5,9 @@ type DeepLinkParams = {
     to?: string;
     amount?: string;
     returnUrl?: string;
-    productId?: string;
+    merchantId?: string;
     state?: string;
-    productName?: string;
+    merchantName?: string;
 };
 
 function extractSearchParams(
@@ -17,9 +17,9 @@ function extractSearchParams(
         to: searchParams.get("to") ?? undefined,
         amount: searchParams.get("amount") ?? undefined,
         returnUrl: searchParams.get("returnUrl") ?? undefined,
-        productId: searchParams.get("productId") ?? undefined,
+        merchantId: searchParams.get("merchantId") ?? undefined,
         state: searchParams.get("state") ?? undefined,
-        productName: searchParams.get("productName") ?? undefined,
+        merchantName: searchParams.get("merchantName") ?? undefined,
     };
 }
 
@@ -92,10 +92,10 @@ function handleDeepLinkAction(navigate: NavigateFn, params: DeepLinkParams) {
                 to: "/open/login",
                 search: {
                     ...(params.returnUrl && { returnUrl: params.returnUrl }),
-                    ...(params.productId && { productId: params.productId }),
+                    ...(params.merchantId && { merchantId: params.merchantId }),
                     ...(params.state && { state: params.state }),
-                    ...(params.productName && {
-                        productName: params.productName,
+                    ...(params.merchantName && {
+                        merchantName: params.merchantName,
                     }),
                 },
             });

@@ -65,12 +65,12 @@ export const Route = createFileRoute("/_wallet/_sso/sso")({
         }
 
         // Convert compressed params to full params
-        const { productId, redirectUrl, directExit, lang, metadata } =
+        const { merchantId, redirectUrl, directExit, lang, metadata } =
             compressedSsoToParams(compressedParam);
 
         // Save the SSO context to the store
         authenticationStore.getState().setSsoContext({
-            productId: productId ?? undefined,
+            merchantId: merchantId ?? undefined,
             redirectUrl: redirectUrl ?? undefined,
             directExit: directExit ?? undefined,
             metadata: metadata ?? undefined,
@@ -82,7 +82,7 @@ export const Route = createFileRoute("/_wallet/_sso/sso")({
         }
 
         return {
-            ssoParams: { productId, redirectUrl, directExit, lang, metadata },
+            ssoParams: { merchantId, redirectUrl, directExit, lang, metadata },
         };
     },
 });
