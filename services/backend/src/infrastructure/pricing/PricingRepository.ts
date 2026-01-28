@@ -1,7 +1,7 @@
 import { log } from "@backend-infrastructure";
-import { addresses } from "@frak-labs/app-essentials";
 import {
     currentStablecoins,
+    stablecoins,
     usdcArbitrumAddress,
 } from "@frak-labs/app-essentials/blockchain";
 import type { Currency } from "@frak-labs/core-sdk";
@@ -80,8 +80,7 @@ export class PricingRepository {
         // Handle special token mappings
         let finalToken = token;
 
-        // Replace mocked USD token address with the usdc address
-        if (isAddressEqual(token, addresses.mUSDToken)) {
+        if (isAddressEqual(token, stablecoins.testnet.usdc)) {
             finalToken = usdcArbitrumAddress;
         }
 

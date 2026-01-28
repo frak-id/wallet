@@ -5,7 +5,6 @@ export const productRoles = {
     productAdministrator: BigInt(1 << 0),
     interactionManager: BigInt(1 << 1),
     campaignManager: BigInt(1 << 2),
-    purchaseOracleUpdater: BigInt(1 << 3),
 } as const;
 
 export type ProductRolesKey = keyof typeof productRoles;
