@@ -5,7 +5,7 @@ import type {
     BudgetConfig,
     Campaign,
     CampaignMetadata,
-    CampaignRule,
+    CampaignRuleDefinition,
 } from "@/types/Campaign";
 
 // ============================================================================
@@ -24,7 +24,7 @@ import type {
 type CreateCampaignInput = {
     merchantId: string;
     name: string;
-    rule: CampaignRule;
+    rule: CampaignRuleDefinition;
     metadata?: CampaignMetadata;
     budgetConfig?: BudgetConfig;
     expiresAt?: string;
@@ -60,7 +60,7 @@ type UpdateCampaignInput = {
     merchantId: string;
     campaignId: string;
     name?: string;
-    rule?: CampaignRule;
+    rule?: CampaignRuleDefinition;
     metadata?: CampaignMetadata;
     budgetConfig?: BudgetConfig;
     expiresAt?: string | null;

@@ -19,7 +19,7 @@ import { Form, FormLayout } from "@/module/forms/Form";
 import { campaignStore } from "@/stores/campaignStore";
 import type {
     Campaign,
-    CampaignRule,
+    CampaignRuleDefinition,
     RewardDefinition,
 } from "@/types/Campaign";
 import styles from "./index.module.css";
@@ -51,7 +51,7 @@ export function ValidationCampaign() {
             },
         ];
 
-        const rule: CampaignRule = {
+        const rule: CampaignRuleDefinition = {
             trigger: values.trigger,
             conditions: [],
             rewards,

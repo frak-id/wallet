@@ -9,14 +9,14 @@ import type {
     BudgetConfig,
     Campaign,
     CampaignMetadata,
-    CampaignRule,
+    CampaignRuleDefinition,
 } from "@/types/Campaign";
 
 type SaveCampaignInput = {
     merchantId: string;
     campaignId?: string;
     name: string;
-    rule: CampaignRule;
+    rule: CampaignRuleDefinition;
     metadata?: CampaignMetadata;
     budgetConfig?: BudgetConfig;
     expiresAt?: string;

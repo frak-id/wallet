@@ -35,11 +35,18 @@ export const ConditionOperatorSchema = t.Union([
 ]);
 export type ConditionOperator = Static<typeof ConditionOperatorSchema>;
 
+export const RuleConditionValue = t.Union([
+    t.String(),
+    t.Number(),
+    t.Boolean(),
+    t.Null(),
+]);
+
 export const RuleConditionSchema = t.Object({
     field: t.String(),
     operator: ConditionOperatorSchema,
-    value: t.Unknown(),
-    valueTo: t.Optional(t.Unknown()),
+    value: RuleConditionValue,
+    valueTo: t.Optional(RuleConditionValue),
 });
 export type RuleCondition = Static<typeof RuleConditionSchema>;
 
@@ -215,4 +222,7 @@ export const CampaignResponseSchema = t.Object({
     createdAt: t.String(),
     updatedAt: t.String(),
 });
-export type CampaignResponse = Static<typeof CampaignResponseSchema>;
+export type CampaignResponse = Omit<
+    Static<typeof CampaignResponseSchema>,
+    "rule"
+> & { rule: CampaignRuleDefinition };

@@ -1,8 +1,8 @@
 import type {
     BudgetConfig,
-    CampaignRule,
+    CampaignRuleDefinition,
     CampaignTrigger,
-    FixedReward,
+    FixedRewardDefinition,
 } from "@/types/Campaign";
 
 const WEEK_IN_SECONDS = 7 * 24 * 60 * 60;
@@ -148,14 +148,14 @@ export function buildCampaignRule({
 }: {
     cacBrut: number;
     ratio: number;
-}): CampaignRule {
+}): CampaignRuleDefinition {
     const referrerPercent = ratio / 100;
     const refereePercent = 1 - referrerPercent;
 
-    const rewards: FixedReward[] = [];
+    const rewards: FixedRewardDefinition[] = [];
 
     if (referrerPercent > 0) {
-        const referrerReward: FixedReward = {
+        const referrerReward: FixedRewardDefinition = {
             recipient: "referrer",
             type: "token",
             amountType: "fixed",
@@ -166,7 +166,7 @@ export function buildCampaignRule({
     }
 
     if (refereePercent > 0) {
-        const refereeReward: FixedReward = {
+        const refereeReward: FixedRewardDefinition = {
             recipient: "referee",
             type: "token",
             amountType: "fixed",
