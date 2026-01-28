@@ -104,14 +104,6 @@ export function MetricsCampaign() {
                                                         Referee
                                                     </FormLabel>
                                                 </FormItem>
-                                                <FormItem variant="radio">
-                                                    <FormControl>
-                                                        <RadioGroupItem value="user" />
-                                                    </FormControl>
-                                                    <FormLabel variant="radio">
-                                                        User
-                                                    </FormLabel>
-                                                </FormItem>
                                             </RadioGroup>
                                         </FormControl>
                                         <FormMessage />
@@ -158,40 +150,6 @@ export function MetricsCampaign() {
 
                     <Panel title="Reward Chaining (Optional)">
                         <Row>
-                            <FormField
-                                control={form.control}
-                                name="rule.rewards.0.chaining.userPercent"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>User %</FormLabel>
-                                        <FormControl>
-                                            <input
-                                                type="number"
-                                                step="0.01"
-                                                placeholder="0.1"
-                                                style={{
-                                                    height: "40px",
-                                                    width: "100%",
-                                                    borderRadius:
-                                                        "var(--frak-radius-2)",
-                                                    border: "1px solid var(--frak-color-gray-4)",
-                                                    padding: "0 12px",
-                                                    fontSize: "14px",
-                                                }}
-                                                {...field}
-                                                onChange={(e) =>
-                                                    field.onChange(
-                                                        parseFloat(
-                                                            e.target.value
-                                                        ) || 0
-                                                    )
-                                                }
-                                                value={field.value ?? ""}
-                                            />
-                                        </FormControl>
-                                    </FormItem>
-                                )}
-                            />
                             <FormField
                                 control={form.control}
                                 name="rule.rewards.0.chaining.deperditionPerLevel"

@@ -1,4 +1,5 @@
 import type { Address } from "viem";
+import type { RewardRecipient } from "../schemas";
 import type {
     CalculatedReward,
     FixedRewardDefinition,
@@ -117,8 +118,6 @@ function distributeChainedRewards(params: {
     totalAmount: number;
     token: Address | null;
     chaining: RewardChaining;
-    refereeIdentityGroupId: string;
-    refereeWallet: Address | null;
     referralChain: ReferralChainMember[];
     campaignRuleId: string;
     rewardType: "token";
@@ -127,22 +126,6 @@ function distributeChainedRewards(params: {
 }): CalculatedReward[] {
     const rewards: CalculatedReward[] = [];
     let remainingAmount = params.totalAmount;
-
-    const userAmount =
-        (remainingAmount * params.chaining.userPercent) / PERCENT_BASE;
-    rewards.push({
-        recipient: "referee",
-        recipientIdentityGroupId: params.refereeIdentityGroupId,
-        recipientWallet: params.refereeWallet,
-        type: params.rewardType,
-        amount: roundAmount(userAmount),
-        token: params.token,
-        campaignRuleId: params.campaignRuleId,
-        description: params.description,
-        chainDepth: 0,
-        expirationDays: params.expirationDays,
-    });
-    remainingAmount -= userAmount;
 
     for (let i = 0; i < params.referralChain.length; i++) {
         const member = params.referralChain[i];
@@ -233,8 +216,6 @@ export class RewardCalculator {
                     totalAmount: result.amount,
                     token: result.token,
                     chaining: reward.chaining,
-                    refereeIdentityGroupId: context.user.identityGroupId,
-                    refereeWallet: context.user.walletAddress,
                     referralChain,
                     campaignRuleId,
                     rewardType: reward.type,
@@ -272,7 +253,7 @@ export class RewardCalculator {
     }
 
     private resolveRecipient(
-        recipient: "referrer" | "referee" | "user",
+        recipient: RewardRecipient,
         context: RuleContext
     ): { identityGroupId: string; wallet: Address | null } | null {
         switch (recipient) {
@@ -285,7 +266,6 @@ export class RewardCalculator {
                 };
             }
             case "referee":
-            case "user":
                 return {
                     identityGroupId: context.user.identityGroupId,
                     wallet: context.user.walletAddress,

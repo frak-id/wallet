@@ -78,7 +78,6 @@ export type RuleConditions = RuleCondition[] | ConditionGroup;
 export const RewardRecipientSchema = t.Union([
     t.Literal("referrer"),
     t.Literal("referee"),
-    t.Literal("user"),
 ]);
 export type RewardRecipient = Static<typeof RewardRecipientSchema>;
 
@@ -86,7 +85,6 @@ export const RewardAssetTypeSchema = t.Literal("token");
 export type RewardAssetType = Static<typeof RewardAssetTypeSchema>;
 
 export const RewardChainingSchema = t.Object({
-    userPercent: t.Number(),
     deperditionPerLevel: t.Number(),
     maxDepth: t.Optional(t.Number()),
 });

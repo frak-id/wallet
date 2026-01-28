@@ -100,7 +100,7 @@ export function FormCheck() {
                         <FormDescription label={"Chaining"} />
                         <Input
                             disabled={true}
-                            value={`User: ${rewardChaining.userPercent}%, Decay: ${rewardChaining.deperditionPerLevel}%`}
+                            value={`Decay: ${rewardChaining.deperditionPerLevel}%${rewardChaining.maxDepth ? `, Max depth: ${rewardChaining.maxDepth}` : ""}`}
                         />
                     </FormItem>
                 )}
