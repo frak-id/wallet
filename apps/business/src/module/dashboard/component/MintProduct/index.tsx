@@ -3,12 +3,9 @@ import { useForm } from "react-hook-form";
 import { Head } from "@/module/common/component/Head";
 import { useCheckDomainName } from "@/module/dashboard/hooks/dnsRecordHooks";
 import { useMintMyProduct } from "@/module/dashboard/hooks/useMintMyProduct";
-import {
-    defaultProductTypes,
-    getDefaultStablecoin,
-} from "@/module/dashboard/utils/mintUtils";
+import { getDefaultStablecoin } from "@/module/dashboard/utils/mintUtils";
 import { FormLayout } from "@/module/forms/Form";
-import type { ProductNew } from "@/types/Product";
+import type { MerchantNew } from "@/types/Merchant";
 import { ProductInformationPanel } from "./ProductInformationPanel";
 import { RegistrationPanel } from "./RegistrationPanel";
 import { ValidationPanel } from "./ValidationPanel";
@@ -18,19 +15,17 @@ export function MintProduct() {
     const [domainError, setDomainError] = useState<string | undefined>();
     const [openAccordion, setOpenAccordion] = useState<string>("product-info");
 
-    const form = useForm<ProductNew>({
+    const form = useForm<MerchantNew>({
         defaultValues: {
             name: "",
             domain: "",
-            productTypes: defaultProductTypes,
             setupCode: "",
-            currency: "eure", // Always use "eure" as initial default for SSR consistency
+            currency: "eure",
         },
     });
     const domain = form.watch("domain");
     const setupCode = form.watch("setupCode");
 
-    // Set locale-based currency after hydration to avoid SSR mismatch
     useEffect(() => {
         const defaultCurrency = getDefaultStablecoin();
         if (
@@ -58,7 +53,6 @@ export function MintProduct() {
         },
     });
 
-    // Verify the validity of a domain
     async function verifyDomain() {
         const isFormValid = await form.trigger();
         if (!isFormValid) return;
@@ -80,14 +74,13 @@ export function MintProduct() {
 
             if (isAlreadyRegistered) {
                 setDomainError(
-                    `A product already exists for the domain ${domain}`
+                    `A merchant already exists for the domain ${domain}`
                 );
             } else if (!isDomainValid) {
                 setDomainError(
                     "The DNS txt record is not set, or the setup code is invalid"
                 );
             } else {
-                // Directly shift to step 2
                 setStep(2);
             }
         } catch (err) {
@@ -109,7 +102,7 @@ export function MintProduct() {
         <FormLayout>
             <Head
                 title={{
-                    content: "Mint New Product",
+                    content: "Register New Merchant",
                     size: "small",
                 }}
             />

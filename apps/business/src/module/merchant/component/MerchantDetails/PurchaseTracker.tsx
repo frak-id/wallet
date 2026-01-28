@@ -12,15 +12,10 @@ import { Badge } from "@/module/common/component/Badge";
 import { PanelAccordion } from "@/module/common/component/PanelAccordion";
 import { Title } from "@/module/common/component/Title";
 import { useHasRoleOnMerchant } from "@/module/common/hook/useHasRoleOnProduct";
-import { useOracleSetupData } from "../../hook/useOracleSetupData";
+import { useOracleSetupData } from "@/module/merchant/hook/useOracleSetupData";
 import styles from "./PurchaseTracker.module.css";
 import { PurchaseTrackerWebhook } from "./PurchaseTrackerWebhook";
 
-/**
- * Setup data for the purchase oracle
- * @param merchantId - The merchant UUID for role checks
- * @param productId - The on-chain product ID for blockchain operations (optional)
- */
 export function PurchasseTrackerSetup({
     merchantId,
     productId,
@@ -28,9 +23,6 @@ export function PurchasseTrackerSetup({
     merchantId: string;
     productId?: Hex;
 }) {
-    // Note: We can't check productTypes without productId, so we always show the panel
-    // The backend merchant data should include this info in the future
-
     return (
         <PanelAccordion
             title="Purchase Tracker"
@@ -49,9 +41,6 @@ export function PurchasseTrackerSetup({
     );
 }
 
-/**
- * The content of the accordion
- */
 function PurchasseTrackerAccordionContent({
     merchantId,
     productId,
@@ -60,7 +49,6 @@ function PurchasseTrackerAccordionContent({
     productId?: Hex;
 }) {
     const { hasAccess } = useHasRoleOnMerchant({ merchantId });
-    // Fetch some data about the current oracle setup
     const { data: oracleSetupData, refetch: refresh } = useOracleSetupData({
         merchantId,
         productId,
@@ -113,9 +101,6 @@ function PurchasseTrackerAccordionContent({
     );
 }
 
-/**
- * Some webhook stats
- */
 function WebhookStats({
     stats,
 }: {
@@ -170,9 +155,6 @@ function WebhookStats({
     );
 }
 
-/**
- * Toggle the oracle updater role
- */
 function ToggleOracleUpdaterRole({
     productId,
     oracleUpdater,

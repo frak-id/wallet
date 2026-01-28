@@ -1,11 +1,8 @@
 import { useMutation } from "@tanstack/react-query";
 import { authenticatedBackendApi } from "@/context/api/backendClient";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
-import { useWebhookInteractionStatus } from "@/module/product/hook/useWebhookInteractionStatus";
+import { useWebhookInteractionStatus } from "./useWebhookInteractionStatus";
 
-/**
- * Hook to delete the webhook interaction
- */
 export function useWebhookInteractionDelete({
     merchantId,
 }: {
@@ -13,10 +10,10 @@ export function useWebhookInteractionDelete({
 }) {
     const isDemoMode = useIsDemoMode();
     const { refetch } = useWebhookInteractionStatus({ merchantId });
+
     return useMutation({
         mutationKey: ["merchant", "webhook-interaction", "delete", merchantId],
         mutationFn: async () => {
-            // Return mock success in demo mode
             if (isDemoMode) {
                 await new Promise((resolve) => setTimeout(resolve, 200));
                 return { success: true };

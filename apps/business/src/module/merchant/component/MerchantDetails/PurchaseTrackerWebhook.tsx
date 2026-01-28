@@ -7,14 +7,13 @@ import { useMutation } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import type { Hex } from "viem";
-// Note: Hex type is still needed for the productId optional prop
 import { generatePrivateKey } from "viem/accounts";
 import { authenticatedBackendApi } from "@/context/api/backendClient";
 import { Badge } from "@/module/common/component/Badge";
 import { Row } from "@/module/common/component/Row";
 import { Title } from "@/module/common/component/Title";
 import { Form, FormLabel } from "@/module/forms/Form";
-import { useOracleSetupData } from "../../hook/useOracleSetupData";
+import { useOracleSetupData } from "@/module/merchant/hook/useOracleSetupData";
 
 type OraclePlatform = "shopify" | "woocommerce" | "custom" | "internal";
 
@@ -25,7 +24,6 @@ export function PurchaseTrackerWebhook({
     merchantId: string;
     productId?: Hex;
 }) {
-    // Fetch some data about the current oracle setup
     const { data: oracleSetupData } = useOracleSetupData({
         merchantId,
         productId,
@@ -39,7 +37,6 @@ export function PurchaseTrackerWebhook({
         return "shopify";
     }, [oracleSetupData]);
 
-    // Current platform and webhook url to setup
     const [currentPlatform, setCurrentPlatform] =
         useState<OraclePlatform>(initialState);
     const webhookUrl = useMemo(() => {
@@ -228,7 +225,6 @@ function CustomRegistrationForm({
         merchantId,
     });
 
-    // The key that will be used for the woocommerce webhook
     const signinKey = useMemo(() => {
         if (currentSigninKey) {
             return currentSigninKey;
@@ -288,7 +284,6 @@ function WooCommerceRegistrationForm({
         merchantId,
     });
 
-    // The key that will be used for the woocommerce webhook
     const signinKey = useMemo(() => {
         if (currentSigninKey) {
             return currentSigninKey;
@@ -412,7 +407,7 @@ function InternalRegistrationForm() {
     return (
         <>
             <p>
-                Your product is already registered on Frak using an internal
+                Your merchant is already registered on Frak using an internal
                 webhook. <br />
                 This could be because you are using one of our third parties
                 application like the Shopify app, or the WordPress plugin.

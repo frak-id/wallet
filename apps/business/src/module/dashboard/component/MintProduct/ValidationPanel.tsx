@@ -1,11 +1,11 @@
 import { Button } from "@frak-labs/ui/component/Button";
 import type { UseFormReturn } from "react-hook-form";
 import { PanelAccordion } from "@/module/common/component/PanelAccordion";
-import type { ProductNew } from "@/types/Product";
+import type { MerchantNew } from "@/types/Merchant";
 import styles from "./index.module.css";
 
 interface ValidationPanelProps {
-    form: UseFormReturn<ProductNew>;
+    form: UseFormReturn<MerchantNew>;
     step: number;
     onPrevious: () => void;
     onNext: () => void;
@@ -41,16 +41,17 @@ export function ValidationPanel({
             ) : step === 2 ? (
                 <div className={styles.verifySection}>
                     <h3 className={styles.sectionHeading}>
-                        Review Your Product
+                        Review Your Merchant
                     </h3>
                     <p className={styles.description}>
                         Please review the information below before proceeding.
-                        You'll be able to launch your product in the next step.
+                        You'll be able to register your merchant in the next
+                        step.
                     </p>
                     <div className={styles.productSummary}>
                         <div className={styles.summaryItem}>
                             <span className={styles.summaryLabel}>
-                                Product Name:
+                                Merchant Name:
                             </span>
                             <span className={styles.summaryValue}>
                                 {values.name}

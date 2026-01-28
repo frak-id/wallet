@@ -5,7 +5,6 @@ import {
     AccordionTrigger,
 } from "@frak-labs/ui/component/Accordion";
 import { Button } from "@frak-labs/ui/component/Button";
-import { Checkbox } from "@frak-labs/ui/component/forms/Checkbox";
 import { Input } from "@frak-labs/ui/component/forms/Input";
 import { Spinner } from "@frak-labs/ui/component/Spinner";
 import { TextWithCopy } from "@frak-labs/ui/component/TextWithCopy";
@@ -14,7 +13,6 @@ import { CheckCircle2, ExternalLink, XCircle } from "lucide-react";
 import type { UseFormReturn } from "react-hook-form";
 import { PanelAccordion } from "@/module/common/component/PanelAccordion";
 import { useDnsTxtRecordToSet } from "@/module/dashboard/hooks/dnsRecordHooks";
-import { productTypeDescriptions } from "@/module/dashboard/utils/mintUtils";
 import { CurrencySelector } from "@/module/forms/CurrencySelector";
 import {
     Form,
@@ -24,71 +22,16 @@ import {
     FormLabel,
     FormMessage,
 } from "@/module/forms/Form";
-import type { ProductTypesKey } from "@/module/product/utils/productTypes";
-import type { ProductNew } from "@/types/Product";
+import type { MerchantNew } from "@/types/Merchant";
 import styles from "./index.module.css";
 
 interface ProductInformationPanelProps {
-    form: UseFormReturn<ProductNew>;
+    form: UseFormReturn<MerchantNew>;
     step: number;
     domainError?: string;
     onVerifyDomain: () => void;
     isOpen: boolean;
     onOpenChange: (isOpen: boolean) => void;
-}
-
-function ProductTypeCard({
-    info,
-    isChecked,
-    disabled,
-    onChange,
-}: {
-    info: {
-        name: string;
-        description: string;
-        useCase: string;
-        events: string[];
-    };
-    isChecked: boolean;
-    disabled?: boolean;
-    onChange: (checked: boolean) => void;
-}) {
-    return (
-        <label
-            className={styles.productTypeCard}
-            htmlFor={`checkbox-${info.name}`}
-        >
-            <div className={styles.productTypeLabel}>
-                <div>
-                    <Checkbox
-                        checked={isChecked}
-                        disabled={disabled}
-                        onCheckedChange={onChange}
-                        id={`checkbox-${info.name}`}
-                    />
-                </div>
-                <div className={styles.productTypeInfo}>
-                    <h4>{info.name}</h4>
-                    <p className={styles.productTypeDescription}>
-                        {info.description}
-                    </p>
-                    <p className={styles.productTypeUseCase}>{info.useCase}</p>
-                    {info.events.length > 0 && (
-                        <div className={styles.productTypeEvents}>
-                            <span className={styles.productTypeEventsLabel}>
-                                Trackable events:
-                            </span>
-                            <ul className={styles.productTypeEventsList}>
-                                {info.events.map((event) => (
-                                    <li key={event}>{event}</li>
-                                ))}
-                            </ul>
-                        </div>
-                    )}
-                </div>
-            </div>
-        </label>
-    );
 }
 
 export function ProductInformationPanel({
@@ -119,7 +62,7 @@ export function ProductInformationPanel({
 
     return (
         <PanelAccordion
-            title="Product Information"
+            title="Merchant Information"
             className={styles.panel}
             withBadge={step > 1}
             value={isOpen ? "item-1" : ""}
@@ -127,27 +70,26 @@ export function ProductInformationPanel({
         >
             <Form {...form}>
                 <form className={styles.form}>
-                    {/* Product Name */}
                     <FormField
                         control={form.control}
                         name="name"
                         rules={{
-                            required: "Product name is required",
+                            required: "Merchant name is required",
                             minLength: {
                                 value: 2,
                                 message:
-                                    "Product name must be at least 2 characters",
+                                    "Merchant name must be at least 2 characters",
                             },
                         }}
                         render={({ field }) => (
                             <FormItem className={styles.nameField}>
                                 <FormLabel weight="medium">
-                                    Enter a Product Name
+                                    Enter a Merchant Name
                                 </FormLabel>
                                 <FormControl>
                                     <Input
                                         length="medium"
-                                        placeholder="Product Name..."
+                                        placeholder="Merchant Name..."
                                         disabled={step > 1}
                                         {...field}
                                     />
@@ -157,7 +99,6 @@ export function ProductInformationPanel({
                         )}
                     />
 
-                    {/* Currency */}
                     <FormField
                         control={form.control}
                         name="currency"
@@ -179,110 +120,6 @@ export function ProductInformationPanel({
                         )}
                     />
 
-                    {/* Mandatory Configuration */}
-                    <div className={styles.mandatorySection}>
-                        <FormLabel weight="medium">
-                            Mandatory Configuration
-                        </FormLabel>
-                        <p className={styles.mandatorySectionDescription}>
-                            The following feature is always enabled as it's
-                            required for reward distribution:
-                        </p>
-                        <div className={styles.mandatoryCard}>
-                            <div className={styles.mandatoryCardContent}>
-                                <h4>Referral Tracking</h4>
-                                <p className={styles.mandatoryCardDescription}>
-                                    Tracks user referral activities and enables
-                                    reward distribution. This is the foundation
-                                    of all campaigns on Frak.
-                                </p>
-                                <div className={styles.mandatoryEvents}>
-                                    <span
-                                        className={styles.mandatoryEventsLabel}
-                                    >
-                                        Trackable events:
-                                    </span>
-                                    <ul className={styles.mandatoryEventsList}>
-                                        {productTypeDescriptions.referral.events.map(
-                                            (event) => (
-                                                <li key={event}>{event}</li>
-                                            )
-                                        )}
-                                    </ul>
-                                </div>
-                            </div>
-                            <div className={styles.mandatoryBadge}>
-                                Always Active
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Product Types */}
-                    <FormField
-                        control={form.control}
-                        name="productTypes"
-                        rules={{
-                            required: "Please select at least one product type",
-                            validate: (value) =>
-                                value.length > 0 ||
-                                "At least one product type must be selected",
-                        }}
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel weight="medium">
-                                    Product Types
-                                </FormLabel>
-                                <p className={styles.productTypesDescription}>
-                                    Select the events you want to track on your
-                                    platform. These determine what user actions
-                                    you can reward through your campaigns. For
-                                    example, selecting "Purchase" allows you to
-                                    track purchases and create campaigns that
-                                    reward users based on purchase activity.
-                                </p>
-                                <div className={styles.productTypesGrid}>
-                                    {Object.entries(productTypeDescriptions)
-                                        .filter(([key]) => key !== "referral")
-                                        .map(([key, info]) => {
-                                            const productType =
-                                                key as ProductTypesKey;
-                                            const isChecked =
-                                                field.value.includes(
-                                                    productType
-                                                );
-
-                                            return (
-                                                <ProductTypeCard
-                                                    key={key}
-                                                    info={info}
-                                                    isChecked={isChecked}
-                                                    disabled={step > 1}
-                                                    onChange={(checked) => {
-                                                        if (checked) {
-                                                            field.onChange([
-                                                                ...field.value,
-                                                                productType,
-                                                            ]);
-                                                        } else {
-                                                            field.onChange(
-                                                                field.value.filter(
-                                                                    (type) =>
-                                                                        type !==
-                                                                        productType
-                                                                )
-                                                            );
-                                                        }
-                                                    }}
-                                                />
-                                            );
-                                        })}
-                                </div>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    {/* Domain and Setup Code Section */}
                     <div className={styles.domainSection}>
                         <FormLabel weight="medium">
                             Domain Configuration

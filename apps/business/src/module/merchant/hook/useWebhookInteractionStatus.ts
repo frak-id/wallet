@@ -2,9 +2,6 @@ import { useQuery } from "@tanstack/react-query";
 import { authenticatedBackendApi } from "@/context/api/backendClient";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 
-/**
- * Hook to fetch the webhook interaction status
- */
 export function useWebhookInteractionStatus({
     merchantId,
 }: {
@@ -21,7 +18,6 @@ export function useWebhookInteractionStatus({
             isDemoMode ? "demo" : "live",
         ],
         queryFn: async () => {
-            // Return mock webhook status in demo mode
             if (isDemoMode) {
                 await new Promise((resolve) => setTimeout(resolve, 100));
                 return {

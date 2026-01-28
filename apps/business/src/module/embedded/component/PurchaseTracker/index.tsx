@@ -8,7 +8,7 @@ import { authenticatedBackendApi } from "@/context/api/backendClient";
 import { CallOut } from "@/module/common/component/CallOut";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
-import { useOracleSetupData } from "@/module/product/hook/useOracleSetupData";
+import { useOracleSetupData } from "@/module/merchant/hook/useOracleSetupData";
 import styles from "../Mint/index.module.css";
 
 export function EmbeddedPurchaseTracker() {

@@ -12,14 +12,11 @@ import {
 import { Badge } from "@/module/common/component/Badge";
 import { PanelAccordion } from "@/module/common/component/PanelAccordion";
 import { Title } from "@/module/common/component/Title";
-import { useWebhookInteractionDelete } from "@/module/product/hook/useWebhookInteractionDelete";
-import { useWebhookInteractionSetup } from "@/module/product/hook/useWebhookInteractionSetup";
-import { useWebhookInteractionStatus } from "@/module/product/hook/useWebhookInteractionStatus";
+import { useWebhookInteractionDelete } from "@/module/merchant/hook/useWebhookInteractionDelete";
+import { useWebhookInteractionSetup } from "@/module/merchant/hook/useWebhookInteractionSetup";
+import { useWebhookInteractionStatus } from "@/module/merchant/hook/useWebhookInteractionStatus";
 import styles from "./WebhookInteraction.module.css";
 
-/**
- * Setup for the Webhook interaction
- */
 export function WebhookInteractionSetup({
     merchantId,
 }: {
@@ -36,9 +33,6 @@ export function WebhookInteractionSetup({
     );
 }
 
-/**
- * The content of the accordion
- */
 function WebhookInteractionAccordionContent({
     merchantId,
 }: {
@@ -52,7 +46,6 @@ function WebhookInteractionAccordionContent({
 }
 
 function WebhookInteraction({ merchantId }: { merchantId: string }) {
-    // Fetch some data about the current webhook interaction setup
     const { data: webhookInteractionStatus, isLoading } =
         useWebhookInteractionStatus({
             merchantId,
@@ -65,12 +58,11 @@ function WebhookInteraction({ merchantId }: { merchantId: string }) {
         isError: isErrorWebhookInteraction,
         reset: resetWebhookInteraction,
     } = useWebhookInteractionSetup({ merchantId });
-    // Current webhook url and signinKey to setup
+
     const webhookUrl = useMemo(() => {
         return `${process.env.BACKEND_URL}/ext/merchant/${merchantId}/webhook/purchases`;
     }, [merchantId]);
 
-    // The key that will be used for webhook
     const signinKey = useMemo(() => {
         if (webhookInteractionStatus?.setup) {
             return webhookInteractionStatus?.webhookSigninKey;
@@ -149,11 +141,6 @@ function WebhookInteraction({ merchantId }: { merchantId: string }) {
     );
 }
 
-/**
- * Component representing the delete modal for the webhook interaction
- * @param merchantId
- * @param resetWebhookInteraction
- */
 function ModalDelete({
     merchantId,
     resetWebhookInteraction,

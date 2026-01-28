@@ -11,11 +11,6 @@ import { viemClient } from "@/context/blockchain/provider";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { useGetAdminWallet } from "@/module/common/hook/useGetAdminWallet";
 
-/**
- * Hook to fetch the oracle setup data
- * @param merchantId - The merchant UUID for backend API calls
- * @param productId - The on-chain product ID (optional, for blockchain role checks)
- */
 export function useOracleSetupData({
     merchantId,
     productId,
@@ -27,7 +22,7 @@ export function useOracleSetupData({
     const { data: oracleUpdater } = useGetAdminWallet({
         key: "oracle-updater",
     });
-    // Fetch some data about the current oracle setup
+
     return useQuery({
         enabled: !!oracleUpdater && !!merchantId,
         queryKey: [
@@ -42,7 +37,6 @@ export function useOracleSetupData({
                 return null;
             }
 
-            // Return mock data in demo mode
             if (isDemoMode) {
                 await new Promise((resolve) => setTimeout(resolve, 100));
                 return {
@@ -60,12 +54,10 @@ export function useOracleSetupData({
                 };
             }
 
-            // Get the current backend webhook status via merchant API
             const { data: webhookStatus } = await authenticatedBackendApi
                 .merchant({ merchantId })
                 .webhooks.get();
 
-            // Check if the updater is allowed on this product (only if we have a productId)
             let isOracleUpdaterAllowed = false;
             if (productId) {
                 isOracleUpdaterAllowed = await readContract(viemClient, {
