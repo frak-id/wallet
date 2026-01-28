@@ -91,7 +91,7 @@ describe("MyProducts", () => {
         expect(screen.getByText("Product 2")).toBeInTheDocument();
     });
 
-    it("should render empty list with add product button", async () => {
+    it("should render empty list with add merchant button", async () => {
         vi.mocked(useMyMerchants).mockReturnValue({
             merchants: [],
             owned: [],
@@ -102,7 +102,7 @@ describe("MyProducts", () => {
         render(<MyProducts />);
 
         expect(screen.getAllByTestId("panel").length).toBeGreaterThan(0);
-        expect(screen.getAllByText("List a Product").length).toBeGreaterThan(0);
+        expect(screen.getAllByText("Add a Merchant").length).toBeGreaterThan(0);
         expect(screen.getAllByTestId("plus-icon").length).toBeGreaterThan(0);
     });
 });

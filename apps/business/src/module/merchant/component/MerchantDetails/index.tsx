@@ -161,10 +161,7 @@ export function MerchantDetails({ merchantId }: { merchantId: string }) {
                     </Panel>
                 )}
                 <WebhookInteractionSetup merchantId={merchantId} />
-                <PurchasseTrackerSetup
-                    merchantId={merchantId}
-                    productId={merchant?.productId}
-                />
+                <PurchasseTrackerSetup merchantId={merchantId} />
             </Form>
         </FormLayout>
     );

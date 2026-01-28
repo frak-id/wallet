@@ -10,7 +10,7 @@ vi.mock("@/module/common/component/Badge", () => ({
     ),
 }));
 
-vi.mock("@/module/product/utils/currencyOptions", () => ({
+vi.mock("@/module/common/utils/currencyOptions", () => ({
     currencyOptions: [
         {
             group: "Monerium",

@@ -6,44 +6,37 @@ import { TextWithCopy } from "@frak-labs/ui/component/TextWithCopy";
 import { useMutation } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
-import type { Hex } from "viem";
 import { generatePrivateKey } from "viem/accounts";
 import { authenticatedBackendApi } from "@/context/api/backendClient";
 import { Badge } from "@/module/common/component/Badge";
 import { Row } from "@/module/common/component/Row";
 import { Title } from "@/module/common/component/Title";
 import { Form, FormLabel } from "@/module/forms/Form";
-import { useOracleSetupData } from "@/module/merchant/hook/useOracleSetupData";
+import {
+    usePurchaseWebhookStatus,
+    type WebhookPlatform,
+} from "@/module/merchant/hook/usePurchaseWebhookStatus";
 
-type OraclePlatform = "shopify" | "woocommerce" | "custom" | "internal";
-
-export function PurchaseTrackerWebhook({
-    merchantId,
-    productId,
-}: {
-    merchantId: string;
-    productId?: Hex;
-}) {
-    const { data: oracleSetupData } = useOracleSetupData({
+export function PurchaseTrackerWebhook({ merchantId }: { merchantId: string }) {
+    const { data: webhookStatus } = usePurchaseWebhookStatus({
         merchantId,
-        productId,
     });
 
     const initialState = useMemo(() => {
-        if (oracleSetupData?.webhookStatus?.setup) {
-            return oracleSetupData?.webhookStatus?.platform;
+        if (webhookStatus?.setup) {
+            return webhookStatus.platform;
         }
 
         return "shopify";
-    }, [oracleSetupData]);
+    }, [webhookStatus]);
 
     const [currentPlatform, setCurrentPlatform] =
-        useState<OraclePlatform>(initialState);
+        useState<WebhookPlatform>(initialState);
     const webhookUrl = useMemo(() => {
         return `${process.env.BACKEND_URL}/ext/merchant/${merchantId}/webhook/purchases/${currentPlatform}`;
     }, [merchantId, currentPlatform]);
 
-    if (!oracleSetupData) {
+    if (!webhookStatus) {
         return <Spinner />;
     }
 
@@ -55,21 +48,18 @@ export function PurchaseTrackerWebhook({
                     <Row>
                         <Badge
                             variant={
-                                oracleSetupData.isWebhookSetup
-                                    ? "success"
-                                    : "warning"
+                                webhookStatus.setup ? "success" : "warning"
                             }
                         >
-                            {oracleSetupData.isWebhookSetup
+                            {webhookStatus.setup
                                 ? "Webhook registered"
                                 : "Webhook not registered"}
                         </Badge>
-                        {oracleSetupData.webhookStatus?.setup &&
-                            oracleSetupData?.webhookStatus?.platform && (
-                                <Badge variant={"information"}>
-                                    {oracleSetupData?.webhookStatus?.platform}
-                                </Badge>
-                            )}
+                        {webhookStatus.setup && webhookStatus.platform && (
+                            <Badge variant={"information"}>
+                                {webhookStatus.platform}
+                            </Badge>
+                        )}
                     </Row>
                 </Column>
             </Columns>
@@ -81,7 +71,7 @@ export function PurchaseTrackerWebhook({
                     <PlatformSelector
                         currentPlatform={currentPlatform}
                         setPlatform={setCurrentPlatform}
-                        isSetup={oracleSetupData.webhookStatus?.setup ?? false}
+                        isSetup={webhookStatus.setup}
                     />
 
                     <PlatformRegistration
@@ -89,8 +79,8 @@ export function PurchaseTrackerWebhook({
                         webhookUrl={webhookUrl}
                         merchantId={merchantId}
                         currentSigninKey={
-                            oracleSetupData.webhookStatus?.setup
-                                ? oracleSetupData.webhookStatus.webhookSigninKey
+                            webhookStatus.setup
+                                ? webhookStatus.webhookSigninKey
                                 : undefined
                         }
                     />
@@ -105,11 +95,11 @@ function PlatformSelector({
     setPlatform,
     isSetup,
 }: {
-    currentPlatform: OraclePlatform;
-    setPlatform: (platform: OraclePlatform) => void;
+    currentPlatform: WebhookPlatform;
+    setPlatform: (platform: WebhookPlatform) => void;
     isSetup: boolean;
 }) {
-    const handlePlatformChange = (platform: OraclePlatform) => {
+    const handlePlatformChange = (platform: WebhookPlatform) => {
         if (platform === currentPlatform) return;
         if (!isSetup) {
             setPlatform(platform);
@@ -174,7 +164,7 @@ function PlatformRegistration({
     merchantId,
     currentSigninKey,
 }: {
-    platform: OraclePlatform;
+    platform: WebhookPlatform;
     webhookUrl: string;
     merchantId: string;
     currentSigninKey?: string;
@@ -421,7 +411,7 @@ function InternalRegistrationForm() {
 }
 
 function useWebhookSetup({ merchantId }: { merchantId: string }) {
-    const { refetch } = useOracleSetupData({ merchantId });
+    const { refetch } = usePurchaseWebhookStatus({ merchantId });
     return useMutation({
         mutationKey: ["merchant", "webhook", "setup", merchantId],
         mutationFn: async ({
@@ -429,7 +419,7 @@ function useWebhookSetup({ merchantId }: { merchantId: string }) {
             platform,
         }: {
             webhookKey: string;
-            platform: OraclePlatform;
+            platform: WebhookPlatform;
         }) => {
             await authenticatedBackendApi
                 .merchant({ merchantId })

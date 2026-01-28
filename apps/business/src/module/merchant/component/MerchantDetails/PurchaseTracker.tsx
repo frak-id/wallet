@@ -1,28 +1,12 @@
-import {
-    addresses,
-    productAdministratorRegistryAbi,
-    productRoles,
-} from "@frak-labs/app-essentials";
-import { useSendTransactionAction } from "@frak-labs/react-sdk";
-import { Button } from "@frak-labs/ui/component/Button";
 import { Column, Columns } from "@frak-labs/ui/component/Columns";
 import { Spinner } from "@frak-labs/ui/component/Spinner";
-import { type Address, encodeFunctionData, type Hex } from "viem";
-import { Badge } from "@/module/common/component/Badge";
 import { PanelAccordion } from "@/module/common/component/PanelAccordion";
 import { Title } from "@/module/common/component/Title";
-import { useHasRoleOnMerchant } from "@/module/common/hook/useHasRoleOnProduct";
-import { useOracleSetupData } from "@/module/merchant/hook/useOracleSetupData";
+import { usePurchaseWebhookStatus } from "@/module/merchant/hook/usePurchaseWebhookStatus";
 import styles from "./PurchaseTracker.module.css";
 import { PurchaseTrackerWebhook } from "./PurchaseTrackerWebhook";
 
-export function PurchasseTrackerSetup({
-    merchantId,
-    productId,
-}: {
-    merchantId: string;
-    productId?: Hex;
-}) {
+export function PurchasseTrackerSetup({ merchantId }: { merchantId: string }) {
     return (
         <PanelAccordion
             title="Purchase Tracker"
@@ -33,70 +17,30 @@ export function PurchasseTrackerSetup({
                 The purchase tracker will permit to create campaigns and
                 distribute rewards based on user purchase on your website.
             </p>
-            <PurchasseTrackerAccordionContent
-                merchantId={merchantId}
-                productId={productId}
-            />
+            <PurchasseTrackerAccordionContent merchantId={merchantId} />
         </PanelAccordion>
     );
 }
 
 function PurchasseTrackerAccordionContent({
     merchantId,
-    productId,
 }: {
     merchantId: string;
-    productId?: Hex;
 }) {
-    const { hasAccess } = useHasRoleOnMerchant({ merchantId });
-    const { data: oracleSetupData, refetch: refresh } = useOracleSetupData({
+    const { data: webhookStatus, isLoading } = usePurchaseWebhookStatus({
         merchantId,
-        productId,
     });
 
-    if (!oracleSetupData) {
+    if (isLoading) {
         return <Spinner />;
     }
 
     return (
         <div className={styles.purchaseTrackerAccordionContent}>
-            <PurchaseTrackerWebhook
-                merchantId={merchantId}
-                productId={productId}
-            />
-            <Columns>
-                <Column size={"full"}>
-                    <Title as={"h3"}>Oracle</Title>
-                    <p>
-                        <Badge
-                            variant={
-                                oracleSetupData.isOracleUpdaterAllowed
-                                    ? "success"
-                                    : "warning"
-                            }
-                        >
-                            {oracleSetupData.isOracleUpdaterAllowed
-                                ? "Allowed"
-                                : "Disallowed"}
-                        </Badge>
-                    </p>
-
-                    {productId && oracleSetupData.oracleUpdater && (
-                        <p>
-                            <ToggleOracleUpdaterRole
-                                oracleUpdater={oracleSetupData.oracleUpdater}
-                                isOracleUpdaterAllowed={
-                                    oracleSetupData.isOracleUpdaterAllowed
-                                }
-                                disabled={!hasAccess}
-                                productId={productId}
-                                refresh={refresh}
-                            />
-                        </p>
-                    )}
-                </Column>
-            </Columns>
-            <WebhookStats stats={oracleSetupData.webhookStatus} />
+            <PurchaseTrackerWebhook merchantId={merchantId} />
+            {webhookStatus?.setup && webhookStatus.stats && (
+                <WebhookStats stats={webhookStatus.stats} />
+            )}
         </div>
     );
 }
@@ -104,126 +48,27 @@ function PurchasseTrackerAccordionContent({
 function WebhookStats({
     stats,
 }: {
-    stats?:
-        | { setup: false }
-        | {
-              setup: true;
-              webhookSigninKey: string;
-              stats?: {
-                  firstPurchase?: Date;
-                  lastPurchase?: Date;
-                  lastUpdate?: Date;
-                  totalPurchaseHandled?: number;
-              };
-          }
-        | null;
+    stats: {
+        firstPurchase?: Date;
+        lastPurchase?: Date;
+        lastUpdate?: Date;
+        totalPurchaseHandled?: number;
+    };
 }) {
-    if (!stats?.setup) {
-        return null;
-    }
-
-    if (!stats.stats) {
-        return (
-            <>
-                <h3>Stats</h3>
-                <p>No stats currently available</p>
-            </>
-        );
-    }
-
     return (
         <Columns>
             <Column size={"full"}>
                 <Title as={"h3"}>Stats</Title>
                 <p>
-                    First purchase:{" "}
-                    {stats.stats.firstPurchase?.toString() ?? "N/A"}
+                    First purchase: {stats.firstPurchase?.toString() ?? "N/A"}
                 </p>
-                <p>
-                    Last purchase:{" "}
-                    {stats.stats.lastPurchase?.toString() ?? "N/A"}
-                </p>
-                <p>
-                    Last update: {stats.stats.lastUpdate?.toString() ?? "N/A"}
-                </p>
+                <p>Last purchase: {stats.lastPurchase?.toString() ?? "N/A"}</p>
+                <p>Last update: {stats.lastUpdate?.toString() ?? "N/A"}</p>
                 <p>
                     Total purchase handled:{" "}
-                    {stats.stats?.totalPurchaseHandled ?? "N/A"}
+                    {stats.totalPurchaseHandled ?? "N/A"}
                 </p>
             </Column>
         </Columns>
-    );
-}
-
-function ToggleOracleUpdaterRole({
-    productId,
-    oracleUpdater,
-    isOracleUpdaterAllowed,
-    disabled,
-    refresh,
-}: {
-    productId: Hex;
-    oracleUpdater: Address;
-    isOracleUpdaterAllowed: boolean;
-    disabled?: boolean;
-    refresh: () => Promise<unknown>;
-}) {
-    const { mutate: sendTx } = useSendTransactionAction({
-        mutations: {
-            onSuccess: async () => {
-                await refresh();
-            },
-        },
-    });
-
-    if (isOracleUpdaterAllowed) {
-        return (
-            <Button
-                variant={"danger"}
-                disabled={disabled}
-                onClick={() =>
-                    sendTx({
-                        tx: {
-                            to: addresses.productAdministratorRegistry,
-                            data: encodeFunctionData({
-                                abi: productAdministratorRegistryAbi,
-                                functionName: "revokeRoles",
-                                args: [
-                                    BigInt(productId),
-                                    oracleUpdater,
-                                    productRoles.purchaseOracleUpdater,
-                                ],
-                            }),
-                        },
-                    })
-                }
-            >
-                Disallow oracle updater
-            </Button>
-        );
-    }
-
-    return (
-        <Button
-            variant={"submit"}
-            onClick={() =>
-                sendTx({
-                    tx: {
-                        to: addresses.productAdministratorRegistry,
-                        data: encodeFunctionData({
-                            abi: productAdministratorRegistryAbi,
-                            functionName: "grantRoles",
-                            args: [
-                                BigInt(productId),
-                                oracleUpdater,
-                                productRoles.purchaseOracleUpdater,
-                            ],
-                        }),
-                    },
-                })
-            }
-        >
-            Allow oracle updater
-        </Button>
     );
 }

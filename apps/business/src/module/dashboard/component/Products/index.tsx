@@ -43,7 +43,7 @@ function MerchantListSection({
                     name={
                         <>
                             <Plus />
-                            List a Product
+                            Add a Merchant
                         </>
                     }
                     domain={"domain.com"}

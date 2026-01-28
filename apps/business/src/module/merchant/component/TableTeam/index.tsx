@@ -9,21 +9,21 @@ import { isAddressEqual, zeroAddress } from "viem";
 import { Badge } from "@/module/common/component/Badge";
 import { Table } from "@/module/common/component/Table";
 import { useHasRoleOnMerchant } from "@/module/common/hook/useHasRoleOnProduct";
-import { ButtonAddTeam } from "@/module/product/component/ButtonAddTeam";
-import { DeleteTeamMemberModal } from "@/module/product/component/TableTeam/Modal";
+import { ButtonAddTeam } from "@/module/merchant/component/ButtonAddTeam";
+import { DeleteTeamMemberModal } from "@/module/merchant/component/TableTeam/Modal";
 import {
-    type ProductAdministrator,
-    useGetProductAdministrators,
-} from "@/module/product/hook/useGetProductAdministrators";
+    type MerchantAdministrator,
+    useGetMerchantAdministrators,
+} from "@/module/merchant/hook/useGetMerchantAdministrators";
 import styles from "./index.module.css";
 
-export type ManageTeamTableData = ProductAdministrator;
+export type ManageTeamTableData = MerchantAdministrator;
 
 const columnHelper = createColumnHelper<ManageTeamTableData>();
 
 export function TableTeam({ merchantId }: { merchantId: string }) {
     const { isAdministrator } = useHasRoleOnMerchant({ merchantId });
-    const { data: administrators, isLoading } = useGetProductAdministrators({
+    const { data: administrators, isLoading } = useGetMerchantAdministrators({
         merchantId,
     });
 

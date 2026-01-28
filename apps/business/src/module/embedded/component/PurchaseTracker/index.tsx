@@ -3,20 +3,21 @@ import { Spinner } from "@frak-labs/ui/component/Spinner";
 import { useMutation } from "@tanstack/react-query";
 import { useSearch } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo } from "react";
-import type { Hex } from "viem";
 import { authenticatedBackendApi } from "@/context/api/backendClient";
 import { CallOut } from "@/module/common/component/CallOut";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
-import { useOracleSetupData } from "@/module/merchant/hook/useOracleSetupData";
+import {
+    usePurchaseWebhookStatus,
+    type WebhookPlatform,
+} from "@/module/merchant/hook/usePurchaseWebhookStatus";
 import styles from "../Mint/index.module.css";
 
 export function EmbeddedPurchaseTracker() {
     const search = useSearch({ from: "/embedded/_layout/purchase-tracker" });
 
-    const { merchantId, productId, platform, secret } = useMemo(() => {
+    const { merchantId, platform, secret } = useMemo(() => {
         const merchantId = search.mid;
-        const productId = search.pid;
 
         // Default to shopify values
         const platform = search.p ?? "internal";
@@ -35,12 +36,7 @@ export function EmbeddedPurchaseTracker() {
 
         return {
             merchantId,
-            productId: productId as Hex | undefined,
-            platform: platform as
-                | "internal"
-                | "custom"
-                | "shopify"
-                | "woocommerce",
+            platform: platform as WebhookPlatform,
             secret,
         };
     }, [search]);
@@ -52,7 +48,6 @@ export function EmbeddedPurchaseTracker() {
         isError,
     } = usePurchaseTrackerSetup({
         merchantId,
-        productId,
         platform,
         secret,
     });
@@ -110,23 +105,16 @@ export function EmbeddedPurchaseTracker() {
 
 function usePurchaseTrackerSetup({
     merchantId,
-    productId,
     platform,
     secret,
 }: {
     merchantId: string;
-    productId?: Hex;
-    platform: "internal" | "custom" | "shopify" | "woocommerce";
+    platform: WebhookPlatform;
     secret: string;
 }) {
-    const { refetch } = useOracleSetupData({ merchantId, productId });
+    const { refetch } = usePurchaseWebhookStatus({ merchantId });
     return useMutation({
-        mutationKey: [
-            "merchant",
-            merchantId,
-            "oracle-webhook-internal",
-            "setup",
-        ],
+        mutationKey: ["merchant", merchantId, "webhook", "setup"],
         mutationFn: async () => {
             const { error } = await authenticatedBackendApi
                 .merchant({ merchantId })

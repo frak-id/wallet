@@ -1,6 +1,8 @@
 import { Spinner } from "@frak-labs/ui/component/Spinner";
+import { Panel } from "@/module/common/component/Panel";
+import { FormLayout } from "@/module/forms/Form";
+import { TableTeam } from "@/module/merchant/component/TableTeam";
 import { useMerchant } from "@/module/merchant/hook/useMerchant";
-import { Team } from "@/module/product/component/Team";
 
 /**
  * Merchant team page wrapper
@@ -24,5 +26,12 @@ export function MerchantTeam({ merchantId }: { merchantId: string }) {
         );
     }
 
-    return <Team merchantId={merchantId} />;
+    return (
+        <FormLayout>
+            <Panel title={"Manage your team"}>
+                {/* Display the administrators */}
+                <TableTeam merchantId={merchantId} />
+            </Panel>
+        </FormLayout>
+    );
 }

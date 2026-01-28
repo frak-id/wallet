@@ -20,7 +20,7 @@ import {
     FormMessage,
     FormValidMessage,
 } from "@/module/forms/Form";
-import { useAddAdmin } from "@/module/product/hook/useAddAdmin";
+import { useAddAdmin } from "@/module/merchant/hook/useAddAdmin";
 
 type FormAddTeamMembers = {
     wallet?: Address;

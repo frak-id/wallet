@@ -4,8 +4,8 @@ import type { CellContext } from "@tanstack/react-table";
 import { Trash2 } from "lucide-react";
 import { useState } from "react";
 import { AlertDialog } from "@/module/common/component/AlertDialog";
-import type { ManageTeamTableData } from "@/module/product/component/TableTeam/index";
-import { useRemoveAdmin } from "@/module/product/hook/useRemoveAdmin";
+import type { ManageTeamTableData } from "@/module/merchant/component/TableTeam/index";
+import { useRemoveAdmin } from "@/module/merchant/hook/useRemoveAdmin";
 
 export function DeleteTeamMemberModal({
     row,
