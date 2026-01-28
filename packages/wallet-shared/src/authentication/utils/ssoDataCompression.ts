@@ -7,12 +7,12 @@ export function compressedSsoToParams(
         redirectUrl: compressed.r,
         directExit: compressed.d,
         lang: compressed.l,
-        productId: compressed.p,
+        merchantId: compressed.m,
         metadata: {
-            name: compressed.m?.n,
-            css: compressed.m?.css,
-            logoUrl: compressed.m?.l,
-            homepageLink: compressed.m?.h,
+            name: compressed.md?.n,
+            css: compressed.md?.css,
+            logoUrl: compressed.md?.l,
+            homepageLink: compressed.md?.h,
         },
     };
 }

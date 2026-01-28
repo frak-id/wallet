@@ -25,11 +25,11 @@ export function setupMobileAuthCallback(
     // One-shot URL check
     const url = new URL(window.location.href);
     const authCode = url.searchParams.get("frakAuth");
-    const productId = url.searchParams.get("productId");
+    const merchantId = url.searchParams.get("productId");
     const state = url.searchParams.get("state");
 
     // Early return if no auth callback params
-    if (!authCode || !productId) {
+    if (!authCode || !merchantId) {
         return;
     }
 
@@ -54,7 +54,7 @@ export function setupMobileAuthCallback(
     // Exchange auth code for session
     const backendUrl = getBackendUrl(config.walletUrl);
 
-    exchangeAuthCode({ backendUrl, authCode, productId })
+    exchangeAuthCode({ backendUrl, authCode, merchantId })
         .then(async (result) => {
             // Wait for iframe connection before sending lifecycle event
             await waitForConnection;
@@ -89,11 +89,11 @@ function cleanupAuthParams(url: URL): void {
 async function exchangeAuthCode({
     backendUrl,
     authCode,
-    productId,
+    merchantId,
 }: {
     backendUrl: string;
     authCode: string;
-    productId: string;
+    merchantId: string;
 }): Promise<{
     wallet: string;
     sdkJwt: { token: string; expires: number };
@@ -103,7 +103,7 @@ async function exchangeAuthCode({
     const response = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ authCode, productId }),
+        body: JSON.stringify({ authCode, productId: merchantId }),
     });
 
     if (!response.ok) {

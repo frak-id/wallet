@@ -2,7 +2,7 @@ export { useReferralInteraction } from "./helper/useReferralInteraction";
 export { useDisplayModal } from "./useDisplayModal";
 export { useFrakClient } from "./useFrakClient";
 export { useFrakConfig } from "./useFrakConfig";
-export { useGetProductInformation } from "./useGetProductInformation";
+export { useGetMerchantInformation } from "./useGetMerchantInformation";
 export { useLogin } from "./useLogin";
 export { useOpenSso } from "./useOpenSso";
 export { usePrepareSso } from "./usePrepareSso";

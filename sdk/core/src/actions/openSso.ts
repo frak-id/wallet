@@ -3,7 +3,7 @@ import type {
     OpenSsoParamsType,
     OpenSsoReturnType,
 } from "../types";
-import { computeProductId } from "../utils/computeProductId";
+import { computeLegacyProductId } from "../utils/computeLegacyProductId";
 import { generateSsoUrl } from "../utils/sso";
 
 // SSO popup configuration
@@ -91,7 +91,7 @@ export async function openSso(
         generateSsoUrl(
             walletUrl ?? "https://wallet.frak.id",
             args,
-            computeProductId(),
+            computeLegacyProductId(),
             metadata.name,
             customizations?.css
         );

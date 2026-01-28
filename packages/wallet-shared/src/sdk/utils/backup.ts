@@ -1,5 +1,5 @@
 import { base64urlDecode, base64urlEncode } from "@frak-labs/core-sdk";
-import { type Hex, sha256 } from "viem";
+import { sha256 } from "viem";
 import { sessionStore } from "../../stores/sessionStore";
 import type { SdkSession, Session } from "../../types/Session";
 import { emitLifecycleEvent } from "./lifecycleEvents";
@@ -8,7 +8,7 @@ import { emitLifecycleEvent } from "./lifecycleEvents";
  * Represent backed up data
  */
 type BackupData = {
-    productId: Hex;
+    domain: string;
     session?: Session;
     sdkSession?: SdkSession;
     expireAtTimestamp: number;
@@ -31,14 +31,14 @@ function hashJson(data: unknown): string {
 /**
  * Restore received backup data
  * @param backup
- * @param productId
+ * @param domain
  */
 export async function restoreBackupData({
     backup,
-    productId,
+    domain,
 }: {
     backup: string;
-    productId: Hex;
+    domain: string;
 }) {
     let data: BackupData | undefined;
     try {
@@ -59,8 +59,8 @@ export async function restoreBackupData({
         return;
     }
 
-    // Ensure that the backup data is for the current product
-    if (data.productId !== productId) {
+    // Ensure that the backup data is for the current domain
+    if (data.domain !== domain) {
         throw new Error("Invalid backup data");
     }
 
@@ -84,11 +84,11 @@ export async function restoreBackupData({
 /**
  * Push new backup data
  */
-export async function pushBackupData(args?: { productId?: Hex }) {
-    // Get the product ID from args (optional for cleanup scenarios)
-    const productId = args?.productId;
-    if (!productId) {
-        console.log("[Backup] No productId provided - skipping backup");
+export async function pushBackupData(args?: { domain?: string }) {
+    // Get the domain from args (optional for cleanup scenarios)
+    const domain = args?.domain;
+    if (!domain) {
+        console.log("[Backup] No domain provided - skipping backup");
         return;
     }
     // Get the current backup data from stores
@@ -101,7 +101,7 @@ export async function pushBackupData(args?: { productId?: Hex }) {
     const backup: BackupData = {
         session: session?.token ? session : undefined,
         sdkSession: sdkSession?.token ? sdkSession : undefined,
-        productId,
+        domain,
         // Backup will expire in a week
         expireAtTimestamp: Date.now() + 7 * 24 * 60 * 60_000,
     };

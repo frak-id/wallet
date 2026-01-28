@@ -5,7 +5,7 @@ export {
     useDisplayModal,
     useFrakClient,
     useFrakConfig,
-    useGetProductInformation,
+    useGetMerchantInformation,
     useLogin,
     useOpenSso,
     usePrepareSso,

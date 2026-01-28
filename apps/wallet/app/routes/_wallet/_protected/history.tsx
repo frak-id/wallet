@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Grid } from "@/module/common/component/Grid";
 import { Panel } from "@/module/common/component/Panel";
-import { InteractionHistoryList } from "@/module/history/component/InteractionHistory";
 import { RewardHistoryList } from "@/module/history/component/RewardHistory";
 import styles from "@/module/history/page/HistoryPage.module.css";
 
@@ -12,7 +11,7 @@ export const Route = createFileRoute("/_wallet/_protected/history")({
     component: HistoryPage,
 });
 
-type HistoryType = "rewards" | "interaction" | "notifications";
+type HistoryType = "rewards" | "notifications";
 
 /**
  * HistoryPage
@@ -23,7 +22,7 @@ type HistoryType = "rewards" | "interaction" | "notifications";
  */
 function HistoryPage() {
     const { t } = useTranslation();
-    const [type, setType] = useState<HistoryType>("interaction");
+    const [type, setType] = useState<HistoryType>("rewards");
 
     return (
         <Grid>
@@ -35,19 +34,10 @@ function HistoryPage() {
                         onTypeChange={setType}
                     >
                         {t("common.rewards")}
-                    </ButtonType>{" "}
-                    |{" "}
-                    <ButtonType
-                        currentType={"interaction"}
-                        activeType={type}
-                        onTypeChange={setType}
-                    >
-                        {t("common.interactions")}
                     </ButtonType>
                 </nav>
             </Panel>
             {type === "rewards" && <RewardHistoryList />}
-            {type === "interaction" && <InteractionHistoryList />}
         </Grid>
     );
 }

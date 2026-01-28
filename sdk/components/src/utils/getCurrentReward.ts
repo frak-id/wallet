@@ -3,7 +3,7 @@ import {
     formatAmount,
     getCurrencyAmountKey,
 } from "@frak-labs/core-sdk";
-import { getProductInformation } from "@frak-labs/core-sdk/actions";
+import { getMerchantInformation } from "@frak-labs/core-sdk/actions";
 
 /**
  * The parameters for the getCurrentReward function
@@ -27,7 +27,7 @@ export async function getCurrentReward({
         return;
     }
 
-    const { maxReferrer, rewards } = await getProductInformation(client);
+    const { maxReferrer, rewards } = await getMerchantInformation(client);
 
     if (!maxReferrer) return;
 

@@ -1,6 +1,6 @@
 import {
     AUTH_STATE_KEY,
-    computeProductId,
+    computeLegacyProductId,
     DEEP_LINK_SCHEME,
     trackEvent,
 } from "@frak-labs/core-sdk";
@@ -33,9 +33,9 @@ function generateState(): string {
  * Open the Frak Wallet mobile app with login flow
  * Stores CSRF state and redirects to app with returnUrl
  *
- * @param productId - Product ID (if not provided, computed from domain)
+ * @param merchantId - Merchant ID (if not provided, computed from domain)
  */
-export function openFrakWalletLogin(productId?: string): void {
+export function openFrakWalletLogin(merchantId?: string): void {
     if (window.FrakSetup?.client) {
         trackEvent(window.FrakSetup.client, "open_in_app_login_clicked");
     }
@@ -44,14 +44,14 @@ export function openFrakWalletLogin(productId?: string): void {
     const state = generateState();
     localStorage.setItem(AUTH_STATE_KEY, state);
 
-    // Resolve productId
-    const resolvedProductId =
-        productId ?? computeProductId(window.FrakSetup?.client?.config);
+    // Resolve merchantId
+    const resolvedMerchantId =
+        merchantId ?? computeLegacyProductId(window.FrakSetup?.client?.config);
 
     // Build login URL
     const params = new URLSearchParams();
     params.set("returnUrl", window.location.href);
-    params.set("productId", resolvedProductId);
+    params.set("productId", resolvedMerchantId);
     params.set("state", state);
 
     window.location.href = `${DEEP_LINK_SCHEME}login?${params.toString()}`;

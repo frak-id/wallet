@@ -62,7 +62,7 @@ export type LastWebAuthNAction = {
 export type LastAuthentication = Session & { type: "webauthn" };
 
 export type SsoContext = {
-    productId?: string;
+    merchantId?: string;
     redirectUrl?: string;
     directExit?: boolean;
     metadata?: AppSpecificSsoMetadata;

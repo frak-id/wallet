@@ -8,7 +8,7 @@ vi.mock("@frak-labs/core-sdk", () => ({
 }));
 
 describe("useSsoLink", () => {
-    const mockProductId = "0x1234" as Hex;
+    const mockMerchantId = "0x1234" as Hex;
     const mockMetadata = {
         name: "Test App",
         css: "body { color: blue; }",
@@ -27,7 +27,7 @@ describe("useSsoLink", () => {
 
         const { result } = renderHook(() =>
             useSsoLink({
-                productId: mockProductId,
+                merchantId: mockMerchantId,
                 metadata: mockMetadata,
                 directExit: true,
                 redirectUrl: "https://example.com/callback",
@@ -47,7 +47,7 @@ describe("useSsoLink", () => {
                 metadata: mockMetadata,
                 lang: "en",
             },
-            mockProductId,
+            mockMerchantId,
             mockMetadata.name
         );
     });
@@ -61,7 +61,7 @@ describe("useSsoLink", () => {
 
         const { result } = renderHook(() =>
             useSsoLink({
-                productId: mockProductId,
+                merchantId: mockMerchantId,
                 metadata: mockMetadata,
             })
         );
@@ -78,12 +78,12 @@ describe("useSsoLink", () => {
                 metadata: mockMetadata,
                 lang: undefined,
             },
-            mockProductId,
+            mockMerchantId,
             mockMetadata.name
         );
     });
 
-    test("should regenerate link when productId changes", async () => {
+    test("should regenerate link when merchantId changes", async () => {
         const { generateSsoUrl } = await import("@frak-labs/core-sdk");
 
         vi.mocked(generateSsoUrl)
@@ -91,13 +91,13 @@ describe("useSsoLink", () => {
             .mockReturnValueOnce("https://wallet.frak.id/sso?productId=0x5678");
 
         const { result, rerender } = renderHook(
-            ({ productId }: { productId: Hex }) =>
+            ({ merchantId }: { merchantId: Hex }) =>
                 useSsoLink({
-                    productId,
+                    merchantId,
                     metadata: mockMetadata,
                 }),
             {
-                initialProps: { productId: mockProductId },
+                initialProps: { merchantId: mockMerchantId },
             }
         );
 
@@ -105,7 +105,7 @@ describe("useSsoLink", () => {
             "https://wallet.frak.id/sso?productId=0x1234"
         );
 
-        rerender({ productId: "0x5678" as Hex });
+        rerender({ merchantId: "0x5678" as Hex });
 
         expect(result.current.link).toBe(
             "https://wallet.frak.id/sso?productId=0x5678"
@@ -123,7 +123,7 @@ describe("useSsoLink", () => {
 
         const { result } = renderHook(() =>
             useSsoLink({
-                productId: mockProductId,
+                merchantId: mockMerchantId,
                 metadata: mockMetadata,
                 lang: "fr",
             })
@@ -141,7 +141,7 @@ describe("useSsoLink", () => {
                 metadata: mockMetadata,
                 lang: "fr",
             },
-            mockProductId,
+            mockMerchantId,
             mockMetadata.name
         );
     });
@@ -155,7 +155,7 @@ describe("useSsoLink", () => {
 
         const { result, rerender } = renderHook(() =>
             useSsoLink({
-                productId: mockProductId,
+                merchantId: mockMerchantId,
                 metadata: mockMetadata,
             })
         );

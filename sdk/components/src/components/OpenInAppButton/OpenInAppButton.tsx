@@ -42,7 +42,7 @@ export function OpenInAppButton({
     text = "Open in App",
     classname = "",
     action = "open",
-    productId,
+    merchantId,
 }: OpenInAppButtonProps) {
     const { isClientReady } = useClientReady();
     const { isMobile } = useIsMobile();
@@ -53,7 +53,7 @@ export function OpenInAppButton({
 
     const handleClick = () => {
         if (action === "login") {
-            openFrakWalletLogin(productId);
+            openFrakWalletLogin(merchantId);
         } else {
             openFrakWalletApp();
         }

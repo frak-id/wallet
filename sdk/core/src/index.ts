@@ -110,4 +110,4 @@ export {
     setupMergeTokenListener,
     trackEvent,
 } from "./utils";
-export { computeProductId as computeLegacyProductId } from "./utils/computeProductId";
+export { computeLegacyProductId } from "./utils/computeLegacyProductId";

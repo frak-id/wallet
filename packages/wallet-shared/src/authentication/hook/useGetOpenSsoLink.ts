@@ -7,13 +7,13 @@ import type { AppSpecificSsoMetadata } from "../../stores/types";
  * Hook used to get the sso link
  */
 export function useSsoLink({
-    productId,
+    merchantId,
     metadata,
     directExit,
     redirectUrl,
     lang,
 }: {
-    productId: Hex;
+    merchantId: Hex;
     metadata: AppSpecificSsoMetadata;
     directExit?: boolean;
     redirectUrl?: string;
@@ -23,10 +23,10 @@ export function useSsoLink({
         return generateSsoUrl(
             window.location.origin,
             { directExit, redirectUrl, metadata, lang },
-            productId,
+            merchantId,
             metadata.name
         );
-    }, [productId, metadata, directExit, redirectUrl, lang]);
+    }, [merchantId, metadata, directExit, redirectUrl, lang]);
 
     return {
         link,

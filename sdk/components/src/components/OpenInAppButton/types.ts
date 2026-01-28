@@ -16,8 +16,8 @@ export type OpenInAppButtonProps = {
      */
     action?: "open" | "login";
     /**
-     * Product ID for login action (required if action="login")
+     * Merchant ID for login action (required if action="login")
      * If not provided, will be computed from current domain
      */
-    productId?: string;
+    merchantId?: string;
 };
