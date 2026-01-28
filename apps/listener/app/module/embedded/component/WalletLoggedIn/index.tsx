@@ -12,7 +12,6 @@ import {
     OriginPairingState,
     trackGenericEvent,
     useGetUserBalance,
-    useGetUserPendingBalance,
 } from "@frak-labs/wallet-shared";
 import { cx } from "class-variance-authority";
 import { toast } from "sonner";
@@ -40,16 +39,8 @@ export function LoggedInComponent() {
         currentRequest: { configMetadata },
     } = useEmbeddedListenerUI();
     const { userBalance } = useGetUserBalance();
-    const { userPendingBalance, refetch: refetchPendingBalance } =
-        useGetUserPendingBalance();
     const currencyAmountKey = getCurrencyAmountKey(configMetadata?.currency);
-    const isPending = !!(
-        userPendingBalance?.[currencyAmountKey] &&
-        userPendingBalance?.[currencyAmountKey] > 0
-    );
-    const amount = isPending
-        ? userPendingBalance[currencyAmountKey]
-        : (userBalance?.total?.[currencyAmountKey] ?? 0);
+    const amount = userBalance?.total?.[currencyAmountKey] ?? 0;
 
     // Build the footer
     const footer = (
@@ -67,37 +58,21 @@ export function LoggedInComponent() {
         <>
             <Balance
                 amount={amount}
-                isPending={isPending}
                 currency={configMetadata?.currency ?? "eur"}
             />
-            <ActionButtons refetchPendingBalance={refetchPendingBalance} />
+            <ActionButtons />
             <RewardHistory />
             {footer}
         </>
     );
 }
 
-function Balance({
-    amount,
-    isPending,
-    currency,
-}: {
-    amount: number;
-    isPending: boolean;
-    currency: Currency;
-}) {
+function Balance({ amount, currency }: { amount: number; currency: Currency }) {
     const { t } = useListenerTranslation();
 
     return (
         <div className={styles.balance}>
-            <h2 className={styles.balance__title}>
-                {t("common.balance")}{" "}
-                {isPending && (
-                    <span className={styles.balance__status}>
-                        ({t("common.pending")})
-                    </span>
-                )}
-            </h2>
+            <h2 className={styles.balance__title}>{t("common.balance")}</h2>
             <p className={styles.balance__amount}>
                 {formatAmount(amount, currency)}
             </p>
@@ -106,11 +81,7 @@ function Balance({
     );
 }
 
-function ActionButtons({
-    refetchPendingBalance,
-}: {
-    refetchPendingBalance: () => void;
-}) {
+function ActionButtons() {
     const { address } = useAccount();
     const {
         currentRequest: {
@@ -136,24 +107,16 @@ function ActionButtons({
                 prefixWalletCss("modalListenerWallet__actionButtons")
             )}
         >
-            <ButtonCopyLink
-                finalSharingLink={finalSharingLink}
-                refetchPendingBalance={refetchPendingBalance}
-            />
-            <ButtonSharingLink
-                finalSharingLink={finalSharingLink}
-                refetchPendingBalance={refetchPendingBalance}
-            />
+            <ButtonCopyLink finalSharingLink={finalSharingLink} />
+            <ButtonSharingLink finalSharingLink={finalSharingLink} />
         </div>
     );
 }
 
 function ButtonCopyLink({
     finalSharingLink,
-    refetchPendingBalance,
 }: {
     finalSharingLink: string | null;
-    refetchPendingBalance: () => void;
 }) {
     const { copied, copy } = useCopyToClipboardWithState();
     const { t } = useListenerTranslation();
@@ -170,7 +133,6 @@ function ButtonCopyLink({
                 trackGenericEvent("sharing-copy-link", {
                     link: finalSharingLink,
                 });
-                refetchPendingBalance();
                 toast.success(t("sharing.btn.copySuccess"));
             }}
         >
@@ -181,10 +143,8 @@ function ButtonCopyLink({
 
 function ButtonSharingLink({
     finalSharingLink,
-    refetchPendingBalance,
 }: {
     finalSharingLink: string | null;
-    refetchPendingBalance: () => void;
 }) {
     const { t } = useListenerTranslation();
 
@@ -193,7 +153,6 @@ function ButtonSharingLink({
         finalSharingLink,
         {
             onSuccess: (message) => {
-                refetchPendingBalance();
                 message && toast.success(message as string);
             },
         }
