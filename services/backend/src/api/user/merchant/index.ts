@@ -8,6 +8,7 @@ export const userMerchantApi = new Elysia({ prefix: "/merchant" }).get(
         const normalizedDomain = domain
             .toLowerCase()
             .replace(/^https?:\/\//, "")
+            .replace(/:\d+$/, "")
             .replace(/\/$/, "")
             .replace(/^www\./, "");
 
