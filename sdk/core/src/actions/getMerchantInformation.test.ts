@@ -1,22 +1,16 @@
-/**
- * Tests for getProductInformation action
- * Tests fetching product information via RPC
- */
-
 import type { Address, Hex } from "viem";
 import { describe, expect, it, vi } from "../../tests/vitest-fixtures";
-import type { FrakClient, GetProductInformationReturnType } from "../types";
-import { getProductInformation } from "./getProductInformation";
+import type { FrakClient, GetMerchantInformationReturnType } from "../types";
+import { getMerchantInformation } from "./getMerchantInformation";
 
-describe("getProductInformation", () => {
+describe("getMerchantInformation", () => {
     describe("success cases", () => {
         it("should call client.request with correct method", async () => {
-            const mockResponse: GetProductInformationReturnType = {
+            const mockResponse: GetMerchantInformationReturnType = {
                 id: "0x1234567890123456789012345678901234567890123456789012345678901234" as Hex,
                 onChainMetadata: {
-                    name: "Test Product",
+                    name: "Test Merchant",
                     domain: "example.com",
-                    productTypes: ["press"],
                 },
                 rewards: [],
             };
@@ -25,20 +19,19 @@ describe("getProductInformation", () => {
                 request: vi.fn().mockResolvedValue(mockResponse),
             } as unknown as FrakClient;
 
-            await getProductInformation(mockClient);
+            await getMerchantInformation(mockClient);
 
             expect(mockClient.request).toHaveBeenCalledWith({
-                method: "frak_getProductInformation",
+                method: "frak_getMerchantInformation",
             });
         });
 
-        it("should return product information", async () => {
-            const mockResponse: GetProductInformationReturnType = {
+        it("should return merchant information", async () => {
+            const mockResponse: GetMerchantInformationReturnType = {
                 id: "0x1234567890123456789012345678901234567890123456789012345678901234" as Hex,
                 onChainMetadata: {
-                    name: "Test Product",
+                    name: "Test Merchant",
                     domain: "example.com",
-                    productTypes: ["press"],
                 },
                 rewards: [],
             };
@@ -47,18 +40,17 @@ describe("getProductInformation", () => {
                 request: vi.fn().mockResolvedValue(mockResponse),
             } as unknown as FrakClient;
 
-            const result = await getProductInformation(mockClient);
+            const result = await getMerchantInformation(mockClient);
 
             expect(result).toEqual(mockResponse);
         });
 
-        it("should return product information with rewards", async () => {
-            const mockResponse: GetProductInformationReturnType = {
+        it("should return merchant information with rewards", async () => {
+            const mockResponse: GetMerchantInformationReturnType = {
                 id: "0x1234567890123456789012345678901234567890123456789012345678901234" as Hex,
                 onChainMetadata: {
-                    name: "Test Product",
+                    name: "Test Merchant",
                     domain: "example.com",
-                    productTypes: ["press", "purchase"],
                 },
                 maxReferrer: {
                     amount: 100,
@@ -98,7 +90,7 @@ describe("getProductInformation", () => {
                 request: vi.fn().mockResolvedValue(mockResponse),
             } as unknown as FrakClient;
 
-            const result = await getProductInformation(mockClient);
+            const result = await getMerchantInformation(mockClient);
 
             expect(result).toEqual(mockResponse);
             expect(result.rewards).toHaveLength(1);
@@ -114,7 +106,7 @@ describe("getProductInformation", () => {
                 request: vi.fn().mockRejectedValue(error),
             } as unknown as FrakClient;
 
-            await expect(getProductInformation(mockClient)).rejects.toThrow(
+            await expect(getMerchantInformation(mockClient)).rejects.toThrow(
                 "RPC request failed"
             );
         });
@@ -125,7 +117,7 @@ describe("getProductInformation", () => {
                 request: vi.fn().mockRejectedValue(error),
             } as unknown as FrakClient;
 
-            await expect(getProductInformation(mockClient)).rejects.toThrow(
+            await expect(getMerchantInformation(mockClient)).rejects.toThrow(
                 "Request timeout"
             );
         });
