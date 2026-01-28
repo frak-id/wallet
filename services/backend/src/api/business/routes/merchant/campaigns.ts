@@ -1,8 +1,7 @@
-import type { BudgetUsed } from "@backend-domain/campaign/schemas";
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import {
-    type BudgetConfig,
+    BudgetConfig,
     BudgetConfigSchema,
     CampaignContext,
     CampaignMetadataSchema,
@@ -13,6 +12,7 @@ import {
 } from "../../../../domain/campaign";
 import { MerchantContext } from "../../../../domain/merchant";
 import { businessSessionContext } from "../../middleware/session";
+import { BudgetUsed } from "@backend-domain/campaign/schemas";
 
 function formatCampaign(campaign: {
     id: string;

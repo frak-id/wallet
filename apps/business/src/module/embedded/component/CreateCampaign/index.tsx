@@ -3,8 +3,8 @@ import { Spinner } from "@frak-labs/ui/component/Spinner";
 import { useMutation } from "@tanstack/react-query";
 import { useSearch } from "@tanstack/react-router";
 import { useCallback } from "react";
-import { createCampaign } from "@/context/campaigns/action/createCampaign";
 import { publishCampaign } from "@/context/campaigns/action/statusTransitions";
+import { useSaveCampaign } from "@/module/campaigns/hook/useSaveCampaign";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
 import { useHasRoleOnMerchant } from "@/module/common/hook/useHasRoleOnProduct";
@@ -18,6 +18,8 @@ export function EmbeddedCreateCampaign() {
     const handleClose = useCallback(() => {
         window.close();
     }, []);
+
+    const saveCampaign = useSaveCampaign();
 
     const {
         mutate: handleCreateCampaign,
@@ -38,13 +40,11 @@ export function EmbeddedCreateCampaign() {
                 ratio: extracted.ratio,
             });
 
-            const campaign = await createCampaign({
-                data: {
-                    merchantId: extracted.merchantId,
-                    name: extracted.name,
-                    rule,
-                    budgetConfig: extracted.budgetConfig,
-                },
+            const campaign = await saveCampaign.mutateAsync({
+                merchantId: extracted.merchantId,
+                name: extracted.name,
+                rule,
+                budgetConfig: extracted.budgetConfig,
             });
 
             const published = await publishCampaign({

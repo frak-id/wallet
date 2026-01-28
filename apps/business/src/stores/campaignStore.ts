@@ -14,6 +14,8 @@ import type {
  * Holds in-progress form data, not the full backend response
  */
 type CampaignFormData = {
+    // For campaign in the draft state
+    id?: string;
     name: string;
     merchantId: string;
     goal: CampaignGoal | undefined;
@@ -58,6 +60,9 @@ type CampaignState = {
 
     // Actions
     setCampaign: (campaign: CampaignFormData) => void;
+    updateCampaign: (
+        args: (campaign: CampaignFormData) => CampaignFormData
+    ) => void;
     setStep: (step: number | ((prev: number) => number)) => void;
     setSuccess: (success: boolean) => void;
     setIsClosing: (isClosing: boolean) => void;
@@ -83,6 +88,8 @@ export const campaignStore = create<CampaignState>()(
 
             // Actions
             setCampaign: (campaign) => set({ campaign }),
+            updateCampaign: (callback) =>
+                set((state) => ({ campaign: callback(state.campaign) })),
 
             setStep: (step) =>
                 set((state) => ({

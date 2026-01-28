@@ -1,7 +1,10 @@
 import { queryOptions } from "@tanstack/react-query";
 import { redirect } from "@tanstack/react-router";
-import { getMyCampaigns } from "@/context/campaigns/action/getCampaigns";
-import { getCampaignDetail } from "@/context/campaigns/action/getDetails";
+import {
+    getCampaignDetail,
+    getMyCampaigns,
+} from "@/module/campaigns/api/campaignApi";
+import { getMyCampaignsStats } from "@/module/campaigns/api/campaignStatsApi";
 import type { Campaign, CampaignWithActions } from "@/types/Campaign";
 
 type CampaignStateValidator = (campaign: Campaign) => {
@@ -9,55 +12,39 @@ type CampaignStateValidator = (campaign: Campaign) => {
     redirectTo?: { to: string; params: { campaignId: string } };
 };
 
-/**
- * Query options for fetching all campaigns for the current user
- * @returns CampaignWithActions[] — campaigns with available action flags
- */
 export const campaignsListQueryOptions = (isDemoMode: boolean) =>
     queryOptions<CampaignWithActions[]>({
         queryKey: ["campaigns", "my-campaigns", isDemoMode ? "demo" : "live"],
-        queryFn: async () => {
-            return await getMyCampaigns();
-        },
-        staleTime: 5 * 60 * 1000, // 5 minutes
+        queryFn: () => getMyCampaigns(isDemoMode),
+        staleTime: 5 * 60 * 1000,
     });
 
-/**
- * Query options for fetching campaign performance stats
- */
 export const campaignsStatsQueryOptions = () =>
     queryOptions({
         queryKey: ["campaigns", "stats"],
-        queryFn: async () => {
-            const { getMyCampaignsStats } = await import(
-                "@/context/campaigns/action/getCampaignsStats"
-            );
-            return await getMyCampaignsStats({ data: undefined });
-        },
-        staleTime: 5 * 60 * 1000, // 5 minutes
+        queryFn: () => getMyCampaignsStats(),
+        staleTime: 5 * 60 * 1000,
     });
 
-/**
- * Query options for fetching campaign details
- * Can be used with optional state validation
- */
 export const campaignQueryOptions = (
     campaignId: string,
+    isDemoMode: boolean,
     merchantId?: string,
     validateState?: CampaignStateValidator
 ) =>
     queryOptions({
-        queryKey: ["campaign", campaignId],
+        queryKey: ["campaign", campaignId, isDemoMode ? "demo" : "live"],
         queryFn: async () => {
             const campaign = await getCampaignDetail({
-                data: { merchantId, campaignId },
+                merchantId,
+                campaignId,
+                isDemoMode,
             });
 
             if (!campaign) {
                 throw redirect({ to: "/campaigns/list" });
             }
 
-            // Optional state validation
             if (validateState) {
                 const validation = validateState(campaign);
                 if (validation.shouldRedirect && validation.redirectTo) {
@@ -67,12 +54,9 @@ export const campaignQueryOptions = (
 
             return campaign;
         },
-        staleTime: 5 * 60 * 1000, // 5 minutes
+        staleTime: 5 * 60 * 1000,
     });
 
-/**
- * Validator for draft route - redirects if campaign is in "created" state
- */
 export function validateDraftCampaign(campaignId: string) {
     return (campaign: Campaign): ReturnType<CampaignStateValidator> => {
         const shouldBeInEditMode = campaign.status === "draft";
@@ -89,9 +73,6 @@ export function validateDraftCampaign(campaignId: string) {
     };
 }
 
-/**
- * Validator for edit route - redirects if campaign is NOT in "created" state
- */
 export function validateEditCampaign(campaignId: string) {
     return (campaign: Campaign): ReturnType<CampaignStateValidator> => {
         const shouldBeInDraftMode = campaign.status !== "draft";

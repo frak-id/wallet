@@ -1,18 +1,19 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect } from "react";
+import { isDemoMode } from "@/context/auth/authEnv";
 import { CampaignDetails } from "@/module/campaigns/component/CampaignDetails";
 import { campaignQueryOptions } from "@/module/campaigns/queries/queryOptions";
 import { mapCampaignToFormData } from "@/module/campaigns/utils/mapper";
+import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { CampaignError } from "@/module/common/component/RouteError";
 import { queryClient } from "@/module/common/provider/RootProvider";
 import { campaignStore } from "@/stores/campaignStore";
 
 export const Route = createFileRoute("/_restricted/campaigns/$campaignId")({
-    // Prefetch into TanStack Query cache
     loader: ({ params }) => {
         return queryClient.ensureQueryData(
-            campaignQueryOptions(params.campaignId, "")
+            campaignQueryOptions(params.campaignId, isDemoMode())
         );
     },
     component: CampaignsContentPage,
@@ -21,8 +22,9 @@ export const Route = createFileRoute("/_restricted/campaigns/$campaignId")({
 
 function CampaignsContentPage() {
     const { campaignId } = Route.useParams();
+    const isDemo = useIsDemoMode();
     const { data: campaign } = useSuspenseQuery(
-        campaignQueryOptions(campaignId, "")
+        campaignQueryOptions(campaignId, isDemo)
     );
 
     // Use individual selectors to avoid infinite loop

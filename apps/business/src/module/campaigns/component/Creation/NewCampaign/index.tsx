@@ -10,9 +10,11 @@ import { FormTerritory } from "@/module/campaigns/component/Creation/NewCampaign
 import { FormTitle } from "@/module/campaigns/component/Creation/NewCampaign/FormTitle";
 import type { CampaignFormValues } from "@/module/campaigns/component/Creation/NewCampaign/types";
 import { useSaveCampaign } from "@/module/campaigns/hook/useSaveCampaign";
+import { mapCampaignFormToInput } from "@/module/campaigns/utils/mapper";
 import { Head } from "@/module/common/component/Head";
 import { Form, FormLayout } from "@/module/forms/Form";
 import { campaignStore } from "@/stores/campaignStore";
+import { FormMerchant } from "./FormMerchant";
 
 export function NewCampaign({ title }: { title: string }) {
     const campaign = campaignStore((state) => state.campaign);
@@ -40,13 +42,10 @@ export function NewCampaign({ title }: { title: string }) {
      */
     useEffect(() => {
         form.reset(campaign);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [campaign]);
 
     async function onSubmit(values: CampaignFormValues) {
-        // @ts-expect-error - saveCampaign expects Campaign but we have form values
-        // This will be fixed when saveCampaign is updated in later tasks
-        await saveCampaign(values);
+        await saveCampaign.mutateAsync(mapCampaignFormToInput(values));
     }
 
     return (
@@ -63,6 +62,7 @@ export function NewCampaign({ title }: { title: string }) {
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)}>
                     <FormTitle {...form} />
+                    <FormMerchant />
                     <FormGoals {...form} />
                     <FormSpecialAdvertising {...form} />
                     <FormBudget />

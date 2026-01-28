@@ -1,5 +1,9 @@
 import type { CampaignFormValues } from "@/module/campaigns/component/Creation/NewCampaign/types";
-import type { Campaign } from "@/types/Campaign";
+import type {
+    Campaign,
+    CampaignRuleDefinition,
+    RewardDefinition,
+} from "@/types/Campaign";
 
 export function mapCampaignToFormData(campaign: Campaign): CampaignFormValues {
     const formData: CampaignFormValues = {
@@ -31,4 +35,38 @@ export function mapCampaignToFormData(campaign: Campaign): CampaignFormValues {
     }
 
     return formData;
+}
+
+export function mapCampaignFormToInput(values: CampaignFormValues) {
+    const rewards: RewardDefinition[] = values.rewardAmount
+        ? [
+              {
+                  recipient: values.rewardRecipient,
+                  type: "token",
+                  amountType: "fixed",
+                  amount: values.rewardAmount,
+                  chaining: values.rewardChaining,
+              },
+          ]
+        : [];
+
+    const rule: CampaignRuleDefinition = {
+        trigger: values.trigger,
+        conditions: [],
+        rewards,
+    };
+
+    return {
+        merchantId: values.merchantId,
+        name: values.name,
+        rule,
+        metadata: {
+            goal: values.goal,
+            specialCategories: values.specialCategories,
+            territories: values.territories,
+        },
+        budgetConfig: values.budget ? [values.budget] : [],
+        expiresAt: values.scheduled.dateEnd?.toISOString(),
+        priority: values.priority,
+    };
 }

@@ -1,6 +1,7 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect } from "react";
+import { isDemoMode } from "@/context/auth/authEnv";
 import { NewCampaign } from "@/module/campaigns/component/Creation/NewCampaign";
 import {
     campaignQueryOptions,
@@ -19,6 +20,7 @@ export const Route = createFileRoute(
         return queryClient.ensureQueryData(
             campaignQueryOptions(
                 params.campaignId,
+                false,
                 "",
                 validateDraftCampaign(params.campaignId)
             )
@@ -31,7 +33,12 @@ export const Route = createFileRoute(
 function CampaignsDraftPage() {
     const { campaignId } = Route.useParams();
     const { data: campaign } = useSuspenseQuery(
-        campaignQueryOptions(campaignId, "", validateDraftCampaign(campaignId))
+        campaignQueryOptions(
+            campaignId,
+            isDemoMode(),
+            "",
+            validateDraftCampaign(campaignId)
+        )
     );
 
     // Use individual selectors to avoid infinite loop

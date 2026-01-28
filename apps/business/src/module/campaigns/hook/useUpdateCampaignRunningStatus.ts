@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
     pauseCampaign,
     resumeCampaign,
-} from "@/context/campaigns/action/statusTransitions";
+} from "@/module/campaigns/api/campaignApi";
 import type { Campaign } from "@/types/Campaign";
 
 export function useUpdateCampaignRunningStatus() {
@@ -20,13 +20,9 @@ export function useUpdateCampaignRunningStatus() {
             shouldRun: boolean;
         }): Promise<Campaign> => {
             if (shouldRun) {
-                return await resumeCampaign({
-                    data: { merchantId, campaignId },
-                });
+                return resumeCampaign({ merchantId, campaignId });
             }
-            return await pauseCampaign({
-                data: { merchantId, campaignId },
-            });
+            return pauseCampaign({ merchantId, campaignId });
         },
         onSuccess: async (_data, { campaignId }) => {
             await queryClient.invalidateQueries({

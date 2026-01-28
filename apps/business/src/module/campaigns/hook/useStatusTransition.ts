@@ -4,7 +4,7 @@ import {
     pauseCampaign,
     publishCampaign,
     resumeCampaign,
-} from "@/context/campaigns/action/statusTransitions";
+} from "@/module/campaigns/api/campaignApi";
 import type { Campaign, CampaignStatus } from "@/types/Campaign";
 
 type StatusTransitionAction = "publish" | "pause" | "resume" | "archive";
@@ -17,9 +17,7 @@ type StatusTransitionInput = {
 
 const transitionFns: Record<
     StatusTransitionAction,
-    (args: {
-        data: { merchantId: string; campaignId: string };
-    }) => Promise<Campaign>
+    (args: { merchantId: string; campaignId: string }) => Promise<Campaign>
 > = {
     publish: publishCampaign,
     pause: pauseCampaign,
@@ -38,7 +36,7 @@ export function useStatusTransition() {
             action,
         }: StatusTransitionInput): Promise<Campaign> => {
             const fn = transitionFns[action];
-            return await fn({ data: { merchantId, campaignId } });
+            return fn({ merchantId, campaignId });
         },
         onSuccess: async (_data, { campaignId }) => {
             await queryClient.invalidateQueries({
@@ -51,9 +49,6 @@ export function useStatusTransition() {
     });
 }
 
-/**
- * Get the available status transition action for a given status
- */
 export function getAvailableTransitions(
     status: CampaignStatus
 ): StatusTransitionAction[] {

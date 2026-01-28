@@ -18,7 +18,8 @@ export const Route = createFileRoute(
         return queryClient.ensureQueryData(
             campaignQueryOptions(
                 params.campaignId,
-                "",
+                false,
+                undefined,
                 validateDraftCampaign(params.campaignId)
             )
         );

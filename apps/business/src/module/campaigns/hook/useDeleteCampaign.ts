@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { deleteCampaign } from "@/context/campaigns/action/deleteCampaign";
+import { deleteCampaign } from "@/module/campaigns/api/campaignApi";
 
 export function useDeleteCampaign() {
     const queryClient = useQueryClient();
@@ -13,7 +13,7 @@ export function useDeleteCampaign() {
             merchantId: string;
             campaignId: string;
         }) => {
-            await deleteCampaign({ data: { merchantId, campaignId } });
+            await deleteCampaign({ merchantId, campaignId });
         },
         onSuccess: async () => {
             await queryClient.invalidateQueries({

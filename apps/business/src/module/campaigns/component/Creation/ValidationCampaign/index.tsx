@@ -2,27 +2,18 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { useForm } from "react-hook-form";
-import {
-    createCampaign,
-    updateCampaign,
-} from "@/context/campaigns/action/createCampaign";
 import { Actions } from "@/module/campaigns/component/Actions";
 import { ButtonCancel } from "@/module/campaigns/component/Creation/NewCampaign/ButtonCancel";
 import type { CampaignFormValues } from "@/module/campaigns/component/Creation/NewCampaign/types";
 import { FormCheck } from "@/module/campaigns/component/Creation/ValidationCampaign/FormCheck";
 import { useSaveCampaign } from "@/module/campaigns/hook/useSaveCampaign";
 import { useStatusTransition } from "@/module/campaigns/hook/useStatusTransition";
+import { mapCampaignFormToInput } from "@/module/campaigns/utils/mapper";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { Head } from "@/module/common/component/Head";
 import { Panel } from "@/module/common/component/Panel";
 import { Form, FormLayout } from "@/module/forms/Form";
 import { campaignStore } from "@/stores/campaignStore";
-import type {
-    Campaign,
-    CampaignRuleDefinition,
-    RewardDefinition,
-} from "@/types/Campaign";
-import styles from "./index.module.css";
 
 export function ValidationCampaign() {
     const navigate = useNavigate();
@@ -35,42 +26,11 @@ export function ValidationCampaign() {
     const save = useSaveCampaign();
     const { mutateAsync: publishStatus } = useStatusTransition();
     const isDemoMode = useIsDemoMode();
+    const saveCampaign = useSaveCampaign();
 
     const form = useForm<CampaignFormValues>({
         values: useMemo(() => campaign, [campaign]),
     });
-
-    const mapFormToInput = (values: CampaignFormValues) => {
-        const rewards: RewardDefinition[] = [
-            {
-                recipient: values.rewardRecipient,
-                type: "token",
-                amountType: "fixed",
-                amount: values.rewardAmount,
-                chaining: values.rewardChaining,
-            },
-        ];
-
-        const rule: CampaignRuleDefinition = {
-            trigger: values.trigger,
-            conditions: [],
-            rewards,
-        };
-
-        return {
-            merchantId: values.merchantId,
-            name: values.name,
-            rule,
-            metadata: {
-                goal: values.goal,
-                specialCategories: values.specialCategories,
-                territories: values.territories,
-            },
-            budgetConfig: values.budget ? [values.budget] : [],
-            expiresAt: values.scheduled.dateEnd?.toISOString(),
-            priority: values.priority,
-        };
-    };
 
     const { mutate: createAndPublish, isPending: isPendingPublish } =
         useMutation({
@@ -82,18 +42,12 @@ export function ValidationCampaign() {
                     return;
                 }
 
-                const input = mapFormToInput(values);
-                // biome-ignore lint/suspicious/noExplicitAny: campaign store type is incomplete
-                const id = (campaign as any).id;
+                const input = mapCampaignFormToInput(values);
 
-                let resultCampaign: Campaign;
-                if (id) {
-                    resultCampaign = await updateCampaign({
-                        data: { ...input, campaignId: id },
-                    });
-                } else {
-                    resultCampaign = await createCampaign({ data: input });
-                }
+                const resultCampaign = await saveCampaign.mutateAsync({
+                    campaignId: campaign.id,
+                    ...input,
+                });
 
                 if (!resultCampaign?.id)
                     throw new Error("Failed to create/update campaign");
@@ -119,10 +73,8 @@ export function ValidationCampaign() {
         }
 
         if (isClosing) {
-            const input = mapFormToInput(values);
-            // biome-ignore lint/suspicious/noExplicitAny: campaign store type is incomplete
-            const id = (campaign as any).id;
-            save.mutate({ ...input, campaignId: id });
+            const input = mapCampaignFormToInput(values);
+            save.mutate({ ...input, campaignId: campaign.id });
             return;
         }
 
