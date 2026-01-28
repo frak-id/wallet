@@ -4,11 +4,10 @@ import { useEffect } from "react";
 import { isDemoMode } from "@/context/auth/authEnv";
 import { CampaignDetails } from "@/module/campaigns/component/CampaignDetails";
 import { campaignQueryOptions } from "@/module/campaigns/queries/queryOptions";
-import { mapCampaignToFormData } from "@/module/campaigns/utils/mapper";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { CampaignError } from "@/module/common/component/RouteError";
 import { queryClient } from "@/module/common/provider/RootProvider";
-import { campaignStore } from "@/stores/campaignStore";
+import { campaignStore, campaignToDraft } from "@/stores/campaignStore";
 
 export const Route = createFileRoute("/_restricted/campaigns/$campaignId")({
     loader: ({ params }) => {
@@ -27,16 +26,11 @@ function CampaignsContentPage() {
         campaignQueryOptions(campaignId, isDemo)
     );
 
-    // Use individual selectors to avoid infinite loop
-    const setCampaign = campaignStore((state) => state.setCampaign);
-    const setIsFetched = campaignStore((state) => state.setIsFetched);
+    const setDraft = campaignStore((state) => state.setDraft);
 
-    // Set campaign in store on mount (maintaining existing behavior from CampaignLoad)
     useEffect(() => {
-        const formData = mapCampaignToFormData(campaign);
-        setCampaign(formData);
-        setIsFetched(true);
-    }, [campaign, setCampaign, setIsFetched]);
+        setDraft(campaignToDraft(campaign));
+    }, [campaign, setDraft]);
 
     return <CampaignDetails campaignId={campaignId} campaign={campaign} />;
 }

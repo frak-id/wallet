@@ -1,48 +1,34 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect } from "react";
 import { ValidationCampaign } from "@/module/campaigns/component/Creation/ValidationCampaign";
 import {
     campaignQueryOptions,
     validateDraftCampaign,
 } from "@/module/campaigns/queries/queryOptions";
-import { mapCampaignToFormData } from "@/module/campaigns/utils/mapper";
 import { queryClient } from "@/module/common/provider/RootProvider";
-import { campaignStore } from "@/stores/campaignStore";
-import type { Campaign } from "@/types/Campaign";
+import { campaignStore, campaignToDraft } from "@/stores/campaignStore";
 
 export const Route = createFileRoute(
     "/_restricted/campaigns/draft/$campaignId/validation"
 )({
-    // Prefetch into TanStack Query cache with validation
-    loader: ({ params }) => {
-        return queryClient.ensureQueryData(
+    loader: async ({ params }) => {
+        const storeDraftId = campaignStore.getState().draft.id;
+        if (storeDraftId === params.campaignId) {
+            return null;
+        }
+        const campaign = await queryClient.ensureQueryData(
             campaignQueryOptions(
                 params.campaignId,
                 false,
-                undefined,
+                "",
                 validateDraftCampaign(params.campaignId)
             )
         );
+        campaignStore.getState().setDraft(campaignToDraft(campaign));
+        return campaign;
     },
     component: CampaignsDraftValidationPage,
 });
 
 function CampaignsDraftValidationPage() {
-    const { campaignId } = Route.useParams();
-    const campaign = Route.useLoaderData() as Campaign;
-
-    // Use individual selectors to avoid infinite loop
-    const setCampaign = campaignStore((state) => state.setCampaign);
-    const setAction = campaignStore((state) => state.setAction);
-    const setIsFetched = campaignStore((state) => state.setIsFetched);
-
-    // Set campaign in store on mount (maintaining existing behavior from CampaignLoad)
-    useEffect(() => {
-        const formData = mapCampaignToFormData(campaign);
-        setCampaign(formData);
-        setAction("draft");
-        setIsFetched(true);
-    }, [campaign, campaignId, setCampaign, setAction, setIsFetched]);
-
     return <ValidationCampaign />;
 }

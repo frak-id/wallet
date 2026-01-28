@@ -7,11 +7,10 @@ import {
     campaignQueryOptions,
     validateEditCampaign,
 } from "@/module/campaigns/queries/queryOptions";
-import { mapCampaignToFormData } from "@/module/campaigns/utils/mapper";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { CampaignError } from "@/module/common/component/RouteError";
 import { queryClient } from "@/module/common/provider/RootProvider";
-import { campaignStore } from "@/stores/campaignStore";
+import { campaignStore, campaignToDraft } from "@/stores/campaignStore";
 
 export const Route = createFileRoute("/_restricted/campaigns/edit/$campaignId")(
     {
@@ -42,18 +41,11 @@ function CampaignsEditPage() {
         )
     );
 
-    // Use individual selectors to avoid infinite loop
-    const setCampaign = campaignStore((state) => state.setCampaign);
-    const setAction = campaignStore((state) => state.setAction);
-    const setIsFetched = campaignStore((state) => state.setIsFetched);
+    const setDraft = campaignStore((state) => state.setDraft);
 
-    // Set campaign in store on mount (maintaining existing behavior from CampaignLoad)
     useEffect(() => {
-        const formData = mapCampaignToFormData(campaign);
-        setCampaign(formData);
-        setAction("edit");
-        setIsFetched(true);
-    }, [campaign, setAction, setIsFetched, setCampaign]);
+        setDraft(campaignToDraft(campaign));
+    }, [campaign, setDraft]);
 
     return <CampaignEdit campaignId={campaignId} />;
 }

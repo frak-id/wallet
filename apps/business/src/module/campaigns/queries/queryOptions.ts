@@ -59,8 +59,8 @@ export const campaignQueryOptions = (
 
 export function validateDraftCampaign(campaignId: string) {
     return (campaign: Campaign): ReturnType<CampaignStateValidator> => {
-        const shouldBeInEditMode = campaign.status === "draft";
-        if (shouldBeInEditMode) {
+        const isPublished = campaign.status !== "draft";
+        if (isPublished) {
             return {
                 shouldRedirect: true,
                 redirectTo: {
@@ -75,8 +75,8 @@ export function validateDraftCampaign(campaignId: string) {
 
 export function validateEditCampaign(campaignId: string) {
     return (campaign: Campaign): ReturnType<CampaignStateValidator> => {
-        const shouldBeInDraftMode = campaign.status !== "draft";
-        if (shouldBeInDraftMode) {
+        const isDraft = campaign.status === "draft";
+        if (isDraft) {
             return {
                 shouldRedirect: true,
                 redirectTo: {

@@ -2,7 +2,6 @@ import { CircleDollarSign, Wallet } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { getCapPeriod } from "@/context/campaigns/utils/capPeriods";
-import type { CampaignFormValues } from "@/module/campaigns/component/Creation/NewCampaign/types";
 import { Column } from "@/module/common/component/Column";
 import { InputAmount } from "@/module/common/component/InputAmount";
 import { Row } from "@/module/common/component/Row";
@@ -15,6 +14,7 @@ import {
     FormMessage,
 } from "@/module/forms/Form";
 import { RadioGroup, RadioGroupItem } from "@/module/forms/RadioGroup";
+import type { CampaignDraft } from "@/stores/campaignStore";
 import styles from "./FormBudgetRow.module.css";
 
 type BudgetPeriod = "daily" | "weekly" | "monthly" | "global";
@@ -27,37 +27,31 @@ const periods: { value: BudgetPeriod; label: string }[] = [
 ];
 
 export function FormBudgetRow({ disabled }: { disabled?: boolean }) {
-    const { control, setValue, watch } = useFormContext<CampaignFormValues>();
-    const budget = watch("budget");
+    const { control, setValue, watch } = useFormContext<CampaignDraft>();
+    const budgetConfig = watch("budgetConfig");
+    const budget = budgetConfig?.[0];
 
     const [period, setPeriod] = useState<BudgetPeriod>("global");
 
-    // Initialize period from existing budget
     useEffect(() => {
         if (budget?.durationInSeconds) {
             const matched = periods.find(
                 (p) => getCapPeriod(p.value) === budget.durationInSeconds
             );
-            if (matched) {
-                setPeriod(matched.value);
-            }
+            if (matched) setPeriod(matched.value);
         }
     }, [budget?.durationInSeconds]);
 
-    const currentAmount = budget?.amount || 0;
+    const currentAmount = budget?.amount ?? 0;
 
     const updateBudget = (newPeriod: BudgetPeriod, newAmount: number) => {
         const duration = getCapPeriod(newPeriod);
         const label =
-            periods.find((p) => p.value === newPeriod)?.label || "Global";
+            periods.find((p) => p.value === newPeriod)?.label ?? "Global";
 
         setValue(
-            "budget",
-            {
-                label,
-                durationInSeconds: duration,
-                amount: newAmount,
-            },
+            "budgetConfig",
+            [{ label, durationInSeconds: duration, amount: newAmount }],
             { shouldValidate: true, shouldDirty: true }
         );
     };
@@ -103,24 +97,24 @@ export function FormBudgetRow({ disabled }: { disabled?: boolean }) {
             <Row>
                 <FormField
                     control={control}
-                    name="budget"
+                    name="budgetConfig"
                     rules={{
                         validate: {
                             required: (value) =>
-                                (value && value.amount > 0) || "Invalid amount",
+                                value?.[0]?.amount > 0 || "Invalid amount",
                         },
                     }}
                     render={() => (
                         <FormItem>
-                            <FormDescription label={"Budget Amount"} />
+                            <FormDescription label="Budget Amount" />
                             <FormMessage />
                             <FormControl>
                                 <InputAmount
-                                    placeholder={"25,00 €"}
-                                    length={"medium"}
+                                    placeholder="25,00 €"
+                                    length="medium"
                                     disabled={disabled}
                                     value={currentAmount}
-                                    // @ts-expect-error - InputAmount expects onChange from ControllerRenderProps but we pass raw handler
+                                    // @ts-expect-error - InputAmount expects ControllerRenderProps onChange
                                     onChange={(val: number | string) => {
                                         const num =
                                             typeof val === "number" ? val : 0;
@@ -137,14 +131,14 @@ export function FormBudgetRow({ disabled }: { disabled?: boolean }) {
             <div>
                 <div className={styles.budget__section}>
                     <div className={styles.budget__iconGroup}>
-                        <div className={`${styles.budget__icon}`}>
+                        <div className={styles.budget__icon}>
                             <CircleDollarSign />
                         </div>
                         <span className={styles.budget__label}>
                             Frak commission (20%)
                         </span>
                     </div>
-                    <div className={`${styles.budget__value}`}>
+                    <div className={styles.budget__value}>
                         {frakCommission.toFixed(2)} €
                     </div>
                 </div>
@@ -153,14 +147,14 @@ export function FormBudgetRow({ disabled }: { disabled?: boolean }) {
 
                 <div className={styles.budget__section}>
                     <div className={styles.budget__iconGroup}>
-                        <div className={`${styles.budget__icon}`}>
+                        <div className={styles.budget__icon}>
                             <Wallet />
                         </div>
                         <span className={styles.budget__label}>
-                            Rewards distributed to your customers (80%)
+                            Rewards distributed (80%)
                         </span>
                     </div>
-                    <div className={`${styles.budget__value}`}>
+                    <div className={styles.budget__value}>
                         {remainingBudget.toFixed(2)} €
                     </div>
                 </div>

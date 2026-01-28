@@ -7,12 +7,13 @@ import {
     type ColumnFiltersState,
     createColumnHelper,
 } from "@tanstack/react-table";
-import { Eye, Pencil, Trash2 } from "lucide-react";
+import { Archive, Eye, Pause, Pencil, Play, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { CampaignStateTag } from "@/module/campaigns/component/TableCampaigns/CampaignStateTag";
 import { TableCampaignFilters } from "@/module/campaigns/component/TableCampaigns/Filter";
 import { useDeleteCampaign } from "@/module/campaigns/hook/useDeleteCampaign";
 import { useGetCampaigns } from "@/module/campaigns/hook/useGetCampaigns";
+import { useStatusTransition } from "@/module/campaigns/hook/useStatusTransition";
 import { AlertDialog } from "@/module/common/component/AlertDialog";
 import { Table } from "@/module/common/component/Table";
 import { formatDate } from "@/module/common/utils/formatDate";
@@ -33,14 +34,24 @@ export function TableCampaigns() {
                 columnHelper.accessor("name", {
                     enableSorting: false,
                     header: () => "Campaign",
-                    cell: ({ getValue, row }) => (
-                        <Link
-                            to="/campaigns/$campaignId"
-                            params={{ campaignId: row.original.id }}
-                        >
-                            {getValue()}
-                        </Link>
-                    ),
+                    cell: ({ getValue, row }) => {
+                        const isDraft = row.original.status === "draft";
+                        return isDraft ? (
+                            <Link
+                                to="/campaigns/draft/$campaignId"
+                                params={{ campaignId: row.original.id }}
+                            >
+                                {getValue()}
+                            </Link>
+                        ) : (
+                            <Link
+                                to="/campaigns/$campaignId"
+                                params={{ campaignId: row.original.id }}
+                            >
+                                {getValue()}
+                            </Link>
+                        );
+                    },
                 }),
                 columnHelper.accessor("status", {
                     enableSorting: true,
@@ -124,16 +135,38 @@ function CellActions({
 }: Pick<CellContext<CampaignWithActions, unknown>, "row">) {
     const actions = useMemo(() => row.original.actions, [row.original.actions]);
     const reset = campaignStore((state) => state.reset);
+    const status = row.original.status;
+    const isDraft = status === "draft";
+    const isArchived = status === "archived";
 
     return (
         <div className={styles.table__actions}>
-            <Link
-                to="/campaigns/$campaignId"
-                params={{ campaignId: row.original.id }}
-            >
-                <Eye size={20} absoluteStrokeWidth={true} />
-            </Link>
-            {actions.canEdit && (
+            {isDraft ? (
+                <Link
+                    to="/campaigns/draft/$campaignId"
+                    params={{ campaignId: row.original.id }}
+                    onClick={() => reset()}
+                >
+                    <Eye size={20} absoluteStrokeWidth={true} />
+                </Link>
+            ) : (
+                <Link
+                    to="/campaigns/$campaignId"
+                    params={{ campaignId: row.original.id }}
+                >
+                    <Eye size={20} absoluteStrokeWidth={true} />
+                </Link>
+            )}
+            {isDraft && (
+                <Link
+                    to="/campaigns/draft/$campaignId"
+                    params={{ campaignId: row.original.id }}
+                    onClick={() => reset()}
+                >
+                    <Pencil size={20} absoluteStrokeWidth={true} />
+                </Link>
+            )}
+            {!isDraft && !isArchived && (
                 <Link
                     to="/campaigns/edit/$campaignId"
                     params={{ campaignId: row.original.id }}
@@ -142,8 +175,170 @@ function CellActions({
                     <Pencil size={20} absoluteStrokeWidth={true} />
                 </Link>
             )}
+            {actions.canPause && <ModalPause row={row} />}
+            {actions.canResume && <ModalResume row={row} />}
+            {actions.canArchive && <ModalArchive row={row} />}
             {actions.canDelete && <ModalDelete row={row} />}
         </div>
+    );
+}
+
+function ModalPause({
+    row,
+}: Pick<CellContext<CampaignWithActions, unknown>, "row">) {
+    const [open, setOpen] = useState(false);
+    const {
+        mutateAsync: onPauseClick,
+        isPending: isPausing,
+        isError,
+    } = useStatusTransition();
+
+    return (
+        <AlertDialog
+            open={open}
+            onOpenChange={setOpen}
+            title={"Pause campaign"}
+            buttonElement={
+                <button type={"button"}>
+                    <Pause size={20} absoluteStrokeWidth={true} />
+                </button>
+            }
+            description={
+                <>
+                    Are you sure you want to pause the campaign{" "}
+                    <strong>{row.original.name}</strong>?
+                </>
+            }
+            text={
+                isError ? (
+                    <p className={"error"}>An error occurred, try again</p>
+                ) : undefined
+            }
+            cancel={<Button variant={"outline"}>Cancel</Button>}
+            action={
+                <Button
+                    variant={"secondary"}
+                    isLoading={isPausing}
+                    disabled={isPausing}
+                    onClick={async () => {
+                        await onPauseClick({
+                            campaignId: row.original.id,
+                            merchantId: row.original.merchantId,
+                            action: "pause",
+                        });
+                        setOpen(false);
+                    }}
+                >
+                    Pause
+                </Button>
+            }
+        />
+    );
+}
+
+function ModalResume({
+    row,
+}: Pick<CellContext<CampaignWithActions, unknown>, "row">) {
+    const [open, setOpen] = useState(false);
+    const {
+        mutateAsync: onResumeClick,
+        isPending: isResuming,
+        isError,
+    } = useStatusTransition();
+
+    return (
+        <AlertDialog
+            open={open}
+            onOpenChange={setOpen}
+            title={"Resume campaign"}
+            buttonElement={
+                <button type={"button"}>
+                    <Play size={20} absoluteStrokeWidth={true} />
+                </button>
+            }
+            description={
+                <>
+                    Are you sure you want to resume the campaign{" "}
+                    <strong>{row.original.name}</strong>?
+                </>
+            }
+            text={
+                isError ? (
+                    <p className={"error"}>An error occurred, try again</p>
+                ) : undefined
+            }
+            cancel={<Button variant={"outline"}>Cancel</Button>}
+            action={
+                <Button
+                    variant={"submit"}
+                    isLoading={isResuming}
+                    disabled={isResuming}
+                    onClick={async () => {
+                        await onResumeClick({
+                            campaignId: row.original.id,
+                            merchantId: row.original.merchantId,
+                            action: "resume",
+                        });
+                        setOpen(false);
+                    }}
+                >
+                    Resume
+                </Button>
+            }
+        />
+    );
+}
+
+function ModalArchive({
+    row,
+}: Pick<CellContext<CampaignWithActions, unknown>, "row">) {
+    const [open, setOpen] = useState(false);
+    const {
+        mutateAsync: onArchiveClick,
+        isPending: isArchiving,
+        isError,
+    } = useStatusTransition();
+
+    return (
+        <AlertDialog
+            open={open}
+            onOpenChange={setOpen}
+            title={"Archive campaign"}
+            buttonElement={
+                <button type={"button"}>
+                    <Archive size={20} absoluteStrokeWidth={true} />
+                </button>
+            }
+            description={
+                <>
+                    Are you sure you want to archive the campaign{" "}
+                    <strong>{row.original.name}</strong>?
+                </>
+            }
+            text={
+                isError ? (
+                    <p className={"error"}>An error occurred, try again</p>
+                ) : undefined
+            }
+            cancel={<Button variant={"outline"}>Cancel</Button>}
+            action={
+                <Button
+                    variant={"secondary"}
+                    isLoading={isArchiving}
+                    disabled={isArchiving}
+                    onClick={async () => {
+                        await onArchiveClick({
+                            campaignId: row.original.id,
+                            merchantId: row.original.merchantId,
+                            action: "archive",
+                        });
+                        setOpen(false);
+                    }}
+                >
+                    Archive
+                </Button>
+            }
+        />
     );
 }
 

@@ -4,16 +4,14 @@ import { useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { Actions } from "@/module/campaigns/component/Actions";
 import { ButtonCancel } from "@/module/campaigns/component/Creation/NewCampaign/ButtonCancel";
-import type { CampaignFormValues } from "@/module/campaigns/component/Creation/NewCampaign/types";
 import { FormCheck } from "@/module/campaigns/component/Creation/ValidationCampaign/FormCheck";
 import { useSaveCampaign } from "@/module/campaigns/hook/useSaveCampaign";
 import { useStatusTransition } from "@/module/campaigns/hook/useStatusTransition";
-import { mapCampaignFormToInput } from "@/module/campaigns/utils/mapper";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { Head } from "@/module/common/component/Head";
 import { Panel } from "@/module/common/component/Panel";
 import { Form, FormLayout } from "@/module/forms/Form";
-import { campaignStore } from "@/stores/campaignStore";
+import { type CampaignDraft, campaignStore } from "@/stores/campaignStore";
 import styles from "./index.module.css";
 
 export function ValidationCampaign() {
@@ -21,32 +19,27 @@ export function ValidationCampaign() {
     const queryClient = useQueryClient();
     const isDemoMode = useIsDemoMode();
 
-    const campaign = campaignStore((state) => state.campaign);
-    const campaignSuccess = campaignStore((state) => state.success);
-    const isClosing = campaignStore((state) => state.isClosing);
-    const setSuccess = campaignStore((state) => state.setSuccess);
-    const reset = campaignStore((state) => state.reset);
+    const draft = campaignStore((s) => s.draft);
+    const isSuccess = campaignStore((s) => s.isSuccess);
+    const setSuccess = campaignStore((s) => s.setSuccess);
+    const reset = campaignStore((s) => s.reset);
 
     const saveCampaign = useSaveCampaign();
     const { mutateAsync: publishCampaign } = useStatusTransition();
 
-    const form = useForm<CampaignFormValues>({
-        values: useMemo(() => campaign, [campaign]),
+    const form = useForm<CampaignDraft>({
+        values: useMemo(() => draft, [draft]),
     });
 
     const { mutate: saveAndPublish, isPending } = useMutation({
         mutationKey: ["campaign", "save-publish"],
-        mutationFn: async (values: CampaignFormValues) => {
+        mutationFn: async (values: CampaignDraft) => {
             if (isDemoMode) {
                 await new Promise((r) => setTimeout(r, 1000));
                 return;
             }
 
-            const input = mapCampaignFormToInput(values);
-            const saved = await saveCampaign.mutateAsync({
-                ...input,
-                campaignId: campaign.id,
-            });
+            const saved = await saveCampaign.mutateAsync(values);
 
             if (!saved?.id) throw new Error("Failed to save campaign");
 
@@ -62,16 +55,10 @@ export function ValidationCampaign() {
         },
     });
 
-    function handleSubmit(values: CampaignFormValues) {
-        if (campaignSuccess) {
+    function handleSubmit(values: CampaignDraft) {
+        if (isSuccess) {
             reset();
             navigate({ to: "/campaigns/list" });
-            return;
-        }
-
-        if (isClosing) {
-            const input = mapCampaignFormToInput(values);
-            saveCampaign.mutate({ ...input, campaignId: campaign.id });
             return;
         }
 
@@ -86,15 +73,15 @@ export function ValidationCampaign() {
                 title={{ content: "Campaign Validation", size: "small" }}
                 rightSection={
                     <ButtonCancel
-                        onClick={() => form.reset(campaign)}
-                        disabled={campaignSuccess || isLoading}
+                        onClick={() => form.reset(draft)}
+                        disabled={isSuccess || isLoading}
                     />
                 }
             />
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(handleSubmit)}>
-                    {!campaignSuccess && <FormCheck {...form} />}
-                    {campaignSuccess && <SuccessMessage />}
+                    {!isSuccess && <FormCheck />}
+                    {isSuccess && <SuccessMessage />}
                     <Actions isLoading={isLoading} />
                 </form>
             </Form>

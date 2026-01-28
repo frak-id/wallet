@@ -6,8 +6,7 @@ import {
     Volume2,
 } from "lucide-react";
 import { type ReactElement, useEffect, useState } from "react";
-import type { UseFormReturn } from "react-hook-form";
-import type { CampaignFormValues } from "@/module/campaigns/component/Creation/NewCampaign/types";
+import { useFormContext } from "react-hook-form";
 import { Badge } from "@/module/common/component/Badge";
 import { Column } from "@/module/common/component/Column";
 import { Panel } from "@/module/common/component/Panel";
@@ -21,6 +20,7 @@ import {
     FormMessage,
 } from "@/module/forms/Form";
 import { RadioGroup, RadioGroupItem } from "@/module/forms/RadioGroup";
+import type { CampaignDraft } from "@/stores/campaignStore";
 import styles from "./FormGoals.module.css";
 
 type ItemGoals = {
@@ -54,7 +54,7 @@ const itemsGoals: ItemGoals[] = [
         information: {
             title: "Registration",
             description:
-                "Create more registrations on your website for more qualified data and no longer depend on cookie consent.",
+                "Create more registrations on your website for more qualified data.",
             badges: ["Registration", "CRM", "Qualified data"],
         },
     },
@@ -88,27 +88,21 @@ const itemsGoals: ItemGoals[] = [
         information: {
             title: "Retention",
             description:
-                "Make your users want to come back to your website or app. Stand out from the crowd.",
+                "Make your users want to come back to your website or app.",
             badges: ["Retention", "Loyalty", "Membership"],
         },
         disabled: true,
     },
-] as const;
+];
 
-export function FormGoals(form: UseFormReturn<CampaignFormValues>) {
+export function FormGoals() {
+    const { control, watch } = useFormContext<CampaignDraft>();
     const [goal, setGoal] = useState<ItemGoals | undefined>();
-    const watchGoal = form.watch("goal");
+    const watchGoal = watch("metadata.goal");
 
-    /**
-     * Set goal when we have a type
-     */
     useEffect(() => {
         if (watchGoal === undefined) return;
-        setGoal(
-            watchGoal
-                ? itemsGoals.find((item) => item.id === watchGoal)
-                : undefined
-        );
+        setGoal(itemsGoals.find((item) => item.id === watchGoal));
     }, [watchGoal]);
 
     return (
@@ -116,28 +110,26 @@ export function FormGoals(form: UseFormReturn<CampaignFormValues>) {
             <Column>
                 <FormDescription>
                     The choice of your goal defines the event that generates the
-                    distribution of rewards. Pay only when this goal is reached.
+                    distribution of rewards.
                 </FormDescription>
             </Column>
             <Column fullWidth={true}>
                 <FormField
-                    control={form.control}
-                    name="goal"
+                    control={control}
+                    name="metadata.goal"
                     rules={{ required: "Select a goal" }}
                     render={({ field }) => (
                         <FormItem>
-                            <FormDescription label={"Campaign goal"} />
-                            <Row align={"start"}>
+                            <FormDescription label="Campaign goal" />
+                            <Row align="start">
                                 <div>
                                     <FormControl>
                                         <RadioGroup
                                             onValueChange={(value) => {
-                                                // This is necessary because RadioGroup returns string but our form expects enum-like union
                                                 field.onChange(value);
                                                 setGoal(
                                                     itemsGoals.find(
-                                                        (item) =>
-                                                            item.id === value
+                                                        (i) => i.id === value
                                                     )
                                                 );
                                             }}
@@ -145,7 +137,7 @@ export function FormGoals(form: UseFormReturn<CampaignFormValues>) {
                                         >
                                             {itemsGoals.map((item) => (
                                                 <FormItem
-                                                    variant={"radio"}
+                                                    variant="radio"
                                                     key={item.id}
                                                 >
                                                     <FormControl>
@@ -157,7 +149,7 @@ export function FormGoals(form: UseFormReturn<CampaignFormValues>) {
                                                         />
                                                     </FormControl>
                                                     <FormLabel
-                                                        variant={"radio"}
+                                                        variant="radio"
                                                         className={
                                                             item.disabled
                                                                 ? styles.formGoals__label_disabled
@@ -191,10 +183,7 @@ export function FormGoals(form: UseFormReturn<CampaignFormValues>) {
 
 function GoalInformation({ goal }: { goal: ItemGoals }) {
     if (!goal.information) return null;
-
-    const {
-        information: { title, description, badges },
-    } = goal;
+    const { title, description, badges } = goal.information;
 
     return (
         <>
@@ -206,7 +195,7 @@ function GoalInformation({ goal }: { goal: ItemGoals }) {
             </div>
             <div className={styles.formGoals__badges}>
                 {badges?.map((badge) => (
-                    <Badge key={badge} variant={"secondary"}>
+                    <Badge key={badge} variant="secondary">
                         {badge}
                     </Badge>
                 ))}

@@ -1,25 +1,27 @@
 import { Input } from "@frak-labs/ui/component/forms/Input";
 import { capitalize } from "radash";
-import type { UseFormReturn } from "react-hook-form";
+import { useFormContext } from "react-hook-form";
 import { FormBudgetRow } from "@/module/campaigns/component/Creation/NewCampaign/FormBudgetRow";
-import type { CampaignFormValues } from "@/module/campaigns/component/Creation/NewCampaign/types";
 import { FormAdvertising } from "@/module/campaigns/component/Creation/ValidationCampaign/FormAdvertising";
 import { FormGoal } from "@/module/campaigns/component/Creation/ValidationCampaign/FormGoal";
 import { Panel } from "@/module/common/component/Panel";
 import { FormDescription, FormItem } from "@/module/forms/Form";
+import type { CampaignDraft } from "@/stores/campaignStore";
+import type { FixedRewardDefinition } from "@/types/Campaign";
 
-export function FormCheck(form: UseFormReturn<CampaignFormValues>) {
-    const {
-        territories,
-        scheduled,
-        trigger,
-        rewardAmount,
-        rewardRecipient,
-        priority,
-        rewardChaining,
-    } = form.getValues();
+export function FormCheck() {
+    const form = useFormContext<CampaignDraft>();
+    const { metadata, scheduled, rule, priority } = form.getValues();
 
-    const formatDate = (date: Date) => {
+    const territories = metadata.territories ?? [];
+    const trigger = rule.trigger;
+    const reward = rule.rewards?.[0] as FixedRewardDefinition | undefined;
+    const rewardAmount = reward?.amount ?? 0;
+    const rewardRecipient = reward?.recipient ?? "referrer";
+    const rewardChaining = reward?.chaining;
+
+    const formatDate = (date?: Date) => {
+        if (!date) return "Not set";
         return new Intl.DateTimeFormat("en-US", {
             dateStyle: "medium",
             timeStyle: "short",
@@ -33,9 +35,9 @@ export function FormCheck(form: UseFormReturn<CampaignFormValues>) {
                 <Input disabled={true} {...form.register("name")} />
             </FormItem>
 
-            <FormGoal {...form} />
+            <FormGoal />
 
-            <FormAdvertising {...form} />
+            <FormAdvertising />
 
             <FormItem>
                 <FormDescription label={"Territories"} />
@@ -56,15 +58,15 @@ export function FormCheck(form: UseFormReturn<CampaignFormValues>) {
                         <FormDescription label={"Start Date"} />
                         <Input
                             disabled={true}
-                            value={formatDate(scheduled.dateStart)}
+                            value={formatDate(scheduled.startDate)}
                         />
                     </div>
-                    {scheduled.dateEnd && (
+                    {scheduled.endDate && (
                         <div style={{ flex: 1 }}>
                             <FormDescription label={"End Date"} />
                             <Input
                                 disabled={true}
-                                value={formatDate(scheduled.dateEnd)}
+                                value={formatDate(scheduled.endDate)}
                             />
                         </div>
                     )}

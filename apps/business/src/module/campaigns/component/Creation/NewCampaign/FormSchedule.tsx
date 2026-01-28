@@ -1,14 +1,7 @@
 import { Checkbox } from "@frak-labs/ui/component/forms/Checkbox";
 import { format, isBefore, startOfDay } from "date-fns";
 import { useEffect, useState } from "react";
-import type {
-    Control,
-    FieldValues,
-    Path,
-    PathValue,
-    UseFormReturn,
-} from "react-hook-form";
-import type { CampaignFormValues } from "@/module/campaigns/component/Creation/NewCampaign/types";
+import { useFormContext } from "react-hook-form";
 import { ButtonCalendar } from "@/module/common/component/ButtonCalendar";
 import { Calendar } from "@/module/common/component/Calendar";
 import { Panel } from "@/module/common/component/Panel";
@@ -25,128 +18,108 @@ import {
     FormLabel,
     FormMessage,
 } from "@/module/forms/Form";
+import type { CampaignDraft } from "@/stores/campaignStore";
 import styles from "./FormSchedule.module.css";
 
-export function FormSchedule(form: UseFormReturn<CampaignFormValues>) {
+export function FormSchedule() {
+    const { control, watch, setValue, getValues } =
+        useFormContext<CampaignDraft>();
+    const [hasEndDate, setHasEndDate] = useState(false);
+
+    const watchEndDate = watch("scheduled.endDate");
+
+    useEffect(() => {
+        setHasEndDate(!!watchEndDate);
+    }, [watchEndDate]);
+
     return (
         <Panel title="Schedule">
             <FormDescription>
-                You can choose to run your ads continuously, starting today, or
-                only during a specific period. If you don't set an end date, the
-                campaign will automatically stop when the entire campaign budget
-                has been distributed.
+                You can choose to run your ads continuously or only during a
+                specific period. If you don't set an end date, the campaign will
+                stop when the budget is exhausted.
             </FormDescription>
 
-            <FormScheduleFields {...form} />
-        </Panel>
-    );
-}
-
-function FormScheduleFields<T extends FieldValues>(form: UseFormReturn<T>) {
-    const [isEndDate, setIsEndDate] = useState<boolean | "indeterminate">(
-        "indeterminate"
-    );
-
-    // Watch the end date to uncheck the end date checkbox
-    const watchScheduledEnd = form.watch("scheduled.dateEnd" as Path<T>);
-
-    /**
-     * Uncheck the end date checkbox
-     */
-    useEffect(() => {
-        setIsEndDate(!!watchScheduledEnd);
-    }, [watchScheduledEnd]);
-
-    return (
-        <>
             <FormField
-                control={form.control as Control<FieldValues>}
-                name="scheduled.dateStart"
-                render={({ field }) => {
-                    const { value, ...rest } = field;
-                    return (
-                        <FormItem>
-                            <FormLabel>Start date</FormLabel>
-                            <Popover>
-                                <PopoverTrigger {...rest} asChild>
-                                    <FormControl>
-                                        <ButtonCalendar>
-                                            {field.value ? (
-                                                format(field.value, "PPP")
-                                            ) : (
-                                                <span>Pick a date</span>
-                                            )}
-                                        </ButtonCalendar>
-                                    </FormControl>
-                                </PopoverTrigger>
-                                <PopoverContent align="start">
-                                    <Calendar
-                                        mode="single"
-                                        selected={field.value}
-                                        onSelect={(value) => {
-                                            if (!value) return;
-                                            field.onChange(value);
-
-                                            // If checkbox is checked, set the end date to the same date
-                                            if (isEndDate) {
-                                                form.setValue(
-                                                    "scheduled.dateEnd" as Path<T>,
-                                                    value as PathValue<
-                                                        T,
-                                                        Path<T>
-                                                    >
+                control={control}
+                name="scheduled.startDate"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Start date (optional)</FormLabel>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <FormControl>
+                                    <ButtonCalendar>
+                                        {field.value ? (
+                                            format(field.value, "PPP")
+                                        ) : (
+                                            <span>
+                                                Starts immediately on publish
+                                            </span>
+                                        )}
+                                    </ButtonCalendar>
+                                </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent align="start">
+                                <Calendar
+                                    mode="single"
+                                    selected={field.value}
+                                    onSelect={(date) => {
+                                        field.onChange(date);
+                                        if (hasEndDate && date) {
+                                            const endDate =
+                                                getValues("scheduled.endDate");
+                                            if (endDate && date > endDate) {
+                                                setValue(
+                                                    "scheduled.endDate",
+                                                    date
                                                 );
                                             }
-                                        }}
-                                        disabled={(date) =>
-                                            isBefore(
-                                                date,
-                                                startOfDay(new Date())
-                                            )
                                         }
-                                        startMonth={startOfDay(new Date())}
-                                    />
-                                </PopoverContent>
-                            </Popover>
-                            <FormMessage />
-                        </FormItem>
-                    );
-                }}
+                                    }}
+                                    disabled={(date) =>
+                                        isBefore(date, startOfDay(new Date()))
+                                    }
+                                    startMonth={startOfDay(new Date())}
+                                />
+                            </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                    </FormItem>
+                )}
             />
 
             <FormField
-                control={form.control as Control<FieldValues>}
-                name="scheduled.dateEnd"
+                control={control}
+                name="scheduled.endDate"
                 render={({ field }) => (
                     <>
                         <FormItem
-                            variant={"checkbox"}
+                            variant="checkbox"
                             className={styles.formSchedule__endDate}
                         >
                             <Checkbox
-                                onCheckedChange={(value) => {
-                                    setIsEndDate(value);
-
-                                    // Reset the end date if the checkbox is unchecked
-                                    if (value === false) {
-                                        form.setValue(
-                                            "scheduled.dateEnd" as Path<T>,
-                                            undefined as PathValue<T, Path<T>>
+                                onCheckedChange={(checked) => {
+                                    setHasEndDate(!!checked);
+                                    if (!checked) {
+                                        setValue(
+                                            "scheduled.endDate",
+                                            undefined
                                         );
                                     }
                                 }}
-                                id={"is-end-date"}
-                                checked={isEndDate === true}
+                                id="has-end-date"
+                                checked={hasEndDate}
                             />
                             <FormLabel
-                                variant={"checkbox"}
-                                selected={isEndDate === true}
-                                htmlFor={"is-end-date"}
+                                variant="checkbox"
+                                selected={hasEndDate}
+                                htmlFor="has-end-date"
                             >
-                                Create an end date
+                                Set an end date
                             </FormLabel>
                         </FormItem>
-                        {isEndDate === true && (
+                        {hasEndDate && (
                             <FormItem>
                                 <Popover>
                                     <PopoverTrigger asChild>
@@ -166,21 +139,19 @@ function FormScheduleFields<T extends FieldValues>(form: UseFormReturn<T>) {
                                             selected={field.value}
                                             onSelect={field.onChange}
                                             disabled={(date) => {
-                                                const dateStart =
-                                                    form.getValues(
-                                                        "scheduled.dateStart" as Path<T>
-                                                    );
-                                                return (
-                                                    isBefore(
-                                                        date,
-                                                        startOfDay(new Date())
-                                                    ) ||
-                                                    date < new Date(dateStart)
+                                                const startDate = getValues(
+                                                    "scheduled.startDate"
                                                 );
+                                                const minDate = startDate
+                                                    ? new Date(startDate)
+                                                    : startOfDay(new Date());
+                                                return isBefore(date, minDate);
                                             }}
-                                            startMonth={form.getValues(
-                                                "scheduled.dateStart" as Path<T>
-                                            )}
+                                            startMonth={
+                                                getValues(
+                                                    "scheduled.startDate"
+                                                ) ?? new Date()
+                                            }
                                         />
                                     </PopoverContent>
                                 </Popover>
@@ -190,6 +161,6 @@ function FormScheduleFields<T extends FieldValues>(form: UseFormReturn<T>) {
                     </>
                 )}
             />
-        </>
+        </Panel>
     );
 }

@@ -1,4 +1,5 @@
-import { useEffect, useMemo } from "react";
+import { useNavigate } from "@tanstack/react-router";
+import { useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { Actions } from "@/module/campaigns/component/Actions";
 import { ButtonCancel } from "@/module/campaigns/component/Creation/NewCampaign/ButtonCancel";
@@ -9,44 +10,28 @@ import { FormSchedule } from "@/module/campaigns/component/Creation/NewCampaign/
 import { FormSpecialAdvertising } from "@/module/campaigns/component/Creation/NewCampaign/FormSpecialAdvertising";
 import { FormTerritory } from "@/module/campaigns/component/Creation/NewCampaign/FormTerritory";
 import { FormTitle } from "@/module/campaigns/component/Creation/NewCampaign/FormTitle";
-import type { CampaignFormValues } from "@/module/campaigns/component/Creation/NewCampaign/types";
 import { useSaveCampaign } from "@/module/campaigns/hook/useSaveCampaign";
-import { mapCampaignFormToInput } from "@/module/campaigns/utils/mapper";
 import { Head } from "@/module/common/component/Head";
 import { Form, FormLayout } from "@/module/forms/Form";
-import { campaignStore } from "@/stores/campaignStore";
+import { type CampaignDraft, campaignStore } from "@/stores/campaignStore";
 
 export function NewCampaign({ title }: { title: string }) {
-    const campaign = campaignStore((state) => state.campaign);
-    const setCampaign = campaignStore((state) => state.setCampaign);
-    const setStep = campaignStore((state) => state.setStep);
-    const campaignSuccess = campaignStore((state) => state.success);
-    const reset = campaignStore((state) => state.reset);
-    const setIsClosing = campaignStore((state) => state.setIsClosing);
+    const navigate = useNavigate();
+    const draft = campaignStore((s) => s.draft);
+    const updateDraft = campaignStore((s) => s.updateDraft);
     const saveCampaign = useSaveCampaign();
 
-    useEffect(() => {
-        if (campaignSuccess) reset();
-        setIsClosing(false);
-    }, [campaignSuccess, reset, setIsClosing]);
-
-    const form = useForm<CampaignFormValues>({
-        values: useMemo(() => campaign, [campaign]),
+    const form = useForm<CampaignDraft>({
+        values: useMemo(() => draft, [draft]),
     });
 
-    useEffect(() => {
-        form.reset(campaign);
-    }, [campaign, form]);
-
-    async function onSubmit(values: CampaignFormValues) {
-        setCampaign({ ...campaign, ...values });
-
-        await saveCampaign.mutateAsync({
-            ...mapCampaignFormToInput(values),
-            campaignId: campaign.id,
+    async function onSubmit(values: CampaignDraft) {
+        updateDraft(() => values);
+        const saved = await saveCampaign.mutateAsync(values);
+        navigate({
+            to: "/campaigns/draft/$campaignId/metrics",
+            params: { campaignId: saved.id },
         });
-
-        setStep((s) => s + 1);
     }
 
     return (
@@ -54,18 +39,18 @@ export function NewCampaign({ title }: { title: string }) {
             <Head
                 title={{ content: title, size: "small" }}
                 rightSection={
-                    <ButtonCancel onClick={() => form.reset(campaign)} />
+                    <ButtonCancel onClick={() => form.reset(draft)} />
                 }
             />
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)}>
-                    <FormTitle {...form} />
+                    <FormTitle />
                     <FormMerchant />
-                    <FormGoals {...form} />
-                    <FormSpecialAdvertising {...form} />
+                    <FormGoals />
+                    <FormSpecialAdvertising />
                     <FormBudget />
-                    <FormTerritory {...form} />
-                    <FormSchedule {...form} />
+                    <FormTerritory />
+                    <FormSchedule />
                     <Actions isLoading={saveCampaign.isPending} />
                 </form>
             </Form>

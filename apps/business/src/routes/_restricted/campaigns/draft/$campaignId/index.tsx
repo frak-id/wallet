@@ -1,14 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { MetricsCampaign } from "@/module/campaigns/component/Creation/MetricsCampaign";
+import { NewCampaign } from "@/module/campaigns/component/Creation/NewCampaign";
 import {
     campaignQueryOptions,
     validateDraftCampaign,
 } from "@/module/campaigns/queries/queryOptions";
+import { CampaignError } from "@/module/common/component/RouteError";
 import { queryClient } from "@/module/common/provider/RootProvider";
 import { campaignStore, campaignToDraft } from "@/stores/campaignStore";
 
 export const Route = createFileRoute(
-    "/_restricted/campaigns/draft/$campaignId/metrics"
+    "/_restricted/campaigns/draft/$campaignId/"
 )({
     loader: async ({ params }) => {
         const storeDraftId = campaignStore.getState().draft.id;
@@ -26,9 +27,10 @@ export const Route = createFileRoute(
         campaignStore.getState().setDraft(campaignToDraft(campaign));
         return campaign;
     },
-    component: CampaignsDraftMetricsPage,
+    component: CampaignsDraftPage,
+    errorComponent: CampaignError,
 });
 
-function CampaignsDraftMetricsPage() {
-    return <MetricsCampaign />;
+function CampaignsDraftPage() {
+    return <NewCampaign title="Edit campaign" />;
 }

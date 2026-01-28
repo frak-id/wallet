@@ -1,10 +1,9 @@
+import { useNavigate } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { Actions } from "@/module/campaigns/component/Actions";
 import { ButtonCancel } from "@/module/campaigns/component/Creation/NewCampaign/ButtonCancel";
-import type { CampaignFormValues } from "@/module/campaigns/component/Creation/NewCampaign/types";
 import { useSaveCampaign } from "@/module/campaigns/hook/useSaveCampaign";
-import { mapCampaignFormToInput } from "@/module/campaigns/utils/mapper";
 import { Head } from "@/module/common/component/Head";
 import { InputAmountCampaign } from "@/module/common/component/InputAmount";
 import { Panel } from "@/module/common/component/Panel";
@@ -19,28 +18,26 @@ import {
     FormMessage,
 } from "@/module/forms/Form";
 import { RadioGroup, RadioGroupItem } from "@/module/forms/RadioGroup";
-import { campaignStore } from "@/stores/campaignStore";
+import { type CampaignDraft, campaignStore } from "@/stores/campaignStore";
 import { FormTrigger } from "../Generic/FormTrigger";
 
 export function MetricsCampaign() {
-    const campaign = campaignStore((state) => state.campaign);
-    const setCampaign = campaignStore((state) => state.setCampaign);
-    const setStep = campaignStore((state) => state.setStep);
+    const navigate = useNavigate();
+    const draft = campaignStore((s) => s.draft);
+    const updateDraft = campaignStore((s) => s.updateDraft);
     const saveCampaign = useSaveCampaign();
 
-    const form = useForm<CampaignFormValues>({
-        values: useMemo(() => campaign, [campaign]),
+    const form = useForm<CampaignDraft>({
+        values: useMemo(() => draft, [draft]),
     });
 
-    async function onSubmit(values: CampaignFormValues) {
-        setCampaign({ ...campaign, ...values });
-
-        await saveCampaign.mutateAsync({
-            ...mapCampaignFormToInput(values),
-            campaignId: campaign.id,
+    async function onSubmit(values: CampaignDraft) {
+        updateDraft(() => values);
+        const saved = await saveCampaign.mutateAsync(values);
+        navigate({
+            to: "/campaigns/draft/$campaignId/validation",
+            params: { campaignId: saved.id },
         });
-
-        setStep((s) => s + 1);
     }
 
     return (
@@ -50,9 +47,7 @@ export function MetricsCampaign() {
                     <Head
                         title={{ content: "Campaign Rules", size: "small" }}
                         rightSection={
-                            <ButtonCancel
-                                onClick={() => form.reset(campaign)}
-                            />
+                            <ButtonCancel onClick={() => form.reset(draft)} />
                         }
                     />
 
@@ -62,7 +57,7 @@ export function MetricsCampaign() {
                         <Row>
                             <FormField
                                 control={form.control}
-                                name="rewardAmount"
+                                name="rule.rewards.0.amount"
                                 rules={{ required: "Required", min: 0 }}
                                 render={({ field }) => (
                                     <FormItem>
@@ -80,7 +75,7 @@ export function MetricsCampaign() {
 
                             <FormField
                                 control={form.control}
-                                name="rewardRecipient"
+                                name="rule.rewards.0.recipient"
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Recipient</FormLabel>
@@ -165,7 +160,7 @@ export function MetricsCampaign() {
                         <Row>
                             <FormField
                                 control={form.control}
-                                name="rewardChaining.userPercent"
+                                name="rule.rewards.0.chaining.userPercent"
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>User %</FormLabel>
@@ -199,7 +194,7 @@ export function MetricsCampaign() {
                             />
                             <FormField
                                 control={form.control}
-                                name="rewardChaining.deperditionPerLevel"
+                                name="rule.rewards.0.chaining.deperditionPerLevel"
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Deperdition/Level</FormLabel>
@@ -233,7 +228,7 @@ export function MetricsCampaign() {
                             />
                             <FormField
                                 control={form.control}
-                                name="rewardChaining.maxDepth"
+                                name="rule.rewards.0.chaining.maxDepth"
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Max Depth</FormLabel>

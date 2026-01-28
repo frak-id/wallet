@@ -45,6 +45,13 @@ export function EmbeddedCreateCampaign() {
                 name: extracted.name,
                 rule,
                 budgetConfig: extracted.budgetConfig,
+                metadata: {
+                    goal: undefined,
+                    specialCategories: [],
+                    territories: [],
+                },
+                scheduled: {},
+                priority: 0,
             });
 
             const published = await publishCampaign({

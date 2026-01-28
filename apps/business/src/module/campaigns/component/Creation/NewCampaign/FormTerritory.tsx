@@ -1,6 +1,5 @@
 import { getCountryDataList } from "countries-list";
-import type { UseFormReturn } from "react-hook-form";
-import type { CampaignFormValues } from "@/module/campaigns/component/Creation/NewCampaign/types";
+import { useFormContext } from "react-hook-form";
 import { Panel } from "@/module/common/component/Panel";
 import {
     FormControl,
@@ -11,18 +10,21 @@ import {
     FormMessage,
 } from "@/module/forms/Form";
 import { MultiSelect } from "@/module/forms/MultiSelect";
+import type { CampaignDraft } from "@/stores/campaignStore";
 
-export function FormTerritory(form: UseFormReturn<CampaignFormValues>) {
+export function FormTerritory() {
+    const { control } = useFormContext<CampaignDraft>();
+
     return (
         <Panel title="Territory">
             <FormField
-                control={form.control}
-                name="territories"
+                control={control}
+                name="metadata.territories"
                 rules={{ required: "Select a country" }}
                 render={({ field }) => (
                     <FormItem>
                         <FormDescription>
-                            Choose a or several countries where your campaign
+                            Choose one or several countries where your campaign
                             will be displayed.
                         </FormDescription>
                         <FormLabel>Location</FormLabel>
