@@ -5,7 +5,6 @@ import {
     CardHeader,
     CardTitle,
 } from "~/module/common/components/ui/card";
-import { ProductList } from "~/module/product/component/ProductList";
 
 export const Route = createFileRoute("/_layout/")({
     component: HomeComponent,
@@ -55,11 +54,6 @@ function HomeComponent() {
                         </p>
                     </CardContent>
                 </Card>
-            </div>
-
-            {/* Products Section */}
-            <div>
-                <ProductList />
             </div>
         </>
     );
