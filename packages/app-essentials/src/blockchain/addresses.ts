@@ -14,7 +14,7 @@ export const addresses = {
     productRegistry: "0x9100000000290000D9a49572110030ba00E0F40b",
     purchaseOracle: "0x0000EC17000000e783CA00Ee06890000114C100d",
     referralRegistry: "0x5439e7b27500f7000A6DCD00006D000082510000",
-    // Frak
+    // Frak v2
     rewarderHub: "0xBaf28A2214856E864D9d89Ae3377140358FA5fa8",
     campaignBankFactory: "0x4bD5CFDF64bB6ab0c439F36ba2C324338F15BF28",
     // Kernel

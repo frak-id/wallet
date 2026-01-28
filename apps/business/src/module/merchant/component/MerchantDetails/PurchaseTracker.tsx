@@ -11,7 +11,7 @@ export function PurchasseTrackerSetup({ merchantId }: { merchantId: string }) {
         <PanelAccordion
             title="Purchase Tracker"
             id={"purchaseTracker"}
-            className={styles.purchaseOracleSetup}
+            className={styles.purchaseTrackerSetup}
         >
             <p className={styles.purchaseTracker__description}>
                 The purchase tracker will permit to create campaigns and

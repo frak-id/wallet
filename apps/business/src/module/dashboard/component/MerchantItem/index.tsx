@@ -3,7 +3,7 @@ import { Pen, Users, WalletMinimal } from "lucide-react";
 import type { HTMLAttributes, PropsWithChildren, ReactElement } from "react";
 import styles from "./index.module.css";
 
-interface ProductItemProps
+interface MerchantItemProps
     extends Omit<HTMLAttributes<HTMLSpanElement>, "className"> {
     /**
      * Merchant UUID for navigation
@@ -15,7 +15,7 @@ interface ProductItemProps
     isLink?: boolean;
 }
 
-export function ProductItem({
+export function MerchantItem({
     merchantId,
     name,
     domain,
@@ -23,35 +23,37 @@ export function ProductItem({
     isLink = true,
     children,
     ...props
-}: PropsWithChildren<ProductItemProps>) {
+}: PropsWithChildren<MerchantItemProps>) {
     return (
-        <span className={styles.productItem} {...props}>
-            <p className={styles.productItem__name}>
+        <span className={styles.merchantItem} {...props}>
+            <p className={styles.merchantItem__name}>
                 {name}
                 {domain && isLink && (
                     <a
                         href={`//${domain}`}
                         target={"_blank"}
                         rel={"noreferrer"}
-                        className={styles.productItem__domain}
+                        className={styles.merchantItem__domain}
                     >
                         {domain}
                     </a>
                 )}
                 {domain && !isLink && (
-                    <span className={styles.productItem__domain}>{domain}</span>
+                    <span className={styles.merchantItem__domain}>
+                        {domain}
+                    </span>
                 )}
             </p>
-            {showActions && <ProductActions merchantId={merchantId} />}
+            {showActions && <MerchantActions merchantId={merchantId} />}
         </span>
     );
 }
 
-function ProductActions({ merchantId }: { merchantId?: string }) {
+function MerchantActions({ merchantId }: { merchantId?: string }) {
     if (!merchantId) return null;
 
     return (
-        <ul className={styles.productItem__actions}>
+        <ul className={styles.merchantItem__actions}>
             <li>
                 <Link
                     to="/merchant/$id/funding"
@@ -82,3 +84,13 @@ function ProductActions({ merchantId }: { merchantId?: string }) {
         </ul>
     );
 }
+
+/**
+ * @deprecated Use MerchantItem instead
+ */
+export const ProductItem = MerchantItem;
+
+/**
+ * @deprecated Use MerchantItemProps instead
+ */
+export type ProductItemProps = MerchantItemProps;

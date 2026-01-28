@@ -1,13 +1,18 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
-import { myProductsQueryOptions } from "@/module/dashboard/queries/queryOptions";
+import { myMerchantsQueryOptions } from "@/module/dashboard/queries/queryOptions";
 
-export function useMyProducts() {
+export function useMyMerchants() {
     const isDemoMode = useIsDemoMode();
-    const { data } = useSuspenseQuery(myProductsQueryOptions(isDemoMode));
+    const { data } = useSuspenseQuery(myMerchantsQueryOptions(isDemoMode));
 
     return {
         isEmpty: data.owner.length === 0 && data.operator.length === 0,
-        products: data,
+        merchants: data,
     };
 }
+
+/**
+ * @deprecated Use useMyMerchants instead
+ */
+export const useMyProducts = useMyMerchants;

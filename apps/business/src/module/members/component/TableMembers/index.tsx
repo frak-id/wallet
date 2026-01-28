@@ -13,7 +13,7 @@ import { formatEther, isAddressEqual } from "viem";
 import type {
     GetMembersPageItem,
     GetMembersParam,
-} from "@/context/members/action/getProductMembers";
+} from "@/context/members/action/getMerchantMembers";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { Row } from "@/module/common/component/Row";
 import { Table } from "@/module/common/component/Table";
@@ -86,7 +86,7 @@ export function TableMembers() {
     }, [sortingState, setFilters]);
 
     const { data: page, isPending } = useQuery({
-        ...membersPageQueryOptions(filters),
+        ...membersPageQueryOptions(filters, isDemoMode),
         placeholderData: keepPreviousData,
     });
 
@@ -124,9 +124,9 @@ export function TableMembers() {
                         <WalletAddress wallet={getValue()} />
                     ),
                 }),
-                columnHelper.accessor("productNames", {
+                columnHelper.accessor("merchantNames", {
                     enableSorting: false,
-                    header: () => "Products",
+                    header: () => "Merchants",
                     cell: ({ getValue }) => getValue().join(", "),
                 }),
                 columnHelper.accessor("firstInteractionTimestamp", {

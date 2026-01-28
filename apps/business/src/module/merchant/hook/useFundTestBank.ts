@@ -12,7 +12,7 @@ export function useFundTestBank() {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationKey: ["product", "bank"],
+        mutationKey: ["merchant", "bank", "test-funding"],
         mutationFn: async ({
             bank,
             stablecoin,
@@ -24,7 +24,7 @@ export function useFundTestBank() {
             if (isDemoMode) {
                 await new Promise((resolve) => setTimeout(resolve, 300));
                 await queryClient.invalidateQueries({
-                    queryKey: ["product"],
+                    queryKey: ["merchant"],
                     exact: false,
                 });
                 return;
@@ -35,7 +35,7 @@ export function useFundTestBank() {
                 stablecoin,
             });
             await queryClient.invalidateQueries({
-                queryKey: ["product"],
+                queryKey: ["merchant"],
                 exact: false,
             });
         },

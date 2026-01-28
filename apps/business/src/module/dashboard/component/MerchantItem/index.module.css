@@ -1,4 +1,4 @@
-.productItem {
+.merchantItem {
     position: relative;
     display: flex;
     flex-direction: column;
@@ -19,7 +19,7 @@
     }
 }
 
-.productItem__name {
+.merchantItem__name {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -27,13 +27,13 @@
     font-weight: 600;
 }
 
-.productItem__domain {
+.merchantItem__domain {
     font-size: 14px;
     font-weight: 400;
     color: var(--frak-color-grayText);
 }
 
-.productItem__actions {
+.merchantItem__actions {
     position: absolute;
     bottom: 75px;
     display: flex;
@@ -44,7 +44,7 @@
     }
 }
 
-.productItem__status {
+.merchantItem__status {
     position: absolute;
     top: 8px;
     left: 8px;

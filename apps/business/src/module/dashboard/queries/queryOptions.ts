@@ -1,12 +1,9 @@
 import { queryOptions } from "@tanstack/react-query";
-import { getMyProducts } from "@/context/product/action/getProducts";
+import { getMyMerchants } from "@/context/merchant/action/getMerchants";
 
-/**
- * Query options for fetching user's products
- */
-export const myProductsQueryOptions = (isDemoMode: boolean) =>
+export const myMerchantsQueryOptions = (isDemoMode: boolean) =>
     queryOptions({
-        queryKey: ["product", "get-mine", isDemoMode ? "demo" : "live"],
-        queryFn: () => getMyProducts(),
-        staleTime: 5 * 60 * 1000, // 5 minutes
+        queryKey: ["merchant", "get-mine", isDemoMode ? "demo" : "live"],
+        queryFn: () => getMyMerchants(isDemoMode),
+        staleTime: 5 * 60 * 1000,
     });

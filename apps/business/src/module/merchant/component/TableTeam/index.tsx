@@ -8,7 +8,7 @@ import { useMemo } from "react";
 import { isAddressEqual, zeroAddress } from "viem";
 import { Badge } from "@/module/common/component/Badge";
 import { Table } from "@/module/common/component/Table";
-import { useHasRoleOnMerchant } from "@/module/common/hook/useHasRoleOnProduct";
+import { useHasRoleOnMerchant } from "@/module/common/hook/useHasRoleOnMerchant";
 import { ButtonAddTeam } from "@/module/merchant/component/ButtonAddTeam";
 import { DeleteTeamMemberModal } from "@/module/merchant/component/TableTeam/Modal";
 import {

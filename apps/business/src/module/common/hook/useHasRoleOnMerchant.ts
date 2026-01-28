@@ -75,3 +75,8 @@ export function useHasRoleOnMerchant({ merchantId }: { merchantId: string }) {
         ...(accessResult ?? defaultAccess),
     };
 }
+
+/**
+ * @deprecated Use useHasRoleOnMerchant instead
+ */
+export const useHasRoleOnProduct = useHasRoleOnMerchant;

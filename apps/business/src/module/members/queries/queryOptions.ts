@@ -1,17 +1,15 @@
 import { queryOptions } from "@tanstack/react-query";
 import {
     type GetMembersParam,
-    getProductMembers,
-} from "@/context/members/action/getProductMembers";
+    getMerchantMembers,
+} from "@/context/members/action/getMerchantMembers";
 
-/**
- * Query options for fetching members with filtering and pagination
- */
-export const membersPageQueryOptions = (filters: GetMembersParam) =>
+export const membersPageQueryOptions = (
+    filters: GetMembersParam,
+    isDemoMode: boolean
+) =>
     queryOptions({
-        queryKey: ["members", "page", filters],
-        queryFn: async () => {
-            return await getProductMembers({ data: filters });
-        },
-        staleTime: 5 * 60 * 1000, // 5 minutes
+        queryKey: ["members", "page", filters, isDemoMode ? "demo" : "live"],
+        queryFn: () => getMerchantMembers(filters, isDemoMode),
+        staleTime: 5 * 60 * 1000,
     });

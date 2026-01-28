@@ -7,7 +7,7 @@ import {
     type TestContext,
     test,
 } from "@/tests/vitest-fixtures";
-import { useHasRoleOnMerchant } from "./useHasRoleOnProduct";
+import { useHasRoleOnMerchant } from "./useHasRoleOnMerchant";
 
 // Mock the business API
 vi.mock("@/context/api/backendClient", () => ({

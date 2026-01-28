@@ -25,7 +25,7 @@ import {
 import type { MerchantNew } from "@/types/Merchant";
 import styles from "./index.module.css";
 
-interface ProductInformationPanelProps {
+interface MerchantInformationPanelProps {
     form: UseFormReturn<MerchantNew>;
     step: number;
     domainError?: string;
@@ -34,14 +34,14 @@ interface ProductInformationPanelProps {
     onOpenChange: (isOpen: boolean) => void;
 }
 
-export function ProductInformationPanel({
+export function MerchantInformationPanel({
     form,
     step,
     domainError,
     onVerifyDomain,
     isOpen,
     onOpenChange,
-}: ProductInformationPanelProps) {
+}: MerchantInformationPanelProps) {
     const domain = form.watch("domain");
     const domainFieldState = form.getFieldState("domain");
 
@@ -281,3 +281,8 @@ export function ProductInformationPanel({
         </PanelAccordion>
     );
 }
+
+/**
+ * @deprecated Use MerchantInformationPanel instead
+ */
+export const ProductInformationPanel = MerchantInformationPanel;

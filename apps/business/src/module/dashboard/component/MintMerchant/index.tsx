@@ -2,15 +2,15 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Head } from "@/module/common/component/Head";
 import { useCheckDomainName } from "@/module/dashboard/hooks/dnsRecordHooks";
-import { useMintMyProduct } from "@/module/dashboard/hooks/useMintMyProduct";
+import { useMintMyMerchant } from "@/module/dashboard/hooks/useMintMyMerchant";
 import { getDefaultStablecoin } from "@/module/dashboard/utils/mintUtils";
 import { FormLayout } from "@/module/forms/Form";
 import type { MerchantNew } from "@/types/Merchant";
-import { ProductInformationPanel } from "./ProductInformationPanel";
+import { MerchantInformationPanel } from "./MerchantInformationPanel";
 import { RegistrationPanel } from "./RegistrationPanel";
 import { ValidationPanel } from "./ValidationPanel";
 
-export function MintProduct() {
+export function MintMerchant() {
     const [step, setStep] = useState(1);
     const [domainError, setDomainError] = useState<string | undefined>();
     const [openAccordion, setOpenAccordion] = useState<string>("product-info");
@@ -46,7 +46,7 @@ export function MintProduct() {
             data: { merchantId } = {},
         },
         infoTxt,
-    } = useMintMyProduct({
+    } = useMintMyMerchant({
         onSuccess: () => {
             setStep(4);
             setOpenAccordion("registration");
@@ -107,7 +107,7 @@ export function MintProduct() {
                 }}
             />
 
-            <ProductInformationPanel
+            <MerchantInformationPanel
                 form={form}
                 step={step}
                 domainError={domainError}
@@ -150,3 +150,8 @@ export function MintProduct() {
         </FormLayout>
     );
 }
+
+/**
+ * @deprecated Use MintMerchant instead
+ */
+export const MintProduct = MintMerchant;

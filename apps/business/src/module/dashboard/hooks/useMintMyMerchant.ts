@@ -88,4 +88,9 @@ export function useRegisterMerchant(
 /**
  * @deprecated Use useRegisterMerchant instead
  */
-export const useMintMyProduct = useRegisterMerchant;
+export const useMintMyMerchant = useRegisterMerchant;
+
+/**
+ * @deprecated Use useMintMyMerchant instead
+ */
+export const useMintMyProduct = useMintMyMerchant;
