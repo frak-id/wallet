@@ -1,5 +1,5 @@
-import type { GetProductInformationReturnType } from "@frak-labs/core-sdk";
-import { useGetProductInformation } from "@frak-labs/react-sdk";
+import type { GetMerchantInformationReturnType } from "@frak-labs/core-sdk";
+import { useGetMerchantInformation } from "@frak-labs/react-sdk";
 import { Panel } from "@/module/common/component/Panel";
 
 export function ProductInfo() {
@@ -7,7 +7,7 @@ export function ProductInfo() {
         data: productInformation,
         error,
         status,
-    } = useGetProductInformation();
+    } = useGetMerchantInformation();
 
     return (
         <Panel variant={"primary"}>
@@ -28,7 +28,7 @@ export function ProductInfo() {
 function InnerStatus({
     info,
 }: {
-    info?: Readonly<GetProductInformationReturnType>;
+    info?: Readonly<GetMerchantInformationReturnType>;
 }) {
     if (!info?.onChainMetadata) {
         return null;
@@ -46,9 +46,6 @@ function InnerStatus({
                 </p>
                 <p>
                     <b>Domain:</b> {info.onChainMetadata.domain}
-                </p>
-                <p>
-                    <b>Types:</b> {info.onChainMetadata.productTypes.join(", ")}
                 </p>
             </div>
             <h4>Active reward</h4>

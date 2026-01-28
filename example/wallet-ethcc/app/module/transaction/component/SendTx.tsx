@@ -1,8 +1,4 @@
-import {
-    addresses,
-    productInteractionManagerAbi,
-    rewarderHubAbi,
-} from "@frak-labs/app-essentials";
+import { addresses, rewarderHubAbi } from "@frak-labs/app-essentials";
 import type {
     ModalRpcStepsResultType,
     SendTransactionModalStepType,
