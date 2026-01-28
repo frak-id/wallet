@@ -31,7 +31,6 @@ export {
 export type {
     BudgetConfig,
     BudgetConsumptionResult,
-    BudgetUsed,
     CalculatedReward,
     CampaignMetadata,
     CampaignRuleDefinition,

@@ -164,6 +164,15 @@ export const BudgetConfigItemSchema = t.Object({
 });
 export type BudgetConfigItem = Static<typeof BudgetConfigItemSchema>;
 
+export const BudgetUsedItemSchema = t.Object({
+    resetAt: t.Optional(t.String()),
+    used: t.Number(),
+});
+export type BudgetUsedItem = Static<typeof BudgetUsedItemSchema>;
+
+export const BudgetUsedSchema = t.Record(t.String(), BudgetUsedItemSchema);
+export type BudgetUsed = Static<typeof BudgetUsedSchema>;
+
 export const BudgetConfigSchema = t.Array(BudgetConfigItemSchema);
 export type BudgetConfig = Static<typeof BudgetConfigSchema>;
 
@@ -200,7 +209,7 @@ export const CampaignResponseSchema = t.Object({
     rule: CampaignRuleDefinitionSchema,
     metadata: t.Union([CampaignMetadataSchema, t.Null()]),
     budgetConfig: t.Union([BudgetConfigSchema, t.Null()]),
-    budgetUsed: t.Union([t.Record(t.String(), t.Unknown()), t.Null()]),
+    budgetUsed: t.Union([BudgetUsedSchema, t.Null()]),
     expiresAt: t.Union([t.String(), t.Null()]),
     publishedAt: t.Union([t.String(), t.Null()]),
     createdAt: t.String(),
