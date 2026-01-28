@@ -13,11 +13,10 @@ export const mobileAuthRoutes = new Elysia({ prefix: "/mobile" })
     .use(sessionContext)
     .post(
         "/code",
-        async ({ walletSession, body: { productId, returnOrigin } }) => {
+        async ({ walletSession, body: { returnOrigin } }) => {
             const result =
                 await AuthContext.services.mobileAuthCode.generateAuthCode({
                     walletAddress: walletSession.address,
-                    productId,
                     returnOrigin,
                 });
             return result;
@@ -33,13 +32,12 @@ export const mobileAuthRoutes = new Elysia({ prefix: "/mobile" })
     )
     .post(
         "/exchange",
-        async ({ body: { authCode, productId }, request }) => {
+        async ({ body: { authCode }, request }) => {
             const requestOrigin = request.headers.get("origin") ?? undefined;
 
             const result =
                 await AuthContext.services.mobileAuthCode.exchangeAuthCode({
                     authCode,
-                    productId,
                     requestOrigin,
                 });
 

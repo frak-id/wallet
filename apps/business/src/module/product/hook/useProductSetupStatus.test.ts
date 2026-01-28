@@ -1,5 +1,5 @@
 import { renderHook, waitFor } from "@testing-library/react";
-import type { Address, Hex } from "viem";
+import type { Address } from "viem";
 import { vi } from "vitest";
 import {
     describe,
@@ -7,23 +7,88 @@ import {
     type TestContext,
     test,
 } from "@/tests/vitest-fixtures";
+import { useGetMerchantBank } from "./useGetMerchantBank";
 import { useGetProductAdministrators } from "./useGetProductAdministrators";
-import { useGetProductFunding } from "./useGetProductFunding";
 import { useProductSetupStatus } from "./useProductSetupStatus";
 
-// Mock the dependencies
 vi.mock("./useGetProductAdministrators", () => ({
     useGetProductAdministrators: vi.fn(),
 }));
 
-vi.mock("./useGetProductFunding", () => ({
-    useGetProductFunding: vi.fn(),
+vi.mock("./useGetMerchantBank", () => ({
+    useGetMerchantBank: vi.fn(),
 }));
 
-describe("useProductSetupStatus", () => {
-    const mockProductId = "0x1234567890123456789012345678901234567890" as Hex;
-    const mockMerchantId = "11111111-1111-1111-1111-111111111111";
+const mockMerchantId = "11111111-1111-1111-1111-111111111111";
 
+const mockBankEmpty = {
+    data: {
+        deployed: true,
+        bankAddress: "0x1" as Address,
+        isManager: true,
+        isOpen: false,
+        tokens: [],
+    },
+    isSuccess: true,
+} as any;
+
+const mockBankWithBalance = {
+    data: {
+        deployed: true,
+        bankAddress: "0x1" as Address,
+        isManager: true,
+        isOpen: false,
+        tokens: [
+            {
+                symbol: "usdc",
+                address: "0x2" as Address,
+                balance: 1000n,
+                allowance: 0n,
+            },
+        ],
+    },
+    isSuccess: true,
+} as any;
+
+const mockBankOpen = {
+    data: {
+        deployed: true,
+        bankAddress: "0x1" as Address,
+        isManager: true,
+        isOpen: true,
+        tokens: [
+            {
+                symbol: "usdc",
+                address: "0x2" as Address,
+                balance: 1000n,
+                allowance: 1000n,
+            },
+        ],
+    },
+    isSuccess: true,
+} as any;
+
+const mockAdminsEmpty = {
+    data: [],
+    isSuccess: true,
+} as any;
+
+const mockAdminsMultiple = {
+    data: [{ isOwner: true }, { isOwner: true }],
+    isSuccess: true,
+} as any;
+
+const mockAdminsSingle = {
+    data: [{ isOwner: true }],
+    isSuccess: true,
+} as any;
+
+function setupMocks(admins: any, bank: any) {
+    vi.mocked(useGetProductAdministrators).mockReturnValue(admins);
+    vi.mocked(useGetMerchantBank).mockReturnValue(bank);
+}
+
+describe("useProductSetupStatus", () => {
     describe("demo mode", () => {
         test("should return mock setup status in demo mode", async ({
             queryWrapper,
@@ -38,22 +103,10 @@ describe("useProductSetupStatus", () => {
                     Date.now() + 1000000
                 );
 
-            // Mock dependencies as successful
-            vi.mocked(useGetProductAdministrators).mockReturnValue({
-                data: [],
-                isSuccess: true,
-            } as any);
-            vi.mocked(useGetProductFunding).mockReturnValue({
-                data: [],
-                isSuccess: true,
-            } as any);
+            setupMocks(mockAdminsEmpty, mockBankEmpty);
 
             const { result } = renderHook(
-                () =>
-                    useProductSetupStatus({
-                        merchantId: mockMerchantId,
-                        productId: mockProductId,
-                    }),
+                () => useProductSetupStatus({ merchantId: mockMerchantId }),
                 { wrapper: queryWrapper.wrapper }
             );
 
@@ -65,7 +118,6 @@ describe("useProductSetupStatus", () => {
             expect(result.current.data?.items).toHaveLength(8);
             expect(result.current.data?.hasWarning).toBe(true);
 
-            // Check that all step keys are present
             const stepKeys = result.current.data?.items.map((item) => item.key);
             expect(stepKeys).toContain("other-admin");
             expect(stepKeys).toContain("interaction-setup");
@@ -90,21 +142,10 @@ describe("useProductSetupStatus", () => {
                     Date.now() + 1000000
                 );
 
-            vi.mocked(useGetProductAdministrators).mockReturnValue({
-                data: [],
-                isSuccess: true,
-            } as any);
-            vi.mocked(useGetProductFunding).mockReturnValue({
-                data: [],
-                isSuccess: true,
-            } as any);
+            setupMocks(mockAdminsEmpty, mockBankEmpty);
 
             const { result } = renderHook(
-                () =>
-                    useProductSetupStatus({
-                        merchantId: mockMerchantId,
-                        productId: mockProductId,
-                    }),
+                () => useProductSetupStatus({ merchantId: mockMerchantId }),
                 { wrapper: queryWrapper.wrapper }
             );
 
@@ -112,7 +153,6 @@ describe("useProductSetupStatus", () => {
                 expect(result.current.isSuccess).toBe(true);
             });
 
-            // Check that merchantId was replaced in URLs
             const teamItem = result.current.data?.items.find(
                 (item) => item.key === "other-admin"
             );
@@ -129,26 +169,10 @@ describe("useProductSetupStatus", () => {
             queryWrapper.client.clear();
             freshAuthStore.getState().clearAuth();
 
-            // Mock multiple administrators
-            vi.mocked(useGetProductAdministrators).mockReturnValue({
-                data: [
-                    { roleDetails: { admin: true } },
-                    { roleDetails: { admin: true } },
-                ],
-                isSuccess: true,
-            } as any);
-
-            vi.mocked(useGetProductFunding).mockReturnValue({
-                data: [],
-                isSuccess: true,
-            } as any);
+            setupMocks(mockAdminsMultiple, mockBankEmpty);
 
             const { result } = renderHook(
-                () =>
-                    useProductSetupStatus({
-                        merchantId: mockMerchantId,
-                        productId: mockProductId,
-                    }),
+                () => useProductSetupStatus({ merchantId: mockMerchantId }),
                 { wrapper: queryWrapper.wrapper }
             );
 
@@ -169,23 +193,10 @@ describe("useProductSetupStatus", () => {
             queryWrapper.client.clear();
             freshAuthStore.getState().clearAuth();
 
-            // Mock single administrator
-            vi.mocked(useGetProductAdministrators).mockReturnValue({
-                data: [{ roleDetails: { admin: true } }],
-                isSuccess: true,
-            } as any);
-
-            vi.mocked(useGetProductFunding).mockReturnValue({
-                data: [],
-                isSuccess: true,
-            } as any);
+            setupMocks(mockAdminsSingle, mockBankEmpty);
 
             const { result } = renderHook(
-                () =>
-                    useProductSetupStatus({
-                        merchantId: mockMerchantId,
-                        productId: mockProductId,
-                    }),
+                () => useProductSetupStatus({ merchantId: mockMerchantId }),
                 { wrapper: queryWrapper.wrapper }
             );
 
@@ -206,22 +217,10 @@ describe("useProductSetupStatus", () => {
             queryWrapper.client.clear();
             freshAuthStore.getState().clearAuth();
 
-            vi.mocked(useGetProductAdministrators).mockReturnValue({
-                data: [],
-                isSuccess: true,
-            } as any);
-
-            vi.mocked(useGetProductFunding).mockReturnValue({
-                data: [],
-                isSuccess: true,
-            } as any);
+            setupMocks(mockAdminsEmpty, mockBankEmpty);
 
             const { result } = renderHook(
-                () =>
-                    useProductSetupStatus({
-                        merchantId: mockMerchantId,
-                        productId: mockProductId,
-                    }),
+                () => useProductSetupStatus({ merchantId: mockMerchantId }),
                 { wrapper: queryWrapper.wrapper }
             );
 
@@ -244,22 +243,10 @@ describe("useProductSetupStatus", () => {
             queryWrapper.client.clear();
             freshAuthStore.getState().clearAuth();
 
-            vi.mocked(useGetProductAdministrators).mockReturnValue({
-                data: [],
-                isSuccess: true,
-            } as any);
-
-            vi.mocked(useGetProductFunding).mockReturnValue({
-                data: [{ balance: 1000n, isDistributing: false }],
-                isSuccess: true,
-            } as any);
+            setupMocks(mockAdminsEmpty, mockBankWithBalance);
 
             const { result } = renderHook(
-                () =>
-                    useProductSetupStatus({
-                        merchantId: mockMerchantId,
-                        productId: mockProductId,
-                    }),
+                () => useProductSetupStatus({ merchantId: mockMerchantId }),
                 { wrapper: queryWrapper.wrapper }
             );
 
@@ -273,29 +260,17 @@ describe("useProductSetupStatus", () => {
             expect(fundingItem?.isGood).toBe(true);
         });
 
-        test("should detect no funding when balance = 0 (hasFunding = false)", async ({
+        test("should detect no funding when no tokens have balance (hasFunding = false)", async ({
             queryWrapper,
             freshAuthStore,
         }: TestContext) => {
             queryWrapper.client.clear();
             freshAuthStore.getState().clearAuth();
 
-            vi.mocked(useGetProductAdministrators).mockReturnValue({
-                data: [],
-                isSuccess: true,
-            } as any);
-
-            vi.mocked(useGetProductFunding).mockReturnValue({
-                data: [{ balance: 0n, isDistributing: false }],
-                isSuccess: true,
-            } as any);
+            setupMocks(mockAdminsEmpty, mockBankEmpty);
 
             const { result } = renderHook(
-                () =>
-                    useProductSetupStatus({
-                        merchantId: mockMerchantId,
-                        productId: mockProductId,
-                    }),
+                () => useProductSetupStatus({ merchantId: mockMerchantId }),
                 { wrapper: queryWrapper.wrapper }
             );
 
@@ -309,29 +284,17 @@ describe("useProductSetupStatus", () => {
             expect(fundingItem?.isGood).toBe(false);
         });
 
-        test("should detect running bank (hasRunningBank = true)", async ({
+        test("should detect running bank when isOpen = true", async ({
             queryWrapper,
             freshAuthStore,
         }: TestContext) => {
             queryWrapper.client.clear();
             freshAuthStore.getState().clearAuth();
 
-            vi.mocked(useGetProductAdministrators).mockReturnValue({
-                data: [],
-                isSuccess: true,
-            } as any);
-
-            vi.mocked(useGetProductFunding).mockReturnValue({
-                data: [{ balance: 1000n, isDistributing: true }],
-                isSuccess: true,
-            } as any);
+            setupMocks(mockAdminsEmpty, mockBankOpen);
 
             const { result } = renderHook(
-                () =>
-                    useProductSetupStatus({
-                        merchantId: mockMerchantId,
-                        productId: mockProductId,
-                    }),
+                () => useProductSetupStatus({ merchantId: mockMerchantId }),
                 { wrapper: queryWrapper.wrapper }
             );
 
@@ -345,29 +308,17 @@ describe("useProductSetupStatus", () => {
             expect(runningBankItem?.isGood).toBe(true);
         });
 
-        test("should detect no running bank (hasRunningBank = false)", async ({
+        test("should detect no running bank when isOpen = false", async ({
             queryWrapper,
             freshAuthStore,
         }: TestContext) => {
             queryWrapper.client.clear();
             freshAuthStore.getState().clearAuth();
 
-            vi.mocked(useGetProductAdministrators).mockReturnValue({
-                data: [],
-                isSuccess: true,
-            } as any);
-
-            vi.mocked(useGetProductFunding).mockReturnValue({
-                data: [{ balance: 1000n, isDistributing: false }],
-                isSuccess: true,
-            } as any);
+            setupMocks(mockAdminsEmpty, mockBankWithBalance);
 
             const { result } = renderHook(
-                () =>
-                    useProductSetupStatus({
-                        merchantId: mockMerchantId,
-                        productId: mockProductId,
-                    }),
+                () => useProductSetupStatus({ merchantId: mockMerchantId }),
                 { wrapper: queryWrapper.wrapper }
             );
 
@@ -390,22 +341,10 @@ describe("useProductSetupStatus", () => {
             queryWrapper.client.clear();
             freshAuthStore.getState().clearAuth();
 
-            vi.mocked(useGetProductAdministrators).mockReturnValue({
-                data: [],
-                isSuccess: true,
-            } as any);
-
-            vi.mocked(useGetProductFunding).mockReturnValue({
-                data: [],
-                isSuccess: true,
-            } as any);
+            setupMocks(mockAdminsEmpty, mockBankEmpty);
 
             const { result } = renderHook(
-                () =>
-                    useProductSetupStatus({
-                        merchantId: mockMerchantId,
-                        productId: mockProductId,
-                    }),
+                () => useProductSetupStatus({ merchantId: mockMerchantId }),
                 { wrapper: queryWrapper.wrapper }
             );
 
@@ -413,7 +352,6 @@ describe("useProductSetupStatus", () => {
                 expect(result.current.isSuccess).toBe(true);
             });
 
-            // Should have warnings since most steps are not complete
             expect(result.current.data?.hasWarning).toBe(true);
         });
 
@@ -424,26 +362,10 @@ describe("useProductSetupStatus", () => {
             queryWrapper.client.clear();
             freshAuthStore.getState().clearAuth();
 
-            // Mock optimal setup: multiple admins, funded, distributing
-            vi.mocked(useGetProductAdministrators).mockReturnValue({
-                data: [
-                    { roleDetails: { admin: true } },
-                    { roleDetails: { admin: true } },
-                ],
-                isSuccess: true,
-            } as any);
-
-            vi.mocked(useGetProductFunding).mockReturnValue({
-                data: [{ balance: 1000n, isDistributing: true }],
-                isSuccess: true,
-            } as any);
+            setupMocks(mockAdminsMultiple, mockBankOpen);
 
             const { result } = renderHook(
-                () =>
-                    useProductSetupStatus({
-                        merchantId: mockMerchantId,
-                        productId: mockProductId,
-                    }),
+                () => useProductSetupStatus({ merchantId: mockMerchantId }),
                 { wrapper: queryWrapper.wrapper }
             );
 
@@ -451,8 +373,6 @@ describe("useProductSetupStatus", () => {
                 expect(result.current.isSuccess).toBe(true);
             });
 
-            // Still has warning due to placeholder steps (interaction, webhook, campaign)
-            // But at least funding and admins should be good
             const fundingItem = result.current.data?.items.find(
                 (item) => item.key === "add-funding"
             );
@@ -472,58 +392,22 @@ describe("useProductSetupStatus", () => {
             queryWrapper.client.clear();
             freshAuthStore.getState().clearAuth();
 
-            // Mock dependencies as not successful yet
             vi.mocked(useGetProductAdministrators).mockReturnValue({
                 data: undefined,
                 isSuccess: false,
             } as any);
-
-            vi.mocked(useGetProductFunding).mockReturnValue({
+            vi.mocked(useGetMerchantBank).mockReturnValue({
                 data: undefined,
                 isSuccess: false,
             } as any);
 
             const { result } = renderHook(
-                () =>
-                    useProductSetupStatus({
-                        merchantId: mockMerchantId,
-                        productId: mockProductId,
-                    }),
+                () => useProductSetupStatus({ merchantId: mockMerchantId }),
                 { wrapper: queryWrapper.wrapper }
             );
 
-            // Should be pending since dependencies not loaded
             expect(result.current.isPending).toBe(true);
             expect(result.current.data).toBeUndefined();
-        });
-
-        test("should be disabled when no productId provided", async ({
-            queryWrapper,
-            freshAuthStore,
-        }: TestContext) => {
-            queryWrapper.client.clear();
-            freshAuthStore.getState().clearAuth();
-
-            vi.mocked(useGetProductAdministrators).mockReturnValue({
-                data: [],
-                isSuccess: true,
-            } as any);
-
-            vi.mocked(useGetProductFunding).mockReturnValue({
-                data: [],
-                isSuccess: true,
-            } as any);
-
-            const { result } = renderHook(
-                () =>
-                    useProductSetupStatus({
-                        merchantId: mockMerchantId,
-                        productId: undefined as unknown as Hex,
-                    }),
-                { wrapper: queryWrapper.wrapper }
-            );
-
-            expect(result.current.isPending).toBe(true);
         });
 
         test("should be disabled when no merchantId provided", async ({
@@ -533,21 +417,12 @@ describe("useProductSetupStatus", () => {
             queryWrapper.client.clear();
             freshAuthStore.getState().clearAuth();
 
-            vi.mocked(useGetProductAdministrators).mockReturnValue({
-                data: [],
-                isSuccess: true,
-            } as any);
-
-            vi.mocked(useGetProductFunding).mockReturnValue({
-                data: [],
-                isSuccess: true,
-            } as any);
+            setupMocks(mockAdminsEmpty, mockBankEmpty);
 
             const { result } = renderHook(
                 () =>
                     useProductSetupStatus({
                         merchantId: undefined as unknown as string,
-                        productId: mockProductId,
                     }),
                 { wrapper: queryWrapper.wrapper }
             );
@@ -564,22 +439,10 @@ describe("useProductSetupStatus", () => {
             queryWrapper.client.clear();
             freshAuthStore.getState().clearAuth();
 
-            vi.mocked(useGetProductAdministrators).mockReturnValue({
-                data: [],
-                isSuccess: true,
-            } as any);
-
-            vi.mocked(useGetProductFunding).mockReturnValue({
-                data: [],
-                isSuccess: true,
-            } as any);
+            setupMocks(mockAdminsEmpty, mockBankEmpty);
 
             const { result } = renderHook(
-                () =>
-                    useProductSetupStatus({
-                        merchantId: mockMerchantId,
-                        productId: mockProductId,
-                    }),
+                () => useProductSetupStatus({ merchantId: mockMerchantId }),
                 { wrapper: queryWrapper.wrapper }
             );
 
@@ -587,7 +450,6 @@ describe("useProductSetupStatus", () => {
                 expect(result.current.isSuccess).toBe(true);
             });
 
-            // Check that each step has all required fields
             for (const item of result.current.data?.items ?? []) {
                 expect(item.key).toBeTruthy();
                 expect(item.name).toBeTruthy();

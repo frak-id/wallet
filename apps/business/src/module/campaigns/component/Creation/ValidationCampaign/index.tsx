@@ -1,139 +1,71 @@
-import { useSendTransactionAction } from "@frak-labs/react-sdk";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { tryit } from "radash";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useForm } from "react-hook-form";
-import type { Hex, TransactionReceipt } from "viem";
-import { waitForTransactionReceipt } from "viem/actions";
-import { viemClient } from "@/context/blockchain/provider";
-import {
-    saveCampaignDraft,
-    updateCampaignState,
-} from "@/context/campaigns/action/createCampaign";
-import { getCreationData } from "@/context/campaigns/action/createOnChain";
 import { Actions } from "@/module/campaigns/component/Actions";
 import { ButtonCancel } from "@/module/campaigns/component/Creation/NewCampaign/ButtonCancel";
 import { FormCheck } from "@/module/campaigns/component/Creation/ValidationCampaign/FormCheck";
 import { useSaveCampaign } from "@/module/campaigns/hook/useSaveCampaign";
+import { useStatusTransition } from "@/module/campaigns/hook/useStatusTransition";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { Head } from "@/module/common/component/Head";
 import { Panel } from "@/module/common/component/Panel";
 import { Form, FormLayout } from "@/module/forms/Form";
-import { campaignStore } from "@/stores/campaignStore";
-import { currencyStore } from "@/stores/currencyStore";
-import type { Campaign } from "@/types/Campaign";
+import { type CampaignDraft, campaignStore } from "@/stores/campaignStore";
 import styles from "./index.module.css";
 
 export function ValidationCampaign() {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
-    const campaign = campaignStore((state) => state.campaign);
-    const setCampaign = campaignStore((state) => state.setCampaign);
-    const campaignSuccess = campaignStore((state) => state.success);
-    const setSuccess = campaignStore((state) => state.setSuccess);
-    const isClosing = campaignStore((state) => state.isClosing);
-    const preferredCurrency = currencyStore((state) => state.preferredCurrency);
-    const [txHash, setTxHash] = useState<Hex | undefined>();
-    const save = useSaveCampaign();
     const isDemoMode = useIsDemoMode();
 
-    // Hook used to send transaction via the nexus wallet
-    const { mutateAsync: sendTransaction, isPending: isPendingTransaction } =
-        useSendTransactionAction();
+    const draft = campaignStore((s) => s.draft);
+    const isSuccess = campaignStore((s) => s.isSuccess);
+    const setSuccess = campaignStore((s) => s.setSuccess);
+    const reset = campaignStore((s) => s.reset);
 
-    // Perform the campaign creation
-    const { mutate: createCampaign, isPending: isPendingCreateCampaign } =
-        useMutation({
-            mutationKey: ["campaign", "create"],
-            mutationFn: async (campaign: Campaign) => {
-                // In demo mode, just simulate success
-                if (isDemoMode) {
-                    await new Promise((resolve) => setTimeout(resolve, 1000));
-                    setSuccess(true);
-                    return;
-                }
+    const saveCampaign = useSaveCampaign();
+    const { mutateAsync: publishCampaign } = useStatusTransition();
 
-                const campaignWithCurrency = {
-                    ...campaign,
-                    setupCurrency: preferredCurrency,
-                };
-                // Save it in the database
-                const { id } = await saveCampaignDraft({
-                    data: { campaign: campaignWithCurrency },
-                });
-                if (!id) {
-                    throw new Error("Unable to save campaign draft");
-                }
-                const newCampaign = {
-                    ...campaignWithCurrency,
-                    id,
-                };
-                // Update the atom
-                setCampaign(newCampaign);
-                // Build the creation data
-                const { tx } = await getCreationData({
-                    data: { campaign: newCampaign },
-                });
+    const form = useForm<CampaignDraft>({
+        values: useMemo(() => draft, [draft]),
+    });
 
-                // Send the campaign creation transaction
-                const [, result] = await tryit(() =>
-                    sendTransaction({
-                        metadata: {
-                            i18n: {
-                                fr: {
-                                    "sdk.modal.sendTransaction.description": `Créer la campagne ${campaign.title}`,
-                                },
-                                en: {
-                                    "sdk.modal.sendTransaction.description": `Create campaign ${campaign.title}`,
-                                },
-                            },
-                        },
-                        tx,
-                    })
-                )();
-                await updateCampaignState({
-                    data: {
-                        campaignId: id,
-                        txHash: result?.hash,
-                    },
-                });
+    const { mutate: saveAndPublish, isPending } = useMutation({
+        mutationKey: ["campaign", "save-publish"],
+        mutationFn: async (values: CampaignDraft) => {
+            if (isDemoMode) {
+                await new Promise((r) => setTimeout(r, 1000));
+                return;
+            }
 
-                if (!result) return;
-                setTxHash(result?.hash);
-                setSuccess(true);
-            },
-        });
+            const saved = await saveCampaign.mutateAsync(values);
 
-    const {
-        isLoading: isWaitingForFinalisedCreation,
-        data: transactionReceipt,
-    } = useQuery({
-        queryKey: ["campaign", "wait-for-finalised-deployment"],
-        enabled: !!txHash,
-        queryFn: async () => {
-            if (!txHash) return null;
-            // We are waiting for the block with the tx hash to have at least 32 confirmations,
-            //  it will leave the time for the indexer to process it + the time for the block to be finalised
-            const receipt = await waitForTransactionReceipt(viemClient, {
-                hash: txHash,
-                confirmations: 32,
-                retryCount: 32,
+            if (!saved?.id) throw new Error("Failed to save campaign");
+
+            await publishCampaign({
+                merchantId: values.merchantId,
+                campaignId: saved.id,
+                action: "publish",
             });
-
-            // Invalidate campaigns list to show the newly created campaign
-            await queryClient.invalidateQueries({
-                queryKey: ["campaigns"],
-                exact: false,
-            });
-
-            return receipt;
+        },
+        onSuccess: async () => {
+            setSuccess(true);
+            await queryClient.invalidateQueries({ queryKey: ["campaigns"] });
         },
     });
 
-    const form = useForm<Campaign>({
-        values: useMemo(() => campaign, [campaign]),
-    });
+    function handleSubmit(values: CampaignDraft) {
+        if (isSuccess) {
+            reset();
+            navigate({ to: "/campaigns/list" });
+            return;
+        }
+
+        saveAndPublish(values);
+    }
+
+    const isLoading = isPending || saveCampaign.isPending;
 
     return (
         <FormLayout>
@@ -141,89 +73,28 @@ export function ValidationCampaign() {
                 title={{ content: "Campaign Validation", size: "small" }}
                 rightSection={
                     <ButtonCancel
-                        onClick={() => form.reset(campaign)}
-                        disabled={
-                            campaignSuccess || isWaitingForFinalisedCreation
-                        }
+                        onClick={() => form.reset(draft)}
+                        disabled={isSuccess || isLoading}
                     />
                 }
             />
             <Form {...form}>
-                <form
-                    onSubmit={form.handleSubmit(async (campaign) => {
-                        // If the campaign is already a success, we don't need to do anything
-                        if (campaignSuccess && !isWaitingForFinalisedCreation) {
-                            navigate({ to: "/campaigns/list" });
-                            return;
-                        }
-
-                        // If the user click on close button, we save it and return
-                        if (isClosing) {
-                            await save(campaign);
-                            return;
-                        }
-
-                        // Otherwise, we create the campaign
-                        createCampaign(campaign);
-                    })}
-                >
-                    {!campaignSuccess && <FormCheck {...form} />}
-                    <CampaignSuccessInfo
-                        txHash={txHash}
-                        isCreated={campaignSuccess}
-                        isWaitingForFinalisedCreation={
-                            isWaitingForFinalisedCreation
-                        }
-                        receipt={transactionReceipt}
-                    />
-                    <Actions
-                        isLoading={
-                            isPendingTransaction ||
-                            isPendingCreateCampaign ||
-                            isWaitingForFinalisedCreation
-                        }
-                    />
+                <form onSubmit={form.handleSubmit(handleSubmit)}>
+                    {!isSuccess && <FormCheck />}
+                    {isSuccess && <SuccessMessage />}
+                    <Actions isLoading={isLoading} />
                 </form>
             </Form>
         </FormLayout>
     );
 }
 
-/**
- * If created but waiting for finalised, show a spinner
- *  Once finalised and success, show txHash + success message
- */
-function CampaignSuccessInfo({
-    txHash,
-    isCreated,
-    isWaitingForFinalisedCreation,
-    receipt,
-}: {
-    txHash?: Hex;
-    isCreated: boolean;
-    isWaitingForFinalisedCreation: boolean;
-    receipt?: TransactionReceipt | null;
-}) {
-    if (!isCreated) return null;
-
-    if (isCreated && isWaitingForFinalisedCreation && !receipt) {
-        return (
-            <Panel title="Campaign creation in progress">
-                <p>
-                    Setting all the right blockchain data
-                    <span className={"dotsLoading"}>...</span>
-                </p>
-            </Panel>
-        );
-    }
-
+function SuccessMessage() {
     return (
-        <Panel title="Campaign creation success">
+        <Panel title="Campaign published">
             <p className={styles.validationCampaign__message}>
-                Your campaign was successfully created !
+                Your campaign was successfully created and published!
             </p>
-            <br />
-            {txHash && <p>Transaction hash: {txHash}</p>}
         </Panel>
     );
 }

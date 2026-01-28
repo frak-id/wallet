@@ -1,6 +1,6 @@
-import type { Budget } from "@/types/Campaign";
+export type BudgetType = "daily" | "weekly" | "monthly" | "global";
 
-const capPeriods: Record<Budget, number> = {
+const capPeriods: Record<BudgetType, number> = {
     daily: 24 * 60 * 60,
     weekly: 7 * 24 * 60 * 60,
     monthly: 30 * 24 * 60 * 60,
@@ -11,7 +11,7 @@ const capPeriods: Record<Budget, number> = {
  * Get the cap period for a given budget type
  * @param type
  */
-export function getCapPeriod(type?: "" | Budget) {
+export function getCapPeriod(type?: "" | BudgetType | string) {
     if (!type) return 0;
-    return capPeriods[type] || 0;
+    return capPeriods[type as BudgetType] || 0;
 }

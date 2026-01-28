@@ -1,7 +1,6 @@
 import { isTauri } from "@frak-labs/app-essentials/utils/platform";
 import { sessionStore } from "@frak-labs/wallet-shared";
 import { useCallback, useState } from "react";
-import type { Hex } from "viem";
 import { useGenerateMobileAuthCode } from "./useGenerateMobileAuthCode";
 
 type MobileLoginRedirectParams = {

@@ -1,11 +1,11 @@
-import { useEffect, useMemo } from "react";
+import { useNavigate } from "@tanstack/react-router";
+import { useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { Actions } from "@/module/campaigns/component/Actions";
 import { ButtonCancel } from "@/module/campaigns/component/Creation/NewCampaign/ButtonCancel";
-import { FormBank } from "@/module/campaigns/component/Creation/NewCampaign/FormBank";
 import { FormBudget } from "@/module/campaigns/component/Creation/NewCampaign/FormBudget";
 import { FormGoals } from "@/module/campaigns/component/Creation/NewCampaign/FormGoals";
-import { FormProduct } from "@/module/campaigns/component/Creation/NewCampaign/FormProduct";
+import { FormMerchant } from "@/module/campaigns/component/Creation/NewCampaign/FormMerchant";
 import { FormSchedule } from "@/module/campaigns/component/Creation/NewCampaign/FormSchedule";
 import { FormSpecialAdvertising } from "@/module/campaigns/component/Creation/NewCampaign/FormSpecialAdvertising";
 import { FormTerritory } from "@/module/campaigns/component/Creation/NewCampaign/FormTerritory";
@@ -13,64 +13,45 @@ import { FormTitle } from "@/module/campaigns/component/Creation/NewCampaign/For
 import { useSaveCampaign } from "@/module/campaigns/hook/useSaveCampaign";
 import { Head } from "@/module/common/component/Head";
 import { Form, FormLayout } from "@/module/forms/Form";
-import { campaignStore } from "@/stores/campaignStore";
-import type { Campaign } from "@/types/Campaign";
+import { type CampaignDraft, campaignStore } from "@/stores/campaignStore";
 
 export function NewCampaign({ title }: { title: string }) {
-    const campaign = campaignStore((state) => state.campaign);
-    const campaignSuccess = campaignStore((state) => state.success);
-    const reset = campaignStore((state) => state.reset);
-    const setIsClosing = campaignStore((state) => state.setIsClosing);
+    const navigate = useNavigate();
+    const draft = campaignStore((s) => s.draft);
+    const updateDraft = campaignStore((s) => s.updateDraft);
     const saveCampaign = useSaveCampaign();
 
-    /**
-     * Reset campaign atom when campaign was in success
-     */
-    useEffect(() => {
-        if (campaignSuccess) {
-            reset();
-        }
-        setIsClosing(false);
-    }, [campaignSuccess, reset, setIsClosing]);
-
-    const form = useForm<Campaign>({
-        values: useMemo(() => campaign, [campaign]),
+    const form = useForm<CampaignDraft>({
+        values: useMemo(() => draft, [draft]),
     });
 
-    /**
-     * Populate the form with campaign atom
-     */
-    useEffect(() => {
-        form.reset(campaign);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [campaign]);
-
-    async function onSubmit(values: Campaign) {
-        await saveCampaign(values);
+    async function onSubmit(values: CampaignDraft) {
+        updateDraft(() => values);
+        const saved = await saveCampaign.mutateAsync(values);
+        navigate({
+            to: "/campaigns/draft/$campaignId/metrics",
+            params: { campaignId: saved.id },
+        });
     }
 
     return (
         <FormLayout>
             <Head
-                title={{
-                    content: title,
-                    size: "small",
-                }}
+                title={{ content: title, size: "small" }}
                 rightSection={
-                    <ButtonCancel onClick={() => form.reset(campaign)} />
+                    <ButtonCancel onClick={() => form.reset(draft)} />
                 }
             />
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)}>
-                    <FormTitle {...form} />
-                    <FormProduct />
-                    <FormBank />
-                    <FormGoals {...form} />
-                    <FormSpecialAdvertising {...form} />
+                    <FormTitle />
+                    <FormMerchant />
+                    <FormGoals />
+                    <FormSpecialAdvertising />
                     <FormBudget />
-                    <FormTerritory {...form} />
-                    <FormSchedule {...form} />
-                    <Actions />
+                    <FormTerritory />
+                    <FormSchedule />
+                    <Actions isLoading={saveCampaign.isPending} />
                 </form>
             </Form>
         </FormLayout>

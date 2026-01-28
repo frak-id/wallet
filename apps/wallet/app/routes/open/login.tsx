@@ -1,7 +1,6 @@
 import { Spinner } from "@frak-labs/ui/component/Spinner";
 import { HandleErrors } from "@frak-labs/wallet-shared";
 import { createFileRoute } from "@tanstack/react-router";
-import { isHex } from "viem";
 import { Grid } from "@/module/common/component/Grid";
 import { OpenLoginFlow } from "@/module/open-login/component/OpenLoginFlow";
 

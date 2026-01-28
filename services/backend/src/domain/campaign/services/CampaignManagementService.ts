@@ -44,11 +44,6 @@ export class CampaignManagementService {
     ) {}
 
     async create(input: CampaignCreateInput): Promise<CampaignResult> {
-        const validationError = this.validateRuleDefinition(input.rule);
-        if (validationError) {
-            return { success: false, error: validationError };
-        }
-
         const campaign = await this.campaignRuleRepository.create({
             merchantId: input.merchantId,
             name: input.name,
@@ -200,7 +195,11 @@ export class CampaignManagementService {
         }
 
         if (action === "publish") {
-            const validationError = this.validateForPublish(campaign);
+            let validationError = this.validateForPublish(campaign);
+            if (validationError) {
+                return { success: false, error: validationError };
+            }
+            validationError = this.validateRuleDefinition(campaign.rule);
             if (validationError) {
                 return { success: false, error: validationError };
             }

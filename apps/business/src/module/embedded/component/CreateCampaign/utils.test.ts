@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { createCampaignDraft, extractSearchParams } from "./utils";
+import { buildCampaignRule, extractSearchParams } from "./utils";
 
 const mockMerchantId = "test-merchant-uuid-123";
 
@@ -22,13 +22,15 @@ describe("CreateCampaign utils", () => {
                     bankId: "0x1234567890123456789012345678901234567890",
                     domain: "example.com",
                     merchantId: mockMerchantId,
-                    budget: {
-                        type: "weekly",
-                        maxEuroDaily: 1000,
-                    },
+                    budgetConfig: [
+                        {
+                            label: "weekly",
+                            durationInSeconds: 7 * 24 * 60 * 60,
+                            amount: 1000,
+                        },
+                    ],
                     cacBrut: 10,
                     ratio: 50,
-                    productId: expect.any(String),
                     setupCurrency: undefined,
                 });
             });
@@ -44,10 +46,13 @@ describe("CreateCampaign utils", () => {
                     mb: "5000",
                 });
 
-                expect(result.budget).toEqual({
-                    type: "monthly",
-                    maxEuroDaily: 5000,
-                });
+                expect(result.budgetConfig).toEqual([
+                    {
+                        label: "monthly",
+                        durationInSeconds: 30 * 24 * 60 * 60,
+                        amount: 5000,
+                    },
+                ]);
             });
 
             test("should extract params with global budget", () => {
@@ -61,10 +66,13 @@ describe("CreateCampaign utils", () => {
                     gb: "10000",
                 });
 
-                expect(result.budget).toEqual({
-                    type: "global",
-                    maxEuroDaily: 10000,
-                });
+                expect(result.budgetConfig).toEqual([
+                    {
+                        label: "global",
+                        durationInSeconds: null,
+                        amount: 10000,
+                    },
+                ]);
             });
 
             test("should extract params with setup currency (eur)", () => {
@@ -126,32 +134,6 @@ describe("CreateCampaign utils", () => {
 
                 expect(result.setupCurrency).toBe("raw");
             });
-
-            test("should remove www. prefix from domain when computing productId", () => {
-                const resultWithWww = extractSearchParams({
-                    n: "Test",
-                    bid: "0x1234567890123456789012345678901234567890",
-                    d: "www.example.com",
-                    mid: mockMerchantId,
-                    cac: "10",
-                    r: "50",
-                    wb: "1000",
-                });
-
-                const resultWithoutWww = extractSearchParams({
-                    n: "Test",
-                    bid: "0x1234567890123456789012345678901234567890",
-                    d: "example.com",
-                    mid: mockMerchantId,
-                    cac: "10",
-                    r: "50",
-                    wb: "1000",
-                });
-
-                expect(resultWithWww.productId).toBe(
-                    resultWithoutWww.productId
-                );
-            });
         });
 
         describe("validation errors", () => {
@@ -160,20 +142,6 @@ describe("CreateCampaign utils", () => {
                     extractSearchParams({
                         n: "",
                         bid: "0x1234567890123456789012345678901234567890",
-                        d: "example.com",
-                        mid: mockMerchantId,
-                        cac: "10",
-                        r: "50",
-                        wb: "1000",
-                    })
-                ).toThrow("Missing required parameters");
-            });
-
-            test("should throw error when bankId is missing", () => {
-                expect(() =>
-                    extractSearchParams({
-                        n: "Test",
-                        bid: "",
                         d: "example.com",
                         mid: mockMerchantId,
                         cac: "10",
@@ -223,20 +191,6 @@ describe("CreateCampaign utils", () => {
                         wb: "1000",
                     })
                 ).toThrow("Missing required parameters");
-            });
-
-            test("should throw error when bankId is invalid", () => {
-                expect(() =>
-                    extractSearchParams({
-                        n: "Test",
-                        bid: "invalid-address",
-                        d: "example.com",
-                        mid: mockMerchantId,
-                        cac: "10",
-                        r: "50",
-                        wb: "1000",
-                    })
-                ).toThrow("Invalid bank id");
             });
 
             test("should throw error when cacBrut is not a number", () => {
@@ -334,7 +288,7 @@ describe("CreateCampaign utils", () => {
                         cac: "10",
                         r: "50",
                     })
-                ).toThrow("Missing required parameters");
+                ).toThrow("Missing required budget parameters");
             });
 
             test("should throw error when multiple budgets are provided", () => {
@@ -354,185 +308,51 @@ describe("CreateCampaign utils", () => {
         });
     });
 
-    describe("createCampaignDraft", () => {
-        test("should create campaign draft with weekly budget", () => {
-            const campaign = createCampaignDraft({
-                name: "Test Campaign",
-                bankId: "0x1234567890123456789012345678901234567890",
-                merchantId: mockMerchantId,
-                productId:
-                    "0xabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcd",
-                budget: {
-                    type: "weekly",
-                    maxEuroDaily: 1000,
-                },
-                cacBrut: 10,
-                ratio: 50,
-            });
+    describe("buildCampaignRule", () => {
+        test("should build rule with 50/50 split", () => {
+            const rule = buildCampaignRule({ cacBrut: 10, ratio: 50 });
 
-            expect(campaign).toEqual({
-                title: "Test Campaign",
-                merchantId: mockMerchantId,
-                productId:
-                    "0xabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcd",
-                type: "sales",
-                specialCategories: [],
-                budget: {
-                    type: "weekly",
-                    maxEuroDaily: 1000,
-                },
-                territories: ["FR", "BE", "SH", "GB", "US"],
-                bank: "0x1234567890123456789012345678901234567890",
-                scheduled: {
-                    dateStart: expect.any(Date),
-                },
-                rewardChaining: {
-                    userPercent: 0.5,
-                },
-                triggers: {
-                    started: {
-                        cac: 10,
-                    },
-                },
-                setupCurrency: "raw",
+            expect(rule.trigger).toBe("purchase");
+            expect(rule.conditions).toEqual([]);
+            expect(rule.rewards).toHaveLength(2);
+            expect(rule.rewards[0]).toEqual({
+                recipient: "referrer",
+                type: "token",
+                amountType: "fixed",
+                amount: 5,
+                description: "Referrer reward",
+            });
+            expect(rule.rewards[1]).toEqual({
+                recipient: "referee",
+                type: "token",
+                amountType: "fixed",
+                amount: 5,
+                description: "Referee reward",
             });
         });
 
-        test("should create campaign draft with monthly budget", () => {
-            const campaign = createCampaignDraft({
-                name: "Test",
-                bankId: "0x1234567890123456789012345678901234567890",
-                merchantId: mockMerchantId,
-                productId:
-                    "0xabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcd",
-                budget: {
-                    type: "monthly",
-                    maxEuroDaily: 5000,
-                },
-                cacBrut: 15,
-                ratio: 60,
-            });
+        test("should build rule with 100% referrer", () => {
+            const rule = buildCampaignRule({ cacBrut: 10, ratio: 100 });
 
-            expect(campaign.budget.type).toBe("monthly");
-            expect(campaign.rewardChaining?.userPercent).toBe(0.4);
+            expect(rule.rewards).toHaveLength(1);
+            expect(rule.rewards[0]?.recipient).toBe("referrer");
+            expect(rule.rewards[0]).toHaveProperty("amount", 10);
         });
 
-        test("should create campaign draft with global budget", () => {
-            const campaign = createCampaignDraft({
-                name: "Test",
-                bankId: "0x1234567890123456789012345678901234567890",
-                merchantId: mockMerchantId,
-                productId:
-                    "0xabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcd",
-                budget: {
-                    type: "global",
-                    maxEuroDaily: 10000,
-                },
-                cacBrut: 20,
-                ratio: 70,
-            });
+        test("should build rule with 0% referrer (100% referee)", () => {
+            const rule = buildCampaignRule({ cacBrut: 10, ratio: 0 });
 
-            expect(campaign.budget.type).toBe("global");
-            expect(campaign.rewardChaining?.userPercent).toBeCloseTo(0.3);
+            expect(rule.rewards).toHaveLength(1);
+            expect(rule.rewards[0]?.recipient).toBe("referee");
+            expect(rule.rewards[0]).toHaveProperty("amount", 10);
         });
 
-        test("should use custom setupCurrency when provided", () => {
-            const campaign = createCampaignDraft({
-                name: "Test",
-                bankId: "0x1234567890123456789012345678901234567890",
-                merchantId: mockMerchantId,
-                productId:
-                    "0xabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcd",
-                budget: {
-                    type: "weekly",
-                    maxEuroDaily: 1000,
-                },
-                cacBrut: 10,
-                ratio: 50,
-                setupCurrency: "eur",
-            });
+        test("should handle non-round ratio splits", () => {
+            const rule = buildCampaignRule({ cacBrut: 10, ratio: 70 });
 
-            expect(campaign.setupCurrency).toBe("eur");
-        });
-
-        test("should default setupCurrency to raw when not provided", () => {
-            const campaign = createCampaignDraft({
-                name: "Test",
-                bankId: "0x1234567890123456789012345678901234567890",
-                merchantId: mockMerchantId,
-                productId:
-                    "0xabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcd",
-                budget: {
-                    type: "weekly",
-                    maxEuroDaily: 1000,
-                },
-                cacBrut: 10,
-                ratio: 50,
-            });
-
-            expect(campaign.setupCurrency).toBe("raw");
-        });
-
-        test("should calculate userPercent correctly", () => {
-            const campaign1 = createCampaignDraft({
-                name: "Test",
-                bankId: "0x1234567890123456789012345678901234567890",
-                merchantId: mockMerchantId,
-                productId:
-                    "0xabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcd",
-                budget: { type: "weekly", maxEuroDaily: 1000 },
-                cacBrut: 10,
-                ratio: 0,
-            });
-            expect(campaign1.rewardChaining?.userPercent).toBe(1);
-
-            const campaign2 = createCampaignDraft({
-                name: "Test",
-                bankId: "0x1234567890123456789012345678901234567890",
-                merchantId: mockMerchantId,
-                productId:
-                    "0xabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcd",
-                budget: { type: "weekly", maxEuroDaily: 1000 },
-                cacBrut: 10,
-                ratio: 100,
-            });
-            expect(campaign2.rewardChaining?.userPercent).toBe(0);
-        });
-
-        test("should always set type to sales", () => {
-            const campaign = createCampaignDraft({
-                name: "Test",
-                bankId: "0x1234567890123456789012345678901234567890",
-                merchantId: mockMerchantId,
-                productId:
-                    "0xabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcd",
-                budget: { type: "weekly", maxEuroDaily: 1000 },
-                cacBrut: 10,
-                ratio: 50,
-            });
-
-            expect(campaign.type).toBe("sales");
-        });
-
-        test("should set correct territories", () => {
-            const campaign = createCampaignDraft({
-                name: "Test",
-                bankId: "0x1234567890123456789012345678901234567890",
-                merchantId: mockMerchantId,
-                productId:
-                    "0xabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcd",
-                budget: { type: "weekly", maxEuroDaily: 1000 },
-                cacBrut: 10,
-                ratio: 50,
-            });
-
-            expect(campaign.territories).toEqual([
-                "FR",
-                "BE",
-                "SH",
-                "GB",
-                "US",
-            ]);
+            expect(rule.rewards).toHaveLength(2);
+            expect(rule.rewards[0]).toHaveProperty("amount", 7);
+            expect(rule.rewards[1]).toHaveProperty("amount", 3);
         });
     });
 });

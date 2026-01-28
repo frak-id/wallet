@@ -1,8 +1,5 @@
-import type { ProductRolesKey } from "@frak-labs/app-essentials";
 import { Button } from "@frak-labs/ui/component/Button";
-import { Checkbox } from "@frak-labs/ui/component/forms/Checkbox";
 import { Input } from "@frak-labs/ui/component/forms/Input";
-import { Tooltip } from "@frak-labs/ui/component/Tooltip";
 import { BadgeCheck } from "lucide-react";
 import {
     type PropsWithChildren,
@@ -11,48 +8,37 @@ import {
     useState,
 } from "react";
 import { useForm, useFormContext } from "react-hook-form";
-import { type Address, type Hex, isAddress } from "viem";
+import { type Address, isAddress } from "viem";
 import { AlertDialog } from "@/module/common/component/AlertDialog";
 import { Row } from "@/module/common/component/Row";
 import {
     Form,
     FormControl,
-    FormDescription,
     FormField,
     FormItem,
     FormLabel,
     FormMessage,
     FormValidMessage,
 } from "@/module/forms/Form";
-import { useAddProductMember } from "@/module/product/hook/useAddProductMember";
-import { permissionLabelsArray } from "@/module/product/utils/permissions";
-import styles from "./index.module.css";
+import { useAddAdmin } from "@/module/product/hook/useAddAdmin";
 
 type FormAddTeamMembers = {
     wallet?: Address;
-    permissions: ProductRolesKey[];
 };
 
 export function ButtonAddTeam({
-    productId,
+    merchantId,
     children,
-}: PropsWithChildren<{ productId: Hex }>) {
+}: PropsWithChildren<{ merchantId: string }>) {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const {
-        mutateAsync: addProductMember,
+        mutateAsync: addAdmin,
         isPending: isAddingMember,
         error,
-    } = useAddProductMember();
+    } = useAddAdmin();
 
-    const form = useForm<FormAddTeamMembers>({
-        defaultValues: {
-            permissions: ["interactionManager", "campaignManager"],
-        },
-    });
+    const form = useForm<FormAddTeamMembers>();
 
-    /**
-     * Reset the form and the atoms when the modal is closed
-     */
     useEffect(() => {
         if (isModalOpen) return;
         form.reset();
@@ -61,16 +47,13 @@ export function ButtonAddTeam({
     const onSubmit = useCallback(
         async (data: FormAddTeamMembers) => {
             if (!data.wallet) return;
-            // Trigger the product adding
-            await addProductMember({
-                productId,
+            await addAdmin({
+                merchantId,
                 wallet: data.wallet,
-                roles: data.permissions,
             });
-            // Close the modal
             setIsModalOpen(false);
         },
-        [addProductMember, productId]
+        [addAdmin, merchantId]
     );
 
     return (
@@ -90,16 +73,14 @@ export function ButtonAddTeam({
                         <>
                             {isAddingMember && (
                                 <p>
-                                    Adding the new member to the product
+                                    Adding the new admin
                                     <span className={"dotsLoading"}>...</span>
                                 </p>
                             )}
                             <FormWallet disabled={isAddingMember} />
-                            <FormPermissions disabled={isAddingMember} />
                             {error && (
                                 <p>
-                                    Error when adding the operator on your
-                                    product: {error.message}
+                                    Error when adding the admin: {error.message}
                                 </p>
                             )}
                         </>
@@ -124,13 +105,8 @@ export function ButtonAddTeam({
     );
 }
 
-/**
- * Initial form to add wallet address
- * @constructor
- */
 function FormWallet({ disabled }: { disabled: boolean }) {
     const { trigger, control } = useFormContext<FormAddTeamMembers>();
-    // on mount trigger a wallet field verification
     useEffect(() => {
         trigger("wallet");
     }, [trigger]);
@@ -174,77 +150,6 @@ function FormWallet({ disabled }: { disabled: boolean }) {
                     <FormValidMessage>
                         The new member is ready to be added
                     </FormValidMessage>
-                </FormItem>
-            )}
-        />
-    );
-}
-
-/**
- * Initial form to add wallet permissions
- * @constructor
- */
-function FormPermissions({ disabled }: { disabled: boolean }) {
-    const { control } = useFormContext<FormAddTeamMembers>();
-
-    return (
-        <FormField
-            control={control}
-            name="permissions"
-            rules={{
-                required: "Select a permission",
-                validate: {
-                    required: (value) =>
-                        value?.length > 0 || "Select a permission",
-                },
-            }}
-            render={({ field }) => (
-                <FormItem>
-                    <FormDescription
-                        label={"Permissions"}
-                        className={styles.formPermission__description}
-                        classNameTitle={styles.formPermission__descriptionTitle}
-                    >
-                        Choose the permission for the new operator.
-                    </FormDescription>
-                    {permissionLabelsArray.map(({ id, label, description }) => {
-                        return (
-                            <FormItem variant={"checkbox"} key={id}>
-                                <FormControl>
-                                    <Checkbox
-                                        checked={field?.value?.includes(id)}
-                                        disabled={disabled}
-                                        onCheckedChange={(checked) => {
-                                            return checked
-                                                ? field.onChange([
-                                                      ...field.value,
-                                                      id,
-                                                  ])
-                                                : field.onChange(
-                                                      field?.value?.filter(
-                                                          (value) =>
-                                                              value !== id
-                                                      )
-                                                  );
-                                        }}
-                                        {...field}
-                                    />
-                                </FormControl>
-                                <Tooltip
-                                    content={description}
-                                    className={"tooltipPermissions"}
-                                >
-                                    <FormLabel
-                                        variant={"checkbox"}
-                                        selected={field?.value?.includes(id)}
-                                    >
-                                        {label}
-                                    </FormLabel>
-                                </Tooltip>
-                            </FormItem>
-                        );
-                    })}
-                    <FormMessage />
                 </FormItem>
             )}
         />

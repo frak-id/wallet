@@ -35,11 +35,18 @@ export const ConditionOperatorSchema = t.Union([
 ]);
 export type ConditionOperator = Static<typeof ConditionOperatorSchema>;
 
+export const RuleConditionValue = t.Union([
+    t.String(),
+    t.Number(),
+    t.Boolean(),
+    t.Null(),
+]);
+
 export const RuleConditionSchema = t.Object({
     field: t.String(),
     operator: ConditionOperatorSchema,
-    value: t.Unknown(),
-    valueTo: t.Optional(t.Unknown()),
+    value: RuleConditionValue,
+    valueTo: t.Optional(RuleConditionValue),
 });
 export type RuleCondition = Static<typeof RuleConditionSchema>;
 
@@ -71,7 +78,6 @@ export type RuleConditions = RuleCondition[] | ConditionGroup;
 export const RewardRecipientSchema = t.Union([
     t.Literal("referrer"),
     t.Literal("referee"),
-    t.Literal("user"),
 ]);
 export type RewardRecipient = Static<typeof RewardRecipientSchema>;
 
@@ -79,7 +85,6 @@ export const RewardAssetTypeSchema = t.Literal("token");
 export type RewardAssetType = Static<typeof RewardAssetTypeSchema>;
 
 export const RewardChainingSchema = t.Object({
-    userPercent: t.Number(),
     deperditionPerLevel: t.Number(),
     maxDepth: t.Optional(t.Number()),
 });
@@ -164,6 +169,15 @@ export const BudgetConfigItemSchema = t.Object({
 });
 export type BudgetConfigItem = Static<typeof BudgetConfigItemSchema>;
 
+export const BudgetUsedItemSchema = t.Object({
+    resetAt: t.Optional(t.String()),
+    used: t.Number(),
+});
+export type BudgetUsedItem = Static<typeof BudgetUsedItemSchema>;
+
+export const BudgetUsedSchema = t.Record(t.String(), BudgetUsedItemSchema);
+export type BudgetUsed = Static<typeof BudgetUsedSchema>;
+
 export const BudgetConfigSchema = t.Array(BudgetConfigItemSchema);
 export type BudgetConfig = Static<typeof BudgetConfigSchema>;
 
@@ -200,10 +214,13 @@ export const CampaignResponseSchema = t.Object({
     rule: CampaignRuleDefinitionSchema,
     metadata: t.Union([CampaignMetadataSchema, t.Null()]),
     budgetConfig: t.Union([BudgetConfigSchema, t.Null()]),
-    budgetUsed: t.Union([t.Record(t.String(), t.Unknown()), t.Null()]),
+    budgetUsed: t.Union([BudgetUsedSchema, t.Null()]),
     expiresAt: t.Union([t.String(), t.Null()]),
     publishedAt: t.Union([t.String(), t.Null()]),
     createdAt: t.String(),
     updatedAt: t.String(),
 });
-export type CampaignResponse = Static<typeof CampaignResponseSchema>;
+export type CampaignResponse = Omit<
+    Static<typeof CampaignResponseSchema>,
+    "rule"
+> & { rule: CampaignRuleDefinition };

@@ -10,11 +10,11 @@ import {
 
 import type {
     BudgetConfig,
+    BudgetUsed,
     CampaignMetadata,
     CampaignRuleDefinition,
     CampaignStatus,
 } from "../schemas";
-import type { BudgetUsed } from "../types";
 
 export const campaignRulesTable = pgTable(
     "campaign_rules",

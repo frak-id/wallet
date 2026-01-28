@@ -78,7 +78,6 @@ export function setupMobileAuthCallback(
  */
 function cleanupAuthParams(url: URL): void {
     url.searchParams.delete("frakAuth");
-    url.searchParams.delete("productId");
     url.searchParams.delete("state");
     window.history.replaceState({}, "", url.toString());
 }

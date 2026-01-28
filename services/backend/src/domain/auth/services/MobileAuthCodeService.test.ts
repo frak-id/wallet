@@ -1,4 +1,4 @@
-import type { Address, Hex } from "viem";
+import type { Address } from "viem";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { JwtContextMock } from "../../../../test/mock/common";
 import { MobileAuthCodeService } from "./MobileAuthCodeService";
@@ -9,7 +9,6 @@ describe("MobileAuthCodeService", () => {
     let walletSdkSessionService: WalletSdkSessionService;
 
     const mockWallet = "0x1234567890abcdef1234567890abcdef12345678" as Address;
-    const mockProductId = "0xabcdef" as Hex;
     const mockOrigin = "https://partner.com";
 
     beforeEach(() => {
@@ -40,13 +39,11 @@ describe("MobileAuthCodeService", () => {
 
             const result = await service.generateAuthCode({
                 walletAddress: mockWallet,
-                productId: mockProductId,
                 returnOrigin: mockOrigin,
             });
 
             expect(JwtContextMock.mobileAuthCode.sign).toHaveBeenCalledWith({
                 address: mockWallet,
-                productId: mockProductId,
                 origin: mockOrigin,
                 jti: "test-uuid-1234",
                 sub: mockWallet,
@@ -70,13 +67,11 @@ describe("MobileAuthCodeService", () => {
 
             await service.generateAuthCode({
                 walletAddress: mockWallet,
-                productId: mockProductId,
                 returnOrigin: mockOrigin,
             });
 
             await service.generateAuthCode({
                 walletAddress: mockWallet,
-                productId: mockProductId,
                 returnOrigin: mockOrigin,
             });
 
@@ -95,7 +90,6 @@ describe("MobileAuthCodeService", () => {
     describe("exchangeAuthCode", () => {
         const validPayload = {
             address: mockWallet,
-            productId: mockProductId,
             origin: mockOrigin,
             jti: "unique-jti-123",
             sub: mockWallet,
@@ -109,20 +103,6 @@ describe("MobileAuthCodeService", () => {
 
             const result = await service.exchangeAuthCode({
                 authCode: "invalid-code",
-                productId: mockProductId,
-            });
-
-            expect(result).toBeNull();
-        });
-
-        it("should return null for mismatched productId", async () => {
-            JwtContextMock.mobileAuthCode.verify.mockResolvedValue(
-                validPayload as never
-            );
-
-            const result = await service.exchangeAuthCode({
-                authCode: "valid-code",
-                productId: "0xdifferent" as Hex,
             });
 
             expect(result).toBeNull();
@@ -135,7 +115,6 @@ describe("MobileAuthCodeService", () => {
 
             const result = await service.exchangeAuthCode({
                 authCode: "valid-code",
-                productId: mockProductId,
                 requestOrigin: "https://attacker.com",
             });
 
@@ -153,7 +132,6 @@ describe("MobileAuthCodeService", () => {
 
             const result = await service.exchangeAuthCode({
                 authCode: "valid-code",
-                productId: mockProductId,
                 requestOrigin: mockOrigin,
             });
 
@@ -177,7 +155,6 @@ describe("MobileAuthCodeService", () => {
 
             const result = await service.exchangeAuthCode({
                 authCode: "valid-code",
-                productId: mockProductId,
             });
 
             expect(result).not.toBeNull();
@@ -195,13 +172,11 @@ describe("MobileAuthCodeService", () => {
 
             const firstResult = await service.exchangeAuthCode({
                 authCode: "valid-code",
-                productId: mockProductId,
             });
             expect(firstResult).not.toBeNull();
 
             const secondResult = await service.exchangeAuthCode({
                 authCode: "valid-code",
-                productId: mockProductId,
             });
             expect(secondResult).toBeNull();
         });

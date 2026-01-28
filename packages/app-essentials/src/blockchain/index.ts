@@ -1,15 +1,15 @@
 // Abis
 
 export {
-    campaignBankAbi as campaignBankV2Abi,
-    campaignBankFactoryAbi as campaignBankFactoryV2Abi,
+    campaignBankAbi,
+    campaignBankFactoryAbi,
     rewarderHubAbi,
 } from "./abis/abis";
 export {
     affiliationFixedCampaignAbi,
     affiliationRangeCampaignAbi,
-    campaignBankAbi,
-    campaignBankFactoryAbi,
+    campaignBankAbi as campaignBankAbiLegacy,
+    campaignBankFactoryAbi as campaignBankFactoryAbiLegacy,
     campaignFactoryAbi,
     interactionCampaignAbi,
     referralCampaignAbi,

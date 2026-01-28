@@ -1,6 +1,8 @@
+import type { BudgetUsed } from "@backend-domain/campaign/schemas";
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import {
+    type BudgetConfig,
     BudgetConfigSchema,
     CampaignContext,
     CampaignMetadataSchema,
@@ -20,8 +22,8 @@ function formatCampaign(campaign: {
     priority: number;
     rule: CampaignRuleDefinition;
     metadata: unknown;
-    budgetConfig: unknown;
-    budgetUsed: unknown;
+    budgetConfig: BudgetConfig | null;
+    budgetUsed: BudgetUsed | null;
     expiresAt: Date | null;
     publishedAt: Date | null;
     createdAt: Date;
@@ -34,7 +36,7 @@ function formatCampaign(campaign: {
         campaign.budgetUsed &&
         typeof campaign.budgetUsed === "object" &&
         Object.keys(campaign.budgetUsed).length > 0
-            ? (campaign.budgetUsed as Record<string, unknown>)
+            ? campaign.budgetUsed
             : null;
 
     return {

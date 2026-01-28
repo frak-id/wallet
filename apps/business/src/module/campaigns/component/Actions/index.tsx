@@ -1,10 +1,26 @@
 import { Button } from "@frak-labs/ui/component/Button";
-import { useNavigate } from "@tanstack/react-router";
+import { useLocation, useNavigate } from "@tanstack/react-router";
 import { Check, X } from "lucide-react";
-import { memo, useCallback, useEffect } from "react";
+import { memo, useCallback } from "react";
 import { ActionsWrapper } from "@/module/common/component/ActionsWrapper";
 import { campaignStore } from "@/stores/campaignStore";
 import styles from "./index.module.css";
+
+function getStepFromPath(pathname: string): number {
+    if (pathname.endsWith("/validation")) return 3;
+    if (pathname.endsWith("/metrics")) return 2;
+    return 1;
+}
+
+function getPreviousPath(pathname: string, campaignId?: string): string | null {
+    const step = getStepFromPath(pathname);
+    if (step === 1) return null;
+
+    const baseId = campaignId ?? "new";
+    if (step === 3) return `/campaigns/draft/${baseId}/metrics`;
+    if (step === 2) return `/campaigns/draft/${baseId}`;
+    return null;
+}
 
 export const Actions = memo(function Actions({
     isLoading = false,
@@ -12,66 +28,41 @@ export const Actions = memo(function Actions({
     isLoading?: boolean;
 }) {
     const navigate = useNavigate();
-    const step = campaignStore((state) => state.step);
-    const setStep = campaignStore((state) => state.setStep);
-    const campaignSuccess = campaignStore((state) => state.success);
-    const campaignAction = campaignStore((state) => state.action);
-    const setIsClosing = campaignStore((state) => state.setIsClosing);
-    const campaignId = campaignStore((state) => state.campaign.id);
+    const location = useLocation();
+    const isSuccess = campaignStore((state) => state.isSuccess);
+    const campaignId = campaignStore((state) => state.draft.id);
 
-    const getPages = useCallback(
-        (campaignId?: string) => {
-            if (campaignAction === "create") {
-                return [
-                    "/campaigns/new",
-                    "/campaigns/metrics",
-                    "/campaigns/validation",
-                ];
-            }
-            if (campaignAction === "draft") {
-                return [
-                    `/campaigns/draft/${campaignId}`,
-                    `/campaigns/draft/${campaignId}/metrics`,
-                    `/campaigns/draft/${campaignId}/validation`,
-                ];
-            }
-        },
-        [campaignAction]
-    );
+    const step = getStepFromPath(location.pathname);
+    const previousPath = getPreviousPath(location.pathname, campaignId);
 
-    const pages = getPages(campaignId);
-
-    useEffect(() => {
-        if (!pages) return;
-        navigate({ to: pages[step - 1] });
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [step, campaignAction, campaignId]);
+    const handlePrevious = useCallback(() => {
+        if (previousPath) {
+            // biome-ignore lint/suspicious/noExplicitAny: dynamic route paths
+            navigate({ to: previousPath as any });
+        }
+    }, [navigate, previousPath]);
 
     return (
         <ActionsWrapper
             left={
-                <Button
-                    type={"submit"}
-                    variant={"outline"}
-                    onClick={() => setIsClosing(true)}
-                >
-                    Close
+                <Button type={"submit"} variant={"outline"}>
+                    Save Draft
                 </Button>
             }
             right={
                 <>
-                    {step > 1 && !campaignSuccess && (
+                    {previousPath && !isSuccess && (
                         <Button
                             variant={"informationOutline"}
-                            onClick={() => setStep((prev) => prev - 1)}
+                            onClick={handlePrevious}
                         >
                             Previous
                         </Button>
                     )}
-                    {!campaignSuccess && (
+                    {!isSuccess && (
                         <ButtonNext
                             isLoading={isLoading}
-                            isLastStep={step === pages?.length}
+                            isLastStep={step === 3}
                         />
                     )}
                 </>
@@ -87,7 +78,6 @@ function ButtonNext({
     isLoading: boolean;
     isLastStep: boolean;
 }) {
-    const setIsClosing = campaignStore((state) => state.setIsClosing);
     return isLastStep ? (
         <Button
             type={"submit"}
@@ -98,11 +88,7 @@ function ButtonNext({
             Publish
         </Button>
     ) : (
-        <Button
-            type={"submit"}
-            variant={"information"}
-            onClick={() => setIsClosing(false)}
-        >
+        <Button type={"submit"} variant={"information"}>
             Next
         </Button>
     );

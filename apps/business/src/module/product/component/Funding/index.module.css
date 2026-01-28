@@ -2,90 +2,145 @@
     margin-bottom: 20px;
 }
 
-.bankPanelTitle {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
 .bankContent {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 24px;
 }
 
-.bankRow {
+.bankHeaderRow {
     display: flex;
     align-items: center;
-    /* justify-content: space-between; */
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.bankTitleGroup {
+    display: flex;
+    align-items: center;
     gap: 12px;
 }
 
-.bankHeader {
+.statusToggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+}
+
+.statusLabel {
+    font-weight: 500;
+}
+
+.tokenList {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.tokenRow {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    background-color: var(--color-background-secondary);
+    transition: border-color 0.2s ease;
+}
+
+.tokenRow:hover {
+    border-color: var(--color-border-hover);
+}
+
+.tokenRow__info {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.tokenRow__symbol {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    min-width: 60px;
+}
+
+.tokenRow__stats {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    flex-wrap: wrap;
+    flex: 1;
+}
+
+.tokenRow__stat {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.statLabel {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.statValue {
+    font-family: var(--font-mono);
+    font-weight: 500;
+    color: var(--color-text-primary);
+}
+
+.tokenRow__warning {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.875rem;
+    color: var(--color-warning);
+    background-color: var(--color-warning-transparent);
+    padding: 8px 12px;
+    border-radius: 6px;
+}
+
+.tokenRow__actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding-top: 12px;
+    border-top: 1px solid var(--color-border);
+}
+
+.smallInput {
+    width: 120px !important;
+    height: 32px !important;
+}
+
+.actionRow {
     display: flex;
     gap: 8px;
 }
 
-.bankSection {
+.fundActionsRow {
     display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.bankSectionTitle {
-    margin: 0;
-    font-weight: 600;
-    color: var(--color-text-secondary);
-}
-
-.bankActions {
-    display: flex;
+    align-items: center;
     gap: 12px;
     flex-wrap: wrap;
-    align-items: center;
-    justify-content: end;
-    flex-grow: 1;
+    margin-top: 8px;
+    padding-top: 16px;
+    border-top: 1px dashed var(--color-border);
 }
 
-.addBankButton {
-    width: 100%;
-    justify-content: center;
-}
-
-.currencySelection {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    margin: 16px 0;
-}
-
-.currencyOption {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    padding: 12px;
-    border: 1px solid var(--color-border);
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.currencyOption:hover {
-    border-color: var(--color-primary);
-    background-color: var(--color-background-secondary);
-}
-
-.currencyOption div {
-    flex: 1;
-}
-
-.currencyOption strong {
-    display: block;
-    margin-bottom: 4px;
-}
-
-.currencyOption p {
-    margin: 0;
-    font-size: 0.875rem;
-    color: var(--color-text-secondary);
+.errorText {
+    color: var(--color-danger);
+    text-align: center;
+    padding: 20px;
 }

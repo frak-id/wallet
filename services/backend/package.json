@@ -60,6 +60,10 @@
     "pino-pretty": "^13.1.2",
     "typescript": "catalog:"
   },
+  "exports": {
+    ".": "./src/index.ts",
+    "./domain/campaign": "./src/domain/campaign/schemas/index.ts"
+  },
   "module": "src/index.ts",
   "main": "./src/index.ts"
 }

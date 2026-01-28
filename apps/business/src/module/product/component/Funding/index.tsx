@@ -1,596 +1,461 @@
-import {
-    addresses,
-    detectStablecoinFromToken,
-    isRunningInProd,
-} from "@frak-labs/app-essentials";
-import {
-    campaignBankAbi,
-    type Stablecoin,
-} from "@frak-labs/app-essentials/blockchain";
-import { useSendTransactionAction } from "@frak-labs/react-sdk";
+import { useWalletStatus } from "@frak-labs/react-sdk";
 import { Button, buttonVariants } from "@frak-labs/ui/component/Button";
-import { Column, Columns } from "@frak-labs/ui/component/Columns";
+import { Input } from "@frak-labs/ui/component/forms/Input";
 import { IconInfo } from "@frak-labs/ui/component/IconInfo";
 import { Spinner } from "@frak-labs/ui/component/Spinner";
 import { Switch } from "@frak-labs/ui/component/Switch";
 import { Tooltip } from "@frak-labs/ui/component/Tooltip";
-import { useMutation } from "@tanstack/react-query";
-import { BadgeCheck, CheckCircle, Plus, XCircle } from "lucide-react";
-import { useMemo, useState } from "react";
 import {
-    type Address,
-    encodeFunctionData,
-    formatUnits,
-    type Hex,
-    isAddressEqual,
-} from "viem";
-import { readContract } from "viem/actions";
-import { viemClient } from "@/context/blockchain/provider";
-import { useAddProductBank } from "@/module/bank/hook/useAddProductBank";
+    AlertTriangle,
+    BadgeCheck,
+    CheckCircle,
+    Download,
+    RefreshCw,
+    Wallet,
+    XCircle,
+} from "lucide-react";
+import { useState } from "react";
+import { type Address, formatUnits, parseUnits } from "viem";
 import { Badge } from "@/module/common/component/Badge";
 import { Panel } from "@/module/common/component/Panel";
 import { Row } from "@/module/common/component/Row";
 import { Title } from "@/module/common/component/Title";
-import { useConvertToPreferredCurrency } from "@/module/common/hook/useConversionRate";
-import { formatPrice } from "@/module/common/utils/formatPrice";
-import { useWaitForTxAndInvalidateQueries } from "@/module/common/utils/useWaitForTxAndInvalidateQueries";
-import { CurrencySelector } from "@/module/forms/CurrencySelector";
 import { FormLayout } from "@/module/forms/Form";
-import { ProductHead } from "@/module/product/component/ProductHead";
 import { useFundTestBank } from "@/module/product/hook/useFundTestBank";
-import {
-    type ProductBank,
-    useGetProductFunding,
-} from "@/module/product/hook/useGetProductFunding";
-import { useSetBankDistributionStatus } from "@/module/product/hook/useSetBankDistributionStatus";
-import { currencyOptions } from "@/module/product/utils/currencyOptions";
-import { useProductMetadata } from "../../hook/useProductMetadata";
+import { useGetMerchantBank } from "@/module/product/hook/useGetMerchantBank";
+import { useRevokeBankAllowance } from "@/module/product/hook/useRevokeBankAllowance";
+import { useSetBankOpenStatus } from "@/module/product/hook/useSetBankOpenStatus";
+import { useSyncMerchantBank } from "@/module/product/hook/useSyncMerchantBank";
+import { useUpdateBankAllowance } from "@/module/product/hook/useUpdateBankAllowance";
+import { useWithdrawFromBank } from "@/module/product/hook/useWithdrawFromBank";
 import styles from "./index.module.css";
 
-/**
- * Product funding page
- * @param productId
- * @returns
- */
-export function ProductFunding({ productId }: { productId: Hex }) {
-    const { data, isLoading, isPending } = useGetProductFunding({ productId });
+export function MerchantFunding({ merchantId }: { merchantId: string }) {
+    const { data, isLoading, isError } = useGetMerchantBank({ merchantId });
+    const { mutate: syncBank, isPending: isSyncing } = useSyncMerchantBank({
+        merchantId,
+    });
+
+    if (isLoading) {
+        return (
+            <FormLayout>
+                <Spinner />
+            </FormLayout>
+        );
+    }
+
+    if (isError || !data) {
+        return (
+            <FormLayout>
+                <Panel>
+                    <p className={styles.errorText}>
+                        Failed to load merchant bank data.
+                    </p>
+                </Panel>
+            </FormLayout>
+        );
+    }
+
+    if (!data.deployed || !data.bankAddress) {
+        return (
+            <FormLayout>
+                <Panel title="Setup Merchant Bank" className={styles.bankPanel}>
+                    <div className={styles.bankContent}>
+                        <p>
+                            You need to deploy a campaign bank to start funding
+                            your campaigns.
+                        </p>
+                        <Button
+                            variant="submit"
+                            onClick={() => syncBank()}
+                            isLoading={isSyncing}
+                            disabled={isSyncing}
+                        >
+                            Setup Bank
+                        </Button>
+                    </div>
+                </Panel>
+            </FormLayout>
+        );
+    }
 
     return (
         <FormLayout>
-            <ProductHead productId={productId} />
-            {isLoading || isPending ? (
-                <Spinner />
-            ) : (
-                <ProductFundingBanks banks={data ?? []} productId={productId} />
-            )}
+            <MerchantBankView
+                merchantId={merchantId}
+                bankAddress={data.bankAddress}
+                isManager={data.isManager}
+                isOpen={data.isOpen}
+                tokens={data.tokens}
+            />
         </FormLayout>
     );
 }
 
-/**
- * List of banks for the product
- * @param banks
- * @returns
- */
-function ProductFundingBanks({
-    banks,
-    productId,
+function MerchantBankView({
+    merchantId,
+    bankAddress,
+    isManager,
+    isOpen,
+    tokens,
 }: {
-    banks: ProductBank[];
-    productId: Hex;
+    merchantId: string;
+    bankAddress: Address;
+    isManager: boolean;
+    isOpen: boolean | null;
+    tokens: NonNullable<
+        ReturnType<typeof useGetMerchantBank>["data"]
+    >["tokens"];
 }) {
-    return (
-        <>
-            {banks.map((bank) => (
-                <ProductFundingBank
-                    key={`bank-${bank.address}`}
-                    bank={bank}
-                    productId={productId}
-                />
-            ))}
-            <AddNewBank banks={banks} productId={productId} />
-        </>
-    );
-}
-
-/**
- * Inline fund action for the actions row
- * @returns
- */
-function FundAction({
-    bank,
-    isTestBank,
-    productId,
-}: {
-    bank: ProductBank;
-    isTestBank: boolean;
-    productId: Hex;
-}) {
-    const { mutate: fundTestBank, isPending } = useFundTestBank();
-    const { data: productMetadata, isLoading: isLoadingProductMetadata } =
-        useProductMetadata({ productId });
-    const isShopify = useMemo(
-        () => productMetadata?.domain?.includes("myshopify") ?? false,
-        [productMetadata]
-    );
-
-    const stablecoin = useMemo(() => {
-        return detectStablecoinFromToken(bank.token.address);
-    }, [bank.token.address]);
-
-    if (isLoadingProductMetadata) {
-        return <Spinner />;
-    }
-
-    if (isShopify) {
-        return (
-            <a
-                href={`https://admin.shopify.com/store/${productMetadata?.domain?.replace(".myshopify.com", "")}/apps/frak/app/status`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={buttonVariants({ variant: "submit" })}
-            >
-                Add funds
-            </a>
-        );
-    }
-
-    if (isTestBank) {
-        return (
-            <Button
-                variant={"submit"}
-                disabled={isPending}
-                isLoading={isPending}
-                onClick={() => fundTestBank({ bank: bank.address })}
-            >
-                Add funds
-            </Button>
-        );
-    }
-
-    // For Monerium stablecoins in dev/testnet only, use the test funding
-    if (!isRunningInProd && stablecoin && stablecoin !== "usdc") {
-        return (
-            <Button
-                variant={"submit"}
-                disabled={isPending}
-                isLoading={isPending}
-                onClick={() => fundTestBank({ bank: bank.address, stablecoin })}
-            >
-                Add funds
-            </Button>
-        );
-    }
-
-    return (
-        <a
-            href={process.env.FUNDING_ON_RAMP_URL ?? ""}
-            target={"_blank"}
-            rel="noopener noreferrer"
-            className={buttonVariants({ variant: "submit" })}
-        >
-            Add funds
-        </a>
-    );
-}
-
-/**
- * Bank information
- * @param bank
- * @returns
- */
-function ProductFundingBank({
-    bank,
-    productId,
-}: {
-    bank: ProductBank;
-    productId: Hex;
-}) {
-    const isTestBank = useMemo(
-        () => isAddressEqual(bank.token.address, addresses.mUSDToken),
-        [bank.token.address]
-    );
-
-    const stablecoinInfo = useMemo(() => {
-        const symbol = bank.token.symbol.toLowerCase();
-        for (const group of currencyOptions) {
-            const option = group.options.find(
-                (opt) =>
-                    opt.label.toLowerCase() === symbol || opt.value === symbol
-            );
-            if (option) {
-                return {
-                    group: group.group,
-                    label: option.label,
-                    value: option.value,
-                };
-            }
-        }
-        return null;
-    }, [bank.token.symbol]);
-
-    const panelTitle = stablecoinInfo
-        ? `${stablecoinInfo.label} Bank`
-        : `${bank.token.symbol} Bank`;
-
     return (
         <Panel className={styles.bankPanel}>
             <div className={styles.bankContent}>
-                {/* Row 1: Title and badges */}
-                <div className={styles.bankRow}>
-                    <Title
-                        as={"h3"}
-                        size={"small"}
-                        icon={<BadgeCheck color={"#0DDB84"} />}
-                    >
-                        {panelTitle}
-                    </Title>
-                    <div className={styles.bankHeader}>
-                        {stablecoinInfo && (
-                            <Badge size={"small"} variant={"information"}>
-                                {stablecoinInfo.group}
-                            </Badge>
-                        )}
-                        {isTestBank && (
-                            <Badge size={"small"} variant={"warning"}>
-                                Test
-                            </Badge>
-                        )}
+                <div className={styles.bankHeaderRow}>
+                    <div className={styles.bankTitleGroup}>
+                        <Title
+                            as="h3"
+                            size="small"
+                            icon={<BadgeCheck color="#0DDB84" />}
+                        >
+                            Campaign Bank
+                        </Title>
+                        <Badge variant={isOpen ? "success" : "danger"}>
+                            {isOpen ? (
+                                <>
+                                    <CheckCircle width={14} height={14} /> Open
+                                </>
+                            ) : (
+                                <>
+                                    <XCircle width={14} height={14} /> Closed
+                                </>
+                            )}
+                        </Badge>
                     </div>
-                </div>
 
-                {/* Row 2: Balance and Status columns */}
-                <div className={styles.bankRow}>
-                    <Columns align="start">
-                        <Column className={styles.balanceColumn}>
-                            <div className={styles.bankSection}>
-                                <Title
-                                    as={"h4"}
-                                    size={"small"}
-                                    className={styles.bankSectionTitle}
-                                >
-                                    Balance information
-                                </Title>
-                                <BankAmount
-                                    title="Balance:"
-                                    balance={bank.balance}
-                                    symbol={bank.token.symbol}
-                                    decimals={bank.token.decimals}
-                                    token={bank.token.address}
-                                />
-                                <BankAmount
-                                    title="Total distributed:"
-                                    balance={bank.totalDistributed}
-                                    symbol={bank.token.symbol}
-                                    decimals={bank.token.decimals}
-                                    token={bank.token.address}
-                                />
-                                <BankAmount
-                                    title="Total claimed:"
-                                    balance={bank.totalClaimed}
-                                    symbol={bank.token.symbol}
-                                    decimals={bank.token.decimals}
-                                    token={bank.token.address}
-                                />
-                            </div>
-                        </Column>
-                        <Column justify={"start"}>
-                            <div className={styles.bankSection}>
-                                <Title
-                                    as={"h4"}
-                                    size={"small"}
-                                    className={styles.bankSectionTitle}
-                                >
-                                    Campaigns funding status
-                                </Title>
-                                <Row align={"center"}>
-                                    <ToggleFundingStatus
-                                        bank={bank}
-                                        productId={productId}
-                                    />
-                                    <Badge
-                                        size={"small"}
-                                        variant={
-                                            bank.isDistributing
-                                                ? "success"
-                                                : "danger"
-                                        }
-                                    >
-                                        {bank.isDistributing ? (
-                                            <CheckCircle size={16} />
-                                        ) : (
-                                            <XCircle size={16} />
-                                        )}
-                                        {bank.isDistributing
-                                            ? "Active"
-                                            : "Inactive"}
-                                    </Badge>
-                                    <StatusTooltip />
-                                </Row>
-                            </div>
-                        </Column>
-                    </Columns>
-                </div>
-
-                {/* Row 3: Actions */}
-                <div className={styles.bankRow}>
-                    <div className={styles.bankActions}>
-                        <FundAction
-                            bank={bank}
-                            isTestBank={isTestBank}
-                            productId={productId}
+                    {isManager && (
+                        <BankStatusToggle
+                            merchantId={merchantId}
+                            bankAddress={bankAddress}
+                            isOpen={isOpen ?? false}
                         />
-                        <WithdrawFunds bank={bank} />
-                    </div>
+                    )}
+                </div>
+
+                <div className={styles.tokenList}>
+                    {tokens.map((token) => (
+                        <TokenRow
+                            key={token.address}
+                            token={token}
+                            merchantId={merchantId}
+                            bankAddress={bankAddress}
+                            isManager={isManager}
+                            isBankOpen={isOpen ?? false}
+                        />
+                    ))}
+                </div>
+
+                <div className={styles.fundActionsRow}>
+                    <a
+                        href={process.env.FUNDING_ON_RAMP_URL ?? "#"}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={buttonVariants({ variant: "submit" })}
+                    >
+                        Add funds via Stripe
+                    </a>
+
+                    <TestFundButton bankAddress={bankAddress} />
                 </div>
             </div>
         </Panel>
     );
 }
 
-/**
- * Show the amount of the bank
- * @param title
- * @param amount
- * @param symbol
- * @returns
- */
-function BankAmount({
-    title,
-    balance,
-    symbol,
-    decimals,
-    token,
+function BankStatusToggle({
+    merchantId,
+    bankAddress,
+    isOpen,
 }: {
-    title: string;
-    balance: bigint;
-    symbol: string;
-    decimals: number;
-    token: Address;
+    merchantId: string;
+    bankAddress: Address;
+    isOpen: boolean;
 }) {
-    const converted = useConvertToPreferredCurrency({
-        balance,
-        decimals,
-        token,
+    const { setOpenStatus, isSettingOpenStatus } = useSetBankOpenStatus({
+        bankAddress,
+        merchantId,
     });
 
-    // Format the raw balance
-    const formattedBalance = formatUnits(balance, decimals);
-    const formattedPrice = formatPrice(formattedBalance);
-
-    // If conversion failed but we have a balance, show the raw amount
-    if (converted === undefined && balance >= 0n) {
-        return (
-            <p>
-                {title}{" "}
-                <strong>{formattedPrice?.replace("$", `${symbol} `)}</strong>
-            </p>
-        );
-    }
-
-    // If we have a converted value, show both
-    if (converted !== undefined) {
-        return (
-            <p>
-                {title} <strong>{converted}</strong> (
-                {formattedPrice?.replace("$", `${symbol} `)})
-            </p>
-        );
-    }
-
-    // Otherwise don't show anything
-    return null;
-}
-
-/**
- * Toggle the funding status of the bank
- * @param bank
- * @returns
- */
-function ToggleFundingStatus({
-    bank,
-    productId,
-}: {
-    bank: ProductBank;
-    productId: Hex;
-}) {
-    const { isSettingDistributionStatus, setDistributionStatus } =
-        useSetBankDistributionStatus({
-            productId,
-            bank: bank.address,
-        });
-
     return (
-        <>
+        <div className={styles.statusToggle}>
+            <span className={styles.statusLabel}>Bank Status</span>
             <Switch
-                disabled={isSettingDistributionStatus}
-                checked={bank.isDistributing}
+                checked={isOpen}
+                disabled={isSettingOpenStatus}
                 onCheckedChange={(checked) =>
-                    setDistributionStatus({ isDistributing: checked })
+                    setOpenStatus({ isOpen: checked })
                 }
             />
-            {isSettingDistributionStatus && <Spinner />}
-        </>
+            {isSettingOpenStatus && <Spinner />}
+            <Tooltip content="When open, the bank distributes rewards via campaigns">
+                <IconInfo />
+            </Tooltip>
+        </div>
     );
 }
 
-/**
- * Funding status tooltip
- * @returns
- */
-function StatusTooltip() {
-    return (
-        <Tooltip
-            content={
-                "When active, the bank will distribute the funds to the campaigns."
-            }
-        >
-            <IconInfo />
-        </Tooltip>
-    );
-}
+function TokenRow({
+    token,
+    merchantId,
+    bankAddress,
+    isManager,
+    isBankOpen,
+}: {
+    token: {
+        symbol: string;
+        address: Address;
+        balance: bigint;
+        allowance: bigint;
+    };
+    merchantId: string;
+    bankAddress: Address;
+    isManager: boolean;
+    isBankOpen: boolean;
+}) {
+    const [action, setAction] = useState<"allowance" | "withdraw" | null>(null);
+    const [inputValue, setInputValue] = useState("");
 
-/**
- * Withdraw funds from the bank
- */
-function WithdrawFunds({ bank }: { bank: ProductBank }) {
-    const { mutateAsync: sendTx } = useSendTransactionAction();
-    const waitForTxAndInvalidateQueries = useWaitForTxAndInvalidateQueries();
-
-    const { mutate: withdraw, isPending: isWithdrawing } = useMutation({
-        mutationKey: ["product", "funding", "withdraw", bank.address],
-        mutationFn: async () => {
-            // Check if the bank is currently distributing
-            const isDistributing = await readContract(viemClient, {
-                abi: campaignBankAbi,
-                address: bank.address,
-                functionName: "isDistributionEnabled",
-            });
-
-            const txDatas: Hex[] = [];
-
-            // If distributing tokens, disable distribution first
-            if (isDistributing) {
-                txDatas.push(
-                    encodeFunctionData({
-                        abi: campaignBankAbi,
-                        functionName: "updateDistributionState",
-                        args: [false],
-                    })
-                );
-            }
-
-            // Withdraw funds tx hash
-            txDatas.push(
-                encodeFunctionData({
-                    abi: campaignBankAbi,
-                    functionName: "withdraw",
-                })
-            );
-
-            // Send the transaction
-            const { hash } = await sendTx({
-                tx: txDatas.map((data) => ({
-                    to: bank.address,
-                    data,
-                })),
-            });
-
-            // Invalidate product related queries
-            await waitForTxAndInvalidateQueries({
-                hash,
-                queryKey: ["product"],
-                // Long confirmations time to ensure indexer is up to date
-                confirmations: 32,
-            });
-        },
+    const { mutate: updateAllowance, isPending: isUpdatingAllowance } =
+        useUpdateBankAllowance({ bankAddress, merchantId });
+    const { mutate: revokeAllowance, isPending: isRevokingAllowance } =
+        useRevokeBankAllowance({ bankAddress, merchantId });
+    const { mutate: withdraw, isPending: isWithdrawing } = useWithdrawFromBank({
+        bankAddress,
+        merchantId,
     });
 
-    return (
-        <Button
-            variant={"submit"}
-            onClick={() => withdraw()}
-            isLoading={isWithdrawing}
-            disabled={isWithdrawing}
-        >
-            Withdraw funds
-        </Button>
-    );
-}
+    const { data: walletStatusData } = useWalletStatus();
+    const walletAddress = walletStatusData?.wallet;
 
-/**
- * Add new bank component
- */
-function AddNewBank({
-    banks,
-    productId,
-}: {
-    banks: ProductBank[];
-    productId: Hex;
-}) {
-    const [isAdding, setIsAdding] = useState(false);
-    const [selectedCurrency, setSelectedCurrency] = useState<string>("");
-    const { mutate: addBank, isPending } = useAddProductBank();
+    const formattedBalance = formatUnits(token.balance, 6);
+    const formattedAllowance = formatUnits(token.allowance, 6);
+    const showWarning = token.balance > 0n && token.allowance === 0n;
 
-    const usedCurrencies = useMemo(() => {
-        return banks
-            .map((bank) => detectStablecoinFromToken(bank.token.address))
-            .filter((value) => value !== undefined);
-    }, [banks]);
-
-    const totalAvailableCurrencies = useMemo(() => {
-        return currencyOptions.reduce(
-            (count, group) => count + group.options.length,
-            0
-        );
-    }, []);
-
-    const hasAvailableCurrencies =
-        usedCurrencies.length < totalAvailableCurrencies;
-
-    const handleAddBank = () => {
-        if (!selectedCurrency || !productId) return;
-
-        addBank(
+    const handleUpdateAllowance = () => {
+        if (!inputValue) return;
+        updateAllowance(
             {
-                productId,
-                stablecoin: selectedCurrency as Stablecoin,
+                token: token.address,
+                amount: parseUnits(inputValue, 6),
             },
             {
                 onSuccess: () => {
-                    setIsAdding(false);
-                    setSelectedCurrency("");
-                },
-                onError: (error) => {
-                    console.error("Failed to add bank:", error);
+                    setAction(null);
+                    setInputValue("");
                 },
             }
         );
     };
 
-    if (!hasAvailableCurrencies) {
-        return null;
-    }
-
-    if (!isAdding) {
-        return (
-            <Button
-                onClick={() => setIsAdding(true)}
-                className={styles.addBankButton}
-            >
-                <Plus size={16} />
-                Add new bank
-            </Button>
+    const handleWithdraw = () => {
+        if (!inputValue || !walletAddress) return;
+        withdraw(
+            {
+                token: token.address,
+                amount: parseUnits(inputValue, 6),
+                to: walletAddress,
+            },
+            {
+                onSuccess: () => {
+                    setAction(null);
+                    setInputValue("");
+                },
+            }
         );
-    }
+    };
+
+    const isPending =
+        isUpdatingAllowance || isRevokingAllowance || isWithdrawing;
 
     return (
-        <Panel title="Add new bank" className={styles.bankPanel}>
-            <p>Select a stablecoin for the new bank:</p>
-            <CurrencySelector
-                value={selectedCurrency}
-                onChange={setSelectedCurrency}
-                excludeCurrencies={usedCurrencies}
-            />
-            <div className={styles.bankActions}>
-                <Button
-                    variant="submit"
-                    onClick={handleAddBank}
-                    disabled={!selectedCurrency || isPending}
-                    isLoading={isPending}
-                >
-                    Create bank
-                </Button>
-                <Button
-                    variant="outline"
-                    onClick={() => {
-                        setIsAdding(false);
-                        setSelectedCurrency("");
-                    }}
-                >
-                    Cancel
-                </Button>
+        <div className={styles.tokenRow}>
+            <div className={styles.tokenRow__info}>
+                <div className={styles.tokenRow__symbol}>
+                    {token.symbol.toUpperCase()}
+                </div>
+                <div className={styles.tokenRow__stats}>
+                    <div className={styles.tokenRow__stat}>
+                        <span className={styles.statLabel}>Balance:</span>
+                        <span className={styles.statValue}>
+                            {formattedBalance}
+                        </span>
+                    </div>
+                    <div className={styles.tokenRow__stat}>
+                        <span className={styles.statLabel}>Allowance:</span>
+                        <span className={styles.statValue}>
+                            {formattedAllowance}
+                        </span>
+                    </div>
+                </div>
             </div>
-        </Panel>
+
+            {showWarning && (
+                <div className={styles.tokenRow__warning}>
+                    <AlertTriangle width={14} height={14} />
+                    <span>Set allowance to enable distribution</span>
+                </div>
+            )}
+
+            {isManager && (
+                <div className={styles.tokenRow__actions}>
+                    {action === null && (
+                        <>
+                            <Button
+                                size="small"
+                                variant="outline"
+                                onClick={() => setAction("allowance")}
+                                disabled={!isBankOpen}
+                            >
+                                <RefreshCw
+                                    width={14}
+                                    height={14}
+                                    className="mr-2"
+                                />
+                                Update Allowance
+                            </Button>
+
+                            {token.allowance > 0n && (
+                                <Button
+                                    size="small"
+                                    variant="ghost"
+                                    onClick={() =>
+                                        revokeAllowance({
+                                            token: token.address,
+                                        })
+                                    }
+                                    disabled={isPending}
+                                    isLoading={isRevokingAllowance}
+                                >
+                                    Revoke
+                                </Button>
+                            )}
+
+                            {isBankOpen ? (
+                                <Tooltip content="Close the bank first to withdraw funds">
+                                    <div style={{ display: "inline-block" }}>
+                                        <Button
+                                            size="small"
+                                            variant="secondary"
+                                            disabled
+                                        >
+                                            <Download
+                                                width={14}
+                                                height={14}
+                                                className="mr-2"
+                                            />
+                                            Withdraw
+                                        </Button>
+                                    </div>
+                                </Tooltip>
+                            ) : (
+                                <Button
+                                    size="small"
+                                    variant="secondary"
+                                    onClick={() => setAction("withdraw")}
+                                >
+                                    <Download
+                                        width={14}
+                                        height={14}
+                                        className="mr-2"
+                                    />
+                                    Withdraw
+                                </Button>
+                            )}
+                        </>
+                    )}
+
+                    {action === "allowance" && (
+                        <Row align="center" className={styles.actionRow}>
+                            <Input
+                                type="number"
+                                placeholder="Amount"
+                                value={inputValue}
+                                onChange={(e) => setInputValue(e.target.value)}
+                                className={styles.smallInput}
+                                autoFocus
+                            />
+                            <Button
+                                size="small"
+                                variant="submit"
+                                onClick={handleUpdateAllowance}
+                                disabled={!inputValue || isPending}
+                                isLoading={isUpdatingAllowance}
+                            >
+                                Update
+                            </Button>
+                            <Button
+                                size="small"
+                                variant="ghost"
+                                onClick={() => {
+                                    setAction(null);
+                                    setInputValue("");
+                                }}
+                                disabled={isPending}
+                            >
+                                Cancel
+                            </Button>
+                        </Row>
+                    )}
+
+                    {action === "withdraw" && (
+                        <Row align="center" className={styles.actionRow}>
+                            <Input
+                                type="number"
+                                placeholder="Amount"
+                                value={inputValue}
+                                onChange={(e) => setInputValue(e.target.value)}
+                                className={styles.smallInput}
+                                autoFocus
+                            />
+                            <Button
+                                size="small"
+                                variant="submit"
+                                onClick={handleWithdraw}
+                                disabled={!inputValue || isPending}
+                                isLoading={isWithdrawing}
+                            >
+                                Withdraw
+                            </Button>
+                            <Button
+                                size="small"
+                                variant="ghost"
+                                onClick={() => {
+                                    setAction(null);
+                                    setInputValue("");
+                                }}
+                                disabled={isPending}
+                            >
+                                Cancel
+                            </Button>
+                        </Row>
+                    )}
+                </div>
+            )}
+        </div>
+    );
+}
+
+function TestFundButton({ bankAddress }: { bankAddress: Address }) {
+    const { mutate: fundTestBank, isPending } = useFundTestBank();
+
+    return (
+        <Button
+            variant="secondary"
+            onClick={() => fundTestBank({ bank: bankAddress })}
+            disabled={isPending}
+            isLoading={isPending}
+        >
+            <Wallet width={16} height={16} className="mr-2" />
+            Fund with Test Tokens
+        </Button>
     );
 }

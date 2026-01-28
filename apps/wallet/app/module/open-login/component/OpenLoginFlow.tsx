@@ -4,7 +4,6 @@ import { HandleErrors, sessionStore } from "@frak-labs/wallet-shared";
 import { useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useReducer } from "react";
 import { Trans, useTranslation } from "react-i18next";
-import type { Hex } from "viem";
 import { AuthActions } from "@/module/authentication/component/AuthActions";
 import { Grid } from "@/module/common/component/Grid";
 import { useMobileLoginRedirect } from "../hook/useMobileLoginRedirect";

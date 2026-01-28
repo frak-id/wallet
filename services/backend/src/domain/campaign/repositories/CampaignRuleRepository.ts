@@ -6,13 +6,13 @@ import {
     type CampaignRuleSelect,
     campaignRulesTable,
 } from "../db/schema";
-import type { CampaignStatus } from "../schemas";
 import type {
     BudgetConfig,
-    BudgetConsumptionResult,
     BudgetUsed,
+    CampaignStatus,
     CampaignTrigger,
-} from "../types";
+} from "../schemas";
+import type { BudgetConsumptionResult } from "../types";
 
 function computeNextResetAt(durationInSeconds: number): string {
     const now = Date.now();

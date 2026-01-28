@@ -1,21 +1,12 @@
-import { useQuery } from "@tanstack/react-query";
 import {
-    AlertTriangle,
     MousePointer,
     RotateCw,
     ShoppingBag,
     User,
     Volume2,
 } from "lucide-react";
-import { type ReactElement, useEffect, useMemo, useState } from "react";
-import type { UseFormReturn } from "react-hook-form";
-import type { Hex } from "viem";
-import {
-    getGoalLabel,
-    getProductTypeLabel,
-    getProductTypesForGoal,
-    isGoalCompatible,
-} from "@/module/campaigns/utils/goalCompatibility";
+import { type ReactElement, useEffect, useState } from "react";
+import { useFormContext } from "react-hook-form";
 import { Badge } from "@/module/common/component/Badge";
 import { Column } from "@/module/common/component/Column";
 import { Panel } from "@/module/common/component/Panel";
@@ -29,9 +20,7 @@ import {
     FormMessage,
 } from "@/module/forms/Form";
 import { RadioGroup, RadioGroupItem } from "@/module/forms/RadioGroup";
-import { productMetadataQueryOptions } from "@/module/product/queries/queryOptions";
-import { useAuthStore } from "@/stores/authStore";
-import type { Campaign } from "@/types/Campaign";
+import type { CampaignDraft } from "@/stores/campaignStore";
 import styles from "./FormGoals.module.css";
 
 type ItemGoals = {
@@ -65,7 +54,7 @@ const itemsGoals: ItemGoals[] = [
         information: {
             title: "Registration",
             description:
-                "Create more registrations on your website for more qualified data and no longer depend on cookie consent.",
+                "Create more registrations on your website for more qualified data.",
             badges: ["Registration", "CRM", "Qualified data"],
         },
     },
@@ -99,82 +88,40 @@ const itemsGoals: ItemGoals[] = [
         information: {
             title: "Retention",
             description:
-                "Make your users want to come back to your website or app. Stand out from the crowd.",
+                "Make your users want to come back to your website or app.",
             badges: ["Retention", "Loyalty", "Membership"],
         },
         disabled: true,
     },
-] as const;
+];
 
-export function FormGoals(form: UseFormReturn<Campaign>) {
+export function FormGoals() {
+    const { control, watch } = useFormContext<CampaignDraft>();
     const [goal, setGoal] = useState<ItemGoals | undefined>();
-    const watchType = form.watch("type");
+    const watchGoal = watch("metadata.goal");
 
-    // Get productId from form state (reacts to changes immediately)
-    const productId = form.watch("productId");
-    const isDemoMode = useAuthStore((state) => state.token === "demo-token");
-
-    // Fetch product metadata to get product types
-    const { data: productMetadata } = useQuery({
-        ...productMetadataQueryOptions(productId as Hex, isDemoMode),
-        enabled: !!productId,
-    });
-
-    // Check goal compatibility and generate warning message
-    const warningMessage = useMemo(() => {
-        // No warning if no product selected or no goal selected
-        if (!productId || !watchType) return null;
-
-        // No warning if product metadata not loaded yet
-        if (!productMetadata?.productTypes) return null;
-
-        const selectedGoal = watchType;
-        const productTypes = productMetadata.productTypes;
-
-        // Check if the selected goal is compatible with the product types
-        if (isGoalCompatible(selectedGoal, productTypes)) return null;
-
-        // Generate warning message
-        const requiredTypes = getProductTypesForGoal(selectedGoal);
-        const requiredTypesLabels = requiredTypes
-            .map(getProductTypeLabel)
-            .join(", ");
-        const currentTypesLabels = productTypes
-            .map(getProductTypeLabel)
-            .join(", ");
-
-        return `The "${getGoalLabel(selectedGoal)}" goal requires a product with ${requiredTypesLabels} type${requiredTypes.length > 1 ? "s" : ""}. Your product uses ${currentTypesLabels}.`;
-    }, [productId, watchType, productMetadata]);
-
-    /**
-     * Set goal when we have a type
-     */
     useEffect(() => {
-        if (watchType === "") return;
-        setGoal(
-            watchType
-                ? itemsGoals.find((item) => item.id === watchType)
-                : undefined
-        );
-    }, [watchType]);
+        if (watchGoal === undefined) return;
+        setGoal(itemsGoals.find((item) => item.id === watchGoal));
+    }, [watchGoal]);
 
     return (
         <Panel title="Goals">
             <Column>
                 <FormDescription>
                     The choice of your goal defines the event that generates the
-                    distribution of rewards. Pay only when this goal is reached.
+                    distribution of rewards.
                 </FormDescription>
             </Column>
             <Column fullWidth={true}>
                 <FormField
-                    control={form.control}
-                    name="type"
+                    control={control}
+                    name="metadata.goal"
                     rules={{ required: "Select a goal" }}
                     render={({ field }) => (
                         <FormItem>
-                            <FormDescription label={"Campaign goal"} />
-                            <Row align={"start"}>
+                            <FormDescription label="Campaign goal" />
+                            <Row align="start">
                                 <div>
                                     <FormControl>
                                         <RadioGroup
@@ -182,17 +129,15 @@ export function FormGoals(form: UseFormReturn<Campaign>) {
                                                 field.onChange(value);
                                                 setGoal(
                                                     itemsGoals.find(
-                                                        (item) =>
-                                                            item.id === value
+                                                        (i) => i.id === value
                                                     )
                                                 );
                                             }}
                                             defaultValue={field.value}
-                                            {...field}
                                         >
                                             {itemsGoals.map((item) => (
                                                 <FormItem
-                                                    variant={"radio"}
+                                                    variant="radio"
                                                     key={item.id}
                                                 >
                                                     <FormControl>
@@ -204,7 +149,7 @@ export function FormGoals(form: UseFormReturn<Campaign>) {
                                                         />
                                                     </FormControl>
                                                     <FormLabel
-                                                        variant={"radio"}
+                                                        variant="radio"
                                                         className={
                                                             item.disabled
                                                                 ? styles.formGoals__label_disabled
@@ -228,12 +173,6 @@ export function FormGoals(form: UseFormReturn<Campaign>) {
                                 </div>
                             </Row>
                             <FormMessage />
-                            {warningMessage && (
-                                <div className={styles.formGoals__warning}>
-                                    <AlertTriangle size={18} />
-                                    <span>{warningMessage}</span>
-                                </div>
-                            )}
                         </FormItem>
                     )}
                 />
@@ -244,10 +183,7 @@ export function FormGoals(form: UseFormReturn<Campaign>) {
 
 function GoalInformation({ goal }: { goal: ItemGoals }) {
     if (!goal.information) return null;
-
-    const {
-        information: { title, description, badges },
-    } = goal;
+    const { title, description, badges } = goal.information;
 
     return (
         <>
@@ -259,7 +195,7 @@ function GoalInformation({ goal }: { goal: ItemGoals }) {
             </div>
             <div className={styles.formGoals__badges}>
                 {badges?.map((badge) => (
-                    <Badge key={badge} variant={"secondary"}>
+                    <Badge key={badge} variant="secondary">
                         {badge}
                     </Badge>
                 ))}

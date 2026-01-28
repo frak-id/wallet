@@ -1,19 +1,12 @@
 import { render, screen } from "@testing-library/react";
-import type { Hex } from "viem";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Team } from "./index";
 
-const mockProductId = "0x123" as Hex;
-
-vi.mock("@/module/product/component/ProductHead", () => ({
-    ProductHead: ({ productId }: { productId: Hex }) => (
-        <div data-testid="product-head">Product Head {productId}</div>
-    ),
-}));
+const mockMerchantId = "mock-merchant-id";
 
 vi.mock("@/module/product/component/TableTeam", () => ({
-    TableTeam: ({ productId }: { productId: Hex }) => (
-        <div data-testid="table-team">Table Team {productId}</div>
+    TableTeam: ({ merchantId }: { merchantId: string }) => (
+        <div data-testid="table-team">Table Team {merchantId}</div>
     ),
 }));
 
@@ -43,32 +36,23 @@ describe("Team", () => {
         vi.clearAllMocks();
     });
 
-    it("should render ProductHead with productId", () => {
-        render(<Team productId={mockProductId} />);
-
-        expect(screen.getByTestId("product-head")).toBeInTheDocument();
-        expect(
-            screen.getByText(`Product Head ${mockProductId}`)
-        ).toBeInTheDocument();
-    });
-
     it("should render Panel with title", () => {
-        render(<Team productId={mockProductId} />);
+        render(<Team merchantId={mockMerchantId} />);
 
         expect(screen.getByText("Manage your team")).toBeInTheDocument();
     });
 
-    it("should render TableTeam with productId", () => {
-        render(<Team productId={mockProductId} />);
+    it("should render TableTeam with merchantId", () => {
+        render(<Team merchantId={mockMerchantId} />);
 
         expect(screen.getByTestId("table-team")).toBeInTheDocument();
         expect(
-            screen.getByText(`Table Team ${mockProductId}`)
+            screen.getByText(`Table Team ${mockMerchantId}`)
         ).toBeInTheDocument();
     });
 
     it("should render FormLayout wrapper", () => {
-        render(<Team productId={mockProductId} />);
+        render(<Team merchantId={mockMerchantId} />);
 
         expect(screen.getByTestId("form-layout")).toBeInTheDocument();
     });
