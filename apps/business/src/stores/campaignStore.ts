@@ -5,7 +5,6 @@ import type {
     CampaignMetadata,
     CampaignRuleDefinition,
     ConditionGroup,
-    FixedRewardDefinition,
     RuleCondition,
 } from "@/types/Campaign";
 
@@ -23,20 +22,13 @@ export type CampaignDraft = {
     priority: number;
 };
 
-const defaultReward: FixedRewardDefinition = {
-    recipient: "referrer",
-    type: "token",
-    amountType: "fixed",
-    amount: 0,
-};
-
 const initialDraft: CampaignDraft = {
     merchantId: "",
     name: "",
     rule: {
         trigger: "purchase",
         conditions: [],
-        rewards: [defaultReward],
+        rewards: [],
     },
     metadata: {
         goal: undefined,

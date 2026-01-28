@@ -64,7 +64,7 @@ export function FormBudgetRow({ disabled }: { disabled?: boolean }) {
     return (
         <Column>
             <FormItem>
-                <FormLabel>Budget Period</FormLabel>
+                <FormDescription label="Budget Period" />
                 <RadioGroup
                     value={period}
                     onValueChange={(val) => {

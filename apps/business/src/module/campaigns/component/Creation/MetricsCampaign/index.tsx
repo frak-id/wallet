@@ -5,21 +5,58 @@ import { Actions } from "@/module/campaigns/component/Actions";
 import { ButtonCancel } from "@/module/campaigns/component/Creation/NewCampaign/ButtonCancel";
 import { useSaveCampaign } from "@/module/campaigns/hook/useSaveCampaign";
 import { Head } from "@/module/common/component/Head";
-import { InputAmountCampaign } from "@/module/common/component/InputAmount";
 import { Panel } from "@/module/common/component/Panel";
-import { Row } from "@/module/common/component/Row";
-import {
-    Form,
-    FormControl,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormLayout,
-    FormMessage,
-} from "@/module/forms/Form";
-import { RadioGroup, RadioGroupItem } from "@/module/forms/RadioGroup";
+import { Form, FormLayout } from "@/module/forms/Form";
 import { type CampaignDraft, campaignStore } from "@/stores/campaignStore";
-import { FormTrigger } from "../Generic/FormTrigger";
+import type { CampaignTrigger } from "@/types/Campaign";
+import { CacInput } from "./CacInput";
+import { ChainingConfig } from "./ChainingConfig";
+import { DistributionSlider } from "./DistributionSlider";
+import styles from "./index.module.css";
+import { TriggerSelector } from "./TriggerSelector";
+import {
+    DEFAULT_REWARD_STATE,
+    extractFormStateFromRule,
+    type RewardFormState,
+    updateRuleWithRewards,
+} from "./utils";
+
+type MetricsFormValues = {
+    trigger: CampaignTrigger;
+} & RewardFormState;
+
+function draftToFormValues(draft: CampaignDraft): MetricsFormValues {
+    const rewardState =
+        draft.rule.rewards.length > 0
+            ? extractFormStateFromRule(draft.rule)
+            : DEFAULT_REWARD_STATE;
+
+    return {
+        trigger: draft.rule.trigger,
+        ...rewardState,
+    };
+}
+
+function formValuesToDraft(
+    values: MetricsFormValues,
+    currentDraft: CampaignDraft
+): CampaignDraft {
+    const updatedRule = updateRuleWithRewards(currentDraft.rule, {
+        cac: values.cac,
+        ratio: values.ratio,
+        chainingEnabled: values.chainingEnabled,
+        deperditionPerLevel: values.deperditionPerLevel,
+        maxDepth: values.maxDepth,
+    });
+
+    return {
+        ...currentDraft,
+        rule: {
+            ...updatedRule,
+            trigger: values.trigger,
+        },
+    };
+}
 
 export function MetricsCampaign() {
     const navigate = useNavigate();
@@ -27,13 +64,17 @@ export function MetricsCampaign() {
     const updateDraft = campaignStore((s) => s.updateDraft);
     const saveCampaign = useSaveCampaign();
 
-    const form = useForm<CampaignDraft>({
-        values: useMemo(() => draft, [draft]),
+    const defaultValues = useMemo(() => draftToFormValues(draft), [draft]);
+
+    const form = useForm<MetricsFormValues>({
+        defaultValues,
+        values: defaultValues,
     });
 
-    async function onSubmit(values: CampaignDraft) {
-        updateDraft(() => values);
-        const saved = await saveCampaign.mutateAsync(values);
+    async function onSubmit(values: MetricsFormValues) {
+        const updatedDraft = formValuesToDraft(values, draft);
+        updateDraft(() => updatedDraft);
+        const saved = await saveCampaign.mutateAsync(updatedDraft);
         navigate({
             to: "/campaigns/draft/$campaignId/validation",
             params: { campaignId: saved.id },
@@ -47,178 +88,35 @@ export function MetricsCampaign() {
                     <Head
                         title={{ content: "Campaign Rules", size: "small" }}
                         rightSection={
-                            <ButtonCancel onClick={() => form.reset(draft)} />
+                            <ButtonCancel
+                                onClick={() => form.reset(defaultValues)}
+                            />
                         }
                     />
 
-                    <Panel title="Trigger & Reward">
-                        <FormTrigger />
-
-                        <Row>
-                            <FormField
-                                control={form.control}
-                                name="rule.rewards.0.amount"
-                                rules={{ required: "Required", min: 0 }}
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Reward Amount</FormLabel>
-                                        <FormControl>
-                                            <InputAmountCampaign
-                                                placeholder="5.00"
-                                                {...field}
-                                            />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            <FormField
-                                control={form.control}
-                                name="rule.rewards.0.recipient"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Recipient</FormLabel>
-                                        <FormControl>
-                                            <RadioGroup
-                                                onValueChange={field.onChange}
-                                                value={field.value}
-                                                style={{
-                                                    display: "flex",
-                                                    gap: "16px",
-                                                }}
-                                            >
-                                                <FormItem variant="radio">
-                                                    <FormControl>
-                                                        <RadioGroupItem value="referrer" />
-                                                    </FormControl>
-                                                    <FormLabel variant="radio">
-                                                        Referrer
-                                                    </FormLabel>
-                                                </FormItem>
-                                                <FormItem variant="radio">
-                                                    <FormControl>
-                                                        <RadioGroupItem value="referee" />
-                                                    </FormControl>
-                                                    <FormLabel variant="radio">
-                                                        Referee
-                                                    </FormLabel>
-                                                </FormItem>
-                                            </RadioGroup>
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        </Row>
-
-                        <FormField
-                            control={form.control}
-                            name="priority"
-                            rules={{ required: "Required", min: 0 }}
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Priority</FormLabel>
-                                    <FormControl>
-                                        <input
-                                            type="number"
-                                            style={{
-                                                height: "40px",
-                                                width: "120px",
-                                                borderRadius:
-                                                    "var(--frak-radius-2)",
-                                                border: "1px solid var(--frak-color-gray-4)",
-                                                padding: "0 12px",
-                                                fontSize: "14px",
-                                            }}
-                                            {...field}
-                                            onChange={(e) =>
-                                                field.onChange(
-                                                    parseInt(
-                                                        e.target.value,
-                                                        10
-                                                    ) || 0
-                                                )
-                                            }
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
+                    <Panel title="Set a target cost per action">
+                        <p className={styles.panelDescription}>
+                            "Target CPA" defines your overall acquisition cost
+                            per target action (your goal) to generate the
+                            maximum number of conversions at a cost equal to or
+                            lower than the target cost per action you set.
+                        </p>
+                        <CacInput />
+                        <TriggerSelector />
                     </Panel>
 
-                    <Panel title="Reward Chaining (Optional)">
-                        <Row>
-                            <FormField
-                                control={form.control}
-                                name="rule.rewards.0.chaining.deperditionPerLevel"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Deperdition/Level</FormLabel>
-                                        <FormControl>
-                                            <input
-                                                type="number"
-                                                step="0.01"
-                                                placeholder="0.5"
-                                                style={{
-                                                    height: "40px",
-                                                    width: "100%",
-                                                    borderRadius:
-                                                        "var(--frak-radius-2)",
-                                                    border: "1px solid var(--frak-color-gray-4)",
-                                                    padding: "0 12px",
-                                                    fontSize: "14px",
-                                                }}
-                                                {...field}
-                                                onChange={(e) =>
-                                                    field.onChange(
-                                                        parseFloat(
-                                                            e.target.value
-                                                        ) || 0
-                                                    )
-                                                }
-                                                value={field.value ?? ""}
-                                            />
-                                        </FormControl>
-                                    </FormItem>
-                                )}
-                            />
-                            <FormField
-                                control={form.control}
-                                name="rule.rewards.0.chaining.maxDepth"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Max Depth</FormLabel>
-                                        <FormControl>
-                                            <input
-                                                type="number"
-                                                placeholder="3"
-                                                style={{
-                                                    height: "40px",
-                                                    width: "100%",
-                                                    borderRadius:
-                                                        "var(--frak-radius-2)",
-                                                    border: "1px solid var(--frak-color-gray-4)",
-                                                    padding: "0 12px",
-                                                    fontSize: "14px",
-                                                }}
-                                                {...field}
-                                                onChange={(e) =>
-                                                    field.onChange(
-                                                        parseInt(
-                                                            e.target.value,
-                                                            10
-                                                        ) || 0
-                                                    )
-                                                }
-                                                value={field.value ?? ""}
-                                            />
-                                        </FormControl>
-                                    </FormItem>
-                                )}
-                            />
-                        </Row>
+                    <Panel title="Set reward amounts">
+                        <p className={styles.panelDescription}>
+                            When your goal is reached, the rewards are
+                            distributed instantly and automatically to the
+                            business introducer and the new customer, directly
+                            into their wallets, in the set proportions.
+                        </p>
+                        <DistributionSlider />
+                    </Panel>
+
+                    <Panel title="Referral Chain">
+                        <ChainingConfig />
                     </Panel>
 
                     <Actions isLoading={saveCampaign.isPending} />

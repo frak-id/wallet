@@ -4,21 +4,18 @@ import { useFormContext } from "react-hook-form";
 import { FormBudgetRow } from "@/module/campaigns/component/Creation/NewCampaign/FormBudgetRow";
 import { FormAdvertising } from "@/module/campaigns/component/Creation/ValidationCampaign/FormAdvertising";
 import { FormGoal } from "@/module/campaigns/component/Creation/ValidationCampaign/FormGoal";
+import { RewardsSummary } from "@/module/campaigns/component/RewardsSummary";
 import { Panel } from "@/module/common/component/Panel";
 import { FormDescription, FormItem } from "@/module/forms/Form";
 import type { CampaignDraft } from "@/stores/campaignStore";
-import type { FixedRewardDefinition } from "@/types/Campaign";
 
 export function FormCheck() {
     const form = useFormContext<CampaignDraft>();
-    const { metadata, scheduled, rule, priority } = form.getValues();
+    const { metadata, scheduled, rule } = form.getValues();
 
     const territories = metadata.territories ?? [];
     const trigger = rule.trigger;
-    const reward = rule.rewards?.[0] as FixedRewardDefinition | undefined;
-    const rewardAmount = reward?.amount ?? 0;
-    const rewardRecipient = reward?.recipient ?? "referrer";
-    const rewardChaining = reward?.chaining;
+    const rewards = rule.rewards ?? [];
 
     const formatDate = (date?: Date) => {
         if (!date) return "Not set";
@@ -78,33 +75,7 @@ export function FormCheck() {
                 <Input disabled={true} value={capitalize(trigger)} />
             </FormItem>
 
-            <FormItem>
-                <FormDescription label={"Priority"} />
-                <Input disabled={true} value={priority.toString()} />
-            </FormItem>
-
-            <Panel title="Reward Configuration">
-                <FormItem>
-                    <FormDescription label={"Reward Amount"} />
-                    <Input disabled={true} value={`${rewardAmount} EUR`} />
-                </FormItem>
-                <FormItem>
-                    <FormDescription label={"Recipient"} />
-                    <Input
-                        disabled={true}
-                        value={capitalize(rewardRecipient)}
-                    />
-                </FormItem>
-                {rewardChaining && (
-                    <FormItem>
-                        <FormDescription label={"Chaining"} />
-                        <Input
-                            disabled={true}
-                            value={`Decay: ${rewardChaining.deperditionPerLevel}%${rewardChaining.maxDepth ? `, Max depth: ${rewardChaining.maxDepth}` : ""}`}
-                        />
-                    </FormItem>
-                )}
-            </Panel>
+            <RewardsSummary rewards={rewards} />
 
             <FormBudgetRow disabled={true} />
         </Panel>

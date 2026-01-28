@@ -8,6 +8,7 @@ import { CampaignTerritory } from "@/module/campaigns/component/CampaignDetails/
 import { FormBudgetRow } from "@/module/campaigns/component/Creation/NewCampaign/FormBudgetRow";
 import { FormAdvertising } from "@/module/campaigns/component/Creation/ValidationCampaign/FormAdvertising";
 import { FormGoal } from "@/module/campaigns/component/Creation/ValidationCampaign/FormGoal";
+import { RewardsSummary } from "@/module/campaigns/component/RewardsSummary";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { ActionsWrapper } from "@/module/common/component/ActionsWrapper";
 import { LinkButton } from "@/module/common/component/LinkButton";
@@ -69,6 +70,8 @@ export function CampaignDetails({
         return <Panel title={"Campaign Status"}>Campaign not found</Panel>;
     }
 
+    const rewards = campaign.rule.rewards ?? [];
+
     return (
         <FormLayout>
             <CampaignStatus campaign={campaign} />
@@ -76,6 +79,7 @@ export function CampaignDetails({
                 <Form {...form}>
                     <FormAdvertising />
                     <FormGoal />
+                    <RewardsSummary rewards={rewards} />
                     <FormBudgetRow disabled={true} />
                     <CampaignTerritory campaign={campaign} />
                 </Form>
