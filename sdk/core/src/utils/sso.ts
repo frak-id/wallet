@@ -34,7 +34,7 @@ export type FullSsoParams = Omit<PrepareSsoParamsType, "metadata"> & {
  *   "0x123...",
  *   "My App"
  * );
- * // Returns: https://wallet.frak.id/sso?m=<compressed_base64>
+ * // Returns: https://wallet.frak.id/sso?p=<compressed_base64>
  * ```
  */
 export function generateSsoUrl(
@@ -64,10 +64,10 @@ export function generateSsoUrl(
     // Encode to base64url
     const compressedString = compressJsonToB64(compressedParam);
 
-    // Build URL matching wallet's expected format: /sso?m=<compressed>
+    // Build URL matching wallet's expected format: /sso?p=<compressed>
     const ssoUrl = new URL(walletUrl);
     ssoUrl.pathname = "/sso";
-    ssoUrl.searchParams.set("m", compressedString);
+    ssoUrl.searchParams.set("p", compressedString);
 
     return ssoUrl.toString();
 }
