@@ -37,22 +37,7 @@ export {
     usdcArbitrumAddress,
     webShopInteractionFacetAbi,
 } from "./blockchain";
-export type {
-    GetAllProductsResponseDto,
-    GetAllTokenResponseDto,
-    GetCampaignResponseDto,
-    GetInteractionItemDto,
-    GetInteractionsResponseDto,
-    GetMembersCountResponseDto,
-    GetMembersPageItem,
-    GetMembersRequestDto,
-    GetMembersResponseDto,
-    GetMembersWalletResponseDto,
-    GetProductInfoResponseDto,
-    GetRewardHistoryResponseDto,
-    GetRewardResponseDto,
-    IndexerToken,
-} from "./types";
+
 export {
     bytesToString,
     detectStablecoinFromToken,
