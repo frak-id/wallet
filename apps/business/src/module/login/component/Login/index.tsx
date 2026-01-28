@@ -1,11 +1,9 @@
-import { WebAuthN } from "@frak-labs/app-essentials";
+import { useSiweAuthenticate } from "@frak-labs/react-sdk";
 import { ClientOnly } from "@frak-labs/ui/component/ClientOnly";
 import { Spinner } from "@frak-labs/ui/component/Spinner";
 import { useMediaQuery } from "@frak-labs/ui/hook/useMediaQuery";
 import { useNavigate } from "@tanstack/react-router";
-import { WebAuthnP256 } from "ox";
 import { useTransition } from "react";
-import { generatePrivateKey } from "viem/accounts";
 import { authenticatedBackendApi } from "@/context/api/backendClient";
 import { useAuthStore } from "@/stores/authStore";
 import styles from "./index.module.css";
@@ -13,34 +11,16 @@ import logo from "./logo-frak.svg";
 
 export function Login() {
     const navigate = useNavigate();
-    const [isPending, startTransition] = useTransition();
+    const [, startTransition] = useTransition();
     const isMobile = useMediaQuery("(max-width : 768px)");
 
-    const handleLogin = async () => {
-        startTransition(async () => {
-            try {
-                const challenge = generatePrivateKey();
-                const { metadata, signature, raw } = await WebAuthnP256.sign({
-                    rpId: WebAuthN.rpId,
-                    userVerification: "required",
-                    challenge,
-                });
-
-                const authenticationResponse = {
-                    id: raw.id,
-                    response: {
-                        metadata,
-                        signature,
-                    },
-                };
-
-                const encodedResponse = btoa(
-                    JSON.stringify(authenticationResponse)
-                );
-
+    const { mutate: authenticate, isPending } = useSiweAuthenticate({
+        mutations: {
+            onSuccess: async (data) => {
+                // Call backend to exchange SIWE for JWT
                 const response = await authenticatedBackendApi.auth.login.post({
-                    expectedChallenge: challenge,
-                    authenticatorResponse: encodedResponse,
+                    message: data.message,
+                    signature: data.signature,
                 });
 
                 if (response.error) {
@@ -59,11 +39,9 @@ export function Login() {
                 startTransition(() => {
                     navigate({ to: "/dashboard" });
                 });
-            } catch (error) {
-                console.error("WebAuthn login error:", error);
-            }
-        });
-    };
+            },
+        },
+    });
 
     const logoFrakLabs = (
         <ClientOnly>
@@ -114,14 +92,22 @@ export function Login() {
                         className={styles.button}
                         type="button"
                         disabled={isPending}
-                        onClick={handleLogin}
+                        onClick={() =>
+                            authenticate({
+                                siwe: {
+                                    // Expire the session after 1 week
+                                    expirationTimeTimestamp:
+                                        Date.now() + 1000 * 60 * 60 * 24 * 7,
+                                },
+                            })
+                        }
                     >
                         {isPending && <Spinner />} Connect
                     </button>
                 </div>
             </div>
             <footer className={styles.footer}>
-                <p>© 2024 Frak Labs Copyright and rights reserved</p>
+                <p>© 2026 Frak Labs Copyright and rights reserved</p>
                 <ul className={styles.list}>
                     <li className={styles.list__item}>
                         <a href="/">Terms and Conditions</a>
