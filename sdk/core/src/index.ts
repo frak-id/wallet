@@ -13,12 +13,7 @@ export {
     interactionTypes,
 } from "./constants/interactionTypes";
 export { type LocalesKey, locales } from "./constants/locales";
-// Constants
-export {
-    type ProductTypesKey,
-    productTypes,
-    productTypesMask,
-} from "./constants/productTypes";
+
 // Types
 export type {
     ClientLifecycleEvent,
@@ -39,7 +34,7 @@ export type {
     FrakLifecycleEvent,
     // Config
     FrakWalletSdkConfig,
-    GetProductInformationReturnType,
+    GetMerchantInformationReturnType,
     HashProtectedData,
     I18nConfig,
     IFrameLifecycleEvent,
@@ -115,4 +110,4 @@ export {
     setupMergeTokenListener,
     trackEvent,
 } from "./utils";
-export { computeProductId } from "./utils/computeProductId";
+export { computeProductId as computeLegacyProductId } from "./utils/computeProductId";

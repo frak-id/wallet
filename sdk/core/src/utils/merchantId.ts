@@ -9,7 +9,6 @@ import { getBackendUrl } from "./backendUrl";
  */
 type MerchantLookupResponse = {
     merchantId: string;
-    productId: string;
     name: string;
     domain: string;
 };

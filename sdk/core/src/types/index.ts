@@ -39,6 +39,10 @@ export type {
     LoggedOutEmbeddedView,
 } from "./rpc/embedded";
 export type {
+    GetMerchantInformationReturnType,
+    TokenAmountType,
+} from "./rpc/merchantInformation";
+export type {
     FinalActionType,
     FinalModalStepType,
     LoginModalStepType,
@@ -50,10 +54,6 @@ export type {
     SiweAuthenticateReturnType,
     SiweAuthenticationParams,
 } from "./rpc/modal";
-export type {
-    GetProductInformationReturnType,
-    TokenAmountType,
-} from "./rpc/productInformation";
 export type {
     OpenSsoParamsType,
     OpenSsoReturnType,

@@ -1,6 +1,5 @@
 import type { Address, Hex } from "viem";
 import type { FullInteractionTypesKey } from "../../constants/interactionTypes";
-import type { ProductTypesKey } from "../../constants/productTypes";
 
 /**
  * The type for the amount of tokens
@@ -13,12 +12,12 @@ export type TokenAmountType = {
 };
 
 /**
- * Response of the `frak_getProductInformation` RPC method
+ * Response of the `frak_getMerchantInformation` RPC method
  * @group RPC Schema
  */
-export type GetProductInformationReturnType = {
+export type GetMerchantInformationReturnType = {
     /**
-     * Current product id
+     * Current merchant id
      */
     id: Hex;
     /**
@@ -26,17 +25,13 @@ export type GetProductInformationReturnType = {
      */
     onChainMetadata: {
         /**
-         * Name of the product on-chain
+         * Name of the merchant on-chain
          */
         name: string;
         /**
-         * Domain of the product on-chain
+         * Domain of the merchant on-chain
          */
         domain: string;
-        /**
-         * The supported product types
-         */
-        productTypes: ProductTypesKey[];
     };
     /**
      * The max potential reward for the referrer
@@ -47,7 +42,7 @@ export type GetProductInformationReturnType = {
      */
     maxReferee?: TokenAmountType;
     /**
-     * List of all the potentials reward arround this product
+     * List of all the potentials reward around this merchant
      */
     rewards: {
         token: Address;

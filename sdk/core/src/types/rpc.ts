@@ -9,7 +9,7 @@ import type {
     DisplayEmbeddedWalletResultType,
 } from "./rpc/embedded";
 
-import type { GetProductInformationReturnType } from "./rpc/productInformation";
+import type { GetMerchantInformationReturnType } from "./rpc/merchantInformation";
 import type {
     OpenSsoParamsType,
     OpenSsoReturnType,
@@ -47,9 +47,9 @@ import type { WalletStatusReturnType } from "./rpc/walletStatus";
  *  - Returns: {@link OpenSsoReturnType}
  *  - Response Type: promise (one-shot)
  *
- * #### frak_getProductInformation
+ * #### frak_getMerchantInformation
  *  - Params: None
- *  - Returns: {@link GetProductInformationReturnType}
+ *  - Returns: {@link GetMerchantInformationReturnType}
  *  - Response Type: promise (one-shot)
  *
  * #### frak_displayEmbeddedWallet
@@ -110,16 +110,16 @@ export type IFrameRpcSchema = [
         ReturnType: OpenSsoReturnType;
     },
     /**
-     * Method to get current product information's
-     *  - Is product minted?
+     * Method to get current merchant information
+     *  - Is merchant registered?
      *  - Does it have running campaign?
      *  - Estimated reward on actions
      * This is a one-shot request
      */
     {
-        Method: "frak_getProductInformation";
+        Method: "frak_getMerchantInformation";
         Parameters?: undefined;
-        ReturnType: GetProductInformationReturnType;
+        ReturnType: GetMerchantInformationReturnType;
     },
     /**
      * Method to show the embedded wallet, with potential customization

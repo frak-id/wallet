@@ -12,7 +12,7 @@ export type AppSpecificSsoMetadata = SsoMetadata & {
  */
 export type FullSsoParams = Omit<PrepareSsoParamsType, "metadata"> & {
     metadata: AppSpecificSsoMetadata;
-    productId: Hex;
+    merchantId: Hex;
 };
 
 /**
@@ -34,13 +34,13 @@ export type FullSsoParams = Omit<PrepareSsoParamsType, "metadata"> & {
  *   "0x123...",
  *   "My App"
  * );
- * // Returns: https://wallet.frak.id/sso?p=<compressed_base64>
+ * // Returns: https://wallet.frak.id/sso?m=<compressed_base64>
  * ```
  */
 export function generateSsoUrl(
     walletUrl: string,
     params: PrepareSsoParamsType,
-    productId: Hex,
+    merchantId: Hex,
     name: string,
     css?: string
 ): string {
@@ -49,7 +49,7 @@ export function generateSsoUrl(
         redirectUrl: params.redirectUrl,
         directExit: params.directExit,
         lang: params.lang,
-        productId,
+        merchantId,
         metadata: {
             name,
             css,
@@ -64,10 +64,10 @@ export function generateSsoUrl(
     // Encode to base64url
     const compressedString = compressJsonToB64(compressedParam);
 
-    // Build URL matching wallet's expected format: /sso?p=<compressed>
+    // Build URL matching wallet's expected format: /sso?m=<compressed>
     const ssoUrl = new URL(walletUrl);
     ssoUrl.pathname = "/sso";
-    ssoUrl.searchParams.set("p", compressedString);
+    ssoUrl.searchParams.set("m", compressedString);
 
     return ssoUrl.toString();
 }
@@ -81,8 +81,8 @@ function ssoParamsToCompressed(params: FullSsoParams) {
         r: params.redirectUrl,
         d: params.directExit,
         l: params.lang,
-        p: params.productId,
-        m: {
+        m: params.merchantId,
+        md: {
             n: params.metadata?.name,
             css: params.metadata?.css,
             l: params.metadata?.logoUrl,
@@ -103,11 +103,11 @@ export type CompressedSsoData = {
     d?: boolean;
     // language
     l?: "en" | "fr";
-    // product id
-    p: Hex;
+    // merchant id
+    m: Hex;
     // metadata
-    m: {
-        // product name
+    md: {
+        // merchant name
         n: string;
         // custom css
         css?: string;
