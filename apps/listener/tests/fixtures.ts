@@ -13,9 +13,9 @@ import {
  */
 export type ListenerTestFixtures = BaseTestFixtures & {
     /**
-     * Mock product ID for testing
+     * Mock merchant ID for testing
      */
-    mockProductId: `0x${string}`;
+    mockMerchantId: string;
 
     /**
      * Mock origin URL for testing
@@ -25,31 +25,17 @@ export type ListenerTestFixtures = BaseTestFixtures & {
 
 /**
  * Extended test with listener-specific fixtures
- * Use this instead of the base test for listener app tests
- *
- * @example
- * ```ts
- * import { test, expect } from '@/tests/fixtures';
- *
- * test('should handle RPC message', ({ mockProductId, mockOrigin, mockAddress }) => {
- *     // mockProductId and mockOrigin from listener-specific fixtures
- *     // mockAddress from base fixtures
- *     expect(mockProductId).toMatch(/^0x/);
- *     expect(mockOrigin).toBeDefined();
- * });
- * ```
  */
 export const test = baseTest.extend<
-    Pick<ListenerTestFixtures, "mockProductId" | "mockOrigin">
+    Pick<ListenerTestFixtures, "mockMerchantId" | "mockOrigin">
 >({
     /**
-     * Mock product ID for testing RPC messages
+     * Mock merchant ID for testing RPC messages
      */
     // biome-ignore lint/correctness/noEmptyPattern: Vitest requires object destructuring
-    mockProductId: async ({}, use: (value: `0x${string}`) => Promise<void>) => {
-        const productId =
-            "0x1234567890abcdef1234567890abcdef12345678" as `0x${string}`;
-        await use(productId);
+    mockMerchantId: async ({}, use: (value: string) => Promise<void>) => {
+        const merchantId = "test-merchant-id-1234";
+        await use(merchantId);
     },
 
     /**
@@ -64,17 +50,6 @@ export const test = baseTest.extend<
 
 /**
  * Type-aware hooks that have access to fixtures
- *
- * @example
- * ```ts
- * import { test, beforeEach } from '@/tests/fixtures';
- *
- * beforeEach(({ mockSession, mockProductId }) => {
- *     // Setup with typed fixtures from both base and listener-specific
- *     sessionStore.getState().setSession(mockSession);
- *     resolvingContextStore.getState().updateContext({ productId: mockProductId });
- * });
- * ```
  */
 export const { beforeEach, afterEach, beforeAll, afterAll } = test;
 

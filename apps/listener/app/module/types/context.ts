@@ -1,6 +1,6 @@
 import type { IFrameRpcSchema } from "@frak-labs/core-sdk";
 import type { SsoRpcSchema } from "@frak-labs/wallet-shared";
-import type { Address, Hex } from "viem";
+import type { Address } from "viem";
 
 /**
  * Augmented context for wallet RPC handlers
@@ -25,13 +25,6 @@ export type WalletRpcContext = {
      * Primary identifier for the merchant
      */
     merchantId: string;
-
-    /**
-     * The product ID (derived from domain) - LEGACY
-     * Kept for on-chain queries compatibility
-     * @deprecated Use merchantId for new integrations
-     */
-    productId: Hex;
 
     /**
      * The full source URL

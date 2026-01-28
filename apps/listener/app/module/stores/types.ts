@@ -23,12 +23,6 @@ export interface IFrameResolvingContext {
      * Primary identifier for the merchant
      */
     merchantId: string;
-    /**
-     * The product ID (derived from domain) - LEGACY
-     * Kept for on-chain queries compatibility
-     * @deprecated Use merchantId for new integrations
-     */
-    productId: `0x${string}`;
     origin: string;
     sourceUrl: string;
     isAutoContext: boolean;

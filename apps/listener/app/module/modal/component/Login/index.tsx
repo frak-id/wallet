@@ -97,7 +97,10 @@ export function LoginModalStep({
                 {allowSso && (
                     <div>
                         <SsoButton
-                            productId={resolvingContext?.productId ?? "0x"}
+                            merchantId={
+                                (resolvingContext?.merchantId as `0x${string}`) ??
+                                "0x"
+                            }
                             ssoMetadata={ssoMetadata}
                             text={t("sdk.modal.login.primaryAction")}
                             className={`${styles.modalListener__buttonPrimary} ${prefixModalCss("button-primary")}`}

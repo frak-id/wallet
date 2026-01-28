@@ -16,7 +16,7 @@ import {
 import { useDisplayEmbeddedWallet } from "@/module/hooks/useDisplayEmbeddedWallet";
 import { useDisplayModalListener } from "@/module/hooks/useDisplayModalListener";
 import { useListenerDataPreload } from "@/module/hooks/useListenerDataPreload";
-import { useOnGetProductInformation } from "@/module/hooks/useOnGetProductInformation";
+import { useOnGetMerchantInformation } from "@/module/hooks/useOnGetMerchantInformation";
 import { useSendPing } from "@/module/hooks/useSendPing";
 import { useWalletStatusListener } from "@/module/hooks/useWalletStatusListener";
 import {
@@ -57,8 +57,7 @@ function ListenerContent() {
     // Hook when a embedded wallet display is asked
     const onDisplayEmbeddedWallet = useDisplayEmbeddedWallet();
 
-    // Hook when the product information are asked
-    const onGetProductInformation = useOnGetProductInformation();
+    const onGetMerchantInformation = useOnGetMerchantInformation();
 
     // Create the RPC listener with centralized message handling
     useEffect(() => {
@@ -86,7 +85,7 @@ function ListenerContent() {
         // - SsoRpcSchema: SSO window -> wallet communication
         //
         // Note: We accept all origins with "*" because the actual security validation
-        // happens in walletContextMiddleware (matching computed productId from origin
+        // happens in walletContextMiddleware (matching merchantId from origin
         // against stored iframeResolvingContext)
         //
         // Message routing:
@@ -95,7 +94,7 @@ function ListenerContent() {
         //
         // Middleware stack order (RPC messages only):
         // 1. loggingMiddleware - Logs requests/responses (development only)
-        // 2. walletContextMiddleware - Augments context with productId, sourceUrl, etc.
+        // 2. walletContextMiddleware - Augments context with merchantId, sourceUrl, etc.
         const listener = createRpcListener<
             CombinedRpcSchema,
             WalletRpcContext,
@@ -113,7 +112,10 @@ function ListenerContent() {
         listener.handle("frak_displayModal", onDisplayModalRequest);
         listener.handle("frak_prepareSso", handlePrepareSso);
         listener.handle("frak_openSso", handleOpenSso);
-        listener.handle("frak_getProductInformation", onGetProductInformation);
+        listener.handle(
+            "frak_getMerchantInformation",
+            onGetMerchantInformation
+        );
         listener.handle("frak_displayEmbeddedWallet", onDisplayEmbeddedWallet);
 
         // Register streaming handlers (IFrameRpcSchema)
@@ -135,7 +137,7 @@ function ListenerContent() {
     }, [
         onWalletListenRequest,
         onDisplayModalRequest,
-        onGetProductInformation,
+        onGetMerchantInformation,
         onDisplayEmbeddedWallet,
     ]);
 

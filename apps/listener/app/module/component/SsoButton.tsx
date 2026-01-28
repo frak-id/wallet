@@ -23,22 +23,14 @@ import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
  * - SSO completion now handled via direct window postMessage
  * - Session updates trigger via sessionAtom changes
  *
- * @param appName
- * @param productId
- * @param ssoMetadata
- * @param text
- * @param defaultText
- * @param lang
- * @param className
- * @constructor
  */
 export function SsoButton({
-    productId,
+    merchantId,
     ssoMetadata,
     text,
     className,
 }: {
-    productId: Hex;
+    merchantId: Hex;
     ssoMetadata: SsoMetadata;
     text: string;
     className?: string;
@@ -51,7 +43,7 @@ export function SsoButton({
 
     // Get the link to use with the SSO
     const { link } = useSsoLink({
-        productId,
+        merchantId,
         metadata: {
             name: appName,
             ...ssoMetadata,
@@ -68,8 +60,8 @@ export function SsoButton({
     if (ua.isMobile) {
         return (
             <MobileSsoButton
-                productId={productId}
-                productName={appName}
+                merchantId={merchantId}
+                merchantName={appName}
                 text={text}
                 className={className}
             />
@@ -150,13 +142,13 @@ function LinkSsoButton({
 }
 
 function MobileSsoButton({
-    productId,
-    productName,
+    merchantId,
+    merchantName,
     text,
     className,
 }: {
-    productId: Hex;
-    productName: string;
+    merchantId: Hex;
+    merchantName: string;
     text: ReactNode;
     className?: string;
 }) {
@@ -174,9 +166,9 @@ function MobileSsoButton({
             window.location.href;
         const deepLinkUrl = buildMobileLoginUrl({
             returnUrl,
-            productId,
+            merchantId,
             state,
-            productName,
+            merchantName,
         });
 
         // Use iframe lifecycle redirect event (handled by SDK)
@@ -213,20 +205,20 @@ function generateState(): string {
 
 function buildMobileLoginUrl({
     returnUrl,
-    productId,
+    merchantId,
     state,
-    productName,
+    merchantName,
 }: {
     returnUrl: string;
-    productId: string;
+    merchantId: string;
     state: string;
-    productName?: string;
+    merchantName?: string;
 }): string {
     const params = new URLSearchParams();
     params.set("returnUrl", returnUrl);
-    params.set("productId", productId);
+    params.set("merchantId", merchantId);
     params.set("state", state);
-    if (productName) params.set("productName", productName);
+    if (merchantName) params.set("merchantName", merchantName);
 
     return `${DEEP_LINK_SCHEME}login?${params.toString()}`;
 }

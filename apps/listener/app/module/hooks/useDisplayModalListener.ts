@@ -28,7 +28,7 @@ type OnDisplayModalRequest = RpcPromiseHandler<
 /**
  * Hook used to listen to the display modal action
  *
- * Note: Context is augmented by middleware with productId, sourceUrl, etc.
+ * Note: Context is augmented by middleware with merchantId, sourceUrl, etc.
  * No need to read from Zustand store.
  */
 export function useDisplayModalListener(): OnDisplayModalRequest {

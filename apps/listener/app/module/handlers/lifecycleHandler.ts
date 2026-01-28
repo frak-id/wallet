@@ -68,10 +68,13 @@ export const createClientLifecycleHandler =
                     );
                     return;
                 }
-                // Restore the backup
+                const domain = new URL(resolveContext.sourceUrl).host.replace(
+                    "www.",
+                    ""
+                );
                 await restoreBackupData({
                     backup: data.backup,
-                    productId: resolveContext.productId,
+                    domain,
                 });
                 return;
             }

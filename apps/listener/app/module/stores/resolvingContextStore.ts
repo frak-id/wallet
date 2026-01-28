@@ -12,14 +12,14 @@ import {
     type ClientLifecycleEvent,
     FrakContextManager,
 } from "@frak-labs/core-sdk";
-import { type Address, type Hex, isAddressEqual, keccak256, toHex } from "viem";
+import { type Address, isAddressEqual } from "viem";
 import { create } from "zustand";
 import type { IFrameResolvingContext, ResolvingContextStore } from "./types";
 
 /**
  * Cache for merchant lookups by domain
  */
-const merchantCache = new Map<string, { merchantId: string; productId: Hex }>();
+const merchantCache = new Map<string, { merchantId: string }>();
 
 /**
  * Clear the merchant cache (for testing)
@@ -107,7 +107,6 @@ export const resolvingContextStore = create<ResolvingContextStore>(
                     // Set open panel global properties
                     updateGlobalProperties({
                         isIframe: true,
-                        productId: context.productId,
                         contextUrl: context.sourceUrl,
                         contextReferrer: context.walletReferrer,
                     });
@@ -160,21 +159,18 @@ async function resolveIFrameContext(
     const isAutoContext = event === undefined;
 
     // Fetch merchantId from backend (with cache)
-    // Falls back to computed productId if merchant not found
     const merchantData = await fetchMerchantByDomain(normalizedDomain);
 
     console.log("Resolved context", {
         sourceUrl,
         origin,
         merchantId: merchantData.merchantId,
-        productId: merchantData.productId,
         isAutoContext,
         ...(walletReferrer && { walletReferrer }),
     });
 
     return {
         merchantId: merchantData.merchantId,
-        productId: merchantData.productId,
         origin,
         sourceUrl,
         isAutoContext,
@@ -184,19 +180,16 @@ async function resolveIFrameContext(
 
 /**
  * Fetch merchant data from backend by domain
- * Always returns a result - falls back to computed productId if merchant not found
+ * Always returns a result - falls back to empty merchantId if merchant not found
  */
 async function fetchMerchantByDomain(
     domain: string
-): Promise<{ merchantId: string; productId: Hex }> {
+): Promise<{ merchantId: string }> {
     // Check cache first
     const cached = merchantCache.get(domain);
     if (cached) {
         return cached;
     }
-
-    // Compute fallback productId (used if backend lookup fails)
-    const fallbackProductId = keccak256(toHex(domain));
 
     try {
         const { data, error } =
@@ -207,21 +200,20 @@ async function fetchMerchantByDomain(
         if (error || !data) {
             // Merchant not registered - use fallback
             console.warn(`Merchant not found for ${domain}, using fallback`);
-            const fallback = { merchantId: "", productId: fallbackProductId };
+            const fallback = { merchantId: "" };
             merchantCache.set(domain, fallback);
             return fallback;
         }
 
         const result = {
             merchantId: data.merchantId,
-            productId: data.productId as Hex,
         };
         merchantCache.set(domain, result);
         return result;
     } catch (error) {
         console.warn("Failed to fetch merchant:", error);
         // Network error - use fallback
-        const fallback = { merchantId: "", productId: fallbackProductId };
+        const fallback = { merchantId: "" };
         merchantCache.set(domain, fallback);
         return fallback;
     }

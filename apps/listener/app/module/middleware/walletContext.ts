@@ -33,7 +33,7 @@ import type {
  *
  * // Handlers now receive augmented context
  * listener.handle('frak_sendInteraction', async (params, context) => {
- *   // context.merchantId, context.productId, context.sourceUrl, etc. are directly available
+ *   // context.merchantId, context.sourceUrl, etc. are directly available
  *   // No need to read from store!
  * })
  * ```
@@ -64,7 +64,6 @@ export const walletContextMiddleware: RpcMiddleware<
             return {
                 ...context,
                 merchantId: "",
-                productId: "0x",
                 sourceUrl: context.origin,
                 isAutoContext: false,
             };
@@ -96,7 +95,6 @@ export const walletContextMiddleware: RpcMiddleware<
         return {
             ...context,
             merchantId: resolvingContext.merchantId,
-            productId: resolvingContext.productId,
             sourceUrl: resolvingContext.sourceUrl,
             isAutoContext: resolvingContext.isAutoContext,
             walletReferrer: resolvingContext.walletReferrer,
