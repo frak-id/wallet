@@ -4,6 +4,7 @@ import { Actions } from "@/module/campaigns/component/Actions";
 import { ButtonCancel } from "@/module/campaigns/component/Creation/NewCampaign/ButtonCancel";
 import { FormBudget } from "@/module/campaigns/component/Creation/NewCampaign/FormBudget";
 import { FormGoals } from "@/module/campaigns/component/Creation/NewCampaign/FormGoals";
+import { FormMerchant } from "@/module/campaigns/component/Creation/NewCampaign/FormMerchant";
 import { FormSchedule } from "@/module/campaigns/component/Creation/NewCampaign/FormSchedule";
 import { FormSpecialAdvertising } from "@/module/campaigns/component/Creation/NewCampaign/FormSpecialAdvertising";
 import { FormTerritory } from "@/module/campaigns/component/Creation/NewCampaign/FormTerritory";
@@ -14,22 +15,18 @@ import { mapCampaignFormToInput } from "@/module/campaigns/utils/mapper";
 import { Head } from "@/module/common/component/Head";
 import { Form, FormLayout } from "@/module/forms/Form";
 import { campaignStore } from "@/stores/campaignStore";
-import { FormMerchant } from "./FormMerchant";
 
 export function NewCampaign({ title }: { title: string }) {
     const campaign = campaignStore((state) => state.campaign);
+    const setCampaign = campaignStore((state) => state.setCampaign);
+    const setStep = campaignStore((state) => state.setStep);
     const campaignSuccess = campaignStore((state) => state.success);
     const reset = campaignStore((state) => state.reset);
     const setIsClosing = campaignStore((state) => state.setIsClosing);
     const saveCampaign = useSaveCampaign();
 
-    /**
-     * Reset campaign atom when campaign was in success
-     */
     useEffect(() => {
-        if (campaignSuccess) {
-            reset();
-        }
+        if (campaignSuccess) reset();
         setIsClosing(false);
     }, [campaignSuccess, reset, setIsClosing]);
 
@@ -37,24 +34,25 @@ export function NewCampaign({ title }: { title: string }) {
         values: useMemo(() => campaign, [campaign]),
     });
 
-    /**
-     * Populate the form with campaign atom
-     */
     useEffect(() => {
         form.reset(campaign);
-    }, [campaign]);
+    }, [campaign, form]);
 
     async function onSubmit(values: CampaignFormValues) {
-        await saveCampaign.mutateAsync(mapCampaignFormToInput(values));
+        setCampaign({ ...campaign, ...values });
+
+        await saveCampaign.mutateAsync({
+            ...mapCampaignFormToInput(values),
+            campaignId: campaign.id,
+        });
+
+        setStep((s) => s + 1);
     }
 
     return (
         <FormLayout>
             <Head
-                title={{
-                    content: title,
-                    size: "small",
-                }}
+                title={{ content: title, size: "small" }}
                 rightSection={
                     <ButtonCancel onClick={() => form.reset(campaign)} />
                 }
@@ -68,7 +66,7 @@ export function NewCampaign({ title }: { title: string }) {
                     <FormBudget />
                     <FormTerritory {...form} />
                     <FormSchedule {...form} />
-                    <Actions />
+                    <Actions isLoading={saveCampaign.isPending} />
                 </form>
             </Form>
         </FormLayout>

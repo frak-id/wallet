@@ -31,7 +31,7 @@ export function FormMerchant() {
     }, [merchants]);
 
     return (
-        <Panel title="Product" aria-disabled={isDisabled}>
+        <Panel title="Merchant" aria-disabled={isDisabled}>
             <FormField
                 control={control}
                 name="merchantId"
@@ -49,7 +49,7 @@ export function FormMerchant() {
                                 disabled={isDisabled}
                             >
                                 <SelectTrigger length={"medium"} {...field}>
-                                    <SelectValue placeholder="Select a product" />
+                                    <SelectValue placeholder="Select a merchant" />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {merchants.map((merchant) => (

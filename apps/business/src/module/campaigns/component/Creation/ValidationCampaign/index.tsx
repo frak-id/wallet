@@ -19,68 +19,66 @@ import styles from "./index.module.css";
 export function ValidationCampaign() {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
-    const campaign = campaignStore((state) => state.campaign);
+    const isDemoMode = useIsDemoMode();
 
-    const setSuccess = campaignStore((state) => state.setSuccess);
+    const campaign = campaignStore((state) => state.campaign);
     const campaignSuccess = campaignStore((state) => state.success);
     const isClosing = campaignStore((state) => state.isClosing);
-    const save = useSaveCampaign();
-    const { mutateAsync: publishStatus } = useStatusTransition();
-    const isDemoMode = useIsDemoMode();
+    const setSuccess = campaignStore((state) => state.setSuccess);
+    const reset = campaignStore((state) => state.reset);
+
     const saveCampaign = useSaveCampaign();
+    const { mutateAsync: publishCampaign } = useStatusTransition();
 
     const form = useForm<CampaignFormValues>({
         values: useMemo(() => campaign, [campaign]),
     });
 
-    const { mutate: createAndPublish, isPending: isPendingPublish } =
-        useMutation({
-            mutationKey: ["campaign", "create-publish"],
-            mutationFn: async (values: CampaignFormValues) => {
-                if (isDemoMode) {
-                    await new Promise((resolve) => setTimeout(resolve, 1000));
-                    setSuccess(true);
-                    return;
-                }
+    const { mutate: saveAndPublish, isPending } = useMutation({
+        mutationKey: ["campaign", "save-publish"],
+        mutationFn: async (values: CampaignFormValues) => {
+            if (isDemoMode) {
+                await new Promise((r) => setTimeout(r, 1000));
+                return;
+            }
 
-                const input = mapCampaignFormToInput(values);
+            const input = mapCampaignFormToInput(values);
+            const saved = await saveCampaign.mutateAsync({
+                ...input,
+                campaignId: campaign.id,
+            });
 
-                const resultCampaign = await saveCampaign.mutateAsync({
-                    campaignId: campaign.id,
-                    ...input,
-                });
+            if (!saved?.id) throw new Error("Failed to save campaign");
 
-                if (!resultCampaign?.id)
-                    throw new Error("Failed to create/update campaign");
+            await publishCampaign({
+                merchantId: values.merchantId,
+                campaignId: saved.id,
+                action: "publish",
+            });
+        },
+        onSuccess: async () => {
+            setSuccess(true);
+            await queryClient.invalidateQueries({ queryKey: ["campaigns"] });
+        },
+    });
 
-                await publishStatus({
-                    merchantId: values.merchantId,
-                    campaignId: resultCampaign.id,
-                    action: "publish",
-                });
-
-                setSuccess(true);
-
-                await queryClient.invalidateQueries({
-                    queryKey: ["campaigns"],
-                });
-            },
-        });
-
-    const handleSubmit = async (values: CampaignFormValues) => {
+    function handleSubmit(values: CampaignFormValues) {
         if (campaignSuccess) {
+            reset();
             navigate({ to: "/campaigns/list" });
             return;
         }
 
         if (isClosing) {
             const input = mapCampaignFormToInput(values);
-            save.mutate({ ...input, campaignId: campaign.id });
+            saveCampaign.mutate({ ...input, campaignId: campaign.id });
             return;
         }
 
-        createAndPublish(values);
-    };
+        saveAndPublish(values);
+    }
+
+    const isLoading = isPending || saveCampaign.isPending;
 
     return (
         <FormLayout>
@@ -89,30 +87,22 @@ export function ValidationCampaign() {
                 rightSection={
                     <ButtonCancel
                         onClick={() => form.reset(campaign)}
-                        disabled={
-                            campaignSuccess ||
-                            isPendingPublish ||
-                            save.isPending
-                        }
+                        disabled={campaignSuccess || isLoading}
                     />
                 }
             />
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(handleSubmit)}>
                     {!campaignSuccess && <FormCheck {...form} />}
-
-                    <CampaignSuccessInfo isCreated={campaignSuccess} />
-
-                    <Actions isLoading={isPendingPublish || save.isPending} />
+                    {campaignSuccess && <SuccessMessage />}
+                    <Actions isLoading={isLoading} />
                 </form>
             </Form>
         </FormLayout>
     );
 }
 
-function CampaignSuccessInfo({ isCreated }: { isCreated: boolean }) {
-    if (!isCreated) return null;
-
+function SuccessMessage() {
     return (
         <Panel title="Campaign published">
             <p className={styles.validationCampaign__message}>

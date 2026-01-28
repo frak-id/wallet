@@ -1,7 +1,7 @@
 import { Button } from "@frak-labs/ui/component/Button";
+import { useNavigate } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { useForm } from "react-hook-form";
-import { ActionsMessageSuccess } from "@/module/campaigns/component/Actions";
 import { FormBudget } from "@/module/campaigns/component/Creation/NewCampaign/FormBudget";
 import { FormSchedule } from "@/module/campaigns/component/Creation/NewCampaign/FormSchedule";
 import type { CampaignFormValues } from "@/module/campaigns/component/Creation/NewCampaign/types";
@@ -11,18 +11,10 @@ import { Head } from "@/module/common/component/Head";
 import { Form, FormLayout } from "@/module/forms/Form";
 import { campaignStore } from "@/stores/campaignStore";
 
-/**
- * Campaign edit component
- * @constructor
- */
 export function CampaignEdit({ campaignId }: { campaignId: string }) {
+    const navigate = useNavigate();
     const campaign = campaignStore((state) => state.campaign);
-
-    const {
-        mutate: onSaveCampaign,
-        isPending: isSaving,
-        isSuccess,
-    } = useSaveCampaign();
+    const saveCampaign = useSaveCampaign();
 
     const form = useForm<CampaignFormValues>({
         values: useMemo(() => campaign, [campaign]),
@@ -31,13 +23,12 @@ export function CampaignEdit({ campaignId }: { campaignId: string }) {
     async function onSubmit(values: CampaignFormValues) {
         if (!values.budget) return;
 
-        onSaveCampaign({
+        await saveCampaign.mutateAsync({
             merchantId: values.merchantId,
-            campaignId: campaignId,
+            campaignId,
             name: values.name,
             rule: {
                 trigger: values.trigger,
-                // TODO: restore conditions if they were part of the form
                 conditions: [],
                 rewards: [
                     {
@@ -58,28 +49,24 @@ export function CampaignEdit({ campaignId }: { campaignId: string }) {
             expiresAt: values.scheduled?.dateEnd?.toISOString(),
             priority: values.priority,
         });
+
+        navigate({ to: "/campaigns/list" });
     }
 
     return (
         <FormLayout>
-            <Head
-                title={{
-                    content: "Edit campaign",
-                    size: "small",
-                }}
-            />
+            <Head title={{ content: "Edit campaign", size: "small" }} />
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)}>
                     <FormBudget />
                     <FormSchedule {...form} />
                     <ActionsWrapper
-                        left={isSuccess && <ActionsMessageSuccess />}
                         right={
                             <Button
-                                type={"submit"}
-                                variant={"submit"}
-                                disabled={isSaving}
-                                isLoading={isSaving}
+                                type="submit"
+                                variant="submit"
+                                disabled={saveCampaign.isPending}
+                                isLoading={saveCampaign.isPending}
                             >
                                 Save Changes
                             </Button>
