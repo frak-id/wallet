@@ -1,8 +1,8 @@
 import { indexerApi, viemClient } from "@backend-infrastructure";
-import type { GetAllTokenResponseDto } from "@frak-labs/app-essentials";
 import { LRUCache } from "lru-cache";
 import { type Address, erc20Abi, formatUnits } from "viem";
 import { multicall } from "viem/actions";
+import type { GetAllTokenResponseDto } from "../types/indexerTypes";
 
 type TokenMetadata = {
     name: string;

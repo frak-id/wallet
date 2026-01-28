@@ -1,6 +1,5 @@
-import { indexerApi, log } from "@backend-infrastructure";
+import { log } from "@backend-infrastructure";
 import { t } from "@backend-utils";
-import type { GetMembersWalletResponseDto } from "@frak-labs/app-essentials";
 import { Elysia } from "elysia";
 import type { Address } from "viem";
 import {
@@ -56,12 +55,9 @@ async function getWalletsTargets({
         return targets.wallets;
     }
 
-    // Otherwise, query the indexer to fetch the wallets
-    const result = await indexerApi
-        .post(`members/${wallet}`, {
-            json: { filter: targets.filter, onlyAddress: true },
-        })
-        .json<GetMembersWalletResponseDto>();
-    log.debug(`Found ${result.users.length} wallets for the given filter`);
-    return result.users;
+    // TODO: Migrate to DB-based member query once indexer is fully removed
+    log.warn(
+        `Filter-based notification targeting not yet migrated to DB for wallet ${wallet}. Returning empty list.`
+    );
+    return [];
 }
