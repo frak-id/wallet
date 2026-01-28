@@ -1,4 +1,3 @@
-import type { GetMembersPageItem } from "@frak-labs/app-essentials";
 import { Button } from "@frak-labs/ui/component/Button";
 import { Checkbox } from "@frak-labs/ui/component/forms/Checkbox";
 import { WalletAddress } from "@frak-labs/ui/component/HashDisplay";
@@ -11,7 +10,10 @@ import {
 } from "@tanstack/react-table";
 import { useEffect, useMemo, useState } from "react";
 import { formatEther, isAddressEqual } from "viem";
-import type { GetMembersParam } from "@/context/members/action/getProductMembers";
+import type {
+    GetMembersPageItem,
+    GetMembersParam,
+} from "@/context/members/action/getProductMembers";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { Row } from "@/module/common/component/Row";
 import { Table } from "@/module/common/component/Table";

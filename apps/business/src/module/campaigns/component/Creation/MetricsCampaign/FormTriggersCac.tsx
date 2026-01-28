@@ -1,7 +1,6 @@
 import {
     type InteractionTypesKey,
     interactionTypes,
-    type ProductTypesKey,
 } from "@frak-labs/core-sdk";
 import { Button } from "@frak-labs/ui/component/Button";
 import { useMemo } from "react";
@@ -13,6 +12,7 @@ import {
 import { Panel } from "@/module/common/component/Panel";
 import { FormDescription } from "@/module/forms/Form";
 import { interactionTypesInfo } from "@/module/product/utils/interactionTypes";
+import type { ProductTypesKey } from "@/module/product/utils/productTypes";
 import { campaignStore } from "@/stores/campaignStore";
 import { FormTrigger } from "../Generic/FormTrigger";
 import styles from "./FormTriggersCac.module.css";

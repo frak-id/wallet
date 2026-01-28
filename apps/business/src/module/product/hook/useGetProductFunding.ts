@@ -1,8 +1,5 @@
-import { indexerApi } from "@frak-labs/client/server";
 import { useQuery } from "@tanstack/react-query";
-import { type Address, erc20Abi, type Hex } from "viem";
-import { multicall } from "viem/actions";
-import { viemClient } from "@/context/blockchain/provider";
+import type { Address, Hex } from "viem";
 import { useAuthStore } from "@/stores/authStore";
 
 export type ProductBank = {
@@ -18,19 +15,6 @@ export type ProductBank = {
         decimals: number;
     };
 };
-
-type ApiResponse = {
-    address: Address;
-    totalDistributed: string; // bigint as string
-    totalClaimed: string; // bigint as string
-    isDistributing: boolean;
-    token: {
-        address: Address;
-        name: string;
-        symbol: string;
-        decimals: number;
-    };
-}[];
 
 /**
  * Mock bank data for demo mode
@@ -84,31 +68,8 @@ export function useGetProductFunding({ productId }: { productId?: Hex }) {
                 return MOCK_BANKS;
             }
 
-            const response = await indexerApi
-                .get(`products/${productId}/banks`)
-                .json<ApiResponse>();
-
-            const balances = await multicall(viemClient, {
-                contracts: response.map(
-                    (funding) =>
-                        ({
-                            address: funding.token.address,
-                            abi: erc20Abi,
-                            functionName: "balanceOf",
-                            args: [funding.address],
-                        }) as const
-                ),
-                allowFailure: false,
-            });
-
-            // Return the response mapped
-            return response.map((funding, index) => ({
-                ...funding,
-                totalDistributed: BigInt(funding.totalDistributed),
-                totalClaimed: BigInt(funding.totalClaimed),
-                isDistributing: funding.isDistributing,
-                balance: balances[index],
-            }));
+            // TODO: Migrate to DB-based funding query once indexer is fully removed
+            return [] as ProductBank[];
         },
         enabled: !!productId,
     });

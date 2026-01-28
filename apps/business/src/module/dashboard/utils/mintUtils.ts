@@ -1,5 +1,5 @@
 import type { Stablecoin } from "@frak-labs/app-essentials";
-import type { ProductTypesKey } from "@frak-labs/core-sdk";
+import type { ProductTypesKey } from "@/module/product/utils/productTypes";
 
 // Get default currency based on browser language
 export function getDefaultStablecoin(): Stablecoin {

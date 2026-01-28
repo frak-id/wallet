@@ -1,9 +1,9 @@
-import { productTypesMask } from "@frak-labs/core-sdk";
 import { describe, expect, it } from "vitest";
 import {
     decodeProductTypesMask,
     encodeProductTypesMask,
     productTypesLabel,
+    productTypesMask,
 } from "./productTypes";
 
 describe("productTypes", () => {

@@ -3,11 +3,11 @@ import {
     bytesToString,
     productRegistryAbi,
 } from "@frak-labs/app-essentials";
-import type { ProductTypesKey } from "@frak-labs/core-sdk";
 import { queryOptions } from "@tanstack/react-query";
 import type { Hex } from "viem";
 import { readContract } from "viem/actions";
 import { viemClient } from "@/context/blockchain/provider";
+import type { ProductTypesKey } from "@/module/product/utils/productTypes";
 import { decodeProductTypesMask } from "@/module/product/utils/productTypes";
 
 /**

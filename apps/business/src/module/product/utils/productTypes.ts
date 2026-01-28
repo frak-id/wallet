@@ -1,4 +1,35 @@
-import { type ProductTypesKey, productTypesMask } from "@frak-labs/core-sdk";
+/**
+ * List of the product types per denominator
+ */
+const productTypes = {
+    // content type
+    dapp: 1,
+    press: 2,
+    webshop: 3,
+    retail: 4,
+
+    // feature type
+    referral: 30,
+    purchase: 31,
+} as const;
+
+/**
+ * The keys for each product types
+ */
+export type ProductTypesKey = keyof typeof productTypes;
+
+/**
+ * Bitmask for each product types
+ */
+export const productTypesMask: Record<ProductTypesKey, bigint> = Object.entries(
+    productTypes
+).reduce(
+    (acc, [key, value]) => {
+        acc[key as ProductTypesKey] = BigInt(1) << BigInt(value);
+        return acc;
+    },
+    {} as Record<ProductTypesKey, bigint>
+);
 
 /**
  * Decode a bit mask of product types into an array of keys contained inside it

@@ -1,9 +1,9 @@
 import {
     type InteractionTypesKey,
     interactionTypes,
-    type ProductTypesKey,
 } from "@frak-labs/core-sdk";
 import { interactionTypesInfo } from "@/module/product/utils/interactionTypes";
+import type { ProductTypesKey } from "@/module/product/utils/productTypes";
 import type { Goal } from "@/types/Campaign";
 
 /**

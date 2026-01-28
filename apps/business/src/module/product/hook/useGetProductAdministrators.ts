@@ -1,7 +1,6 @@
-import { type ProductRolesKey, productRoles } from "@frak-labs/app-essentials";
-import { indexerApi } from "@frak-labs/client/server";
+import type { ProductRolesKey } from "@frak-labs/app-essentials";
 import { useQuery } from "@tanstack/react-query";
-import { type Address, type Hex, toHex } from "viem";
+import type { Address, Hex } from "viem";
 import { useAuthStore } from "@/stores/authStore";
 
 /**
@@ -61,13 +60,6 @@ export type ProductAdministrator = {
     isMe: boolean;
 };
 
-type ApiResult = {
-    wallet: Address;
-    isOwner: boolean;
-    roles: string; // bigint
-    addedTimestamp: string; // bigint
-}[];
-
 /**
  * Hook to get product administrators with demo mode support
  */
@@ -84,43 +76,8 @@ export function useGetProductAdministrators({ productId }: { productId: Hex }) {
                 return MOCK_ADMINISTRATORS;
             }
 
-            // Fetch from indexer API
-            const json = await indexerApi
-                .get(`products/${productId}/administrators`)
-                .json<ApiResult>();
-
-            // Parse the roles
-            const buildRolesMap = (rolesMask: bigint) => {
-                const rolesMap: Record<ProductRolesKey, boolean> = {
-                    productAdministrator: false,
-                    interactionManager: false,
-                    campaignManager: false,
-                    purchaseOracleUpdater: false,
-                };
-                for (const [role, value] of Object.entries(productRoles)) {
-                    rolesMap[role as ProductRolesKey] =
-                        (rolesMask & value) === value;
-                }
-                return rolesMap;
-            };
-
-            // Return mapped with the right types
-            const administrators = json.map((result) => ({
-                wallet: result.wallet,
-                isOwner: result.isOwner,
-                roles: toHex(BigInt(result.roles)),
-                addedTimestamp: BigInt(result.addedTimestamp),
-                roleDetails: {
-                    admin: result.isOwner,
-                    ...buildRolesMap(BigInt(result.roles)),
-                } as Record<"admin" | ProductRolesKey, boolean>,
-                isMe: false, // Will be updated by component if needed
-            }));
-
-            // Filter out people who are only purchaseOracleUpdater
-            return administrators.filter((admin) => {
-                return !admin.roleDetails.purchaseOracleUpdater;
-            });
+            // TODO: Migrate to DB-based administrator query once indexer is fully removed
+            return [] as ProductAdministrator[];
         },
         enabled: !!productId,
     });

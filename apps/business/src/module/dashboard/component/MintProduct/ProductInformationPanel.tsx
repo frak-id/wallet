@@ -1,4 +1,3 @@
-import type { ProductTypesKey } from "@frak-labs/core-sdk";
 import {
     Accordion,
     AccordionContent,
@@ -25,6 +24,7 @@ import {
     FormLabel,
     FormMessage,
 } from "@/module/forms/Form";
+import type { ProductTypesKey } from "@/module/product/utils/productTypes";
 import type { ProductNew } from "@/types/Product";
 import styles from "./index.module.css";
 

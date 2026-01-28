@@ -1,12 +1,10 @@
+import type { Hex } from "viem";
 import type {
     GetMembersPageItem,
-    GetMembersRequestDto,
+    GetMembersParam,
     GetMembersResponseDto,
-} from "@frak-labs/app-essentials";
-import type { Hex } from "viem";
+} from "@/context/members/action/getProductMembers";
 import membersData from "@/mock/members.json";
-
-type GetMembersParam = Omit<GetMembersRequestDto, "noData" | "onlyAddress">;
 
 type MemberData = {
     user: string;
