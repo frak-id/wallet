@@ -1,8 +1,4 @@
 import { authenticatedBackendApi } from "@/context/api/backendClient";
-import {
-    getCampaignDetailsMock,
-    getMyCampaignsMock,
-} from "@/context/campaigns/action/mock";
 import type {
     BudgetConfig,
     Campaign,
@@ -12,6 +8,7 @@ import type {
     CampaignStatus,
     CampaignWithActions,
 } from "@/types/Campaign";
+import { getCampaignDetailsMock, getMyCampaignsMock } from "./mock";
 
 function mapStatusToActions(status: CampaignStatus): CampaignActions {
     return {

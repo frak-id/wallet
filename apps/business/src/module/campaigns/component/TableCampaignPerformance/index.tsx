@@ -11,14 +11,14 @@ import {
     createColumnHelper,
 } from "@tanstack/react-table";
 import { useMemo, useState } from "react";
-import type { getMyCampaignsStats } from "@/context/campaigns/action/getCampaignsStats";
+import type { CampaignStats } from "@/module/campaigns/api/campaignStatsApi";
 import { TablePerformanceFilters } from "@/module/campaigns/component/TableCampaignPerformance/Filter";
 import { campaignsStatsQueryOptions } from "@/module/campaigns/queries/queryOptions";
 import { Table } from "@/module/common/component/Table";
 import { TooltipTable } from "@/module/common/component/TooltipTable";
 import { useConvertToPreferredCurrency } from "@/module/common/hook/useConversionRate";
 
-type TableData = Awaited<ReturnType<typeof getMyCampaignsStats>>[number];
+type TableData = CampaignStats;
 
 const columnHelper = createColumnHelper<TableData>();
 

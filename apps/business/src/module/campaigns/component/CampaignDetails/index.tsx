@@ -2,7 +2,7 @@ import { Skeleton } from "@frak-labs/ui/component/Skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { getCampaignDetail } from "@/context/campaigns/action/getDetails";
+import { getCampaignDetail } from "@/module/campaigns/api/campaignApi";
 import { CampaignStatus } from "@/module/campaigns/component/CampaignDetails/CampaignStatus";
 import { CampaignTerritory } from "@/module/campaigns/component/CampaignDetails/CampaignTerritory";
 import { FormBudgetRow } from "@/module/campaigns/component/Creation/NewCampaign/FormBudgetRow";
@@ -10,6 +10,7 @@ import type { CampaignFormValues } from "@/module/campaigns/component/Creation/N
 import { FormAdvertising } from "@/module/campaigns/component/Creation/ValidationCampaign/FormAdvertising";
 import { FormGoal } from "@/module/campaigns/component/Creation/ValidationCampaign/FormGoal";
 import { mapCampaignToFormData } from "@/module/campaigns/utils/mapper";
+import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { ActionsWrapper } from "@/module/common/component/ActionsWrapper";
 import { LinkButton } from "@/module/common/component/LinkButton";
 import { Panel } from "@/module/common/component/Panel";
@@ -25,14 +26,16 @@ export function CampaignDetails({
     campaign?: Campaign;
 }) {
     const merchantId = preloadedCampaign?.merchantId ?? "";
+    const isDemoMode = useIsDemoMode();
 
     const {
         data: campaign = preloadedCampaign,
         isLoading,
         isPending,
     } = useQuery({
-        queryKey: ["campaign", campaignId],
-        queryFn: () => getCampaignDetail({ data: { campaignId, merchantId } }),
+        queryKey: ["campaign", campaignId, isDemoMode ? "demo" : "live"],
+        queryFn: () =>
+            getCampaignDetail({ campaignId, merchantId, isDemoMode }),
         enabled: !preloadedCampaign && !!merchantId,
         initialData: preloadedCampaign,
     });

@@ -3,7 +3,7 @@ import { beforeEach, vi } from "vitest";
 import {
     pauseCampaign,
     resumeCampaign,
-} from "@/context/campaigns/action/statusTransitions";
+} from "@/module/campaigns/api/campaignApi";
 import {
     describe,
     expect,
@@ -13,7 +13,7 @@ import {
 import type { Campaign } from "@/types/Campaign";
 import { useUpdateCampaignRunningStatus } from "./useUpdateCampaignRunningStatus";
 
-vi.mock("@/context/campaigns/action/statusTransitions", () => ({
+vi.mock("@/module/campaigns/api/campaignApi", () => ({
     pauseCampaign: vi.fn(),
     resumeCampaign: vi.fn(),
 }));
@@ -64,10 +64,8 @@ describe("useUpdateCampaignRunningStatus", () => {
             });
 
             expect(pauseCampaign).toHaveBeenCalledWith({
-                data: {
-                    merchantId: "merchant-456",
-                    campaignId: "campaign-123",
-                },
+                merchantId: "merchant-456",
+                campaignId: "campaign-123",
             });
             expect(resumeCampaign).not.toHaveBeenCalled();
         });
@@ -91,10 +89,8 @@ describe("useUpdateCampaignRunningStatus", () => {
             });
 
             expect(resumeCampaign).toHaveBeenCalledWith({
-                data: {
-                    merchantId: "merchant-456",
-                    campaignId: "campaign-123",
-                },
+                merchantId: "merchant-456",
+                campaignId: "campaign-123",
             });
             expect(pauseCampaign).not.toHaveBeenCalled();
         });

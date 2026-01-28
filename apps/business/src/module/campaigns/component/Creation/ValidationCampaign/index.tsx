@@ -14,6 +14,7 @@ import { Head } from "@/module/common/component/Head";
 import { Panel } from "@/module/common/component/Panel";
 import { Form, FormLayout } from "@/module/forms/Form";
 import { campaignStore } from "@/stores/campaignStore";
+import styles from "./index.module.css";
 
 export function ValidationCampaign() {
     const navigate = useNavigate();

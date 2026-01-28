@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect } from "react";
+import { isDemoMode } from "@/context/auth/authEnv";
 import { MetricsCampaign } from "@/module/campaigns/component/Creation/MetricsCampaign";
 import {
     campaignQueryOptions,
@@ -18,6 +19,7 @@ export const Route = createFileRoute(
         return queryClient.ensureQueryData(
             campaignQueryOptions(
                 params.campaignId,
+                isDemoMode(),
                 "",
                 validateDraftCampaign(params.campaignId)
             )

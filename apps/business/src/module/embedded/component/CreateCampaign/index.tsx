@@ -3,7 +3,7 @@ import { Spinner } from "@frak-labs/ui/component/Spinner";
 import { useMutation } from "@tanstack/react-query";
 import { useSearch } from "@tanstack/react-router";
 import { useCallback } from "react";
-import { publishCampaign } from "@/context/campaigns/action/statusTransitions";
+import { publishCampaign } from "@/module/campaigns/api/campaignApi";
 import { useSaveCampaign } from "@/module/campaigns/hook/useSaveCampaign";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
@@ -48,10 +48,8 @@ export function EmbeddedCreateCampaign() {
             });
 
             const published = await publishCampaign({
-                data: {
-                    merchantId: extracted.merchantId,
-                    campaignId: campaign.id,
-                },
+                merchantId: extracted.merchantId,
+                campaignId: campaign.id,
             });
 
             return { campaign: published };
