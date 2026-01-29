@@ -2,9 +2,11 @@ import { trackGenericEvent } from "@frak-labs/wallet-shared";
 import { type MutationOptions, useMutation } from "@tanstack/react-query";
 import { useListenerTranslation } from "../providers/ListenerUiProvider";
 import { listenerSharingKey } from "../queryKeys/sharing";
+import { useTrackSharing } from "./useTrackSharing";
 
 export function useShareLink(link: string | null, options?: MutationOptions) {
     const { t } = useListenerTranslation();
+    const { mutateAsync: trackSharing } = useTrackSharing();
 
     return useMutation({
         ...options,
@@ -33,6 +35,7 @@ export function useShareLink(link: string | null, options?: MutationOptions) {
                 trackGenericEvent("sharing-share-link", {
                     link: link,
                 });
+                trackSharing().catch(() => {});
                 // If no error, return the shared state
                 return t("sharing.btn.shareSuccess");
             } catch (err) {
