@@ -7,6 +7,7 @@ import type { Static } from "elysia";
 
 export const InteractionTypeSchema = t.Union([
     t.Literal("referral_arrival"),
+    t.Literal("create_referral_link"),
     t.Literal("purchase"),
     t.Literal("wallet_connect"),
     t.Literal("identity_merge"),

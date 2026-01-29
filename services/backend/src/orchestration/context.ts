@@ -5,6 +5,7 @@ import { MerchantContext } from "../domain/merchant/context";
 import { PurchasesContext } from "../domain/purchases/context";
 import { RewardsContext } from "../domain/rewards/context";
 import { BatchRewardOrchestrator } from "./BatchRewardOrchestrator";
+import { CampaignStatsOrchestrator } from "./CampaignStatsOrchestrator";
 import {
     AnonymousMergeOrchestrator,
     IdentityMergeService,
@@ -81,6 +82,8 @@ const memberQueryOrchestrator = new MemberQueryOrchestrator(
     MerchantContext.services.authorization
 );
 
+const campaignStatsOrchestrator = new CampaignStatsOrchestrator();
+
 const anonymousMergeOrchestrator = new AnonymousMergeOrchestrator(
     IdentityContext.services.anonymousMerge,
     IdentityContext.repositories.identity,
@@ -92,6 +95,7 @@ const anonymousMergeOrchestrator = new AnonymousMergeOrchestrator(
 export namespace OrchestrationContext {
     export const orchestrators = {
         memberQuery: memberQueryOrchestrator,
+        campaignStats: campaignStatsOrchestrator,
         anonymousMerge: anonymousMergeOrchestrator,
         batchReward: batchRewardOrchestrator,
         identity: identityOrchestrator,

@@ -15,10 +15,19 @@ export type { AssetStatus, AssetType, InteractionType, RecipientType };
 /**
  * Payload for referral arrival interaction.
  */
-type ReferralArrivalPayload = {
+export type ReferralArrivalPayload = {
     referrerWallet: Address;
     landingUrl?: string;
     touchpointId: string;
+};
+
+/**
+ * Payload for create referral link interaction (user shares their link).
+ */
+export type CreateReferralLinkPayload = {
+    sharerWallet: Address;
+    merchantId: string;
+    touchpointId?: string;
 };
 
 /**
@@ -58,6 +67,7 @@ type IdentityMergePayload = {
 
 export type InteractionPayload =
     | ReferralArrivalPayload
+    | CreateReferralLinkPayload
     | PurchasePayload
     | WalletConnectPayload
     | IdentityMergePayload;

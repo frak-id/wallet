@@ -4,6 +4,7 @@ import type { InteractionType } from "../schemas";
 
 export const TriggerTypeSchema = t.Union([
     t.Literal("referral"),
+    t.Literal("create_referral_link"),
     t.Literal("purchase"),
     t.Literal("wallet_connect"),
     t.Literal("identity_merge"),
@@ -38,6 +39,8 @@ export function mapInteractionType(
     switch (dbType) {
         case "referral_arrival":
             return "referral";
+        case "create_referral_link":
+            return "create_referral_link";
         case "purchase":
             return "purchase";
         case "wallet_connect":
