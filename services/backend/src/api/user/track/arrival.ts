@@ -1,11 +1,9 @@
 import { Elysia, status, t } from "elysia";
 import type { Address } from "viem";
 import { isAddress } from "viem";
-import {
-    AttributionContext,
-    type TouchpointSourceData,
-} from "../../../domain/attribution";
+import type { TouchpointSourceData } from "../../../domain/attribution";
 import { IdentityContext } from "../../../domain/identity";
+import { OrchestrationContext } from "../../../orchestration/context";
 import { resolveSdkIdentity, sdkIdentityHeaderSchema } from "./sdkIdentity";
 
 async function resolveReferrerGroupId(
@@ -56,20 +54,26 @@ export const trackArrivalRoute = new Elysia().post(
             body.referrerWallet
         );
 
-        const touchpoint =
-            await AttributionContext.services.attribution.recordTouchpoint({
-                identityGroupId,
-                merchantId: body.merchantId,
-                source: sourceData.type,
-                sourceData,
-                landingUrl: body.landingUrl,
-                referrerIdentityGroupId,
-            });
+        const result =
+            await OrchestrationContext.orchestrators.arrivalTracking.trackArrival(
+                {
+                    identityGroupId,
+                    merchantId: body.merchantId,
+                    source: sourceData.type,
+                    sourceData,
+                    landingUrl: body.landingUrl,
+                    referrerIdentityGroupId,
+                    referrerWallet:
+                        body.referrerWallet && isAddress(body.referrerWallet)
+                            ? (body.referrerWallet as Address)
+                            : undefined,
+                }
+            );
 
         return {
             success: true,
             identityGroupId,
-            touchpointId: touchpoint.id,
+            touchpointId: result.touchpointId,
         };
     },
     {
