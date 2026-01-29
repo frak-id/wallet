@@ -2,12 +2,12 @@ import { Button } from "@frak-labs/ui/component/Button";
 import { useCallback, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { formatEther, type Hex, parseEther, toHex } from "viem";
-import type { GetMembersParam } from "@/context/members/action/getProductMembers";
+import type { GetMembersParam } from "@/context/members/action/getMerchantMembers";
 import { Row } from "@/module/common/component/Row";
 import { Form } from "@/module/forms/Form";
 import { InteractionsFiltering } from "@/module/members/component/MembersFiltering/InteractionsFiltering";
 import { MembershipDateFiltering } from "@/module/members/component/MembersFiltering/MembershipDateFiltering";
-import { ProductFiltering } from "@/module/members/component/MembersFiltering/ProductFiltering";
+import { MerchantFiltering } from "@/module/members/component/MembersFiltering/MerchantFiltering";
 import { RewardFiltering } from "@/module/members/component/MembersFiltering/RewardFiltering";
 import { membersStore } from "@/stores/membersStore";
 
@@ -57,7 +57,7 @@ export function MembersFiltering({
 
     function resetForm() {
         const defaultValues = {
-            productIds: undefined,
+            merchantIds: undefined,
             interactions: undefined,
             firstInteractionTimestamp: undefined,
             rewards: undefined,
@@ -75,8 +75,8 @@ export function MembersFiltering({
             // Fix interactions if no filter provided
             data.interactions = fixInteractions(data.interactions);
 
-            // Fix productIds if no filter provided
-            data.productIds = fixProductIds(data.productIds);
+            // Fix merchantIds if no filter provided
+            data.merchantIds = fixMerchantIds(data.merchantIds);
 
             // Fix firstInteractionTimestamp if no filter provided
             data.firstInteractionTimestamp = fixFirstInteractionTimestamp(
@@ -95,7 +95,7 @@ export function MembersFiltering({
 
     return (
         <Form {...form}>
-            <ProductFiltering {...commonProps} />
+            <MerchantFiltering {...commonProps} />
             <MembershipDateFiltering {...commonProps} />
             <InteractionsFiltering {...commonProps} />
             <RewardFiltering {...commonProps} />
@@ -143,15 +143,11 @@ const fixInteractions = (
     return interactions;
 };
 
-/**
- * Fix productIds values
- * @param productIds
- */
-const fixProductIds = (productIds: FormMembersFiltering["productIds"]) => {
-    if (!productIds?.length) {
+const fixMerchantIds = (merchantIds: FormMembersFiltering["merchantIds"]) => {
+    if (!merchantIds?.length) {
         return undefined;
     }
-    return productIds;
+    return merchantIds;
 };
 
 /**

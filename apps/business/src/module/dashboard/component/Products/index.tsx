@@ -2,23 +2,25 @@ import { Button } from "@frak-labs/ui/component/Button";
 import { useNavigate } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
 import { Panel } from "@/module/common/component/Panel";
-import { ProductItem } from "@/module/dashboard/component/ProductItem";
-import { useMyMerchants } from "@/module/dashboard/hooks/useMyMerchants";
+import { MerchantItem } from "@/module/dashboard/component/MerchantItem";
+import { useMyMerchants } from "@/module/dashboard/hooks/useMyProducts";
 import styles from "./index.module.css";
 
-/**
- * Component to display all the current user merchants
- * @constructor
- */
-export function MyProducts() {
+export function MyMerchants() {
     const { merchants } = useMyMerchants();
+    const allMerchants = [
+        ...(merchants?.owner ?? []),
+        ...(merchants?.operator ?? []),
+    ];
 
     return (
-        <Panel variant={"ghost"} title={"My Products"} withBadge={false}>
-            <MerchantListSection merchants={merchants} />
+        <Panel variant={"ghost"} title={"My Merchants"} withBadge={false}>
+            <MerchantListSection merchants={allMerchants} />
         </Panel>
     );
 }
+
+export const MyProducts = MyMerchants;
 
 function MerchantListSection({
     merchants,
@@ -39,11 +41,11 @@ function MerchantListSection({
                     navigate({ to: "/mint" });
                 }}
             >
-                <ProductItem
+                <MerchantItem
                     name={
                         <>
                             <Plus />
-                            List a Product
+                            Add a Merchant
                         </>
                     }
                     domain={"domain.com"}
@@ -61,5 +63,5 @@ function MerchantListItem({
     merchant: { id: string; name: string; domain: string };
 }) {
     const { id, name, domain } = merchant;
-    return <ProductItem merchantId={id} name={name} domain={domain} />;
+    return <MerchantItem merchantId={id} name={name} domain={domain} />;
 }

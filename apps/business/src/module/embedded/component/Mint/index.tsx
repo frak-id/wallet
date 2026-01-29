@@ -6,7 +6,7 @@ import { useCallback, useMemo } from "react";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
 import { useListenToDomainNameSetup } from "@/module/dashboard/hooks/dnsRecordHooks";
-import { useMintMyProduct } from "@/module/dashboard/hooks/useMintMyProduct";
+import { useMintMyMerchant } from "@/module/dashboard/hooks/useMintMyMerchant";
 import styles from "./index.module.css";
 
 export function EmbeddedMint() {
@@ -107,7 +107,7 @@ function DoMintComponent({
     const {
         infoTxt,
         mutation: { mutate: triggerMintMyContent, isPending, error },
-    } = useMintMyProduct({
+    } = useMintMyMerchant({
         onSuccess: () => {
             // Close the current window
             window.close();

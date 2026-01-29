@@ -5,8 +5,9 @@ import { useFormContext } from "react-hook-form";
 import type { Address } from "viem";
 import {
     type GetMembersParam,
-    getProductsMembersCount,
-} from "@/context/members/action/getProductMembers";
+    getMerchantsMembersCount,
+} from "@/context/members/action/getMerchantMembers";
+import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { Panel } from "@/module/common/component/Panel";
 import { FormField, FormItem, FormMessage } from "@/module/forms/Form";
 import type { FormCreatePushNotification } from "@/module/members/component/CreatePush/types";
@@ -82,12 +83,12 @@ function SelectAudience() {
     const { setValue, getValues } =
         useFormContext<FormCreatePushNotification>();
     const initialValue = getValues("target.filter");
+    const isDemoMode = useIsDemoMode();
 
     const { mutate: computeAudienceSize, data: targetAudience } = useMutation({
-        mutationKey: ["create-push", "compute=audience-size"],
+        mutationKey: ["create-push", "compute-audience-size"],
         mutationFn: async (filter: GetMembersParam["filter"]) => {
-            // Get the number of user who will be concerned by this filter
-            return await getProductsMembersCount({ data: { filter } });
+            return getMerchantsMembersCount({ filter }, isDemoMode);
         },
     });
 

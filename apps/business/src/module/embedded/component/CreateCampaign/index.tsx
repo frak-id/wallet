@@ -7,7 +7,7 @@ import { publishCampaign } from "@/module/campaigns/api/campaignApi";
 import { useSaveCampaign } from "@/module/campaigns/hook/useSaveCampaign";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
-import { useHasRoleOnMerchant } from "@/module/common/hook/useHasRoleOnProduct";
+import { useHasRoleOnMerchant } from "@/module/common/hook/useHasRoleOnMerchant";
 import styles from "../Mint/index.module.css";
 import { buildCampaignRule, extractSearchParams } from "./utils";
 

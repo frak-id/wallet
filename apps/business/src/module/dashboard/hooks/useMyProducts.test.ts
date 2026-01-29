@@ -1,6 +1,6 @@
 import { renderHook, waitFor } from "@testing-library/react";
 import { afterEach, vi } from "vitest";
-import { getMyProducts } from "@/context/product/action/getProducts";
+import { getMyMerchants } from "@/context/merchant/action/getMerchants";
 import {
     describe,
     expect,
@@ -10,14 +10,14 @@ import {
 import { useMyProducts } from "./useMyProducts";
 
 // Hoist mocks so they can be used in the mock factory
-const { mockGetMyProducts, mockUseIsDemoMode } = vi.hoisted(() => ({
-    mockGetMyProducts: vi.fn(),
+const { mockGetMyMerchants, mockUseIsDemoMode } = vi.hoisted(() => ({
+    mockGetMyMerchants: vi.fn(),
     mockUseIsDemoMode: vi.fn(() => false),
 }));
 
-// Mock getMyProducts action
-vi.mock("@/context/product/action/getProducts", () => ({
-    getMyProducts: mockGetMyProducts,
+// Mock getMyMerchants action
+vi.mock("@/context/merchant/action/getMerchants", () => ({
+    getMyMerchants: mockGetMyMerchants,
 }));
 
 // Mock demo mode atom
@@ -53,19 +53,19 @@ describe("useMyProducts", () => {
                 ],
             };
 
-            mockGetMyProducts.mockResolvedValue(mockResponse as any);
+            mockGetMyMerchants.mockResolvedValue(mockResponse as any);
 
             const { result } = renderHook(() => useMyProducts(), {
                 wrapper: queryWrapper.wrapper,
             });
 
             await waitFor(() => {
-                expect(result.current.products).toBeDefined();
+                expect(result.current.merchants).toBeDefined();
             });
 
-            expect(result.current.products).toEqual(mockResponse);
+            expect(result.current.merchants).toEqual(mockResponse);
             expect(result.current.isEmpty).toBe(false);
-            expect(getMyProducts).toHaveBeenCalled();
+            expect(getMyMerchants).toHaveBeenCalled();
         });
 
         test("should return isEmpty true when no products exist", async ({
@@ -76,19 +76,19 @@ describe("useMyProducts", () => {
                 operator: [],
             };
 
-            mockGetMyProducts.mockResolvedValue(emptyResponse as any);
+            mockGetMyMerchants.mockResolvedValue(emptyResponse as any);
 
             const { result } = renderHook(() => useMyProducts(), {
                 wrapper: queryWrapper.wrapper,
             });
 
             await waitFor(() => {
-                expect(result.current.products).toBeDefined();
+                expect(result.current.merchants).toBeDefined();
             });
 
             expect(result.current.isEmpty).toBe(true);
-            expect(result.current.products?.owner).toEqual([]);
-            expect(result.current.products?.operator).toEqual([]);
+            expect(result.current.merchants?.owner).toEqual([]);
+            expect(result.current.merchants?.operator).toEqual([]);
         });
 
         test("should handle only owned products", async ({
@@ -106,20 +106,22 @@ describe("useMyProducts", () => {
                 operator: [],
             };
 
-            mockGetMyProducts.mockResolvedValue(mockResponse as any);
+            mockGetMyMerchants.mockResolvedValue(mockResponse as any);
 
             const { result } = renderHook(() => useMyProducts(), {
                 wrapper: queryWrapper.wrapper,
             });
 
             await waitFor(() => {
-                expect(result.current.products).toBeDefined();
+                expect(result.current.merchants).toBeDefined();
             });
 
             expect(result.current.isEmpty).toBe(false);
-            expect(result.current.products?.owner).toHaveLength(1);
-            expect(result.current.products?.operator).toHaveLength(0);
-            expect(result.current.products?.owner[0].name).toBe("Only Product");
+            expect(result.current.merchants?.owner).toHaveLength(1);
+            expect(result.current.merchants?.operator).toHaveLength(0);
+            expect(result.current.merchants?.owner[0].name).toBe(
+                "Only Product"
+            );
         });
 
         test("should handle only operator products", async ({
@@ -141,19 +143,19 @@ describe("useMyProducts", () => {
                 ],
             };
 
-            mockGetMyProducts.mockResolvedValue(mockResponse as any);
+            mockGetMyMerchants.mockResolvedValue(mockResponse as any);
 
             const { result } = renderHook(() => useMyProducts(), {
                 wrapper: queryWrapper.wrapper,
             });
 
             await waitFor(() => {
-                expect(result.current.products).toBeDefined();
+                expect(result.current.merchants).toBeDefined();
             });
 
             expect(result.current.isEmpty).toBe(false);
-            expect(result.current.products?.owner).toHaveLength(0);
-            expect(result.current.products?.operator).toHaveLength(2);
+            expect(result.current.merchants?.owner).toHaveLength(0);
+            expect(result.current.merchants?.operator).toHaveLength(2);
         });
     });
 
@@ -161,7 +163,7 @@ describe("useMyProducts", () => {
         test("should set isEmpty to true when both arrays are empty", async ({
             queryWrapper,
         }: TestContext) => {
-            mockGetMyProducts.mockResolvedValue({
+            mockGetMyMerchants.mockResolvedValue({
                 owner: [],
                 operator: [],
             } as any);
@@ -171,7 +173,7 @@ describe("useMyProducts", () => {
             });
 
             await waitFor(() => {
-                expect(result.current.products).toBeDefined();
+                expect(result.current.merchants).toBeDefined();
             });
 
             expect(result.current.isEmpty).toBe(true);
@@ -180,7 +182,7 @@ describe("useMyProducts", () => {
         test("should set isEmpty to false when owner has products", async ({
             queryWrapper,
         }: TestContext) => {
-            mockGetMyProducts.mockResolvedValue({
+            mockGetMyMerchants.mockResolvedValue({
                 owner: [{ id: "0x1234", name: "Owned" }],
                 operator: [],
             } as any);
@@ -190,7 +192,7 @@ describe("useMyProducts", () => {
             });
 
             await waitFor(() => {
-                expect(result.current.products).toBeDefined();
+                expect(result.current.merchants).toBeDefined();
             });
 
             expect(result.current.isEmpty).toBe(false);
@@ -199,7 +201,7 @@ describe("useMyProducts", () => {
         test("should set isEmpty to false when operator has products", async ({
             queryWrapper,
         }: TestContext) => {
-            mockGetMyProducts.mockResolvedValue({
+            mockGetMyMerchants.mockResolvedValue({
                 owner: [],
                 operator: [{ id: "0x5678", name: "Operated" }],
             } as any);
@@ -209,7 +211,7 @@ describe("useMyProducts", () => {
             });
 
             await waitFor(() => {
-                expect(result.current.products).toBeDefined();
+                expect(result.current.merchants).toBeDefined();
             });
 
             expect(result.current.isEmpty).toBe(false);
@@ -218,7 +220,7 @@ describe("useMyProducts", () => {
         test("should set isEmpty to false when both have products", async ({
             queryWrapper,
         }: TestContext) => {
-            mockGetMyProducts.mockResolvedValue({
+            mockGetMyMerchants.mockResolvedValue({
                 owner: [{ id: "0x1234", name: "Owned" }],
                 operator: [{ id: "0x5678", name: "Operated" }],
             } as any);
@@ -228,7 +230,7 @@ describe("useMyProducts", () => {
             });
 
             await waitFor(() => {
-                expect(result.current.products).toBeDefined();
+                expect(result.current.merchants).toBeDefined();
             });
 
             expect(result.current.isEmpty).toBe(false);
@@ -239,7 +241,7 @@ describe("useMyProducts", () => {
         test("should use different query key for demo mode", async ({
             queryWrapper,
         }: TestContext) => {
-            mockGetMyProducts.mockResolvedValue({
+            mockGetMyMerchants.mockResolvedValue({
                 owner: [],
                 operator: [],
             } as any);
@@ -252,7 +254,7 @@ describe("useMyProducts", () => {
             });
 
             await waitFor(() => {
-                expect(liveResult.current.products).toBeDefined();
+                expect(liveResult.current.merchants).toBeDefined();
             });
 
             // Test demo mode
@@ -263,7 +265,7 @@ describe("useMyProducts", () => {
             });
 
             await waitFor(() => {
-                expect(demoResult.current.products).toBeDefined();
+                expect(demoResult.current.merchants).toBeDefined();
             });
 
             // Both should succeed but with different query keys
@@ -274,7 +276,7 @@ describe("useMyProducts", () => {
         test("should use correct query key structure", async ({
             queryWrapper,
         }: TestContext) => {
-            mockGetMyProducts.mockResolvedValue({
+            mockGetMyMerchants.mockResolvedValue({
                 owner: [],
                 operator: [],
             } as any);
@@ -284,7 +286,7 @@ describe("useMyProducts", () => {
             });
 
             await waitFor(() => {
-                expect(result.current.products).toBeDefined();
+                expect(result.current.merchants).toBeDefined();
             });
 
             // Check query key after query has loaded
@@ -292,7 +294,7 @@ describe("useMyProducts", () => {
             const myProductsQuery = queries.find((query) => {
                 const key = query.queryKey;
                 return (
-                    key[0] === "product" &&
+                    key[0] === "merchant" &&
                     key[1] === "get-mine" &&
                     (key[2] === "live" || key[2] === "demo")
                 );

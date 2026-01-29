@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { CriticalError } from "@/module/common/component/RouteError";
-import { MintProduct } from "@/module/dashboard/component/MintProduct";
+import { MintMerchant } from "@/module/dashboard/component/MintMerchant";
 
 export const Route = createFileRoute("/_restricted/mint")({
     component: MintPage,
@@ -8,5 +8,5 @@ export const Route = createFileRoute("/_restricted/mint")({
 });
 
 function MintPage() {
-    return <MintProduct />;
+    return <MintMerchant />;
 }

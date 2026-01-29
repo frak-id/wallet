@@ -33,7 +33,7 @@ const { mockGetMyCampaigns, mockUseIsDemoMode } = vi.hoisted(() => ({
     mockUseIsDemoMode: vi.fn(() => false),
 }));
 
-vi.mock("@/context/campaigns/action/getCampaigns", () => ({
+vi.mock("@/module/campaigns/api/campaignApi", () => ({
     getMyCampaigns: mockGetMyCampaigns,
 }));
 

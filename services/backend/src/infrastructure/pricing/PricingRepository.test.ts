@@ -1,6 +1,6 @@
-import { addresses } from "@frak-labs/app-essentials";
 import {
     currentStablecoins,
+    stablecoins,
     usdcArbitrumAddress,
 } from "@frak-labs/app-essentials/blockchain";
 import type { Address } from "viem";
@@ -116,7 +116,7 @@ describe("PricingRepository", () => {
             });
 
             const result = await repository.getTokenPrice({
-                token: addresses.mUSDToken,
+                token: stablecoins.testnet.usdc,
             });
 
             expect(result).toEqual(mockPrice);

@@ -3,7 +3,7 @@ import type {
     GetMembersPageItem,
     GetMembersParam,
     GetMembersResponseDto,
-} from "@/context/members/action/getProductMembers";
+} from "@/context/members/action/getMerchantMembers";
 import membersData from "@/mock/members.json";
 
 type MemberData = {
@@ -15,23 +15,15 @@ type MemberData = {
     productNames: string[];
 };
 
-/**
- * Filter members by product IDs
- */
-function filterByProductIds(
+function filterByMerchantIds(
     members: MemberData[],
-    productIds: Hex[]
+    merchantIds: Hex[]
 ): MemberData[] {
     return members.filter((member) =>
-        member.productIds.some((productId) =>
-            productIds.includes(productId as Hex)
-        )
+        member.productIds.some((id) => merchantIds.includes(id as Hex))
     );
 }
 
-/**
- * Filter members by interaction count
- */
 function filterByInteractions(
     members: MemberData[],
     interactions: { min?: number; max?: number }
@@ -55,9 +47,6 @@ function filterByInteractions(
     return filtered;
 }
 
-/**
- * Filter members by first interaction timestamp
- */
 function filterByTimestamp(
     members: MemberData[],
     timestamp: { min?: number; max?: number }
@@ -85,9 +74,6 @@ function filterByTimestamp(
     return filtered;
 }
 
-/**
- * Apply all filters to members
- */
 function applyFilters(
     members: MemberData[],
     filter: GetMembersParam["filter"]
@@ -98,8 +84,8 @@ function applyFilters(
         return filtered;
     }
 
-    if (filter.productIds && filter.productIds.length > 0) {
-        filtered = filterByProductIds(filtered, filter.productIds);
+    if (filter.merchantIds && filter.merchantIds.length > 0) {
+        filtered = filterByMerchantIds(filtered, filter.merchantIds);
     }
 
     if (filter.interactions) {
@@ -116,25 +102,16 @@ function applyFilters(
     return filtered;
 }
 
-/**
- * Mock implementation of getProductMembers for demo mode
- * Returns paginated mock member data with a realistic delay
- */
-export async function getProductMembersMock(
+export async function getMerchantMembersMock(
     params: GetMembersParam
 ): Promise<GetMembersResponseDto> {
-    // Simulate network delay
     await new Promise((resolve) => setTimeout(resolve, 350));
 
     const { limit = 20, offset = 0, sort, filter } = params;
 
-    // Get all members from mock data
     let filteredMembers = [...membersData.members];
-
-    // Apply filters
     filteredMembers = applyFilters(filteredMembers, filter);
 
-    // Apply sorting if provided
     if (sort) {
         filteredMembers.sort((a, b) => {
             let comparison = 0;
@@ -162,31 +139,27 @@ export async function getProductMembersMock(
         });
     }
 
-    // Apply pagination
     const paginatedMembers = filteredMembers.slice(offset, offset + limit);
+
+    const mappedMembers = paginatedMembers.map((m) => ({
+        ...m,
+        merchantIds: m.productIds,
+        merchantNames: m.productNames,
+    }));
 
     return {
         totalResult: filteredMembers.length,
-        members: paginatedMembers as unknown as GetMembersPageItem[],
+        members: mappedMembers as unknown as GetMembersPageItem[],
     };
 }
 
-/**
- * Mock implementation of getProductsMembersCount for demo mode
- * Returns count of mock members matching the criteria
- */
-export async function getProductsMembersCountMock(
+export async function getMerchantsMembersCountMock(
     params: Omit<GetMembersParam, "limit" | "offset" | "sort">
 ): Promise<number> {
-    // Simulate network delay
     await new Promise((resolve) => setTimeout(resolve, 200));
 
     const { filter } = params;
-
-    // Get all members from mock data
     let filteredMembers = [...membersData.members];
-
-    // Apply filters using the same helper function
     filteredMembers = applyFilters(filteredMembers, filter);
 
     return filteredMembers.length;

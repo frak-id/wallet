@@ -6,25 +6,10 @@ export {
     rewarderHubAbi,
 } from "./abis/abis";
 export {
-    affiliationFixedCampaignAbi,
-    affiliationRangeCampaignAbi,
-    campaignBankAbi as campaignBankAbiLegacy,
-    campaignBankFactoryAbi as campaignBankFactoryAbiLegacy,
-    campaignFactoryAbi,
     interactionCampaignAbi,
     referralCampaignAbi,
 } from "./abis/campaignAbis";
 export { getExecutionAbi, mintAbi } from "./abis/custom";
-export {
-    dappInteractionFacetAbi,
-    pressInteractionFacetAbi,
-    productInteractionDiamondAbi,
-    productInteractionManagerAbi,
-    purchaseFeatureFacetAbi,
-    referralFeatureFacetAbi,
-    retailInteractionFacetAbi,
-    webShopInteractionFacetAbi,
-} from "./abis/interactionAbis";
 export {
     KernelExecuteAbi,
     KernelInitAbi,
@@ -34,12 +19,6 @@ export {
     multiWebAuthNValidatorV2Abi,
 } from "./abis/kernelV2Abis";
 export {
-    productAdministratorRegistryAbi,
-    productRegistryAbi,
-    purchaseOracleAbi,
-    referralRegistryAbi,
-} from "./abis/registryAbis";
-export {
     addresses,
     currentStablecoins,
     kernelAddresses,
@@ -47,11 +26,6 @@ export {
     stablecoins,
     usdcArbitrumAddress,
 } from "./addresses";
-export {
-    baseCampaignTriggerPtr,
-    type CampaignType,
-    campaignAbiForType,
-} from "./campaign";
 export { getTransport, getViemClientFromChain } from "./provider";
 export {
     interactionValidatorRoles,

@@ -19,10 +19,9 @@ import {
 import { MerchantHead } from "@/module/merchant/component/MerchantHead";
 import { useEditMerchant } from "@/module/merchant/hook/useEditMerchant";
 import { useMerchant } from "@/module/merchant/hook/useMerchant";
-import { InteractionSettings } from "@/module/product/component/ProductDetails/InteractionSettings";
-import { PurchasseTrackerSetup } from "@/module/product/component/ProductDetails/PurchaseTracker";
-import { WebhookInteractionSetup } from "@/module/product/component/ProductDetails/WebhookInteraction";
 import styles from "./index.module.css";
+import { PurchasseTrackerSetup } from "./PurchaseTracker";
+import { WebhookInteractionSetup } from "./WebhookInteraction";
 
 type FormMerchant = {
     name: string;
@@ -162,14 +161,7 @@ export function MerchantDetails({ merchantId }: { merchantId: string }) {
                     </Panel>
                 )}
                 <WebhookInteractionSetup merchantId={merchantId} />
-                <PurchasseTrackerSetup
-                    merchantId={merchantId}
-                    productId={merchant?.productId}
-                />
-                <InteractionSettings
-                    merchantId={merchantId}
-                    productId={merchant?.productId}
-                />
+                <PurchasseTrackerSetup merchantId={merchantId} />
             </Form>
         </FormLayout>
     );

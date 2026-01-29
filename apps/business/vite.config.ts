@@ -45,7 +45,6 @@ export default defineConfig({
             process.env.FRAK_WALLET_URL
         ),
         "process.env.BACKEND_URL": JSON.stringify(process.env.BACKEND_URL),
-        "process.env.INDEXER_URL": JSON.stringify(process.env.INDEXER_URL),
         "process.env.ERPC_URL": JSON.stringify(process.env.ERPC_URL),
         "process.env.OPEN_PANEL_API_URL": JSON.stringify(
             process.env.OPEN_PANEL_API_URL

@@ -1,15 +1,8 @@
 export {
     addresses,
-    affiliationFixedCampaignAbi,
-    affiliationRangeCampaignAbi,
-    baseCampaignTriggerPtr,
-    type CampaignType,
-    campaignAbiForType,
-    campaignBankAbi as campaignBankV2Abi, // v2 abi
-    campaignBankFactoryAbi as campaignBankFactoryV2Abi, // v2 abi
-    campaignFactoryAbi,
+    campaignBankAbi,
+    campaignBankFactoryAbi,
     currentStablecoins,
-    dappInteractionFacetAbi,
     getExecutionAbi,
     interactionCampaignAbi,
     interactionValidatorRoles,
@@ -20,22 +13,12 @@ export {
     multiWebAuthNRecoveryActionAbi,
     multiWebAuthNValidatorV2Abi,
     type ProductRolesKey,
-    pressInteractionFacetAbi,
-    productAdministratorRegistryAbi,
-    productInteractionDiamondAbi,
-    productInteractionManagerAbi,
-    productRegistryAbi,
     productRoles,
-    purchaseFeatureFacetAbi,
     referralCampaignAbi,
-    referralFeatureFacetAbi,
-    referralRegistryAbi,
-    retailInteractionFacetAbi,
     rewarderHubAbi,
     type Stablecoin,
     stablecoins,
     usdcArbitrumAddress,
-    webShopInteractionFacetAbi,
 } from "./blockchain";
 
 export {
