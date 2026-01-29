@@ -5,6 +5,7 @@ import { businessSessionContext } from "../../middleware/session";
 import { merchantAdminsRoutes } from "./admins";
 import { merchantBankRoutes } from "./bank";
 import { merchantCampaignsRoutes } from "./campaigns";
+import { merchantMembersRoutes } from "./members";
 import { merchantRegistrationRoutes } from "./registration";
 import { merchantTransferRoutes } from "./transfer";
 import { merchantWebhooksRoutes } from "./webhooks";
@@ -139,4 +140,5 @@ export const merchantRoutes = new Elysia({ prefix: "/merchant" })
     .use(merchantBankRoutes)
     .use(merchantTransferRoutes)
     .use(merchantCampaignsRoutes)
+    .use(merchantMembersRoutes)
     .use(merchantWebhooksRoutes);

@@ -11,6 +11,7 @@ import {
     IdentityOrchestrator,
     IdentityWeightService,
 } from "./identity";
+import { MemberQueryOrchestrator } from "./MemberQueryOrchestrator";
 import { PurchaseLinkingOrchestrator } from "./PurchaseLinkingOrchestrator";
 import { PurchaseWebhookOrchestrator } from "./PurchaseWebhookOrchestrator";
 import { RewardExpirationOrchestrator } from "./RewardExpirationOrchestrator";
@@ -76,6 +77,10 @@ const rewardExpirationOrchestrator = new RewardExpirationOrchestrator(
 
 // Anonymous merge orchestrator needs identityOrchestrator to auto-create
 // identity groups on merge token generation (same pattern as /track/arrival)
+const memberQueryOrchestrator = new MemberQueryOrchestrator(
+    MerchantContext.services.authorization
+);
+
 const anonymousMergeOrchestrator = new AnonymousMergeOrchestrator(
     IdentityContext.services.anonymousMerge,
     IdentityContext.repositories.identity,
@@ -86,6 +91,7 @@ const anonymousMergeOrchestrator = new AnonymousMergeOrchestrator(
 
 export namespace OrchestrationContext {
     export const orchestrators = {
+        memberQuery: memberQueryOrchestrator,
         anonymousMerge: anonymousMergeOrchestrator,
         batchReward: batchRewardOrchestrator,
         identity: identityOrchestrator,
