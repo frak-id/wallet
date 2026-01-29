@@ -18,26 +18,26 @@ const MOCK_MERCHANT_BANK = {
         {
             symbol: "eure",
             address: currentStablecoins.eure,
-            balance: BigInt("5000000000"),
-            allowance: BigInt("10000000000"),
+            balance: 5000000000n,
+            allowance: 10000000000n,
         },
         {
             symbol: "gbpe",
             address: currentStablecoins.gbpe,
-            balance: BigInt("3000000000"),
-            allowance: BigInt("8000000000"),
+            balance: 3000000000n,
+            allowance: 8000000000n,
         },
         {
             symbol: "usde",
             address: currentStablecoins.usde,
-            balance: BigInt("0"),
-            allowance: BigInt("0"),
+            balance: 0n,
+            allowance: 0n,
         },
         {
             symbol: "usdc",
             address: currentStablecoins.usdc,
-            balance: BigInt("0"),
-            allowance: BigInt("0"),
+            balance: 0n,
+            allowance: 0n,
         },
     ],
 };
@@ -129,5 +129,13 @@ export function useGetMerchantBank({ merchantId }: { merchantId: string }) {
             };
         },
         enabled: !!merchantId,
+        select: (data) => ({
+            ...data,
+            tokens: data.tokens.map((token) => ({
+                ...token,
+                balance: BigInt(token.balance),
+                allowance: BigInt(token.allowance),
+            })),
+        }),
     });
 }

@@ -36,97 +36,130 @@
     font-weight: 500;
 }
 
-.tokenList {
+.tokenSections {
     display: flex;
     flex-direction: column;
+    gap: 16px;
+}
+
+.tokenGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
     gap: 12px;
 }
 
-.tokenRow {
+.tokenCard {
     display: flex;
     flex-direction: column;
     gap: 12px;
     padding: 16px;
     border: 1px solid var(--color-border);
+    border-left: 3px solid var(--color-border);
     border-radius: 8px;
     background-color: var(--color-background-secondary);
-    transition: border-color 0.2s ease;
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.06);
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
 }
 
-.tokenRow:hover {
+.tokenCard:hover {
     border-color: var(--color-border-hover);
+    box-shadow: 0 2px 6px rgb(0 0 0 / 0.1);
 }
 
-.tokenRow__info {
+.tokenCard--empty {
+    opacity: 0.5;
+}
+
+.tokenCard--empty:hover {
+    border-color: var(--color-border);
+}
+
+.tokenCard--active {
+    border-left-color: var(--color-success);
+}
+
+.tokenCard--warning {
+    border-left-color: var(--color-warning);
+}
+
+.tokenCard--paused {
+    border-left-color: var(--color-danger);
+}
+
+.tokenCard__header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 16px;
+    gap: 8px;
 }
 
-.tokenRow__symbol {
+.tokenCard__currencyGroup {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.tokenCard__currency {
     font-size: 1.125rem;
     font-weight: 700;
     color: var(--color-text-primary);
-    min-width: 60px;
 }
 
-.tokenRow__stats {
-    display: flex;
-    align-items: center;
-    gap: 24px;
-    flex-wrap: wrap;
-    flex: 1;
+.tokenCard__balance {
+    font-size: 1.5rem;
+    font-weight: 700;
+    font-family: var(--font-mono);
+    color: var(--color-text-primary);
+    line-height: 1.2;
 }
 
-.tokenRow__stat {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.statLabel {
+.tokenCard__availableLabel {
     font-size: 0.75rem;
     color: var(--color-text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
 }
 
-.statValue {
-    font-family: var(--font-mono);
-    font-weight: 500;
-    color: var(--color-text-primary);
+.tokenCard__emptyLabel {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+    font-style: italic;
 }
 
-.tokenRow__warning {
+.tokenCard__actions {
     display: flex;
-    align-items: center;
+    flex-direction: column;
     gap: 8px;
-    font-size: 0.875rem;
-    color: var(--color-warning);
-    background-color: var(--color-warning-transparent);
-    padding: 8px 12px;
-    border-radius: 6px;
-}
-
-.tokenRow__actions {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
     padding-top: 12px;
     border-top: 1px solid var(--color-border);
 }
 
-.smallInput {
-    width: 120px !important;
-    height: 32px !important;
+.tokenCard__actionButtons {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.tokenCard__warning {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8125rem;
+    color: var(--color-warning);
+    background-color: var(--color-warning-transparent);
+    padding: 6px 10px;
+    border-radius: 6px;
 }
 
 .actionRow {
     display: flex;
     gap: 8px;
+}
+
+.smallInput {
+    width: 120px !important;
+    height: 32px !important;
 }
 
 .fundActionsRow {
