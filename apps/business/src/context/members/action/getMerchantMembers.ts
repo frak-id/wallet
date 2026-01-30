@@ -29,7 +29,6 @@ export type GetMembersParam = {
     filter?: {
         merchantIds?: Hex[];
         interactions?: { min?: number; max?: number };
-        rewards?: { min?: Hex; max?: Hex };
         firstInteractionTimestamp?: { min?: number; max?: number };
     };
 };
@@ -53,16 +52,6 @@ export async function getMerchantMembers(
                           | string[]
                           | undefined,
                       interactions: params.filter.interactions,
-                      rewards: params.filter.rewards
-                          ? {
-                                min: params.filter.rewards.min as
-                                    | string
-                                    | undefined,
-                                max: params.filter.rewards.max as
-                                    | string
-                                    | undefined,
-                            }
-                          : undefined,
                       firstInteractionTimestamp:
                           params.filter.firstInteractionTimestamp,
                   }
@@ -93,16 +82,6 @@ export async function getMerchantsMembersCount(
                           | string[]
                           | undefined,
                       interactions: params.filter.interactions,
-                      rewards: params.filter.rewards
-                          ? {
-                                min: params.filter.rewards.min as
-                                    | string
-                                    | undefined,
-                                max: params.filter.rewards.max as
-                                    | string
-                                    | undefined,
-                            }
-                          : undefined,
                       firstInteractionTimestamp:
                           params.filter.firstInteractionTimestamp,
                   }

@@ -123,7 +123,7 @@ export async function getMerchantMembersMock(
                 case "totalInteractions":
                     comparison = a.totalInteractions - b.totalInteractions;
                     break;
-                case "rewards":
+                case "totalRewardsUsd":
                     comparison = a.totalRewardsUsd - b.totalRewardsUsd;
                     break;
                 case "firstInteractionTimestamp":

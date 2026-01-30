@@ -7,7 +7,6 @@ import { Form } from "@/module/forms/Form";
 import { InteractionsFiltering } from "@/module/members/component/MembersFiltering/InteractionsFiltering";
 import { MembershipDateFiltering } from "@/module/members/component/MembersFiltering/MembershipDateFiltering";
 import { MerchantFiltering } from "@/module/members/component/MembersFiltering/MerchantFiltering";
-import { RewardFiltering } from "@/module/members/component/MembersFiltering/RewardFiltering";
 import { membersStore } from "@/stores/membersStore";
 
 /**
@@ -43,7 +42,6 @@ export function MembersFiltering({
             merchantIds: undefined,
             interactions: undefined,
             firstInteractionTimestamp: undefined,
-            rewards: undefined,
         };
         form.reset(defaultValues);
         onFilterSet(defaultValues);
@@ -52,10 +50,6 @@ export function MembersFiltering({
 
     const onSubmit = useCallback(
         async (data: FormMembersFiltering) => {
-            // Fix rewards min and max if needed
-            data.rewards = fixRewards(data.rewards);
-
-            // Fix interactions if no filter provided
             data.interactions = fixInteractions(data.interactions);
 
             // Fix merchantIds if no filter provided
@@ -81,8 +75,6 @@ export function MembersFiltering({
             <MerchantFiltering {...commonProps} />
             <MembershipDateFiltering {...commonProps} />
             <InteractionsFiltering {...commonProps} />
-            <RewardFiltering {...commonProps} />
-
             <Row>
                 {showResetButton && (
                     <Button
@@ -97,19 +89,6 @@ export function MembersFiltering({
         </Form>
     );
 }
-
-/**
- * Fix rewards min and max values
- * @param rewards
- */
-const fixRewards = (rewards: FormMembersFiltering["rewards"]) => {
-    if (rewards) {
-        const { min, max } = rewards;
-        if (!(min || max)) return undefined;
-        return rewards;
-    }
-    return rewards;
-};
 
 /**
  * Fix interactions min and max values

@@ -1,4 +1,4 @@
-import { and, count, eq, inArray, min, type SQL, sql, sum } from "drizzle-orm";
+import { and, count, eq, inArray, min, type SQL, sql } from "drizzle-orm";
 import type { Static } from "elysia";
 import type { Address } from "viem";
 import { touchpointsTable } from "../domain/attribution/db/schema";
@@ -29,6 +29,8 @@ export type MemberQueryParams = {
     sort?: MemberQuerySort;
     filter?: MemberQueryFilter;
 };
+
+type TokenPriceMap = Map<string, number>;
 
 export class MemberQueryOrchestrator {
     constructor(
@@ -63,8 +65,11 @@ export class MemberQueryOrchestrator {
             return { totalResult: 0, members: [] };
         }
 
+        const tokenPrices = await this.getTokenPricesForMerchants(merchantIds);
+        const usdRewardsExpr = this.buildUsdRewardsExpression(tokenPrices);
+
         const havingConditions = this.buildHavingConditions(params.filter);
-        const sortExpr = this.buildSortExpression(params.sort);
+        const sortExpr = this.buildSortExpression(params.sort, usdRewardsExpr);
 
         const limit = params.limit ?? 20;
         const offset = params.offset ?? 0;
@@ -76,9 +81,9 @@ export class MemberQueryOrchestrator {
                     totalInteractions: count(interactionLogsTable.id).as(
                         "total_interactions"
                     ),
-                    totalRewards:
-                        sql<string>`COALESCE(${sum(assetLogsTable.amount)}, '0')`.as(
-                            "total_rewards"
+                    totalRewardsUsd:
+                        sql<number>`COALESCE(SUM(${usdRewardsExpr}), 0)`.as(
+                            "total_rewards_usd"
                         ),
                     firstInteraction: min(touchpointsTable.createdAt).as(
                         "first_interaction"
@@ -143,9 +148,9 @@ export class MemberQueryOrchestrator {
                 totalInteractions: count(interactionLogsTable.id).as(
                     "total_interactions"
                 ),
-                totalRewards:
-                    sql<string>`COALESCE(${sum(assetLogsTable.amount)}, '0')`.as(
-                        "total_rewards"
+                totalRewardsUsd:
+                    sql<number>`ROUND(COALESCE(SUM(${usdRewardsExpr}), 0)::NUMERIC, 2)`.as(
+                        "total_rewards_usd"
                     ),
                 firstInteraction: min(touchpointsTable.createdAt).as(
                     "first_interaction"
@@ -215,31 +220,21 @@ export class MemberQueryOrchestrator {
             ...allMerchantIds,
         ]);
 
-        const groupIds = rows.map((row) => row.groupId);
-        const perTokenRewards = await this.getPerTokenRewardsForMembers(
-            groupIds,
-            merchantIds
-        );
-
-        const members: MemberItem[] = await Promise.all(
-            rows.map(async (row) => {
-                const mIds = (row.merchantIdsAgg ?? []).filter(Boolean);
-                const tokenAmounts = perTokenRewards.get(row.groupId) ?? [];
-                const totalRewardsUsd = await this.convertToUsd(tokenAmounts);
-                return {
-                    user: row.walletAddress,
-                    totalInteractions: Number(row.totalInteractions),
-                    totalRewardsUsd,
-                    firstInteractionTimestamp: row.firstInteraction
-                        ? row.firstInteraction.toISOString()
-                        : "",
-                    merchantIds: mIds,
-                    merchantNames: mIds.map(
-                        (id) => merchantNameMap.get(id) ?? "Unknown"
-                    ),
-                };
-            })
-        );
+        const members: MemberItem[] = rows.map((row) => {
+            const mIds = (row.merchantIdsAgg ?? []).filter(Boolean);
+            return {
+                user: row.walletAddress,
+                totalInteractions: Number(row.totalInteractions),
+                totalRewardsUsd: Number(row.totalRewardsUsd),
+                firstInteractionTimestamp: row.firstInteraction
+                    ? row.firstInteraction.toISOString()
+                    : "",
+                merchantIds: mIds,
+                merchantNames: mIds.map(
+                    (id) => merchantNameMap.get(id) ?? "Unknown"
+                ),
+            };
+        });
 
         return { totalResult, members };
     }
@@ -258,6 +253,9 @@ export class MemberQueryOrchestrator {
         );
         if (merchantIds.length === 0) return 0;
 
+        const tokenPrices = await this.getTokenPricesForMerchants(merchantIds);
+        const usdRewardsExpr = this.buildUsdRewardsExpression(tokenPrices);
+
         const havingConditions = this.buildHavingConditions(filter);
 
         const [result] = await db.select({ total: count() }).from(
@@ -267,9 +265,9 @@ export class MemberQueryOrchestrator {
                     totalInteractions: count(interactionLogsTable.id).as(
                         "total_interactions"
                     ),
-                    totalRewards:
-                        sql<string>`COALESCE(${sum(assetLogsTable.amount)}, '0')`.as(
-                            "total_rewards"
+                    totalRewardsUsd:
+                        sql<number>`COALESCE(SUM(${usdRewardsExpr}), 0)`.as(
+                            "total_rewards_usd"
                         ),
                     firstInteraction: min(touchpointsTable.createdAt).as(
                         "first_interaction"
@@ -320,7 +318,54 @@ export class MemberQueryOrchestrator {
         return result?.total ?? 0;
     }
 
-    private buildHavingConditions(filter?: MemberQueryFilter): SQL | undefined {
+    // Produces: CASE WHEN token_address = '0x..' THEN amount * usd_price ... ELSE 0 END
+    private buildUsdRewardsExpression(tokenPrices: TokenPriceMap): SQL {
+        if (tokenPrices.size === 0) {
+            return sql`0`;
+        }
+
+        const whenClauses: SQL[] = [];
+        for (const [token, usdPrice] of tokenPrices) {
+            whenClauses.push(
+                sql`WHEN ${assetLogsTable.tokenAddress} = ${token} THEN ${assetLogsTable.amount}::NUMERIC * ${usdPrice}`
+            );
+        }
+
+        return sql`CASE ${sql.join(whenClauses, sql` `)} ELSE 0 END`;
+    }
+
+    private async getTokenPricesForMerchants(
+        merchantIds: string[]
+    ): Promise<TokenPriceMap> {
+        const tokenRows = await db
+            .selectDistinct({
+                tokenAddress: assetLogsTable.tokenAddress,
+            })
+            .from(assetLogsTable)
+            .where(inArray(assetLogsTable.merchantId, merchantIds));
+
+        const tokens = tokenRows
+            .map((r) => r.tokenAddress)
+            .filter((addr): addr is Address => addr !== null);
+
+        const priceMap: TokenPriceMap = new Map();
+        await Promise.all(
+            tokens.map(async (token) => {
+                const price = await this.pricingRepository.getTokenPrice({
+                    token,
+                });
+                if (price) {
+                    priceMap.set(token, price.usd);
+                }
+            })
+        );
+
+        return priceMap;
+    }
+
+    private buildHavingConditions(
+        filter: MemberQueryFilter | undefined
+    ): SQL | undefined {
         const conditions: SQL[] = [];
 
         if (filter?.interactions?.min !== undefined) {
@@ -331,17 +376,6 @@ export class MemberQueryOrchestrator {
         if (filter?.interactions?.max !== undefined) {
             conditions.push(
                 sql`COUNT(${interactionLogsTable.id}) <= ${filter.interactions.max}`
-            );
-        }
-
-        if (filter?.rewards?.min !== undefined) {
-            conditions.push(
-                sql`COALESCE(SUM(${assetLogsTable.amount}), '0')::NUMERIC >= ${filter.rewards.min}::NUMERIC`
-            );
-        }
-        if (filter?.rewards?.max !== undefined) {
-            conditions.push(
-                sql`COALESCE(SUM(${assetLogsTable.amount}), '0')::NUMERIC <= ${filter.rewards.max}::NUMERIC`
             );
         }
 
@@ -366,14 +400,17 @@ export class MemberQueryOrchestrator {
         return and(...conditions);
     }
 
-    private buildSortExpression(sort?: MemberQuerySort): SQL {
+    private buildSortExpression(
+        sort: MemberQuerySort | undefined,
+        usdRewardsExpr: SQL
+    ): SQL {
         const direction = sort?.order === "asc" ? sql`ASC` : sql`DESC`;
 
         switch (sort?.by) {
             case "totalInteractions":
                 return sql`COUNT(${interactionLogsTable.id}) ${direction}`;
-            case "rewards":
-                return sql`COALESCE(SUM(${assetLogsTable.amount}), '0')::NUMERIC ${direction}`;
+            case "totalRewardsUsd":
+                return sql`COALESCE(SUM(${usdRewardsExpr}), 0) ${direction}`;
             case "firstInteractionTimestamp":
                 return sql`MIN(${touchpointsTable.createdAt}) ${direction}`;
             default:
@@ -392,60 +429,5 @@ export class MemberQueryOrchestrator {
             .where(inArray(merchantsTable.id, merchantIds));
 
         return new Map(merchants.map((m) => [m.id, m.name]));
-    }
-
-    private async getPerTokenRewardsForMembers(
-        groupIds: string[],
-        merchantIds: string[]
-    ): Promise<Map<string, Array<{ token: string; amount: string }>>> {
-        if (groupIds.length === 0) return new Map();
-
-        const rows = await db
-            .select({
-                groupId: assetLogsTable.identityGroupId,
-                token: assetLogsTable.tokenAddress,
-                totalAmount: sql<string>`COALESCE(SUM(${assetLogsTable.amount}), '0')`,
-            })
-            .from(assetLogsTable)
-            .where(
-                and(
-                    inArray(assetLogsTable.identityGroupId, groupIds),
-                    inArray(assetLogsTable.merchantId, merchantIds)
-                )
-            )
-            .groupBy(
-                assetLogsTable.identityGroupId,
-                assetLogsTable.tokenAddress
-            );
-
-        const result = new Map<
-            string,
-            Array<{ token: string; amount: string }>
-        >();
-        for (const row of rows) {
-            const existing = result.get(row.groupId) ?? [];
-            if (row.token) {
-                existing.push({ token: row.token, amount: row.totalAmount });
-            }
-            result.set(row.groupId, existing);
-        }
-        return result;
-    }
-
-    private async convertToUsd(
-        perTokenAmounts: Array<{ token: string; amount: string }>
-    ): Promise<number> {
-        let totalUsd = 0;
-        for (const { token, amount } of perTokenAmounts) {
-            const price = await this.pricingRepository.getTokenPrice({
-                token: token as Address,
-            });
-            const numericAmount = Number.parseFloat(amount);
-            if (price) {
-                totalUsd += numericAmount * price.usd;
-            }
-        }
-
-        return Math.round(totalUsd * 100) / 100;
     }
 }

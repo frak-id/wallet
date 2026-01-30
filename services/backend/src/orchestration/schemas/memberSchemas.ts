@@ -8,12 +8,6 @@ export const MemberFilterSchema = t.Object({
             max: t.Optional(t.Number()),
         })
     ),
-    rewards: t.Optional(
-        t.Object({
-            min: t.Optional(t.String()),
-            max: t.Optional(t.String()),
-        })
-    ),
     firstInteractionTimestamp: t.Optional(
         t.Object({
             min: t.Optional(t.Number()),
