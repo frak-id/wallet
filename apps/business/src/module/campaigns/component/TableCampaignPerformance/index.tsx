@@ -18,6 +18,7 @@ import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { Table } from "@/module/common/component/Table";
 import { TooltipTable } from "@/module/common/component/TooltipTable";
 import { useConvertToPreferredCurrency } from "@/module/common/hook/useConversionRate";
+import { useTokenMetadata } from "@/module/common/hook/useTokenMetadata";
 
 type TableData = CampaignStats;
 
@@ -260,10 +261,11 @@ function RawAmountInPreferredCurrency({
     rawAmount: string;
 }) {
     const token = row.original.tokenAddress ?? undefined;
+    const { data: tokenMeta } = useTokenMetadata(token);
     const converted = useConvertToPreferredCurrency({
         token,
         balance: BigInt(rawAmount),
-        decimals: 18,
+        decimals: tokenMeta?.decimals,
     });
 
     if (converted === undefined) return null;

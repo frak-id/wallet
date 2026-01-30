@@ -6,11 +6,11 @@ import {
 import { CheckCircle2, Star } from "lucide-react";
 import { useEffect } from "react";
 import { useFormContext } from "react-hook-form";
-import { Address,
-formatUnits } from "viem";
+import { type Address, formatUnits } from "viem";
 import { Badge } from "@/module/common/component/Badge";
 import { Panel } from "@/module/common/component/Panel";
 import { currencyOptions } from "@/module/common/utils/currencyOptions";
+import { stablecoinMetadata } from "@/module/common/utils/stablecoinMetadata";
 import {
     FormControl,
     FormDescription,
@@ -22,8 +22,6 @@ import { useGetMerchantBank } from "@/module/merchant/hook/useGetMerchantBank";
 import { useMerchant } from "@/module/merchant/hook/useMerchant";
 import type { CampaignDraft } from "@/stores/campaignStore";
 import styles from "./FormRewardToken.module.css";
-
-const TOKEN_DECIMALS = 6;
 
 const tokenDisplayNames: Record<Stablecoin, string> = {
     eure: "Euro (Monerium)",
@@ -75,7 +73,10 @@ export function FormRewardToken() {
             (t) => t.address.toLowerCase() === tokenAddress.toLowerCase()
         );
         if (!token) return null;
-        return formatUnits(token.balance, TOKEN_DECIMALS);
+        return formatUnits(
+            token.balance,
+            stablecoinMetadata[stablecoin].decimals
+        );
     }
 
     return (
