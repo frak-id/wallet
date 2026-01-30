@@ -1,7 +1,7 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { isDemoMode } from "@/context/auth/authEnv";
+import { isDemoMode } from "@/config/auth";
 import { CampaignEdit } from "@/module/campaigns/component/CampaignEdit";
 import {
     campaignQueryOptions,

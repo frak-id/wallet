@@ -1,7 +1,7 @@
 import type { Stablecoin } from "@frak-labs/app-essentials";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Hex } from "viem";
-import { authenticatedBackendApi } from "@/context/api/backendClient";
+import { authenticatedBackendApi } from "@/api/backendClient";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 
 /**

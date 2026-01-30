@@ -1,5 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
-import { getMyMerchants } from "@/context/merchant/action/getMerchants";
+import { getMyMerchants } from "@/module/merchant/api/getMerchants";
 
 export const myMerchantsQueryOptions = (isDemoMode: boolean) =>
     queryOptions({

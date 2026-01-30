@@ -3,7 +3,7 @@ import { Spinner } from "@frak-labs/ui/component/Spinner";
 import { useMutation } from "@tanstack/react-query";
 import { useSearch } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo } from "react";
-import { authenticatedBackendApi } from "@/context/api/backendClient";
+import { authenticatedBackendApi } from "@/api/backendClient";
 import { CallOut } from "@/module/common/component/CallOut";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";

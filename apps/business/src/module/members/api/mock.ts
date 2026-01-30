@@ -1,10 +1,10 @@
 import type { Hex } from "viem";
+import membersData from "@/mock/members.json";
 import type {
     GetMembersPageItem,
     GetMembersParam,
     GetMembersResponseDto,
-} from "@/context/members/action/getMerchantMembers";
-import membersData from "@/mock/members.json";
+} from "@/module/members/api/getMerchantMembers";
 
 type MemberData = {
     user: string;

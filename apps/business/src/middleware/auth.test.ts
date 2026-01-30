@@ -24,7 +24,7 @@ vi.mock("@/stores/authStore", () => ({
     },
 }));
 
-vi.mock("@/context/auth/authEnv", () => ({
+vi.mock("@/config/auth", () => ({
     getAuthToken: mockGetAuthToken,
     isDemoMode: mockIsDemoMode,
     getWallet: mockGetWallet,

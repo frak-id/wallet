@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { isDemoMode } from "@/context/auth/authEnv";
+import { isDemoMode } from "@/config/auth";
 import { ButtonNewCampaign } from "@/module/campaigns/component/ButtonNewCampaign";
 import { TableCampaigns } from "@/module/campaigns/component/TableCampaigns";
 import { campaignsListQueryOptions } from "@/module/campaigns/queries/queryOptions";

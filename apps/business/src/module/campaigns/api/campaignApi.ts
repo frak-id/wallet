@@ -1,4 +1,4 @@
-import { authenticatedBackendApi } from "@/context/api/backendClient";
+import { authenticatedBackendApi } from "@/api/backendClient";
 import type {
     BudgetConfig,
     Campaign,

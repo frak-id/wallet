@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { isDemoMode } from "@/context/auth/authEnv";
+import { isDemoMode } from "@/config/auth";
 import { Breadcrumb } from "@/module/common/component/Breadcrumb";
 import { Head } from "@/module/common/component/Head";
 import { CriticalError } from "@/module/common/component/RouteError";

@@ -4,7 +4,7 @@ import { Spinner } from "@frak-labs/ui/component/Spinner";
 import { useMediaQuery } from "@frak-labs/ui/hook/useMediaQuery";
 import { useNavigate } from "@tanstack/react-router";
 import { useTransition } from "react";
-import { authenticatedBackendApi } from "@/context/api/backendClient";
+import { authenticatedBackendApi } from "@/api/backendClient";
 import { useAuthStore } from "@/stores/authStore";
 import styles from "./index.module.css";
 import logo from "./logo-frak.svg";

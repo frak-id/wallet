@@ -3,7 +3,7 @@ import { Button } from "@frak-labs/ui/component/Button";
 import { Spinner } from "@frak-labs/ui/component/Spinner";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useTransition } from "react";
-import { authenticatedBackendApi } from "@/context/api/backendClient";
+import { authenticatedBackendApi } from "@/api/backendClient";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
 import { useAuthStore } from "@/stores/authStore";

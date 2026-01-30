@@ -5,7 +5,7 @@ import {
 import { useSiweAuthenticate, useWalletStatus } from "@frak-labs/react-sdk";
 import { type UseMutationOptions, useMutation } from "@tanstack/react-query";
 import { useState } from "react";
-import { authenticatedBackendApi } from "@/context/api/backendClient";
+import { authenticatedBackendApi } from "@/api/backendClient";
 
 /**
  * Extract error message from API error response

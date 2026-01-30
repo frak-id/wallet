@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { type Address, erc20Abi } from "viem";
 import { multicall } from "viem/actions";
-import { viemClient } from "@/context/blockchain/provider";
+import { viemClient } from "@/config/blockchain";
 
 type TokenMetadata = {
     name: string;

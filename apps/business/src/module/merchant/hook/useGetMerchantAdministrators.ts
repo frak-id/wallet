@@ -1,7 +1,7 @@
 import { useWalletStatus } from "@frak-labs/react-sdk";
 import { useQuery } from "@tanstack/react-query";
 import { type Address, isAddressEqual } from "viem";
-import { authenticatedBackendApi } from "@/context/api/backendClient";
+import { authenticatedBackendApi } from "@/api/backendClient";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 
 const MOCK_ADMINISTRATORS: MerchantAdministrator[] = [

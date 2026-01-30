@@ -1,7 +1,7 @@
 import { CircleDollarSign, Wallet } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useFormContext } from "react-hook-form";
-import { getCapPeriod } from "@/context/campaigns/utils/capPeriods";
+import { getCapPeriod } from "@/module/campaigns/utils/capPeriods";
 import { Column } from "@/module/common/component/Column";
 import { InputAmount } from "@/module/common/component/InputAmount";
 import { Row } from "@/module/common/component/Row";

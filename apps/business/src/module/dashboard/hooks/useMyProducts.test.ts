@@ -1,6 +1,6 @@
 import { renderHook, waitFor } from "@testing-library/react";
 import { afterEach, vi } from "vitest";
-import { getMyMerchants } from "@/context/merchant/action/getMerchants";
+import { getMyMerchants } from "@/module/merchant/api/getMerchants";
 import {
     describe,
     expect,
@@ -16,7 +16,7 @@ const { mockGetMyMerchants, mockUseIsDemoMode } = vi.hoisted(() => ({
 }));
 
 // Mock getMyMerchants action
-vi.mock("@/context/merchant/action/getMerchants", () => ({
+vi.mock("@/module/merchant/api/getMerchants", () => ({
     getMyMerchants: mockGetMyMerchants,
 }));
 

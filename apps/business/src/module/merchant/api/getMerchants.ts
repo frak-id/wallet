@@ -1,5 +1,5 @@
-import { authenticatedBackendApi } from "@/context/api/backendClient";
-import { getMyMerchantsMock } from "@/context/merchant/action/mock";
+import { authenticatedBackendApi } from "@/api/backendClient";
+import { getMyMerchantsMock } from "@/module/merchant/api/mock";
 
 export type GetMerchantsResult = {
     owner: { id: string; name: string; domain: string }[];

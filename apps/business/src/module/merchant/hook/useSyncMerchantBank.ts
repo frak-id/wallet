@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { authenticatedBackendApi } from "@/context/api/backendClient";
+import { authenticatedBackendApi } from "@/api/backendClient";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 
 export function useSyncMerchantBank({ merchantId }: { merchantId: string }) {

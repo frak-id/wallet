@@ -5,8 +5,8 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import type { Address } from "viem";
 import { multicall } from "viem/actions";
-import { authenticatedBackendApi } from "@/context/api/backendClient";
-import { viemClient } from "@/context/blockchain/provider";
+import { authenticatedBackendApi } from "@/api/backendClient";
+import { viemClient } from "@/config/blockchain";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 
 const MOCK_MERCHANT_BANK = {

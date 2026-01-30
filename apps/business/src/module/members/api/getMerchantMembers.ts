@@ -1,9 +1,9 @@
 import type { Hex } from "viem";
-import { authenticatedBackendApi } from "@/context/api/backendClient";
+import { authenticatedBackendApi } from "@/api/backendClient";
 import {
     getMerchantMembersMock,
     getMerchantsMembersCountMock,
-} from "@/context/members/action/mock";
+} from "@/module/members/api/mock";
 
 export type GetMembersPageItem = {
     user: `0x${string}`;

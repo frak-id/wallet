@@ -2,7 +2,7 @@ import { queryOptions } from "@tanstack/react-query";
 import {
     type GetMembersParam,
     getMerchantMembers,
-} from "@/context/members/action/getMerchantMembers";
+} from "@/module/members/api/getMerchantMembers";
 
 export const membersPageQueryOptions = (
     filters: GetMembersParam,

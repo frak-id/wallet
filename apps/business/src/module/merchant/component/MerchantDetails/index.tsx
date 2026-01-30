@@ -9,6 +9,7 @@ import { Input, type InputProps } from "@frak-labs/ui/component/forms/Input";
 import { Pencil } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
+import type { Address } from "viem";
 import { ActionsMessageSuccess } from "@/module/campaigns/component/Actions";
 import { Panel } from "@/module/common/component/Panel";
 import { Row } from "@/module/common/component/Row";
@@ -28,7 +29,6 @@ import { useMerchant } from "@/module/merchant/hook/useMerchant";
 import styles from "./index.module.css";
 import { PurchasseTrackerSetup } from "./PurchaseTracker";
 import { WebhookInteractionSetup } from "./WebhookInteraction";
-import { Address } from "viem";
 
 type FormMerchant = {
     name: string;

@@ -1,6 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 import type { Address, Hex } from "viem";
-import { authenticatedBackendApi } from "@/context/api/backendClient";
+import { authenticatedBackendApi } from "@/api/backendClient";
 import merchantsMockData from "@/mock/merchants.json";
 import { useAuthStore } from "@/stores/authStore";
 

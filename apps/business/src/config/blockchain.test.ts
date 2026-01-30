@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { viemClient } from "./provider";
+import { viemClient } from "./blockchain";
 
 describe("blockchain provider", () => {
     describe("viemClient", () => {

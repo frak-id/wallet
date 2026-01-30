@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { isDemoMode } from "@/context/auth/authEnv";
+import { isDemoMode } from "@/config/auth";
 import { queryClient } from "@/module/common/provider/RootProvider";
 import { MerchantTeam } from "@/module/merchant/component/Team";
 import { merchantQueryOptions } from "@/module/merchant/queries/queryOptions";

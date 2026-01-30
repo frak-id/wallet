@@ -7,7 +7,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { generatePrivateKey } from "viem/accounts";
-import { authenticatedBackendApi } from "@/context/api/backendClient";
+import { authenticatedBackendApi } from "@/api/backendClient";
 import { Badge } from "@/module/common/component/Badge";
 import { Row } from "@/module/common/component/Row";
 import { Title } from "@/module/common/component/Title";

@@ -11,7 +11,7 @@ import {
 } from "@tanstack/react-query-persist-client";
 import { useRouterState } from "@tanstack/react-router";
 import { type PropsWithChildren, useEffect } from "react";
-import { frakWalletSdkConfig } from "@/context/frak-wallet/config";
+import { frakWalletSdkConfig } from "@/config/frakWallet";
 import { openPanel } from "../utils/openPanel";
 
 /**

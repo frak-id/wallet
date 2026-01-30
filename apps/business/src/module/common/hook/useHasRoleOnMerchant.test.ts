@@ -1,6 +1,6 @@
 import { renderHook, waitFor } from "@testing-library/react";
 import { vi } from "vitest";
-import { authenticatedBackendApi } from "@/context/api/backendClient";
+import { authenticatedBackendApi } from "@/api/backendClient";
 import {
     describe,
     expect,
@@ -10,7 +10,7 @@ import {
 import { useHasRoleOnMerchant } from "./useHasRoleOnMerchant";
 
 // Mock the business API
-vi.mock("@/context/api/backendClient", () => ({
+vi.mock("@/api/backendClient", () => ({
     authenticatedBackendApi: {
         merchant: vi.fn(() => ({
             get: vi.fn(),

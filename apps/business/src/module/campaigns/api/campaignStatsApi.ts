@@ -1,5 +1,5 @@
 import type { Address } from "viem";
-import { authenticatedBackendApi } from "@/context/api/backendClient";
+import { authenticatedBackendApi } from "@/api/backendClient";
 import campaignStatsData from "@/mock/campaignStats.json";
 
 export type CampaignStats = {

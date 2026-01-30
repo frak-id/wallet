@@ -1,5 +1,5 @@
 import { redirect } from "@tanstack/react-router";
-import { getAuthToken, getWallet, isDemoMode } from "@/context/auth/authEnv";
+import { getAuthToken, getWallet, isDemoMode } from "@/config/auth";
 import { useAuthStore } from "@/stores/authStore";
 
 /**

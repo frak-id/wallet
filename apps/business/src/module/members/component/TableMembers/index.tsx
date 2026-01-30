@@ -10,13 +10,13 @@ import {
 } from "@tanstack/react-table";
 import { useEffect, useMemo, useState } from "react";
 import { isAddressEqual } from "viem";
-import type {
-    GetMembersPageItem,
-    GetMembersParam,
-} from "@/context/members/action/getMerchantMembers";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { Row } from "@/module/common/component/Row";
 import { Table } from "@/module/common/component/Table";
+import type {
+    GetMembersPageItem,
+    GetMembersParam,
+} from "@/module/members/api/getMerchantMembers";
 import { TableMembersFilters } from "@/module/members/component/TableMembers/Filters";
 import { Pagination } from "@/module/members/component/TableMembers/Pagination";
 import { membersPageQueryOptions } from "@/module/members/queries/queryOptions";

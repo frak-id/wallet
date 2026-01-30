@@ -3,13 +3,13 @@ import { useMutation } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useFormContext } from "react-hook-form";
 import type { Address } from "viem";
-import {
-    type GetMembersParam,
-    getMerchantsMembersCount,
-} from "@/context/members/action/getMerchantMembers";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { Panel } from "@/module/common/component/Panel";
 import { FormField, FormItem, FormMessage } from "@/module/forms/Form";
+import {
+    type GetMembersParam,
+    getMerchantsMembersCount,
+} from "@/module/members/api/getMerchantMembers";
 import type { FormCreatePushNotification } from "@/module/members/component/CreatePush/types";
 import { MembersFiltering } from "@/module/members/component/MembersFiltering";
 import { membersStore } from "@/stores/membersStore";

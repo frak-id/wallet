@@ -1,6 +1,6 @@
 import { renderHook, waitFor } from "@testing-library/react";
 import { vi } from "vitest";
-import { authenticatedBackendApi } from "@/context/api/backendClient";
+import { authenticatedBackendApi } from "@/api/backendClient";
 import {
     describe,
     expect,
@@ -14,7 +14,7 @@ import {
 } from "./dnsRecordHooks";
 
 // Mock the business API with merchant routes
-vi.mock("@/context/api/backendClient", () => {
+vi.mock("@/api/backendClient", () => {
     const mockRegister = {
         "dns-txt": {
             get: vi.fn(),
