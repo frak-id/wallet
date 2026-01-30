@@ -127,7 +127,7 @@ export class CampaignStatsOrchestrator {
                         "total_rewards"
                     ),
                 tokenAddress:
-                    sql<Address | null>`MAX(${assetLogsTable.tokenAddress})`.as(
+                    sql<Address | null>`MAX(${assetLogsTable.tokenAddress}::text)::bytea`.as(
                         "token_address"
                     ),
                 uniqueWallets: countDistinct(

@@ -8,6 +8,7 @@ import { CampaignTerritory } from "@/module/campaigns/component/CampaignDetails/
 import { FormBudgetRow } from "@/module/campaigns/component/Creation/NewCampaign/FormBudgetRow";
 import { FormAdvertising } from "@/module/campaigns/component/Creation/ValidationCampaign/FormAdvertising";
 import { FormGoal } from "@/module/campaigns/component/Creation/ValidationCampaign/FormGoal";
+import { FormTrigger } from "@/module/campaigns/component/Creation/ValidationCampaign/FormTrigger";
 import { RewardsSummary } from "@/module/campaigns/component/RewardsSummary";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { ActionsWrapper } from "@/module/common/component/ActionsWrapper";
@@ -79,6 +80,7 @@ export function CampaignDetails({
                 <Form {...form}>
                     <FormAdvertising />
                     <FormGoal />
+                    <FormTrigger />
                     <RewardsSummary rewards={rewards} />
                     <FormBudgetRow disabled={true} />
                     <CampaignTerritory campaign={campaign} />
