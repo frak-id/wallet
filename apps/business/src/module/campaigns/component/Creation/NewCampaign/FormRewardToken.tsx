@@ -6,11 +6,12 @@ import {
 import { CheckCircle2, Star } from "lucide-react";
 import { useEffect } from "react";
 import { useFormContext } from "react-hook-form";
-import { type Address, formatUnits } from "viem";
+import type { Address } from "viem";
+import { formatUnits } from "viem";
 import { Badge } from "@/module/common/component/Badge";
 import { Panel } from "@/module/common/component/Panel";
+import { useTokenMetadata } from "@/module/common/hook/useTokenMetadata";
 import { currencyOptions } from "@/module/common/utils/currencyOptions";
-import { stablecoinMetadata } from "@/module/common/utils/stablecoinMetadata";
 import {
     FormControl,
     FormDescription,
@@ -66,16 +67,13 @@ export function FormRewardToken() {
         }))
     );
 
-    function getTokenBalance(stablecoin: Stablecoin): string | null {
+    function getTokenData(stablecoin: Stablecoin) {
         if (!bankData?.tokens) return null;
         const tokenAddress = currentStablecoins[stablecoin];
-        const token = bankData.tokens.find(
-            (t) => t.address.toLowerCase() === tokenAddress.toLowerCase()
-        );
-        if (!token) return null;
-        return formatUnits(
-            token.balance,
-            stablecoinMetadata[stablecoin].decimals
+        return (
+            bankData.tokens.find(
+                (t) => t.address.toLowerCase() === tokenAddress.toLowerCase()
+            ) ?? null
         );
     }
 
@@ -106,8 +104,8 @@ export function FormRewardToken() {
                                         const isDefault =
                                             stablecoin ===
                                             merchantDefaultStablecoin;
-                                        const balance =
-                                            getTokenBalance(stablecoin);
+                                        const tokenData =
+                                            getTokenData(stablecoin);
                                         const isRecommended =
                                             currency.group === "Monerium";
 
@@ -192,19 +190,15 @@ export function FormRewardToken() {
                                                             )}
                                                     </div>
                                                 </div>
-                                                {balance !== null && (
-                                                    <div
-                                                        className={
-                                                            styles.tokenBalance
+                                                {tokenData && (
+                                                    <TokenBalanceDisplay
+                                                        balance={
+                                                            tokenData.balance
                                                         }
-                                                    >
-                                                        Available:{" "}
-                                                        <strong>
-                                                            {Number(
-                                                                balance
-                                                            ).toLocaleString()}
-                                                        </strong>
-                                                    </div>
+                                                        tokenAddress={
+                                                            tokenData.address
+                                                        }
+                                                    />
                                                 )}
                                             </button>
                                         );
@@ -217,5 +211,26 @@ export function FormRewardToken() {
                 }}
             />
         </Panel>
+    );
+}
+
+function TokenBalanceDisplay({
+    balance,
+    tokenAddress,
+}: {
+    balance: bigint;
+    tokenAddress: Address;
+}) {
+    const { data: tokenMeta } = useTokenMetadata(tokenAddress);
+    if (!tokenMeta) return null;
+
+    const formatted = Number(
+        formatUnits(balance, tokenMeta.decimals)
+    ).toLocaleString();
+
+    return (
+        <div className={styles.tokenBalance}>
+            Available: <strong>{formatted}</strong>
+        </div>
     );
 }

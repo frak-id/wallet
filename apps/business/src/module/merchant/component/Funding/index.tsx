@@ -21,9 +21,9 @@ import { Row } from "@/module/common/component/Row";
 import { Title } from "@/module/common/component/Title";
 import { useTokenMetadata } from "@/module/common/hook/useTokenMetadata";
 import {
+    currencyMetadata,
     formatTokenBalance,
-    stablecoinMetadata,
-} from "@/module/common/utils/stablecoinMetadata";
+} from "@/module/common/utils/currencyOptions";
 import { FormLayout } from "@/module/forms/Form";
 import { useFundTestBank } from "@/module/merchant/hook/useFundTestBank";
 import { useGetMerchantBank } from "@/module/merchant/hook/useGetMerchantBank";
@@ -261,9 +261,9 @@ function TokenCard({
     isBankOpen: boolean;
 }) {
     const stablecoin = token.symbol as Stablecoin;
-    const meta = stablecoinMetadata[stablecoin];
+    const meta = currencyMetadata[stablecoin];
     const { data: tokenMeta } = useTokenMetadata(token.address);
-    const decimals = tokenMeta?.decimals ?? meta.decimals;
+    const decimals = tokenMeta?.decimals ?? 18;
     const status = getTokenStatus(token.balance, token.allowance);
     const formattedBalance = formatTokenBalance(
         token.balance,
