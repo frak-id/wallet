@@ -23,18 +23,36 @@ export const merchantAdminsRoutes = new Elysia({
                 return status(403, "Access denied");
             }
 
-            const admins =
-                await MerchantContext.repositories.merchantAdmin.findByMerchant(
+            const [merchant, admins] = await Promise.all([
+                MerchantContext.repositories.merchant.findById(merchantId),
+                MerchantContext.repositories.merchantAdmin.findByMerchant(
                     merchantId
-                );
+                ),
+            ]);
+
+            if (!merchant) {
+                return status(404, "Merchant not found");
+            }
 
             return {
-                admins: admins.map((admin) => ({
-                    id: admin.id,
-                    wallet: admin.wallet,
-                    addedBy: admin.addedBy,
-                    addedAt: admin.addedAt.toISOString(),
-                })),
+                admins: [
+                    {
+                        id: merchant.id,
+                        wallet: merchant.ownerWallet,
+                        addedBy: merchant.ownerWallet,
+                        addedAt: (
+                            merchant.createdAt ?? new Date()
+                        ).toISOString(),
+                        isOwner: true,
+                    },
+                    ...admins.map((admin) => ({
+                        id: admin.id,
+                        wallet: admin.wallet,
+                        addedBy: admin.addedBy,
+                        addedAt: admin.addedAt.toISOString(),
+                        isOwner: false,
+                    })),
+                ],
             };
         },
         {
@@ -49,11 +67,13 @@ export const merchantAdminsRoutes = new Elysia({
                             wallet: t.Hex(),
                             addedBy: t.Hex(),
                             addedAt: t.String(),
+                            isOwner: t.Boolean(),
                         })
                     ),
                 }),
                 401: t.String(),
                 403: t.String(),
+                404: t.String(),
             },
         }
     )
