@@ -64,12 +64,11 @@ export function EmbeddedCreateCampaign() {
         },
     });
 
-    const { isOwner, isAdministrator, isCampaignManager } =
-        useHasRoleOnMerchant({
-            merchantId: extracted.merchantId,
-        });
+    const { hasAccess } = useHasRoleOnMerchant({
+        merchantId: extracted.merchantId,
+    });
 
-    if (!isOwner && !isAdministrator && !isCampaignManager) {
+    if (!hasAccess) {
         return (
             <>
                 <Title className={styles.title}>Create Campaign</Title>

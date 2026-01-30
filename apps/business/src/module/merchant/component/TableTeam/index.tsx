@@ -22,7 +22,7 @@ export type ManageTeamTableData = MerchantAdministrator;
 const columnHelper = createColumnHelper<ManageTeamTableData>();
 
 export function TableTeam({ merchantId }: { merchantId: string }) {
-    const { isAdministrator } = useHasRoleOnMerchant({ merchantId });
+    const { hasAccess } = useHasRoleOnMerchant({ merchantId });
     const { data: administrators, isLoading } = useGetMerchantAdministrators({
         merchantId,
     });
@@ -68,7 +68,7 @@ export function TableTeam({ merchantId }: { merchantId: string }) {
             data={administrators}
             columns={columns}
             preTable={
-                isAdministrator && (
+                hasAccess && (
                     <ButtonAddTeam merchantId={merchantId}>
                         <Button variant={"submit"}>Add Team Member</Button>
                     </ButtonAddTeam>
@@ -85,17 +85,17 @@ function CellActions({
     merchantId: string;
 }) {
     const { data: wallletStatus } = useWalletStatus();
-    const { isAdministrator } = useHasRoleOnMerchant({ merchantId });
+    const { hasAccess } = useHasRoleOnMerchant({ merchantId });
 
     const canDoActions = useMemo(() => {
         if (row.original.isOwner) return false;
-        if (isAdministrator) return true;
+        if (hasAccess) return true;
 
         return isAddressEqual(
             row.original.wallet,
             wallletStatus?.wallet ?? zeroAddress
         );
-    }, [isAdministrator, row, wallletStatus]);
+    }, [hasAccess, row, wallletStatus]);
 
     if (!canDoActions) return null;
 

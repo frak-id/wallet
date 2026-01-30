@@ -9,9 +9,6 @@ const defaultAccess = {
     isOwner: false,
     isAdmin: false,
     hasAccess: false,
-    isAdministrator: false,
-    isInteractionManager: false,
-    isCampaignManager: false,
 };
 
 const demoAccess = {
@@ -19,10 +16,6 @@ const demoAccess = {
     isOwner: true,
     isAdmin: false,
     hasAccess: true,
-    // todo: legacy roles to delete
-    isAdministrator: true,
-    isInteractionManager: true,
-    isCampaignManager: true,
 };
 
 export function useHasRoleOnMerchant({ merchantId }: { merchantId: string }) {
@@ -54,16 +47,11 @@ export function useHasRoleOnMerchant({ merchantId }: { merchantId: string }) {
             }
 
             const role = data.role;
-            const isOwner = role === "owner";
-            const isAdmin = role === "admin";
             return {
                 role,
-                isOwner,
-                isAdmin,
+                isOwner: role === "owner",
+                isAdmin: role === "admin",
                 hasAccess: role !== "none",
-                isAdministrator: isOwner || isAdmin,
-                isInteractionManager: isOwner || isAdmin,
-                isCampaignManager: isOwner || isAdmin,
             };
         },
         enabled: !!merchantId,
@@ -75,8 +63,3 @@ export function useHasRoleOnMerchant({ merchantId }: { merchantId: string }) {
         ...(accessResult ?? defaultAccess),
     };
 }
-
-/**
- * @deprecated Use useHasRoleOnMerchant instead
- */
-export const useHasRoleOnProduct = useHasRoleOnMerchant;

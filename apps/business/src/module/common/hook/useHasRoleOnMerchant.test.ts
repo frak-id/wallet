@@ -79,10 +79,6 @@ describe("useHasRoleOnMerchant", () => {
             expect(result.current.isOwner).toBe(true);
             expect(result.current.isAdmin).toBe(false);
             expect(result.current.hasAccess).toBe(true);
-            // Legacy fields
-            expect(result.current.isAdministrator).toBe(true);
-            expect(result.current.isInteractionManager).toBe(true);
-            expect(result.current.isCampaignManager).toBe(true);
         });
     });
 
@@ -115,10 +111,6 @@ describe("useHasRoleOnMerchant", () => {
             expect(result.current.isOwner).toBe(false);
             expect(result.current.isAdmin).toBe(true);
             expect(result.current.hasAccess).toBe(true);
-            // Legacy fields
-            expect(result.current.isAdministrator).toBe(true);
-            expect(result.current.isInteractionManager).toBe(true);
-            expect(result.current.isCampaignManager).toBe(true);
         });
     });
 
@@ -151,10 +143,6 @@ describe("useHasRoleOnMerchant", () => {
             expect(result.current.isOwner).toBe(false);
             expect(result.current.isAdmin).toBe(false);
             expect(result.current.hasAccess).toBe(false);
-            // Legacy fields
-            expect(result.current.isAdministrator).toBe(false);
-            expect(result.current.isInteractionManager).toBe(false);
-            expect(result.current.isCampaignManager).toBe(false);
         });
     });
 
