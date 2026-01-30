@@ -9,7 +9,7 @@ import membersData from "@/mock/members.json";
 type MemberData = {
     user: string;
     totalInteractions: number;
-    rewards: string;
+    totalRewardsUsd: number;
     firstInteractionTimestamp: string;
     productIds: string[];
     productNames: string[];
@@ -124,9 +124,7 @@ export async function getMerchantMembersMock(
                     comparison = a.totalInteractions - b.totalInteractions;
                     break;
                 case "rewards":
-                    comparison =
-                        Number.parseInt(a.rewards, 10) -
-                        Number.parseInt(b.rewards, 10);
+                    comparison = a.totalRewardsUsd - b.totalRewardsUsd;
                     break;
                 case "firstInteractionTimestamp":
                     comparison =

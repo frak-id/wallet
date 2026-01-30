@@ -8,7 +8,7 @@ import {
 export type GetMembersPageItem = {
     user: `0x${string}`;
     totalInteractions: number;
-    rewards: string;
+    totalRewardsUsd: number;
     firstInteractionTimestamp: string;
     merchantIds: string[];
     merchantNames: string[];

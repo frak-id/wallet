@@ -1,5 +1,10 @@
 // Blockchain
 export { viemClient } from "./blockchain/client";
+export {
+    type TokenMetadata,
+    TokenMetadataRepository,
+    tokenMetadataRepository,
+} from "./blockchain/TokenMetadataRepository";
 // External services
 export { indexerApi } from "./external/indexer";
 export { JwtContext } from "./external/jwt";

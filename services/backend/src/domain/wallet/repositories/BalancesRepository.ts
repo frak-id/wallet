@@ -1,20 +1,14 @@
-import { indexerApi, viemClient } from "@backend-infrastructure";
-import { LRUCache } from "lru-cache";
+import {
+    indexerApi,
+    type TokenMetadata,
+    tokenMetadataRepository,
+    viemClient,
+} from "@backend-infrastructure";
 import { type Address, erc20Abi, formatUnits } from "viem";
 import { multicall } from "viem/actions";
 import type { GetAllTokenResponseDto } from "../types/indexerTypes";
 
-type TokenMetadata = {
-    name: string;
-    symbol: string;
-    decimals: number;
-};
-
 export class BalancesRepository {
-    // A few caches
-    private readonly metadataCache = new LRUCache<Address, TokenMetadata>({
-        max: 128,
-    });
     private knownTokens: GetAllTokenResponseDto = [];
 
     /**
@@ -108,42 +102,11 @@ export class BalancesRepository {
      * Get a token metadata
      * @param token
      */
-    async getTokenMetadata({ token }: { token: Address }) {
-        // Check the cache
-        const cached = this.metadataCache.get(token);
-        if (cached) {
-            return cached;
-        }
-
-        // Fetch the metadata
-        const rawMetadata = await multicall(viemClient, {
-            contracts: [
-                {
-                    abi: erc20Abi,
-                    address: token,
-                    functionName: "symbol",
-                },
-                {
-                    abi: erc20Abi,
-                    address: token,
-                    functionName: "name",
-                },
-                {
-                    abi: erc20Abi,
-                    address: token,
-                    functionName: "decimals",
-                },
-            ] as const,
-            allowFailure: false,
-        });
-        const metadata: TokenMetadata = {
-            symbol: rawMetadata[0],
-            name: rawMetadata[1],
-            decimals: rawMetadata[2],
-        };
-
-        // Cache the metadata and return them
-        this.metadataCache.set(token, metadata);
-        return metadata;
+    async getTokenMetadata({
+        token,
+    }: {
+        token: Address;
+    }): Promise<TokenMetadata> {
+        return tokenMetadataRepository.getMetadata({ token });
     }
 }

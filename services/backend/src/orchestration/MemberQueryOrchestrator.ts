@@ -10,6 +10,7 @@ import {
     interactionLogsTable,
 } from "../domain/rewards/db/schema";
 import { db } from "../infrastructure/persistence/postgres";
+import type { PricingRepository } from "../infrastructure/pricing/PricingRepository";
 import type {
     MemberFilterSchema,
     MemberItemSchema,
@@ -30,7 +31,10 @@ export type MemberQueryParams = {
 };
 
 export class MemberQueryOrchestrator {
-    constructor(readonly authorizationService: MerchantAuthorizationService) {}
+    constructor(
+        readonly authorizationService: MerchantAuthorizationService,
+        private readonly pricingRepository: PricingRepository
+    ) {}
 
     private scopeMerchantIds(
         accessible: string[],
@@ -211,21 +215,31 @@ export class MemberQueryOrchestrator {
             ...allMerchantIds,
         ]);
 
-        const members: MemberItem[] = rows.map((row) => {
-            const mIds = (row.merchantIdsAgg ?? []).filter(Boolean);
-            return {
-                user: row.walletAddress,
-                totalInteractions: Number(row.totalInteractions),
-                rewards: row.totalRewards ?? "0",
-                firstInteractionTimestamp: row.firstInteraction
-                    ? row.firstInteraction.toISOString()
-                    : "",
-                merchantIds: mIds,
-                merchantNames: mIds.map(
-                    (id) => merchantNameMap.get(id) ?? "Unknown"
-                ),
-            };
-        });
+        const groupIds = rows.map((row) => row.groupId);
+        const perTokenRewards = await this.getPerTokenRewardsForMembers(
+            groupIds,
+            merchantIds
+        );
+
+        const members: MemberItem[] = await Promise.all(
+            rows.map(async (row) => {
+                const mIds = (row.merchantIdsAgg ?? []).filter(Boolean);
+                const tokenAmounts = perTokenRewards.get(row.groupId) ?? [];
+                const totalRewardsUsd = await this.convertToUsd(tokenAmounts);
+                return {
+                    user: row.walletAddress,
+                    totalInteractions: Number(row.totalInteractions),
+                    totalRewardsUsd,
+                    firstInteractionTimestamp: row.firstInteraction
+                        ? row.firstInteraction.toISOString()
+                        : "",
+                    merchantIds: mIds,
+                    merchantNames: mIds.map(
+                        (id) => merchantNameMap.get(id) ?? "Unknown"
+                    ),
+                };
+            })
+        );
 
         return { totalResult, members };
     }
@@ -378,5 +392,60 @@ export class MemberQueryOrchestrator {
             .where(inArray(merchantsTable.id, merchantIds));
 
         return new Map(merchants.map((m) => [m.id, m.name]));
+    }
+
+    private async getPerTokenRewardsForMembers(
+        groupIds: string[],
+        merchantIds: string[]
+    ): Promise<Map<string, Array<{ token: string; amount: string }>>> {
+        if (groupIds.length === 0) return new Map();
+
+        const rows = await db
+            .select({
+                groupId: assetLogsTable.identityGroupId,
+                token: assetLogsTable.tokenAddress,
+                totalAmount: sql<string>`COALESCE(SUM(${assetLogsTable.amount}), '0')`,
+            })
+            .from(assetLogsTable)
+            .where(
+                and(
+                    inArray(assetLogsTable.identityGroupId, groupIds),
+                    inArray(assetLogsTable.merchantId, merchantIds)
+                )
+            )
+            .groupBy(
+                assetLogsTable.identityGroupId,
+                assetLogsTable.tokenAddress
+            );
+
+        const result = new Map<
+            string,
+            Array<{ token: string; amount: string }>
+        >();
+        for (const row of rows) {
+            const existing = result.get(row.groupId) ?? [];
+            if (row.token) {
+                existing.push({ token: row.token, amount: row.totalAmount });
+            }
+            result.set(row.groupId, existing);
+        }
+        return result;
+    }
+
+    private async convertToUsd(
+        perTokenAmounts: Array<{ token: string; amount: string }>
+    ): Promise<number> {
+        let totalUsd = 0;
+        for (const { token, amount } of perTokenAmounts) {
+            const price = await this.pricingRepository.getTokenPrice({
+                token: token as Address,
+            });
+            const numericAmount = Number.parseFloat(amount);
+            if (price) {
+                totalUsd += numericAmount * price.usd;
+            }
+        }
+
+        return Math.round(totalUsd * 100) / 100;
     }
 }

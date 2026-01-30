@@ -4,6 +4,7 @@ import { IdentityContext } from "../domain/identity/context";
 import { MerchantContext } from "../domain/merchant/context";
 import { PurchasesContext } from "../domain/purchases/context";
 import { RewardsContext } from "../domain/rewards/context";
+import { pricingRepository } from "../infrastructure/pricing/PricingRepository";
 import { ArrivalTrackingOrchestrator } from "./ArrivalTrackingOrchestrator";
 import { BatchRewardOrchestrator } from "./BatchRewardOrchestrator";
 import { CampaignStatsOrchestrator } from "./CampaignStatsOrchestrator";
@@ -81,7 +82,8 @@ const rewardExpirationOrchestrator = new RewardExpirationOrchestrator(
 // Anonymous merge orchestrator needs identityOrchestrator to auto-create
 // identity groups on merge token generation (same pattern as /track/arrival)
 const memberQueryOrchestrator = new MemberQueryOrchestrator(
-    MerchantContext.services.authorization
+    MerchantContext.services.authorization,
+    pricingRepository
 );
 
 const arrivalTrackingOrchestrator = new ArrivalTrackingOrchestrator(
