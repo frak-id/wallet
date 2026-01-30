@@ -8,6 +8,7 @@ import type { TargetPairingState as TargetPairingStateType } from "@frak-labs/wa
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useStore } from "zustand";
+import { PairingDropdown } from "@/module/pairing/component/PairingDropdown";
 import { SignatureRequestList } from "@/module/pairing/component/SignatureRequest";
 
 /**
@@ -38,10 +39,12 @@ function InnerTargetPairingState() {
 
     return (
         <StatusBoxWallet status={status} title={text}>
-            <SignatureRequestList
-                requests={Array.from(state.pendingSignatures.values())}
-                client={client}
-            />
+            <PairingDropdown>
+                <SignatureRequestList
+                    requests={Array.from(state.pendingSignatures.values())}
+                    client={client}
+                />
+            </PairingDropdown>
         </StatusBoxWallet>
     );
 }

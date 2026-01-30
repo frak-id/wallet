@@ -25,7 +25,6 @@ export {
     redirectWithMerge,
     setupMergeTokenListener,
 } from "./mergeToken";
-export { setupMobileAuthCallback } from "./mobileAuthCallback";
 export {
     type AppSpecificSsoMetadata,
     type CompressedSsoData,

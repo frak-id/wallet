@@ -5,7 +5,7 @@ import {
     PersistQueryClientProvider,
     type PersistQueryClientProviderProps,
 } from "@tanstack/react-query-persist-client";
-import { type PropsWithChildren, useState } from "react";
+import { type PropsWithChildren, Suspense, useState } from "react";
 import { FrakProvider } from "@/module/common/provider/FrakProvider";
 
 /**
@@ -48,7 +48,9 @@ export function RootProvider({ children }: PropsWithChildren) {
             client={queryClient}
             persistOptions={persistOptions}
         >
-            <FrakProvider>{children}</FrakProvider>
+            <Suspense>
+                <FrakProvider>{children}</FrakProvider>
+            </Suspense>
             <ReactQueryDevtools initialIsOpen={false} />
         </PersistQueryClientProvider>
     );

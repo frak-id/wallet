@@ -5,15 +5,24 @@ import {
     ssoPopupName,
 } from "@frak-labs/core-sdk";
 import {
+    emitLifecycleEvent,
+    getOriginPairingClient,
     trackAuthFailed,
     trackAuthInitiated,
     ua,
     useSsoLink,
 } from "@frak-labs/wallet-shared";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { Hex } from "viem";
+import { useStore } from "zustand";
 import { useListenerWithRequestUI } from "@/module/providers/ListenerUiProvider";
-import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
+
+function buildDeepLinkHref(pairing: { id: string; code: string }): string {
+    const id = encodeURIComponent(pairing.id);
+    const code = encodeURIComponent(pairing.code);
+    return `${DEEP_LINK_SCHEME}pair?id=${id}&code=${code}`;
+}
 
 /**
  * Button used to launch an SSO registration
@@ -58,14 +67,7 @@ export function SsoButton({
 
     // On mobile, use deep link redirect flow instead of popup
     if (ua.isMobile) {
-        return (
-            <MobileSsoButton
-                merchantId={merchantId}
-                merchantName={appName}
-                text={text}
-                className={className}
-            />
-        );
+        return <MobileSsoButton text={text} className={className} />;
     }
 
     return <RegularSsoButton link={link} text={text} className={className} />;
@@ -141,92 +143,137 @@ function LinkSsoButton({
     );
 }
 
+/**
+ * Mobile SSO button using WebSocket pairing.
+ * User clicks → WS pairing initiated → deep link shown → wallet app authenticates via WS.
+ */
 function MobileSsoButton({
-    merchantId,
-    merchantName,
     text,
     className,
 }: {
-    merchantId: Hex;
-    merchantName: string;
     text: ReactNode;
     className?: string;
 }) {
-    const handleClick = () => {
+    const { t } = useTranslation();
+    const [status, setStatus] = useState<
+        "idle" | "connecting" | "waiting" | "timeout"
+    >("idle");
+    const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const mountedRef = useRef(true);
+    const client = getOriginPairingClient();
+    const clientState = useStore(client.store);
+
+    useEffect(() => {
+        mountedRef.current = true;
+        return () => {
+            mountedRef.current = false;
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+            }
+            client.disconnect();
+        };
+    }, [client]);
+
+    const handleStartPairing = () => {
         trackAuthInitiated("sso", { method: "mobile" });
+        setStatus("connecting");
 
-        const state = generateState();
-
-        // Prefer resolving context (handshake-derived) as return URL.
-        // This is more reliable than document.referrer under strict Referrer-Policy.
-        const resolvingContext = resolvingContextStore.getState().context;
-        const returnUrl =
-            resolvingContext?.sourceUrl ??
-            document.referrer ??
-            window.location.href;
-        const deepLinkUrl = buildMobileLoginUrl({
-            returnUrl,
-            merchantId,
-            state,
-            merchantName,
+        client.initiatePairing(() => {
+            if (!mountedRef.current) return;
         });
 
-        // Use iframe lifecycle redirect event (handled by SDK)
-        // Use parent origin from referrer for security (avoid "*")
-        const targetOrigin =
-            resolvingContext?.origin ?? safeGetOrigin(returnUrl);
-        if (!targetOrigin) {
-            trackAuthFailed("sso", "invalid-return-url");
-            return;
-        }
-
-        // Send redirect event with state so parent can store it in its sessionStorage
-        window.parent.postMessage(
-            {
-                iframeLifecycle: "redirect",
-                data: { baseRedirectUrl: deepLinkUrl, state },
-            },
-            targetOrigin
-        );
+        timeoutRef.current = setTimeout(() => {
+            if (!mountedRef.current) return;
+            // Check if already paired (race: WS paired but React hasn't re-rendered yet)
+            if (client.store.getState().status === "paired") {
+                return;
+            }
+            setStatus("timeout");
+            trackAuthFailed("sso", "pairing-timeout");
+        }, 30_000);
     };
 
+    const deepLinkHref = clientState.pairing
+        ? buildDeepLinkHref(clientState.pairing)
+        : undefined;
+
+    useEffect(() => {
+        if (deepLinkHref && status === "connecting") {
+            emitLifecycleEvent({
+                iframeLifecycle: "redirect",
+                data: { baseRedirectUrl: deepLinkHref },
+            });
+            setStatus("waiting");
+        }
+    }, [deepLinkHref, status]);
+
+    useEffect(() => {
+        if (clientState.status === "paired" && timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+            timeoutRef.current = null;
+        }
+    }, [clientState.status]);
+
+    if (status === "idle") {
+        return (
+            <button
+                type="button"
+                className={className}
+                onClick={handleStartPairing}
+            >
+                {text}
+            </button>
+        );
+    }
+
+    if (status === "timeout") {
+        return (
+            <button
+                type="button"
+                className={className}
+                onClick={handleStartPairing}
+            >
+                {text}
+            </button>
+        );
+    }
+
+    if (status === "connecting" && !deepLinkHref) {
+        return (
+            <button type="button" className={className} disabled>
+                {t("mobile-sso.connecting")}
+            </button>
+        );
+    }
+
+    if (deepLinkHref) {
+        if (status === "waiting") {
+            return (
+                <button type="button" className={className} disabled>
+                    {t("mobile-sso.waiting")}
+                </button>
+            );
+        }
+        return (
+            <button
+                type="button"
+                className={className}
+                onClick={() => {
+                    emitLifecycleEvent({
+                        iframeLifecycle: "redirect",
+                        data: { baseRedirectUrl: deepLinkHref },
+                    });
+                    setStatus("waiting");
+                }}
+            >
+                {t("mobile-sso.openWallet")}
+            </button>
+        );
+    }
+
     return (
-        <button type="button" className={className} onClick={handleClick}>
+        <button type="button" className={className} disabled>
             {text}
         </button>
     );
-}
-
-function generateState(): string {
-    const array = new Uint8Array(16);
-    crypto.getRandomValues(array);
-    return Array.from(array, (b) => b.toString(16).padStart(2, "0")).join("");
-}
-
-function buildMobileLoginUrl({
-    returnUrl,
-    merchantId,
-    state,
-    merchantName,
-}: {
-    returnUrl: string;
-    merchantId: string;
-    state: string;
-    merchantName?: string;
-}): string {
-    const params = new URLSearchParams();
-    params.set("returnUrl", returnUrl);
-    params.set("merchantId", merchantId);
-    params.set("state", state);
-    if (merchantName) params.set("merchantName", merchantName);
-
-    return `${DEEP_LINK_SCHEME}login?${params.toString()}`;
-}
-
-function safeGetOrigin(url: string): string | null {
-    try {
-        return new URL(url).origin;
-    } catch {
-        return null;
-    }
 }

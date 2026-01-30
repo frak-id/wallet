@@ -1,0 +1,28 @@
+.pairingConfirmModal {
+    top: 10px;
+}
+
+.pairingConfirmModal__card {
+    border: 1px solid #e5e7eb;
+    border-radius: 18px;
+    padding: 20px;
+    background-color: #fff;
+}
+
+.pairingConfirmModal__title {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+
+.pairingConfirmModal__description {
+    font-size: 14px;
+    margin-bottom: 20px;
+    color: #6b7280;
+}
+
+.pairingConfirmModal__buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}

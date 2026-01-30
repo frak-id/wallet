@@ -4,18 +4,6 @@ export {
     BusinessTokenDto,
 } from "./models/BusinessSessionDto";
 export {
-    ExchangeMobileAuthCodeRequestDto,
-    ExchangeMobileAuthCodeResponseDto,
-    GenerateMobileAuthCodeRequestDto,
-    GenerateMobileAuthCodeResponseDto,
-    MobileAuthCodeDto,
-    type StaticExchangeMobileAuthCodeRequestDto,
-    type StaticExchangeMobileAuthCodeResponseDto,
-    type StaticGenerateMobileAuthCodeRequestDto,
-    type StaticGenerateMobileAuthCodeResponseDto,
-    type StaticMobileAuthCodeDto,
-} from "./models/MobileAuthCodeDto";
-export {
     type StaticWalletSdkTokenDto,
     type StaticWalletTokenDto,
     type StaticWalletWebauthnTokenDto,

@@ -1,5 +1,4 @@
 import { AuthenticatorRepository } from "./repositories/AuthenticatorRepository";
-import { MobileAuthCodeService } from "./services/MobileAuthCodeService";
 import { WalletSdkSessionService } from "./services/WalletSdkSessionService";
 import { WebAuthNService } from "./services/WebAuthNService";
 
@@ -14,6 +13,5 @@ export namespace AuthContext {
     export const services = {
         walletSdkSession: walletSdkSessionService,
         webAuthN: new WebAuthNService(authenticatorRepository),
-        mobileAuthCode: new MobileAuthCodeService(walletSdkSessionService),
     };
 }

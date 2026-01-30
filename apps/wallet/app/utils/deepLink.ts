@@ -1,4 +1,5 @@
 import { isTauri } from "@frak-labs/app-essentials/utils/platform";
+import { pendingPairingStore } from "@/module/pairing/stores/pendingPairingStore";
 
 type DeepLinkParams = {
     action: string;
@@ -8,6 +9,8 @@ type DeepLinkParams = {
     merchantId?: string;
     state?: string;
     merchantName?: string;
+    id?: string;
+    code?: string;
 };
 
 function extractSearchParams(
@@ -20,6 +23,8 @@ function extractSearchParams(
         merchantId: searchParams.get("merchantId") ?? undefined,
         state: searchParams.get("state") ?? undefined,
         merchantName: searchParams.get("merchantName") ?? undefined,
+        id: searchParams.get("id") ?? undefined,
+        code: searchParams.get("code") ?? undefined,
     };
 }
 
@@ -87,18 +92,14 @@ function handleDeepLinkAction(navigate: NavigateFn, params: DeepLinkParams) {
             navigate({ to: "/history" });
             break;
 
-        case "login":
-            navigate({
-                to: "/open/login",
-                search: {
-                    ...(params.returnUrl && { returnUrl: params.returnUrl }),
-                    ...(params.merchantId && { merchantId: params.merchantId }),
-                    ...(params.state && { state: params.state }),
-                    ...(params.merchantName && {
-                        merchantName: params.merchantName,
-                    }),
-                },
-            });
+        case "pair":
+            if (params.id && params.code) {
+                pendingPairingStore.getState().setPendingPairing({
+                    id: params.id,
+                    code: params.code,
+                });
+            }
+            navigate({ to: "/wallet" });
             break;
 
         default:

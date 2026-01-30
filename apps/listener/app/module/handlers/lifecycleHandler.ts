@@ -106,16 +106,8 @@ export const createClientLifecycleHandler =
             }
 
             case "sso-redirect-complete": {
-                // Handle SSO redirect with compressed data from URL
-                // Data arrives compressed from SDK, decompress and process here
+                // Handle SSO redirect completion from SDK
                 await handleSsoRedirectComplete(data);
-                return;
-            }
-
-            case "mobile-auth-complete": {
-                // Handle mobile auth callback from SDK
-                // SDK exchanged auth code and sent us wallet + sdkJwt
-                await handleMobileAuthComplete(data);
                 return;
             }
         }
@@ -214,30 +206,4 @@ async function handleSsoRedirectComplete(data: {
     } catch (error) {
         console.error("[SSO Redirect] Error processing SSO redirect:", error);
     }
-}
-
-/**
- * Handle mobile auth complete event from SDK
- * Uses processSsoCompletion for identical code path as SSO redirect
- */
-async function handleMobileAuthComplete(data: {
-    wallet: string;
-    sdkJwt: { token: string; expires: number };
-}): Promise<void> {
-    const session: Session = {
-        type: "mobile-auth",
-        address: data.wallet as `0x${string}`,
-        // Important: mobile-auth sessions must not masquerade as wallet-auth sessions.
-        // Use sdkSession for SDK-authenticated endpoints instead.
-        token: "",
-        authenticatorId: `mobile-${data.wallet}` as `mobile-${string}`,
-        transports: undefined,
-    };
-
-    const sdkSession: SdkSession = {
-        token: data.sdkJwt.token,
-        expires: data.sdkJwt.expires,
-    };
-
-    await processSsoCompletion(session, sdkSession);
 }

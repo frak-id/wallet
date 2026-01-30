@@ -18,7 +18,9 @@
                 }
             },
             "description": "Before continuing, please make sure you are using a device that belongs to you.<br />Frak is a solution allowing <strong>{{productName}}</strong> to reward its community for the help provided in promoting its offers. <strong>Frak is a decentralized and open-source solution, which does not store any personal or biometric data.</strong><br />To learn more about <strong>{{productName}}</strong>, please review our Privacy Policy and Terms of Use.",
-            "header": { "title": "Login with Frak Wallet" },
+            "header": {
+                "title": "Login with Frak Wallet"
+            },
             "recover": "Recover wallet from file",
             "redirect": "You will be redirected to {{ productName }} in a few seconds.",
             "redirectNow": "Redirect now",
@@ -56,7 +58,8 @@
         "wallet": "Wallet:",
         "walletAddress": "Wallet address:",
         "walletAddressRequired": "Wallet address is required",
-        "walletInvalid": "Invalid wallet address"
+        "walletInvalid": "Invalid wallet address",
+        "back-to-wallet": "Back to Wallet"
     },
     "sharing": {
         "btn": {
@@ -365,5 +368,28 @@
                 "daysAgo": "{{count}}d ago"
             }
         }
+    },
+    "mobile-sso": {
+        "connecting": "Connecting...",
+        "openWallet": "Open in Frak Wallet",
+        "waiting": "Waiting for wallet app..."
+    },
+    "mobile-tx": {
+        "sendTransaction": "Send transaction",
+        "explanation": "Approve this transaction in your wallet app",
+        "waiting": "Waiting for approval...",
+        "openWallet": "Open wallet to approve",
+        "reopenWallet": "Re-open wallet",
+        "timeout": "Approval timed out. Try again?",
+        "retry": "Retry"
+    },
+    "open-pair": {
+        "connecting": "Connecting to pairing...",
+        "success": "Pairing Successful!",
+        "error": "Pairing Failed",
+        "confirm-title": "Device pairing request",
+        "confirm-description": "A device wants to pair with your wallet",
+        "accept": "Accept",
+        "reject": "Reject"
     }
 }

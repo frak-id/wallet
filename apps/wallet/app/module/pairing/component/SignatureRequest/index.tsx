@@ -27,17 +27,9 @@ export function SignatureRequestList({
     requests: TargetPairingPendingSignature[];
     client: TargetPairingClient;
 }) {
-    return (
-        <div className={styles.signatureRequestList}>
-            {requests.map((request) => (
-                <SignatureRequest
-                    key={request.id}
-                    request={request}
-                    client={client}
-                />
-            ))}
-        </div>
-    );
+    return requests.map((request) => (
+        <SignatureRequest key={request.id} request={request} client={client} />
+    ));
 }
 
 /**
@@ -59,26 +51,21 @@ function SignatureRequest({
     const [isDeclined, setIsDeclined] = useState(false);
 
     return (
-        <div className={styles.signatureRequest__wrapper}>
-            <Panel size={"small"} className={styles.signatureRequest}>
-                <Title icon={<Shield size={24} />}>
-                    {t("wallet.pairing.signatureRequest.title")}
-                </Title>
-                <SignatureRequestDescription request={request} />
-                <SignatureRequestState
-                    status={status}
-                    isDeclined={isDeclined}
-                />
-                <SignatureRequestActions
-                    status={status}
-                    signRequest={() => signRequest(request)}
-                    declineRequest={() => {
-                        declineRequest(request);
-                        setIsDeclined(true);
-                    }}
-                />
-            </Panel>
-        </div>
+        <Panel size={"small"} className={styles.signatureRequest}>
+            <Title icon={<Shield size={24} />}>
+                {t("wallet.pairing.signatureRequest.title")}
+            </Title>
+            <SignatureRequestDescription request={request} />
+            <SignatureRequestState status={status} isDeclined={isDeclined} />
+            <SignatureRequestActions
+                status={status}
+                signRequest={() => signRequest(request)}
+                declineRequest={() => {
+                    declineRequest(request);
+                    setIsDeclined(true);
+                }}
+            />
+        </Panel>
     );
 }
 

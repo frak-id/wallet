@@ -56,7 +56,8 @@
         "wallet": "Porte-monnaie :",
         "walletAddress": "Adresse du porte-monnaie :",
         "walletAddressRequired": "L'adresse du porte-monnaie est requise",
-        "walletInvalid": "Adresse de porte-monnaie invalide"
+        "walletInvalid": "Adresse de porte-monnaie invalide",
+        "back-to-wallet": "Retour au porte-monnaie"
     },
     "sharing": {
         "btn": {
@@ -365,5 +366,28 @@
                 "daysAgo": "il y a {{count}}j"
             }
         }
+    },
+    "mobile-sso": {
+        "connecting": "Connexion...",
+        "openWallet": "Ouvrir dans Frak Wallet",
+        "waiting": "En attente du wallet..."
+    },
+    "mobile-tx": {
+        "sendTransaction": "Envoyer la transaction",
+        "explanation": "Approuvez cette transaction dans votre portefeuille",
+        "waiting": "En attente d'approbation...",
+        "openWallet": "Ouvrir le portefeuille pour approuver",
+        "reopenWallet": "Ré-ouvrir le portefeuille",
+        "timeout": "Délai d'approbation dépassé. Réessayer ?",
+        "retry": "Réessayer"
+    },
+    "open-pair": {
+        "connecting": "Connexion en cours...",
+        "success": "Appairage réussi !",
+        "error": "Appairage échoué",
+        "confirm-title": "Demande d'appairage",
+        "confirm-description": "Un appareil souhaite se connecter à votre portefeuille",
+        "accept": "Accepter",
+        "reject": "Rejeter"
     }
 }
