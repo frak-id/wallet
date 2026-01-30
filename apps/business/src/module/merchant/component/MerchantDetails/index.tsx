@@ -1,3 +1,8 @@
+import {
+    currentStablecoins,
+    getTokenAddressForStablecoin,
+    type Stablecoin,
+} from "@frak-labs/app-essentials";
 import { Button } from "@frak-labs/ui/component/Button";
 import { Column, Columns } from "@frak-labs/ui/component/Columns";
 import { Input, type InputProps } from "@frak-labs/ui/component/forms/Input";
@@ -7,6 +12,7 @@ import { useForm } from "react-hook-form";
 import { ActionsMessageSuccess } from "@/module/campaigns/component/Actions";
 import { Panel } from "@/module/common/component/Panel";
 import { Row } from "@/module/common/component/Row";
+import { CurrencySelector } from "@/module/forms/CurrencySelector";
 import {
     Form,
     FormControl,
@@ -22,11 +28,22 @@ import { useMerchant } from "@/module/merchant/hook/useMerchant";
 import styles from "./index.module.css";
 import { PurchasseTrackerSetup } from "./PurchaseTracker";
 import { WebhookInteractionSetup } from "./WebhookInteraction";
+import { Address } from "viem";
 
 type FormMerchant = {
     name: string;
     domain: string;
+    defaultCurrency: Stablecoin;
 };
+
+function detectStablecoinFromAddress(address: Address): Stablecoin | undefined {
+    for (const [key, value] of Object.entries(currentStablecoins)) {
+        if (value.toLowerCase() === address.toLowerCase()) {
+            return key as Stablecoin;
+        }
+    }
+    return undefined;
+}
 
 export function MerchantDetails({ merchantId }: { merchantId: string }) {
     const { data: merchant } = useMerchant({ merchantId });
@@ -42,6 +59,10 @@ export function MerchantDetails({ merchantId }: { merchantId: string }) {
                 ? {
                       name: merchant.name,
                       domain: merchant.domain,
+                      defaultCurrency:
+                          detectStablecoinFromAddress(
+                              merchant.defaultRewardToken
+                          ) ?? "eure",
                   }
                 : undefined,
         [merchant]
@@ -52,24 +73,21 @@ export function MerchantDetails({ merchantId }: { merchantId: string }) {
         defaultValues: {
             name: "",
             domain: "",
+            defaultCurrency: "eure",
         },
     });
 
-    /**
-     * On success, reset the form
-     */
     useEffect(() => {
         if (!editMerchantSuccess) return;
         form.reset(form.getValues());
     }, [editMerchantSuccess, form.reset, form.getValues, form]);
 
-    /**
-     * Launch the mutation to edit the merchant
-     * @param values
-     */
     function onSubmit(values: FormMerchant) {
         editMerchant({
             name: values.name,
+            defaultRewardToken: getTokenAddressForStablecoin(
+                values.defaultCurrency
+            ),
         });
     }
 
@@ -118,6 +136,24 @@ export function MerchantDetails({ merchantId }: { merchantId: string }) {
                                             placeholder={"Domain name...."}
                                             {...field}
                                             disabled={true}
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="defaultCurrency"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel weight={"medium"}>
+                                        Default reward currency
+                                    </FormLabel>
+                                    <FormControl>
+                                        <CurrencySelector
+                                            value={field.value}
+                                            onChange={field.onChange}
                                         />
                                     </FormControl>
                                     <FormMessage />

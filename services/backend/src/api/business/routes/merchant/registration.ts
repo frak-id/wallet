@@ -84,6 +84,7 @@ export const merchantRegistrationRoutes = new Elysia({ prefix: "/register" })
                     name: body.name,
                     requestOrigin: origin,
                     setupCode: body.setupCode,
+                    defaultRewardToken: body.defaultRewardToken,
                 }
             );
 
@@ -126,6 +127,7 @@ export const merchantRegistrationRoutes = new Elysia({ prefix: "/register" })
                 domain: t.String(),
                 name: t.String(),
                 setupCode: t.Optional(t.String()),
+                defaultRewardToken: t.Hex(),
             }),
             response: {
                 200: t.Object({

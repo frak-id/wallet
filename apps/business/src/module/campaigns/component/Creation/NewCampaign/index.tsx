@@ -6,6 +6,7 @@ import { ButtonCancel } from "@/module/campaigns/component/Creation/NewCampaign/
 import { FormBudget } from "@/module/campaigns/component/Creation/NewCampaign/FormBudget";
 import { FormGoals } from "@/module/campaigns/component/Creation/NewCampaign/FormGoals";
 import { FormMerchant } from "@/module/campaigns/component/Creation/NewCampaign/FormMerchant";
+import { FormRewardToken } from "@/module/campaigns/component/Creation/NewCampaign/FormRewardToken";
 import { FormSchedule } from "@/module/campaigns/component/Creation/NewCampaign/FormSchedule";
 import { FormSpecialAdvertising } from "@/module/campaigns/component/Creation/NewCampaign/FormSpecialAdvertising";
 import { FormTerritory } from "@/module/campaigns/component/Creation/NewCampaign/FormTerritory";
@@ -46,6 +47,7 @@ export function NewCampaign({ title }: { title: string }) {
                 <form onSubmit={form.handleSubmit(onSubmit)}>
                     <FormTitle />
                     <FormMerchant />
+                    <FormRewardToken />
                     <FormGoals />
                     <FormSpecialAdvertising />
                     <FormBudget />

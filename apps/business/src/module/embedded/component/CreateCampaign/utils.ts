@@ -1,3 +1,4 @@
+import type { Hex } from "viem";
 import type {
     BudgetConfig,
     CampaignRuleDefinition,
@@ -76,6 +77,7 @@ export type ExtractedSearchParams = {
     cacBrut: number;
     ratio: number;
     setupCurrency?: "eur" | "usd" | "gbp" | "raw";
+    rewardToken?: Hex;
 };
 
 export function extractSearchParams(search: {
@@ -89,6 +91,7 @@ export function extractSearchParams(search: {
     wb?: string;
     mb?: string;
     gb?: string;
+    t?: string;
 }): ExtractedSearchParams {
     const name = search.n;
     // bid: bank address for fiat conversion — kept for backwards compat, not sent to backend
@@ -101,6 +104,7 @@ export function extractSearchParams(search: {
     const weeklyBudget = search.wb ?? null;
     const monthlyBudget = search.mb ?? null;
     const globalBudget = search.gb ?? null;
+    const rewardToken = search.t as Hex | undefined;
 
     if (!name || !domain || !merchantId || !cacBrut || !ratio) {
         throw new Error("Missing required parameters");
@@ -139,15 +143,18 @@ export function extractSearchParams(search: {
             | "gbp"
             | "raw"
             | undefined,
+        rewardToken,
     };
 }
 
 export function buildCampaignRule({
     cacBrut,
     ratio,
+    rewardToken,
 }: {
     cacBrut: number;
     ratio: number;
+    rewardToken?: Hex;
 }): CampaignRuleDefinition {
     const referrerPercent = ratio / 100;
     const refereePercent = 1 - referrerPercent;
@@ -160,6 +167,7 @@ export function buildCampaignRule({
             type: "token",
             amountType: "fixed",
             amount: Math.round(cacBrut * referrerPercent * 100) / 100,
+            token: rewardToken,
             description: "Referrer reward",
         };
         rewards.push(referrerReward);
@@ -171,6 +179,7 @@ export function buildCampaignRule({
             type: "token",
             amountType: "fixed",
             amount: Math.round(cacBrut * refereePercent * 100) / 100,
+            token: rewardToken,
             description: "Referee reward",
         };
         rewards.push(refereeReward);

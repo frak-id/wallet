@@ -8,6 +8,13 @@
             "when": 1768393496861,
             "tag": "0000_swift_luckman",
             "breakpoints": true
+        },
+        {
+            "idx": 1,
+            "version": "7",
+            "when": 1769775615751,
+            "tag": "0001_ancient_the_fury",
+            "breakpoints": true
         }
     ]
 }

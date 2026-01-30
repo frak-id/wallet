@@ -34,14 +34,11 @@ export type MerchantData = {
     name: string;
     ownerWallet: Address;
     bankAddress: Address | null;
+    defaultRewardToken: Address;
     config: { [key: string]: object } | null;
     verifiedAt: string | null;
     createdAt: string | null;
     role: MerchantRole;
-    /**
-     * On-chain product ID (keccak256 of domain)
-     * Used for blockchain operations
-     */
     productId?: Hex;
 };
 
@@ -93,6 +90,7 @@ export const merchantQueryOptions = (merchantId: string, isDemoMode: boolean) =>
                 name: data.name,
                 ownerWallet: data.ownerWallet,
                 bankAddress: data.bankAddress,
+                defaultRewardToken: data.defaultRewardToken,
                 config: data.config,
                 verifiedAt: data.verifiedAt,
                 createdAt: data.createdAt,

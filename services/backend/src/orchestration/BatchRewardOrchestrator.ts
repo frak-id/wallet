@@ -2,6 +2,7 @@ import { log } from "@backend-infrastructure";
 import type { ReferralService } from "../domain/attribution";
 import { buildTimeContext, type CalculatedReward } from "../domain/campaign";
 import type { RuleEngineService } from "../domain/campaign/services/RuleEngineService";
+import type { MerchantRepository } from "../domain/merchant/repositories/MerchantRepository";
 import type { InteractionLogSelect } from "../domain/rewards/db/schema";
 import type { AssetLogRepository } from "../domain/rewards/repositories/AssetLogRepository";
 import type { InteractionLogRepository } from "../domain/rewards/repositories/InteractionLogRepository";
@@ -34,7 +35,8 @@ export class BatchRewardOrchestrator {
         private readonly ruleEngineService: RuleEngineService,
         private readonly referralService: ReferralService,
         private readonly identityOrchestrator: IdentityOrchestrator,
-        private readonly contextBuilder: InteractionContextBuilder
+        private readonly contextBuilder: InteractionContextBuilder,
+        private readonly merchantRepository: MerchantRepository
     ) {}
 
     async processPendingInteractions(options: {
@@ -165,7 +167,7 @@ export class BatchRewardOrchestrator {
                 const touchpointId =
                     context.attribution?.touchpointId ?? undefined;
 
-                const assetParams = this.buildAssetLogParams(
+                const assetParams = await this.buildAssetLogParams(
                     evaluationResult.rewards,
                     merchantId,
                     interaction.id,
@@ -211,25 +213,53 @@ export class BatchRewardOrchestrator {
         }
     }
 
-    private buildAssetLogParams(
+    private async buildAssetLogParams(
         rewards: CalculatedReward[],
         merchantId: string,
         interactionLogId: string,
         touchpointId: string | undefined
-    ): CreateAssetLogParams[] {
-        return rewards.map((reward) => ({
-            identityGroupId: reward.recipientIdentityGroupId,
-            merchantId,
-            campaignRuleId: reward.campaignRuleId,
-            assetType: reward.type,
-            amount: reward.amount,
-            tokenAddress: reward.token ?? undefined,
-            recipientType: reward.recipient as RecipientType,
-            recipientWallet: reward.recipientWallet ?? undefined,
-            touchpointId,
-            interactionLogId,
-            chainDepth: reward.chainDepth,
-            expirationDays: reward.expirationDays,
-        }));
+    ): Promise<CreateAssetLogParams[]> {
+        const hasTokenTypeWithoutToken = rewards.some(
+            (r) => r.type === "token" && !r.token
+        );
+        const fallbackToken = hasTokenTypeWithoutToken
+            ? await this.merchantRepository.getDefaultRewardToken(merchantId)
+            : null;
+
+        const params: CreateAssetLogParams[] = [];
+
+        for (const reward of rewards) {
+            const resolvedToken = reward.token ?? fallbackToken ?? undefined;
+
+            if (reward.type === "token" && !resolvedToken) {
+                log.warn(
+                    {
+                        merchantId,
+                        campaignRuleId: reward.campaignRuleId,
+                        interactionLogId,
+                        recipient: reward.recipient,
+                    },
+                    "Skipping token reward with no resolved token address"
+                );
+                continue;
+            }
+
+            params.push({
+                identityGroupId: reward.recipientIdentityGroupId,
+                merchantId,
+                campaignRuleId: reward.campaignRuleId,
+                assetType: reward.type,
+                amount: reward.amount,
+                tokenAddress: resolvedToken,
+                recipientType: reward.recipient as RecipientType,
+                recipientWallet: reward.recipientWallet ?? undefined,
+                touchpointId,
+                interactionLogId,
+                chainDepth: reward.chainDepth,
+                expirationDays: reward.expirationDays,
+            });
+        }
+
+        return params;
     }
 }

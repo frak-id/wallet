@@ -49,7 +49,8 @@ const batchRewardOrchestrator = new BatchRewardOrchestrator(
     CampaignContext.services.ruleEngine,
     AttributionContext.services.referral,
     identityOrchestrator,
-    interactionContextBuilder
+    interactionContextBuilder,
+    MerchantContext.repositories.merchant
 );
 
 const purchaseLinkingOrchestrator = new PurchaseLinkingOrchestrator(

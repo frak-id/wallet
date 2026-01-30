@@ -1,3 +1,7 @@
+import {
+    getTokenAddressForStablecoin,
+    type Stablecoin,
+} from "@frak-labs/app-essentials";
 import { useSiweAuthenticate, useWalletStatus } from "@frak-labs/react-sdk";
 import { type UseMutationOptions, useMutation } from "@tanstack/react-query";
 import { useState } from "react";
@@ -30,6 +34,7 @@ export function useRegisterMerchant(
             name: string;
             domain: string;
             setupCode?: string;
+            currency: Stablecoin;
         }
     >
 ) {
@@ -44,7 +49,7 @@ export function useRegisterMerchant(
             // Clear info post mutation
             setInfoTxt(undefined);
         },
-        async mutationFn({ name, domain, setupCode }) {
+        async mutationFn({ name, domain, setupCode, currency }) {
             const wallet = walletStatus?.wallet;
             if (!wallet) {
                 throw new Error("Wallet not connected");
@@ -63,6 +68,8 @@ export function useRegisterMerchant(
 
             // Register the merchant
             setInfoTxt("Registering your merchant");
+            const defaultRewardToken = getTokenAddressForStablecoin(currency);
+
             const { data, error } =
                 await authenticatedBackendApi.merchant.register.post({
                     message: siweResult.message,
@@ -70,6 +77,7 @@ export function useRegisterMerchant(
                     domain,
                     name,
                     setupCode,
+                    defaultRewardToken,
                 });
             if (error) {
                 throw new Error(extractErrorMessage(error));
