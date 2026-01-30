@@ -60,10 +60,11 @@ export const stablecoinMetadata: Record<Stablecoin, StablecoinMeta> = {
  */
 export function formatTokenBalance(
     balance: bigint,
-    stablecoin: Stablecoin
+    stablecoin: Stablecoin,
+    decimals?: number
 ): string {
     const meta = stablecoinMetadata[stablecoin];
-    const numeric = Number(formatUnits(balance, meta.decimals));
+    const numeric = Number(formatUnits(balance, decimals ?? meta.decimals));
     return new Intl.NumberFormat(meta.locale, {
         style: "currency",
         currency: meta.currencyCode,

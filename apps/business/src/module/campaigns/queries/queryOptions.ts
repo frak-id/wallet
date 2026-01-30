@@ -19,10 +19,10 @@ export const campaignsListQueryOptions = (isDemoMode: boolean) =>
         staleTime: 5 * 60 * 1000,
     });
 
-export const campaignsStatsQueryOptions = () =>
+export const campaignsStatsQueryOptions = (isDemoMode: boolean) =>
     queryOptions({
-        queryKey: ["campaigns", "stats"],
-        queryFn: () => getMyCampaignsStats(),
+        queryKey: ["campaigns", "stats", isDemoMode ? "demo" : "live"],
+        queryFn: () => getMyCampaignsStats(isDemoMode),
         staleTime: 5 * 60 * 1000,
     });
 

@@ -42,36 +42,36 @@ export const backend = new sst.x.DevCommand("backend", {
         STAGE: $app.stage,
     },
 });
-// export const dbGcpStudio = new sst.x.DevCommand(
-//     "db:gcp:studio",
-//     {
-//         dev: {
-//             title: "[DB][GCP] Inspect",
-//             autostart: false,
-//             command: "bunx drizzle-kit studio --port 13001",
-//             directory: "services/backend",
-//         },
-//         environment: dbEnv,
-//     },
-//     {
-//         dependsOn: [tunnelCmd],
-//     }
-// );
-// export const dbGcpGenerate = new sst.x.DevCommand("db:gcp:generate", {
-//     dev: {
-//         title: "[DB][GCP] Generate",
-//         autostart: false,
-//         command: "bunx drizzle-kit generate",
-//         directory: "services/backend",
-//     },
-//     environment: dbEnv,
-// });
-// export const dbGcpMigrate = new sst.x.DevCommand("db:gcp:migrate", {
-//     dev: {
-//         title: "[DB][GCP] Migrate",
-//         autostart: false,
-//         command: "bunx drizzle-kit migrate",
-//         directory: "services/backend",
-//     },
-//     environment: dbEnv,
-// });
+export const dbGcpStudio = new sst.x.DevCommand(
+    "db:gcp:studio",
+    {
+        dev: {
+            title: "[DB][GCP] Inspect",
+            autostart: false,
+            command: "bunx drizzle-kit studio --port 13001",
+            directory: "services/backend",
+        },
+        environment: dbEnv,
+    },
+    {
+        dependsOn: [tunnelCmd],
+    }
+);
+export const dbGcpGenerate = new sst.x.DevCommand("db:gcp:generate", {
+    dev: {
+        title: "[DB][GCP] Generate",
+        autostart: false,
+        command: "bunx drizzle-kit generate",
+        directory: "services/backend",
+    },
+    environment: dbEnv,
+});
+export const dbGcpMigrate = new sst.x.DevCommand("db:gcp:migrate", {
+    dev: {
+        title: "[DB][GCP] Migrate",
+        autostart: false,
+        command: "bunx drizzle-kit migrate",
+        directory: "services/backend",
+    },
+    environment: dbEnv,
+});

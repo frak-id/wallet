@@ -66,4 +66,16 @@ export class MerchantAuthorizationService {
         const access = await this.checkAccess(merchantId, wallet);
         return access.hasAccess;
     }
+
+    async getAccessibleMerchantIds(wallet: Address): Promise<string[]> {
+        const [owned, adminOf] = await Promise.all([
+            this.merchantRepository.findByOwnerWallet(wallet),
+            this.merchantAdminRepository.findByWallet(wallet),
+        ]);
+
+        const ids = new Set<string>();
+        for (const m of owned) ids.add(m.id);
+        for (const a of adminOf) ids.add(a.merchantId);
+        return [...ids];
+    }
 }

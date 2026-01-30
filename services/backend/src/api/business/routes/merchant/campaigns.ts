@@ -1,6 +1,7 @@
 import type { BudgetUsed } from "@backend-domain/campaign/schemas";
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
+import type { Address } from "viem";
 import {
     type BudgetConfig,
     BudgetConfigSchema,
@@ -13,6 +14,19 @@ import {
 } from "../../../../domain/campaign";
 import { MerchantContext } from "../../../../domain/merchant";
 import { businessSessionContext } from "../../middleware/session";
+
+function resolveRewardTokens(
+    rule: CampaignRuleDefinition,
+    defaultRewardToken: Address | null
+): CampaignRuleDefinition {
+    return {
+        ...rule,
+        rewards: rule.rewards.map((reward) => ({
+            ...reward,
+            token: reward.token ?? defaultRewardToken ?? undefined,
+        })),
+    };
+}
 
 function formatCampaign(campaign: {
     id: string;
@@ -153,10 +167,19 @@ export const merchantCampaignsRoutes = new Elysia({
                 return status(403, "Access denied");
             }
 
+            const merchant =
+                await MerchantContext.repositories.merchant.findById(
+                    merchantId
+                );
+            const rule = resolveRewardTokens(
+                body.rule as CampaignRuleDefinition,
+                merchant?.defaultRewardToken ?? null
+            );
+
             const result = await CampaignContext.services.management.create({
                 merchantId,
                 name: body.name,
-                rule: body.rule as CampaignRuleDefinition,
+                rule,
                 metadata: body.metadata,
                 budgetConfig: body.budgetConfig,
                 expiresAt: body.expiresAt
@@ -215,11 +238,23 @@ export const merchantCampaignsRoutes = new Elysia({
                 return status(404, "Campaign not found");
             }
 
+            let resolvedRule = body.rule as CampaignRuleDefinition | undefined;
+            if (resolvedRule) {
+                const merchant =
+                    await MerchantContext.repositories.merchant.findById(
+                        merchantId
+                    );
+                resolvedRule = resolveRewardTokens(
+                    resolvedRule,
+                    merchant?.defaultRewardToken ?? null
+                );
+            }
+
             const result = await CampaignContext.services.management.update(
                 campaignId,
                 {
                     name: body.name,
-                    rule: body.rule as CampaignRuleDefinition | undefined,
+                    rule: resolvedRule,
                     metadata: body.metadata,
                     budgetConfig: body.budgetConfig,
                     expiresAt: body.expiresAt

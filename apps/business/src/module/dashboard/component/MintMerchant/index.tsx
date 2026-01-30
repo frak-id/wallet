@@ -95,6 +95,7 @@ export function MintMerchant() {
             name: formData.name,
             domain: formData.domain,
             setupCode: formData.setupCode,
+            currency: formData.currency,
         });
     };
 

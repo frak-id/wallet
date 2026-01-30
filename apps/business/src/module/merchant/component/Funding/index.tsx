@@ -19,6 +19,7 @@ import { Badge } from "@/module/common/component/Badge";
 import { Panel } from "@/module/common/component/Panel";
 import { Row } from "@/module/common/component/Row";
 import { Title } from "@/module/common/component/Title";
+import { useTokenMetadata } from "@/module/common/hook/useTokenMetadata";
 import {
     formatTokenBalance,
     stablecoinMetadata,
@@ -261,8 +262,14 @@ function TokenCard({
 }) {
     const stablecoin = token.symbol as Stablecoin;
     const meta = stablecoinMetadata[stablecoin];
+    const { data: tokenMeta } = useTokenMetadata(token.address);
+    const decimals = tokenMeta?.decimals ?? meta.decimals;
     const status = getTokenStatus(token.balance, token.allowance);
-    const formattedBalance = formatTokenBalance(token.balance, stablecoin);
+    const formattedBalance = formatTokenBalance(
+        token.balance,
+        stablecoin,
+        decimals
+    );
     const hasBalance = token.balance > 0n;
     const needsAllowanceIncrease =
         hasBalance && token.allowance < token.balance && isBankOpen;
@@ -290,7 +297,11 @@ function TokenCard({
                         </Badge>
                     </Tooltip>
                 </div>
-                <TokenStatusBadge token={token} status={status} />
+                <TokenStatusBadge
+                    token={token}
+                    status={status}
+                    decimals={decimals}
+                />
             </div>
 
             <div>
@@ -315,6 +326,7 @@ function TokenCard({
                     bankAddress={bankAddress}
                     isBankOpen={isBankOpen}
                     needsAllowanceIncrease={needsAllowanceIncrease}
+                    decimals={decimals}
                 />
             )}
         </div>
@@ -324,16 +336,18 @@ function TokenCard({
 function TokenStatusBadge({
     token,
     status,
+    decimals,
 }: {
     token: TokenData;
     status: ReturnType<typeof getTokenStatus>;
+    decimals: number;
 }) {
     if (status === "empty") return null;
 
     const stablecoin = token.symbol as Stablecoin;
     const allowanceLabel =
         token.allowance > 0n
-            ? `Up to ${formatTokenBalance(token.allowance, stablecoin)} authorized for distribution`
+            ? `Up to ${formatTokenBalance(token.allowance, stablecoin, decimals)} authorized for distribution`
             : undefined;
 
     if (status === "active") {
@@ -369,15 +383,17 @@ function TokenActions({
     bankAddress,
     isBankOpen,
     needsAllowanceIncrease,
+    decimals,
 }: {
     token: TokenData;
     merchantId: string;
     bankAddress: Address;
     isBankOpen: boolean;
     needsAllowanceIncrease: boolean;
+    decimals: number;
 }) {
     const [action, setAction] = useState<"allowance" | "withdraw" | null>(null);
-    const defaultAllowanceValue = formatUnits(token.balance * 10n, 6);
+    const defaultAllowanceValue = formatUnits(token.balance * 10n, decimals);
     const [inputValue, setInputValue] = useState(defaultAllowanceValue);
 
     const { mutate: updateAllowance, isPending: isUpdatingAllowance } =
@@ -400,7 +416,7 @@ function TokenActions({
         updateAllowance(
             {
                 token: token.address,
-                amount: parseUnits(inputValue, 6),
+                amount: parseUnits(inputValue, decimals),
             },
             {
                 onSuccess: () => {
@@ -416,7 +432,7 @@ function TokenActions({
         withdraw(
             {
                 token: token.address,
-                amount: parseUnits(inputValue, 6),
+                amount: parseUnits(inputValue, decimals),
                 to: walletAddress,
             },
             {

@@ -20,6 +20,9 @@ export const merchantsTable = pgTable(
         name: text("name").notNull(),
         ownerWallet: customHex("owner_wallet").$type<Address>().notNull(),
         bankAddress: customHex("bank_address").$type<Address>(),
+        defaultRewardToken: customHex("default_reward_token")
+            .$type<Address>()
+            .notNull(),
         webhookSignatureKey: text("webhook_signature_key"),
         webhookPlatform: text("webhook_platform"),
         config: jsonb("config").$type<MerchantConfig>(),

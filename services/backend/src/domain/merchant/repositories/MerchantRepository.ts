@@ -39,6 +39,14 @@ export class MerchantRepository {
         max: 512,
         ttl: 5 * 60 * 1000,
     });
+
+    private readonly defaultRewardTokenCache = new LRUCache<
+        string,
+        { value: Address | null }
+    >({
+        max: 512,
+        ttl: 5 * 60 * 1000,
+    });
     async findById(id: string): Promise<MerchantSelect | null> {
         const cached = this.idCache.get(id);
         if (cached) {
@@ -135,6 +143,18 @@ export class MerchantRepository {
         return result;
     }
 
+    async getDefaultRewardToken(merchantId: string): Promise<Address | null> {
+        const cached = this.defaultRewardTokenCache.get(merchantId);
+        if (cached) {
+            return cached.value;
+        }
+
+        const merchant = await this.findById(merchantId);
+        const value = merchant?.defaultRewardToken ?? null;
+        this.defaultRewardTokenCache.set(merchantId, { value });
+        return value;
+    }
+
     async findByDomain(domain: string): Promise<MerchantSelect | null> {
         const cached = this.domainCache.get(domain);
         if (cached) {
@@ -173,6 +193,7 @@ export class MerchantRepository {
         this.idCache.delete(merchant.id);
         this.domainCache.delete(merchant.domain);
         this.bankAddressCache.delete(merchant.id);
+        this.defaultRewardTokenCache.delete(merchant.id);
         if (merchant.productId) {
             this.productIdCache.delete(merchant.productId);
         }
@@ -211,6 +232,26 @@ export class MerchantRepository {
         const [result] = await db
             .update(merchantsTable)
             .set({ bankAddress, updatedAt: new Date() })
+            .where(eq(merchantsTable.id, id))
+            .returning();
+        if (result) {
+            this.invalidateCache(result);
+        }
+        return result ?? null;
+    }
+
+    async update(
+        id: string,
+        fields: Partial<Pick<MerchantInsert, "name" | "defaultRewardToken">>
+    ): Promise<MerchantSelect | null> {
+        const updates = Object.fromEntries(
+            Object.entries(fields).filter(([_, v]) => v !== undefined)
+        );
+        if (Object.keys(updates).length === 0) return this.findById(id);
+
+        const [result] = await db
+            .update(merchantsTable)
+            .set({ ...updates, updatedAt: new Date() })
             .where(eq(merchantsTable.id, id))
             .returning();
         if (result) {

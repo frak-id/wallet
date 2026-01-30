@@ -1,17 +1,14 @@
 import type { Hex } from "viem";
+import { authenticatedBackendApi } from "@/context/api/backendClient";
 import {
     getMerchantMembersMock,
     getMerchantsMembersCountMock,
 } from "@/context/members/action/mock";
 
-// TODO: [BACKEND-V2] Migrate to backend API once member endpoints are available
-// Currently returns empty results in non-demo mode
-// Backend ticket: https://linear.app/frak/issue/FRAK-XXX
-
 export type GetMembersPageItem = {
     user: `0x${string}`;
     totalInteractions: number;
-    rewards: string;
+    totalRewardsUsd: number;
     firstInteractionTimestamp: string;
     merchantIds: string[];
     merchantNames: string[];
@@ -32,7 +29,6 @@ export type GetMembersParam = {
     filter?: {
         merchantIds?: Hex[];
         interactions?: { min?: number; max?: number };
-        rewards?: { min?: Hex; max?: Hex };
         firstInteractionTimestamp?: { min?: number; max?: number };
     };
 };
@@ -45,11 +41,29 @@ export async function getMerchantMembers(
         return getMerchantMembersMock(params);
     }
 
-    // TODO: [BACKEND-V2] Call backend API: authenticatedBackendApi.merchant.members.post(params)
-    return {
-        totalResult: 0,
-        members: [],
-    };
+    const { data, error } = await authenticatedBackendApi.merchant.members.post(
+        {
+            limit: params.limit,
+            offset: params.offset,
+            sort: params.sort,
+            filter: params.filter
+                ? {
+                      merchantIds: params.filter.merchantIds as
+                          | string[]
+                          | undefined,
+                      interactions: params.filter.interactions,
+                      firstInteractionTimestamp:
+                          params.filter.firstInteractionTimestamp,
+                  }
+                : undefined,
+        }
+    );
+
+    if (error || !data) {
+        return { totalResult: 0, members: [] };
+    }
+
+    return data;
 }
 
 export async function getMerchantsMembersCount(
@@ -60,6 +74,23 @@ export async function getMerchantsMembersCount(
         return getMerchantsMembersCountMock(params);
     }
 
-    // TODO: [BACKEND-V2] Call backend API: authenticatedBackendApi.merchant.members.count.post(params)
-    return 0;
+    const { data, error } =
+        await authenticatedBackendApi.merchant.members.count.post({
+            filter: params.filter
+                ? {
+                      merchantIds: params.filter.merchantIds as
+                          | string[]
+                          | undefined,
+                      interactions: params.filter.interactions,
+                      firstInteractionTimestamp:
+                          params.filter.firstInteractionTimestamp,
+                  }
+                : undefined,
+        });
+
+    if (error || !data) {
+        return 0;
+    }
+
+    return data.count;
 }

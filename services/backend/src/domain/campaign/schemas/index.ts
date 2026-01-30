@@ -10,6 +10,8 @@ export const CampaignStatusSchema = t.Union([
 export type CampaignStatus = Static<typeof CampaignStatusSchema>;
 
 export const CampaignTriggerSchema = t.Union([
+    t.Literal("referral"),
+    t.Literal("create_referral_link"),
     t.Literal("purchase"),
     t.Literal("signup"),
     t.Literal("wallet_connect"),

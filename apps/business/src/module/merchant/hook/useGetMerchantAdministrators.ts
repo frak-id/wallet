@@ -1,5 +1,6 @@
+import { useWalletStatus } from "@frak-labs/react-sdk";
 import { useQuery } from "@tanstack/react-query";
-import type { Address } from "viem";
+import { type Address, isAddressEqual } from "viem";
 import { authenticatedBackendApi } from "@/context/api/backendClient";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 
@@ -45,6 +46,7 @@ export function useGetMerchantAdministrators({
     merchantId: string;
 }) {
     const isDemoMode = useIsDemoMode();
+    const { data: walletStatus } = useWalletStatus();
 
     return useQuery({
         queryKey: [
@@ -68,13 +70,17 @@ export function useGetMerchantAdministrators({
                 return [];
             }
 
+            const currentWallet = walletStatus?.wallet;
+
             return data.admins.map((admin) => ({
                 id: admin.id,
                 wallet: admin.wallet as Address,
                 addedBy: admin.addedBy as Address,
                 addedAt: admin.addedAt,
-                isOwner: false,
-                isMe: false,
+                isOwner: admin.isOwner,
+                isMe: currentWallet
+                    ? isAddressEqual(admin.wallet as Address, currentWallet)
+                    : false,
             }));
         },
         enabled: !!merchantId,

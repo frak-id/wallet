@@ -14,9 +14,11 @@ import { useMemo, useState } from "react";
 import type { CampaignStats } from "@/module/campaigns/api/campaignStatsApi";
 import { TablePerformanceFilters } from "@/module/campaigns/component/TableCampaignPerformance/Filter";
 import { campaignsStatsQueryOptions } from "@/module/campaigns/queries/queryOptions";
+import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { Table } from "@/module/common/component/Table";
 import { TooltipTable } from "@/module/common/component/TooltipTable";
 import { useConvertToPreferredCurrency } from "@/module/common/hook/useConversionRate";
+import { useTokenMetadata } from "@/module/common/hook/useTokenMetadata";
 
 type TableData = CampaignStats;
 
@@ -47,18 +49,19 @@ function avgPercentages(table: TableReact<TableData>, column: keyof TableData) {
 
 export function TableCampaignPerformance() {
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+    const isDemoMode = useIsDemoMode();
 
-    const { data } = useSuspenseQuery(campaignsStatsQueryOptions());
+    const { data } = useSuspenseQuery(campaignsStatsQueryOptions(isDemoMode));
 
     const columns = useMemo(
         () =>
             [
-                columnHelper.accessor("title", {
+                columnHelper.accessor("campaignName", {
                     header: "Campaign",
                     cell: ({ getValue }) => <span>{getValue()}</span>,
                     footer: "Total",
                 }),
-                columnHelper.accessor("eventType", {
+                columnHelper.accessor("trigger", {
                     header: "Event",
                     cell: ({ getValue }) => getValue(),
                 }),
@@ -160,9 +163,9 @@ export function TableCampaignPerformance() {
                         </TooltipTable>
                     ),
                     cell: ({ row, getValue }) => (
-                        <AmountInPreferredCurrency
+                        <RawAmountInPreferredCurrency
                             row={row}
-                            getValue={getValue}
+                            rawAmount={getValue()}
                         />
                     ),
                 }),
@@ -198,13 +201,13 @@ export function TableCampaignPerformance() {
                         </TooltipTable>
                     ),
                     cell: ({ row, getValue }) => (
-                        <AmountInPreferredCurrency
+                        <RawAmountInPreferredCurrency
                             row={row}
-                            getValue={getValue}
+                            rawAmount={getValue()}
                         />
                     ),
                 }),
-                columnHelper.accessor("amountSpent", {
+                columnHelper.accessor("totalRewards", {
                     header: () => (
                         <TooltipTable
                             content={
@@ -219,9 +222,9 @@ export function TableCampaignPerformance() {
                         </TooltipTable>
                     ),
                     cell: ({ row, getValue }) => (
-                        <AmountInPreferredCurrency
+                        <RawAmountInPreferredCurrency
                             row={row}
-                            getValue={getValue}
+                            rawAmount={getValue()}
                         />
                     ),
                 }),
@@ -250,13 +253,19 @@ export function TableCampaignPerformance() {
     );
 }
 
-function AmountInPreferredCurrency({
+function RawAmountInPreferredCurrency({
     row,
-    getValue,
-}: Pick<CellContext<TableData, number>, "row" | "getValue">) {
+    rawAmount,
+}: {
+    row: CellContext<TableData, string>["row"];
+    rawAmount: string;
+}) {
+    const token = row.original.tokenAddress ?? undefined;
+    const { data: tokenMeta } = useTokenMetadata(token);
     const converted = useConvertToPreferredCurrency({
-        amount: getValue(),
-        token: row.original.token,
+        token,
+        balance: BigInt(rawAmount),
+        decimals: tokenMeta?.decimals,
     });
 
     if (converted === undefined) return null;

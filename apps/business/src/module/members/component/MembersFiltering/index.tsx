@@ -1,14 +1,12 @@
 import { Button } from "@frak-labs/ui/component/Button";
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 import { useForm } from "react-hook-form";
-import { formatEther, type Hex, parseEther, toHex } from "viem";
 import type { GetMembersParam } from "@/context/members/action/getMerchantMembers";
 import { Row } from "@/module/common/component/Row";
 import { Form } from "@/module/forms/Form";
 import { InteractionsFiltering } from "@/module/members/component/MembersFiltering/InteractionsFiltering";
 import { MembershipDateFiltering } from "@/module/members/component/MembersFiltering/MembershipDateFiltering";
 import { MerchantFiltering } from "@/module/members/component/MembersFiltering/MerchantFiltering";
-import { RewardFiltering } from "@/module/members/component/MembersFiltering/RewardFiltering";
 import { membersStore } from "@/stores/membersStore";
 
 /**
@@ -34,24 +32,8 @@ export function MembersFiltering({
         (state) => state.setTableFiltersCount
     );
 
-    // Map the initial values if any
-    const mappedInitialValue = useMemo(() => {
-        if (!initialValue?.rewards) return initialValue;
-
-        // Map min and max rewards if present
-        const { min, max } = initialValue.rewards;
-        return {
-            ...initialValue,
-            // Type nonsense since min and max are treated as strings in the form, but string representing float, and we output hex string representing ether values
-            rewards: {
-                min: min ? (formatEther(BigInt(min as Hex)) as Hex) : undefined,
-                max: max ? (formatEther(BigInt(max as Hex)) as Hex) : undefined,
-            },
-        };
-    }, [initialValue]);
-
     const form = useForm<FormMembersFiltering>({
-        values: mappedInitialValue,
+        values: initialValue,
         defaultValues: {},
     });
 
@@ -60,7 +42,6 @@ export function MembersFiltering({
             merchantIds: undefined,
             interactions: undefined,
             firstInteractionTimestamp: undefined,
-            rewards: undefined,
         };
         form.reset(defaultValues);
         onFilterSet(defaultValues);
@@ -69,10 +50,6 @@ export function MembersFiltering({
 
     const onSubmit = useCallback(
         async (data: FormMembersFiltering) => {
-            // Fix rewards min and max if needed
-            data.rewards = fixRewards(data.rewards);
-
-            // Fix interactions if no filter provided
             data.interactions = fixInteractions(data.interactions);
 
             // Fix merchantIds if no filter provided
@@ -98,8 +75,6 @@ export function MembersFiltering({
             <MerchantFiltering {...commonProps} />
             <MembershipDateFiltering {...commonProps} />
             <InteractionsFiltering {...commonProps} />
-            <RewardFiltering {...commonProps} />
-
             <Row>
                 {showResetButton && (
                     <Button
@@ -114,21 +89,6 @@ export function MembersFiltering({
         </Form>
     );
 }
-
-/**
- * Fix rewards min and max values
- * @param rewards
- */
-const fixRewards = (rewards: FormMembersFiltering["rewards"]) => {
-    if (rewards) {
-        const { min, max } = rewards;
-        if (min) rewards.min = toHex(parseEther(min));
-        if (max) rewards.max = toHex(parseEther(max));
-        if (!(min || max)) return undefined;
-        return rewards;
-    }
-    return rewards;
-};
 
 /**
  * Fix interactions min and max values

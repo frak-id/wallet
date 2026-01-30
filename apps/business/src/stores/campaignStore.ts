@@ -1,3 +1,4 @@
+import type { Hex } from "viem";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type {
@@ -12,6 +13,7 @@ export type CampaignDraft = {
     id?: string;
     merchantId: string;
     name: string;
+    rewardToken?: Hex;
     rule: CampaignRuleDefinition;
     metadata: CampaignMetadata;
     budgetConfig: BudgetConfigItem[];
@@ -117,12 +119,20 @@ export function buildApiPayload(draft: CampaignDraft) {
               ],
           };
 
+    const rewards = draft.rewardToken
+        ? draft.rule.rewards.map((reward) => ({
+              ...reward,
+              token: reward.token ?? draft.rewardToken,
+          }))
+        : draft.rule.rewards;
+
     return {
         merchantId: draft.merchantId,
         name: draft.name,
         rule: {
             ...draft.rule,
             conditions: allConditions,
+            rewards,
         },
         metadata: draft.metadata,
         budgetConfig: draft.budgetConfig,
@@ -141,10 +151,15 @@ export function campaignToDraft(campaign: {
     expiresAt: string | null;
     priority: number;
 }): CampaignDraft {
+    const existingToken = campaign.rule.rewards.find((r) => r.token)?.token as
+        | Hex
+        | undefined;
+
     return {
         id: campaign.id,
         merchantId: campaign.merchantId,
         name: campaign.name,
+        rewardToken: existingToken,
         rule: campaign.rule,
         metadata: campaign.metadata ?? {
             goal: undefined,

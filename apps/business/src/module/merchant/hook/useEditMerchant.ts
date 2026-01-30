@@ -1,18 +1,26 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import type { Address } from "viem";
+import { authenticatedBackendApi } from "@/context/api/backendClient";
 
-/**
- * Hook to edit merchant details
- * Note: Currently only name can be edited. Domain is immutable.
- */
+type EditMerchantInput = {
+    name?: string;
+    defaultRewardToken?: Address;
+};
+
 export function useEditMerchant({ merchantId }: { merchantId: string }) {
     const queryClient = useQueryClient();
 
     return useMutation({
         mutationKey: ["merchant", "edit", merchantId],
-        mutationFn: async ({ name }: { name: string }) => {
-            // TODO: Add PATCH endpoint to backend for merchant updates
-            // For now, just invalidate to refresh data
-            console.log("Edit merchant:", merchantId, name);
+        mutationFn: async (input: EditMerchantInput) => {
+            const { error } = await authenticatedBackendApi
+                .merchant({ merchantId })
+                .put(input);
+
+            if (error) {
+                throw new Error("Failed to update merchant");
+            }
+
             return { success: true };
         },
         onSuccess: () => {

@@ -38,6 +38,7 @@ export function EmbeddedCreateCampaign() {
             const rule = buildCampaignRule({
                 cacBrut: extracted.cacBrut,
                 ratio: extracted.ratio,
+                rewardToken: extracted.rewardToken,
             });
 
             const campaign = await saveCampaign.mutateAsync({

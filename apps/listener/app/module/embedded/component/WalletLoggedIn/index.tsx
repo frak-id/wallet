@@ -28,6 +28,7 @@ import {
 } from "@/module/providers/ListenerUiProvider";
 import { useSafeResolvingContext } from "@/module/stores/hooks";
 import { useShareLink } from "../../../hooks/useShareLink";
+import { useTrackSharing } from "../../../hooks/useTrackSharing";
 import styles from "./index.module.css";
 
 /**
@@ -120,6 +121,7 @@ function ButtonCopyLink({
 }) {
     const { copied, copy } = useCopyToClipboardWithState();
     const { t } = useListenerTranslation();
+    const { mutate: trackSharing } = useTrackSharing();
 
     return (
         <ButtonWallet
@@ -133,6 +135,7 @@ function ButtonCopyLink({
                 trackGenericEvent("sharing-copy-link", {
                     link: finalSharingLink,
                 });
+                trackSharing();
                 toast.success(t("sharing.btn.copySuccess"));
             }}
         >

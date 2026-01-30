@@ -23,6 +23,7 @@ export class MerchantRegistrationService {
         name: string;
         requestOrigin: string;
         setupCode?: string;
+        defaultRewardToken: Address;
     }): Promise<RegistrationResult> {
         const siweResult = await this.verifySiweMessage({
             message: params.message,
@@ -67,6 +68,7 @@ export class MerchantRegistrationService {
             name: params.name,
             ownerWallet: wallet,
             productId,
+            defaultRewardToken: params.defaultRewardToken,
             verifiedAt: new Date(),
         });
 

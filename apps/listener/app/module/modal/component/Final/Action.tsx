@@ -11,6 +11,7 @@ import styles from "@/module/modal/component/Modal/index.module.css";
 import { useListenerTranslation } from "@/module/providers/ListenerUiProvider";
 import { useSafeResolvingContext } from "@/module/stores/hooks";
 import { useShareLink } from "../../../hooks/useShareLink";
+import { useTrackSharing } from "../../../hooks/useTrackSharing";
 
 export function FinalModalActionComponent({
     action,
@@ -64,6 +65,7 @@ function SharingButtons({
     const { address } = useAccount();
     const { copy } = useCopyToClipboardWithState();
     const { t } = useListenerTranslation();
+    const { mutate: trackSharing } = useTrackSharing();
 
     // Get our final sharing link
     const finalSharingLink = useMemo(() => {
@@ -101,6 +103,7 @@ function SharingButtons({
                     trackGenericEvent("sharing-copy-link", {
                         link: finalSharingLink,
                     });
+                    trackSharing();
                     toast.success(t("sharing.btn.copySuccess"));
                 }}
             >

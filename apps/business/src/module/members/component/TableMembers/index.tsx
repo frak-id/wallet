@@ -9,7 +9,7 @@ import {
     type SortingState,
 } from "@tanstack/react-table";
 import { useEffect, useMemo, useState } from "react";
-import { formatEther, isAddressEqual } from "viem";
+import { isAddressEqual } from "viem";
 import type {
     GetMembersPageItem,
     GetMembersParam,
@@ -142,11 +142,10 @@ export function TableMembers() {
                     header: () => "Interactions",
                     cell: ({ getValue }) => getValue(),
                 }),
-                columnHelper.accessor("rewards", {
+                columnHelper.accessor("totalRewardsUsd", {
                     enableSorting: true,
-                    header: () => "Rewards",
-                    cell: ({ getValue }) =>
-                        `${formatEther(BigInt(getValue()))} ${isDemoMode ? "€" : "$"}`,
+                    header: () => "Rewards (USD)",
+                    cell: ({ getValue }) => `$${getValue().toFixed(2)}`,
                 }),
             ] as ColumnDef<GetMembersPageItem>[],
         [selectedMembers, addSelectedMember, removeSelectedMember, isDemoMode]

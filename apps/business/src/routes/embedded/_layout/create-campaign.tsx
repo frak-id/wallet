@@ -17,6 +17,7 @@ export const Route = createFileRoute("/embedded/_layout/create-campaign")({
         const wb = search.wb as string | undefined;
         const mb = search.mb as string | undefined;
         const gb = search.gb as string | undefined;
+        const t = search.t as string | undefined;
 
         return {
             n: n ?? "",
@@ -29,6 +30,7 @@ export const Route = createFileRoute("/embedded/_layout/create-campaign")({
             wb,
             mb,
             gb,
+            t,
         };
     },
 });

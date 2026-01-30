@@ -81,6 +81,18 @@ export class InteractionContextBuilder {
                 };
             }
 
+            case "referral_arrival":
+                return {
+                    trigger: "referral",
+                    typeContext: {},
+                };
+
+            case "create_referral_link":
+                return {
+                    trigger: "create_referral_link",
+                    typeContext: {},
+                };
+
             default:
                 return {
                     trigger: "custom",

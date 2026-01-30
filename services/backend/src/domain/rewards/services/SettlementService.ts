@@ -1,3 +1,4 @@
+import type { TokenMetadataRepository } from "@backend-infrastructure";
 import { log } from "@backend-infrastructure";
 import type { Address, Hex } from "viem";
 import { parseUnits } from "viem";
@@ -13,8 +14,6 @@ import {
     type SettlementResult,
 } from "../types";
 
-const DEFAULT_TOKEN_DECIMALS = 18;
-
 export type AssetLogWithWallet = AssetLogSelect & {
     walletAddress: Address;
     interactionType: InteractionType | null;
@@ -29,7 +28,8 @@ type PreparedSettlement = {
 export class SettlementService {
     constructor(
         private readonly assetLogRepository: AssetLogRepository,
-        private readonly rewardsHub: RewardsHubRepository
+        private readonly rewardsHub: RewardsHubRepository,
+        private readonly tokenMetadata: TokenMetadataRepository
     ) {}
 
     async settleRewards(
@@ -48,7 +48,7 @@ export class SettlementService {
             return result;
         }
 
-        const prepared = this.prepareRewards(rewards, merchantBanks);
+        const prepared = await this.prepareRewards(rewards, merchantBanks);
 
         result.failedCount = prepared.errors.length;
         result.errors = prepared.errors;
@@ -110,13 +110,30 @@ export class SettlementService {
         return result;
     }
 
-    private prepareRewards(
+    private async prepareRewards(
         rewards: AssetLogWithWallet[],
         merchantBanks: Map<string, Address>
-    ): PreparedSettlement {
+    ): Promise<PreparedSettlement> {
         const preparedRewards: PushRewardParams[] = [];
         const validAssetLogIds: string[] = [];
         const errors: Array<{ assetLogId: string; error: string }> = [];
+
+        const uniqueTokens = [
+            ...new Set(
+                rewards
+                    .map((reward) => reward.tokenAddress)
+                    .filter((token): token is Address => token !== null)
+            ),
+        ];
+        const decimalsMap = new Map<Address, number>();
+        await Promise.all(
+            uniqueTokens.map(async (token) => {
+                const decimals = await this.tokenMetadata.getDecimals({
+                    token,
+                });
+                decimalsMap.set(token, decimals);
+            })
+        );
 
         for (const reward of rewards) {
             const validationError = this.validateReward(reward, merchantBanks);
@@ -125,8 +142,19 @@ export class SettlementService {
                 continue;
             }
 
+            const tokenDecimals = decimalsMap.get(
+                reward.tokenAddress as Address
+            );
+            if (tokenDecimals === undefined) {
+                errors.push({
+                    assetLogId: reward.id,
+                    error: "Could not resolve token decimals",
+                });
+                continue;
+            }
+
             const attestation = this.buildAttestationHex(reward);
-            const amount = parseUnits(reward.amount, DEFAULT_TOKEN_DECIMALS);
+            const amount = parseUnits(reward.amount, tokenDecimals);
             const token = reward.tokenAddress as Address;
             const bank = merchantBanks.get(reward.merchantId) as Address;
 
