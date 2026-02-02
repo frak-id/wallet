@@ -3,7 +3,7 @@ import { getAuthToken, getWallet, isDemoMode } from "@/config/auth";
 import { useAuthStore } from "@/stores/authStore";
 
 /**
- * Check if user is authenticated (works on both server and client)
+ * Check if user is authenticated
  */
 export function isAuthenticated(): boolean {
     const token = getAuthToken();
@@ -19,12 +19,7 @@ export function isAuthenticated(): boolean {
         return false;
     }
 
-    // Server-side: assume token is valid (will be verified by authMiddleware)
-    if (typeof window === "undefined") {
-        return true;
-    }
-
-    // Client-side: check expiration
+    // Check expiration
     return useAuthStore.getState().isAuthenticated();
 }
 

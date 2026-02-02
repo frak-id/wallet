@@ -47,7 +47,7 @@ export async function getMyCampaigns(
                 .merchant({ merchantId })
                 .campaigns.get();
             if (!data || error) return [];
-            return data.campaigns.map((campaign) => ({
+            return data.campaigns.map((campaign: Campaign) => ({
                 ...(campaign as Campaign),
                 merchantId,
                 actions: mapStatusToActions(campaign.status),

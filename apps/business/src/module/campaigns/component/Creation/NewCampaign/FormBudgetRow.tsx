@@ -1,3 +1,4 @@
+import type { InputNumberProps } from "@frak-labs/ui/component/forms/InputNumber";
 import { CircleDollarSign, Wallet } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useFormContext } from "react-hook-form";
@@ -27,7 +28,8 @@ const periods: { value: BudgetPeriod; label: string }[] = [
 ];
 
 export function FormBudgetRow({ disabled }: { disabled?: boolean }) {
-    const { control, setValue, watch } = useFormContext<CampaignDraft>();
+    const form = useFormContext<CampaignDraft>();
+    const { control, setValue, watch } = form;
     const budgetConfig = watch("budgetConfig");
     const budget = budgetConfig?.[0];
 
@@ -49,11 +51,13 @@ export function FormBudgetRow({ disabled }: { disabled?: boolean }) {
         const label =
             periods.find((p) => p.value === newPeriod)?.label ?? "Global";
 
-        setValue(
-            "budgetConfig",
-            [{ label, durationInSeconds: duration, amount: newAmount }],
-            { shouldValidate: true, shouldDirty: true }
-        );
+        const newBudgetConfig: CampaignDraft["budgetConfig"] = [
+            { label, durationInSeconds: duration, amount: newAmount },
+        ];
+        setValue("budgetConfig", newBudgetConfig, {
+            shouldValidate: true,
+            shouldDirty: true,
+        });
     };
 
     const [frakCommission, remainingBudget] = useMemo(() => {
@@ -114,12 +118,15 @@ export function FormBudgetRow({ disabled }: { disabled?: boolean }) {
                                     length="medium"
                                     disabled={disabled}
                                     value={currentAmount}
-                                    // @ts-expect-error - InputAmount expects ControllerRenderProps onChange
-                                    onChange={(val: number | string) => {
-                                        const num =
-                                            typeof val === "number" ? val : 0;
-                                        updateBudget(period, num);
-                                    }}
+                                    onChange={
+                                        ((val: number | string) => {
+                                            const num =
+                                                typeof val === "number"
+                                                    ? val
+                                                    : 0;
+                                            updateBudget(period, num);
+                                        }) as InputNumberProps["onChange"]
+                                    }
                                     name="budgetAmount"
                                 />
                             </FormControl>

@@ -63,7 +63,7 @@ export async function getMyCampaignsStats(
                 .merchant({ merchantId })
                 .campaigns.stats.get();
             if (!data || error) return [];
-            return data.stats.map((stat) => ({
+            return data.stats.map((stat: CampaignStats) => ({
                 ...stat,
                 createReferredLinkInteractions: 0,
                 tokenAddress: stat.tokenAddress as Address | null,
