@@ -40,6 +40,11 @@ export type WalletRpcContext = {
      * Optional wallet referrer address
      */
     walletReferrer?: Address;
+
+    /**
+     * Anonymous client ID from the SDK for identity tracking
+     */
+    clientId?: string;
 };
 
 /**

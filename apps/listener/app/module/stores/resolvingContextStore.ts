@@ -157,6 +157,7 @@ async function resolveIFrameContext(
     const origin = originUrl.origin;
     const walletReferrer = getWalletReferrer(sourceUrl);
     const isAutoContext = event === undefined;
+    const clientId = event?.data?.data?.clientId;
 
     // Fetch merchantId from backend (with cache)
     const merchantData = await fetchMerchantByDomain(normalizedDomain);
@@ -175,6 +176,7 @@ async function resolveIFrameContext(
         sourceUrl,
         isAutoContext,
         ...(walletReferrer && { walletReferrer }),
+        ...(clientId && { clientId }),
     };
 }
 

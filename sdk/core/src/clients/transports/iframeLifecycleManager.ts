@@ -1,5 +1,6 @@
 import { Deferred } from "@frak-labs/frame-connector";
 import type { FrakLifecycleEvent } from "../../types";
+import { getClientId } from "../../utils/clientId";
 import { AUTH_STATE_KEY, BACKUP_KEY } from "../../utils/constants";
 import { changeIframeVisibility } from "../../utils/iframeHelper";
 
@@ -60,6 +61,7 @@ export function createIFrameLifecycleManager({
                         data: {
                             token: data.token,
                             currentUrl: window.location.href,
+                            clientId: getClientId(),
                         },
                     },
                     "*"

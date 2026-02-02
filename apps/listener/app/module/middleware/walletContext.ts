@@ -66,6 +66,7 @@ export const walletContextMiddleware: RpcMiddleware<
                 merchantId: "",
                 sourceUrl: context.origin,
                 isAutoContext: false,
+                clientId: resolvingContext.clientId,
             };
         }
 
@@ -98,6 +99,7 @@ export const walletContextMiddleware: RpcMiddleware<
             sourceUrl: resolvingContext.sourceUrl,
             isAutoContext: resolvingContext.isAutoContext,
             walletReferrer: resolvingContext.walletReferrer,
+            clientId: resolvingContext.clientId,
         };
     },
 } as const;
