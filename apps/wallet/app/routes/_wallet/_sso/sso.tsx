@@ -115,11 +115,14 @@ function Sso() {
     const [success, setSuccess] = useState(false);
 
     /**
-     * The error state (can come from beforeLoad or from login/register actions)
+     * The loader error (from beforeLoad, unrecoverable)
      */
-    const [error, setError] = useState<Error | null>(
-        (routeContext as { error?: Error })?.error ?? null
-    );
+    const loaderError = (routeContext as { error?: Error })?.error ?? null;
+
+    /**
+     * The action error state (from login/register, retryable)
+     */
+    const [error, setError] = useState<Error | null>(null);
 
     /**
      * The on success callback
@@ -219,13 +222,13 @@ function Sso() {
     }, []);
 
     // Show error state if loader failed
-    if (error) {
+    if (loaderError) {
         return (
             <>
                 <SsoHeader />
                 <Grid className={styles.sso__grid}>
                     <h2>An error occurred</h2>
-                    <HandleErrors error={error} />
+                    <HandleErrors error={loaderError} />
                     <button
                         className={styles.sso__buttonLink}
                         onClick={() => window.close()}
@@ -280,6 +283,7 @@ function Sso() {
                 <Header />
                 {!success && (
                     <>
+                        {error && <HandleErrors error={error} />}
                         <Actions onSuccess={onSuccess} onError={setError} />
                         <PhonePairingAction onSuccess={onSuccess} />
                     </>
@@ -305,7 +309,6 @@ function Sso() {
                         </button>
                     </>
                 )}
-                {error && <HandleErrors error={error} />}
             </Grid>
         </>
     );
