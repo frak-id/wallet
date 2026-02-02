@@ -1,4 +1,5 @@
 import { log } from "@backend-infrastructure";
+import { currentStablecoins } from "@frak-labs/app-essentials";
 import type { Address } from "viem";
 import type { MerchantRepository } from "../../merchant/repositories/MerchantRepository";
 import type { CampaignBankRepository } from "../repositories/CampaignBankRepository";
@@ -43,6 +44,10 @@ export class CampaignBankService {
                 bankAddress,
                 merchant.ownerWallet
             );
+
+            await this.campaignBankRepository.enableDistribution(bankAddress, {
+                tokens: Object.values(currentStablecoins) as Address[],
+            });
 
             log.info(
                 {

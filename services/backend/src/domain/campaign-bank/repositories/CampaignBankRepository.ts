@@ -1,6 +1,12 @@
 import { log, viemClient } from "@backend-infrastructure";
 import { addresses } from "@frak-labs/app-essentials";
-import { type Address, encodeFunctionData, type Hex, keccak256 } from "viem";
+import {
+    type Address,
+    encodeFunctionData,
+    type Hex,
+    keccak256,
+    maxUint256,
+} from "viem";
 import {
     readContract,
     sendTransaction,
@@ -156,7 +162,7 @@ export class CampaignBankRepository {
 
             const receipt = await waitForTransactionReceipt(viemClient, {
                 hash: txHash,
-                confirmations: 4,
+                confirmations: 2,
             });
 
             log.info(
@@ -235,6 +241,75 @@ export class CampaignBankRepository {
                 txHash,
                 blockNumber: receipt.blockNumber,
             };
+        });
+    }
+
+    async enableDistribution(
+        bankAddress: Address,
+        options?: { tokens?: Address[] }
+    ): Promise<void> {
+        const mutex = adminWalletsRepository.getMutexForAccount({
+            key: "bank-manager",
+        });
+
+        await mutex.runExclusive(async () => {
+            const bankOwnerAccount =
+                await adminWalletsRepository.getKeySpecificAccount({
+                    key: "bank-manager",
+                });
+
+            const setOpenData = encodeFunctionData({
+                abi: campaignBankAbi,
+                functionName: "setOpen",
+                args: [true],
+            });
+
+            const setOpenTxHash = await sendTransaction(viemClient, {
+                account: bankOwnerAccount,
+                to: bankAddress,
+                data: setOpenData,
+                chain: viemClient.chain,
+            });
+
+            await waitForTransactionReceipt(viemClient, {
+                hash: setOpenTxHash,
+                confirmations: 2,
+            });
+
+            log.info(
+                { bankAddress, txHash: setOpenTxHash },
+                "Campaign bank opened for distribution"
+            );
+
+            const tokens = options?.tokens;
+            if (tokens && tokens.length > 0) {
+                const updateAllowancesData = encodeFunctionData({
+                    abi: campaignBankAbi,
+                    functionName: "updateAllowances",
+                    args: [tokens, tokens.map(() => maxUint256)],
+                });
+
+                const allowanceTxHash = await sendTransaction(viemClient, {
+                    account: bankOwnerAccount,
+                    to: bankAddress,
+                    data: updateAllowancesData,
+                    chain: viemClient.chain,
+                });
+
+                await waitForTransactionReceipt(viemClient, {
+                    hash: allowanceTxHash,
+                    confirmations: 2,
+                });
+
+                log.info(
+                    {
+                        bankAddress,
+                        tokens,
+                        txHash: allowanceTxHash,
+                    },
+                    "Campaign bank allowances set to max"
+                );
+            }
         });
     }
 }

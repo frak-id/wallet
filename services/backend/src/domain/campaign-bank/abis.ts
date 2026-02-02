@@ -33,6 +33,27 @@ export const campaignBankAbi = [
         outputs: [{ name: "result", internalType: "address", type: "address" }],
         stateMutability: "view",
     },
+    {
+        type: "function",
+        inputs: [{ name: "_isOpen", internalType: "bool", type: "bool" }],
+        name: "setOpen",
+        outputs: [],
+        stateMutability: "nonpayable",
+    },
+    {
+        type: "function",
+        inputs: [
+            { name: "_tokens", internalType: "address[]", type: "address[]" },
+            {
+                name: "_amounts",
+                internalType: "uint256[]",
+                type: "uint256[]",
+            },
+        ],
+        name: "updateAllowances",
+        outputs: [],
+        stateMutability: "nonpayable",
+    },
 ] as const;
 
 export const campaignBankFactoryAbi = [
