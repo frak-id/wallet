@@ -137,7 +137,7 @@ bun run changeset:release
 ### Monorepo Structure
 - **`apps/`** - Frontend applications
   - `wallet/` - TanStack Router user wallet (SSR disabled, module-based architecture)
-  - `business/` - TanStack Start business dashboard (SSR enabled)
+  - `business/` - TanStack Router business dashboard (SPA, nginx in production)
   - `dashboard-admin/` - TanStack Router admin interface
   - `listener/` - Iframe communication app for SDK interactions
 - **`packages/`** - Shared internal libraries (workspace-only)
@@ -188,7 +188,7 @@ bun run changeset:release
 - **`example/`** - Integration examples
 
 ### Key Technologies
-- **Frontend**: React 19, TanStack Query, Zustand, Viem, Wagmi, CSS Modules, TanStack Start, TanStack Router
+- **Frontend**: React 19, TanStack Query, Zustand, Viem, Wagmi, CSS Modules, TanStack Router
 - **Styling**: Lightning CSS for all Vite apps (wallet, listener, business, showcase)
 - **Backend**: Elysia.js, PostgreSQL (Drizzle ORM), MongoDB
 - **Blockchain**: Account Abstraction (ERC-4337), WebAuthn, Multi-chain support, Pimlico, ZeroDev
@@ -226,10 +226,8 @@ bun run bundle:check # Analyze bundle with vite-bundle-visualizer
 **Business Dashboard (`apps/business/`)**:
 ```bash
 cd apps/business
-bun run dev          # TanStack Start development (Vite dev server on port 3022)
-bun run build        # Production build (Nitro output)
-bun run start        # Preview production build locally
-bun run start:prod   # Run production build
+bun run dev          # SST dev + Vite (port 3022)
+bun run build        # Production build (static output)
 bun run typecheck    # Type checking
 bun run test         # Run Vitest tests
 ```

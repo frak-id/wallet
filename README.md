@@ -17,7 +17,7 @@ Visit our comprehensive documentation at **[docs.frak.id](https://docs.frak.id)*
 
 ### 📱 Applications (`/apps`)
 - **`wallet/`** - TanStack Router user wallet (SSR disabled, module-based architecture)
-- **`business/`** - TanStack Start business dashboard (SSR enabled, primary dashboard)
+- **`business/`** - TanStack Router business dashboard (SPA, primary dashboard)
 - **`dashboard-admin/`** - TanStack Router admin interface
 - **`listener/`** - Iframe communication app for SDK interactions
 
@@ -55,7 +55,7 @@ Visit our comprehensive documentation at **[docs.frak.id](https://docs.frak.id)*
 
 ### Frontend Stack
 - **[TanStack Router](https://tanstack.com/router)** - Type-safe routing for wallet and admin apps
-- **[TanStack Start](https://tanstack.com/start)** - Full-stack React framework for business dashboard
+
 - **[TanStack Query](https://tanstack.com/query)** - Data fetching and state management
 - **[Wagmi](https://wagmi.sh/)** - Ethereum hooks for React
 - **[Viem](https://viem.sh/)** - TypeScript interface for Ethereum

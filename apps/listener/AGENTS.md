@@ -8,20 +8,23 @@ Iframe RPC handler for SDK-to-wallet communication. Embedded in partner sites vi
 app/
 ├── module/
 │   ├── common/       # Shared utilities
-│   ├── hooks/        # RPC message handlers (18 files - core logic)
-│   ├── listener/     # Main listener orchestration
-│   └── utils/        # Communication utilities
+│   ├── embedded/     # Embedded wallet UI components
+│   ├── hooks/        # RPC message handlers (12 handlers - core logic)
+│   ├── modal/        # Modal UI for wallet operations
+│   ├── providers/    # RootProvider (Wagmi, QueryClient)
+│   └── stores/       # Zustand stores (modal, context state)
 ├── styles/           # Minimal CSS
-└── views/            # UI components for modals
+└── views/            # Main listener orchestration (RPC setup)
 ```
 
 ## Where to Look
 
 | Task | Location |
 |------|----------|
-| RPC handlers | `app/module/hooks/` (18 handlers) |
-| Modal rendering | `app/views/` |
-| Main listener | `app/module/listener/` |
+| RPC handlers | `app/module/hooks/` (12 handlers) |
+| Modal rendering | `app/module/modal/` |
+| Embedded wallet | `app/module/embedded/` |
+| Main listener | `app/views/listener.tsx` |
 | Entry point | `app/entry.client.tsx` |
 
 ## Commands

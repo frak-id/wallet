@@ -7,17 +7,23 @@ Elysia.js API with domain-driven design. PostgreSQL (Drizzle) + MongoDB.
 ```
 src/
 ├── api/              # API route composition (BFF pattern)
-├── orchestration/    # Cross-domain coordination layer
+├── orchestration/    # Cross-domain coordination layer (7 orchestrators)
 │   ├── context.ts    # Singleton orchestrator instances
+│   ├── RewardOrchestrator.ts
+│   ├── BatchRewardOrchestrator.ts
+│   ├── RewardExpirationOrchestrator.ts
 │   ├── PurchaseLinkingOrchestrator.ts
 │   ├── PurchaseWebhookOrchestrator.ts
-│   └── RewardOrchestrator.ts
+│   ├── SettlementOrchestrator.ts
+│   └── WebhookResolverOrchestrator.ts
 ├── domain/           # DDD bounded contexts
 │   ├── attribution/  # Touchpoint tracking, conversion attribution
 │   ├── auth/         # WebAuthn authentication
 │   ├── business/     # Business operations
 │   ├── campaign/     # Campaign rules, reward calculation
+│   ├── campaign-bank/ # Campaign banking
 │   ├── identity/     # Identity resolution, group management
+│   ├── merchant/     # Merchant management
 │   ├── notifications/ # Push notifications
 │   ├── oracle/       # Blockchain oracle
 │   ├── pairing/      # Device pairing
@@ -105,7 +111,7 @@ constructor(repository?: IdentityRepository) {
 | Cross-domain logic | `src/orchestration/` |
 | Domain singletons | `src/domain/{name}/context.ts` |
 | DB schemas | `src/domain/*/db/schema.ts` |
-| API routes | `src/api/` |
+| API routes | `src/api/` (user, business, external, common) |
 | Background jobs | `src/jobs/` |
 | DB connection | `src/infrastructure/persistence/` |
 | Shared utilities | `src/utils/` |

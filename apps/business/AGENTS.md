@@ -1,6 +1,6 @@
 # apps/business
 
-TanStack Start SSR dashboard for business users. Campaign management, product setup, analytics.
+TanStack Router SPA dashboard for business users. Campaign management, product setup, analytics. Served via nginx in production.
 
 ## Structure
 
@@ -10,12 +10,15 @@ src/
 │   ├── campaigns/    # Campaign creation, management, analytics
 │   ├── common/       # Shared components, hooks, layouts
 │   ├── dashboard/    # Overview dashboard
+│   ├── embedded/     # Embedded integration views
+│   ├── login/        # Authentication flows
 │   ├── members/      # Team member management
+│   ├── merchant/     # Merchant management (17 hooks)
 │   ├── paywall/      # Billing integration
 │   ├── product/      # Product setup, configuration
 │   ├── settings/     # Business settings
 │   └── wallet/       # Wallet connection
-├── routes/           # TanStack Start file-based routes
+├── routes/           # TanStack Router file-based routes
 ├── stores/           # Zustand stores
 ├── styles/           # Global CSS
 └── utils/            # App-level utilities
@@ -27,35 +30,34 @@ src/
 |------|----------|
 | Campaign logic | `src/module/campaigns/` (29 hooks, 15 components) |
 | Product setup | `src/module/product/` (29 hooks) |
-| Root HTML shell | `src/routes/__root.tsx` |
-| API routes | `src/routes/api/` |
+| Root component | `src/routes/__root.tsx` |
+| HTML shell | `index.html` |
+| Nginx config | `nginx.conf` |
 | Stores | `src/stores/` |
 
 ## Commands
 
 ```bash
-bun run dev          # TanStack Start dev (port 3022)
-bun run build        # Production build (Nitro output)
-bun run start        # Preview production build
+bun run dev          # SST dev + Vite (port 3022)
+bun run build        # Production build (static output)
 bun run typecheck    # Type checking
 bun run test         # Unit tests (business-unit project)
 ```
 
 ## Conventions
 
-- **SSR-first**: Full HTML shell in `__root.tsx` with meta tags
+- **SPA**: Static HTML shell in `index.html`, client-side routing
 - **Module pattern**: Features in `src/module/{name}/`
 - **Stores**: Zustand with persist, located in `src/stores/`
-- **API routes**: Server endpoints in `src/routes/api/`
+- **Production**: nginx serves static files with pre-compressed gzip
 
 ## Anti-Patterns
 
-- Client-only code without proper SSR guards
 - Direct DOM manipulation (use React state)
 - Entire store subscriptions
 
 ## Notes
 
 - Largest app in monorepo (345 TS/TSX files)
-- SSR requires careful hydration handling
-- TanStack Start uses Vinxi under the hood
+- Config baked at build time via Vite `define` (no runtime env vars)
+- Dockerfile uses nginx:1.29.1 with pre-compressed static assets

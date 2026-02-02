@@ -1,8 +1,8 @@
 # AGENTS.md
 
-**Generated:** 2026-01-03  
-**Commit:** bdef56f09  
-**Branch:** dev
+**Generated:** 2026-02-02  
+**Commit:** 8a136e2d9  
+**Branch:** feat/business-spa-migration
 
 ## Overview
 
@@ -14,7 +14,7 @@ Frak Wallet monorepo - Web3 referral tracking & rewards infrastructure. TypeScri
 frak-wallet/
 ├── apps/
 │   ├── wallet/        # TanStack Router SPA - user wallet (SSR disabled)
-│   ├── business/      # TanStack Start SSR - business dashboard
+│   ├── business/      # TanStack Router SPA - business dashboard
 │   ├── listener/      # Iframe RPC handler for SDK communication
 │   └── dashboard-admin/  # Admin interface
 ├── packages/
@@ -41,12 +41,12 @@ frak-wallet/
 | Task | Location | Notes |
 |------|----------|-------|
 | Wallet features | `apps/wallet/app/module/` | Module-based architecture |
-| Business dashboard | `apps/business/src/module/` | SSR-enabled, TanStack Start |
+| Business dashboard | `apps/business/src/module/` | SPA, TanStack Router |
 | SDK iframe communication | `apps/listener/app/module/hooks/` | RPC message handlers |
 | Shared wallet logic | `packages/wallet-shared/src/` | Stores, auth, blockchain |
 | UI components | `packages/ui/component/` | Radix-based, CSS Modules |
 | Core SDK actions | `sdk/core/src/actions/` | Blockchain interactions |
-| React hooks | `sdk/react/src/hook/` | 9 hooks + providers |
+| React hooks | `sdk/react/src/hook/` | 11 hooks + providers |
 | Backend domains | `services/backend/src/domain/` | auth, wallet, oracle, etc. |
 | Vite/CSS config | `packages/dev-tooling/src/vite.ts` | Lightning CSS central config |
 | Test mocks | `packages/test-foundation/src/` | Wagmi, WebAuthn, router mocks |
@@ -73,7 +73,7 @@ cd apps/wallet && bun run test:e2e  # Playwright E2E
 # Deployment
 bun run deploy             # AWS dev
 bun run deploy:prod        # AWS prod
-bun run deploy-gcp:prod    # GCP prod (backend)
+bun run deploy-gcp:prod    # GCP prod (all production apps)
 ```
 
 ## Conventions
@@ -148,7 +148,7 @@ Build order: `rpc → core → legacy → react → components`
 
 ## Custom Agents
 
-Purpose-based agents in `.opencode/agent/`:
+Purpose-based agents in `.opencode/agents/`:
 
 ### Orchestrator
 

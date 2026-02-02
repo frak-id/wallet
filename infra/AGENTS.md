@@ -2,116 +2,111 @@
 
 ## Multi-Cloud Strategy
 
-- **AWS (SST v3)**: Frontends, CDN, static assets, example apps
-- **GCP (Pulumi)**: Backend service only (Kubernetes)
+- **AWS (SST v3)**: Admin dashboard, example apps, dev deployments
+- **GCP (Pulumi)**: All production apps (backend, wallet, business, listener) on GKE
 
 ## Key Files
 
-- `sst.config.ts` - SST v3 configuration (AWS)
-- `infra/gcp/` - Pulumi configuration (GCP)
-- `infra/components/` - Reusable infrastructure components
-- `Dockerfile.base` - Base Docker image
-- `services/backend/MigrationDockerfile` - Database migration image
+| File | Purpose |
+|------|---------|
+| `sst.config.ts` | SST v3 root config (AWS) |
+| `infra/gcp/*.ts` | Pulumi resources per app (backend, wallet, business) |
+| `infra/components/` | Reusable K8s components (`KubernetesService`, `KubernetesJob`) |
+| `infra/utils.ts` | Stage detection helpers (`isProd`, `isGcp`, `isV2`, `normalizedStageName`) |
+| `Dockerfile.base` | Base image — pre-builds SDK packages for all app Dockerfiles |
+| `apps/*/Dockerfile` | Per-app: multi-stage build → nginx:1.29.1 with pre-compressed gzip |
+| `services/backend/Dockerfile` | Backend app image (Bun runtime) |
+| `services/backend/MigrationDockerfile` | Database migration K8s Job image |
 
-## SST v3 Configuration
+## Reusable Components
 
-**Root Config** (`sst.config.ts`):
+**`KubernetesService`** (in `infra/components/`):
+- Creates: Deployment + Service + HPA + Ingress + ServiceMonitor
+- Used by: backend, wallet, business
+
+**`KubernetesJob`**:
+- One-shot K8s Job (e.g., database migrations)
+
+## Docker Build Strategy
+
+1. `Dockerfile.base` builds SDK packages once (shared layer)
+2. App Dockerfiles extend base, build specific app with Vite
+3. Frontend apps: final stage copies static files to `nginx:1.29.1`
+4. **Secrets**: Frontend secrets are build-time only (BuildKit `--mount=type=secret`), backend secrets are runtime K8s env vars
+
+## GCP Production Architecture
+
+**Stages**: `gcp-staging`, `gcp-production`
+
+**Routing**: Path-based ingress — listener is NOT standalone, served via wallet ingress at `/listener` path
+
+**HPA**: Backend min=1, max=2, target CPU=120%
+
+**Database**: PostgreSQL on Cloud SQL
+- Schema naming: `staging_v2`, `production_v2`
+- Local access: GCP tunnel (`cloud-sql-proxy`)
+- Migrations: `KubernetesJob` runs Drizzle migrate
+
+## SST v3 (AWS)
+
+**Stages**: `$dev` (local), `dev`, `prod`
+
+**Deploys**: Admin dashboard, example apps only (production frontends are on GCP)
+
 ```typescript
 export default $config({
-  app(input) {
-    return {
-      name: "frak-wallet",
-      removal: input?.stage === "production" ? "retain" : "remove",
-      home: "aws",
-    };
-  },
-  async run() {
-    await import("./infra/dashboard");
-    await import("./infra/example");
-  },
+    app(input) {
+        return { name: "frak-wallet", home: "aws" };
+    },
+    async run() {
+        await import("./infra/dashboard");
+        await import("./infra/example");
+    },
 });
 ```
 
-**Stages:**
-- `$dev` - Local development (ephemeral)
-- `dev` - Development environment (AWS)
-- `prod` - Production environment (AWS)
+## CI/CD
 
-## GCP Configuration
-
-**Stages:**
-- `gcp-staging` - GCP staging environment
-- `gcp-production` - GCP production environment
-
-**Components:**
-- Kubernetes cluster
-- Container registry
-- Load balancer
-- Cloud SQL (PostgreSQL)
-- MongoDB Atlas integration
+**GitHub Actions**: `.github/workflows/deploy.yml` — path-based triggers
 
 ## Environment Variables
 
-**Frontend Apps (Vite):**
-- Prefix: `VITE_*`
-- Injected at build time via `define` config
+**Frontend (Vite)**: `VITE_*` prefix, baked at build time via `define` config
+**Backend**: Runtime env vars from K8s pod spec + Secret Manager
 
-**Backend Service:**
-- Runtime environment variables
-- Secrets via SST Resource (AWS) or Secret Manager (GCP)
+## Secrets Management
+
+| Context | Mechanism |
+|---------|-----------|
+| AWS dev | `sst secret set Key "value"` |
+| GCP prod | GCP Secret Manager → K8s env vars |
+| Frontend build | BuildKit `--mount=type=secret` (never in runtime) |
+
+## Database
+
+```bash
+cd services/backend
+bun db:generate    # Generate migration from schema
+bun db:migrate     # Apply migration locally
+bun db:studio      # Open Drizzle Studio
+```
+
+**Production**: Migration Docker image → `KubernetesJob` → then deploy backend
 
 ## Deployment Commands
 
 ```bash
 # AWS (SST)
-bun run deploy             # Dev stage
-bun run deploy:prod        # Prod stage
+bun run deploy             # Dev
+bun run deploy:prod        # Prod
 
-# GCP (Backend)
+# GCP (Pulumi)
 bun run deploy-gcp:staging
 bun run deploy-gcp:prod
 ```
 
-## Secrets Management
+## Anti-Patterns
 
-**AWS (SST):**
-```bash
-sst secret set DatabaseUrl "postgresql://..."
-sst secret list
-```
-
-**GCP (Secret Manager):**
-```bash
-gcloud secrets create jwt-secret --data-file=-
-```
-
-## Database Migrations
-
-**Development:**
-```bash
-cd services/backend
-bun run db:generate        # Generate migration
-bun run db:migrate         # Apply migration
-```
-
-**Production (GCP):**
-1. Build migration Docker image
-2. Run as Kubernetes Job
-3. Deploy backend service
-
-## Rollback
-
-```bash
-# SST (AWS)
-sst deploy --stage prod --rollback
-
-# GCP (Kubernetes)
-kubectl rollout undo deployment/backend
-```
-
-## Security
-
-1. Never commit secrets to git
-2. Use SST Secret or GCP Secret Manager
-3. Principle of least privilege for IAM roles
-4. HTTPS only, VPC isolation
+- Never expose runtime secrets in frontend pod specs (config is build-time only)
+- Never hardcode stage names — use `infra/utils.ts` helpers
+- Never skip migration Job before backend deployment

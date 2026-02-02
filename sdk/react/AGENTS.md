@@ -38,7 +38,7 @@ bun run build:watch   # Watch mode
 | CJS | `dist/index.cjs` |
 | Types | `dist/index.d.ts` |
 
-## Hooks (9 public)
+## Hooks (11 public)
 
 | Hook | Purpose |
 |------|---------|
@@ -50,7 +50,8 @@ bun run build:watch   # Watch mode
 | `useSiweAuthenticate` | SIWE authentication |
 | `useOpenSso` | SSO flow |
 | `useWatchWalletStatus` | Reactive wallet status |
-| `useFrakContext` | Full context access |
+| `useLogin` | Login flow |
+| `useTrackArrival` | Arrival tracking |
 
 ## Conventions
 
