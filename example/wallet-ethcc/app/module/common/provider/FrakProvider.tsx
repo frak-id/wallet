@@ -16,7 +16,9 @@ const walletUrlPromise: Promise<string> = (async () => {
         if (response.type === "opaque" || response.ok) {
             return "http://localhost:3010";
         }
-    } catch {}
+    } catch {
+        // Intentional: dev-only probe via no-cors — opaque failures expected
+    }
 
     return envUrl;
 })();

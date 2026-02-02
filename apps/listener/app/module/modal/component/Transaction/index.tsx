@@ -7,17 +7,19 @@ import {
     HandleErrors,
     sessionStore,
     ua,
+    useMountedTimeout,
 } from "@frak-labs/wallet-shared";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAccount, useSendTransaction } from "wagmi";
 import { useStore } from "zustand";
 import { AccordionTransactions } from "@/module/modal/component/Transaction/AccordionTransactions";
 import { useListenerTranslation } from "@/module/providers/ListenerUiProvider";
+import styles from "./index.module.css";
+
+const mobileWalletDeepLink = `${DEEP_LINK_SCHEME}wallet`;
 
 /**
- * The component for the transaction step of a modal
- * @param onClose
- * @constructor
+ * Transaction step modal — routes to desktop (direct WebAuthn) or mobile (distant-webauthn via deep link) flow
  */
 export function TransactionModalStep({
     params,
@@ -26,10 +28,8 @@ export function TransactionModalStep({
     params: SendTransactionModalStepType["params"];
     onFinish: (result: SendTransactionModalStepType["returns"]) => void;
 }) {
-    const { t } = useListenerTranslation();
     const { sendTransaction, isPending, isError, error } = useSendTransaction({
         mutation: {
-            // Link success and error hooks
             onSuccess: (hash) => {
                 onFinish({ hash });
             },
@@ -38,88 +38,57 @@ export function TransactionModalStep({
 
     const { txs, toSendTx } = useMappedTx({ tx: params.tx });
 
-    // Mobile distant-webauthn flow state
     const sessionType = useStore(sessionStore, (s) => s.session?.type);
     const isMobilePairing = ua.isMobile && sessionType === "distant-webauthn";
-    const [hasTriggered, setHasTriggered] = useState(false);
-    const [status, setStatus] = useState<
-        "idle" | "pending" | "waiting" | "timeout"
-    >("idle");
-    const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-    const mountedRef = useRef(true);
-
-    // Cleanup on unmount
-    useEffect(() => {
-        mountedRef.current = true;
-        return () => {
-            mountedRef.current = false;
-            if (timeoutRef.current) {
-                clearTimeout(timeoutRef.current);
-            }
-        };
-    }, []);
-
-    // Handle timeout for mobile flow
-    useEffect(() => {
-        if (!isMobilePairing || !isPending || !hasTriggered) return;
-
-        setStatus("pending");
-
-        timeoutRef.current = setTimeout(() => {
-            if (!mountedRef.current) return;
-            // Check if already succeeded (race condition)
-            if (!isPending) return;
-            setStatus("timeout");
-        }, 30_000);
-
-        return () => {
-            if (timeoutRef.current) {
-                clearTimeout(timeoutRef.current);
-                timeoutRef.current = null;
-            }
-        };
-    }, [isMobilePairing, isPending, hasTriggered]);
-
-    // Clear timeout on success
-    useEffect(() => {
-        if (!isError && !isPending && hasTriggered && timeoutRef.current) {
-            clearTimeout(timeoutRef.current);
-            timeoutRef.current = null;
-        }
-    }, [isPending, isError, hasTriggered]);
 
     if (!(params && toSendTx)) {
         return null;
     }
 
-    const deepLinkHref = `${DEEP_LINK_SCHEME}wallet`;
-
-    // Desktop flow (unchanged)
-    if (!isMobilePairing) {
+    if (isMobilePairing) {
         return (
-            <>
-                <AccordionTransactions txs={txs} />
-
-                <ButtonAuth
-                    size={"small"}
-                    width={"full"}
-                    disabled={isPending}
-                    onClick={() => {
-                        if (!toSendTx) return;
-                        sendTransaction(toSendTx);
-                    }}
-                >
-                    {t("sdk.modal.sendTransaction.primaryAction", {
-                        count: txs.length,
-                    })}
-                </ButtonAuth>
-
-                {isError && error && <HandleErrors error={error} />}
-            </>
+            <MobileTransactionStep
+                txs={txs}
+                toSendTx={toSendTx}
+                sendTransaction={sendTransaction}
+                isPending={isPending}
+                isError={isError}
+                error={error}
+            />
         );
     }
 
-    // Mobile distant-webauthn flow
+    return (
+        <DesktopTransactionStep
+            txs={txs}
+            toSendTx={toSendTx}
+            sendTransaction={sendTransaction}
+            isPending={isPending}
+            isError={isError}
+            error={error}
+        />
+    );
+}
+
+type TransactionStepProps = {
+    txs: ReturnType<typeof useMappedTx>["txs"];
+    toSendTx: NonNullable<ReturnType<typeof useMappedTx>["toSendTx"]>;
+    sendTransaction: ReturnType<typeof useSendTransaction>["sendTransaction"];
+    isPending: boolean;
+    isError: boolean;
+    error: Error | null;
+};
+
+function DesktopTransactionStep({
+    txs,
+    toSendTx,
+    sendTransaction,
+    isPending,
+    isError,
+    error,
+}: TransactionStepProps) {
+    const { t } = useListenerTranslation();
+
     return (
         <>
             <AccordionTransactions txs={txs} />
@@ -127,45 +96,95 @@ export function TransactionModalStep({
             <ButtonAuth
                 size={"small"}
                 width={"full"}
-                disabled={isPending || hasTriggered}
+                disabled={isPending}
                 onClick={() => {
-                    if (!toSendTx) return;
-                    setHasTriggered(true);
-                    setStatus("waiting");
                     sendTransaction(toSendTx);
-                    // Open wallet app via parent page (iframe can't navigate custom schemes on iOS)
-                    emitLifecycleEvent({
-                        iframeLifecycle: "redirect",
-                        data: { baseRedirectUrl: deepLinkHref },
-                    });
                 }}
+            >
+                {t("sdk.modal.sendTransaction.primaryAction", {
+                    count: txs.length,
+                })}
+            </ButtonAuth>
+
+            {isError && error && <HandleErrors error={error} />}
+        </>
+    );
+}
+
+function MobileTransactionStep({
+    txs,
+    toSendTx,
+    sendTransaction,
+    isPending,
+    isError,
+    error,
+}: TransactionStepProps) {
+    const { t } = useListenerTranslation();
+    const [status, setStatus] = useState<"idle" | "waiting" | "timeout">(
+        "idle"
+    );
+    const { startTimeout, clearTimeout: clearTxTimeout } = useMountedTimeout();
+    const deepLinkTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const isPendingRef = useRef(isPending);
+    isPendingRef.current = isPending;
+
+    useEffect(() => {
+        return () => {
+            if (deepLinkTimerRef.current) {
+                clearTimeout(deepLinkTimerRef.current);
+            }
+        };
+    }, []);
+
+    const emitDeepLink = useCallback(() => {
+        emitLifecycleEvent({
+            iframeLifecycle: "redirect",
+            data: { baseRedirectUrl: mobileWalletDeepLink },
+        });
+    }, []);
+
+    const triggerTransaction = useCallback(() => {
+        setStatus("waiting");
+        sendTransaction(toSendTx);
+
+        // Delay deep link to let the WS signature request queue before browser context switches
+        deepLinkTimerRef.current = setTimeout(emitDeepLink, 150);
+
+        startTimeout(() => {
+            if (!isPendingRef.current) return;
+            setStatus("timeout");
+        }, 30_000);
+    }, [sendTransaction, toSendTx, emitDeepLink, startTimeout]);
+
+    useEffect(() => {
+        if (!isError && !isPending && status === "waiting") {
+            clearTxTimeout();
+        }
+    }, [isPending, isError, status, clearTxTimeout]);
+
+    return (
+        <>
+            <AccordionTransactions txs={txs} />
+
+            <ButtonAuth
+                size={"small"}
+                width={"full"}
+                disabled={isPending}
+                onClick={triggerTransaction}
             >
                 {t("mobile-tx.sendTransaction")}
             </ButtonAuth>
 
             {/* Waiting state - show after user triggered tx + deep link */}
-            {hasTriggered && isPending && status !== "timeout" && (
-                <div style={{ marginTop: "1rem", textAlign: "center" }}>
-                    <p style={{ marginBottom: "0.5rem", fontSize: "0.875rem" }}>
+            {isPending && status === "waiting" && (
+                <div className={styles.mobileTx__statusContainer}>
+                    <p className={styles.mobileTx__statusText}>
                         {t("mobile-tx.waiting")}
                     </p>
                     <button
                         type="button"
-                        onClick={() => {
-                            emitLifecycleEvent({
-                                iframeLifecycle: "redirect",
-                                data: {
-                                    baseRedirectUrl: deepLinkHref,
-                                },
-                            });
-                        }}
-                        style={{
-                            color: "#007AFF",
-                            background: "none",
-                            border: "none",
-                            cursor: "pointer",
-                            fontSize: "0.875rem",
-                        }}
+                        onClick={emitDeepLink}
+                        className={styles.mobileTx__reopenLink}
                     >
                         {t("mobile-tx.reopenWallet")}
                     </button>
@@ -174,37 +193,14 @@ export function TransactionModalStep({
 
             {/* Timeout state */}
             {status === "timeout" && (
-                <div style={{ marginTop: "1rem", textAlign: "center" }}>
-                    <p
-                        style={{
-                            marginBottom: "1rem",
-                            fontSize: "0.875rem",
-                            color: "#d32f2f",
-                        }}
-                    >
+                <div className={styles.mobileTx__statusContainer}>
+                    <p className={styles.mobileTx__timeoutText}>
                         {t("mobile-tx.timeout")}
                     </p>
                     <button
                         type="button"
-                        onClick={() => {
-                            setStatus("waiting");
-                            emitLifecycleEvent({
-                                iframeLifecycle: "redirect",
-                                data: {
-                                    baseRedirectUrl: deepLinkHref,
-                                },
-                            });
-                        }}
-                        style={{
-                            display: "inline-block",
-                            padding: "0.75rem 1.5rem",
-                            backgroundColor: "#007AFF",
-                            color: "white",
-                            borderRadius: "0.5rem",
-                            border: "none",
-                            cursor: "pointer",
-                            fontSize: "0.875rem",
-                        }}
+                        onClick={triggerTransaction}
+                        className={styles.mobileTx__retryButton}
                     >
                         {t("mobile-tx.retry")}
                     </button>
@@ -224,7 +220,7 @@ function useMappedTx({
     const { address } = useAccount();
 
     return useMemo(() => {
-        if (!(tx || !address)) {
+        if (!tx || !address) {
             return {
                 txs: [],
                 toSendTx: undefined,

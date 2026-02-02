@@ -27,6 +27,7 @@ export { Warning } from "./component/Warning";
 // Hooks
 export { useAddToHomeScreenPrompt } from "./hook/useAddToHomeScreenPrompt";
 export { useGetSafeSdkSession } from "./hook/useGetSafeSdkSession";
+export { useMountedTimeout } from "./hook/useMountedTimeout";
 export { useSessionFlag } from "./hook/useSessionFlag";
 
 // Lib

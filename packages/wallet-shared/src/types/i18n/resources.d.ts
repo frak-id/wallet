@@ -112,6 +112,7 @@ interface Resources {
             amountRequired: "Amount is required";
             at: "at";
             authenticator: "Authenticator:";
+            "back-to-wallet": "Back to Wallet";
             balance: "Balance";
             claim: "Claim";
             claimed: "claimed";
@@ -141,6 +142,55 @@ interface Resources {
                 generic: "An error occurred. Please try again.";
                 notAllowed: "You have cancelled the authentication process, please try again.";
                 userOperationExecution: "An error occurred while executing the transaction. Please try again.";
+            };
+        };
+        "mobile-sso": {
+            connecting: "Connecting...";
+            openWallet: "Open in Frak Wallet";
+            retry: "Connection timed out. Retry?";
+            waiting: "Waiting for wallet app...";
+        };
+        "mobile-tx": {
+            explanation: "Approve this transaction in your wallet app";
+            openWallet: "Open wallet to approve";
+            reopenWallet: "Re-open wallet";
+            retry: "Retry";
+            sendTransaction: "Send transaction";
+            timeout: "Approval timed out. Try again?";
+            waiting: "Waiting for approval...";
+        };
+        "open-pair": {
+            accept: "Accept";
+            "confirm-description": "A device wants to pair with your wallet";
+            "confirm-title": "Device pairing request";
+            error: "Pairing failed. Please try again.";
+            expired: "Pairing request expired.";
+            reject: "Reject";
+        };
+        reward: {
+            history: {
+                time: {
+                    daysAgo: "{{count}}d ago";
+                    hoursAgo: "{{count}}h ago";
+                    justNow: "just now";
+                    minutesAgo: "{{count}}m ago";
+                };
+                title: "Recent Rewards";
+            };
+            status: {
+                cancelled: "Cancelled";
+                consumed: "Consumed";
+                expired: "Expired";
+                pending: "Pending";
+                processing: "Processing";
+                settled: "Settled";
+            };
+            trigger: {
+                identity_merge: "Identity Merge";
+                purchase: "Purchase";
+                referral: "Referral";
+                unknown: "Reward";
+                wallet_connect: "Wallet Connect";
             };
         };
         sharing: {
@@ -221,15 +271,7 @@ interface Resources {
                 noNotifications: "No notifications";
             };
             openLogin: {
-                complete: {
-                    backToBrowser: "Continue";
-                    message: "You can now return to {{productName}}.";
-                    title: "Login successful!";
-                };
                 login: "Connect with biometrics";
-                redirecting: "Redirecting to {{productName}}";
-                subtitle: "Connect to {{productName}}";
-                title: "Connect your wallet";
                 webauthnNotSupported: "WebAuthn is not supported on this device";
             };
             pairing: {

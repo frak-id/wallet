@@ -15,3 +15,38 @@
     margin-top: 8px;
     margin-bottom: 8px;
 }
+
+.mobileTx__statusContainer {
+    margin-top: 16px;
+    text-align: center;
+}
+
+.mobileTx__statusText {
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.mobileTx__reopenLink {
+    color: var(--frak-color-accent);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.mobileTx__timeoutText {
+    margin-bottom: 16px;
+    font-size: 14px;
+    color: var(--frak-color-red);
+}
+
+.mobileTx__retryButton {
+    display: inline-block;
+    padding: 12px 24px;
+    background-color: var(--frak-color-accent);
+    color: var(--frak-color-white);
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+}

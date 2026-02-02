@@ -244,8 +244,6 @@ async function postConnectionSetup({
     // This checks for ?sso= parameter and forwards compressed data to iframe
     setupSsoUrlListener(rpcClient, lifecycleManager.isConnected);
 
-    // Setup mobile auth callback listener to detect and exchange auth codes
-
     // Setup merge token listener to detect and process identity merge tokens
     // This checks for ?fmt= parameter and executes merge in background
     setupMergeTokenListener(config, lifecycleManager.isConnected);

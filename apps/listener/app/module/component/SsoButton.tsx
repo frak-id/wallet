@@ -10,9 +10,10 @@ import {
     trackAuthFailed,
     trackAuthInitiated,
     ua,
+    useMountedTimeout,
     useSsoLink,
 } from "@frak-labs/wallet-shared";
-import { type ReactNode, useEffect, useRef, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { Hex } from "viem";
 import { useStore } from "zustand";
@@ -158,33 +159,31 @@ function MobileSsoButton({
     const [status, setStatus] = useState<
         "idle" | "connecting" | "waiting" | "timeout"
     >("idle");
-    const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-    const mountedRef = useRef(true);
+    const { startTimeout, clearTimeout: clearPairingTimeout } =
+        useMountedTimeout();
     const client = getOriginPairingClient();
     const clientState = useStore(client.store);
 
     useEffect(() => {
-        mountedRef.current = true;
         return () => {
-            mountedRef.current = false;
-            if (timeoutRef.current) {
-                clearTimeout(timeoutRef.current);
-            }
             client.disconnect();
         };
     }, [client]);
 
-    const handleStartPairing = () => {
+    const handleStartPairing = async () => {
         trackAuthInitiated("sso", { method: "mobile" });
         setStatus("connecting");
 
-        client.initiatePairing(() => {
-            if (!mountedRef.current) return;
-        });
+        try {
+            client.disconnect();
+            await client.initiatePairing();
+        } catch {
+            setStatus("idle");
+            trackAuthFailed("sso", "pairing-init-failed");
+            return;
+        }
 
-        timeoutRef.current = setTimeout(() => {
-            if (!mountedRef.current) return;
-            // Check if already paired (race: WS paired but React hasn't re-rendered yet)
+        startTimeout(() => {
             if (client.store.getState().status === "paired") {
                 return;
             }
@@ -208,11 +207,10 @@ function MobileSsoButton({
     }, [deepLinkHref, status]);
 
     useEffect(() => {
-        if (clientState.status === "paired" && timeoutRef.current) {
-            clearTimeout(timeoutRef.current);
-            timeoutRef.current = null;
+        if (clientState.status === "paired") {
+            clearPairingTimeout();
         }
-    }, [clientState.status]);
+    }, [clientState.status, clearPairingTimeout]);
 
     if (status === "idle") {
         return (
@@ -233,7 +231,7 @@ function MobileSsoButton({
                 className={className}
                 onClick={handleStartPairing}
             >
-                {text}
+                {t("mobile-sso.retry")}
             </button>
         );
     }
@@ -246,34 +244,29 @@ function MobileSsoButton({
         );
     }
 
-    if (deepLinkHref) {
-        if (status === "waiting") {
-            return (
-                <button type="button" className={className} disabled>
-                    {t("mobile-sso.waiting")}
-                </button>
-            );
-        }
+    if (status === "waiting") {
         return (
-            <button
-                type="button"
-                className={className}
-                onClick={() => {
-                    emitLifecycleEvent({
-                        iframeLifecycle: "redirect",
-                        data: { baseRedirectUrl: deepLinkHref },
-                    });
-                    setStatus("waiting");
-                }}
-            >
-                {t("mobile-sso.openWallet")}
+            <button type="button" className={className} disabled>
+                {t("mobile-sso.waiting")}
             </button>
         );
     }
 
     return (
-        <button type="button" className={className} disabled>
-            {text}
+        <button
+            type="button"
+            className={className}
+            onClick={() => {
+                if (!deepLinkHref) return;
+                emitLifecycleEvent({
+                    iframeLifecycle: "redirect",
+                    data: { baseRedirectUrl: deepLinkHref },
+                });
+                setStatus("waiting");
+            }}
+            disabled={!deepLinkHref}
+        >
+            {t("mobile-sso.openWallet")}
         </button>
     );
 }

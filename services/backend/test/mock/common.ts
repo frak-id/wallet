@@ -51,10 +51,6 @@ export const JwtContextMock = {
         sign: vi.fn(() => Promise.resolve("mock-business-jwt-token")),
         verify: vi.fn(() => Promise.resolve({ wallet: "0x123" })),
     },
-    mobileAuthCode: {
-        sign: vi.fn(() => Promise.resolve("mock-mobile-auth-code")),
-        verify: vi.fn(() => Promise.resolve(null)),
-    },
     anonymousMerge: {
         sign: vi.fn(() => Promise.resolve("mock-anonymous-merge-token")),
         verify: vi.fn(() => Promise.resolve(null)),

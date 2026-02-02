@@ -30,9 +30,10 @@ export function TargetPairingState() {
  *  -> dot: red "idle", orange "connecting", green "paired"
  */
 function InnerTargetPairingState() {
+    const { t } = useTranslation();
     const client = useMemo(() => getTargetPairingClient(), []);
     const state = useStore(client.store);
-    const { status, text } = getStatusDetails(state) ?? {};
+    const { status, text } = getStatusDetails(state, t) ?? {};
 
     // Don't display anything if the state is idle
     if (state.status === "idle" || !status || !text) return null;
@@ -49,12 +50,13 @@ function InnerTargetPairingState() {
     );
 }
 
-function getStatusDetails(state: TargetPairingStateType): {
+function getStatusDetails(
+    state: TargetPairingStateType,
+    t: ReturnType<typeof useTranslation>["t"]
+): {
     status: "success" | "waiting" | "loading" | "error";
     text: string;
 } | null {
-    const { t } = useTranslation();
-
     if (state.status === "idle") {
         return null;
     }

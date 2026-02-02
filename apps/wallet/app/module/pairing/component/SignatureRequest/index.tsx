@@ -110,27 +110,31 @@ function SignatureRequestState({
     status: MutationStatus;
     isDeclined: boolean;
 }) {
-    const label = getSignatureRequestStateLabel(status, isDeclined);
     const { t } = useTranslation();
 
     return (
         <div className={styles.signatureRequest__state}>
             <span>{t("wallet.pairing.signatureRequest.stateTitle")}</span>
-            <span>{label}</span>
+            <span>
+                <SignatureRequestStateLabel
+                    status={status}
+                    isDeclined={isDeclined}
+                />
+            </span>
         </div>
     );
 }
 
 /**
  * Get the signature request state label
- *
- * @param status - Status of the signature request
- * @param isDeclined - Whether the signature request is declined
  */
-function getSignatureRequestStateLabel(
-    status: MutationStatus,
-    isDeclined: boolean
-) {
+function SignatureRequestStateLabel({
+    status,
+    isDeclined,
+}: {
+    status: MutationStatus;
+    isDeclined: boolean;
+}) {
     const { t } = useTranslation();
 
     if (isDeclined) {

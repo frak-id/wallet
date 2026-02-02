@@ -3,7 +3,6 @@ import type { NotificationModel } from "../common/storage/NotificationModel";
 import type {
     DistantWebAuthnWallet,
     EcdsaWallet,
-    MobileAuthWallet,
     SdkSession,
 } from "../types/Session";
 import type { WebAuthNWallet } from "../types/WebAuthN";
@@ -36,22 +35,6 @@ export function createMockSession(
         },
         authenticatorId: "auth-123",
         token: "test-token",
-        ...overrides,
-    };
-}
-
-/**
- * Creates a mock MobileAuth session with default values
- */
-export function createMockMobileAuthSession(
-    overrides?: Partial<Omit<MobileAuthWallet & { token: string }, "type">>
-): MobileAuthWallet & { token: string } {
-    return {
-        type: "mobile-auth",
-        address: createMockAddress(),
-        authenticatorId: "mobile-123",
-        token: "test-token",
-        transports: undefined,
         ...overrides,
     };
 }

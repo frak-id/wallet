@@ -13,7 +13,6 @@ import type {
     DistantWebAuthnWallet,
     EcdsaWallet,
     Session,
-    SignableSession,
 } from "../../types/Session";
 import type { WebAuthNWallet } from "../../types/WebAuthN";
 import type { BaseFrakSmartAccount } from "./baseFrakWallet";
@@ -21,17 +20,6 @@ import { frakEcdsaWalletSmartAccount } from "./FrakEcdsaSmartWallet";
 import { frakPairedWalletSmartAccount } from "./FrakPairedSmartWallet";
 import { frakWalletSmartAccount } from "./FrakSmartWallet";
 import { signHashViaWebAuthN } from "./signature";
-
-/**
- * Check if a session has signing capabilities
- * Mobile auth sessions cannot sign transactions
- */
-function isSignableSession(
-    session: Session | null | undefined
-): session is SignableSession {
-    if (!session) return false;
-    return session.type !== "mobile-auth";
-}
 
 /**
  * Properties
@@ -64,19 +52,12 @@ export function getSmartAccountProvider({
     // The current smart account
     let currentSmartAccountClient: SmartAccountConnectorClient | undefined;
 
-    // The current session (only signable sessions - excludes mobile-auth)
     const initialSession = getSafeSession();
-    let currentWebAuthNWallet: SignableSession | null = isSignableSession(
-        initialSession
-    )
-        ? initialSession
-        : null;
+    let currentWebAuthNWallet: Session | null = initialSession ?? null;
 
     // Subscribe to the session store, to refresh the wallet and emit a few stuff?
     sessionStore.subscribe((state) => {
-        const newWallet = state.session;
-        // Filter out mobile-auth sessions (they can't sign)
-        const signableWallet = isSignableSession(newWallet) ? newWallet : null;
+        const signableWallet = state.session ?? null;
 
         // If the session hasn't changed, do nothing
         if (

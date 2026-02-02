@@ -5,10 +5,6 @@ type DeepLinkParams = {
     action: string;
     to?: string;
     amount?: string;
-    returnUrl?: string;
-    merchantId?: string;
-    state?: string;
-    merchantName?: string;
     id?: string;
     code?: string;
 };
@@ -19,10 +15,6 @@ function extractSearchParams(
     return {
         to: searchParams.get("to") ?? undefined,
         amount: searchParams.get("amount") ?? undefined,
-        returnUrl: searchParams.get("returnUrl") ?? undefined,
-        merchantId: searchParams.get("merchantId") ?? undefined,
-        state: searchParams.get("state") ?? undefined,
-        merchantName: searchParams.get("merchantName") ?? undefined,
         id: searchParams.get("id") ?? undefined,
         code: searchParams.get("code") ?? undefined,
     };
@@ -32,23 +24,11 @@ function parseDeepLink(url: string): DeepLinkParams | null {
     try {
         const parsed = new URL(url);
 
-        // frakwallet://login?returnUrl=...
+        // frakwallet://pair?id=...&code=...
         if (parsed.protocol === "frakwallet:") {
             const action =
                 parsed.hostname || parsed.pathname.replace(/^\//, "") || "home";
             return { action, ...extractSearchParams(parsed.searchParams) };
-        }
-
-        // https://wallet.frak.id/open/login?returnUrl=...
-        if (parsed.pathname.startsWith("/open")) {
-            const pathAfterOpen = parsed.pathname
-                .replace("/open/", "")
-                .replace("/open", "");
-            const action = pathAfterOpen || "home";
-            return {
-                action,
-                ...extractSearchParams(parsed.searchParams),
-            };
         }
 
         return null;
@@ -93,11 +73,22 @@ function handleDeepLinkAction(navigate: NavigateFn, params: DeepLinkParams) {
             break;
 
         case "pair":
-            if (params.id && params.code) {
+            if (
+                params.id &&
+                params.code &&
+                params.id.length > 0 &&
+                params.id.length <= 128 &&
+                params.code.length > 0 &&
+                params.code.length <= 128
+            ) {
                 pendingPairingStore.getState().setPendingPairing({
                     id: params.id,
                     code: params.code,
                 });
+            } else {
+                console.warn(
+                    "[DeepLink] Invalid pair params — id/code missing or out of bounds"
+                );
             }
             navigate({ to: "/wallet" });
             break;

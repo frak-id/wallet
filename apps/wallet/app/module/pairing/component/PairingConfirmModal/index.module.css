@@ -1,28 +1,57 @@
-.pairingConfirmModal {
-    top: 10px;
+.pairingModal {
+    max-width: 360px;
 }
 
-.pairingConfirmModal__card {
-    border: 1px solid #e5e7eb;
-    border-radius: 18px;
-    padding: 20px;
-    background-color: #fff;
-}
-
-.pairingConfirmModal__title {
-    font-size: 18px;
-    font-weight: 600;
-    margin-bottom: 12px;
-}
-
-.pairingConfirmModal__description {
-    font-size: 14px;
-    margin-bottom: 20px;
-    color: #6b7280;
-}
-
-.pairingConfirmModal__buttons {
+.pairingModal__titleRow {
     display: flex;
-    gap: 10px;
-    justify-content: flex-end;
+    align-items: center;
+    gap: 8px;
+}
+
+.pairingModal__body {
+    margin-top: 0;
+}
+
+.pairingModal__device {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 10px;
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+.pairingModal__deviceIcon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background-color: rgba(255, 255, 255, 0.1);
+    flex-shrink: 0;
+}
+
+.pairingModal__description {
+    font-size: 14px;
+    line-height: 1.4;
+    opacity: 0.8;
+    margin: 0;
+}
+
+.pairingModal__error {
+    font-size: 13px;
+    margin-top: 10px;
+    color: var(--frak-color-red);
+}
+
+.pairingModal__expired {
+    font-size: 14px;
+    text-align: center;
+    opacity: 0.7;
+    margin: 0;
+}
+
+.pairingModal__rejectBtn {
+    opacity: 0.7;
 }

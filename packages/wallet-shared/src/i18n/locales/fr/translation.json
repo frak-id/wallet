@@ -303,16 +303,8 @@
             "dismiss": "Masquer le message"
         },
         "openLogin": {
-            "title": "Connectez votre porte-monnaie",
-            "subtitle": "Se connecter à {{productName}}",
             "login": "Se connecter avec la biométrie",
-            "redirecting": "Redirection vers {{productName}}",
-            "webauthnNotSupported": "WebAuthn n'est pas pris en charge sur cet appareil",
-            "complete": {
-                "title": "Connexion réussie !",
-                "message": "Vous pouvez maintenant retourner à {{productName}}.",
-                "backToBrowser": "Continuer"
-            }
+            "webauthnNotSupported": "WebAuthn n'est pas pris en charge sur cet appareil"
         }
     },
     "biometrics": {
@@ -370,7 +362,8 @@
     "mobile-sso": {
         "connecting": "Connexion...",
         "openWallet": "Ouvrir dans Frak Wallet",
-        "waiting": "En attente du wallet..."
+        "waiting": "En attente du wallet...",
+        "retry": "Connexion expirée. Réessayer ?"
     },
     "mobile-tx": {
         "sendTransaction": "Envoyer la transaction",
@@ -382,12 +375,11 @@
         "retry": "Réessayer"
     },
     "open-pair": {
-        "connecting": "Connexion en cours...",
-        "success": "Appairage réussi !",
-        "error": "Appairage échoué",
         "confirm-title": "Demande d'appairage",
         "confirm-description": "Un appareil souhaite se connecter à votre portefeuille",
         "accept": "Accepter",
-        "reject": "Rejeter"
+        "reject": "Rejeter",
+        "error": "Échec de l'appairage. Veuillez réessayer.",
+        "expired": "Demande d'appairage expirée."
     }
 }

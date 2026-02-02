@@ -9,6 +9,6 @@ export const BACKUP_KEY = "nexus-wallet-backup";
 export const DEEP_LINK_SCHEME = "frakwallet://";
 
 /**
- * LocalStorage key for CSRF state in mobile auth flow
+ * LocalStorage key for CSRF state in SSO redirect flow
  */
 export const AUTH_STATE_KEY = "frak_auth_state";

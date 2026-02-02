@@ -305,16 +305,8 @@
             "dismiss": "Dismiss inapp browser warning"
         },
         "openLogin": {
-            "title": "Connect your wallet",
-            "subtitle": "Connect to {{productName}}",
             "login": "Connect with biometrics",
-            "redirecting": "Redirecting to {{productName}}",
-            "webauthnNotSupported": "WebAuthn is not supported on this device",
-            "complete": {
-                "title": "Login successful!",
-                "message": "You can now return to {{productName}}.",
-                "backToBrowser": "Continue"
-            }
+            "webauthnNotSupported": "WebAuthn is not supported on this device"
         }
     },
     "biometrics": {
@@ -372,7 +364,8 @@
     "mobile-sso": {
         "connecting": "Connecting...",
         "openWallet": "Open in Frak Wallet",
-        "waiting": "Waiting for wallet app..."
+        "waiting": "Waiting for wallet app...",
+        "retry": "Connection timed out. Retry?"
     },
     "mobile-tx": {
         "sendTransaction": "Send transaction",
@@ -384,12 +377,11 @@
         "retry": "Retry"
     },
     "open-pair": {
-        "connecting": "Connecting to pairing...",
-        "success": "Pairing Successful!",
-        "error": "Pairing Failed",
         "confirm-title": "Device pairing request",
         "confirm-description": "A device wants to pair with your wallet",
         "accept": "Accept",
-        "reject": "Reject"
+        "reject": "Reject",
+        "error": "Pairing failed. Please try again.",
+        "expired": "Pairing request expired."
     }
 }
