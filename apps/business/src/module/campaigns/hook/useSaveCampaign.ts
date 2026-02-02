@@ -3,6 +3,7 @@ import {
     createCampaign,
     updateCampaign,
 } from "@/module/campaigns/api/campaignApi";
+import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import {
     buildApiPayload,
     type CampaignDraft,
@@ -10,12 +11,40 @@ import {
 } from "@/stores/campaignStore";
 import type { Campaign } from "@/types/Campaign";
 
+function buildDemoCampaign(draft: CampaignDraft): Campaign {
+    return {
+        id: draft.id ?? crypto.randomUUID(),
+        merchantId: draft.merchantId,
+        name: draft.name,
+        status: "draft",
+        createdAt: new Date().toISOString(),
+        publishedAt: null,
+        rule: draft.rule,
+        metadata: draft.metadata,
+        budgetConfig: draft.budgetConfig,
+        budgetUsed: null,
+        expiresAt: null,
+        priority: draft.priority,
+    } as Campaign;
+}
+
 export function useSaveCampaign() {
     const queryClient = useQueryClient();
+    const isDemoMode = useIsDemoMode();
 
     return useMutation({
         mutationKey: ["campaigns", "save"],
         mutationFn: async (draft: CampaignDraft): Promise<Campaign> => {
+            if (isDemoMode) {
+                await new Promise((resolve) => setTimeout(resolve, 300));
+                const demoCampaign = buildDemoCampaign(draft);
+                campaignStore.getState().updateDraft((d) => ({
+                    ...d,
+                    id: demoCampaign.id,
+                }));
+                return demoCampaign;
+            }
+
             const payload = buildApiPayload(draft);
 
             if (draft.id) {

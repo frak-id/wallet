@@ -23,9 +23,12 @@ export const authenticatedBackendApi = treaty<App>(
             // Return the new headers
             return headers;
         },
-        // Auto cleanup session on 401 response
+        // Auto cleanup session on 401 response (skip in demo mode)
         onResponse(response) {
-            if (response.status === 401) {
+            if (
+                response.status === 401 &&
+                useAuthStore.getState().token !== "demo-token"
+            ) {
                 useAuthStore.getState().clearAuth();
             }
         },
