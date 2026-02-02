@@ -16,11 +16,6 @@ export { trackPurchaseStatus } from "./trackPurchaseStatus";
 export { watchWalletStatus } from "./watchWalletStatus";
 // Modal wrappers
 export {
-    type LoginModalParams,
-    type LoginReturnType,
-    login,
-} from "./wrapper/login";
-export {
     type ModalBuilder,
     type ModalStepBuilder,
     modalBuilder,

@@ -6,7 +6,6 @@ export {
     useFrakClient,
     useFrakConfig,
     useGetMerchantInformation,
-    useLogin,
     useOpenSso,
     usePrepareSso,
     useReferralInteraction,
