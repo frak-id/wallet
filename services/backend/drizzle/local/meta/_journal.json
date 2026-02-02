@@ -15,6 +15,13 @@
             "when": 1769775615751,
             "tag": "0001_ancient_the_fury",
             "breakpoints": true
+        },
+        {
+            "idx": 2,
+            "version": "7",
+            "when": 1769946457530,
+            "tag": "0002_dark_the_twelve",
+            "breakpoints": true
         }
     ]
 }

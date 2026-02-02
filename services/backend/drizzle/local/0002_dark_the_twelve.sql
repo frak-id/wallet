@@ -1,0 +1,1 @@
+ALTER TABLE "merchants" ALTER COLUMN "default_reward_token" SET NOT NULL;

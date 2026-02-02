@@ -45,7 +45,7 @@
     "ox": "^0.9.14",
     "permissionless": "^0.2.57",
     "postgres": "^3.4.7",
-    "sst": "3.17.25",
+    "sst": "3.17.38",
     "ua-parser-js": "^2.0.5",
     "viem": "catalog:",
     "web-push": "^3.6.7",
