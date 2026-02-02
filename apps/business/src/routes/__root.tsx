@@ -13,41 +13,37 @@ export const Route = createRootRoute({
 });
 
 function ErrorComponent({ error }: { error: Error }) {
-    if (error instanceof Error) {
-        return (
-            <div
-                style={{
-                    padding: "2rem",
-                    textAlign: "center",
-                    maxWidth: "600px",
-                    margin: "4rem auto",
-                }}
-            >
-                <h1 style={{ fontSize: "2rem", marginBottom: "1rem" }}>
-                    Something went wrong
-                </h1>
-                <p style={{ color: "#94a3b8", marginBottom: "1rem" }}>
-                    {error.message}
-                </p>
-                {import.meta.env.DEV && (
-                    <pre
-                        style={{
-                            textAlign: "left",
-                            overflow: "auto",
-                            padding: "1rem",
-                            background: "#1e293b",
-                            borderRadius: "0.5rem",
-                            fontSize: "0.75rem",
-                        }}
-                    >
-                        {error.stack}
-                    </pre>
-                )}
-            </div>
-        );
-    }
-
-    return <h1>Unknown Error</h1>;
+    return (
+        <div
+            style={{
+                padding: "2rem",
+                textAlign: "center",
+                maxWidth: "600px",
+                margin: "4rem auto",
+            }}
+        >
+            <h1 style={{ fontSize: "2rem", marginBottom: "1rem" }}>
+                Something went wrong
+            </h1>
+            <p style={{ color: "#94a3b8", marginBottom: "1rem" }}>
+                {error.message}
+            </p>
+            {import.meta.env.DEV && (
+                <pre
+                    style={{
+                        textAlign: "left",
+                        overflow: "auto",
+                        padding: "1rem",
+                        background: "#1e293b",
+                        borderRadius: "0.5rem",
+                        fontSize: "0.75rem",
+                    }}
+                >
+                    {error.stack}
+                </pre>
+            )}
+        </div>
+    );
 }
 
 /**

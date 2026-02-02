@@ -26,13 +26,8 @@ export function isAuthenticated(): boolean {
 /**
  * beforeLoad hook for protected routes
  * Use this in route definitions to require authentication
- * Works correctly during both SSR and client-side navigation
  */
-export async function requireAuth({
-    location,
-}: {
-    location: { href: string };
-}) {
+export function requireAuth({ location }: { location: { href: string } }) {
     const authenticated = isAuthenticated();
 
     if (!authenticated) {
@@ -44,7 +39,7 @@ export async function requireAuth({
         });
     }
 
-    const wallet = await getWallet();
+    const wallet = getWallet();
 
     return {
         session: {
@@ -56,7 +51,6 @@ export async function requireAuth({
 /**
  * beforeLoad hook for login route
  * Redirects to dashboard if already authenticated
- * Works correctly during both SSR and client-side navigation
  */
 export function redirectIfAuthenticated() {
     const authenticated = isAuthenticated();

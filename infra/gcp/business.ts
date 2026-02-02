@@ -33,7 +33,7 @@ const dependency: Resource[] = [];
 
 if (!$dev) {
     const { baseImage } = await import("./images");
-    // Build the business SSR image
+    // Build the business SPA image
     const image = new dockerbuild.Image(
         "business",
         {
@@ -108,10 +108,7 @@ export const businessService = new KubernetesService(
                         limits: { cpu: "50m", memory: "256Mi" },
                         requests: { cpu: "20m", memory: "64Mi" },
                     },
-                    env: Object.entries(businessEnv).map(([name, value]) => ({
-                        name,
-                        value,
-                    })),
+                    // No runtime env needed — all config is baked into JS at build time via Vite define
                 },
             ],
         },
