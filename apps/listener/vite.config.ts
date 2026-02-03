@@ -87,6 +87,13 @@ export default {
                             priority: 35,
                         },
 
+                        // TanStack libraries - React Query
+                        {
+                            name: "tanstack-vendor",
+                            test: /node_modules[\\/]@tanstack/,
+                            priority: 32,
+                        },
+
                         // UI vendors - ALL UI libraries together
                         {
                             name: "ui-vendor",
