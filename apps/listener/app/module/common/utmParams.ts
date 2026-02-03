@@ -3,20 +3,27 @@
  * Extracts marketing attribution parameters from URLs
  */
 
-import type { UtmParams } from "../types/tracking";
+/**
+ * UTM parameters for marketing attribution
+ */
+export type UtmParams = {
+    source?: string;
+    medium?: string;
+    campaign?: string;
+    term?: string;
+    content?: string;
+};
 
 /**
  * Extract UTM parameters from a URL
- * @param url - The URL to extract UTM parameters from (defaults to current page)
+ * @param url - The URL to extract UTM parameters from
  * @returns Extracted UTM parameters, or undefined if none found
  */
 export function extractUtmParams(url?: string): UtmParams | undefined {
-    const targetUrl =
-        url ?? (typeof window !== "undefined" ? window.location.href : "");
-    if (!targetUrl) return undefined;
+    if (!url) return undefined;
 
     try {
-        const urlObj = new URL(targetUrl);
+        const urlObj = new URL(url);
         const params = urlObj.searchParams;
 
         const utmSource = params.get("utm_source");

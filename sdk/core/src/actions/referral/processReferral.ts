@@ -6,7 +6,7 @@ import type {
     FrakContext,
     WalletStatusReturnType,
 } from "../../types";
-import { extractUtmParams, FrakContextManager, trackEvent } from "../../utils";
+import { FrakContextManager, trackEvent } from "../../utils";
 import { displayEmbeddedWallet } from "../displayEmbeddedWallet";
 import { sendInteraction } from "../sendInteraction";
 
@@ -84,19 +84,11 @@ export async function processReferral(
         },
     });
 
-    // Send arrival interaction immediately via RPC (fire-and-forget)
-    // This happens BEFORE wallet check to capture anonymous arrivals via clientId
-    const utmParams = extractUtmParams();
     sendInteraction(client, {
         type: "arrival",
         referrerWallet: frakContext.r,
         landingUrl:
             typeof window !== "undefined" ? window.location.href : undefined,
-        utmSource: utmParams?.source,
-        utmMedium: utmParams?.medium,
-        utmCampaign: utmParams?.campaign,
-        utmTerm: utmParams?.term,
-        utmContent: utmParams?.content,
     });
 
     // Helper to fetch a fresh wallet status

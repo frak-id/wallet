@@ -1,14 +1,9 @@
 import type { SendInteractionParamsType } from "@frak-labs/core-sdk";
 import { authenticatedBackendApi } from "@frak-labs/wallet-shared";
 import { useMutation } from "@tanstack/react-query";
+import { extractUtmParams } from "@/module/common/utmParams";
 import { useSafeResolvingContext } from "@/module/stores/hooks";
 
-/**
- * Unified mutation hook for sending interactions to the backend.
- * Used by both RPC handler and internal sharing tracking.
- *
- * Note: Fire-and-forget - errors are caught and logged, not thrown.
- */
 export function useSendInteraction() {
     const { merchantId } = useSafeResolvingContext();
 
@@ -17,13 +12,17 @@ export function useSendInteraction() {
         mutationFn: async (params: SendInteractionParamsType) => {
             if (!merchantId) return;
 
+            const enrichedParams =
+                params.type === "arrival" && params.landingUrl
+                    ? enrichArrivalWithUtm(params)
+                    : params;
+
             try {
                 await authenticatedBackendApi.user.track.interaction.post({
-                    ...params,
+                    ...enrichedParams,
                     merchantId,
                 });
             } catch (error) {
-                // Fire-and-forget: log but don't throw
                 console.warn(
                     "[Listener] Failed to send interaction:",
                     params.type,
@@ -32,4 +31,20 @@ export function useSendInteraction() {
             }
         },
     });
+}
+
+function enrichArrivalWithUtm(
+    params: Extract<SendInteractionParamsType, { type: "arrival" }>
+): SendInteractionParamsType {
+    const utmParams = extractUtmParams(params.landingUrl);
+    if (!utmParams) return params;
+
+    return {
+        ...params,
+        utmSource: utmParams.source,
+        utmMedium: utmParams.medium,
+        utmCampaign: utmParams.campaign,
+        utmTerm: utmParams.term,
+        utmContent: utmParams.content,
+    };
 }

@@ -32,4 +32,3 @@ export {
     generateSsoUrl,
 } from "./sso";
 export { type FrakEvent, trackEvent } from "./trackEvent";
-export { extractUtmParams } from "./utmParams";

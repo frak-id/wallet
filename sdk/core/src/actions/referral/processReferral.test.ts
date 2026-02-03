@@ -26,8 +26,7 @@ vi.mock("../../utils", () => ({
         replaceUrl: vi.fn(),
     },
     trackEvent: vi.fn(),
-    resolveMerchantId: vi.fn().mockResolvedValue(undefined), // No merchantId = no arrival tracking
-    extractUtmParams: vi.fn().mockReturnValue({}),
+    resolveMerchantId: vi.fn().mockResolvedValue(undefined),
 }));
 
 describe("processReferral", () => {
