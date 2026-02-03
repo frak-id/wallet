@@ -2,18 +2,13 @@ import {
     authenticatedBackendApi,
     clientIdStore,
     emitLifecycleEvent,
-    sessionStore,
     updateGlobalProperties,
 } from "@frak-labs/wallet-shared";
 /**
  * Zustand store for iframe resolving context and handshake management
  */
 
-import {
-    type ClientLifecycleEvent,
-    FrakContextManager,
-} from "@frak-labs/core-sdk";
-import { type Address, isAddressEqual } from "viem";
+import type { ClientLifecycleEvent } from "@frak-labs/core-sdk";
 import { create } from "zustand";
 import type { IFrameResolvingContext, ResolvingContextStore } from "./types";
 
@@ -109,7 +104,6 @@ export const resolvingContextStore = create<ResolvingContextStore>(
                     updateGlobalProperties({
                         isIframe: true,
                         contextUrl: context.sourceUrl,
-                        contextReferrer: context.walletReferrer,
                     });
                 }
             });
@@ -156,7 +150,6 @@ async function resolveIFrameContext(
     const originUrl = new URL(sourceUrl);
     const normalizedDomain = originUrl.host.replace("www.", "");
     const origin = originUrl.origin;
-    const walletReferrer = getWalletReferrer(sourceUrl);
     const isAutoContext = event === undefined;
     const clientId = event?.data?.data?.clientId;
 
@@ -168,7 +161,6 @@ async function resolveIFrameContext(
         origin,
         merchantId: merchantData.merchantId,
         isAutoContext,
-        ...(walletReferrer && { walletReferrer }),
         ...(clientId && { clientId }),
     });
 
@@ -181,7 +173,6 @@ async function resolveIFrameContext(
         origin,
         sourceUrl,
         isAutoContext,
-        ...(walletReferrer && { walletReferrer }),
         ...(clientId && { clientId }),
     };
 }
@@ -225,29 +216,4 @@ async function fetchMerchantByDomain(
         merchantCache.set(domain, fallback);
         return fallback;
     }
-}
-
-/**
- * Get the referrer address from the source url
- * @param sourceUrl The source URL to extract the referrer from
- * @returns The referrer address if valid and different from current session, undefined otherwise
- */
-function getWalletReferrer(sourceUrl: string): Address | undefined {
-    // Get the current session from store
-    const session = sessionStore.getState().session;
-
-    // Get the current frak context
-    const frakContext = FrakContextManager.parse({
-        url: sourceUrl,
-    });
-
-    // If we got a referrer and it's not the same as the current session, return it
-    if (
-        frakContext?.r &&
-        (!session?.address || !isAddressEqual(frakContext.r, session.address))
-    ) {
-        return frakContext.r;
-    }
-
-    return;
 }
