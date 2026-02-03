@@ -97,17 +97,18 @@ function Sso() {
     const routeContext = Route.useRouteContext();
 
     /**
-     * The current metadata
-     */
-    const currentMetadata = authenticationStore(
-        (state) => state.ssoContext?.metadata
-    );
-
-    /**
      * Check if we have a redirectUrl
      */
     const ssoContext = authenticationStore((state) => state.ssoContext);
     const hasRedirectUrl = !!ssoContext?.redirectUrl;
+
+    /**
+     * The current metadata
+     */
+    const currentMetadata = useMemo(
+        () => ssoContext?.metadata,
+        [ssoContext?.metadata]
+    );
 
     /**
      * The success state after login or register
@@ -383,6 +384,9 @@ function Actions({
     const lastAuthenticator = authenticationStore(
         (state) => state.lastAuthenticator
     );
+    const merchantId = authenticationStore(
+        (state) => state.ssoContext?.merchantId
+    );
     const privateKey = sessionStore((state) => state.demoPrivateKey);
     const { login, isLoginInProgress } = useLoginDemo({
         onSuccess: () => onSuccess(),
@@ -423,6 +427,7 @@ function Actions({
                     onSuccess={onSuccess}
                     onError={onError}
                     isPrimary={true}
+                    merchantId={merchantId}
                     lastAuthentication={{
                         wallet: lastAuthenticator.address,
                         authenticatorId: lastAuthenticator.authenticatorId,
@@ -433,6 +438,7 @@ function Actions({
                     onSuccess={onSuccess}
                     onError={onError}
                     isPrimary={false}
+                    merchantId={merchantId}
                 />
             </>
         );
@@ -445,11 +451,13 @@ function Actions({
                 onSuccess={onSuccess}
                 onError={onError}
                 isPrimary={true}
+                merchantId={merchantId}
             />
             <SsoLoginComponent
                 onSuccess={onSuccess}
                 onError={onError}
                 isPrimary={false}
+                merchantId={merchantId}
             />
         </>
     );
@@ -502,7 +510,11 @@ function useLoginDemo(options?: UseMutationOptions<Session>) {
             }
 
             // Launch the login process
-            return demoLogin({ pkey });
+            return demoLogin({
+                pkey,
+                merchantId:
+                    authenticationStore.getState().ssoContext?.merchantId,
+            });
         },
     });
 
