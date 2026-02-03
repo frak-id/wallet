@@ -17,6 +17,7 @@ import { useDisplayEmbeddedWallet } from "@/module/hooks/useDisplayEmbeddedWalle
 import { useDisplayModalListener } from "@/module/hooks/useDisplayModalListener";
 import { useListenerDataPreload } from "@/module/hooks/useListenerDataPreload";
 import { useOnGetMerchantInformation } from "@/module/hooks/useOnGetMerchantInformation";
+import { useSendInteractionListener } from "@/module/hooks/useSendInteractionListener";
 import { useSendPing } from "@/module/hooks/useSendPing";
 import { useWalletStatusListener } from "@/module/hooks/useWalletStatusListener";
 import {
@@ -58,6 +59,8 @@ function ListenerContent() {
     const onDisplayEmbeddedWallet = useDisplayEmbeddedWallet();
 
     const onGetMerchantInformation = useOnGetMerchantInformation();
+
+    const onSendInteraction = useSendInteractionListener();
 
     // Create the RPC listener with centralized message handling
     useEffect(() => {
@@ -117,6 +120,7 @@ function ListenerContent() {
             onGetMerchantInformation
         );
         listener.handle("frak_displayEmbeddedWallet", onDisplayEmbeddedWallet);
+        listener.handle("frak_sendInteraction", onSendInteraction);
 
         // Register streaming handlers (IFrameRpcSchema)
         listener.handleStream(
@@ -139,6 +143,7 @@ function ListenerContent() {
         onDisplayModalRequest,
         onGetMerchantInformation,
         onDisplayEmbeddedWallet,
+        onSendInteraction,
     ]);
 
     /**
