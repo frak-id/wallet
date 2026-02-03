@@ -146,9 +146,9 @@ export function campaignToDraft(campaign: {
     merchantId: string;
     name: string;
     rule: CampaignRuleDefinition;
-    metadata: CampaignMetadata | null;
-    budgetConfig: BudgetConfigItem[] | null;
-    expiresAt: string | null;
+    metadata?: CampaignMetadata | null;
+    budgetConfig?: BudgetConfigItem[] | null;
+    expiresAt?: string | null;
     priority: number;
 }): CampaignDraft {
     const existingToken = campaign.rule.rewards.find((r) => r.token)?.token as

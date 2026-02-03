@@ -74,12 +74,12 @@ export function useGetMerchantAdministrators({
 
             return data.admins.map((admin) => ({
                 id: admin.id,
-                wallet: admin.wallet as Address,
-                addedBy: admin.addedBy as Address,
+                wallet: admin.wallet,
+                addedBy: admin.addedBy,
                 addedAt: admin.addedAt,
                 isOwner: admin.isOwner,
                 isMe: currentWallet
-                    ? isAddressEqual(admin.wallet as Address, currentWallet)
+                    ? isAddressEqual(admin.wallet, currentWallet)
                     : false,
             }));
         },

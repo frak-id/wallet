@@ -106,7 +106,7 @@ export function FormSpecialAdvertising() {
                                                           ])
                                                         : field.onChange(
                                                               field.value?.filter(
-                                                                  (v) =>
+                                                                  (v: string) =>
                                                                       v !==
                                                                       item.id
                                                               )

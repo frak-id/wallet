@@ -40,7 +40,7 @@ describe("middleware/auth", () => {
             // Mock isomorphic functions
             mockGetAuthToken.mockReturnValue("mock-token");
             mockIsDemoMode.mockReturnValue(false);
-            mockGetWallet.mockResolvedValue(mockAuthSession.wallet);
+            mockGetWallet.mockReturnValue(mockAuthSession.wallet);
 
             // Mock client-side auth state for expiration check
             mockGetState.mockReturnValue({
@@ -63,11 +63,11 @@ describe("middleware/auth", () => {
             mockGetAuthToken.mockReturnValue(null);
             mockIsDemoMode.mockReturnValue(false);
 
-            await expect(
+            expect(() =>
                 requireAuth({
                     location: { href: "/dashboard/campaigns" },
                 })
-            ).rejects.toThrow(
+            ).toThrow(
                 'REDIRECT:{"to":"/login","search":{"redirect":"/dashboard/campaigns"}}'
             );
         });
@@ -95,7 +95,7 @@ describe("middleware/auth", () => {
             // Mock demo mode
             mockGetAuthToken.mockReturnValue("demo-token");
             mockIsDemoMode.mockReturnValue(true);
-            mockGetWallet.mockResolvedValue(mockAuthSession.wallet);
+            mockGetWallet.mockReturnValue(mockAuthSession.wallet);
 
             const result = await requireAuth({
                 location: { href: "/dashboard" },

@@ -96,6 +96,7 @@ function DoMintComponent({
     name,
     domain,
     setupCode,
+    currency,
 }: {
     name?: string;
     domain: string;
@@ -125,6 +126,7 @@ function DoMintComponent({
                         name: name ?? domain,
                         domain,
                         setupCode,
+                        currency,
                     })
                 }
                 isLoading={isPending}

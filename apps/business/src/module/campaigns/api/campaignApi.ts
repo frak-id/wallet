@@ -47,11 +47,11 @@ export async function getMyCampaigns(
                 .merchant({ merchantId })
                 .campaigns.get();
             if (!data || error) return [];
-            return data.campaigns.map((campaign: Campaign) => ({
-                ...(campaign as Campaign),
+            return data.campaigns.map((campaign) => ({
+                ...campaign,
                 merchantId,
                 actions: mapStatusToActions(campaign.status),
-            }));
+            })) as CampaignWithActions[];
         })
     );
 

@@ -108,7 +108,7 @@ export function FormBudgetRow({ disabled }: { disabled?: boolean }) {
                                 value?.[0]?.amount > 0 || "Invalid amount",
                         },
                     }}
-                    render={() => (
+                    render={({ field }) => (
                         <FormItem>
                             <FormDescription label="Budget Amount" />
                             <FormMessage />
@@ -128,6 +128,8 @@ export function FormBudgetRow({ disabled }: { disabled?: boolean }) {
                                         }) as InputNumberProps["onChange"]
                                     }
                                     name="budgetAmount"
+                                    onBlur={field.onBlur}
+                                    ref={field.ref}
                                 />
                             </FormControl>
                         </FormItem>

@@ -63,11 +63,11 @@ export async function getMyCampaignsStats(
                 .merchant({ merchantId })
                 .campaigns.stats.get();
             if (!data || error) return [];
-            return data.stats.map((stat: CampaignStats) => ({
+            return data.stats.map((stat) => ({
                 ...stat,
                 createReferredLinkInteractions: 0,
                 tokenAddress: stat.tokenAddress as Address | null,
-            }));
+            })) as CampaignStats[];
         })
     );
 

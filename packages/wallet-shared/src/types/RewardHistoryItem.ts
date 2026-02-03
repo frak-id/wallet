@@ -10,7 +10,8 @@ export type TriggerType =
     | "referral"
     | "purchase"
     | "wallet_connect"
-    | "identity_merge";
+    | "identity_merge"
+    | "create_referral_link";
 
 export type RecipientType = "referee" | "referrer" | "user";
 

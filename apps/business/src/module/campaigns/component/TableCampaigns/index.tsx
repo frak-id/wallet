@@ -36,19 +36,20 @@ export function TableCampaigns() {
                     header: () => "Campaign",
                     cell: ({ getValue, row }) => {
                         const isDraft = row.original.status === "draft";
+                        const name = getValue() as string;
                         return isDraft ? (
                             <Link
                                 to="/campaigns/draft/$campaignId"
                                 params={{ campaignId: row.original.id }}
                             >
-                                {getValue()}
+                                {name}
                             </Link>
                         ) : (
                             <Link
                                 to="/campaigns/$campaignId"
                                 params={{ campaignId: row.original.id }}
                             >
-                                {getValue()}
+                                {name}
                             </Link>
                         );
                     },

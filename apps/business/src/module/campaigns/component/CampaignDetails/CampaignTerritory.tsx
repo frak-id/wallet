@@ -14,7 +14,7 @@ export function CampaignTerritory({ campaign }: { campaign: Campaign | null }) {
                 Territory
             </Title>
             <Row align={"start"}>
-                {campaign.metadata.territories.map((territory) => (
+                {campaign.metadata.territories.map((territory: string) => (
                     <Badge key={territory} variant={"secondary"}>
                         {capitalize(territory)}
                     </Badge>

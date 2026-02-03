@@ -59,7 +59,7 @@ export function getAvailableTransitions(
             return ["pause", "archive"];
         case "paused":
             return ["resume", "archive"];
-        case "archived":
+        default:
             return [];
     }
 }
