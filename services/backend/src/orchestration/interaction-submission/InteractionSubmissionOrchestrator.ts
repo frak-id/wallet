@@ -88,6 +88,7 @@ export class InteractionSubmissionOrchestrator {
 
         let interactionLog: InteractionLogResult = null;
         let isDuplicate = false;
+        const type = handler.getInteractionType(input);
 
         const shouldCreate =
             handler.shouldCreateInteractionLog?.(input) ?? true;
@@ -100,7 +101,7 @@ export class InteractionSubmissionOrchestrator {
 
             const result = await this.interactionLogRepository.createIdempotent(
                 {
-                    type: handler.getInteractionType(input),
+                    type,
                     identityGroupId: context.identity.identityGroupId,
                     merchantId: input.merchantId,
                     externalEventId,
@@ -110,7 +111,7 @@ export class InteractionSubmissionOrchestrator {
 
             if (result) {
                 interactionLog = this.toInteractionLogResult(result);
-                this.emitNewInteraction(handler.getInteractionType(input));
+                this.emitNewInteraction(type);
             } else {
                 isDuplicate = true;
             }
@@ -122,7 +123,7 @@ export class InteractionSubmissionOrchestrator {
 
         log.info(
             {
-                interactionType: handler.getInteractionType(input),
+                interactionType: type,
                 identityGroupId: context.identity.identityGroupId,
                 merchantId: input.merchantId,
                 interactionLogId: interactionLog?.id ?? null,

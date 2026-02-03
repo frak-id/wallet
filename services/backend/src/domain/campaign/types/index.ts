@@ -1,5 +1,5 @@
 import type { Address } from "viem";
-import type { RewardAssetType, RewardRecipient } from "../schemas";
+import type { AssetType, RecipientType } from "../../rewards/schemas";
 
 export type {
     BudgetConfig,
@@ -93,10 +93,10 @@ export type RuleContext = {
 };
 
 export type CalculatedReward = {
-    recipient: RewardRecipient;
+    recipient: RecipientType;
     recipientIdentityGroupId: string;
     recipientWallet: Address | null;
-    type: RewardAssetType;
+    type: AssetType;
     amount: number;
     token: Address | null;
     campaignRuleId: string;

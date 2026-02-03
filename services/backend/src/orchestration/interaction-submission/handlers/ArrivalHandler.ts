@@ -32,7 +32,7 @@ export class ArrivalHandler
     constructor(private readonly attributionService: AttributionService) {}
 
     getInteractionType(_input: ArrivalInput): InteractionType {
-        return "referral_arrival";
+        return "referral";
     }
 
     buildExternalEventId(
@@ -40,7 +40,7 @@ export class ArrivalHandler
         payload: ReferralArrivalPayload,
         _context: HandlerContext
     ): string {
-        return `referral_arrival:${payload.touchpointId ?? Date.now()}`;
+        return `referral:${payload.touchpointId ?? Date.now()}`;
     }
 
     async buildPayload(

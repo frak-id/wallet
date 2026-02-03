@@ -51,15 +51,15 @@
         "status": "paused",
         "priority": 2,
         "rule": {
-            "trigger": "signup",
+            "trigger": "referral",
             "conditions": [],
             "rewards": [
                 {
-                    "recipient": "user",
+                    "recipient": "referrer",
                     "type": "token",
                     "amountType": "fixed",
                     "amount": 1000000000000000000,
-                    "description": "1 FRK for signup"
+                    "description": "1 FRK for referral"
                 }
             ]
         },
@@ -89,7 +89,7 @@
         "status": "draft",
         "priority": 3,
         "rule": {
-            "trigger": "wallet_connect",
+            "trigger": "create_referral_link",
             "conditions": [],
             "rewards": [
                 {
@@ -97,7 +97,7 @@
                     "type": "token",
                     "amountType": "fixed",
                     "amount": 3000000000000000000,
-                    "description": "3 FRK for wallet connection"
+                    "description": "3 FRK for sharing referral link"
                 }
             ]
         },

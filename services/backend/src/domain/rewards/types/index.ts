@@ -7,6 +7,7 @@ import type {
 } from "../schemas";
 
 export type { AssetStatus, AssetType, InteractionType, RecipientType };
+export { InteractionTypeSchema } from "../schemas";
 
 // =============================================================================
 // INTERACTION LOG TYPES
@@ -48,23 +49,6 @@ export type PurchasePayload = {
     purchaseId: string;
 };
 
-/**
- * Payload for wallet connect interaction.
- */
-export type WalletConnectPayload = {
-    wallet: Address;
-    previousGroupId?: string;
-};
-
-/**
- * Payload for identity merge interaction.
- */
-type IdentityMergePayload = {
-    sourceGroupId: string;
-    targetGroupId: string;
-    mergedNodeCount: number;
-};
-
 export type CustomPayload = {
     customType: string;
     data: Record<string, unknown>;
@@ -74,8 +58,6 @@ export type InteractionPayload =
     | ReferralArrivalPayload
     | CreateReferralLinkPayload
     | PurchasePayload
-    | WalletConnectPayload
-    | IdentityMergePayload
     | CustomPayload;
 
 // =============================================================================

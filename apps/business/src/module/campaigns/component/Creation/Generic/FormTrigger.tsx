@@ -27,25 +27,25 @@ export function FormTrigger() {
                         >
                             <FormItem variant="radio">
                                 <FormControl>
+                                    <RadioGroupItem value="referral" />
+                                </FormControl>
+                                <FormLabel variant="radio">Referral</FormLabel>
+                            </FormItem>
+
+                            <FormItem variant="radio">
+                                <FormControl>
+                                    <RadioGroupItem value="create_referral_link" />
+                                </FormControl>
+                                <FormLabel variant="radio">
+                                    Referral Link Created
+                                </FormLabel>
+                            </FormItem>
+
+                            <FormItem variant="radio">
+                                <FormControl>
                                     <RadioGroupItem value="purchase" />
                                 </FormControl>
                                 <FormLabel variant="radio">Purchase</FormLabel>
-                            </FormItem>
-
-                            <FormItem variant="radio">
-                                <FormControl>
-                                    <RadioGroupItem value="signup" />
-                                </FormControl>
-                                <FormLabel variant="radio">Signup</FormLabel>
-                            </FormItem>
-
-                            <FormItem variant="radio">
-                                <FormControl>
-                                    <RadioGroupItem value="wallet_connect" />
-                                </FormControl>
-                                <FormLabel variant="radio">
-                                    Wallet Connect
-                                </FormLabel>
                             </FormItem>
 
                             <FormItem variant="radio">

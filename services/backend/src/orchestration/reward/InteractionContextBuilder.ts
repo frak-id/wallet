@@ -6,7 +6,6 @@ import type { InteractionLogSelect } from "../../domain/rewards/db/schema";
 import type {
     CustomPayload,
     PurchasePayload,
-    WalletConnectPayload,
 } from "../../domain/rewards/types";
 import type {
     CustomContext,
@@ -38,8 +37,7 @@ export class InteractionContextBuilder {
               })
             : null;
 
-        const { trigger, typeContext, walletAddressOverride } =
-            this.buildTypeSpecific(interaction, walletAddress);
+        const { trigger, typeContext } = this.buildTypeSpecific(interaction);
 
         return {
             trigger,
@@ -53,15 +51,14 @@ export class InteractionContextBuilder {
                 },
                 user: {
                     identityGroupId,
-                    walletAddress: walletAddressOverride ?? walletAddress,
+                    walletAddress,
                 },
             },
         };
     }
 
     private buildTypeSpecific(
-        interaction: InteractionLogSelect,
-        walletAddress: Address | null
+        interaction: InteractionLogSelect
     ): TypeSpecificContextResult {
         switch (interaction.type) {
             case "purchase": {
@@ -74,16 +71,7 @@ export class InteractionContextBuilder {
                 };
             }
 
-            case "wallet_connect": {
-                const payload = interaction.payload as WalletConnectPayload;
-                return {
-                    trigger: "wallet_connect",
-                    typeContext: {},
-                    walletAddressOverride: payload.wallet ?? walletAddress,
-                };
-            }
-
-            case "referral_arrival":
+            case "referral":
                 return {
                     trigger: "referral",
                     typeContext: {},
@@ -104,12 +92,6 @@ export class InteractionContextBuilder {
                     },
                 };
             }
-
-            default:
-                return {
-                    trigger: "custom",
-                    typeContext: {},
-                };
         }
     }
 

@@ -1,4 +1,3 @@
-import type { Address } from "viem";
 import type {
     CampaignTrigger,
     CustomInteractionContext,
@@ -19,5 +18,4 @@ export type TypeSpecificContextResult = {
         purchase?: PurchaseContext;
         custom?: CustomInteractionContext;
     };
-    walletAddressOverride?: Address | null;
 };

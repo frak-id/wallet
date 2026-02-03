@@ -345,9 +345,9 @@
         "trigger": {
             "unknown": "Récompense",
             "referral": "Parrainage",
+            "create_referral_link": "Lien partagé",
             "purchase": "Achat",
-            "wallet_connect": "Connexion Wallet",
-            "identity_merge": "Fusion d'identité"
+            "custom": "Personnalisé"
         },
         "history": {
             "title": "Récompenses récentes",
