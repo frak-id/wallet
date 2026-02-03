@@ -1,18 +1,15 @@
-import { authenticatedBackendApi } from "@frak-labs/wallet-shared";
-import { useMutation } from "@tanstack/react-query";
-import { useSafeResolvingContext } from "@/module/stores/hooks";
+import { useSendInteraction } from "./useSendInteraction";
 
+/**
+ * Track sharing interaction.
+ * Thin wrapper around useSendInteraction for backward compatibility.
+ */
 export function useTrackSharing() {
-    const { merchantId } = useSafeResolvingContext();
+    const { mutate, mutateAsync, ...rest } = useSendInteraction();
 
-    return useMutation({
-        mutationKey: ["track-sharing", merchantId],
-        mutationFn: async () => {
-            if (!merchantId) return;
-
-            await authenticatedBackendApi.user.track.sharing.post({
-                merchantId,
-            });
-        },
-    });
+    return {
+        ...rest,
+        mutate: () => mutate({ type: "sharing" }),
+        mutateAsync: () => mutateAsync({ type: "sharing" }),
+    };
 }
