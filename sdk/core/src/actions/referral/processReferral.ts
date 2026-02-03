@@ -6,10 +6,9 @@ import type {
     FrakContext,
     WalletStatusReturnType,
 } from "../../types";
-import { FrakContextManager, resolveMerchantId, trackEvent } from "../../utils";
-import { displayEmbeddedWallet, trackArrival } from "../index";
-
-const ARRIVAL_TRACKED_KEY = "frak-arrival-tracked";
+import { extractUtmParams, FrakContextManager, trackEvent } from "../../utils";
+import { displayEmbeddedWallet } from "../displayEmbeddedWallet";
+import { sendInteraction } from "../sendInteraction";
 
 /**
  * The different states of the referral process
@@ -85,9 +84,6 @@ export async function processReferral(
         },
     });
 
-    // Track arrival to backend (fire-and-forget, with session deduplication)
-    trackArrivalIfNeeded(client, frakContext.r);
-
     // Helper to fetch a fresh wallet status
     let walletRequest = false;
     async function getFreshWalletStatus() {
@@ -111,6 +107,7 @@ export async function processReferral(
     try {
         // Do the core processing logic
         const { status, currentWallet } = await processReferralLogic({
+            client,
             initialWalletStatus: walletStatus,
             getFreshWalletStatus,
             // We can enforce this type cause of the condition at the start
@@ -164,15 +161,18 @@ export async function processReferral(
 
 /**
  * Process referral logic - ensure user is logged in and track the referral
+ * @param client - The Frak client instance
  * @param initialWalletStatus - The current wallet status
  * @param getFreshWalletStatus - Function to display modal and get wallet
  * @param frakContext - The frak context containing referrer info
  */
 async function processReferralLogic({
+    client,
     initialWalletStatus,
     getFreshWalletStatus,
     frakContext,
 }: {
+    client: FrakClient;
     initialWalletStatus?: WalletStatusReturnType;
     getFreshWalletStatus: () => Promise<Address | undefined>;
     frakContext: Pick<FrakContext, "r">;
@@ -189,6 +189,14 @@ async function processReferralLogic({
     if (currentWallet && isAddressEqual(frakContext.r, currentWallet)) {
         return { status: "self-referral", currentWallet } as const;
     }
+
+    // Send arrival interaction via RPC (fire-and-forget)
+    sendInteraction(client, {
+        type: "arrival",
+        landingUrl:
+            typeof window !== "undefined" ? window.location.href : undefined,
+        utmParams: extractUtmParams(),
+    });
 
     // Referral is tracked via the backend when user logs in with a referral context
     // The interactionToken is sent with requests and backend handles attribution
@@ -231,52 +239,4 @@ function mapErrorToState(error: unknown): ReferralState {
         }
     }
     return "error";
-}
-
-/**
- * Track arrival to backend with session-based deduplication
- * Fire-and-forget: errors are logged but don't block the referral flow
- */
-function trackArrivalIfNeeded(client: FrakClient, referrerWallet: Address) {
-    // Check sessionStorage for deduplication
-    if (typeof sessionStorage !== "undefined") {
-        const alreadyTracked = sessionStorage.getItem(ARRIVAL_TRACKED_KEY);
-        if (alreadyTracked) {
-            return;
-        }
-    }
-
-    // Mark as tracked before async call (prevent double-tracking)
-    if (typeof sessionStorage !== "undefined") {
-        sessionStorage.setItem(ARRIVAL_TRACKED_KEY, "true");
-    }
-
-    // Resolve merchantId from config or auto-fetch from backend
-    resolveMerchantId(client.config, client.config.walletUrl)
-        .then((merchantId) => {
-            if (!merchantId) {
-                console.warn(
-                    "[Frak SDK] No merchantId found - arrival tracking skipped. " +
-                        "Add merchantId to your SDK config or register your domain in the Frak dashboard."
-                );
-                // Clear the flag so it can be retried if config changes
-                if (typeof sessionStorage !== "undefined") {
-                    sessionStorage.removeItem(ARRIVAL_TRACKED_KEY);
-                }
-                return;
-            }
-
-            // Fire-and-forget tracking call
-            return trackArrival(client, {
-                merchantId,
-                referrerWallet,
-            });
-        })
-        .catch((error) => {
-            console.warn("[Frak SDK] Failed to track arrival:", error);
-            // Clear the flag on failure so it can be retried
-            if (typeof sessionStorage !== "undefined") {
-                sessionStorage.removeItem(ARRIVAL_TRACKED_KEY);
-            }
-        });
 }
