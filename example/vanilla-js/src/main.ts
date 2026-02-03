@@ -1,5 +1,4 @@
 import {
-    clearClientId,
     type FrakWalletSdkConfig,
     generateMergeToken,
     getClientId,
@@ -103,7 +102,9 @@ function handleSimulateRedirect() {
 }
 
 function handleClearId() {
-    clearClientId();
+    if (window.localStorage) {
+        localStorage.removeItem("frak-client-id");
+    }
     log("Client ID cleared - refreshing to get new ID...", "info");
     setTimeout(() => window.location.reload(), 500);
 }

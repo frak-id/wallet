@@ -38,13 +38,3 @@ export function getClientId(): string {
     }
     return clientId;
 }
-
-/**
- * Clear the stored client ID
- * Useful for testing or when user requests data deletion
- */
-export function clearClientId(): void {
-    if (typeof window !== "undefined" && window.localStorage) {
-        localStorage.removeItem(CLIENT_ID_KEY);
-    }
-}

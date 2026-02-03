@@ -1,6 +1,6 @@
 export { Deferred } from "@frak-labs/frame-connector";
 export { getBackendUrl } from "./backendUrl";
-export { clearClientId, getClientId } from "./clientId";
+export { getClientId } from "./clientId";
 export { base64urlDecode, base64urlEncode } from "./compression/b64";
 export { compressJsonToB64 } from "./compression/compress";
 export { decompressJsonFromB64 } from "./compression/decompress";
