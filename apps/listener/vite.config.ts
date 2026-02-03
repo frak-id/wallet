@@ -72,6 +72,8 @@ export default {
             },
             output: {
                 advancedChunks: {
+                    // Only chunk stuff shared by at least 2 modules
+                    minShareCount: 2,
                     groups: [
                         // React ecosystem - React + React-DOM + scheduler
                         {
@@ -100,6 +102,12 @@ export default {
                             test: /node_modules[\\/](@radix-ui|vaul|micromark|sonner|lucide-react|class-variance-authority|cuer|nprogress|react-hook-form|react-dropzone)/,
                             priority: 30,
                             // minSize: 30000,
+                        },
+
+                        // All the other elements shared within the codebase
+                        {
+                            name: "common",
+                            priority: 10,
                         },
                     ],
                 },
