@@ -2,7 +2,6 @@
 export { HandleErrors } from "./component/HandleErrors";
 
 // Hooks
-export { useSsoLink } from "./hook/useGetOpenSsoLink";
 export { useLogin } from "./hook/useLogin";
 
 // Query Keys

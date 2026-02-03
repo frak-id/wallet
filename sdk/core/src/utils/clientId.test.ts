@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { clearClientId, getClientId } from "./clientId";
+import { getClientId } from "./clientId";
 
 describe("clientId", () => {
     beforeEach(() => {
@@ -36,21 +36,6 @@ describe("clientId", () => {
             const id2 = getClientId();
 
             expect(id1).toBe(id2);
-        });
-    });
-
-    describe("clearClientId", () => {
-        it("should remove client ID from localStorage", () => {
-            getClientId(); // Generate and store
-            expect(localStorage.getItem("frak-client-id")).toBeDefined();
-
-            clearClientId();
-
-            expect(localStorage.getItem("frak-client-id")).toBeNull();
-        });
-
-        it("should handle case when no client ID exists", () => {
-            expect(() => clearClientId()).not.toThrow();
         });
     });
 });

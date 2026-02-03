@@ -85,7 +85,6 @@ export {
     base64urlEncode,
     baseIframeProps,
     type CompressedSsoData,
-    clearClientId,
     clearMerchantIdCache,
     compressJsonToB64,
     createIframe,

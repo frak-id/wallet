@@ -22,6 +22,13 @@
             "when": 1769946457530,
             "tag": "0002_dark_the_twelve",
             "breakpoints": true
+        },
+        {
+            "idx": 3,
+            "version": "7",
+            "when": 1770121923216,
+            "tag": "0003_absurd_shadowcat",
+            "breakpoints": true
         }
     ]
 }

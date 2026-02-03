@@ -15,10 +15,17 @@ import { WebAuthnP256 } from "ox";
 import { toHex } from "viem";
 import { usePreviousAuthenticators } from "@/module/authentication/hook/usePreviousAuthenticators";
 
+type UseRegisterArgs = {
+    merchantId?: string;
+    // biome-ignore lint/suspicious/noConfusingVoidType: required for optional mutation arguments
+} | void;
+
 /**
  * Hook that handle the registration process
  */
-export function useRegister(options?: UseMutationOptions<Session>) {
+export function useRegister(
+    options?: UseMutationOptions<Session, Error, UseRegisterArgs>
+) {
     // Setter for the last authentication
     const { data: previousAuthenticators } = usePreviousAuthenticators();
 
@@ -34,7 +41,7 @@ export function useRegister(options?: UseMutationOptions<Session>) {
     } = useMutation({
         ...options,
         mutationKey: authKey.register,
-        mutationFn: async () => {
+        mutationFn: async (args?: UseRegisterArgs) => {
             // Identify the user and track the event
             const events = [trackAuthInitiated("register")];
 
@@ -61,6 +68,7 @@ export function useRegister(options?: UseMutationOptions<Session>) {
                         prefix: publicKey.prefix,
                     },
                     raw: encodedResponse,
+                    merchantId: args?.merchantId,
                 });
             if (error) {
                 throw error;

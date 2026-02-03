@@ -1,5 +1,6 @@
 import type { Hex } from "viem";
 import type { PrepareSsoParamsType, SsoMetadata } from "../types";
+import { getClientId } from "./clientId";
 import { compressJsonToB64 } from "./compression/compress";
 
 export type AppSpecificSsoMetadata = SsoMetadata & {
@@ -12,7 +13,8 @@ export type AppSpecificSsoMetadata = SsoMetadata & {
  */
 export type FullSsoParams = Omit<PrepareSsoParamsType, "metadata"> & {
     metadata: AppSpecificSsoMetadata;
-    merchantId: Hex;
+    merchantId: string;
+    clientId: string;
 };
 
 /**
@@ -42,7 +44,8 @@ export function generateSsoUrl(
     params: PrepareSsoParamsType,
     merchantId: Hex,
     name: string,
-    css?: string
+    css?: string,
+    clientId?: string
 ): string {
     // Build full params with app-specific metadata
     const fullParams: FullSsoParams = {
@@ -56,6 +59,7 @@ export function generateSsoUrl(
             logoUrl: params.metadata?.logoUrl,
             homepageLink: params.metadata?.homepageLink,
         },
+        clientId: clientId ?? getClientId(),
     };
 
     // Compress params to minimal format
@@ -76,9 +80,10 @@ export function generateSsoUrl(
  * Map full sso params to compressed sso params
  * @param params
  */
-function ssoParamsToCompressed(params: FullSsoParams) {
+function ssoParamsToCompressed(params: FullSsoParams): CompressedSsoData {
     return {
         r: params.redirectUrl,
+        cId: params.clientId,
         d: params.directExit,
         l: params.lang,
         m: params.merchantId,
@@ -97,6 +102,8 @@ function ssoParamsToCompressed(params: FullSsoParams) {
 export type CompressedSsoData = {
     // Potential id from backend
     id?: Hex;
+    // Client id
+    cId?: string;
     // redirect url
     r?: string;
     // direct exit
@@ -104,7 +111,7 @@ export type CompressedSsoData = {
     // language
     l?: "en" | "fr";
     // merchant id
-    m: Hex;
+    m: string;
     // metadata
     md: {
         // merchant name

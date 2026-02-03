@@ -3,6 +3,8 @@ import { db, JwtContext, log } from "@backend-infrastructure";
 import { and, eq, inArray, isNull } from "drizzle-orm";
 import type { ElysiaWS } from "elysia/ws";
 import { UAParser } from "ua-parser-js";
+import { OrchestrationContext } from "../../../orchestration/context";
+import type { IdentityNode } from "../../../orchestration/identity/types";
 import type {
     StaticWalletTokenDto,
     StaticWalletWebauthnTokenDto,
@@ -41,7 +43,7 @@ export class PairingConnectionRepository extends PairingRepository {
         wallet?: StaticWalletTokenDto;
         ws: ElysiaWS;
     }) {
-        const { action, pairingCode, id } = query;
+        const { action, pairingCode, id, originNode: originNodeRaw } = query;
         if (!action && !wallet) {
             log.debug("No action or wallet token");
             ws.close(
@@ -51,9 +53,11 @@ export class PairingConnectionRepository extends PairingRepository {
             return;
         }
 
+        const originNode = this.parseOriginNode(originNodeRaw);
+
         // If that's an initiate request
         if (action === "initiate" && !wallet) {
-            await this.handleInitiateRequest({ userAgent, ws });
+            await this.handleInitiateRequest({ userAgent, ws, originNode });
             return;
         }
 
@@ -83,15 +87,25 @@ export class PairingConnectionRepository extends PairingRepository {
         ws.close(WsCloseCode.UNAUTHORIZED, "Missing action or wallet token");
     }
 
-    /**
-     * Handle an initiate pairing request
-     */
+    private parseOriginNode(b64?: string): IdentityNode | undefined {
+        if (!b64) return undefined;
+        try {
+            const json = Buffer.from(b64, "base64").toString("utf-8");
+            return JSON.parse(json) as IdentityNode;
+        } catch {
+            log.warn({ b64 }, "Failed to parse originNode");
+            return undefined;
+        }
+    }
+
     private async handleInitiateRequest({
         userAgent,
         ws,
+        originNode,
     }: {
         userAgent?: string;
         ws: ElysiaWS;
+        originNode?: IdentityNode;
     }) {
         const deviceName = this.uaToDeviceName(userAgent);
 
@@ -103,12 +117,12 @@ export class PairingConnectionRepository extends PairingRepository {
             100000 + Math.random() * 900000
         ).toString();
 
-        // Insert the pairing into the database
         await db.insert(pairingTable).values({
             pairingId,
             pairingCode,
             originUserAgent: userAgent ?? "Unknown",
             originName: deviceName,
+            originNode,
         });
         // Subscribe the client to the pairing topic
         ws.subscribe(originTopic(pairingId));
@@ -206,7 +220,6 @@ export class PairingConnectionRepository extends PairingRepository {
             this.walletSdkSession.generateSdkJwt({ wallet: wallet.address }),
         ]);
 
-        // Send the authenticated message to the origin
         await this.sendTopicMessage({
             ws,
             pairingId: pairing.pairingId,
@@ -219,9 +232,28 @@ export class PairingConnectionRepository extends PairingRepository {
                 },
             },
             topic: "origin",
-            // We can skip the update since we will send the partner connect msg just after
             skipUpdate: true,
         });
+
+        if (pairing.originNode) {
+            try {
+                await OrchestrationContext.orchestrators.identity.resolveAndAssociate(
+                    [
+                        { type: "wallet", value: wallet.address },
+                        pairing.originNode,
+                    ]
+                );
+            } catch (err: unknown) {
+                log.error(
+                    {
+                        err,
+                        wallet: wallet.address,
+                        originNode: pairing.originNode,
+                    },
+                    "Failed to associate identity after pairing"
+                );
+            }
+        }
     }
 
     /**

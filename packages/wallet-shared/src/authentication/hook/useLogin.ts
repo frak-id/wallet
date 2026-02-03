@@ -16,15 +16,17 @@ import type { Session } from "../../types/Session";
 import { authKey } from "../queryKeys/auth";
 import { getTauriGetFn } from "../webauthn/tauriBridge";
 
+type UseLoginArgs = {
+    lastAuthentication?: PreviousAuthenticatorModel;
+    merchantId?: string;
+    // biome-ignore lint/suspicious/noConfusingVoidType: required for optional mutation arguments
+} | void;
+
 /**
  * Hook that handle the registration process
  */
 export function useLogin(
-    options?: UseMutationOptions<
-        Session,
-        Error,
-        { lastAuthentication?: PreviousAuthenticatorModel } | undefined
-    >
+    options?: UseMutationOptions<Session, Error, UseLoginArgs>
 ) {
     // The mutation that will be used to perform the registration process
     const {
@@ -36,9 +38,7 @@ export function useLogin(
     } = useMutation({
         ...options,
         mutationKey: authKey.login,
-        mutationFn: async (args?: {
-            lastAuthentication?: PreviousAuthenticatorModel;
-        }) => {
+        mutationFn: async (args?: UseLoginArgs) => {
             // Identify the user and track the event
             const events = [
                 trackAuthInitiated("login", {
@@ -76,6 +76,7 @@ export function useLogin(
                 await authenticatedWalletApi.auth.login.post({
                     expectedChallenge: challenge,
                     authenticatorResponse: encodedResponse,
+                    merchantId: args?.merchantId,
                 });
             if (error) {
                 throw error;

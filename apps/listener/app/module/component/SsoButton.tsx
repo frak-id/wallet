@@ -7,17 +7,19 @@ import {
 import {
     emitLifecycleEvent,
     getOriginPairingClient,
+    type OriginIdentityNode,
     trackAuthFailed,
     trackAuthInitiated,
     ua,
     useMountedTimeout,
-    useSsoLink,
 } from "@frak-labs/wallet-shared";
-import { type ReactNode, useEffect, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { Hex } from "viem";
 import { useStore } from "zustand";
+import { useSsoLink } from "@/module/hooks/useSsoLink";
 import { useListenerWithRequestUI } from "@/module/providers/ListenerUiProvider";
+import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 
 function buildDeepLinkHref(pairing: { id: string; code: string }): string {
     const id = encodeURIComponent(pairing.id);
@@ -144,10 +146,6 @@ function LinkSsoButton({
     );
 }
 
-/**
- * Mobile SSO button using WebSocket pairing.
- * User clicks → WS pairing initiated → deep link shown → wallet app authenticates via WS.
- */
 function MobileSsoButton({
     text,
     className,
@@ -163,6 +161,18 @@ function MobileSsoButton({
         useMountedTimeout();
     const client = getOriginPairingClient();
     const clientState = useStore(client.store);
+    const resolvingContext = useStore(resolvingContextStore, (s) => s.context);
+
+    const originNode = useMemo((): OriginIdentityNode | undefined => {
+        if (!resolvingContext?.clientId || !resolvingContext?.merchantId) {
+            return undefined;
+        }
+        return {
+            type: "anonymous_fingerprint",
+            value: resolvingContext.clientId,
+            merchantId: resolvingContext.merchantId,
+        };
+    }, [resolvingContext?.clientId, resolvingContext?.merchantId]);
 
     useEffect(() => {
         return () => {
@@ -176,7 +186,7 @@ function MobileSsoButton({
 
         try {
             client.disconnect();
-            await client.initiatePairing();
+            await client.initiatePairing({ originNode });
         } catch {
             setStatus("idle");
             trackAuthFailed("sso", "pairing-init-failed");

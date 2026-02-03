@@ -9,7 +9,6 @@ import {
 } from "@frak-labs/frame-connector";
 import { authenticatedBackendApi } from "@frak-labs/wallet-shared";
 import { useCallback } from "react";
-import type { Hex } from "viem";
 import type { WalletRpcContext } from "@/module/types/context";
 
 type OnGetMerchantInformation = RpcPromiseHandler<
@@ -49,7 +48,7 @@ export function useOnGetMerchantInformation(): OnGetMerchantInformation {
         }
 
         return {
-            id: data.merchantId as Hex,
+            id: data.merchantId,
             onChainMetadata: {
                 name: data.name ?? "",
                 domain: new URL(context.sourceUrl).host.replace("www.", ""),

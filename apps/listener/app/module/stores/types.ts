@@ -27,6 +27,11 @@ export interface IFrameResolvingContext {
     sourceUrl: string;
     isAutoContext: boolean;
     walletReferrer?: Address;
+    /**
+     * Anonymous client ID from the SDK (partner site localStorage)
+     * Used for identity tracking in backend API calls
+     */
+    clientId?: string;
 }
 
 /**
