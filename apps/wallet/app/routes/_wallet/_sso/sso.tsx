@@ -15,6 +15,7 @@ import type {
 } from "@frak-labs/wallet-shared";
 import {
     authenticationStore,
+    clientIdStore,
     compressedSsoToParams,
     HandleErrors,
     sessionStore,
@@ -75,6 +76,11 @@ export const Route = createFileRoute("/_wallet/_sso/sso")({
             directExit: directExit ?? undefined,
             metadata: metadata ?? undefined,
         });
+
+        // Save the client id if provided
+        if (compressedParam.cId) {
+            clientIdStore.getState().setClientId(compressedParam.cId);
+        }
 
         // Change language if provided and different from current
         if (lang && i18next.language !== lang) {

@@ -1,5 +1,6 @@
 import { treaty } from "@elysiajs/eden";
 import type { App } from "@frak-labs/backend-elysia";
+import { clientIdStore } from "../../stores/clientIdStore";
 import { sessionStore } from "../../stores/sessionStore";
 import { getSafeSdkSession, getSafeSession } from "../utils/safeSession";
 
@@ -16,6 +17,7 @@ export const authenticatedBackendApi = treaty<App>(backendUrl, {
         const session = getSafeSession();
         const token = session?.token;
         const sdkToken = getSafeSdkSession()?.token;
+        const clientId = clientIdStore.getState().clientId;
 
         // Build our new headers
         const headers = new Headers(options.headers);
@@ -24,6 +26,9 @@ export const authenticatedBackendApi = treaty<App>(backendUrl, {
         }
         if (sdkToken && !headers.has("x-wallet-sdk-auth")) {
             headers.append("x-wallet-sdk-auth", sdkToken);
+        }
+        if (clientId && !headers.has("x-frak-client-id")) {
+            headers.append("x-frak-client-id", clientId);
         }
 
         // Return the new headers

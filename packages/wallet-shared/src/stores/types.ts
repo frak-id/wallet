@@ -86,3 +86,17 @@ export type AuthenticationStore = {
     setSsoContext: (context: SsoContext | null) => void;
     clearAuthentication: () => void;
 };
+
+/**
+ * Client ID Store Types
+ *
+ * TODO: Evolve to Record<merchantId, clientId> for per-merchant tracking
+ */
+export type ClientIdStore = {
+    // State
+    clientId: string | null;
+
+    // Actions
+    setClientId: (clientId: string | null) => void;
+    clearClientId: () => void;
+};

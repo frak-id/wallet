@@ -14,5 +14,6 @@ export function compressedSsoToParams(
             logoUrl: compressed.md?.l,
             homepageLink: compressed.md?.h,
         },
+        clientId: compressed.cId,
     };
 }

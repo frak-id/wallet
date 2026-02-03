@@ -1,5 +1,6 @@
 import {
     authenticatedBackendApi,
+    clientIdStore,
     emitLifecycleEvent,
     sessionStore,
     updateGlobalProperties,
@@ -168,7 +169,12 @@ async function resolveIFrameContext(
         merchantId: merchantData.merchantId,
         isAutoContext,
         ...(walletReferrer && { walletReferrer }),
+        ...(clientId && { clientId }),
     });
+
+    if (clientId) {
+        clientIdStore.getState().setClientId(clientId);
+    }
 
     return {
         merchantId: merchantData.merchantId,
