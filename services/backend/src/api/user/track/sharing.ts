@@ -1,8 +1,5 @@
-import { eventEmitter, log } from "@backend-infrastructure";
 import { Elysia, status, t } from "elysia";
-import type { Address } from "viem";
-import { RewardsContext } from "../../../domain/rewards/context";
-import type { CreateReferralLinkPayload } from "../../../domain/rewards/types";
+import { OrchestrationContext } from "../../../orchestration/context";
 import { resolveSdkIdentity, sdkIdentityHeaderSchema } from "./sdkIdentity";
 
 const trackSharingBodySchema = t.Object({
@@ -33,48 +30,20 @@ export const trackSharingRoute = new Elysia().post(
             });
         }
 
-        const payload: CreateReferralLinkPayload = {
-            sharerWallet: walletAddress as Address,
-            merchantId: body.merchantId,
-        };
-
-        const externalEventId = `create_referral_link:${identityGroupId}:${body.merchantId}:${Date.now()}`;
-        const interactionLog =
-            await RewardsContext.repositories.interactionLog.createIdempotent({
-                type: "create_referral_link",
-                identityGroupId,
-                merchantId: body.merchantId,
-                externalEventId,
-                payload,
-            });
-
-        if (!interactionLog) {
-            return {
-                success: true,
-                identityGroupId,
-                interactionLogId: null,
-                isDuplicate: true,
-            };
-        }
-
-        eventEmitter.emit("newInteraction", {
-            type: "create_referral_link",
-        });
-
-        log.info(
-            {
-                identityGroupId,
-                interactionLogId: interactionLog.id,
-                merchantId: body.merchantId,
-            },
-            "Referral link creation tracked as interaction"
-        );
+        const result =
+            await OrchestrationContext.orchestrators.interactionSubmission.submit(
+                {
+                    type: "sharing",
+                    merchantId: body.merchantId,
+                },
+                { identityGroupId, walletAddress }
+            );
 
         return {
             success: true,
             identityGroupId,
-            interactionLogId: interactionLog.id,
-            isDuplicate: false,
+            interactionLogId: result.interactionLog?.id ?? null,
+            isDuplicate: result.isDuplicate,
         };
     },
     {

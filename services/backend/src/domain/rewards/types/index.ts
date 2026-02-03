@@ -65,12 +65,18 @@ type IdentityMergePayload = {
     mergedNodeCount: number;
 };
 
+export type CustomPayload = {
+    customType: string;
+    data: Record<string, unknown>;
+};
+
 export type InteractionPayload =
     | ReferralArrivalPayload
     | CreateReferralLinkPayload
     | PurchasePayload
     | WalletConnectPayload
-    | IdentityMergePayload;
+    | IdentityMergePayload
+    | CustomPayload;
 
 // =============================================================================
 // ASSET LOG TYPES

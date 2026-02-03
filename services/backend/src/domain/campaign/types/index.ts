@@ -79,12 +79,17 @@ export type TimeContext = {
     timestamp: number;
 };
 
+export type CustomInteractionContext = {
+    customType: string;
+    data: Record<string, unknown>;
+};
+
 export type RuleContext = {
     purchase?: PurchaseContext;
     attribution?: AttributionContext;
     user: UserContext;
     time: TimeContext;
-    custom?: Record<string, unknown>;
+    custom?: CustomInteractionContext;
 };
 
 export type CalculatedReward = {

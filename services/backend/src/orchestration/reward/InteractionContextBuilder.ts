@@ -4,10 +4,12 @@ import type { PurchaseContext } from "../../domain/campaign";
 import type { IdentityRepository } from "../../domain/identity";
 import type { InteractionLogSelect } from "../../domain/rewards/db/schema";
 import type {
+    CustomPayload,
     PurchasePayload,
     WalletConnectPayload,
 } from "../../domain/rewards/types";
 import type {
+    CustomContext,
     InteractionContextResult,
     TypeSpecificContextResult,
 } from "./types";
@@ -93,12 +95,29 @@ export class InteractionContextBuilder {
                     typeContext: {},
                 };
 
+            case "custom": {
+                const payload = interaction.payload as CustomPayload;
+                return {
+                    trigger: "custom",
+                    typeContext: {
+                        custom: this.buildCustomContext(payload),
+                    },
+                };
+            }
+
             default:
                 return {
                     trigger: "custom",
                     typeContext: {},
                 };
         }
+    }
+
+    private buildCustomContext(payload: CustomPayload): CustomContext {
+        return {
+            customType: payload.customType,
+            data: payload.data,
+        };
     }
 
     private buildPurchaseContext(payload: PurchasePayload): PurchaseContext {

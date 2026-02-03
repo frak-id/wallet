@@ -8,4 +8,5 @@ type InteractionEventType =
     | "create_referral_link"
     | "purchase"
     | "wallet_connect"
-    | "identity_merge";
+    | "identity_merge"
+    | "custom";

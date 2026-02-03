@@ -5,7 +5,6 @@ import { MerchantContext } from "../domain/merchant/context";
 import { PurchasesContext } from "../domain/purchases/context";
 import { RewardsContext } from "../domain/rewards/context";
 import { pricingRepository } from "../infrastructure/pricing/PricingRepository";
-import { ArrivalTrackingOrchestrator } from "./ArrivalTrackingOrchestrator";
 import { BatchRewardOrchestrator } from "./BatchRewardOrchestrator";
 import { CampaignStatsOrchestrator } from "./CampaignStatsOrchestrator";
 import {
@@ -14,6 +13,7 @@ import {
     IdentityOrchestrator,
     IdentityWeightService,
 } from "./identity";
+import { InteractionSubmissionOrchestrator } from "./interaction-submission";
 import { MemberQueryOrchestrator } from "./MemberQueryOrchestrator";
 import { PurchaseLinkingOrchestrator } from "./PurchaseLinkingOrchestrator";
 import { PurchaseWebhookOrchestrator } from "./PurchaseWebhookOrchestrator";
@@ -86,12 +86,12 @@ const memberQueryOrchestrator = new MemberQueryOrchestrator(
     pricingRepository
 );
 
-const arrivalTrackingOrchestrator = new ArrivalTrackingOrchestrator(
-    AttributionContext.services.attribution,
-    RewardsContext.repositories.interactionLog
-);
-
 const campaignStatsOrchestrator = new CampaignStatsOrchestrator();
+
+const interactionSubmissionOrchestrator = new InteractionSubmissionOrchestrator(
+    RewardsContext.repositories.interactionLog,
+    AttributionContext.services.attribution
+);
 
 const anonymousMergeOrchestrator = new AnonymousMergeOrchestrator(
     IdentityContext.services.anonymousMerge,
@@ -103,7 +103,7 @@ const anonymousMergeOrchestrator = new AnonymousMergeOrchestrator(
 
 export namespace OrchestrationContext {
     export const orchestrators = {
-        arrivalTracking: arrivalTrackingOrchestrator,
+        interactionSubmission: interactionSubmissionOrchestrator,
         memberQuery: memberQueryOrchestrator,
         campaignStats: campaignStatsOrchestrator,
         anonymousMerge: anonymousMergeOrchestrator,

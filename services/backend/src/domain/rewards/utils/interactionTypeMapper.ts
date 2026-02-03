@@ -8,6 +8,7 @@ export const TriggerTypeSchema = t.Union([
     t.Literal("purchase"),
     t.Literal("wallet_connect"),
     t.Literal("identity_merge"),
+    t.Literal("custom"),
 ]);
 
 /**
@@ -47,6 +48,8 @@ export function mapInteractionType(
             return "wallet_connect";
         case "identity_merge":
             return "identity_merge";
+        case "custom":
+            return "custom";
         default:
             console.warn(`[mapInteractionType] Unknown type: ${dbType}`);
             return null;

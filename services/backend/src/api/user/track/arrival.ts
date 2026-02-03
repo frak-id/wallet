@@ -1,24 +1,6 @@
 import { Elysia, status, t } from "elysia";
-import type { Address } from "viem";
-import { isAddress } from "viem";
-import type { TouchpointSourceData } from "../../../domain/attribution";
-import { IdentityContext } from "../../../domain/identity";
 import { OrchestrationContext } from "../../../orchestration/context";
 import { resolveSdkIdentity, sdkIdentityHeaderSchema } from "./sdkIdentity";
-
-async function resolveReferrerGroupId(
-    referrerWallet: string | undefined
-): Promise<string | undefined> {
-    if (!referrerWallet || !isAddress(referrerWallet)) {
-        return undefined;
-    }
-    const group =
-        await IdentityContext.repositories.identity.findGroupByIdentity({
-            type: "wallet",
-            value: referrerWallet,
-        });
-    return group?.id ?? undefined;
-}
 
 const trackArrivalBodySchema = t.Object({
     merchantId: t.String({ format: "uuid" }),
@@ -46,28 +28,15 @@ export const trackArrivalRoute = new Elysia().post(
             });
         }
 
-        const { identityGroupId } = identityResult;
-
-        const sourceData = buildSourceData(body);
-
-        const referrerIdentityGroupId = await resolveReferrerGroupId(
-            body.referrerWallet
-        );
+        const { identityGroupId, walletAddress } = identityResult;
 
         const result =
-            await OrchestrationContext.orchestrators.arrivalTracking.trackArrival(
+            await OrchestrationContext.orchestrators.interactionSubmission.submit(
                 {
-                    identityGroupId,
-                    merchantId: body.merchantId,
-                    source: sourceData.type,
-                    sourceData,
-                    landingUrl: body.landingUrl,
-                    referrerIdentityGroupId,
-                    referrerWallet:
-                        body.referrerWallet && isAddress(body.referrerWallet)
-                            ? (body.referrerWallet as Address)
-                            : undefined,
-                }
+                    type: "arrival",
+                    ...body,
+                },
+                { identityGroupId, walletAddress }
             );
 
         return {
@@ -81,32 +50,3 @@ export const trackArrivalRoute = new Elysia().post(
         body: trackArrivalBodySchema,
     }
 );
-
-function buildSourceData(body: {
-    referrerWallet?: string;
-    utmSource?: string;
-    utmMedium?: string;
-    utmCampaign?: string;
-    utmTerm?: string;
-    utmContent?: string;
-}): TouchpointSourceData {
-    if (body.referrerWallet && isAddress(body.referrerWallet)) {
-        return {
-            type: "referral_link",
-            referrerWallet: body.referrerWallet as Address,
-        };
-    }
-
-    if (body.utmSource || body.utmMedium || body.utmCampaign) {
-        return {
-            type: "paid_ad",
-            utmSource: body.utmSource,
-            utmMedium: body.utmMedium,
-            utmCampaign: body.utmCampaign,
-            utmTerm: body.utmTerm,
-            utmContent: body.utmContent,
-        };
-    }
-
-    return { type: "direct" };
-}

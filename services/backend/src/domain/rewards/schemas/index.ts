@@ -11,6 +11,7 @@ export const InteractionTypeSchema = t.Union([
     t.Literal("purchase"),
     t.Literal("wallet_connect"),
     t.Literal("identity_merge"),
+    t.Literal("custom"),
 ]);
 export type InteractionType = Static<typeof InteractionTypeSchema>;
 
