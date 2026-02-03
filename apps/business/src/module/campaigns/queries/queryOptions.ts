@@ -1,10 +1,15 @@
 import { queryOptions } from "@tanstack/react-query";
 import { redirect } from "@tanstack/react-router";
+import campaignsMockData from "@/mock/campaigns.json";
 import {
     getCampaignDetail,
     getMyCampaigns,
 } from "@/module/campaigns/api/campaignApi";
-import { getMyCampaignsStats } from "@/module/campaigns/api/campaignStatsApi";
+import {
+    getMyCampaignsStats,
+    getMyCampaignsStatsMock,
+} from "@/module/campaigns/api/campaignStatsApi";
+import { getCampaignDetailsMockSync } from "@/module/campaigns/api/mock";
 import type { Campaign, CampaignWithActions } from "@/types/Campaign";
 
 type CampaignStateValidator = (campaign: Campaign) => {
@@ -12,18 +17,35 @@ type CampaignStateValidator = (campaign: Campaign) => {
     redirectTo?: { to: string; params: { campaignId: string } };
 };
 
+function getCampaignsInitialData(): CampaignWithActions[] {
+    return (campaignsMockData as unknown as Campaign[]).map((campaign) => ({
+        ...campaign,
+        actions: {
+            canEdit: campaign.status === "draft",
+            canDelete: campaign.status === "draft",
+            canPublish: campaign.status === "draft",
+            canPause: campaign.status === "active",
+            canResume: campaign.status === "paused",
+            canArchive:
+                campaign.status === "active" || campaign.status === "paused",
+        },
+    }));
+}
+
 export const campaignsListQueryOptions = (isDemoMode: boolean) =>
     queryOptions<CampaignWithActions[]>({
         queryKey: ["campaigns", "my-campaigns", isDemoMode ? "demo" : "live"],
         queryFn: () => getMyCampaigns(isDemoMode),
-        staleTime: 5 * 60 * 1000,
+        staleTime: isDemoMode ? Number.POSITIVE_INFINITY : 5 * 60 * 1000,
+        initialData: isDemoMode ? getCampaignsInitialData() : undefined,
     });
 
 export const campaignsStatsQueryOptions = (isDemoMode: boolean) =>
     queryOptions({
         queryKey: ["campaigns", "stats", isDemoMode ? "demo" : "live"],
         queryFn: () => getMyCampaignsStats(isDemoMode),
-        staleTime: 5 * 60 * 1000,
+        staleTime: isDemoMode ? Number.POSITIVE_INFINITY : 5 * 60 * 1000,
+        initialData: isDemoMode ? getMyCampaignsStatsMock() : undefined,
     });
 
 export const campaignQueryOptions = (
@@ -54,7 +76,10 @@ export const campaignQueryOptions = (
 
             return campaign;
         },
-        staleTime: 5 * 60 * 1000,
+        staleTime: isDemoMode ? Number.POSITIVE_INFINITY : 5 * 60 * 1000,
+        initialData: isDemoMode
+            ? (getCampaignDetailsMockSync(campaignId) ?? undefined)
+            : undefined,
     });
 
 export function validateDraftCampaign(campaignId: string) {

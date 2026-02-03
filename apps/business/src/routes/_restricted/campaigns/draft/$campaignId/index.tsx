@@ -1,11 +1,13 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect } from "react";
+import { isDemoMode } from "@/config/auth";
 import { NewCampaign } from "@/module/campaigns/component/Creation/NewCampaign";
 import {
     campaignQueryOptions,
     validateDraftCampaign,
 } from "@/module/campaigns/queries/queryOptions";
+import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { CampaignError } from "@/module/common/component/RouteError";
 import { queryClient } from "@/module/common/provider/RootProvider";
 import { campaignStore, campaignToDraft } from "@/stores/campaignStore";
@@ -17,7 +19,7 @@ export const Route = createFileRoute(
         queryClient.prefetchQuery(
             campaignQueryOptions(
                 params.campaignId,
-                false,
+                isDemoMode(),
                 "",
                 validateDraftCampaign(params.campaignId)
             )
@@ -29,10 +31,11 @@ export const Route = createFileRoute(
 
 function CampaignsDraftPage() {
     const { campaignId } = Route.useParams();
+    const isDemo = useIsDemoMode();
     const { data: campaign } = useSuspenseQuery(
         campaignQueryOptions(
             campaignId,
-            false,
+            isDemo,
             "",
             validateDraftCampaign(campaignId)
         )

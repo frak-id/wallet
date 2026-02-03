@@ -112,8 +112,8 @@ describe("useGetCampaigns", () => {
         test("should fetch campaigns in demo mode", async ({
             queryWrapper,
         }: TestContext) => {
+            mockGetMyCampaigns.mockClear();
             mockUseIsDemoMode.mockReturnValue(true);
-            mockGetMyCampaigns.mockResolvedValue([mockCampaign]);
 
             const { result } = renderHook(() => useGetCampaigns(), {
                 wrapper: createSuspenseWrapper(queryWrapper.wrapper),
@@ -123,7 +123,9 @@ describe("useGetCampaigns", () => {
                 expect(result.current.data).toBeDefined();
             });
 
-            expect(result.current.data).toEqual([mockCampaign]);
+            // In demo mode, data comes from initialData (mock JSON), not queryFn
+            expect(result.current.data.length).toBeGreaterThan(0);
+            expect(mockGetMyCampaigns).not.toHaveBeenCalled();
         });
     });
 

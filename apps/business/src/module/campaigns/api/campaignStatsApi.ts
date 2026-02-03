@@ -19,7 +19,7 @@ export type CampaignStats = {
     costPerShare: string;
 };
 
-function getMyCampaignsStatsMock(): CampaignStats[] {
+export function getMyCampaignsStatsMock(): CampaignStats[] {
     return campaignStatsData.map((stat) => ({
         campaignId: stat.id,
         campaignName: stat.title,

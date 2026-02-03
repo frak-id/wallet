@@ -268,9 +268,12 @@ describe("useMyProducts", () => {
                 expect(demoResult.current.merchants).toBeDefined();
             });
 
-            // Both should succeed but with different query keys
+            // Live mode uses mocked empty data
             expect(liveResult.current.isEmpty).toBe(true);
-            expect(demoResult.current.isEmpty).toBe(true);
+            // Demo mode uses initialData from mock JSON (has products)
+            expect(demoResult.current.isEmpty).toBe(false);
+            // Demo mode should not call the API (uses initialData)
+            expect(mockGetMyMerchants).toHaveBeenCalledTimes(1); // Only live mode call
         });
 
         test("should use correct query key structure", async ({

@@ -42,6 +42,15 @@ export type MerchantData = {
     productId?: Hex;
 };
 
+function getMerchantMockData(merchantId: string): MerchantData {
+    const allMerchants = [
+        ...merchantsMockData.owned,
+        ...merchantsMockData.adminOf,
+    ];
+    const merchant = allMerchants.find((m) => m.id === merchantId);
+    return (merchant ?? merchantsMockData.owned[0]) as MerchantData;
+}
+
 /**
  * Query options for fetching merchant data
  */
@@ -53,17 +62,7 @@ export const merchantQueryOptions = (merchantId: string, isDemoMode: boolean) =>
 
             // Return mock data in demo mode
             if (isDemo) {
-                await new Promise((resolve) => setTimeout(resolve, 150));
-                const allMerchants = [
-                    ...merchantsMockData.owned,
-                    ...merchantsMockData.adminOf,
-                ];
-                const merchant = allMerchants.find((m) => m.id === merchantId);
-                if (merchant) {
-                    return merchant as MerchantData;
-                }
-                // Return first mock merchant as fallback
-                return merchantsMockData.owned[0] as MerchantData;
+                return getMerchantMockData(merchantId);
             }
 
             // On server during SSR, we can't make authenticated API calls reliably.
@@ -97,8 +96,19 @@ export const merchantQueryOptions = (merchantId: string, isDemoMode: boolean) =>
                 role: data.role,
             };
         },
-        staleTime: 5 * 60 * 1000, // 5 minutes
+        staleTime: isDemoMode ? Number.POSITIVE_INFINITY : 5 * 60 * 1000,
+        initialData: isDemoMode ? getMerchantMockData(merchantId) : undefined,
     });
+
+function getMyMerchantsMockData(): {
+    owned: MerchantData[];
+    adminOf: MerchantData[];
+} {
+    return {
+        owned: merchantsMockData.owned as MerchantData[],
+        adminOf: merchantsMockData.adminOf as MerchantData[],
+    };
+}
 
 /**
  * Query options for fetching user's merchants
@@ -111,11 +121,7 @@ export const myMerchantsQueryOptions = (isDemoMode: boolean) =>
 
             // Return mock data in demo mode
             if (isDemo) {
-                await new Promise((resolve) => setTimeout(resolve, 250));
-                return {
-                    owned: merchantsMockData.owned as MerchantData[],
-                    adminOf: merchantsMockData.adminOf as MerchantData[],
-                };
+                return getMyMerchantsMockData();
             }
 
             // On server during SSR without demo mode param, we can't make
@@ -139,5 +145,6 @@ export const myMerchantsQueryOptions = (isDemoMode: boolean) =>
                 adminOf: data.adminOf,
             };
         },
-        staleTime: 2 * 60 * 1000, // 2 minutes
+        staleTime: isDemoMode ? Number.POSITIVE_INFINITY : 2 * 60 * 1000,
+        initialData: isDemoMode ? getMyMerchantsMockData() : undefined,
     });
