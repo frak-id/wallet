@@ -212,6 +212,13 @@ export default defineConfig(({ mode, command }: ConfigEnv): UserConfig => {
                                 priority: 35,
                             },
 
+                            // TanStack libraries - Router + Query
+                            {
+                                name: "tanstack-vendor",
+                                test: /node_modules[\\/]@tanstack/,
+                                priority: 32,
+                            },
+
                             // UI vendors - ALL UI libraries together
                             {
                                 name: "ui-vendor",
