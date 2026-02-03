@@ -12,7 +12,7 @@ export type AppSpecificSsoMetadata = SsoMetadata & {
  */
 export type FullSsoParams = Omit<PrepareSsoParamsType, "metadata"> & {
     metadata: AppSpecificSsoMetadata;
-    merchantId: Hex;
+    merchantId: string;
 };
 
 /**
@@ -104,7 +104,7 @@ export type CompressedSsoData = {
     // language
     l?: "en" | "fr";
     // merchant id
-    m: Hex;
+    m: string;
     // metadata
     md: {
         // merchant name
