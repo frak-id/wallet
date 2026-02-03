@@ -1,27 +1,7 @@
+import type { SendInteractionParamsType } from "@frak-labs/core-sdk";
 import { authenticatedBackendApi } from "@frak-labs/wallet-shared";
 import { useMutation } from "@tanstack/react-query";
 import { useSafeResolvingContext } from "@/module/stores/hooks";
-
-/**
- * Parameters for sending interactions
- */
-type SendInteractionParams =
-    | {
-          type: "arrival";
-          landingUrl?: string;
-          utmSource?: string;
-          utmMedium?: string;
-          utmCampaign?: string;
-          utmTerm?: string;
-          utmContent?: string;
-      }
-    | { type: "sharing" }
-    | {
-          type: "custom";
-          customType: string;
-          data?: Record<string, unknown>;
-          idempotencyKey?: string;
-      };
 
 /**
  * Unified mutation hook for sending interactions to the backend.
@@ -34,7 +14,7 @@ export function useSendInteraction() {
 
     return useMutation({
         mutationKey: ["send-interaction", merchantId],
-        mutationFn: async (params: SendInteractionParams) => {
+        mutationFn: async (params: SendInteractionParamsType) => {
             if (!merchantId) return;
 
             try {

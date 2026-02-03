@@ -84,6 +84,20 @@ export async function processReferral(
         },
     });
 
+    // Send arrival interaction immediately via RPC (fire-and-forget)
+    // This happens BEFORE wallet check to capture anonymous arrivals via clientId
+    const utmParams = extractUtmParams();
+    sendInteraction(client, {
+        type: "arrival",
+        landingUrl:
+            typeof window !== "undefined" ? window.location.href : undefined,
+        utmSource: utmParams?.source,
+        utmMedium: utmParams?.medium,
+        utmCampaign: utmParams?.campaign,
+        utmTerm: utmParams?.term,
+        utmContent: utmParams?.content,
+    });
+
     // Helper to fetch a fresh wallet status
     let walletRequest = false;
     async function getFreshWalletStatus() {
@@ -107,7 +121,6 @@ export async function processReferral(
     try {
         // Do the core processing logic
         const { status, currentWallet } = await processReferralLogic({
-            client,
             initialWalletStatus: walletStatus,
             getFreshWalletStatus,
             // We can enforce this type cause of the condition at the start
@@ -160,19 +173,13 @@ export async function processReferral(
 }
 
 /**
- * Process referral logic - ensure user is logged in and track the referral
- * @param client - The Frak client instance
- * @param initialWalletStatus - The current wallet status
- * @param getFreshWalletStatus - Function to display modal and get wallet
- * @param frakContext - The frak context containing referrer info
+ * Process referral logic - ensure user is logged in and check for self-referral
  */
 async function processReferralLogic({
-    client,
     initialWalletStatus,
     getFreshWalletStatus,
     frakContext,
 }: {
-    client: FrakClient;
     initialWalletStatus?: WalletStatusReturnType;
     getFreshWalletStatus: () => Promise<Address | undefined>;
     frakContext: Pick<FrakContext, "r">;
@@ -190,16 +197,6 @@ async function processReferralLogic({
         return { status: "self-referral", currentWallet } as const;
     }
 
-    // Send arrival interaction via RPC (fire-and-forget)
-    sendInteraction(client, {
-        type: "arrival",
-        landingUrl:
-            typeof window !== "undefined" ? window.location.href : undefined,
-        utmParams: extractUtmParams(),
-    });
-
-    // Referral is tracked via the backend when user logs in with a referral context
-    // The interactionToken is sent with requests and backend handles attribution
     return { status: "success", currentWallet } as const;
 }
 

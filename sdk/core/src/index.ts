@@ -61,6 +61,8 @@ export type {
     PreparedInteraction,
     PrepareSsoParamsType,
     PrepareSsoReturnType,
+    // RPC Interaction
+    SendInteractionParamsType,
     SendTransactionModalStepType,
     SendTransactionReturnType,
     SendTransactionTxType,

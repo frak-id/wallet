@@ -1,5 +1,3 @@
-import type { UtmParams } from "../tracking";
-
 /**
  * Parameters for sending interactions via RPC
  *
@@ -12,7 +10,11 @@ export type SendInteractionParamsType =
     | {
           type: "arrival";
           landingUrl?: string;
-          utmParams?: UtmParams;
+          utmSource?: string;
+          utmMedium?: string;
+          utmCampaign?: string;
+          utmTerm?: string;
+          utmContent?: string;
       }
     | {
           type: "sharing";
