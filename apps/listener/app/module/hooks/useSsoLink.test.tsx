@@ -1,7 +1,7 @@
 import { renderHook } from "@testing-library/react";
 import type { Hex } from "viem";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { useSsoLink } from "./useGetOpenSsoLink";
+import { useSsoLink } from "./useSsoLink";
 
 vi.mock("@frak-labs/core-sdk", () => ({
     generateSsoUrl: vi.fn(),
@@ -48,7 +48,9 @@ describe("useSsoLink", () => {
                 lang: "en",
             },
             mockMerchantId,
-            mockMetadata.name
+            mockMetadata.name,
+            mockMetadata.css,
+            undefined
         );
     });
 
@@ -79,7 +81,9 @@ describe("useSsoLink", () => {
                 lang: undefined,
             },
             mockMerchantId,
-            mockMetadata.name
+            mockMetadata.name,
+            mockMetadata.css,
+            undefined
         );
     });
 
@@ -142,7 +146,9 @@ describe("useSsoLink", () => {
                 lang: "fr",
             },
             mockMerchantId,
-            mockMetadata.name
+            mockMetadata.name,
+            mockMetadata.css,
+            undefined
         );
     });
 

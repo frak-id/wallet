@@ -11,12 +11,12 @@ import {
     trackAuthInitiated,
     ua,
     useMountedTimeout,
-    useSsoLink,
 } from "@frak-labs/wallet-shared";
 import { type ReactNode, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { Hex } from "viem";
 import { useStore } from "zustand";
+import { useSsoLink } from "@/module/hooks/useSsoLink";
 import { useListenerWithRequestUI } from "@/module/providers/ListenerUiProvider";
 
 function buildDeepLinkHref(pairing: { id: string; code: string }): string {
