@@ -4,6 +4,7 @@ import { trackAuthCompleted } from "../../common/analytics";
 import { getSafeSession } from "../../common/utils/safeSession";
 import { sessionStore } from "../../stores/sessionStore";
 import type {
+    OriginIdentityNode,
     OriginPairingState,
     WsOriginMessage,
     WsOriginRequest,
@@ -41,15 +42,16 @@ export class OriginPairingClient extends BasePairingClient<
         };
     }
 
-    /**
-     * Initiate a new pairing
-     */
-    async initiatePairing(onSuccess?: OnPairingSuccessCallback) {
-        this.onPairingSuccess = onSuccess ?? null;
+    async initiatePairing(options?: {
+        onSuccess?: OnPairingSuccessCallback;
+        originNode?: OriginIdentityNode;
+    }) {
+        this.onPairingSuccess = options?.onSuccess ?? null;
 
         this.forceConnect(() =>
             this.connect({
                 action: "initiate",
+                originNode: options?.originNode,
             })
         );
     }

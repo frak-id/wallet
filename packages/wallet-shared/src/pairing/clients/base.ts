@@ -4,6 +4,7 @@ import { createStore } from "zustand/vanilla";
 import { authenticatedWalletApi } from "../../common/api/backendClient";
 import {
     type BasePairingState,
+    type OriginIdentityNode,
     WsCloseCode,
     type WsOriginMessage,
     type WsOriginRequest,
@@ -22,6 +23,7 @@ export type PairingWsEventListener = (
 type ConnectionParams =
     | {
           action: "initiate";
+          originNode?: OriginIdentityNode;
       }
     | {
           action: "join";
@@ -86,17 +88,22 @@ export abstract class BasePairingClient<
         this._store.setState(updater);
     }
 
-    /**
-     * Connect to the pairing websocket
-     */
     protected connect(params: ConnectionParams) {
         if (this.connection) {
             console.warn("Pairing client is already connected");
             return;
         }
 
+        const query =
+            "originNode" in params && params.originNode
+                ? {
+                      ...params,
+                      originNode: btoa(JSON.stringify(params.originNode)),
+                  }
+                : params;
+
         this.connection = authenticatedWalletApi.pairings.ws.subscribe({
-            query: params,
+            query,
         });
         this.setState({ status: "connecting" } as Partial<TState>);
 

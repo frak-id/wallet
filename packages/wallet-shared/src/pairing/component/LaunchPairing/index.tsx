@@ -6,7 +6,7 @@ import { create, useStore } from "zustand";
 import { trackAuthInitiated } from "../../../common/analytics";
 import type { OnPairingSuccessCallback } from "../../clients/origin";
 import { getOriginPairingClient } from "../../clients/store";
-import type { OriginPairingState } from "../../types";
+import type { OriginIdentityNode, OriginPairingState } from "../../types";
 import { PairingCode } from "../PairingCode";
 import { PairingStatus } from "../PairingStatus";
 import styles from "./index.module.css";
@@ -25,8 +25,10 @@ const useShowBrighterQRCodeStore = create<{
  */
 export function LaunchPairing({
     onSuccess,
+    originNode,
 }: {
     onSuccess?: OnPairingSuccessCallback;
+    originNode?: OriginIdentityNode;
 }) {
     const showBrighterQRCode = useShowBrighterQRCodeStore(
         (state) => state.show
@@ -65,7 +67,7 @@ export function LaunchPairing({
     }, [setShowBrighterQRCode]);
 
     useEffect(() => {
-        client.initiatePairing(onSuccess);
+        client.initiatePairing({ onSuccess, originNode });
         trackAuthInitiated("pairing");
     }, [client, onSuccess]);
 

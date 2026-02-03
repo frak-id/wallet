@@ -111,7 +111,7 @@ describe("LaunchPairing", () => {
             const onSuccess = vi.fn();
             render(<LaunchPairing onSuccess={onSuccess} />);
 
-            expect(mockInitiatePairing).toHaveBeenCalledWith(onSuccess);
+            expect(mockInitiatePairing).toHaveBeenCalledWith({ onSuccess });
         });
     });
 

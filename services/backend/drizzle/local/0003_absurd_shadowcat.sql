@@ -1,0 +1,1 @@
+ALTER TABLE "device_pairing" ADD COLUMN "origin_node" jsonb;

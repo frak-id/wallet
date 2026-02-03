@@ -34,6 +34,7 @@ export { pairingKey } from "./queryKeys";
 // Types
 export type {
     BasePairingState,
+    OriginIdentityNode,
     TargetPairingIdState,
     TargetPairingPendingSignature,
     TargetPairingState,

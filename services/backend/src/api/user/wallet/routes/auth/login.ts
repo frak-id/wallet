@@ -66,19 +66,16 @@ export const loginRoutes = new Elysia()
                 });
 
             const clientId = headers["x-frak-client-id"];
-            if (clientId || merchantId) {
+            if (clientId && merchantId) {
                 try {
                     const nodes: IdentityNode[] = [
                         { type: "wallet", value: walletAddress },
-                    ];
-
-                    if (clientId && merchantId) {
-                        nodes.push({
+                        {
                             type: "anonymous_fingerprint",
                             value: clientId,
                             merchantId,
-                        });
-                    }
+                        },
+                    ];
 
                     await OrchestrationContext.orchestrators.identity.resolveAndAssociate(
                         nodes
@@ -161,19 +158,16 @@ export const loginRoutes = new Elysia()
                 });
 
             const clientId = headers["x-frak-client-id"];
-            if (clientId || merchantId) {
+            if (clientId && merchantId) {
                 try {
                     const nodes: IdentityNode[] = [
                         { type: "wallet", value: address },
-                    ];
-
-                    if (clientId && merchantId) {
-                        nodes.push({
+                        {
                             type: "anonymous_fingerprint",
                             value: clientId,
                             merchantId,
-                        });
-                    }
+                        },
+                    ];
 
                     await OrchestrationContext.orchestrators.identity.resolveAndAssociate(
                         nodes
