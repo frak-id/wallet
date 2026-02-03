@@ -1,6 +1,5 @@
 import type { IFrameRpcSchema } from "@frak-labs/core-sdk";
 import type { SsoRpcSchema } from "@frak-labs/wallet-shared";
-import type { Address } from "viem";
 
 /**
  * Augmented context for wallet RPC handlers
@@ -35,11 +34,6 @@ export type WalletRpcContext = {
      * Whether this context was auto-computed or from handshake
      */
     isAutoContext: boolean;
-
-    /**
-     * Optional wallet referrer address
-     */
-    walletReferrer?: Address;
 
     /**
      * Anonymous client ID from the SDK for identity tracking

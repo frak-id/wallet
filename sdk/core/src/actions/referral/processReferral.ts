@@ -89,6 +89,7 @@ export async function processReferral(
     const utmParams = extractUtmParams();
     sendInteraction(client, {
         type: "arrival",
+        referrerWallet: frakContext.r,
         landingUrl:
             typeof window !== "undefined" ? window.location.href : undefined,
         utmSource: utmParams?.source,

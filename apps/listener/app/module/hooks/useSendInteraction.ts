@@ -10,7 +10,7 @@ import { useSafeResolvingContext } from "@/module/stores/hooks";
  * Note: Fire-and-forget - errors are caught and logged, not thrown.
  */
 export function useSendInteraction() {
-    const { merchantId, walletReferrer } = useSafeResolvingContext();
+    const { merchantId } = useSafeResolvingContext();
 
     return useMutation({
         mutationKey: ["send-interaction", merchantId],
@@ -21,10 +21,6 @@ export function useSendInteraction() {
                 await authenticatedBackendApi.user.track.interaction.post({
                     ...params,
                     merchantId,
-                    // Add referrerWallet for arrival type
-                    ...(params.type === "arrival" && walletReferrer
-                        ? { referrerWallet: walletReferrer }
-                        : {}),
                 });
             } catch (error) {
                 // Fire-and-forget: log but don't throw
