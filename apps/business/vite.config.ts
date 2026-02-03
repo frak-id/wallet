@@ -39,6 +39,13 @@ export default defineConfig({
         }),
         viteReact(),
     ],
+    resolve: {
+        // Prefer production exports for smaller bundles when building
+        conditions:
+            process.env.NODE_ENV === "production"
+                ? ["production", "default"]
+                : ["development"],
+    },
     // Replace some env variable when it's needed
     define: {
         "process.env.STAGE": JSON.stringify(process.env.STAGE),
