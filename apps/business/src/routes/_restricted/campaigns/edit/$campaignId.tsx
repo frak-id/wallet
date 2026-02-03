@@ -15,7 +15,7 @@ import { campaignStore, campaignToDraft } from "@/stores/campaignStore";
 export const Route = createFileRoute("/_restricted/campaigns/edit/$campaignId")(
     {
         loader: ({ params }) => {
-            return queryClient.ensureQueryData(
+            queryClient.prefetchQuery(
                 campaignQueryOptions(
                     params.campaignId,
                     isDemoMode(),

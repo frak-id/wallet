@@ -10,9 +10,7 @@ import { queryClient } from "@/module/common/provider/RootProvider";
 
 export const Route = createFileRoute("/_restricted/campaigns/performance")({
     loader: () => {
-        return queryClient.ensureQueryData(
-            campaignsStatsQueryOptions(isDemoMode())
-        );
+        queryClient.prefetchQuery(campaignsStatsQueryOptions(isDemoMode()));
     },
     component: CampaignsPerformancePage,
     errorComponent: (props) => (

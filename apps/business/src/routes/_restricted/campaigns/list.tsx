@@ -10,9 +10,7 @@ import { queryClient } from "@/module/common/provider/RootProvider";
 
 export const Route = createFileRoute("/_restricted/campaigns/list")({
     loader: () => {
-        return queryClient.ensureQueryData(
-            campaignsListQueryOptions(isDemoMode())
-        );
+        queryClient.prefetchQuery(campaignsListQueryOptions(isDemoMode()));
     },
     component: CampaignsListPage,
     errorComponent: (props) => (

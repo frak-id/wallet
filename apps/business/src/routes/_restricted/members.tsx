@@ -13,7 +13,7 @@ export const Route = createFileRoute("/_restricted/members")({
     loader: () => {
         const initialFilters = membersStore.getState().tableFilters;
         const isDemoMode = useAuthStore.getState().token === "demo-token";
-        return queryClient.ensureQueryData(
+        queryClient.prefetchQuery(
             membersPageQueryOptions(initialFilters, isDemoMode)
         );
     },

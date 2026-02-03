@@ -9,9 +9,7 @@ import { myMerchantsQueryOptions } from "@/module/dashboard/queries/queryOptions
 
 export const Route = createFileRoute("/_restricted/dashboard")({
     loader: () => {
-        return queryClient.ensureQueryData(
-            myMerchantsQueryOptions(isDemoMode())
-        );
+        queryClient.prefetchQuery(myMerchantsQueryOptions(isDemoMode()));
     },
     component: Dashboard,
     errorComponent: CriticalError,

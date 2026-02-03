@@ -7,9 +7,7 @@ import { merchantQueryOptions } from "@/module/merchant/queries/queryOptions";
 export const Route = createFileRoute("/_restricted/merchant/$id/funding")({
     loader: ({ params }) => {
         const demoMode = isDemoMode();
-        return queryClient.ensureQueryData(
-            merchantQueryOptions(params.id, demoMode)
-        );
+        queryClient.prefetchQuery(merchantQueryOptions(params.id, demoMode));
     },
     component: MerchantFundingPage,
 });

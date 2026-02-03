@@ -61,7 +61,147 @@
     </head>
 
     <body>
-        <div id="root"></div>
+        <div id="root">
+            <!-- Initial loading spinner - replaced when React mounts -->
+            <style>
+            html,
+            body,
+            #root {
+                margin: 0;
+                padding: 0;
+                min-height: 100vh;
+            }
+            .initial-loader {
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                gap: 24px;
+                min-height: 100vh;
+                background-color: #001432;
+                font-family: Inter, system-ui, sans-serif;
+                opacity: 0;
+                animation: loader-fade-in 200ms ease-out 200ms forwards;
+            }
+            @keyframes loader-fade-in {
+                to {
+                    opacity: 1;
+                }
+            }
+            .initial-loader__text {
+                color: rgba(255, 255, 255, 0.6);
+                font-size: 14px;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+            .spinner {
+                width: 20px;
+                height: 20px;
+                position: relative;
+                opacity: 0.65;
+            }
+            .spinner span {
+                position: absolute;
+                top: 0;
+                left: calc(50% - 6.25% / 2);
+                width: 12.5%;
+                height: 100%;
+                animation: spinner-fade 800ms linear infinite;
+            }
+            .spinner span::before {
+                content: "";
+                display: block;
+                width: 100%;
+                height: 30%;
+                border-radius: 3px;
+                background-color: #fff;
+            }
+            .spinner span:nth-child(1) {
+                transform: rotate(0deg);
+                animation-delay: -800ms;
+            }
+            .spinner span:nth-child(2) {
+                transform: rotate(45deg);
+                animation-delay: -700ms;
+            }
+            .spinner span:nth-child(3) {
+                transform: rotate(90deg);
+                animation-delay: -600ms;
+            }
+            .spinner span:nth-child(4) {
+                transform: rotate(135deg);
+                animation-delay: -500ms;
+            }
+            .spinner span:nth-child(5) {
+                transform: rotate(180deg);
+                animation-delay: -400ms;
+            }
+            .spinner span:nth-child(6) {
+                transform: rotate(225deg);
+                animation-delay: -300ms;
+            }
+            .spinner span:nth-child(7) {
+                transform: rotate(270deg);
+                animation-delay: -200ms;
+            }
+            .spinner span:nth-child(8) {
+                transform: rotate(315deg);
+                animation-delay: -100ms;
+            }
+            @keyframes spinner-fade {
+                from {
+                    opacity: 1;
+                }
+                to {
+                    opacity: 0.25;
+                }
+            }
+            </style>
+            <div class="initial-loader">
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="64"
+                    height="64"
+                    fill="none"
+                    viewBox="0 0 36 36"
+                >
+                    <path
+                        fill="url(#lg)"
+                        d="M12.29 27.878L.46 23.875a.348.348 0 00-.46.33v7.302c0 .149.095.28.236.329l11.83 4.002a.348.348 0 00.46-.33v-7.301a.347.347 0 00-.236-.33zm12.306-14.003l-11.834 4.002a.348.348 0 00-.236.33v7.301c0 .238.234.406.46.33l11.832-4.003a.348.348 0 00.237-.33v-7.301a.348.348 0 00-.46-.33zM35.708.01l-19.81 6.378a.348.348 0 00-.242.331v7.482c0 .148.148.254.292.207l19.81-6.378a.348.348 0 00.242-.33V.218a.222.222 0 00-.292-.208z"
+                    />
+                    <defs>
+                        <linearGradient
+                            id="lg"
+                            x1="1.677"
+                            x2="36.6"
+                            y1="29.793"
+                            y2="5.359"
+                            gradientUnits="userSpaceOnUse"
+                        >
+                            <stop offset="0.02" stop-color="#8B5EB3"/>
+                            <stop offset="0.04" stop-color="#B155B3"/>
+                            <stop offset="0.09" stop-color="#B13FB3"/>
+                            <stop offset="0.14" stop-color="#B12FB3"/>
+                            <stop offset="0.21" stop-color="#B125B3"/>
+                            <stop offset="0.29" stop-color="#B123B3"/>
+                            <stop offset="0.42" stop-color="#6E5CCA"/>
+                            <stop offset="0.55" stop-color="#338EDE"/>
+                            <stop offset="0.65" stop-color="#0FAEEB"/>
+                            <stop offset="0.7" stop-color="#02BAF0"/>
+                            <stop offset="0.9" stop-color="#02E6D5"/>
+                        </linearGradient>
+                    </defs>
+                </svg>
+                <div class="initial-loader__text">
+                    <div class="spinner">
+                        <span></span><span></span><span></span><span></span>
+                        <span></span><span></span><span></span><span></span>
+                    </div>
+                    Loading dashboard...
+                </div>
+            </div>
+        </div>
         <script type="module" src="/src/main.tsx"></script>
     </body>
 </html>

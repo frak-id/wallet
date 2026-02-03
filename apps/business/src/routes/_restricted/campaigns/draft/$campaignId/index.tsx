@@ -1,4 +1,6 @@
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { NewCampaign } from "@/module/campaigns/component/Creation/NewCampaign";
 import {
     campaignQueryOptions,
@@ -11,12 +13,8 @@ import { campaignStore, campaignToDraft } from "@/stores/campaignStore";
 export const Route = createFileRoute(
     "/_restricted/campaigns/draft/$campaignId/"
 )({
-    loader: async ({ params }) => {
-        const storeDraftId = campaignStore.getState().draft.id;
-        if (storeDraftId === params.campaignId) {
-            return null;
-        }
-        const campaign = await queryClient.ensureQueryData(
+    loader: ({ params }) => {
+        queryClient.prefetchQuery(
             campaignQueryOptions(
                 params.campaignId,
                 false,
@@ -24,13 +22,30 @@ export const Route = createFileRoute(
                 validateDraftCampaign(params.campaignId)
             )
         );
-        campaignStore.getState().setDraft(campaignToDraft(campaign));
-        return campaign;
     },
     component: CampaignsDraftPage,
     errorComponent: CampaignError,
 });
 
 function CampaignsDraftPage() {
+    const { campaignId } = Route.useParams();
+    const { data: campaign } = useSuspenseQuery(
+        campaignQueryOptions(
+            campaignId,
+            false,
+            "",
+            validateDraftCampaign(campaignId)
+        )
+    );
+
+    const setDraft = campaignStore((state) => state.setDraft);
+    const draftId = campaignStore((state) => state.draft.id);
+
+    useEffect(() => {
+        if (draftId !== campaignId) {
+            setDraft(campaignToDraft(campaign));
+        }
+    }, [campaign, campaignId, draftId, setDraft]);
+
     return <NewCampaign title="Edit campaign" />;
 }
