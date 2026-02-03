@@ -3,7 +3,7 @@ import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import viteReact from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 import viteTsConfigPaths from "vite-tsconfig-paths";
-import { lightningCssConfig } from "../../packages/dev-tooling";
+import { lightningCssConfig, onwarn } from "../../packages/dev-tooling";
 
 /**
  * Get SST secret value - handles both sst dev (plain env) and sst shell (SST_RESOURCE_* JSON format)
@@ -63,6 +63,42 @@ export default defineConfig({
             getSstSecret("FUNDING_ON_RAMP_URL")
         ),
         // Not placing mongo or session encryption key, that's only server side normally
+    },
+    build: {
+        rolldownOptions: {
+            output: {
+                advancedChunks: {
+                    minShareCount: 2,
+                    groups: [
+                        {
+                            name: "react-vendor",
+                            test: /node_modules[\\/](react|react-dom|react[\\/]jsx-runtime)/,
+                            priority: 40,
+                        },
+                        {
+                            name: "blockchain-vendor",
+                            test: /node_modules[\\/](viem|@noble|@scure)/,
+                            priority: 35,
+                        },
+                        {
+                            name: "tanstack-vendor",
+                            test: /node_modules[\\/]@tanstack/,
+                            priority: 32,
+                        },
+                        {
+                            name: "ui-vendor",
+                            test: /node_modules[\\/](@radix-ui|lucide-react|class-variance-authority|cmdk|react-hook-form)/,
+                            priority: 30,
+                        },
+                        {
+                            name: "common",
+                            priority: 10,
+                        },
+                    ],
+                },
+            },
+            onwarn,
+        },
     },
     server: {
         port: 3022,
