@@ -142,7 +142,8 @@ export const handlePrepareSso: PrepareSsoHandler = (params, context) => {
         ssoInfo,
         context.merchantId,
         name,
-        css
+        css,
+        context.clientId
     );
 
     return Promise.resolve({ ssoUrl });
@@ -193,7 +194,8 @@ export const handleOpenSso: OpenSsoHandler = async (params, context) => {
             ssoInfo,
             context.merchantId,
             name,
-            css
+            css,
+            context.clientId
         );
 
         // Trigger redirect via lifecycle event

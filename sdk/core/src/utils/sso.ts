@@ -44,7 +44,8 @@ export function generateSsoUrl(
     params: PrepareSsoParamsType,
     merchantId: Hex,
     name: string,
-    css?: string
+    css?: string,
+    clientId?: string
 ): string {
     // Build full params with app-specific metadata
     const fullParams: FullSsoParams = {
@@ -58,7 +59,7 @@ export function generateSsoUrl(
             logoUrl: params.metadata?.logoUrl,
             homepageLink: params.metadata?.homepageLink,
         },
-        clientId: getClientId(),
+        clientId: clientId ?? getClientId(),
     };
 
     // Compress params to minimal format
