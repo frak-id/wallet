@@ -21,13 +21,13 @@ start_dev_server() {
         echo "[tauri-dev] Dev server already running at $DEV_SERVER_URL"
         return 0
     fi
-    
+
     echo "[tauri-dev] Starting dev server..."
     cd "$WALLET_DIR"
     bun run build:sw
     vite dev &
     VITE_PID=$!
-    
+
     # Wait for server to be ready
     local retries=30
     while ! curl -s --connect-timeout 1 "$DEV_SERVER_URL" >/dev/null 2>&1; do
@@ -43,22 +43,23 @@ start_dev_server() {
 
 setup_adb_reverse() {
     echo "[tauri-dev] Setting up ADB reverse port forwarding..."
-    
+
     if ! command -v adb &> /dev/null; then
         echo "[tauri-dev] WARNING: adb not found, skipping port forwarding"
         return 0
     fi
-    
+
     if ! adb devices | grep -q "device$"; then
         echo "[tauri-dev] WARNING: No Android device connected, skipping port forwarding"
         return 0
     fi
-    
+
     adb reverse tcp:3010 tcp:3010
+    adb reverse tcp:3012 tcp:3012
     adb reverse tcp:3013 tcp:3013
     adb reverse tcp:3014 tcp:3014
     adb reverse tcp:3030 tcp:3030
-    
+
     echo "[tauri-dev] ADB reverse ports configured (3010=wallet, 3013-3014=examples, 3030=backend)"
 }
 
