@@ -2,15 +2,15 @@ import type { SendInteractionParamsType } from "@frak-labs/core-sdk";
 import { authenticatedBackendApi } from "@frak-labs/wallet-shared";
 import { useMutation } from "@tanstack/react-query";
 import { extractUtmParams } from "@/module/common/utmParams";
-import { useSafeResolvingContext } from "@/module/stores/hooks";
+import { resolvingContextStore } from "../stores/resolvingContextStore";
 
 export function useSendInteraction() {
-    const { merchantId } = useSafeResolvingContext();
+    const context = resolvingContextStore((state) => state.context);
 
     return useMutation({
-        mutationKey: ["send-interaction", merchantId],
+        mutationKey: ["send-interaction", context?.merchantId],
         mutationFn: async (params: SendInteractionParamsType) => {
-            if (!merchantId) return;
+            if (!context?.merchantId) return;
 
             const enrichedParams =
                 params.type === "arrival" && params.landingUrl
@@ -20,7 +20,7 @@ export function useSendInteraction() {
             try {
                 await authenticatedBackendApi.user.track.interaction.post({
                     ...enrichedParams,
-                    merchantId,
+                    merchantId: context.merchantId,
                 });
             } catch (error) {
                 console.warn(
