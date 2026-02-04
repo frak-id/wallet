@@ -8,7 +8,7 @@ import type {
     DisplayEmbeddedWalletParamsType,
     DisplayEmbeddedWalletResultType,
 } from "./rpc/embedded";
-
+import type { SendInteractionParamsType } from "./rpc/interaction";
 import type { GetMerchantInformationReturnType } from "./rpc/merchantInformation";
 import type {
     OpenSsoParamsType,
@@ -132,5 +132,15 @@ export type IFrameRpcSchema = [
             metadata: FrakWalletSdkConfig["metadata"],
         ];
         ReturnType: DisplayEmbeddedWalletResultType;
+    },
+    /**
+     * Method to send interactions (arrival, sharing, custom events)
+     * Fire-and-forget method - no return value expected
+     * merchantId and clientId are resolved from context
+     */
+    {
+        Method: "frak_sendInteraction";
+        Parameters: [interaction: SendInteractionParamsType];
+        ReturnType: undefined;
     },
 ];

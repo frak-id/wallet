@@ -1,4 +1,4 @@
-import type { Address, Hex } from "viem";
+import type { Address } from "viem";
 import type { FullInteractionTypesKey } from "../../constants/interactionTypes";
 
 /**
@@ -19,7 +19,7 @@ export type GetMerchantInformationReturnType = {
     /**
      * Current merchant id
      */
-    id: Hex;
+    id: string;
     /**
      * Some metadata
      */

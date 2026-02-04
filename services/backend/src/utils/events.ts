@@ -1,11 +1,6 @@
+import type { InteractionType } from "../domain/rewards";
+
 export type FrakEvents = {
-    newInteraction: [{ type: InteractionEventType }];
+    newInteraction: [{ type: InteractionType }];
     newPendingRewards: [{ count: number }];
 };
-
-type InteractionEventType =
-    | "referral_arrival"
-    | "create_referral_link"
-    | "purchase"
-    | "wallet_connect"
-    | "identity_merge";

@@ -1,5 +1,5 @@
 import type { Address } from "viem";
-import type { RewardRecipient } from "../schemas";
+import type { RecipientType } from "../../rewards/schemas";
 import type {
     CalculatedReward,
     FixedRewardDefinition,
@@ -253,7 +253,7 @@ export class RewardCalculator {
     }
 
     private resolveRecipient(
-        recipient: RewardRecipient,
+        recipient: RecipientType,
         context: RuleContext
     ): { identityGroupId: string; wallet: Address | null } | null {
         switch (recipient) {

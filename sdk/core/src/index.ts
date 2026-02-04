@@ -61,6 +61,8 @@ export type {
     PreparedInteraction,
     PrepareSsoParamsType,
     PrepareSsoReturnType,
+    // RPC Interaction
+    SendInteractionParamsType,
     SendTransactionModalStepType,
     SendTransactionReturnType,
     SendTransactionTxType,
@@ -90,7 +92,6 @@ export {
     createIframe,
     DEEP_LINK_SCHEME,
     decompressJsonFromB64,
-    extractUtmParams,
     FrakContextManager,
     type FrakEvent,
     type FullSsoParams,

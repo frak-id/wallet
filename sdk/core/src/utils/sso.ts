@@ -42,7 +42,7 @@ export type FullSsoParams = Omit<PrepareSsoParamsType, "metadata"> & {
 export function generateSsoUrl(
     walletUrl: string,
     params: PrepareSsoParamsType,
-    merchantId: Hex,
+    merchantId: string,
     name: string,
     css?: string,
     clientId?: string
@@ -103,7 +103,7 @@ export type CompressedSsoData = {
     // Potential id from backend
     id?: Hex;
     // Client id
-    cId?: string;
+    cId: string;
     // redirect url
     r?: string;
     // direct exit

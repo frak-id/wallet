@@ -17,6 +17,7 @@ describe("ssoDataCompression", () => {
                     l: "https://example.com/logo.png",
                     h: "https://example.com",
                 },
+                cId: "client-123",
             };
 
             const result = compressedSsoToParams(compressed);
@@ -40,6 +41,7 @@ describe("ssoDataCompression", () => {
                 r: "https://example.com/callback",
                 m: "0x1234567890abcdef" as Hex,
                 md: { n: "Minimal App" },
+                cId: "client-123",
             };
 
             const result = compressedSsoToParams(compressed);
@@ -58,6 +60,7 @@ describe("ssoDataCompression", () => {
                 l: "fr",
                 m: "0xabcdef1234567890" as Hex,
                 md: { n: "No Metadata App" },
+                cId: "client-123",
             };
 
             const result = compressedSsoToParams(compressed);
@@ -77,6 +80,7 @@ describe("ssoDataCompression", () => {
                     n: "Partial App",
                     l: "https://example.com/logo.png",
                 },
+                cId: "client-123",
             };
 
             const result = compressedSsoToParams(compressed);
@@ -101,6 +105,7 @@ describe("ssoDataCompression", () => {
                     l: "logo-url",
                     h: "home-url",
                 },
+                cId: "client-123",
             };
 
             const result = compressedSsoToParams(compressed);
@@ -121,6 +126,7 @@ describe("ssoDataCompression", () => {
                 d: false,
                 m: "0x1234567890abcdef" as Hex,
                 md: { n: "Test App" },
+                cId: "client-123",
             };
 
             const result = compressedSsoToParams(compressed);
@@ -133,6 +139,7 @@ describe("ssoDataCompression", () => {
                 r: "https://example.com",
                 m: "0x1234567890abcdef" as Hex,
                 md: { n: "Test App" },
+                cId: "client-123",
             };
 
             const result = compressedSsoToParams(compressed);
@@ -152,6 +159,7 @@ describe("ssoDataCompression", () => {
                     l: "https://cdn.example.com/logo.svg",
                     h: "https://example.com/home?utm_source=sso",
                 },
+                cId: "client-123",
             };
 
             const result = compressedSsoToParams(compressed);

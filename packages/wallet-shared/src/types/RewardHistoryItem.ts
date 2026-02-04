@@ -8,12 +8,11 @@ export type RewardStatus =
 
 export type TriggerType =
     | "referral"
+    | "create_referral_link"
     | "purchase"
-    | "wallet_connect"
-    | "identity_merge"
-    | "create_referral_link";
+    | "custom";
 
-export type RecipientType = "referee" | "referrer" | "user";
+export type RecipientType = "referee" | "referrer";
 
 export type MerchantInfo = {
     name: string;

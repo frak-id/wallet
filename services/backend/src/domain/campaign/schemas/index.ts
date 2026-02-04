@@ -1,5 +1,11 @@
 import { t } from "@backend-utils";
 import type { Static, TSchema } from "elysia";
+import {
+    AssetTypeSchema,
+    type InteractionType,
+    InteractionTypeSchema,
+    RecipientTypeSchema,
+} from "../../rewards/schemas";
 
 export const CampaignStatusSchema = t.Union([
     t.Literal("draft"),
@@ -9,15 +15,8 @@ export const CampaignStatusSchema = t.Union([
 ]);
 export type CampaignStatus = Static<typeof CampaignStatusSchema>;
 
-export const CampaignTriggerSchema = t.Union([
-    t.Literal("referral"),
-    t.Literal("create_referral_link"),
-    t.Literal("purchase"),
-    t.Literal("signup"),
-    t.Literal("wallet_connect"),
-    t.Literal("custom"),
-]);
-export type CampaignTrigger = Static<typeof CampaignTriggerSchema>;
+export const CampaignTriggerSchema = InteractionTypeSchema;
+export type CampaignTrigger = InteractionType;
 
 export const ConditionOperatorSchema = t.Union([
     t.Literal("eq"),
@@ -77,15 +76,6 @@ export const RuleConditionsSchema = t.Union([
 ]);
 export type RuleConditions = RuleCondition[] | ConditionGroup;
 
-export const RewardRecipientSchema = t.Union([
-    t.Literal("referrer"),
-    t.Literal("referee"),
-]);
-export type RewardRecipient = Static<typeof RewardRecipientSchema>;
-
-export const RewardAssetTypeSchema = t.Literal("token");
-export type RewardAssetType = Static<typeof RewardAssetTypeSchema>;
-
 export const RewardChainingSchema = t.Object({
     deperditionPerLevel: t.Number(),
     maxDepth: t.Optional(t.Number()),
@@ -100,8 +90,8 @@ export const RewardTierSchema = t.Object({
 export type RewardTier = Static<typeof RewardTierSchema>;
 
 export const FixedRewardDefinitionSchema = t.Object({
-    recipient: RewardRecipientSchema,
-    type: RewardAssetTypeSchema,
+    recipient: RecipientTypeSchema,
+    type: AssetTypeSchema,
     amountType: t.Literal("fixed"),
     amount: t.Number(),
     token: t.Optional(t.Hex()),
@@ -111,8 +101,8 @@ export const FixedRewardDefinitionSchema = t.Object({
 export type FixedRewardDefinition = Static<typeof FixedRewardDefinitionSchema>;
 
 export const PercentageRewardDefinitionSchema = t.Object({
-    recipient: RewardRecipientSchema,
-    type: RewardAssetTypeSchema,
+    recipient: RecipientTypeSchema,
+    type: AssetTypeSchema,
     amountType: t.Literal("percentage"),
     percent: t.Number(),
     percentOf: t.Union([
@@ -130,8 +120,8 @@ export type PercentageRewardDefinition = Static<
 >;
 
 export const TieredRewardDefinitionSchema = t.Object({
-    recipient: RewardRecipientSchema,
-    type: RewardAssetTypeSchema,
+    recipient: RecipientTypeSchema,
+    type: AssetTypeSchema,
     amountType: t.Literal("tiered"),
     tierField: t.String(),
     tiers: t.Array(RewardTierSchema),

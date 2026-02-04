@@ -7,12 +7,9 @@ import { IdentityContext } from "../../../../domain/identity";
 import { RewardsContext } from "../../../../domain/rewards/context";
 import {
     AssetStatusSchema,
+    InteractionTypeSchema,
     RecipientTypeSchema,
 } from "../../../../domain/rewards/schemas";
-import {
-    mapInteractionType,
-    TriggerTypeSchema,
-} from "../../../../domain/rewards/utils/interactionTypeMapper";
 import { WalletContext } from "../../../../domain/wallet";
 
 async function resolveIdentityGroupId(
@@ -130,8 +127,6 @@ export const rewardsRoutes = new Elysia({ prefix: "/rewards" }).get(
                 formatUnits(BigInt(log.amount), decimals)
             );
 
-            const trigger = mapInteractionType(log.interactionType);
-
             return {
                 id: log.id,
                 amount,
@@ -141,7 +136,7 @@ export const rewardsRoutes = new Elysia({ prefix: "/rewards" }).get(
                 createdAt: log.createdAt,
                 settledAt: log.settledAt ?? undefined,
                 onchainTxHash: log.onchainTxHash ?? undefined,
-                trigger: trigger ?? undefined,
+                trigger: log.interactionType ?? undefined,
                 merchant: {
                     name: log.merchantName,
                     domain: log.merchantDomain,
@@ -173,7 +168,7 @@ export const rewardsRoutes = new Elysia({ prefix: "/rewards" }).get(
                         createdAt: t.Date(),
                         settledAt: t.Optional(t.Date()),
                         onchainTxHash: t.Optional(t.String()),
-                        trigger: t.Optional(TriggerTypeSchema),
+                        trigger: t.Optional(InteractionTypeSchema),
                         merchant: t.Object({
                             name: t.String(),
                             domain: t.String(),

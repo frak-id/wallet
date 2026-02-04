@@ -37,6 +37,7 @@ export type {
     CampaignTrigger,
     ConditionGroup,
     ConditionOperator,
+    CustomInteractionContext,
     EvaluationResult,
     FixedRewardDefinition,
     PercentageRewardDefinition,

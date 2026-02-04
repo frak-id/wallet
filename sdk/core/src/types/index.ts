@@ -38,6 +38,7 @@ export type {
     LoggedInEmbeddedView,
     LoggedOutEmbeddedView,
 } from "./rpc/embedded";
+export type { SendInteractionParamsType } from "./rpc/interaction";
 export type {
     GetMerchantInformationReturnType,
     TokenAmountType,

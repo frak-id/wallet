@@ -7,7 +7,6 @@ import type {
     ModalRpcStepsResultType,
     ModalStepTypes,
 } from "@frak-labs/core-sdk";
-import type { Address } from "viem";
 
 /**
  * Type for modal step keys
@@ -26,7 +25,6 @@ export interface IFrameResolvingContext {
     origin: string;
     sourceUrl: string;
     isAutoContext: boolean;
-    walletReferrer?: Address;
     /**
      * Anonymous client ID from the SDK (partner site localStorage)
      * Used for identity tracking in backend API calls

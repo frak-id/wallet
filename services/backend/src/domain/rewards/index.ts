@@ -29,7 +29,6 @@ export type {
     InteractionPayload,
     PurchasePayload,
     SettlementResult,
-    WalletConnectPayload,
 } from "./types";
 
 export { buildAttestation } from "./types";

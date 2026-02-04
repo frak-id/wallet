@@ -347,9 +347,9 @@
         "trigger": {
             "unknown": "Reward",
             "referral": "Referral",
+            "create_referral_link": "Shared Link",
             "purchase": "Purchase",
-            "wallet_connect": "Wallet Connect",
-            "identity_merge": "Identity Merge"
+            "custom": "Custom"
         },
         "history": {
             "title": "Recent Rewards",

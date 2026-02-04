@@ -13,7 +13,6 @@ export type AnalyticsGlobalProperties = {
     // Embedded specifics
     productId: Hex;
     contextUrl: string;
-    contextReferrer?: Address;
 };
 
 /**
