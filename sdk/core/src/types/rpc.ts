@@ -141,6 +141,6 @@ export type IFrameRpcSchema = [
     {
         Method: "frak_sendInteraction";
         Parameters: [interaction: SendInteractionParamsType];
-        ReturnType: void;
+        ReturnType: undefined;
     },
 ];

@@ -17,7 +17,6 @@ export type {
     PercentageRewardDefinition,
     RewardChaining,
     RewardDefinition,
-    RewardRecipient,
     RuleCondition,
     RuleConditions,
     SpecialCategory,

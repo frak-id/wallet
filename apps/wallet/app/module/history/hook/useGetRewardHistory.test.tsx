@@ -41,7 +41,7 @@ describe("useGetRewardHistory", () => {
         amount: 12.5,
         tokenAddress: "0x1111111111111111111111111111111111111111",
         status: "pending" as const,
-        recipientType: "user" as const,
+        recipientType: "referee" as const,
         createdAt: new Date("2026-01-20T10:00:00.000Z"),
         settledAt: undefined,
         onchainTxHash: "0xabc123",

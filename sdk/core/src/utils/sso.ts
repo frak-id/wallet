@@ -103,7 +103,7 @@ export type CompressedSsoData = {
     // Potential id from backend
     id?: Hex;
     // Client id
-    cId?: string;
+    cId: string;
     // redirect url
     r?: string;
     // direct exit
