@@ -82,7 +82,6 @@ export type {
 // Utils
 export {
     type AppSpecificSsoMetadata,
-    AUTH_STATE_KEY,
     base64urlDecode,
     base64urlEncode,
     baseIframeProps,

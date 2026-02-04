@@ -1,7 +1,7 @@
 import { Deferred } from "@frak-labs/frame-connector";
 import type { FrakLifecycleEvent } from "../../types";
 import { getClientId } from "../../utils/clientId";
-import { AUTH_STATE_KEY, BACKUP_KEY } from "../../utils/constants";
+import { BACKUP_KEY } from "../../utils/constants";
 import { changeIframeVisibility } from "../../utils/iframeHelper";
 
 /** @ignore */
@@ -70,12 +70,6 @@ export function createIFrameLifecycleManager({
             }
             // Redirect handling
             case "redirect": {
-                // Store state in localStorage for cross-tab CSRF validation
-                // (sessionStorage doesn't persist when mobile app opens new tab)
-                if ("state" in data && data.state) {
-                    localStorage.setItem(AUTH_STATE_KEY, data.state as string);
-                }
-
                 const redirectUrl = new URL(data.baseRedirectUrl);
 
                 // If we got a u append the current location dynamically

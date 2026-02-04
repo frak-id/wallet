@@ -148,7 +148,7 @@ Android-specific Tauri plugins:
 
 ## Deep Linking
 
-The app supports deep linking via custom URL scheme and Universal Links/App Links.
+The app supports deep linking via a custom URL scheme.
 
 ### URL Schemes
 
@@ -157,53 +157,14 @@ The app supports deep linking via custom URL scheme and Universal Links/App Link
 - `frakwallet://send?to=0x...` - Pre-filled send screen
 - `frakwallet://receive` - Receive screen
 - `frakwallet://settings` - Settings
+- `frakwallet://recovery` - Recovery settings
+- `frakwallet://notifications` - Notifications
 - `frakwallet://history` - Transaction history
-
-**Universal Links:**
-- `https://wallet.frak.id/open/wallet`
-- `https://wallet.frak.id/open/send?to=0x...`
-- `https://wallet-dev.frak.id/open/...` (development)
-
-### Backend Requirements
-
-For Universal Links to work, the backend must serve `.well-known` files:
-
-**iOS - Apple App Site Association** (`/.well-known/apple-app-site-association`):
-```json
-{
-    "applinks": {
-        "apps": [],
-        "details": [
-            {
-                "appID": "6Y48FFCGMY.id.frak.wallet",
-                "paths": ["/open/*"]
-            }
-        ]
-    },
-    "webcredentials": {
-        "apps": ["6Y48FFCGMY.id.frak.wallet"]
-    }
-}
-```
-
-**Android - Asset Links** (`/.well-known/assetlinks.json`):
-```json
-[
-    {
-        "relation": ["delegate_permission/common.handle_all_urls"],
-        "target": {
-            "namespace": "android_app",
-            "package_name": "id.frak.wallet",
-            "sha256_cert_fingerprints": ["YOUR_APK_SIGNING_KEY_HASH"]
-        }
-    }
-]
-```
+- `frakwallet://pair?id=<id>&mode=embedded` - Pairing confirmation (iframe flow)
 
 ### Configuration Files
 
 - **iOS URL Scheme**: `gen/apple/app_iOS/Info.plist` (CFBundleURLTypes)
-- **iOS Universal Links**: `gen/apple/app_iOS/app_iOS.entitlements` (applinks)
 - **Android Intent Filters**: `gen/android/app/src/main/AndroidManifest.xml`
 - **Frontend Handler**: `app/utils/deepLink.ts`
 

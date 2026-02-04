@@ -24,7 +24,7 @@ function parseDeepLink(url: string): DeepLinkParams | null {
     try {
         const parsed = new URL(url);
 
-        // frakwallet://pair?id=...&code=...
+        // frakwallet://pair?id=...&mode=embedded
         if (parsed.protocol === "frakwallet:") {
             const action =
                 parsed.hostname || parsed.pathname.replace(/^\//, "") || "home";
