@@ -41,7 +41,7 @@
     "deploy:example": "sst deploy --stage example",
     "deploy:prod": "sst deploy --stage prod",
     "deploy-gcp:prod": "sst deploy --stage gcp-production",
-    "deploy-gcp:staging": "sst deploy --stage gcp-staging",
+    "deploy-gcp:staging": "sst deploy --stage gcp-staging-v2",
     "dev": "bun sst dev",
     "format": "biome check --write .",
     "format:check": "biome check .",

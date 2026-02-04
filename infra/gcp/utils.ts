@@ -11,14 +11,14 @@ export const domainName = `backend.${baseDomainName}`;
 export const walletNamespace = new kubernetes.core.v1.Namespace(
     "infra-wallet",
     {
-        metadata: { name: `wallet-${normalizedStageName}` },
+        metadata: { name: `wallet-${normalizedStageName}${isV2 ? "-v2" : ""}` },
     }
 );
 
 let registryPath: Output<string> | undefined;
 if (!$dev) {
     const registry = new gcp.artifactregistry.Repository("wallet-gcr", {
-        repositoryId: `wallet-${normalizedStageName}`,
+        repositoryId: `wallet-${normalizedStageName}${isV2 ? "-v2" : ""}`,
         format: "DOCKER",
         description: "Artifact registry for the cooking bot images",
         location: "europe-west1",

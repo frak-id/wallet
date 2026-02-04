@@ -1,6 +1,6 @@
 import { KubernetesJob } from "../components/KubernetesJob";
 import { KubernetesService } from "../components/KubernetesService";
-import { isProd, normalizedStageName } from "../utils";
+import { isProd, isV2, normalizedStageName } from "../utils";
 import { elysiaImage, migrationImage } from "./images";
 import { elysiaEnv, postgresEnv } from "./secrets";
 import { domainName, walletNamespace } from "./utils";
@@ -136,7 +136,7 @@ export const backendInstance = new KubernetesService(
             host: domainName,
             tlsSecretName: "elysia-tls",
             // For legacy purposes
-            additionalHosts: [legacyDomain],
+            additionalHosts: !isV2 ? [legacyDomain] : undefined,
             // Performance optimizations for API backend
             customAnnotations: {
                 // Connection pooling for ingress -> backend pod connections
