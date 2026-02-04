@@ -17,17 +17,8 @@ import { PairingInfo } from "@/module/pairing/component/PairingInfo";
 import { usePendingPairingInfo } from "@/module/pairing/hook/usePendingPairingInfo";
 import styles from "@/module/pairing/page/PairingPage.module.css";
 
-type PairingSearch = {
-    id?: string;
-};
-
 export const Route = createFileRoute("/_wallet/_protected/pairing")({
     component: PairingPage,
-    validateSearch: (search: Record<string, unknown>): PairingSearch => {
-        return {
-            id: (search.id as string) || "",
-        };
-    },
 });
 
 /**

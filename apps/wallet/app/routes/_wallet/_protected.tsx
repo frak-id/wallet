@@ -1,6 +1,7 @@
 import {
     getSafeSession,
     OriginPairingState,
+    pairingStore,
     selectDistantWebauthnSession,
     sessionStore,
 } from "@frak-labs/wallet-shared";
@@ -11,7 +12,14 @@ import { TargetPairingState } from "@/module/pairing/component/TargetPairingStat
 
 export const Route = createFileRoute("/_wallet/_protected")({
     component: ProtectedLayout,
-    beforeLoad: async () => {
+    beforeLoad: async ({ location }) => {
+        const search = new URLSearchParams(location.search);
+        const pairingId = search.get("id");
+
+        if (pairingId) {
+            pairingStore.getState().setPendingPairingId(pairingId);
+        }
+
         // Check if user is authenticated
         // Use getSafeSession() to handle cases where Zustand store hasn't hydrated from localStorage yet
         const session = getSafeSession();

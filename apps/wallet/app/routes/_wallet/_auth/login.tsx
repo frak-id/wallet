@@ -11,6 +11,7 @@ import styles from "@/module/authentication/page/LoginPage.module.css";
 import { Back } from "@/module/common/component/Back";
 import { Grid } from "@/module/common/component/Grid";
 import { PairingInProgress } from "@/module/pairing/component/PairingInProgress";
+import { usePendingPairingInfo } from "@/module/pairing/hook/usePendingPairingInfo";
 
 export const Route = createFileRoute("/_wallet/_auth/login")({
     component: LoginPage,
@@ -29,18 +30,26 @@ export const Route = createFileRoute("/_wallet/_auth/login")({
 function LoginPage() {
     const { t } = useTranslation();
     const navigate = useNavigate();
+    const { pairingInfo } = usePendingPairingInfo();
+    const hasPendingPairing = Boolean(pairingInfo?.id);
     const [error, setError] = useState<Error | null>(null);
     const session = sessionStore((state) => state.session);
 
     // Redirect to wallet after successful login
     useEffect(() => {
         if (session) {
-            navigate({ to: "/wallet", replace: true });
+            navigate({
+                to: hasPendingPairing ? "/pairing" : "/wallet",
+                replace: true,
+            });
         }
-    }, [session, navigate]);
+    }, [session, navigate, hasPendingPairing]);
 
     const handleLoginSuccess = () => {
-        navigate({ to: "/wallet", replace: true });
+        navigate({
+            to: hasPendingPairing ? "/pairing" : "/wallet",
+            replace: true,
+        });
     };
 
     return (

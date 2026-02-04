@@ -88,6 +88,19 @@ export type AuthenticationStore = {
 };
 
 /**
+ * Pairing Store Types
+ */
+export type PairingStore = {
+    // State
+    pendingPairingId: string | null;
+    pendingPairingExpiresAt: number | null;
+
+    // Actions
+    setPendingPairingId: (id: string) => void;
+    clearPendingPairing: () => void;
+};
+
+/**
  * Client ID Store Types
  *
  * TODO: Evolve to Record<merchantId, clientId> for per-merchant tracking

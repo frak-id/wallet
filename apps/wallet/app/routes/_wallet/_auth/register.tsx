@@ -10,6 +10,7 @@ import styles from "@/module/authentication/page/RegisterPage.module.css";
 import { Grid } from "@/module/common/component/Grid";
 import { Notice } from "@/module/common/component/Notice";
 import { PairingInProgress } from "@/module/pairing/component/PairingInProgress";
+import { usePendingPairingInfo } from "@/module/pairing/hook/usePendingPairingInfo";
 
 export const Route = createFileRoute("/_wallet/_auth/register")({
     component: RegisterPage,
@@ -27,6 +28,8 @@ export const Route = createFileRoute("/_wallet/_auth/register")({
 function RegisterPage() {
     const { t } = useTranslation();
     const navigate = useNavigate();
+    const { pairingInfo } = usePendingPairingInfo();
+    const hasPendingPairing = Boolean(pairingInfo?.id);
     const [disabled, setDisabled] = useState(false);
     const { register, error, isRegisterInProgress, isSuccess } = useRegister(
         {}
@@ -85,9 +88,12 @@ function RegisterPage() {
     // Redirect to wallet after successful registration
     useEffect(() => {
         if (isSuccess) {
-            navigate({ to: "/wallet", replace: true });
+            navigate({
+                to: hasPendingPairing ? "/pairing" : "/wallet",
+                replace: true,
+            });
         }
-    }, [isSuccess, navigate]);
+    }, [isSuccess, navigate, hasPendingPairing]);
 
     return (
         <Grid

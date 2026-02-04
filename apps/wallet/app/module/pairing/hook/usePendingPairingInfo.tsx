@@ -1,27 +1,52 @@
-import { useNavigate, useSearch } from "@tanstack/react-router";
-import { useCallback, useMemo } from "react";
+import {
+    pairingStore,
+    selectPendingPairingExpiresAt,
+    selectPendingPairingId,
+} from "@frak-labs/wallet-shared";
+import { useCallback, useEffect, useMemo } from "react";
 
 /**
- * Hook to get the pairing code from the URL
+ * Hook to get the pairing code from the store
  * @returns The pairing code
  */
 export function usePendingPairingInfo() {
-    const search = useSearch({ strict: false });
-    const navigate = useNavigate();
+    const pairingId = pairingStore(selectPendingPairingId);
+    const pairingExpiresAt = pairingStore(selectPendingPairingExpiresAt);
+    const isExpired =
+        pairingExpiresAt !== null && pairingExpiresAt <= Date.now();
+
+    useEffect(() => {
+        if (!pairingId || !pairingExpiresAt) {
+            return;
+        }
+
+        const timeLeft = pairingExpiresAt - Date.now();
+
+        if (timeLeft <= 0) {
+            pairingStore.getState().clearPendingPairing();
+            return;
+        }
+
+        const timeoutId = setTimeout(() => {
+            pairingStore.getState().clearPendingPairing();
+        }, timeLeft);
+
+        return () => {
+            clearTimeout(timeoutId);
+        };
+    }, [pairingId, pairingExpiresAt]);
 
     const pairingInfo = useMemo(() => {
-        const id = (search as { id?: string }).id;
-        return id ? { id } : null;
-    }, [search]);
+        if (!pairingId || isExpired) {
+            return null;
+        }
+
+        return { id: pairingId };
+    }, [pairingId, isExpired]);
 
     const resetPairingInfo = useCallback(() => {
-        const currentSearch = search as Record<string, unknown>;
-        const { id, ...rest } = currentSearch;
-        navigate({
-            search: rest as never,
-            replace: true,
-        });
-    }, [navigate, search]);
+        pairingStore.getState().clearPendingPairing();
+    }, []);
 
     return { pairingInfo, resetPairingInfo };
 }
