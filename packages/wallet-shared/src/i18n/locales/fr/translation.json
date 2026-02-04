@@ -230,6 +230,7 @@
                 "device": "Appareil :"
             },
             "code": "Vérifiez que le code est correct",
+            "noCodeNotice": "Confirmez cette demande d'appairage pour continuer.",
             "error": {
                 "title": "Requête de connexion invalide",
                 "noCode": "Aucun code de connexion fourni"
@@ -373,13 +374,5 @@
         "reopenWallet": "Ré-ouvrir le portefeuille",
         "timeout": "Délai d'approbation dépassé. Réessayer ?",
         "retry": "Réessayer"
-    },
-    "open-pair": {
-        "confirm-title": "Demande d'appairage",
-        "confirm-description": "Un appareil souhaite se connecter à votre portefeuille",
-        "accept": "Accepter",
-        "reject": "Rejeter",
-        "error": "Échec de l'appairage. Veuillez réessayer.",
-        "expired": "Demande d'appairage expirée."
     }
 }

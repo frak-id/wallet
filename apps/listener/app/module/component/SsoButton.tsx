@@ -21,10 +21,9 @@ import { useSsoLink } from "@/module/hooks/useSsoLink";
 import { useListenerWithRequestUI } from "@/module/providers/ListenerUiProvider";
 import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 
-function buildDeepLinkHref(pairing: { id: string; code: string }): string {
+function buildDeepLinkHref(pairing: { id: string }): string {
     const id = encodeURIComponent(pairing.id);
-    const code = encodeURIComponent(pairing.code);
-    return `${DEEP_LINK_SCHEME}pair?id=${id}&code=${code}`;
+    return `${DEEP_LINK_SCHEME}pair?id=${id}&mode=embedded`;
 }
 
 /**

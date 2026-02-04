@@ -159,14 +159,6 @@ interface Resources {
             timeout: "Approval timed out. Try again?";
             waiting: "Waiting for approval...";
         };
-        "open-pair": {
-            accept: "Accept";
-            "confirm-description": "A device wants to pair with your wallet";
-            "confirm-title": "Device pairing request";
-            error: "Pairing failed. Please try again.";
-            expired: "Pairing request expired.";
-            reject: "Reject";
-        };
         reward: {
             history: {
                 time: {
@@ -278,6 +270,7 @@ interface Resources {
                 cancel: "Cancel";
                 code: "Check that the code is correct";
                 confirm: "Confirm";
+                noCodeNotice: "Confirm this pairing request to continue.";
                 error: {
                     noCode: "No pairing code provided";
                     title: "Invalid pairing request";

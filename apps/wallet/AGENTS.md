@@ -13,7 +13,6 @@ app/
 │   ├── history/      # Transaction & interaction history
 │   ├── membrs/       # User profile & membership
 │   ├── notification/ # Push notification management
-│   ├── open-pair/    # Open pairing component
 │   ├── pairing/      # Device pairing (QR + WebSocket)
 │   ├── recovery/     # Account recovery flows
 │   ├── recovery-setup/ # Recovery passkey setup wizard

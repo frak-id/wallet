@@ -12,6 +12,11 @@
     margin-top: 1rem;
 }
 
+.pairing__noCodeNotice {
+    margin-top: 0.75rem;
+    text-align: center;
+}
+
 .pairing__loading > span {
     display: flex;
     align-items: center;

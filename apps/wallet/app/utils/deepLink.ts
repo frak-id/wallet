@@ -1,12 +1,12 @@
 import { isTauri } from "@frak-labs/app-essentials/utils/platform";
-import { pendingPairingStore } from "@/module/pairing/stores/pendingPairingStore";
+import { pairingStore } from "@frak-labs/wallet-shared";
 
 type DeepLinkParams = {
     action: string;
     to?: string;
     amount?: string;
     id?: string;
-    code?: string;
+    mode?: string;
 };
 
 function extractSearchParams(
@@ -16,7 +16,7 @@ function extractSearchParams(
         to: searchParams.get("to") ?? undefined,
         amount: searchParams.get("amount") ?? undefined,
         id: searchParams.get("id") ?? undefined,
-        code: searchParams.get("code") ?? undefined,
+        mode: searchParams.get("mode") ?? undefined,
     };
 }
 
@@ -73,24 +73,20 @@ function handleDeepLinkAction(navigate: NavigateFn, params: DeepLinkParams) {
             break;
 
         case "pair":
-            if (
-                params.id &&
-                params.code &&
-                params.id.length > 0 &&
-                params.id.length <= 128 &&
-                params.code.length > 0 &&
-                params.code.length <= 128
-            ) {
-                pendingPairingStore.getState().setPendingPairing({
-                    id: params.id,
-                    code: params.code,
-                });
+            // Pairing codes are resolved server-side via /pairing; deep link only needs the id.
+            if (params.id && params.id.length > 0 && params.id.length <= 128) {
+                pairingStore.getState().setPendingPairingId(params.id);
             } else {
                 console.warn(
-                    "[DeepLink] Invalid pair params — id/code missing or out of bounds"
+                    "[DeepLink] Invalid pair params — id missing or out of bounds"
                 );
             }
-            navigate({ to: "/wallet" });
+            navigate({
+                to: "/pairing",
+                search: params.mode
+                    ? { mode: params.mode }
+                    : { mode: "embedded" },
+            });
             break;
 
         default:

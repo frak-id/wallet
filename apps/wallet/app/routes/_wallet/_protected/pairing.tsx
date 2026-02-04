@@ -19,6 +19,9 @@ import styles from "@/module/pairing/page/PairingPage.module.css";
 
 export const Route = createFileRoute("/_wallet/_protected/pairing")({
     component: PairingPage,
+    validateSearch: (search: Record<string, unknown>) => ({
+        mode: typeof search.mode === "string" ? search.mode : undefined,
+    }),
 });
 
 /**
@@ -34,10 +37,13 @@ function PairingPage() {
     const { pairingInfo: pendingPairingInfo, resetPairingInfo } =
         usePendingPairingInfo();
     const navigate = useNavigate();
+    const { mode } = Route.useSearch();
     const pairingState = useStore(client.store);
     const { data: pairingInfo } = usePairingInfo({
         id: pendingPairingInfo?.id,
     });
+    const hasPairingCode = Boolean(pairingInfo?.pairingCode?.trim());
+    const shouldShowCode = mode !== "embedded" && hasPairingCode;
 
     const actionPairing = useCallback(
         (action: "join" | "cancel") => {
@@ -85,7 +91,13 @@ function PairingPage() {
         <Grid>
             <PairingHeader />
             <PairingInfo state={pairingState} id={pendingPairingInfo.id} />
-            <PairingCode code={pairingInfo.pairingCode} />
+            {shouldShowCode ? (
+                <PairingCode code={pairingInfo.pairingCode} />
+            ) : (
+                <p className={styles.pairing__noCodeNotice}>
+                    {t("wallet.pairing.noCodeNotice")}
+                </p>
+            )}
             <div className={styles.pairing__buttons}>
                 <Button
                     variant="secondary"

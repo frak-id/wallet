@@ -232,6 +232,7 @@
                 "device": "Device:"
             },
             "code": "Check that the code is correct",
+            "noCodeNotice": "Confirm this pairing request to continue.",
             "error": {
                 "title": "Invalid pairing request",
                 "noCode": "No pairing code provided"
@@ -375,13 +376,5 @@
         "reopenWallet": "Re-open wallet",
         "timeout": "Approval timed out. Try again?",
         "retry": "Retry"
-    },
-    "open-pair": {
-        "confirm-title": "Device pairing request",
-        "confirm-description": "A device wants to pair with your wallet",
-        "accept": "Accept",
-        "reject": "Reject",
-        "error": "Pairing failed. Please try again.",
-        "expired": "Pairing request expired."
     }
 }
