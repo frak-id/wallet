@@ -1,16 +1,13 @@
 import {
-    indexerApi,
     type TokenMetadata,
     tokenMetadataRepository,
     viemClient,
 } from "@backend-infrastructure";
+import { currentStablecoinsList } from "@frak-labs/app-essentials";
 import { type Address, erc20Abi, formatUnits } from "viem";
 import { multicall } from "viem/actions";
-import type { GetAllTokenResponseDto } from "../types/indexerTypes";
 
 export class BalancesRepository {
-    private knownTokens: GetAllTokenResponseDto = [];
-
     /**
      * Get the user balance
      * @param address
@@ -48,16 +45,13 @@ export class BalancesRepository {
      * Get the user balance around every known tokens
      */
     async getUserBalanceViaKnownTokens({ address }: { address: Address }) {
-        // Get the known tokens
-        const knownTokens = await this.getKnownTokens();
-
         // Fetch every balance in a single multicall
         const balanceResults = await multicall(viemClient, {
-            contracts: knownTokens.map(
-                ({ address: contractAddress }) =>
+            contracts: currentStablecoinsList.map(
+                (token) =>
                     ({
                         abi: erc20Abi,
-                        address: contractAddress,
+                        address: token,
                         functionName: "balanceOf",
                         args: [address],
                     }) as const
@@ -68,34 +62,18 @@ export class BalancesRepository {
         const userBalances = balanceResults.map(({ result, error }, index) => {
             if (error) {
                 return {
-                    contractAddress: knownTokens[index].address,
+                    contractAddress: currentStablecoinsList[index],
                     tokenBalance: 0n,
                 };
             }
 
             return {
-                contractAddress: knownTokens[index].address,
+                contractAddress: currentStablecoinsList[index],
                 tokenBalance: result,
             };
         });
 
         return userBalances;
-    }
-
-    /**
-     * Get the known tokens from the indexer
-     */
-    async getKnownTokens() {
-        if (this.knownTokens.length > 0) {
-            return this.knownTokens;
-        }
-
-        // Fetch all the known tokens
-        const response = await indexerApi
-            .get("tokens")
-            .json<GetAllTokenResponseDto>();
-        this.knownTokens = response;
-        return response;
     }
 
     /**

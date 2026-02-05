@@ -3,6 +3,7 @@ export {
     campaignBankAbi,
     campaignBankFactoryAbi,
     currentStablecoins,
+    currentStablecoinsList,
     getExecutionAbi,
     interactionCampaignAbi,
     interactionValidatorRoles,

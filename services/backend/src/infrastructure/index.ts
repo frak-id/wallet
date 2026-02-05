@@ -6,7 +6,6 @@ export {
     tokenMetadataRepository,
 } from "./blockchain/TokenMetadataRepository";
 // External services
-export { indexerApi } from "./external/indexer";
 export { JwtContext } from "./external/jwt";
 export { log } from "./external/logger";
 // Repositories

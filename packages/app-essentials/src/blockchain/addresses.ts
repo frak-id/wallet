@@ -56,3 +56,8 @@ export const currentStablecoins = isRunningInProd
     : stablecoins.testnet;
 
 export type Stablecoin = keyof typeof currentStablecoins;
+
+/**
+ * Known stablecoins as a list of address
+ */
+export const currentStablecoinsList = Object.values(currentStablecoins);

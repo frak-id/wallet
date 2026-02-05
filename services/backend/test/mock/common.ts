@@ -7,15 +7,6 @@ import { viemMocks } from "./viem";
 /*                            Infrastructure Mocks                            */
 /* -------------------------------------------------------------------------- */
 
-export const indexerApiMocks = {
-    get: vi.fn(() => ({
-        json: vi.fn(() => Promise.resolve({})),
-    })),
-    post: vi.fn(() => ({
-        json: vi.fn(() => Promise.resolve({})),
-    })),
-};
-
 export const pricingRepositoryMocks = {
     getTokenPrice: vi.fn(() =>
         Promise.resolve({ eur: 1.2, usd: 1.0, gbp: 0.8 })
@@ -336,7 +327,6 @@ export const businessSessionContextMock = new Elysia({
     .as("scoped");
 
 vi.mock("@backend-infrastructure", () => ({
-    indexerApi: indexerApiMocks,
     pricingRepository: pricingRepositoryMocks,
     viemClient: viemMocks,
     adminWalletsRepository: adminWalletsRepositoryMocks,

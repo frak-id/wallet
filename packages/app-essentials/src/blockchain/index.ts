@@ -21,6 +21,7 @@ export {
 export {
     addresses,
     currentStablecoins,
+    currentStablecoinsList,
     kernelAddresses,
     type Stablecoin,
     stablecoins,
