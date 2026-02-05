@@ -2,7 +2,7 @@ import {
     FrakConfigProvider,
     FrakIFrameClientProvider,
 } from "@frak-labs/react-sdk";
-import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
+import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
 import { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import {
@@ -31,9 +31,8 @@ export const queryClient = new QueryClient({
  * The storage persister to cache our query data's
  */
 const persistOptions: PersistQueryClientProviderProps["persistOptions"] = {
-    persister: createSyncStoragePersister({
-        storage:
-            typeof window !== "undefined" ? window.localStorage : undefined,
+    persister: createAsyncStoragePersister({
+        storage: window.localStorage,
         // Throttle for 50ms to prevent storage spamming
         throttleTime: 50,
     }),
