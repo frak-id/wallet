@@ -10,7 +10,6 @@ import type { FrakClient } from "../types/client";
 import type { FrakWalletSdkConfig } from "../types/config";
 import type { IFrameRpcSchema } from "../types/rpc";
 import { BACKUP_KEY } from "../utils/constants";
-import { setupMergeTokenListener } from "../utils/mergeToken";
 import { setupSsoUrlListener } from "../utils/ssoUrlListener";
 
 import { DebugInfoGatherer } from "./DebugInfo";
@@ -243,10 +242,6 @@ async function postConnectionSetup({
     // Setup SSO URL listener to detect and forward SSO redirects
     // This checks for ?sso= parameter and forwards compressed data to iframe
     setupSsoUrlListener(rpcClient, lifecycleManager.isConnected);
-
-    // Setup merge token listener to detect and process identity merge tokens
-    // This checks for ?fmt= parameter and executes merge in background
-    setupMergeTokenListener(config, lifecycleManager.isConnected);
 
     // Push raw CSS if needed
     async function pushCss() {

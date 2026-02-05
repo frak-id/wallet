@@ -97,16 +97,13 @@ export {
     fetchMerchantId,
     findIframeInOpener,
     formatAmount,
-    generateMergeToken,
     generateSsoUrl,
     getBackendUrl,
     getClientId,
     getCurrencyAmountKey,
     getSupportedCurrency,
     getSupportedLocale,
-    redirectWithMerge,
     resolveMerchantId,
-    setupMergeTokenListener,
     trackEvent,
 } from "./utils";
 export { computeLegacyProductId } from "./utils/computeLegacyProductId";

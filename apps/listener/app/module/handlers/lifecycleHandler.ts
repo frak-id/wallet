@@ -6,6 +6,7 @@ import { decompressJsonFromB64 } from "@frak-labs/core-sdk";
 import type { LifecycleHandler } from "@frak-labs/frame-connector";
 import type { SdkSession, Session } from "@frak-labs/wallet-shared";
 import {
+    authenticatedBackendApi,
     emitLifecycleEvent,
     mapI18nConfig,
     restoreBackupData,
@@ -98,6 +99,14 @@ export const createClientLifecycleHandler =
                 const hasContext = resolvingContextStore
                     .getState()
                     .handleHandshakeResponse(messageEvent);
+
+                if (data.pendingMergeToken && data.clientId) {
+                    executeMergeInBackground(
+                        data.pendingMergeToken,
+                        data.clientId
+                    );
+                }
+
                 // Once we got a context, we can tell that we are rdy to handle request
                 if (hasContext) {
                     setReadyToHandleRequest();
@@ -206,4 +215,22 @@ async function handleSsoRedirectComplete(data: {
     } catch (error) {
         console.error("[SSO Redirect] Error processing SSO redirect:", error);
     }
+}
+
+function executeMergeInBackground(
+    mergeToken: string,
+    targetClientId: string
+): void {
+    const context = resolvingContextStore.getState().context;
+    if (!context?.merchantId) {
+        return;
+    }
+
+    authenticatedBackendApi.user.identity.merge.execute
+        .post({
+            mergeToken,
+            targetAnonymousId: targetClientId,
+            merchantId: context.merchantId,
+        })
+        .catch(() => {});
 }

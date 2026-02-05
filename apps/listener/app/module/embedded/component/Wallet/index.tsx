@@ -6,6 +6,7 @@ import { Toaster } from "sonner";
 import { ListenerWalletHeader } from "@/module/embedded/component/WalletHeader";
 import { LoggedInComponent } from "@/module/embedded/component/WalletLoggedIn";
 import { LoggedOutComponent } from "@/module/embedded/component/WalletLoggedOut";
+import { useGetMergeToken } from "@/module/hooks/useGetMergeToken";
 import { useEmbeddedListenerUI } from "@/module/providers/ListenerUiProvider";
 import { ToastLoading } from "../../../component/ToastLoading";
 import styles from "./index.module.css";
@@ -57,6 +58,7 @@ export function ListenerWallet() {
  */
 function CurrentEmbeddedViewComponent() {
     const session = sessionStore.getState().session;
+    const getMergeToken = useGetMergeToken();
 
     return (
         <div
@@ -67,7 +69,7 @@ function CurrentEmbeddedViewComponent() {
             )}
         >
             <Toaster position="top-center" />
-            <InAppBrowserToast />
+            <InAppBrowserToast getMergeToken={getMergeToken} />
             <ToastLoading />
             <ListenerWalletHeader />
             {session ? <LoggedInComponent /> : <LoggedOutComponent />}

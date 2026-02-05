@@ -21,11 +21,6 @@ export {
     resolveMerchantId,
 } from "./merchantId";
 export {
-    generateMergeToken,
-    redirectWithMerge,
-    setupMergeTokenListener,
-} from "./mergeToken";
-export {
     type AppSpecificSsoMetadata,
     type CompressedSsoData,
     type FullSsoParams,

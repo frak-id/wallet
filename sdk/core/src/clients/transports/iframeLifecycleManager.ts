@@ -55,6 +55,10 @@ export function createIFrameLifecycleManager({
                 break;
             // Handshake handling
             case "handshake": {
+                const url = new URL(window.location.href);
+                const pendingMergeToken =
+                    url.searchParams.get("fmt") ?? undefined;
+
                 iframe.contentWindow?.postMessage(
                     {
                         clientLifecycle: "handshake-response",
@@ -62,10 +66,16 @@ export function createIFrameLifecycleManager({
                             token: data.token,
                             currentUrl: window.location.href,
                             clientId: getClientId(),
+                            pendingMergeToken,
                         },
                     },
                     "*"
                 );
+
+                if (pendingMergeToken) {
+                    url.searchParams.delete("fmt");
+                    window.history.replaceState({}, "", url.toString());
+                }
                 break;
             }
             // Redirect handling
@@ -76,10 +86,13 @@ export function createIFrameLifecycleManager({
                 if (redirectUrl.searchParams.has("u")) {
                     redirectUrl.searchParams.delete("u");
                     redirectUrl.searchParams.append("u", window.location.href);
-                    window.location.href = redirectUrl.toString();
-                } else {
-                    window.location.href = data.baseRedirectUrl;
                 }
+
+                if (data.mergeToken) {
+                    redirectUrl.searchParams.append("fmt", data.mergeToken);
+                }
+
+                window.location.href = redirectUrl.toString();
                 break;
             }
         }

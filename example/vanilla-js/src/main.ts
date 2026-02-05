@@ -1,19 +1,4 @@
-import {
-    type FrakWalletSdkConfig,
-    generateMergeToken,
-    getClientId,
-} from "@frak-labs/core-sdk";
-
-declare const window: Window & { FrakSetup?: { config: FrakWalletSdkConfig } };
-
-function getConfig(): FrakWalletSdkConfig {
-    return (
-        window.FrakSetup?.config ?? {
-            walletUrl: "https://wallet-dev.frak.id",
-            metadata: { name: "Vanilla JS" },
-        }
-    );
-}
+import { getClientId } from "@frak-labs/core-sdk";
 
 function log(
     message: string,
@@ -44,61 +29,11 @@ function checkForMergeToken() {
     if (mergeToken) {
         log("Merge token detected in URL!", "success");
         log(`Token: ${mergeToken.substring(0, 50)}...`, "info");
-        log("SDK will auto-process this token and link identities", "info");
-
-        url.searchParams.delete("fmt");
-        window.history.replaceState({}, "", url.toString());
-        log("URL cleaned (token removed from address bar)", "info");
+        log(
+            "Listener will auto-process this token and link identities",
+            "info"
+        );
     }
-}
-
-async function handleGenerateToken() {
-    const btn = document.getElementById(
-        "btn-generate-token"
-    ) as HTMLButtonElement;
-    const tokenDisplay = document.getElementById("token-display");
-
-    btn.disabled = true;
-    log("Generating merge token...", "info");
-
-    try {
-        const config = getConfig();
-        const token = await generateMergeToken(config);
-
-        if (token) {
-            log("Merge token generated successfully!", "success");
-            if (tokenDisplay) {
-                tokenDisplay.style.display = "block";
-                tokenDisplay.textContent = token;
-            }
-        } else {
-            log(
-                "Failed to generate token (backend may not be running)",
-                "warn"
-            );
-        }
-    } catch (error) {
-        log(`Error: ${error}`, "error");
-    } finally {
-        btn.disabled = false;
-    }
-}
-
-function handleSimulateRedirect() {
-    const tokenDisplay = document.getElementById("token-display");
-    const token = tokenDisplay?.textContent;
-
-    if (!token || token === "") {
-        log("Generate a token first!", "warn");
-        return;
-    }
-
-    const currentUrl = new URL(window.location.href);
-    currentUrl.searchParams.set("fmt", token);
-
-    log(`Redirecting to: ${currentUrl.toString().substring(0, 80)}...`, "info");
-
-    window.location.href = currentUrl.toString();
 }
 
 function handleClearId() {
@@ -124,12 +59,6 @@ async function init() {
     updateClientIdDisplay();
     checkForMergeToken();
 
-    document
-        .getElementById("btn-generate-token")
-        ?.addEventListener("click", handleGenerateToken);
-    document
-        .getElementById("btn-simulate-redirect")
-        ?.addEventListener("click", handleSimulateRedirect);
     document
         .getElementById("btn-clear-id")
         ?.addEventListener("click", handleClearId);
