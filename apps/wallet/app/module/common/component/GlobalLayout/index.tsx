@@ -1,7 +1,7 @@
+import { InAppBrowserToast } from "@frak-labs/wallet-shared";
 import { cx } from "class-variance-authority";
 import type { ReactNode } from "react";
 import { Header } from "@/module/common/component/Header";
-import { InAppBrowserToast } from "@/module/common/component/InAppBrowserToast";
 import { Navigation } from "@/module/common/component/Navigation";
 import styles from "./index.module.css";
 

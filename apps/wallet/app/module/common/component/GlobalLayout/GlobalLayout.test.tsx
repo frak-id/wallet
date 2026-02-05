@@ -11,11 +11,16 @@ vi.mock("@/module/common/component/Navigation", () => ({
     Navigation: () => <nav data-testid="navigation">Navigation</nav>,
 }));
 
-vi.mock("@/module/common/component/InAppBrowserToast", () => ({
-    InAppBrowserToast: () => (
-        <div data-testid="in-app-browser-toast">Toast</div>
-    ),
-}));
+vi.mock("@frak-labs/wallet-shared", async (importOriginal) => {
+    const original =
+        await importOriginal<typeof import("@frak-labs/wallet-shared")>();
+    return {
+        ...original,
+        InAppBrowserToast: () => (
+            <div data-testid="in-app-browser-toast">Toast</div>
+        ),
+    };
+});
 
 describe("GlobalLayout", () => {
     it("should render with header by default", () => {
