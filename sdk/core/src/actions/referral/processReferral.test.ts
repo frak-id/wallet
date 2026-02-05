@@ -16,9 +16,12 @@ import type {
 import { processReferral } from "./processReferral";
 
 // Mock dependencies
-vi.mock("../index", () => ({
+vi.mock("../displayEmbeddedWallet", () => ({
     displayEmbeddedWallet: vi.fn(),
-    sendInteraction: vi.fn().mockResolvedValue({ success: true }),
+}));
+
+vi.mock("../sendInteraction", () => ({
+    sendInteraction: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock("../../utils", () => ({
@@ -142,7 +145,9 @@ describe("processReferral", () => {
     });
 
     it("should handle wallet not connected scenario", async () => {
-        const { displayEmbeddedWallet } = await import("../index");
+        const { displayEmbeddedWallet } = await import(
+            "../displayEmbeddedWallet"
+        );
 
         // Mock displayEmbeddedWallet to return a wallet
         vi.mocked(displayEmbeddedWallet).mockResolvedValue({
@@ -159,7 +164,9 @@ describe("processReferral", () => {
     });
 
     it("should return 'no-wallet' when wallet connection fails", async () => {
-        const { displayEmbeddedWallet } = await import("../index");
+        const { displayEmbeddedWallet } = await import(
+            "../displayEmbeddedWallet"
+        );
 
         const error = new FrakRpcError(
             RpcErrorCodes.walletNotConnected,
@@ -176,7 +183,9 @@ describe("processReferral", () => {
     });
 
     it("should return 'error' for unknown errors", async () => {
-        const { displayEmbeddedWallet } = await import("../index");
+        const { displayEmbeddedWallet } = await import(
+            "../displayEmbeddedWallet"
+        );
 
         const error = new Error("Unknown error");
         vi.mocked(displayEmbeddedWallet).mockRejectedValue(error);

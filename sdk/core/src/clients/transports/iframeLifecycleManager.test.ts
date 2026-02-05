@@ -24,6 +24,10 @@ vi.mock("../../utils/iframeHelper", () => ({
     changeIframeVisibility: vi.fn(),
 }));
 
+vi.mock("../../utils/clientId", () => ({
+    getClientId: vi.fn(() => "mock-client-id-12345"),
+}));
+
 describe("createIFrameLifecycleManager", () => {
     beforeEach(() => {
         vi.clearAllMocks();
@@ -244,6 +248,7 @@ describe("createIFrameLifecycleManager", () => {
                     data: {
                         token: "handshake-token-123",
                         currentUrl: "https://test.com",
+                        clientId: "mock-client-id-12345",
                     },
                 },
                 "*"

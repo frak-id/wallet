@@ -14,7 +14,6 @@ import type { WalletStatusReturnType } from "../types/rpc/walletStatus";
  * await watchWalletStatus(frakConfig, (status: WalletStatusReturnType) => {
  *     if (status.key === "connected") {
  *         console.log("Wallet connected:", status.wallet);
- *         console.log("Current interaction session:", status.interactionSession);
  *     } else {
  *         console.log("Wallet not connected");
  *     }

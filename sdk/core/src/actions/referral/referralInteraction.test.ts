@@ -52,8 +52,8 @@ describe("referralInteraction", () => {
 
         vi.mocked(FrakContextManager.parse).mockReturnValue({} as any);
         vi.mocked(watchWalletStatus).mockResolvedValue({
+            key: "connected",
             wallet: "0x123" as Hex,
-            interactionSession: true,
         } as any);
         vi.mocked(processReferral).mockResolvedValue("success");
 

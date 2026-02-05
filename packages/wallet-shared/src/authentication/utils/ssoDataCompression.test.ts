@@ -33,6 +33,7 @@ describe("ssoDataCompression", () => {
                     logoUrl: "https://example.com/logo.png",
                     homepageLink: "https://example.com",
                 },
+                clientId: "client-123",
             });
         });
 
@@ -51,6 +52,7 @@ describe("ssoDataCompression", () => {
             expect(result.lang).toBeUndefined();
             expect(result.merchantId).toBe("0x1234567890abcdef");
             expect(result.metadata.name).toBe("Minimal App");
+            expect(result.clientId).toBe("client-123");
         });
 
         it("should handle SSO data without metadata", () => {
