@@ -63,7 +63,13 @@
   },
   "exports": {
     ".": "./src/index.ts",
-    "./domain/campaign": "./src/domain/campaign/schemas/index.ts"
+    "./infrastructure": "./src/infrastructure/index.ts",
+    "./domain/merchant": "./src/domain/merchant/index.ts",
+    "./domain/merchant/context": "./src/domain/merchant/context.ts",
+    "./domain/campaign": "./src/domain/campaign/index.ts",
+    "./domain/campaign/context": "./src/domain/campaign/context.ts",
+    "./domain/campaign-bank": "./src/domain/campaign-bank/index.ts",
+    "./domain/campaign-bank/context": "./src/domain/campaign-bank/context.ts"
   },
   "module": "src/index.ts",
   "main": "./src/index.ts"

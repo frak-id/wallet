@@ -662,6 +662,22 @@
         "typescript": "catalog:",
       },
     },
+    "services/migration": {
+      "name": "@frak-labs/migration",
+      "version": "0.0.1",
+      "dependencies": {
+        "@frak-labs/app-essentials": "workspace:*",
+        "@frak-labs/backend-elysia": "workspace:*",
+        "drizzle-orm": "^0.44.7",
+        "ky": "^1.14.0",
+        "mongodb": "^6.20.0",
+        "viem": "catalog:",
+      },
+      "devDependencies": {
+        "bun-types": "latest",
+        "typescript": "catalog:",
+      },
+    },
   },
   "overrides": {
     "@wagmi/connectors": "file:.stubs/wagmi-connectors-stub",
@@ -959,6 +975,8 @@
     "@frak-labs/dev-tooling": ["@frak-labs/dev-tooling@workspace:packages/dev-tooling"],
 
     "@frak-labs/frame-connector": ["@frak-labs/frame-connector@workspace:packages/rpc"],
+
+    "@frak-labs/migration": ["@frak-labs/migration@workspace:services/migration"],
 
     "@frak-labs/nexus-business": ["@frak-labs/nexus-business@workspace:apps/business"],
 
