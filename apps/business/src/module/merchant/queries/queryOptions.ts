@@ -5,25 +5,11 @@ import merchantsMockData from "@/mock/merchants.json";
 import { useAuthStore } from "@/stores/authStore";
 
 /**
- * Check demo mode - works on both client and server
- * On server during SSR, we can't reliably check auth state, so we return
- * the passed parameter. On client, we double-check with Zustand store.
+ * Check demo mode via param or Zustand store
  */
 function checkDemoMode(isDemoModeParam: boolean): boolean {
     if (isDemoModeParam) return true;
-    // On client, check Zustand store directly
-    if (typeof window !== "undefined") {
-        return useAuthStore.getState().token === "demo-token";
-    }
-    // On server, trust the param
-    return false;
-}
-
-/**
- * Check if we're running on the server (SSR)
- */
-function isServer(): boolean {
-    return typeof window === "undefined";
+    return useAuthStore.getState().token === "demo-token";
 }
 
 export type MerchantRole = "owner" | "admin" | "none";
@@ -63,12 +49,6 @@ export const merchantQueryOptions = (merchantId: string, isDemoMode: boolean) =>
             // Return mock data in demo mode
             if (isDemo) {
                 return getMerchantMockData(merchantId);
-            }
-
-            // On server during SSR, we can't make authenticated API calls reliably.
-            // Return mock data and let client hydrate with real data.
-            if (isServer()) {
-                return merchantsMockData.owned[0] as MerchantData;
             }
 
             const { data, error } = await authenticatedBackendApi
@@ -122,15 +102,6 @@ export const myMerchantsQueryOptions = (isDemoMode: boolean) =>
             // Return mock data in demo mode
             if (isDemo) {
                 return getMyMerchantsMockData();
-            }
-
-            // On server during SSR without demo mode param, we can't make
-            // authenticated API calls reliably. Return empty and let client hydrate.
-            if (isServer()) {
-                return {
-                    owned: [] as MerchantData[],
-                    adminOf: [] as MerchantData[],
-                };
             }
 
             const { data, error } =
