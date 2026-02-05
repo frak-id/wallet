@@ -10,7 +10,8 @@ export type ClientLifecycleEvent =
     | RestoreBackupEvent
     | HearbeatEvent
     | HandshakeResponse
-    | SsoRedirectCompleteEvent;
+    | SsoRedirectCompleteEvent
+    | DeepLinkFailedEvent;
 
 type CustomCssEvent = {
     clientLifecycle: "modal-css";
@@ -54,4 +55,9 @@ type HandshakeResponse = {
 type SsoRedirectCompleteEvent = {
     clientLifecycle: "sso-redirect-complete";
     data: { compressed: string };
+};
+
+type DeepLinkFailedEvent = {
+    clientLifecycle: "deep-link-failed";
+    data: { originalUrl: string };
 };

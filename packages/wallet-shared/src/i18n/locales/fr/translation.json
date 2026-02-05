@@ -364,7 +364,9 @@
         "connecting": "Connexion...",
         "openWallet": "Ouvrir dans Frak Wallet",
         "waiting": "En attente du wallet...",
-        "retry": "Connexion expirée. Réessayer ?"
+        "retry": "Connexion expirée. Réessayer ?",
+        "appNotFound": "Application Frak Wallet introuvable",
+        "continueInBrowser": "Continuer dans le navigateur"
     },
     "mobile-tx": {
         "sendTransaction": "Envoyer la transaction",
@@ -373,6 +375,8 @@
         "openWallet": "Ouvrir le portefeuille pour approuver",
         "reopenWallet": "Ré-ouvrir le portefeuille",
         "timeout": "Délai d'approbation dépassé. Réessayer ?",
-        "retry": "Réessayer"
+        "retry": "Réessayer",
+        "appNotFound": "Application Frak Wallet introuvable",
+        "appNotFoundHint": "Veuillez réinstaller l'application ou réessayer"
     }
 }

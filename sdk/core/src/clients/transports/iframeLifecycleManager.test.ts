@@ -28,6 +28,11 @@ vi.mock("../../utils/clientId", () => ({
     getClientId: vi.fn(() => "mock-client-id-12345"),
 }));
 
+vi.mock("../../utils/deepLinkWithFallback", () => ({
+    isFrakDeepLink: vi.fn((url: string) => url.startsWith("frakwallet://")),
+    triggerDeepLinkWithFallback: vi.fn(),
+}));
+
 describe("createIFrameLifecycleManager", () => {
     beforeEach(() => {
         vi.clearAllMocks();
@@ -295,7 +300,7 @@ describe("createIFrameLifecycleManager", () => {
     });
 
     describe("redirect event", () => {
-        test("should redirect with appended current URL", async () => {
+        test("should redirect with appended current URL for HTTP URLs", async () => {
             const { createIFrameLifecycleManager } = await import(
                 "./iframeLifecycleManager"
             );
@@ -353,6 +358,132 @@ describe("createIFrameLifecycleManager", () => {
             await manager.handleEvent(event);
 
             expect(window.location.href).toBe("https://redirect.com/path");
+        });
+
+        test("should use fallback detection for frakwallet:// deep links", async () => {
+            const { createIFrameLifecycleManager } = await import(
+                "./iframeLifecycleManager"
+            );
+            const { triggerDeepLinkWithFallback } = await import(
+                "../../utils/deepLinkWithFallback"
+            );
+
+            Object.defineProperty(window, "location", {
+                value: {
+                    href: "https://original.com",
+                },
+                writable: true,
+            });
+
+            const mockIframe = document.createElement("iframe");
+            const manager = createIFrameLifecycleManager({
+                iframe: mockIframe,
+            });
+
+            const event = {
+                iframeLifecycle: "redirect" as const,
+                data: {
+                    baseRedirectUrl: "frakwallet://wallet",
+                },
+            };
+
+            await manager.handleEvent(event);
+
+            expect(triggerDeepLinkWithFallback).toHaveBeenCalledWith(
+                "frakwallet://wallet",
+                expect.objectContaining({
+                    onFallback: expect.any(Function),
+                })
+            );
+        });
+
+        test("should post deep-link-failed message when fallback is triggered", async () => {
+            const { createIFrameLifecycleManager } = await import(
+                "./iframeLifecycleManager"
+            );
+            const { triggerDeepLinkWithFallback } = await import(
+                "../../utils/deepLinkWithFallback"
+            );
+
+            Object.defineProperty(window, "location", {
+                value: {
+                    href: "https://original.com",
+                },
+                writable: true,
+            });
+
+            const mockPostMessage = vi.fn();
+            const mockIframe = {
+                contentWindow: {
+                    postMessage: mockPostMessage,
+                },
+            } as any;
+
+            const manager = createIFrameLifecycleManager({
+                iframe: mockIframe,
+            });
+
+            const event = {
+                iframeLifecycle: "redirect" as const,
+                data: {
+                    baseRedirectUrl: "frakwallet://wallet",
+                },
+            };
+
+            await manager.handleEvent(event);
+
+            // Extract the onFallback callback from the mock call
+            const callArgs = (triggerDeepLinkWithFallback as any).mock.calls[0];
+            const options = callArgs[1];
+            expect(options).toBeDefined();
+            expect(options.onFallback).toBeInstanceOf(Function);
+
+            // Trigger the fallback callback
+            options.onFallback();
+
+            // Verify postMessage was called with deep-link-failed event
+            expect(mockPostMessage).toHaveBeenCalledWith(
+                {
+                    clientLifecycle: "deep-link-failed",
+                    data: { originalUrl: "frakwallet://wallet" },
+                },
+                "*"
+            );
+        });
+
+        test("should NOT use fallback detection for HTTP URLs", async () => {
+            const { createIFrameLifecycleManager } = await import(
+                "./iframeLifecycleManager"
+            );
+            const { triggerDeepLinkWithFallback } = await import(
+                "../../utils/deepLinkWithFallback"
+            );
+
+            Object.defineProperty(window, "location", {
+                value: {
+                    href: "https://original.com",
+                },
+                writable: true,
+            });
+
+            const mockIframe = document.createElement("iframe");
+            const manager = createIFrameLifecycleManager({
+                iframe: mockIframe,
+            });
+
+            const event = {
+                iframeLifecycle: "redirect" as const,
+                data: {
+                    baseRedirectUrl: "https://wallet.frak.id/login",
+                },
+            };
+
+            await manager.handleEvent(event);
+
+            // Should NOT call fallback detection
+            expect(triggerDeepLinkWithFallback).not.toHaveBeenCalled();
+            // Should directly redirect
+            expect(window.location.href).toBe("https://wallet.frak.id/login");
         });
     });
 

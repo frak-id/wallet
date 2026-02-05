@@ -5,6 +5,11 @@ export { base64urlDecode, base64urlEncode } from "./compression/b64";
 export { compressJsonToB64 } from "./compression/compress";
 export { decompressJsonFromB64 } from "./compression/decompress";
 export { DEEP_LINK_SCHEME } from "./constants";
+export {
+    type DeepLinkFallbackOptions,
+    isFrakDeepLink,
+    triggerDeepLinkWithFallback,
+} from "./deepLinkWithFallback";
 export { FrakContextManager } from "./FrakContext";
 export { formatAmount } from "./formatAmount";
 export { getCurrencyAmountKey } from "./getCurrencyAmountKey";

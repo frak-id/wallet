@@ -366,7 +366,9 @@
         "connecting": "Connecting...",
         "openWallet": "Open in Frak Wallet",
         "waiting": "Waiting for wallet app...",
-        "retry": "Connection timed out. Retry?"
+        "retry": "Connection timed out. Retry?",
+        "appNotFound": "Frak Wallet app not found",
+        "continueInBrowser": "Continue in browser"
     },
     "mobile-tx": {
         "sendTransaction": "Send transaction",
@@ -375,6 +377,8 @@
         "openWallet": "Open wallet to approve",
         "reopenWallet": "Re-open wallet",
         "timeout": "Approval timed out. Try again?",
-        "retry": "Retry"
+        "retry": "Retry",
+        "appNotFound": "Frak Wallet app not found",
+        "appNotFoundHint": "Please reinstall the app or try again"
     }
 }

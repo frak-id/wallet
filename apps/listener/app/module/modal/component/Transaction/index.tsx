@@ -2,7 +2,6 @@ import type { SendTransactionModalStepType } from "@frak-labs/core-sdk";
 import { DEEP_LINK_SCHEME } from "@frak-labs/core-sdk";
 import { ButtonAuth } from "@frak-labs/ui/component/ButtonAuth";
 import {
-    emitLifecycleEvent,
     encodeWalletMulticall,
     HandleErrors,
     sessionStore,
@@ -12,6 +11,7 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAccount, useSendTransaction } from "wagmi";
 import { useStore } from "zustand";
+import { useDeepLinkFallback } from "@/module/hooks/useDeepLinkFallback";
 import { AccordionTransactions } from "@/module/modal/component/Transaction/AccordionTransactions";
 import { useListenerTranslation } from "@/module/providers/ListenerUiProvider";
 import styles from "./index.module.css";
@@ -123,7 +123,9 @@ function MobileTransactionStep({
     const [status, setStatus] = useState<"idle" | "waiting" | "timeout">(
         "idle"
     );
+    const [appNotFound, setAppNotFound] = useState(false);
     const { startTimeout, clearTimeout: clearTxTimeout } = useMountedTimeout();
+    const { emitRedirectWithFallback } = useDeepLinkFallback();
     const deepLinkTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const isPendingRef = useRef(isPending);
     isPendingRef.current = isPending;
@@ -137,11 +139,10 @@ function MobileTransactionStep({
     }, []);
 
     const emitDeepLink = useCallback(() => {
-        emitLifecycleEvent({
-            iframeLifecycle: "redirect",
-            data: { baseRedirectUrl: mobileWalletDeepLink },
+        emitRedirectWithFallback(mobileWalletDeepLink, () => {
+            setAppNotFound(true);
         });
-    }, []);
+    }, [emitRedirectWithFallback]);
 
     const triggerTransaction = useCallback(() => {
         setStatus("waiting");
@@ -161,6 +162,26 @@ function MobileTransactionStep({
             clearTxTimeout();
         }
     }, [isPending, isError, status, clearTxTimeout]);
+
+    if (appNotFound) {
+        return (
+            <div className={styles.mobileTx__appNotFound}>
+                <p className={styles.mobileTx__appNotFoundText}>
+                    {t("mobile-tx.appNotFound")}
+                </p>
+                <p className={styles.mobileTx__appNotFoundHint}>
+                    {t("mobile-tx.appNotFoundHint")}
+                </p>
+                <button
+                    type="button"
+                    onClick={() => setAppNotFound(false)}
+                    className={styles.mobileTx__retryButton}
+                >
+                    {t("mobile-tx.retry")}
+                </button>
+            </div>
+        );
+    }
 
     return (
         <>

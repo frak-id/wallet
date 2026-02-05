@@ -43,10 +43,37 @@
 .mobileTx__retryButton {
     display: inline-block;
     padding: 12px 24px;
-    background-color: var(--frak-color-accent);
-    color: var(--frak-color-white);
+    background-color: transparent;
+    color: var(--frak-color-white, #fff);
     border-radius: 8px;
-    border: none;
+    border: 1px solid rgba(255, 255, 255, 0.2);
     cursor: pointer;
     font-size: 14px;
+    transition: background-color 0.2s ease;
+}
+
+.mobileTx__retryButton:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.mobileTx__appNotFound {
+    margin-top: 16px;
+    padding: 16px;
+    text-align: center;
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+}
+
+.mobileTx__appNotFoundText {
+    margin-bottom: 8px;
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--frak-color-white, #fff);
+}
+
+.mobileTx__appNotFoundHint {
+    margin-bottom: 16px;
+    font-size: 14px;
+    color: var(--frak-color-grayText, #818c9c);
 }

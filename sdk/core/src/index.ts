@@ -90,6 +90,7 @@ export {
     compressJsonToB64,
     createIframe,
     DEEP_LINK_SCHEME,
+    type DeepLinkFallbackOptions,
     decompressJsonFromB64,
     FrakContextManager,
     type FrakEvent,
@@ -103,7 +104,9 @@ export {
     getCurrencyAmountKey,
     getSupportedCurrency,
     getSupportedLocale,
+    isFrakDeepLink,
     resolveMerchantId,
     trackEvent,
+    triggerDeepLinkWithFallback,
 } from "./utils";
 export { computeLegacyProductId } from "./utils/computeLegacyProductId";
