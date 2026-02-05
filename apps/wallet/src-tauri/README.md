@@ -254,10 +254,10 @@ Ensure all three files are updated when bumping versions.
 
 ## Security Considerations
 
-- **CSP (Content Security Policy)**: Currently disabled (`csp: null` in `tauri.conf.json`)
-  - **Rationale**: Disabled to allow flexible development and testing of WebAuthn flows, SDK integrations, and dynamic content loading
-  - **Note**: For production builds, consider configuring appropriate CSP rules if additional security is required
-  - **Location**: `tauri.conf.json` → `app.security.csp`
+- **CSP (Content Security Policy)**: Configured in `tauri.conf.json` → `app.security.csp`
+  - **Current policy**: `default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://*.frak.id https://*.drpc.org https://*.pimlico.io wss://*.frak.id`
+  - **Rationale**: Restricts content sources while allowing necessary connections for WebAuthn, blockchain RPCs, and WebSocket communication
+  - **Note**: Update CSP if adding new external resources or third-party integrations
 - **Code Signing**: Required for both iOS and Android production builds
 - **WebAuthn Origins**: Properly validated on backend to prevent origin spoofing
 - **Associated Domains**: Required for iOS WebAuthn credential sharing
