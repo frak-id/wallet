@@ -126,9 +126,6 @@ if (typeof document !== "undefined" && document.referrer) {
     });
 }
 
-/**
- * Resolve the iFrame context by fetching merchantId from backend
- */
 async function resolveIFrameContext(
     event?: MessageEvent<
         Extract<ClientLifecycleEvent, { clientLifecycle: "handshake-response" }>
@@ -152,6 +149,7 @@ async function resolveIFrameContext(
     const origin = originUrl.origin;
     const isAutoContext = event === undefined;
     const clientId = event?.data?.data?.clientId;
+    const pendingMergeToken = event?.data?.data?.pendingMergeToken;
 
     // Fetch merchantId from backend (with cache)
     const merchantData = await fetchMerchantByDomain(normalizedDomain);
@@ -166,6 +164,18 @@ async function resolveIFrameContext(
 
     if (clientId) {
         clientIdStore.getState().setClientId(clientId);
+    }
+
+    if (pendingMergeToken && clientId && merchantData.merchantId) {
+        authenticatedBackendApi.user.identity.merge.execute
+            .post({
+                mergeToken: pendingMergeToken,
+                targetAnonymousId: clientId,
+                merchantId: merchantData.merchantId,
+            })
+            .catch((error) => {
+                console.warn("Unable to merge client identities", error);
+            });
     }
 
     return {
