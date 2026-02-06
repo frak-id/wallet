@@ -6,12 +6,13 @@ import { useGetRewardHistory } from "@/module/history/hook/useGetRewardHistory";
 import styles from "./index.module.css";
 
 export function RewardHistoryList() {
+    const { t } = useTranslation();
     const { rewards, isLoading } = useGetRewardHistory();
 
     if (isLoading) return <Skeleton count={3} height={110} />;
 
     if (!rewards || rewards.length === 0) {
-        return <div className={styles.empty}>No rewards yet</div>;
+        return <div className={styles.empty}>{t("reward.history.empty")}</div>;
     }
 
     return (

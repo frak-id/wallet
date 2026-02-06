@@ -352,6 +352,7 @@
         },
         "history": {
             "title": "Récompenses récentes",
+            "empty": "Pas encore de récompenses",
             "time": {
                 "justNow": "à l'instant",
                 "minutesAgo": "il y a {{count}}min",

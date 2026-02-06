@@ -165,6 +165,7 @@ interface Resources {
         };
         reward: {
             history: {
+                empty: "No rewards yet";
                 time: {
                     daysAgo: "{{count}}d ago";
                     hoursAgo: "{{count}}h ago";

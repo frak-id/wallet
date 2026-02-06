@@ -354,6 +354,7 @@
         },
         "history": {
             "title": "Recent Rewards",
+            "empty": "No rewards yet",
             "time": {
                 "justNow": "just now",
                 "minutesAgo": "{{count}}m ago",
