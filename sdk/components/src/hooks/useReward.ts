@@ -1,4 +1,4 @@
-import type { FullInteractionTypesKey } from "@frak-labs/core-sdk";
+import type { InteractionTypeKey } from "@frak-labs/core-sdk";
 import { useEffect, useState } from "preact/hooks";
 import { getCurrentReward } from "@/utils/getCurrentReward";
 
@@ -11,7 +11,7 @@ import { getCurrentReward } from "@/utils/getCurrentReward";
  */
 export function useReward(
     shouldUseReward: boolean,
-    targetInteraction?: FullInteractionTypesKey
+    targetInteraction?: InteractionTypeKey
 ) {
     const [reward, setReward] = useState<string | undefined>(undefined);
 

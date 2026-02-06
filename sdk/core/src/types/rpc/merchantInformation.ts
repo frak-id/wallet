@@ -1,5 +1,5 @@
 import type { Address } from "viem";
-import type { FullInteractionTypesKey } from "../../constants/interactionTypes";
+import type { InteractionTypeKey } from "../../constants/interactionTypes";
 
 /**
  * The type for the amount of tokens
@@ -47,7 +47,7 @@ export type GetMerchantInformationReturnType = {
     rewards: {
         token: Address;
         campaign: Address;
-        interactionTypeKey: FullInteractionTypesKey;
+        interactionTypeKey: InteractionTypeKey;
         referrer: TokenAmountType;
         referee: TokenAmountType;
     }[];

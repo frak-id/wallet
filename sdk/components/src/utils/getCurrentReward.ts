@@ -1,7 +1,7 @@
 import {
-    type FullInteractionTypesKey,
     formatAmount,
     getCurrencyAmountKey,
+    type InteractionTypeKey,
 } from "@frak-labs/core-sdk";
 import { getMerchantInformation } from "@frak-labs/core-sdk/actions";
 
@@ -9,7 +9,7 @@ import { getMerchantInformation } from "@frak-labs/core-sdk/actions";
  * The parameters for the getCurrentReward function
  */
 type GetCurrentRewardParams = {
-    targetInteraction?: FullInteractionTypesKey;
+    targetInteraction?: InteractionTypeKey;
 };
 
 /**

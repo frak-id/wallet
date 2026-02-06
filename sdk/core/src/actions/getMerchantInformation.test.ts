@@ -69,7 +69,7 @@ describe("getMerchantInformation", () => {
                         token: "0x1234567890123456789012345678901234567890" as Address,
                         campaign:
                             "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd" as Address,
-                        interactionTypeKey: "press.readArticle",
+                        interactionTypeKey: "referral",
                         referrer: {
                             amount: 10,
                             eurAmount: 1,
