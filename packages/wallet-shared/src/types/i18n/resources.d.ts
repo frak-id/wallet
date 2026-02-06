@@ -145,12 +145,16 @@ interface Resources {
             };
         };
         "mobile-sso": {
+            appNotFound: "Frak Wallet app not found";
             connecting: "Connecting...";
+            continueInBrowser: "Continue in browser";
             openWallet: "Open in Frak Wallet";
             retry: "Connection timed out. Retry?";
             waiting: "Waiting for wallet app...";
         };
         "mobile-tx": {
+            appNotFound: "Frak Wallet app not found";
+            appNotFoundHint: "Please reinstall the app or try again";
             explanation: "Approve this transaction in your wallet app";
             openWallet: "Open wallet to approve";
             reopenWallet: "Re-open wallet";
@@ -178,11 +182,11 @@ interface Resources {
                 settled: "Settled";
             };
             trigger: {
-                identity_merge: "Identity Merge";
+                create_referral_link: "Shared Link";
+                custom: "Custom";
                 purchase: "Purchase";
                 referral: "Referral";
                 unknown: "Reward";
-                wallet_connect: "Wallet Connect";
             };
         };
         sharing: {
@@ -270,7 +274,6 @@ interface Resources {
                 cancel: "Cancel";
                 code: "Check that the code is correct";
                 confirm: "Confirm";
-                noCodeNotice: "Confirm this pairing request to continue.";
                 error: {
                     noCode: "No pairing code provided";
                     title: "Invalid pairing request";
@@ -291,6 +294,7 @@ interface Resources {
                 loading: {
                     title: "Please wait";
                 };
+                noCodeNotice: "Confirm this pairing request to continue.";
                 origin: {
                     state: {
                         connecting: "Paired device not online";
