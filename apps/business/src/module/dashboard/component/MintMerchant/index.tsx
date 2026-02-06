@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Head } from "@/module/common/component/Head";
 import { useCheckDomainName } from "@/module/dashboard/hooks/dnsRecordHooks";
-import { useMintMyMerchant } from "@/module/dashboard/hooks/useMintMyMerchant";
+import { useRegisterMerchant } from "@/module/dashboard/hooks/useMintMyMerchant";
 import { getDefaultStablecoin } from "@/module/dashboard/utils/mintUtils";
 import { FormLayout } from "@/module/forms/Form";
 import type { MerchantNew } from "@/types/Merchant";
@@ -46,7 +46,7 @@ export function MintMerchant() {
             data: { merchantId } = {},
         },
         infoTxt,
-    } = useMintMyMerchant({
+    } = useRegisterMerchant({
         onSuccess: () => {
             setStep(4);
             setOpenAccordion("registration");

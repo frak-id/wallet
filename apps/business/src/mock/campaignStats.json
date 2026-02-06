@@ -17,8 +17,7 @@
         "ctr": 0.43,
         "amountSpent": 3265.0,
         "costPerShare": "1030000",
-        "costPerPurchase": "20000000",
-        "customerMeetingInteractions": 120
+        "costPerPurchase": "20000000"
     },
     {
         "title": "Awareness Campaign",
@@ -38,8 +37,7 @@
         "ctr": 0.32,
         "amountSpent": 74.0,
         "costPerShare": "960000",
-        "costPerPurchase": "3000000",
-        "customerMeetingInteractions": 5
+        "costPerPurchase": "3000000"
     },
     {
         "title": "Traffic Boost",
@@ -59,8 +57,7 @@
         "ctr": 0.28,
         "amountSpent": 1652.0,
         "costPerShare": "1400000",
-        "costPerPurchase": "5000000",
-        "customerMeetingInteractions": 32
+        "costPerPurchase": "5000000"
     },
     {
         "title": "Retention / Loyal",
@@ -80,7 +77,6 @@
         "ctr": 0.24,
         "amountSpent": 964.0,
         "costPerShare": "350000",
-        "costPerPurchase": "12000000",
-        "customerMeetingInteractions": 65
+        "costPerPurchase": "12000000"
     }
 ]

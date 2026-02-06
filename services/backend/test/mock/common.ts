@@ -177,15 +177,6 @@ export const dbMock = {
                 );
             }),
         },
-        backendTrackerTable: {
-            findFirst: vi.fn((_opts?: unknown) => {
-                // findFirst returns a single item or undefined
-                const result = mockFunctions.selectMockFn();
-                return result.then((items: unknown[]) =>
-                    items.length > 0 ? items[0] : undefined
-                );
-            }),
-        },
     },
     // biome-ignore lint/suspicious/noExplicitAny: Mock configuration
     __setSelectResponse: (fn: any) => {
@@ -448,34 +439,6 @@ vi.mock("../../src/domain/notifications", () => ({
     pushTokensTable: {},
     SendNotificationPayloadDto,
     SendNotificationTargetsDto,
-}));
-
-/* -------------------------------------------------------------------------- */
-/*                            Interactions Context                            */
-/* -------------------------------------------------------------------------- */
-
-export const campaignRewardsServiceMocks = {
-    getActiveRewardsForProduct: vi.fn(() => Promise.resolve(undefined)),
-};
-
-const InteractionRequestDto = t.Object({
-    wallet: t.String(),
-    productId: t.String(),
-    interaction: t.Object({
-        handlerTypeDenominator: t.String(),
-        interactionData: t.String(),
-    }),
-    signature: t.Optional(t.Union([t.String(), t.Undefined(), t.Null()])),
-});
-
-vi.mock("../../src/domain/interactions", () => ({
-    InteractionsContext: {
-        services: { campaignRewards: campaignRewardsServiceMocks },
-    },
-    pendingInteractionsTable: {},
-    interactionsPurchaseTrackerTable: {},
-    backendTrackerTable: {},
-    InteractionRequestDto,
 }));
 
 /* -------------------------------------------------------------------------- */

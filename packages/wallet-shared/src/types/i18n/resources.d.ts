@@ -208,16 +208,6 @@ interface Resources {
                 warning: "You're using an embedded browser. Your experience may be degraded. Tap to open in your browser.";
             };
             installWebApp: "<strong>Install wallet on home screen</strong> <br /> to find your gains at any time";
-            interaction: {
-                CREATE_REFERRAL_LINK: "Created share link";
-                CUSTOMER_MEETING: "Appointment in store";
-                OPEN_ARTICLE: "Opened article";
-                PURCHASE_COMPLETED: "Completed purchase";
-                PURCHASE_STARTED: "Started purchase";
-                READ_ARTICLE: "Read article";
-                REFERRED: "Referred";
-                WEBSHOP_OPENNED: "Opened webshop";
-            };
             invite: {
                 text: "Earn $5 for each friend you invite. T&C apply";
                 title: "Invite friends, earn $5";

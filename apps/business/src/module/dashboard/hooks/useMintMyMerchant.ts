@@ -92,13 +92,3 @@ export function useRegisterMerchant(
 
     return { mutation, infoTxt };
 }
-
-/**
- * @deprecated Use useRegisterMerchant instead
- */
-export const useMintMyMerchant = useRegisterMerchant;
-
-/**
- * @deprecated Use useMintMyMerchant instead
- */
-export const useMintMyProduct = useMintMyMerchant;

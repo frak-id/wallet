@@ -79,16 +79,6 @@
             "deletePrivateKey": "Supprimer la clé privée"
         },
         "installWebApp": "<strong>Installer le wallet sur l'écran d'accueil</strong><br /> pour retrouver vos gains à tout moment",
-        "interaction": {
-            "CREATE_REFERRAL_LINK": "Lien de partage créé",
-            "OPEN_ARTICLE": "Article ouvert",
-            "PURCHASE_COMPLETED": "Achat terminé",
-            "PURCHASE_STARTED": "Achat commencé",
-            "READ_ARTICLE": "Article lu",
-            "REFERRED": "Parrainé",
-            "WEBSHOP_OPENNED": "Ouverture de la boutique en ligne",
-            "CUSTOMER_MEETING": "Rendez-vous en boutique"
-        },
         "invite": {
             "title": "Invitez des amis, gagnez 5€",
             "text": "Gagnez 5€ pour chaque ami que vous invitez. Conditions générales applicables"
