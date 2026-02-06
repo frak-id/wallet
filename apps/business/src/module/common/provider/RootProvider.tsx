@@ -59,8 +59,6 @@ function RoutePageAttribute() {
     });
 
     useEffect(() => {
-        if (typeof document === "undefined") return;
-
         const rootElement = document.documentElement;
         if (!rootElement) return;
 
