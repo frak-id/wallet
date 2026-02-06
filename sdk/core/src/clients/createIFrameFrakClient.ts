@@ -46,7 +46,10 @@ export function createIFrameFrakClient({
     const frakWalletUrl = config?.walletUrl ?? "https://wallet.frak.id";
 
     // Create lifecycle manager
-    const lifecycleManager = createIFrameLifecycleManager({ iframe });
+    const lifecycleManager = createIFrameLifecycleManager({
+        iframe,
+        targetOrigin: frakWalletUrl,
+    });
 
     // Create our debug info gatherer
     const debugInfo = new DebugInfoGatherer(config, iframe);

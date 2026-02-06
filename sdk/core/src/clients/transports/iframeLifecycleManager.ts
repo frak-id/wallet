@@ -28,7 +28,11 @@ function handleBackup(backup: string | undefined): void {
 /**
  * Handle handshake with iframe
  */
-function handleHandshake(iframe: HTMLIFrameElement, token: string): void {
+function handleHandshake(
+    iframe: HTMLIFrameElement,
+    token: string,
+    targetOrigin: string
+): void {
     const url = new URL(window.location.href);
     const pendingMergeToken = url.searchParams.get("fmt") ?? undefined;
 
@@ -42,7 +46,7 @@ function handleHandshake(iframe: HTMLIFrameElement, token: string): void {
                 pendingMergeToken,
             },
         },
-        "*"
+        targetOrigin
     );
 
     if (pendingMergeToken) {
@@ -83,12 +87,12 @@ function computeRedirectUrl(
 function handleRedirect(
     iframe: HTMLIFrameElement,
     baseRedirectUrl: string,
+    targetOrigin: string,
     mergeToken?: string
 ): void {
     const finalUrl = computeRedirectUrl(baseRedirectUrl, mergeToken);
 
     if (isFrakDeepLink(baseRedirectUrl)) {
-        const iframeOrigin = new URL(iframe.src).origin;
         triggerDeepLinkWithFallback(finalUrl, {
             onFallback: () => {
                 iframe.contentWindow?.postMessage(
@@ -96,7 +100,7 @@ function handleRedirect(
                         clientLifecycle: "deep-link-failed",
                         data: { originalUrl: finalUrl },
                     },
-                    iframeOrigin
+                    targetOrigin
                 );
             },
         });
@@ -111,8 +115,10 @@ function handleRedirect(
  */
 export function createIFrameLifecycleManager({
     iframe,
+    targetOrigin,
 }: {
     iframe: HTMLIFrameElement;
+    targetOrigin: string;
 }): IframeLifecycleManager {
     // Create the isConnected listener
     const isConnectedDeferred = new Deferred<boolean>();
@@ -143,11 +149,16 @@ export function createIFrameLifecycleManager({
                 break;
             // Handshake handling
             case "handshake":
-                handleHandshake(iframe, data.token);
+                handleHandshake(iframe, data.token, targetOrigin);
                 break;
             // Redirect handling
             case "redirect":
-                handleRedirect(iframe, data.baseRedirectUrl, data.mergeToken);
+                handleRedirect(
+                    iframe,
+                    data.baseRedirectUrl,
+                    targetOrigin,
+                    data.mergeToken
+                );
                 break;
         }
     };

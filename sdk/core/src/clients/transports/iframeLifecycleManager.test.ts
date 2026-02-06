@@ -33,6 +33,8 @@ vi.mock("../../utils/deepLinkWithFallback", () => ({
     triggerDeepLinkWithFallback: vi.fn(),
 }));
 
+const WALLET_ORIGIN = "https://wallet.frak.id";
+
 describe("createIFrameLifecycleManager", () => {
     beforeEach(() => {
         vi.clearAllMocks();
@@ -54,6 +56,7 @@ describe("createIFrameLifecycleManager", () => {
             const mockIframe = document.createElement("iframe");
             const manager = createIFrameLifecycleManager({
                 iframe: mockIframe,
+                targetOrigin: WALLET_ORIGIN,
             });
 
             expect(manager).toBeDefined();
@@ -69,6 +72,7 @@ describe("createIFrameLifecycleManager", () => {
             const mockIframe = document.createElement("iframe");
             const manager = createIFrameLifecycleManager({
                 iframe: mockIframe,
+                targetOrigin: WALLET_ORIGIN,
             });
 
             let resolved = false;
@@ -91,6 +95,7 @@ describe("createIFrameLifecycleManager", () => {
             const mockIframe = document.createElement("iframe");
             const manager = createIFrameLifecycleManager({
                 iframe: mockIframe,
+                targetOrigin: WALLET_ORIGIN,
             });
 
             const event = {
@@ -112,6 +117,7 @@ describe("createIFrameLifecycleManager", () => {
             const mockIframe = document.createElement("iframe");
             const manager = createIFrameLifecycleManager({
                 iframe: mockIframe,
+                targetOrigin: WALLET_ORIGIN,
             });
 
             const backup = "encrypted-backup-data";
@@ -133,6 +139,7 @@ describe("createIFrameLifecycleManager", () => {
             const mockIframe = document.createElement("iframe");
             const manager = createIFrameLifecycleManager({
                 iframe: mockIframe,
+                targetOrigin: WALLET_ORIGIN,
             });
 
             // First set a backup
@@ -156,6 +163,7 @@ describe("createIFrameLifecycleManager", () => {
             const mockIframe = document.createElement("iframe");
             const manager = createIFrameLifecycleManager({
                 iframe: mockIframe,
+                targetOrigin: WALLET_ORIGIN,
             });
 
             // First set a backup
@@ -183,6 +191,7 @@ describe("createIFrameLifecycleManager", () => {
             const mockIframe = document.createElement("iframe");
             const manager = createIFrameLifecycleManager({
                 iframe: mockIframe,
+                targetOrigin: WALLET_ORIGIN,
             });
 
             const event = {
@@ -208,6 +217,7 @@ describe("createIFrameLifecycleManager", () => {
             const mockIframe = document.createElement("iframe");
             const manager = createIFrameLifecycleManager({
                 iframe: mockIframe,
+                targetOrigin: WALLET_ORIGIN,
             });
 
             const event = {
@@ -224,13 +234,14 @@ describe("createIFrameLifecycleManager", () => {
     });
 
     describe("handshake event", () => {
-        test("should post handshake-response with token", async () => {
+        test("should post handshake-response with token to iframe origin", async () => {
             const { createIFrameLifecycleManager } = await import(
                 "./iframeLifecycleManager"
             );
 
             const mockPostMessage = vi.fn();
             const mockIframe = {
+                src: "https://wallet.frak.id/listener",
                 contentWindow: {
                     postMessage: mockPostMessage,
                 },
@@ -238,6 +249,7 @@ describe("createIFrameLifecycleManager", () => {
 
             const manager = createIFrameLifecycleManager({
                 iframe: mockIframe,
+                targetOrigin: WALLET_ORIGIN,
             });
 
             const event = {
@@ -256,7 +268,7 @@ describe("createIFrameLifecycleManager", () => {
                         clientId: "mock-client-id-12345",
                     },
                 },
-                "*"
+                "https://wallet.frak.id"
             );
         });
 
@@ -272,6 +284,7 @@ describe("createIFrameLifecycleManager", () => {
 
             const mockPostMessage = vi.fn();
             const mockIframe = {
+                src: "https://wallet.frak.id/listener",
                 contentWindow: {
                     postMessage: mockPostMessage,
                 },
@@ -279,6 +292,7 @@ describe("createIFrameLifecycleManager", () => {
 
             const manager = createIFrameLifecycleManager({
                 iframe: mockIframe,
+                targetOrigin: WALLET_ORIGIN,
             });
 
             const event = {
@@ -294,7 +308,7 @@ describe("createIFrameLifecycleManager", () => {
                         currentUrl: "https://example.com/page?param=value",
                     }),
                 }),
-                "*"
+                "https://wallet.frak.id"
             );
         });
     });
@@ -315,6 +329,7 @@ describe("createIFrameLifecycleManager", () => {
             const mockIframe = document.createElement("iframe");
             const manager = createIFrameLifecycleManager({
                 iframe: mockIframe,
+                targetOrigin: WALLET_ORIGIN,
             });
 
             const event = {
@@ -346,6 +361,7 @@ describe("createIFrameLifecycleManager", () => {
             const mockIframe = document.createElement("iframe");
             const manager = createIFrameLifecycleManager({
                 iframe: mockIframe,
+                targetOrigin: WALLET_ORIGIN,
             });
 
             const event = {
@@ -379,6 +395,7 @@ describe("createIFrameLifecycleManager", () => {
             mockIframe.src = "https://wallet.frak.id";
             const manager = createIFrameLifecycleManager({
                 iframe: mockIframe,
+                targetOrigin: WALLET_ORIGIN,
             });
 
             const event = {
@@ -423,6 +440,7 @@ describe("createIFrameLifecycleManager", () => {
 
             const manager = createIFrameLifecycleManager({
                 iframe: mockIframe,
+                targetOrigin: WALLET_ORIGIN,
             });
 
             const event = {
@@ -471,6 +489,7 @@ describe("createIFrameLifecycleManager", () => {
             const mockIframe = document.createElement("iframe");
             const manager = createIFrameLifecycleManager({
                 iframe: mockIframe,
+                targetOrigin: WALLET_ORIGIN,
             });
 
             const event = {
@@ -498,6 +517,7 @@ describe("createIFrameLifecycleManager", () => {
             const mockIframe = document.createElement("iframe");
             const manager = createIFrameLifecycleManager({
                 iframe: mockIframe,
+                targetOrigin: WALLET_ORIGIN,
             });
 
             const event = {
@@ -519,6 +539,7 @@ describe("createIFrameLifecycleManager", () => {
             const mockIframe = document.createElement("iframe");
             const manager = createIFrameLifecycleManager({
                 iframe: mockIframe,
+                targetOrigin: WALLET_ORIGIN,
             });
 
             // Event without iframeLifecycle
