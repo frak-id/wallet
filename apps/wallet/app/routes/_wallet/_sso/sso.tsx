@@ -28,7 +28,6 @@ import i18next from "i18next";
 import { CloudUpload } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
-import type { Hex } from "viem";
 import { AuthenticateWithPhone } from "@/module/authentication/component/AuthenticateWithPhone";
 import styles from "@/module/authentication/component/Sso/index.module.css";
 import { SsoHeader } from "@/module/authentication/component/Sso/SsoHeader";
@@ -508,9 +507,7 @@ function useLoginDemo(options?: UseMutationOptions<Session>) {
         mutationKey: ssoKey.demo.login,
         async mutationFn() {
             // Retrieve the pkey
-            const pkey = sessionStore.getState().demoPrivateKey as
-                | Hex
-                | undefined;
+            const pkey = sessionStore.getState().demoPrivateKey;
             if (!pkey) {
                 throw new Error("No private key found");
             }
