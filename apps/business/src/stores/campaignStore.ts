@@ -70,8 +70,12 @@ export const campaignStore = create<CampaignState>()(
     )
 );
 
-function dateToTimestamp(date: Date): number {
-    return Math.floor(date.getTime() / 1000);
+/**
+ * Convert a Date (or ISO string from Zustand persist deserialization) to unix timestamp
+ */
+function dateToTimestamp(date: Date | string): number {
+    const d = date instanceof Date ? date : new Date(date);
+    return Math.floor(d.getTime() / 1000);
 }
 
 export function buildScheduleConditions(
@@ -136,7 +140,12 @@ export function buildApiPayload(draft: CampaignDraft) {
         },
         metadata: draft.metadata,
         budgetConfig: draft.budgetConfig,
-        expiresAt: draft.scheduled.endDate?.toISOString(),
+        expiresAt: draft.scheduled.endDate
+            ? (draft.scheduled.endDate instanceof Date
+                  ? draft.scheduled.endDate
+                  : new Date(draft.scheduled.endDate)
+              ).toISOString()
+            : undefined,
         priority: draft.priority,
     };
 }
