@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef } from "react";
  * skips callbacks if unmounted. Shared by mobile pairing + tx flows.
  */
 export function useMountedTimeout() {
-    const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const mountedRef = useRef(true);
 
     useEffect(() => {
