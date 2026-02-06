@@ -135,7 +135,10 @@ export default defineConfig(({ mode, command }: ConfigEnv): UserConfig => {
             ...(isProd ? [removeConsole()] : []),
         ],
         resolve: {
-            conditions: ["development"],
+            conditions:
+                process.env.NODE_ENV === "production"
+                    ? ["production", "default"]
+                    : ["development"],
             alias: {
                 // Enforce stub for @wagmi/connectors to avoid heavy dependencies (MetaMask SDK, etc.)
                 "@wagmi/connectors": new URL(
