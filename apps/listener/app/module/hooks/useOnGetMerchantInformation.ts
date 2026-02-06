@@ -49,17 +49,13 @@ export function useOnGetMerchantInformation(): OnGetMerchantInformation {
             );
         }
 
-        const rewards = rewardsResult.data;
-
         return {
             id: resolveResult.data.merchantId,
             onChainMetadata: {
                 name: resolveResult.data.name ?? "",
                 domain,
             },
-            maxReferrer: rewards?.maxReferrer,
-            maxReferee: rewards?.maxReferee,
-            rewards: (rewards?.rewards ?? []).map((reward) => ({
+            rewards: (rewardsResult.data?.rewards ?? []).map((reward) => ({
                 token: reward.token as Address | undefined,
                 campaignId: reward.campaignId,
                 interactionTypeKey:

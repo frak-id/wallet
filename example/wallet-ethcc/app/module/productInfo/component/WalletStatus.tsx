@@ -50,8 +50,7 @@ function InnerStatus({
             </div>
             <h4>Active reward</h4>
             <div>
-                <b>Estimated eur reward per interaction:</b>{" "}
-                {info.maxReferrer?.eurAmount ?? "N/A"}
+                <b>Active campaigns:</b> {info.rewards.length}
             </div>
         </div>
     );

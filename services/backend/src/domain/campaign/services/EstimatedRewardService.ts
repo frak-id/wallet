@@ -1,5 +1,4 @@
 import { pricingRepository, type TokenPrice } from "@backend-infrastructure";
-import type { TokenAmount } from "@backend-utils";
 import type { Address } from "viem";
 import type { CampaignRuleSelect } from "../db/schema";
 import type { CampaignRuleRepository } from "../repositories/CampaignRuleRepository";
@@ -27,7 +26,11 @@ export class EstimatedRewardService {
         }
 
         const priceMap = await this.fetchTokenPrices(campaigns);
-        return this.buildResult(campaigns, priceMap);
+        return {
+            rewards: campaigns.map((campaign) =>
+                this.buildCampaignRewardItem(campaign, priceMap)
+            ),
+        };
     }
 
     private async fetchTokenPrices(
@@ -52,25 +55,6 @@ export class EstimatedRewardService {
             })
         );
         return priceMap;
-    }
-
-    private buildResult(
-        campaigns: CampaignRuleSelect[],
-        priceMap: Map<Address, TokenPrice>
-    ): EstimatedRewardsResult {
-        const rewards: EstimatedRewardItem[] = [];
-        let maxReferrer: TokenAmount | undefined;
-        let maxReferee: TokenAmount | undefined;
-
-        for (const campaign of campaigns) {
-            const item = this.buildCampaignRewardItem(campaign, priceMap);
-            rewards.push(item);
-
-            maxReferrer = this.updateMax(maxReferrer, item.referrer);
-            maxReferee = this.updateMax(maxReferee, item.referee);
-        }
-
-        return { maxReferrer, maxReferee, rewards };
     }
 
     private buildCampaignRewardItem(
@@ -105,17 +89,6 @@ export class EstimatedRewardService {
             referrer,
             referee,
         };
-    }
-
-    private updateMax(
-        current: TokenAmount | undefined,
-        estimated: EstimatedReward | undefined
-    ): TokenAmount | undefined {
-        if (!estimated || estimated.payoutType !== "fixed") return current;
-        if (!current) return estimated.amount;
-        return estimated.amount.eurAmount > current.eurAmount
-            ? estimated.amount
-            : current;
     }
 
     private buildEstimatedReward(
@@ -174,10 +147,7 @@ export class EstimatedRewardService {
         };
     }
 
-    private toTokenAmount(
-        amount: number,
-        price: TokenPrice | undefined
-    ): TokenAmount {
+    private toTokenAmount(amount: number, price: TokenPrice | undefined) {
         return {
             amount,
             eurAmount: price ? amount * price.eur : 0,

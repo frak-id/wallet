@@ -89,9 +89,6 @@ vi.mock("@frak-labs/core-sdk", async () => {
 
         // Product actions
         getProductInformation: vi.fn().mockResolvedValue({
-            maxReferrer: {
-                eurAmount: 10,
-            },
             rewards: [],
         }),
 
@@ -126,9 +123,6 @@ vi.mock("@frak-labs/core-sdk/actions", async () => {
         displayEmbeddedWallet: vi.fn(),
         displayModal: vi.fn(),
         getProductInformation: vi.fn().mockResolvedValue({
-            maxReferrer: {
-                eurAmount: 10,
-            },
             rewards: [],
         }),
         openSso: vi.fn(),

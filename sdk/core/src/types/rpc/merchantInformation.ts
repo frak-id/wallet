@@ -67,17 +67,6 @@ export type GetMerchantInformationReturnType = {
          */
         domain: string;
     };
-    /**
-     * The max potential reward for the referrer (only computed from fixed rewards)
-     */
-    maxReferrer?: TokenAmountType;
-    /**
-     * The max potential reward for the referee (only computed from fixed rewards)
-     */
-    maxReferee?: TokenAmountType;
-    /**
-     * List of all the potential rewards around this merchant
-     */
     rewards: {
         token?: Address;
         campaignId: string;

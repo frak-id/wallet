@@ -240,8 +240,6 @@ export const EstimatedRewardItemSchema = t.Object({
 export type EstimatedRewardItem = Static<typeof EstimatedRewardItemSchema>;
 
 export const EstimatedRewardsResultSchema = t.Object({
-    maxReferrer: t.Optional(t.TokenAmount),
-    maxReferee: t.Optional(t.TokenAmount),
     rewards: t.Array(EstimatedRewardItemSchema),
 });
 export type EstimatedRewardsResult = Static<

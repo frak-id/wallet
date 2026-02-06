@@ -11,12 +11,23 @@ type GetCurrentRewardParams = {
     targetInteraction?: InteractionTypeKey;
 };
 
-function getFixedAmount(
+function getFixedFiatAmount(
     estimated: EstimatedReward | undefined,
     key: keyof TokenAmountType
 ): number {
     if (!estimated || estimated.payoutType !== "fixed") return 0;
     return estimated.amount[key];
+}
+
+function getMaxFixedReferrerReward(
+    rewards: { referrer?: EstimatedReward }[],
+    key: keyof TokenAmountType
+): number {
+    return rewards.reduce(
+        (max, reward) =>
+            Math.max(max, getFixedFiatAmount(reward.referrer, key)),
+        0
+    );
 }
 
 export async function getCurrentReward({
@@ -28,24 +39,25 @@ export async function getCurrentReward({
         return;
     }
 
-    const { maxReferrer, rewards } = await getMerchantInformation(client);
-
-    if (!maxReferrer) return;
+    const { rewards } = await getMerchantInformation(client);
 
     const currencyAmountKey = getCurrencyAmountKey(
         client.config.metadata?.currency
     );
 
-    let currentReward = Math.round(maxReferrer[currencyAmountKey]);
-    if (targetInteraction) {
-        const targetReward = rewards
-            .filter((reward) => reward.interactionTypeKey === targetInteraction)
-            .map((reward) => getFixedAmount(reward.referrer, currencyAmountKey))
-            .reduce((acc, reward) => (reward > acc ? reward : acc), 0);
-        if (targetReward > 0) {
-            currentReward = Math.round(targetReward);
-        }
-    }
+    const filteredRewards = targetInteraction
+        ? rewards.filter((r) => r.interactionTypeKey === targetInteraction)
+        : rewards;
 
-    return formatAmount(currentReward, client.config.metadata?.currency);
+    const maxReward = getMaxFixedReferrerReward(
+        filteredRewards,
+        currencyAmountKey
+    );
+
+    if (maxReward <= 0) return;
+
+    return formatAmount(
+        Math.round(maxReward),
+        client.config.metadata?.currency
+    );
 }

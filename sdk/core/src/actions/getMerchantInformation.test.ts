@@ -52,18 +52,6 @@ describe("getMerchantInformation", () => {
                     name: "Test Merchant",
                     domain: "example.com",
                 },
-                maxReferrer: {
-                    amount: 100,
-                    eurAmount: 10,
-                    usdAmount: 12,
-                    gbpAmount: 9,
-                },
-                maxReferee: {
-                    amount: 50,
-                    eurAmount: 5,
-                    usdAmount: 6,
-                    gbpAmount: 4.5,
-                },
                 rewards: [
                     {
                         token: "0x1234567890123456789012345678901234567890" as Address,
@@ -99,8 +87,6 @@ describe("getMerchantInformation", () => {
 
             expect(result).toEqual(mockResponse);
             expect(result.rewards).toHaveLength(1);
-            expect(result.maxReferrer).toBeDefined();
-            expect(result.maxReferee).toBeDefined();
         });
     });
 
