@@ -1,5 +1,6 @@
 import { emitLifecycleEvent } from "@frak-labs/wallet-shared";
 import { useCallback, useEffect, useRef } from "react";
+import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 
 /**
  * Hook to emit redirect with fallback callback support.
@@ -27,6 +28,12 @@ export function useDeepLinkFallback() {
     useEffect(() => {
         const handler = (event: MessageEvent) => {
             if (event.data?.clientLifecycle === "deep-link-failed") {
+                // Validate the message comes from the expected parent origin
+                const expectedOrigin =
+                    resolvingContextStore.getState().context?.origin;
+                if (expectedOrigin && event.origin !== expectedOrigin) {
+                    return;
+                }
                 fallbackRef.current?.();
                 fallbackRef.current = null;
             }

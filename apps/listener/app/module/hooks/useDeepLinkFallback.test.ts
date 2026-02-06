@@ -3,6 +3,8 @@ import { vi } from "vitest";
 import { beforeEach, describe, expect, test } from "@/tests/fixtures";
 import { useDeepLinkFallback } from "./useDeepLinkFallback";
 
+const EXPECTED_ORIGIN = "https://example.com";
+
 // Mock emitLifecycleEvent from wallet-shared
 vi.mock("@frak-labs/wallet-shared", async () => {
     const actual = await vi.importActual<
@@ -13,6 +15,15 @@ vi.mock("@frak-labs/wallet-shared", async () => {
         emitLifecycleEvent: vi.fn(),
     };
 });
+
+// Mock resolvingContextStore to return a known origin
+vi.mock("@/module/stores/resolvingContextStore", () => ({
+    resolvingContextStore: {
+        getState: () => ({
+            context: { origin: EXPECTED_ORIGIN },
+        }),
+    },
+}));
 
 describe("useDeepLinkFallback", () => {
     beforeEach(() => {
@@ -47,6 +58,7 @@ describe("useDeepLinkFallback", () => {
         window.dispatchEvent(
             new MessageEvent("message", {
                 data: { clientLifecycle: "deep-link-failed" },
+                origin: EXPECTED_ORIGIN,
             })
         );
 
@@ -65,6 +77,7 @@ describe("useDeepLinkFallback", () => {
         window.dispatchEvent(
             new MessageEvent("message", {
                 data: { clientLifecycle: "deep-link-failed" },
+                origin: EXPECTED_ORIGIN,
             })
         );
 
@@ -84,6 +97,7 @@ describe("useDeepLinkFallback", () => {
         window.dispatchEvent(
             new MessageEvent("message", {
                 data: { clientLifecycle: "deep-link-failed" },
+                origin: EXPECTED_ORIGIN,
             })
         );
 
@@ -93,6 +107,7 @@ describe("useDeepLinkFallback", () => {
         window.dispatchEvent(
             new MessageEvent("message", {
                 data: { clientLifecycle: "deep-link-failed" },
+                origin: EXPECTED_ORIGIN,
             })
         );
 
@@ -136,6 +151,7 @@ describe("useDeepLinkFallback", () => {
         window.dispatchEvent(
             new MessageEvent("message", {
                 data: { clientLifecycle: "some-other-event" },
+                origin: EXPECTED_ORIGIN,
             })
         );
 
@@ -145,10 +161,41 @@ describe("useDeepLinkFallback", () => {
         window.dispatchEvent(
             new MessageEvent("message", {
                 data: { someOtherField: "value" },
+                origin: EXPECTED_ORIGIN,
             })
         );
 
         expect(onFallback).not.toHaveBeenCalled();
+    });
+
+    test("should ignore deep-link-failed messages from unexpected origins", () => {
+        const { result } = renderHook(() => useDeepLinkFallback());
+
+        const onFallback = vi.fn();
+        result.current.emitRedirectWithFallback(
+            "frakwallet://test",
+            onFallback
+        );
+
+        // Send deep-link-failed from a different origin
+        window.dispatchEvent(
+            new MessageEvent("message", {
+                data: { clientLifecycle: "deep-link-failed" },
+                origin: "https://malicious.com",
+            })
+        );
+
+        expect(onFallback).not.toHaveBeenCalled();
+
+        // Confirm that the same message from the expected origin still works
+        window.dispatchEvent(
+            new MessageEvent("message", {
+                data: { clientLifecycle: "deep-link-failed" },
+                origin: EXPECTED_ORIGIN,
+            })
+        );
+
+        expect(onFallback).toHaveBeenCalledTimes(1);
     });
 
     test("should handle multiple callback registrations", () => {
@@ -173,6 +220,7 @@ describe("useDeepLinkFallback", () => {
         window.dispatchEvent(
             new MessageEvent("message", {
                 data: { clientLifecycle: "deep-link-failed" },
+                origin: EXPECTED_ORIGIN,
             })
         );
 

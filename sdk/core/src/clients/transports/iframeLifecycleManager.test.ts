@@ -376,6 +376,7 @@ describe("createIFrameLifecycleManager", () => {
             });
 
             const mockIframe = document.createElement("iframe");
+            mockIframe.src = "https://wallet.frak.id";
             const manager = createIFrameLifecycleManager({
                 iframe: mockIframe,
             });
@@ -414,6 +415,7 @@ describe("createIFrameLifecycleManager", () => {
 
             const mockPostMessage = vi.fn();
             const mockIframe = {
+                src: "https://wallet.frak.id",
                 contentWindow: {
                     postMessage: mockPostMessage,
                 },
@@ -447,7 +449,7 @@ describe("createIFrameLifecycleManager", () => {
                     clientLifecycle: "deep-link-failed",
                     data: { originalUrl: "frakwallet://wallet" },
                 },
-                "*"
+                "https://wallet.frak.id"
             );
         });
 

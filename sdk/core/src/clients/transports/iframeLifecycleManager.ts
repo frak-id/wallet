@@ -88,6 +88,7 @@ function handleRedirect(
     const finalUrl = computeRedirectUrl(baseRedirectUrl, mergeToken);
 
     if (isFrakDeepLink(baseRedirectUrl)) {
+        const iframeOrigin = new URL(iframe.src).origin;
         triggerDeepLinkWithFallback(finalUrl, {
             onFallback: () => {
                 iframe.contentWindow?.postMessage(
@@ -95,7 +96,7 @@ function handleRedirect(
                         clientLifecycle: "deep-link-failed",
                         data: { originalUrl: finalUrl },
                     },
-                    "*"
+                    iframeOrigin
                 );
             },
         });
