@@ -19,7 +19,6 @@
 **Entry Points:**
 - `index.ts` - Main exports
 - `actions/index.ts` - Action methods
-- `interactions/index.ts` - Interaction encoders
 - `bundle.ts` - Combined bundle for CDN
 
 **Build Outputs:**
