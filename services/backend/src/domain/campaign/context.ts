@@ -1,5 +1,6 @@
 import { CampaignRuleRepository } from "./repositories/CampaignRuleRepository";
 import { CampaignManagementService } from "./services/CampaignManagementService";
+import { EstimatedRewardService } from "./services/EstimatedRewardService";
 import { RewardCalculator } from "./services/RewardCalculator";
 import { RuleConditionEvaluator } from "./services/RuleConditionEvaluator";
 import { RuleEngineService } from "./services/RuleEngineService";
@@ -15,6 +16,9 @@ const ruleEngineService = new RuleEngineService(
 const campaignManagementService = new CampaignManagementService(
     campaignRuleRepository
 );
+const estimatedRewardService = new EstimatedRewardService(
+    campaignRuleRepository
+);
 
 export namespace CampaignContext {
     export const repositories = {
@@ -26,5 +30,6 @@ export namespace CampaignContext {
         rewardCalculator: rewardCalculator,
         ruleEngine: ruleEngineService,
         management: campaignManagementService,
+        estimatedReward: estimatedRewardService,
     };
 }

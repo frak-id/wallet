@@ -23,4 +23,5 @@ export { db } from "./persistence/postgres";
 export {
     PricingRepository,
     pricingRepository,
+    type TokenPrice,
 } from "./pricing/PricingRepository";

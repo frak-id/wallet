@@ -40,7 +40,9 @@ export type {
 } from "./rpc/embedded";
 export type { SendInteractionParamsType } from "./rpc/interaction";
 export type {
+    EstimatedReward,
     GetMerchantInformationReturnType,
+    RewardTier,
     TokenAmountType,
 } from "./rpc/merchantInformation";
 export type {

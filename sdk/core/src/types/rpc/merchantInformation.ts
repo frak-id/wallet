@@ -12,6 +12,40 @@ export type TokenAmountType = {
 };
 
 /**
+ * A tier definition for tiered rewards
+ */
+export type RewardTier = {
+    minValue: number;
+    maxValue?: number;
+    amount: TokenAmountType;
+};
+
+/**
+ * Estimated reward amount — discriminated union by payout type
+ *
+ * - `fixed`: A known token amount (with fiat equivalents)
+ * - `percentage`: A percent of a purchase field (e.g. 5% of purchase_amount), with optional min/max caps
+ * - `tiered`: Amount depends on a field value matching tier brackets
+ */
+export type EstimatedReward =
+    | {
+          payoutType: "fixed";
+          amount: TokenAmountType;
+      }
+    | {
+          payoutType: "percentage";
+          percent: number;
+          percentOf: string;
+          maxAmount?: TokenAmountType;
+          minAmount?: TokenAmountType;
+      }
+    | {
+          payoutType: "tiered";
+          tierField: string;
+          tiers: RewardTier[];
+      };
+
+/**
  * Response of the `frak_getMerchantInformation` RPC method
  * @group RPC Schema
  */
@@ -34,21 +68,21 @@ export type GetMerchantInformationReturnType = {
         domain: string;
     };
     /**
-     * The max potential reward for the referrer
+     * The max potential reward for the referrer (only computed from fixed rewards)
      */
     maxReferrer?: TokenAmountType;
     /**
-     * The max potential reward for the referee
+     * The max potential reward for the referee (only computed from fixed rewards)
      */
     maxReferee?: TokenAmountType;
     /**
-     * List of all the potentials reward around this merchant
+     * List of all the potential rewards around this merchant
      */
     rewards: {
-        token: Address;
-        campaign: Address;
+        token?: Address;
+        campaignId: string;
         interactionTypeKey: InteractionTypeKey;
-        referrer: TokenAmountType;
-        referee: TokenAmountType;
+        referrer?: EstimatedReward;
+        referee?: EstimatedReward;
     }[];
 };

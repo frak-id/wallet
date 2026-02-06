@@ -1,6 +1,8 @@
 import type {
+    EstimatedReward,
     GetMerchantInformationReturnType,
     IFrameRpcSchema,
+    InteractionTypeKey,
 } from "@frak-labs/core-sdk";
 import {
     FrakRpcError,
@@ -9,6 +11,7 @@ import {
 } from "@frak-labs/frame-connector";
 import { authenticatedBackendApi } from "@frak-labs/wallet-shared";
 import { useCallback } from "react";
+import type { Address } from "viem";
 import type { WalletRpcContext } from "@/module/types/context";
 
 type OnGetMerchantInformation = RpcPromiseHandler<
@@ -17,11 +20,6 @@ type OnGetMerchantInformation = RpcPromiseHandler<
     WalletRpcContext
 >;
 
-/**
- * Get the current merchant information from the backend
- *
- * Note: Context is augmented by middleware with merchantId, sourceUrl, etc.
- */
 export function useOnGetMerchantInformation(): OnGetMerchantInformation {
     return useCallback(async (_params, context) => {
         const { merchantId } = context;
@@ -33,29 +31,42 @@ export function useOnGetMerchantInformation(): OnGetMerchantInformation {
             );
         }
 
-        const { data, error } =
-            await authenticatedBackendApi.user.merchant.resolve.get({
-                query: {
-                    domain: new URL(context.sourceUrl).host.replace("www.", ""),
-                },
-            });
+        const domain = new URL(context.sourceUrl).host.replace("www.", "");
 
-        if (error || !data) {
+        const [resolveResult, rewardsResult] = await Promise.all([
+            authenticatedBackendApi.user.merchant.resolve.get({
+                query: { domain },
+            }),
+            authenticatedBackendApi.user.merchant["estimated-rewards"].get({
+                query: { merchantId },
+            }),
+        ]);
+
+        if (resolveResult.error || !resolveResult.data) {
             throw new FrakRpcError(
                 RpcErrorCodes.configError,
                 "The current merchant doesn't exist within the Frak ecosystem"
             );
         }
 
+        const rewards = rewardsResult.data;
+
         return {
-            id: data.merchantId,
+            id: resolveResult.data.merchantId,
             onChainMetadata: {
-                name: data.name ?? "",
-                domain: new URL(context.sourceUrl).host.replace("www.", ""),
+                name: resolveResult.data.name ?? "",
+                domain,
             },
-            maxReferrer: undefined,
-            maxReferee: undefined,
-            rewards: [],
+            maxReferrer: rewards?.maxReferrer,
+            maxReferee: rewards?.maxReferee,
+            rewards: (rewards?.rewards ?? []).map((reward) => ({
+                token: reward.token as Address | undefined,
+                campaignId: reward.campaignId,
+                interactionTypeKey:
+                    reward.interactionTypeKey as InteractionTypeKey,
+                referrer: reward.referrer as EstimatedReward | undefined,
+                referee: reward.referee as EstimatedReward | undefined,
+            })),
         } satisfies GetMerchantInformationReturnType;
     }, []);
 }

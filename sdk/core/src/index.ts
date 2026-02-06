@@ -21,6 +21,7 @@ export type {
     DisplayModalParamsType,
     EmbeddedViewActionReferred,
     EmbeddedViewActionSharing,
+    EstimatedReward,
     FinalActionType,
     FinalModalStepType,
     // Client
@@ -55,6 +56,7 @@ export type {
     OpenSsoReturnType,
     PrepareSsoParamsType,
     PrepareSsoReturnType,
+    RewardTier,
     // RPC Interaction
     SendInteractionParamsType,
     SendTransactionModalStepType,
