@@ -45,6 +45,7 @@ export default $config({
             await import("./infra/gcp/dev.ts");
             await import("./infra/gcp/wallet.ts");
             await import("./infra/gcp/business.ts");
+            await import("./infra/gcp/sandbox.ts");
             await import("./infra/dashboard-admin.ts");
             await import("./infra/example.ts");
 

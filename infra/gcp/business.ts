@@ -16,7 +16,7 @@ import { baseDomainName, getRegistryPath, walletNamespace } from "./utils";
 
 const subDomain = isProd ? "business" : "business-dev";
 
-const businessEnv = {
+export const businessEnv = {
     STAGE: normalizedStageName,
     FRAK_WALLET_URL: walletUrl,
     BACKEND_URL: backendUrl,

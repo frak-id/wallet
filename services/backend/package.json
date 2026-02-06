@@ -14,6 +14,7 @@
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest watch",
     "dev": "bun sst dev bun dev:watch",
+    "dev:sandbox": "bun run dev:watch",
     "dev:env": "sst shell bun run scripts/envSetup.ts",
     "dev:watch": "bun run --watch src/index.ts",
     "build:docker": "docker build --tag \"elysia-dev\" .",

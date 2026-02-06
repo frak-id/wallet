@@ -5,7 +5,6 @@ import {
     backendUrl,
     drpcApiKey,
     erpcUrl,
-    indexerUrl,
     nexusRpcSecret,
     openPanelApiUrl,
     openPanelWalletClientId,
@@ -19,10 +18,9 @@ import { baseDomainName, getRegistryPath, walletNamespace } from "./utils";
 // todo: for now on wallet.gcp-dev.frak.id, to test that up a bit, and we wil llater migrate it to the real wallet.frak.id
 const subDomain = isProd ? "wallet" : "wallet-dev";
 
-const walletEnv = {
+export const walletEnv = {
     STAGE: normalizedStageName,
     BACKEND_URL: backendUrl,
-    INDEXER_URL: indexerUrl,
     ERPC_URL: erpcUrl,
     DRPC_API_KEY: drpcApiKey.value,
     PIMLICO_API_KEY: pimlicoApiKey.value,
@@ -57,7 +55,6 @@ if (!$dev) {
             BASE_IMAGE: baseImage.ref,
             STAGE: walletEnv.STAGE,
             BACKEND_URL: walletEnv.BACKEND_URL,
-            INDEXER_URL: walletEnv.INDEXER_URL,
             ERPC_URL: walletEnv.ERPC_URL,
             FRAK_WALLET_URL: walletEnv.FRAK_WALLET_URL,
             OPEN_PANEL_API_URL: walletEnv.OPEN_PANEL_API_URL,
@@ -89,7 +86,6 @@ if (!$dev) {
             BASE_IMAGE: baseImage.ref,
             STAGE: walletEnv.STAGE,
             BACKEND_URL: walletEnv.BACKEND_URL,
-            INDEXER_URL: walletEnv.INDEXER_URL,
             ERPC_URL: walletEnv.ERPC_URL,
             FRAK_WALLET_URL: walletEnv.FRAK_WALLET_URL,
             OPEN_PANEL_API_URL: walletEnv.OPEN_PANEL_API_URL,

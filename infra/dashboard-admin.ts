@@ -1,4 +1,3 @@
-import { indexerUrl } from "./config";
 import { isProd } from "./utils";
 
 /**
@@ -20,7 +19,6 @@ new sst.aws.StaticSite("Admin", {
     // Environment variables
     environment: {
         STAGE: $app.stage,
-        INDEXER_URL: indexerUrl,
     },
     dev: { autostart: false },
 });

@@ -10,6 +10,7 @@
     "build": "bun run build:sw && NODE_ENV=production vite build",
     "build:sw": "vite build --mode sw",
     "dev": "bun run build:sw && sst dev vite dev",
+    "dev:sandbox": "bun run build:sw && vite dev",
     "start": "bunx serve dist -p 3000",
     "lint": "biome lint .",
     "format:check": "biome check .",

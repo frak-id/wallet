@@ -1,7 +1,6 @@
 import {
     drpcApiKey,
     erpcUrl,
-    indexerUrl,
     jwtBusinessSecret,
     nexusRpcSecret,
     pimlicoApiKey,
@@ -43,7 +42,6 @@ export const postgresEnv = {
 export const elysiaEnv = {
     // Global
     STAGE: normalizedStageName,
-    INDEXER_URL: indexerUrl,
     ERPC_URL: erpcUrl,
     MASTER_KEY_SECRET: masterPkey,
     // Postgres related
