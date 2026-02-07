@@ -2,13 +2,13 @@ import { isRunningLocally } from "../utils";
 import { isTauri } from "../utils/platform";
 
 const rpName = "Frak wallet";
-const rpId = process.env.WEBAUTHN_RP_ID ?? 
-    (isRunningLocally && !isTauri()
-        ? "localhost"
-        : "frak.id");
+const rpId =
+    process.env.WEBAUTHN_RP_ID ??
+    (isRunningLocally && !isTauri() ? "localhost" : "frak.id");
 
 const rpOrigin =
-    process.env.FRAK_WALLET_URL ?? (isRunningLocally && !isTauri()
+    process.env.FRAK_WALLET_URL ??
+    (isRunningLocally && !isTauri()
         ? "https://localhost:3000"
         : "https://wallet.frak.id");
 
