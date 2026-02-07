@@ -181,6 +181,7 @@ export default defineConfig(({ mode, command }: ConfigEnv): UserConfig => {
                 // Tell vite to ignore watching `src-tauri`
                 ignored: ["**/src-tauri/**"],
             },
+            allowedHosts: isSandbox ? true : undefined,
         },
         build: {
             // CSS code splitting - keep enabled for better caching

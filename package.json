@@ -43,7 +43,7 @@
     "deploy-gcp:prod": "sst deploy --stage gcp-production",
     "deploy-gcp:staging": "sst deploy --stage gcp-staging-v2",
     "dev": "bun sst dev",
-    "dev:sandbox": "set -a && . ./.env.sandbox && set +a && bun run --cwd services/backend dev:sandbox & bun run --cwd apps/wallet dev:sandbox & bun run --cwd apps/listener dev:sandbox & bun run --cwd apps/business dev:sandbox & wait",
+    "dev:sandbox": "bun run --filter '*' dev:sandbox",
     "env:sandbox": "echo 'Run bun sst dev, then type env:sandbox in the SST dev UI'",
     "format": "biome check --write .",
     "format:check": "biome check .",

@@ -5,6 +5,9 @@ import { defineConfig } from "vite";
 import viteTsConfigPaths from "vite-tsconfig-paths";
 import { lightningCssConfig, onwarn } from "../../packages/dev-tooling";
 
+
+const isSandbox = !!process.env.SANDBOX;
+
 /**
  * Get SST secret value - handles both sst dev (plain env) and sst shell (SST_RESOURCE_* JSON format)
  */
@@ -109,5 +112,6 @@ export default defineConfig({
     },
     server: {
         port: 3022,
+        allowedHosts: isSandbox ? true : undefined,
     },
 });

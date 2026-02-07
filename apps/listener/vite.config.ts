@@ -59,6 +59,7 @@ export default {
     server: {
         port: 3002,
         proxy: {},
+        allowedHosts: isSandbox ? true : undefined,
     },
     build: {
         cssCodeSplit: true,
