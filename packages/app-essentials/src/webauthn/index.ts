@@ -1,22 +1,16 @@
-import { isRunningInProd, isRunningLocally } from "../utils";
+import { isRunningLocally } from "../utils";
 import { isTauri } from "../utils/platform";
 
-/**
- * The RP ID for the webauthn
- * For Tauri mobile (iOS/Android), use wallet-dev.frak.id to match Associated Domains
- */
 const rpName = "Frak wallet";
-const rpId = isRunningInProd
-    ? "frak.id"
-    : isRunningLocally && !isTauri()
-      ? "localhost"
-      : "wallet-dev.frak.id";
+const rpId =
+    isRunningLocally && !isTauri()
+        ? "localhost"
+        : (process.env.WEBAUTHN_RP_ID ?? "frak.id");
 
-const rpOrigin = isRunningInProd
-    ? "https://wallet.frak.id"
-    : isRunningLocally
-      ? "https://localhost:3000"
-      : "https://wallet-dev.frak.id";
+const rpOrigin =
+    isRunningLocally && !isTauri()
+        ? "https://localhost:3000"
+        : (process.env.FRAK_WALLET_URL ?? "https://wallet.frak.id");
 
 /**
  * Mobile app origins for Tauri
@@ -37,14 +31,7 @@ const iosTauriOrigin = "tauri://localhost";
  */
 const rpAllowedOrigins = [rpOrigin, androidApkOrigin, iosTauriOrigin];
 
-/**
- * All allowed RP IDs for backend verification
- */
-const rpAllowedIds = isRunningInProd
-    ? ["frak.id"]
-    : isRunningLocally
-      ? ["localhost", "wallet-dev.frak.id"]
-      : ["wallet-dev.frak.id"];
+const rpAllowedIds = isRunningLocally ? ["localhost", rpId] : [rpId];
 
 /**
  * The default user name

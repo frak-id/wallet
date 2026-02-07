@@ -10,7 +10,7 @@ const lines = Object.entries(process.env)
     .sort(([a], [b]) => a.localeCompare(b))
     .map(
         ([key, value]) =>
-            `${key.replace("TO_PRINT_", "")}=${shellQuote(value ?? "")}`
+            `export ${key.replace("TO_PRINT_", "")}=${shellQuote(value ?? "")}`
     );
 
 const content = [

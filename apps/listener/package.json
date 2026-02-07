@@ -10,7 +10,7 @@
     "build": "NODE_ENV=production vite build",
     "start": "bunx serve dist/ -p 3000",
     "dev": "sst dev vite dev",
-    "dev:sandbox": "vite dev",
+    "dev:sandbox": "vite dev  --clearScreen false",
     "preview": "vite preview",
     "lint": "biome lint .",
     "format:check": "biome check .",

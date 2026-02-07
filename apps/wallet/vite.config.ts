@@ -12,6 +12,7 @@ const DEBUG = JSON.stringify(false);
 
 const isProd = process.env.STAGE?.includes("prod") ?? false;
 const isTauri = !!process.env.TAURI_CLI_RUNNING;
+const isSandbox = !!process.env.SANDBOX;
 
 /**
  * Get SST secret value - handles both sst dev (plain env) and sst shell (SST_RESOURCE_* JSON format)
@@ -95,6 +96,9 @@ export default defineConfig(({ mode, command }: ConfigEnv): UserConfig => {
             "process.env.OPEN_PANEL_WALLET_CLIENT_ID": JSON.stringify(
                 getSstSecret("OPEN_PANEL_WALLET_CLIENT_ID")
             ),
+            "process.env.WEBAUTHN_RP_ID": JSON.stringify(
+                process.env.WEBAUTHN_RP_ID
+            ),
         },
     };
 
@@ -129,8 +133,8 @@ export default defineConfig(({ mode, command }: ConfigEnv): UserConfig => {
                 autoCodeSplitting: true,
             }),
             viteReact(),
-            // Skip HTTPS for Tauri dev (mobile simulators don't trust self-signed certs)
-            ...(isTauri ? [] : [mkcert()]),
+            // Skip HTTPS for Tauri dev (simulators don't trust self-signed certs) and sandbox (proxy handles TLS)
+            ...(isTauri || isSandbox ? [] : [mkcert()]),
             tsconfigPaths(),
             ...(isProd ? [removeConsole()] : []),
         ],

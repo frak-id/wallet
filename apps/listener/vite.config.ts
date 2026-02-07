@@ -9,6 +9,7 @@ import { lightningCssConfig, onwarn } from "../../packages/dev-tooling";
 const DEBUG = JSON.stringify(false);
 
 const isProd = process.env.STAGE?.includes("prod") ?? false;
+const isSandbox = !!process.env.SANDBOX;
 
 export default {
     base: "/listener",
@@ -45,10 +46,13 @@ export default {
         "process.env.OPEN_PANEL_LISTENER_CLIENT_ID": JSON.stringify(
             process.env.OPEN_PANEL_LISTENER_CLIENT_ID
         ),
+        "process.env.WEBAUTHN_RP_ID": JSON.stringify(
+            process.env.WEBAUTHN_RP_ID
+        ),
     },
     plugins: [
         react(),
-        mkcert(),
+        ...(isSandbox ? [] : [mkcert()]),
         tsconfigPaths(),
         ...(isProd ? [removeConsole()] : []),
     ],

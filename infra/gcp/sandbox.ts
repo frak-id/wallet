@@ -12,6 +12,7 @@ const sandboxEnv = {
     ...walletEnv,
     OPEN_PANEL_BUSINESS_CLIENT_ID: businessEnv.OPEN_PANEL_BUSINESS_CLIENT_ID,
     FUNDING_ON_RAMP_URL: businessEnv.FUNDING_ON_RAMP_URL,
+    SANDBOX: "true",
 };
 
 new sst.x.DevCommand("env:sandbox", {
