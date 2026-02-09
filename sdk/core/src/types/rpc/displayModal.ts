@@ -1,4 +1,4 @@
-import type { FullInteractionTypesKey } from "../../constants/interactionTypes";
+import type { InteractionTypeKey } from "../../constants/interactionTypes";
 import type { I18nConfig } from "../config";
 import type {
     FinalModalStepType,
@@ -52,7 +52,7 @@ export type ModalRpcMetadata = {
         title?: string;
         icon?: string;
     };
-    targetInteraction?: FullInteractionTypesKey;
+    targetInteraction?: InteractionTypeKey;
     /**
      * Some i18n override for the displayed modal (i.e. update the displayed text only for this modal)
      */

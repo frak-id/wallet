@@ -1,8 +1,8 @@
 import type {
     DisplayEmbeddedWalletParamsType,
     FrakWalletSdkConfig,
-    FullInteractionTypesKey,
     IFrameRpcSchema,
+    InteractionTypeKey,
     Language,
     ModalRpcMetadata,
     ModalRpcStepsInput,
@@ -34,7 +34,7 @@ export type GenericWalletUiType = {
     appName: string;
     logoUrl?: string;
     homepageLink?: string;
-    targetInteraction?: FullInteractionTypesKey;
+    targetInteraction?: InteractionTypeKey;
     i18n?: {
         lang?: "en" | "fr";
         context?: string;

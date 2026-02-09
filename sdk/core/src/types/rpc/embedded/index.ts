@@ -1,5 +1,5 @@
 import type { Address } from "viem";
-import type { FullInteractionTypesKey } from "../../../constants/interactionTypes";
+import type { InteractionTypeKey } from "../../../constants/interactionTypes";
 import type { I18nConfig } from "../../config";
 import type {
     EmbeddedViewActionReferred,
@@ -46,7 +46,7 @@ export type DisplayEmbeddedWalletParamsType = {
         /**
          * The target interaction behind this modal
          */
-        targetInteraction?: FullInteractionTypesKey;
+        targetInteraction?: InteractionTypeKey;
         /**
          * The position of the component
          */

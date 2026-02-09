@@ -52,35 +52,28 @@ describe("getMerchantInformation", () => {
                     name: "Test Merchant",
                     domain: "example.com",
                 },
-                maxReferrer: {
-                    amount: 100,
-                    eurAmount: 10,
-                    usdAmount: 12,
-                    gbpAmount: 9,
-                },
-                maxReferee: {
-                    amount: 50,
-                    eurAmount: 5,
-                    usdAmount: 6,
-                    gbpAmount: 4.5,
-                },
                 rewards: [
                     {
                         token: "0x1234567890123456789012345678901234567890" as Address,
-                        campaign:
-                            "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd" as Address,
-                        interactionTypeKey: "press.readArticle",
+                        campaignId: "campaign-1",
+                        interactionTypeKey: "referral",
                         referrer: {
-                            amount: 10,
-                            eurAmount: 1,
-                            usdAmount: 1.2,
-                            gbpAmount: 0.9,
+                            payoutType: "fixed",
+                            amount: {
+                                amount: 10,
+                                eurAmount: 1,
+                                usdAmount: 1.2,
+                                gbpAmount: 0.9,
+                            },
                         },
                         referee: {
-                            amount: 5,
-                            eurAmount: 0.5,
-                            usdAmount: 0.6,
-                            gbpAmount: 0.45,
+                            payoutType: "fixed",
+                            amount: {
+                                amount: 5,
+                                eurAmount: 0.5,
+                                usdAmount: 0.6,
+                                gbpAmount: 0.45,
+                            },
                         },
                     },
                 ],
@@ -94,8 +87,6 @@ describe("getMerchantInformation", () => {
 
             expect(result).toEqual(mockResponse);
             expect(result.rewards).toHaveLength(1);
-            expect(result.maxReferrer).toBeDefined();
-            expect(result.maxReferee).toBeDefined();
         });
     });
 

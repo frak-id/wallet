@@ -81,16 +81,6 @@
             "deletePrivateKey": "Delete private key"
         },
         "installWebApp": "<strong>Install wallet on home screen</strong> <br /> to find your gains at any time",
-        "interaction": {
-            "CREATE_REFERRAL_LINK": "Created share link",
-            "OPEN_ARTICLE": "Opened article",
-            "PURCHASE_COMPLETED": "Completed purchase",
-            "PURCHASE_STARTED": "Started purchase",
-            "READ_ARTICLE": "Read article",
-            "REFERRED": "Referred",
-            "WEBSHOP_OPENNED": "Opened webshop",
-            "CUSTOMER_MEETING": "Appointment in store"
-        },
         "invite": {
             "title": "Invite friends, earn $5",
             "text": "Earn $5 for each friend you invite. T&C apply"

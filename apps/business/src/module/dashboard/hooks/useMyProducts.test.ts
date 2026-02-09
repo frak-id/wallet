@@ -40,7 +40,6 @@ describe("useMyProducts", () => {
                         id: "0x1234567890123456789012345678901234567890",
                         name: "Owned Product",
                         domain: "owned.com",
-                        productTypes: ["webshop"],
                     },
                 ],
                 operator: [
@@ -48,7 +47,6 @@ describe("useMyProducts", () => {
                         id: "0x2222222222222222222222222222222222222222",
                         name: "Operator Product",
                         domain: "operator.com",
-                        productTypes: ["press"],
                     },
                 ],
             };
@@ -100,7 +98,6 @@ describe("useMyProducts", () => {
                         id: "0x1234567890123456789012345678901234567890",
                         name: "Only Product",
                         domain: "only.example.com",
-                        productTypes: ["dapp"],
                     },
                 ],
                 operator: [],
@@ -133,12 +130,10 @@ describe("useMyProducts", () => {
                     {
                         id: "0x1111111111111111111111111111111111111111",
                         name: "Webshop",
-                        productTypes: ["webshop"],
                     },
                     {
                         id: "0x2222222222222222222222222222222222222222",
                         name: "Press",
-                        productTypes: ["press"],
                     },
                 ],
             };

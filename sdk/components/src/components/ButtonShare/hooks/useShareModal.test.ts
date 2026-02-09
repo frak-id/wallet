@@ -68,7 +68,7 @@ describe("useShareModal", () => {
         } as any);
 
         const { result } = renderHook(() =>
-            useShareModal("retail.customerMeeting")
+            useShareModal("custom.customerMeeting")
         );
 
         await result.current.handleShare();
@@ -79,7 +79,7 @@ describe("useShareModal", () => {
         const transformFn = mockDisplay.mock.calls[0][0];
         const resultMetadata = transformFn({});
         expect(resultMetadata).toEqual({
-            targetInteraction: "retail.customerMeeting",
+            targetInteraction: "custom.customerMeeting",
         });
     });
 

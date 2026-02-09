@@ -1,53 +1,63 @@
 import {
-    type FullInteractionTypesKey,
+    type EstimatedReward,
     formatAmount,
     getCurrencyAmountKey,
+    type InteractionTypeKey,
+    type TokenAmountType,
 } from "@frak-labs/core-sdk";
 import { getMerchantInformation } from "@frak-labs/core-sdk/actions";
 
-/**
- * The parameters for the getCurrentReward function
- */
 type GetCurrentRewardParams = {
-    targetInteraction?: FullInteractionTypesKey;
+    targetInteraction?: InteractionTypeKey;
 };
 
-/**
- * Find the estimated reward
- * @param targetInteraction
- * @returns
- */
+function getFixedFiatAmount(
+    estimated: EstimatedReward | undefined,
+    key: keyof TokenAmountType
+): number {
+    if (!estimated || estimated.payoutType !== "fixed") return 0;
+    return estimated.amount[key];
+}
+
+function getMaxFixedReferrerReward(
+    rewards: { referrer?: EstimatedReward }[],
+    key: keyof TokenAmountType
+): number {
+    return rewards.reduce(
+        (max, reward) =>
+            Math.max(max, getFixedFiatAmount(reward.referrer, key)),
+        0
+    );
+}
+
 export async function getCurrentReward({
     targetInteraction,
 }: GetCurrentRewardParams) {
-    // Get the client
     const client = window.FrakSetup?.client;
     if (!client) {
         console.warn("Frak client not ready yet");
         return;
     }
 
-    const { maxReferrer, rewards } = await getMerchantInformation(client);
+    const { rewards } = await getMerchantInformation(client);
 
-    if (!maxReferrer) return;
-
-    // Get the currency amount key (e.g. "eurAmount")
     const currencyAmountKey = getCurrencyAmountKey(
         client.config.metadata?.currency
     );
 
-    // Get the current reward
-    let currentReward = Math.round(maxReferrer[currencyAmountKey]);
-    if (targetInteraction) {
-        // Find the max reward for the target interaction
-        const targetReward = rewards
-            .filter((reward) => reward.interactionTypeKey === targetInteraction)
-            .map((reward) => reward.referrer[currencyAmountKey])
-            .reduce((acc, reward) => (reward > acc ? reward : acc), 0);
-        if (targetReward > 0) {
-            currentReward = Math.round(targetReward);
-        }
-    }
+    const filteredRewards = targetInteraction
+        ? rewards.filter((r) => r.interactionTypeKey === targetInteraction)
+        : rewards;
 
-    return formatAmount(currentReward, client.config.metadata?.currency);
+    const maxReward = getMaxFixedReferrerReward(
+        filteredRewards,
+        currencyAmountKey
+    );
+
+    if (maxReward <= 0) return;
+
+    return formatAmount(
+        Math.round(maxReward),
+        client.config.metadata?.currency
+    );
 }

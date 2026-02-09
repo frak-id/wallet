@@ -197,6 +197,55 @@ export const CampaignMetadataSchema = t.Object({
 });
 export type CampaignMetadata = Static<typeof CampaignMetadataSchema>;
 
+export const EstimatedRewardTierSchema = t.Object({
+    minValue: t.Number(),
+    maxValue: t.Optional(t.Number()),
+    amount: t.TokenAmount,
+});
+export type EstimatedRewardTier = Static<typeof EstimatedRewardTierSchema>;
+
+export const FixedEstimatedRewardSchema = t.Object({
+    payoutType: t.Literal("fixed"),
+    amount: t.TokenAmount,
+});
+
+export const PercentageEstimatedRewardSchema = t.Object({
+    payoutType: t.Literal("percentage"),
+    percent: t.Number(),
+    percentOf: t.String(),
+    maxAmount: t.Optional(t.TokenAmount),
+    minAmount: t.Optional(t.TokenAmount),
+});
+
+export const TieredEstimatedRewardSchema = t.Object({
+    payoutType: t.Literal("tiered"),
+    tierField: t.String(),
+    tiers: t.Array(EstimatedRewardTierSchema),
+});
+
+export const EstimatedRewardSchema = t.Union([
+    FixedEstimatedRewardSchema,
+    PercentageEstimatedRewardSchema,
+    TieredEstimatedRewardSchema,
+]);
+export type EstimatedReward = Static<typeof EstimatedRewardSchema>;
+
+export const EstimatedRewardItemSchema = t.Object({
+    token: t.Optional(t.Address()),
+    campaignId: t.String(),
+    interactionTypeKey: t.String(),
+    referrer: t.Optional(EstimatedRewardSchema),
+    referee: t.Optional(EstimatedRewardSchema),
+});
+export type EstimatedRewardItem = Static<typeof EstimatedRewardItemSchema>;
+
+export const EstimatedRewardsResultSchema = t.Object({
+    rewards: t.Array(EstimatedRewardItemSchema),
+});
+export type EstimatedRewardsResult = Static<
+    typeof EstimatedRewardsResultSchema
+>;
+
 export const CampaignResponseSchema = t.Object({
     id: t.String(),
     merchantId: t.String(),
