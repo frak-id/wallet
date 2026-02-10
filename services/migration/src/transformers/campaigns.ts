@@ -67,10 +67,16 @@ function createRewardFromTrigger(
     };
 }
 
+export type ProductOrigin = {
+    productId: string;
+    productDomain: string;
+};
+
 export function transformMongoDBCampaignToRules(
     campaign: V1MongoDBCampaign,
     merchantId: string,
-    defaultToken?: Hex
+    defaultToken?: Hex,
+    productOrigin?: ProductOrigin
 ): { rules: V2CampaignRuleInsert[]; actions: MigrationAction[] } {
     const rules: V2CampaignRuleInsert[] = [];
     const actions: MigrationAction[] = [];
@@ -126,20 +132,27 @@ export function transformMongoDBCampaignToRules(
         };
 
         rules.push(rule);
-        actions.push({ type: "create_campaign_rule", data: rule });
+        actions.push({
+            type: "create_campaign_rule",
+            data: rule,
+            productOrigin,
+        });
     }
 
     return { rules, actions };
 }
 
 export function formatCampaignRuleForDryRun(
-    rule: V2CampaignRuleInsert
+    rule: V2CampaignRuleInsert,
+    productOrigin?: ProductOrigin
 ): string {
+    const productLine = productOrigin
+        ? `    - Product: ${productOrigin.productDomain} (${productOrigin.productId})\n`
+        : "";
     return `
   Campaign Rule:
     - Name: ${rule.name}
-    - Merchant ID: ${rule.merchantId}
-    - Status: ${rule.status}
+${productLine}    - Status: ${rule.status}
     - Trigger: ${rule.rule.trigger}
     - Budget: ${rule.budgetConfig ? JSON.stringify(rule.budgetConfig) : "None"}
 `;

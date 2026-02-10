@@ -6,7 +6,7 @@ export const migrationConfig = {
     mongodbUri: process.env.MONGODB_BUSINESS_URI ?? "",
     mongodbDatabase:
         process.env.NODE_ENV === "production" ? "business" : "business-dev",
-    defaultRewardToken: currentStablecoins.usdc as Address,
+    defaultRewardToken: currentStablecoins.eure as Address,
     dryRun: process.env.DRY_RUN !== "false",
     logLevel: (process.env.LOG_LEVEL ?? "info") as
         | "debug"

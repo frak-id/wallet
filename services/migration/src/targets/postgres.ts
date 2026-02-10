@@ -1,9 +1,9 @@
-import { campaignRulesTable } from "@frak-labs/backend-elysia/domain/campaign";
+import { campaignRulesTable } from "@frak-labs/backend-elysia/domain/campaign/db/schema";
 import {
     merchantAdminsTable,
     merchantsTable,
-} from "@frak-labs/backend-elysia/domain/merchant";
-import { db } from "@frak-labs/backend-elysia/infrastructure";
+} from "@frak-labs/backend-elysia/domain/merchant/db/schema";
+import { db } from "@frak-labs/backend-elysia/infrastructure/persistence/postgres";
 import { eq } from "drizzle-orm";
 import type {
     V2CampaignRuleInsert,

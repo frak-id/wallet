@@ -55,19 +55,31 @@ function log(
     }
 }
 
+const MAX_INDEXER_ERRORS = 10;
+
 async function fetchAllProductsWithDetails(): Promise<ProductWithDetails[]> {
     log("info", "Fetching all products from indexer...");
     const products = await fetchAllProducts();
     log("info", `Found ${products.length} products`);
 
     const results: ProductWithDetails[] = [];
+    let errorCount = 0;
     for (const product of products) {
         const productId = productIdToHex(product.id);
         log("debug", `Fetching details for product ${product.domain}`);
 
         const productInfo = await fetchProductInfo(productId);
         if (!productInfo) {
-            log("warn", `Could not fetch product info for ${product.domain}`);
+            errorCount++;
+            log(
+                "warn",
+                `Could not fetch product info for ${product.domain} (${errorCount}/${MAX_INDEXER_ERRORS})`
+            );
+            if (errorCount >= MAX_INDEXER_ERRORS) {
+                throw new Error(
+                    `Aborting: too many indexer errors (${errorCount}). The indexer may be down or the data is stale.`
+                );
+            }
             continue;
         }
 
@@ -115,16 +127,19 @@ function processProduct(
         plan.summary.totalAdmins += adminActions.length;
     }
 
-    const productCampaigns = mongoCampaignsByProductId.get(
-        productIdToHex(productInfo.product.id)
-    );
+    const productHexId = productIdToHex(productInfo.product.id);
+    const productCampaigns = mongoCampaignsByProductId.get(productHexId);
     if (productCampaigns) {
         for (const campaign of productCampaigns) {
             const { actions: campaignActions } =
                 transformMongoDBCampaignToRules(
                     campaign,
                     "PLACEHOLDER",
-                    migrationConfig.defaultRewardToken
+                    migrationConfig.defaultRewardToken,
+                    {
+                        productId: productHexId,
+                        productDomain: productInfo.product.domain,
+                    }
                 );
             plan.campaigns.push(...campaignActions);
             plan.summary.totalCampaignRules += campaignActions.length;
@@ -213,7 +228,7 @@ function printDryRunPlan(plan: MigrationPlan): void {
     );
     printDryRunSection("CAMPAIGN RULES", plan.campaigns, (a) =>
         a.type === "create_campaign_rule"
-            ? formatCampaignRuleForDryRun(a.data)
+            ? formatCampaignRuleForDryRun(a.data, a.productOrigin)
             : null
     );
 

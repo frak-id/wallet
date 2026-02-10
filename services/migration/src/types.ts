@@ -152,7 +152,11 @@ export type MigrationAction =
     | { type: "create_merchant"; data: V2MerchantInsert }
     | { type: "deploy_bank"; merchantId: string; ownerWallet: Address }
     | { type: "create_merchant_admin"; data: V2MerchantAdminInsert }
-    | { type: "create_campaign_rule"; data: V2CampaignRuleInsert };
+    | {
+          type: "create_campaign_rule";
+          data: V2CampaignRuleInsert;
+          productOrigin?: { productId: string; productDomain: string };
+      };
 
 export type MigrationPlan = {
     merchants: MigrationAction[];

@@ -27,7 +27,7 @@ export async function fetchProductInfo(
 ): Promise<V1IndexerProductInfo | null> {
     try {
         return await indexerApi
-            .get(`products/${productId}`)
+            .get(`products/info?productId=${productId}`)
             .json<V1IndexerProductInfo>();
     } catch (error) {
         console.error(`Failed to fetch product info for ${productId}:`, error);
