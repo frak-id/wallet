@@ -79,7 +79,7 @@
     "@frak-labs/frame-connector": "workspace:*",
     "@frak-labs/core-sdk": "workspace:*",
     "class-variance-authority": "^0.7.1",
-    "preact": "^10.28.0",
+    "preact": "^10.28.3",
     "preact-custom-element": "^4.6.0"
   },
   "devDependencies": {

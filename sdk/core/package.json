@@ -92,7 +92,7 @@
   },
   "dependencies": {
     "@frak-labs/frame-connector": "workspace:*",
-    "@openpanel/web": "^1.0.6"
+    "@openpanel/web": "^1.0.7"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.2",

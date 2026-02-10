@@ -51,7 +51,6 @@ export function PwaInstall() {
 
     return (
         <pwa-install
-            // @ts-expect-error - Web component types from @khmyznikov/pwa-install don't include React ref, but it works at runtime
             ref={pwaInstallRef}
             manifest-url="/manifest.json"
             manual-apple="true"
