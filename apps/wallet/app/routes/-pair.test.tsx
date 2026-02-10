@@ -89,6 +89,7 @@ describe("PairTrampolinePage", () => {
             expect(navigate).toHaveBeenCalledWith({
                 to: "/pairing",
                 search: { mode: "embedded" },
+                replace: true,
             });
         });
     });
@@ -159,6 +160,7 @@ describe("PairTrampolinePage", () => {
             expect(navigate).toHaveBeenCalledWith({
                 to: "/pairing",
                 search: { mode: "embedded" },
+                replace: true,
             });
 
             clearTimeout(timeoutId);
@@ -253,6 +255,7 @@ describe("PairTrampolinePage", () => {
             expect(navigate).toHaveBeenCalledWith({
                 to: "/pairing",
                 search: { mode: "embedded" },
+                replace: true,
             });
 
             // Cleanup

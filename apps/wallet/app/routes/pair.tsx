@@ -35,7 +35,7 @@ export function validatePairSearch(search: Record<string, unknown>) {
  */
 export function redirectToWebPairing(id: string, navigate: NavigateFn) {
     pairingStore.getState().setPendingPairingId(id);
-    navigate({ to: "/pairing", search: { mode: "embedded" } });
+    navigate({ to: "/pairing", search: { mode: "embedded" }, replace: true });
 }
 
 export const Route = createFileRoute("/pair")({

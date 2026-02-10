@@ -264,7 +264,7 @@ describe("useDeepLinkFallback", () => {
             windowOpenSpy = vi.spyOn(window, "open").mockReturnValue(null);
         });
 
-        test("should use window.open with intent URL on Chromium Android", async () => {
+        test("should use window.open with intent URL on Chromium Android and preserve fallback signaling", async () => {
             const { emitLifecycleEvent } = await import(
                 "@frak-labs/wallet-shared"
             );
@@ -275,12 +275,15 @@ describe("useDeepLinkFallback", () => {
                 vi.fn()
             );
 
-            // Should open intent URL directly, not emit lifecycle event
+            // Should open intent URL directly and still notify parent for fallback wiring
             expect(windowOpenSpy).toHaveBeenCalledWith(
                 "intent://wallet#Intent;scheme=frakwallet;package=id.frak.wallet;end",
                 "_blank"
             );
-            expect(emitLifecycleEvent).not.toHaveBeenCalled();
+            expect(emitLifecycleEvent).toHaveBeenCalledWith({
+                iframeLifecycle: "redirect",
+                data: { baseRedirectUrl: "frakwallet://wallet" },
+            });
         });
 
         test("should preserve deep link path and query in intent URL", () => {

@@ -34,14 +34,14 @@ export function useDeepLinkFallback() {
             fallbackRef.current = onFallback;
 
             // On Chromium Android, trigger intent URL directly from iframe
-            // to preserve user gesture and avoid Chrome's confirmation bar
+            // to preserve user gesture and avoid Chrome's confirmation bar.
+            // Keep lifecycle emission so parent fallback contract remains active.
             if (isChromiumAndroid() && isFrakDeepLink(deepLinkUrl)) {
                 const intentUrl = toAndroidIntentUrl(deepLinkUrl);
                 window.open(intentUrl, "_blank");
-                return;
             }
 
-            // On other platforms, route through parent SDK
+            // Route through parent SDK so deep-link-failed can be emitted if needed
             emitLifecycleEvent({
                 iframeLifecycle: "redirect",
                 data: { baseRedirectUrl: deepLinkUrl },
