@@ -28,6 +28,7 @@ export default defineConfig({
     dts: false,
     outDir: "./dist/bundle",
     noExternal: [/.*/],
+    inlineOnly: false,
     treeshake: {
         moduleSideEffects: false,
     },

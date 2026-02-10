@@ -125,6 +125,7 @@ export default defineConfig([
         dts: false,
         outDir: "./cdn",
         noExternal: [/.*/],
+        inlineOnly: false,
         treeshake: {
             moduleSideEffects: true,
         },
