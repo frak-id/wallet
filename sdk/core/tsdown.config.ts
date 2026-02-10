@@ -64,6 +64,12 @@ export default defineConfig([
         treeshake: {
             moduleSideEffects: false,
         },
+        outputOptions(options) {
+            return {
+                ...options,
+                entryFileNames: "[name].js",
+            };
+        },
         define: buildDefine,
         plugins: [nodePolyfills()],
     },
