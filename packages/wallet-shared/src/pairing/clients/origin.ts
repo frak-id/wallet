@@ -57,7 +57,9 @@ export class OriginPairingClient extends BasePairingClient<
     }
 
     /**
-     * Reconnect to all the pairing associated with the current wallet
+     * Reconnect to all the pairing associated with the current wallet.
+     * Uses isAlive() to detect and clean up zombie connections left
+     * after the app was backgrounded on mobile.
      */
     reconnect() {
         const session = getSafeSession();
@@ -72,6 +74,12 @@ export class OriginPairingClient extends BasePairingClient<
             );
             return;
         }
+
+        // If the connection is still alive, nothing to do
+        if (this.isAlive()) return;
+
+        // Reset stale ping state from previous connection
+        this.pendingPings = 0;
 
         // Launch the WS connection
         this.connect({
