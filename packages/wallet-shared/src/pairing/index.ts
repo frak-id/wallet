@@ -23,7 +23,11 @@ export {
 // Hooks
 export { useDeletePairing } from "./hook/useDeletePairing";
 export { useGetActivePairings } from "./hook/useListPairings";
-export { usePairingInfo } from "./hook/usePairingInfo";
+export {
+    isPairingNotFoundError,
+    PairingNotFoundError,
+    usePairingInfo,
+} from "./hook/usePairingInfo";
 export { usePersistentPairingClient } from "./hook/usePersistentPairingClient";
 export {
     useDeclineSignatureRequest,

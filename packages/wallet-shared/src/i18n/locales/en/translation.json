@@ -225,7 +225,8 @@
             "noCodeNotice": "Confirm this pairing request to continue.",
             "error": {
                 "title": "Invalid pairing request",
-                "noCode": "No pairing code provided"
+                "noCode": "No pairing code provided",
+                "notFound": "Pairing request not found or expired"
             },
             "loading": {
                 "title": "Please wait"

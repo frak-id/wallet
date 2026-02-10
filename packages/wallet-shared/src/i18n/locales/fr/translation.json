@@ -223,7 +223,8 @@
             "noCodeNotice": "Confirmez cette demande d'appairage pour continuer.",
             "error": {
                 "title": "Requête de connexion invalide",
-                "noCode": "Aucun code de connexion fourni"
+                "noCode": "Aucun code de connexion fourni",
+                "notFound": "Demande d'appairage introuvable ou expirée"
             },
             "loading": {
                 "title": "Veuillez patienter"

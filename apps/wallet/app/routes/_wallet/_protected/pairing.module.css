@@ -12,14 +12,11 @@
     margin-top: 1rem;
 }
 
+.pairing__buttons--single {
+    justify-content: center;
+}
+
 .pairing__noCodeNotice {
     margin-top: 0.75rem;
     text-align: center;
-}
-
-.pairing__loading > span {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
 }

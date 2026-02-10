@@ -2,6 +2,7 @@ import { Button } from "@frak-labs/ui/component/Button";
 import { Skeleton } from "@frak-labs/ui/component/Skeleton";
 import {
     getTargetPairingClient,
+    isPairingNotFoundError,
     PairingCode,
     usePairingInfo,
 } from "@frak-labs/wallet-shared";
@@ -15,7 +16,7 @@ import { Title } from "@/module/common/component/Title";
 import { PairingHeader } from "@/module/pairing/component/PairingHeader";
 import { PairingInfo } from "@/module/pairing/component/PairingInfo";
 import { usePendingPairingInfo } from "@/module/pairing/hook/usePendingPairingInfo";
-import styles from "@/module/pairing/page/PairingPage.module.css";
+import styles from "./pairing.module.css";
 
 export const Route = createFileRoute("/_wallet/_protected/pairing")({
     component: PairingPage,
@@ -23,6 +24,21 @@ export const Route = createFileRoute("/_wallet/_protected/pairing")({
         mode: typeof search.mode === "string" ? search.mode : undefined,
     }),
 });
+
+export function getPairingErrorState(
+    isPairingError: boolean,
+    pairingError: Error | null
+): "none" | "not-found" | "transient" {
+    if (!isPairingError) {
+        return "none";
+    }
+
+    if (isPairingNotFoundError(pairingError)) {
+        return "not-found";
+    }
+
+    return "transient";
+}
 
 /**
  * PairingPage
@@ -39,11 +55,20 @@ function PairingPage() {
     const navigate = useNavigate();
     const { mode } = Route.useSearch();
     const pairingState = useStore(client.store);
-    const { data: pairingInfo } = usePairingInfo({
+    const {
+        data: pairingInfo,
+        error: pairingError,
+        isError: isPairingError,
+        refetch: refetchPairingInfo,
+    } = usePairingInfo({
         id: pendingPairingInfo?.id,
     });
     const hasPairingCode = Boolean(pairingInfo?.pairingCode?.trim());
     const shouldShowCode = mode !== "embedded" && hasPairingCode;
+    const pairingErrorState = getPairingErrorState(
+        isPairingError,
+        pairingError
+    );
 
     const actionPairing = useCallback(
         (action: "join" | "cancel") => {
@@ -73,6 +98,48 @@ function PairingPage() {
                     <AlertCircle size={24} />
                     {t("wallet.pairing.error.noCode")}
                 </p>
+            </Grid>
+        );
+    }
+
+    // Error state (invalid/expired pairing ID)
+    if (pairingErrorState === "not-found") {
+        return (
+            <Grid>
+                <Title size="big" align="center">
+                    {t("wallet.pairing.error.title")}
+                </Title>
+                <p className={styles.pairing__error}>
+                    <AlertCircle size={24} />
+                    {t("wallet.pairing.error.notFound")}
+                </p>
+            </Grid>
+        );
+    }
+
+    // Transient error state (network/backend issues)
+    if (pairingErrorState === "transient") {
+        return (
+            <Grid>
+                <Title size="big" align="center">
+                    {t("wallet.pairing.title")}
+                </Title>
+                <p className={styles.pairing__error}>
+                    <AlertCircle size={24} />
+                    {t("error.webauthn.generic")}
+                </p>
+                <div
+                    className={`${styles.pairing__buttons} ${styles["pairing__buttons--single"]}`}
+                >
+                    <Button
+                        variant="secondary"
+                        onClick={() => {
+                            void refetchPairingInfo();
+                        }}
+                    >
+                        {t("wallet.pairing.refresh")}
+                    </Button>
+                </div>
             </Grid>
         );
     }

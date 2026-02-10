@@ -267,6 +267,7 @@ interface Resources {
                 confirm: "Confirm";
                 error: {
                     noCode: "No pairing code provided";
+                    notFound: "Pairing request not found or expired";
                     title: "Invalid pairing request";
                 };
                 info: {
