@@ -1,41 +1,77 @@
 import { isRunningLocally } from "../utils";
 import { isTauri } from "../utils/platform";
 
-const rpName = "Frak wallet";
-const rpId =
-    process.env.WEBAUTHN_RP_ID ??
-    (isRunningLocally && !isTauri() ? "localhost" : "frak.id");
+/**
+ * Tauri dev domain — must match Digital Asset Links (Android) and AASA (iOS)
+ */
+const tauriDevDomain = "wallet.v2.gcp-dev.frak.id";
 
-const rpOrigin =
-    process.env.FRAK_WALLET_URL ??
-    (isRunningLocally && !isTauri()
-        ? "https://localhost:3000"
-        : "https://wallet.frak.id");
+/**
+ * Resolve the relying party ID based on environment:
+ *  1. Explicit env override (set via Vite define or runtime)
+ *  2. Tauri mobile app → dev domain with assetlinks/AASA
+ *  3. Local web dev → localhost
+ *  4. Production web → frak.id
+ */
+function resolveRpId(): string {
+    if (process.env.WEBAUTHN_RP_ID) return process.env.WEBAUTHN_RP_ID;
+    if (isRunningLocally && isTauri()) return tauriDevDomain;
+    if (isRunningLocally) return "localhost";
+    return "frak.id";
+}
+
+function isRpOriginCompatibleWithId(origin: string, rpId: string): boolean {
+    try {
+        const hostname = new URL(origin).hostname;
+        return hostname === rpId || hostname.endsWith(`.${rpId}`);
+    } catch {
+        return false;
+    }
+}
+
+function resolveRpOrigin(rpId: string): string {
+    const envOrigin = process.env.FRAK_WALLET_URL;
+
+    // Native WebAuthn requires RP ID to match origin host (or parent domain).
+    if (isTauri()) {
+        if (envOrigin && isRpOriginCompatibleWithId(envOrigin, rpId)) {
+            return envOrigin;
+        }
+        return `https://${rpId}`;
+    }
+
+    if (envOrigin) return envOrigin;
+    if (isRunningLocally && !isTauri()) return "https://localhost:3000";
+    return "https://wallet.frak.id";
+}
+
+const rpName = "Frak wallet";
+const rpId = resolveRpId();
+const rpOrigin = resolveRpOrigin(rpId);
 
 /**
  * Mobile app origins for Tauri
- * - Android: APK signing key hash (changes per signing key)
- *   ⚠️ IMPORTANT: If the Android APK signing key changes, this hash MUST be updated
- *   to match the new signing key. The hash is used for WebAuthn Digital Asset Links
- *   verification. To get the hash: `keytool -list -v -keystore <keystore> -alias <alias>`
- *   then extract the SHA-256 fingerprint and base64url encode it.
+ * - Android: APK signing key hash (must match assetlinks.json fingerprint)
+ *   ⚠️ If the Android APK signing key changes, update this hash.
+ *   Get it: `keytool -list -v -keystore <keystore> -alias <alias>`
+ *   then base64url-encode the SHA-256 fingerprint.
  * - iOS: tauri://localhost
  */
 const androidApkOrigin =
     "android:apk-key-hash:R68LewSdx_cfn9hNQdDKwm27UfBJXOjtIqC2u01wiHc";
 const iosTauriOrigin = "tauri://localhost";
 
-/**
- * All allowed origins for WebAuthn verification
- * Includes the web origin + mobile app origins
- */
+/** All allowed origins for WebAuthn verification (web + mobile) */
 const rpAllowedOrigins = [rpOrigin, androidApkOrigin, iosTauriOrigin];
 
-const rpAllowedIds = isRunningLocally ? ["localhost", rpId] : [rpId];
-
 /**
- * The default user name
+ * Allowed RP IDs for backend verification.
+ * Local dev accepts both web (localhost) and Tauri (dev domain).
  */
+const rpAllowedIds = isRunningLocally
+    ? Array.from(new Set(["localhost", tauriDevDomain, rpId]))
+    : [rpId];
+
 const defaultUsername = "Frak Wallet";
 
 export const WebAuthN = {
