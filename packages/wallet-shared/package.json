@@ -57,17 +57,17 @@
     "@frak-labs/test-foundation": "workspace:*",
     "i18next-resources-for-ts": "^2.0.0",
     "@testing-library/jest-dom": "^6.9.1",
-    "@testing-library/react": "^16.3.1",
+    "@testing-library/react": "^16.3.2",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
-    "@vitejs/plugin-react": "^5.1.2",
-    "@vitest/coverage-v8": "^4.0.16",
-    "@vitest/ui": "^4.0.16",
+    "@vitejs/plugin-react": "^5.1.4",
+    "@vitest/coverage-v8": "^4.0.18",
+    "@vitest/ui": "^4.0.18",
     "bun-types": "latest",
-    "jsdom": "^27.3.0",
-    "msw": "^2.12.4",
+    "jsdom": "^27.4.0",
+    "msw": "^2.12.10",
     "typescript": "catalog:",
-    "vitest": "^4.0.16"
+    "vitest": "^4.0.18"
   }
 }
