@@ -102,7 +102,7 @@
     "bun-types": "latest",
     "cbor": "^10.0.11",
     "esbuild": "^0.27.3",
-    "jsdom": "^27.4.0",
+    "jsdom": "^28.0.0",
     "lightningcss": "^1.31.1",
     "rolldown-vite": "^7.3.1",
     "sst": "3.17.38",
