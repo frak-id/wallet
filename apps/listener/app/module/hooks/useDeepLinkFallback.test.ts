@@ -5,6 +5,23 @@ import { useDeepLinkFallback } from "./useDeepLinkFallback";
 
 const EXPECTED_ORIGIN = "https://example.com";
 
+// Mock core-sdk deep link helpers
+const mockIsChromiumAndroid = vi.fn(() => false);
+vi.mock("@frak-labs/core-sdk", async () => {
+    const actual = await vi.importActual<typeof import("@frak-labs/core-sdk")>(
+        "@frak-labs/core-sdk"
+    );
+    return {
+        ...actual,
+        isChromiumAndroid: () => mockIsChromiumAndroid(),
+        isFrakDeepLink: (url: string) => url.startsWith("frakwallet://"),
+        toAndroidIntentUrl: (deepLink: string) => {
+            const path = deepLink.slice("frakwallet://".length);
+            return `intent://${path}#Intent;scheme=frakwallet;package=id.frak.wallet;end`;
+        },
+    };
+});
+
 // Mock emitLifecycleEvent from wallet-shared
 vi.mock("@frak-labs/wallet-shared", async () => {
     const actual = await vi.importActual<
@@ -237,5 +254,64 @@ describe("useDeepLinkFallback", () => {
         const secondFunction = result.current.emitRedirectWithFallback;
 
         expect(firstFunction).toBe(secondFunction);
+    });
+
+    describe("Chromium Android behavior", () => {
+        let windowOpenSpy: ReturnType<typeof vi.spyOn>;
+
+        beforeEach(() => {
+            mockIsChromiumAndroid.mockReturnValue(true);
+            windowOpenSpy = vi.spyOn(window, "open").mockReturnValue(null);
+        });
+
+        test("should use window.open with intent URL on Chromium Android", async () => {
+            const { emitLifecycleEvent } = await import(
+                "@frak-labs/wallet-shared"
+            );
+            const { result } = renderHook(() => useDeepLinkFallback());
+
+            result.current.emitRedirectWithFallback(
+                "frakwallet://wallet",
+                vi.fn()
+            );
+
+            // Should open intent URL directly, not emit lifecycle event
+            expect(windowOpenSpy).toHaveBeenCalledWith(
+                "intent://wallet#Intent;scheme=frakwallet;package=id.frak.wallet;end",
+                "_blank"
+            );
+            expect(emitLifecycleEvent).not.toHaveBeenCalled();
+        });
+
+        test("should preserve deep link path and query in intent URL", () => {
+            const { result } = renderHook(() => useDeepLinkFallback());
+
+            result.current.emitRedirectWithFallback(
+                "frakwallet://pair?id=abc-123&mode=embedded",
+                vi.fn()
+            );
+
+            expect(windowOpenSpy).toHaveBeenCalledWith(
+                "intent://pair?id=abc-123&mode=embedded#Intent;scheme=frakwallet;package=id.frak.wallet;end",
+                "_blank"
+            );
+        });
+
+        test("should fall back to postMessage for non-frak URLs on Chromium Android", async () => {
+            const { emitLifecycleEvent } = await import(
+                "@frak-labs/wallet-shared"
+            );
+            const { result } = renderHook(() => useDeepLinkFallback());
+
+            const url = "https://wallet.frak.id/open";
+            result.current.emitRedirectWithFallback(url, vi.fn());
+
+            // Non-frak URL should go through postMessage even on Android
+            expect(windowOpenSpy).not.toHaveBeenCalled();
+            expect(emitLifecycleEvent).toHaveBeenCalledWith({
+                iframeLifecycle: "redirect",
+                data: { baseRedirectUrl: url },
+            });
+        });
     });
 });

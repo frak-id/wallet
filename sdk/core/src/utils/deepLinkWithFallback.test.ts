@@ -4,10 +4,29 @@ import {
     triggerDeepLinkWithFallback,
 } from "./deepLinkWithFallback";
 
+/**
+ * Set navigator.userAgent for testing platform-specific behavior
+ */
+function mockUserAgent(ua: string) {
+    Object.defineProperty(navigator, "userAgent", {
+        value: ua,
+        writable: true,
+        configurable: true,
+    });
+}
+
+const CHROME_ANDROID_UA =
+    "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36";
+const FIREFOX_ANDROID_UA =
+    "Mozilla/5.0 (Android 14; Mobile; rv:121.0) Gecko/121.0 Firefox/121.0";
+const DESKTOP_CHROME_UA =
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+
 describe("deepLinkWithFallback", () => {
     let originalHidden: boolean;
     let originalAddEventListener: typeof document.addEventListener;
     let originalRemoveEventListener: typeof document.removeEventListener;
+    let originalUserAgent: string;
     let visibilityChangeHandler: (() => void) | null = null;
 
     beforeEach(() => {
@@ -17,6 +36,10 @@ describe("deepLinkWithFallback", () => {
         originalHidden = document.hidden;
         originalAddEventListener = document.addEventListener;
         originalRemoveEventListener = document.removeEventListener;
+        originalUserAgent = navigator.userAgent;
+
+        // Default to desktop Chrome (non-Android)
+        mockUserAgent(DESKTOP_CHROME_UA);
 
         // Mock document.hidden
         Object.defineProperty(document, "hidden", {
@@ -56,6 +79,7 @@ describe("deepLinkWithFallback", () => {
         });
         document.addEventListener = originalAddEventListener;
         document.removeEventListener = originalRemoveEventListener;
+        mockUserAgent(originalUserAgent);
     });
 
     describe("triggerDeepLinkWithFallback", () => {
@@ -149,6 +173,56 @@ describe("deepLinkWithFallback", () => {
             vi.advanceTimersByTime(2500);
 
             // No error should occur, callback is optional
+        });
+
+        describe("Android Intent URL conversion", () => {
+            test("should use intent:// URL on Chromium Android", () => {
+                mockUserAgent(CHROME_ANDROID_UA);
+
+                triggerDeepLinkWithFallback("frakwallet://wallet");
+
+                expect(window.location.href).toBe(
+                    "intent://wallet#Intent;scheme=frakwallet;package=id.frak.wallet;end"
+                );
+            });
+
+            test("should preserve path and query params in intent URL", () => {
+                mockUserAgent(CHROME_ANDROID_UA);
+
+                triggerDeepLinkWithFallback(
+                    "frakwallet://pair?id=abc-123&mode=embedded"
+                );
+
+                expect(window.location.href).toBe(
+                    "intent://pair?id=abc-123&mode=embedded#Intent;scheme=frakwallet;package=id.frak.wallet;end"
+                );
+            });
+
+            test("should use custom scheme on Firefox Android", () => {
+                mockUserAgent(FIREFOX_ANDROID_UA);
+
+                triggerDeepLinkWithFallback("frakwallet://wallet");
+
+                expect(window.location.href).toBe("frakwallet://wallet");
+            });
+
+            test("should use custom scheme on desktop Chrome", () => {
+                mockUserAgent(DESKTOP_CHROME_UA);
+
+                triggerDeepLinkWithFallback("frakwallet://wallet");
+
+                expect(window.location.href).toBe("frakwallet://wallet");
+            });
+
+            test("should not convert non-frak deep links to intent URL", () => {
+                mockUserAgent(CHROME_ANDROID_UA);
+
+                triggerDeepLinkWithFallback("https://wallet.frak.id/pair");
+
+                expect(window.location.href).toBe(
+                    "https://wallet.frak.id/pair"
+                );
+            });
         });
     });
 

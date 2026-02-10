@@ -100,8 +100,10 @@ export {
     getCurrencyAmountKey,
     getSupportedCurrency,
     getSupportedLocale,
+    isChromiumAndroid,
     isFrakDeepLink,
     resolveMerchantId,
+    toAndroidIntentUrl,
     trackEvent,
     triggerDeepLinkWithFallback,
 } from "./utils";

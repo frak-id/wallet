@@ -1,4 +1,4 @@
-import { DEEP_LINK_SCHEME } from "./constants";
+import { ANDROID_PACKAGE, DEEP_LINK_SCHEME } from "./constants";
 
 /**
  * Options for deep link with fallback
@@ -11,11 +11,41 @@ export type DeepLinkFallbackOptions = {
 };
 
 /**
+ * Check if running on a Chromium-based Android browser.
+ *
+ * On Chrome Android, custom scheme deep links (e.g. frakwallet://) trigger
+ * a confirmation bar ("Continue to Frak Wallet?"). Using intent:// URLs
+ * instead bypasses this for Chromium browsers while keeping custom scheme
+ * fallback for non-Chromium browsers (e.g. Firefox) where it works fine.
+ */
+export function isChromiumAndroid(): boolean {
+    const ua = navigator.userAgent;
+    return /Android/i.test(ua) && /Chrome\/\d+/i.test(ua);
+}
+
+/**
+ * Convert a frakwallet:// deep link to an Android intent:// URL.
+ *
+ * Intent URLs let Chromium browsers open the app directly without
+ * showing the "Continue to app?" confirmation bar.
+ *
+ * Format: intent://path#Intent;scheme=frakwallet;package=id.frak.wallet;end
+ */
+export function toAndroidIntentUrl(deepLink: string): string {
+    // Extract everything after "frakwallet://"
+    const path = deepLink.slice(DEEP_LINK_SCHEME.length);
+    return `intent://${path}#Intent;scheme=frakwallet;package=${ANDROID_PACKAGE};end`;
+}
+
+/**
  * Trigger a deep link with visibility-based fallback detection.
  *
  * Uses the Page Visibility API to detect if the app opened (page goes hidden).
  * If the page remains visible after the timeout, assumes app is not installed
  * and invokes the onFallback callback.
+ *
+ * On Chromium Android, converts custom scheme to intent:// URL to avoid
+ * the "Continue to app?" confirmation bar.
  *
  * @param deepLink - The deep link URL to trigger (e.g., "frakwallet://wallet")
  * @param options - Optional configuration (timeout, onFallback callback)
@@ -38,8 +68,14 @@ export function triggerDeepLinkWithFallback(
     // Start listening for visibility changes
     document.addEventListener("visibilitychange", onVisibilityChange);
 
+    // On Chromium Android, use intent:// to avoid confirmation bar
+    const url =
+        isChromiumAndroid() && isFrakDeepLink(deepLink)
+            ? toAndroidIntentUrl(deepLink)
+            : deepLink;
+
     // Trigger the deep link
-    window.location.href = deepLink;
+    window.location.href = url;
 
     // Check after timeout if app opened
     setTimeout(() => {

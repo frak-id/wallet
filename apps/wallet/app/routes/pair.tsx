@@ -1,3 +1,4 @@
+import { triggerDeepLinkWithFallback } from "@frak-labs/core-sdk";
 import { Spinner } from "@frak-labs/ui/component/Spinner";
 import { pairingStore } from "@frak-labs/wallet-shared";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
@@ -82,7 +83,9 @@ function PairTrampolinePage() {
         }
 
         // Attempt to open the app via deep link (encode id to prevent URL injection)
-        window.location.href = `frakwallet://pair?id=${encodeURIComponent(id)}`;
+        triggerDeepLinkWithFallback(
+            `frakwallet://pair?id=${encodeURIComponent(id)}`
+        );
 
         // Fallback: redirect to web pairing after timeout
         const timeoutId = setTimeout(() => {

@@ -126,17 +126,8 @@ function MobileTransactionStep({
     const [appNotFound, setAppNotFound] = useState(false);
     const { startTimeout, clearTimeout: clearTxTimeout } = useMountedTimeout();
     const { emitRedirectWithFallback } = useDeepLinkFallback();
-    const deepLinkTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const isPendingRef = useRef(isPending);
     isPendingRef.current = isPending;
-
-    useEffect(() => {
-        return () => {
-            if (deepLinkTimerRef.current) {
-                clearTimeout(deepLinkTimerRef.current);
-            }
-        };
-    }, []);
 
     const emitDeepLink = useCallback(() => {
         emitRedirectWithFallback(mobileWalletDeepLink, () => {
@@ -148,8 +139,11 @@ function MobileTransactionStep({
         setStatus("waiting");
         sendTransaction(toSendTx);
 
-        // Delay deep link to let the WS signature request queue before browser context switches
-        deepLinkTimerRef.current = setTimeout(emitDeepLink, 150);
+        // Trigger deep link immediately — must stay synchronous in click
+        // handler to preserve user gesture (Chrome Android blocks async
+        // deep links with a "Continue to app?" confirmation bar).
+        // The WS signature request is already queued by sendTransaction().
+        emitDeepLink();
 
         startTimeout(() => {
             if (!isPendingRef.current) return;

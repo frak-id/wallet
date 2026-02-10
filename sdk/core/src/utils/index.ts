@@ -7,7 +7,9 @@ export { decompressJsonFromB64 } from "./compression/decompress";
 export { DEEP_LINK_SCHEME } from "./constants";
 export {
     type DeepLinkFallbackOptions,
+    isChromiumAndroid,
     isFrakDeepLink,
+    toAndroidIntentUrl,
     triggerDeepLinkWithFallback,
 } from "./deepLinkWithFallback";
 export { FrakContextManager } from "./FrakContext";
