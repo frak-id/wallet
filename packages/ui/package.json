@@ -47,6 +47,7 @@
     "@vitest/ui": "^4.0.18",
     "jsdom": "^27.4.0",
     "react": "catalog:",
+    "react-dom": "catalog:",
     "typescript": "^5",
     "vitest": "^4.0.18"
   }
