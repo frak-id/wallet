@@ -62,6 +62,7 @@ targets:
         RUST_LOG: info
     settings:
       base:
+        CODE_SIGN_ALLOW_ENTITLEMENTS_MODIFICATION: true
         ENABLE_BITCODE: false
         ARCHS: [arm64]
         VALID_ARCHS: arm64 
