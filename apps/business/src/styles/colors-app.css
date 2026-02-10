@@ -79,8 +79,8 @@
     --frak-select-content-background-color: var(--frak-color-white);
     --frak-select-content-border-color: var(--frak-color-mischka);
     --frak-select-content-shadow:
-        0 10px 38px -10px rgba(22, 23, 24, 0.35), 0 10px 20px -15px
-        rgba(22, 23, 24, 0.2);
+        0 10px 38px -10px rgba(22, 23, 24, 0.35),
+        0 10px 20px -15px rgba(22, 23, 24, 0.2);
     --frak-select-item-text-color: var(--frak-color-tuna);
     --frak-select-item-hover-background-color: #818c9c24;
     --frak-select-label-text-color: var(--frak-color-regent-gray);

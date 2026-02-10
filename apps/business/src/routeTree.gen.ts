@@ -215,10 +215,10 @@ export interface FileRoutesByFullPath {
   '/merchant/$id/funding': typeof RestrictedMerchantIdFundingRoute
   '/merchant/$id/setup-status': typeof RestrictedMerchantIdSetupStatusRoute
   '/merchant/$id/team': typeof RestrictedMerchantIdTeamRoute
-  '/merchant/$id': typeof RestrictedMerchantIdIndexRoute
+  '/merchant/$id/': typeof RestrictedMerchantIdIndexRoute
   '/campaigns/draft/$campaignId/metrics': typeof RestrictedCampaignsDraftCampaignIdMetricsRoute
   '/campaigns/draft/$campaignId/validation': typeof RestrictedCampaignsDraftCampaignIdValidationRoute
-  '/campaigns/draft/$campaignId': typeof RestrictedCampaignsDraftCampaignIdIndexRoute
+  '/campaigns/draft/$campaignId/': typeof RestrictedCampaignsDraftCampaignIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -306,10 +306,10 @@ export interface FileRouteTypes {
     | '/merchant/$id/funding'
     | '/merchant/$id/setup-status'
     | '/merchant/$id/team'
-    | '/merchant/$id'
+    | '/merchant/$id/'
     | '/campaigns/draft/$campaignId/metrics'
     | '/campaigns/draft/$campaignId/validation'
-    | '/campaigns/draft/$campaignId'
+    | '/campaigns/draft/$campaignId/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -407,7 +407,7 @@ declare module '@tanstack/react-router' {
     '/_restricted': {
       id: '/_restricted'
       path: ''
-      fullPath: ''
+      fullPath: '/'
       preLoaderRoute: typeof RestrictedRouteImport
       parentRoute: typeof rootRouteImport
     }
@@ -519,7 +519,7 @@ declare module '@tanstack/react-router' {
     '/_restricted/merchant/$id/': {
       id: '/_restricted/merchant/$id/'
       path: '/merchant/$id'
-      fullPath: '/merchant/$id'
+      fullPath: '/merchant/$id/'
       preLoaderRoute: typeof RestrictedMerchantIdIndexRouteImport
       parentRoute: typeof RestrictedRoute
     }
@@ -561,7 +561,7 @@ declare module '@tanstack/react-router' {
     '/_restricted/campaigns/draft/$campaignId/': {
       id: '/_restricted/campaigns/draft/$campaignId/'
       path: '/campaigns/draft/$campaignId'
-      fullPath: '/campaigns/draft/$campaignId'
+      fullPath: '/campaigns/draft/$campaignId/'
       preLoaderRoute: typeof RestrictedCampaignsDraftCampaignIdIndexRouteImport
       parentRoute: typeof RestrictedRoute
     }
