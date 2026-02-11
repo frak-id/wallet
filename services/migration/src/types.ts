@@ -158,10 +158,26 @@ export type MigrationAction =
           productOrigin?: { productId: string; productDomain: string };
       };
 
+export type ExcludedProduct = {
+    domain: string;
+    matchedPattern: string;
+};
+
+export type BankBalanceInfo = {
+    productDomain: string;
+    productId: string;
+    bankAddress: Address;
+    tokenAddress: Address;
+    balance: bigint;
+    formattedBalance: string;
+};
+
 export type MigrationPlan = {
     merchants: MigrationAction[];
     admins: MigrationAction[];
     campaigns: MigrationAction[];
+    excludedProducts: ExcludedProduct[];
+    banksWithBalance: BankBalanceInfo[];
     summary: {
         totalMerchants: number;
         totalBanksToDeploy: number;

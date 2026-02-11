@@ -1,0 +1,413 @@
+[2026-02-11T09:45:21.711Z] [INFO] Running migration in DRY RUN mode 
+[2026-02-11T09:45:21.712Z] [INFO] Indexer URL: https://ponder.gcp.frak.id 
+[2026-02-11T09:45:21.712Z] [INFO] Fetching all products from indexer... 
+[2026-02-11T09:45:21.823Z] [INFO] Found 51 products 
+[2026-02-11T09:45:24.021Z] [INFO] Excluded 36 products matching exclusion patterns 
+[2026-02-11T09:45:24.021Z] [INFO] Checking bank balances on-chain... 
+results [
+  {
+    [0mresult[2m:[0m [0m[33m77280000n[0m[0m[2m,[0m
+    [0mstatus[2m:[0m [0m[32m[0m[32m"success"[0m[0m[0m[2m,[0m
+  }[0m[2m,[0m {
+    [0mresult[2m:[0m [0m[33m0n[0m[0m[2m,[0m
+    [0mstatus[2m:[0m [0m[32m[0m[32m"success"[0m[0m[0m[2m,[0m
+  }[0m[2m,[0m {
+    [0mresult[2m:[0m [0m[33m0n[0m[0m[2m,[0m
+    [0mstatus[2m:[0m [0m[32m[0m[32m"success"[0m[0m[0m[2m,[0m
+  }[0m[2m,[0m {
+    [0mresult[2m:[0m [0m[33m0n[0m[0m[2m,[0m
+    [0mstatus[2m:[0m [0m[32m[0m[32m"success"[0m[0m[0m[2m,[0m
+  }[0m[2m,[0m {
+    [0mresult[2m:[0m [0m[33m0n[0m[0m[2m,[0m
+    [0mstatus[2m:[0m [0m[32m[0m[32m"success"[0m[0m[0m[2m,[0m
+  }[0m[2m,[0m {
+    [0mresult[2m:[0m [0m[33m174000000n[0m[0m[2m,[0m
+    [0mstatus[2m:[0m [0m[32m[0m[32m"success"[0m[0m[0m[2m,[0m
+  }[0m[2m,[0m {
+    [0mresult[2m:[0m [0m[33m0n[0m[0m[2m,[0m
+    [0mstatus[2m:[0m [0m[32m[0m[32m"success"[0m[0m[0m[2m,[0m
+  }[0m[2m,[0m {
+    [0mresult[2m:[0m [0m[33m149000000n[0m[0m[2m,[0m
+    [0mstatus[2m:[0m [0m[32m[0m[32m"success"[0m[0m[0m[2m,[0m
+  }[0m[2m,[0m {
+    [0mresult[2m:[0m [0m[33m20000000n[0m[0m[2m,[0m
+    [0mstatus[2m:[0m [0m[32m[0m[32m"success"[0m[0m[0m[2m,[0m
+  }[0m[2m,[0m {
+    [0mresult[2m:[0m [0m[33m156000000n[0m[0m[2m,[0m
+    [0mstatus[2m:[0m [0m[32m[0m[32m"success"[0m[0m[0m[2m,[0m
+  }[0m[2m,[0m {
+    [0mresult[2m:[0m [0m[33m0n[0m[0m[2m,[0m
+    [0mstatus[2m:[0m [0m[32m[0m[32m"success"[0m[0m[0m[2m,[0m
+  }[0m[2m,[0m {
+    [0mresult[2m:[0m [0m[33m0n[0m[0m[2m,[0m
+    [0mstatus[2m:[0m [0m[32m[0m[32m"success"[0m[0m[0m[2m,[0m
+  }[0m[2m,[0m {
+    [0mresult[2m:[0m [0m[33m0n[0m[0m[2m,[0m
+    [0mstatus[2m:[0m [0m[32m[0m[32m"success"[0m[0m[0m[2m,[0m
+  }[0m[2m,[0m {
+    [0mresult[2m:[0m [0m[33m0n[0m[0m[2m,[0m
+    [0mstatus[2m:[0m [0m[32m[0m[32m"success"[0m[0m[0m[2m,[0m
+  }
+]
+[2026-02-11T09:45:24.224Z] [WARN] Found 5 banks with remaining balance that need manual migration 
+[2026-02-11T09:45:24.224Z] [INFO] Fetching MongoDB campaigns... 
+[2026-02-11T09:45:24.723Z] [INFO] Found 63 MongoDB campaigns 
+
+================================================================================
+MIGRATION DRY RUN SUMMARY
+================================================================================
+
+Total Merchants to Create: 15
+Total Banks to Deploy: 1
+Total Admins to Create: 7
+Total Campaign Rules to Create: 11
+
+--------------------------------------------------------------------------------
+MERCHANTS
+--------------------------------------------------------------------------------
+
+  Merchant:
+    - Domain: gapianne.com
+    - Name: Gapianne
+    - Product ID: 0xbefe088a272c69bd4a643f2270dbd67c046cded7485a100c5dbd4dc87f651cd3
+    - Owner Wallet: 0x7409e301f71ec8d2c5203501559e936f91c7c2d5
+    - Bank Address: 0xd4aa0fc3cfcda57a65607d22a8ea03f75f699145
+    - Default Reward Token: 0xFdEed5cE7E281B4e0F163B70eBe2Cf0B10803b7B
+
+
+  Merchant:
+    - Domain: moov360.com
+    - Name: Moov360
+    - Product ID: 0xca89756c72bee9a4ebf5da0fb67c1e8876e66c0cd7addbf1bbf451e117208533
+    - Owner Wallet: 0xcfddeab1e5bcd45fd8fa07aa85e458a134245e62
+    - Bank Address: 0xd09a3f93dfc330d78538961b625c384f8b404f2e
+    - Default Reward Token: 0xFdEed5cE7E281B4e0F163B70eBe2Cf0B10803b7B
+
+
+  Merchant:
+    - Domain: untappednewyorktours.com
+    - Name: Untapped New York Tours
+    - Product ID: 0x073d76ad4d240669b795bd86fa5049894aea4ebf9c70ca034e70c54e47a208ba
+    - Owner Wallet: 0x3379a520a830d5e55eed72312182356467f500d6
+    - Bank Address: 0x3ad77b025580370f0e3ab781c5c566ffdd849242
+    - Default Reward Token: 0xFdEed5cE7E281B4e0F163B70eBe2Cf0B10803b7B
+
+
+  Merchant:
+    - Domain: maison-sassy.com
+    - Name: Maison Sassy
+    - Product ID: 0xb166abc85ad0a64ab16bb3ac2abea7bfc0252c75a99aa9943096c4ca2164a47a
+    - Owner Wallet: 0xcfddeab1e5bcd45fd8fa07aa85e458a134245e62
+    - Bank Address: 0xb64ec7fa341758b2baf195805ee912434f58a6ac
+    - Default Reward Token: 0xFdEed5cE7E281B4e0F163B70eBe2Cf0B10803b7B
+
+
+  Merchant:
+    - Domain: frak-business.sorosorcerer.com
+    - Name: BBC test
+    - Product ID: 0x41969b69d85b1e62b376c92b943d1474ca0da96ed32472fe799c108351269341
+    - Owner Wallet: 0x4ec2eebb92c9f71be28352d3918c704444c77aaa
+    - Bank Address: 0xfbc55bb3db63325d5350f19924fd743846defba3
+    - Default Reward Token: 0xFdEed5cE7E281B4e0F163B70eBe2Cf0B10803b7B
+
+
+  Merchant:
+    - Domain: waitlist.basileboli.com
+    - Name: BBC referral
+    - Product ID: 0xf3ead9e3c4a82278f3606a9827415ad3336ed2c6cdf86b47eae410cb7cbcd0e9
+    - Owner Wallet: 0x4ec2eebb92c9f71be28352d3918c704444c77aaa
+    - Bank Address: NEEDS DEPLOYMENT
+    - Default Reward Token: 0xFdEed5cE7E281B4e0F163B70eBe2Cf0B10803b7B
+
+
+  Bank Deployment Required:
+    - Owner Wallet: 0x4ec2eebb92c9f71be28352d3918c704444c77aaa
+
+  Merchant:
+    - Domain: morning-marvels.com
+    - Name: Morning Marvels
+    - Product ID: 0x28727f8f3b7a0d469705a44da249cad1772762ef73e59cca7f3f2125af059745
+    - Owner Wallet: 0xbb25efab295c9dc59f03aa4cfb4c38aeca0d2e0b
+    - Bank Address: 0x9414a13469d0d08e05f595275b5b3f6439628dde
+    - Default Reward Token: 0xFdEed5cE7E281B4e0F163B70eBe2Cf0B10803b7B
+
+
+  Merchant:
+    - Domain: gayaskin.fr
+    - Name: Gayaskin
+    - Product ID: 0x06d0244d6b1ac5fad3c4efbce30bdd6d5ff4faea03990520ffb3512a9b63f65a
+    - Owner Wallet: 0x1f6eddb1ca7dbd36cb6778f112ad72f43248595a
+    - Bank Address: 0xdc30c84835e27e050e82f532e0a0504850f23ff3
+    - Default Reward Token: 0xFdEed5cE7E281B4e0F163B70eBe2Cf0B10803b7B
+
+
+  Merchant:
+    - Domain: wyvesurf.com
+    - Name: Wyve Surf
+    - Product ID: 0xa2864f05599aa7cc38cb2ce19692599011300c2c90528090673b1cf6fbfab8bb
+    - Owner Wallet: 0xb84edf08f9bdf3ed058db60aee34ae9e6c5a0f9e
+    - Bank Address: 0x2e1119d0e32990b9611c0e930c8279f7ca732de2
+    - Default Reward Token: 0xFdEed5cE7E281B4e0F163B70eBe2Cf0B10803b7B
+
+
+  Merchant:
+    - Domain: nowacosmetics.com
+    - Name: Nowa Cosmetics
+    - Product ID: 0x6191bf044b1f766ad396a8b92d3cd128662e5aa43d14bc6e54ed55b4cd62ecc9
+    - Owner Wallet: 0x0488970071124577bb8084dd1c89b7cfa466a48d
+    - Bank Address: 0x795819ae03565a939ba3ca761c77e09bafeafb5b
+    - Default Reward Token: 0xFdEed5cE7E281B4e0F163B70eBe2Cf0B10803b7B
+
+
+  Merchant:
+    - Domain: saintlazare.fr
+    - Name: SAINT LAZARE
+    - Product ID: 0x849d4885b33e6bba1baf1325ef207ed066c935cb691e5f632572bbbb6262f189
+    - Owner Wallet: 0x796a5f4f1d31e5fb2ad0b72696d072f735d30982
+    - Bank Address: 0x809e580da41223966684db5c8b8e0fb942f03f9e
+    - Default Reward Token: 0xFdEed5cE7E281B4e0F163B70eBe2Cf0B10803b7B
+
+
+  Merchant:
+    - Domain: latribuhappykids.com
+    - Name: La Tribu Happy Kids
+    - Product ID: 0xa86708b5a4d58e8dbfb6c15d74634d3c00ab336fb79f1235689917aeca3da2ea
+    - Owner Wallet: 0x79273d5957e03e1d78c03ad722574c2215c5fafb
+    - Bank Address: 0x54a76180632106eb17b5f0d14093f4a52a38aeff
+    - Default Reward Token: 0xFdEed5cE7E281B4e0F163B70eBe2Cf0B10803b7B
+
+
+  Merchant:
+    - Domain: nowanowater.com
+    - Name: Nowa No Water
+    - Product ID: 0x89f8d0212ed11a8bfb3dcf4e72f6316547a96e2c17246ba711cebe54343a2138
+    - Owner Wallet: 0x0488970071124577bb8084dd1c89b7cfa466a48d
+    - Bank Address: 0x45d772d1f0ef71b23a7b83fa825c9369856f5667
+    - Default Reward Token: 0xFdEed5cE7E281B4e0F163B70eBe2Cf0B10803b7B
+
+
+  Merchant:
+    - Domain: quentin.nivelais.com
+    - Name: Portfolio Quentin
+    - Product ID: 0xfafc4216bbb770027c3243413d12b691f11d1ce8f68bf6d41b7581904018010e
+    - Owner Wallet: 0xd64b31c0a06ac2ca02374df233c550c38d94ba78
+    - Bank Address: 0x934fee7968c2f925e520ae6c5996e1877cbc2ed0
+    - Default Reward Token: 0xFdEed5cE7E281B4e0F163B70eBe2Cf0B10803b7B
+
+
+  Merchant:
+    - Domain: voltaire.bike
+    - Name: Voltaire
+    - Product ID: 0x6f14290835106c1dbf783774623d8abfee5baa261770ee4f18fbd8c40d2cfbd8
+    - Owner Wallet: 0x3375c3cdf5a4315215e05944ef906d195cf96d44
+    - Bank Address: 0xda2773fdbb2db4e8a5bfd31c8022b7485bf4386c
+    - Default Reward Token: 0xFdEed5cE7E281B4e0F163B70eBe2Cf0B10803b7B
+
+
+--------------------------------------------------------------------------------
+ADMINS
+--------------------------------------------------------------------------------
+
+  Merchant Admin:
+    - Merchant ID: PLACEHOLDER
+    - Wallet: 0x616ddd354e84c0ceb4e560c02c1a20f4e61b8100
+    - Added By: 0xcfddeab1e5bcd45fd8fa07aa85e458a134245e62
+
+
+  Merchant Admin:
+    - Merchant ID: PLACEHOLDER
+    - Wallet: 0xaccc411edddff0bbdb3481f71500152164aa8a38
+    - Added By: 0xcfddeab1e5bcd45fd8fa07aa85e458a134245e62
+
+
+  Merchant Admin:
+    - Merchant ID: PLACEHOLDER
+    - Wallet: 0x22b80d2005427196ccc6e40e33ac7252854f19af
+    - Added By: 0xcfddeab1e5bcd45fd8fa07aa85e458a134245e62
+
+
+  Merchant Admin:
+    - Merchant ID: PLACEHOLDER
+    - Wallet: 0xcfddeab1e5bcd45fd8fa07aa85e458a134245e62
+    - Added By: 0xbb25efab295c9dc59f03aa4cfb4c38aeca0d2e0b
+
+
+  Merchant Admin:
+    - Merchant ID: PLACEHOLDER
+    - Wallet: 0x7976d841feefb32f6494dc61478727d80152b735
+    - Added By: 0x1f6eddb1ca7dbd36cb6778f112ad72f43248595a
+
+
+  Merchant Admin:
+    - Merchant ID: PLACEHOLDER
+    - Wallet: 0xb1c85ba54a8a5f527222b784fa223e5e53e59c2f
+    - Added By: 0x79273d5957e03e1d78c03ad722574c2215c5fafb
+
+
+  Merchant Admin:
+    - Merchant ID: PLACEHOLDER
+    - Wallet: 0xfac59e76a7fb3a43bc4dfffca1a9c80f69b64f18
+    - Added By: 0x3375c3cdf5a4315215e05944ef906d195cf96d44
+
+
+--------------------------------------------------------------------------------
+CAMPAIGN RULES
+--------------------------------------------------------------------------------
+
+  Campaign Rule:
+    - Name: Gapianne - openArticle
+    - Product: gapianne.com (0xbefe088a272c69bd4a643f2270dbd67c046cded7485a100c5dbd4dc87f651cd3)
+    - Status: active
+    - Trigger: purchase
+    - Budget: [{"label":"daily","durationInSeconds":86400,"amount":50}]
+
+
+  Campaign Rule:
+    - Name: Gapianne - readArticle
+    - Product: gapianne.com (0xbefe088a272c69bd4a643f2270dbd67c046cded7485a100c5dbd4dc87f651cd3)
+    - Status: active
+    - Trigger: purchase
+    - Budget: [{"label":"daily","durationInSeconds":86400,"amount":50}]
+
+
+  Campaign Rule:
+    - Name: Gapianne - proofVerifiableStorageUpdate
+    - Product: gapianne.com (0xbefe088a272c69bd4a643f2270dbd67c046cded7485a100c5dbd4dc87f651cd3)
+    - Status: active
+    - Trigger: purchase
+    - Budget: [{"label":"daily","durationInSeconds":86400,"amount":50}]
+
+
+  Campaign Rule:
+    - Name: Gapianne - callableVerifiableStorageUpdate
+    - Product: gapianne.com (0xbefe088a272c69bd4a643f2270dbd67c046cded7485a100c5dbd4dc87f651cd3)
+    - Status: active
+    - Trigger: purchase
+    - Budget: [{"label":"daily","durationInSeconds":86400,"amount":50}]
+
+
+  Campaign Rule:
+    - Name: Gapianne - open
+    - Product: gapianne.com (0xbefe088a272c69bd4a643f2270dbd67c046cded7485a100c5dbd4dc87f651cd3)
+    - Status: active
+    - Trigger: purchase
+    - Budget: [{"label":"daily","durationInSeconds":86400,"amount":50}]
+
+
+  Campaign Rule:
+    - Name: Gapianne - referred
+    - Product: gapianne.com (0xbefe088a272c69bd4a643f2270dbd67c046cded7485a100c5dbd4dc87f651cd3)
+    - Status: active
+    - Trigger: referral_link
+    - Budget: [{"label":"daily","durationInSeconds":86400,"amount":50}]
+
+
+  Campaign Rule:
+    - Name: Gapianne - createLink
+    - Product: gapianne.com (0xbefe088a272c69bd4a643f2270dbd67c046cded7485a100c5dbd4dc87f651cd3)
+    - Status: active
+    - Trigger: create_referral_link
+    - Budget: [{"label":"daily","durationInSeconds":86400,"amount":50}]
+
+
+  Campaign Rule:
+    - Name: Gapianne - started
+    - Product: gapianne.com (0xbefe088a272c69bd4a643f2270dbd67c046cded7485a100c5dbd4dc87f651cd3)
+    - Status: active
+    - Trigger: purchase
+    - Budget: [{"label":"daily","durationInSeconds":86400,"amount":50}]
+
+
+  Campaign Rule:
+    - Name: Gapianne - completed
+    - Product: gapianne.com (0xbefe088a272c69bd4a643f2270dbd67c046cded7485a100c5dbd4dc87f651cd3)
+    - Status: active
+    - Trigger: purchase
+    - Budget: [{"label":"daily","durationInSeconds":86400,"amount":50}]
+
+
+  Campaign Rule:
+    - Name: Gapianne - unsafeCompleted
+    - Product: gapianne.com (0xbefe088a272c69bd4a643f2270dbd67c046cded7485a100c5dbd4dc87f651cd3)
+    - Status: active
+    - Trigger: purchase
+    - Budget: [{"label":"daily","durationInSeconds":86400,"amount":50}]
+
+
+  Campaign Rule:
+    - Name: Gapianne - customerMeeting
+    - Product: gapianne.com (0xbefe088a272c69bd4a643f2270dbd67c046cded7485a100c5dbd4dc87f651cd3)
+    - Status: active
+    - Trigger: purchase
+    - Budget: [{"label":"daily","durationInSeconds":86400,"amount":50}]
+
+
+--------------------------------------------------------------------------------
+⚠ BANKS WITH BALANCE - MANUAL MIGRATION REQUIRED (5)
+--------------------------------------------------------------------------------
+  gapianne.com:
+    - Bank: 0xd4aa0fc3cfcda57a65607d22a8ea03f75f699145
+    - Token: 0xaf88d065e77c8cc2239327c5edb3a432268e5831
+    - Balance: 77.28 (raw: 77280000)
+  morning-marvels.com:
+    - Bank: 0x9414a13469d0d08e05f595275b5b3f6439628dde
+    - Token: 0xaf88d065e77c8cc2239327c5edb3a432268e5831
+    - Balance: 174 (raw: 174000000)
+  wyvesurf.com:
+    - Bank: 0x2e1119d0e32990b9611c0e930c8279f7ca732de2
+    - Token: 0xaf88d065e77c8cc2239327c5edb3a432268e5831
+    - Balance: 149 (raw: 149000000)
+  nowacosmetics.com:
+    - Bank: 0x795819ae03565a939ba3ca761c77e09bafeafb5b
+    - Token: 0xaf88d065e77c8cc2239327c5edb3a432268e5831
+    - Balance: 20 (raw: 20000000)
+  saintlazare.fr:
+    - Bank: 0x809e580da41223966684db5c8b8e0fb942f03f9e
+    - Token: 0xaf88d065e77c8cc2239327c5edb3a432268e5831
+    - Balance: 156 (raw: 156000000)
+
+--------------------------------------------------------------------------------
+EXCLUDED PRODUCTS (36 matched)
+--------------------------------------------------------------------------------
+  - ethcc.news-paper.xyz  (pattern: *.news-paper.xyz)
+  - paris-rooftop.myshopify.com  (pattern: *.myshopify.com)
+  - wordpress-shop.news-paper.xyz  (pattern: *.news-paper.xyz)
+  - test01.frak.id  (pattern: *.frak.id)
+  - test02.frak.id  (pattern: *.frak.id)
+  - test03.frak.id  (pattern: *.frak.id)
+  - test04.frak.id  (pattern: *.frak.id)
+  - test05.frak.id  (pattern: *.frak.id)
+  - test06.frak.id  (pattern: *.frak.id)
+  - test07.frak.id  (pattern: *.frak.id)
+  - test08.frak.id  (pattern: *.frak.id)
+  - test09.frak.id  (pattern: *.frak.id)
+  - test10.frak.id  (pattern: *.frak.id)
+  - test-store-frak.myshopify.com  (pattern: *.myshopify.com)
+  - frak-empty-products.myshopify.com  (pattern: *.myshopify.com)
+  - frak-app.myshopify.com  (pattern: *.myshopify.com)
+  - xem09e-6r.myshopify.com  (pattern: *.myshopify.com)
+  - frak-mint-prod.myshopify.com  (pattern: *.myshopify.com)
+  - test11.frak.id  (pattern: *.frak.id)
+  - test12.frak.id  (pattern: *.frak.id)
+  - test13.frak.id  (pattern: *.frak.id)
+  - test14.frak.id  (pattern: *.frak.id)
+  - frak-mint-product-7.myshopify.com  (pattern: *.myshopify.com)
+  - frak-mint-product8.myshopify.com  (pattern: *.myshopify.com)
+  - frak-mint-11.myshopify.com  (pattern: *.myshopify.com)
+  - frak-mint-product10.myshopify.com  (pattern: *.myshopify.com)
+  - frak-mint-product11.myshopify.com  (pattern: *.myshopify.com)
+  - 595062-cc.myshopify.com  (pattern: *.myshopify.com)
+  - frak-mint-product12.myshopify.com  (pattern: *.myshopify.com)
+  - artest-j2.myshopify.com  (pattern: *.myshopify.com)
+  - b69df3-2f.myshopify.com  (pattern: *.myshopify.com)
+  - frak-mint-14.myshopify.com  (pattern: *.myshopify.com)
+  - frak-mint-12.myshopify.com  (pattern: *.myshopify.com)
+  - frak-test-17.myshopify.com  (pattern: *.myshopify.com)
+  - frak-mint-17.myshopify.com  (pattern: *.myshopify.com)
+  - news-paper.xyz  (pattern: news-paper.xyz)
+
+================================================================================
+END OF DRY RUN
+================================================================================
+
+Migration completed

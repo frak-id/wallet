@@ -1,4 +1,5 @@
 import { migrationConfig, validateConfig } from "./config";
+import { fetchBankBalances } from "./sources/blockchain";
 import {
     fetchAllProducts,
     fetchProductAdministrators,
@@ -40,6 +41,25 @@ type ProductWithDetails = {
     productInfo: V1IndexerProductInfo;
     administrators: V1IndexerAdministrator[];
 };
+
+// Glob to regex: `*` → `[^.]*`, everything else escaped
+function globToRegex(pattern: string): RegExp {
+    const escaped = pattern.replace(/[.+^${}()|[\]\\]/g, "\\$&");
+    const regexStr = escaped.replace(/\*/g, "[^.]*");
+    return new RegExp(`^${regexStr}$`, "i");
+}
+
+function isProductExcluded(
+    domain: string,
+    patterns: string[]
+): string | undefined {
+    for (const pattern of patterns) {
+        if (globToRegex(pattern).test(domain)) {
+            return pattern;
+        }
+    }
+    return undefined;
+}
 
 function log(
     level: "debug" | "info" | "warn" | "error",
@@ -152,6 +172,8 @@ async function buildMigrationPlan(): Promise<MigrationPlan> {
         merchants: [],
         admins: [],
         campaigns: [],
+        excludedProducts: [],
+        banksWithBalance: [],
         summary: {
             totalMerchants: 0,
             totalBanksToDeploy: 0,
@@ -160,7 +182,40 @@ async function buildMigrationPlan(): Promise<MigrationPlan> {
         },
     };
 
-    const productsWithDetails = await fetchAllProductsWithDetails();
+    const allProducts = await fetchAllProductsWithDetails();
+
+    const excludePatterns = migrationConfig.excludedProductDomains;
+    const productsWithDetails: ProductWithDetails[] = [];
+    for (const product of allProducts) {
+        const domain = product.productInfo.product.domain;
+        const matchedPattern = isProductExcluded(domain, excludePatterns);
+        if (matchedPattern) {
+            plan.excludedProducts.push({ domain, matchedPattern });
+            log(
+                "debug",
+                `Excluding product ${domain} (matched ${matchedPattern})`
+            );
+        } else {
+            productsWithDetails.push(product);
+        }
+    }
+
+    if (plan.excludedProducts.length > 0) {
+        log(
+            "info",
+            `Excluded ${plan.excludedProducts.length} products matching exclusion patterns`
+        );
+    }
+
+    log("info", "Checking bank balances on-chain...");
+    const productInfos = productsWithDetails.map((p) => p.productInfo);
+    plan.banksWithBalance = await fetchBankBalances(productInfos);
+    if (plan.banksWithBalance.length > 0) {
+        log(
+            "warn",
+            `Found ${plan.banksWithBalance.length} banks with remaining balance that need manual migration`
+        );
+    }
 
     log("info", "Fetching MongoDB campaigns...");
     const mongoCampaigns = migrationConfig.mongodbUri
@@ -195,7 +250,7 @@ function printDryRunSection(
     actions: MigrationAction[],
     formatter: (action: MigrationAction) => string | null
 ): void {
-    console.log("\n" + "-".repeat(80));
+    console.log(`\n${"-".repeat(80)}`);
     console.log(title);
     console.log("-".repeat(80));
     for (const action of actions) {
@@ -205,7 +260,7 @@ function printDryRunSection(
 }
 
 function printDryRunPlan(plan: MigrationPlan): void {
-    console.log("\n" + "=".repeat(80));
+    console.log(`\n${"=".repeat(80)}`);
     console.log("MIGRATION DRY RUN SUMMARY");
     console.log("=".repeat(80));
     console.log(`\nTotal Merchants to Create: ${plan.summary.totalMerchants}`);
@@ -232,9 +287,38 @@ function printDryRunPlan(plan: MigrationPlan): void {
             : null
     );
 
-    console.log("\n" + "=".repeat(80));
+    if (plan.banksWithBalance.length > 0) {
+        console.log(`\n${"-".repeat(80)}`);
+        console.log(
+            `⚠ BANKS WITH BALANCE - MANUAL MIGRATION REQUIRED (${plan.banksWithBalance.length})`
+        );
+        console.log("-".repeat(80));
+        for (const bank of plan.banksWithBalance) {
+            console.log(`  ${bank.productDomain}:`);
+            console.log(`    - Bank: ${bank.bankAddress}`);
+            console.log(`    - Token: ${bank.tokenAddress}`);
+            console.log(
+                `    - Balance: ${bank.formattedBalance} (raw: ${bank.balance})`
+            );
+        }
+    }
+
+    if (plan.excludedProducts.length > 0) {
+        console.log(`\n${"-".repeat(80)}`);
+        console.log(
+            `EXCLUDED PRODUCTS (${plan.excludedProducts.length} matched)`
+        );
+        console.log("-".repeat(80));
+        for (const excluded of plan.excludedProducts) {
+            console.log(
+                `  - ${excluded.domain}  (pattern: ${excluded.matchedPattern})`
+            );
+        }
+    }
+
+    console.log(`\n${"=".repeat(80)}`);
     console.log("END OF DRY RUN");
-    console.log("=".repeat(80) + "\n");
+    console.log(`${"=".repeat(80)}\n`);
 }
 
 async function executeMerchants(
@@ -342,7 +426,7 @@ async function executeMigration(plan: MigrationPlan): Promise<MigrationResult> {
 }
 
 function printMigrationResult(result: MigrationResult): void {
-    console.log("\n" + "=".repeat(80));
+    console.log(`\n${"=".repeat(80)}`);
     console.log("MIGRATION RESULT");
     console.log("=".repeat(80));
     console.log(`Success: ${result.success}`);
@@ -356,7 +440,7 @@ function printMigrationResult(result: MigrationResult): void {
             console.log(`  - ${e}`);
         }
     }
-    console.log("=".repeat(80) + "\n");
+    console.log(`${"=".repeat(80)}\n`);
 }
 
 export async function runMigration(): Promise<void> {

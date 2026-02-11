@@ -13,6 +13,13 @@ export const migrationConfig = {
         | "info"
         | "warn"
         | "error",
+
+    excludedProductDomains: [
+        "*.frak.id",
+        "*.myshopify.com",
+        "*.news-paper.xyz",
+        "news-paper.xyz",
+    ],
 };
 
 export function validateConfig(): void {
