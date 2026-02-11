@@ -76,7 +76,7 @@ export function useLogin(
                 await authenticatedWalletApi.auth.login.post({
                     expectedChallenge: challenge,
                     authenticatorResponse: encodedResponse,
-                    merchantId: args?.merchantId,
+                    merchantId: args?.merchantId || undefined,
                 });
             if (error) {
                 throw error;

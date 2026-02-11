@@ -70,7 +70,7 @@ export const Route = createFileRoute("/_wallet/_sso/sso")({
 
         // Save the SSO context to the store
         authenticationStore.getState().setSsoContext({
-            merchantId: merchantId ?? undefined,
+            merchantId: merchantId || undefined,
             redirectUrl: redirectUrl ?? undefined,
             directExit: directExit ?? undefined,
             metadata: metadata ?? undefined,

@@ -68,7 +68,7 @@ export function useRegister(
                         prefix: publicKey.prefix,
                     },
                     raw: encodedResponse,
-                    merchantId: args?.merchantId,
+                    merchantId: args?.merchantId || undefined,
                 });
             if (error) {
                 throw error;

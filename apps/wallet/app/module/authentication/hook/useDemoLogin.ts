@@ -41,7 +41,7 @@ export function useDemoLogin() {
                     signature,
                     wallet: account.address as Address,
                     demoPkey: pkey,
-                    merchantId,
+                    merchantId: merchantId || undefined,
                 });
             if (error) {
                 throw error;
