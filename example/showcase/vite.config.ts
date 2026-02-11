@@ -19,7 +19,7 @@ export default defineConfig(({ mode }) => {
     // Otherwise, use CDN
     const scriptSrc = useLocal
         ? `${bundleDir}/loader.js`
-        : "https://cdn.jsdelivr.net/npm/@frak-labs/components";
+        : "https://cdn.jsdelivr.net/npm/@frak-labs/components@beta/cdn/loader.js";
 
     return {
         plugins: [

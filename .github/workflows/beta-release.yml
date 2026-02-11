@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - dev
+      - dev-v2
     paths:
       - 'packages/rpc/**/*.ts'
       - 'packages/rpc/**/package.json'
