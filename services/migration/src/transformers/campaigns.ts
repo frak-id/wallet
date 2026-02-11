@@ -7,21 +7,21 @@ import type {
 
 const V1_TO_V2_TRIGGER_MAP: Record<
     string,
-    "purchase" | "referral_link" | "create_referral_link"
+    "purchase" | "create_referral_link" | "referral" | "custom"
 > = {
     "purchase.completed": "purchase",
-    "purchase.started": "purchase",
-    referred: "referral_link",
+    "purchase.started": "custom",
+    referred: "referral",
     createLink: "create_referral_link",
-    "webshop.opened": "purchase",
-    "article.read": "referral_link",
-    "article.open": "referral_link",
+    "webshop.opened": "custom",
+    "article.read": "custom",
+    "article.open": "custom",
 };
 
 function mapV1TriggerToV2(
     triggerKey: string
-): "purchase" | "referral_link" | "create_referral_link" {
-    return V1_TO_V2_TRIGGER_MAP[triggerKey] ?? "purchase";
+): "purchase" | "create_referral_link" | "referral" | "custom" {
+    return V1_TO_V2_TRIGGER_MAP[triggerKey] ?? "custom";
 }
 
 function mapV1BudgetToV2(
@@ -123,7 +123,20 @@ export function transformMongoDBCampaignToRules(
             name: `${campaign.title} - ${triggerKey}`,
             status,
             priority: priority++,
-            rule: { trigger: v2Trigger, conditions: [], rewards: [reward] },
+            rule: {
+                trigger: v2Trigger,
+                conditions:
+                    v2Trigger === "custom"
+                        ? [
+                              {
+                                  field: "custom.customType",
+                                  operator: "eq",
+                                  value: triggerKey,
+                              },
+                          ]
+                        : [],
+                rewards: [reward],
+            },
             metadata: Object.keys(metadata).length > 0 ? metadata : undefined,
             budgetConfig,
             expiresAt: campaign.scheduled?.dateEnd,

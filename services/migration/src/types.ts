@@ -129,7 +129,7 @@ export type V2CampaignRuleInsert = {
     status: "draft" | "active" | "paused" | "archived";
     priority: number;
     rule: {
-        trigger: "purchase" | "referral_link" | "create_referral_link";
+        trigger: "purchase" | "create_referral_link" | "referral" | "custom";
         conditions: unknown[];
         rewards: unknown[];
         pendingRewardExpirationDays?: number;
