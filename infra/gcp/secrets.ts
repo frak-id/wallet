@@ -71,4 +71,8 @@ export const elysiaEnv = {
 
     // Shopify related
     SHOPIFY_API_SECRET: new sst.Secret("SHOPIFY_API_SECRET").value,
+
+    // Mobile
+    ANDROID_SHA256_FINGERPRINT: new sst.Secret("ANDROID_SHA256_FINGERPRINT")
+        .value,
 };

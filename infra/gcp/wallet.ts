@@ -15,6 +15,12 @@ import {
 import { getLocalIp, isProd, isV2, normalizedStageName } from "../utils";
 import { baseDomainName, getRegistryPath, walletNamespace } from "./utils";
 
+// Resolve backend service name only in non-dev (avoids triggering Docker builds locally)
+const backendServiceName = $dev
+    ? ""
+    : ((await import("./backend")).backendInstance.service?.metadata?.name ??
+      "");
+
 // todo: for now on wallet.gcp-dev.frak.id, to test that up a bit, and we wil llater migrate it to the real wallet.frak.id
 const subDomain = isProd ? "wallet" : "wallet-dev";
 
@@ -267,8 +273,14 @@ export const walletService = new KubernetesService(
             host: isV2 ? `wallet.${baseDomainName}` : `${subDomain}.frak.id`,
             tlsSecretName: "wallet-tls",
             additionalHosts: isV2 ? [] : [`wallet.${baseDomainName}`],
-            // Route /listener to the listener service
+            // Route /listener to the listener service and /.well-known to backend
             pathRoutes: [
+                {
+                    path: "/.well-known",
+                    pathType: "Prefix",
+                    serviceName: backendServiceName,
+                    servicePort: 80,
+                },
                 {
                     path: "/listener",
                     pathType: "Prefix",
