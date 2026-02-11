@@ -1,6 +1,6 @@
 import ky from "ky";
 import type { Address, Hex } from "viem";
-import { toHex } from "viem";
+import { pad, toHex } from "viem";
 import { migrationConfig } from "../config";
 import type {
     V1IndexerAdministrator,
@@ -67,5 +67,5 @@ export async function fetchProductAdministrators(
 }
 
 export function productIdToHex(productIdStr: string): Hex {
-    return toHex(BigInt(productIdStr));
+    return pad(toHex(BigInt(productIdStr)), { size: 32 });
 }

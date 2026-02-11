@@ -1,3 +1,4 @@
+import { type Hex, pad } from "viem";
 import { migrationConfig, validateConfig } from "./config";
 import { fetchBankBalances } from "./sources/blockchain";
 import {
@@ -110,15 +111,22 @@ async function fetchAllProductsWithDetails(): Promise<ProductWithDetails[]> {
     return results;
 }
 
+function normalizeProductId(productId: Hex | ""): Hex | "" {
+    if (!productId) return "";
+    return pad(productId, { size: 32 });
+}
+
 function groupCampaignsByProductId(
     campaigns: V1MongoDBCampaign[]
 ): Map<string, V1MongoDBCampaign[]> {
     const map = new Map<string, V1MongoDBCampaign[]>();
     for (const campaign of campaigns) {
         if (!campaign.productId) continue;
-        const existing = map.get(campaign.productId) ?? [];
+        const normalizedId = normalizeProductId(campaign.productId);
+        if (!normalizedId) continue;
+        const existing = map.get(normalizedId) ?? [];
         existing.push(campaign);
-        map.set(campaign.productId, existing);
+        map.set(normalizedId, existing);
     }
     return map;
 }

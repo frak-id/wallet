@@ -19,7 +19,19 @@ export const migrationConfig = {
         "*.myshopify.com",
         "*.news-paper.xyz",
         "news-paper.xyz",
+        "*.basileboli.com",
+        "*.sorosorcerer.com",
+        "*.nivelais.com",
     ],
+
+    skippedTriggerKeys: [
+        "openArticle",
+        "readArticle",
+        "proofVerifiableStorageUpdate",
+        "callableVerifiableStorageUpdate",
+        "unsafeCompleted",
+        "customerMeeting",
+    ] as string[],
 };
 
 export function validateConfig(): void {

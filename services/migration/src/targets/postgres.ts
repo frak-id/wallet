@@ -1,9 +1,9 @@
-import { campaignRulesTable } from "@frak-labs/backend-elysia/domain/campaign/db/schema";
+import { campaignRulesTable } from "@backend/domain/campaign/db/schema";
 import {
     merchantAdminsTable,
     merchantsTable,
-} from "@frak-labs/backend-elysia/domain/merchant/db/schema";
-import { db } from "@frak-labs/backend-elysia/infrastructure/persistence/postgres";
+} from "@backend/domain/merchant/db/schema";
+import { db } from "@backend/infrastructure/persistence/postgres";
 import { eq } from "drizzle-orm";
 import type {
     V2CampaignRuleInsert,
@@ -16,16 +16,7 @@ export async function insertMerchant(
 ): Promise<string> {
     const [result] = await db
         .insert(merchantsTable)
-        .values({
-            productId: merchant.productId,
-            domain: merchant.domain,
-            name: merchant.name,
-            ownerWallet: merchant.ownerWallet,
-            bankAddress: merchant.bankAddress,
-            defaultRewardToken: merchant.defaultRewardToken,
-            verifiedAt: merchant.verifiedAt,
-            createdAt: merchant.createdAt,
-        })
+        .values(merchant)
         .returning({ id: merchantsTable.id });
 
     if (!result)
@@ -38,12 +29,7 @@ export async function insertMerchantAdmin(
 ): Promise<string> {
     const [result] = await db
         .insert(merchantAdminsTable)
-        .values({
-            merchantId: admin.merchantId,
-            wallet: admin.wallet,
-            addedBy: admin.addedBy,
-            addedAt: admin.addedAt,
-        })
+        .values(admin)
         .returning({ id: merchantAdminsTable.id });
 
     if (!result)
@@ -56,17 +42,7 @@ export async function insertCampaignRule(
 ): Promise<string> {
     const [result] = await db
         .insert(campaignRulesTable)
-        .values({
-            merchantId: rule.merchantId,
-            name: rule.name,
-            status: rule.status,
-            priority: rule.priority,
-            rule: rule.rule,
-            metadata: rule.metadata,
-            budgetConfig: rule.budgetConfig,
-            expiresAt: rule.expiresAt,
-            publishedAt: rule.publishedAt,
-        })
+        .values(rule)
         .returning({ id: campaignRulesTable.id });
 
     if (!result) throw new Error(`Failed to insert campaign rule ${rule.name}`);

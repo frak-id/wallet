@@ -1,4 +1,15 @@
+import type { CampaignRuleInsert } from "@backend/domain/campaign/db/schema";
+import type { CampaignRuleDefinition } from "@backend/domain/campaign/schemas";
+import type {
+    MerchantAdminInsert,
+    MerchantInsert,
+} from "@backend/domain/merchant/db/schema";
 import type { Address, Hex } from "viem";
+
+export type V2MerchantInsert = MerchantInsert;
+export type V2MerchantAdminInsert = MerchantAdminInsert;
+export type V2CampaignRuleInsert = CampaignRuleInsert;
+export type V2CampaignRuleDefinition = CampaignRuleDefinition;
 
 export type V1IndexerProduct = {
     id: string;
@@ -103,49 +114,6 @@ export type V1MongoDBCampaign = {
         | { key: "draft" }
         | { key: "creationFailed" }
         | { key: "created"; txHash: Hex; address: Address };
-};
-
-export type V2MerchantInsert = {
-    productId: Hex;
-    domain: string;
-    name: string;
-    ownerWallet: Address;
-    bankAddress?: Address;
-    defaultRewardToken: Address;
-    verifiedAt?: Date;
-    createdAt?: Date;
-};
-
-export type V2MerchantAdminInsert = {
-    merchantId: string;
-    wallet: Address;
-    addedBy: Address;
-    addedAt?: Date;
-};
-
-export type V2CampaignRuleInsert = {
-    merchantId: string;
-    name: string;
-    status: "draft" | "active" | "paused" | "archived";
-    priority: number;
-    rule: {
-        trigger: "purchase" | "create_referral_link" | "referral" | "custom";
-        conditions: unknown[];
-        rewards: unknown[];
-        pendingRewardExpirationDays?: number;
-    };
-    metadata?: {
-        goal?: "awareness" | "traffic" | "registration" | "sales" | "retention";
-        specialCategories?: ("credit" | "jobs" | "housing" | "social")[];
-        territories?: string[];
-    };
-    budgetConfig?: {
-        label: string;
-        durationInSeconds: number | null;
-        amount: number;
-    }[];
-    expiresAt?: Date;
-    publishedAt?: Date;
 };
 
 export type MigrationAction =

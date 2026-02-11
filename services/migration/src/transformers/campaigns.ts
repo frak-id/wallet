@@ -1,14 +1,17 @@
+import type { CampaignTrigger } from "@backend/domain/campaign/schemas";
+import type {
+    FixedRewardDefinition,
+    RewardChaining,
+} from "@backend/domain/campaign/types";
 import type { Hex } from "viem";
+import { migrationConfig } from "../config";
 import type {
     MigrationAction,
     V1MongoDBCampaign,
     V2CampaignRuleInsert,
 } from "../types";
 
-const V1_TO_V2_TRIGGER_MAP: Record<
-    string,
-    "purchase" | "create_referral_link" | "referral" | "custom"
-> = {
+const V1_TO_V2_TRIGGER_MAP: Record<string, CampaignTrigger> = {
     "purchase.completed": "purchase",
     "purchase.started": "custom",
     referred: "referral",
@@ -18,9 +21,7 @@ const V1_TO_V2_TRIGGER_MAP: Record<
     "article.open": "custom",
 };
 
-function mapV1TriggerToV2(
-    triggerKey: string
-): "purchase" | "create_referral_link" | "referral" | "custom" {
+function mapV1TriggerToV2(triggerKey: string): CampaignTrigger {
     return V1_TO_V2_TRIGGER_MAP[triggerKey] ?? "custom";
 }
 
@@ -49,9 +50,9 @@ function createRewardFromTrigger(
     triggerConfig:
         | { cac: number; maxCountPerUser?: number }
         | { from: number; to: number; maxCountPerUser?: number },
-    chaining?: { deperditionPerLevel: number; maxDepth?: number },
+    chaining?: RewardChaining,
     defaultToken?: Hex
-): unknown {
+): FixedRewardDefinition {
     const amount =
         "cac" in triggerConfig
             ? triggerConfig.cac
@@ -92,7 +93,8 @@ export function transformMongoDBCampaignToRules(
         metadata.territories = campaign.territories;
 
     const budgetConfig = mapV1BudgetToV2(campaign.budget);
-    const chaining = campaign.rewardChaining?.deperditionPerLevel
+    const chaining: RewardChaining | undefined = campaign.rewardChaining
+        ?.deperditionPerLevel
         ? {
               deperditionPerLevel:
                   campaign.rewardChaining.deperditionPerLevel / 10000,
@@ -107,10 +109,18 @@ export function transformMongoDBCampaignToRules(
               ? "archived"
               : "draft";
 
+    const skippedTriggers = migrationConfig.skippedTriggerKeys;
+
     let priority = 0;
     for (const [triggerKey, triggerConfig] of Object.entries(
         campaign.triggers
     )) {
+        if (skippedTriggers.includes(triggerKey)) continue;
+
+        // If trigger contain empty rewards, skip it
+        if ("from" in triggerConfig && triggerConfig.from === 0 && triggerConfig.to === 0) continue;
+        if ("cac" in triggerConfig && triggerConfig.cac === 0) continue;
+
         const v2Trigger = mapV1TriggerToV2(triggerKey);
         const reward = createRewardFromTrigger(
             triggerConfig,
@@ -167,6 +177,7 @@ export function formatCampaignRuleForDryRun(
     - Name: ${rule.name}
 ${productLine}    - Status: ${rule.status}
     - Trigger: ${rule.rule.trigger}
+    - Rewards: ${JSON.stringify(rule.rule.rewards)}
     - Budget: ${rule.budgetConfig ? JSON.stringify(rule.budgetConfig) : "None"}
 `;
 }
