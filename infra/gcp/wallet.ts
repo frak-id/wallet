@@ -2,6 +2,7 @@ import path from "node:path";
 import type { Resource } from "@pulumi/pulumi";
 import { KubernetesService } from "../components/KubernetesService";
 import {
+    androidSha256Fingerprint,
     backendUrl,
     drpcApiKey,
     erpcUrl,
@@ -36,6 +37,7 @@ export const walletEnv = {
     OPEN_PANEL_API_URL: openPanelApiUrl,
     OPEN_PANEL_WALLET_CLIENT_ID: openPanelWalletClientId.value,
     OPEN_PANEL_LISTENER_CLIENT_ID: openPanelWalletClientId.value,
+    ANDROID_SHA256_FINGERPRINT: androidSha256Fingerprint.value,
 };
 
 let imageRefs = {
@@ -72,6 +74,7 @@ if (!$dev) {
             NEXUS_RPC_SECRET: walletEnv.NEXUS_RPC_SECRET,
             VAPID_PUBLIC_KEY: walletEnv.VAPID_PUBLIC_KEY,
             OPEN_PANEL_WALLET_CLIENT_ID: walletEnv.OPEN_PANEL_WALLET_CLIENT_ID,
+            ANDROID_SHA256_FINGERPRINT: walletEnv.ANDROID_SHA256_FINGERPRINT,
         },
         platforms: ["linux/amd64"],
         push: true,
@@ -103,6 +106,7 @@ if (!$dev) {
             NEXUS_RPC_SECRET: walletEnv.NEXUS_RPC_SECRET,
             OPEN_PANEL_LISTENER_CLIENT_ID:
                 walletEnv.OPEN_PANEL_LISTENER_CLIENT_ID,
+            ANDROID_SHA256_FINGERPRINT: walletEnv.ANDROID_SHA256_FINGERPRINT,
         },
         platforms: ["linux/amd64"],
         push: true,

@@ -1,4 +1,5 @@
 import {
+    androidSha256Fingerprint,
     drpcApiKey,
     erpcUrl,
     jwtBusinessSecret,
@@ -73,6 +74,5 @@ export const elysiaEnv = {
     SHOPIFY_API_SECRET: new sst.Secret("SHOPIFY_API_SECRET").value,
 
     // Mobile
-    ANDROID_SHA256_FINGERPRINT: new sst.Secret("ANDROID_SHA256_FINGERPRINT")
-        .value,
+    ANDROID_SHA256_FINGERPRINT: androidSha256Fingerprint.value,
 };

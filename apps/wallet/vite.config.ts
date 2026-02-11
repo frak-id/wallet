@@ -107,6 +107,9 @@ export default defineConfig(
                 "process.env.WEBAUTHN_RP_ID": JSON.stringify(
                     process.env.WEBAUTHN_RP_ID
                 ),
+                "process.env.ANDROID_SHA256_FINGERPRINT": JSON.stringify(
+                    getSstSecret("ANDROID_SHA256_FINGERPRINT")
+                ),
             },
         };
 

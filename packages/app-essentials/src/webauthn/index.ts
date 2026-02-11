@@ -45,24 +45,47 @@ function resolveRpOrigin(rpId: string): string {
     return "https://wallet.frak.id";
 }
 
+/**
+ * Derive the Android APK origin from the colon-hex SHA-256 fingerprint.
+ *
+ * Both `assetlinks.json` (colon-hex) and WebAuthn origin verification
+ * (base64url) need the same signing key — deriving one from the other
+ * ensures they can never diverge.
+ *
+ * @see https://developer.android.com/identity/sign-in/credential-manager#add-support-dal
+ */
+function resolveAndroidApkOrigin(): string {
+    const hex = process.env.ANDROID_SHA256_FINGERPRINT;
+    if (!hex) return "";
+
+    const bytes = new Uint8Array(
+        hex.split(":").map((b) => Number.parseInt(b, 16))
+    );
+    const base64 = btoa(String.fromCharCode(...bytes));
+    const base64url = base64
+        .replace(/\+/g, "-")
+        .replace(/\//g, "_")
+        .replace(/=+$/, "");
+    return `android:apk-key-hash:${base64url}`;
+}
+
 const rpName = "Frak wallet";
 const rpId = resolveRpId();
 const rpOrigin = resolveRpOrigin(rpId);
 
 /**
  * Mobile app origins for Tauri
- * - Android: APK signing key hash (must match assetlinks.json fingerprint)
- *   ⚠️ If the Android APK signing key changes, update this hash.
- *   Get it: `keytool -list -v -keystore <keystore> -alias <alias>`
- *   then base64url-encode the SHA-256 fingerprint.
+ * - Android: derived from ANDROID_SHA256_FINGERPRINT env var
+ *   (same key used in /.well-known/assetlinks.json)
  * - iOS: tauri://localhost
  */
-const androidApkOrigin =
-    "android:apk-key-hash:R68LewSdx_cfn9hNQdDKwm27UfBJXOjtIqC2u01wiHc";
+const androidApkOrigin = resolveAndroidApkOrigin();
 const iosTauriOrigin = "tauri://localhost";
 
 /** All allowed origins for WebAuthn verification (web + mobile) */
-const rpAllowedOrigins = [rpOrigin, androidApkOrigin, iosTauriOrigin];
+const rpAllowedOrigins = [rpOrigin, androidApkOrigin, iosTauriOrigin].filter(
+    Boolean
+);
 
 /**
  * Allowed RP IDs for backend verification.
