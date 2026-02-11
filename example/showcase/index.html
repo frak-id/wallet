@@ -35,16 +35,10 @@
                 };
             }
 
-            // Load SDK first, then React app after SDK is ready
+            // Load SDK components script
             const sdkScript = document.createElement('script');
             sdkScript.type = 'module';
             sdkScript.src = '<%- sdkScriptSrc %>';
-            sdkScript.onload = () => {
-                const appScript = document.createElement('script');
-                appScript.type = 'module';
-                appScript.src = '/src/main.tsx';
-                document.body.appendChild(appScript);
-            };
             document.head.appendChild(sdkScript);
         })();
     </script>
@@ -52,6 +46,7 @@
 
 <body>
     <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
 </body>
 
 </html>

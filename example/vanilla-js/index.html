@@ -27,16 +27,10 @@
                 },
             };
 
-            // Load SDK first, then app script after SDK is ready
+            // Load SDK components script
             const sdkScript = document.createElement('script');
             sdkScript.type = 'module';
             sdkScript.src = '<%- sdkScriptSrc %>';
-            sdkScript.onload = () => {
-                const appScript = document.createElement('script');
-                appScript.type = 'module';
-                appScript.src = '/src/main.ts';
-                document.body.appendChild(appScript);
-            };
             document.head.appendChild(sdkScript);
         })();
     </script>
@@ -179,5 +173,6 @@
         <div class="info">[Ready] Merge token demo initialized</div>
     </div>
 </div>
+<script type="module" src="/src/main.ts"></script>
 </body>
 </html>
