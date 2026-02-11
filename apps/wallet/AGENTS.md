@@ -6,7 +6,7 @@ TanStack Router SPA for user wallet. SSR disabled, module-based architecture wit
 
 ```
 app/
-├── module/           # Feature modules (17 modules)
+├── module/           # Feature modules (14 modules)
 │   ├── authentication/ # WebAuthn login/register
 │   ├── biometrics/   # Biometric lock & settings
 │   ├── common/       # Shared components (Header, Nav, Layout)
@@ -18,6 +18,7 @@ app/
 │   ├── recovery-setup/ # Recovery passkey setup wizard
 │   ├── root/         # Root layout & initialization
 │   ├── settings/     # User settings management
+│   ├── stores/       # App-level Zustand stores (recoveryStore)
 │   ├── tokens/       # Token balances, send/receive
 │   └── wallet/       # Core wallet operations
 ├── routes/           # TanStack Router file-based routes

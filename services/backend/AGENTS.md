@@ -7,19 +7,23 @@ Elysia.js API with domain-driven design. PostgreSQL (Drizzle) + MongoDB.
 ```
 src/
 ├── api/              # API route composition (BFF pattern)
-├── orchestration/    # Cross-domain coordination layer (7 orchestrators)
+├── orchestration/    # Cross-domain coordination layer (11+ orchestrators)
 │   ├── context.ts    # Singleton orchestrator instances
-│   ├── RewardOrchestrator.ts
 │   ├── BatchRewardOrchestrator.ts
-│   ├── RewardExpirationOrchestrator.ts
+│   ├── CampaignStatsOrchestrator.ts
+│   ├── MemberQueryOrchestrator.ts
 │   ├── PurchaseLinkingOrchestrator.ts
 │   ├── PurchaseWebhookOrchestrator.ts
+│   ├── RewardExpirationOrchestrator.ts
 │   ├── SettlementOrchestrator.ts
-│   └── WebhookResolverOrchestrator.ts
+│   ├── WebhookResolverOrchestrator.ts
+│   ├── identity/     # Identity + anonymous merge orchestrators
+│   ├── interaction-submission/ # Interaction submission orchestrators
+│   ├── reward/       # Reward orchestrators
+│   └── schemas/      # Shared orchestration schemas
 ├── domain/           # DDD bounded contexts
 │   ├── attribution/  # Touchpoint tracking, conversion attribution
 │   ├── auth/         # WebAuthn authentication
-│   ├── business/     # Business operations
 │   ├── campaign/     # Campaign rules, reward calculation
 │   ├── campaign-bank/ # Campaign banking
 │   ├── identity/     # Identity resolution, group management

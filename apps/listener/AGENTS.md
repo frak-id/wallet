@@ -8,11 +8,17 @@ Iframe RPC handler for SDK-to-wallet communication. Embedded in partner sites vi
 app/
 ├── module/
 │   ├── common/       # Shared utilities
+│   ├── component/    # Shared components (SsoButton, ToastLoading)
 │   ├── embedded/     # Embedded wallet UI components
-│   ├── hooks/        # RPC message handlers (12 handlers - core logic)
+│   ├── handlers/     # RPC message handler wrappers
+│   ├── hooks/        # RPC message handlers (14 hooks - core logic)
+│   ├── middleware/    # Request/response middleware
 │   ├── modal/        # Modal UI for wallet operations
 │   ├── providers/    # RootProvider (Wagmi, QueryClient)
-│   └── stores/       # Zustand stores (modal, context state)
+│   ├── queryKeys/    # TanStack Query key factories
+│   ├── stores/       # Zustand stores (modal, context state)
+│   ├── types/        # TypeScript definitions
+│   └── utils/        # Utility functions
 ├── styles/           # Minimal CSS
 └── views/            # Main listener orchestration (RPC setup)
 ```
@@ -21,7 +27,7 @@ app/
 
 | Task | Location |
 |------|----------|
-| RPC handlers | `app/module/hooks/` (12 handlers) |
+| RPC handlers | `app/module/hooks/` (14 hooks) |
 | Modal rendering | `app/module/modal/` |
 | Embedded wallet | `app/module/embedded/` |
 | Main listener | `app/views/listener.tsx` |

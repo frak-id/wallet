@@ -1,8 +1,8 @@
 # AGENTS.md
 
-**Generated:** 2026-02-02  
-**Commit:** 8a136e2d9  
-**Branch:** feat/business-spa-migration
+**Generated:** 2026-02-11  
+**Commit:** 221c9c29a  
+**Branch:** dev-v2
 
 ## Overview
 
@@ -46,7 +46,7 @@ frak-wallet/
 | Shared wallet logic | `packages/wallet-shared/src/` | Stores, auth, blockchain |
 | UI components | `packages/ui/component/` | Radix-based, CSS Modules |
 | Core SDK actions | `sdk/core/src/actions/` | Blockchain interactions |
-| React hooks | `sdk/react/src/hook/` | 11 hooks + providers |
+| React hooks | `sdk/react/src/hook/` | 9 hooks + providers |
 | Backend domains | `services/backend/src/domain/` | auth, wallet, oracle, etc. |
 | Vite/CSS config | `packages/dev-tooling/src/vite.ts` | Lightning CSS central config |
 | Test mocks | `packages/test-foundation/src/` | Wagmi, WebAuthn, router mocks |
@@ -174,8 +174,13 @@ Purpose-based agents in `.opencode/agents/`:
 - `apps/wallet/AGENTS.md` - Wallet app patterns
 - `apps/business/AGENTS.md` - Business dashboard patterns
 - `apps/listener/AGENTS.md` - Listener patterns
+- `apps/dashboard-admin/AGENTS.md` - Admin dashboard patterns
 - `sdk/AGENTS.md` - SDK architecture
-- `packages/AGENTS.md` - Shared packages
+- `sdk/core/AGENTS.md`, `sdk/react/AGENTS.md`, `sdk/components/AGENTS.md` - SDK package specifics
+- `packages/AGENTS.md` - Shared packages overview
+- `packages/wallet-shared/AGENTS.md`, `packages/ui/AGENTS.md` - Package specifics
+- `packages/app-essentials/AGENTS.md` - Blockchain + WebAuthn config
+- `packages/test-foundation/AGENTS.md` - Test infrastructure
 - `infra/AGENTS.md` - Infrastructure patterns
 
 ## Notes

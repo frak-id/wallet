@@ -7,9 +7,9 @@ Web Components for Frak integration. Preact-based, published as `@frak-labs/comp
 ```
 src/
 ├── components/
-│   ├── ButtonWallet/   # frak-button-wallet Web Component
-│   ├── ButtonShare/    # frak-button-share Web Component
-│   └── OpenInAppButton/ # frak-open-in-app Web Component
+│   ├── ButtonWallet/    # frak-button-wallet Web Component
+│   ├── ButtonShare/     # frak-button-share Web Component
+│   └── OpenInAppButton/ # frak-open-in-app Web Component (app store redirect)
 ├── hooks/              # Preact hooks (8 files)
 ├── utils/              # Shared utilities (14 files)
 └── index.ts            # NPM entry
