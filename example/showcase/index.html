@@ -14,7 +14,7 @@
         const detectWalletUrl = <%- detectWalletUrl %>;
 
         (async () => {
-            const walletUrl = await detectWalletUrl(<%= useLocal %>);
+            const walletUrl = await detectWalletUrl(<%= useLocal %>, "<%= walletUrl %>");
             const config = localStorage.getItem("frak-wallet-sdk-config");
 
             if (config) {

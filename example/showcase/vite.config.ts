@@ -28,6 +28,9 @@ export default defineConfig(({ mode }) => {
                 inject: {
                     data: {
                         useLocal,
+                        walletUrl:
+                            process.env.FRAK_WALLET_URL ??
+                            "https://wallet-dev.frak.id",
                         detectWalletUrl: detectWalletUrl.toString(),
                         sdkScriptSrc: scriptSrc,
                     },

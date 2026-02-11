@@ -9,7 +9,7 @@
         const detectWalletUrl = <%- detectWalletUrl %>;
 
         (async () => {
-            const walletUrl = await detectWalletUrl(<%= useLocal %>);
+            const walletUrl = await detectWalletUrl(<%= useLocal %>, "<%= walletUrl %>");
 
             window.FrakSetup = {
                 config: {

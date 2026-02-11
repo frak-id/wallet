@@ -1,6 +1,9 @@
-export async function detectWalletUrl(useLocal: boolean): Promise<string> {
+export async function detectWalletUrl(
+    useLocal: boolean,
+    remoteUrl = "https://wallet-dev.frak.id"
+): Promise<string> {
     if (!useLocal) {
-        return "https://wallet-dev.frak.id";
+        return remoteUrl;
     }
 
     const cacheKey = "frak-wallet-url";

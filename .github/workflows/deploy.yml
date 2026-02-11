@@ -160,6 +160,11 @@ jobs:
 
       - name: "🚀 Deploy Example"
         if: steps.changes.outputs.example == 'true' || github.event.inputs.force_deploy == 'true'
-        run: bun sst deploy --stage example
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/dev-v2" ]]; then
+            bun sst deploy --stage example-v2
+          else
+            bun sst deploy --stage example
+          fi
         env:
           STAGE: ${{ env.STAGE }}

@@ -1,4 +1,4 @@
-import { isProd } from "./utils";
+import { isProd, normalizedStageName } from "./utils";
 
 /**
  * Admin business website
@@ -18,7 +18,7 @@ new sst.aws.StaticSite("Admin", {
     },
     // Environment variables
     environment: {
-        STAGE: $app.stage,
+        STAGE: normalizedStageName,
     },
     dev: { autostart: false },
 });
