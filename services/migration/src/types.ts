@@ -116,6 +116,29 @@ export type V1MongoDBCampaign = {
         | { key: "created"; txHash: Hex; address: Address };
 };
 
+export type OnChainCampaignData = {
+    campaignAddress: Address;
+    productId: string;
+    isRunning: boolean;
+    isActive: boolean;
+    campaignType: string;
+    campaignVersion: string;
+    campaignName: string;
+    capConfig: {
+        period: bigint;
+        amount: bigint;
+    };
+    activationPeriod: {
+        start: bigint;
+        end: bigint;
+    };
+    bankAddress: Address;
+    chainingConfig?: {
+        userPercent: bigint;
+        deperditionPerLevel: bigint;
+    };
+};
+
 export type MigrationAction =
     | { type: "create_merchant"; data: V2MerchantInsert }
     | { type: "deploy_bank"; merchantId: string; ownerWallet: Address }
@@ -124,6 +147,7 @@ export type MigrationAction =
           type: "create_campaign_rule";
           data: V2CampaignRuleInsert;
           productOrigin?: { productId: string; productDomain: string };
+          onChainCampaignAddress?: Address;
       };
 
 export type ExcludedProduct = {
@@ -146,6 +170,7 @@ export type MigrationPlan = {
     campaigns: MigrationAction[];
     excludedProducts: ExcludedProduct[];
     banksWithBalance: BankBalanceInfo[];
+    onChainCampaigns: Map<Address, OnChainCampaignData>;
     summary: {
         totalMerchants: number;
         totalBanksToDeploy: number;

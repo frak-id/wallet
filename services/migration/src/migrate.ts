@@ -1,6 +1,9 @@
-import { type Hex, pad } from "viem";
+import { type Address, type Hex, pad } from "viem";
 import { migrationConfig, validateConfig } from "./config";
-import { fetchBankBalances } from "./sources/blockchain";
+import {
+    fetchBankBalances,
+    fetchOnChainCampaignData,
+} from "./sources/blockchain";
 import {
     fetchAllProducts,
     fetchProductAdministrators,
@@ -33,6 +36,7 @@ import type {
     MigrationAction,
     MigrationPlan,
     MigrationResult,
+    OnChainCampaignData,
     V1IndexerAdministrator,
     V1IndexerProductInfo,
     V1MongoDBCampaign,
@@ -135,6 +139,7 @@ function processProduct(
     productInfo: V1IndexerProductInfo,
     administrators: V1IndexerAdministrator[],
     mongoCampaignsByProductId: Map<string, V1MongoDBCampaign[]>,
+    onChainCampaignMap: Map<Address, OnChainCampaignData>,
     plan: MigrationPlan
 ): void {
     const { actions } = transformProductToMerchant(productInfo, administrators);
@@ -159,6 +164,10 @@ function processProduct(
     const productCampaigns = mongoCampaignsByProductId.get(productHexId);
     if (productCampaigns) {
         for (const campaign of productCampaigns) {
+            const campaignOnChainData = findOnChainDataForCampaign(
+                campaign,
+                onChainCampaignMap
+            );
             const { actions: campaignActions } =
                 transformMongoDBCampaignToRules(
                     campaign,
@@ -167,12 +176,27 @@ function processProduct(
                     {
                         productId: productHexId,
                         productDomain: productInfo.product.domain,
-                    }
+                    },
+                    campaignOnChainData
                 );
             plan.campaigns.push(...campaignActions);
             plan.summary.totalCampaignRules += campaignActions.length;
         }
     }
+}
+
+function findOnChainDataForCampaign(
+    campaign: V1MongoDBCampaign,
+    onChainCampaignMap: Map<Address, OnChainCampaignData>
+): OnChainCampaignData | undefined {
+    if (
+        campaign.state.key !== "created" ||
+        !("address" in campaign.state) ||
+        !campaign.state.address
+    ) {
+        return undefined;
+    }
+    return onChainCampaignMap.get(campaign.state.address);
 }
 
 async function buildMigrationPlan(): Promise<MigrationPlan> {
@@ -182,6 +206,7 @@ async function buildMigrationPlan(): Promise<MigrationPlan> {
         campaigns: [],
         excludedProducts: [],
         banksWithBalance: [],
+        onChainCampaigns: new Map(),
         summary: {
             totalMerchants: 0,
             totalBanksToDeploy: 0,
@@ -215,8 +240,9 @@ async function buildMigrationPlan(): Promise<MigrationPlan> {
         );
     }
 
-    log("info", "Checking bank balances on-chain...");
     const productInfos = productsWithDetails.map((p) => p.productInfo);
+
+    log("info", "Checking bank balances on-chain...");
     plan.banksWithBalance = await fetchBankBalances(productInfos);
     if (plan.banksWithBalance.length > 0) {
         log(
@@ -224,6 +250,14 @@ async function buildMigrationPlan(): Promise<MigrationPlan> {
             `Found ${plan.banksWithBalance.length} banks with remaining balance that need manual migration`
         );
     }
+
+    log("info", "Fetching on-chain campaign data...");
+    const onChainCampaignMap = await fetchOnChainCampaignData(productInfos);
+    log(
+        "info",
+        `Fetched on-chain data for ${onChainCampaignMap.size} campaigns`
+    );
+    plan.onChainCampaigns = onChainCampaignMap;
 
     log("info", "Fetching MongoDB campaigns...");
     const mongoCampaigns = migrationConfig.mongodbUri
@@ -239,6 +273,7 @@ async function buildMigrationPlan(): Promise<MigrationPlan> {
                 productInfo,
                 administrators,
                 mongoCampaignsByProductId,
+                onChainCampaignMap,
                 plan
             );
         } catch (error) {
@@ -277,6 +312,7 @@ function printDryRunPlan(plan: MigrationPlan): void {
     console.log(
         `Total Campaign Rules to Create: ${plan.summary.totalCampaignRules}`
     );
+    console.log(`On-chain Campaigns Fetched: ${plan.onChainCampaigns.size}`);
 
     printDryRunSection("MERCHANTS", plan.merchants, (a) => {
         if (a.type === "create_merchant")
@@ -289,11 +325,35 @@ function printDryRunPlan(plan: MigrationPlan): void {
     printDryRunSection("ADMINS", plan.admins, (a) =>
         a.type === "create_merchant_admin" ? formatAdminForDryRun(a.data) : null
     );
-    printDryRunSection("CAMPAIGN RULES", plan.campaigns, (a) =>
-        a.type === "create_campaign_rule"
-            ? formatCampaignRuleForDryRun(a.data, a.productOrigin)
-            : null
-    );
+    printDryRunSection("CAMPAIGN RULES", plan.campaigns, (a) => {
+        if (a.type !== "create_campaign_rule") return null;
+        const onChainData = a.onChainCampaignAddress
+            ? plan.onChainCampaigns.get(a.onChainCampaignAddress)
+            : undefined;
+        return formatCampaignRuleForDryRun(
+            a.data,
+            a.productOrigin,
+            onChainData
+        );
+    });
+
+    if (plan.onChainCampaigns.size > 0) {
+        const pausedCampaigns = [...plan.onChainCampaigns.values()].filter(
+            (c) => !c.isRunning
+        );
+        if (pausedCampaigns.length > 0) {
+            console.log(`\n${"-".repeat(80)}`);
+            console.log(
+                `⏸ PAUSED CAMPAIGNS (not running on-chain): ${pausedCampaigns.length}`
+            );
+            console.log("-".repeat(80));
+            for (const c of pausedCampaigns) {
+                console.log(
+                    `  ${c.campaignAddress} - ${c.campaignName} (${c.campaignType})`
+                );
+            }
+        }
+    }
 
     if (plan.banksWithBalance.length > 0) {
         console.log(`\n${"-".repeat(80)}`);
