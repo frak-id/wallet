@@ -1,8 +1,6 @@
 import type {
-    EstimatedReward,
     GetMerchantInformationReturnType,
     IFrameRpcSchema,
-    InteractionTypeKey,
 } from "@frak-labs/core-sdk";
 import {
     FrakRpcError,
@@ -10,8 +8,9 @@ import {
     type RpcPromiseHandler,
 } from "@frak-labs/frame-connector";
 import { authenticatedBackendApi } from "@frak-labs/wallet-shared";
+import { useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
-import type { Address } from "viem";
+import { estimatedRewardsQueryOptions } from "@/module/hooks/useEstimatedRewards";
 import type { WalletRpcContext } from "@/module/types/context";
 
 type OnGetMerchantInformation = RpcPromiseHandler<
@@ -21,48 +20,46 @@ type OnGetMerchantInformation = RpcPromiseHandler<
 >;
 
 export function useOnGetMerchantInformation(): OnGetMerchantInformation {
-    return useCallback(async (_params, context) => {
-        const { merchantId } = context;
+    const queryClient = useQueryClient();
 
-        if (!merchantId) {
-            throw new FrakRpcError(
-                RpcErrorCodes.configError,
-                "The current merchant doesn't exist within the Frak ecosystem"
-            );
-        }
+    return useCallback(
+        async (_params, context) => {
+            const { merchantId } = context;
 
-        const domain = new URL(context.sourceUrl).host.replace("www.", "");
+            if (!merchantId) {
+                throw new FrakRpcError(
+                    RpcErrorCodes.configError,
+                    "The current merchant doesn't exist within the Frak ecosystem"
+                );
+            }
 
-        const [resolveResult, rewardsResult] = await Promise.all([
-            authenticatedBackendApi.user.merchant.resolve.get({
-                query: { domain },
-            }),
-            authenticatedBackendApi.user.merchant["estimated-rewards"].get({
-                query: { merchantId },
-            }),
-        ]);
+            const domain = new URL(context.sourceUrl).host.replace("www.", "");
 
-        if (resolveResult.error || !resolveResult.data) {
-            throw new FrakRpcError(
-                RpcErrorCodes.configError,
-                "The current merchant doesn't exist within the Frak ecosystem"
-            );
-        }
+            const [resolveResult, rewards] = await Promise.all([
+                authenticatedBackendApi.user.merchant.resolve.get({
+                    query: { domain },
+                }),
+                queryClient.fetchQuery(
+                    estimatedRewardsQueryOptions(merchantId)
+                ),
+            ]);
 
-        return {
-            id: resolveResult.data.merchantId,
-            onChainMetadata: {
-                name: resolveResult.data.name ?? "",
-                domain,
-            },
-            rewards: (rewardsResult.data?.rewards ?? []).map((reward) => ({
-                token: reward.token as Address | undefined,
-                campaignId: reward.campaignId,
-                interactionTypeKey:
-                    reward.interactionTypeKey as InteractionTypeKey,
-                referrer: reward.referrer as EstimatedReward | undefined,
-                referee: reward.referee as EstimatedReward | undefined,
-            })),
-        } satisfies GetMerchantInformationReturnType;
-    }, []);
+            if (resolveResult.error || !resolveResult.data) {
+                throw new FrakRpcError(
+                    RpcErrorCodes.configError,
+                    "The current merchant doesn't exist within the Frak ecosystem"
+                );
+            }
+
+            return {
+                id: resolveResult.data.merchantId,
+                onChainMetadata: {
+                    name: resolveResult.data.name ?? "",
+                    domain,
+                },
+                rewards,
+            } satisfies GetMerchantInformationReturnType;
+        },
+        [queryClient]
+    );
 }

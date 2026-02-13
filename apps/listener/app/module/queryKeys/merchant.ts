@@ -9,4 +9,14 @@ export namespace listenerMerchantKey {
         byId: (merchantId?: string) =>
             [base, metadataBase, merchantId ?? "no-merchant-id"] as const,
     };
+
+    const estimatedRewardsBase = "estimatedRewards" as const;
+    export const estimatedRewards = {
+        byMerchant: (merchantId?: string) =>
+            [
+                base,
+                estimatedRewardsBase,
+                merchantId ?? "no-merchant-id",
+            ] as const,
+    };
 }

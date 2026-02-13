@@ -27,6 +27,7 @@ import {
     useState,
 } from "react";
 import { useTranslation } from "react-i18next";
+import { useFormattedEstimatedReward } from "@/module/hooks/useEstimatedRewards";
 import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 import { mapDeprecatedModalMetadata } from "../utils/deprecatedModalMetadataMapper";
 
@@ -100,11 +101,17 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
     const { i18n: initialI18n } = useTranslation();
     // We are not using the safeResolvingContext here, since this component is init before the iframe is ready
     const resolvingContext = resolvingContextStore((state) => state.context);
-
     // The current UI request
     const [currentRequest, setCurrentRequest] = useState<UIRequest | undefined>(
         undefined
     );
+
+    const { data: formattedReward } = useFormattedEstimatedReward({
+        merchantId: resolvingContext?.merchantId,
+        currency: currentRequest?.configMetadata?.currency,
+        targetInteraction: currentRequest?.targetInteraction,
+        context: currentRequest?.i18n?.context,
+    });
 
     // Track pending clear timeout to prevent flashing on rapid close/open
     const clearTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -194,6 +201,7 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
             interpolation: {
                 defaultVariables: {
                     ...context,
+                    estimatedReward: formattedReward,
                 },
             },
             // Load both the default and the potentially customized i18n
@@ -213,12 +221,14 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
             rawT(key, {
                 ...context,
                 ...options,
+                estimatedReward: formattedReward,
             });
         return { lang, i18n, t };
     }, [
         currentRequest,
         resolvingContext?.origin,
         initialI18n,
+        formattedReward,
         populateI18nResources,
     ]);
 
