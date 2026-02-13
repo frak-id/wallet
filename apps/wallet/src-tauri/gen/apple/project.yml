@@ -32,6 +32,8 @@ targets:
       - path: Sources
       - path: Assets.xcassets
       - path: Externals
+        excludes:
+          - "**/*.a"
       - path: app_iOS
       - path: assets
         buildPhase: resources

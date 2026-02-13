@@ -1,6 +1,6 @@
 import { Elysia } from "elysia";
 
-const iosTeamId = "6Y48FFCGMY";
+const iosTeamId = "57DZ6Z2235";
 const iosBundleId = "id.frak.wallet";
 const iosAppId = `${iosTeamId}.${iosBundleId}`;
 

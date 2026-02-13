@@ -150,6 +150,20 @@
 			path = app;
 			sourceTree = "<group>";
 		};
+		"TEMP_07DDAC6B-7114-430F-8868-FBDFD69A6D1F" /* arm64 */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = arm64;
+			sourceTree = "<group>";
+		};
+		"TEMP_1BA27B7D-4F85-4927-9829-81E1119070C3" /* x86_64 */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = x86_64;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -183,7 +197,7 @@
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
 					E86255CB8A1836C0BF0C0E14 = {
-						DevelopmentTeam = ;
+						DevelopmentTeam = 57DZ6Z2235;
 					};
 				};
 			};
@@ -266,7 +280,7 @@
 				CODE_SIGN_ALLOW_ENTITLEMENTS_MODIFICATION = YES;
 				CODE_SIGN_ENTITLEMENTS = app_iOS/app_iOS.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = "57DZ6Z2235";
 				ENABLE_BITCODE = NO;
 				"EXCLUDED_ARCHS[sdk=iphoneos*]" = x86_64;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -355,7 +369,7 @@
 				CODE_SIGN_ALLOW_ENTITLEMENTS_MODIFICATION = YES;
 				CODE_SIGN_ENTITLEMENTS = app_iOS/app_iOS.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = "57DZ6Z2235";
 				ENABLE_BITCODE = NO;
 				"EXCLUDED_ARCHS[sdk=iphoneos*]" = x86_64;
 				FRAMEWORK_SEARCH_PATHS = (
