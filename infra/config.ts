@@ -61,6 +61,9 @@ export const mongoBusinessDb = new sst.Secret("MONGODB_BUSINESS_URI");
 export const onRampUrl = new sst.Secret("FUNDING_ON_RAMP_URL");
 export const jwtBusinessSecret = new sst.Secret("JWT_BUSINESS_SECRET");
 
+// Shopify
+export const shopifyClientId = new sst.Secret("SHOPIFY_CLIENT_ID");
+
 // Android signing key fingerprint (shared by frontend + backend for WebAuthn + assetlinks)
 export const androidSha256Fingerprint = new sst.Secret(
     "ANDROID_SHA256_FINGERPRINT"

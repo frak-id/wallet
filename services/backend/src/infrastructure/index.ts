@@ -8,6 +8,10 @@ export {
 // External services
 export { JwtContext } from "./external/jwt";
 export { log } from "./external/logger";
+export {
+    extractShopDomain,
+    verifyShopifySessionToken,
+} from "./external/shopifyJwt";
 // Repositories
 export {
     AdminWalletsRepository,
