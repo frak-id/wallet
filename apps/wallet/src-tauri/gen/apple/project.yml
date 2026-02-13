@@ -54,8 +54,8 @@ targets:
           - UIInterfaceOrientationPortraitUpsideDown
           - UIInterfaceOrientationLandscapeLeft
           - UIInterfaceOrientationLandscapeRight
-        CFBundleShortVersionString: 0.0.30
-        CFBundleVersion: "0.0.30"
+        CFBundleShortVersionString: 0.0.31
+        CFBundleVersion: "0.0.31"
         ITSAppUsesNonExemptEncryption: false
         NSFaceIDUsageDescription: Unlock your wallet securely with Face ID
         CFBundleURLTypes:
