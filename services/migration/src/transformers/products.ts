@@ -27,14 +27,12 @@ export function transformProductToMerchant(
     }
 
     const productId = computeProductId(productInfo.product.domain);
-    const primaryBank = productInfo.banks[0];
 
     const merchant: V2MerchantInsert = {
         productId,
         domain: productInfo.product.domain.replace("www.", ""),
         name: productInfo.product.name,
         ownerWallet: owner.user,
-        bankAddress: primaryBank?.id,
         defaultRewardToken: migrationConfig.defaultRewardToken,
         verifiedAt: new Date(
             Number(productInfo.product.createTimestamp) * 1000
@@ -43,14 +41,11 @@ export function transformProductToMerchant(
     };
 
     actions.push({ type: "create_merchant", data: merchant });
-
-    if (!primaryBank) {
-        actions.push({
-            type: "deploy_bank",
-            merchantId: "",
-            ownerWallet: owner.user,
-        });
-    }
+    actions.push({
+        type: "deploy_bank",
+        merchantId: "",
+        ownerWallet: owner.user,
+    });
 
     return { merchant, actions };
 }
@@ -62,7 +57,7 @@ export function formatMerchantForDryRun(merchant: V2MerchantInsert): string {
     - Name: ${merchant.name}
     - Product ID: ${merchant.productId}
     - Owner Wallet: ${merchant.ownerWallet}
-    - Bank Address: ${merchant.bankAddress ?? "NEEDS DEPLOYMENT"}
+    - Bank Address: PENDING (new contract deployment required)
     - Default Reward Token: ${merchant.defaultRewardToken}
 `;
 }

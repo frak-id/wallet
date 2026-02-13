@@ -142,10 +142,15 @@ export type OnChainCampaignData = {
 export type MigrationAction =
     | { type: "create_merchant"; data: V2MerchantInsert }
     | { type: "deploy_bank"; merchantId: string; ownerWallet: Address }
-    | { type: "create_merchant_admin"; data: V2MerchantAdminInsert }
+    | {
+          type: "create_merchant_admin";
+          data: V2MerchantAdminInsert;
+          merchantDomain: string;
+      }
     | {
           type: "create_campaign_rule";
           data: V2CampaignRuleInsert;
+          merchantDomain: string;
           productOrigin?: { productId: string; productDomain: string };
           onChainCampaignAddress?: Address;
       };

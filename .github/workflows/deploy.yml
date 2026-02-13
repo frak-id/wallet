@@ -12,7 +12,6 @@ on:
     branches:
       - main
       - dev
-      - dev-v2
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
@@ -139,8 +138,6 @@ jobs:
         run: |
           if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
             bun sst deploy --stage gcp-production
-          elif [[ "${{ github.ref }}" == "refs/heads/dev-v2" ]]; then
-            bun sst deploy --stage gcp-staging-v2
           else
             bun sst deploy --stage gcp-staging
           fi
@@ -161,10 +158,6 @@ jobs:
       - name: "🚀 Deploy Example"
         if: steps.changes.outputs.example == 'true' || github.event.inputs.force_deploy == 'true'
         run: |
-          if [[ "${{ github.ref }}" == "refs/heads/dev-v2" ]]; then
-            bun sst deploy --stage example-v2
-          else
             bun sst deploy --stage example
-          fi
         env:
           STAGE: ${{ env.STAGE }}

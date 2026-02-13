@@ -145,15 +145,16 @@ function processProduct(
     const { actions } = transformProductToMerchant(productInfo, administrators);
     plan.merchants.push(...actions);
     plan.summary.totalMerchants++;
+    plan.summary.totalBanksToDeploy++;
 
-    if (!productInfo.banks.length) plan.summary.totalBanksToDeploy++;
-
+    const domain = productInfo.product.domain;
     const owner = administrators.find((a) => a.isOwner);
     if (owner) {
         const { actions: adminActions } =
             transformAdministratorsToMerchantAdmins(
                 administrators,
                 "PLACEHOLDER",
+                domain,
                 owner.user
             );
         plan.admins.push(...adminActions);
@@ -172,10 +173,11 @@ function processProduct(
                 transformMongoDBCampaignToRules(
                     campaign,
                     "PLACEHOLDER",
+                    domain,
                     migrationConfig.defaultRewardToken,
                     {
                         productId: productHexId,
-                        productDomain: productInfo.product.domain,
+                        productDomain: domain,
                     },
                     campaignOnChainData
                 );
@@ -437,12 +439,27 @@ async function executeMerchants(
 
 async function executeAdmins(
     actions: MigrationAction[],
-    result: MigrationResult
+    result: MigrationResult,
+    merchantIdMap: Map<string, string>
 ): Promise<void> {
     for (const action of actions) {
         if (action.type !== "create_merchant_admin") continue;
         try {
-            await insertMerchantAdmin(action.data);
+            const resolvedMerchantId = merchantIdMap.get(action.merchantDomain);
+            if (!resolvedMerchantId) {
+                result.errors.push(
+                    `Failed to create admin ${action.data.wallet}: no merchant found for domain ${action.merchantDomain}`
+                );
+                log(
+                    "error",
+                    `No merchant ID found for domain ${action.merchantDomain}, skipping admin ${action.data.wallet}`
+                );
+                continue;
+            }
+            await insertMerchantAdmin({
+                ...action.data,
+                merchantId: resolvedMerchantId,
+            });
             result.adminsCreated++;
             log("info", `Created admin ${action.data.wallet}`);
         } catch (error) {
@@ -456,12 +473,27 @@ async function executeAdmins(
 
 async function executeCampaigns(
     actions: MigrationAction[],
-    result: MigrationResult
+    result: MigrationResult,
+    merchantIdMap: Map<string, string>
 ): Promise<void> {
     for (const action of actions) {
         if (action.type !== "create_campaign_rule") continue;
         try {
-            await insertCampaignRule(action.data);
+            const resolvedMerchantId = merchantIdMap.get(action.merchantDomain);
+            if (!resolvedMerchantId) {
+                result.errors.push(
+                    `Failed to create campaign rule ${action.data.name}: no merchant found for domain ${action.merchantDomain}`
+                );
+                log(
+                    "error",
+                    `No merchant ID found for domain ${action.merchantDomain}, skipping campaign rule ${action.data.name}`
+                );
+                continue;
+            }
+            await insertCampaignRule({
+                ...action.data,
+                merchantId: resolvedMerchantId,
+            });
             result.campaignRulesCreated++;
             log("info", `Created campaign rule ${action.data.name}`);
         } catch (error) {
@@ -486,8 +518,8 @@ async function executeMigration(plan: MigrationPlan): Promise<MigrationResult> {
 
     log("info", "Starting migration execution...");
     await executeMerchants(plan.merchants, result, merchantIdMap);
-    await executeAdmins(plan.admins, result);
-    await executeCampaigns(plan.campaigns, result);
+    await executeAdmins(plan.admins, result, merchantIdMap);
+    await executeCampaigns(plan.campaigns, result, merchantIdMap);
 
     result.success = result.errors.length === 0;
     return result;

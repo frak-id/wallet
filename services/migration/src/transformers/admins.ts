@@ -10,6 +10,7 @@ const PURCHASE_ORACLE_UPDATER_ROLE = 1n << 3n;
 export function transformAdministratorsToMerchantAdmins(
     administrators: V1IndexerAdministrator[],
     merchantId: string,
+    merchantDomain: string,
     ownerWallet: Address
 ): { admins: V2MerchantAdminInsert[]; actions: MigrationAction[] } {
     const admins: V2MerchantAdminInsert[] = [];
@@ -30,7 +31,11 @@ export function transformAdministratorsToMerchantAdmins(
         };
 
         admins.push(merchantAdmin);
-        actions.push({ type: "create_merchant_admin", data: merchantAdmin });
+        actions.push({
+            type: "create_merchant_admin",
+            data: merchantAdmin,
+            merchantDomain,
+        });
     }
 
     return { admins, actions };

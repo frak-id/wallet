@@ -175,6 +175,7 @@ function isTriggerEmpty(
 export function transformMongoDBCampaignToRules(
     campaign: V1MongoDBCampaign,
     merchantId: string,
+    merchantDomain: string,
     defaultToken?: Hex,
     productOrigin?: ProductOrigin,
     onChainData?: OnChainCampaignData
@@ -189,12 +190,16 @@ export function transformMongoDBCampaignToRules(
 
     const activationStart = onChainData?.activationPeriod.start
         ? new Date(Number(onChainData.activationPeriod.start) * 1000)
-        : campaign.scheduled?.dateStart;
+        : campaign.scheduled?.dateStart
+          ? new Date(campaign.scheduled.dateStart)
+          : undefined;
     const activationEnd =
         onChainData?.activationPeriod.end &&
         onChainData.activationPeriod.end > 0n
             ? new Date(Number(onChainData.activationPeriod.end) * 1000)
-            : campaign.scheduled?.dateEnd;
+            : campaign.scheduled?.dateEnd
+              ? new Date(campaign.scheduled.dateEnd)
+              : undefined;
 
     let priority = 0;
     for (const [triggerKey, triggerConfig] of Object.entries(
@@ -234,6 +239,7 @@ export function transformMongoDBCampaignToRules(
         actions.push({
             type: "create_campaign_rule",
             data: rule,
+            merchantDomain,
             productOrigin,
             onChainCampaignAddress: onChainData?.campaignAddress,
         });

@@ -13,6 +13,9 @@
         "restore": "bun run src/snapshot/restore.ts",
         "restore:dry-run": "DRY_RUN=true bun run src/snapshot/restore.ts",
         "restore:live": "DRY_RUN=false bun run src/snapshot/restore.ts",
+        "deploy-banks": "bun run src/deploy-banks.ts",
+        "deploy-banks:dry-run": "DRY_RUN=true bun run src/deploy-banks.ts",
+        "deploy-banks:live": "DRY_RUN=false bun run src/deploy-banks.ts",
         "db:dump": "bash scripts/db-dump.sh",
         "db:restore": "bash scripts/db-restore.sh"
     },
