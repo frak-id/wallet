@@ -20,6 +20,17 @@ function extractSearchParams(
     };
 }
 
+/**
+ * Known wallet hosts that trigger App Link handling on Android.
+ * When the OS opens the app via a verified HTTPS link, the URL arrives
+ * here as an `https://` deep link instead of the `frakwallet://` scheme.
+ */
+const knownWalletHosts = new Set([
+    "wallet.frak.id",
+    "wallet.v2.gcp-dev.frak.id",
+    "wallet-dev.frak.id",
+]);
+
 function parseDeepLink(url: string): DeepLinkParams | null {
     try {
         const parsed = new URL(url);
@@ -28,6 +39,16 @@ function parseDeepLink(url: string): DeepLinkParams | null {
         if (parsed.protocol === "frakwallet:") {
             const action =
                 parsed.hostname || parsed.pathname.replace(/^\//, "") || "home";
+            return { action, ...extractSearchParams(parsed.searchParams) };
+        }
+
+        // https://wallet.v2.gcp-dev.frak.id/pair?id=... (Android App Links)
+        if (
+            parsed.protocol === "https:" &&
+            knownWalletHosts.has(parsed.hostname)
+        ) {
+            const action =
+                parsed.pathname.replace(/^\//, "").split("/")[0] || "home";
             return { action, ...extractSearchParams(parsed.searchParams) };
         }
 

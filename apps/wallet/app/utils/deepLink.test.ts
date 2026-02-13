@@ -111,4 +111,57 @@ describe("initDeepLinks", () => {
 
         expect(navigate).toHaveBeenCalledWith({ to: "/wallet" });
     });
+
+    test("should handle HTTPS App Link for pairing (Android)", async () => {
+        vi.useFakeTimers();
+        getCurrentMock.mockResolvedValue([
+            "https://wallet.v2.gcp-dev.frak.id/pair?id=pair-456",
+        ]);
+
+        const { initDeepLinks } = await import("./deepLink");
+        const navigate = vi.fn();
+
+        await initDeepLinks(navigate);
+        vi.runAllTimers();
+
+        expect(pairingStore.getState().pendingPairingId).toBe("pair-456");
+        expect(navigate).toHaveBeenCalledWith({
+            to: "/pairing",
+            search: { mode: "embedded" },
+        });
+    });
+
+    test("should handle warm-start HTTPS App Link", async () => {
+        const { initDeepLinks } = await import("./deepLink");
+        const navigate = vi.fn();
+
+        await initDeepLinks(navigate);
+
+        if (!openUrlHandler) {
+            throw new Error("Expected openUrlHandler to be set");
+        }
+
+        openUrlHandler(["https://wallet.frak.id/pair?id=pair-789"]);
+
+        expect(pairingStore.getState().pendingPairingId).toBe("pair-789");
+        expect(navigate).toHaveBeenCalledWith({
+            to: "/pairing",
+            search: { mode: "embedded" },
+        });
+    });
+
+    test("should ignore unknown HTTPS hosts", async () => {
+        const { initDeepLinks } = await import("./deepLink");
+        const navigate = vi.fn();
+
+        await initDeepLinks(navigate);
+
+        if (!openUrlHandler) {
+            throw new Error("Expected openUrlHandler to be set");
+        }
+
+        openUrlHandler(["https://evil.example.com/pair?id=steal-me"]);
+
+        expect(navigate).not.toHaveBeenCalled();
+    });
 });
