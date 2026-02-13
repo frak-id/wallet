@@ -12,7 +12,9 @@
         "snapshot": "bun run src/snapshot/extract.ts",
         "restore": "bun run src/snapshot/restore.ts",
         "restore:dry-run": "DRY_RUN=true bun run src/snapshot/restore.ts",
-        "restore:live": "DRY_RUN=false bun run src/snapshot/restore.ts"
+        "restore:live": "DRY_RUN=false bun run src/snapshot/restore.ts",
+        "db:dump": "bash scripts/db-dump.sh",
+        "db:restore": "bash scripts/db-restore.sh"
     },
     "dependencies": {
         "@frak-labs/app-essentials": "workspace:*",
