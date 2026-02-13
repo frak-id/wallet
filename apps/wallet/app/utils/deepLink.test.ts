@@ -115,7 +115,7 @@ describe("initDeepLinks", () => {
     test("should handle HTTPS App Link for pairing (Android)", async () => {
         vi.useFakeTimers();
         getCurrentMock.mockResolvedValue([
-            "https://wallet.v2.gcp-dev.frak.id/pair?id=pair-456",
+            "https://wallet-dev.frak.id/pair?id=pair-456",
         ]);
 
         const { initDeepLinks } = await import("./deepLink");

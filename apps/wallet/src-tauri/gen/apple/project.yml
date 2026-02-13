@@ -12,7 +12,7 @@ settingGroups:
     base:
       PRODUCT_NAME: Frak Wallet
       PRODUCT_BUNDLE_IDENTIFIER: id.frak.wallet
-      DEVELOPMENT_TEAM: 6Y48FFCGMY
+      DEVELOPMENT_TEAM: 57DZ6Z2235
 targetTemplates:
   app:
     type: application
@@ -52,8 +52,8 @@ targets:
           - UIInterfaceOrientationPortraitUpsideDown
           - UIInterfaceOrientationLandscapeLeft
           - UIInterfaceOrientationLandscapeRight
-        CFBundleShortVersionString: 0.0.26
-        CFBundleVersion: "0.0.26"
+        CFBundleShortVersionString: 0.0.30
+        CFBundleVersion: "0.0.30"
     entitlements:
       path: app_iOS/app_iOS.entitlements
     scheme:

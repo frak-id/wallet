@@ -25,11 +25,7 @@ function extractSearchParams(
  * When the OS opens the app via a verified HTTPS link, the URL arrives
  * here as an `https://` deep link instead of the `frakwallet://` scheme.
  */
-const knownWalletHosts = new Set([
-    "wallet.frak.id",
-    "wallet.v2.gcp-dev.frak.id",
-    "wallet-dev.frak.id",
-]);
+const knownWalletHosts = new Set(["wallet.frak.id", "wallet-dev.frak.id"]);
 
 function parseDeepLink(url: string): DeepLinkParams | null {
     try {

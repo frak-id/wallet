@@ -1,6 +1,6 @@
 [package]
 name = "app"
-version = "0.0.26"
+version = "0.0.30"
 description = "Frak Wallet"
 authors = ["Frak Labs"]
 license = "GNU GPL 3.0"

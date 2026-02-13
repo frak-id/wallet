@@ -29,7 +29,7 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="https" android:host="wallet.v2.gcp-dev.frak.id" />
+                <data android:scheme="https" android:host="wallet-dev.frak.id" />
             </intent-filter>
             <!-- Custom URL Scheme for Deep Linking -->
             <intent-filter>
@@ -49,7 +49,7 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="https" android:host="wallet.v2.gcp-dev.frak.id" android:pathPrefix="/open" />
+                <data android:scheme="https" android:host="wallet-dev.frak.id" android:pathPrefix="/open" />
             </intent-filter>
         </activity>
 

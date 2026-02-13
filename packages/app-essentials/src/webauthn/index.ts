@@ -4,7 +4,7 @@ import { isTauri } from "../utils/platform";
 /**
  * Tauri dev domain — must match Digital Asset Links (Android) and AASA (iOS)
  */
-const tauriDevDomain = "wallet.v2.gcp-dev.frak.id";
+const tauriDevDomain = "wallet-dev.frak.id";
 
 /**
  * Resolve the relying party ID based on environment:
