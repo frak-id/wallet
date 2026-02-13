@@ -21,7 +21,7 @@ The Frak Wallet mobile app is built using [Tauri 2.x](https://tauri.app/), which
 - **Xcode**: Latest version with iOS SDK
 - **Xcode Command Line Tools**: `xcode-select --install`
 - **CocoaPods**: `sudo gem install cocoapods`
-- **Apple Developer Account**: For code signing (Team ID: `6Y48FFCGMY`)
+- **Apple Developer Account**: For code signing (Team ID: `57DZ6Z2235`)
 - **iOS Simulator**: Available devices can be listed with `xcrun simctl list devices`
 
 ### Android Development
@@ -113,7 +113,7 @@ This allows the app to share WebAuthn credentials with the web domain.
 #### Code Signing
 
 - **Bundle ID**: `id.frak.wallet`
-- **Development Team**: `6Y48FFCGMY`
+- **Development Team**: `57DZ6Z2235`
 - Configured in: `tauri.conf.json`
 
 ### Android
@@ -245,12 +245,19 @@ bun run test
 
 ## Version Management
 
-Version numbers are currently duplicated across:
+Version is synced across 4 files via a single command:
+
+```bash
+bun run tauri:version 0.0.33
+```
+
+This updates:
 - `apps/wallet/package.json`
 - `apps/wallet/src-tauri/Cargo.toml`
 - `apps/wallet/src-tauri/tauri.conf.json`
+- `apps/wallet/src-tauri/gen/apple/project.yml`
 
-Ensure all three files are updated when bumping versions.
+Script: `apps/wallet/scripts/sync-version.sh`
 
 ## Security Considerations
 
