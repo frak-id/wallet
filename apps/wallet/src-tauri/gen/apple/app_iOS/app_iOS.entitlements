@@ -2,12 +2,12 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <key>com.apple.developer.associated-domains</key>
-    <array>
-        <string>webcredentials:wallet-dev.frak.id</string>
-        <string>webcredentials:wallet.frak.id</string>
-        <string>applinks:wallet.frak.id</string>
-        <string>applinks:wallet-dev.frak.id</string>
-    </array>
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<string>webcredentials:wallet-dev.frak.id</string>
+		<string>webcredentials:wallet.frak.id</string>
+		<string>applinks:wallet.frak.id</string>
+		<string>applinks:wallet-dev.frak.id</string>
+	</array>
 </dict>
 </plist>

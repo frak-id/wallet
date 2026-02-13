@@ -150,14 +150,14 @@
 			path = app;
 			sourceTree = "<group>";
 		};
-		"TEMP_07DDAC6B-7114-430F-8868-FBDFD69A6D1F" /* arm64 */ = {
+		"TEMP_07F2559F-CAA4-49BE-B5A6-560D56D5E168" /* arm64 */ = {
 			isa = PBXGroup;
 			children = (
 			);
 			path = arm64;
 			sourceTree = "<group>";
 		};
-		"TEMP_1BA27B7D-4F85-4927-9829-81E1119070C3" /* x86_64 */ = {
+		"TEMP_BBAF9FD0-A747-4D15-8F80-8DB0579AFA98" /* x86_64 */ = {
 			isa = PBXGroup;
 			children = (
 			);
@@ -280,7 +280,7 @@
 				CODE_SIGN_ALLOW_ENTITLEMENTS_MODIFICATION = YES;
 				CODE_SIGN_ENTITLEMENTS = app_iOS/app_iOS.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				DEVELOPMENT_TEAM = "57DZ6Z2235";
+				DEVELOPMENT_TEAM = 57DZ6Z2235;
 				ENABLE_BITCODE = NO;
 				"EXCLUDED_ARCHS[sdk=iphoneos*]" = x86_64;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -369,7 +369,7 @@
 				CODE_SIGN_ALLOW_ENTITLEMENTS_MODIFICATION = YES;
 				CODE_SIGN_ENTITLEMENTS = app_iOS/app_iOS.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				DEVELOPMENT_TEAM = "57DZ6Z2235";
+				DEVELOPMENT_TEAM = 57DZ6Z2235;
 				ENABLE_BITCODE = NO;
 				"EXCLUDED_ARCHS[sdk=iphoneos*]" = x86_64;
 				FRAMEWORK_SEARCH_PATHS = (
