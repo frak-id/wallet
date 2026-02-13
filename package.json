@@ -41,7 +41,7 @@
     "deploy:example": "sst deploy --stage example",
     "deploy:prod": "sst deploy --stage prod",
     "deploy-gcp:prod": "sst deploy --stage gcp-production",
-    "deploy-gcp:staging": "sst deploy --stage gcp-staging-v2",
+    "deploy-gcp:staging": "sst deploy --stage gcp-staging",
     "dev": "bun sst dev",
     "dev:sandbox": "bun run --filter '*' dev:sandbox",
     "env:sandbox": "echo 'Run bun sst dev, then type env:sandbox in the SST dev UI'",

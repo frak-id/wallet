@@ -224,8 +224,8 @@ CREATE INDEX "interaction_logs_type_idx" ON "interaction_logs" USING btree ("typ
 CREATE INDEX "interaction_logs_created_at_idx" ON "interaction_logs" USING btree ("created_at");--> statement-breakpoint
 CREATE INDEX "interaction_logs_processed_at_idx" ON "interaction_logs" USING btree ("processed_at");--> statement-breakpoint
 CREATE UNIQUE INDEX "interaction_logs_external_event_unique_idx" ON "interaction_logs" USING btree ("merchant_id","type","external_event_id");--> statement-breakpoint
-DROP TYPE "public"."interactions_archive_reason";--> statement-breakpoint
-DROP TYPE "public"."backend_interactions_tracker_source";--> statement-breakpoint
-DROP TYPE "public"."interactions_simulation_status";--> statement-breakpoint
-DROP TYPE "public"."product_oracle_platform";--> statement-breakpoint
-DROP TYPE "public"."purchase_status";
+-- DROP TYPE "public"."interactions_archive_reason";--> statement-breakpoint
+-- DROP TYPE "public"."backend_interactions_tracker_source";--> statement-breakpoint
+-- DROP TYPE "public"."interactions_simulation_status";--> statement-breakpoint
+-- DROP TYPE "public"."product_oracle_platform";--> statement-breakpoint
+-- DROP TYPE "public"."purchase_status";
