@@ -3,7 +3,7 @@ import { selectDemoPrivateKey, sessionStore } from "@frak-labs/wallet-shared";
 import { KeyRound } from "lucide-react";
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { useBiometricConfirm } from "@/module/biometrics/hooks/useBiometricConfirm";
+import { useBiometricConfirm } from "@/module/biometrics";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
 

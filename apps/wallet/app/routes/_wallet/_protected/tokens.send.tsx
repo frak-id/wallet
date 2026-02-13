@@ -16,7 +16,7 @@ import { useTranslation } from "react-i18next";
 import type { Hex } from "viem";
 import { erc20Abi, parseUnits } from "viem";
 import { useWriteContract } from "wagmi";
-import { useBiometricConfirm } from "@/module/biometrics/hooks/useBiometricConfirm";
+import { useBiometricConfirm } from "@/module/biometrics";
 import { Back } from "@/module/common/component/Back";
 import { Grid } from "@/module/common/component/Grid";
 import { TokenMax } from "@/module/tokens/component/TokenMax";
