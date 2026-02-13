@@ -1,6 +1,6 @@
 {
   "name": "@frak-labs/nexus-wallet",
-  "version": "0.0.31",
+  "version": "0.0.32",
   "description": "The simple and cross-platform wallet to centralise your contents.",
   "private": true,
   "sideEffects": false,
@@ -31,10 +31,10 @@
     "test:e2e:dev:codegen": "TARGET_ENV=dev playwright codegen wallet-dev.frak.id",
     "tauri": "tauri",
     "tauri:ios:dev": "sst dev tauri ios dev",
-    "tauri:ios:build": "WEBAUTHN_RP_ID=wallet-dev.frak.id sst shell -- tauri ios build",
-    "tauri:ios:build:prod": "WEBAUTHN_RP_ID=wallet-dev.frak.id sst shell -- tauri ios build --export-method app-store-connect",
+    "tauri:ios:build": "sst shell -- tauri ios build",
+    "tauri:ios:build:prod": "sst shell -- tauri ios build --export-method app-store-connect",
     "tauri:android:dev": "sst dev tauri android dev",
-    "tauri:android:build": "WEBAUTHN_RP_ID=wallet-dev.frak.id sst shell -- tauri android build",
+    "tauri:android:build": "sst shell -- tauri android build",
     "tauri:version": "./scripts/sync-version.sh"
   },
   "dependencies": {

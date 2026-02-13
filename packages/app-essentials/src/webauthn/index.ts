@@ -15,7 +15,7 @@ const tauriDevDomain = "wallet-dev.frak.id";
  */
 function resolveRpId(): string {
     if (process.env.WEBAUTHN_RP_ID) return process.env.WEBAUTHN_RP_ID;
-    if (isRunningLocally && isTauri()) return tauriDevDomain;
+    if (isTauri() && !isRunningInProd) return tauriDevDomain;
     if (isRunningLocally) return "localhost";
     return "frak.id";
 }
