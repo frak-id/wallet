@@ -1,4 +1,4 @@
-import { isRunningLocally } from "../utils";
+import { isRunningInProd, isRunningLocally } from "../utils";
 import { isTauri } from "../utils/platform";
 
 /**
@@ -89,11 +89,12 @@ const rpAllowedOrigins = [rpOrigin, androidApkOrigin, iosTauriOrigin].filter(
 
 /**
  * Allowed RP IDs for backend verification.
- * Local dev accepts both web (localhost) and Tauri (dev domain).
+ * Non-production accepts web (localhost), Tauri dev domain, and resolved rpId.
+ * Production only accepts the resolved rpId (frak.id).
  */
-const rpAllowedIds = isRunningLocally
-    ? Array.from(new Set(["localhost", tauriDevDomain, rpId]))
-    : [rpId];
+const rpAllowedIds = isRunningInProd
+    ? [rpId]
+    : Array.from(new Set(["localhost", tauriDevDomain, rpId]));
 
 const defaultUsername = "Frak Wallet";
 
