@@ -8,7 +8,11 @@
         "typecheck": "tsc --noEmit",
         "migrate": "bun run src/migrate.ts",
         "migrate:dry-run": "DRY_RUN=true bun run src/migrate.ts",
-        "migrate:live": "DRY_RUN=false bun run src/migrate.ts"
+        "migrate:live": "DRY_RUN=false bun run src/migrate.ts",
+        "snapshot": "bun run src/snapshot/extract.ts",
+        "restore": "bun run src/snapshot/restore.ts",
+        "restore:dry-run": "DRY_RUN=true bun run src/snapshot/restore.ts",
+        "restore:live": "DRY_RUN=false bun run src/snapshot/restore.ts"
     },
     "dependencies": {
         "@frak-labs/app-essentials": "workspace:*",
@@ -16,6 +20,7 @@
         "drizzle-orm": "^0.44.7",
         "ky": "^1.14.0",
         "mongodb": "^6.20.0",
+        "postgres": "^3.4.8",
         "viem": "catalog:"
     },
     "devDependencies": {

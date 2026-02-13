@@ -1,8 +1,9 @@
+import { isRunningInProd } from "@frak-labs/app-essentials";
 import { getViemClientFromChain } from "@frak-labs/app-essentials/blockchain";
 import type { Address, Hex } from "viem";
 import { erc20Abi, formatUnits, hexToString, trim } from "viem";
 import { multicall } from "viem/actions";
-import { arbitrum } from "viem/chains";
+import { arbitrum, arbitrumSepolia } from "viem/chains";
 import {
     affiliationCampaignAbi,
     interactionCampaignAbi,
@@ -15,7 +16,9 @@ import type {
     V1IndexerProductInfo,
 } from "../types";
 
-const viemClient = getViemClientFromChain({ chain: arbitrum });
+const viemClient = getViemClientFromChain({
+    chain: isRunningInProd ? arbitrum : arbitrumSepolia,
+});
 
 const LEGACY_CAMPAIGN_TYPE = "frak.campaign.referral";
 const BASIS_POINTS_DIVISOR = 10_000n;

@@ -4,8 +4,7 @@ import type { Address } from "viem";
 export const migrationConfig = {
     indexerUrl: process.env.INDEXER_URL ?? "https://ponder.gcp.frak.id",
     mongodbUri: process.env.MONGODB_BUSINESS_URI ?? "",
-    mongodbDatabase:
-        process.env.NODE_ENV === "production" ? "business" : "business-dev",
+    mongodbDatabase: process.env.MONGO_DATABASE ?? "business",
     defaultRewardToken: currentStablecoins.eure as Address,
     dryRun: process.env.DRY_RUN !== "false",
     logLevel: (process.env.LOG_LEVEL ?? "info") as
@@ -22,6 +21,8 @@ export const migrationConfig = {
         "*.basileboli.com",
         "*.sorosorcerer.com",
         "*.nivelais.com",
+        "localhost:*",
+        "localhost",
     ],
 
     skippedTriggerKeys: [
