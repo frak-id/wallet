@@ -1,25 +1,36 @@
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
-import { referralLinksTable, touchpointsTable } from "../../domain/attribution";
-import { campaignRulesTable } from "../../domain/campaign";
-import { identityGroupsTable, identityNodesTable } from "../../domain/identity";
+// Import schemas directly from db/schema.ts files to avoid pulling in
+// domain contexts (which eagerly instantiate services and repositories)
+import {
+    referralLinksTable,
+    touchpointsTable,
+} from "../../domain/attribution/db/schema";
+import { campaignRulesTable } from "../../domain/campaign/db/schema";
+import {
+    identityGroupsTable,
+    identityNodesTable,
+} from "../../domain/identity/db/schema";
 import {
     merchantAdminsTable,
     merchantOwnershipTransfersTable,
     merchantsTable,
-} from "../../domain/merchant";
-import { pushTokensTable } from "../../domain/notifications";
+} from "../../domain/merchant/db/schema";
+import { pushTokensTable } from "../../domain/notifications/db/schema";
 import {
     pairingSignatureRequestTable,
     pairingTable,
-} from "../../domain/pairing";
+} from "../../domain/pairing/db/schema";
 import {
     merchantWebhooksTable,
     purchaseClaimsTable,
     purchaseItemsTable,
     purchasesTable,
-} from "../../domain/purchases";
-import { assetLogsTable, interactionLogsTable } from "../../domain/rewards";
+} from "../../domain/purchases/db/schema";
+import {
+    assetLogsTable,
+    interactionLogsTable,
+} from "../../domain/rewards/db/schema";
 
 const schemaName = process.env.POSTGRES_SCHEMA || "public";
 

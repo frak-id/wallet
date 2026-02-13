@@ -466,7 +466,7 @@
     },
     "packages/wallet-shared": {
       "name": "@frak-labs/wallet-shared",
-      "version": "0.0.0",
+      "version": "0.0.1",
       "dependencies": {
         "@elysiajs/eden": "^1.4.8",
         "@frak-labs/app-essentials": "workspace:*",
@@ -518,7 +518,7 @@
     },
     "sdk/components": {
       "name": "@frak-labs/components",
-      "version": "0.0.23",
+      "version": "0.0.24",
       "dependencies": {
         "@frak-labs/core-sdk": "workspace:*",
         "@frak-labs/frame-connector": "workspace:*",
@@ -551,7 +551,7 @@
     },
     "sdk/core": {
       "name": "@frak-labs/core-sdk",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "dependencies": {
         "@frak-labs/frame-connector": "workspace:*",
         "@openpanel/web": "^1.0.7",
@@ -577,7 +577,7 @@
     },
     "sdk/legacy": {
       "name": "@frak-labs/nexus-sdk",
-      "version": "0.0.41",
+      "version": "0.0.42",
       "dependencies": {
         "@frak-labs/core-sdk": "workspace:*",
         "@frak-labs/ui": "workspace:*",
@@ -591,7 +591,7 @@
     },
     "sdk/react": {
       "name": "@frak-labs/react-sdk",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "dependencies": {
         "@frak-labs/core-sdk": "workspace:*",
         "@frak-labs/frame-connector": "workspace:*",
@@ -626,7 +626,7 @@
     },
     "services/backend": {
       "name": "@frak-labs/backend-elysia",
-      "version": "0.0.13",
+      "version": "0.0.14",
       "dependencies": {
         "@bogeychan/elysia-logger": "^0.1.10",
         "@elysiajs/cors": "^1.4.0",
@@ -659,6 +659,23 @@
         "bun-types": "latest",
         "drizzle-kit": "^0.31.6",
         "pino-pretty": "^13.1.2",
+        "typescript": "catalog:",
+      },
+    },
+    "services/migration": {
+      "name": "@frak-labs/migration",
+      "version": "0.0.1",
+      "dependencies": {
+        "@frak-labs/app-essentials": "workspace:*",
+        "@frak-labs/backend-elysia": "workspace:*",
+        "drizzle-orm": "^0.44.7",
+        "ky": "^1.14.0",
+        "mongodb": "^6.20.0",
+        "postgres": "^3.4.8",
+        "viem": "catalog:",
+      },
+      "devDependencies": {
+        "bun-types": "latest",
         "typescript": "catalog:",
       },
     },
@@ -959,6 +976,8 @@
     "@frak-labs/dev-tooling": ["@frak-labs/dev-tooling@workspace:packages/dev-tooling"],
 
     "@frak-labs/frame-connector": ["@frak-labs/frame-connector@workspace:packages/rpc"],
+
+    "@frak-labs/migration": ["@frak-labs/migration@workspace:services/migration"],
 
     "@frak-labs/nexus-business": ["@frak-labs/nexus-business@workspace:apps/business"],
 
@@ -2776,7 +2795,7 @@
 
     "postcss-selector-parser": ["postcss-selector-parser@7.1.1", "", { "dependencies": { "cssesc": "^3.0.0", "util-deprecate": "^1.0.2" } }, "sha512-orRsuYpJVw8LdAwqqLykBj9ecS5/cRHlI5+nvTo8LcCKmzDmqVORXtOIYEEQuL9D4BxtA1lm5isAqzQZCoQ6Eg=="],
 
-    "postgres": ["postgres@3.4.7", "", {}, "sha512-Jtc2612XINuBjIl/QTWsV5UvE8UHuNblcO3vVADSrKsrc6RqGX6lOW1cEo3CM2v0XG4Nat8nI+YM7/f26VxXLw=="],
+    "postgres": ["postgres@3.4.8", "", {}, "sha512-d+JFcLM17njZaOLkv6SCev7uoLaBtfK86vMUXhW1Z4glPWh4jozno9APvW/XKFJ3CCxVoC7OL38BqRydtu5nGg=="],
 
     "preact": ["preact@10.28.3", "", {}, "sha512-tCmoRkPQLpBeWzpmbhryairGnhW9tKV6c6gr/w+RhoRoKEJwsjzipwp//1oCpGPOchvSLaAPlpcJi9MwMmoPyA=="],
 
