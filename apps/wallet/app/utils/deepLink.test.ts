@@ -22,6 +22,10 @@ const getCurrentMock = vi.fn<() => Promise<string[]>>(() =>
     Promise.resolve([])
 );
 
+const getSafeSessionMock = vi.fn<() => { token: string } | null | undefined>(
+    () => null
+);
+
 vi.mock("@frak-labs/app-essentials/utils/platform", () => ({
     isTauri: vi.fn(() => true),
 }));
@@ -31,15 +35,28 @@ vi.mock("@tauri-apps/plugin-deep-link", () => ({
     getCurrent: () => getCurrentMock(),
 }));
 
+vi.mock("@frak-labs/wallet-shared", async (importOriginal) => {
+    const actual =
+        await importOriginal<typeof import("@frak-labs/wallet-shared")>();
+    return {
+        ...actual,
+        getSafeSession: () => getSafeSessionMock(),
+    };
+});
+
 describe("initDeepLinks", () => {
     beforeEach(async () => {
         vi.clearAllMocks();
         pairingStore.getState().clearPendingPairing();
         openUrlHandler = null;
+        getSafeSessionMock.mockReturnValue({ token: "valid-token" });
         const { isTauri } = await import(
             "@frak-labs/app-essentials/utils/platform"
         );
         vi.mocked(isTauri).mockReturnValue(true);
+
+        const { clearPendingDeepLink } = await import("./deepLink");
+        clearPendingDeepLink();
     });
 
     afterEach(() => {
@@ -162,6 +179,140 @@ describe("initDeepLinks", () => {
 
         openUrlHandler(["https://evil.example.com/pair?id=steal-me"]);
 
+        expect(navigate).not.toHaveBeenCalled();
+    });
+});
+
+describe("deep link auth gate", () => {
+    beforeEach(async () => {
+        vi.clearAllMocks();
+        pairingStore.getState().clearPendingPairing();
+        openUrlHandler = null;
+        getSafeSessionMock.mockReturnValue(null);
+        const { isTauri } = await import(
+            "@frak-labs/app-essentials/utils/platform"
+        );
+        vi.mocked(isTauri).mockReturnValue(true);
+
+        const { clearPendingDeepLink } = await import("./deepLink");
+        clearPendingDeepLink();
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
+    });
+
+    test("should redirect to /register when unauthenticated", async () => {
+        const { initDeepLinks } = await import("./deepLink");
+        const navigate = vi.fn();
+
+        await initDeepLinks(navigate);
+
+        if (!openUrlHandler) {
+            throw new Error("Expected openUrlHandler to be set");
+        }
+
+        openUrlHandler(["frakwallet://send?to=0xabc"]);
+
+        expect(navigate).toHaveBeenCalledWith({ to: "/register" });
+        expect(navigate).not.toHaveBeenCalledWith(
+            expect.objectContaining({ to: "/tokens/send" })
+        );
+    });
+
+    test("should store pending deep link when unauthenticated", async () => {
+        const { initDeepLinks, getPendingDeepLink } = await import(
+            "./deepLink"
+        );
+        const navigate = vi.fn();
+
+        await initDeepLinks(navigate);
+
+        if (!openUrlHandler) {
+            throw new Error("Expected openUrlHandler to be set");
+        }
+
+        openUrlHandler(["frakwallet://send?to=0xabc"]);
+
+        const pending = getPendingDeepLink();
+        expect(pending).toEqual({
+            action: "send",
+            to: "0xabc",
+            amount: undefined,
+            id: undefined,
+            mode: undefined,
+        });
+    });
+
+    test("should store pairing ID when unauthenticated pair deep link", async () => {
+        const { initDeepLinks, getPendingDeepLink } = await import(
+            "./deepLink"
+        );
+        const navigate = vi.fn();
+
+        await initDeepLinks(navigate);
+
+        if (!openUrlHandler) {
+            throw new Error("Expected openUrlHandler to be set");
+        }
+
+        openUrlHandler(["frakwallet://pair?id=pair-abc"]);
+
+        expect(pairingStore.getState().pendingPairingId).toBe("pair-abc");
+        expect(navigate).toHaveBeenCalledWith({ to: "/register" });
+
+        const pending = getPendingDeepLink();
+        expect(pending?.action).toBe("pair");
+        expect(pending?.id).toBe("pair-abc");
+    });
+
+    test("should allow recovery deep link without auth", async () => {
+        const { initDeepLinks } = await import("./deepLink");
+        const navigate = vi.fn();
+
+        await initDeepLinks(navigate);
+
+        if (!openUrlHandler) {
+            throw new Error("Expected openUrlHandler to be set");
+        }
+
+        openUrlHandler(["frakwallet://recovery"]);
+
+        expect(navigate).toHaveBeenCalledWith({ to: "/settings/recovery" });
+    });
+
+    test("should consume pending deep link after auth", async () => {
+        const { initDeepLinks, consumePendingDeepLink, getPendingDeepLink } =
+            await import("./deepLink");
+        const navigate = vi.fn();
+
+        await initDeepLinks(navigate);
+
+        if (!openUrlHandler) {
+            throw new Error("Expected openUrlHandler to be set");
+        }
+
+        // Trigger unauthenticated deep link
+        openUrlHandler(["frakwallet://settings"]);
+        expect(navigate).toHaveBeenCalledWith({ to: "/register" });
+        expect(getPendingDeepLink()?.action).toBe("settings");
+
+        // Simulate post-auth consumption
+        navigate.mockClear();
+        const consumed = consumePendingDeepLink(navigate);
+
+        expect(consumed).toBe(true);
+        expect(navigate).toHaveBeenCalledWith({ to: "/settings" });
+        expect(getPendingDeepLink()).toBeNull();
+    });
+
+    test("should return false when no pending deep link to consume", async () => {
+        const { consumePendingDeepLink } = await import("./deepLink");
+        const navigate = vi.fn();
+
+        const consumed = consumePendingDeepLink(navigate);
+
+        expect(consumed).toBe(false);
         expect(navigate).not.toHaveBeenCalled();
     });
 });

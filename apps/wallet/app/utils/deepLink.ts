@@ -1,5 +1,5 @@
 import { isTauri } from "@frak-labs/app-essentials/utils/platform";
-import { pairingStore } from "@frak-labs/wallet-shared";
+import { getSafeSession, pairingStore } from "@frak-labs/wallet-shared";
 
 type DeepLinkParams = {
     action: string;
@@ -8,6 +8,33 @@ type DeepLinkParams = {
     id?: string;
     mode?: string;
 };
+
+/**
+ * Pending deep link stored when user is unauthenticated.
+ * Consumed by login/register pages after successful auth.
+ */
+let pendingDeepLink: DeepLinkParams | null = null;
+
+export function getPendingDeepLink(): DeepLinkParams | null {
+    return pendingDeepLink;
+}
+
+export function clearPendingDeepLink(): void {
+    pendingDeepLink = null;
+}
+
+/**
+ * After auth, consume the pending deep link and navigate to it.
+ * Returns true if a pending deep link was consumed, false otherwise.
+ */
+export function consumePendingDeepLink(navigate: NavigateFn): boolean {
+    const pending = pendingDeepLink;
+    if (!pending) return false;
+
+    pendingDeepLink = null;
+    routeDeepLink(navigate, pending);
+    return true;
+}
 
 function extractSearchParams(
     searchParams: URLSearchParams
@@ -60,7 +87,34 @@ type NavigateFn = (options: {
     search?: Record<string, string>;
 }) => unknown;
 
+/**
+ * Routes that don't require authentication (auth pages, recovery).
+ */
+const publicActions = new Set(["register", "login", "recovery"]);
+
 function handleDeepLinkAction(navigate: NavigateFn, params: DeepLinkParams) {
+    // Gate protected deep links behind auth
+    if (!publicActions.has(params.action)) {
+        const session = getSafeSession();
+        if (!session?.token) {
+            // Store for post-auth redirect, set up pairing if needed
+            if (params.action === "pair" && params.id) {
+                pairingStore.getState().setPendingPairingId(params.id);
+            }
+            pendingDeepLink = params;
+            navigate({ to: "/register" });
+            return;
+        }
+    }
+
+    routeDeepLink(navigate, params);
+}
+
+/**
+ * Route deep link params to the appropriate screen.
+ * Extracted so post-auth redirect can call it directly.
+ */
+export function routeDeepLink(navigate: NavigateFn, params: DeepLinkParams) {
     switch (params.action) {
         case "send":
             navigate({

@@ -2,7 +2,7 @@ import { Button } from "@frak-labs/ui/component/Button";
 import { HandleErrors, sessionStore } from "@frak-labs/wallet-shared";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { CloudUpload } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AuthActions } from "@/module/authentication/component/AuthActions";
 import { AuthenticateWithPhone } from "@/module/authentication/component/AuthenticateWithPhone";
@@ -12,6 +12,7 @@ import { Back } from "@/module/common/component/Back";
 import { Grid } from "@/module/common/component/Grid";
 import { PairingInProgress } from "@/module/pairing/component/PairingInProgress";
 import { usePendingPairingInfo } from "@/module/pairing/hook/usePendingPairingInfo";
+import { consumePendingDeepLink } from "@/utils/deepLink";
 
 export const Route = createFileRoute("/_wallet/_auth/login")({
     component: LoginPage,
@@ -34,22 +35,27 @@ function LoginPage() {
     const hasPendingPairing = Boolean(pairingInfo?.id);
     const [error, setError] = useState<Error | null>(null);
     const session = sessionStore((state) => state.session);
+    const hasHandledPostLoginRedirect = useRef(false);
 
-    // Redirect to wallet after successful login
-    useEffect(() => {
-        if (session) {
-            navigate({
-                to: hasPendingPairing ? "/pairing" : "/wallet",
-                replace: true,
-            });
-        }
-    }, [session, navigate, hasPendingPairing]);
+    const handlePostLoginRedirect = useCallback(() => {
+        if (hasHandledPostLoginRedirect.current) return;
+        hasHandledPostLoginRedirect.current = true;
 
-    const handleLoginSuccess = () => {
+        if (consumePendingDeepLink(navigate)) return;
         navigate({
             to: hasPendingPairing ? "/pairing" : "/wallet",
             replace: true,
         });
+    }, [navigate, hasPendingPairing]);
+
+    // Redirect after successful login: pending deep link > pairing > wallet
+    useEffect(() => {
+        if (!session) return;
+        handlePostLoginRedirect();
+    }, [session, handlePostLoginRedirect]);
+
+    const handleLoginSuccess = () => {
+        handlePostLoginRedirect();
     };
 
     return (

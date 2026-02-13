@@ -11,6 +11,7 @@ import { Grid } from "@/module/common/component/Grid";
 import { Notice } from "@/module/common/component/Notice";
 import { PairingInProgress } from "@/module/pairing/component/PairingInProgress";
 import { usePendingPairingInfo } from "@/module/pairing/hook/usePendingPairingInfo";
+import { consumePendingDeepLink } from "@/utils/deepLink";
 
 export const Route = createFileRoute("/_wallet/_auth/register")({
     component: RegisterPage,
@@ -85,9 +86,10 @@ function RegisterPage() {
         }, 3000);
     }, [isPreviouslyUsedAuthenticatorError, navigate]);
 
-    // Redirect to wallet after successful registration
+    // Redirect after successful registration: pending deep link > pairing > wallet
     useEffect(() => {
         if (isSuccess) {
+            if (consumePendingDeepLink(navigate)) return;
             navigate({
                 to: hasPendingPairing ? "/pairing" : "/wallet",
                 replace: true,
