@@ -24,7 +24,9 @@ export const merchantWebhooksTable = pgTable(
             .notNull()
             .default("shopify"),
     },
-    (table) => [index("merchant_webhooks_merchant_id_idx").on(table.merchantId)]
+    (table) => [
+        uniqueIndex("merchant_webhooks_merchant_id_idx").on(table.merchantId),
+    ]
 );
 
 export const purchasesTable = pgTable(
