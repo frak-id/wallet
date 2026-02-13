@@ -25,12 +25,19 @@ export class IdentityRepository {
         ttl: 60_000,
     });
 
+    private normalizeValue(type: IdentityType, value: string): string {
+        if (type === "wallet") {
+            return value.toLowerCase();
+        }
+        return value;
+    }
+
     private buildIdentityCacheKey(
         type: IdentityType,
         value: string,
         merchantId?: string
     ): string {
-        return `${type}:${value}:${merchantId ?? ""}`;
+        return `${type}:${this.normalizeValue(type, value)}:${merchantId ?? ""}`;
     }
 
     invalidateCachesForGroup(groupId: string): void {
@@ -61,10 +68,11 @@ export class IdentityRepository {
             return this.findGroupById(cached.value);
         }
 
+        const normalizedValue = this.normalizeValue(params.type, params.value);
         const node = await db.query.identityNodesTable.findFirst({
             where: and(
                 eq(identityNodesTable.identityType, params.type),
-                eq(identityNodesTable.identityValue, params.value),
+                eq(identityNodesTable.identityValue, normalizedValue),
                 params.merchantId
                     ? eq(identityNodesTable.merchantId, params.merchantId)
                     : isNull(identityNodesTable.merchantId)
@@ -115,12 +123,13 @@ export class IdentityRepository {
         value: string;
         merchantId?: string;
     }): Promise<IdentityNodeSelect> {
+        const normalizedValue = this.normalizeValue(params.type, params.value);
         const [result] = await db
             .insert(identityNodesTable)
             .values({
                 groupId: params.groupId,
                 identityType: params.type,
-                identityValue: params.value,
+                identityValue: normalizedValue,
                 merchantId: params.merchantId,
             })
             .onConflictDoNothing()
@@ -130,7 +139,7 @@ export class IdentityRepository {
             const existing = await db.query.identityNodesTable.findFirst({
                 where: and(
                     eq(identityNodesTable.identityType, params.type),
-                    eq(identityNodesTable.identityValue, params.value),
+                    eq(identityNodesTable.identityValue, normalizedValue),
                     params.merchantId
                         ? eq(identityNodesTable.merchantId, params.merchantId)
                         : isNull(identityNodesTable.merchantId)
