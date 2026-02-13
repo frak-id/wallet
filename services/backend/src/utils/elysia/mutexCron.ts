@@ -11,7 +11,7 @@ type CronContext = Cron["options"] & {
     };
 };
 
-export interface CronConfig<Name extends string>
+interface CronConfig<Name extends string>
     extends Omit<CronOptions, "context" | "catch" | "protect"> {
     /**
      * Input pattern, input date, or input ISO 8601 time string

@@ -1,6 +1,6 @@
 import {
     DebugInfoGatherer,
-    type FullInteractionTypesKey,
+    type InteractionTypeKey,
     trackEvent,
 } from "@frak-labs/core-sdk";
 import { FrakRpcError, RpcErrorCodes } from "@frak-labs/frame-connector";
@@ -13,7 +13,7 @@ import { getModalBuilderSteps } from "@/utils/setup";
  * @description
  * This function will open the share modal with the configuration provided in the `window.FrakSetup.modalShareConfig` object.
  */
-export function useShareModal(targetInteraction?: FullInteractionTypesKey) {
+export function useShareModal(targetInteraction?: InteractionTypeKey) {
     const [debugInfo, setDebugInfo] = useState<string | undefined>(undefined);
     const [isError, setIsError] = useState(false);
 

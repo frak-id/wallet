@@ -1,4 +1,4 @@
-import { compressJson } from "@frak-labs/frame-connector";
+import { jsonEncode } from "@frak-labs/frame-connector";
 import { base64urlEncode } from "./b64";
 
 /**
@@ -7,5 +7,5 @@ import { base64urlEncode } from "./b64";
  * @ignore
  */
 export function compressJsonToB64(data: unknown): string {
-    return base64urlEncode(compressJson(data));
+    return base64urlEncode(jsonEncode(data));
 }

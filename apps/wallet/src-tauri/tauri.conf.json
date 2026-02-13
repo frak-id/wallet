@@ -5,7 +5,7 @@
     "identifier": "id.frak.wallet",
     "build": {
         "frontendDist": "../dist",
-        "devUrl": "http://localhost:3000",
+        "devUrl": "http://localhost:3010",
         "beforeDevCommand": "NODE_ENV=development TAURI_CLI_RUNNING=1 vite dev",
         "beforeBuildCommand": "bun run build"
     },

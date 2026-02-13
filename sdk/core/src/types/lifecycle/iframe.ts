@@ -31,5 +31,11 @@ type RedirectRequestEvent = {
          *  If it contain a query param `u`, the client need will suffix the current url to the base url
          */
         baseRedirectUrl: string;
+        /**
+         * Optional merge token for anonymous identity merging
+         * When provided, appended as ?fmt= query parameter to the final redirect URL
+         * Used when redirecting out of social browsers to preserve identity across contexts
+         */
+        mergeToken?: string;
     };
 };

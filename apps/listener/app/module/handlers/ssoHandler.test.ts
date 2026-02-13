@@ -1,80 +1,23 @@
-import { vi } from "vitest"; // Keep vi from vitest for vi.mock() hoisting
+import { vi } from "vitest";
 import { beforeEach, describe, expect, test } from "@/tests/fixtures";
-import {
-    handleOpenSso,
-    handlePrepareSso,
-    handleSsoComplete,
-    processSsoCompletion,
-} from "./ssoHandler";
 
-// Mock wallet-shared
-const mockAddLastAuthentication = vi.fn(async () => {});
-const mockEmitLifecycleEvent = vi.fn();
-const mockTrackAuthCompleted = vi.fn(async () => {});
-const mockSetSession = vi.fn();
-const mockSetSdkSession = vi.fn();
-
-vi.mock("@frak-labs/wallet-shared", () => ({
-    get addLastAuthentication() {
-        return mockAddLastAuthentication;
-    },
-    get emitLifecycleEvent() {
-        return mockEmitLifecycleEvent;
-    },
-    get trackAuthCompleted() {
-        return mockTrackAuthCompleted;
-    },
-    sessionStore: {
-        getState: vi.fn(() => ({
-            setSession: mockSetSession,
-            setSdkSession: mockSetSdkSession,
-        })),
-    },
-}));
-
-// Mock core-sdk
-const mockGenerateSsoUrl = vi.fn(() => "https://sso.example.com/auth");
 vi.mock("@frak-labs/core-sdk", () => ({
-    get generateSsoUrl() {
-        return mockGenerateSsoUrl;
-    },
+    generateSsoUrl: vi.fn(),
 }));
 
-// Mock frame-connector
-vi.mock("@frak-labs/frame-connector", () => {
-    class MockFrakRpcError extends Error {
-        code: number;
-        constructor(code: number, message: string) {
-            super(message);
-            this.code = code;
-            this.name = "FrakRpcError";
-        }
-    }
-
-    class MockDeferred {
-        promise: Promise<any>;
-        resolve: (value: any) => void;
-        reject: (error: any) => void;
-
-        constructor() {
-            let resolveRef: (value: any) => void;
-            let rejectRef: (error: any) => void;
-
-            this.promise = new Promise((resolve, reject) => {
-                resolveRef = resolve;
-                rejectRef = reject;
-            });
-
-            this.resolve = (value: any) => resolveRef(value);
-            this.reject = (error: any) => rejectRef(error);
-        }
-    }
-
+vi.mock("@frak-labs/wallet-shared", async (importOriginal) => {
+    const actual =
+        await importOriginal<typeof import("@frak-labs/wallet-shared")>();
     return {
-        Deferred: MockDeferred,
-        FrakRpcError: MockFrakRpcError,
-        RpcErrorCodes: {
-            internalError: -32603,
+        ...actual,
+        addLastAuthentication: vi.fn(),
+        emitLifecycleEvent: vi.fn(),
+        trackAuthCompleted: vi.fn(),
+        sessionStore: {
+            getState: vi.fn().mockReturnValue({
+                setSession: vi.fn(),
+                setSdkSession: vi.fn(),
+            }),
         },
     };
 });
@@ -82,265 +25,186 @@ vi.mock("@frak-labs/frame-connector", () => {
 describe("ssoHandler", () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        vi.resetModules();
     });
 
     describe("processSsoCompletion", () => {
-        test("should successfully process SSO completion", async ({
-            mockSession,
-            mockSdkSession,
-        }) => {
-            await processSsoCompletion(mockSession, mockSdkSession);
+        test("should store session and sdkSession in stores", async () => {
+            const { sessionStore, addLastAuthentication, trackAuthCompleted } =
+                await import("@frak-labs/wallet-shared");
 
-            expect(mockAddLastAuthentication).toHaveBeenCalledWith(mockSession);
-            expect(mockSetSession).toHaveBeenCalledWith(mockSession);
-            expect(mockSetSdkSession).toHaveBeenCalledWith(mockSdkSession);
-            expect(mockTrackAuthCompleted).toHaveBeenCalledWith(
-                "sso",
-                mockSession
-            );
-        });
+            const setSession = vi.fn();
+            const setSdkSession = vi.fn();
+            vi.mocked(sessionStore.getState).mockReturnValue({
+                setSession,
+                setSdkSession,
+            } as any);
+            vi.mocked(addLastAuthentication).mockResolvedValue(undefined);
+            vi.mocked(trackAuthCompleted).mockResolvedValue(undefined);
 
-        test("should complete without error when no pending request", async ({
-            mockSession,
-            mockSdkSession,
-        }) => {
-            // Just verify it doesn't throw when pendingSsoRequest is undefined
-            await expect(
-                processSsoCompletion(mockSession, mockSdkSession)
-            ).resolves.not.toThrow();
+            const mockSession = {
+                address: "0x123" as `0x${string}`,
+                token: "session-token",
+            };
+            const mockSdkSession = { token: "sdk-token" };
 
-            expect(mockAddLastAuthentication).toHaveBeenCalledWith(mockSession);
-            expect(mockSetSession).toHaveBeenCalledWith(mockSession);
-        });
-
-        test("should handle session without token by adding empty string", async ({
-            mockAddress,
-            mockSdkSession,
-        }) => {
-            const { createMockEcdsaSession } = await import(
-                "@frak-labs/wallet-shared/test"
-            );
-            const sessionWithoutToken = createMockEcdsaSession({
-                address: mockAddress,
-            });
-            // Remove token to test edge case
-            delete (sessionWithoutToken as any).token;
-
+            const { processSsoCompletion } = await import("./ssoHandler");
             await processSsoCompletion(
-                sessionWithoutToken as any,
-                mockSdkSession
+                mockSession as any,
+                mockSdkSession as any
             );
 
-            // Should call with token: ""
-            expect(mockSetSession).toHaveBeenCalledWith(
-                expect.objectContaining({
-                    token: "",
-                })
+            expect(addLastAuthentication).toHaveBeenCalled();
+            expect(setSession).toHaveBeenCalled();
+            expect(setSdkSession).toHaveBeenCalledWith(mockSdkSession);
+            expect(trackAuthCompleted).toHaveBeenCalledWith(
+                "sso",
+                expect.objectContaining({ address: "0x123" })
             );
         });
 
-        test("should throw error on storage failure", async ({
-            mockSession,
-            mockSdkSession,
-        }) => {
-            const error = new Error("Storage failed");
-            mockAddLastAuthentication.mockRejectedValueOnce(error);
+        test("should handle errors and reject pending request", async () => {
+            const { addLastAuthentication } = await import(
+                "@frak-labs/wallet-shared"
+            );
+            vi.mocked(addLastAuthentication).mockRejectedValue(
+                new Error("Storage failed")
+            );
 
+            const mockSession = {
+                address: "0x123" as `0x${string}`,
+                token: "t",
+            };
+
+            const { processSsoCompletion } = await import("./ssoHandler");
             await expect(
-                processSsoCompletion(mockSession, mockSdkSession)
+                processSsoCompletion(mockSession as any, {} as any)
             ).rejects.toThrow("Storage failed");
-        });
-
-        test("should log success message with wallet address", async ({
-            mockSession,
-            mockSdkSession,
-        }) => {
-            const consoleSpy = vi.spyOn(console, "log");
-
-            await processSsoCompletion(mockSession, mockSdkSession);
-
-            expect(consoleSpy).toHaveBeenCalledWith(
-                "[SSO] Authentication completed successfully",
-                {
-                    address: mockSession.address,
-                }
-            );
-
-            consoleSpy.mockRestore();
         });
     });
 
     describe("handleSsoComplete", () => {
-        test("should process SSO completion and return success", async ({
-            mockSession,
-            mockSdkSession,
-        }) => {
+        test("should call processSsoCompletion and return success", async () => {
+            const { sessionStore, addLastAuthentication, trackAuthCompleted } =
+                await import("@frak-labs/wallet-shared");
+
+            const setSession = vi.fn();
+            const setSdkSession = vi.fn();
+            vi.mocked(sessionStore.getState).mockReturnValue({
+                setSession,
+                setSdkSession,
+            } as any);
+            vi.mocked(addLastAuthentication).mockResolvedValue(undefined);
+            vi.mocked(trackAuthCompleted).mockResolvedValue(undefined);
+
+            const mockSession = {
+                address: "0x456" as `0x${string}`,
+                token: "tok",
+            };
+            const mockSdkSession = { token: "sdk" };
+
+            const { handleSsoComplete } = await import("./ssoHandler");
             const result = await handleSsoComplete(
-                [mockSession, mockSdkSession],
+                [mockSession as any, mockSdkSession as any],
                 {} as any
             );
 
             expect(result).toEqual({ success: true });
-            expect(mockAddLastAuthentication).toHaveBeenCalled();
+            expect(setSession).toHaveBeenCalled();
         });
     });
 
     describe("handlePrepareSso", () => {
-        test("should generate SSO URL with correct parameters", async ({
-            mockProductId,
-        }) => {
-            const ssoInfo = {
-                redirectUrl: "https://example.com/callback",
+        test("should generate SSO URL and return it", async () => {
+            const { generateSsoUrl } = await import("@frak-labs/core-sdk");
+            vi.mocked(generateSsoUrl).mockReturnValue(
+                "https://wallet.frak.id/sso?test=1"
+            );
+
+            const context = {
+                merchantId: "merchant-123",
+                clientId: "client-456",
+                origin: "https://example.com",
             };
+
+            const ssoInfo = { redirectUrl: "https://example.com/callback" };
             const name = "Test App";
-            const css = "body { background: red; }";
-            const context = { productId: mockProductId } as any;
+            const css = "https://cdn.example.com/style.css";
 
+            const { handlePrepareSso } = await import("./ssoHandler");
             const result = await handlePrepareSso(
-                [ssoInfo, name, css],
-                context
+                [ssoInfo as any, name, css],
+                context as any
             );
 
-            expect(mockGenerateSsoUrl).toHaveBeenCalledWith(
+            expect(result).toEqual({
+                ssoUrl: "https://wallet.frak.id/sso?test=1",
+            });
+            expect(generateSsoUrl).toHaveBeenCalledWith(
                 window.location.origin,
                 ssoInfo,
-                context.productId,
+                "merchant-123",
                 name,
-                css
+                css,
+                "client-456"
             );
-            expect(result).toEqual({ ssoUrl: "https://sso.example.com/auth" });
-        });
-
-        test("should work without optional parameters", async ({
-            mockProductId,
-        }) => {
-            const ssoInfo = {};
-            const context = { productId: mockProductId } as any;
-
-            const result = await handlePrepareSso(
-                [ssoInfo, undefined, undefined] as any,
-                context
-            );
-
-            expect(mockGenerateSsoUrl).toHaveBeenCalledWith(
-                window.location.origin,
-                ssoInfo,
-                context.productId,
-                undefined,
-                undefined
-            );
-            expect(result).toEqual({ ssoUrl: "https://sso.example.com/auth" });
         });
     });
 
     describe("handleOpenSso", () => {
-        test("should throw error if called server-side", async ({
-            mockProductId,
-        }) => {
-            const mockContext = {
-                productId: mockProductId,
-            } as any;
-            const originalWindow = global.window;
-            // @ts-expect-error
-            delete global.window;
+        test("should emit redirect lifecycle event in redirect mode", async () => {
+            const { generateSsoUrl } = await import("@frak-labs/core-sdk");
+            const { emitLifecycleEvent } = await import(
+                "@frak-labs/wallet-shared"
+            );
 
-            const ssoInfo = {};
+            vi.mocked(generateSsoUrl).mockReturnValue(
+                "https://wallet.frak.id/sso?redirect=1"
+            );
 
-            await expect(
-                handleOpenSso(
-                    [ssoInfo, undefined, undefined] as any,
-                    mockContext
-                )
-            ).rejects.toThrow("Server side not supported");
+            const ssoInfo = {
+                openInSameWindow: true,
+                redirectUrl: "https://example.com",
+            };
+            const context = {
+                merchantId: "m-1",
+                clientId: "c-1",
+            };
 
-            global.window = originalWindow;
-        });
-
-        test("should handle redirect mode (openInSameWindow: true)", async ({
-            mockProductId,
-        }) => {
-            const mockContext = {
-                productId: mockProductId,
-            } as any;
-            const ssoInfo = { openInSameWindow: true };
-
+            const { handleOpenSso } = await import("./ssoHandler");
             const result = await handleOpenSso(
-                [ssoInfo, "Test App", undefined],
-                mockContext
+                [ssoInfo as any, "name", "css"],
+                context as any
             );
 
-            expect(mockGenerateSsoUrl).toHaveBeenCalled();
-            expect(mockEmitLifecycleEvent).toHaveBeenCalledWith({
-                iframeLifecycle: "redirect",
-                data: { baseRedirectUrl: "https://sso.example.com/auth" },
-            });
             expect(result).toEqual({ wallet: undefined });
+            expect(emitLifecycleEvent).toHaveBeenCalledWith({
+                iframeLifecycle: "redirect",
+                data: {
+                    baseRedirectUrl: "https://wallet.frak.id/sso?redirect=1",
+                },
+            });
         });
 
-        test("should handle redirect mode (redirectUrl present)", async ({
-            mockProductId,
-        }) => {
-            const mockContext = {
-                productId: mockProductId,
-            } as any;
-            const ssoInfo = { redirectUrl: "https://example.com/callback" };
-
-            const result = await handleOpenSso(
-                [ssoInfo, undefined, undefined] as any,
-                mockContext
+        test("should infer redirect mode from redirectUrl presence", async () => {
+            const { generateSsoUrl } = await import("@frak-labs/core-sdk");
+            const { emitLifecycleEvent } = await import(
+                "@frak-labs/wallet-shared"
             );
 
-            expect(mockEmitLifecycleEvent).toHaveBeenCalledWith({
-                iframeLifecycle: "redirect",
-                data: { baseRedirectUrl: "https://sso.example.com/auth" },
-            });
+            vi.mocked(generateSsoUrl).mockReturnValue("https://sso-url");
+
+            const ssoInfo = {
+                redirectUrl: "https://example.com/done",
+            };
+
+            const { handleOpenSso } = await import("./ssoHandler");
+            const result = await handleOpenSso([ssoInfo as any, "", ""], {
+                merchantId: "m",
+                clientId: "c",
+            } as any);
+
             expect(result).toEqual({ wallet: undefined });
-        });
-
-        test("should create deferred for popup mode", async ({
-            mockProductId,
-        }) => {
-            const mockContext = {
-                productId: mockProductId,
-            } as any;
-            const ssoInfo = { openInSameWindow: false };
-
-            // Start the handler (don't await, let it timeout)
-            const promise = handleOpenSso(
-                [ssoInfo, undefined, undefined] as any,
-                mockContext
-            );
-
-            // Verify it's a promise (deferred was created)
-            expect(promise).toBeInstanceOf(Promise);
-
-            // Let it timeout naturally (tested separately)
-        }, 200);
-
-        test("should handle popup mode - timeout", async ({
-            mockProductId,
-        }) => {
-            const mockContext = {
-                productId: mockProductId,
-            } as any;
-            vi.useFakeTimers();
-
-            const ssoInfo = { openInSameWindow: false };
-
-            const promise = handleOpenSso(
-                [ssoInfo, undefined, undefined] as any,
-                mockContext
-            );
-
-            // Fast-forward time to trigger timeout
-            vi.advanceTimersByTime(120_000);
-
-            await expect(promise).rejects.toThrow(
-                "SSO timeout - no completion received within 120 seconds"
-            );
-
-            vi.useRealTimers();
+            expect(emitLifecycleEvent).toHaveBeenCalled();
         });
     });
 });

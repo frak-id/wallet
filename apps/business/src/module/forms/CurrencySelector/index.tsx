@@ -1,7 +1,7 @@
 import type { Stablecoin } from "@frak-labs/app-essentials";
 import { CheckCircle2, Star } from "lucide-react";
 import { Badge } from "@/module/common/component/Badge";
-import { currencyOptions } from "@/module/product/utils/currencyOptions";
+import { currencyOptions } from "@/module/common/utils/currencyOptions";
 import styles from "./index.module.css";
 
 interface CurrencySelectorProps {

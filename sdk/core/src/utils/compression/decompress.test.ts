@@ -7,15 +7,19 @@ import { vi } from "vitest";
 
 // Mock the frame-connector module - must be before imports
 vi.mock("@frak-labs/frame-connector", () => ({
-    compressJson: vi.fn((data: unknown) => {
+    jsonEncode: vi.fn((data: unknown) => {
         // Simple mock: convert JSON to Uint8Array
         const jsonString = JSON.stringify(data);
         return new TextEncoder().encode(jsonString);
     }),
-    decompressJson: vi.fn((data: Uint8Array) => {
+    jsonDecode: vi.fn((data: Uint8Array) => {
         // Simple mock: convert Uint8Array back to JSON
-        const jsonString = new TextDecoder().decode(data);
-        return JSON.parse(jsonString);
+        try {
+            const jsonString = new TextDecoder().decode(data);
+            return JSON.parse(jsonString);
+        } catch {
+            return null;
+        }
     }),
 }));
 

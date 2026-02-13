@@ -1,5 +1,11 @@
 # @frak-labs/core-sdk
 
+## 0.1.1
+
+### Patch Changes
+
+- [#127](https://github.com/frak-id/wallet/pull/127) [`5947e2e`](https://github.com/frak-id/wallet/commit/5947e2ebfd449ebf54b2a1e9e311795419f26991) Thanks [@srod](https://github.com/srod)! - Improve tracking of the user_referred events with multiple sub events
+
 ## 0.1.0
 
 ### Patch Changes

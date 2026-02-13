@@ -180,7 +180,7 @@ describe("authenticationStore", () => {
     describe("setSsoContext", () => {
         test("should set SSO context", () => {
             const mockSsoContext = {
-                productId: "product-123",
+                merchantId: "product-123",
                 metadata: { name: "Example App" },
             };
 
@@ -192,7 +192,7 @@ describe("authenticationStore", () => {
 
         test("should clear SSO context when null", () => {
             const mockSsoContext = {
-                productId: "product-123",
+                merchantId: "product-123",
                 metadata: { name: "Example App" },
             };
 
@@ -203,7 +203,7 @@ describe("authenticationStore", () => {
 
         test("should work with selector", () => {
             const mockSsoContext = {
-                productId: "product-123",
+                merchantId: "product-123",
                 metadata: { name: "Example App" },
             };
 
@@ -237,7 +237,7 @@ describe("authenticationStore", () => {
                 } as AuthenticationResponseJSON,
                 challenge: "0x74657374",
             };
-            const mockSsoContext = { productId: "product-123" };
+            const mockSsoContext = { merchantId: "product-123" };
 
             // Set all values
             authenticationStore
@@ -261,7 +261,7 @@ describe("authenticationStore", () => {
         test("should return SSO metadata when context exists", () => {
             const mockMetadata = { name: "Example App", domain: "example.com" };
             const mockSsoContext = {
-                productId: "product-123",
+                merchantId: "product-123",
                 metadata: mockMetadata,
             };
 
@@ -282,7 +282,7 @@ describe("authenticationStore", () => {
 
         test("should return undefined when SSO context has no metadata", () => {
             const mockSsoContext = {
-                productId: "product-123",
+                merchantId: "product-123",
             };
 
             authenticationStore.getState().setSsoContext(mockSsoContext);
@@ -441,7 +441,7 @@ describe("authenticationStore", () => {
                 challenge: "0x74657374",
             };
             const mockSsoContext = {
-                productId: "product-123",
+                merchantId: "product-123",
                 metadata: { name: "Example App" },
             };
 

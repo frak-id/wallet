@@ -21,9 +21,6 @@ describe("referralInteraction", () => {
         request: vi.fn(),
     } as any;
 
-    const mockProductId =
-        "0x0000000000000000000000000000000000000000000000000000000000000002" as Hex;
-
     beforeEach(() => {
         vi.clearAllMocks();
         Object.defineProperty(global, "window", {
@@ -55,8 +52,8 @@ describe("referralInteraction", () => {
 
         vi.mocked(FrakContextManager.parse).mockReturnValue({} as any);
         vi.mocked(watchWalletStatus).mockResolvedValue({
+            key: "connected",
             wallet: "0x123" as Hex,
-            interactionSession: true,
         } as any);
         vi.mocked(processReferral).mockResolvedValue("success");
 
@@ -80,7 +77,6 @@ describe("referralInteraction", () => {
         vi.mocked(processReferral).mockResolvedValue("success");
 
         await referralInteraction(mockClient, {
-            productId: mockProductId,
             modalConfig: mockModalConfig as any,
             options: mockOptions,
         });
@@ -89,7 +85,6 @@ describe("referralInteraction", () => {
             walletStatus: mockWalletStatus,
             frakContext: mockContext,
             modalConfig: mockModalConfig,
-            productId: mockProductId,
             options: mockOptions,
         });
     });
@@ -145,7 +140,6 @@ describe("referralInteraction", () => {
             mockClient,
             expect.objectContaining({
                 modalConfig: undefined,
-                productId: undefined,
                 options: undefined,
             })
         );

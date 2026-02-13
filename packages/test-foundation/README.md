@@ -7,7 +7,7 @@ This package (`@frak-labs/test-foundation`) contains shared test configuration a
 **Test Projects:**
 - `wallet-unit` - Wallet app (TanStack Router, jsdom environment)
 - `listener-unit` - Listener iframe app (jsdom environment)
-- `business-unit` - Business dashboard (TanStack Start, jsdom environment)
+- `business-unit` - Business dashboard (TanStack Router SPA, jsdom environment)
 - `wallet-shared-unit` - Shared wallet utilities package (jsdom environment)
 - `core-sdk-unit` - Core SDK (framework-agnostic, jsdom environment)
 - `react-sdk-unit` - React SDK (hooks and providers, jsdom environment)
@@ -479,7 +479,7 @@ import { createMockSession } from "@frak-labs/wallet-shared/test";
 
 **Special Features:**
 - TanStack Router mocks (different from react-router!)
-- TanStack Start specific setup
+- TanStack Router specific setup
 - Custom tsconfig path mapping
 
 ### wallet-shared Package

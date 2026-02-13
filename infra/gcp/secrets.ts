@@ -1,15 +1,18 @@
 import {
+    androidSha256Fingerprint,
     drpcApiKey,
     erpcUrl,
-    indexerUrl,
     jwtBusinessSecret,
     nexusRpcSecret,
     pimlicoApiKey,
     vapidPublicKey,
 } from "../config";
-import { isProd, normalizedStageName } from "../utils";
+import { isProd, isV2, normalizedStageName } from "../utils";
 
 const dbStage = normalizedStageName === "production" ? "production" : "staging";
+
+// PostgreSQL schema: staging_v2, production_v2 for V2; public for V1
+const postgresSchema = isV2 ? `${dbStage}_v2` : "public";
 
 // Get Some db parameters
 export const dbInstance = $output(
@@ -34,12 +37,12 @@ export const postgresEnv = {
     POSTGRES_USER: `wallet-backend_${dbStage}`,
     POSTGRES_PASSWORD: dbPassword,
     POSTGRES_HOST: dbInstance.privateIpAddress,
+    POSTGRES_SCHEMA: postgresSchema,
 };
 
 export const elysiaEnv = {
     // Global
     STAGE: normalizedStageName,
-    INDEXER_URL: indexerUrl,
     ERPC_URL: erpcUrl,
     MASTER_KEY_SECRET: masterPkey,
     // Postgres related
@@ -69,4 +72,7 @@ export const elysiaEnv = {
 
     // Shopify related
     SHOPIFY_API_SECRET: new sst.Secret("SHOPIFY_API_SECRET").value,
+
+    // Mobile
+    ANDROID_SHA256_FINGERPRINT: androidSha256Fingerprint.value,
 };

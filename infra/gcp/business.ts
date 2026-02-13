@@ -5,32 +5,26 @@ import {
     backendUrl,
     drpcApiKey,
     erpcUrl,
-    indexerUrl,
-    jwtBusinessSecret,
-    mongoBusinessDb,
     nexusRpcSecret,
     onRampUrl,
     openPanelApiUrl,
     openPanelBusinessClientId,
     walletUrl,
 } from "../config";
-import { isProd, normalizedStageName } from "../utils";
+import { isProd, isV2, normalizedStageName } from "../utils";
 import { baseDomainName, getRegistryPath, walletNamespace } from "./utils";
 
 const subDomain = isProd ? "business" : "business-dev";
 
-const businessEnv = {
+export const businessEnv = {
     STAGE: normalizedStageName,
     FRAK_WALLET_URL: walletUrl,
     BACKEND_URL: backendUrl,
-    INDEXER_URL: indexerUrl,
     ERPC_URL: erpcUrl,
     OPEN_PANEL_API_URL: openPanelApiUrl,
     OPEN_PANEL_BUSINESS_CLIENT_ID: openPanelBusinessClientId.value,
     DRPC_API_KEY: drpcApiKey.value,
     NEXUS_RPC_SECRET: nexusRpcSecret.value,
-    JWT_BUSINESS_SECRET: jwtBusinessSecret.value,
-    MONGODB_BUSINESS_URI: mongoBusinessDb.value,
     FUNDING_ON_RAMP_URL: onRampUrl.value,
 };
 
@@ -39,7 +33,7 @@ const dependency: Resource[] = [];
 
 if (!$dev) {
     const { baseImage } = await import("./images");
-    // Build the business SSR image
+    // Build the business SPA image
     const image = new dockerbuild.Image(
         "business",
         {
@@ -59,7 +53,6 @@ if (!$dev) {
                 STAGE: businessEnv.STAGE,
                 FRAK_WALLET_URL: businessEnv.FRAK_WALLET_URL,
                 BACKEND_URL: businessEnv.BACKEND_URL,
-                INDEXER_URL: businessEnv.INDEXER_URL,
                 ERPC_URL: businessEnv.ERPC_URL,
                 OPEN_PANEL_API_URL: businessEnv.OPEN_PANEL_API_URL,
             },
@@ -110,15 +103,12 @@ export const businessService = new KubernetesService(
                 {
                     name: "business",
                     image: businessImage,
-                    ports: [{ containerPort: 3022 }],
+                    ports: [{ containerPort: 80 }],
                     resources: {
                         limits: { cpu: "50m", memory: "256Mi" },
                         requests: { cpu: "20m", memory: "64Mi" },
                     },
-                    env: Object.entries(businessEnv).map(([name, value]) => ({
-                        name,
-                        value,
-                    })),
+                    // No runtime env needed — all config is baked into JS at build time via Vite define
                 },
             ],
         },
@@ -126,15 +116,15 @@ export const businessService = new KubernetesService(
         // Service config
         service: {
             ports: [
-                { port: 80, targetPort: 3022, protocol: "TCP", name: "http" },
+                { port: 80, targetPort: 80, protocol: "TCP", name: "http" },
             ],
         },
 
         // Ingress config with path-based routing
         ingress: {
-            host: `${subDomain}.frak.id`,
+            host: isV2 ? `business.${baseDomainName}` : `${subDomain}.frak.id`,
             tlsSecretName: "business-tls",
-            additionalHosts: [`business.${baseDomainName}`],
+            additionalHosts: isV2 ? [] : [`business.${baseDomainName}`],
         },
     },
     {

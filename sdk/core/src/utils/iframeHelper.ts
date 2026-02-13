@@ -51,11 +51,15 @@ export function createIframe({
     iframe.style.zIndex = baseIframeProps.style.zIndex.toString();
 
     changeIframeVisibility({ iframe, isVisible: false });
-    document.body.appendChild(iframe);
+
+    // Set src BEFORE appending to DOM to avoid about:blank load event
+    const walletUrl =
+        config?.walletUrl ?? walletBaseUrl ?? "https://wallet.frak.id";
+    iframe.src = `${walletUrl}/listener`;
 
     return new Promise((resolve) => {
-        iframe?.addEventListener("load", () => resolve(iframe));
-        iframe.src = `${config?.walletUrl ?? walletBaseUrl ?? "https://wallet.frak.id"}/listener`;
+        iframe.addEventListener("load", () => resolve(iframe));
+        document.body.appendChild(iframe);
     });
 }
 /**

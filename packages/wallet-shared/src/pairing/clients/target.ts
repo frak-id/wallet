@@ -49,7 +49,9 @@ export class TargetPairingClient extends BasePairingClient<
     }
 
     /**
-     * Reconnect to all the pairing associated with the current wallet
+     * Reconnect to all the pairing associated with the current wallet.
+     * Uses isAlive() to detect and clean up zombie connections left
+     * after the app was backgrounded on mobile.
      */
     reconnect() {
         const session = getSafeSession();
@@ -64,6 +66,9 @@ export class TargetPairingClient extends BasePairingClient<
             );
             return;
         }
+
+        // If the connection is still alive, nothing to do
+        if (this.isAlive()) return;
 
         this.connect({
             wallet: session.token,

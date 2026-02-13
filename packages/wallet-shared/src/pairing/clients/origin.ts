@@ -4,6 +4,7 @@ import { trackAuthCompleted } from "../../common/analytics";
 import { getSafeSession } from "../../common/utils/safeSession";
 import { sessionStore } from "../../stores/sessionStore";
 import type {
+    OriginIdentityNode,
     OriginPairingState,
     WsOriginMessage,
     WsOriginRequest,
@@ -41,21 +42,24 @@ export class OriginPairingClient extends BasePairingClient<
         };
     }
 
-    /**
-     * Initiate a new pairing
-     */
-    async initiatePairing(onSuccess?: OnPairingSuccessCallback) {
-        this.onPairingSuccess = onSuccess ?? null;
+    async initiatePairing(options?: {
+        onSuccess?: OnPairingSuccessCallback;
+        originNode?: OriginIdentityNode;
+    }) {
+        this.onPairingSuccess = options?.onSuccess ?? null;
 
         this.forceConnect(() =>
             this.connect({
                 action: "initiate",
+                originNode: options?.originNode,
             })
         );
     }
 
     /**
-     * Reconnect to all the pairing associated with the current wallet
+     * Reconnect to all the pairing associated with the current wallet.
+     * Uses isAlive() to detect and clean up zombie connections left
+     * after the app was backgrounded on mobile.
      */
     reconnect() {
         const session = getSafeSession();
@@ -70,6 +74,12 @@ export class OriginPairingClient extends BasePairingClient<
             );
             return;
         }
+
+        // If the connection is still alive, nothing to do
+        if (this.isAlive()) return;
+
+        // Reset stale ping state from previous connection
+        this.pendingPings = 0;
 
         // Launch the WS connection
         this.connect({

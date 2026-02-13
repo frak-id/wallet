@@ -6,14 +6,9 @@
  * App-specific fixtures should extend these base fixtures in their own files.
  */
 
-import type {
-    InteractionSession,
-    SdkSession,
-    Session,
-} from "@frak-labs/wallet-shared";
+import type { SdkSession, Session } from "@frak-labs/wallet-shared";
 import {
     createMockAddress,
-    createMockInteractionSession,
     createMockSdkSession,
     createMockSession,
 } from "@frak-labs/wallet-shared/test";
@@ -41,11 +36,6 @@ export type BaseTestFixtures = {
     mockSdkSession: SdkSession;
 
     /**
-     * Mock interaction session with default values
-     */
-    mockInteractionSession: InteractionSession;
-
-    /**
      * Fresh QueryClient instance for each test
      */
     queryClient: QueryClient;
@@ -67,7 +57,6 @@ export type BaseTestFixtures = {
      * Fresh Zustand stores that auto-reset before/after each test
      */
     freshSessionStore: typeof import("@frak-labs/wallet-shared").sessionStore;
-    freshWalletStore: typeof import("@frak-labs/wallet-shared").walletStore;
     freshUserStore: typeof import("@frak-labs/wallet-shared").userStore;
     freshAuthenticationStore: typeof import("@frak-labs/wallet-shared").authenticationStore;
 
@@ -88,11 +77,6 @@ export type BaseTestFixtures = {
         user: {
             setUser: ReturnType<typeof import("vitest").vi.fn>;
             clearUser: ReturnType<typeof import("vitest").vi.fn>;
-        };
-        wallet: {
-            setInteractionSession: ReturnType<typeof import("vitest").vi.fn>;
-            addPendingInteraction: ReturnType<typeof import("vitest").vi.fn>;
-            cleanPendingInteractions: ReturnType<typeof import("vitest").vi.fn>;
         };
     };
 
@@ -117,9 +101,6 @@ export type BaseTestFixtures = {
             login: {
                 post: ReturnType<typeof import("vitest").vi.fn>;
             };
-        };
-        interactions: {
-            push: ReturnType<typeof import("vitest").vi.fn>;
         };
     };
 
@@ -182,18 +163,6 @@ export const test = baseTest.extend<BaseTestFixtures>({
             expires: Date.now() + 3600000, // 1 hour from now
         });
         await use(sdkSession);
-    },
-
-    /**
-     * Provides a mock interaction session for each test
-     */
-    // biome-ignore lint/correctness/noEmptyPattern: Vitest requires object destructuring
-    mockInteractionSession: async ({}, use) => {
-        const interactionSession = createMockInteractionSession({
-            sessionStart: Date.now() - 3600000, // 1 hour ago
-            sessionEnd: Date.now() + 3600000, // 1 hour from now
-        });
-        await use(interactionSession);
     },
 
     /**
@@ -264,18 +233,6 @@ export const test = baseTest.extend<BaseTestFixtures>({
     },
 
     /**
-     * Provides fresh walletStore that auto-resets after each test
-     * Note: Only resets after use to avoid redundant overhead
-     */
-    // biome-ignore lint/correctness/noEmptyPattern: Vitest requires object destructuring
-    freshWalletStore: async ({}, use) => {
-        const { walletStore } = await import("@frak-labs/wallet-shared");
-        await use(walletStore);
-        walletStore.getState().cleanPendingInteractions();
-        walletStore.getState().setInteractionSession(null);
-    },
-
-    /**
      * Provides fresh userStore that auto-resets after each test
      * Note: Only resets after use to avoid redundant overhead
      */
@@ -319,11 +276,6 @@ export const test = baseTest.extend<BaseTestFixtures>({
             user: {
                 setUser: vi.fn(),
                 clearUser: vi.fn(),
-            },
-            wallet: {
-                setInteractionSession: vi.fn(),
-                addPendingInteraction: vi.fn(),
-                cleanPendingInteractions: vi.fn(),
             },
         };
         await use(actions);
@@ -390,12 +342,6 @@ export const test = baseTest.extend<BaseTestFixtures>({
                         error: null,
                     }),
                 },
-            },
-            interactions: {
-                push: vi.fn().mockResolvedValue({
-                    data: [],
-                    error: null,
-                }),
             },
         };
         await use(mocks);

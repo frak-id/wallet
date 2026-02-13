@@ -4,7 +4,6 @@ import {
     type RpcClient,
     RpcErrorCodes,
 } from "@frak-labs/frame-connector";
-import { createClientCompressionMiddleware } from "@frak-labs/frame-connector/middleware";
 import { OpenPanel } from "@openpanel/web";
 import type { FrakLifecycleEvent } from "../types";
 import type { FrakClient } from "../types/client";
@@ -12,6 +11,7 @@ import type { FrakWalletSdkConfig } from "../types/config";
 import type { IFrameRpcSchema } from "../types/rpc";
 import { BACKUP_KEY } from "../utils/constants";
 import { setupSsoUrlListener } from "../utils/ssoUrlListener";
+
 import { DebugInfoGatherer } from "./DebugInfo";
 import {
     createIFrameLifecycleManager,
@@ -46,7 +46,10 @@ export function createIFrameFrakClient({
     const frakWalletUrl = config?.walletUrl ?? "https://wallet.frak.id";
 
     // Create lifecycle manager
-    const lifecycleManager = createIFrameLifecycleManager({ iframe });
+    const lifecycleManager = createIFrameLifecycleManager({
+        iframe,
+        targetOrigin: frakWalletUrl,
+    });
 
     // Create our debug info gatherer
     const debugInfo = new DebugInfoGatherer(config, iframe);
@@ -64,7 +67,6 @@ export function createIFrameFrakClient({
         emittingTransport: iframe.contentWindow,
         listeningTransport: window,
         targetOrigin: frakWalletUrl,
-        // Add compression middleware to handle request/response compression
         middleware: [
             // Ensure we are connected before sending request
             {
@@ -80,7 +82,6 @@ export function createIFrameFrakClient({
                     return ctx;
                 },
             },
-            createClientCompressionMiddleware(),
             // Save debug info
             {
                 onRequest(message, ctx) {

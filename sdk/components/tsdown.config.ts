@@ -98,6 +98,7 @@ export default defineConfig([
         entry: {
             buttonShare: "./src/components/ButtonShare/index.ts",
             buttonWallet: "./src/components/ButtonWallet/index.ts",
+            openInApp: "./src/components/OpenInAppButton/index.ts",
         },
         format: ["esm"],
         platform: "browser",
@@ -124,6 +125,7 @@ export default defineConfig([
         dts: false,
         outDir: "./cdn",
         noExternal: [/.*/],
+        inlineOnly: false,
         treeshake: {
             moduleSideEffects: true,
         },

@@ -1,5 +1,13 @@
-import type { Hex } from "viem";
+import type { Address, Hex } from "viem";
 import type { DistantWebAuthnWallet } from "../../types/Session";
+
+/**
+ * Identity node for origin device, used for identity resolution when pairing completes
+ */
+export type OriginIdentityNode =
+    | { type: "anonymous_fingerprint"; value: string; merchantId: string }
+    | { type: "merchant_customer"; value: string; merchantId: string }
+    | { type: "wallet"; value: Address };
 
 type WsPartnerConnected = {
     type: "partner-connected";

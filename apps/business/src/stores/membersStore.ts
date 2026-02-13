@@ -1,7 +1,7 @@
 import { unique } from "radash";
 import { type Address, getAddress, isAddressEqual } from "viem";
 import { create } from "zustand";
-import type { GetMembersParam } from "@/context/members/action/getProductMembers";
+import type { GetMembersParam } from "@/module/members/api/getMerchantMembers";
 
 type MembersState = {
     // Member selection

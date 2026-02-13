@@ -73,14 +73,13 @@ describe("displayModal", () => {
     });
 
     describe("modal with multiple steps", () => {
-        it("should handle login + openSession steps", async () => {
+        it("should handle login + sendTransaction steps", async () => {
             const mockResponse = {
                 login: {
                     wallet: "0x1234567890123456789012345678901234567890" as Address,
                 },
-                openSession: {
-                    startTimestamp: 1234567890,
-                    endTimestamp: 1234567900,
+                sendTransaction: {
+                    hash: "0xtxhash" as `0x${string}`,
                 },
             };
 
@@ -96,7 +95,14 @@ describe("displayModal", () => {
             const params: DisplayModalParamsType<ModalStepTypes[]> = {
                 steps: {
                     login: { allowSso: true },
-                    openSession: {},
+                    sendTransaction: {
+                        tx: [
+                            {
+                                to: "0xdeadbeef" as Address,
+                                data: "0xdata" as `0x${string}`,
+                            },
+                        ],
+                    },
                 },
             };
 
@@ -109,10 +115,6 @@ describe("displayModal", () => {
             const mockResponse = {
                 login: {
                     wallet: "0x1234567890123456789012345678901234567890" as Address,
-                },
-                openSession: {
-                    startTimestamp: 1234567890,
-                    endTimestamp: 1234567900,
                 },
                 sendTransaction: {
                     hash: "0xtxhash" as `0x${string}`,
@@ -133,7 +135,6 @@ describe("displayModal", () => {
             const params: DisplayModalParamsType<ModalStepTypes[]> = {
                 steps: {
                     login: { allowSso: true },
-                    openSession: {},
                     sendTransaction: {
                         tx: [
                             {
@@ -375,7 +376,7 @@ describe("displayModal", () => {
 
             const params: DisplayModalParamsType<ModalStepTypes[]> = {
                 steps: {
-                    openSession: {},
+                    login: { allowSso: true },
                 },
             };
 

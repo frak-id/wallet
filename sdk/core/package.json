@@ -11,7 +11,7 @@
       "url": "https://twitter.com/QNivelais"
     }
   ],
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Core SDK of the Frak wallet, low level library to interact directly with the frak ecosystem.",
   "repository": {
     "url": "https://github.com/frak-id/wallet",
@@ -61,17 +61,6 @@
         "default": "./dist/actions.cjs"
       }
     },
-    "./interactions": {
-      "development": "./src/interactions/index.ts",
-      "import": {
-        "types": "./dist/interactions.d.ts",
-        "default": "./dist/interactions.js"
-      },
-      "require": {
-        "types": "./dist/interactions.d.cts",
-        "default": "./dist/interactions.cjs"
-      }
-    },
     "./bundle": {
       "import": {
         "types": "./dist/bundle.d.ts",
@@ -103,21 +92,21 @@
   },
   "dependencies": {
     "@frak-labs/frame-connector": "workspace:*",
-    "@openpanel/web": "^1.0.6"
+    "@openpanel/web": "^1.0.7"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.2",
     "@frak-labs/dev-tooling": "workspace:*",
     "@frak-labs/test-foundation": "workspace:*",
-    "@rolldown/plugin-node-polyfills": "^1.0.0",
+    "@rolldown/plugin-node-polyfills": "^1.0.3",
     "@types/jsdom": "^27.0.0",
     "@types/node": "catalog:",
-    "@vitest/coverage-v8": "^4.0.16",
-    "@vitest/ui": "^4.0.16",
-    "jsdom": "^27.3.0",
-    "tsdown": "^0.18.2",
+    "@vitest/coverage-v8": "^4.0.18",
+    "@vitest/ui": "^4.0.18",
+    "jsdom": "^28.0.0",
+    "tsdown": "^0.20.3",
     "typescript": "catalog:",
     "viem": "catalog:",
-    "vitest": "^4.0.16"
+    "vitest": "^4.0.18"
   }
 }

@@ -15,7 +15,7 @@ export function useGetActivePairings() {
             const { data } = await authenticatedWalletApi.pairings.list.get();
             if (!data) {
                 console.warn("No pairings found");
-                return null;
+                return [];
             }
             return data;
         },

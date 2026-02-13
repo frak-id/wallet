@@ -1,7 +1,4 @@
-import {
-    addresses,
-    productInteractionManagerAbi,
-} from "@frak-labs/app-essentials";
+import { addresses, rewarderHubAbi } from "@frak-labs/app-essentials";
 import type {
     ModalRpcStepsResultType,
     SendTransactionModalStepType,
@@ -9,7 +6,7 @@ import type {
 import { useDisplayModal } from "@frak-labs/react-sdk";
 import { Button } from "@frak-labs/ui/component/Button";
 import { BadgeCheck } from "lucide-react";
-import { encodeFunctionData } from "viem";
+import { encodeFunctionData, zeroAddress } from "viem";
 import { Panel } from "@/module/common/component/Panel";
 
 export function SendTransaction() {
@@ -44,14 +41,12 @@ export function SendTransaction() {
                         steps: {
                             sendTransaction: {
                                 tx: {
-                                    to: addresses.productInteractionManager,
+                                    to: addresses.rewarderHub,
                                     value: "0x00",
                                     data: encodeFunctionData({
-                                        abi: productInteractionManagerAbi,
-                                        functionName: "getInteractionContract",
-                                        args: [
-                                            106219508196454080375526586478153583586194937194493887259467424694676997453395n,
-                                        ],
+                                        abi: rewarderHubAbi,
+                                        functionName: "getClaimable",
+                                        args: [zeroAddress, zeroAddress],
                                     }),
                                 },
                             },

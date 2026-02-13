@@ -1,5 +1,5 @@
 import { Checkbox } from "@frak-labs/ui/component/forms/Checkbox";
-import type { UseFormReturn } from "react-hook-form";
+import { useFormContext } from "react-hook-form";
 import { Panel } from "@/module/common/component/Panel";
 import {
     FormControl,
@@ -9,7 +9,7 @@ import {
     FormLabel,
     FormMessage,
 } from "@/module/forms/Form";
-import type { Campaign } from "@/types/Campaign";
+import type { CampaignDraft } from "@/stores/campaignStore";
 import styles from "./FormSpecialAdvertising.module.css";
 
 const itemsSpecialAdvertising = [
@@ -55,70 +55,67 @@ const itemsSpecialAdvertising = [
             <>
                 Social, electoral or political issues
                 <span className={styles.checkbox__information}>
-                    Advertisements concerning social issues (such as the economy
-                    or civil and social rights), elections, or political figures
-                    or campaigns.
+                    Advertisements concerning social issues, elections, or
+                    political figures or campaigns.
                 </span>
             </>
         ),
     },
 ] as const;
 
-export function FormSpecialAdvertising(form: UseFormReturn<Campaign>) {
+export function FormSpecialAdvertising() {
+    const { control } = useFormContext<CampaignDraft>();
+
     return (
         <Panel title="Special advertising categories">
             <FormField
-                control={form.control}
-                name="specialCategories"
+                control={control}
+                name="metadata.specialCategories"
                 render={() => (
                     <FormItem>
                         <FormDescription>
                             Declare whether your ads concern credit, employment,
                             housing or a social, electoral or political issue.
-                            Criteria differ from country to country.
                         </FormDescription>
                         {itemsSpecialAdvertising.map((item) => (
                             <FormField
                                 key={item.id}
-                                control={form.control}
-                                name="specialCategories"
+                                control={control}
+                                name="metadata.specialCategories"
                                 rules={{
                                     validate: {
                                         required: (value) =>
-                                            value.length === 0
+                                            !value?.length
                                                 ? undefined
-                                                : "Special advertising categories are not supported for now",
+                                                : "Special advertising categories are not supported yet",
                                     },
                                 }}
                                 render={({ field }) => (
-                                    <FormItem
-                                        variant={"checkbox"}
-                                        key={item.id}
-                                    >
+                                    <FormItem variant="checkbox" key={item.id}>
                                         <FormControl>
                                             <Checkbox
                                                 checked={field.value?.includes(
                                                     item.id
                                                 )}
-                                                onCheckedChange={(checked) => {
-                                                    return checked
+                                                onCheckedChange={(checked) =>
+                                                    checked
                                                         ? field.onChange([
-                                                              ...field.value,
+                                                              ...(field.value ??
+                                                                  []),
                                                               item.id,
                                                           ])
                                                         : field.onChange(
                                                               field.value?.filter(
-                                                                  (value) =>
-                                                                      value !==
+                                                                  (v: string) =>
+                                                                      v !==
                                                                       item.id
                                                               )
-                                                          );
-                                                }}
-                                                {...field}
+                                                          )
+                                                }
                                             />
                                         </FormControl>
                                         <FormLabel
-                                            variant={"checkbox"}
+                                            variant="checkbox"
                                             selected={field.value?.includes(
                                                 item.id
                                             )}

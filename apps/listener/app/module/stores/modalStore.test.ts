@@ -701,7 +701,7 @@ describe("modalStore", () => {
 
             const steps = [
                 { key: "login" as const, params: {} as any },
-                { key: "openSession" as const, params: {} as any },
+                { key: "siweAuthenticate" as const, params: {} as any },
                 {
                     key: "final" as const,
                     params: { action: "redirect" } as any,
@@ -723,13 +723,13 @@ describe("modalStore", () => {
             expect(state.results).toEqual({ login: { status: "success" } });
 
             // Complete step 2
-            state.steps?.[1].onResponse({ session: "abc123" } as any);
+            state.steps?.[1].onResponse({ signature: "0x123" } as any);
 
             state = modalStore.getState();
             expect(state.currentStep).toBe(2);
             expect(state.results).toEqual({
                 login: { status: "success" },
-                openSession: { session: "abc123" },
+                siweAuthenticate: { signature: "0x123" },
             });
 
             expect(trackGenericEvent).toHaveBeenCalledTimes(2);
@@ -747,12 +747,14 @@ describe("modalStore", () => {
             modalStore.getState().setNewModal({
                 currentStep: 0,
                 initialResult: { existing: "data" } as any,
-                steps: [{ key: "openSession" as const, params: {} as any }],
+                steps: [
+                    { key: "siweAuthenticate" as const, params: {} as any },
+                ],
             });
 
             const state = modalStore.getState();
             expect(state.steps).toHaveLength(1);
-            expect(state.steps?.[0].key).toBe("openSession");
+            expect(state.steps?.[0].key).toBe("siweAuthenticate");
             expect(state.results).toEqual({ existing: "data" });
         });
     });

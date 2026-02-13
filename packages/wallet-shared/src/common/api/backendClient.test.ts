@@ -2,9 +2,11 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@elysiajs/eden", () => ({
     treaty: vi.fn(() => ({
-        wallet: {
-            balance: { get: vi.fn() },
-            auth: { login: { post: vi.fn() } },
+        user: {
+            wallet: {
+                balance: { get: vi.fn() },
+                auth: { login: { post: vi.fn() } },
+            },
         },
     })),
 }));

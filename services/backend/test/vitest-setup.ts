@@ -34,9 +34,6 @@ vi.mock("bun", () => ({ CryptoHasher: MockCryptoHasher }));
 // Mock domain contexts to prevent circular dependencies
 const mockContext = { repositories: {}, services: {} };
 vi.mock("../src/domain/auth/context", () => ({ AuthContext: mockContext }));
-vi.mock("../src/domain/interactions/context", () => ({
-    InteractionsContext: mockContext,
-}));
 vi.mock("../src/domain/business/context", () => ({
     BusinessContext: mockContext,
 }));

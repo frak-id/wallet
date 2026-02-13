@@ -91,7 +91,7 @@ export function updateGlobalProperties(
 export async function trackAuthInitiated(
     event: AnalyticsAuthenticationType,
     args?: {
-        method?: "global" | "specific";
+        method?: "global" | "specific" | "popup" | "link" | "mobile";
     }
 ) {
     if (!openPanel) return;

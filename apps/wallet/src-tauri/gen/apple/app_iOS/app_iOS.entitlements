@@ -4,7 +4,9 @@
 <dict>
     <key>com.apple.developer.associated-domains</key>
     <array>
-        <string>webcredentials:wallet-dev.frak.id</string>
+        <string>webcredentials:wallet.v2.gcp-dev.frak.id</string>
+        <string>applinks:wallet.frak.id</string>
+        <string>applinks:wallet.v2.gcp-dev.frak.id</string>
     </array>
 </dict>
 </plist>

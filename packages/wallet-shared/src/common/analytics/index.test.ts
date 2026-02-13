@@ -1,6 +1,6 @@
-import type { Address } from "viem";
+import type { Address, Hex } from "viem";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { Session } from "../../types/Session";
+import type { WebAuthNWallet } from "../../types/WebAuthN";
 import {
     openPanel,
     setProfileId,
@@ -109,11 +109,11 @@ describe("Analytics", () => {
 
     describe("trackAuthCompleted", () => {
         it("should not throw when tracking auth completed", async () => {
-            const mockSession: Omit<Session, "token"> = {
+            const mockSession: WebAuthNWallet = {
                 type: "webauthn",
                 address:
                     "0x1234567890123456789012345678901234567890" as Address,
-                publicKey: "0xabc" as Address,
+                publicKey: { x: "0xabc" as Hex, y: "0xdef" as Hex },
                 authenticatorId: "auth-123",
             };
 
@@ -124,11 +124,11 @@ describe("Analytics", () => {
         });
 
         it("should handle different session types", async () => {
-            const mockSession: Omit<Session, "token"> = {
+            const mockSession: WebAuthNWallet = {
                 type: "webauthn",
                 address:
                     "0x1234567890123456789012345678901234567890" as Address,
-                publicKey: "0xabc" as Address,
+                publicKey: { x: "0xabc" as Hex, y: "0xdef" as Hex },
                 authenticatorId: "auth-123",
             };
 
@@ -139,11 +139,11 @@ describe("Analytics", () => {
         });
 
         it("should handle different wallet addresses", async () => {
-            const mockSession: Omit<Session, "token"> = {
+            const mockSession: WebAuthNWallet = {
                 type: "webauthn",
                 address:
                     "0xabcdef1234567890abcdef1234567890abcdef12" as Address,
-                publicKey: "0xdef" as Address,
+                publicKey: { x: "0xdef" as Hex, y: "0x123" as Hex },
                 authenticatorId: "auth-456",
             };
 
@@ -211,12 +211,13 @@ describe("Analytics", () => {
             setProfileId("test");
             updateGlobalProperties({ wallet: "0x123" as Address });
             await trackAuthInitiated("login");
-            await trackAuthCompleted("login", {
+            const mockSession: WebAuthNWallet = {
                 type: "webauthn",
                 address: "0x123" as Address,
-                publicKey: "0xabc" as Address,
+                publicKey: { x: "0xabc" as Hex, y: "0xdef" as Hex },
                 authenticatorId: "auth",
-            });
+            };
+            await trackAuthCompleted("login", mockSession);
             await trackAuthFailed("login", "error");
             await trackGenericEvent("test");
 
@@ -270,10 +271,10 @@ describe("Analytics", () => {
                 return;
             }
 
-            const session: Omit<Session, "token"> = {
+            const session: WebAuthNWallet = {
                 type: "webauthn",
                 address: "0xtest123" as Address,
-                publicKey: "0xpubkey" as Address,
+                publicKey: { x: "0xpubkey" as Hex, y: "0xpubkey2" as Hex },
                 authenticatorId: "auth-id",
             };
 
@@ -289,10 +290,10 @@ describe("Analytics", () => {
                 return;
             }
 
-            const session: Omit<Session, "token"> = {
+            const session: WebAuthNWallet = {
                 type: undefined,
                 address: "0xtest456" as Address,
-                publicKey: "0xpubkey2" as Address,
+                publicKey: { x: "0xpubkey" as Hex, y: "0xpubkey2" as Hex },
                 authenticatorId: "auth-id-2",
             };
 
@@ -333,10 +334,10 @@ describe("Analytics", () => {
 
     describe("Edge cases and error handling", () => {
         it("should handle trackAuthCompleted when wallet has null type", async () => {
-            const session: Omit<Session, "token"> = {
+            const session: WebAuthNWallet = {
                 type: null as unknown as undefined,
                 address: "0xnull123" as Address,
-                publicKey: "0xpubnull" as Address,
+                publicKey: { x: "0xpubnull" as Hex, y: "0xpubnull2" as Hex },
                 authenticatorId: "auth-null",
             };
 
@@ -356,17 +357,17 @@ describe("Analytics", () => {
         });
 
         it("should handle multiple concurrent trackAuthCompleted calls", async () => {
-            const session1: Omit<Session, "token"> = {
+            const session1: WebAuthNWallet = {
                 type: "webauthn",
                 address: "0xconcurrent1" as Address,
-                publicKey: "0xpub1" as Address,
+                publicKey: { x: "0xpub1" as Hex, y: "0xpub1y" as Hex },
                 authenticatorId: "auth-1",
             };
 
-            const session2: Omit<Session, "token"> = {
+            const session2: WebAuthNWallet = {
                 type: "webauthn",
                 address: "0xconcurrent2" as Address,
-                publicKey: "0xpub2" as Address,
+                publicKey: { x: "0xpub2" as Hex, y: "0xpub2y" as Hex },
                 authenticatorId: "auth-2",
             };
 

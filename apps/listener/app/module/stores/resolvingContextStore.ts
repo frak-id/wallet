@@ -1,27 +1,36 @@
 import {
+    authenticatedBackendApi,
+    clientIdStore,
     emitLifecycleEvent,
-    sessionStore,
     updateGlobalProperties,
 } from "@frak-labs/wallet-shared";
 /**
  * Zustand store for iframe resolving context and handshake management
  */
 
-import {
-    type ClientLifecycleEvent,
-    FrakContextManager,
-} from "@frak-labs/core-sdk";
-import { type Address, isAddressEqual, keccak256, toHex } from "viem";
+import type { ClientLifecycleEvent } from "@frak-labs/core-sdk";
 import { create } from "zustand";
 import type { IFrameResolvingContext, ResolvingContextStore } from "./types";
+
+/**
+ * Cache for merchant lookups by domain
+ */
+const merchantCache = new Map<string, { merchantId: string }>();
+
+/**
+ * Clear the merchant cache (for testing)
+ */
+export function clearMerchantCache(): void {
+    merchantCache.clear();
+}
 
 /**
  * Resolving context store
  */
 export const resolvingContextStore = create<ResolvingContextStore>(
     (set, get) => ({
-        // Initial state
-        context: getIFrameResolvingContext(),
+        // Initial state - will be populated async
+        context: undefined,
         handshakeTokens: new Set<string>(),
 
         // Actions
@@ -65,39 +74,41 @@ export const resolvingContextStore = create<ResolvingContextStore>(
                 return false;
             }
 
-            // Set the new resolving context (only if different)
-            const currentContext = get().context;
-            const context = getIFrameResolvingContext(
+            // Resolve context async (fetches merchantId from backend)
+            // Token stays in handshakeTokens until resolution to block concurrent heartbeats
+            resolveIFrameContext(
                 event as MessageEvent<
                     Extract<
                         ClientLifecycleEvent,
                         { clientLifecycle: "handshake-response" }
                     >
                 >
-            );
-            if (
-                currentContext?.sourceUrl !== context?.sourceUrl ||
-                currentContext?.isAutoContext !== context?.isAutoContext
-            ) {
-                set({ context });
-
-                // Set open panel global properties
-                updateGlobalProperties({
-                    isIframe: true,
-                    productId: context?.productId,
-                    contextUrl: context?.sourceUrl,
-                    contextReferrer: context?.walletReferrer,
+            ).then((context) => {
+                // Token removal must happen after fetch to prevent heartbeat race condition
+                set((state) => {
+                    const newTokens = new Set(state.handshakeTokens);
+                    newTokens.delete(responseToken);
+                    return { handshakeTokens: newTokens };
                 });
-            }
 
-            // Remove the token
-            set((state) => {
-                const newTokens = new Set(state.handshakeTokens);
-                newTokens.delete(responseToken);
-                return { handshakeTokens: newTokens };
+                if (!context) return;
+
+                const currentContext = get().context;
+                if (
+                    currentContext?.sourceUrl !== context.sourceUrl ||
+                    currentContext?.isAutoContext !== context.isAutoContext
+                ) {
+                    set({ context });
+
+                    // Set open panel global properties
+                    updateGlobalProperties({
+                        isIframe: true,
+                        contextUrl: context.sourceUrl,
+                    });
+                }
             });
 
-            // Return the fresh context
+            // Return true to indicate token was valid
             return true;
         },
 
@@ -106,72 +117,113 @@ export const resolvingContextStore = create<ResolvingContextStore>(
     })
 );
 
-/**
- * Get the current iFrame resolving context
- */
-function getIFrameResolvingContext(
+// Initialize context from document.referrer on load
+if (typeof document !== "undefined" && document.referrer) {
+    resolveIFrameContext().then((context) => {
+        if (context) {
+            resolvingContextStore.setState({ context });
+        }
+    });
+}
+
+async function resolveIFrameContext(
     event?: MessageEvent<
         Extract<ClientLifecycleEvent, { clientLifecycle: "handshake-response" }>
     >
-): IFrameResolvingContext | undefined {
+): Promise<IFrameResolvingContext | undefined> {
     if (typeof document === "undefined") {
         return undefined;
     }
+
     // Get the referrer of the iframe
     const sourceUrl =
         event?.data?.data?.currentUrl ?? event?.origin ?? document?.referrer;
     if (!sourceUrl) {
-        console.warn("No origin to compute resolving context", {
-            sourceUrl,
-        });
+        console.warn("No origin to compute resolving context", { sourceUrl });
         return undefined;
     }
 
-    // Map the origin to an url and compute the product id
+    // Parse URL and get domain
     const originUrl = new URL(sourceUrl);
     const normalizedDomain = originUrl.host.replace("www.", "");
-    const productId = keccak256(toHex(normalizedDomain));
     const origin = originUrl.origin;
-    const walletReferrer = getWalletReferrer(sourceUrl);
-    console.log("Computed resolving context", {
+    const isAutoContext = event === undefined;
+    const clientId = event?.data?.data?.clientId;
+    const pendingMergeToken = event?.data?.data?.pendingMergeToken;
+
+    // Fetch merchantId from backend (with cache)
+    const merchantData = await fetchMerchantByDomain(normalizedDomain);
+
+    console.log("Resolved context", {
         sourceUrl,
         origin,
-        productId,
-        isAutoContext: event === undefined,
-        ...(walletReferrer && { walletReferrer }),
+        merchantId: merchantData.merchantId,
+        isAutoContext,
+        ...(clientId && { clientId }),
     });
 
-    // Return the context
+    if (clientId) {
+        clientIdStore.getState().setClientId(clientId);
+    }
+
+    if (pendingMergeToken && clientId && merchantData.merchantId) {
+        authenticatedBackendApi.user.identity.merge.execute
+            .post({
+                mergeToken: pendingMergeToken,
+                targetAnonymousId: clientId,
+                merchantId: merchantData.merchantId,
+            })
+            .catch((error) => {
+                console.warn("Unable to merge client identities", error);
+            });
+    }
+
     return {
-        productId,
+        merchantId: merchantData.merchantId,
         origin,
         sourceUrl,
-        isAutoContext: event === undefined,
-        ...(walletReferrer && { walletReferrer }),
+        isAutoContext,
+        ...(clientId && { clientId }),
     };
 }
 
 /**
- * Get the referrer address from the source url
- * @param sourceUrl The source URL to extract the referrer from
- * @returns The referrer address if valid and different from current session, undefined otherwise
+ * Fetch merchant data from backend by domain
+ * Always returns a result - falls back to empty merchantId if merchant not found
  */
-function getWalletReferrer(sourceUrl: string): Address | undefined {
-    // Get the current session from store
-    const session = sessionStore.getState().session;
-
-    // Get the current frak context
-    const frakContext = FrakContextManager.parse({
-        url: sourceUrl,
-    });
-
-    // If we got a referrer and it's not the same as the current session, return it
-    if (
-        frakContext?.r &&
-        (!session?.address || !isAddressEqual(frakContext.r, session.address))
-    ) {
-        return frakContext.r;
+async function fetchMerchantByDomain(
+    domain: string
+): Promise<{ merchantId: string }> {
+    // Check cache first
+    const cached = merchantCache.get(domain);
+    if (cached) {
+        return cached;
     }
 
-    return;
+    try {
+        const { data, error } =
+            await authenticatedBackendApi.user.merchant.resolve.get({
+                query: { domain },
+            });
+
+        if (error || !data) {
+            // Merchant not registered - use fallback
+            console.warn(`Merchant not found for ${domain}, using fallback`);
+            const fallback = { merchantId: "" };
+            merchantCache.set(domain, fallback);
+            return fallback;
+        }
+
+        const result = {
+            merchantId: data.merchantId,
+        };
+        merchantCache.set(domain, result);
+        return result;
+    } catch (error) {
+        console.warn("Failed to fetch merchant:", error);
+        // Network error - use fallback
+        const fallback = { merchantId: "" };
+        merchantCache.set(domain, fallback);
+        return fallback;
+    }
 }

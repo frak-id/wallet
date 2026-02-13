@@ -4,7 +4,7 @@ import {
     viemClient,
 } from "@backend-infrastructure";
 import { t } from "@backend-utils";
-import { addresses, currentStablecoins } from "@frak-labs/app-essentials";
+import { currentStablecoins, stablecoins } from "@frak-labs/app-essentials";
 import { mintAbi } from "@frak-labs/app-essentials/blockchain";
 import { Elysia } from "elysia";
 import { erc20Abi, parseEther, parseUnits } from "viem";
@@ -50,6 +50,7 @@ export const fundingRoutes = new Elysia({ prefix: "/funding" }).post(
                     abi: erc20Abi,
                     functionName: "transfer",
                     args: [bank, parseUnits("11", 18)],
+                    chain: viemClient.chain,
                 });
                 log.info(
                     { txHash, stablecoin },
@@ -59,11 +60,10 @@ export const fundingRoutes = new Elysia({ prefix: "/funding" }).post(
             return;
         }
 
-        // Original mUSD minting logic
-        // Check the current campaign balance (if more than 1000 ether don't reload it)
+        const testnetUsdc = stablecoins.testnet.usdc;
         const balance = await readContract(viemClient, {
             abi: erc20Abi,
-            address: addresses.mUSDToken,
+            address: testnetUsdc,
             functionName: "balanceOf",
             args: [bank],
         });
@@ -78,14 +78,14 @@ export const fundingRoutes = new Elysia({ prefix: "/funding" }).post(
             key: "minter",
         });
 
-        // Prepare and send our reload transaction
         await lock.runExclusive(async () => {
             const txHash = await writeContract(viemClient, {
                 account,
-                address: addresses.mUSDToken,
+                address: testnetUsdc,
                 abi: [mintAbi],
                 functionName: "mint",
                 args: [bank, parseEther("1000")],
+                chain: viemClient.chain,
             });
             log.info(
                 { txHash },

@@ -4,20 +4,10 @@ import { isRunningInProd } from "../utils/env";
  * The Frak ecosystem addresses
  */
 export const addresses = {
-    // nexus
-    campaignBankFactory: "0x00000000003604CF2d09f4Aa3B878843A765015d",
-    campaignFactory: "0xfE0D3FD4ed50CE828b8192fc5D547Ee609Abe1eC",
-    facetFactory: "0x5Dcb1bB90Fc25ceFe9815bbd0c710F0496Fe946B",
-    mUSDToken: "0x43838DCb58a61325eC5F31FD70aB8cd3540733d1",
-    productAdministratorRegistry: "0x0000000000000823EaD12075a50A2a6520966e5c",
-    productInteractionManager: "0x0000000000009720dc2B0D893f7Ec2a878d21AeC",
-    productRegistry: "0x9100000000290000D9a49572110030ba00E0F40b",
-    purchaseOracle: "0x0000EC17000000e783CA00Ee06890000114C100d",
-    referralRegistry: "0x5439e7b27500f7000A6DCD00006D000082510000",
+    // Frak v2
+    rewarderHub: "0xBaf28A2214856E864D9d89Ae3377140358FA5fa8",
+    campaignBankFactory: "0x4bD5CFDF64bB6ab0c439F36ba2C324338F15BF28",
     // Kernel
-    interactionDelegator: "0x0000000000915Bae6248227914666Afd11Ad706e",
-    interactionDelegatorAction: "0x00000000001BF7FE0EEBf7c66E1e624D52a12FAD",
-    interactionDelegatorValidator: "0x00000000002f84e026BbA7983F3c189D0C6dc8Fa",
     p256Wrapper: "0x00e4005A00007384000000B0a8A0F300DD9fCAFA",
     webAuthNRecoveryAction: "0x000000000093c960bC9F9Dc93509E394a96c7FD9",
     webAuthNValidator: "0x0000000000Fb9604350a25E826B050D859FE7b77",
@@ -66,3 +56,8 @@ export const currentStablecoins = isRunningInProd
     : stablecoins.testnet;
 
 export type Stablecoin = keyof typeof currentStablecoins;
+
+/**
+ * Known stablecoins as a list of address
+ */
+export const currentStablecoinsList = Object.values(currentStablecoins);

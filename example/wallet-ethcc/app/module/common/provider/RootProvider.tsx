@@ -1,20 +1,19 @@
-import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
+import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
 import { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import {
     PersistQueryClientProvider,
     type PersistQueryClientProviderProps,
 } from "@tanstack/react-query-persist-client";
-import { type PropsWithChildren, useState } from "react";
+import { type PropsWithChildren, Suspense, useState } from "react";
 import { FrakProvider } from "@/module/common/provider/FrakProvider";
 
 /**
  * The storage persister to cache our query data's
  */
 const persistOptions: PersistQueryClientProviderProps["persistOptions"] = {
-    persister: createSyncStoragePersister({
-        storage:
-            typeof window !== "undefined" ? window.localStorage : undefined,
+    persister: createAsyncStoragePersister({
+        storage: window.localStorage,
         // Throttle for 50ms to prevent storage spamming
         throttleTime: 50,
     }),
@@ -48,7 +47,9 @@ export function RootProvider({ children }: PropsWithChildren) {
             client={queryClient}
             persistOptions={persistOptions}
         >
-            <FrakProvider>{children}</FrakProvider>
+            <Suspense>
+                <FrakProvider>{children}</FrakProvider>
+            </Suspense>
             <ReactQueryDevtools initialIsOpen={false} />
         </PersistQueryClientProvider>
     );

@@ -87,42 +87,6 @@ export class SettingsPage {
         await this.page.waitForURL("/settings/recovery");
     }
 
-    // Verify the disable status display
-    async verifyDisplayDisableStatus() {
-        await expect(this.page.getByText("Activate your wallet")).toBeVisible();
-        await expect(this.page.getByText("Wallet not activated")).toBeVisible();
-    }
-
-    // Verify the enable status display
-    async verifyDisplayEnableStatus() {
-        await expect(
-            this.page.getByText("Your wallet is activated")
-        ).toBeVisible();
-        await expect(
-            this.page.getByText("Wallet is activated").first()
-        ).toBeVisible();
-    }
-
-    /**
-     * Click the activate wallet button
-     */
-    async clickActivateWalletButton() {
-        await this.page
-            .getByText("Your wallet is activated")
-            .getByRole("switch")
-            .click();
-    }
-
-    /**
-     * Click the desactivate wallet button
-     */
-    async clickDesactivateWalletButton() {
-        await this.page
-            .getByText("Activate your wallet")
-            .getByRole("switch")
-            .click();
-    }
-
     //verify logout button click
     async clickLogoutButton() {
         // Verify the logout button is visible

@@ -1,4 +1,3 @@
-import type { GetMembersPageItem } from "@frak-labs/app-essentials";
 import { Button } from "@frak-labs/ui/component/Button";
 import { Checkbox } from "@frak-labs/ui/component/forms/Checkbox";
 import { WalletAddress } from "@frak-labs/ui/component/HashDisplay";
@@ -10,11 +9,14 @@ import {
     type SortingState,
 } from "@tanstack/react-table";
 import { useEffect, useMemo, useState } from "react";
-import { formatEther, isAddressEqual } from "viem";
-import type { GetMembersParam } from "@/context/members/action/getProductMembers";
+import { isAddressEqual } from "viem";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { Row } from "@/module/common/component/Row";
 import { Table } from "@/module/common/component/Table";
+import type {
+    GetMembersPageItem,
+    GetMembersParam,
+} from "@/module/members/api/getMerchantMembers";
 import { TableMembersFilters } from "@/module/members/component/TableMembers/Filters";
 import { Pagination } from "@/module/members/component/TableMembers/Pagination";
 import { membersPageQueryOptions } from "@/module/members/queries/queryOptions";
@@ -84,7 +86,7 @@ export function TableMembers() {
     }, [sortingState, setFilters]);
 
     const { data: page, isPending } = useQuery({
-        ...membersPageQueryOptions(filters),
+        ...membersPageQueryOptions(filters, isDemoMode),
         placeholderData: keepPreviousData,
     });
 
@@ -122,9 +124,9 @@ export function TableMembers() {
                         <WalletAddress wallet={getValue()} />
                     ),
                 }),
-                columnHelper.accessor("productNames", {
+                columnHelper.accessor("merchantNames", {
                     enableSorting: false,
-                    header: () => "Products",
+                    header: () => "Merchants",
                     cell: ({ getValue }) => getValue().join(", "),
                 }),
                 columnHelper.accessor("firstInteractionTimestamp", {
@@ -140,11 +142,10 @@ export function TableMembers() {
                     header: () => "Interactions",
                     cell: ({ getValue }) => getValue(),
                 }),
-                columnHelper.accessor("rewards", {
+                columnHelper.accessor("totalRewardsUsd", {
                     enableSorting: true,
-                    header: () => "Rewards",
-                    cell: ({ getValue }) =>
-                        `${formatEther(BigInt(getValue()))} ${isDemoMode ? "€" : "$"}`,
+                    header: () => "Rewards (USD)",
+                    cell: ({ getValue }) => `$${getValue().toFixed(2)}`,
                 }),
             ] as ColumnDef<GetMembersPageItem>[],
         [selectedMembers, addSelectedMember, removeSelectedMember, isDemoMode]

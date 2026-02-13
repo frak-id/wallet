@@ -1,8 +1,8 @@
 # AGENTS.md
 
-**Generated:** 2026-01-03  
-**Commit:** bdef56f09  
-**Branch:** dev
+**Generated:** 2026-02-11  
+**Commit:** 221c9c29a  
+**Branch:** dev-v2
 
 ## Overview
 
@@ -14,7 +14,7 @@ Frak Wallet monorepo - Web3 referral tracking & rewards infrastructure. TypeScri
 frak-wallet/
 ├── apps/
 │   ├── wallet/        # TanStack Router SPA - user wallet (SSR disabled)
-│   ├── business/      # TanStack Start SSR - business dashboard
+│   ├── business/      # TanStack Router SPA - business dashboard
 │   ├── listener/      # Iframe RPC handler for SDK communication
 │   └── dashboard-admin/  # Admin interface
 ├── packages/
@@ -41,7 +41,7 @@ frak-wallet/
 | Task | Location | Notes |
 |------|----------|-------|
 | Wallet features | `apps/wallet/app/module/` | Module-based architecture |
-| Business dashboard | `apps/business/src/module/` | SSR-enabled, TanStack Start |
+| Business dashboard | `apps/business/src/module/` | SPA, TanStack Router |
 | SDK iframe communication | `apps/listener/app/module/hooks/` | RPC message handlers |
 | Shared wallet logic | `packages/wallet-shared/src/` | Stores, auth, blockchain |
 | UI components | `packages/ui/component/` | Radix-based, CSS Modules |
@@ -73,7 +73,7 @@ cd apps/wallet && bun run test:e2e  # Playwright E2E
 # Deployment
 bun run deploy             # AWS dev
 bun run deploy:prod        # AWS prod
-bun run deploy-gcp:prod    # GCP prod (backend)
+bun run deploy-gcp:prod    # GCP prod (all production apps)
 ```
 
 ## Conventions
@@ -145,6 +145,43 @@ Build order: `rpc → core → legacy → react → components`
 - **GCP (Pulumi)**: Production (backend, wallet, business) on GKE
 - **Stages**: dev, prod, gcp-staging, gcp-production
 - **Docker**: Multi-stage with SDK pre-building optimization
+
+## Custom Agents
+
+Purpose-based agents in `.opencode/agents/`:
+
+### Orchestrator
+
+| Agent | Purpose | Activation |
+|-------|---------|------------|
+| `frak-builder` | Plans, delegates, executes complex tasks | Include `frakwork` or `fw` in prompt |
+
+**FrakBuilder** auto-delegates to specialists, runs parallel tasks, and enforces todo completion (Sisyphus mode).
+
+### Specialists
+
+| Agent | Purpose | When to Use |
+|-------|---------|-------------|
+| `explore` | Fast codebase search | Finding files, patterns, quick navigation |
+| `architect` | Strategic thinking | Complex bugs, design decisions, code review |
+| `librarian` | Knowledge research | Documentation, implementation examples |
+| `frontend-builder` | UI/UX implementation | Components, styling, accessibility |
+| `backend-builder` | API & data work | Endpoints, schemas, business logic |
+| `infra-ops` | Infrastructure | Deployment, config, CI/CD |
+
+**Domain-specific context** in `AGENTS.md` files per directory:
+- `services/backend/AGENTS.md` - Backend patterns
+- `apps/wallet/AGENTS.md` - Wallet app patterns
+- `apps/business/AGENTS.md` - Business dashboard patterns
+- `apps/listener/AGENTS.md` - Listener patterns
+- `apps/dashboard-admin/AGENTS.md` - Admin dashboard patterns
+- `sdk/AGENTS.md` - SDK architecture
+- `sdk/core/AGENTS.md`, `sdk/react/AGENTS.md`, `sdk/components/AGENTS.md` - SDK package specifics
+- `packages/AGENTS.md` - Shared packages overview
+- `packages/wallet-shared/AGENTS.md`, `packages/ui/AGENTS.md` - Package specifics
+- `packages/app-essentials/AGENTS.md` - Blockchain + WebAuthn config
+- `packages/test-foundation/AGENTS.md` - Test infrastructure
+- `infra/AGENTS.md` - Infrastructure patterns
 
 ## Notes
 

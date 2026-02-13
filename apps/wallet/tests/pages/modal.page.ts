@@ -34,30 +34,6 @@ export class ModalPage {
         await expect(this.walletFrame.locator("body")).not.toBeVisible();
     }
 
-    async verifyActivatedButton() {
-        await expect(this.walletFrame.getByText("Activated")).toBeVisible();
-    }
-
-    async verifyDesactivatedButton() {
-        await expect(this.walletFrame.getByText("Disabled")).toBeVisible();
-    }
-
-    async clickActivatedButton() {
-        await this.walletFrame.getByRole("button", { name: "Power" }).click();
-    }
-    async clickDesactivatedButton() {
-        await this.walletFrame.getByRole("button", { name: "Power" }).click();
-    }
-
-    async verifyDisableCopyAndShareButton() {
-        await expect(
-            this.walletFrame.getByRole("button", { name: "Copy" })
-        ).toBeDisabled();
-        await expect(
-            this.walletFrame.getByRole("button", { name: "Share" })
-        ).toBeDisabled();
-    }
-
     async verifyEnableCopyAndShareButton() {
         await expect(
             this.walletFrame.getByRole("button", { name: "Copy" })

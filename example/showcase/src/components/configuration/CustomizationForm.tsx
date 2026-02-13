@@ -4,7 +4,6 @@ import {
     AccordionItem,
     AccordionTrigger,
 } from "@frak-labs/ui/component/Accordion";
-import { ActivationCustomization } from "./ActivationCustomization";
 import { CssCustomization } from "./CssCustomization";
 import styles from "./CustomizationForm.module.css";
 import { DismissCustomization } from "./DismissCustomization";
@@ -37,24 +36,6 @@ export function CustomizationForm() {
                     </AccordionTrigger>
                     <AccordionContent>
                         <LoginCustomization lang="fr" />
-                    </AccordionContent>
-                </AccordionItem>
-
-                <AccordionItem value="activation-en">
-                    <AccordionTrigger>
-                        Customization of activation screen in English
-                    </AccordionTrigger>
-                    <AccordionContent>
-                        <ActivationCustomization lang="en" />
-                    </AccordionContent>
-                </AccordionItem>
-
-                <AccordionItem value="activation-fr">
-                    <AccordionTrigger>
-                        Customization of activation screen in French
-                    </AccordionTrigger>
-                    <AccordionContent>
-                        <ActivationCustomization lang="fr" />
                     </AccordionContent>
                 </AccordionItem>
 

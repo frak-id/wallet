@@ -9,7 +9,11 @@ import {
 import { currentChain, currentViemClient } from "../../blockchain/provider";
 import { getSafeSession } from "../../common/utils/safeSession";
 import { sessionStore } from "../../stores/sessionStore";
-import type { DistantWebAuthnWallet, EcdsaWallet } from "../../types/Session";
+import type {
+    DistantWebAuthnWallet,
+    EcdsaWallet,
+    Session,
+} from "../../types/Session";
 import type { WebAuthNWallet } from "../../types/WebAuthN";
 import type { BaseFrakSmartAccount } from "./baseFrakWallet";
 import { frakEcdsaWalletSmartAccount } from "./FrakEcdsaSmartWallet";
@@ -48,25 +52,26 @@ export function getSmartAccountProvider({
     // The current smart account
     let currentSmartAccountClient: SmartAccountConnectorClient | undefined;
 
-    // The current session
-    let currentWebAuthNWallet = getSafeSession();
+    const initialSession = getSafeSession();
+    let currentWebAuthNWallet: Session | null = initialSession ?? null;
 
     // Subscribe to the session store, to refresh the wallet and emit a few stuff?
     sessionStore.subscribe((state) => {
-        const newWallet = state.session;
+        const signableWallet = state.session ?? null;
+
         // If the session hasn't changed, do nothing
         if (
-            newWallet?.authenticatorId ===
+            signableWallet?.authenticatorId ===
             currentWebAuthNWallet?.authenticatorId
         ) {
             return;
         }
         // Otherwise, replace the session
-        currentWebAuthNWallet = newWallet;
+        currentWebAuthNWallet = signableWallet;
         // Cleanup the cached stuff
         currentSmartAccountClient = undefined;
         // And tell that it has changed
-        onAccountChanged(newWallet ?? undefined);
+        onAccountChanged(signableWallet ?? undefined);
     });
 
     return {

@@ -1,4 +1,3 @@
-import type { Hex } from "viem";
 import type { DisplayEmbeddedWalletParamsType, FrakClient } from "../../types";
 import { FrakContextManager } from "../../utils";
 import { watchWalletStatus } from "../index";
@@ -8,10 +7,9 @@ import {
 } from "./processReferral";
 
 /**
- * Function used to display a modal
+ * Function used to handle referral interactions
  * @param client - The current Frak Client
  * @param args
- * @param args.productId - The product id to interact with (if not specified will be recomputed from the current domain)
  * @param args.modalConfig - The modal configuration to display if the user is not logged in
  * @param args.options - Some options for the referral interaction
  *
@@ -25,11 +23,9 @@ import {
 export async function referralInteraction(
     client: FrakClient,
     {
-        productId,
         modalConfig,
         options,
     }: {
-        productId?: Hex;
         modalConfig?: DisplayEmbeddedWalletParamsType;
         options?: ProcessReferralOptions;
     } = {}
@@ -47,7 +43,6 @@ export async function referralInteraction(
             walletStatus: currentWalletStatus,
             frakContext,
             modalConfig,
-            productId,
             options,
         });
     } catch (error) {

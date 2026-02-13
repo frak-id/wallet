@@ -3,19 +3,21 @@ import { Spinner } from "@frak-labs/ui/component/Spinner";
 import { useMutation } from "@tanstack/react-query";
 import { useSearch } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo } from "react";
-import type { Hex } from "viem";
-import { authenticatedBackendApi } from "@/context/api/backendClient";
+import { authenticatedBackendApi } from "@/api/backendClient";
 import { CallOut } from "@/module/common/component/CallOut";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
-import { useOracleSetupData } from "@/module/product/hook/useOracleSetupData";
+import {
+    usePurchaseWebhookStatus,
+    type WebhookPlatform,
+} from "@/module/merchant/hook/usePurchaseWebhookStatus";
 import styles from "../Mint/index.module.css";
 
 export function EmbeddedPurchaseTracker() {
     const search = useSearch({ from: "/embedded/_layout/purchase-tracker" });
 
-    const { productId, platform, secret } = useMemo(() => {
-        const productId = search.pid;
+    const { merchantId, platform, secret } = useMemo(() => {
+        const merchantId = search.mid;
 
         // Default to shopify values
         const platform = search.p ?? "internal";
@@ -28,17 +30,13 @@ export function EmbeddedPurchaseTracker() {
             throw new Error("Invalid platform");
         }
 
-        if (!productId) {
-            throw new Error("Missing required parameters");
+        if (!merchantId) {
+            throw new Error("Missing required parameter: merchantId (mid)");
         }
 
         return {
-            productId,
-            platform: platform as
-                | "internal"
-                | "custom"
-                | "shopify"
-                | "woocommerce",
+            merchantId,
+            platform: platform as WebhookPlatform,
             secret,
         };
     }, [search]);
@@ -49,15 +47,15 @@ export function EmbeddedPurchaseTracker() {
         isSuccess,
         isError,
     } = usePurchaseTrackerSetup({
-        productId: productId as Hex,
+        merchantId,
         platform,
         secret,
     });
 
     useEffect(() => {
-        if (!productId) return;
+        if (!merchantId) return;
         setupPurchaseTracker();
-    }, [setupPurchaseTracker, productId]);
+    }, [setupPurchaseTracker, merchantId]);
 
     // Button to exit
     const close = useCallback(() => {
@@ -106,21 +104,21 @@ export function EmbeddedPurchaseTracker() {
 }
 
 function usePurchaseTrackerSetup({
-    productId,
+    merchantId,
     platform,
     secret,
 }: {
-    productId: Hex;
-    platform: "internal" | "custom" | "shopify" | "woocommerce";
+    merchantId: string;
+    platform: WebhookPlatform;
     secret: string;
 }) {
-    const { refetch } = useOracleSetupData({ productId });
+    const { refetch } = usePurchaseWebhookStatus({ merchantId });
     return useMutation({
-        mutationKey: ["product", "oracle-webhook-internal", "setup", productId],
+        mutationKey: ["merchant", merchantId, "webhook", "setup"],
         mutationFn: async () => {
             const { error } = await authenticatedBackendApi
-                .product({ productId })
-                .oracleWebhook.setup.post({
+                .merchant({ merchantId })
+                .webhooks.post({
                     hookSignatureKey: secret,
                     platform,
                 });

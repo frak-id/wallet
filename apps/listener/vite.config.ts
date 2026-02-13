@@ -1,105 +1,140 @@
 import * as process from "node:process";
 import react from "@vitejs/plugin-react";
 import type { UserConfig } from "rolldown-vite";
+import { defineConfig } from "rolldown-vite";
 import mkcert from "vite-plugin-mkcert";
 import removeConsole from "vite-plugin-remove-console";
 import tsconfigPaths from "vite-tsconfig-paths";
-import { lightningCssConfig, onwarn } from "../../packages/dev-tooling";
+import {
+    getSandboxEnv,
+    lightningCssConfig,
+    onwarn,
+} from "../../packages/dev-tooling";
 
 const DEBUG = JSON.stringify(false);
 
 const isProd = process.env.STAGE?.includes("prod") ?? false;
+const isSandbox = !!process.env.ATELIER_SANDBOX_ID;
 
-export default {
-    base: "/listener",
-    css: lightningCssConfig,
-    resolve: {
-        // CRITICAL: Use production conditions for tree shaking!
-        // "development" loads full dev builds with debugging code
-        conditions:
-            process.env.NODE_ENV === "production"
-                ? ["production", "default"]
-                : ["development"],
-    },
-    define: {
-        "process.env.STAGE": JSON.stringify(process.env.STAGE),
-        "process.env.BACKEND_URL": JSON.stringify(process.env.BACKEND_URL),
-        "process.env.INDEXER_URL": JSON.stringify(process.env.INDEXER_URL),
-        "process.env.ERPC_URL": JSON.stringify(process.env.ERPC_URL),
-        "process.env.DRPC_API_KEY": JSON.stringify(process.env.DRPC_API_KEY),
-        "process.env.PIMLICO_API_KEY": JSON.stringify(
-            process.env.PIMLICO_API_KEY
-        ),
-        "process.env.NEXUS_RPC_SECRET": JSON.stringify(
-            process.env.NEXUS_RPC_SECRET
-        ),
-        "process.env.DEBUG": JSON.stringify(DEBUG),
-        "process.env.APP_VERSION": JSON.stringify(
-            process.env.COMMIT_HASH ?? "UNKNOWN"
-        ),
-        "process.env.FRAK_WALLET_URL": JSON.stringify(
-            process.env.FRAK_WALLET_URL
-        ),
-        "process.env.OPEN_PANEL_API_URL": JSON.stringify(
-            process.env.OPEN_PANEL_API_URL
-        ),
-        "process.env.OPEN_PANEL_LISTENER_CLIENT_ID": JSON.stringify(
-            process.env.OPEN_PANEL_LISTENER_CLIENT_ID
-        ),
-    },
-    plugins: [
-        react(),
-        mkcert(),
-        tsconfigPaths(),
-        ...(isProd ? [removeConsole()] : []),
-    ],
-    server: {
-        port: 3002,
-        proxy: {},
-    },
-    build: {
-        cssCodeSplit: true,
-        target: "baseline-widely-available",
-        chunkSizeWarningLimit: 400,
-        rolldownOptions: {
-            // Enable aggressive tree shaking
-            treeshake: {
-                moduleSideEffects: "no-external", // External packages (node_modules) have no side effects
-                propertyReadSideEffects: false, // Reading properties doesn't cause side effects
-            },
-            optimization: {
-                // This will to remove some stuff that will be defined, like stage depend variable
-                inlineConst: { mode: "all", pass: 3 },
-            },
-            output: {
-                advancedChunks: {
-                    groups: [
-                        // React ecosystem - React + React-DOM + scheduler
-                        {
-                            name: "react-vendor",
-                            test: /node_modules[\\/](react|react-dom|react[\\/]jsx-runtime)/,
-                            priority: 40,
-                        },
+export default defineConfig(async () => {
+    const sandboxEnv = await getSandboxEnv();
 
-                        // Blockchain libraries - viem + wagmi + all crypto
-                        {
-                            name: "blockchain-vendor",
-                            test: /node_modules[\\/](viem|0x|wagmi|@wagmi|permissionless|@noble|@scure)/,
-                            priority: 35,
-                        },
-
-                        // UI vendors - ALL UI libraries together
-                        {
-                            name: "ui-vendor",
-                            test: /node_modules[\\/](@radix-ui|vaul|micromark|sonner|lucide-react|class-variance-authority|cuer|nprogress|react-hook-form|react-dropzone)/,
-                            priority: 30,
-                            // minSize: 30000,
-                        },
-                    ],
-                },
-            },
-            onwarn,
+    return {
+        base: "/listener",
+        css: lightningCssConfig,
+        resolve: {
+            // CRITICAL: Use production conditions for tree shaking!
+            // "development" loads full dev builds with debugging code
+            conditions:
+                process.env.NODE_ENV === "production"
+                    ? ["production", "default"]
+                    : ["development"],
         },
-        sourcemap: false,
-    },
-} satisfies UserConfig;
+        define: {
+            "process.env.STAGE": JSON.stringify(process.env.STAGE),
+            "process.env.BACKEND_URL": JSON.stringify(
+                sandboxEnv.backendUrl ?? process.env.BACKEND_URL
+            ),
+            "process.env.ERPC_URL": JSON.stringify(process.env.ERPC_URL),
+            "process.env.DRPC_API_KEY": JSON.stringify(
+                process.env.DRPC_API_KEY
+            ),
+            "process.env.PIMLICO_API_KEY": JSON.stringify(
+                process.env.PIMLICO_API_KEY
+            ),
+            "process.env.NEXUS_RPC_SECRET": JSON.stringify(
+                process.env.NEXUS_RPC_SECRET
+            ),
+            "process.env.DEBUG": JSON.stringify(DEBUG),
+            "process.env.APP_VERSION": JSON.stringify(
+                process.env.COMMIT_HASH ?? "UNKNOWN"
+            ),
+            "process.env.FRAK_WALLET_URL": JSON.stringify(
+                sandboxEnv.walletUrl ?? process.env.FRAK_WALLET_URL
+            ),
+            "process.env.OPEN_PANEL_API_URL": JSON.stringify(
+                process.env.OPEN_PANEL_API_URL
+            ),
+            "process.env.OPEN_PANEL_LISTENER_CLIENT_ID": JSON.stringify(
+                process.env.OPEN_PANEL_LISTENER_CLIENT_ID
+            ),
+            "process.env.WEBAUTHN_RP_ID": JSON.stringify(
+                process.env.WEBAUTHN_RP_ID
+            ),
+            "process.env.ANDROID_SHA256_FINGERPRINT": JSON.stringify(
+                process.env.ANDROID_SHA256_FINGERPRINT
+            ),
+        },
+        plugins: [
+            react(),
+            ...(isSandbox ? [] : [mkcert()]),
+            tsconfigPaths(),
+            ...(isProd ? [removeConsole()] : []),
+        ],
+        server: {
+            port: 3002,
+            proxy: {},
+            allowedHosts: isSandbox ? true : undefined,
+        },
+        build: {
+            cssCodeSplit: true,
+            target: "baseline-widely-available",
+            chunkSizeWarningLimit: 400,
+            rolldownOptions: {
+                // Enable aggressive tree shaking
+                treeshake: {
+                    moduleSideEffects: "no-external", // External packages (node_modules) have no side effects
+                    propertyReadSideEffects: false, // Reading properties doesn't cause side effects
+                },
+                optimization: {
+                    // This will to remove some stuff that will be defined, like stage depend variable
+                    inlineConst: { mode: "all", pass: 3 },
+                },
+                output: {
+                    advancedChunks: {
+                        // Only chunk stuff shared by at least 2 modules
+                        minShareCount: 2,
+                        groups: [
+                            // React ecosystem - React + React-DOM + scheduler
+                            {
+                                name: "react-vendor",
+                                test: /node_modules[\\/](react|react-dom|react[\\/]jsx-runtime)/,
+                                priority: 40,
+                            },
+
+                            // Blockchain libraries - viem + wagmi + all crypto
+                            {
+                                name: "blockchain-vendor",
+                                test: /node_modules[\\/](viem|0x|wagmi|@wagmi|permissionless|@noble|@scure)/,
+                                priority: 35,
+                            },
+
+                            // TanStack libraries - React Query
+                            {
+                                name: "tanstack-vendor",
+                                test: /node_modules[\\/]@tanstack/,
+                                priority: 32,
+                            },
+
+                            // UI vendors - ALL UI libraries together
+                            {
+                                name: "ui-vendor",
+                                test: /node_modules[\\/](@radix-ui|vaul|micromark|sonner|lucide-react|class-variance-authority|cuer|nprogress|react-hook-form|react-dropzone)/,
+                                priority: 30,
+                                // minSize: 30000,
+                            },
+
+                            // All the other elements shared within the codebase
+                            {
+                                name: "common",
+                                priority: 10,
+                            },
+                        ],
+                    },
+                },
+                onwarn,
+            },
+            sourcemap: false,
+        },
+    } satisfies UserConfig;
+});

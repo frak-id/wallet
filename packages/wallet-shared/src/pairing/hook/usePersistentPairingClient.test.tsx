@@ -227,4 +227,150 @@ describe("usePersistentPairingClient", () => {
         rerender();
         expect(mockTargetClient.reconnect).toHaveBeenCalledTimes(1);
     });
+
+    describe("visibility-based reconnect (foreground resume)", () => {
+        beforeEach(() => {
+            vi.useFakeTimers();
+        });
+
+        afterEach(() => {
+            vi.useRealTimers();
+        });
+
+        test("should reconnect target client when app comes to foreground with webauthn session", () => {
+            mockSessionState.webauthnSession = {
+                address:
+                    "0x1234567890123456789012345678901234567890" as `0x${string}`,
+            };
+
+            renderHook(() => usePersistentPairingClient());
+
+            // Reset call count from initial mount
+            mockTargetClient.reconnect.mockClear();
+
+            // Simulate app coming to foreground
+            Object.defineProperty(document, "visibilityState", {
+                value: "visible",
+                writable: true,
+                configurable: true,
+            });
+            document.dispatchEvent(new Event("visibilitychange"));
+
+            // Should not reconnect immediately (300ms delay)
+            expect(mockTargetClient.reconnect).not.toHaveBeenCalled();
+
+            // Advance past the 300ms delay
+            vi.advanceTimersByTime(300);
+
+            expect(mockTargetClient.reconnect).toHaveBeenCalledTimes(1);
+            expect(mockOriginClient.reconnect).not.toHaveBeenCalled();
+        });
+
+        test("should reconnect origin client when app comes to foreground with distant-webauthn session", () => {
+            mockSessionState.distantWebauthnSession = {
+                address:
+                    "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd" as `0x${string}`,
+            };
+
+            renderHook(() => usePersistentPairingClient());
+
+            // Reset call count from initial mount
+            mockOriginClient.reconnect.mockClear();
+
+            // Simulate app coming to foreground
+            Object.defineProperty(document, "visibilityState", {
+                value: "visible",
+                writable: true,
+                configurable: true,
+            });
+            document.dispatchEvent(new Event("visibilitychange"));
+
+            vi.advanceTimersByTime(300);
+
+            expect(mockOriginClient.reconnect).toHaveBeenCalledTimes(1);
+            expect(mockTargetClient.reconnect).not.toHaveBeenCalled();
+        });
+
+        test("should not reconnect when app goes to background", () => {
+            mockSessionState.webauthnSession = {
+                address:
+                    "0x1234567890123456789012345678901234567890" as `0x${string}`,
+            };
+
+            renderHook(() => usePersistentPairingClient());
+            mockTargetClient.reconnect.mockClear();
+
+            // Simulate app going to background
+            Object.defineProperty(document, "visibilityState", {
+                value: "hidden",
+                writable: true,
+                configurable: true,
+            });
+            document.dispatchEvent(new Event("visibilitychange"));
+
+            vi.advanceTimersByTime(500);
+
+            expect(mockTargetClient.reconnect).not.toHaveBeenCalled();
+        });
+
+        test("should not register visibility listener when no session exists", () => {
+            const addListenerSpy = vi.spyOn(document, "addEventListener");
+
+            renderHook(() => usePersistentPairingClient());
+
+            // Should not register visibilitychange listener
+            const visibilityCalls = addListenerSpy.mock.calls.filter(
+                ([event]) => event === "visibilitychange"
+            );
+            expect(visibilityCalls).toHaveLength(0);
+
+            addListenerSpy.mockRestore();
+        });
+
+        test("should clean up visibility listener on unmount", () => {
+            mockSessionState.webauthnSession = {
+                address:
+                    "0x1234567890123456789012345678901234567890" as `0x${string}`,
+            };
+
+            const removeListenerSpy = vi.spyOn(document, "removeEventListener");
+
+            const { unmount } = renderHook(() => usePersistentPairingClient());
+
+            unmount();
+
+            const visibilityCalls = removeListenerSpy.mock.calls.filter(
+                ([event]) => event === "visibilitychange"
+            );
+            expect(visibilityCalls).toHaveLength(1);
+
+            removeListenerSpy.mockRestore();
+        });
+
+        test("should cancel pending reconnect timer on unmount", () => {
+            mockSessionState.webauthnSession = {
+                address:
+                    "0x1234567890123456789012345678901234567890" as `0x${string}`,
+            };
+
+            const { unmount } = renderHook(() => usePersistentPairingClient());
+            mockTargetClient.reconnect.mockClear();
+
+            // Trigger visibility change
+            Object.defineProperty(document, "visibilityState", {
+                value: "visible",
+                writable: true,
+                configurable: true,
+            });
+            document.dispatchEvent(new Event("visibilitychange"));
+
+            // Unmount before timer fires
+            unmount();
+
+            // Advance timer — should NOT call reconnect
+            vi.advanceTimersByTime(500);
+
+            expect(mockTargetClient.reconnect).not.toHaveBeenCalled();
+        });
+    });
 });

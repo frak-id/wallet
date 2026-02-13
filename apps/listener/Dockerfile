@@ -17,7 +17,6 @@ COPY apps/listener ./apps/listener
 ARG NODE_ENV
 ARG STAGE
 ARG BACKEND_URL
-ARG INDEXER_URL
 ARG ERPC_URL
 ARG FRAK_WALLET_URL
 ARG OPEN_PANEL_API_URL
@@ -25,7 +24,6 @@ ARG OPEN_PANEL_API_URL
 ENV NODE_ENV=$NODE_ENV
 ENV STAGE=$STAGE
 ENV BACKEND_URL=$BACKEND_URL
-ENV INDEXER_URL=$INDEXER_URL
 ENV ERPC_URL=$ERPC_URL
 ENV FRAK_WALLET_URL=$FRAK_WALLET_URL
 ENV OPEN_PANEL_API_URL=$OPEN_PANEL_API_URL
@@ -36,10 +34,12 @@ RUN --mount=type=secret,id=DRPC_API_KEY \
     --mount=type=secret,id=PIMLICO_API_KEY \
     --mount=type=secret,id=NEXUS_RPC_SECRET \
     --mount=type=secret,id=OPEN_PANEL_LISTENER_CLIENT_ID \
+    --mount=type=secret,id=ANDROID_SHA256_FINGERPRINT \
     export DRPC_API_KEY=$(cat /run/secrets/DRPC_API_KEY) && \
     export PIMLICO_API_KEY=$(cat /run/secrets/PIMLICO_API_KEY) && \
     export NEXUS_RPC_SECRET=$(cat /run/secrets/NEXUS_RPC_SECRET) && \
     export OPEN_PANEL_LISTENER_CLIENT_ID=$(cat /run/secrets/OPEN_PANEL_LISTENER_CLIENT_ID) && \
+    export ANDROID_SHA256_FINGERPRINT=$(cat /run/secrets/ANDROID_SHA256_FINGERPRINT) && \
     bun run build
 
 # Pre-compress all compressible static assets in builder stage

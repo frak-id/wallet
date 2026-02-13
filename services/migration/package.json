@@ -1,0 +1,32 @@
+{
+    "name": "@frak-labs/migration",
+    "description": "V1 to V2 migration scripts",
+    "version": "0.0.1",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "typecheck": "tsc --noEmit",
+        "migrate": "bun run src/migrate.ts",
+        "migrate:dry-run": "DRY_RUN=true bun run src/migrate.ts",
+        "migrate:live": "DRY_RUN=false bun run src/migrate.ts",
+        "snapshot": "bun run src/snapshot/extract.ts",
+        "restore": "bun run src/snapshot/restore.ts",
+        "restore:dry-run": "DRY_RUN=true bun run src/snapshot/restore.ts",
+        "restore:live": "DRY_RUN=false bun run src/snapshot/restore.ts",
+        "db:dump": "bash scripts/db-dump.sh",
+        "db:restore": "bash scripts/db-restore.sh"
+    },
+    "dependencies": {
+        "@frak-labs/app-essentials": "workspace:*",
+        "@frak-labs/backend-elysia": "workspace:*",
+        "drizzle-orm": "^0.44.7",
+        "ky": "^1.14.0",
+        "mongodb": "^6.20.0",
+        "postgres": "^3.4.8",
+        "viem": "catalog:"
+    },
+    "devDependencies": {
+        "bun-types": "latest",
+        "typescript": "catalog:"
+    }
+}

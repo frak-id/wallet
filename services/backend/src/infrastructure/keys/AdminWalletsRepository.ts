@@ -1,14 +1,14 @@
 import { createHmac } from "node:crypto";
 import { Mutex } from "async-mutex";
 import { LRUCache } from "lru-cache";
-import { type Hex, hexToBytes, toHex } from "viem";
+import { type Hex, hexToBytes } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 
 type AccountPredefinedKeys =
-    | "interaction-executor"
-    | "oracle-updater"
     | "minter"
     | "monerium-dev"
+    | "rewarder"
+    | "bank-manager"
     | (string & {});
 
 /**
@@ -75,18 +75,6 @@ export class AdminWalletsRepository {
             hmac.update(key);
             return `0x${hmac.digest("hex")}` as Hex;
         });
-    }
-
-    /**
-     * Get an account specific to a product
-     */
-    public async getProductSpecificAccount({
-        productId,
-    }: {
-        productId: bigint;
-    }) {
-        const pkey = await this.getDerivedKey(toHex(productId));
-        return privateKeyToAccount(pkey);
     }
 
     /**

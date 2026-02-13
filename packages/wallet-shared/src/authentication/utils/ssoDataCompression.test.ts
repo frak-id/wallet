@@ -10,13 +10,14 @@ describe("ssoDataCompression", () => {
                 r: "https://example.com/callback",
                 d: true,
                 l: "en",
-                p: "0x1234567890abcdef" as Hex,
-                m: {
+                m: "0x1234567890abcdef" as Hex,
+                md: {
                     n: "Example App",
                     css: "custom-styles.css",
                     l: "https://example.com/logo.png",
                     h: "https://example.com",
                 },
+                cId: "client-123",
             };
 
             const result = compressedSsoToParams(compressed);
@@ -25,21 +26,23 @@ describe("ssoDataCompression", () => {
                 redirectUrl: "https://example.com/callback",
                 directExit: true,
                 lang: "en",
-                productId: "0x1234567890abcdef",
+                merchantId: "0x1234567890abcdef",
                 metadata: {
                     name: "Example App",
                     css: "custom-styles.css",
                     logoUrl: "https://example.com/logo.png",
                     homepageLink: "https://example.com",
                 },
+                clientId: "client-123",
             });
         });
 
         it("should handle minimal SSO data", () => {
             const compressed: CompressedSsoData = {
                 r: "https://example.com/callback",
-                p: "0x1234567890abcdef" as Hex,
-                m: { n: "Minimal App" },
+                m: "0x1234567890abcdef" as Hex,
+                md: { n: "Minimal App" },
+                cId: "client-123",
             };
 
             const result = compressedSsoToParams(compressed);
@@ -47,8 +50,9 @@ describe("ssoDataCompression", () => {
             expect(result.redirectUrl).toBe("https://example.com/callback");
             expect(result.directExit).toBeUndefined();
             expect(result.lang).toBeUndefined();
-            expect(result.productId).toBe("0x1234567890abcdef");
+            expect(result.merchantId).toBe("0x1234567890abcdef");
             expect(result.metadata.name).toBe("Minimal App");
+            expect(result.clientId).toBe("client-123");
         });
 
         it("should handle SSO data without metadata", () => {
@@ -56,8 +60,9 @@ describe("ssoDataCompression", () => {
                 r: "https://example.com/callback",
                 d: false,
                 l: "fr",
-                p: "0xabcdef1234567890" as Hex,
-                m: { n: "No Metadata App" },
+                m: "0xabcdef1234567890" as Hex,
+                md: { n: "No Metadata App" },
+                cId: "client-123",
             };
 
             const result = compressedSsoToParams(compressed);
@@ -65,18 +70,19 @@ describe("ssoDataCompression", () => {
             expect(result.redirectUrl).toBe("https://example.com/callback");
             expect(result.directExit).toBe(false);
             expect(result.lang).toBe("fr");
-            expect(result.productId).toBe("0xabcdef1234567890");
+            expect(result.merchantId).toBe("0xabcdef1234567890");
             expect(result.metadata.name).toBe("No Metadata App");
         });
 
         it("should handle partial metadata", () => {
             const compressed: CompressedSsoData = {
                 r: "https://example.com/callback",
-                p: "0x9876543210fedcba" as Hex,
-                m: {
+                m: "0x9876543210fedcba" as Hex,
+                md: {
                     n: "Partial App",
                     l: "https://example.com/logo.png",
                 },
+                cId: "client-123",
             };
 
             const result = compressedSsoToParams(compressed);
@@ -94,22 +100,22 @@ describe("ssoDataCompression", () => {
                 r: "redirect-url",
                 d: true,
                 l: "fr",
-                p: "0x1234567890abcdef" as Hex,
-                m: {
+                m: "0x1234567890abcdef" as Hex,
+                md: {
                     n: "app-name",
                     css: "styles",
                     l: "logo-url",
                     h: "home-url",
                 },
+                cId: "client-123",
             };
 
             const result = compressedSsoToParams(compressed);
 
-            // Verify all mappings
             expect(result.redirectUrl).toBe("redirect-url");
             expect(result.directExit).toBe(true);
             expect(result.lang).toBe("fr");
-            expect(result.productId).toBe("0x1234567890abcdef");
+            expect(result.merchantId).toBe("0x1234567890abcdef");
             expect(result.metadata.name).toBe("app-name");
             expect(result.metadata.css).toBe("styles");
             expect(result.metadata.logoUrl).toBe("logo-url");
@@ -120,8 +126,9 @@ describe("ssoDataCompression", () => {
             const compressed: CompressedSsoData = {
                 r: "https://example.com",
                 d: false,
-                p: "0x1234567890abcdef" as Hex,
-                m: { n: "Test App" },
+                m: "0x1234567890abcdef" as Hex,
+                md: { n: "Test App" },
+                cId: "client-123",
             };
 
             const result = compressedSsoToParams(compressed);
@@ -132,8 +139,9 @@ describe("ssoDataCompression", () => {
         it("should handle empty metadata object", () => {
             const compressed: CompressedSsoData = {
                 r: "https://example.com",
-                p: "0x1234567890abcdef" as Hex,
-                m: { n: "Test App" },
+                m: "0x1234567890abcdef" as Hex,
+                md: { n: "Test App" },
+                cId: "client-123",
             };
 
             const result = compressedSsoToParams(compressed);
@@ -146,23 +154,24 @@ describe("ssoDataCompression", () => {
                 r: "https://example.com/very/long/callback/url?param1=value1&param2=value2",
                 d: true,
                 l: "en",
-                p: "0x1234567890abcdef",
-                m: {
+                m: "0x1234567890abcdef" as Hex,
+                md: {
                     n: "App with Special Chars !@#$%",
                     css: "https://cdn.example.com/styles.css?v=1.2.3",
                     l: "https://cdn.example.com/logo.svg",
                     h: "https://example.com/home?utm_source=sso",
                 },
+                cId: "client-123",
             };
 
             const result = compressedSsoToParams(compressed);
 
             expect(result.redirectUrl).toBe(compressed.r);
-            expect(result.productId).toBe(compressed.p);
-            expect(result.metadata.name).toBe(compressed.m?.n);
-            expect(result.metadata.css).toBe(compressed.m?.css);
-            expect(result.metadata.logoUrl).toBe(compressed.m?.l);
-            expect(result.metadata.homepageLink).toBe(compressed.m?.h);
+            expect(result.merchantId).toBe(compressed.m);
+            expect(result.metadata.name).toBe(compressed.md?.n);
+            expect(result.metadata.css).toBe(compressed.md?.css);
+            expect(result.metadata.logoUrl).toBe(compressed.md?.l);
+            expect(result.metadata.homepageLink).toBe(compressed.md?.h);
         });
     });
 });

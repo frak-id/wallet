@@ -14,7 +14,6 @@ import type { FrakContext, WalletStatusReturnType } from "@frak-labs/core-sdk";
 import { processReferral } from "@frak-labs/core-sdk/actions";
 import { ClientNotFound } from "@frak-labs/frame-connector";
 import { renderHook, waitFor } from "@testing-library/react";
-import type { Hex } from "viem";
 import { describe, expect, test } from "../../../tests/vitest-fixtures";
 import { useFrakClient } from "../useFrakClient";
 import { useWalletStatus } from "../useWalletStatus";
@@ -84,54 +83,8 @@ describe("useReferralInteraction", () => {
             walletStatus: mockWalletStatus,
             frakContext: mockFrakContext,
             modalConfig: undefined,
-            productId: undefined,
             options: undefined,
         });
-    });
-
-    test("should process referral with productId", async ({
-        queryWrapper,
-        mockFrakClient,
-    }) => {
-        const mockReferralState = "success";
-
-        const productId =
-            "0x1234567890123456789012345678901234567890123456789012345678901234" as Hex;
-
-        const mockWalletStatus: WalletStatusReturnType = {
-            key: "connected",
-            wallet: "0x1234567890123456789012345678901234567890",
-        };
-
-        vi.mocked(useFrakClient).mockReturnValue(mockFrakClient);
-        vi.mocked(useFrakContext).mockReturnValue({
-            frakContext: { r: "0x1234567890123456789012345678901234567890" },
-            updateContext: vi.fn(),
-        });
-        vi.mocked(useWalletStatus).mockReturnValue({
-            data: mockWalletStatus,
-            isSuccess: true,
-            isPending: false,
-        } as ReturnType<typeof useWalletStatus>);
-        vi.mocked(processReferral).mockResolvedValue(mockReferralState);
-
-        const { result } = renderHook(
-            () => useReferralInteraction({ productId }),
-            {
-                wrapper: queryWrapper.wrapper,
-            }
-        );
-
-        await waitFor(() => {
-            expect(result.current).toEqual(mockReferralState);
-        });
-
-        expect(processReferral).toHaveBeenCalledWith(
-            mockFrakClient,
-            expect.objectContaining({
-                productId,
-            })
-        );
     });
 
     test("should process referral with modalConfig", async ({

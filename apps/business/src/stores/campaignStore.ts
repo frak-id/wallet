@@ -1,111 +1,186 @@
-import {
-    type InteractionTypesKey,
-    interactionTypes,
-} from "@frak-labs/core-sdk";
+import type { Hex } from "viem";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { Campaign } from "@/types/Campaign";
+import type {
+    BudgetConfigItem,
+    CampaignMetadata,
+    CampaignRuleDefinition,
+    ConditionGroup,
+    RuleCondition,
+} from "@/types/Campaign";
 
-/**
- * Get all the keys from the interaction types
- */
-const flattenedKeys: InteractionTypesKey[] = Object.values(
-    interactionTypes
-).flatMap(Object.keys) as InteractionTypesKey[];
-
-const initialValues: Campaign = {
-    title: "",
-    type: "",
-    productId: "",
-    specialCategories: [],
-    budget: {
-        type: "global",
-        maxEuroDaily: 0,
-    },
-    territories: [],
-    bank: "",
+export type CampaignDraft = {
+    id?: string;
+    merchantId: string;
+    name: string;
+    rewardToken?: Hex;
+    rule: CampaignRuleDefinition;
+    metadata: CampaignMetadata;
+    budgetConfig: BudgetConfigItem[];
     scheduled: {
-        dateStart: new Date(),
+        startDate?: Date;
+        endDate?: Date;
+    };
+    priority: number;
+};
+
+const initialDraft: CampaignDraft = {
+    merchantId: "",
+    name: "",
+    rule: {
+        trigger: "purchase",
+        conditions: [],
+        rewards: [],
     },
-    distribution: {
-        type: "fixed",
+    metadata: {
+        goal: undefined,
+        specialCategories: [],
+        territories: [],
     },
-    rewardChaining: {
-        userPercent: 0.1,
-    },
-    triggers: Object.fromEntries(
-        flattenedKeys.map((key) => [key, { cac: 0 }])
-    ) as Record<InteractionTypesKey, { cac: number }>,
+    budgetConfig: [],
+    scheduled: {},
+    priority: 0,
 };
 
 type CampaignState = {
-    // State
-    campaign: Campaign;
-    step: number;
-    success: boolean;
-    isClosing: boolean;
-    isFetched: boolean;
-    action: "create" | "edit" | "draft";
+    draft: CampaignDraft;
+    isSuccess: boolean;
 
-    // Actions
-    setCampaign: (campaign: Campaign) => void;
-    setStep: (step: number | ((prev: number) => number)) => void;
-    setSuccess: (success: boolean) => void;
-    setIsClosing: (isClosing: boolean) => void;
-    setIsFetched: (isFetched: boolean) => void;
-    setAction: (action: "create" | "edit" | "draft") => void;
+    setDraft: (draft: CampaignDraft) => void;
+    updateDraft: (fn: (d: CampaignDraft) => CampaignDraft) => void;
+    setSuccess: (v: boolean) => void;
     reset: () => void;
 };
 
-/**
- * Store for campaign creation workflow
- * Combines campaign data, step navigation, and UI state
- */
 export const campaignStore = create<CampaignState>()(
     persist(
         (set) => ({
-            // Initial state
-            campaign: initialValues,
-            step: 1,
-            success: false,
-            isClosing: false,
-            isFetched: false,
-            action: "create",
+            draft: initialDraft,
+            isSuccess: false,
 
-            // Actions
-            setCampaign: (campaign) => set({ campaign }),
-
-            setStep: (step) =>
-                set((state) => ({
-                    step: typeof step === "function" ? step(state.step) : step,
-                })),
-
-            setSuccess: (success) => set({ success }),
-
-            setIsClosing: (isClosing) => set({ isClosing }),
-
-            setIsFetched: (isFetched) => set({ isFetched }),
-
-            setAction: (action) => set({ action }),
-
-            reset: () =>
-                set({
-                    campaign: initialValues,
-                    step: 1,
-                    success: false,
-                    isClosing: false,
-                    isFetched: false,
-                    action: "create",
-                }),
+            setDraft: (draft) => set({ draft }),
+            updateDraft: (fn) => set((s) => ({ draft: fn(s.draft) })),
+            setSuccess: (isSuccess) => set({ isSuccess }),
+            reset: () => set({ draft: initialDraft, isSuccess: false }),
         }),
         {
-            name: "campaign",
-            partialize: (state) => ({
-                campaign: state.campaign,
-                step: state.step,
-                success: state.success,
-                isClosing: state.isClosing,
-            }),
+            name: "campaign-draft-v4",
+            partialize: (s) => ({ draft: s.draft }),
         }
     )
 );
+
+/**
+ * Convert a Date (or ISO string from Zustand persist deserialization) to unix timestamp
+ */
+function dateToTimestamp(date: Date | string): number {
+    const d = date instanceof Date ? date : new Date(date);
+    return Math.floor(d.getTime() / 1000);
+}
+
+export function buildScheduleConditions(
+    scheduled: CampaignDraft["scheduled"]
+): RuleCondition[] {
+    const conditions: RuleCondition[] = [];
+
+    if (scheduled.startDate) {
+        conditions.push({
+            field: "time.timestamp",
+            operator: "gte",
+            value: dateToTimestamp(scheduled.startDate),
+        });
+    }
+
+    if (scheduled.endDate) {
+        conditions.push({
+            field: "time.timestamp",
+            operator: "lte",
+            value: dateToTimestamp(scheduled.endDate),
+        });
+    }
+
+    return conditions;
+}
+
+export function buildApiPayload(draft: CampaignDraft) {
+    const scheduleConditions = buildScheduleConditions(draft.scheduled);
+
+    const existingConditions = Array.isArray(draft.rule.conditions)
+        ? draft.rule.conditions.filter(
+              (c) => !("field" in c && c.field === "time.timestamp")
+          )
+        : draft.rule.conditions;
+
+    const allConditions: RuleCondition[] | ConditionGroup = Array.isArray(
+        existingConditions
+    )
+        ? [...existingConditions, ...scheduleConditions]
+        : {
+              ...existingConditions,
+              conditions: [
+                  ...existingConditions.conditions,
+                  ...scheduleConditions,
+              ],
+          };
+
+    const rewards = draft.rewardToken
+        ? draft.rule.rewards.map((reward) => ({
+              ...reward,
+              token: reward.token ?? draft.rewardToken,
+          }))
+        : draft.rule.rewards;
+
+    return {
+        merchantId: draft.merchantId,
+        name: draft.name,
+        rule: {
+            ...draft.rule,
+            conditions: allConditions,
+            rewards,
+        },
+        metadata: draft.metadata,
+        budgetConfig: draft.budgetConfig,
+        expiresAt: draft.scheduled.endDate
+            ? (draft.scheduled.endDate instanceof Date
+                  ? draft.scheduled.endDate
+                  : new Date(draft.scheduled.endDate)
+              ).toISOString()
+            : undefined,
+        priority: draft.priority,
+    };
+}
+
+export function campaignToDraft(campaign: {
+    id: string;
+    merchantId: string;
+    name: string;
+    rule: CampaignRuleDefinition;
+    metadata?: CampaignMetadata | null;
+    budgetConfig?: BudgetConfigItem[] | null;
+    expiresAt?: string | null;
+    priority: number;
+}): CampaignDraft {
+    const existingToken = campaign.rule.rewards.find((r) => r.token)?.token as
+        | Hex
+        | undefined;
+
+    return {
+        id: campaign.id,
+        merchantId: campaign.merchantId,
+        name: campaign.name,
+        rewardToken: existingToken,
+        rule: campaign.rule,
+        metadata: campaign.metadata ?? {
+            goal: undefined,
+            specialCategories: [],
+            territories: [],
+        },
+        budgetConfig: campaign.budgetConfig ?? [],
+        scheduled: {
+            endDate: campaign.expiresAt
+                ? new Date(campaign.expiresAt)
+                : undefined,
+        },
+        priority: campaign.priority,
+    };
+}

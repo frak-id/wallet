@@ -60,13 +60,13 @@ export type ReactSdkTestFixtures = {
         openSso: ReturnType<typeof import("vitest").vi.fn>;
         prepareSso: ReturnType<typeof import("vitest").vi.fn>;
         getProductInformation: ReturnType<typeof import("vitest").vi.fn>;
-        sendInteraction: ReturnType<typeof import("vitest").vi.fn>;
         trackPurchaseStatus: ReturnType<typeof import("vitest").vi.fn>;
         watchWalletStatus: ReturnType<typeof import("vitest").vi.fn>;
         sendTransaction: ReturnType<typeof import("vitest").vi.fn>;
         siweAuthenticate: ReturnType<typeof import("vitest").vi.fn>;
         processReferral: ReturnType<typeof import("vitest").vi.fn>;
         referralInteraction: ReturnType<typeof import("vitest").vi.fn>;
+        sendInteraction: ReturnType<typeof import("vitest").vi.fn>;
     };
 };
 
@@ -184,13 +184,13 @@ export const test = baseTest.extend<ReactSdkTestFixtures>({
             openSso: vi.fn(),
             prepareSso: vi.fn(),
             getProductInformation: vi.fn(),
-            sendInteraction: vi.fn(),
             trackPurchaseStatus: vi.fn(),
             watchWalletStatus: vi.fn(),
             sendTransaction: vi.fn(),
             siweAuthenticate: vi.fn(),
             processReferral: vi.fn(),
             referralInteraction: vi.fn(),
+            sendInteraction: vi.fn(),
         };
 
         await use(actions);

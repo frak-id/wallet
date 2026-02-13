@@ -16,6 +16,7 @@ import {
     WalletSdkTokenDto,
     WalletTokenDto,
 } from "../../domain/auth/models/WalletSessionDto";
+import { AnonymousMergeTokenDto } from "../../domain/identity/models/AnonymousMergeTokenDto";
 
 export namespace JwtContext {
     export const wallet = buildJwtContext({
@@ -35,10 +36,15 @@ export namespace JwtContext {
     export const business = buildJwtContext({
         secret: process.env.JWT_BUSINESS_SECRET as string,
         schema: BusinessTokenDto,
-        // One week
         expirationDelayInSecond: 60 * 60 * 24 * 7,
-        // Default jwt payload
         iss: "frak.id",
+    });
+    export const anonymousMerge = buildJwtContext({
+        secret: process.env.JWT_SDK_SECRET as string,
+        schema: AnonymousMergeTokenDto,
+        // 60 minutes - user may browse before leaving in-app browser
+        expirationDelayInSecond: 60 * 60,
+        iss: "frak-identity",
     });
 }
 

@@ -3,7 +3,7 @@ import { guard } from "radash";
 import { useCallback } from "react";
 import type { Hex } from "viem";
 import { waitForTransactionReceipt } from "viem/actions";
-import { viemClient } from "@/context/blockchain/provider";
+import { viemClient } from "@/config/blockchain";
 
 /**
  * wait for a transaction confirmations and invalide some queries

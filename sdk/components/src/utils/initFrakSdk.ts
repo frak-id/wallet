@@ -21,9 +21,6 @@ export async function initFrakSdk(): Promise<void> {
 
     console.log("[Frak SDK] Starting initialization");
 
-    // Set the setup flag
-    window.frakSetupInProgress = true;
-
     if (!window.FrakSetup.config) {
         console.error("[Frak SDK] Configuration not found");
         window.frakSetupInProgress = false;
@@ -63,17 +60,21 @@ export async function initFrakSdk(): Promise<void> {
 
 /**
  * Pre-checks for the Frak SDK initialization
+ * Sets frakSetupInProgress flag atomically to prevent race conditions
  */
 function preChecks(): boolean {
-    // Prevent multiple simultaneous initializations
+    // Prevent multiple simultaneous initializations (atomic check-and-set)
     if (window.frakSetupInProgress) {
         console.log("[Frak SDK] Initialization already in progress");
         return false;
     }
+    // Set flag immediately to prevent race condition with concurrent calls
+    window.frakSetupInProgress = true;
 
     if (window.FrakSetup?.client) {
         // Prevent re-initialization if client exists
         console.log("[Frak SDK] Client already initialized");
+        window.frakSetupInProgress = false;
         return false;
     }
 
@@ -82,6 +83,7 @@ function preChecks(): boolean {
         console.error(
             "[Frak SDK] Configuration not found. Please ensure window.FrakSetup.config is set."
         );
+        window.frakSetupInProgress = false;
         return false;
     }
 

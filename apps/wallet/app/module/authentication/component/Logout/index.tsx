@@ -13,7 +13,6 @@ function cleanLocalStorage() {
         "frak_theme",
         "frak_session",
         "frak_sdkSession",
-        "frak_interactionSession",
         "frak_lastWebAuthNAction",
         "frak_user",
         "frak_userSetupLater",

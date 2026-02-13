@@ -1,4 +1,8 @@
-import { getSafeSession } from "@frak-labs/wallet-shared";
+import {
+    getSafeSession,
+    getValidPendingPairingId,
+    pairingStore,
+} from "@frak-labs/wallet-shared";
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { GlobalLayout } from "@/module/common/component/GlobalLayout";
 
@@ -11,12 +15,24 @@ export const Route = createFileRoute("/_wallet/_auth")({
         if (session?.token) {
             // Check if there's a pairing ID in search params
             const search = new URLSearchParams(location.search);
-            const pairingId = search.get("id");
+            const searchPairingId = search.get("id");
+
+            if (searchPairingId) {
+                pairingStore.getState().setPendingPairingId(searchPairingId);
+            }
+
+            const pairingId = searchPairingId || getValidPendingPairingId();
 
             throw redirect({
                 to: pairingId ? "/pairing" : "/wallet",
                 replace: true,
             });
+        }
+
+        const search = new URLSearchParams(location.search);
+        const pairingId = search.get("id");
+        if (pairingId) {
+            pairingStore.getState().setPendingPairingId(pairingId);
         }
     },
 });

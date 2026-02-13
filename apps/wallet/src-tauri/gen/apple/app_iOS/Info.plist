@@ -42,5 +42,16 @@
 	</array>
 	<key>NSFaceIDUsageDescription</key>
 	<string>Unlock your wallet securely with Face ID</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>id.frak.wallet</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>frakwallet</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

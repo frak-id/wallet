@@ -13,10 +13,12 @@ export function SsoRegisterComponent({
     isPrimary,
     onSuccess,
     onError,
+    merchantId,
 }: {
     isPrimary: boolean;
     onSuccess: () => void;
     onError: (error: Error | null) => void;
+    merchantId?: string;
 }) {
     const { t } = useTranslation();
     const { register, error, isRegisterInProgress } = useRegister({
@@ -60,7 +62,7 @@ export function SsoRegisterComponent({
                         // Reset the error
                         onError(null);
 
-                        register();
+                        register({ merchantId });
                     }}
                     disabled={
                         isRegisterInProgress ||
@@ -85,7 +87,7 @@ export function SsoRegisterComponent({
                     // Reset the error
                     onError(null);
 
-                    register();
+                    register({ merchantId });
                 }}
                 type={"button"}
             >

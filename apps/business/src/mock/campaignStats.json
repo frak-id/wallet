@@ -16,9 +16,8 @@
         "sharingRate": 0.57,
         "ctr": 0.43,
         "amountSpent": 3265.0,
-        "costPerShare": 1.03,
-        "costPerPurchase": 20.0,
-        "customerMeetingInteractions": 120
+        "costPerShare": "1030000",
+        "costPerPurchase": "20000000"
     },
     {
         "title": "Awareness Campaign",
@@ -37,9 +36,8 @@
         "sharingRate": 0.51,
         "ctr": 0.32,
         "amountSpent": 74.0,
-        "costPerShare": 0.96,
-        "costPerPurchase": 3.0,
-        "customerMeetingInteractions": 5
+        "costPerShare": "960000",
+        "costPerPurchase": "3000000"
     },
     {
         "title": "Traffic Boost",
@@ -58,9 +56,8 @@
         "sharingRate": 0.42,
         "ctr": 0.28,
         "amountSpent": 1652.0,
-        "costPerShare": 1.4,
-        "costPerPurchase": 5.0,
-        "customerMeetingInteractions": 32
+        "costPerShare": "1400000",
+        "costPerPurchase": "5000000"
     },
     {
         "title": "Retention / Loyal",
@@ -79,8 +76,7 @@
         "sharingRate": 0.47,
         "ctr": 0.24,
         "amountSpent": 964.0,
-        "costPerShare": 0.35,
-        "costPerPurchase": 12.0,
-        "customerMeetingInteractions": 65
+        "costPerShare": "350000",
+        "costPerPurchase": "12000000"
     }
 ]

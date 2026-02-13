@@ -1,11 +1,7 @@
-import {
-    addresses,
-    productInteractionManagerAbi,
-} from "@frak-labs/app-essentials";
+import { addresses, rewarderHubAbi } from "@frak-labs/app-essentials";
 import type {
     LoginModalStepType,
     ModalRpcStepsResultType,
-    OpenInteractionSessionModalStepType,
     SendTransactionModalStepType,
     SiweAuthenticateModalStepType,
 } from "@frak-labs/core-sdk";
@@ -13,7 +9,7 @@ import { useDisplayModal } from "@frak-labs/react-sdk";
 import { Button } from "@frak-labs/ui/component/Button";
 import { BadgeCheck } from "lucide-react";
 import { useMemo } from "react";
-import { encodeFunctionData } from "viem";
+import { encodeFunctionData, zeroAddress } from "viem";
 import { parseSiweMessage } from "viem/siwe";
 import { Panel } from "@/module/common/component/Panel";
 
@@ -54,18 +50,15 @@ export function FullDialog() {
                             },
                             sendTransaction: {
                                 tx: {
-                                    to: addresses.productInteractionManager,
+                                    to: addresses.rewarderHub,
                                     value: "0x00",
                                     data: encodeFunctionData({
-                                        abi: productInteractionManagerAbi,
-                                        functionName: "getInteractionContract",
-                                        args: [
-                                            106219508196454080375526586478153583586194937194493887259467424694676997453395n,
-                                        ],
+                                        abi: rewarderHubAbi,
+                                        functionName: "getClaimable",
+                                        args: [zeroAddress, zeroAddress],
                                     }),
                                 },
                             },
-                            openSession: {},
                             login: {
                                 allowSso: true,
                                 ssoMetadata: {
@@ -111,7 +104,6 @@ function ActionResult({
     data: ModalRpcStepsResultType<
         [
             LoginModalStepType,
-            OpenInteractionSessionModalStepType,
             SiweAuthenticateModalStepType,
             SendTransactionModalStepType,
         ]
@@ -130,11 +122,6 @@ function ActionResult({
 
             <h5>Login data</h5>
             <p>Address: {data.login.wallet}</p>
-            <hr />
-
-            <h5>Open session data</h5>
-            <p>Session start: {data.openSession.startTimestamp}</p>
-            <p>Session end: {data.openSession.endTimestamp}</p>
             <hr />
 
             <h5>Siwe data</h5>

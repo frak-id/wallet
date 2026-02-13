@@ -30,7 +30,6 @@
         }
     },
     "common": {
-        "activated": "Activé",
         "amountRequired": "Le montant est requis",
         "added": "ajouté",
         "at": "à",
@@ -40,7 +39,6 @@
         "claimed": "réclamé",
         "copied": "Copié !",
         "copyAddress": "Copier l'adresse",
-        "disabled": "Désactivé",
         "enterAddress": "Entrez l'adresse",
         "interactions": "Interactions",
         "logout": "Déconnexion",
@@ -52,13 +50,14 @@
         "send": "Envoyer",
         "submit": "Envoyer",
         "to": "À",
-        "transactionHash": "Hash de transaction :",
+        "transactionHash": "Hash de transaction :",
         "transactionLink": "Lien de transaction",
-        "transactionSuccess": "Transaction réussie !",
+        "transactionSuccess": "Transaction réussie !",
         "wallet": "Porte-monnaie :",
         "walletAddress": "Adresse du porte-monnaie :",
         "walletAddressRequired": "L'adresse du porte-monnaie est requise",
-        "walletInvalid": "Adresse de porte-monnaie invalide"
+        "walletInvalid": "Adresse de porte-monnaie invalide",
+        "back-to-wallet": "Retour au porte-monnaie"
     },
     "sharing": {
         "btn": {
@@ -80,16 +79,6 @@
             "deletePrivateKey": "Supprimer la clé privée"
         },
         "installWebApp": "<strong>Installer le wallet sur l'écran d'accueil</strong><br /> pour retrouver vos gains à tout moment",
-        "interaction": {
-            "CREATE_REFERRAL_LINK": "Lien de partage créé",
-            "OPEN_ARTICLE": "Article ouvert",
-            "PURCHASE_COMPLETED": "Achat terminé",
-            "PURCHASE_STARTED": "Achat commencé",
-            "READ_ARTICLE": "Article lu",
-            "REFERRED": "Parrainé",
-            "WEBSHOP_OPENNED": "Ouverture de la boutique en ligne",
-            "CUSTOMER_MEETING": "Rendez-vous en boutique"
-        },
         "invite": {
             "title": "Invitez des amis, gagnez 5€",
             "text": "Gagnez 5€ pour chaque ami que vous invitez. Conditions générales applicables"
@@ -174,17 +163,6 @@
                 "inProgress": "Création du porte-monnaie en cours"
             }
         },
-        "session": {
-            "closed": "Votre porte-monnaie n’est pas activé. Vous ne pouvez pas recevoir vos gains",
-            "open": "Votre porte-monnaie est activé",
-            "openSession": "Activez votre porte-monnaie",
-            "titleActivated": "Porte-monnaie est activé",
-            "titleNotActivated": "Porte-monnaie non activé",
-            "tooltip": {
-                "active": "Vous avez un porte-monnaie actif depuis {{sessionStart}} et jusqu'à {{sessionEnd}}",
-                "inactive": "L'activation du porte-monnaie nous permettra d'envoyer des données d'interaction"
-            }
-        },
         "share-and-earn": "Partagez<br />& gagnez",
         "tokens": {
             "amountLessThanBalance": "Le montant doit être inférieur au solde",
@@ -242,9 +220,11 @@
                 "device": "Appareil :"
             },
             "code": "Vérifiez que le code est correct",
+            "noCodeNotice": "Confirmez cette demande d'appairage pour continuer.",
             "error": {
                 "title": "Requête de connexion invalide",
-                "noCode": "Aucun code de connexion fourni"
+                "noCode": "Aucun code de connexion fourni",
+                "notFound": "Demande d'appairage introuvable ou expirée"
             },
             "loading": {
                 "title": "Veuillez patienter"
@@ -313,6 +293,10 @@
         "toastLoading": {
             "stuck": "Vous êtes bloqué ? Consulter la section <pLink>Dépannage</pLink> pour plus d'informations.<br /><br />Vous pouvez essayer de <button>nettoyer</button>.<br />(cela vous déconnectera et vous devrez redémarrer une connexion / appairage)",
             "dismiss": "Masquer le message"
+        },
+        "openLogin": {
+            "login": "Se connecter avec la biométrie",
+            "webauthnNotSupported": "WebAuthn n'est pas pris en charge sur cet appareil"
         }
     },
     "biometrics": {
@@ -340,5 +324,51 @@
             "userOperationExecution": "Une erreur est survenue lors de l'exécution de la transaction. Veuillez réessayer.",
             "generic": "Une erreur est survenue. Veuillez réessayer."
         }
+    },
+    "reward": {
+        "status": {
+            "pending": "En attente",
+            "processing": "En cours de traitement",
+            "settled": "Réglé",
+            "consumed": "Consommé",
+            "cancelled": "Annulé",
+            "expired": "Expiré"
+        },
+        "trigger": {
+            "unknown": "Récompense",
+            "referral": "Parrainage",
+            "create_referral_link": "Lien partagé",
+            "purchase": "Achat",
+            "custom": "Personnalisé"
+        },
+        "history": {
+            "title": "Récompenses récentes",
+            "empty": "Pas encore de récompenses",
+            "time": {
+                "justNow": "à l'instant",
+                "minutesAgo": "il y a {{count}}min",
+                "hoursAgo": "il y a {{count}}h",
+                "daysAgo": "il y a {{count}}j"
+            }
+        }
+    },
+    "mobile-sso": {
+        "connecting": "Connexion...",
+        "openWallet": "Ouvrir dans Frak Wallet",
+        "waiting": "En attente du wallet...",
+        "retry": "Connexion expirée. Réessayer ?",
+        "appNotFound": "Application Frak Wallet introuvable",
+        "continueInBrowser": "Continuer dans le navigateur"
+    },
+    "mobile-tx": {
+        "sendTransaction": "Envoyer la transaction",
+        "explanation": "Approuvez cette transaction dans votre portefeuille",
+        "waiting": "En attente d'approbation...",
+        "openWallet": "Ouvrir le portefeuille pour approuver",
+        "reopenWallet": "Ré-ouvrir le portefeuille",
+        "timeout": "Délai d'approbation dépassé. Réessayer ?",
+        "retry": "Réessayer",
+        "appNotFound": "Application Frak Wallet introuvable",
+        "appNotFoundHint": "Veuillez réinstaller l'application ou réessayer"
     }
 }

@@ -4,6 +4,7 @@ import { createStore } from "zustand/vanilla";
 import { authenticatedWalletApi } from "../../common/api/backendClient";
 import {
     type BasePairingState,
+    type OriginIdentityNode,
     WsCloseCode,
     type WsOriginMessage,
     type WsOriginRequest,
@@ -22,6 +23,7 @@ export type PairingWsEventListener = (
 type ConnectionParams =
     | {
           action: "initiate";
+          originNode?: OriginIdentityNode;
       }
     | {
           action: "join";
@@ -87,16 +89,50 @@ export abstract class BasePairingClient<
     }
 
     /**
-     * Connect to the pairing websocket
+     * Check WebSocket liveness, cleaning up zombie connections.
+     * A zombie occurs when the OS kills the socket while the app is backgrounded
+     * without firing a close event — the connection object lingers in CLOSED state.
+     *
+     * Returns true if connection is active or closing (let close handler finish).
      */
+    protected isAlive(): boolean {
+        if (!this.connection) return false;
+
+        const { readyState } = this.connection.ws;
+
+        // Active, handshaking, or tearing down — leave it alone
+        if (
+            readyState === WebSocket.OPEN ||
+            readyState === WebSocket.CONNECTING ||
+            readyState === WebSocket.CLOSING
+        ) {
+            return true;
+        }
+
+        // CLOSED but connection object lingering — zombie cleanup
+        console.log("[Pairing] Cleaning up zombie WebSocket connection");
+        this.connection = null;
+        this.reconnectRetryCount = 0;
+        this.cleanupConnection();
+        return false;
+    }
+
     protected connect(params: ConnectionParams) {
         if (this.connection) {
             console.warn("Pairing client is already connected");
             return;
         }
 
+        const query =
+            "originNode" in params && params.originNode
+                ? {
+                      ...params,
+                      originNode: btoa(JSON.stringify(params.originNode)),
+                  }
+                : params;
+
         this.connection = authenticatedWalletApi.pairings.ws.subscribe({
-            query: params,
+            query,
         });
         this.setState({ status: "connecting" } as Partial<TState>);
 
@@ -197,6 +233,18 @@ export abstract class BasePairingClient<
 
         // Reput the state to initial state
         this.setState(this.getInitialState());
+    }
+
+    /**
+     * Lightweight cleanup that only clears the ping interval without
+     * resetting store state. Used by isAlive() to avoid a UI flash
+     * (idle → connecting) when recovering from a zombie connection.
+     */
+    protected cleanupConnection() {
+        if (this.pingInterval) {
+            clearInterval(this.pingInterval);
+            this.pingInterval = null;
+        }
     }
 
     /**

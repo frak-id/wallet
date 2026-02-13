@@ -32,51 +32,6 @@ test("should be able to click recovery button ", async ({ settingsPage }) => {
     await settingsPage.verifyRecoverySetupPage();
 });
 
-// Verify the activating status toggle
-test("Should display activated wallet status", async ({
-    settingsPage,
-    blockchainHelper,
-}) => {
-    await blockchainHelper.withEnabledSession();
-    await settingsPage.navigateToSettings();
-    await settingsPage.verifyDisplayEnableStatus();
-});
-
-// Verify the activating status display
-test("Should display desactivated wallet status", async ({
-    settingsPage,
-    blockchainHelper,
-}) => {
-    await blockchainHelper.withDisabledSession();
-    await settingsPage.navigateToSettings();
-    await settingsPage.verifyDisplayDisableStatus();
-});
-
-// Click the activate wallet button
-test("should be able to click activate the wallet button", async ({
-    settingsPage,
-    blockchainHelper,
-    mockedWebAuthN,
-}) => {
-    await blockchainHelper.withEnabledSession();
-    await settingsPage.navigateToSettings();
-    await settingsPage.clickActivateWalletButton();
-
-    await mockedWebAuthN.verifySignature();
-});
-
-test("should be able to click desactivate wallet button", async ({
-    settingsPage,
-    blockchainHelper,
-    mockedWebAuthN,
-}) => {
-    await blockchainHelper.withDisabledSession();
-    await settingsPage.navigateToSettings();
-    await settingsPage.clickDesactivateWalletButton();
-
-    await mockedWebAuthN.verifySignature();
-});
-
 //verify the unsubscribe notifications block
 test("should display unsubscribe notifications block if notifications tokens set", async ({
     backendApi,

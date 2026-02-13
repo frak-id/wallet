@@ -1,6 +1,6 @@
-import { addresses } from "@frak-labs/app-essentials";
 import {
     currentStablecoins,
+    stablecoins,
     usdcArbitrumAddress,
 } from "@frak-labs/app-essentials/blockchain";
 import type { Address } from "viem";
@@ -61,6 +61,8 @@ describe("PricingRepository", () => {
         });
 
         it("should return fixed rate for USDe stablecoin", async () => {
+            mockGet.mockRejectedValueOnce(new Error("API error"));
+
             const result = await repository.getTokenPrice({
                 token: currentStablecoins.usde,
             });
@@ -70,10 +72,11 @@ describe("PricingRepository", () => {
                 eur: 0.85,
                 gbp: 0.75,
             });
-            expect(mockGet).not.toHaveBeenCalled();
         });
 
         it("should return fixed rate for EURe stablecoin", async () => {
+            mockGet.mockRejectedValueOnce(new Error("API error"));
+
             const result = await repository.getTokenPrice({
                 token: currentStablecoins.eure,
             });
@@ -83,10 +86,11 @@ describe("PricingRepository", () => {
                 eur: 1,
                 gbp: 0.88,
             });
-            expect(mockGet).not.toHaveBeenCalled();
         });
 
         it("should return fixed rate for GBPe stablecoin", async () => {
+            mockGet.mockRejectedValueOnce(new Error("API error"));
+
             const result = await repository.getTokenPrice({
                 token: currentStablecoins.gbpe,
             });
@@ -96,7 +100,6 @@ describe("PricingRepository", () => {
                 eur: 1.14,
                 gbp: 1,
             });
-            expect(mockGet).not.toHaveBeenCalled();
         });
 
         it("should replace mUSD token with USDC address", async () => {
@@ -113,7 +116,7 @@ describe("PricingRepository", () => {
             });
 
             const result = await repository.getTokenPrice({
-                token: addresses.mUSDToken,
+                token: stablecoins.testnet.usdc,
             });
 
             expect(result).toEqual(mockPrice);
@@ -238,9 +241,8 @@ describe("PricingRepository", () => {
 
             mockGet.mockRejectedValue(new Error("API error"));
 
-            await expect(
-                repository.getTokenPrice({ token: mockToken })
-            ).rejects.toThrow("API error");
+            const result = await repository.getTokenPrice({ token: mockToken });
+            expect(result).toBeUndefined();
         });
 
         it("should handle malformed API responses", async () => {
@@ -248,12 +250,11 @@ describe("PricingRepository", () => {
                 "0x1234567890abcdef1234567890abcdef12345678" as Address;
 
             mockGet.mockResolvedValue({
-                json: async () => null,
+                json: async () => ({}),
             });
 
-            await expect(
-                repository.getTokenPrice({ token: mockToken })
-            ).rejects.toThrow();
+            const result = await repository.getTokenPrice({ token: mockToken });
+            expect(result).toBeUndefined();
         });
     });
 

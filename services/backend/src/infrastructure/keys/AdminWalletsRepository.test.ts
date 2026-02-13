@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { AdminWalletsRepository } from "./AdminWalletsRepository";
 
 describe("AdminWalletsRepository", () => {
@@ -14,48 +14,6 @@ describe("AdminWalletsRepository", () => {
 
         // Create a fresh instance for each test
         repository = new AdminWalletsRepository();
-    });
-
-    describe("getProductSpecificAccount", () => {
-        it("should return an account for a given product ID", async () => {
-            const productId = 123n;
-
-            const account = await repository.getProductSpecificAccount({
-                productId,
-            });
-
-            expect(account).toBeDefined();
-            expect(account.address).toMatch(/^0x[a-fA-F0-9]{40}$/);
-            expect(account.signMessage).toBeDefined();
-            expect(account.signTransaction).toBeDefined();
-        });
-
-        it("should return the same account for the same product ID (caching)", async () => {
-            const productId = 456n;
-
-            const account1 = await repository.getProductSpecificAccount({
-                productId,
-            });
-            const account2 = await repository.getProductSpecificAccount({
-                productId,
-            });
-
-            expect(account1.address).toBe(account2.address);
-        });
-
-        it("should return different accounts for different product IDs", async () => {
-            const productId1 = 123n;
-            const productId2 = 456n;
-
-            const account1 = await repository.getProductSpecificAccount({
-                productId: productId1,
-            });
-            const account2 = await repository.getProductSpecificAccount({
-                productId: productId2,
-            });
-
-            expect(account1.address).not.toBe(account2.address);
-        });
     });
 
     describe("getKeySpecificAccount", () => {
@@ -159,62 +117,6 @@ describe("AdminWalletsRepository", () => {
 
             release();
             expect(mutex.isLocked()).toBe(false);
-        });
-    });
-
-    describe("error handling", () => {
-        it("should throw error when MASTER_KEY_SECRET is missing", async () => {
-            delete process.env.MASTER_KEY_SECRET;
-            const newRepository = new AdminWalletsRepository();
-
-            await expect(
-                newRepository.getProductSpecificAccount({ productId: 123n })
-            ).rejects.toThrow("Missing MASTER_KEY_SECRET");
-        });
-
-        it("should throw error when masterPrivateKey is missing in secret", async () => {
-            process.env.MASTER_KEY_SECRET = JSON.stringify({});
-            const newRepository = new AdminWalletsRepository();
-
-            await expect(
-                newRepository.getProductSpecificAccount({ productId: 123n })
-            ).rejects.toThrow("Missing masterPrivateKey in the secret");
-        });
-    });
-
-    describe("caching behavior", () => {
-        it("should cache master private key", async () => {
-            const spy = vi.spyOn(JSON, "parse");
-
-            // First call should parse the env variable
-            await repository.getProductSpecificAccount({ productId: 123n });
-            const firstCallCount = spy.mock.calls.length;
-
-            // Second call should use cache
-            await repository.getProductSpecificAccount({ productId: 456n });
-            const secondCallCount = spy.mock.calls.length;
-
-            // Should not parse again (same call count)
-            expect(secondCallCount).toBe(firstCallCount);
-
-            spy.mockRestore();
-        });
-
-        it("should cache derived keys", async () => {
-            const productId = 789n;
-
-            // First call
-            const account1 = await repository.getProductSpecificAccount({
-                productId,
-            });
-
-            // Second call should return cached result
-            const account2 = await repository.getProductSpecificAccount({
-                productId,
-            });
-
-            // Should have the same address (cached private key)
-            expect(account1.address).toBe(account2.address);
         });
     });
 });

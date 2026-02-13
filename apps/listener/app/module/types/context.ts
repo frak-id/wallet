@@ -1,6 +1,5 @@
 import type { IFrameRpcSchema } from "@frak-labs/core-sdk";
 import type { SsoRpcSchema } from "@frak-labs/wallet-shared";
-import type { Address, Hex } from "viem";
 
 /**
  * Augmented context for wallet RPC handlers
@@ -21,10 +20,10 @@ export type WalletRpcContext = {
     source: MessageEventSource | null;
 
     /**
-     * The product ID (derived from domain)
-     * Already validated to match the message origin
+     * The merchant ID (UUID from backend)
+     * Primary identifier for the merchant
      */
-    productId: Hex;
+    merchantId: string;
 
     /**
      * The full source URL
@@ -37,9 +36,9 @@ export type WalletRpcContext = {
     isAutoContext: boolean;
 
     /**
-     * Optional wallet referrer address
+     * Anonymous client ID from the SDK for identity tracking
      */
-    walletReferrer?: Address;
+    clientId?: string;
 };
 
 /**

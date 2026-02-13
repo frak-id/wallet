@@ -2,10 +2,10 @@ import path from "node:path";
 import type { Resource } from "@pulumi/pulumi";
 import { KubernetesService } from "../components/KubernetesService";
 import {
+    androidSha256Fingerprint,
     backendUrl,
     drpcApiKey,
     erpcUrl,
-    indexerUrl,
     nexusRpcSecret,
     openPanelApiUrl,
     openPanelWalletClientId,
@@ -13,16 +13,21 @@ import {
     vapidPublicKey,
     walletUrl,
 } from "../config";
-import { getLocalIp, isProd, normalizedStageName } from "../utils";
+import { getLocalIp, isProd, isV2, normalizedStageName } from "../utils";
 import { baseDomainName, getRegistryPath, walletNamespace } from "./utils";
+
+// Resolve backend service name only in non-dev (avoids triggering Docker builds locally)
+const backendServiceName = $dev
+    ? ""
+    : ((await import("./backend")).backendInstance.service?.metadata?.name ??
+      "");
 
 // todo: for now on wallet.gcp-dev.frak.id, to test that up a bit, and we wil llater migrate it to the real wallet.frak.id
 const subDomain = isProd ? "wallet" : "wallet-dev";
 
-const walletEnv = {
+export const walletEnv = {
     STAGE: normalizedStageName,
     BACKEND_URL: backendUrl,
-    INDEXER_URL: indexerUrl,
     ERPC_URL: erpcUrl,
     DRPC_API_KEY: drpcApiKey.value,
     PIMLICO_API_KEY: pimlicoApiKey.value,
@@ -32,6 +37,7 @@ const walletEnv = {
     OPEN_PANEL_API_URL: openPanelApiUrl,
     OPEN_PANEL_WALLET_CLIENT_ID: openPanelWalletClientId.value,
     OPEN_PANEL_LISTENER_CLIENT_ID: openPanelWalletClientId.value,
+    ANDROID_SHA256_FINGERPRINT: androidSha256Fingerprint.value,
 };
 
 let imageRefs = {
@@ -57,7 +63,6 @@ if (!$dev) {
             BASE_IMAGE: baseImage.ref,
             STAGE: walletEnv.STAGE,
             BACKEND_URL: walletEnv.BACKEND_URL,
-            INDEXER_URL: walletEnv.INDEXER_URL,
             ERPC_URL: walletEnv.ERPC_URL,
             FRAK_WALLET_URL: walletEnv.FRAK_WALLET_URL,
             OPEN_PANEL_API_URL: walletEnv.OPEN_PANEL_API_URL,
@@ -69,6 +74,7 @@ if (!$dev) {
             NEXUS_RPC_SECRET: walletEnv.NEXUS_RPC_SECRET,
             VAPID_PUBLIC_KEY: walletEnv.VAPID_PUBLIC_KEY,
             OPEN_PANEL_WALLET_CLIENT_ID: walletEnv.OPEN_PANEL_WALLET_CLIENT_ID,
+            ANDROID_SHA256_FINGERPRINT: walletEnv.ANDROID_SHA256_FINGERPRINT,
         },
         platforms: ["linux/amd64"],
         push: true,
@@ -89,7 +95,6 @@ if (!$dev) {
             BASE_IMAGE: baseImage.ref,
             STAGE: walletEnv.STAGE,
             BACKEND_URL: walletEnv.BACKEND_URL,
-            INDEXER_URL: walletEnv.INDEXER_URL,
             ERPC_URL: walletEnv.ERPC_URL,
             FRAK_WALLET_URL: walletEnv.FRAK_WALLET_URL,
             OPEN_PANEL_API_URL: walletEnv.OPEN_PANEL_API_URL,
@@ -101,6 +106,7 @@ if (!$dev) {
             NEXUS_RPC_SECRET: walletEnv.NEXUS_RPC_SECRET,
             OPEN_PANEL_LISTENER_CLIENT_ID:
                 walletEnv.OPEN_PANEL_LISTENER_CLIENT_ID,
+            ANDROID_SHA256_FINGERPRINT: walletEnv.ANDROID_SHA256_FINGERPRINT,
         },
         platforms: ["linux/amd64"],
         push: true,
@@ -268,11 +274,17 @@ export const walletService = new KubernetesService(
 
         // Ingress config with path-based routing
         ingress: {
-            host: `${subDomain}.frak.id`,
+            host: isV2 ? `wallet.${baseDomainName}` : `${subDomain}.frak.id`,
             tlsSecretName: "wallet-tls",
-            additionalHosts: [`wallet.${baseDomainName}`],
-            // Route /listener to the listener service
+            additionalHosts: isV2 ? [] : [`wallet.${baseDomainName}`],
+            // Route /listener to the listener service and /.well-known to backend
             pathRoutes: [
+                {
+                    path: "/.well-known",
+                    pathType: "Prefix",
+                    serviceName: backendServiceName,
+                    servicePort: 80,
+                },
                 {
                     path: "/listener",
                     pathType: "Prefix",
@@ -319,13 +331,24 @@ if ($dev) {
         // Override backend URL to use local IP instead of localhost
         // This allows Android/iOS emulators and physical devices to connect
         BACKEND_URL: `http://${localIp}:3030`,
+        TAURI_CLI_RUNNING: "1",
     };
+
+    new sst.x.DevCommand("wallet:tauri", {
+        dev: {
+            title: "Wallet Tauri Dev Server",
+            autostart: false,
+            command: "./scripts/tauri-dev.sh dev",
+            directory: "./apps/wallet",
+        },
+        environment: mobileEnv,
+    });
 
     new sst.x.DevCommand("wallet:tauri-android", {
         dev: {
-            title: "Tauri Android Dev",
+            title: "Tauri Android",
             autostart: false,
-            command: "bun run tauri:android:dev",
+            command: "./scripts/tauri-dev.sh android",
             directory: "./apps/wallet",
         },
         environment: mobileEnv,
@@ -333,9 +356,9 @@ if ($dev) {
 
     new sst.x.DevCommand("wallet:tauri-ios", {
         dev: {
-            title: "Tauri iOS Dev",
+            title: "Tauri iOS",
             autostart: false,
-            command: "bun run tauri:ios:dev",
+            command: "./scripts/tauri-dev.sh ios",
             directory: "./apps/wallet",
         },
         environment: mobileEnv,

@@ -14,43 +14,6 @@ describe("Common Routes API", () => {
     });
 
     describe("GET /adminWallet", () => {
-        it("should return admin wallet for valid productId", async () => {
-            const mockAccount = {
-                address: "0x1234567890123456789012345678901234567890",
-            };
-            adminWalletsRepositoryMocks.getProductSpecificAccount.mockResolvedValue(
-                mockAccount as never
-            );
-
-            const response = await commonRoutes.handle(
-                new Request("http://localhost/adminWallet?productId=0x1")
-            );
-
-            expect(response.status).toBe(200);
-            expect(
-                adminWalletsRepositoryMocks.getProductSpecificAccount
-            ).toHaveBeenCalledWith({
-                productId: 1n,
-            });
-
-            const data = await response.json();
-            expect(data).toEqual({
-                pubKey: mockAccount.address,
-            });
-        });
-
-        it("should return 422 for invalid productId (not hex)", async () => {
-            const response = await commonRoutes.handle(
-                new Request("http://localhost/adminWallet?productId=invalid")
-            );
-
-            // Elysia returns 422 for validation errors
-            expect(response.status).toBe(422);
-            expect(
-                adminWalletsRepositoryMocks.getProductSpecificAccount
-            ).not.toHaveBeenCalled();
-        });
-
         it("should return admin wallet for valid key", async () => {
             const mockAccount = {
                 address: "0x1234567890123456789012345678901234567890",
@@ -86,27 +49,14 @@ describe("Common Routes API", () => {
             expect(errorMessage).toBe("Invalid query");
         });
 
-        it("should prioritize productId over key when both are provided", async () => {
-            const mockAccount = {
-                address: "0x1234567890123456789012345678901234567890",
-            };
-            adminWalletsRepositoryMocks.getProductSpecificAccount.mockResolvedValue(
-                mockAccount as never
-            );
-
+        it("should return error when key is not provided", async () => {
             const response = await commonRoutes.handle(
-                new Request(
-                    "http://localhost/adminWallet?productId=0x1&key=test-key"
-                )
+                new Request("http://localhost/adminWallet")
             );
 
-            expect(response.status).toBe(200);
-            expect(
-                adminWalletsRepositoryMocks.getProductSpecificAccount
-            ).toHaveBeenCalled();
-            expect(
-                adminWalletsRepositoryMocks.getKeySpecificAccount
-            ).not.toHaveBeenCalled();
+            expect(response.status).toBe(400);
+            const errorMessage = await response.text();
+            expect(errorMessage).toBe("Invalid query");
         });
     });
 

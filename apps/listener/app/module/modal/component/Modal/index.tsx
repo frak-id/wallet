@@ -21,11 +21,11 @@ import {
 } from "react";
 import { Toaster } from "sonner";
 import { useShallow } from "zustand/react/shallow";
+import { useGetMergeToken } from "@/module/hooks/useGetMergeToken";
 import { SiweAuthenticateModalStep } from "@/module/modal/component/Authenticate";
 import { FinalModalStep } from "@/module/modal/component/Final";
 import { MetadataInfo } from "@/module/modal/component/Generic";
 import { LoginModalStep } from "@/module/modal/component/Login";
-import { OpenSessionModalStep } from "@/module/modal/component/OpenSession";
 import { TransactionModalStep } from "@/module/modal/component/Transaction";
 import {
     type GenericWalletUiType,
@@ -54,6 +54,7 @@ export function ListenerModal({
 }: ModalUiType & GenericWalletUiType) {
     const { clearRequest } = useListenerUI();
     const [isOpen, setIsOpen] = useState(true);
+    const getMergeToken = useGetMergeToken();
 
     /**
      * Method to close the modal
@@ -200,7 +201,7 @@ export function ListenerModal({
             onOpenChange={onOpenChange}
         >
             <Toaster position="top-center" />
-            <InAppBrowserToast />
+            <InAppBrowserToast getMergeToken={getMergeToken} />
             <ToastLoading />
 
             {icon}
@@ -338,13 +339,6 @@ function CurrentModalStepComponent({
                     <TransactionModalStep
                         params={currentStep.params}
                         onFinish={currentStep.onResponse}
-                    />
-                );
-            case "openSession":
-                return (
-                    <OpenSessionModalStep
-                        onFinish={currentStep.onResponse}
-                        onError={onError}
                     />
                 );
             case "final":

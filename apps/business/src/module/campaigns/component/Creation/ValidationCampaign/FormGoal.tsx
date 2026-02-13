@@ -1,23 +1,20 @@
 import { Input } from "@frak-labs/ui/component/forms/Input";
 import { capitalize } from "radash";
-import type { UseFormReturn } from "react-hook-form";
+import { useFormContext } from "react-hook-form";
 import { FormDescription, FormItem } from "@/module/forms/Form";
-import type { Campaign } from "@/types/Campaign";
+import type { CampaignDraft } from "@/stores/campaignStore";
 
-/**
- * Display the campaign goal
- * @param form
- * @constructor
- */
-export function FormGoal(form: UseFormReturn<Campaign>) {
+export function FormGoal() {
+    const form = useFormContext<CampaignDraft>();
+    const goal = form.getValues("metadata.goal");
     return (
         <FormItem>
             <FormDescription label={"Campaign goal"} />
-            {form.getValues("type") && (
+            {goal && (
                 <Input
                     length={"medium"}
                     disabled={true}
-                    defaultValue={capitalize(form.getValues("type") ?? "")}
+                    defaultValue={capitalize(goal ?? "")}
                 />
             )}
         </FormItem>

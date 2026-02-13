@@ -6,7 +6,6 @@ export {
     dbMock,
     dnsCheckRepositoryMocks,
     mintRepositoryMocks,
-    onChainRolesRepositoryMocks,
     resetMockBusinessSession,
     setMockBusinessSession,
 } from "./common";

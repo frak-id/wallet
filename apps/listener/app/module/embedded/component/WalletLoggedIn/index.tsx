@@ -6,34 +6,29 @@ import {
 } from "@frak-labs/core-sdk";
 import { useCopyToClipboardWithState } from "@frak-labs/ui/hook/useCopyToClipboardWithState";
 import { Copy } from "@frak-labs/ui/icons/Copy";
-import { Power } from "@frak-labs/ui/icons/Power";
 import { Share } from "@frak-labs/ui/icons/Share";
 import { prefixWalletCss } from "@frak-labs/ui/utils/prefixWalletCss";
 import {
     OriginPairingState,
     trackGenericEvent,
-    useCloseSession,
     useGetUserBalance,
-    useGetUserPendingBalance,
-    useInteractionSessionStatus,
-    useOpenSession,
 } from "@frak-labs/wallet-shared";
 import { cx } from "class-variance-authority";
 import { toast } from "sonner";
 import { useAccount } from "wagmi";
 import { ButtonWallet } from "@/module/embedded/component/ButtonWallet";
 import {
-    OnboardingActivate,
     OnboardingShare,
     OnboardingWelcome,
 } from "@/module/embedded/component/Onboarding";
-import { useTriggerPushInterraction } from "@/module/hooks/useTriggerPushInterraction";
+import { RewardHistory } from "@/module/embedded/component/RewardHistory";
 import {
     useEmbeddedListenerUI,
     useListenerTranslation,
 } from "@/module/providers/ListenerUiProvider";
 import { useSafeResolvingContext } from "@/module/stores/hooks";
 import { useShareLink } from "../../../hooks/useShareLink";
+import { useTrackSharing } from "../../../hooks/useTrackSharing";
 import styles from "./index.module.css";
 
 /**
@@ -45,16 +40,8 @@ export function LoggedInComponent() {
         currentRequest: { configMetadata },
     } = useEmbeddedListenerUI();
     const { userBalance } = useGetUserBalance();
-    const { userPendingBalance, refetch: refetchPendingBalance } =
-        useGetUserPendingBalance();
     const currencyAmountKey = getCurrencyAmountKey(configMetadata?.currency);
-    const isPending = !!(
-        userPendingBalance?.[currencyAmountKey] &&
-        userPendingBalance?.[currencyAmountKey] > 0
-    );
-    const amount = isPending
-        ? userPendingBalance[currencyAmountKey]
-        : (userBalance?.total?.[currencyAmountKey] ?? 0);
+    const amount = userBalance?.total?.[currencyAmountKey] ?? 0;
 
     // Build the footer
     const footer = (
@@ -72,36 +59,21 @@ export function LoggedInComponent() {
         <>
             <Balance
                 amount={amount}
-                isPending={isPending}
                 currency={configMetadata?.currency ?? "eur"}
             />
-            <ActionButtons refetchPendingBalance={refetchPendingBalance} />
+            <ActionButtons />
+            <RewardHistory />
             {footer}
         </>
     );
 }
 
-function Balance({
-    amount,
-    isPending,
-    currency,
-}: {
-    amount: number;
-    isPending: boolean;
-    currency: Currency;
-}) {
+function Balance({ amount, currency }: { amount: number; currency: Currency }) {
     const { t } = useListenerTranslation();
 
     return (
         <div className={styles.balance}>
-            <h2 className={styles.balance__title}>
-                {t("common.balance")}{" "}
-                {isPending && (
-                    <span className={styles.balance__status}>
-                        ({t("common.pending")})
-                    </span>
-                )}
-            </h2>
+            <h2 className={styles.balance__title}>{t("common.balance")}</h2>
             <p className={styles.balance__amount}>
                 {formatAmount(amount, currency)}
             </p>
@@ -110,11 +82,7 @@ function Balance({
     );
 }
 
-function ActionButtons({
-    refetchPendingBalance,
-}: {
-    refetchPendingBalance: () => void;
-}) {
+function ActionButtons() {
     const { address } = useAccount();
     const {
         currentRequest: {
@@ -140,83 +108,25 @@ function ActionButtons({
                 prefixWalletCss("modalListenerWallet__actionButtons")
             )}
         >
-            <ButtonOpenSession refetchPendingBalance={refetchPendingBalance} />
-            <ButtonCopyLink
-                finalSharingLink={finalSharingLink}
-                refetchPendingBalance={refetchPendingBalance}
-            />
-            <ButtonSharingLink
-                finalSharingLink={finalSharingLink}
-                refetchPendingBalance={refetchPendingBalance}
-            />
-        </div>
-    );
-}
-
-function ButtonOpenSession({
-    refetchPendingBalance,
-}: {
-    refetchPendingBalance: () => void;
-}) {
-    const { data: currentSession } = useInteractionSessionStatus();
-    const { t } = useListenerTranslation();
-    const { mutateAsync: openSession, isPending: isOpeningSession } =
-        useOpenSession();
-    const { mutateAsync: closeSession, isPending: isClosingSession } =
-        useCloseSession();
-
-    return (
-        <div
-            className={cx(
-                styles.modalListenerWallet__wrapperButton,
-                prefixWalletCss("modalListenerWallet__wrapperButton")
-            )}
-        >
-            <ButtonWallet
-                variant={currentSession ? "success" : "danger"}
-                icon={<Power />}
-                onClick={() => {
-                    if (currentSession) {
-                        closeSession().then(() => {
-                            refetchPendingBalance();
-                        });
-                        return;
-                    }
-
-                    openSession().then(() => {
-                        refetchPendingBalance();
-                    });
-                }}
-                isLoading={isOpeningSession || isClosingSession}
-                disabled={isOpeningSession || isClosingSession}
-            >
-                {currentSession ? t("common.activated") : t("common.disabled")}
-            </ButtonWallet>
-            <OnboardingActivate isReverse={true} isHidden={!!currentSession} />
+            <ButtonCopyLink finalSharingLink={finalSharingLink} />
+            <ButtonSharingLink finalSharingLink={finalSharingLink} />
         </div>
     );
 }
 
 function ButtonCopyLink({
     finalSharingLink,
-    refetchPendingBalance,
 }: {
     finalSharingLink: string | null;
-    refetchPendingBalance: () => void;
 }) {
-    const { data: currentSession } = useInteractionSessionStatus();
     const { copied, copy } = useCopyToClipboardWithState();
     const { t } = useListenerTranslation();
-
-    // Listen to copied to trigger the interaction push
-    useTriggerPushInterraction({
-        conditionToTrigger: copied,
-    });
+    const { mutate: trackSharing } = useTrackSharing();
 
     return (
         <ButtonWallet
-            variant={!currentSession ? "disabled" : "primary"}
-            disabled={!currentSession || copied}
+            variant="primary"
+            disabled={copied}
             isLoading={copied}
             icon={<Copy />}
             onClick={async () => {
@@ -225,7 +135,7 @@ function ButtonCopyLink({
                 trackGenericEvent("sharing-copy-link", {
                     link: finalSharingLink,
                 });
-                refetchPendingBalance();
+                trackSharing();
                 toast.success(t("sharing.btn.copySuccess"));
             }}
         >
@@ -236,30 +146,20 @@ function ButtonCopyLink({
 
 function ButtonSharingLink({
     finalSharingLink,
-    refetchPendingBalance,
 }: {
     finalSharingLink: string | null;
-    refetchPendingBalance: () => void;
 }) {
-    const { data: currentSession } = useInteractionSessionStatus();
     const { t } = useListenerTranslation();
 
     // Trigger native sharing
-    const {
-        data: shareResult,
-        mutate: triggerSharing,
-        isPending: isSharing,
-    } = useShareLink(finalSharingLink, {
-        onSuccess: (message) => {
-            refetchPendingBalance();
-            message && toast.success(message as string);
-        },
-    });
-
-    // Listen to shareResult to trigger the interaction push
-    useTriggerPushInterraction({
-        conditionToTrigger: !!shareResult,
-    });
+    const { mutate: triggerSharing, isPending: isSharing } = useShareLink(
+        finalSharingLink,
+        {
+            onSuccess: (message) => {
+                message && toast.success(message as string);
+            },
+        }
+    );
 
     return (
         <div
@@ -269,8 +169,8 @@ function ButtonSharingLink({
             )}
         >
             <ButtonWallet
-                variant={!currentSession ? "disabled" : "primary"}
-                disabled={!currentSession || isSharing}
+                variant="primary"
+                disabled={isSharing}
                 isLoading={isSharing}
                 icon={<Share />}
                 onClick={() => {
@@ -283,7 +183,7 @@ function ButtonSharingLink({
             >
                 {t("sharing.btn.share")}
             </ButtonWallet>
-            <OnboardingShare isHidden={!currentSession} />
+            <OnboardingShare />
         </div>
     );
 }

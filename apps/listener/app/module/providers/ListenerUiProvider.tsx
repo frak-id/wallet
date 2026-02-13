@@ -1,17 +1,11 @@
 import type {
-    Currency,
     DisplayEmbeddedWalletParamsType,
     FrakWalletSdkConfig,
-    FullInteractionTypesKey,
     IFrameRpcSchema,
+    InteractionTypeKey,
     Language,
     ModalRpcMetadata,
     ModalRpcStepsInput,
-} from "@frak-labs/core-sdk";
-import {
-    formatAmount,
-    getCurrencyAmountKey,
-    getSupportedCurrency,
 } from "@frak-labs/core-sdk";
 import type {
     ExtractReturnType,
@@ -33,7 +27,6 @@ import {
     useState,
 } from "react";
 import { useTranslation } from "react-i18next";
-import { useEstimatedInteractionReward } from "@/module/hooks/useEstimatedInteractionReward";
 import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 import { mapDeprecatedModalMetadata } from "../utils/deprecatedModalMetadataMapper";
 
@@ -41,7 +34,7 @@ export type GenericWalletUiType = {
     appName: string;
     logoUrl?: string;
     homepageLink?: string;
-    targetInteraction?: FullInteractionTypesKey;
+    targetInteraction?: InteractionTypeKey;
     i18n?: {
         lang?: "en" | "fr";
         context?: string;
@@ -107,8 +100,6 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
     const { i18n: initialI18n } = useTranslation();
     // We are not using the safeResolvingContext here, since this component is init before the iframe is ready
     const resolvingContext = resolvingContextStore((state) => state.context);
-    // Get the estimated reward
-    const { estimatedReward: rewardData } = useEstimatedInteractionReward();
 
     // The current UI request
     const [currentRequest, setCurrentRequest] = useState<UIRequest | undefined>(
@@ -144,63 +135,6 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
             clearTimeoutRef.current = null;
         }, 50); // 50ms delay allows new requests to cancel the clear
     }, []);
-
-    /**
-     * Get the right reward estimation for the current target interaction + currency
-     */
-    const getReward = useCallback(
-        ({
-            currency,
-            targetInteraction,
-            context,
-        }: {
-            currency?: Currency;
-            targetInteraction?: FullInteractionTypesKey;
-            context?: string;
-        }) => {
-            // Get the supported currency (e.g. "eur")
-            const supportedCurrency = getSupportedCurrency(currency);
-
-            // Get the currency amount key (e.g. "eurAmount")
-            const currencyAmountKey = getCurrencyAmountKey(supportedCurrency);
-
-            // If we are in the referred context, we use the referee reward instead of the referrer one
-            const useReferrerReward = context !== "referred";
-
-            // Get the max reward
-            const maxReward = useReferrerReward
-                ? rewardData?.maxReferrer?.[currencyAmountKey]
-                : rewardData?.maxReferee?.[currencyAmountKey];
-
-            // Find the right estimated reward depending on the context
-            let estimatedReward = maxReward ?? 0;
-            if (rewardData && targetInteraction) {
-                // Find the max reward for the target interaction
-                const targetReward = rewardData.rewards
-                    .filter(
-                        (reward) =>
-                            reward.interactionTypeKey === targetInteraction
-                    )
-                    .map((reward) =>
-                        useReferrerReward
-                            ? reward.referrer.eurAmount
-                            : reward.referee.eurAmount
-                    )
-                    .reduce((acc, reward) => (reward > acc ? reward : acc), 0);
-                // If found a reward, set it as the estimated reward
-                if (targetReward > 0) {
-                    estimatedReward = targetReward;
-                }
-            }
-
-            // Format the reward
-            return formatAmount(
-                normalizeAmount(estimatedReward),
-                supportedCurrency
-            );
-        },
-        [rewardData]
-    );
 
     /**
      * Populate the i18n resources for the current request
@@ -240,7 +174,6 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
     /**
      * Build the new translation context for the listener UI
      *  - Set the language to the request language
-     *  - Compute the right reward estimation depending on the request context
      *  - Add some default variable (product name, product origin, context)
      */
     const translation = useMemo(() => {
@@ -255,20 +188,12 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
               }
             : {};
 
-        // Format the reward
-        const formattedReward = getReward({
-            currency: currentRequest?.configMetadata?.currency,
-            targetInteraction: currentRequest?.targetInteraction,
-            context: currentRequest?.i18n?.context,
-        });
-
         // Create the new i18n instance with the right context
         const i18n = initialI18n.cloneInstance({
             lng: lang,
             interpolation: {
                 defaultVariables: {
                     ...context,
-                    estimatedReward: formattedReward,
                 },
             },
             // Load both the default and the potentially customized i18n
@@ -288,14 +213,12 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
             rawT(key, {
                 ...context,
                 ...options,
-                estimatedReward: formattedReward,
             });
         return { lang, i18n, t };
     }, [
         currentRequest,
         resolvingContext?.origin,
         initialI18n,
-        getReward,
         populateI18nResources,
     ]);
 
@@ -375,13 +298,3 @@ export function useEmbeddedListenerUI() {
  * Custom hooks to get only the translation context
  */
 export const useListenerTranslation = () => useListenerUI().translation;
-
-/**
- * Normalize the amount to the right displayable format
- *  - <10 -> ceil
- *  - <100 -> rounded to the nearest 10s
- *  - >100 -> rounded to the floor 50s
- */
-function normalizeAmount(amount: number) {
-    return Math.round(amount);
-}

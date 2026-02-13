@@ -1,15 +1,5 @@
-.loading {
-    color: var(--frak-color-cerulean);
-}
-
-.paused {
-    color: var(--frak-color-pale-sky);
-}
-
-.active {
-    color: var(--frak-color-malachite);
-}
-
-.stopped {
-    color: var(--frak-color-red);
+.campaignStatus__actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
 }

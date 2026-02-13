@@ -1,12 +1,80 @@
-.reward__title {
+.list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.empty {
+    text-align: center;
+    color: #b2b4b5;
+    padding: 20px;
+}
+
+.item {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 12px;
+    background: #fff;
+}
+
+.item__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.item__title {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.item__amount {
     font-size: 16px;
     font-weight: 600;
 }
 
-.reward__date {
+.item__meta {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    font-size: 12px;
     color: #b2b4b5;
 }
 
-.reward__amount {
-    font-size: 16px;
+.item__date {
+    display: inline-block;
+}
+
+.item__status {
+    display: inline-block;
+    padding: 2px 8px;
+    background: #f3f4f6;
+    border-radius: 4px;
+    font-size: 11px;
+}
+
+.item__trigger {
+    display: inline-block;
+    padding: 2px 8px;
+    background: #f3f4f6;
+    border-radius: 4px;
+    font-size: 11px;
+}
+
+.item__tx {
+    margin-top: 8px;
+    font-size: 11px;
+    color: #b2b4b5;
+    display: flex;
+    gap: 4px;
+}
+
+.item__txLabel {
+    font-weight: 600;
+}
+
+.item__txHash {
+    font-family: monospace;
 }

@@ -140,12 +140,12 @@ export const handlePrepareSso: PrepareSsoHandler = (params, context) => {
     const ssoUrl = generateSsoUrl(
         window.location.origin,
         ssoInfo,
-        context.productId,
+        context.merchantId,
         name,
-        css
+        css,
+        context.clientId
     );
 
-    // Return URL
     return Promise.resolve({ ssoUrl });
 };
 
@@ -166,7 +166,7 @@ export const handlePrepareSso: PrepareSsoHandler = (params, context) => {
  * - Returns when popup sends sso_complete message
  *
  * @param params - Full OpenSsoParamsType
- * @param context - Wallet RPC context with productId
+ * @param context - Wallet RPC context with merchantId
  * @returns Promise<{wallet: Hex | undefined}>
  */
 export const handleOpenSso: OpenSsoHandler = async (params, context) => {
@@ -192,9 +192,10 @@ export const handleOpenSso: OpenSsoHandler = async (params, context) => {
         const ssoUrl = generateSsoUrl(
             window.location.origin,
             ssoInfo,
-            context.productId,
+            context.merchantId,
             name,
-            css
+            css,
+            context.clientId
         );
 
         // Trigger redirect via lifecycle event

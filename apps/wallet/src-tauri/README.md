@@ -146,6 +146,28 @@ Android-specific Tauri plugins:
 - **Target SDK**: 36
 - **Package**: `id.frak.wallet`
 
+## Deep Linking
+
+The app supports deep linking via a custom URL scheme.
+
+### URL Schemes
+
+**Custom URL Scheme:**
+- `frakwallet://wallet` - Open wallet home
+- `frakwallet://send?to=0x...` - Pre-filled send screen
+- `frakwallet://receive` - Receive screen
+- `frakwallet://settings` - Settings
+- `frakwallet://recovery` - Recovery settings
+- `frakwallet://notifications` - Notifications
+- `frakwallet://history` - Transaction history
+- `frakwallet://pair?id=<id>&mode=embedded` - Pairing confirmation (iframe flow)
+
+### Configuration Files
+
+- **iOS URL Scheme**: `gen/apple/app_iOS/Info.plist` (CFBundleURLTypes)
+- **Android Intent Filters**: `gen/android/app/src/main/AndroidManifest.xml`
+- **Frontend Handler**: `app/utils/deepLink.ts`
+
 ## Environment Configuration
 
 ### Development
@@ -232,10 +254,10 @@ Ensure all three files are updated when bumping versions.
 
 ## Security Considerations
 
-- **CSP (Content Security Policy)**: Currently disabled (`csp: null` in `tauri.conf.json`)
-  - **Rationale**: Disabled to allow flexible development and testing of WebAuthn flows, SDK integrations, and dynamic content loading
-  - **Note**: For production builds, consider configuring appropriate CSP rules if additional security is required
-  - **Location**: `tauri.conf.json` → `app.security.csp`
+- **CSP (Content Security Policy)**: Configured in `tauri.conf.json` → `app.security.csp`
+  - **Current policy**: `default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://*.frak.id https://*.drpc.org https://*.pimlico.io wss://*.frak.id`
+  - **Rationale**: Restricts content sources while allowing necessary connections for WebAuthn, blockchain RPCs, and WebSocket communication
+  - **Note**: Update CSP if adding new external resources or third-party integrations
 - **Code Signing**: Required for both iOS and Android production builds
 - **WebAuthn Origins**: Properly validated on backend to prevent origin spoofing
 - **Associated Domains**: Required for iOS WebAuthn credential sharing

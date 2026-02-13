@@ -1,3 +1,4 @@
+import type { BalanceItem } from "@frak-labs/wallet-shared";
 import { useGetUserBalance } from "@frak-labs/wallet-shared";
 import { Skeleton } from "@/module/common/component/Skeleton";
 import { TokenItemLite } from "@/module/tokens/component/TokenItemLite";
@@ -13,7 +14,7 @@ export function TokenListLite() {
     return (
         userBalance && (
             <ul className={styles.tokenListLite}>
-                {userBalance.balances.map((balance) => (
+                {userBalance.balances.map((balance: BalanceItem) => (
                     <TokenItemLite token={balance} key={balance.token} />
                 ))}
             </ul>

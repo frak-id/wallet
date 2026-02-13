@@ -6,9 +6,9 @@ globs: apps/business/**/*.ts, apps/business/**/*.tsx
 
 ## Business Dashboard Summary
 
-`apps/business` is part of Frak monorepo and provides a comprehensive business dashboard solution built with TanStack Start. It integrates with blockchain functionalities, user authentication mechanisms, and campaign management features.
+`apps/business` is a client-side SPA built with TanStack Router (no SSR). It provides a business dashboard for campaign management, product setup, and analytics. Served via nginx in production.
 
-Project is written in TypeScript using React 19, TanStack Start, TanStack Router for routing, TanStack Query for server state management, Zustand for client state management, Viem and Wagmi for blockchain, Radix UI for components, and CSS Modules for styling.
+Project is written in TypeScript using React 19, TanStack Router for routing, TanStack Query for server state management, Zustand for client state management, Viem and Wagmi for blockchain, Radix UI for components, and CSS Modules for styling.
 
 ## State Management
 
@@ -22,40 +22,32 @@ Project is written in TypeScript using React 19, TanStack Start, TanStack Router
 
 ## Technical Stack
 
-- TanStack Start for full-stack React framework with SSR
-- TanStack Router for routing
-- Vite for development and build
-- Nitro for production server output
+- TanStack Router for client-side routing (SPA, no SSR)
+- Vite for development and build (static output)
+- nginx for production serving (static files + SPA fallback)
 - CSS Modules for styling (no Tailwind)
+- Elysia Eden Treaty client for API calls
 
 ## Architecture
 
 - Module-based architecture in `src/module/` directory
 - File-based routing in `src/routes/` directory
-- Server functions using TanStack Start conventions
-- MongoDB integration for data persistence
-- Iron Session for authentication
+- Client-side auth middleware (synchronous `requireAuth()`)
+- All config baked at build time via Vite `define` (no runtime env vars)
 
 ## Resource Tags
 
 Use these tags to find relevant documentation and resources:
 
 - @TanStackRouter - TanStack Router documentation and resources
-- @TanStackStart - TanStack Start framework documentation
 - @RadixUI - An open-source UI component library
 
 ## Key Principles
 
-- You are an expert in TypeScript, TanStack Start, React, Radix UI and CSS modules.
-- Use Server Functions for data fetching when possible
-- Leverage TanStack Router loaders for route-level data fetching
-- Follow React Server Components patterns where applicable
-
-##  Performance Optimization
-
-- Use TanStack Router loaders for data fetching
+- You are an expert in TypeScript, TanStack Router, React, Radix UI and CSS modules.
+- Use TanStack Router loaders for route-level data fetching
 - Leverage route-level code splitting
-- Optimize bundle size using Vite's built-in features
+- All data fetching is client-side (TanStack Query)
 
 ## Structure
 
@@ -65,7 +57,7 @@ src/
 ├── assets/ # Static assets
 ├── components/ # Shared React components
 ├── context/ # React context providers (auth, blockchain, etc.)
-├── middleware/ # Server middleware
+├── middleware/ # Client-side middleware (auth guard)
 ├── mock/ # Mock data for development
 ├── module/ # Feature modules organized by domain
 ├── polyfill/ # Runtime polyfills
@@ -79,10 +71,10 @@ src/
 
 ## Key Conventions
 
-- Use Server Functions for API calls
+- Use TanStack Query for all API calls (no server functions)
 - Leverage file-based routing in `src/routes/`
 - Organize feature modules in `src/module/`
 - Use CSS Modules for all styling
-- Follow TanStack Start conventions for data loading
+- Auth is client-side only (wallet connection check)
 
-Follow TanStack Start docs for Data Fetching, Routing, and Server Functions.
+Follow TanStack Router docs for Data Fetching and Routing.

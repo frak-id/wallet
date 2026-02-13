@@ -1,182 +1,127 @@
-import { Skeleton } from "@frak-labs/ui/component/Skeleton";
+import { useNavigate } from "@tanstack/react-router";
 import { useMemo } from "react";
-import {
-    type ResolverResult,
-    type UseFormReturn,
-    useForm,
-} from "react-hook-form";
-import { toHex } from "viem";
+import { useForm } from "react-hook-form";
 import { Actions } from "@/module/campaigns/component/Actions";
 import { ButtonCancel } from "@/module/campaigns/component/Creation/NewCampaign/ButtonCancel";
 import { useSaveCampaign } from "@/module/campaigns/hook/useSaveCampaign";
 import { Head } from "@/module/common/component/Head";
 import { Panel } from "@/module/common/component/Panel";
-import { Row } from "@/module/common/component/Row";
-import {
-    Form,
-    FormControl,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormLayout,
-    FormMessage,
-} from "@/module/forms/Form";
-import { RadioGroup, RadioGroupItem } from "@/module/forms/RadioGroup";
-import { useProductMetadata } from "@/module/product/hook/useProductMetadata";
-import { campaignStore } from "@/stores/campaignStore";
-import type { Campaign } from "@/types/Campaign";
-import { DistributionConfiguration } from "./DistributionConfig";
-import { FormTriggersCac } from "./FormTriggersCac";
+import { Form, FormLayout } from "@/module/forms/Form";
+import { type CampaignDraft, campaignStore } from "@/stores/campaignStore";
+import type { CampaignTrigger } from "@/types/Campaign";
+import { CacInput } from "./CacInput";
+import { ChainingConfig } from "./ChainingConfig";
+import { DistributionSlider } from "./DistributionSlider";
 import styles from "./index.module.css";
+import { TriggerSelector } from "./TriggerSelector";
+import {
+    DEFAULT_REWARD_STATE,
+    extractFormStateFromRule,
+    type RewardFormState,
+    updateRuleWithRewards,
+} from "./utils";
+
+type MetricsFormValues = {
+    trigger: CampaignTrigger;
+} & RewardFormState;
+
+function draftToFormValues(draft: CampaignDraft): MetricsFormValues {
+    const rewardState =
+        draft.rule.rewards.length > 0
+            ? extractFormStateFromRule(draft.rule)
+            : DEFAULT_REWARD_STATE;
+
+    return {
+        trigger: draft.rule.trigger,
+        ...rewardState,
+    };
+}
+
+function formValuesToDraft(
+    values: MetricsFormValues,
+    currentDraft: CampaignDraft
+): CampaignDraft {
+    const updatedRule = updateRuleWithRewards(currentDraft.rule, {
+        cac: values.cac,
+        ratio: values.ratio,
+        chainingEnabled: values.chainingEnabled,
+        deperditionPerLevel: values.deperditionPerLevel,
+        maxDepth: values.maxDepth,
+    });
+
+    return {
+        ...currentDraft,
+        rule: {
+            ...updatedRule,
+            trigger: values.trigger,
+        },
+    };
+}
 
 export function MetricsCampaign() {
-    const campaign = campaignStore((state) => state.campaign);
+    const navigate = useNavigate();
+    const draft = campaignStore((s) => s.draft);
+    const updateDraft = campaignStore((s) => s.updateDraft);
     const saveCampaign = useSaveCampaign();
 
-    const pId = useMemo(() => {
-        if (!campaign.productId) return "0x0" as const;
-        return toHex(BigInt(campaign.productId));
-    }, [campaign.productId]);
+    const defaultValues = useMemo(() => draftToFormValues(draft), [draft]);
 
-    const { data: product } = useProductMetadata({
-        productId: pId,
+    const form = useForm<MetricsFormValues>({
+        defaultValues,
+        values: defaultValues,
     });
-    const form = useForm<Campaign>({
-        values: useMemo(() => campaign, [campaign]),
-        resolver: (values): ResolverResult<Campaign> => {
-            // Check that we have at least one trigger set with a CAC greater than 0
-            const hasTrigger = Object.values(values.triggers).some(
-                (trigger) => trigger.cac && trigger.cac > 0
-            );
-            if (!hasTrigger) {
-                return {
-                    values: {},
-                    errors: {
-                        triggers: {
-                            message: "At least one trigger should be set",
-                        },
-                    },
-                };
-            }
-            return {
-                values,
-                errors: {},
-            };
-        },
-    });
-    const distributionType = form.watch("distribution.type") ?? "fixed";
 
-    function handleSave(newCampaign: Campaign) {
-        saveCampaign({
-            ...campaign,
-            ...newCampaign,
+    async function onSubmit(values: MetricsFormValues) {
+        const updatedDraft = formValuesToDraft(values, draft);
+        updateDraft(() => updatedDraft);
+        const saved = await saveCampaign.mutateAsync(updatedDraft);
+        navigate({
+            to: "/campaigns/draft/$campaignId/validation",
+            params: { campaignId: saved.id },
         });
-    }
-
-    // Show skeleton if no productId is set yet
-    if (!campaign.productId) {
-        return <Skeleton />;
     }
 
     return (
         <FormLayout>
             <Form {...form}>
-                <form onSubmit={form.handleSubmit(handleSave)}>
+                <form onSubmit={form.handleSubmit(onSubmit)}>
                     <Head
-                        title={{ content: "Campaign Metrics", size: "small" }}
+                        title={{ content: "Campaign Rules", size: "small" }}
                         rightSection={
                             <ButtonCancel
-                                onClick={() => {
-                                    form.reset(campaign);
-                                }}
+                                onClick={() => form.reset(defaultValues)}
                             />
                         }
                     />
-                    <DistributionTypeToggle form={form} />
-                    <FormTriggersCac
-                        productTypes={product?.productTypes ?? []}
-                    />
-                    <DistributionConfiguration
-                        distributionType={distributionType}
-                        form={form}
-                    />
 
-                    <Actions isLoading={form.formState.isSubmitting} />
+                    <Panel title="Set a target cost per action">
+                        <p className={styles.panelDescription}>
+                            "Target CPA" defines your overall acquisition cost
+                            per target action (your goal) to generate the
+                            maximum number of conversions at a cost equal to or
+                            lower than the target cost per action you set.
+                        </p>
+                        <CacInput />
+                        <TriggerSelector />
+                    </Panel>
+
+                    <Panel title="Set reward amounts">
+                        <p className={styles.panelDescription}>
+                            When your goal is reached, the rewards are
+                            distributed instantly and automatically to the
+                            business introducer and the new customer, directly
+                            into their wallets, in the set proportions.
+                        </p>
+                        <DistributionSlider />
+                    </Panel>
+
+                    <Panel title="Referral Chain">
+                        <ChainingConfig />
+                    </Panel>
+
+                    <Actions isLoading={saveCampaign.isPending} />
                 </form>
             </Form>
         </FormLayout>
-    );
-}
-
-function DistributionTypeToggle({ form }: { form: UseFormReturn<Campaign> }) {
-    return (
-        <Panel title="Define the type of rewards">
-            <FormField
-                control={form.control}
-                name="distribution.type"
-                rules={{ required: "Select a distribution type" }}
-                render={({ field }) => (
-                    <FormItem>
-                        <Row align={"start"}>
-                            <div>
-                                <FormControl>
-                                    <RadioGroup
-                                        onValueChange={(value) =>
-                                            field.onChange(value)
-                                        }
-                                        defaultValue={field.value}
-                                        {...field}
-                                    >
-                                        <div className={styles.radio__group}>
-                                            <FormItem variant={"radio"}>
-                                                <FormControl>
-                                                    <RadioGroupItem
-                                                        value={"fixed"}
-                                                    />
-                                                </FormControl>
-                                                <FormLabel variant={"radio"}>
-                                                    Fixed rewards
-                                                </FormLabel>
-                                            </FormItem>
-                                            <span className={styles.notice}>
-                                                Each time your goal is reached,
-                                                a fixed amount that you define
-                                                is automatically distributed to
-                                                the business introducer and the
-                                                new customer
-                                            </span>
-                                        </div>
-                                        <div className={styles.radio__group}>
-                                            <FormItem variant={"radio"}>
-                                                <FormControl>
-                                                    <RadioGroupItem
-                                                        value={"range"}
-                                                    />
-                                                </FormControl>
-                                                <FormLabel variant={"radio"}>
-                                                    Variable rewards
-                                                </FormLabel>
-                                            </FormItem>
-                                            <span className={styles.notice}>
-                                                Each time your goal is reached,
-                                                an amount within a range you
-                                                define is automatically
-                                                distributed to the business
-                                                introducer and the new customer.
-                                                The amount of rewards
-                                                distributed is determined
-                                                randomly. Your CPA at the end of
-                                                the campaign is respected.
-                                            </span>
-                                        </div>
-                                    </RadioGroup>
-                                </FormControl>
-                            </div>
-                        </Row>
-                        <FormMessage />
-                    </FormItem>
-                )}
-            />
-        </Panel>
     );
 }

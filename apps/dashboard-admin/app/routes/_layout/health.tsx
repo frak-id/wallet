@@ -1,6 +1,5 @@
 import { isRunningInProd } from "@frak-labs/app-essentials";
 import { createFileRoute } from "@tanstack/react-router";
-import { IndexerState } from "~/module/health/component/IndexerState";
 import { MeasurePings } from "~/module/health/component/Ping";
 
 export const Route = createFileRoute("/_layout/health")({
@@ -22,10 +21,5 @@ const urls = isRunningInProd
       ];
 
 function HealthComponent() {
-    return (
-        <>
-            <MeasurePings urls={urls} />
-            <IndexerState />
-        </>
-    );
+    return <MeasurePings urls={urls} />;
 }

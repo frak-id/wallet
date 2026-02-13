@@ -1,4 +1,7 @@
-import { WagmiProviderWithDynamicConfig } from "@frak-labs/wallet-shared";
+import {
+    usePersistentPairingClient,
+    WagmiProviderWithDynamicConfig,
+} from "@frak-labs/wallet-shared";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { PropsWithChildren } from "react";
 
@@ -16,6 +19,11 @@ const queryClient = new QueryClient({
     },
 });
 
+function PairingReconnect({ children }: PropsWithChildren) {
+    usePersistentPairingClient();
+    return children;
+}
+
 /**
  * Root provider for the listener app
  * Provides QueryClient and Wagmi to the app
@@ -24,7 +32,7 @@ export function RootProvider({ children }: PropsWithChildren) {
     return (
         <QueryClientProvider client={queryClient}>
             <WagmiProviderWithDynamicConfig>
-                {children}
+                <PairingReconnect>{children}</PairingReconnect>
             </WagmiProviderWithDynamicConfig>
         </QueryClientProvider>
     );

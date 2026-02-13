@@ -180,20 +180,20 @@ describe("ButtonShare", () => {
 
     it("should pass targetInteraction to useReward hook", () => {
         render(
-            <ButtonShare useReward targetInteraction="retail.customerMeeting" />
+            <ButtonShare useReward targetInteraction="custom.customerMeeting" />
         );
 
         expect(useRewardHook.useReward).toHaveBeenCalledWith(
             true,
-            "retail.customerMeeting"
+            "custom.customerMeeting"
         );
     });
 
     it("should pass targetInteraction to useShareModal hook", () => {
-        render(<ButtonShare targetInteraction="retail.customerMeeting" />);
+        render(<ButtonShare targetInteraction="custom.customerMeeting" />);
 
         expect(useShareModalHook.useShareModal).toHaveBeenCalledWith(
-            "retail.customerMeeting"
+            "custom.customerMeeting"
         );
     });
 });

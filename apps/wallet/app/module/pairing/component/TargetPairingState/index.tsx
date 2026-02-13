@@ -8,6 +8,7 @@ import type { TargetPairingState as TargetPairingStateType } from "@frak-labs/wa
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useStore } from "zustand";
+import { PairingDropdown } from "@/module/pairing/component/PairingDropdown";
 import { SignatureRequestList } from "@/module/pairing/component/SignatureRequest";
 
 /**
@@ -29,29 +30,33 @@ export function TargetPairingState() {
  *  -> dot: red "idle", orange "connecting", green "paired"
  */
 function InnerTargetPairingState() {
+    const { t } = useTranslation();
     const client = useMemo(() => getTargetPairingClient(), []);
     const state = useStore(client.store);
-    const { status, text } = getStatusDetails(state) ?? {};
+    const { status, text } = getStatusDetails(state, t) ?? {};
 
     // Don't display anything if the state is idle
     if (state.status === "idle" || !status || !text) return null;
 
     return (
         <StatusBoxWallet status={status} title={text}>
-            <SignatureRequestList
-                requests={Array.from(state.pendingSignatures.values())}
-                client={client}
-            />
+            <PairingDropdown>
+                <SignatureRequestList
+                    requests={Array.from(state.pendingSignatures.values())}
+                    client={client}
+                />
+            </PairingDropdown>
         </StatusBoxWallet>
     );
 }
 
-function getStatusDetails(state: TargetPairingStateType): {
+function getStatusDetails(
+    state: TargetPairingStateType,
+    t: ReturnType<typeof useTranslation>["t"]
+): {
     status: "success" | "waiting" | "loading" | "error";
     text: string;
 } | null {
-    const { t } = useTranslation();
-
     if (state.status === "idle") {
         return null;
     }

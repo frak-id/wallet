@@ -1,32 +1,24 @@
-import type {
-    FrakClient,
-    SendInteractionParamsType,
-    SendInteractionReturnType,
-} from "../types";
-import { computeProductId } from "../utils/computeProductId";
+import type { FrakClient } from "../types";
+import type { SendInteractionParamsType } from "../types/rpc/interaction";
 
 /**
- * Function used to send an interaction
- * @param client - The current Frak Client
- * @param args
+ * Send an interaction to the backend via the listener RPC.
+ * Fire-and-forget: errors are caught and logged, not thrown.
  *
- * @example
- * const interaction = PressInteractionEncoder.openArticle({
- *     articleId: keccak256(toHex("article-slug")),
- * });
- * const { delegationId } = await sendInteraction(frakConfig, {
- *     interaction,
- * });
- * console.log("Delegated interaction id", delegationId);
+ * @param client - The Frak client instance
+ * @param params - The interaction parameters
  */
 export async function sendInteraction(
     client: FrakClient,
-    { productId, interaction, validation }: SendInteractionParamsType
-): Promise<SendInteractionReturnType> {
-    const pId = productId ?? computeProductId(client.config);
-
-    return await client.request({
-        method: "frak_sendInteraction",
-        params: [pId, interaction, validation],
-    });
+    params: SendInteractionParamsType
+): Promise<void> {
+    try {
+        await client.request({
+            method: "frak_sendInteraction",
+            params: [params],
+        });
+    } catch {
+        // Silent failure - fire-and-forget
+        console.warn("[Frak SDK] Failed to send interaction:", params.type);
+    }
 }

@@ -445,13 +445,18 @@ export function createRpcListener<
         // Refetch the id, topic and data after middleware passes
         const { id, topic, data } = event.data;
 
+        // Extract params from the data envelope: { method, params } → params
+        // The client sends { method, params } but handlers expect just params
+        const typedData = data as { method?: string; params?: unknown };
+        const params = typedData.params ?? data;
+
         // Check for promise handler
         const promiseHandler = promiseHandlers.get(
             topic as ExtractMethod<TSchema>
         );
         if (promiseHandler) {
             // Use type assertion since we know the handler matches the method (can fail)
-            const result = await promiseHandler(data, context);
+            const result = await promiseHandler(params, context);
 
             // Execute middlware on the response (can fail)
             const response = await executeOnResponseMiddleware(
@@ -490,8 +495,8 @@ export function createRpcListener<
                 sendResponse(event.source, event.origin, id, topic, response);
             };
 
-            // Call the stream handler with type assertion
-            await streamHandler(data, emitter, context);
+            // Call the stream handler with extracted params
+            await streamHandler(params, emitter, context);
             return;
         }
 

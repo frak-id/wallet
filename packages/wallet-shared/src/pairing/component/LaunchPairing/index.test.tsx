@@ -111,7 +111,7 @@ describe("LaunchPairing", () => {
             const onSuccess = vi.fn();
             render(<LaunchPairing onSuccess={onSuccess} />);
 
-            expect(mockInitiatePairing).toHaveBeenCalledWith(onSuccess);
+            expect(mockInitiatePairing).toHaveBeenCalledWith({ onSuccess });
         });
     });
 
@@ -151,7 +151,7 @@ describe("LaunchPairing", () => {
 
             const qrCode = screen.getByTestId("qr-code");
             expect(qrCode.getAttribute("data-value")).toContain(
-                "/pairing?id=pairing-456"
+                "/pair?id=pairing-456"
             );
         });
 

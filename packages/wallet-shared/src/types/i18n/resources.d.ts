@@ -27,11 +27,6 @@ interface Resources {
                     success: "Connection successful";
                     title: "Connection";
                 };
-                openSession: {
-                    description: "Congratulations, your wallet has been created! Click on the button below to activate it and receive your winnings.";
-                    primaryAction: "Activate my wallet";
-                    title: "Activation";
-                };
                 sendTransaction: {
                     description: "To complete, authorize this transaction in your wallet. This ensures secure processing.";
                     primaryAction_one: "Send transaction";
@@ -47,8 +42,6 @@ interface Resources {
             wallet: {
                 loggedIn: {
                     onboarding: {
-                        activate: "💫 Enable it to be able to share.";
-                        activate_referred: "💫 Enable it to receive your gains.";
                         share: "🚀 Let's go! Share this product and receive your rewards directly.";
                         share_referred: "🚀 Share your turn to win more!";
                         welcome: "🥳 Congratulations! Your wallet is created.";
@@ -115,17 +108,16 @@ interface Resources {
             unlockWith: "Use {{type}} to unlock";
         };
         common: {
-            activated: "Activated";
             added: "added";
             amountRequired: "Amount is required";
             at: "at";
             authenticator: "Authenticator:";
+            "back-to-wallet": "Back to Wallet";
             balance: "Balance";
             claim: "Claim";
             claimed: "claimed";
             copied: "Copied!";
             copyAddress: "Copy address";
-            disabled: "Disabled";
             enterAddress: "Enter address";
             interactions: "Interactions";
             logout: "Logout";
@@ -152,6 +144,52 @@ interface Resources {
                 userOperationExecution: "An error occurred while executing the transaction. Please try again.";
             };
         };
+        "mobile-sso": {
+            appNotFound: "Frak Wallet app not found";
+            connecting: "Connecting...";
+            continueInBrowser: "Continue in browser";
+            openWallet: "Open in Frak Wallet";
+            retry: "Connection timed out. Retry?";
+            waiting: "Waiting for wallet app...";
+        };
+        "mobile-tx": {
+            appNotFound: "Frak Wallet app not found";
+            appNotFoundHint: "Please reinstall the app or try again";
+            explanation: "Approve this transaction in your wallet app";
+            openWallet: "Open wallet to approve";
+            reopenWallet: "Re-open wallet";
+            retry: "Retry";
+            sendTransaction: "Send transaction";
+            timeout: "Approval timed out. Try again?";
+            waiting: "Waiting for approval...";
+        };
+        reward: {
+            history: {
+                empty: "No rewards yet";
+                time: {
+                    daysAgo: "{{count}}d ago";
+                    hoursAgo: "{{count}}h ago";
+                    justNow: "just now";
+                    minutesAgo: "{{count}}m ago";
+                };
+                title: "Recent Rewards";
+            };
+            status: {
+                cancelled: "Cancelled";
+                consumed: "Consumed";
+                expired: "Expired";
+                pending: "Pending";
+                processing: "Processing";
+                settled: "Settled";
+            };
+            trigger: {
+                create_referral_link: "Shared Link";
+                custom: "Custom";
+                purchase: "Purchase";
+                referral: "Referral";
+                unknown: "Reward";
+            };
+        };
         sharing: {
             btn: {
                 copy: "Copy link";
@@ -170,16 +208,6 @@ interface Resources {
                 warning: "You're using an embedded browser. Your experience may be degraded. Tap to open in your browser.";
             };
             installWebApp: "<strong>Install wallet on home screen</strong> <br /> to find your gains at any time";
-            interaction: {
-                CREATE_REFERRAL_LINK: "Created share link";
-                CUSTOMER_MEETING: "Appointment in store";
-                OPEN_ARTICLE: "Opened article";
-                PURCHASE_COMPLETED: "Completed purchase";
-                PURCHASE_STARTED: "Started purchase";
-                READ_ARTICLE: "Read article";
-                REFERRED: "Referred";
-                WEBSHOP_OPENNED: "Opened webshop";
-            };
             invite: {
                 text: "Earn $5 for each friend you invite. T&C apply";
                 title: "Invite friends, earn $5";
@@ -229,12 +257,17 @@ interface Resources {
             notifications: {
                 noNotifications: "No notifications";
             };
+            openLogin: {
+                login: "Connect with biometrics";
+                webauthnNotSupported: "WebAuthn is not supported on this device";
+            };
             pairing: {
                 cancel: "Cancel";
                 code: "Check that the code is correct";
                 confirm: "Confirm";
                 error: {
                     noCode: "No pairing code provided";
+                    notFound: "Pairing request not found or expired";
                     title: "Invalid pairing request";
                 };
                 info: {
@@ -253,6 +286,7 @@ interface Resources {
                 loading: {
                     title: "Please wait";
                 };
+                noCodeNotice: "Confirm this pairing request to continue.";
                 origin: {
                     state: {
                         connecting: "Paired device not online";
@@ -368,17 +402,6 @@ interface Resources {
                     create: "Create your demo <strong>wallet</strong>";
                     error: "Error during registration, please try again";
                     inProgress: "Wallet creation in progress";
-                };
-            };
-            session: {
-                closed: "Your wallet is not activated. You can’t be rewarded.";
-                open: "Your wallet is activated";
-                openSession: "Activate your wallet";
-                titleActivated: "Wallet is activated";
-                titleNotActivated: "Wallet not activated";
-                tooltip: {
-                    active: "You got an active wallet since {{sessionStart}} and until {{sessionEnd}}";
-                    inactive: "The wallet activation will permit us to send interaction data";
                 };
             };
             settings: {

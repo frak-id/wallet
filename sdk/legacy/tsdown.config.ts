@@ -28,8 +28,15 @@ export default defineConfig({
     dts: false,
     outDir: "./dist/bundle",
     noExternal: [/.*/],
+    inlineOnly: false,
     treeshake: {
         moduleSideEffects: false,
+    },
+    outputOptions(options) {
+        return {
+            ...options,
+            entryFileNames: "[name].js",
+        };
     },
     plugins: [nodePolyfills()],
 });

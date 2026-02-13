@@ -7,15 +7,6 @@ import { viemMocks } from "./viem";
 /*                            Infrastructure Mocks                            */
 /* -------------------------------------------------------------------------- */
 
-export const indexerApiMocks = {
-    get: vi.fn(() => ({
-        json: vi.fn(() => Promise.resolve({})),
-    })),
-    post: vi.fn(() => ({
-        json: vi.fn(() => Promise.resolve({})),
-    })),
-};
-
 export const pricingRepositoryMocks = {
     getTokenPrice: vi.fn(() =>
         Promise.resolve({ eur: 1.2, usd: 1.0, gbp: 0.8 })
@@ -34,34 +25,8 @@ export const adminWalletsRepositoryMocks = {
     })),
 };
 
-export const interactionDiamondRepositoryMocks = {
-    getDiamondContract: vi.fn(<T = Address | undefined>() =>
-        Promise.resolve(undefined as T)
-    ),
-    getInteractionDiamond: vi.fn(<T = Address | undefined>() =>
-        Promise.resolve(undefined as T)
-    ),
-};
-
 export const rolesRepositoryMocks = {
     getRoles: vi.fn(() => Promise.resolve([])),
-};
-
-export const onChainRolesRepositoryMocks = {
-    getRolesOnProduct: vi.fn(() =>
-        Promise.resolve({ isOwner: false, roles: 0n })
-    ),
-    hasRoleOrAdminOnProduct: vi.fn(() => Promise.resolve(false)),
-    hasRoles: vi.fn(
-        ({ onChainRoles, role }: { onChainRoles: bigint; role: bigint }) =>
-            (onChainRoles & role) !== 0n
-    ),
-    hasRolesOrAdmin: vi.fn(
-        ({ onChainRoles, role }: { onChainRoles: bigint; role: bigint }) => {
-            const productAdministrator = BigInt(1 << 0);
-            return (onChainRoles & (role | productAdministrator)) !== 0n;
-        }
-    ),
 };
 
 export const JwtContextMock = {
@@ -76,6 +41,10 @@ export const JwtContextMock = {
     business: {
         sign: vi.fn(() => Promise.resolve("mock-business-jwt-token")),
         verify: vi.fn(() => Promise.resolve({ wallet: "0x123" })),
+    },
+    anonymousMerge: {
+        sign: vi.fn(() => Promise.resolve("mock-anonymous-merge-token")),
+        verify: vi.fn(() => Promise.resolve(null)),
     },
 };
 
@@ -200,15 +169,6 @@ export const dbMock = {
             findMany: vi.fn((_opts?: unknown) =>
                 mockFunctions.findManyMockFn()
             ),
-            findFirst: vi.fn((_opts?: unknown) => {
-                // findFirst returns a single item or undefined
-                const result = mockFunctions.selectMockFn();
-                return result.then((items: unknown[]) =>
-                    items.length > 0 ? items[0] : undefined
-                );
-            }),
-        },
-        backendTrackerTable: {
             findFirst: vi.fn((_opts?: unknown) => {
                 // findFirst returns a single item or undefined
                 const result = mockFunctions.selectMockFn();
@@ -358,13 +318,10 @@ export const businessSessionContextMock = new Elysia({
     .as("scoped");
 
 vi.mock("@backend-infrastructure", () => ({
-    indexerApi: indexerApiMocks,
     pricingRepository: pricingRepositoryMocks,
     viemClient: viemMocks,
     adminWalletsRepository: adminWalletsRepositoryMocks,
-    interactionDiamondRepository: interactionDiamondRepositoryMocks,
     rolesRepository: rolesRepositoryMocks,
-    onChainRolesRepository: onChainRolesRepositoryMocks,
     sessionContext: sessionContextMock,
     get JwtContext() {
         return JwtContextMock;
@@ -482,34 +439,6 @@ vi.mock("../../src/domain/notifications", () => ({
     pushTokensTable: {},
     SendNotificationPayloadDto,
     SendNotificationTargetsDto,
-}));
-
-/* -------------------------------------------------------------------------- */
-/*                            Interactions Context                            */
-/* -------------------------------------------------------------------------- */
-
-export const campaignRewardsServiceMocks = {
-    getActiveRewardsForProduct: vi.fn(() => Promise.resolve(undefined)),
-};
-
-const InteractionRequestDto = t.Object({
-    wallet: t.String(),
-    productId: t.String(),
-    interaction: t.Object({
-        handlerTypeDenominator: t.String(),
-        interactionData: t.String(),
-    }),
-    signature: t.Optional(t.Union([t.String(), t.Undefined(), t.Null()])),
-});
-
-vi.mock("../../src/domain/interactions", () => ({
-    InteractionsContext: {
-        services: { campaignRewards: campaignRewardsServiceMocks },
-    },
-    pendingInteractionsTable: {},
-    interactionsPurchaseTrackerTable: {},
-    backendTrackerTable: {},
-    InteractionRequestDto,
 }));
 
 /* -------------------------------------------------------------------------- */

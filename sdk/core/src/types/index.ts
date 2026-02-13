@@ -16,6 +16,7 @@ export type {
 } from "./config";
 // Utils
 export type { FrakContext } from "./context";
+
 export type {
     ClientLifecycleEvent,
     IFrameLifecycleEvent,
@@ -37,18 +38,18 @@ export type {
     LoggedInEmbeddedView,
     LoggedOutEmbeddedView,
 } from "./rpc/embedded";
+export type { SendInteractionParamsType } from "./rpc/interaction";
 export type {
-    PreparedInteraction,
-    SendInteractionParamsType,
-    SendInteractionReturnType,
-} from "./rpc/interaction";
+    EstimatedReward,
+    GetMerchantInformationReturnType,
+    RewardTier,
+    TokenAmountType,
+} from "./rpc/merchantInformation";
 export type {
     FinalActionType,
     FinalModalStepType,
     LoginModalStepType,
     ModalStepMetadata,
-    OpenInteractionSessionModalStepType,
-    OpenInteractionSessionReturnType,
     SendTransactionModalStepType,
     SendTransactionReturnType,
     SendTransactionTxType,
@@ -57,10 +58,6 @@ export type {
     SiweAuthenticationParams,
 } from "./rpc/modal";
 export type {
-    GetProductInformationReturnType,
-    TokenAmountType,
-} from "./rpc/productInformation";
-export type {
     OpenSsoParamsType,
     OpenSsoReturnType,
     PrepareSsoParamsType,
@@ -68,4 +65,11 @@ export type {
     SsoMetadata,
 } from "./rpc/sso";
 export type { WalletStatusReturnType } from "./rpc/walletStatus";
+// Tracking
+export type {
+    TrackArrivalInternalParams,
+    TrackArrivalParams,
+    TrackArrivalResult,
+    UtmParams,
+} from "./tracking";
 export type { FrakLifecycleEvent, IFrameTransport } from "./transport";

@@ -21,11 +21,6 @@ export type DistantWebAuthnWallet = {
     transports: undefined;
 };
 
-export type InteractionSession = {
-    sessionStart: number;
-    sessionEnd: number;
-};
-
 export type SdkSession = {
     token: string;
     expires: number;

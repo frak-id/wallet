@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { authRoutes } from "../../../src/api/wallet/routes/auth";
+import { authRoutes } from "../../../src/api/user/wallet/routes/auth";
 import { JwtContextMock } from "../../mock/common";
 
 describe("Wallet Auth Routes API", () => {

@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - dev
+      - dev-v2
     paths:
       - 'packages/rpc/**/*.ts'
       - 'packages/rpc/**/package.json'
@@ -45,43 +46,51 @@ jobs:
         run: |
           HASH="${{ steps.version.outputs.hash }}"
 
-          # Update RPC package
-          RPC_PKG_PATH="packages/rpc/package.json"
-          if [ -f "$RPC_PKG_PATH" ]; then
-            CURRENT_VERSION=$(node -p "require('./${RPC_PKG_PATH}').version")
-            BETA_VERSION="${CURRENT_VERSION}-beta.${HASH}"
+          node -e "
+            const fs = require('fs');
 
-            node -e "
-              const fs = require('fs');
-              const pkg = JSON.parse(fs.readFileSync('${RPC_PKG_PATH}', 'utf8'));
-              pkg.version = '${BETA_VERSION}';
-              fs.writeFileSync('${RPC_PKG_PATH}', JSON.stringify(pkg, null, 2) + '\n');
-            "
+            const pkgPaths = [
+              'packages/rpc/package.json',
+              'sdk/core/package.json',
+              'sdk/legacy/package.json',
+              'sdk/react/package.json',
+              'sdk/components/package.json',
+            ];
 
-            echo "Updated rpc: ${CURRENT_VERSION} -> ${BETA_VERSION}"
-          fi
+            // Pass 1: Bump versions and collect name → betaVersion map
+            const betaVersions = {};
+            for (const pkgPath of pkgPaths) {
+              if (!fs.existsSync(pkgPath)) continue;
+              const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
+              const betaVersion = pkg.version + '-beta.${HASH}';
+              betaVersions[pkg.name] = betaVersion;
+              pkg.version = betaVersion;
+              fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n');
+              console.log('Version: ' + pkg.name + ' -> ' + betaVersion);
+            }
 
-          # Update SDK packages
-          SDK_DIRS=(core legacy react components)
-
-          for dir in "${SDK_DIRS[@]}"; do
-            PKG_PATH="sdk/${dir}/package.json"
-            if [ -f "$PKG_PATH" ]; then
-              # Read current version
-              CURRENT_VERSION=$(node -p "require('./${PKG_PATH}').version")
-              BETA_VERSION="${CURRENT_VERSION}-beta.${HASH}"
-
-              # Update package.json with beta version
-              node -e "
-                const fs = require('fs');
-                const pkg = JSON.parse(fs.readFileSync('${PKG_PATH}', 'utf8'));
-                pkg.version = '${BETA_VERSION}';
-                fs.writeFileSync('${PKG_PATH}', JSON.stringify(pkg, null, 2) + '\n');
-              "
-
-              echo "Updated ${dir}: ${CURRENT_VERSION} -> ${BETA_VERSION}"
-            fi
-          done
+            // Pass 2: Rewrite workspace:* deps to exact beta versions
+            // Without this, bun publish resolves workspace:* to the stable version,
+            // causing consumers to pull mismatched stable deps instead of beta ones
+            for (const pkgPath of pkgPaths) {
+              if (!fs.existsSync(pkgPath)) continue;
+              const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
+              let changed = false;
+              for (const depType of ['dependencies', 'peerDependencies']) {
+                if (!pkg[depType]) continue;
+                for (const [name, version] of Object.entries(pkg[depType])) {
+                  if (String(version).startsWith('workspace:') && betaVersions[name]) {
+                    pkg[depType][name] = betaVersions[name];
+                    changed = true;
+                  }
+                }
+              }
+              if (changed) {
+                fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n');
+                console.log('Deps rewritten: ' + pkgPath);
+              }
+            }
+          "
 
       - name: "🚀 Publish beta packages to npm"
         run: |

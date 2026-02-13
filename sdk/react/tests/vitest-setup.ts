@@ -48,8 +48,7 @@ vi.mock("@frak-labs/core-sdk", async () => {
         // Product actions
         getProductInformation: vi.fn(),
 
-        // Interaction actions
-        sendInteraction: vi.fn(),
+        // Purchase tracking
         trackPurchaseStatus: vi.fn(),
 
         // Wallet status
@@ -62,6 +61,9 @@ vi.mock("@frak-labs/core-sdk", async () => {
         // Referral actions
         processReferral: vi.fn(),
         referralInteraction: vi.fn(),
+
+        // Interaction tracking
+        sendInteraction: vi.fn(),
 
         // Client creation (keep original implementation)
         createIFrameFrakClient: actual.createIFrameFrakClient,

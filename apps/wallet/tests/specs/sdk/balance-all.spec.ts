@@ -4,7 +4,6 @@ import { test } from "tests/fixtures";
 test("should display the modal balance", async ({
     sdkHelper,
     modalPage,
-    blockchainHelper,
     backendApi,
 }) => {
     await backendApi.interceptBalanceRoute((route) =>
@@ -22,7 +21,6 @@ test("should display the modal balance", async ({
         })
     );
 
-    await blockchainHelper.withEnabledSession();
     await sdkHelper.init();
     await sdkHelper.openWalletModal();
     await modalPage.verifyBalanceInformations(420);
@@ -32,7 +30,6 @@ test("should display the modal balance", async ({
 test("should have the good balance pending", async ({
     sdkHelper,
     modalPage,
-    blockchainHelper,
     backendApi,
 }) => {
     await backendApi.interceptPendingBalanceRoute((route) =>
@@ -46,7 +43,6 @@ test("should have the good balance pending", async ({
             }),
         })
     );
-    await blockchainHelper.withDisabledSession();
     await sdkHelper.init();
     await sdkHelper.openWalletModal();
     await modalPage.verifyPendingInformations(123);
@@ -54,14 +50,13 @@ test("should have the good balance pending", async ({
 
 test.fail(
     "should handle balance error",
-    async ({ sdkHelper, backendApi, blockchainHelper, modalPage }) => {
+    async ({ sdkHelper, backendApi, modalPage }) => {
         // Mock the  balance information
         await backendApi.interceptBalanceRoute((route) =>
             route.fulfill({
                 status: 500,
             })
         );
-        await blockchainHelper.withDisabledSession();
         await sdkHelper.init();
         await sdkHelper.openWalletModal();
         await modalPage.verifyBalanceInformations(1);
@@ -71,7 +66,7 @@ test.fail(
 
 test.fail(
     "should display pending error",
-    async ({ sdkHelper, backendApi, blockchainHelper, modalPage }) => {
+    async ({ sdkHelper, backendApi, modalPage }) => {
         // Mock the  pending information
         await backendApi.interceptPendingBalanceRoute((route) =>
             route.fulfill({
@@ -79,7 +74,6 @@ test.fail(
             })
         );
 
-        await blockchainHelper.withDisabledSession();
         await sdkHelper.init();
         await sdkHelper.openWalletModal();
         await modalPage.verifyPendingInformations(0);

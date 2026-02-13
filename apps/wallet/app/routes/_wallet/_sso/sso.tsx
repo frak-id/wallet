@@ -4,10 +4,7 @@ import {
     decompressJsonFromB64,
     findIframeInOpener,
 } from "@frak-labs/core-sdk";
-import {
-    createClientCompressionMiddleware,
-    createRpcClient,
-} from "@frak-labs/frame-connector";
+import { createRpcClient } from "@frak-labs/frame-connector";
 import { ButtonAuth } from "@frak-labs/ui/component/ButtonAuth";
 import { formatHash } from "@frak-labs/ui/component/HashDisplay";
 import { Spinner } from "@frak-labs/ui/component/Spinner";
@@ -18,6 +15,7 @@ import type {
 } from "@frak-labs/wallet-shared";
 import {
     authenticationStore,
+    clientIdStore,
     compressedSsoToParams,
     HandleErrors,
     sessionStore,
@@ -30,7 +28,6 @@ import i18next from "i18next";
 import { CloudUpload } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
-import type { Hex } from "viem";
 import { AuthenticateWithPhone } from "@/module/authentication/component/AuthenticateWithPhone";
 import styles from "@/module/authentication/component/Sso/index.module.css";
 import { SsoHeader } from "@/module/authentication/component/Sso/SsoHeader";
@@ -68,16 +65,21 @@ export const Route = createFileRoute("/_wallet/_sso/sso")({
         }
 
         // Convert compressed params to full params
-        const { productId, redirectUrl, directExit, lang, metadata } =
+        const { merchantId, redirectUrl, directExit, lang, metadata } =
             compressedSsoToParams(compressedParam);
 
         // Save the SSO context to the store
         authenticationStore.getState().setSsoContext({
-            productId: productId ?? undefined,
+            merchantId: merchantId || undefined,
             redirectUrl: redirectUrl ?? undefined,
             directExit: directExit ?? undefined,
             metadata: metadata ?? undefined,
         });
+
+        // Save the client id if provided
+        if (compressedParam.cId) {
+            clientIdStore.getState().setClientId(compressedParam.cId);
+        }
 
         // Change language if provided and different from current
         if (lang && i18next.language !== lang) {
@@ -85,7 +87,7 @@ export const Route = createFileRoute("/_wallet/_sso/sso")({
         }
 
         return {
-            ssoParams: { productId, redirectUrl, directExit, lang, metadata },
+            ssoParams: { merchantId, redirectUrl, directExit, lang, metadata },
         };
     },
 });
@@ -100,17 +102,18 @@ function Sso() {
     const routeContext = Route.useRouteContext();
 
     /**
-     * The current metadata
-     */
-    const currentMetadata = authenticationStore(
-        (state) => state.ssoContext?.metadata
-    );
-
-    /**
      * Check if we have a redirectUrl
      */
     const ssoContext = authenticationStore((state) => state.ssoContext);
     const hasRedirectUrl = !!ssoContext?.redirectUrl;
+
+    /**
+     * The current metadata
+     */
+    const currentMetadata = useMemo(
+        () => ssoContext?.metadata,
+        [ssoContext?.metadata]
+    );
 
     /**
      * The success state after login or register
@@ -118,11 +121,14 @@ function Sso() {
     const [success, setSuccess] = useState(false);
 
     /**
-     * The error state (can come from beforeLoad or from login/register actions)
+     * The loader error (from beforeLoad, unrecoverable)
      */
-    const [error, setError] = useState<Error | null>(
-        (routeContext as { error?: Error })?.error ?? null
-    );
+    const loaderError = (routeContext as { error?: Error })?.error ?? null;
+
+    /**
+     * The action error state (from login/register, retryable)
+     */
+    const [error, setError] = useState<Error | null>(null);
 
     /**
      * The on success callback
@@ -144,7 +150,6 @@ function Sso() {
                         emittingTransport: listenerIframe,
                         listeningTransport: window,
                         targetOrigin: window.location.origin,
-                        middleware: [createClientCompressionMiddleware()],
                     });
 
                     console.log(
@@ -223,13 +228,13 @@ function Sso() {
     }, []);
 
     // Show error state if loader failed
-    if (error) {
+    if (loaderError) {
         return (
             <>
                 <SsoHeader />
                 <Grid className={styles.sso__grid}>
                     <h2>An error occurred</h2>
-                    <HandleErrors error={error} />
+                    <HandleErrors error={loaderError} />
                     <button
                         className={styles.sso__buttonLink}
                         onClick={() => window.close()}
@@ -284,6 +289,7 @@ function Sso() {
                 <Header />
                 {!success && (
                     <>
+                        {error && <HandleErrors error={error} />}
                         <Actions onSuccess={onSuccess} onError={setError} />
                         <PhonePairingAction onSuccess={onSuccess} />
                     </>
@@ -309,7 +315,6 @@ function Sso() {
                         </button>
                     </>
                 )}
-                {error && <HandleErrors error={error} />}
             </Grid>
         </>
     );
@@ -384,6 +389,9 @@ function Actions({
     const lastAuthenticator = authenticationStore(
         (state) => state.lastAuthenticator
     );
+    const merchantId = authenticationStore(
+        (state) => state.ssoContext?.merchantId
+    );
     const privateKey = sessionStore((state) => state.demoPrivateKey);
     const { login, isLoginInProgress } = useLoginDemo({
         onSuccess: () => onSuccess(),
@@ -424,6 +432,7 @@ function Actions({
                     onSuccess={onSuccess}
                     onError={onError}
                     isPrimary={true}
+                    merchantId={merchantId}
                     lastAuthentication={{
                         wallet: lastAuthenticator.address,
                         authenticatorId: lastAuthenticator.authenticatorId,
@@ -434,6 +443,7 @@ function Actions({
                     onSuccess={onSuccess}
                     onError={onError}
                     isPrimary={false}
+                    merchantId={merchantId}
                 />
             </>
         );
@@ -446,11 +456,13 @@ function Actions({
                 onSuccess={onSuccess}
                 onError={onError}
                 isPrimary={true}
+                merchantId={merchantId}
             />
             <SsoLoginComponent
                 onSuccess={onSuccess}
                 onError={onError}
                 isPrimary={false}
+                merchantId={merchantId}
             />
         </>
     );
@@ -495,15 +507,17 @@ function useLoginDemo(options?: UseMutationOptions<Session>) {
         mutationKey: ssoKey.demo.login,
         async mutationFn() {
             // Retrieve the pkey
-            const pkey = sessionStore.getState().demoPrivateKey as
-                | Hex
-                | undefined;
+            const pkey = sessionStore.getState().demoPrivateKey;
             if (!pkey) {
                 throw new Error("No private key found");
             }
 
             // Launch the login process
-            return demoLogin({ pkey });
+            return demoLogin({
+                pkey,
+                merchantId:
+                    authenticationStore.getState().ssoContext?.merchantId,
+            });
         },
     });
 

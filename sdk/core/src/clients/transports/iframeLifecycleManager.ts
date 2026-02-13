@@ -1,6 +1,11 @@
 import { Deferred } from "@frak-labs/frame-connector";
 import type { FrakLifecycleEvent } from "../../types";
+import { getClientId } from "../../utils/clientId";
 import { BACKUP_KEY } from "../../utils/constants";
+import {
+    isFrakDeepLink,
+    triggerDeepLinkWithFallback,
+} from "../../utils/deepLinkWithFallback";
 import { changeIframeVisibility } from "../../utils/iframeHelper";
 
 /** @ignore */
@@ -10,13 +15,110 @@ export type IframeLifecycleManager = {
 };
 
 /**
+ * Handle backup storage
+ */
+function handleBackup(backup: string | undefined): void {
+    if (backup) {
+        localStorage.setItem(BACKUP_KEY, backup);
+    } else {
+        localStorage.removeItem(BACKUP_KEY);
+    }
+}
+
+/**
+ * Handle handshake with iframe
+ */
+function handleHandshake(
+    iframe: HTMLIFrameElement,
+    token: string,
+    targetOrigin: string
+): void {
+    const url = new URL(window.location.href);
+    const pendingMergeToken = url.searchParams.get("fmt") ?? undefined;
+
+    iframe.contentWindow?.postMessage(
+        {
+            clientLifecycle: "handshake-response",
+            data: {
+                token,
+                currentUrl: window.location.href,
+                clientId: getClientId(),
+                pendingMergeToken,
+            },
+        },
+        targetOrigin
+    );
+
+    if (pendingMergeToken) {
+        url.searchParams.delete("fmt");
+        window.history.replaceState({}, "", url.toString());
+    }
+}
+
+/**
+ * Compute final redirect URL with parameter substitution
+ */
+function computeRedirectUrl(
+    baseRedirectUrl: string,
+    mergeToken?: string
+): string {
+    try {
+        const redirectUrl = new URL(baseRedirectUrl);
+        if (!redirectUrl.searchParams.has("u")) {
+            return baseRedirectUrl;
+        }
+
+        redirectUrl.searchParams.delete("u");
+        redirectUrl.searchParams.append("u", window.location.href);
+
+        if (mergeToken) {
+            redirectUrl.searchParams.append("fmt", mergeToken);
+        }
+
+        return redirectUrl.toString();
+    } catch {
+        return baseRedirectUrl;
+    }
+}
+
+/**
+ * Handle redirect with deep link fallback
+ */
+function handleRedirect(
+    iframe: HTMLIFrameElement,
+    baseRedirectUrl: string,
+    targetOrigin: string,
+    mergeToken?: string
+): void {
+    const finalUrl = computeRedirectUrl(baseRedirectUrl, mergeToken);
+
+    if (isFrakDeepLink(baseRedirectUrl)) {
+        triggerDeepLinkWithFallback(finalUrl, {
+            onFallback: () => {
+                iframe.contentWindow?.postMessage(
+                    {
+                        clientLifecycle: "deep-link-failed",
+                        data: { originalUrl: finalUrl },
+                    },
+                    targetOrigin
+                );
+            },
+        });
+    } else {
+        window.location.href = finalUrl;
+    }
+}
+
+/**
  * Create a new iframe lifecycle handler
  * @ignore
  */
 export function createIFrameLifecycleManager({
     iframe,
+    targetOrigin,
 }: {
     iframe: HTMLIFrameElement;
+    targetOrigin: string;
 }): IframeLifecycleManager {
     // Create the isConnected listener
     const isConnectedDeferred = new Deferred<boolean>();
@@ -34,11 +136,7 @@ export function createIFrameLifecycleManager({
                 break;
             // Perform a frak backup
             case "do-backup":
-                if (data.backup) {
-                    localStorage.setItem(BACKUP_KEY, data.backup);
-                } else {
-                    localStorage.removeItem(BACKUP_KEY);
-                }
+                handleBackup(data.backup);
                 break;
             // Remove frak backup
             case "remove-backup":
@@ -47,39 +145,21 @@ export function createIFrameLifecycleManager({
             // Change iframe visibility
             case "show":
             case "hide":
-                changeIframeVisibility({
-                    iframe,
-                    isVisible: event === "show",
-                });
+                changeIframeVisibility({ iframe, isVisible: event === "show" });
                 break;
             // Handshake handling
-            case "handshake": {
-                iframe.contentWindow?.postMessage(
-                    {
-                        clientLifecycle: "handshake-response",
-                        data: {
-                            token: data.token,
-                            currentUrl: window.location.href,
-                        },
-                    },
-                    "*"
+            case "handshake":
+                handleHandshake(iframe, data.token, targetOrigin);
+                break;
+            // Redirect handling
+            case "redirect":
+                handleRedirect(
+                    iframe,
+                    data.baseRedirectUrl,
+                    targetOrigin,
+                    data.mergeToken
                 );
                 break;
-            }
-            // Redirect handling
-            case "redirect": {
-                const redirectUrl = new URL(data.baseRedirectUrl);
-
-                // If we got a u append the current location dynamicly
-                if (redirectUrl.searchParams.has("u")) {
-                    redirectUrl.searchParams.delete("u");
-                    redirectUrl.searchParams.append("u", window.location.href);
-                    window.location.href = redirectUrl.toString();
-                } else {
-                    window.location.href = data.baseRedirectUrl;
-                }
-                break;
-            }
         }
     };
 

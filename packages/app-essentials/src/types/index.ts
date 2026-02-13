@@ -1,16 +1,1 @@
-export type {
-    GetAllProductsResponseDto,
-    GetAllTokenResponseDto,
-    GetCampaignResponseDto,
-    GetInteractionItemDto,
-    GetInteractionsResponseDto,
-    GetMembersCountResponseDto,
-    GetMembersPageItem,
-    GetMembersRequestDto,
-    GetMembersResponseDto,
-    GetMembersWalletResponseDto,
-    GetProductInfoResponseDto,
-    GetRewardHistoryResponseDto,
-    GetRewardResponseDto,
-    IndexerToken,
-} from "./indexer";
+// Indexer types removed - indexer directory deleted in Task 3

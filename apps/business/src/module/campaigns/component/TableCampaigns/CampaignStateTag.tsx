@@ -1,52 +1,22 @@
-import { Tooltip } from "@frak-labs/ui/component/Tooltip";
 import { Badge } from "@/module/common/component/Badge";
-import type { CampaignState } from "@/types/Campaign";
+import type { CampaignStatus } from "@/types/Campaign";
 
 /**
- * If state == created, display additional badges (isActive, isAttached)
- * @param state
+ * Display the campaign status
+ * @param status
  * @constructor
  */
-export function CampaignStateTag({ state }: { state: CampaignState }) {
-    // Draft and creationFailed are simple badges
-    if (state.key === "draft") {
-        return <Badge variant={"secondary"}>Draft</Badge>;
+export function CampaignStateTag({ status }: { status: CampaignStatus }) {
+    switch (status) {
+        case "draft":
+            return <Badge variant={"secondary"}>Draft</Badge>;
+        case "active":
+            return <Badge variant={"success"}>Active</Badge>;
+        case "paused":
+            return <Badge variant={"warning"}>Paused</Badge>;
+        case "archived":
+            return <Badge variant={"secondary"}>Archived</Badge>;
+        default:
+            return <Badge variant={"danger"}>Unknown</Badge>;
     }
-    if (state.key !== "created") {
-        return <Badge variant={"danger"}>Setup failed</Badge>;
-    }
-
-    // Check if the campaign is running
-    if (!state.isRunning) {
-        return <Badge variant="primary">Paused</Badge>;
-    }
-
-    // Check if the campaign is active
-    if (!state.isActive) {
-        return (
-            <Tooltip
-                content={
-                    "The campaign isn't active, check the funding and the activation date to enable it"
-                }
-            >
-                <Badge variant="danger">Stopped</Badge>
-            </Tooltip>
-        );
-    }
-
-    // Check if for any reason it can't be executed
-    if (!state.interactionLink?.isAttached) {
-        return (
-            <Tooltip
-                content={
-                    "The campaign is stopped since it's not attached to the user interactions"
-                }
-            >
-                <Badge variant="danger">Stopped</Badge>
-            </Tooltip>
-        );
-    }
-
-    // If we are here, all good
-    return <Badge variant="success">Running</Badge>;
 }

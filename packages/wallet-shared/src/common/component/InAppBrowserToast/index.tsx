@@ -6,10 +6,11 @@ import { useSessionFlag } from "../../hook/useSessionFlag";
 import { inAppRedirectUrl, isInAppBrowser, isInIframe } from "../../lib/inApp";
 import { Toast } from "../Toast";
 
-/**
- * Toast component that displays when user is in an in-app browser
- */
-export function InAppBrowserToast() {
+type InAppBrowserToastProps = {
+    getMergeToken?: () => Promise<string | undefined>;
+};
+
+export function InAppBrowserToast({ getMergeToken }: InAppBrowserToastProps) {
     const { t } = useTranslation();
     const [isDismissed, setIsDismissed] = useSessionFlag(
         "inAppBrowserToastDismissed"
@@ -18,26 +19,28 @@ export function InAppBrowserToast() {
         "socialRedirectAttempted"
     );
 
-    const handleRedirect = useCallback(() => {
+    const handleRedirect = useCallback(async () => {
         if (isInIframe) {
-            // If in an iframe, ask the parent to redirect to the new url
             trackGenericEvent("in-app-browser-redirect", {
                 target: "sd-iframe",
             });
+
+            const mergeToken = await getMergeToken?.();
+
             emitLifecycleEvent({
                 iframeLifecycle: "redirect",
                 data: {
                     baseRedirectUrl: inAppRedirectUrl,
+                    mergeToken,
                 },
             });
         } else {
-            // Otherwise, redirect directly
             trackGenericEvent("in-app-browser-redirect", {
                 target: "window",
             });
             window.location.href = `${inAppRedirectUrl}${encodeURIComponent(window.location.href)}`;
         }
-    }, []);
+    }, [getMergeToken]);
 
     // Auto-redirect if this is the first time detecting in-app browser and no redirect has been attempted
     useEffect(() => {

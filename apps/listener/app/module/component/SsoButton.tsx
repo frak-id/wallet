@@ -1,16 +1,46 @@
 import {
+    DEEP_LINK_SCHEME,
     type SsoMetadata,
     ssoPopupFeatures,
     ssoPopupName,
 } from "@frak-labs/core-sdk";
 import {
+    getOriginPairingClient,
+    type OriginIdentityNode,
     trackAuthFailed,
     trackAuthInitiated,
-    useSsoLink,
+    ua,
+    useMountedTimeout,
 } from "@frak-labs/wallet-shared";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { Hex } from "viem";
+import { useStore } from "zustand";
+import { useDeepLinkFallback } from "@/module/hooks/useDeepLinkFallback";
+import { useSsoLink } from "@/module/hooks/useSsoLink";
 import { useListenerWithRequestUI } from "@/module/providers/ListenerUiProvider";
+import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
+import styles from "./SsoButton.module.css";
+
+function buildDeepLinkHref(pairing: { id: string }): string {
+    const id = encodeURIComponent(pairing.id);
+    return `${DEEP_LINK_SCHEME}pair?id=${id}&mode=embedded`;
+}
+
+/**
+ * Try to open SSO popup and track result
+ * @returns true if popup opened successfully
+ */
+function tryOpenSsoPopup(link: string): boolean {
+    const openedWindow = window.open(link, ssoPopupName, ssoPopupFeatures);
+    if (openedWindow) {
+        openedWindow.focus();
+        trackAuthInitiated("sso", { method: "popup" });
+        return true;
+    }
+    trackAuthFailed("sso", "failed-to-open");
+    return false;
+}
 
 /**
  * Button used to launch an SSO registration
@@ -20,22 +50,14 @@ import { useListenerWithRequestUI } from "@/module/providers/ListenerUiProvider"
  * - SSO completion now handled via direct window postMessage
  * - Session updates trigger via sessionAtom changes
  *
- * @param appName
- * @param productId
- * @param ssoMetadata
- * @param text
- * @param defaultText
- * @param lang
- * @param className
- * @constructor
  */
 export function SsoButton({
-    productId,
+    merchantId,
     ssoMetadata,
     text,
     className,
 }: {
-    productId: Hex;
+    merchantId: Hex;
     ssoMetadata: SsoMetadata;
     text: string;
     className?: string;
@@ -48,7 +70,7 @@ export function SsoButton({
 
     // Get the link to use with the SSO
     const { link } = useSsoLink({
-        productId,
+        merchantId,
         metadata: {
             name: appName,
             ...ssoMetadata,
@@ -59,6 +81,13 @@ export function SsoButton({
 
     if (!link) {
         return null;
+    }
+
+    // On mobile, use deep link redirect flow instead of popup
+    if (ua.isMobile) {
+        return (
+            <MobileSsoButton link={link} text={text} className={className} />
+        );
     }
 
     return <RegularSsoButton link={link} text={text} className={className} />;
@@ -85,20 +114,8 @@ function RegularSsoButton({
             type={"button"}
             className={className}
             onClick={() => {
-                // Try to open the sso window
-                const openedWindow = window.open(
-                    link,
-                    ssoPopupName,
-                    ssoPopupFeatures
-                );
-                // If we got a window, focus it and save the clicked state
-                if (openedWindow) {
-                    openedWindow.focus();
-                    trackAuthInitiated("sso");
-                } else {
-                    // Otherwise, mark that we fail to open it
+                if (!tryOpenSsoPopup(link)) {
                     setFailToOpen(true);
-                    trackAuthFailed("sso", "failed-to-open");
                 }
             }}
         >
@@ -126,10 +143,172 @@ function LinkSsoButton({
             target="frak-sso"
             rel="noreferrer"
             onClick={() => {
-                trackAuthInitiated("sso");
+                trackAuthInitiated("sso", { method: "link" });
             }}
         >
             {text}
         </a>
+    );
+}
+
+function MobileSsoButton({
+    link,
+    text,
+    className,
+}: {
+    link: string;
+    text: ReactNode;
+    className?: string;
+}) {
+    const { t } = useTranslation();
+    const [status, setStatus] = useState<
+        "idle" | "connecting" | "waiting" | "timeout" | "appNotFound"
+    >("idle");
+    const { startTimeout, clearTimeout: clearPairingTimeout } =
+        useMountedTimeout();
+    const client = getOriginPairingClient();
+    const clientState = useStore(client.store);
+    const resolvingContext = useStore(resolvingContextStore, (s) => s.context);
+    const { emitRedirectWithFallback } = useDeepLinkFallback();
+
+    const originNode = useMemo((): OriginIdentityNode | undefined => {
+        if (!resolvingContext?.clientId || !resolvingContext?.merchantId) {
+            return undefined;
+        }
+        return {
+            type: "anonymous_fingerprint",
+            value: resolvingContext.clientId,
+            merchantId: resolvingContext.merchantId,
+        };
+    }, [resolvingContext?.clientId, resolvingContext?.merchantId]);
+
+    useEffect(() => {
+        return () => {
+            client.disconnect();
+        };
+    }, [client]);
+
+    const handleStartPairing = async () => {
+        trackAuthInitiated("sso", { method: "mobile" });
+        setStatus("connecting");
+
+        try {
+            client.disconnect();
+            await client.initiatePairing({ originNode });
+        } catch {
+            setStatus("idle");
+            trackAuthFailed("sso", "pairing-init-failed");
+            return;
+        }
+
+        startTimeout(() => {
+            if (client.store.getState().status === "paired") {
+                return;
+            }
+            setStatus("timeout");
+            trackAuthFailed("sso", "pairing-timeout");
+        }, 30_000);
+    };
+
+    const deepLinkHref = clientState.pairing
+        ? buildDeepLinkHref(clientState.pairing)
+        : undefined;
+
+    useEffect(() => {
+        if (deepLinkHref && status === "connecting") {
+            emitRedirectWithFallback(deepLinkHref, () => {
+                // App not installed - show UI for manual browser continuation
+                // (can't auto-open popup from callback - browsers block non-user-initiated popups)
+                setStatus("appNotFound");
+                // Clear pairing timeout since user will continue in browser
+                clearPairingTimeout();
+            });
+            setStatus("waiting");
+        }
+    }, [deepLinkHref, status, emitRedirectWithFallback, clearPairingTimeout]);
+
+    useEffect(() => {
+        if (clientState.status === "paired") {
+            clearPairingTimeout();
+        }
+    }, [clientState.status, clearPairingTimeout]);
+
+    const handleContinueInBrowser = () => {
+        tryOpenSsoPopup(link);
+        setStatus("waiting");
+    };
+
+    if (status === "idle") {
+        return (
+            <button
+                type="button"
+                className={className}
+                onClick={handleStartPairing}
+            >
+                {text}
+            </button>
+        );
+    }
+
+    if (status === "timeout") {
+        return (
+            <button
+                type="button"
+                className={className}
+                onClick={handleStartPairing}
+            >
+                {t("mobile-sso.retry")}
+            </button>
+        );
+    }
+
+    if (status === "appNotFound") {
+        return (
+            <div className={styles.appNotFound}>
+                <p className={styles.appNotFound__text}>
+                    {t("mobile-sso.appNotFound")}
+                </p>
+                <button
+                    type="button"
+                    className={className}
+                    onClick={handleContinueInBrowser}
+                >
+                    {t("mobile-sso.continueInBrowser")}
+                </button>
+            </div>
+        );
+    }
+
+    if (status === "connecting" && !deepLinkHref) {
+        return (
+            <button type="button" className={className} disabled>
+                {t("mobile-sso.connecting")}
+            </button>
+        );
+    }
+
+    if (status === "waiting") {
+        return (
+            <button type="button" className={className} disabled>
+                {t("mobile-sso.waiting")}
+            </button>
+        );
+    }
+
+    return (
+        <button
+            type="button"
+            className={className}
+            onClick={() => {
+                if (!deepLinkHref) return;
+                emitRedirectWithFallback(deepLinkHref, () => {
+                    setStatus("appNotFound");
+                });
+                setStatus("waiting");
+            }}
+            disabled={!deepLinkHref}
+        >
+            {t("mobile-sso.openWallet")}
+        </button>
     );
 }
