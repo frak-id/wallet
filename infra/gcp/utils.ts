@@ -1,9 +1,8 @@
 import type { Output } from "@pulumi/pulumi";
-import { isProd, isV2, normalizedStageName } from "../utils";
+import { isProd, normalizedStageName } from "../utils";
 
 // Base domain: v2.gcp.frak.id or v2.gcp-dev.frak.id for V2, gcp.frak.id or gcp-dev.frak.id for V1
-const baseGcpDomain = isProd ? "gcp.frak.id" : "gcp-dev.frak.id";
-export const baseDomainName = isV2 ? `v2.${baseGcpDomain}` : baseGcpDomain;
+export const baseDomainName = isProd ? "gcp.frak.id" : "gcp-dev.frak.id";
 
 export const domainName = `backend.${baseDomainName}`;
 
@@ -11,14 +10,14 @@ export const domainName = `backend.${baseDomainName}`;
 export const walletNamespace = new kubernetes.core.v1.Namespace(
     "infra-wallet",
     {
-        metadata: { name: `wallet-${normalizedStageName}${isV2 ? "-v2" : ""}` },
+        metadata: { name: `wallet-${normalizedStageName}` },
     }
 );
 
 let registryPath: Output<string> | undefined;
 if (!$dev) {
     const registry = new gcp.artifactregistry.Repository("wallet-gcr", {
-        repositoryId: `wallet-${normalizedStageName}${isV2 ? "-v2" : ""}`,
+        repositoryId: `wallet-${normalizedStageName}`,
         format: "DOCKER",
         description: "Artifact registry for the cooking bot images",
         location: "europe-west1",

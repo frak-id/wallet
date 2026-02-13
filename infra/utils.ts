@@ -6,11 +6,6 @@ import os from "node:os";
 export const isGcp = $app?.stage?.startsWith("gcp") ?? false;
 
 /**
- * Check if we are in v2 environment
- */
-export const isV2 = $app?.stage?.endsWith("-v2") ?? false;
-
-/**
  * Check if we are in production
  */
 export const isProd =

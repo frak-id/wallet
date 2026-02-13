@@ -1,4 +1,4 @@
-import { isProd, isV2 } from "./utils";
+import { isProd } from "./utils";
 
 // Get some info about the deployment env
 const isLocal = $dev ?? false;
@@ -36,23 +36,17 @@ export const erpcUrl = isProd
     : "https://erpc.gcp-dev.frak.id/nexus-rpc/evm/";
 export const backendUrl = getStaticVariable({
     prod: "https://backend.frak.id",
-    dev: isV2
-        ? "https://backend.v2.gcp-dev.frak.id"
-        : "https://backend.gcp-dev.frak.id",
+    dev: "https://backend.gcp-dev.frak.id",
     local: "http://localhost:3030",
 });
 export const walletUrl = getStaticVariable({
     prod: "https://wallet.frak.id",
-    dev: isV2
-        ? "https://wallet.v2.gcp-dev.frak.id"
-        : "https://wallet-dev.frak.id",
+    dev: "https://wallet-dev.frak.id",
     local: "https://localhost:3000",
 });
 export const businessUrl = getStaticVariable({
     prod: "https://business.frak.id",
-    dev: isV2
-        ? "https://business.v2.gcp-dev.frak.id"
-        : "https://business-dev.frak.id",
+    dev: "https://business-dev.frak.id",
     local: "https://localhost:3001",
 });
 export const openPanelApiUrl = "https://op-api.gcp.frak.id";

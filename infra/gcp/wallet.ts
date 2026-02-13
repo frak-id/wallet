@@ -13,7 +13,7 @@ import {
     vapidPublicKey,
     walletUrl,
 } from "../config";
-import { getLocalIp, isProd, isV2, normalizedStageName } from "../utils";
+import { getLocalIp, isProd, normalizedStageName } from "../utils";
 import { baseDomainName, getRegistryPath, walletNamespace } from "./utils";
 
 // Resolve backend service name only in non-dev (avoids triggering Docker builds locally)
@@ -274,9 +274,9 @@ export const walletService = new KubernetesService(
 
         // Ingress config with path-based routing
         ingress: {
-            host: isV2 ? `wallet.${baseDomainName}` : `${subDomain}.frak.id`,
+            host: `${subDomain}.frak.id`,
             tlsSecretName: "wallet-tls",
-            additionalHosts: isV2 ? [] : [`wallet.${baseDomainName}`],
+            additionalHosts: [`wallet.${baseDomainName}`],
             // Route /listener to the listener service and /.well-known to backend
             pathRoutes: [
                 {
