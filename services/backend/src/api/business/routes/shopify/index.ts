@@ -11,6 +11,7 @@ import type {
     BudgetConfig,
     BudgetUsed,
 } from "../../../../domain/campaign/schemas";
+import { CampaignBankContext } from "../../../../domain/campaign-bank";
 import { MerchantContext } from "../../../../domain/merchant";
 import { OrchestrationContext } from "../../../../orchestration/context";
 import { CampaignStatsResponseSchema } from "../../../../orchestration/schemas/campaignStatsSchemas";
@@ -183,6 +184,43 @@ export const shopifyRoutes = new Elysia({ prefix: "/shopify" })
         {
             response: {
                 200: CampaignStatsResponseSchema,
+                400: t.String(),
+                401: t.String(),
+                404: t.String(),
+            },
+        }
+    )
+    .get(
+        "/merchant/bank",
+        async ({ shopifySession }) => {
+            if (!shopifySession) {
+                return status(401, "Authentication required");
+            }
+
+            const shopDomain = extractShopDomain(shopifySession.dest);
+            if (!shopDomain) {
+                return status(400, "Invalid shop domain");
+            }
+
+            const merchant =
+                await MerchantContext.repositories.merchant.findByDomain(
+                    shopDomain
+                );
+            if (!merchant) {
+                return status(404, "Merchant not found for this shop");
+            }
+
+            return CampaignBankContext.services.campaignBank.getBankStatus(
+                merchant.id
+            );
+        },
+        {
+            response: {
+                200: t.Object({
+                    deployed: t.Boolean(),
+                    bankAddress: t.Union([t.Hex(), t.Null()]),
+                    ownerHasManagerRole: t.Boolean(),
+                }),
                 400: t.String(),
                 401: t.String(),
                 404: t.String(),
