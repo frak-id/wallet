@@ -6,13 +6,17 @@ const iosAppId = `${iosTeamId}.${iosBundleId}`;
 
 const androidPackageName = "id.frak.wallet";
 
-// Validate Android SHA256 fingerprint from environment
+// Validate Android SHA256 fingerprint(s) from environment.
+// Supports comma-separated values for multiple signing keys
+// (e.g. Google Play app signing key + local upload key).
 if (!process.env.ANDROID_SHA256_FINGERPRINT?.trim()) {
     throw new Error(
         "Missing required environment variable: ANDROID_SHA256_FINGERPRINT"
     );
 }
-const androidSha256Fingerprint = process.env.ANDROID_SHA256_FINGERPRINT;
+const androidSha256Fingerprints = process.env.ANDROID_SHA256_FINGERPRINT.split(
+    ","
+).map((fp) => fp.trim());
 
 const appleAppSiteAssociation = {
     applinks: {
@@ -38,7 +42,7 @@ const assetLinks = [
         target: {
             namespace: "android_app",
             package_name: androidPackageName,
-            sha256_cert_fingerprints: [androidSha256Fingerprint],
+            sha256_cert_fingerprints: androidSha256Fingerprints,
         },
     },
 ];
