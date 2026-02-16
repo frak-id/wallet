@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { AuthenticateWithPhone } from "@/module/authentication/component/AuthenticateWithPhone";
 import { useRegister } from "@/module/authentication/hook/useRegister";
+import { isAuthenticatorAlreadyRegistered } from "@/module/authentication/lib/isAuthenticatorAlreadyRegistered";
 import styles from "@/module/authentication/page/RegisterPage.module.css";
 import { Grid } from "@/module/common/component/Grid";
 import { Notice } from "@/module/common/component/Notice";
@@ -40,11 +41,7 @@ function RegisterPage() {
      * Boolean used to know if the error is about a previously used authenticator
      */
     const isPreviouslyUsedAuthenticatorError = useMemo(
-        () =>
-            !!error &&
-            "cause" in error &&
-            error.cause instanceof DOMException &&
-            error.cause.name === "InvalidStateError",
+        () => !!error && isAuthenticatorAlreadyRegistered(error),
         [error]
     );
 

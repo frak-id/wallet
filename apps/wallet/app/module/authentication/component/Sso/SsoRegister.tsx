@@ -2,6 +2,7 @@ import { ButtonAuth } from "@frak-labs/ui/component/ButtonAuth";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useRegister } from "@/module/authentication/hook/useRegister";
+import { isAuthenticatorAlreadyRegistered } from "@/module/authentication/lib/isAuthenticatorAlreadyRegistered";
 import { Notice } from "@/module/common/component/Notice";
 import styles from "./index.module.css";
 
@@ -30,11 +31,7 @@ export function SsoRegisterComponent({
      * Boolean used to know if the error is about a previously used authenticator
      */
     const isPreviouslyUsedAuthenticatorError = useMemo(
-        () =>
-            !!error &&
-            "cause" in error &&
-            error.cause instanceof DOMException &&
-            error.cause.name === "InvalidStateError",
+        () => !!error && isAuthenticatorAlreadyRegistered(error),
         [error]
     );
 
