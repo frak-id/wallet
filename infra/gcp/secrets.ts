@@ -5,6 +5,8 @@ import {
     jwtBusinessSecret,
     nexusRpcSecret,
     pimlicoApiKey,
+    shopifyApiSecret,
+    shopifyClientId,
     vapidPublicKey,
 } from "../config";
 import { isProd, normalizedStageName } from "../utils";
@@ -68,8 +70,8 @@ export const elysiaEnv = {
     SLACK_BOT_TOKEN: new sst.Secret("SLACK_BOT_TOKEN").value,
 
     // Shopify related
-    SHOPIFY_API_SECRET: new sst.Secret("SHOPIFY_API_SECRET").value,
-    SHOPIFY_CLIENT_ID: new sst.Secret("SHOPIFY_CLIENT_ID").value,
+    SHOPIFY_API_SECRET: shopifyApiSecret.value,
+    SHOPIFY_CLIENT_ID: shopifyClientId.value,
 
     // Mobile
     ANDROID_SHA256_FINGERPRINT: androidSha256Fingerprint.value,
