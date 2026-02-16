@@ -4,7 +4,6 @@ import type { Address } from "viem";
 import { touchpointsTable } from "../domain/attribution/db/schema";
 import { identityNodesTable } from "../domain/identity/db/schema";
 import { merchantsTable } from "../domain/merchant/db/schema";
-import type { MerchantAuthorizationService } from "../domain/merchant/services/MerchantAuthorizationService";
 import {
     assetLogsTable,
     interactionLogsTable,
@@ -33,10 +32,7 @@ export type MemberQueryParams = {
 type TokenPriceMap = Map<string, number>;
 
 export class MemberQueryOrchestrator {
-    constructor(
-        readonly authorizationService: MerchantAuthorizationService,
-        private readonly pricingRepository: PricingRepository
-    ) {}
+    constructor(private readonly pricingRepository: PricingRepository) {}
 
     private scopeMerchantIds(
         accessible: string[],
@@ -48,17 +44,15 @@ export class MemberQueryOrchestrator {
     }
 
     async queryMembers(
-        wallet: Address,
+        accessibleMerchantIds: string[],
         params: MemberQueryParams
     ): Promise<MemberQueryResult> {
-        const accessible =
-            await this.authorizationService.getAccessibleMerchantIds(wallet);
-        if (accessible.length === 0) {
+        if (accessibleMerchantIds.length === 0) {
             return { totalResult: 0, members: [] };
         }
 
         const merchantIds = this.scopeMerchantIds(
-            accessible,
+            accessibleMerchantIds,
             params.filter?.merchantIds
         );
         if (merchantIds.length === 0) {
@@ -240,15 +234,13 @@ export class MemberQueryOrchestrator {
     }
 
     async countMembers(
-        wallet: Address,
+        accessibleMerchantIds: string[],
         filter?: MemberQueryFilter
     ): Promise<number> {
-        const accessible =
-            await this.authorizationService.getAccessibleMerchantIds(wallet);
-        if (accessible.length === 0) return 0;
+        if (accessibleMerchantIds.length === 0) return 0;
 
         const merchantIds = this.scopeMerchantIds(
-            accessible,
+            accessibleMerchantIds,
             filter?.merchantIds
         );
         if (merchantIds.length === 0) return 0;

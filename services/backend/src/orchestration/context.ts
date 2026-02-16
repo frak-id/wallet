@@ -81,10 +81,7 @@ const rewardExpirationOrchestrator = new RewardExpirationOrchestrator(
 
 // Anonymous merge orchestrator needs identityOrchestrator to auto-create
 // identity groups on merge token generation (same pattern as /track/arrival)
-const memberQueryOrchestrator = new MemberQueryOrchestrator(
-    MerchantContext.services.authorization,
-    pricingRepository
-);
+const memberQueryOrchestrator = new MemberQueryOrchestrator(pricingRepository);
 
 const campaignStatsOrchestrator = new CampaignStatsOrchestrator();
 

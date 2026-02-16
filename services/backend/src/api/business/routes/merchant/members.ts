@@ -1,5 +1,7 @@
+import { extractShopDomain } from "@backend-infrastructure";
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
+import { MerchantContext } from "../../../../domain/merchant";
 import { OrchestrationContext } from "../../../../orchestration/context";
 import {
     MemberFilterSchema,
@@ -8,17 +10,45 @@ import {
 } from "../../../../orchestration/schemas/memberSchemas";
 import { businessSessionContext } from "../../middleware/session";
 
+async function resolveAccessibleMerchantIds(
+    businessSession: { wallet: `0x${string}` } | null,
+    shopifySession: { dest: string } | null
+): Promise<string[]> {
+    if (businessSession) {
+        return MerchantContext.services.authorization.getAccessibleMerchantIds(
+            businessSession.wallet
+        );
+    }
+
+    if (shopifySession) {
+        const shopDomain = extractShopDomain(shopifySession.dest);
+        if (!shopDomain) return [];
+        const merchant =
+            await MerchantContext.repositories.merchant.findByDomain(
+                shopDomain
+            );
+        return merchant ? [merchant.id] : [];
+    }
+
+    return [];
+}
+
 export const merchantMembersRoutes = new Elysia({ prefix: "/members" })
     .use(businessSessionContext)
     .post(
         "",
-        async ({ body, businessSession }) => {
-            if (!businessSession) {
+        async ({ body, businessSession, shopifySession }) => {
+            if (!businessSession && !shopifySession) {
                 return status(401, "Authentication required");
             }
 
+            const merchantIds = await resolveAccessibleMerchantIds(
+                businessSession,
+                shopifySession
+            );
+
             return OrchestrationContext.orchestrators.memberQuery.queryMembers(
-                businessSession.wallet,
+                merchantIds,
                 {
                     limit: body.limit,
                     offset: body.offset,
@@ -42,14 +72,19 @@ export const merchantMembersRoutes = new Elysia({ prefix: "/members" })
     )
     .post(
         "/count",
-        async ({ body, businessSession }) => {
-            if (!businessSession) {
+        async ({ body, businessSession, shopifySession }) => {
+            if (!businessSession && !shopifySession) {
                 return status(401, "Authentication required");
             }
 
+            const merchantIds = await resolveAccessibleMerchantIds(
+                businessSession,
+                shopifySession
+            );
+
             const count =
                 await OrchestrationContext.orchestrators.memberQuery.countMembers(
-                    businessSession.wallet,
+                    merchantIds,
                     body.filter
                 );
 
