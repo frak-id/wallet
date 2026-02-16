@@ -32,8 +32,9 @@ export function SsoRegisterComponent({
     const isPreviouslyUsedAuthenticatorError = useMemo(
         () =>
             !!error &&
-            "code" in error &&
-            error.code === "ERROR_AUTHENTICATOR_PREVIOUSLY_REGISTERED",
+            "cause" in error &&
+            error.cause instanceof DOMException &&
+            error.cause.name === "InvalidStateError",
         [error]
     );
 
