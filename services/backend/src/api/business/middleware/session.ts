@@ -1,27 +1,64 @@
-import { JwtContext } from "@backend-infrastructure";
+import {
+    extractShopDomain,
+    JwtContext,
+    verifyShopifySessionToken,
+} from "@backend-infrastructure";
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
+import type { ShopifySessionToken } from "../../../domain/auth/models/ShopifySessionDto";
+import { MerchantContext } from "../../../domain/merchant";
 
-/**
- * Build the business context for the app
- */
 export const businessSessionContext = new Elysia({
     name: "Context.businessSession",
 })
     .guard({
         headers: t.Object({
             "x-business-auth": t.Optional(t.String()),
+            "x-shopify-session-token": t.Optional(t.String()),
         }),
     })
     .resolve(async ({ headers }) => {
         const businessAuth = headers["x-business-auth"];
-        if (!businessAuth) {
-            return { businessSession: null };
+        if (businessAuth) {
+            const session = await JwtContext.business.verify(businessAuth);
+            if (session) {
+                return {
+                    businessSession: session,
+                    shopifySession: null as ShopifySessionToken | null,
+                    hasMerchantAccess: (merchantId: string) =>
+                        MerchantContext.services.authorization.hasAccess(
+                            merchantId,
+                            session.wallet
+                        ),
+                };
+            }
         }
 
-        const session = await JwtContext.business.verify(businessAuth);
+        const shopifyToken = headers["x-shopify-session-token"];
+        if (shopifyToken) {
+            const session = await verifyShopifySessionToken(shopifyToken);
+            if (session) {
+                const shopDomain = extractShopDomain(session.dest);
+                return {
+                    businessSession: null,
+                    shopifySession: session,
+                    hasMerchantAccess: shopDomain
+                        ? (merchantId: string) =>
+                              MerchantContext.services.authorization.hasAccessByDomain(
+                                  merchantId,
+                                  shopDomain
+                              )
+                        : (_merchantId: string) =>
+                              Promise.resolve(false as boolean),
+                };
+            }
+        }
+
         return {
-            businessSession: session || null,
+            businessSession: null,
+            shopifySession: null as ShopifySessionToken | null,
+            hasMerchantAccess: (_merchantId: string) =>
+                Promise.resolve(false as boolean),
         };
     })
     .macro({
@@ -29,17 +66,28 @@ export const businessSessionContext = new Elysia({
             if (skip) return;
 
             return {
-                beforeHandle: async ({ headers }) => {
+                beforeHandle: async ({ headers, set }) => {
                     const businessAuth = headers["x-business-auth"];
-                    const session =
-                        await JwtContext.business.verify(businessAuth);
-
-                    if (!session) {
-                        return status(
-                            401,
-                            "Unauthorized - Invalid business token"
-                        );
+                    if (businessAuth) {
+                        const session =
+                            await JwtContext.business.verify(businessAuth);
+                        if (session) return;
                     }
+
+                    const shopifyToken = headers["x-shopify-session-token"];
+                    if (shopifyToken) {
+                        const session =
+                            await verifyShopifySessionToken(shopifyToken);
+                        if (session) return;
+
+                        set.headers["X-Shopify-Retry-Invalid-Session-Request"] =
+                            "1";
+                    }
+
+                    return status(
+                        401,
+                        "Unauthorized - No valid authentication"
+                    );
                 },
             };
         },

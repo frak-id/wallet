@@ -1,6 +1,5 @@
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
-import { MerchantContext } from "../../../../domain/merchant";
 import { OrchestrationContext } from "../../../../orchestration/context";
 import { CampaignStatsResponseSchema } from "../../../../orchestration/schemas/campaignStatsSchemas";
 import { businessSessionContext } from "../../middleware/session";
@@ -11,16 +10,17 @@ export const merchantCampaignStatsRoutes = new Elysia({
     .use(businessSessionContext)
     .get(
         "",
-        async ({ params: { merchantId }, businessSession }) => {
-            if (!businessSession) {
+        async ({
+            params: { merchantId },
+            businessSession,
+            shopifySession,
+            hasMerchantAccess,
+        }) => {
+            if (!businessSession && !shopifySession) {
                 return status(401, "Authentication required");
             }
 
-            const hasAccess =
-                await MerchantContext.services.authorization.hasAccess(
-                    merchantId,
-                    businessSession.wallet
-                );
+            const hasAccess = await hasMerchantAccess(merchantId);
             if (!hasAccess) {
                 return status(403, "Access denied");
             }

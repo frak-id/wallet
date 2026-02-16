@@ -67,6 +67,15 @@ export class MerchantAuthorizationService {
         return access.hasAccess;
     }
 
+    async hasAccessByDomain(
+        merchantId: string,
+        shopDomain: string
+    ): Promise<boolean> {
+        const merchant = await this.merchantRepository.findById(merchantId);
+        if (!merchant) return false;
+        return merchant.domain === shopDomain;
+    }
+
     async getAccessibleMerchantIds(wallet: Address): Promise<string[]> {
         const [owned, adminOf] = await Promise.all([
             this.merchantRepository.findByOwnerWallet(wallet),
