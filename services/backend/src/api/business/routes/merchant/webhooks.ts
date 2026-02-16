@@ -2,7 +2,6 @@ import { db } from "@backend-infrastructure";
 import { t } from "@backend-utils";
 import { count, eq, max, min } from "drizzle-orm";
 import { Elysia, status } from "elysia";
-import { MerchantContext } from "../../../../domain/merchant";
 import {
     merchantWebhooksTable,
     purchasesTable,
@@ -93,16 +92,18 @@ export const merchantWebhooksRoutes = new Elysia({
     )
     .post(
         "",
-        async ({ params: { merchantId }, body, businessSession }) => {
-            if (!businessSession) {
+        async ({
+            params: { merchantId },
+            body,
+            businessSession,
+            shopifySession,
+            hasMerchantAccess,
+        }) => {
+            if (!businessSession && !shopifySession) {
                 return status(401, "Authentication required");
             }
 
-            const hasAccess =
-                await MerchantContext.services.authorization.hasAccess(
-                    merchantId,
-                    businessSession.wallet
-                );
+            const hasAccess = await hasMerchantAccess(merchantId);
             if (!hasAccess) {
                 return status(403, "Access denied");
             }
@@ -142,16 +143,17 @@ export const merchantWebhooksRoutes = new Elysia({
     )
     .delete(
         "",
-        async ({ params: { merchantId }, businessSession }) => {
-            if (!businessSession) {
+        async ({
+            params: { merchantId },
+            businessSession,
+            shopifySession,
+            hasMerchantAccess,
+        }) => {
+            if (!businessSession && !shopifySession) {
                 return status(401, "Authentication required");
             }
 
-            const hasAccess =
-                await MerchantContext.services.authorization.hasAccess(
-                    merchantId,
-                    businessSession.wallet
-                );
+            const hasAccess = await hasMerchantAccess(merchantId);
             if (!hasAccess) {
                 return status(403, "Access denied");
             }

@@ -141,16 +141,18 @@ export const merchantRoutes = new Elysia({ prefix: "/merchant" })
     )
     .put(
         "/:merchantId",
-        async ({ params: { merchantId }, body, businessSession }) => {
-            if (!businessSession) {
+        async ({
+            params: { merchantId },
+            body,
+            businessSession,
+            shopifySession,
+            hasMerchantAccess,
+        }) => {
+            if (!businessSession && !shopifySession) {
                 return status(401, "Authentication required");
             }
 
-            const hasAccess =
-                await MerchantContext.services.authorization.hasAccess(
-                    merchantId,
-                    businessSession.wallet
-                );
+            const hasAccess = await hasMerchantAccess(merchantId);
             if (!hasAccess) {
                 return status(403, "Access denied");
             }
