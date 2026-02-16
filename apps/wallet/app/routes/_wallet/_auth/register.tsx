@@ -1,7 +1,15 @@
 import { Button } from "@frak-labs/ui/component/Button";
 import { ButtonAuth } from "@frak-labs/ui/component/ButtonAuth";
-import { isWebAuthNSupported } from "@frak-labs/wallet-shared";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import {
+    authenticatorStorage,
+    isWebAuthNSupported,
+} from "@frak-labs/wallet-shared";
+import {
+    createFileRoute,
+    Link,
+    redirect,
+    useNavigate,
+} from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { AuthenticateWithPhone } from "@/module/authentication/component/AuthenticateWithPhone";
@@ -16,6 +24,20 @@ import { consumePendingDeepLink } from "@/utils/deepLink";
 
 export const Route = createFileRoute("/_wallet/_auth/register")({
     component: RegisterPage,
+    beforeLoad: async ({ location }) => {
+        // Skip redirect if user explicitly requested new account creation
+        const search = new URLSearchParams(location.search);
+        if (search.has("new")) return;
+
+        // If the user already has passkeys stored, redirect to login
+        const previousAuthenticators = await authenticatorStorage.getAll();
+        if (previousAuthenticators.length > 0) {
+            throw redirect({
+                to: "/login",
+                replace: true,
+            });
+        }
+    },
 });
 
 /**

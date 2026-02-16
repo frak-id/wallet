@@ -60,7 +60,9 @@ function LoginPage() {
 
     return (
         <>
-            <Back href={"/register"}>{t("wallet.login.accountCreation")}</Back>
+            <Back href={"/register?new=true"}>
+                {t("wallet.login.accountCreation")}
+            </Back>
             <Grid
                 className={styles.login__grid}
                 footer={
