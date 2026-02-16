@@ -2,7 +2,7 @@ import { jwtVerify } from "jose";
 import type { ShopifySessionToken } from "../../domain/auth/models/ShopifySessionDto";
 import { log } from "./logger";
 
-const CLOCK_TOLERANCE_SECONDS = 10;
+const CLOCK_TOLERANCE_SECONDS = 60;
 
 /**
  * Verify a Shopify session token JWT (HS256, signed by Shopify with the app's API secret).
