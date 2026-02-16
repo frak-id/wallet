@@ -5,7 +5,14 @@ export {
     campaignRulesTable,
 } from "./db/schema";
 export { CampaignRuleRepository } from "./repositories/CampaignRuleRepository";
-export type { CampaignStatus } from "./schemas";
+export type {
+    BudgetConfigItem,
+    CampaignGoal,
+    CampaignResponse,
+    CampaignStatus,
+    RuleConditions,
+    SpecialCategory,
+} from "./schemas";
 export {
     BudgetConfigSchema,
     CampaignMetadataSchema,
@@ -31,6 +38,7 @@ export {
 export type {
     BudgetConfig,
     BudgetConsumptionResult,
+    BudgetUsed,
     CalculatedReward,
     CampaignMetadata,
     CampaignRuleDefinition,
