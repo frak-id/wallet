@@ -32,7 +32,7 @@ const { chain, baseUrl } = getChainConfig(process.env.STAGE);
 
 export const viemClient = createClient({
     transport: http(
-        buildRpcUrl(baseUrl, chain.id, process.env.RPC_SECRET ?? ""),
+        buildRpcUrl(baseUrl, chain.id, process.env.NEXUS_RPC_SECRET ?? ""),
         {
             batch: { wait: 50 },
             retryCount: 1,

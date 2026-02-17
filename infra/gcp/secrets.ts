@@ -5,6 +5,7 @@ import {
     jwtBusinessSecret,
     nexusRpcSecret,
     pimlicoApiKey,
+    productSetupCodeSalt,
     shopifyApiSecret,
     shopifyClientId,
     vapidPublicKey,
@@ -54,7 +55,7 @@ export const elysiaEnv = {
     JWT_SECRET: new sst.Secret("JWT_SECRET").value,
     JWT_SDK_SECRET: new sst.Secret("JWT_SDK_SECRET").value,
     JWT_BUSINESS_SECRET: jwtBusinessSecret.value,
-    PRODUCT_SETUP_CODE_SALT: new sst.Secret("PRODUCT_SETUP_CODE_SALT").value,
+    PRODUCT_SETUP_CODE_SALT: productSetupCodeSalt.value,
 
     // Notifications
     VAPID_PUBLIC_KEY: vapidPublicKey.value,

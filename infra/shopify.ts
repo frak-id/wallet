@@ -2,8 +2,8 @@ import {
     backendUrl,
     businessUrl,
     indexerUrl,
+    nexusRpcSecret,
     productSetupCodeSalt,
-    rpcSecret,
     shopifyApiKey,
     shopifyApiSecret,
     shopifyAppUrl,
@@ -41,6 +41,6 @@ new sst.aws.React("Shopify", {
         shopifyPostgresPassword,
         shopifyApiSecret,
         productSetupCodeSalt,
-        rpcSecret,
+        nexusRpcSecret,
     ],
 });

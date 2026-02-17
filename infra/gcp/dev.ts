@@ -3,8 +3,8 @@ import { dbInstance, elysiaEnv, postgresEnv } from "./secrets";
 // Local port is a random number between 8000 and 9999
 const localPort = "8888";
 
-// Launch the tunnel
-const tunnelCmd = new sst.x.DevCommand("db-tunnel", {
+// DB tunnel cmd
+new sst.x.DevCommand("db-tunnel", {
     dev: {
         title: "GCP Tunnel",
         autostart: false,
@@ -27,8 +27,8 @@ export const dbEnv = {
     POSTGRES_SCHEMA: "local",
 };
 
-// Helpers command
-export const backend = new sst.x.DevCommand("backend", {
+// Backend dev command
+new sst.x.DevCommand("backend", {
     dev: {
         title: "Backend",
         autostart: true,
@@ -41,37 +41,4 @@ export const backend = new sst.x.DevCommand("backend", {
         DOMAIN_NAME: "",
         STAGE: $app.stage,
     },
-});
-export const dbGcpStudio = new sst.x.DevCommand(
-    "db:gcp:studio",
-    {
-        dev: {
-            title: "[DB][GCP] Inspect",
-            autostart: false,
-            command: "bunx drizzle-kit studio --port 13001",
-            directory: "services/backend",
-        },
-        environment: dbEnv,
-    },
-    {
-        dependsOn: [tunnelCmd],
-    }
-);
-export const dbGcpGenerate = new sst.x.DevCommand("db:gcp:generate", {
-    dev: {
-        title: "[DB][GCP] Generate",
-        autostart: false,
-        command: "bunx drizzle-kit generate",
-        directory: "services/backend",
-    },
-    environment: dbEnv,
-});
-export const dbGcpMigrate = new sst.x.DevCommand("db:gcp:migrate", {
-    dev: {
-        title: "[DB][GCP] Migrate",
-        autostart: false,
-        command: "bunx drizzle-kit migrate",
-        directory: "services/backend",
-    },
-    environment: dbEnv,
 });

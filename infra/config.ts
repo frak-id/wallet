@@ -71,7 +71,6 @@ export const shopifyPostgresPassword = new sst.Secret(
     "SHOPIFY_POSTGRES_PASSWORD"
 );
 export const productSetupCodeSalt = new sst.Secret("PRODUCT_SETUP_CODE_SALT");
-export const rpcSecret = new sst.Secret("RPC_SECRET");
 
 // Shopify app URL configs
 export const shopifyAppUrl = isProd
