@@ -261,7 +261,16 @@ export const CampaignResponseSchema = t.Object({
     createdAt: t.String(),
     updatedAt: t.String(),
 });
-export type CampaignResponse = Omit<
-    Static<typeof CampaignResponseSchema>,
-    "rule"
-> & { rule: CampaignRuleDefinition };
+/**
+ * Raw Static type — matches what Eden Treaty returns for API responses.
+ * Use this when working with API response data from the Eden client.
+ */
+export type CampaignResponseRaw = Static<typeof CampaignResponseSchema>;
+
+/**
+ * Adjusted type with properly-typed recursive ConditionGroup in rule.
+ * Use this for domain logic that needs full rule type safety.
+ */
+export type CampaignResponse = Omit<CampaignResponseRaw, "rule"> & {
+    rule: CampaignRuleDefinition;
+};

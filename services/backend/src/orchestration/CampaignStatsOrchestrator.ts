@@ -1,5 +1,4 @@
 import { and, countDistinct, eq, inArray, sql, sum } from "drizzle-orm";
-import type { Static } from "elysia";
 import type { Address } from "viem";
 import type { CampaignRuleSelect } from "../domain/campaign/db/schema";
 import { campaignRulesTable } from "../domain/campaign/db/schema";
@@ -9,9 +8,7 @@ import {
     interactionLogsTable,
 } from "../domain/rewards/db/schema";
 import { db } from "../infrastructure/persistence/postgres";
-import type { CampaignStatsItemSchema } from "./schemas/campaignStatsSchemas";
-
-type CampaignStatsItem = Static<typeof CampaignStatsItemSchema>;
+import type { CampaignStatsItem } from "./schemas/campaignStatsSchemas";
 
 type InteractionCountRow = {
     campaignRuleId: string;
