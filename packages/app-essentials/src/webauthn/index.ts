@@ -42,6 +42,7 @@ function resolveRpOrigin(rpId: string): string {
 
     if (envOrigin) return envOrigin;
     if (isRunningLocally && !isTauri()) return "https://localhost:3000";
+    if (!isRunningInProd) return "https://wallet-dev.frak.id";
     return "https://wallet.frak.id";
 }
 
