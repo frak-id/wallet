@@ -1,0 +1,54 @@
+{% assign use_reward = '' %}
+{% if block.settings.show_reward == true %}
+  {% assign use_reward = 'use-reward' %}
+{% endif %}
+
+{% assign custom_class = '' %}
+{% if block.settings.button_style == 'custom' %}
+  {% assign custom_class = 'frak-wallet-button-custom' %}
+{% endif %}
+
+{% style %}
+  button.frak-wallet-button-custom {
+    background-color: {{ block.settings.background_color }};
+  }
+{% endstyle %}
+
+<frak-button-wallet {{ use_reward }} classname="{{ custom_class }}"></frak-button-wallet>
+
+{% schema %}
+{
+  "name": "Frak Wallet Button",
+  "target": "body",
+  "settings": [
+    {
+      "type": "checkbox",
+      "id": "show_reward",
+      "label": "Show reward",
+      "default": false
+    },
+    {
+      "type": "select",
+      "id": "button_style",
+      "label": "Button Style",
+      "options": [
+        {
+          "value": "primary",
+          "label": "Primary"
+        },
+        {
+          "value": "custom",
+          "label": "Custom Colors"
+        }
+      ],
+      "default": "primary"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Button color",
+      "default": "#3e557e"
+    }
+  ]
+}
+{% endschema %}

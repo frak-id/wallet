@@ -1,0 +1,150 @@
+<script src="https://cdn.jsdelivr.net/npm/@frak-labs/components" defer="defer"></script>
+{% comment %} <script src="{{ 'components.js' | asset_url }}" defer></script> {% endcomment %}
+<script
+  type="text/javascript"
+>
+  // Precompute a few stuff
+  const lang = '{{ block.settings.modal_lng }}' === 'default' ? undefined : '{{ block.settings.modal_lng }}';
+
+  // Get the logo URL
+  {% assign appearance_metafield = shop.metafields.frak.appearance %}
+  let logoUrl = '{{ block.settings.logo.src }}';
+  if (!logoUrl.startsWith('cdn.shopify.com')) {
+    logoUrl = `https://${Shopify.shop}/cdn/shop/${logoUrl}`;
+  }
+
+  {% if appearance_metafield.value %}
+    try {
+      logoUrl = {{ appearance_metafield.value | json }}.logoUrl;
+    } catch (error) {
+      console.error('Error parsing appearance customizations:', error);
+    }
+  {% endif %}
+
+  // Get i18n customizations from metafield
+  {% assign i18n_metafield = shop.metafields.frak.modal_i18n %}
+  let customI18n = {};
+  {% if i18n_metafield.value %}
+    try {
+      customI18n = {{ i18n_metafield.value | json }};
+    } catch (error) {
+      console.error('Error parsing i18n customizations:', error);
+    }
+  {% endif %}
+
+  // Read merchantId from metafield
+  {% assign merchant_id_metafield = shop.metafields.frak.merchant_id %}
+
+  // Top level Frak SDK config
+  const frakConfig = {
+    walletUrl: 'https://wallet.frak.id',
+    metadata: {
+      // Your app name (will be displayed on some modals and in the SSO)
+      name: '{{ shop.name }}',
+      // You can also setup custom styles here
+      lang,
+      logoUrl,
+      {% if merchant_id_metafield.value %}
+      // Merchant ID from Frak dashboard (avoids domain-based lookup)
+      merchantId: {{ merchant_id_metafield.value | json }},
+      {% endif %}
+    },
+    customizations: {
+      css: "{{ 'customizations.css' | asset_url }}",
+      i18n: customI18n,
+    },
+    domain: window.location.host,
+  };
+
+  // Base config for the modals (not rly used for client side stuff)
+  const baseModalConfig = {
+    login: {
+      allowSso: true,
+      ssoMetadata: {
+        logoUrl,
+        homepageLink: window.location.host,
+      },
+    },
+  };
+
+  // Sharing config
+  const sharingConfig = { link: window.location.href };
+
+  const modalWalletConfig = {
+    metadata: {
+      position: '{{ block.settings.wallet_button_position }}',
+    },
+  };
+
+  window.FrakSetup = {
+    config: frakConfig,
+    modalConfig: baseModalConfig,
+    modalShareConfig: sharingConfig,
+    modalWalletConfig,
+  };
+
+  // Inject custom JavaScript
+  try {
+    const script = document.createElement('script');
+    script.textContent = `{{ block.settings.custom_javascript }}`;
+    document.head.appendChild(script);
+  } catch (error) {
+    console.error('Failed to inject JavaScript:', error.message);
+  }
+</script>
+
+{% schema %}
+{
+  "name": "Frak Listener",
+  "target": "head",
+  "settings": [
+    {
+      "type": "image_picker",
+      "id": "logo",
+      "label": "Logo that will be displayed on the modal"
+    },
+    {
+      "type": "select",
+      "id": "modal_lng",
+      "label": "Sharing modal language",
+      "options": [
+        {
+          "value": "en",
+          "label": "English"
+        },
+        {
+          "value": "fr",
+          "label": "Français"
+        },
+        {
+          "value": "default",
+          "label": "Default user language"
+        }
+      ],
+      "default": "default"
+    },
+    {
+      "type": "select",
+      "id": "wallet_button_position",
+      "label": "Wallet Button Position",
+      "options": [
+        {
+          "value": "left",
+          "label": "Left"
+        },
+        {
+          "value": "right",
+          "label": "Right"
+        }
+      ],
+      "default": "right"
+    },
+    {
+      "type": "textarea",
+      "id": "custom_javascript",
+      "label": "Custom JavaScript",
+      "info": "Enter custom JavaScript code to be injected"
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,36 @@
+.tabList {
+    display: flex;
+    gap: 0;
+}
+
+.tab {
+    padding: 12px 16px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 400;
+    color: #6d7175;
+    border-bottom: none;
+    margin-bottom: 0;
+    transition: all 0.2s ease;
+}
+
+.tab:hover {
+    background-color: #f6f6f6;
+}
+
+.tab[aria-selected="true"] {
+    font-weight: 600;
+    color: #303030;
+    background-color: #f1f1f1;
+    border-radius: 8px;
+}
+
+.tab[aria-selected="true"]:hover {
+    background-color: #f1f1f1;
+}
+
+.content {
+    padding-top: 16px;
+}

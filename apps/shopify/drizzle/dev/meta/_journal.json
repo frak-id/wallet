@@ -1,0 +1,27 @@
+{
+    "version": "7",
+    "dialect": "postgresql",
+    "entries": [
+        {
+            "idx": 0,
+            "version": "7",
+            "when": 1732028754163,
+            "tag": "0000_pink_network",
+            "breakpoints": true
+        },
+        {
+            "idx": 1,
+            "version": "7",
+            "when": 1746723911448,
+            "tag": "0001_gray_king_cobra",
+            "breakpoints": true
+        },
+        {
+            "idx": 2,
+            "version": "7",
+            "when": 1746724353070,
+            "tag": "0002_flaky_baron_zemo",
+            "breakpoints": true
+        }
+    ]
+}

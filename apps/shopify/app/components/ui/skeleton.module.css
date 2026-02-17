@@ -1,0 +1,15 @@
+@keyframes skeletonPulse {
+    0%,
+    100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.6;
+    }
+}
+
+.pulse {
+    background-color: #e4e5e7;
+    border-radius: 4px;
+    animation: skeletonPulse 1.5s ease-in-out infinite;
+}

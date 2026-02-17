@@ -1,0 +1,187 @@
+{
+    "id": "f8930c31-e055-4c39-9ea6-9b24fc28d3ee",
+    "prevId": "2359f9ef-08c1-4a07-ba80-58885a2be670",
+    "version": "7",
+    "dialect": "postgresql",
+    "tables": {
+        "public.purchase": {
+            "name": "purchase",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "serial",
+                    "primaryKey": true,
+                    "notNull": true
+                },
+                "shopId": {
+                    "name": "shopId",
+                    "type": "bigint",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "shop": {
+                    "name": "shop",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "purchaseId": {
+                    "name": "purchaseId",
+                    "type": "bigint",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "confirmationUrl": {
+                    "name": "confirmationUrl",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "amount": {
+                    "name": "amount",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "currency": {
+                    "name": "currency",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "status": {
+                    "name": "status",
+                    "type": "shopify_purchase_status",
+                    "typeSchema": "public",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "createdAt": {
+                    "name": "createdAt",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": false,
+                    "default": "now()"
+                },
+                "updatedAt": {
+                    "name": "updatedAt",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": false,
+                    "default": "now()"
+                },
+                "txHash": {
+                    "name": "txHash",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "txStatus": {
+                    "name": "txStatus",
+                    "type": "frak_purchase_status",
+                    "typeSchema": "public",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "bank": {
+                    "name": "bank",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                }
+            },
+            "indexes": {},
+            "foreignKeys": {},
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.session": {
+            "name": "session",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "text",
+                    "primaryKey": true,
+                    "notNull": true
+                },
+                "shop": {
+                    "name": "shop",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "state": {
+                    "name": "state",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "isOnline": {
+                    "name": "isOnline",
+                    "type": "boolean",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": false
+                },
+                "scope": {
+                    "name": "scope",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "expires": {
+                    "name": "expires",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "accessToken": {
+                    "name": "accessToken",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "userId": {
+                    "name": "userId",
+                    "type": "bigint",
+                    "primaryKey": false,
+                    "notNull": false
+                }
+            },
+            "indexes": {},
+            "foreignKeys": {},
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        }
+    },
+    "enums": {
+        "public.frak_purchase_status": {
+            "name": "frak_purchase_status",
+            "schema": "public",
+            "values": ["pending", "confirmed"]
+        },
+        "public.shopify_purchase_status": {
+            "name": "shopify_purchase_status",
+            "schema": "public",
+            "values": ["pending", "active", "declined", "expired"]
+        }
+    },
+    "schemas": {},
+    "sequences": {},
+    "roles": {},
+    "policies": {},
+    "views": {},
+    "_meta": {
+        "columns": {},
+        "schemas": {},
+        "tables": {}
+    }
+}

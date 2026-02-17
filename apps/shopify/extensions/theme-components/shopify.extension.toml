@@ -1,0 +1,8 @@
+api_version = "2025-01"
+
+[[extensions]]
+name = "Frak Theme Components"
+handle = "theme-components"
+description = "Referral button and Frak modal to trigger frak sharing system."
+uid = "beabf0cd-7aba-3f46-70c2-89fed9be0d7ee240bb19"
+type = "theme"

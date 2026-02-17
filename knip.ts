@@ -34,6 +34,17 @@ const config: KnipConfig = {
             entry: ["app/root.tsx", "app.routes.ts", "app/routes/**/*.tsx"],
             project: ["app/**/*.{ts,tsx}"],
         },
+        "apps/shopify": {
+            entry: [
+                "app/root.tsx",
+                "app/routes.ts",
+                "app/routes/**/*.tsx",
+                "app/entry.client.tsx",
+                "app/entry.server.tsx",
+            ],
+            project: ["app/**/*.{ts,tsx}", "db/**/*.ts"],
+            ignore: ["extensions/**", ".shopify/**", ".react-router/**"],
+        },
         "apps/business": {
             entry: ["src/router.tsx", "src/routes/**/*.tsx"],
             project: ["src/**/*.{ts,tsx}"],
