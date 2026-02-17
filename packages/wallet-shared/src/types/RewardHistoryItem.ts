@@ -1,18 +1,12 @@
-export type RewardStatus =
-    | "pending"
-    | "processing"
-    | "settled"
-    | "consumed"
-    | "cancelled"
-    | "expired";
+import type {
+    AssetStatus,
+    InteractionType,
+    RecipientType,
+} from "@frak-labs/backend-elysia/domain/rewards/schemas";
 
-export type TriggerType =
-    | "referral"
-    | "create_referral_link"
-    | "purchase"
-    | "custom";
-
-export type RecipientType = "referee" | "referrer";
+export type RewardStatus = AssetStatus;
+export type TriggerType = InteractionType;
+export type { RecipientType };
 
 export type MerchantInfo = {
     name: string;
