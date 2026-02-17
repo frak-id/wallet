@@ -48,6 +48,7 @@ export default $config({
             await import("./infra/gcp/sandbox.ts");
             await import("./infra/dashboard-admin.ts");
             await import("./infra/example.ts");
+            await import("./infra/shopify.ts");
 
             // SDK build command helper
             new sst.x.DevCommand("sdk:build", {
@@ -63,5 +64,6 @@ export default $config({
         }
 
         await import("./infra/dashboard-admin.ts");
+        await import("./infra/shopify.ts");
     },
 });
