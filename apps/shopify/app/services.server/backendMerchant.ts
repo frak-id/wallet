@@ -1,5 +1,5 @@
 import type {
-    CampaignResponseRaw,
+    CampaignResponse,
     CampaignStatus,
 } from "@frak-labs/backend-elysia/domain/campaign";
 import type { BankStatus } from "@frak-labs/backend-elysia/domain/campaign-bank";
@@ -9,8 +9,7 @@ import type { AuthenticatedContext } from "../types/context";
 import { backendApi } from "../utils/backendApi";
 import { resolveMerchantId } from "./merchant";
 
-export type { BankStatus, CampaignStatsItem, CampaignStatus };
-export type { CampaignResponseRaw as CampaignResponse };
+export type { BankStatus, CampaignResponse, CampaignStatsItem, CampaignStatus };
 
 // ---------------------------------------------------------------------------
 // JWT extraction — Shopify App Bridge session token
@@ -50,7 +49,7 @@ function buildBackendHeaders(
 // Caches — short TTL, navigation-scoped
 // ---------------------------------------------------------------------------
 
-const campaignsCache = new LRUCache<string, CampaignResponseRaw[]>({
+const campaignsCache = new LRUCache<string, CampaignResponse[]>({
     max: 512,
     ttl: 5_000,
 });
@@ -70,7 +69,7 @@ const bankStatusCache = new LRUCache<string, BankStatus>({
 export async function getMerchantCampaigns(
     context: AuthenticatedContext,
     request: Request
-): Promise<CampaignResponseRaw[] | null> {
+): Promise<CampaignResponse[] | null> {
     const merchantId = await resolveMerchantId(context);
     if (!merchantId) {
         return null;
@@ -94,8 +93,9 @@ export async function getMerchantCampaigns(
             return null;
         }
 
-        campaignsCache.set(merchantId, data.campaigns);
-        return data.campaigns;
+        const campaigns = data.campaigns as CampaignResponse[];
+        campaignsCache.set(merchantId, campaigns);
+        return campaigns;
     } catch (error) {
         console.error(
             `[backendMerchant] campaigns fetch error for ${merchantId}:`,

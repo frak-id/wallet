@@ -9,7 +9,6 @@ export type {
     BudgetConfigItem,
     CampaignGoal,
     CampaignResponse,
-    CampaignResponseRaw,
     CampaignStatus,
     RuleConditions,
     SpecialCategory,
