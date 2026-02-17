@@ -72,7 +72,10 @@
     "./domain/campaign/context": "./src/domain/campaign/context.ts",
     "./domain/campaign/db/schema": "./src/domain/campaign/db/schema.ts",
     "./domain/campaign-bank": "./src/domain/campaign-bank/index.ts",
-    "./domain/campaign-bank/context": "./src/domain/campaign-bank/context.ts"
+    "./domain/campaign-bank/context": "./src/domain/campaign-bank/context.ts",
+    "./domain/rewards": "./src/domain/rewards/index.ts",
+    "./domain/rewards/schemas": "./src/domain/rewards/schemas/index.ts",
+    "./orchestration/schemas": "./src/orchestration/schemas/index.ts"
   },
   "module": "src/index.ts",
   "main": "./src/index.ts"

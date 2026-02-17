@@ -1,6 +1,7 @@
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import { CampaignBankContext } from "../../../../domain/campaign-bank";
+import { BankStatusSchema } from "../../../../domain/campaign-bank/schemas";
 import { businessSessionContext } from "../../middleware/session";
 
 export const merchantBankRoutes = new Elysia({
@@ -33,11 +34,7 @@ export const merchantBankRoutes = new Elysia({
                 merchantId: t.String(),
             }),
             response: {
-                200: t.Object({
-                    deployed: t.Boolean(),
-                    bankAddress: t.Union([t.Hex(), t.Null()]),
-                    ownerHasManagerRole: t.Boolean(),
-                }),
+                200: BankStatusSchema,
                 401: t.String(),
                 403: t.String(),
             },
