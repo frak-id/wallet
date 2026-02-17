@@ -42,7 +42,6 @@
         "cmdk": "^1.1.1",
         "countries-list": "^3.2.2",
         "date-fns": "^4.1.0",
-        "ky": "^1.14.3",
         "lru-cache": "^11.2.6",
         "lucide-react": "^0.563.0",
         "normalize.css": "^8.0.1",

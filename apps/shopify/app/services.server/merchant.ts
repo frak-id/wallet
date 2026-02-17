@@ -120,19 +120,17 @@ async function fetchMerchantFromBackend(
     domain: string
 ): Promise<MerchantResolveResponse | null> {
     try {
-        const response = await backendApi.get("user/merchant/resolve", {
-            searchParams: { domain },
-            throwHttpErrors: false,
+        const { data, error } = await backendApi.user.merchant.resolve.get({
+            query: { domain },
         });
-
-        if (!response.ok) {
+        if (error) {
             console.error(
-                `[merchantId] backend resolve failed (${response.status}) for ${domain}`
+                `[merchantId] backend resolve failed (${error.status}) for ${domain}`
             );
             return null;
         }
 
-        return (await response.json()) as MerchantResolveResponse;
+        return data as MerchantResolveResponse;
     } catch (error) {
         console.error(`[merchantId] fetch failed for domain ${domain}:`, error);
         return null;

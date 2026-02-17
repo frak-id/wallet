@@ -19,11 +19,11 @@ export function useConversionRate({ token }: { token?: Address }) {
             }
 
             try {
-                return await backendApi.get(`common/rate?token=${token}`).json<{
-                    usd: number;
-                    eur: number;
-                    gbp: number;
-                }>();
+                const { data, error } = await backendApi.common.rate.get({
+                    query: { token },
+                });
+                if (error) throw error;
+                return data;
             } catch (e) {
                 console.error("Unable to fetch conversion rate", e);
                 return {

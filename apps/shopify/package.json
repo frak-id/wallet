@@ -29,7 +29,10 @@
   "dependencies": {
     "@frak-labs/core-sdk": "workspace:*",
     "@frak-labs/react-sdk": "workspace:*",
+    "@frak-labs/app-essentials": "workspace:*",
+    "@frak-labs/backend-elysia": "workspace:*",
     "@react-router/node": "^7.0.0",
+    "@elysiajs/eden": "^1.4.8",
     "@react-router/serve": "^7.0.0",
     "@shopify/shopify-api": "^12.3.0",
     "@shopify/shopify-app-react-router": "^1.1.1",
@@ -45,7 +48,6 @@
     "i18next-http-backend": "^3.0.2",
     "isbot": "^5.1.35",
     "jsonc-parser": "^3.3.1",
-    "ky": "^1.14.3",
     "lru-cache": "^11.2.6",
     "pick": "^0.0.1",
     "postgres": "^3.4.8",
@@ -59,6 +61,7 @@
     "viem": "catalog:"
   },
   "devDependencies": {
+    "bun-types": "latest",
     "@biomejs/biome": "^2.3.14",
     "@pulumi/aws": "^6.74.0",
     "@react-router/dev": "^7.0.0",

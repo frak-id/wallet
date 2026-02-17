@@ -17,6 +17,12 @@
     "target": "ES2022",
     "baseUrl": ".",
     "rootDirs": [".", "./.react-router/types"],
-    "types": ["node", "@shopify/polaris-types", "@shopify/app-bridge-types"]
+    "types": ["node", "@shopify/polaris-types", "@shopify/app-bridge-types", "bun-types"],
+    "paths": {
+      "@backend-utils": ["../../services/backend/src/utils/index.ts"],
+      "@backend-infrastructure": ["../../services/backend/src/infrastructure/index.ts"],
+      "@backend-infrastructure/*": ["../../services/backend/src/infrastructure/*"],
+      "@backend-domain/*": ["../../services/backend/src/domain/*"]
+    }
   }
 }

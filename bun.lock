@@ -61,7 +61,6 @@
         "cmdk": "^1.1.1",
         "countries-list": "^3.2.2",
         "date-fns": "^4.1.0",
-        "ky": "^1.14.3",
         "lru-cache": "^11.2.6",
         "lucide-react": "^0.563.0",
         "normalize.css": "^8.0.1",
@@ -193,6 +192,9 @@
     "apps/shopify": {
       "name": "@frak-labs/shopify-app",
       "dependencies": {
+        "@elysiajs/eden": "^1.4.8",
+        "@frak-labs/app-essentials": "workspace:*",
+        "@frak-labs/backend-elysia": "workspace:*",
         "@frak-labs/core-sdk": "workspace:*",
         "@frak-labs/react-sdk": "workspace:*",
         "@react-router/node": "^7.0.0",
@@ -211,7 +213,6 @@
         "i18next-http-backend": "^3.0.2",
         "isbot": "^5.1.35",
         "jsonc-parser": "^3.3.1",
-        "ky": "^1.14.3",
         "lru-cache": "^11.2.6",
         "pick": "^0.0.1",
         "postgres": "^3.4.8",
@@ -236,6 +237,7 @@
         "@types/node": "catalog:",
         "@types/react": "catalog:",
         "@types/react-dom": "catalog:",
+        "bun-types": "latest",
         "drizzle-kit": "^0.31.9",
         "preact": "^10.28.3",
         "sst": "3.17.38",
@@ -427,7 +429,6 @@
       "version": "0.0.0",
       "dependencies": {
         "@elysiajs/eden": "^1.4.8",
-        "ky": "^1.14.3",
       },
       "devDependencies": {
         "@frak-labs/backend-elysia": "workspace:*",

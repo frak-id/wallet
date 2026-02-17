@@ -63,7 +63,6 @@ export default $config({
             return;
         }
 
-        await import("./infra/dashboard-admin.ts");
         await import("./infra/shopify.ts");
     },
 });

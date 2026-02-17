@@ -125,24 +125,18 @@ export async function getMerchantCampaigns(
     }
 
     try {
-        const response = await backendApi.get(
-            `business/merchant/${merchantId}/campaigns`,
-            {
+        const { data, error } = await backendApi.business
+            .merchant({ merchantId })
+            .campaigns.get({
                 headers: buildBackendHeaders(request),
-                throwHttpErrors: false,
-            }
-        );
-
-        if (!response.ok) {
+            });
+        if (error) {
             console.error(
-                `[backendMerchant] campaigns fetch failed (${response.status}) for ${merchantId}`
+                `[backendMerchant] campaigns fetch failed (${error.status}) for ${merchantId}`
             );
             return null;
         }
 
-        const data = (await response.json()) as {
-            campaigns: CampaignResponse[];
-        };
         campaignsCache.set(merchantId, data.campaigns);
         return data.campaigns;
     } catch (error) {
@@ -172,22 +166,18 @@ export async function getMerchantBankStatus(
     }
 
     try {
-        const response = await backendApi.get(
-            `business/merchant/${merchantId}/bank`,
-            {
+        const { data, error } = await backendApi.business
+            .merchant({ merchantId })
+            .bank.get({
                 headers: buildBackendHeaders(request),
-                throwHttpErrors: false,
-            }
-        );
-
-        if (!response.ok) {
+            });
+        if (error) {
             console.error(
-                `[backendMerchant] bank fetch failed (${response.status}) for ${merchantId}`
+                `[backendMerchant] bank fetch failed (${error.status}) for ${merchantId}`
             );
             return null;
         }
 
-        const data = (await response.json()) as BankStatus;
         bankStatusCache.set(merchantId, data);
         return data;
     } catch (error) {
@@ -212,24 +202,17 @@ export async function getMerchantCampaignStats(
     }
 
     try {
-        const response = await backendApi.get(
-            `business/merchant/${merchantId}/campaigns/stats`,
-            {
+        const { data, error } = await backendApi.business
+            .merchant({ merchantId })
+            .campaigns.stats.get({
                 headers: buildBackendHeaders(request),
-                throwHttpErrors: false,
-            }
-        );
-
-        if (!response.ok) {
+            });
+        if (error) {
             console.error(
-                `[backendMerchant] stats fetch failed (${response.status}) for ${merchantId}`
+                `[backendMerchant] stats fetch failed (${error}) for ${merchantId}`
             );
             return null;
         }
-
-        const data = (await response.json()) as {
-            stats: CampaignStatsItem[];
-        };
         return data.stats;
     } catch (error) {
         console.error(
@@ -260,20 +243,14 @@ export async function getFrakWebookStatus(
     }
 
     try {
-        const response = await backendApi.get(
-            `business/merchant/${merchantId}/webhooks`,
-            {
+        const { data, error } = await backendApi.business
+            .merchant({ merchantId })
+            .webhooks.get({
                 headers: buildBackendHeaders(request),
-                throwHttpErrors: false,
-            }
-        );
-        if (!response.ok) {
-            return {
-                userErrors: [],
-                setup: false,
-            };
+            });
+        if (error) {
+            throw error;
         }
-        const data = await response.json();
         return {
             userErrors: [],
             setup: Array.isArray(data) ? data.length > 0 : Boolean(data),

@@ -60,7 +60,7 @@ export async function startupPurchase(
                     currencyCode:
                         info.preferredCurrency?.toUpperCase() ?? "USD",
                 },
-                test: process.env.STAGE !== "production",
+                test: process.env.STAGE !== "prod",
             },
         }
     );

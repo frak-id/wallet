@@ -80,7 +80,9 @@ export default defineConfig(() => {
             "process.env.PRODUCT_SETUP_CODE_SALT": JSON.stringify(
                 process.env.PRODUCT_SETUP_CODE_SALT
             ),
-            "process.env.NEXUS_RPC_SECRET": JSON.stringify(process.env.NEXUS_RPC_SECRET),
+            "process.env.NEXUS_RPC_SECRET": JSON.stringify(
+                process.env.NEXUS_RPC_SECRET
+            ),
         },
         server: {
             port: Number(process.env.PORT || 3000),
