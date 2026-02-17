@@ -65,6 +65,22 @@ export const jwtBusinessSecret = new sst.Secret("JWT_BUSINESS_SECRET");
 export const shopifyClientId = new sst.Secret("SHOPIFY_CLIENT_ID");
 export const shopifyApiSecret = new sst.Secret("SHOPIFY_API_SECRET");
 
+// Shopify app secrets (separate from backend Postgres)
+export const shopifyPostgresHost = new sst.Secret("SHOPIFY_POSTGRES_HOST");
+export const shopifyPostgresPassword = new sst.Secret(
+    "SHOPIFY_POSTGRES_PASSWORD"
+);
+export const productSetupCodeSalt = new sst.Secret("PRODUCT_SETUP_CODE_SALT");
+export const rpcSecret = new sst.Secret("RPC_SECRET");
+
+// Shopify app URL configs
+export const shopifyAppUrl = isProd
+    ? "https://extension-shop.frak.id"
+    : "https://extension-shop-dev.frak.id";
+export const shopifyApiKey = isProd
+    ? "87da8338f40c95301b4881ca4bfb23db"
+    : "de34932679bc2a2c5a8dddb21a216247";
+
 // Android signing key fingerprint (shared by frontend + backend for WebAuthn + assetlinks)
 export const androidSha256Fingerprint = new sst.Secret(
     "ANDROID_SHA256_FINGERPRINT"
