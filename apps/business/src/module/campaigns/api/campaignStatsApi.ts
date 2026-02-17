@@ -1,22 +1,10 @@
+import type { CampaignStatsItem } from "@frak-labs/backend-elysia/orchestration/schemas";
 import type { Address } from "viem";
 import { authenticatedBackendApi } from "@/api/backendClient";
 import campaignStatsData from "@/mock/campaignStats.json";
 
-export type CampaignStats = {
-    campaignId: string;
-    campaignName: string;
-    trigger: string;
-    tokenAddress: Address | null;
-    referredInteractions: number;
+export type CampaignStats = CampaignStatsItem & {
     createReferredLinkInteractions: number;
-    purchaseInteractions: number;
-    totalRewards: string;
-    uniqueWallets: number;
-    ambassador: number;
-    sharingRate: number;
-    ctr: number;
-    costPerPurchase: string;
-    costPerShare: string;
 };
 
 export function getMyCampaignsStatsMock(): CampaignStats[] {
