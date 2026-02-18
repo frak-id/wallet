@@ -21,8 +21,8 @@ export function getMyCampaignsStatsMock(): CampaignStats[] {
         ambassador: stat.ambassador,
         sharingRate: stat.sharingRate,
         ctr: stat.ctr,
-        costPerPurchase: String(stat.costPerPurchase),
-        costPerShare: String(stat.costPerShare),
+        costPerPurchase: stat.costPerPurchase,
+        costPerShare: stat.costPerShare,
     }));
 }
 

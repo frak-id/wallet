@@ -8,13 +8,13 @@ export const CampaignStatsItemSchema = t.Object({
     tokenAddress: t.Union([t.Hex(), t.Null()]),
     referredInteractions: t.Number(),
     purchaseInteractions: t.Number(),
-    totalRewards: t.String(),
+    totalRewards: t.Number(),
     uniqueWallets: t.Number(),
     ambassador: t.Number(),
     sharingRate: t.Number(),
     ctr: t.Number(),
-    costPerPurchase: t.String(),
-    costPerShare: t.String(),
+    costPerPurchase: t.Number(),
+    costPerShare: t.Number(),
 });
 
 export type CampaignStatsItem = Static<typeof CampaignStatsItemSchema>;

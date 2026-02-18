@@ -18,7 +18,6 @@ import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { Table } from "@/module/common/component/Table";
 import { TooltipTable } from "@/module/common/component/TooltipTable";
 import { useConvertToPreferredCurrency } from "@/module/common/hook/useConversionRate";
-import { useTokenMetadata } from "@/module/common/hook/useTokenMetadata";
 
 type TableData = CampaignStats;
 
@@ -163,7 +162,7 @@ export function TableCampaignPerformance() {
                         </TooltipTable>
                     ),
                     cell: ({ row, getValue }) => (
-                        <RawAmountInPreferredCurrency
+                        <AmountInPreferredCurrency
                             row={row}
                             rawAmount={getValue()}
                         />
@@ -201,7 +200,7 @@ export function TableCampaignPerformance() {
                         </TooltipTable>
                     ),
                     cell: ({ row, getValue }) => (
-                        <RawAmountInPreferredCurrency
+                        <AmountInPreferredCurrency
                             row={row}
                             rawAmount={getValue()}
                         />
@@ -222,7 +221,7 @@ export function TableCampaignPerformance() {
                         </TooltipTable>
                     ),
                     cell: ({ row, getValue }) => (
-                        <RawAmountInPreferredCurrency
+                        <AmountInPreferredCurrency
                             row={row}
                             rawAmount={getValue()}
                         />
@@ -253,19 +252,17 @@ export function TableCampaignPerformance() {
     );
 }
 
-function RawAmountInPreferredCurrency({
+function AmountInPreferredCurrency({
     row,
     rawAmount,
 }: {
-    row: CellContext<TableData, string>["row"];
-    rawAmount: string;
+    row: CellContext<TableData, number>["row"];
+    rawAmount: number;
 }) {
     const token = row.original.tokenAddress ?? undefined;
-    const { data: tokenMeta } = useTokenMetadata(token);
     const converted = useConvertToPreferredCurrency({
         token,
-        balance: BigInt(rawAmount),
-        decimals: tokenMeta?.decimals,
+        amount: rawAmount,
     });
 
     if (converted === undefined) return null;

@@ -1,6 +1,6 @@
 import { and, count, eq, inArray, min, type SQL, sql } from "drizzle-orm";
 import type { Static } from "elysia";
-import type { Address } from "viem";
+import { type Address, getAddress } from "viem";
 import { touchpointsTable } from "../domain/attribution/db/schema";
 import { identityNodesTable } from "../domain/identity/db/schema";
 import { merchantsTable } from "../domain/merchant/db/schema";
@@ -217,7 +217,7 @@ export class MemberQueryOrchestrator {
         const members: MemberItem[] = rows.map((row) => {
             const mIds = (row.merchantIdsAgg ?? []).filter(Boolean);
             return {
-                user: row.walletAddress,
+                user: getAddress(row.walletAddress),
                 totalInteractions: Number(row.totalInteractions),
                 totalRewardsUsd: Number(row.totalRewardsUsd),
                 firstInteractionTimestamp: row.firstInteraction

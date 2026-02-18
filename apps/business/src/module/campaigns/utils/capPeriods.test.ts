@@ -52,18 +52,18 @@ describe("getCapPeriod", () => {
         it("should have weekly period equal to 7 days", () => {
             const weekly = getCapPeriod("weekly");
             const daily = getCapPeriod("daily");
-            expect(weekly).toBe(daily * 7);
+            expect(weekly).toBe((daily ?? 0) * 7);
         });
 
         it("should have monthly period equal to 30 days", () => {
             const monthly = getCapPeriod("monthly");
             const daily = getCapPeriod("daily");
-            expect(monthly).toBe(daily * 30);
+            expect(monthly).toBe((daily ?? 0) * 30);
         });
 
         it("should have global period much larger than monthly", () => {
             const global = getCapPeriod("global");
-            const monthly = getCapPeriod("monthly");
+            const monthly = getCapPeriod("monthly")!;
             expect(global).toBeGreaterThan(monthly * 1000);
         });
     });

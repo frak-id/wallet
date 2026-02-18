@@ -1,5 +1,5 @@
 import { and, countDistinct, eq, inArray, sql, sum } from "drizzle-orm";
-import type { Address } from "viem";
+import { type Address, bytesToHex, getAddress } from "viem";
 import type { CampaignRuleSelect } from "../domain/campaign/db/schema";
 import { campaignRulesTable } from "../domain/campaign/db/schema";
 import { identityNodesTable } from "../domain/identity/db/schema";
@@ -124,7 +124,7 @@ export class CampaignStatsOrchestrator {
                         "total_rewards"
                     ),
                 tokenAddress:
-                    sql<Address | null>`MAX(${assetLogsTable.tokenAddress}::text)::bytea`.as(
+                    sql<Buffer | null>`MAX(${assetLogsTable.tokenAddress}::text)::bytea`.as(
                         "token_address"
                     ),
                 uniqueWallets: countDistinct(
@@ -147,13 +147,18 @@ export class CampaignStatsOrchestrator {
             .groupBy(assetLogsTable.campaignRuleId);
 
         return rows
-            .filter((r): r is AssetAggRow => r.campaignRuleId !== null)
-            .map((r) => ({
-                campaignRuleId: r.campaignRuleId,
-                totalRewards: r.totalRewards ?? "0",
-                tokenAddress: r.tokenAddress,
-                uniqueWallets: Number(r.uniqueWallets),
-            }));
+            .filter((r) => r.campaignRuleId !== null)
+            .map(
+                (r) =>
+                    ({
+                        campaignRuleId: r.campaignRuleId,
+                        totalRewards: r.totalRewards ?? "0",
+                        tokenAddress: r.tokenAddress
+                            ? getAddress(bytesToHex(r.tokenAddress))
+                            : null,
+                        uniqueWallets: Number(r.uniqueWallets),
+                    }) as AssetAggRow
+            );
     }
 
     private buildStatsItem(
@@ -163,7 +168,7 @@ export class CampaignStatsOrchestrator {
     ): CampaignStatsItem {
         const referred = interactions?.referredInteractions ?? 0;
         const purchases = interactions?.purchaseInteractions ?? 0;
-        const totalRewards = BigInt(assets?.totalRewards ?? "0");
+        const totalRewards = Number.parseFloat(assets?.totalRewards ?? "0");
         const uniqueWallets = assets?.uniqueWallets ?? 0;
 
         const createReferredLinkInteractions =
@@ -179,11 +184,10 @@ export class CampaignStatsOrchestrator {
 
         const costPerShare =
             createReferredLinkInteractions > 0
-                ? totalRewards / BigInt(createReferredLinkInteractions)
-                : BigInt(0);
+                ? totalRewards / createReferredLinkInteractions
+                : 0;
 
-        const costPerPurchase =
-            purchases > 0 ? totalRewards / BigInt(purchases) : BigInt(0);
+        const costPerPurchase = purchases > 0 ? totalRewards / purchases : 0;
 
         let ambassador = uniqueWallets - referred;
         if (ambassador <= 0) {
@@ -197,13 +201,13 @@ export class CampaignStatsOrchestrator {
             tokenAddress: assets?.tokenAddress ?? null,
             referredInteractions: referred,
             purchaseInteractions: purchases,
-            totalRewards: totalRewards.toString(),
+            totalRewards,
             uniqueWallets,
             ambassador,
             sharingRate,
             ctr,
-            costPerPurchase: costPerPurchase.toString(),
-            costPerShare: costPerShare.toString(),
+            costPerPurchase,
+            costPerShare,
         };
     }
 }
