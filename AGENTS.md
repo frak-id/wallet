@@ -16,7 +16,6 @@ frak-wallet/
 │   ├── wallet/        # TanStack Router SPA - user wallet (SSR disabled)
 │   ├── business/      # TanStack Router SPA - business dashboard
 │   ├── listener/      # Iframe RPC handler for SDK communication
-│   ├── dashboard-admin/  # Admin interface
 │   └── shopify/       # React Router v7 embedded Shopify app
 ├── packages/
 │   ├── wallet-shared/ # Shared code for wallet + listener ONLY
@@ -198,7 +197,6 @@ Purpose-based agents in `.opencode/agent/`:
 - `apps/wallet/AGENTS.md` - Wallet app patterns
 - `apps/business/AGENTS.md` - Business dashboard patterns
 - `apps/listener/AGENTS.md` - Listener patterns
-- `apps/dashboard-admin/AGENTS.md` - Admin dashboard patterns
 - `apps/shopify/AGENTS.md` - Shopify app patterns (React Router v7, Polaris)
 - `apps/shopify/app/services.server/AGENTS.md` - Shopify server services
 - `apps/shopify/app/components/AGENTS.md` - Shopify Polaris components

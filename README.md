@@ -18,7 +18,6 @@ Visit our comprehensive documentation at **[docs.frak.id](https://docs.frak.id)*
 ### 📱 Applications (`/apps`)
 - **`wallet/`** - TanStack Router user wallet (SSR disabled, module-based architecture)
 - **`business/`** - TanStack Router business dashboard (SPA, primary dashboard)
-- **`dashboard-admin/`** - TanStack Router admin interface
 - **`listener/`** - Iframe communication app for SDK interactions
 
 ### 📦 Core Packages (`/packages`)

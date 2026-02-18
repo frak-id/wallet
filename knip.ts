@@ -30,10 +30,6 @@ const config: KnipConfig = {
             project: ["app/**/*.{ts,tsx}"],
         },
 
-        "apps/dashboard-admin": {
-            entry: ["app/root.tsx", "app.routes.ts", "app/routes/**/*.tsx"],
-            project: ["app/**/*.{ts,tsx}"],
-        },
         "apps/shopify": {
             entry: [
                 "app/root.tsx",

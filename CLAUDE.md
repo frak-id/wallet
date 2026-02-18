@@ -138,7 +138,6 @@ bun run changeset:release
 - **`apps/`** - Frontend applications
   - `wallet/` - TanStack Router user wallet (SSR disabled, module-based architecture)
   - `business/` - TanStack Router business dashboard (SPA, nginx in production)
-  - `dashboard-admin/` - TanStack Router admin interface
   - `listener/` - Iframe communication app for SDK interactions
 - **`packages/`** - Shared internal libraries (workspace-only)
   - `test-foundation/` - Centralized test configuration and utilities (`@frak-labs/test-foundation`)
