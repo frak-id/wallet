@@ -105,6 +105,24 @@ bun run deploy-gcp:prod    # GCP prod (all production apps)
 - **Always use individual selectors**: `store((s) => s.value)`
 - Never subscribe to entire store
 
+### Commit Messages
+- **Always prefix with emoji** matching the change type
+- Concise, no conventional commit prefix (`fix:`, `feat:`) — emoji replaces it
+- Match existing patterns from `git log`
+
+| Emoji | Usage |
+|-------|-------|
+| ✨ | New feature |
+| 🐛 | Bug fix |
+| ♻️ | Refactor |
+| 🔧 | Config / tooling |
+| ⬆️ | Dependency / version bump |
+| 🗑️ | Remove code / deprecation |
+| 🎨 | UI / styling |
+| ⚡ | Performance |
+| 🧪 | Tests |
+| 📝 | Documentation |
+
 ## Anti-Patterns
 
 | Forbidden | Reason |
