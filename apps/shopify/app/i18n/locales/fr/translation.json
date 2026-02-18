@@ -98,7 +98,8 @@
                 "connect": "Webhook Shopify connecté avec succès",
                 "disconnect": "Webhook Shopify déconnecté avec succès",
                 "error": "Erreur de suppression du webhook",
-                "setup": "Le tracker de commande Frak est configuré"
+                "setup": "Le tracker de commande Frak est configuré",
+                "frakSetupError": "Erreur de connexion du tracker de commande Frak"
             }
         }
     },

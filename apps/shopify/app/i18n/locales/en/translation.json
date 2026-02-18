@@ -98,7 +98,8 @@
                 "connect": "Shopify webhook connected successfully",
                 "disconnect": "Shopify webhook disconnected successfully",
                 "error": "Webhook deletion error",
-                "setup": "Frak purchase tracker is setup"
+                "setup": "Frak purchase tracker is setup",
+                "frakSetupError": "Error connecting Frak purchase tracker"
             }
         }
     },
