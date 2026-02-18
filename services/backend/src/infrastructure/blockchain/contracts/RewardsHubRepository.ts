@@ -53,17 +53,11 @@ export class RewardsHubRepository {
             attestation: r.attestation,
         }));
 
-        return this.executeBatch(ops);
-    }
 
-    private async executeBatch(ops: RewardOp[]): Promise<{
-        txHash: Hex;
-        blockNumber: bigint;
-    }> {
         const sortedOps = sortOpsByBankAndToken(ops);
         return this.executeTransaction(sortedOps);
     }
-
+    
     private async executeTransaction(args: RewardOp[]): Promise<{
         txHash: Hex;
         blockNumber: bigint;
