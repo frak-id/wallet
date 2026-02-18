@@ -163,7 +163,7 @@ listener.handle('frak_getMerchantInformation', async (params, context) => {
   const hasActiveCampaign = await checkActiveCampaigns(merchantId)
 
   return {
-    productId,
+    merchantId,
     hasActiveCampaign
   }
 })
