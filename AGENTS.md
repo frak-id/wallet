@@ -1,8 +1,8 @@
 # AGENTS.md
 
-**Generated:** 2026-02-11  
-**Commit:** 221c9c29a  
-**Branch:** dev-v2
+**Generated:** 2026-02-18  
+**Commit:** bbb5bee29  
+**Branch:** feat/shopify-migration
 
 ## Overview
 
@@ -16,7 +16,8 @@ frak-wallet/
 │   ├── wallet/        # TanStack Router SPA - user wallet (SSR disabled)
 │   ├── business/      # TanStack Router SPA - business dashboard
 │   ├── listener/      # Iframe RPC handler for SDK communication
-│   └── dashboard-admin/  # Admin interface
+│   ├── dashboard-admin/  # Admin interface
+│   └── shopify/       # React Router v7 embedded Shopify app
 ├── packages/
 │   ├── wallet-shared/ # Shared code for wallet + listener ONLY
 │   ├── ui/            # Radix-based component library
@@ -48,6 +49,9 @@ frak-wallet/
 | Core SDK actions | `sdk/core/src/actions/` | Blockchain interactions |
 | React hooks | `sdk/react/src/hook/` | 9 hooks + providers |
 | Backend domains | `services/backend/src/domain/` | auth, wallet, oracle, etc. |
+| Shopify app | `apps/shopify/app/` | React Router v7, Polaris v13 |
+| Shopify services | `apps/shopify/app/services.server/` | Shopify GraphQL, merchant resolution |
+| Shopify extensions | `apps/shopify/extensions/` | Theme blocks, checkout pixel |
 | Vite/CSS config | `packages/dev-tooling/src/vite.ts` | Lightning CSS central config |
 | Test mocks | `packages/test-foundation/src/` | Wagmi, WebAuthn, router mocks |
 
@@ -65,7 +69,7 @@ bun run format             # Biome format (4-space, double quotes)
 bun run typecheck          # TypeScript check all packages
 
 # Testing - CRITICAL: use "bun run test", NOT "bun test"
-bun run test               # All 7 Vitest projects in parallel
+bun run test               # All 11 Vitest projects in parallel
 bun run test --project wallet-unit  # Single project
 bun run test:coverage      # With coverage (40% target)
 cd apps/wallet && bun run test:e2e  # Playwright E2E
@@ -73,6 +77,7 @@ cd apps/wallet && bun run test:e2e  # Playwright E2E
 # Deployment
 bun run deploy             # AWS dev
 bun run deploy:prod        # AWS prod
+bun run deploy-gcp:staging # GCP staging
 bun run deploy-gcp:prod    # GCP prod (all production apps)
 ```
 
@@ -137,9 +142,10 @@ bun run deploy-gcp:prod    # GCP prod (all production apps)
 
 ## Testing
 
-- **7 Vitest projects**: wallet, listener, business, wallet-shared, core-sdk, react-sdk, backend
+- **11 Vitest projects**: wallet, listener, business, wallet-shared, ui, core-sdk, react-sdk, components, shopify, backend + others
 - **Frontend**: jsdom environment, mock Wagmi/WebAuthn/TanStack Query
 - **Backend**: Node environment, mock Viem/Drizzle/Bun runtime
+- **Shopify**: Node environment, co-located `*.test.ts` files
 - **E2E**: Playwright (19 specs) in `apps/wallet/tests/specs/`
 - **Mocks**: Centralized in `packages/test-foundation/src/`
 - **Naming**: "should [behavior] when [condition]"
@@ -160,13 +166,13 @@ Build order: `rpc → core → legacy → react → components`
 ## Infrastructure
 
 - **AWS (SST v3)**: Static sites (admin, examples), dev deployments
-- **GCP (Pulumi)**: Production (backend, wallet, business) on GKE
+- **GCP (Pulumi)**: Production (backend, wallet, business, listener) on GKE
 - **Stages**: dev, prod, gcp-staging, gcp-production
-- **Docker**: Multi-stage with SDK pre-building optimization
+- **Docker**: Multi-stage with SDK pre-building optimization (shared base image)
 
 ## Custom Agents
 
-Purpose-based agents in `.opencode/agents/`:
+Purpose-based agents in `.opencode/agent/`:
 
 ### Orchestrator
 
@@ -193,6 +199,12 @@ Purpose-based agents in `.opencode/agents/`:
 - `apps/business/AGENTS.md` - Business dashboard patterns
 - `apps/listener/AGENTS.md` - Listener patterns
 - `apps/dashboard-admin/AGENTS.md` - Admin dashboard patterns
+- `apps/shopify/AGENTS.md` - Shopify app patterns (React Router v7, Polaris)
+- `apps/shopify/app/services.server/AGENTS.md` - Shopify server services
+- `apps/shopify/app/components/AGENTS.md` - Shopify Polaris components
+- `apps/shopify/app/hooks/AGENTS.md` - Shopify client hooks
+- `apps/shopify/app/routes/AGENTS.md` - Shopify route patterns
+- `apps/shopify/extensions/AGENTS.md` - Shopify theme + pixel extensions
 - `sdk/AGENTS.md` - SDK architecture
 - `sdk/core/AGENTS.md`, `sdk/react/AGENTS.md`, `sdk/components/AGENTS.md` - SDK package specifics
 - `packages/AGENTS.md` - Shared packages overview

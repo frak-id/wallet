@@ -29,10 +29,8 @@ src/
 │   ├── identity/     # Identity resolution, group management
 │   ├── merchant/     # Merchant management
 │   ├── notifications/ # Push notifications
-│   ├── oracle/       # Blockchain oracle
 │   ├── pairing/      # Device pairing
 │   ├── purchases/    # Purchase tracking, webhooks
-│   ├── referral/     # Referral links, chains
 │   ├── rewards/      # Asset logs, settlements
 │   └── wallet/       # Wallet operations
 ├── infrastructure/   # DB, external services

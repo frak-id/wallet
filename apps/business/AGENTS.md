@@ -11,13 +11,12 @@ src/
 │   ├── common/       # Shared components, hooks, layouts
 │   ├── dashboard/    # Overview dashboard
 │   ├── embedded/     # Embedded integration views
+│   ├── forms/        # Form components
 │   ├── login/        # Authentication flows
 │   ├── members/      # Team member management
 │   ├── merchant/     # Merchant management (17 hooks)
-│   ├── paywall/      # Billing integration
 │   ├── product/      # Product setup, configuration
-│   ├── settings/     # Business settings
-│   └── wallet/       # Wallet connection
+│   └── settings/     # Business settings
 ├── routes/           # TanStack Router file-based routes
 ├── stores/           # Zustand stores
 ├── styles/           # Global CSS
