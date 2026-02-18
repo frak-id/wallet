@@ -1,10 +1,10 @@
 export type BudgetType = "daily" | "weekly" | "monthly" | "global";
 
-const capPeriods: Record<BudgetType, number> = {
+const capPeriods: Record<BudgetType, number | null> = {
     daily: 24 * 60 * 60,
     weekly: 7 * 24 * 60 * 60,
     monthly: 30 * 24 * 60 * 60,
-    global: 281474976710655, // Max uint48
+    global: null, // Null for global budgets
 };
 
 /**
@@ -13,5 +13,5 @@ const capPeriods: Record<BudgetType, number> = {
  */
 export function getCapPeriod(type?: "" | BudgetType | string) {
     if (!type) return 0;
-    return capPeriods[type as BudgetType] || 0;
+    return capPeriods[type as BudgetType];
 }

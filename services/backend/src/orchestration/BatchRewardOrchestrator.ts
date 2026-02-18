@@ -158,7 +158,7 @@ export class BatchRewardOrchestrator {
                     context,
                     time,
                 },
-                this.referralService.getReferralChain
+                (args) => this.referralService.getReferralChain(args)
             );
 
             let rewardsCreated = 0;
