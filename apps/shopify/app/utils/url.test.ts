@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
     buildCampaignLink,
-    buildWebhookLink,
     isAbsoluteUrl,
     parseChargeId,
     validateMintParams,
@@ -169,24 +168,5 @@ describe("buildCampaignLink", () => {
         });
         const parsed = new URL(url);
         expect(parsed.searchParams.has("sc")).toBe(false);
-    });
-});
-
-/* ------------------------------------------------------------------ */
-/*  buildWebhookLink                                                   */
-/* ------------------------------------------------------------------ */
-
-describe("buildWebhookLink", () => {
-    it("builds correct URL with merchant ID", () => {
-        const url = buildWebhookLink("https://business.frak.id", "0xabc123");
-        const parsed = new URL(url);
-        expect(parsed.pathname).toBe("/embedded/purchase-tracker");
-        expect(parsed.searchParams.get("mid")).toBe("0xabc123");
-    });
-
-    it("handles dev URL", () => {
-        const url = buildWebhookLink("https://business-dev.frak.id", "0xdef");
-        expect(url).toContain("business-dev.frak.id");
-        expect(url).toContain("mid=0xdef");
     });
 });

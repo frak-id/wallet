@@ -71,16 +71,3 @@ export function buildCampaignLink({
     }
     return createUrl.toString();
 }
-
-/**
- * Build a webhook management URL for the Frak business dashboard.
- */
-export function buildWebhookLink(
-    businessUrl: string,
-    merchantId: string
-): string {
-    const createUrl = new URL(businessUrl);
-    createUrl.pathname = "/embedded/purchase-tracker";
-    createUrl.searchParams.append("mid", merchantId);
-    return createUrl.toString();
-}
