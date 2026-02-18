@@ -59,7 +59,7 @@ export type ReactSdkTestFixtures = {
         displayEmbeddedWallet: ReturnType<typeof import("vitest").vi.fn>;
         openSso: ReturnType<typeof import("vitest").vi.fn>;
         prepareSso: ReturnType<typeof import("vitest").vi.fn>;
-        getProductInformation: ReturnType<typeof import("vitest").vi.fn>;
+        getMerchantInformation: ReturnType<typeof import("vitest").vi.fn>;
         trackPurchaseStatus: ReturnType<typeof import("vitest").vi.fn>;
         watchWalletStatus: ReturnType<typeof import("vitest").vi.fn>;
         sendTransaction: ReturnType<typeof import("vitest").vi.fn>;
@@ -183,7 +183,7 @@ export const test = baseTest.extend<ReactSdkTestFixtures>({
             displayEmbeddedWallet: vi.fn(),
             openSso: vi.fn(),
             prepareSso: vi.fn(),
-            getProductInformation: vi.fn(),
+            getMerchantInformation: vi.fn(),
             trackPurchaseStatus: vi.fn(),
             watchWalletStatus: vi.fn(),
             sendTransaction: vi.fn(),

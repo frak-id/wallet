@@ -45,8 +45,8 @@ vi.mock("@frak-labs/core-sdk", async () => {
         openSso: vi.fn(),
         prepareSso: vi.fn(),
 
-        // Product actions
-        getProductInformation: vi.fn(),
+        // Merchant actions
+        getMerchantInformation: vi.fn(),
 
         // Purchase tracking
         trackPurchaseStatus: vi.fn(),

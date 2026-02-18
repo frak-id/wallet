@@ -87,8 +87,8 @@ vi.mock("@frak-labs/core-sdk", async () => {
         openSso: vi.fn(),
         prepareSso: vi.fn(),
 
-        // Product actions
-        getProductInformation: vi.fn().mockResolvedValue({
+        // Merchant actions
+        getMerchantInformation: vi.fn().mockResolvedValue({
             rewards: [],
         }),
 
@@ -122,7 +122,7 @@ vi.mock("@frak-labs/core-sdk/actions", async () => {
         ...actual,
         displayEmbeddedWallet: vi.fn(),
         displayModal: vi.fn(),
-        getProductInformation: vi.fn().mockResolvedValue({
+        getMerchantInformation: vi.fn().mockResolvedValue({
             rewards: [],
         }),
         openSso: vi.fn(),
