@@ -180,6 +180,72 @@ export async function getMerchantCampaignStats(
     }
 }
 
+/**
+ * Setup Frak webhook for the current merchant on the Frak backend.
+ */
+export async function setupFrakWebhook(
+    context: AuthenticatedContext,
+    request: Request
+): Promise<{ success: boolean; userErrors: { message: string }[] }> {
+    const merchantId = await resolveMerchantId(context);
+    if (!merchantId) {
+        return {
+            success: false,
+            userErrors: [{ message: "Merchant not found" }],
+        };
+    }
+
+    try {
+        const { error } = await backendApi.business
+            .merchant({ merchantId })
+            .webhooks.post(
+                {
+                    hookSignatureKey: "SHOPIFY_SECRET",
+                    platform: "shopify",
+                },
+                {
+                    headers: buildBackendHeaders(request),
+                }
+            );
+        if (error) {
+            const errorMessage =
+                typeof error === "string"
+                    ? error
+                    : error instanceof Error
+                      ? error.message
+                      : "Failed to setup Frak webhook";
+            console.error(
+                `[backendMerchant] webhook setup failed for ${merchantId}: ${errorMessage}`
+            );
+            return {
+                success: false,
+                userErrors: [{ message: errorMessage }],
+            };
+        }
+
+        return {
+            success: true,
+            userErrors: [],
+        };
+    } catch (error) {
+        console.error(
+            `[backendMerchant] webhook setup error for ${merchantId}:`,
+            error
+        );
+        return {
+            success: false,
+            userErrors: [
+                {
+                    message:
+                        error instanceof Error
+                            ? error.message
+                            : "Failed to setup Frak webhook",
+                },
+            ],
+        };
+    }
+}
+
 export type FrakWebhookStatusReturnType = {
     userErrors: {
         message: string;
