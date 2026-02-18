@@ -71,7 +71,9 @@ const purchaseWebhookOrchestrator = new PurchaseWebhookOrchestrator(
 const settlementOrchestrator = new SettlementOrchestrator(
     RewardsContext.services.settlement,
     RewardsContext.repositories.assetLog,
-    MerchantContext.repositories.merchant
+    MerchantContext.repositories.merchant,
+    IdentityContext.repositories.identity,
+    RewardsContext.repositories.interactionLog
 );
 
 const rewardExpirationOrchestrator = new RewardExpirationOrchestrator(

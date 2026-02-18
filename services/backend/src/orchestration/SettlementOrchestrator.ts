@@ -1,8 +1,11 @@
 import { log } from "@backend-infrastructure";
 import type { Address } from "viem";
+import type { IdentityRepository } from "../domain/identity/repositories/IdentityRepository";
 import type { MerchantRepository } from "../domain/merchant/repositories/MerchantRepository";
 import { RewardConfig } from "../domain/rewards/config";
+import type { AssetLogSelect } from "../domain/rewards/db/schema";
 import type { AssetLogRepository } from "../domain/rewards/repositories/AssetLogRepository";
+import type { InteractionLogRepository } from "../domain/rewards/repositories/InteractionLogRepository";
 import type {
     AssetLogWithWallet,
     SettlementService,
@@ -13,7 +16,9 @@ export class SettlementOrchestrator {
     constructor(
         private readonly settlementService: SettlementService,
         private readonly assetLogRepository: AssetLogRepository,
-        private readonly merchantRepository: MerchantRepository
+        private readonly merchantRepository: MerchantRepository,
+        private readonly identityRepository: IdentityRepository,
+        private readonly interactionLogRepository: InteractionLogRepository
     ) {}
 
     async runSettlement(): Promise<SettlementResult> {
@@ -25,13 +30,28 @@ export class SettlementOrchestrator {
             log.info({ resetCount }, "Reset stuck settlement processing items");
         }
 
-        const pendingRewards =
+        const pendingAssetLogs =
             await this.assetLogRepository.findPendingForSettlement(
                 RewardConfig.settlement.batchSize
             );
 
-        if (pendingRewards.length === 0) {
+        if (pendingAssetLogs.length === 0) {
             log.debug("No pending rewards to settle");
+            return {
+                settledCount: 0,
+                failedCount: 0,
+                txHashes: [],
+                errors: [],
+            };
+        }
+
+        const pendingRewards =
+            await this.enrichWithWalletAndInteraction(pendingAssetLogs);
+
+        if (pendingRewards.length === 0) {
+            log.warn(
+                "No rewards could be enriched with wallet addresses, skipping settlement"
+            );
             return {
                 settledCount: 0,
                 failedCount: 0,
@@ -46,6 +66,56 @@ export class SettlementOrchestrator {
             pendingRewards,
             merchantBanks
         );
+    }
+
+    private async enrichWithWalletAndInteraction(
+        assetLogs: AssetLogSelect[]
+    ): Promise<AssetLogWithWallet[]> {
+        const uniqueGroupIds = [
+            ...new Set(assetLogs.map((r) => r.identityGroupId)),
+        ];
+        const walletMap = new Map<string, Address | null>();
+        await Promise.all(
+            uniqueGroupIds.map(async (groupId) => {
+                const wallet =
+                    await this.identityRepository.getWalletForGroup(groupId);
+                walletMap.set(groupId, wallet);
+            })
+        );
+
+        const interactionLogIds = assetLogs
+            .map((r) => r.interactionLogId)
+            .filter((id): id is string => id !== null);
+        const interactionTypeMap =
+            await this.interactionLogRepository.getTypesByIds([
+                ...new Set(interactionLogIds),
+            ]);
+
+        const results: AssetLogWithWallet[] = [];
+        for (const assetLog of assetLogs) {
+            const walletAddress = walletMap.get(assetLog.identityGroupId);
+            if (!walletAddress) {
+                log.warn(
+                    {
+                        assetLogId: assetLog.id,
+                        groupId: assetLog.identityGroupId,
+                    },
+                    "Skipping reward: no wallet found for identity group"
+                );
+                continue;
+            }
+
+            results.push({
+                ...assetLog,
+                walletAddress,
+                interactionType: assetLog.interactionLogId
+                    ? (interactionTypeMap.get(assetLog.interactionLogId) ??
+                      null)
+                    : null,
+            });
+        }
+
+        return results;
     }
 
     private async getMerchantBanks(

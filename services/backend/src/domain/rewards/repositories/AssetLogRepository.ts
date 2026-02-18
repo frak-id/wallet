@@ -12,7 +12,6 @@ import {
 } from "drizzle-orm";
 import type { Address, Hex } from "viem";
 import { db } from "../../../infrastructure/persistence/postgres";
-import { identityNodesTable } from "../../identity/db/schema";
 import { merchantsTable } from "../../merchant/db/schema";
 import { RewardConfig } from "../config";
 import {
@@ -61,59 +60,11 @@ export class AssetLogRepository {
         return db.insert(assetLogsTable).values(inserts).returning();
     }
 
-    async findPendingForSettlement(limit?: number): Promise<
-        Array<
-            AssetLogSelect & {
-                walletAddress: Address;
-                interactionType: InteractionType | null;
-            }
-        >
-    > {
+    async findPendingForSettlement(limit?: number): Promise<AssetLogSelect[]> {
         const now = new Date();
         const query = db
-            .select({
-                id: assetLogsTable.id,
-                identityGroupId: assetLogsTable.identityGroupId,
-                merchantId: assetLogsTable.merchantId,
-                campaignRuleId: assetLogsTable.campaignRuleId,
-                assetType: assetLogsTable.assetType,
-                amount: assetLogsTable.amount,
-                tokenAddress: assetLogsTable.tokenAddress,
-                recipientType: assetLogsTable.recipientType,
-                recipientWallet: assetLogsTable.recipientWallet,
-                chainDepth: assetLogsTable.chainDepth,
-                status: assetLogsTable.status,
-                statusChangedAt: assetLogsTable.statusChangedAt,
-                touchpointId: assetLogsTable.touchpointId,
-                interactionLogId: assetLogsTable.interactionLogId,
-                onchainTxHash: assetLogsTable.onchainTxHash,
-                onchainBlock: assetLogsTable.onchainBlock,
-                settlementAttempts: assetLogsTable.settlementAttempts,
-                lastSettlementError: assetLogsTable.lastSettlementError,
-                createdAt: assetLogsTable.createdAt,
-                settledAt: assetLogsTable.settledAt,
-                expiresAt: assetLogsTable.expiresAt,
-                walletAddress:
-                    sql<Address>`${identityNodesTable.identityValue}`.as(
-                        "walletAddress"
-                    ),
-                interactionType: interactionLogsTable.type,
-            })
+            .select()
             .from(assetLogsTable)
-            .innerJoin(
-                identityNodesTable,
-                and(
-                    eq(
-                        assetLogsTable.identityGroupId,
-                        identityNodesTable.groupId
-                    ),
-                    eq(identityNodesTable.identityType, "wallet")
-                )
-            )
-            .leftJoin(
-                interactionLogsTable,
-                eq(assetLogsTable.interactionLogId, interactionLogsTable.id)
-            )
             .where(
                 and(
                     eq(assetLogsTable.status, "pending"),

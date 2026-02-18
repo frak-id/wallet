@@ -1,6 +1,6 @@
 import { log, viemClient } from "@backend-infrastructure";
 import { addresses, rewarderHubAbi } from "@frak-labs/app-essentials";
-import { type Address, encodeFunctionData, type Hex, pad } from "viem";
+import { type Address, encodeFunctionData, getAddress, type Hex } from "viem";
 import { sendTransaction, waitForTransactionReceipt } from "viem/actions";
 import { adminWalletsRepository } from "../../keys/AdminWalletsRepository";
 
@@ -20,10 +20,6 @@ type PushRewardParams = {
     bank: Address;
     attestation: Hex;
 };
-
-function addressToBytes32(address: Address): Hex {
-    return pad(address, { size: 32 });
-}
 
 function sortOpsByBankAndToken(ops: RewardOp[]): RewardOp[] {
     return [...ops].sort((a, b) => {
@@ -46,7 +42,7 @@ export class RewardsHubRepository {
 
         const ops: RewardOp[] = rewards.map((r) => ({
             isLock: false,
-            target: addressToBytes32(r.wallet),
+            target: getAddress(r.wallet),
             amount: r.amount,
             token: r.token,
             bank: r.bank,

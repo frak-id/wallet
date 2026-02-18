@@ -5,6 +5,7 @@ import {
     type InteractionLogSelect,
     interactionLogsTable,
 } from "../db/schema";
+import type { InteractionType } from "../types";
 
 export class InteractionLogRepository {
     async createIdempotent(
@@ -45,6 +46,20 @@ export class InteractionLogRepository {
             .where(and(...conditions))
             .orderBy(interactionLogsTable.createdAt)
             .limit(limit);
+    }
+
+    async getTypesByIds(ids: string[]): Promise<Map<string, InteractionType>> {
+        if (ids.length === 0) return new Map();
+
+        const rows = await db
+            .select({
+                id: interactionLogsTable.id,
+                type: interactionLogsTable.type,
+            })
+            .from(interactionLogsTable)
+            .where(inArray(interactionLogsTable.id, ids));
+
+        return new Map(rows.map((r) => [r.id, r.type]));
     }
 
     async markProcessedBatch(ids: string[]): Promise<number> {
