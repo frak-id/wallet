@@ -18,9 +18,9 @@ describe("getCapPeriod", () => {
             expect(result).toBe(30 * 24 * 60 * 60); // 2592000 seconds
         });
 
-        it("should return correct period for global budget", () => {
+        it("should return null for global budget (no time cap)", () => {
             const result = getCapPeriod("global");
-            expect(result).toBe(281474976710655); // Max uint48
+            expect(result).toBeNull();
         });
     });
 
@@ -61,10 +61,11 @@ describe("getCapPeriod", () => {
             expect(monthly).toBe((daily ?? 0) * 30);
         });
 
-        it("should have global period much larger than monthly", () => {
+        it("should have global as null while other periods are numeric", () => {
             const global = getCapPeriod("global");
-            const monthly = getCapPeriod("monthly")!;
-            expect(global).toBeGreaterThan(monthly * 1000);
+            const monthly = getCapPeriod("monthly");
+            expect(global).toBeNull();
+            expect(monthly).toBeTypeOf("number");
         });
     });
 
