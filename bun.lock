@@ -23,7 +23,7 @@
         "knip": "^5.83.1",
         "npm-check-updates": "^19.3.2",
         "rimraf": "^6.1.2",
-        "sst": "3.17.38",
+        "sst": "3.18.9",
         "tauri-plugin-webauthn-api": "^0.2.0",
         "typedoc": "^0.28.15",
         "typedoc-plugin-frontmatter": "^1.3.1",
@@ -94,7 +94,7 @@
         "jsdom": "^28.0.0",
         "lightningcss": "^1.31.1",
         "rolldown-vite": "^7.3.1",
-        "sst": "3.17.38",
+        "sst": "3.18.9",
         "typescript": "^5",
         "vite": "catalog:",
         "vite-tsconfig-paths": "^6.1.0",
@@ -180,7 +180,7 @@
         "jsdom": "^28.0.0",
         "lightningcss": "^1.31.1",
         "rolldown-vite": "^7.3.1",
-        "sst": "3.17.38",
+        "sst": "3.18.9",
         "typescript": "^5",
         "vite": "catalog:",
         "vite-plugin-mkcert": "^1.17.9",
@@ -240,7 +240,7 @@
         "bun-types": "latest",
         "drizzle-kit": "^0.31.9",
         "preact": "^10.28.3",
-        "sst": "3.17.38",
+        "sst": "3.18.9",
         "typescript": "catalog:",
         "vite": "catalog:",
         "vite-tsconfig-paths": "^6.1.0",
@@ -318,7 +318,7 @@
         "jsdom": "^28.0.0",
         "lightningcss": "^1.31.1",
         "rolldown-vite": "^7.3.1",
-        "sst": "3.17.38",
+        "sst": "3.18.9",
         "typescript": "^5",
         "vite": "catalog:",
         "vite-plugin-mkcert": "^1.17.9",
@@ -702,7 +702,7 @@
         "ox": "^0.9.14",
         "permissionless": "^0.2.57",
         "postgres": "^3.4.7",
-        "sst": "3.17.38",
+        "sst": "3.18.9",
         "ua-parser-js": "^2.0.5",
         "viem": "catalog:",
         "web-push": "^3.6.7",
@@ -3529,23 +3529,23 @@
 
     "ssri": ["ssri@13.0.0", "", { "dependencies": { "minipass": "^7.0.3" } }, "sha512-yizwGBpbCn4YomB2lzhZqrHLJoqFGXihNbib3ozhqF/cIp5ue+xSmOQrjNasEE62hFxsCcg/V/z23t4n8jMEng=="],
 
-    "sst": ["sst@3.17.38", "", { "dependencies": { "aws-sdk": "2.1692.0", "aws4fetch": "1.0.18", "jose": "5.2.3", "opencontrol": "0.0.6", "openid-client": "5.6.4" }, "optionalDependencies": { "sst-darwin-arm64": "3.17.38", "sst-darwin-x64": "3.17.38", "sst-linux-arm64": "3.17.38", "sst-linux-x64": "3.17.38", "sst-linux-x86": "3.17.38", "sst-win32-arm64": "3.17.38", "sst-win32-x64": "3.17.38", "sst-win32-x86": "3.17.38" }, "bin": { "sst": "bin/sst.mjs" } }, "sha512-AshCCzogYVVTgLV7SBQ2hkmctAI0QV4pJmHwsyrX1ruSCvH18ccGgX/kux6/AFfaKrT7GmuVuQ2Zsz25GPXEiA=="],
+    "sst": ["sst@3.18.9", "", { "dependencies": { "aws-sdk": "2.1692.0", "aws4fetch": "1.0.18", "jose": "5.2.3", "opencontrol": "0.0.6", "openid-client": "5.6.4" }, "optionalDependencies": { "sst-darwin-arm64": "3.18.9", "sst-darwin-x64": "3.18.9", "sst-linux-arm64": "3.18.9", "sst-linux-x64": "3.18.9", "sst-linux-x86": "3.18.9", "sst-win32-arm64": "3.18.9", "sst-win32-x64": "3.18.9", "sst-win32-x86": "3.18.9" }, "bin": { "sst": "bin/sst.mjs" } }, "sha512-LJUCN9GuFye5OsXJCYMujOqT3Kc8JigefWid1LYcz1Jvp29r6Wue8xKn7sWEGdOF7ClndKfS2xsS51gUaQJa9A=="],
 
-    "sst-darwin-arm64": ["sst-darwin-arm64@3.17.38", "", { "os": "darwin", "cpu": "arm64" }, "sha512-2qEu/jRRBGQbMzkJKy4cypX+LdjInKtn1VrPHeggHD0/DsXLUBVdj/WyYb9ZxbsZEUcA9xZDR2+FBZ7lQzaDcw=="],
+    "sst-darwin-arm64": ["sst-darwin-arm64@3.18.9", "", { "os": "darwin", "cpu": "arm64" }, "sha512-4lQJWgoc6spq63/yCrsVagyS/8IWD8hllsU/xJDafaD3f7cqqiRzN1x8kJLfEaghIPy0Q3IHb8EsNPx04RyrAw=="],
 
-    "sst-darwin-x64": ["sst-darwin-x64@3.17.38", "", { "os": "darwin", "cpu": "x64" }, "sha512-um13cWbRK5rfsYuLxS97gaSkFVd6jCzI+k6wlpJaOcJ5IZiH5UdFIz+ZE/7iCfNTEiwDT+RMw2nGL9a+07Vtww=="],
+    "sst-darwin-x64": ["sst-darwin-x64@3.18.9", "", { "os": "darwin", "cpu": "x64" }, "sha512-OlM38L+3UYZGE9zhXNasrYOfnJdkbqJPvU742Jd2i5THTkjUqKqykOVrIAhQdh8juUCgLrEtMnj6BrZcfDQe8w=="],
 
-    "sst-linux-arm64": ["sst-linux-arm64@3.17.38", "", { "os": "linux", "cpu": "arm64" }, "sha512-gMxYJmpytntqZOf9SZfMnj+v6E0vZ8dAT5XnaKQhETSwuN6WH/OWHgx4bnp7bMQfdvm1uYNB+p7GRopIRRPePQ=="],
+    "sst-linux-arm64": ["sst-linux-arm64@3.18.9", "", { "os": "linux", "cpu": "arm64" }, "sha512-cLz/Az5g+Qh5RvG1z0H68ZnzvMTzmXKTmj7XraoNgkP3oaxO/Soqdrj242SJypLFP5QkXkK5zuEBfPxNyHzbiQ=="],
 
-    "sst-linux-x64": ["sst-linux-x64@3.17.38", "", { "os": "linux", "cpu": "x64" }, "sha512-vwzfHhCugRTWevoA2qcl339yQhc8+vVdAqA11Qcats7LvaM6KxN9SqY00SfHPZxmm2odnefDg8z4b3Qvdo2NAw=="],
+    "sst-linux-x64": ["sst-linux-x64@3.18.9", "", { "os": "linux", "cpu": "x64" }, "sha512-mOV2fOIEflUEwXa+3eCI4b885QDO8waWIm/837tmWwxjwwAye5xyNyLiwjKnz/iIpTlk8Ax0tAe8MLEooSIj8Q=="],
 
-    "sst-linux-x86": ["sst-linux-x86@3.17.38", "", { "os": "linux", "cpu": "none" }, "sha512-rxG2YsN2XnykCvJ1ZquZIXbEOWIdLdcJ1ir9hcqb31cLrH0z2EN5F/IsioH9mLRVJnbmY3JewNk+C9mMB2a8zA=="],
+    "sst-linux-x86": ["sst-linux-x86@3.18.9", "", { "os": "linux", "cpu": "none" }, "sha512-mGLLi1CZrJ7TSZ/m8MmhMByF+MJhp+nFJtSbrF5HJhMeeX93rLLIaU9TTHjKNt1IFvk/8S9owimZQqwrH2xWEg=="],
 
-    "sst-win32-arm64": ["sst-win32-arm64@3.17.38", "", { "os": "win32", "cpu": "arm64" }, "sha512-aPTaLqJ4bEEfQwaxnteFXHAePw4Po1Be0tsdTuNUPDhhyv1CV5xSl4nppb4q/Qn1dGxaU6L4zCzZkshWskGIOg=="],
+    "sst-win32-arm64": ["sst-win32-arm64@3.18.9", "", { "os": "win32", "cpu": "arm64" }, "sha512-LDZXtM0cXwLA/pDPzhlMIKD5ZQbWwUeBzaSr2DIs7gSBzmbC1rFdVEqhAnJvC4icKGy0aeK21OaneAAl8JXGiA=="],
 
-    "sst-win32-x64": ["sst-win32-x64@3.17.38", "", { "os": "win32", "cpu": "x64" }, "sha512-X2kx6MOK1tZ0JhMqDisB60fJCOSxot5q7NPFMna5hj7cgJaQfj0NAgQqGJkLEB8iVWyxi6e5o1oJLg+vH452HQ=="],
+    "sst-win32-x64": ["sst-win32-x64@3.18.9", "", { "os": "win32", "cpu": "x64" }, "sha512-2yUR7Gve3i11FwIKLerJbaCC+jw24tKByPPu33lTCYGAB8MIM8E81z1T6zsBV6YTbuIzRBtwUqGV2ZZrgNsHVw=="],
 
-    "sst-win32-x86": ["sst-win32-x86@3.17.38", "", { "os": "win32", "cpu": "none" }, "sha512-W5PxA4uhpXMzWNT0/sMrmU27fn1DCaReGwVwJGEZapu9GKTix41uaP+pyd9fwjiAHVILIdxqe7+BkZfH+mvzbg=="],
+    "sst-win32-x86": ["sst-win32-x86@3.18.9", "", { "os": "win32", "cpu": "none" }, "sha512-Iz21YskG80Z3cRNgygo1RTS/PBnf/L3UUzoQnnL431ytvvGwiyA7J00kitp1QxrNoOl4XZXZJoj1fW8/dlTA1A=="],
 
     "stack-trace": ["stack-trace@1.0.0-pre2", "", {}, "sha512-2ztBJRek8IVofG9DBJqdy2N5kulaacX30Nz7xmkYF6ale9WBVmIy6mFBchvGX7Vx/MyjBhx+Rcxqrj+dbOnQ6A=="],
 
