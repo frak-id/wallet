@@ -145,11 +145,16 @@ async function resolveIFrameContext(
 
     // Parse URL and get domain
     const originUrl = new URL(sourceUrl);
-    const normalizedDomain = originUrl.host.replace("www.", "");
+    const urlDomain = originUrl.host.replace("www.", "");
     const origin = originUrl.origin;
     const isAutoContext = event === undefined;
     const clientId = event?.data?.data?.clientId;
     const pendingMergeToken = event?.data?.data?.pendingMergeToken;
+
+    // Prefer explicit config domain from SDK handshake over URL-derived domain
+    // (handles proxied/tunneled environments like Shopify dev with Cloudflare tunnel)
+    const configDomain = event?.data?.data?.configDomain;
+    const normalizedDomain = configDomain?.replace(/^www\./, "") ?? urlDomain;
 
     // Fetch merchantId from backend (with cache)
     const merchantData = await fetchMerchantByDomain(normalizedDomain);

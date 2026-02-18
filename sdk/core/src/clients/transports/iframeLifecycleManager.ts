@@ -31,7 +31,8 @@ function handleBackup(backup: string | undefined): void {
 function handleHandshake(
     iframe: HTMLIFrameElement,
     token: string,
-    targetOrigin: string
+    targetOrigin: string,
+    configDomain?: string
 ): void {
     const url = new URL(window.location.href);
     const pendingMergeToken = url.searchParams.get("fmt") ?? undefined;
@@ -44,6 +45,7 @@ function handleHandshake(
                 currentUrl: window.location.href,
                 clientId: getClientId(),
                 pendingMergeToken,
+                configDomain,
             },
         },
         targetOrigin
@@ -116,9 +118,11 @@ function handleRedirect(
 export function createIFrameLifecycleManager({
     iframe,
     targetOrigin,
+    configDomain,
 }: {
     iframe: HTMLIFrameElement;
     targetOrigin: string;
+    configDomain?: string;
 }): IframeLifecycleManager {
     // Create the isConnected listener
     const isConnectedDeferred = new Deferred<boolean>();
@@ -149,7 +153,7 @@ export function createIFrameLifecycleManager({
                 break;
             // Handshake handling
             case "handshake":
-                handleHandshake(iframe, data.token, targetOrigin);
+                handleHandshake(iframe, data.token, targetOrigin, configDomain);
                 break;
             // Redirect handling
             case "redirect":

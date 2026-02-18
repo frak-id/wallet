@@ -49,6 +49,12 @@ type HandshakeResponse = {
          * URL is cleaned after handshake response is sent
          */
         pendingMergeToken?: string;
+        /**
+         * Explicit domain from SDK config (FrakWalletSdkConfig.domain)
+         * When present, listener should prefer this over URL-derived domain
+         * for merchant resolution (handles proxied/tunneled environments)
+         */
+        configDomain?: string;
     };
 };
 
