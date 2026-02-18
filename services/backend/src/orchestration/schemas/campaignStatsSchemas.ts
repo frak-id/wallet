@@ -1,4 +1,5 @@
 import { t } from "@backend-utils";
+import type { Static } from "elysia";
 
 export const CampaignStatsItemSchema = t.Object({
     campaignId: t.String(),
@@ -16,6 +17,9 @@ export const CampaignStatsItemSchema = t.Object({
     costPerShare: t.String(),
 });
 
+export type CampaignStatsItem = Static<typeof CampaignStatsItemSchema>;
+
 export const CampaignStatsResponseSchema = t.Object({
     stats: t.Array(CampaignStatsItemSchema),
 });
+export type CampaignStatsResponse = Static<typeof CampaignStatsResponseSchema>;

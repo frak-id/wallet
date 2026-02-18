@@ -1,59 +1,15 @@
+import type {
+    CampaignResponse,
+    CampaignStatus,
+} from "@frak-labs/backend-elysia/domain/campaign";
+import type { BankStatus } from "@frak-labs/backend-elysia/domain/campaign-bank";
+import type { CampaignStatsItem } from "@frak-labs/backend-elysia/orchestration/schemas";
 import { LRUCache } from "lru-cache";
-import type { Address } from "viem";
 import type { AuthenticatedContext } from "../types/context";
 import { backendApi } from "../utils/backendApi";
 import { resolveMerchantId } from "./merchant";
 
-// ---------------------------------------------------------------------------
-// Types — mirrored from backend response schemas
-// ---------------------------------------------------------------------------
-
-export type CampaignStatus = "draft" | "active" | "paused" | "archived";
-
-export type CampaignResponse = {
-    id: string;
-    merchantId: string;
-    name: string;
-    status: CampaignStatus;
-    priority: number;
-    rule: {
-        trigger: string;
-        conditions: unknown;
-        rewards: unknown[];
-        pendingRewardExpirationDays?: number;
-    };
-    metadata: Record<string, unknown> | null;
-    budgetConfig:
-        | { label: string; durationInSeconds: number | null; amount: number }[]
-        | null;
-    budgetUsed: Record<string, { resetAt?: string; used: number }> | null;
-    expiresAt: string | null;
-    publishedAt: string | null;
-    createdAt: string;
-    updatedAt: string;
-};
-
-export type BankStatus = {
-    deployed: boolean;
-    bankAddress: Address | null;
-    ownerHasManagerRole: boolean;
-};
-
-export type CampaignStatsItem = {
-    campaignId: string;
-    campaignName: string;
-    trigger: string;
-    tokenAddress: Address | null;
-    referredInteractions: number;
-    purchaseInteractions: number;
-    totalRewards: string;
-    uniqueWallets: number;
-    ambassador: number;
-    sharingRate: number;
-    ctr: number;
-    costPerPurchase: string;
-    costPerShare: string;
-};
+export type { BankStatus, CampaignResponse, CampaignStatsItem, CampaignStatus };
 
 // ---------------------------------------------------------------------------
 // JWT extraction — Shopify App Bridge session token
@@ -137,8 +93,9 @@ export async function getMerchantCampaigns(
             return null;
         }
 
-        campaignsCache.set(merchantId, data.campaigns);
-        return data.campaigns;
+        const campaigns = data.campaigns as CampaignResponse[];
+        campaignsCache.set(merchantId, campaigns);
+        return campaigns;
     } catch (error) {
         console.error(
             `[backendMerchant] campaigns fetch error for ${merchantId}:`,
