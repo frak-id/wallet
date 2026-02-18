@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import type { LoaderFunctionArgs } from "react-router";
 import {
@@ -8,7 +9,6 @@ import {
     ScrollRestoration,
     useLoaderData,
 } from "react-router";
-import { useChangeLanguage } from "remix-i18next/react";
 import i18next from "./i18n/i18next.server";
 
 export async function loader({ request }: LoaderFunctionArgs) {
@@ -23,7 +23,10 @@ export const handle = {
 export default function App() {
     const { locale } = useLoaderData<typeof loader>();
     const { i18n } = useTranslation();
-    useChangeLanguage(locale);
+
+    useEffect(() => {
+        i18n.changeLanguage(locale);
+    }, [locale, i18n]);
 
     return (
         <html lang={locale} dir={i18n.dir()}>
