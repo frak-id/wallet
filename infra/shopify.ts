@@ -1,7 +1,6 @@
 import {
     backendUrl,
     businessUrl,
-    indexerUrl,
     nexusRpcSecret,
     productSetupCodeSalt,
     shopifyApiKey,
@@ -20,7 +19,6 @@ const shopifyEnv = {
     FRAK_WALLET_URL: walletUrl,
     BUSINESS_URL: businessUrl,
     BACKEND_URL: backendUrl,
-    INDEXER_URL: indexerUrl,
     POSTGRES_SHOPIFY_DB: isProd ? "shopify_prod" : "shopify_dev",
     POSTGRES_USER: isProd ? "shopify-prod" : "shopify-dev",
     SHOPIFY_APP_URL: isLocal ? "http://localhost" : shopifyAppUrl,

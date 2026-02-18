@@ -6,7 +6,6 @@
 
 | Hook                     | Pattern            | External   | Purpose                                                                      |
 | ------------------------ | ------------------ | ---------- | ---------------------------------------------------------------------------- |
-| `useOnChainShopInfo`     | React Query        | indexerApi | Shop/bank/campaign data from indexer, 30s polling                            |
 | `useOnChainCampaignInfo` | React Query + viem | viemClient | Campaign metadata/status via multicall                                       |
 | `usetokenInfo`           | React Query + viem | viemClient | ERC20 name/symbol/decimals/balance via multicall (`useTokenInfoWithBalance`) |
 | `useConversionRate`      | React Query        | backendApi | Token→fiat rates, hardcoded fallback (USD 1, EUR 0.85, GBP 0.72)             |
@@ -68,5 +67,5 @@ const link = useMemo(() => {
 ## ANTI-PATTERNS
 
 - **No `useEffect` for data fetching** — always React Query.
-- **No direct fetch calls** — use `backendApi` or `indexerApi` clients from `utils/`.
+- **No direct fetch calls** — use `backendApi` client from `utils/`.
 - **No `useState` + `useEffect` for derived state** — use `useMemo`.

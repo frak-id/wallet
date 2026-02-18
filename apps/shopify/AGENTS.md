@@ -64,7 +64,7 @@ Frak Shopify app — embedded React Router v7 app enabling referral/share-to-ear
 - **Services pattern**: async functions taking `AuthenticatedContext` as first param. Named exports only. Never throw — return `null` on error.
 - **Hooks pattern**: `use{Feature}.ts`, React Query for async, `useMemo` for URL builders.
 - **Components**: feature-organized dirs (`Stepper/`, `Campaign/`, `Funding/`), `index.tsx` entry.
-- **API clients**: `ky` HTTP client for external APIs (`backendApi`, `indexerApi` in `utils/`).
+- **API clients**: `ky` HTTP client for external APIs (`backendApi` in `utils/`).
 - **Caching**: LRU on server (shop: 1min, theme: 30s, merchant: 5min, onchain/campaigns: 5s). React Query on client (stale: 1min, gc: infinity, localStorage persist).
 - **Enums**: Drizzle `pgEnum` for DB status fields, not TS enums.
 - **Tests**: vitest. Co-located `*.test.ts` files. 10 test files across services + utils.
@@ -75,7 +75,7 @@ Frak Shopify app — embedded React Router v7 app enabling referral/share-to-ear
 utils/ (pure: ABIs, API clients, onboarding logic, viem)
   ↑
   ├─ hooks/ (React Query + viem multicall)
-  ├─ services.server/ (Shopify GraphQL + backend/indexer APIs)
+  ├─ services.server/ (Shopify GraphQL + backend APIs)
   └─ components/ (Polaris UI, hooks, other components)
        ↑
        └─ routes/ (loaders → services, components → UI)
@@ -100,7 +100,7 @@ Shopify Admin → OAuth → app/shopify.server.ts → Session stored (Drizzle or
 Route loader (authenticate.admin) → AuthenticatedContext
   ├── services.server/* (GraphQL queries, metafields, backend API, theme)
   └── Response → Client components
-                    ├── hooks/* (React Query → indexer API, backend API, viem)
+                    ├── hooks/* (React Query → backend API, viem)
                     └── Polaris UI
 
 Theme blocks (listener.liquid) → Frak SDK → sessionStorage token
@@ -155,7 +155,7 @@ Env vars injected at build time via `vite.config.ts` `define` block. Secrets fro
 
 - **Migrated from Remix to React Router v7**: Uses `@shopify/shopify-app-react-router` (not remix), `react-router` ^7.0.0. Build: `react-router build`. Typegen: `react-router typegen`.
 - **Onboarding flow**: 6-step wizard validates merchant registered, pixel created, webhooks configured, Frak webhook active, theme blocks installed, buttons added. See `app/utils/onboarding.ts`.
-- **Frak ecosystem URLs**: backend.frak.id (API), wallet.frak.id (wallet), ponder.gcp.frak.id (indexer), business.frak.id (dashboard). Dev variants: `*.v2.gcp-dev.frak.id` or `*-dev.frak.id`.
+- **Frak ecosystem URLs**: backend.frak.id (API), wallet.frak.id (wallet), business.frak.id (dashboard). Dev variants: `*.v2.gcp-dev.frak.id` or `*-dev.frak.id`.
 - **Session storage conditional**: Memory for localhost, Drizzle for deployed. See `app/shopify.server.ts:14`.
 - **Shopify API version**: `ApiVersion.January25` in app config.
 - **Scopes**: `read_customer_events,read_orders,read_pixels,read_products,read_themes,write_pixels`.

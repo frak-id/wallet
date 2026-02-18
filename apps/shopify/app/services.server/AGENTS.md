@@ -35,7 +35,6 @@ export async function doSomething(
 | **purchase.helpers.ts** | Validation (amount, bank address), GID parsing             | None     | Pure functions                     |
 | **merchant.ts**         | Merchant ID resolution (cache → metafield → backend)       | LRU 5min | Shopify GraphQL + backend API      |
 | **backendMerchant.ts**  | Campaigns, bank status, stats from Frak backend            | LRU 5s   | backend API (**unused by routes**) |
-| **onchain.ts**          | On-chain product/bank/campaign data from indexer           | LRU 5s   | indexer API (ponder)               |
 | **mint.ts**             | Product setup code generation                              | None     | Pure crypto (keccak256)            |
 
 ## CONVENTIONS
@@ -61,7 +60,6 @@ export async function doSomething(
 | Purchase validation     | `purchase.helpers.ts` | `validatePurchaseAmount()`, `validateBank()`, `parseShopifyGid()`                                                                                             |
 | Resolve merchant        | `merchant.ts`         | `resolveMerchantId()`                                                                                                                                         |
 | Fetch merchant data     | `backendMerchant.ts`  | `getMerchantCampaigns()`, `getMerchantBankStatus()`, `getMerchantCampaignStats()`                                                                             |
-| On-chain data           | `onchain.ts`          | `getOnchainProductInfo()`, `clearOnChainShopCache()`                                                                                                          |
 | Setup codes             | `mint.ts`             | `getProductSetupCode()`                                                                                                                                       |
 
 ## DEPENDENCY GRAPH
@@ -73,7 +71,6 @@ shop.ts (foundation — most services depend on it)
   ├─ theme.ts → shopInfo() for shop domain
   ├─ purchase.ts → shopInfo() for shop info + ID
   ├─ webhook.ts → shopInfo() for product ID
-  ├─ onchain.ts → shopInfo() for normalized domain
   ├─ merchant.ts → shopInfo() for normalized domain
   └─ mint.ts → shopInfo() for normalized domain
 
