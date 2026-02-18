@@ -42,7 +42,7 @@ async function sendInteraction(
 
 **Public API:**
 - Providers: `FrakConfigProvider`, `FrakIFrameClientProvider`
-- Hooks: `useWalletStatus()`, `useSendInteraction()`, `useDisplayModal()`
+- Hooks: `useWalletStatus()`, `useDisplayModal()`, `useSendTransactionAction()`, `useReferralInteraction()`, `useGetMerchantInformation()`
 
 **Pattern (TanStack Query):**
 ```typescript
@@ -57,11 +57,16 @@ export function useWalletStatus(options?: UseQueryOptions) {
 }
 
 // Mutations for writes
-export function useSendInteraction(options?: UseMutationOptions) {
+export function useSendTransactionAction({
+  mutations,
+}: UseSendTransactionParams = {}) {
   const client = useFrakClient();
   return useMutation({
-    mutationFn: (params) => sendInteraction(client, params),
-    ...options,
+    ...mutations,
+    mutationKey: ["frak-sdk", "send-transaction"],
+    mutationFn: async (params: SendTransactionParams) => {
+      return sendTransaction(client, params);
+    },
   });
 }
 ```

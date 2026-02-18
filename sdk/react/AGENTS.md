@@ -6,7 +6,7 @@ React hooks and providers for Frak SDK. Published as `@frak-labs/react-sdk`.
 
 ```
 src/
-├── hook/             # React hooks (9 hooks + helpers)
+├── hook/             # React hooks (10 hooks + helpers)
 │   ├── useFrakClient.ts
 │   ├── useWalletStatus.ts
 │   ├── useDisplayModal.ts
@@ -14,8 +14,8 @@ src/
 │   ├── utils/        # Hook utilities
 │   └── ...
 ├── provider/         # Context providers
-│   ├── FrakConfigProvider.tsx
-│   └── FrakWalletProvider.tsx
+│   ├── FrakConfigProvider.ts
+│   └── FrakIFrameClientProvider.ts
 └── index.ts          # Barrel exports
 ```
 
@@ -40,7 +40,7 @@ bun run build:watch   # Watch mode
 | CJS | `dist/index.cjs` |
 | Types | `dist/index.d.ts` |
 
-## Hooks (9 public)
+## Hooks (10 public)
 
 | Hook | Purpose |
 |------|---------|
@@ -51,8 +51,9 @@ bun run build:watch   # Watch mode
 | `useSiweAuthenticate` | SIWE authentication |
 | `useOpenSso` | SSO flow |
 | `usePrepareSso` | Prepare SSO data |
-| `useSendTransaction` | Send blockchain transactions |
+| `useSendTransactionAction` | Send blockchain transaction actions |
 | `useGetMerchantInformation` | Merchant info query |
+| `useReferralInteraction` | Referral interaction helper |
 
 ## Conventions
 
