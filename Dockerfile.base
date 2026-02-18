@@ -16,6 +16,7 @@ COPY apps/business/package.json ./apps/business/
 COPY apps/dashboard-admin/package.json ./apps/dashboard-admin/
 COPY apps/listener/package.json ./apps/listener/
 COPY apps/wallet/package.json ./apps/wallet/
+COPY apps/shopify/package.json ./apps/shopify/
 
 # Services
 COPY services/backend/package.json ./services/backend/
