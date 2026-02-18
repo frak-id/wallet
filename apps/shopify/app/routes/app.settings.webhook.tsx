@@ -4,7 +4,10 @@ import {
     type IntentWebhook,
     WebhookList,
 } from "app/components/Webhook";
-import { getFrakWebookStatus } from "app/services.server/backendMerchant";
+import {
+    getFrakWebookStatus,
+    setupFrakWebhook,
+} from "app/services.server/backendMerchant";
 import { resolveMerchantId } from "app/services.server/merchant";
 import {
     createWebhook,
@@ -48,6 +51,10 @@ export async function action({ request }: ActionFunctionArgs) {
             if (!webhooks[0]?.node?.id)
                 return { userErrors: [{ message: "Webhook does not exists" }] };
             return await deleteWebhook({ ...context, id: webhooks[0].node.id });
+        }
+
+        case "setupFrakWebhook": {
+            return await setupFrakWebhook(context, request);
         }
     }
 }

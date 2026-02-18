@@ -1,15 +1,16 @@
-import { useFrakWebhookLink } from "app/hooks/useFrakWebhookLink";
-import { useRefreshData } from "app/hooks/useRefreshData";
 import type {
     CreateWebhookSubscriptionReturnType,
     DeleteWebhookSubscriptionReturnType,
     GetWebhooksSubscriptionsReturnType,
 } from "app/services.server/webhook";
-import { useCallback, useEffect } from "react";
+import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
 
-export type IntentWebhook = "createWebhook" | "deleteWebhook";
+export type IntentWebhook =
+    | "createWebhook"
+    | "deleteWebhook"
+    | "setupFrakWebhook";
 
 export function CreateShopifyWebhook() {
     const fetcher = useFetcher<
@@ -66,52 +67,42 @@ export function CreateShopifyWebhook() {
     );
 }
 
-export function FrakWebhook({
-    setup,
-    merchantId,
-}: {
-    setup: boolean;
-    merchantId: string;
-}) {
+export function FrakWebhook({ setup }: { setup: boolean; merchantId: string }) {
+    const fetcher = useFetcher<{
+        success: boolean;
+        userErrors: { message: string }[];
+    }>();
     const { t } = useTranslation();
 
-    // The webhook link
-    const webhookLink = useFrakWebhookLink({
-        merchantId,
-    });
+    useEffect(() => {
+        if (!fetcher.data) return;
 
-    const refresh = useRefreshData();
-
-    // Open webhook link
-    const handleSetupWebhook = useCallback(() => {
-        const openedWindow = window.open(
-            webhookLink,
-            "frak-business",
-            "menubar=no,status=no,scrollbars=no,fullscreen=no,width=500, height=800"
-        );
-
-        if (openedWindow) {
-            openedWindow.focus();
-
-            // Check every 500ms if the window is closed
-            // If it is, revalidate the page
-            const timer = setInterval(() => {
-                if (openedWindow.closed) {
-                    clearInterval(timer);
-                    setTimeout(() => refresh(), 1000);
-                }
-            }, 500);
+        if (fetcher.data.success) {
+            window.shopify?.toast.show(t("webhook.actions.messages.setup"));
+        } else {
+            window.shopify?.toast.show(
+                t("webhook.actions.messages.frakSetupError"),
+                { isError: true }
+            );
         }
-    }, [webhookLink, refresh]);
+    }, [fetcher.data, t]);
+
+    if (setup) return null;
 
     return (
-        <>
-            {!setup && (
-                <s-button variant="primary" onClick={handleSetupWebhook}>
-                    {t("webhook.actions.cta.frakConnect")}
-                </s-button>
-            )}
-        </>
+        <s-button
+            variant="primary"
+            loading={fetcher.state !== "idle"}
+            disabled={fetcher.state !== "idle"}
+            onClick={() => {
+                fetcher.submit(
+                    { intent: "setupFrakWebhook" },
+                    { method: "POST", action: "/app/settings/webhook" }
+                );
+            }}
+        >
+            {t("webhook.actions.cta.frakConnect")}
+        </s-button>
     );
 }
 
