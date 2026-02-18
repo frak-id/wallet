@@ -59,7 +59,9 @@ function CampaignTable({ campaigns }: { campaigns: CampaignResponse[] }) {
         <s-section padding="none">
             <s-table>
                 <s-table-header-row>
-                    <s-table-header>{t("status.campaign.name")}</s-table-header>
+                    <s-table-header listSlot="primary">
+                        {t("status.campaign.name")}
+                    </s-table-header>
                     <s-table-header>{t("status.campaign.type")}</s-table-header>
                     <s-table-header>
                         {t("status.campaign.active")}

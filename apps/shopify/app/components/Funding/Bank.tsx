@@ -77,7 +77,9 @@ function BankItem({ bankAddress }: { bankAddress: Address }) {
     return (
         <s-table>
             <s-table-header-row>
-                <s-table-header>{t("status.bank.token")}</s-table-header>
+                <s-table-header listSlot="primary">
+                    {t("status.bank.token")}
+                </s-table-header>
                 <s-table-header>{t("status.bank.balance")}</s-table-header>
                 <s-table-header>{t("status.bank.address")}</s-table-header>
             </s-table-header-row>

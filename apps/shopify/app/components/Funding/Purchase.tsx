@@ -49,7 +49,7 @@ function ActivePurchases({
             <s-heading>{t("status.purchase.activePurchases")}</s-heading>
             <s-table>
                 <s-table-header-row>
-                    <s-table-header>
+                    <s-table-header listSlot="primary">
                         {t("status.purchase.amount")}
                     </s-table-header>
                     <s-table-header>
