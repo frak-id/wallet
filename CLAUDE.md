@@ -226,7 +226,7 @@ bun run bundle:check # Analyze bundle with vite-bundle-visualizer
 **Business Dashboard (`apps/business/`)**:
 ```bash
 cd apps/business
-bun run dev          # SST dev + Vite (port 3022)
+bun run dev          # SST dev + Vite (port 3001)
 bun run build        # Production build (static output)
 bun run typecheck    # Type checking
 bun run test         # Run Vitest tests

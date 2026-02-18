@@ -38,7 +38,7 @@ src/
 ## Commands
 
 ```bash
-bun run dev          # SST dev + Vite (port 3022)
+bun run dev          # SST dev + Vite (port 3001)
 bun run build        # Production build (static output)
 bun run typecheck    # Type checking
 bun run test         # Unit tests (business-unit project)

@@ -119,7 +119,7 @@ export default defineConfig(async () => {
             },
         },
         server: {
-            port: 3022,
+            port: 3001,
             host: isSandbox ? "0.0.0.0" : "localhost",
             allowedHosts: isSandbox ? true : undefined,
         },

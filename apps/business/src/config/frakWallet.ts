@@ -26,7 +26,7 @@ function getWalletUrl(): string {
 function getCssUrl(): `${string}.css` {
     // First check: if running locally (STAGE not set or not a known stage), use localhost
     if (isRunningLocally) {
-        return "http://localhost:3022/css/nexus-modals.css";
+        return "http://localhost:3001/css/nexus-modals.css";
     }
 
     // Runtime check: if we're in the browser and NOT running locally, use the current origin

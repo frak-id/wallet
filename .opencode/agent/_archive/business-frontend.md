@@ -273,7 +273,7 @@ export const Route = createFileRoute("/embedded/_layout/create-campaign")({
 
 ```bash
 cd apps/business
-bun run dev                  # TanStack Start development (port 3022)
+bun run dev                  # TanStack Start development (port 3001)
 bun run build                # Production build (Nitro)
 bun run start                # Preview production locally
 bun run start:prod           # Run production build

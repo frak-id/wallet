@@ -47,7 +47,7 @@ export const walletUrl = getStaticVariable({
 export const businessUrl = getStaticVariable({
     prod: "https://business.frak.id",
     dev: "https://business-dev.frak.id",
-    local: "https://localhost:3001",
+    local: "http://localhost:3001",
 });
 export const openPanelApiUrl = "https://op-api.gcp.frak.id";
 

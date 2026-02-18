@@ -30,7 +30,7 @@ This application provides:
 # Install dependencies (from monorepo root)
 bun install
 
-# Start development server (port 3022)
+# Start development server (port 3001)
 cd apps/business
 bun run dev
 
