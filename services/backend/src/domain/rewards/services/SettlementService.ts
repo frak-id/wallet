@@ -49,18 +49,18 @@ export class SettlementService {
         }
 
         const prepared = await this.prepareRewards(rewards, merchantBanks);
-        
+
         result.failedCount = prepared.errors.length;
         result.errors = prepared.errors;
-        
+
         if (prepared.rewards.length === 0) {
             return result;
         }
-        
+
         await this.assetLogRepository.markSettlementProcessing(
             prepared.validAssetLogIds
         );
-        
+
         try {
             const txResult = await this.rewardsHub.pushRewards(
                 prepared.rewards

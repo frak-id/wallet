@@ -3,7 +3,11 @@ import {
     type Stablecoin,
 } from "@frak-labs/app-essentials";
 import { useSiweAuthenticate, useWalletStatus } from "@frak-labs/react-sdk";
-import { type UseMutationOptions, useMutation } from "@tanstack/react-query";
+import {
+    type UseMutationOptions,
+    useMutation,
+    useQueryClient,
+} from "@tanstack/react-query";
 import { useState } from "react";
 import { authenticatedBackendApi } from "@/api/backendClient";
 
@@ -38,6 +42,7 @@ export function useRegisterMerchant(
         }
     >
 ) {
+    const queryClient = useQueryClient();
     const { data: walletStatus } = useWalletStatus();
     const { mutateAsync: siweAuthenticate } = useSiweAuthenticate();
     const [infoTxt, setInfoTxt] = useState<string | undefined>();
@@ -45,9 +50,12 @@ export function useRegisterMerchant(
     const mutation = useMutation({
         ...options,
         mutationKey: ["merchant", "register"],
-        onSettled() {
+        async onSettled() {
             // Clear info post mutation
             setInfoTxt(undefined);
+            await queryClient.invalidateQueries({
+                queryKey: ["merchant"],
+            });
         },
         async mutationFn({ name, domain, setupCode, currency }) {
             const wallet = walletStatus?.wallet;
