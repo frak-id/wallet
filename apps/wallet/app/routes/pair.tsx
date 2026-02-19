@@ -16,7 +16,7 @@ const maxIdLength = 128;
 /**
  * Time to wait for the native app to open before falling back to web pairing.
  */
-export const DEEP_LINK_TIMEOUT_MS = 1500;
+export const DEEP_LINK_TIMEOUT_MS = 2500;
 
 /**
  * Validates search parameters for the pair route.
