@@ -1,8 +1,10 @@
+import { rateLimitMiddleware } from "@backend-infrastructure";
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import { OrchestrationContext } from "../../../orchestration/context";
 
 export const identityMergeRoutes = new Elysia({ prefix: "/merge" })
+    .use(rateLimitMiddleware({ windowMs: 60_000, maxRequests: 20 }))
     .post(
         "/initiate",
         async ({ body }) => {

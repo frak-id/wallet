@@ -22,6 +22,8 @@ export namespace JwtContext {
     export const wallet = buildJwtContext({
         secret: process.env.JWT_SECRET as string,
         schema: WalletTokenDto,
+        // 30 days
+        expirationDelayInSecond: 60 * 60 * 24 * 30,
         // Default jwt payload
         iss: "frak.id",
     });

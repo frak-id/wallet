@@ -1,10 +1,11 @@
-import { log } from "@backend-infrastructure";
+import { log, rateLimitMiddleware } from "@backend-infrastructure";
 import { Elysia } from "elysia";
 import { customWebhook } from "./customWebhook";
 import { shopifyWebhook } from "./shopifyWebhook";
 import { wooCommerceWebhook } from "./wooCommerceWebhook";
 
 export const webhookRoutes = new Elysia()
+    .use(rateLimitMiddleware({ windowMs: 60_000, maxRequests: 120 }))
     .onBeforeHandle(({ path, headers }) => {
         log.debug({ path, headers }, "Handling purchase webhook");
     })
