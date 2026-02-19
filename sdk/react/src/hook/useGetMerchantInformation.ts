@@ -23,7 +23,7 @@ interface UseGetMerchantInformationParams {
  *
  * It's a {@link @tanstack/react-query!home | `tanstack`} wrapper around the {@link @frak-labs/core-sdk!actions.getMerchantInformation | `getMerchantInformation()`} action
  *
- * @param args
+ * @param args - Optional config object with `query` for customizing the underlying {@link @tanstack/react-query!useQuery | `useQuery()`}
  *
  * @group hooks
  *

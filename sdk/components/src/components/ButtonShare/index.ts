@@ -4,7 +4,10 @@ import type { ButtonShareProps } from "./types";
 
 export { ButtonShare };
 
-// Button share element is HTML element + ButtonShareProps
+/**
+ * Custom element interface for `<frak-button-share>`.
+ * Combines standard {@link HTMLElement} with {@link ButtonShareProps}.
+ */
 export interface ButtonShareElement extends HTMLElement, ButtonShareProps {}
 
 declare global {

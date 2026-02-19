@@ -1,5 +1,8 @@
 import type { FrakClient } from "../types";
 
+/**
+ * Analytics event names emitted by the SDK
+ */
 export type FrakEvent =
     | "share_button_clicked"
     | "wallet_button_clicked"
@@ -13,6 +16,13 @@ export type FrakEvent =
 
 type EventProps = Record<string, unknown>;
 
+/**
+ * Track an analytics event via OpenPanel.
+ * Fire-and-forget: silently catches errors.
+ * @param client - The Frak client instance (no-op if undefined)
+ * @param event - The event name to track
+ * @param props - Optional event properties
+ */
 export function trackEvent(
     client: FrakClient | undefined,
     event: FrakEvent,

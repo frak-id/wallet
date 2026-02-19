@@ -26,7 +26,11 @@ function handleBackup(backup: string | undefined): void {
 }
 
 /**
- * Handle handshake with iframe
+ * Handle handshake with iframe — sends client metadata so the listener can resolve the correct merchant
+ * @param iframe - The iframe element to post the handshake response to
+ * @param token - The handshake token received from the iframe
+ * @param targetOrigin - The target origin for postMessage security
+ * @param configDomain - Optional override domain for merchant resolution in tunneled/proxied environments
  */
 function handleHandshake(
     iframe: HTMLIFrameElement,
@@ -113,6 +117,10 @@ function handleRedirect(
 
 /**
  * Create a new iframe lifecycle handler
+ * @param args
+ * @param args.iframe - The iframe element used for wallet communication
+ * @param args.targetOrigin - The wallet URL origin for postMessage security
+ * @param args.configDomain - Optional domain override forwarded during handshake for tunneled/proxied environments
  * @ignore
  */
 export function createIFrameLifecycleManager({

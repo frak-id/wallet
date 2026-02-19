@@ -23,7 +23,8 @@ type SdkRpcClient = RpcClient<IFrameRpcSchema, FrakLifecycleEvent>;
 /**
  * Create a new iframe Frak client
  * @param args
- * @param args.config - The configuration to use for the Frak Wallet SDK
+ * @param args.config - The configuration to use for the Frak Wallet SDK.
+ *   When `config.domain` is set, it is forwarded to the iframe handshake so the listener resolves the correct merchant in tunneled/proxied environments (e.g. Shopify dev with Cloudflare tunnel).
  * @param args.iframe - The iframe to use for the communication
  * @returns The created Frak Client
  *

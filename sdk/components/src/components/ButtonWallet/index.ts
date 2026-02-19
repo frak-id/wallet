@@ -4,7 +4,10 @@ import type { ButtonWalletProps } from "./types";
 
 export { ButtonWallet };
 
-// Button wallet element is HTML element + ButtonWalletProps
+/**
+ * Custom element interface for `<frak-button-wallet>`.
+ * Combines standard {@link HTMLElement} with {@link ButtonWalletProps}.
+ */
 export interface ButtonWalletElement extends HTMLElement, ButtonWalletProps {}
 
 declare global {

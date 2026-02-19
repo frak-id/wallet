@@ -8,6 +8,7 @@ import type {
  * Function used to display the Frak embedded wallet popup
  * @param client - The current Frak Client
  * @param params - The parameter used to customise the embedded wallet
+ * @returns The embedded wallet display result
  */
 export async function displayEmbeddedWallet(
     client: FrakClient,

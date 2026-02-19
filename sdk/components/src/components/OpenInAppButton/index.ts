@@ -4,6 +4,10 @@ import type { OpenInAppButtonProps } from "./types";
 
 export { OpenInAppButton };
 
+/**
+ * Custom element interface for `<frak-open-in-app>`.
+ * Combines standard {@link HTMLElement} with {@link OpenInAppButtonProps}.
+ */
 export interface OpenInAppButtonElement
     extends HTMLElement,
         OpenInAppButtonProps {}

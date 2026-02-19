@@ -1,3 +1,7 @@
+/**
+ * The props type for {@link OpenInAppButton}.
+ * @inline
+ */
 export type OpenInAppButtonProps = {
     /**
      * Text to display on the button
