@@ -5,22 +5,8 @@ import { useDeepLinkFallback } from "./useDeepLinkFallback";
 
 const EXPECTED_ORIGIN = "https://example.com";
 
-// Mock core-sdk deep link helpers
-const mockIsChromiumAndroid = vi.fn(() => false);
-vi.mock("@frak-labs/core-sdk", async () => {
-    const actual = await vi.importActual<typeof import("@frak-labs/core-sdk")>(
-        "@frak-labs/core-sdk"
-    );
-    return {
-        ...actual,
-        isChromiumAndroid: () => mockIsChromiumAndroid(),
-        isFrakDeepLink: (url: string) => url.startsWith("frakwallet://"),
-        toAndroidIntentUrl: (deepLink: string) => {
-            const path = deepLink.slice("frakwallet://".length);
-            return `intent://${path}#Intent;scheme=frakwallet;end`;
-        },
-    };
-});
+// Note: useDeepLinkFallback no longer imports from @frak-labs/core-sdk
+// (deep link conversion is handled by the parent SDK)
 
 // Mock emitLifecycleEvent from wallet-shared
 vi.mock("@frak-labs/wallet-shared", async () => {
@@ -256,65 +242,27 @@ describe("useDeepLinkFallback", () => {
         expect(firstFunction).toBe(secondFunction);
     });
 
-    describe("Chromium Android behavior", () => {
-        let windowOpenSpy: ReturnType<typeof vi.spyOn>;
+    test("should always route through parent SDK lifecycle event regardless of URL type", async () => {
+        const { emitLifecycleEvent } = await import("@frak-labs/wallet-shared");
+        const { result } = renderHook(() => useDeepLinkFallback());
 
-        beforeEach(() => {
-            mockIsChromiumAndroid.mockReturnValue(true);
-            windowOpenSpy = vi.spyOn(window, "open").mockReturnValue(null);
+        // Deep link URL
+        result.current.emitRedirectWithFallback("frakwallet://wallet", vi.fn());
+        expect(emitLifecycleEvent).toHaveBeenCalledWith({
+            iframeLifecycle: "redirect",
+            data: { baseRedirectUrl: "frakwallet://wallet" },
         });
 
-        test("should use window.open with intent URL on Chromium Android and preserve fallback signaling", async () => {
-            const { emitLifecycleEvent } = await import(
-                "@frak-labs/wallet-shared"
-            );
-            const { result } = renderHook(() => useDeepLinkFallback());
+        vi.mocked(emitLifecycleEvent).mockClear();
 
-            result.current.emitRedirectWithFallback(
-                "frakwallet://wallet",
-                vi.fn()
-            );
-
-            // Should open intent URL directly and still notify parent for fallback wiring
-            expect(windowOpenSpy).toHaveBeenCalledWith(
-                "intent://wallet#Intent;scheme=frakwallet;end",
-                "_blank"
-            );
-            expect(emitLifecycleEvent).toHaveBeenCalledWith({
-                iframeLifecycle: "redirect",
-                data: { baseRedirectUrl: "frakwallet://wallet" },
-            });
-        });
-
-        test("should preserve deep link path and query in intent URL", () => {
-            const { result } = renderHook(() => useDeepLinkFallback());
-
-            result.current.emitRedirectWithFallback(
-                "frakwallet://pair?id=abc-123&mode=embedded",
-                vi.fn()
-            );
-
-            expect(windowOpenSpy).toHaveBeenCalledWith(
-                "intent://pair?id=abc-123&mode=embedded#Intent;scheme=frakwallet;end",
-                "_blank"
-            );
-        });
-
-        test("should fall back to postMessage for non-frak URLs on Chromium Android", async () => {
-            const { emitLifecycleEvent } = await import(
-                "@frak-labs/wallet-shared"
-            );
-            const { result } = renderHook(() => useDeepLinkFallback());
-
-            const url = "https://wallet.frak.id/open";
-            result.current.emitRedirectWithFallback(url, vi.fn());
-
-            // Non-frak URL should go through postMessage even on Android
-            expect(windowOpenSpy).not.toHaveBeenCalled();
-            expect(emitLifecycleEvent).toHaveBeenCalledWith({
-                iframeLifecycle: "redirect",
-                data: { baseRedirectUrl: url },
-            });
+        // Regular URL
+        result.current.emitRedirectWithFallback(
+            "https://wallet.frak.id/open",
+            vi.fn()
+        );
+        expect(emitLifecycleEvent).toHaveBeenCalledWith({
+            iframeLifecycle: "redirect",
+            data: { baseRedirectUrl: "https://wallet.frak.id/open" },
         });
     });
 });
