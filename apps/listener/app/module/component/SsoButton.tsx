@@ -5,6 +5,7 @@ import {
     ssoPopupName,
 } from "@frak-labs/core-sdk";
 import {
+    emitLifecycleEvent,
     getOriginPairingClient,
     type OriginIdentityNode,
     trackAuthFailed,
@@ -20,7 +21,6 @@ import { useDeepLinkFallback } from "@/module/hooks/useDeepLinkFallback";
 import { useSsoLink } from "@/module/hooks/useSsoLink";
 import { useListenerWithRequestUI } from "@/module/providers/ListenerUiProvider";
 import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
-import styles from "./SsoButton.module.css";
 
 function buildDeepLinkHref(pairing: { id: string }): string {
     const id = encodeURIComponent(pairing.id);
@@ -68,14 +68,22 @@ export function SsoButton({
         translation: { lang },
     } = useListenerWithRequestUI();
 
-    // Get the link to use with the SSO
+    // Parent page URL — used as redirect target after mobile SSO
+    const sourceUrl = useStore(
+        resolvingContextStore,
+        (s) => s.context?.sourceUrl
+    );
+
+    // SSO link: popup mode (directExit) for desktop, redirect mode for mobile
+    // On mobile we navigate the parent page to SSO, so we need a redirectUrl
+    // to bring the user back to the merchant site after auth completes.
     const { link } = useSsoLink({
         merchantId,
         metadata: {
             name: appName,
             ...ssoMetadata,
         },
-        directExit: true,
+        ...(ua.isMobile ? { redirectUrl: sourceUrl } : { directExit: true }),
         lang,
     });
 
@@ -162,7 +170,7 @@ function MobileSsoButton({
 }) {
     const { t } = useTranslation();
     const [status, setStatus] = useState<
-        "idle" | "connecting" | "waiting" | "timeout" | "appNotFound"
+        "idle" | "connecting" | "waiting" | "timeout"
     >("idle");
     const { startTimeout, clearTimeout: clearPairingTimeout } =
         useMountedTimeout();
@@ -217,26 +225,30 @@ function MobileSsoButton({
     useEffect(() => {
         if (deepLinkHref && status === "connecting") {
             emitRedirectWithFallback(deepLinkHref, () => {
-                // App not installed - show UI for manual browser continuation
-                // (can't auto-open popup from callback - browsers block non-user-initiated popups)
-                setStatus("appNotFound");
-                // Clear pairing timeout since user will continue in browser
+                // App not installed — redirect parent to SSO page in-browser.
+                // Can't window.open (popup blocked without user gesture),
+                // but page navigation via lifecycle redirect works fine.
                 clearPairingTimeout();
+                emitLifecycleEvent({
+                    iframeLifecycle: "redirect",
+                    data: { baseRedirectUrl: link },
+                });
             });
             setStatus("waiting");
         }
-    }, [deepLinkHref, status, emitRedirectWithFallback, clearPairingTimeout]);
+    }, [
+        deepLinkHref,
+        status,
+        emitRedirectWithFallback,
+        clearPairingTimeout,
+        link,
+    ]);
 
     useEffect(() => {
         if (clientState.status === "paired") {
             clearPairingTimeout();
         }
     }, [clientState.status, clearPairingTimeout]);
-
-    const handleContinueInBrowser = () => {
-        tryOpenSsoPopup(link);
-        setStatus("waiting");
-    };
 
     if (status === "idle") {
         return (
@@ -259,23 +271,6 @@ function MobileSsoButton({
             >
                 {t("mobile-sso.retry")}
             </button>
-        );
-    }
-
-    if (status === "appNotFound") {
-        return (
-            <div className={styles.appNotFound}>
-                <p className={styles.appNotFound__text}>
-                    {t("mobile-sso.appNotFound")}
-                </p>
-                <button
-                    type="button"
-                    className={className}
-                    onClick={handleContinueInBrowser}
-                >
-                    {t("mobile-sso.continueInBrowser")}
-                </button>
-            </div>
         );
     }
 
@@ -302,7 +297,10 @@ function MobileSsoButton({
             onClick={() => {
                 if (!deepLinkHref) return;
                 emitRedirectWithFallback(deepLinkHref, () => {
-                    setStatus("appNotFound");
+                    emitLifecycleEvent({
+                        iframeLifecycle: "redirect",
+                        data: { baseRedirectUrl: link },
+                    });
                 });
                 setStatus("waiting");
             }}
