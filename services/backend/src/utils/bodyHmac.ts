@@ -1,4 +1,3 @@
-import { log } from "@backend-infrastructure";
 import { CryptoHasher } from "bun";
 
 /**
@@ -23,21 +22,7 @@ export function validateBodyHmac({
 
     // Compare the two
     if (!baseSignature.equals(recomputedSignature)) {
-        log.warn(
-            {
-                signature,
-                baseSignature: baseSignature.toString("hex"),
-            },
-            "Signature mismatch"
-        );
-    } else {
-        log.debug(
-            {
-                recomputedSignature: recomputedSignature.toString("hex"),
-                baseSignature: baseSignature.toString("hex"),
-            },
-            "Signature matches"
-        );
+        throw new Error("Webhook signature verification failed");
     }
 }
 
