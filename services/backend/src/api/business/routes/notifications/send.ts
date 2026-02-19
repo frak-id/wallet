@@ -1,6 +1,6 @@
 import { log } from "@backend-infrastructure";
 import { t } from "@backend-utils";
-import { Elysia } from "elysia";
+import { Elysia, status } from "elysia";
 import type { Address } from "viem";
 import {
     NotificationContext,
@@ -9,41 +9,43 @@ import {
 } from "../../../../domain/notifications";
 import { businessSessionContext } from "../../middleware/session";
 
-export const sendRoutes = new Elysia()
-    .use(businessSessionContext)
-    // External endpoint to send notification to a list of wallets
-    .post(
-        "/send",
-        async ({ body: { targets, payload }, businessSession }) => {
-            if (!businessSession) return;
-
-            await NotificationContext.services.notifications.cleanupExpiredTokens();
-
-            // todo: Notification tracking (send, received, clicked)
-
-            // Find every push tokens for the given wallets
-            const wallets = await getWalletsTargets({
-                targets: targets,
-                wallet: businessSession.wallet,
-            });
-
-            // Send the notification
-            await NotificationContext.services.notifications.sendNotification({
-                wallets,
-                payload,
-            });
-        },
-        {
-            body: t.Object({
-                targets: SendNotificationTargetsDto,
-                payload: SendNotificationPayloadDto,
-            }),
+export const sendRoutes = new Elysia().use(businessSessionContext).post(
+    "/send",
+    async ({
+        body: { targets, payload, merchantId },
+        businessSession,
+        hasMerchantAccess,
+    }) => {
+        if (!businessSession) {
+            return status(401, "Unauthorized");
         }
-    );
 
-/**
- * Get a list of wallets depending on the notification target
- */
+        const hasAccess = await hasMerchantAccess(merchantId);
+        if (!hasAccess) {
+            return status(403, "Forbidden");
+        }
+
+        await NotificationContext.services.notifications.cleanupExpiredTokens();
+
+        const wallets = await getWalletsTargets({
+            targets: targets,
+            wallet: businessSession.wallet,
+        });
+
+        await NotificationContext.services.notifications.sendNotification({
+            wallets,
+            payload,
+        });
+    },
+    {
+        body: t.Object({
+            merchantId: t.String({ format: "uuid" }),
+            targets: SendNotificationTargetsDto,
+            payload: SendNotificationPayloadDto,
+        }),
+    }
+);
+
 async function getWalletsTargets({
     targets,
     wallet,
@@ -55,7 +57,6 @@ async function getWalletsTargets({
         return targets.wallets;
     }
 
-    // TODO: Migrate to DB-based member query once indexer is fully removed
     log.warn(
         `Filter-based notification targeting not yet migrated to DB for wallet ${wallet}. Returning empty list.`
     );
