@@ -4,7 +4,7 @@ import type { StaticWalletTokenDto } from "../../auth/models/WalletSessionDto";
 /**
  * When the origin send the request to the target
  */
-type WsSignatureRequest = {
+export type WsSignatureRequest = {
     type: "signature-request";
     payload: {
         // The pairing id
@@ -23,7 +23,7 @@ type WsSignatureRequest = {
 /**
  * When the target is paired to the origin, we can emit the authenticated message
  */
-type WsAuthenticated = {
+export type WsAuthenticated = {
     type: "authenticated";
     payload: {
         token: string;
@@ -38,7 +38,7 @@ type WsAuthenticated = {
 /**
  * When the partner is connected
  */
-type WsPartnerConnected = {
+export type WsPartnerConnected = {
     type: "partner-connected";
     payload: {
         pairingId: string;
@@ -49,7 +49,7 @@ type WsPartnerConnected = {
 /**
  * When the target send back the response to the origin
  */
-type WsSignatureResponse = {
+export type WsSignatureResponse = {
     type: "signature-response";
     payload: {
         pairingId: string;
@@ -61,7 +61,7 @@ type WsSignatureResponse = {
 /**
  * When the target send a signature rejection
  */
-type WsSignatureReject = {
+export type WsSignatureReject = {
     type: "signature-reject";
     payload: {
         pairingId: string;
@@ -75,7 +75,7 @@ type WsSignatureReject = {
  *  - origin send `ping`
  *  - target send `pong`
  */
-type WsPingPong = {
+export type WsPingPong = {
     type: "ping" | "pong";
     payload: {
         // The pairing id

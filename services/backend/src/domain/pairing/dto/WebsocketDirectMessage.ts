@@ -3,7 +3,7 @@ import type { Hex } from "viem";
 /**
  * When a pairing is initiated by the origin
  */
-type WsPairingCreatedResponse = {
+export type WsPairingCreatedResponse = {
     type: "pairing-initiated";
     payload: {
         pairingId: string;
