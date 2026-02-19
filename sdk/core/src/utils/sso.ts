@@ -23,9 +23,10 @@ export type FullSsoParams = Omit<PrepareSsoParamsType, "metadata"> & {
  *
  * @param walletUrl - Base wallet URL (e.g., "https://wallet.frak.id")
  * @param params - SSO parameters
- * @param productId - Product identifier
+ * @param merchantId - Merchant identifier
  * @param name - Application name
  * @param css - Optional custom CSS
+ * @param clientId - Optional client identifier (auto-generated if omitted)
  * @returns Complete SSO URL ready to open in popup or redirect
  *
  * @example
