@@ -151,8 +151,3 @@ export function MintMerchant() {
         </FormLayout>
     );
 }
-
-/**
- * @deprecated Use MintMerchant instead
- */
-export const MintProduct = MintMerchant;

@@ -3,24 +3,18 @@ import { useNavigate } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
 import { Panel } from "@/module/common/component/Panel";
 import { MerchantItem } from "@/module/dashboard/component/MerchantItem";
-import { useMyMerchants } from "@/module/dashboard/hooks/useMyProducts";
+import { useMyMerchants } from "@/module/dashboard/hooks/useMyMerchants";
 import styles from "./index.module.css";
 
 export function MyMerchants() {
     const { merchants } = useMyMerchants();
-    const allMerchants = [
-        ...(merchants?.owner ?? []),
-        ...(merchants?.operator ?? []),
-    ];
 
     return (
         <Panel variant={"ghost"} title={"My Merchants"} withBadge={false}>
-            <MerchantListSection merchants={allMerchants} />
+            <MerchantListSection merchants={merchants} />
         </Panel>
     );
 }
-
-export const MyProducts = MyMerchants;
 
 function MerchantListSection({
     merchants,

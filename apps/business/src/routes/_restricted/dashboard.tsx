@@ -5,7 +5,7 @@ import { Head } from "@/module/common/component/Head";
 import { CriticalError } from "@/module/common/component/RouteError";
 import { queryClient } from "@/module/common/provider/RootProvider";
 import { MyMerchants } from "@/module/dashboard/component/Products";
-import { myMerchantsQueryOptions } from "@/module/dashboard/queries/queryOptions";
+import { myMerchantsQueryOptions } from "@/module/merchant/queries/queryOptions";
 
 export const Route = createFileRoute("/_restricted/dashboard")({
     loader: () => {

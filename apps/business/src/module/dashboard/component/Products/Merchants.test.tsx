@@ -8,7 +8,7 @@ vi.mock("@tanstack/react-router", () => ({
     useNavigate: () => mockNavigate,
 }));
 
-vi.mock("@/module/dashboard/hooks/useMyProducts", () => ({
+vi.mock("@/module/dashboard/hooks/useMyMerchants", () => ({
     useMyMerchants: vi.fn(),
 }));
 
@@ -48,7 +48,7 @@ vi.mock("lucide-react", () => ({
 
 // Import after mocks
 const { useMyMerchants } = await import(
-    "@/module/dashboard/hooks/useMyProducts"
+    "@/module/dashboard/hooks/useMyMerchants"
 );
 
 describe("MyMerchants", () => {
@@ -58,7 +58,9 @@ describe("MyMerchants", () => {
 
     it("should render merchants panel when data is available", async () => {
         vi.mocked(useMyMerchants).mockReturnValue({
-            merchants: { owner: [], operator: [] },
+            merchants: [],
+            owned: [],
+            adminOf: [],
             isEmpty: true,
         });
 
@@ -69,21 +71,20 @@ describe("MyMerchants", () => {
 
     it("should render merchants list when loaded", async () => {
         vi.mocked(useMyMerchants).mockReturnValue({
-            merchants: {
-                owner: [
-                    {
-                        id: "merchant-1",
-                        name: "Merchant 1",
-                        domain: "merchant1.com",
-                    },
-                    {
-                        id: "merchant-2",
-                        name: "Merchant 2",
-                        domain: "merchant2.com",
-                    },
-                ],
-                operator: [],
-            },
+            merchants: [
+                {
+                    id: "merchant-1",
+                    name: "Merchant 1",
+                    domain: "merchant1.com",
+                },
+                {
+                    id: "merchant-2",
+                    name: "Merchant 2",
+                    domain: "merchant2.com",
+                },
+            ],
+            owned: [],
+            adminOf: [],
             isEmpty: false,
         });
 
@@ -96,7 +97,9 @@ describe("MyMerchants", () => {
 
     it("should render empty list with add merchant button", async () => {
         vi.mocked(useMyMerchants).mockReturnValue({
-            merchants: { owner: [], operator: [] },
+            merchants: [],
+            owned: [],
+            adminOf: [],
             isEmpty: true,
         });
 

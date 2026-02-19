@@ -1,6 +1,6 @@
 import { useFormContext } from "react-hook-form";
 import type { Hex } from "viem";
-import { useMyMerchants } from "@/module/dashboard/hooks/useMyProducts";
+import { useMyMerchants } from "@/module/dashboard/hooks/useMyMerchants";
 import {
     FormControl,
     FormDescription,
@@ -19,10 +19,6 @@ export function MerchantFiltering({
     onSubmit: (data: FormMembersFiltering) => void;
 }) {
     const { isEmpty, merchants } = useMyMerchants();
-    const merchantsOptions = [
-        ...(merchants?.operator ?? []),
-        ...(merchants?.owner ?? []),
-    ];
     const { control, handleSubmit } = useFormContext<FormMembersFiltering>();
 
     if (isEmpty || !merchants) {
@@ -39,7 +35,7 @@ export function MerchantFiltering({
                     <FormControl>
                         <MultiSelect
                             disabled={disabled}
-                            options={merchantsOptions.map((merchant) => ({
+                            options={merchants.map((merchant) => ({
                                 name: merchant.name,
                                 value: merchant.id,
                             }))}
