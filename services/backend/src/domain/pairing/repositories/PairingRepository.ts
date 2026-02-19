@@ -20,6 +20,13 @@ class LastActiveTracker {
 
     constructor() {
         setInterval(() => this.flush(), FLUSH_INTERVAL_MS);
+
+        // Flush pending writes on graceful shutdown
+        const onShutdown = () => {
+            this.flush();
+        };
+        process.on("SIGTERM", onShutdown);
+        process.on("SIGINT", onShutdown);
     }
 
     touch(pairingId: string) {
