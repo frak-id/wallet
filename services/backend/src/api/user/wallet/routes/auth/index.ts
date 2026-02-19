@@ -1,4 +1,4 @@
-import { JwtContext, log } from "@backend-infrastructure";
+import { JwtContext, log, rateLimitMiddleware } from "@backend-infrastructure";
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import { WalletAuthResponseDto } from "../../../../../domain/auth";
@@ -8,6 +8,7 @@ import { routingRoutes } from "./routing";
 import { walletSdkRoutes } from "./sdk";
 
 export const authRoutes = new Elysia({ prefix: "/auth" })
+    .use(rateLimitMiddleware({ windowMs: 60_000, maxRequests: 10 }))
     .use(walletSdkRoutes)
     .use(loginRoutes)
     .use(registerRoutes)
