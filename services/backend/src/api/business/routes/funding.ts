@@ -4,7 +4,11 @@ import {
     viemClient,
 } from "@backend-infrastructure";
 import { t } from "@backend-utils";
-import { currentStablecoins, stablecoins } from "@frak-labs/app-essentials";
+import {
+    currentStablecoins,
+    isRunningInProd,
+    stablecoins,
+} from "@frak-labs/app-essentials";
 import { mintAbi } from "@frak-labs/app-essentials/blockchain";
 import { Elysia } from "elysia";
 import { erc20Abi, parseEther, parseUnits } from "viem";
@@ -17,6 +21,9 @@ import { readContract, writeContract } from "viem/actions";
 export const fundingRoutes = new Elysia({ prefix: "/funding" }).post(
     "/getTestToken",
     async ({ body: { bank, stablecoin } }) => {
+        // Don't allow test token on prod
+        if (isRunningInProd) return;
+
         // If a stablecoin is specified, transfer from monerium-dev account
         if (stablecoin) {
             const tokenAddress = currentStablecoins[stablecoin];
