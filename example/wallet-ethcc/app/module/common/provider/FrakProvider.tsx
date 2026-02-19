@@ -43,7 +43,7 @@ export function FrakProvider({ children }: PropsWithChildren) {
                 },
             },
         },
-        domain: "ethcc.news-paper.xyz",
+        domain: "ethcc.frak-labs.com",
     };
 
     return (

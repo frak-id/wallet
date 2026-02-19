@@ -44,7 +44,7 @@ export function WalletLogin() {
                             siweAuthenticate: {
                                 siwe: {
                                     domain: "example.com",
-                                    uri: "https://ethcc.news-paper.xyz/",
+                                    uri: "https://ethcc.frak-labs.com/",
                                     statement: "Please authenticate",
                                     nonce: "0123456789",
                                     version: "1",
