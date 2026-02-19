@@ -323,6 +323,7 @@ vi.mock("@backend-infrastructure", () => ({
     adminWalletsRepository: adminWalletsRepositoryMocks,
     rolesRepository: rolesRepositoryMocks,
     sessionContext: sessionContextMock,
+    rateLimitMiddleware: () => new Elysia({ name: "Mock.rateLimit" }),
     get JwtContext() {
         return JwtContextMock;
     },
