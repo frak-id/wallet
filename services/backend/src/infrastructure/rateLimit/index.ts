@@ -1,2 +1,2 @@
 export { getClientIp } from "./ipExtraction";
-export { rateLimitMiddleware } from "./rateLimiter";
+export { createRateLimitStore, rateLimitMiddleware } from "./rateLimiter";

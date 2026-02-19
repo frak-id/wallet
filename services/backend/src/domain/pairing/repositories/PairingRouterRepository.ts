@@ -148,12 +148,13 @@ export class PairingRouterRepository extends PairingRepository {
             ws.close(WsCloseCode.PAIRING_NOT_FOUND, "Pairing not found");
             return;
         }
-        // Save the request
+        const signatureRequestTtlMs = 10 * 60 * 1_000;
         await db.insert(pairingSignatureRequestTable).values({
             pairingId: wallet.pairingId,
             requestId: message.payload.id,
             request: message.payload.request,
             context: message.payload.context,
+            expiresAt: new Date(Date.now() + signatureRequestTtlMs),
         });
 
         // Transmit the signature request to the right topic

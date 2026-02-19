@@ -24,7 +24,7 @@ const defaultConfig: RateLimitConfig = {
  * Suitable for single-instance deployments. For multi-replica k8s
  * deployments, swap the Map for Redis.
  */
-class InMemoryRateLimitStore {
+export class InMemoryRateLimitStore {
     private readonly windows = new Map<string, RateLimitWindow>();
 
     consume(key: string, config: RateLimitConfig): boolean {
@@ -74,6 +74,12 @@ class InMemoryRateLimitStore {
 }
 
 const stores: InMemoryRateLimitStore[] = [];
+
+export function createRateLimitStore(): InMemoryRateLimitStore {
+    const store = new InMemoryRateLimitStore();
+    stores.push(store);
+    return store;
+}
 
 // Purge expired entries every 5 minutes across all stores
 setInterval(() => {

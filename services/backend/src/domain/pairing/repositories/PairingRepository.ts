@@ -1,15 +1,73 @@
 import { db, log } from "@backend-infrastructure";
-import { eq } from "drizzle-orm";
+import { inArray } from "drizzle-orm";
 import type { ElysiaWS } from "elysia/ws";
 import { pairingTable } from "../db/schema";
 import type { WsDirectMessageResponse } from "../dto/WebsocketDirectMessage";
 import type { WsTopicMessage } from "../dto/WebsocketTopicMessage";
 
+const FLUSH_INTERVAL_MS = 60_000;
+const MIN_UPDATE_INTERVAL_MS = 60_000;
+
+/**
+ * Batches lastActiveAt writes in-memory and flushes to DB once per
+ * minute, instead of issuing an UPDATE on every WebSocket message.
+ * Throttles per-pairingId so the same pairing is updated at most once
+ * per MIN_UPDATE_INTERVAL_MS.
+ */
+class LastActiveTracker {
+    private readonly pending = new Map<string, number>();
+    private readonly lastFlushed = new Map<string, number>();
+
+    constructor() {
+        setInterval(() => this.flush(), FLUSH_INTERVAL_MS);
+
+        // Flush pending writes on graceful shutdown
+        const onShutdown = () => {
+            this.flush();
+        };
+        process.on("SIGTERM", onShutdown);
+        process.on("SIGINT", onShutdown);
+    }
+
+    touch(pairingId: string) {
+        const now = Date.now();
+        const lastFlush = this.lastFlushed.get(pairingId) ?? 0;
+
+        if (now - lastFlush < MIN_UPDATE_INTERVAL_MS) {
+            return;
+        }
+
+        this.pending.set(pairingId, now);
+    }
+
+    private async flush() {
+        if (this.pending.size === 0) return;
+
+        const pairingIds = Array.from(this.pending.keys());
+        this.pending.clear();
+
+        try {
+            await db
+                .update(pairingTable)
+                .set({ lastActiveAt: new Date() })
+                .where(inArray(pairingTable.pairingId, pairingIds));
+
+            const now = Date.now();
+            for (const id of pairingIds) {
+                this.lastFlushed.set(id, now);
+            }
+        } catch (err) {
+            log.error(
+                { err, count: pairingIds.length },
+                "Failed to flush lastActiveAt batch"
+            );
+        }
+    }
+}
+
+const lastActiveTracker = new LastActiveTracker();
+
 export abstract class PairingRepository {
-    /**
-     * Send a direct msg to the websocket client
-     * @internal
-     */
     protected sendDirectMessage({
         ws,
         message,
@@ -20,11 +78,7 @@ export abstract class PairingRepository {
         ws.send(message);
     }
 
-    /**
-     * Send a topic message to the websocket client
-     * @internal
-     */
-    protected async sendTopicMessage({
+    protected sendTopicMessage({
         ws,
         pairingId,
         message,
@@ -38,7 +92,7 @@ export abstract class PairingRepository {
         skipUpdate?: boolean;
     }) {
         if (!skipUpdate) {
-            await this.updatePairingLastActive({ pairingId });
+            lastActiveTracker.touch(pairingId);
         }
         log.debug(
             {
@@ -56,22 +110,6 @@ export abstract class PairingRepository {
                 : targetTopic(pairingId),
             message
         );
-    }
-
-    /**
-     * Update a pairing last active timestamp
-     */
-    private async updatePairingLastActive({
-        pairingId,
-    }: {
-        pairingId: string;
-    }) {
-        await db
-            .update(pairingTable)
-            .set({
-                lastActiveAt: new Date(),
-            })
-            .where(eq(pairingTable.pairingId, pairingId));
     }
 }
 

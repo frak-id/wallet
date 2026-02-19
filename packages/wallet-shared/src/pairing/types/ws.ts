@@ -1,3 +1,10 @@
+import type {
+    WsPairingCreatedResponse,
+    WsPartnerConnected,
+    WsSignatureReject,
+    WsSignatureResponse,
+    WsTopicSignatureRequest,
+} from "@frak-labs/backend-elysia/domain/pairing";
 import type { Address, Hex } from "viem";
 import type { DistantWebAuthnWallet } from "../../types/Session";
 
@@ -9,61 +16,23 @@ export type OriginIdentityNode =
     | { type: "merchant_customer"; value: string; merchantId: string }
     | { type: "wallet"; value: Address };
 
-type WsPartnerConnected = {
-    type: "partner-connected";
-    payload: {
-        pairingId: string;
-        deviceName: string;
-    };
-};
-
 /**
- * All the message that could be receive by the target
+ * All the messages that could be received by the target
  */
 export type WsTargetMessage =
-    | {
-          type: "signature-request";
-          payload: {
-              pairingId: string;
-              id: string;
-              request: Hex;
-              context?: object;
-              partnerDeviceName: string;
-          };
-      }
-    | {
-          type: "ping";
-          payload: {
-              pairingId: string;
-          };
-      }
+    | WsTopicSignatureRequest
+    | { type: "ping"; payload: { pairingId: string } }
     | WsPartnerConnected;
 
 /**
- * All the message that could be receive by the origin
+ * All the messages that could be received by the origin
+ *  - We override the wallet type to use DistantWebAuthnWallet from the client
  */
 export type WsOriginMessage =
-    | {
-          type: "signature-response";
-          payload: { pairingId: string; id: string; signature: Hex };
-      }
-    | {
-          type: "signature-reject";
-          payload: { pairingId: string; id: string; reason: string };
-      }
-    | {
-          type: "pong";
-          payload: {
-              pairingId: string;
-          };
-      }
-    | {
-          type: "pairing-initiated";
-          payload: {
-              pairingId: string;
-              pairingCode: string;
-          };
-      }
+    | WsSignatureResponse
+    | WsSignatureReject
+    | { type: "pong"; payload: { pairingId: string } }
+    | WsPairingCreatedResponse
     | {
           type: "authenticated";
           payload: {
@@ -78,7 +47,7 @@ export type WsOriginMessage =
     | WsPartnerConnected;
 
 /**
- * All the request that could be sent to the backend by the origin
+ * All the requests that could be sent to the backend by the origin
  */
 export type WsOriginRequest =
     | {
@@ -90,7 +59,7 @@ export type WsOriginRequest =
       };
 
 /**
- * All the request that could be sent to the backend by the target
+ * All the requests that could be sent to the backend by the target
  */
 export type WsTargetRequest =
     | {

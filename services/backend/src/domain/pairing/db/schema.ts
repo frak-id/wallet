@@ -54,12 +54,11 @@ export const pairingSignatureRequestTable = pgTable(
         request: customHex("request").notNull(), // b64 serialized WebAuthn options
         context: json("context"), // Origin, operation type, description
 
-        // Status tracking
         createdAt: timestamp("created_at").defaultNow(),
-        processedAt: timestamp("processed_at"), // When target processed request
+        expiresAt: timestamp("expires_at").notNull(),
+        processedAt: timestamp("processed_at"),
 
-        // Result (null until processed)
-        signature: customHex("signature"), // WebAuthn credential response
+        signature: customHex("signature"),
     },
     (table) => [
         index("request_id_idx").on(table.requestId),

@@ -1,18 +1,36 @@
-import { JwtContext, log } from "@backend-infrastructure";
+import {
+    createRateLimitStore,
+    getClientIp,
+    JwtContext,
+    log,
+} from "@backend-infrastructure";
 import { Elysia } from "elysia";
 import type { StaticWalletTokenDto } from "../../../../../domain/auth";
 import { PairingContext } from "../../../../../domain/pairing";
+import { WsCloseCode } from "../../../../../domain/pairing/dto/WebSocketCloseCode";
 
-/**
- * The websocket route for pairing
- */
+const initiateRateLimit = { windowMs: 60_000, maxRequests: 10 };
+const initiateStore = createRateLimitStore();
+
 export const wsRoute = new Elysia().ws("/ws", {
-    // When we open a new websocket connection
     open: async (ws) => {
         log.debug(`[Pairing] websocket opened: ${ws.id}`);
-        // Check if we got a wallet session
         const walletJwt = ws.data.query?.wallet;
         const userAgent = ws.data.headers["user-agent"];
+        const action = ws.data.query?.action;
+
+        if (action === "initiate") {
+            const ip =
+                getClientIp({
+                    headers: ws.data.headers,
+                    remoteAddress: ws.remoteAddress,
+                }) ?? "unknown";
+            if (!initiateStore.consume(ip, initiateRateLimit)) {
+                log.warn({ ip }, "[Pairing] Rate limit exceeded for initiate");
+                ws.close(WsCloseCode.FORBIDDEN, "Rate limit exceeded");
+                return;
+            }
+        }
 
         // Parse the wallet JWT
         let wallet = walletJwt
