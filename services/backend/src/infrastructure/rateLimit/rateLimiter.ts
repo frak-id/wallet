@@ -73,13 +73,19 @@ class InMemoryRateLimitStore {
     }
 }
 
-const globalStore = new InMemoryRateLimitStore();
+const stores: InMemoryRateLimitStore[] = [];
 
-// Purge expired entries every 5 minutes
-setInterval(() => globalStore.purgeExpired(), 5 * 60_000).unref();
+// Purge expired entries every 5 minutes across all stores
+setInterval(() => {
+    for (const store of stores) {
+        store.purgeExpired();
+    }
+}, 5 * 60_000).unref();
 
 export function rateLimitMiddleware(config?: Partial<RateLimitConfig>) {
     const finalConfig = { ...defaultConfig, ...config };
+    const store = new InMemoryRateLimitStore();
+    stores.push(store);
 
     return new Elysia({ name: "Middleware.rateLimit", seed: finalConfig })
         .onBeforeHandle(({ request, headers, server }) => {
@@ -95,7 +101,7 @@ export function rateLimitMiddleware(config?: Partial<RateLimitConfig>) {
                 return;
             }
 
-            const allowed = globalStore.consume(ip, finalConfig);
+            const allowed = store.consume(ip, finalConfig);
             if (!allowed) {
                 log.warn({ ip }, "Rate limit exceeded");
                 return status(429, "Too Many Requests");
