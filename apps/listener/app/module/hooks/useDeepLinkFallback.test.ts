@@ -17,7 +17,7 @@ vi.mock("@frak-labs/core-sdk", async () => {
         isFrakDeepLink: (url: string) => url.startsWith("frakwallet://"),
         toAndroidIntentUrl: (deepLink: string) => {
             const path = deepLink.slice("frakwallet://".length);
-            return `intent://${path}#Intent;scheme=frakwallet;package=id.frak.wallet;end`;
+            return `intent://${path}#Intent;scheme=frakwallet;end`;
         },
     };
 });
@@ -277,7 +277,7 @@ describe("useDeepLinkFallback", () => {
 
             // Should open intent URL directly and still notify parent for fallback wiring
             expect(windowOpenSpy).toHaveBeenCalledWith(
-                "intent://wallet#Intent;scheme=frakwallet;package=id.frak.wallet;end",
+                "intent://wallet#Intent;scheme=frakwallet;end",
                 "_blank"
             );
             expect(emitLifecycleEvent).toHaveBeenCalledWith({
@@ -295,7 +295,7 @@ describe("useDeepLinkFallback", () => {
             );
 
             expect(windowOpenSpy).toHaveBeenCalledWith(
-                "intent://pair?id=abc-123&mode=embedded#Intent;scheme=frakwallet;package=id.frak.wallet;end",
+                "intent://pair?id=abc-123&mode=embedded#Intent;scheme=frakwallet;end",
                 "_blank"
             );
         });

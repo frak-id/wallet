@@ -1,4 +1,4 @@
-import { ANDROID_PACKAGE, DEEP_LINK_SCHEME } from "./constants";
+import { DEEP_LINK_SCHEME } from "./constants";
 
 /**
  * Options for deep link with fallback
@@ -29,12 +29,18 @@ export function isChromiumAndroid(): boolean {
  * Intent URLs let Chromium browsers open the app directly without
  * showing the "Continue to app?" confirmation bar.
  *
- * Format: intent://path#Intent;scheme=frakwallet;package=id.frak.wallet;end
+ * Note: We intentionally omit the `package` parameter. Including it
+ * causes Chrome to redirect to the Play Store when the app is not
+ * installed, which breaks the visibility-based fallback detection.
+ * Without `package`, Chrome simply does nothing when the app is
+ * missing, allowing the fallback mechanism to fire correctly.
+ *
+ * Format: intent://path#Intent;scheme=frakwallet;end
  */
 export function toAndroidIntentUrl(deepLink: string): string {
     // Extract everything after "frakwallet://"
     const path = deepLink.slice(DEEP_LINK_SCHEME.length);
-    return `intent://${path}#Intent;scheme=frakwallet;package=${ANDROID_PACKAGE};end`;
+    return `intent://${path}#Intent;scheme=frakwallet;end`;
 }
 
 /**

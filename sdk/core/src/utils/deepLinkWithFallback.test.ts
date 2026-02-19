@@ -182,7 +182,7 @@ describe("deepLinkWithFallback", () => {
                 triggerDeepLinkWithFallback("frakwallet://wallet");
 
                 expect(window.location.href).toBe(
-                    "intent://wallet#Intent;scheme=frakwallet;package=id.frak.wallet;end"
+                    "intent://wallet#Intent;scheme=frakwallet;end"
                 );
             });
 
@@ -194,7 +194,7 @@ describe("deepLinkWithFallback", () => {
                 );
 
                 expect(window.location.href).toBe(
-                    "intent://pair?id=abc-123&mode=embedded#Intent;scheme=frakwallet;package=id.frak.wallet;end"
+                    "intent://pair?id=abc-123&mode=embedded#Intent;scheme=frakwallet;end"
                 );
             });
 
