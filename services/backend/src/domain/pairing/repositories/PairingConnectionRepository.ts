@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { db, JwtContext, log } from "@backend-infrastructure";
-import { and, eq, inArray, isNull } from "drizzle-orm";
+import { and, eq, gt, inArray, isNull } from "drizzle-orm";
 import type { ElysiaWS } from "elysia/ws";
 import { UAParser } from "ua-parser-js";
 import { OrchestrationContext } from "../../../orchestration/context";
@@ -349,12 +349,12 @@ export class PairingConnectionRepository extends PairingRepository {
             });
         }
 
-        // Get all the pending signatures for each pairings
         const pendingSignatures =
             await db.query.pairingSignatureRequestTable.findMany({
                 where: and(
                     inArray(pairingSignatureRequestTable.pairingId, pairingIds),
-                    isNull(pairingSignatureRequestTable.processedAt)
+                    isNull(pairingSignatureRequestTable.processedAt),
+                    gt(pairingSignatureRequestTable.expiresAt, new Date())
                 ),
             });
 

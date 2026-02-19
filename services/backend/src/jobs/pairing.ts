@@ -1,6 +1,6 @@
 import { db } from "@backend-infrastructure";
 import { mutexCron } from "@backend-utils";
-import { and, isNull, lt, or } from "drizzle-orm";
+import { and, isNull, lt, lte, or } from "drizzle-orm";
 import { Elysia } from "elysia";
 import { pairingSignatureRequestTable, pairingTable } from "../domain/pairing";
 
@@ -8,7 +8,7 @@ import { pairingSignatureRequestTable, pairingTable } from "../domain/pairing";
 export const pairingJobs = new Elysia({ name: "Job.pairing" }).use(
     mutexCron({
         name: "cleanupPairings",
-        pattern: "0 0-23/6 * * *", // Every 30minutes
+        pattern: "0 0-23/6 * * *", // Every 6 hours
         run: async ({ context: { logger } }) => {
             logger.debug("Cleaning up pairings");
 
@@ -34,24 +34,21 @@ export const pairingJobs = new Elysia({ name: "Job.pairing" }).use(
                 );
             logger.info(`Deleted ${pResult.length} pairings`);
 
-            // Delete all the signature request not used and created more than 10min ago
-            const sResult = await db
-                .delete(pairingSignatureRequestTable)
-                .where(
-                    or(
-                        and(
-                            isNull(pairingSignatureRequestTable.signature),
-                            lt(
-                                pairingSignatureRequestTable.createdAt,
-                                creationUnusedThreshold
-                            )
-                        ),
-                        lt(
-                            pairingSignatureRequestTable.processedAt,
-                            lastActiveThreshold
-                        )
+            const now = new Date();
+            const sResult = await db.delete(pairingSignatureRequestTable).where(
+                or(
+                    // Expired and unprocessed
+                    and(
+                        isNull(pairingSignatureRequestTable.signature),
+                        lte(pairingSignatureRequestTable.expiresAt, now)
+                    ),
+                    // Processed and older than 7 days
+                    lt(
+                        pairingSignatureRequestTable.processedAt,
+                        lastActiveThreshold
                     )
-                );
+                )
+            );
             logger.info(`Deleted ${sResult.length} signature requests`);
         },
     })
