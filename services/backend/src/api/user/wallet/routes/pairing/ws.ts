@@ -1,11 +1,16 @@
-import { JwtContext, log } from "@backend-infrastructure";
+import {
+    createRateLimitStore,
+    getClientIp,
+    JwtContext,
+    log,
+} from "@backend-infrastructure";
 import { Elysia } from "elysia";
 import type { StaticWalletTokenDto } from "../../../../../domain/auth";
 import { PairingContext } from "../../../../../domain/pairing";
 import { WsCloseCode } from "../../../../../domain/pairing/dto/WebSocketCloseCode";
-import { InMemoryRateLimiter } from "../../../../../utils/rateLimiter";
 
-const initiateRateLimiter = new InMemoryRateLimiter(60_000, 10);
+const initiateRateLimit = { windowMs: 60_000, maxRequests: 10 };
+const initiateStore = createRateLimitStore();
 
 export const wsRoute = new Elysia().ws("/ws", {
     open: async (ws) => {
@@ -16,9 +21,11 @@ export const wsRoute = new Elysia().ws("/ws", {
 
         if (action === "initiate") {
             const ip =
-                ws.data.headers["x-forwarded-for"]?.split(",")[0]?.trim() ??
-                "unknown";
-            if (!initiateRateLimiter.consume(ip)) {
+                getClientIp({
+                    headers: ws.data.headers,
+                    remoteAddress: ws.remoteAddress,
+                }) ?? "unknown";
+            if (!initiateStore.consume(ip, initiateRateLimit)) {
                 log.warn({ ip }, "[Pairing] Rate limit exceeded for initiate");
                 ws.close(WsCloseCode.FORBIDDEN, "Rate limit exceeded");
                 return;

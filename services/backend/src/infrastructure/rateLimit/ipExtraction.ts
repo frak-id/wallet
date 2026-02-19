@@ -30,6 +30,7 @@ function getHeaderValue(
  * Resolution order:
  *  1. Trusted proxy headers (nginx ingress, cloudflare, etc.)
  *  2. Bun's native `server.requestIP()` (direct connection)
+ *  3. Explicit `remoteAddress` fallback (e.g. WebSocket `ws.remoteAddress`)
  *
  * For `x-forwarded-for`, only the first (left-most) IP is used
  * since it's the original client IP set by the first proxy.
@@ -38,10 +39,14 @@ export function getClientIp({
     request,
     headers,
     server,
+    remoteAddress,
 }: {
-    request: Request;
+    request?: Request;
     headers: HeadersLike;
-    server: { requestIP?: (req: Request) => { address: string } | null } | null;
+    server?: {
+        requestIP?: (req: Request) => { address: string } | null;
+    } | null;
+    remoteAddress?: string;
 }): string | null {
     for (const header of proxyHeaders) {
         const value = getHeaderValue(headers, header);
@@ -54,11 +59,15 @@ export function getClientIp({
         }
     }
 
-    if (server?.requestIP) {
+    if (request && server?.requestIP) {
         const socketAddress = server.requestIP(request);
         if (socketAddress) {
             return socketAddress.address;
         }
+    }
+
+    if (remoteAddress) {
+        return remoteAddress;
     }
 
     return null;
