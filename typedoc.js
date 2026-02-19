@@ -52,6 +52,8 @@ const config = {
     hidePageHeader: true,
     // Frontmatter
     frontmatterCommentTags: ["description"],
+    // Exclude @internal tagged symbols from generated docs
+    excludeInternal: true,
     // Validation settings - suppress expected warnings
     validation: {
         // Don't warn about types marked @ignore but referenced elsewhere

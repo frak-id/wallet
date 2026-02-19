@@ -68,7 +68,6 @@ export type {
     SsoMetadata,
     TokenAmountType,
     // Tracking
-    TrackArrivalInternalParams,
     TrackArrivalParams,
     TrackArrivalResult,
     UtmParams,

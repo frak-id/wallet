@@ -67,7 +67,6 @@ export type {
 export type { WalletStatusReturnType } from "./rpc/walletStatus";
 // Tracking
 export type {
-    TrackArrivalInternalParams,
     TrackArrivalParams,
     TrackArrivalResult,
     UtmParams,

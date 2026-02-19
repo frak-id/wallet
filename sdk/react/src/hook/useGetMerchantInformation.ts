@@ -6,7 +6,11 @@ import { useFrakClient } from "./useFrakClient";
 
 /** @ignore */
 type QueryOptions = Omit<
-    UseQueryOptions<GetMerchantInformationReturnType, FrakRpcError, undefined>,
+    UseQueryOptions<
+        GetMerchantInformationReturnType,
+        FrakRpcError,
+        GetMerchantInformationReturnType
+    >,
     "queryKey" | "queryFn"
 >;
 
