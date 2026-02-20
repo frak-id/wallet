@@ -88,6 +88,24 @@ export class IdentityRepository {
         return this.findGroupById(node.groupId);
     }
 
+    /**
+     * Find all identity group IDs that contain a wallet node for the given address.
+     * Unlike findGroupByIdentity, this returns ALL groups (any merchantId).
+     */
+    async findAllGroupIdsByWallet(walletAddress: Address): Promise<string[]> {
+        const normalized = walletAddress.toLowerCase();
+        const nodes = await db
+            .select({ groupId: identityNodesTable.groupId })
+            .from(identityNodesTable)
+            .where(
+                and(
+                    eq(identityNodesTable.identityType, "wallet"),
+                    eq(identityNodesTable.identityValue, normalized)
+                )
+            );
+        return [...new Set(nodes.map((n) => n.groupId))];
+    }
+
     async getWalletForGroup(groupId: string): Promise<Address | null> {
         const cached = this.walletByGroupCache.get(groupId);
         if (cached) {

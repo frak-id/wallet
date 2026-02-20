@@ -65,27 +65,27 @@ export const loginRoutes = new Elysia()
                     additionalData: { demoPkey },
                 });
 
-            const clientId = headers["x-frak-client-id"];
-            if (clientId && merchantId) {
-                try {
-                    const nodes: IdentityNode[] = [
-                        { type: "wallet", value: walletAddress },
-                        {
-                            type: "anonymous_fingerprint",
-                            value: clientId,
-                            merchantId,
-                        },
-                    ];
-
-                    await OrchestrationContext.orchestrators.identity.resolveAndAssociate(
-                        nodes
-                    );
-                } catch (err: unknown) {
-                    log.error(
-                        { err, walletAddress, clientId, merchantId },
-                        "Failed to connect wallet to identity"
-                    );
+            try {
+                const clientId = headers["x-frak-client-id"];
+                const nodes: IdentityNode[] = [
+                    { type: "wallet", value: walletAddress },
+                ];
+                if (clientId && merchantId) {
+                    nodes.push({
+                        type: "anonymous_fingerprint",
+                        value: clientId,
+                        merchantId,
+                    });
                 }
+
+                await OrchestrationContext.orchestrators.identity.resolveAndAssociate(
+                    nodes
+                );
+            } catch (err: unknown) {
+                log.error(
+                    { err, walletAddress, merchantId },
+                    "Failed to connect wallet to identity"
+                );
             }
 
             return {
@@ -157,27 +157,27 @@ export const loginRoutes = new Elysia()
                     additionalData,
                 });
 
-            const clientId = headers["x-frak-client-id"];
-            if (clientId && merchantId) {
-                try {
-                    const nodes: IdentityNode[] = [
-                        { type: "wallet", value: address },
-                        {
-                            type: "anonymous_fingerprint",
-                            value: clientId,
-                            merchantId,
-                        },
-                    ];
-
-                    await OrchestrationContext.orchestrators.identity.resolveAndAssociate(
-                        nodes
-                    );
-                } catch (err: unknown) {
-                    log.error(
-                        { err, address, clientId, merchantId },
-                        "Failed to connect wallet to identity"
-                    );
+            try {
+                const clientId = headers["x-frak-client-id"];
+                const nodes: IdentityNode[] = [
+                    { type: "wallet", value: address },
+                ];
+                if (clientId && merchantId) {
+                    nodes.push({
+                        type: "anonymous_fingerprint",
+                        value: clientId,
+                        merchantId,
+                    });
                 }
+
+                await OrchestrationContext.orchestrators.identity.resolveAndAssociate(
+                    nodes
+                );
+            } catch (err: unknown) {
+                log.error(
+                    { err, address, merchantId },
+                    "Failed to connect wallet to identity"
+                );
             }
 
             return {

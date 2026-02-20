@@ -1,7 +1,7 @@
 import type { RewardHistoryItem as RewardHistoryItemType } from "@frak-labs/wallet-shared";
 import { useTranslation } from "react-i18next";
+import { Panel } from "@/module/common/component/Panel";
 import { Skeleton } from "@/module/common/component/Skeleton";
-import { Title } from "@/module/common/component/Title";
 import { useGetRewardHistory } from "@/module/history/hook/useGetRewardHistory";
 import styles from "./index.module.css";
 
@@ -26,37 +26,37 @@ export function RewardHistoryList() {
 
 function RewardHistoryItem({ reward }: { reward: RewardHistoryItemType }) {
     const { t } = useTranslation();
-    const amount = `${reward.amount.toFixed(2)} ${reward.token.symbol}`;
     const statusLabel = t(`reward.status.${reward.status}`, reward.status);
     const triggerLabel = reward.trigger
         ? t(`reward.trigger.${reward.trigger}`, reward.trigger)
         : null;
 
     return (
-        <div className={styles.item}>
+        <Panel variant={"primary"} size={"small"} className={styles.item}>
             <div className={styles.item__header}>
-                <Title className={styles.item__title}>
+                <span className={styles.item__merchant}>
                     {reward.merchant.name}
-                </Title>
-                <div className={styles.item__amount}>{amount}</div>
+                </span>
+                <span className={styles.item__amount}>
+                    +{reward.amount.toFixed(2)} {reward.token.symbol}
+                </span>
             </div>
-            <div className={styles.item__meta}>
+            <div className={styles.item__badges}>
+                <span className={styles.item__badge}>{statusLabel}</span>
+                {triggerLabel && (
+                    <span className={styles.item__badge}>{triggerLabel}</span>
+                )}
+            </div>
+            <div className={styles.item__footer}>
                 <span className={styles.item__date}>
                     {new Date(reward.timestamp).toLocaleString()}
                 </span>
-                <span className={styles.item__status}>{statusLabel}</span>
-                {triggerLabel && (
-                    <span className={styles.item__trigger}>{triggerLabel}</span>
-                )}
-            </div>
-            {reward.txHash && (
-                <div className={styles.item__tx}>
-                    <span className={styles.item__txLabel}>Tx:</span>
+                {reward.txHash && (
                     <span className={styles.item__txHash}>
                         {reward.txHash.slice(0, 10)}...
                     </span>
-                </div>
-            )}
-        </div>
+                )}
+            </div>
+        </Panel>
     );
 }

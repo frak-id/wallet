@@ -207,8 +207,8 @@ export class AssetLogRepository {
         );
     }
 
-    async findByIdentityGroup(
-        identityGroupId: string,
+    async findByIdentityGroups(
+        identityGroupIds: string[],
         options?: { status?: AssetStatus[] }
     ): Promise<
         Array<{
@@ -227,7 +227,7 @@ export class AssetLogRepository {
         }>
     > {
         const whereConditions = [
-            eq(assetLogsTable.identityGroupId, identityGroupId),
+            inArray(assetLogsTable.identityGroupId, identityGroupIds),
             eq(assetLogsTable.assetType, "token"),
             isNotNull(assetLogsTable.tokenAddress),
         ];

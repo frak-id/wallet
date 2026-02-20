@@ -37,6 +37,29 @@ export const sessionContext = new Elysia({
                 return { walletSession: auth };
             },
         },
+        withWalletOrSdkAuthent: {
+            async resolve({ headers }) {
+                const walletAuth = headers["x-wallet-auth"];
+                if (walletAuth) {
+                    const walletAuthSession =
+                        await JwtContext.wallet.verify(walletAuth);
+                    if (walletAuthSession) {
+                        return { walletSession: walletAuthSession };
+                    }
+                }
+
+                const walletSdkAuth = headers["x-wallet-sdk-auth"];
+                if (walletSdkAuth) {
+                    const walletSdkAuthSession =
+                        await JwtContext.walletSdk.verify(walletSdkAuth);
+                    if (walletSdkAuthSession) {
+                        return { walletSession: walletSdkAuthSession };
+                    }
+                }
+
+                return status(401, "Unauthorized");
+            },
+        },
         withWalletSdkAuthent: {
             async resolve({ headers }) {
                 const walletSdkAuth = headers["x-wallet-sdk-auth"];
