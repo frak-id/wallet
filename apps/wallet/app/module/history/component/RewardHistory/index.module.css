@@ -5,9 +5,34 @@
 }
 
 .empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+    gap: 12px;
+    padding: 24px;
     text-align: center;
-    color: var(--frak-color-grayText);
-    padding: 20px;
+}
+
+.empty__icon {
+    color: var(--frak-text-color);
+    opacity: 0.4;
+    margin-bottom: 4px;
+}
+
+.empty__title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--frak-text-color);
+}
+
+.empty__description {
+    font-size: 14px;
+    color: var(--frak-text-color);
+    opacity: 0.6;
+    max-width: 240px;
+    line-height: 1.4;
 }
 
 .item {
