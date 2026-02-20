@@ -18,11 +18,15 @@ export function useSendInteractionListener(): OnSendInteraction {
     const { mutate: sendInteraction } = useSendInteraction();
 
     return useCallback(
-        async (params, _context) => {
+        async (params, context) => {
             const [interaction] = params;
+
             // Fire-and-forget: trigger mutation but don't await
-            sendInteraction(interaction);
-            // Return void immediately
+            sendInteraction({
+                interaction,
+                merchantId: context.merchantId,
+                clientId: context.clientId,
+            });
         },
         [sendInteraction]
     );
