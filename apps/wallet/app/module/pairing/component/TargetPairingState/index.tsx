@@ -35,8 +35,16 @@ function InnerTargetPairingState() {
     const state = useStore(client.store);
     const { status, text } = getStatusDetails(state, t) ?? {};
 
-    // Don't display anything if the state is idle
-    if (state.status === "idle" || !status || !text) return null;
+    // Don't display anything if idle or connecting (connecting is a
+    // background reconnect check — showing it causes a brief flash when
+    // the server immediately rejects with 4444/NO_CONNECTION_TO_CONNECT_TO)
+    if (
+        state.status === "idle" ||
+        state.status === "connecting" ||
+        !status ||
+        !text
+    )
+        return null;
 
     return (
         <StatusBoxWallet status={status} title={text}>
