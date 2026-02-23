@@ -244,9 +244,12 @@ export async function publishMerchantCampaign(
         const { data, error } = await backendApi.business
             .merchant({ merchantId })
             .campaigns({ campaignId })
-            .publish.post({}, {
-                headers: buildBackendHeaders(request),
-            });
+            .publish.post(
+                {},
+                {
+                    headers: buildBackendHeaders(request),
+                }
+            );
         if (error) {
             console.error(
                 `[backendMerchant] campaign publish failed (${error.status}) for ${merchantId}`
@@ -260,6 +263,155 @@ export async function publishMerchantCampaign(
     } catch (error) {
         console.error(
             `[backendMerchant] campaign publish error for ${merchantId}:`,
+            error
+        );
+        return null;
+    }
+}
+
+export async function pauseMerchantCampaign(
+    context: AuthenticatedContext,
+    request: Request,
+    campaignId: string
+): Promise<CampaignResponse | null> {
+    const merchantId = await resolveMerchantId(context);
+    if (!merchantId) {
+        return null;
+    }
+
+    try {
+        const { data, error } = await backendApi.business
+            .merchant({ merchantId })
+            .campaigns({ campaignId })
+            .pause.post(
+                {},
+                {
+                    headers: buildBackendHeaders(request),
+                }
+            );
+        if (error) {
+            console.error(
+                `[backendMerchant] campaign pause failed (${error.status}) for ${merchantId}`
+            );
+            return null;
+        }
+
+        campaignsCache.delete(merchantId);
+        return data as CampaignResponse;
+    } catch (error) {
+        console.error(
+            `[backendMerchant] campaign pause error for ${merchantId}:`,
+            error
+        );
+        return null;
+    }
+}
+
+export async function resumeMerchantCampaign(
+    context: AuthenticatedContext,
+    request: Request,
+    campaignId: string
+): Promise<CampaignResponse | null> {
+    const merchantId = await resolveMerchantId(context);
+    if (!merchantId) {
+        return null;
+    }
+
+    try {
+        const { data, error } = await backendApi.business
+            .merchant({ merchantId })
+            .campaigns({ campaignId })
+            .resume.post(
+                {},
+                {
+                    headers: buildBackendHeaders(request),
+                }
+            );
+        if (error) {
+            console.error(
+                `[backendMerchant] campaign resume failed (${error.status}) for ${merchantId}`
+            );
+            return null;
+        }
+
+        campaignsCache.delete(merchantId);
+        return data as CampaignResponse;
+    } catch (error) {
+        console.error(
+            `[backendMerchant] campaign resume error for ${merchantId}:`,
+            error
+        );
+        return null;
+    }
+}
+
+export async function archiveMerchantCampaign(
+    context: AuthenticatedContext,
+    request: Request,
+    campaignId: string
+): Promise<CampaignResponse | null> {
+    const merchantId = await resolveMerchantId(context);
+    if (!merchantId) {
+        return null;
+    }
+
+    try {
+        const { data, error } = await backendApi.business
+            .merchant({ merchantId })
+            .campaigns({ campaignId })
+            .archive.post(
+                {},
+                {
+                    headers: buildBackendHeaders(request),
+                }
+            );
+        if (error) {
+            console.error(
+                `[backendMerchant] campaign archive failed (${error.status}) for ${merchantId}`
+            );
+            return null;
+        }
+
+        campaignsCache.delete(merchantId);
+        return data as CampaignResponse;
+    } catch (error) {
+        console.error(
+            `[backendMerchant] campaign archive error for ${merchantId}:`,
+            error
+        );
+        return null;
+    }
+}
+
+export async function deleteMerchantCampaign(
+    context: AuthenticatedContext,
+    request: Request,
+    campaignId: string
+): Promise<{ success: true } | null> {
+    const merchantId = await resolveMerchantId(context);
+    if (!merchantId) {
+        return null;
+    }
+
+    try {
+        const { error } = await backendApi.business
+            .merchant({ merchantId })
+            .campaigns({ campaignId })
+            .delete({
+                headers: buildBackendHeaders(request),
+            });
+        if (error) {
+            console.error(
+                `[backendMerchant] campaign delete failed (${error.status}) for ${merchantId}`
+            );
+            return null;
+        }
+
+        campaignsCache.delete(merchantId);
+        return { success: true };
+    } catch (error) {
+        console.error(
+            `[backendMerchant] campaign delete error for ${merchantId}:`,
             error
         );
         return null;
