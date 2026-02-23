@@ -61,7 +61,9 @@ export function TableCampaigns() {
                     cell: ({ getValue, row }) => (
                         <CampaignStateTag
                             status={getValue()}
-                            bankDistributionStatus={row.original.bankDistributionStatus}
+                            bankDistributionStatus={
+                                row.original.bankDistributionStatus
+                            }
                         />
                     ),
                 }),

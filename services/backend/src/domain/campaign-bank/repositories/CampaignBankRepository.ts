@@ -275,13 +275,10 @@ export class CampaignBankRepository {
             ]),
         ];
 
-        const results = (await multicall(viemClient, {
+        const results = await multicall(viemClient, {
             contracts,
             allowFailure: true,
-        })) as Array<{
-            status: "success" | "failure";
-            result?: unknown;
-        }>;
+        });
 
         const isOpenResult = results[0];
         const isOpen =

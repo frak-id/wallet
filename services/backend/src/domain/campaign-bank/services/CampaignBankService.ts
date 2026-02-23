@@ -4,7 +4,6 @@ import type { Address } from "viem";
 import type { MerchantRepository } from "../../merchant/repositories/MerchantRepository";
 import type { CampaignBankRepository } from "../repositories/CampaignBankRepository";
 
-
 type DeployAndSetupResult =
     | { success: true; bankAddress: Address }
     | { success: false; error: string };
