@@ -344,15 +344,8 @@
             "custom": "Custom"
         },
         "history": {
-            "title": "Recent Rewards",
             "empty": "No rewards yet",
-            "emptyDescription": "Your rewards will appear here once you start earning",
-            "time": {
-                "justNow": "just now",
-                "minutesAgo": "{{count}}m ago",
-                "hoursAgo": "{{count}}h ago",
-                "daysAgo": "{{count}}d ago"
-            }
+            "emptyDescription": "Your rewards will appear here once you start earning"
         }
     },
     "mobile-sso": {

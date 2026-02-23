@@ -342,15 +342,8 @@
             "custom": "Personnalisé"
         },
         "history": {
-            "title": "Récompenses récentes",
             "empty": "Pas encore de récompenses",
-            "emptyDescription": "Vos récompenses apparaîtront ici dès que vous commencerez à en gagner",
-            "time": {
-                "justNow": "à l'instant",
-                "minutesAgo": "il y a {{count}}min",
-                "hoursAgo": "il y a {{count}}h",
-                "daysAgo": "il y a {{count}}j"
-            }
+            "emptyDescription": "Vos récompenses apparaîtront ici dès que vous commencerez à en gagner"
         }
     },
     "mobile-sso": {
