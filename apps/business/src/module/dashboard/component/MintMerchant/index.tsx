@@ -70,8 +70,6 @@ export function MintMerchant() {
                     domain,
                     setupCode,
                 });
-            setOpenAccordion("validation");
-
             if (isAlreadyRegistered) {
                 setDomainError(
                     `A merchant already exists for the domain ${domain}`
@@ -81,6 +79,7 @@ export function MintMerchant() {
                     "The DNS txt record is not set, or the setup code is invalid"
                 );
             } else {
+                setOpenAccordion("validation");
                 setStep(2);
             }
         } catch (err) {
