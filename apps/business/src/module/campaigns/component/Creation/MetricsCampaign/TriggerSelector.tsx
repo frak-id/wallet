@@ -21,9 +21,25 @@ export function TriggerSelector() {
                     <FormControl>
                         <RadioGroup
                             onValueChange={field.onChange}
-                            value={field.value ?? "purchase"}
+                            value={field.value}
                             className={styles.triggerGroup}
                         >
+                            <FormItem variant="radio">
+                                <FormControl>
+                                    <RadioGroupItem value="referral" />
+                                </FormControl>
+                                <FormLabel variant="radio">Referral</FormLabel>
+                            </FormItem>
+
+                            <FormItem variant="radio">
+                                <FormControl>
+                                    <RadioGroupItem value="create_referral_link" />
+                                </FormControl>
+                                <FormLabel variant="radio">
+                                    Referral Link Created
+                                </FormLabel>
+                            </FormItem>
+
                             <FormItem variant="radio">
                                 <FormControl>
                                     <RadioGroupItem value="purchase" />
@@ -31,6 +47,13 @@ export function TriggerSelector() {
                                 <FormLabel variant="radio">
                                     Purchase completed
                                 </FormLabel>
+                            </FormItem>
+
+                            <FormItem variant="radio">
+                                <FormControl>
+                                    <RadioGroupItem value="custom" />
+                                </FormControl>
+                                <FormLabel variant="radio">Custom</FormLabel>
                             </FormItem>
 
                             <FormItem
