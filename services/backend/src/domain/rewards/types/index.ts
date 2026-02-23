@@ -72,6 +72,7 @@ export type SettlementResult = {
     settledCount: number;
     failedCount: number;
     txHashes: Hex[];
+    banks: Set<Address>;
     errors: Array<{
         assetLogId: string;
         error: string;

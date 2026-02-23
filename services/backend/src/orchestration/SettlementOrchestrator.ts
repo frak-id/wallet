@@ -14,6 +14,14 @@ import type {
 } from "../domain/rewards/services/SettlementService";
 import type { SettlementResult } from "../domain/rewards/types";
 
+const defaultSettlementResult: SettlementResult = {
+    settledCount: 0,
+    failedCount: 0,
+    txHashes: [],
+    errors: [],
+    banks: new Set(),
+};
+
 export class SettlementOrchestrator {
     constructor(
         private readonly settlementService: SettlementService,
@@ -40,12 +48,7 @@ export class SettlementOrchestrator {
 
         if (pendingAssetLogs.length === 0) {
             log.debug("No pending rewards to settle");
-            return {
-                settledCount: 0,
-                failedCount: 0,
-                txHashes: [],
-                errors: [],
-            };
+            return defaultSettlementResult;
         }
 
         const pendingRewards =
@@ -55,12 +58,7 @@ export class SettlementOrchestrator {
             log.warn(
                 "No rewards could be enriched with wallet addresses, skipping settlement"
             );
-            return {
-                settledCount: 0,
-                failedCount: 0,
-                txHashes: [],
-                errors: [],
-            };
+            return defaultSettlementResult;
         }
 
         const merchantBanks = await this.getMerchantBanks(pendingRewards);
@@ -89,27 +87,17 @@ export class SettlementOrchestrator {
         const depletedRewards: AssetLogWithWallet[] = [];
 
         for (const reward of pendingRewards) {
-            const bankAddress = merchantBanks.get(reward.merchantId);
-            if (!bankAddress) {
-                depletedRewards.push(reward);
-                continue;
-            }
+            const isBankCapable = this.isBankCapableForReward(
+                reward,
+                merchantBanks,
+                bankStates
+            );
 
-            const bankState = bankStates.get(bankAddress);
-            if (!bankState || !bankState.isOpen) {
+            if (isBankCapable) {
+                distributableRewards.push(reward);
+            } else {
                 depletedRewards.push(reward);
-                continue;
             }
-
-            const rewardToken = reward.tokenAddress as Address;
-            const tokenBalance = bankState.balances.get(rewardToken) ?? 0n;
-            const tokenAllowance = bankState.allowances.get(rewardToken) ?? 0n;
-            if (tokenBalance === 0n || tokenAllowance === 0n) {
-                depletedRewards.push(reward);
-                continue;
-            }
-
-            distributableRewards.push(reward);
         }
 
         if (depletedRewards.length > 0) {
@@ -135,9 +123,8 @@ export class SettlementOrchestrator {
         if (distributableRewards.length === 0) {
             log.debug("No distributable rewards after bank pre-flight check");
             return {
-                settledCount: 0,
+                ...defaultSettlementResult,
                 failedCount: depletedRewards.length,
-                txHashes: [],
                 errors: depletedRewards.map((reward) => ({
                     assetLogId: reward.id,
                     error: "Bank depleted or closed",
@@ -145,10 +132,17 @@ export class SettlementOrchestrator {
             };
         }
 
-        return this.settlementService.settleRewards(
+        const results = await this.settlementService.settleRewards(
             distributableRewards,
             merchantBanks
         );
+
+        // Invalidate all the banks cache for the results
+        for (const bank of results.banks.values()) {
+            this.campaignBankRepository.clearOnChainCache(bank);
+        }
+
+        return results;
     }
 
     private async enrichWithWalletAndInteraction(
@@ -206,5 +200,37 @@ export class SettlementOrchestrator {
     ): Promise<Map<string, Address>> {
         const merchantIds = [...new Set(rewards.map((r) => r.merchantId))];
         return this.merchantRepository.getBankAddresses(merchantIds);
+    }
+
+    private isBankCapableForReward(
+        reward: AssetLogWithWallet,
+        merchantBanks: Map<string, Address>,
+        bankStates: Map<
+            Address,
+            {
+                isOpen: boolean;
+                balances: Map<Address, bigint>;
+                allowances: Map<Address, bigint>;
+            }
+        >
+    ) {
+        const bankAddress = merchantBanks.get(reward.merchantId);
+        if (!bankAddress) {
+            return false;
+        }
+
+        const bankState = bankStates.get(bankAddress);
+        if (!bankState || !bankState.isOpen) {
+            return false;
+        }
+
+        const rewardToken = reward.tokenAddress as Address;
+        const tokenBalance = bankState.balances.get(rewardToken) ?? 0n;
+        const tokenAllowance = bankState.allowances.get(rewardToken) ?? 0n;
+        if (tokenBalance === 0n || tokenAllowance === 0n) {
+            return false;
+        }
+
+        return true;
     }
 }

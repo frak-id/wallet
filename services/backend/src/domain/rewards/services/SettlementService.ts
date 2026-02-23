@@ -6,7 +6,6 @@ import type {
     PushRewardParams,
     RewardsHubRepository,
 } from "../../../infrastructure/blockchain/contracts/RewardsHubRepository";
-import type { CampaignBankRepository } from "../../campaign-bank/repositories/CampaignBankRepository";
 import type { AssetLogSelect } from "../db/schema";
 import type { AssetLogRepository } from "../repositories/AssetLogRepository";
 import {
@@ -30,8 +29,7 @@ export class SettlementService {
     constructor(
         private readonly assetLogRepository: AssetLogRepository,
         private readonly rewardsHub: RewardsHubRepository,
-        private readonly tokenMetadata: TokenMetadataRepository,
-        private readonly campaignBankRepository: CampaignBankRepository
+        private readonly tokenMetadata: TokenMetadataRepository
     ) {}
 
     async settleRewards(
@@ -43,6 +41,7 @@ export class SettlementService {
             failedCount: 0,
             txHashes: [],
             errors: [],
+            banks: new Set(),
         };
 
         if (rewards.length === 0) {
@@ -87,9 +86,9 @@ export class SettlementService {
                 const txResult = await this.rewardsHub.pushRewards(
                     bankBatch.rewards
                 );
-                this.campaignBankRepository.clearOnChainCache(bank);
 
                 result.txHashes.push(txResult.txHash);
+                result.banks.add(bank);
                 result.settledCount += bankBatch.rewards.length;
 
                 await this.assetLogRepository.updateStatusBatch(

@@ -34,15 +34,12 @@ export function computeDistributionStatus(
     }
     if (totalBalance === 0n) return "depleted";
 
-
     for (const [token, balance] of onChainState.balances.entries()) {
         if (balance <= 0n) continue;
 
         const allowance = onChainState.allowances.get(token) ?? 0n;
 
-
         if (allowance < balance) return "warning";
-
 
         const decimals = tokenDecimals.get(token);
         if (decimals !== undefined) {

@@ -130,7 +130,7 @@ export const merchantCampaignsRoutes = new Elysia({
                 ),
             ]);
 
-            let distributionStatus: DistributionStatus | undefined;
+            let distributionStatus: DistributionStatus = "not_deployed";
             if (bankStatus.bankAddress) {
                 const [onChainState, tokenDecimals] = await Promise.all([
                     CampaignBankContext.repositories.campaignBank.getBankOnChainState(
@@ -143,8 +143,6 @@ export const merchantCampaignsRoutes = new Elysia({
                     onChainState,
                     tokenDecimals
                 );
-            } else {
-                distributionStatus = computeDistributionStatus(null, new Map());
             }
 
             return {
@@ -193,7 +191,7 @@ export const merchantCampaignsRoutes = new Elysia({
                     merchantId
                 );
 
-            let distributionStatus: DistributionStatus | undefined;
+            let distributionStatus: DistributionStatus = "not_deployed";
             if (bankStatus.bankAddress) {
                 const [onChainState, tokenDecimals] = await Promise.all([
                     CampaignBankContext.repositories.campaignBank.getBankOnChainState(
@@ -206,8 +204,6 @@ export const merchantCampaignsRoutes = new Elysia({
                     onChainState,
                     tokenDecimals
                 );
-            } else {
-                distributionStatus = computeDistributionStatus(null, new Map());
             }
 
             return formatCampaign(campaign, distributionStatus);
