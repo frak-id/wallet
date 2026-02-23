@@ -8,13 +8,14 @@ import {
     balanceKey,
     claimableKey,
     currentViemClient,
+    rewardsKey,
 } from "@frak-labs/wallet-shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CircleDollarSign } from "lucide-react";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { encodeFunctionData, erc20Abi, formatUnits } from "viem";
-import { multicall } from "viem/actions";
+import { multicall, waitForTransactionReceipt } from "viem/actions";
 import { useAccount, useSendTransaction } from "wagmi";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
@@ -98,12 +99,19 @@ export function PendingReferral() {
                 data,
             });
 
+            // Wait for on-chain confirmation before refreshing queries
+            await waitForTransactionReceipt(currentViemClient, {
+                hash: txHash,
+            });
             await refetchPendingReward();
             await queryClient.invalidateQueries({
                 queryKey: balanceKey.baseKey,
                 exact: false,
             });
-
+            await queryClient.invalidateQueries({
+                queryKey: rewardsKey.all,
+                exact: false,
+            });
             return txHash;
         },
     });
