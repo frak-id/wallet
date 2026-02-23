@@ -12,6 +12,8 @@ import {
     CampaignRuleDefinitionSchema,
     type CampaignStatus,
 } from "../../../../domain/campaign";
+import { CampaignBankContext } from "../../../../domain/campaign-bank";
+import type { DistributionStatus } from "../../../../domain/campaign-bank/schemas";
 import { MerchantContext } from "../../../../domain/merchant";
 import { businessSessionContext } from "../../middleware/session";
 
@@ -28,21 +30,24 @@ function resolveRewardTokens(
     };
 }
 
-function formatCampaign(campaign: {
-    id: string;
-    merchantId: string;
-    name: string;
-    status: CampaignStatus;
-    priority: number;
-    rule: CampaignRuleDefinition;
-    metadata: unknown;
-    budgetConfig: BudgetConfig | null;
-    budgetUsed: BudgetUsed | null;
-    expiresAt: Date | null;
-    publishedAt: Date | null;
-    createdAt: Date;
-    updatedAt: Date;
-}) {
+function formatCampaign(
+    campaign: {
+        id: string;
+        merchantId: string;
+        name: string;
+        status: CampaignStatus;
+        priority: number;
+        rule: CampaignRuleDefinition;
+        metadata: unknown;
+        budgetConfig: BudgetConfig | null;
+        budgetUsed: BudgetUsed | null;
+        expiresAt: Date | null;
+        publishedAt: Date | null;
+        createdAt: Date;
+        updatedAt: Date;
+    },
+    bankDistributionStatus?: DistributionStatus
+) {
     const budgetConfig = Array.isArray(campaign.budgetConfig)
         ? campaign.budgetConfig
         : null;
@@ -63,6 +68,7 @@ function formatCampaign(campaign: {
         metadata: campaign.metadata ?? null,
         budgetConfig,
         budgetUsed,
+        bankDistributionStatus: bankDistributionStatus ?? null,
         expiresAt: campaign.expiresAt?.toISOString() ?? null,
         publishedAt: campaign.publishedAt?.toISOString() ?? null,
         createdAt: campaign.createdAt.toISOString(),
@@ -102,7 +108,16 @@ export const merchantCampaignsRoutes = new Elysia({
                     statusFilter
                 );
 
-            return { campaigns: campaigns.map(formatCampaign) };
+            const bankStatus =
+                await CampaignBankContext.services.campaignBank.getBankStatus(
+                    merchantId
+                );
+
+            return {
+                campaigns: campaigns.map((campaign) =>
+                    formatCampaign(campaign, bankStatus.distributionStatus)
+                ),
+            };
         },
         {
             params: t.Object({ merchantId: t.String() }),
@@ -139,7 +154,12 @@ export const merchantCampaignsRoutes = new Elysia({
                 return status(404, "Campaign not found");
             }
 
-            return formatCampaign(campaign);
+            const bankStatus =
+                await CampaignBankContext.services.campaignBank.getBankStatus(
+                    merchantId
+                );
+
+            return formatCampaign(campaign, bankStatus.distributionStatus);
         },
         {
             params: t.Object({
@@ -197,7 +217,7 @@ export const merchantCampaignsRoutes = new Elysia({
                 return status(400, result.error);
             }
 
-            return formatCampaign(result.campaign);
+            return formatCampaign(result.campaign, undefined);
         },
         {
             params: t.Object({ merchantId: t.String() }),
@@ -273,7 +293,7 @@ export const merchantCampaignsRoutes = new Elysia({
                 return status(400, result.error);
             }
 
-            return formatCampaign(result.campaign);
+            return formatCampaign(result.campaign, undefined);
         },
         {
             params: t.Object({
@@ -327,7 +347,7 @@ export const merchantCampaignsRoutes = new Elysia({
                 return status(400, result.error);
             }
 
-            return formatCampaign(result.campaign);
+            return formatCampaign(result.campaign, undefined);
         },
         {
             params: t.Object({
@@ -373,7 +393,7 @@ export const merchantCampaignsRoutes = new Elysia({
                 return status(400, result.error);
             }
 
-            return formatCampaign(result.campaign);
+            return formatCampaign(result.campaign, undefined);
         },
         {
             params: t.Object({
@@ -419,7 +439,7 @@ export const merchantCampaignsRoutes = new Elysia({
                 return status(400, result.error);
             }
 
-            return formatCampaign(result.campaign);
+            return formatCampaign(result.campaign, undefined);
         },
         {
             params: t.Object({
@@ -465,7 +485,7 @@ export const merchantCampaignsRoutes = new Elysia({
                 return status(400, result.error);
             }
 
-            return formatCampaign(result.campaign);
+            return formatCampaign(result.campaign, undefined);
         },
         {
             params: t.Object({

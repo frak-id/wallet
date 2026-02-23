@@ -26,6 +26,7 @@ export const AssetStatusSchema = t.Union([
     t.Literal("consumed"),
     t.Literal("cancelled"),
     t.Literal("expired"),
+    t.Literal("bank_depleted"),
 ]);
 export type AssetStatus = Static<typeof AssetStatusSchema>;
 

@@ -35,3 +35,11 @@ export type CampaignActions = {
 export type CampaignWithActions = {
     actions: CampaignActions;
 } & CampaignResponse;
+
+
+export type DistributionStatus =
+    | "distributing"
+    | "low_funds"
+    | "depleted"
+    | "paused"
+    | "not_deployed";

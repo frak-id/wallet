@@ -1,5 +1,6 @@
 import { AttributionContext } from "../domain/attribution/context";
 import { CampaignContext } from "../domain/campaign/context";
+import { CampaignBankContext } from "../domain/campaign-bank/context";
 import { IdentityContext } from "../domain/identity/context";
 import { MerchantContext } from "../domain/merchant/context";
 import { PurchasesContext } from "../domain/purchases/context";
@@ -73,7 +74,8 @@ const settlementOrchestrator = new SettlementOrchestrator(
     RewardsContext.repositories.assetLog,
     MerchantContext.repositories.merchant,
     IdentityContext.repositories.identity,
-    RewardsContext.repositories.interactionLog
+    RewardsContext.repositories.interactionLog,
+    CampaignBankContext.repositories.campaignBank
 );
 
 const rewardExpirationOrchestrator = new RewardExpirationOrchestrator(

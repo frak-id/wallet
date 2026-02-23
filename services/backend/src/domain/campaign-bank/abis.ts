@@ -28,6 +28,27 @@ export const campaignBankAbi = [
     },
     {
         type: "function",
+        inputs: [{ name: "_token", internalType: "address", type: "address" }],
+        name: "getBalance",
+        outputs: [{ name: "", internalType: "uint256", type: "uint256" }],
+        stateMutability: "view",
+    },
+    {
+        type: "function",
+        inputs: [{ name: "_token", internalType: "address", type: "address" }],
+        name: "getAllowance",
+        outputs: [{ name: "", internalType: "uint256", type: "uint256" }],
+        stateMutability: "view",
+    },
+    {
+        type: "function",
+        inputs: [],
+        name: "isOpen",
+        outputs: [{ name: "", internalType: "bool", type: "bool" }],
+        stateMutability: "view",
+    },
+    {
+        type: "function",
         inputs: [],
         name: "owner",
         outputs: [{ name: "result", internalType: "address", type: "address" }],

@@ -41,6 +41,7 @@ function draftToCampaign(draft: CampaignDraft): Campaign {
         budgetUsed: null,
         expiresAt,
         priority: draft.priority,
+        bankDistributionStatus: null,
     } as Campaign;
 }
 

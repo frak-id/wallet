@@ -119,6 +119,8 @@ function RewardBudgetView({
     isOpen: boolean | null;
     tokens: TokenData[];
 }) {
+    const allTokensEmpty = tokens.every((t) => t.balance === 0n);
+
     return (
         <Panel className={styles.bankPanel}>
             <div className={styles.bankContent}>
@@ -137,6 +139,16 @@ function RewardBudgetView({
                         />
                     )}
                 </div>
+
+                {allTokensEmpty && isOpen && (
+                    <div className={styles.bankWarning}>
+                        <AlertTriangle width={16} height={16} />
+                        <span>
+                            Your bank has no funds. Active campaigns cannot
+                            distribute rewards until you add funds.
+                        </span>
+                    </div>
+                )}
 
                 <TokenGridSections
                     tokens={tokens}
@@ -314,7 +326,7 @@ function TokenCard({
                     </span>
                 ) : (
                     <span className={styles.tokenCard__emptyLabel}>
-                        No funds
+                        No funds — add funds to start distributing rewards
                     </span>
                 )}
             </div>

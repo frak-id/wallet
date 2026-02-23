@@ -3,6 +3,7 @@ import { currentStablecoinsList } from "@frak-labs/app-essentials";
 import type { Address } from "viem";
 import type { MerchantRepository } from "../../merchant/repositories/MerchantRepository";
 import type { CampaignBankRepository } from "../repositories/CampaignBankRepository";
+import type { DistributionStatus } from "../schemas";
 
 type DeployAndSetupResult =
     | { success: true; bankAddress: Address }
@@ -226,6 +227,7 @@ export class CampaignBankService {
         deployed: boolean;
         bankAddress: Address | null;
         ownerHasManagerRole: boolean;
+        distributionStatus: DistributionStatus;
     }> {
         const merchant = await this.merchantRepository.findById(merchantId);
         if (!merchant?.bankAddress) {
@@ -233,19 +235,59 @@ export class CampaignBankService {
                 deployed: false,
                 bankAddress: null,
                 ownerHasManagerRole: false,
+                distributionStatus: "not_deployed",
             };
         }
 
-        const ownerHasManagerRole =
-            await this.campaignBankRepository.hasManagerRole(
+        const [ownerHasManagerRole, onChainState] = await Promise.all([
+            this.campaignBankRepository.hasManagerRole(
                 merchant.bankAddress,
                 merchant.ownerWallet
-            );
+            ),
+            this.campaignBankRepository.getBankOnChainState(
+                merchant.bankAddress,
+                currentStablecoinsList
+            ),
+        ]);
 
         return {
             deployed: true,
             bankAddress: merchant.bankAddress,
             ownerHasManagerRole,
+            distributionStatus:
+                this.computeDistributionStatusFromOnChainState(onChainState),
         };
+    }
+
+    private computeDistributionStatusFromOnChainState(onChainState: {
+        isOpen: boolean;
+        balances: Map<Address, bigint>;
+        allowances: Map<Address, bigint>;
+    }): DistributionStatus {
+        if (!onChainState.isOpen) {
+            return "paused";
+        }
+
+        let totalBalance = 0n;
+        for (const balance of onChainState.balances.values()) {
+            totalBalance += balance;
+        }
+
+        if (totalBalance === 0n) {
+            return "depleted";
+        }
+
+        for (const [token, balance] of onChainState.balances.entries()) {
+            if (balance <= 0n) {
+                continue;
+            }
+
+            const allowance = onChainState.allowances.get(token) ?? 0n;
+            if (allowance === 0n) {
+                return "low_funds";
+            }
+        }
+
+        return "distributing";
     }
 }
