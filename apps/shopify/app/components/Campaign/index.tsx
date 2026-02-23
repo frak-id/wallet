@@ -2,16 +2,15 @@ import { type Currency, formatAmount } from "@frak-labs/core-sdk";
 import { Collapsible } from "app/components/ui/Collapsible";
 import { RangeSlider } from "app/components/ui/RangeSlider";
 import type { loader as rootLoader } from "app/routes/app";
+import type { action } from "app/routes/app.campaigns";
 import type {
     BankStatus,
     CampaignResponse,
 } from "app/services.server/backendMerchant";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useRouteLoaderData } from "react-router";
+import { useFetcher, useRouteLoaderData } from "react-router";
 import type { Address } from "viem";
-import { useCreateCampaignLink } from "../../hooks/useCreateCampaignLink";
-import { useRefreshData } from "../../hooks/useRefreshData";
 
 export function CampaignStatus({
     campaigns,
@@ -44,7 +43,10 @@ export function CampaignStatus({
                         timingFunction: "ease-in-out",
                     }}
                 >
-                    <CampaignCreation bankAddress={bankStatus.bankAddress} />
+                    <CampaignCreation
+                        bankAddress={bankStatus.bankAddress}
+                        onCreated={() => setCreationOpen(false)}
+                    />
                 </Collapsible>
             </s-stack>
         </s-section>
@@ -95,23 +97,44 @@ function CampaignStatusBadge({
     return <s-badge tone={tone}>{t("status.campaign.active")}</s-badge>;
 }
 
-function CampaignCreation({ bankAddress }: { bankAddress: Address | null }) {
+function CampaignCreation({
+    bankAddress,
+    onCreated,
+}: {
+    bankAddress: Address | null;
+    onCreated: () => void;
+}) {
     const { t } = useTranslation();
     const rootData = useRouteLoaderData<typeof rootLoader>("routes/app");
+    const fetcher = useFetcher<typeof action>();
 
     const [globalBudget, setGlobalBudget] = useState("");
     const [rawCAC, setRawCAC] = useState("");
-    const [ratio, setRatio] = useState(90); // 90% referrer, 10% referee
+    const [ratio, setRatio] = useState(90);
     const [name, setName] = useState("");
+
+    const isSubmitting = fetcher.state !== "idle";
+    const actionResult = fetcher.data;
+
+    useEffect(() => {
+        if (actionResult?.success) {
+            setName("");
+            setGlobalBudget("");
+            setRawCAC("");
+            setRatio(90);
+            onCreated();
+        }
+    }, [actionResult?.success, onCreated]);
 
     const isCreationDisabled = useMemo(() => {
         if (!bankAddress) return true;
+        if (!name.trim()) return true;
         if (!globalBudget || !rawCAC) return true;
+        if (isSubmitting) return true;
 
         return false;
-    }, [globalBudget, rawCAC, bankAddress]);
+    }, [globalBudget, rawCAC, bankAddress, name, isSubmitting]);
 
-    // Breakdown calculations
     const breakdown = useMemo(() => {
         const cac = Number(rawCAC) || 0;
 
@@ -135,39 +158,18 @@ function CampaignCreation({ bankAddress }: { bankAddress: Address | null }) {
     const currencySymbol = (rootData?.shop.preferredCurrency ??
         "usd") as Currency;
 
-    // The creation link
-    const creationLink = useCreateCampaignLink({
-        bankId: bankAddress ?? "0x",
-        globalBudget: Number(globalBudget),
-        rawCAC: Number(rawCAC),
-        ratio,
-        name,
-        merchantId: rootData?.merchantId ?? "",
-    });
-    const refresh = useRefreshData();
-
-    // Open creation link
     const handleCreate = useCallback(() => {
-        console.log("creationLink", creationLink);
-        const openedWindow = window.open(
-            creationLink,
-            "frak-business",
-            "menubar=no,status=no,scrollbars=no,fullscreen=no,width=500, height=800"
+        fetcher.submit(
+            {
+                intent: "create-campaign",
+                name,
+                globalBudget,
+                rawCAC,
+                ratio: ratio.toString(),
+            },
+            { method: "POST" }
         );
-
-        if (openedWindow) {
-            openedWindow.focus();
-
-            // Check every 500ms if the window is closed
-            // If it is, revalidate the page
-            const timer = setInterval(() => {
-                if (openedWindow.closed) {
-                    clearInterval(timer);
-                    setTimeout(() => refresh(), 1000);
-                }
-            }, 500);
-        }
-    }, [creationLink, refresh]);
+    }, [fetcher, name, globalBudget, rawCAC, ratio]);
 
     if (!bankAddress) {
         return null;
@@ -175,6 +177,12 @@ function CampaignCreation({ bankAddress }: { bankAddress: Address | null }) {
 
     return (
         <s-stack gap="base">
+            {actionResult?.error && (
+                <s-banner tone="critical" dismissible>
+                    {actionResult.error}
+                </s-banner>
+            )}
+
             <s-grid gridTemplateColumns="repeat(2, 1fr)" gap="small">
                 <s-grid-item>
                     <s-text-field
@@ -264,7 +272,9 @@ function CampaignCreation({ bankAddress }: { bankAddress: Address | null }) {
                 onClick={handleCreate}
                 disabled={isCreationDisabled}
             >
-                {t("status.campaign.createButton")}
+                {isSubmitting
+                    ? t("status.campaign.creating")
+                    : t("status.campaign.createButton")}
             </s-button>
         </s-stack>
     );

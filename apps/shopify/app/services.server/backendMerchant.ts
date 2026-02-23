@@ -1,5 +1,8 @@
 import type {
+    BudgetConfigItem,
+    CampaignMetadata,
     CampaignResponse,
+    CampaignRuleDefinition,
     CampaignStatus,
 } from "@frak-labs/backend-elysia/domain/campaign";
 import type { BankStatus } from "@frak-labs/backend-elysia/domain/campaign-bank";
@@ -174,6 +177,89 @@ export async function getMerchantCampaignStats(
     } catch (error) {
         console.error(
             `[backendMerchant] stats fetch error for ${merchantId}:`,
+            error
+        );
+        return null;
+    }
+}
+
+/**
+ * Create a campaign draft for the current merchant.
+ */
+export async function createMerchantCampaign(
+    context: AuthenticatedContext,
+    request: Request,
+    body: {
+        name: string;
+        rule: CampaignRuleDefinition;
+        budgetConfig: BudgetConfigItem[];
+        metadata: CampaignMetadata;
+        priority: number;
+    }
+): Promise<CampaignResponse | null> {
+    const merchantId = await resolveMerchantId(context);
+    if (!merchantId) {
+        return null;
+    }
+
+    try {
+        const { data, error } = await backendApi.business
+            .merchant({ merchantId })
+            .campaigns.post(body, {
+                headers: buildBackendHeaders(request),
+            });
+        if (error) {
+            console.error(
+                `[backendMerchant] campaign create failed (${error.status}) for ${merchantId}`
+            );
+            return null;
+        }
+
+        // Invalidate campaigns cache after creation
+        campaignsCache.delete(merchantId);
+        return data as CampaignResponse;
+    } catch (error) {
+        console.error(
+            `[backendMerchant] campaign create error for ${merchantId}:`,
+            error
+        );
+        return null;
+    }
+}
+
+/**
+ * Publish a draft campaign (transitions draft → active).
+ */
+export async function publishMerchantCampaign(
+    context: AuthenticatedContext,
+    request: Request,
+    campaignId: string
+): Promise<CampaignResponse | null> {
+    const merchantId = await resolveMerchantId(context);
+    if (!merchantId) {
+        return null;
+    }
+
+    try {
+        const { data, error } = await backendApi.business
+            .merchant({ merchantId })
+            .campaigns({ campaignId })
+            .publish.post({}, {
+                headers: buildBackendHeaders(request),
+            });
+        if (error) {
+            console.error(
+                `[backendMerchant] campaign publish failed (${error.status}) for ${merchantId}`
+            );
+            return null;
+        }
+
+        // Invalidate campaigns cache after publish
+        campaignsCache.delete(merchantId);
+        return data as CampaignResponse;
+    } catch (error) {
+        console.error(
+            `[backendMerchant] campaign publish error for ${merchantId}:`,
             error
         );
         return null;

@@ -166,6 +166,7 @@
             },
             "createOpen": "Formulaire de création de campagne",
             "createButton": "Créer la campagne",
+            "creating": "Création de la campagne...",
             "toastCreated": "Création de campagne (mock) : Succès !"
         },
         "bank": {

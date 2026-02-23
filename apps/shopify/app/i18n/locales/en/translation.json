@@ -165,6 +165,7 @@
             },
             "createOpen": "Campaign creation form",
             "createButton": "Create campaign",
+            "creating": "Creating campaign...",
             "toastCreated": "Campaign creation (mock): Success!"
         },
         "bank": {
