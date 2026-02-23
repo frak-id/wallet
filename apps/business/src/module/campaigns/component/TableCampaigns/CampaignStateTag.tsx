@@ -6,6 +6,7 @@ const bankHealthLabels: Record<string, string> = {
     depleted: "Bank empty — rewards can't distribute",
     paused: "Bank paused — distribution stopped",
     low_funds: "Low funds — action needed",
+    insufficient_allowance: "Allowance too low — increase distribution limit",
     not_deployed: "Bank not set up",
 };
 
@@ -67,7 +68,10 @@ export function CampaignStateTag({
                           ? "Paused"
                           : bankDistributionStatus === "low_funds"
                             ? "Low funds"
-                            : "Setup needed"}
+                            : bankDistributionStatus ===
+                                "insufficient_allowance"
+                              ? "Allowance"
+                              : "Setup needed"}
                 </Badge>
             </Tooltip>
         </span>

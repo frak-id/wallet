@@ -1,5 +1,7 @@
 import type { BudgetUsed } from "@backend-domain/campaign/schemas";
+import { tokenMetadataRepository } from "@backend-infrastructure";
 import { t } from "@backend-utils";
+import { currentStablecoinsList } from "@frak-labs/app-essentials";
 import { Elysia, status } from "elysia";
 import type { Address } from "viem";
 import {
@@ -12,7 +14,10 @@ import {
     CampaignRuleDefinitionSchema,
     type CampaignStatus,
 } from "../../../../domain/campaign";
-import { CampaignBankContext } from "../../../../domain/campaign-bank";
+import {
+    CampaignBankContext,
+    computeDistributionStatus,
+} from "../../../../domain/campaign-bank";
 import type { DistributionStatus } from "../../../../domain/campaign-bank/schemas";
 import { MerchantContext } from "../../../../domain/merchant";
 import { businessSessionContext } from "../../middleware/session";
@@ -28,6 +33,19 @@ function resolveRewardTokens(
             token: reward.token ?? defaultRewardToken ?? undefined,
         })),
     };
+}
+
+async function getTokenDecimals(): Promise<Map<Address, number>> {
+    const decimals = new Map<Address, number>();
+
+    await Promise.all(
+        currentStablecoinsList.map(async (token) => {
+            const d = await tokenMetadataRepository.getDecimals({ token });
+            decimals.set(token, d);
+        })
+    );
+
+    return decimals;
 }
 
 function formatCampaign(
@@ -102,20 +120,27 @@ export const merchantCampaignsRoutes = new Elysia({
                 ? (query.status.split(",") as CampaignStatus[])
                 : undefined;
 
-            const campaigns =
-                await CampaignContext.services.management.getByMerchant(
+            const [campaigns, bankStatus, tokenDecimals] = await Promise.all([
+                CampaignContext.services.management.getByMerchant(
                     merchantId,
                     statusFilter
-                );
-
-            const bankStatus =
-                await CampaignBankContext.services.campaignBank.getBankStatus(
+                ),
+                CampaignBankContext.services.campaignBank.getBankStatus(
                     merchantId
-                );
+                ),
+                getTokenDecimals(),
+            ]);
 
             return {
                 campaigns: campaigns.map((campaign) =>
-                    formatCampaign(campaign, bankStatus.distributionStatus)
+                    formatCampaign(
+                        campaign,
+                        computeDistributionStatus(
+                            bankStatus.onChainState,
+                            campaign.rule.rewards,
+                            tokenDecimals
+                        )
+                    )
                 ),
             };
         },
@@ -154,12 +179,21 @@ export const merchantCampaignsRoutes = new Elysia({
                 return status(404, "Campaign not found");
             }
 
-            const bankStatus =
-                await CampaignBankContext.services.campaignBank.getBankStatus(
+            const [bankStatus, tokenDecimals] = await Promise.all([
+                CampaignBankContext.services.campaignBank.getBankStatus(
                     merchantId
-                );
+                ),
+                getTokenDecimals(),
+            ]);
 
-            return formatCampaign(campaign, bankStatus.distributionStatus);
+            return formatCampaign(
+                campaign,
+                computeDistributionStatus(
+                    bankStatus.onChainState,
+                    campaign.rule.rewards,
+                    tokenDecimals
+                )
+            );
         },
         {
             params: t.Object({
