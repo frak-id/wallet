@@ -34,7 +34,9 @@ describe("TriggerSelector", () => {
     });
 
     it("should select custom trigger when form value is custom", () => {
-        const { container } = render(<TriggerSelectorFixture trigger="custom" />);
+        const { container } = render(
+            <TriggerSelectorFixture trigger="custom" />
+        );
 
         expect(
             within(container).getByRole("radio", { name: "Custom" })
