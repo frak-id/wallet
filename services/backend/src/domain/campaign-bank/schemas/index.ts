@@ -3,8 +3,7 @@ import type { Static } from "elysia";
 
 export const DistributionStatusSchema = t.Union([
     t.Literal("distributing"),
-    t.Literal("low_funds"),
-    t.Literal("insufficient_allowance"),
+    t.Literal("warning"),
     t.Literal("depleted"),
     t.Literal("paused"),
     t.Literal("not_deployed"),

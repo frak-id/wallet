@@ -36,10 +36,4 @@ export type CampaignWithActions = {
     actions: CampaignActions;
 } & CampaignResponse;
 
-export type DistributionStatus =
-    | "distributing"
-    | "low_funds"
-    | "insufficient_allowance"
-    | "depleted"
-    | "paused"
-    | "not_deployed";
+export type { DistributionStatus } from "@frak-labs/backend-elysia/domain/campaign-bank";

@@ -65,11 +65,25 @@ export class SettlementOrchestrator {
 
         const merchantBanks = await this.getMerchantBanks(pendingRewards);
 
-        const bankStates =
-            await this.campaignBankRepository.getBanksTotalBalance(
-                merchantBanks,
-                currentStablecoinsList
-            );
+        const bankStates = new Map<
+            Address,
+            {
+                isOpen: boolean;
+                balances: Map<Address, bigint>;
+                allowances: Map<Address, bigint>;
+            }
+        >();
+
+        await Promise.all(
+            [...merchantBanks.entries()].map(async ([, bankAddress]) => {
+                const state =
+                    await this.campaignBankRepository.getBankOnChainState(
+                        bankAddress,
+                        currentStablecoinsList
+                    );
+                bankStates.set(bankAddress, state);
+            })
+        );
 
         const distributableRewards: AssetLogWithWallet[] = [];
         const depletedRewards: AssetLogWithWallet[] = [];
@@ -82,11 +96,15 @@ export class SettlementOrchestrator {
             }
 
             const bankState = bankStates.get(bankAddress);
-            if (
-                !bankState ||
-                !bankState.isOpen ||
-                bankState.totalBalance === 0n
-            ) {
+            if (!bankState || !bankState.isOpen) {
+                depletedRewards.push(reward);
+                continue;
+            }
+
+            const rewardToken = reward.tokenAddress as Address;
+            const tokenBalance = bankState.balances.get(rewardToken) ?? 0n;
+            const tokenAllowance = bankState.allowances.get(rewardToken) ?? 0n;
+            if (tokenBalance === 0n || tokenAllowance === 0n) {
                 depletedRewards.push(reward);
                 continue;
             }

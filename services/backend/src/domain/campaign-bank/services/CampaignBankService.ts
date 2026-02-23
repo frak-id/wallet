@@ -226,11 +226,6 @@ export class CampaignBankService {
         deployed: boolean;
         bankAddress: Address | null;
         ownerHasManagerRole: boolean;
-        onChainState: {
-            isOpen: boolean;
-            balances: Map<Address, bigint>;
-            allowances: Map<Address, bigint>;
-        } | null;
     }> {
         const merchant = await this.merchantRepository.findById(merchantId);
         if (!merchant?.bankAddress) {
@@ -238,25 +233,18 @@ export class CampaignBankService {
                 deployed: false,
                 bankAddress: null,
                 ownerHasManagerRole: false,
-                onChainState: null,
             };
         }
-        const [ownerHasManagerRole, onChainState] = await Promise.all([
-            this.campaignBankRepository.hasManagerRole(
+        const ownerHasManagerRole =
+            await this.campaignBankRepository.hasManagerRole(
                 merchant.bankAddress,
                 merchant.ownerWallet
-            ),
-            this.campaignBankRepository.getBankOnChainState(
-                merchant.bankAddress,
-                currentStablecoinsList
-            ),
-        ]);
+            );
 
         return {
             deployed: true,
             bankAddress: merchant.bankAddress,
             ownerHasManagerRole,
-            onChainState,
         };
     }
 }

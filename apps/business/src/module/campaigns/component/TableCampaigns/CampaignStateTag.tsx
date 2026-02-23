@@ -1,13 +1,20 @@
 import { Tooltip } from "@frak-labs/ui/component/Tooltip";
 import { Badge } from "@/module/common/component/Badge";
 import type { CampaignStatus, DistributionStatus } from "@/types/Campaign";
+import styles from "./CampaignStateTag.module.css";
 
 const bankHealthLabels: Record<string, string> = {
     depleted: "Bank empty — rewards can't distribute",
     paused: "Bank paused — distribution stopped",
-    low_funds: "Low funds — action needed",
-    insufficient_allowance: "Allowance too low — increase distribution limit",
+    warning: "Needs attention — check your reward budget",
     not_deployed: "Bank not set up",
+};
+
+const bankBadgeLabels: Record<string, string> = {
+    depleted: "No funds",
+    paused: "Paused",
+    warning: "Needs attention",
+    not_deployed: "Setup needed",
 };
 
 export function CampaignStateTag({
@@ -32,7 +39,6 @@ export function CampaignStateTag({
         }
     })();
 
-    // Only show bank warning for active campaigns with unhealthy banks
     const showBankWarning =
         status === "active" &&
         bankDistributionStatus &&
@@ -43,15 +49,10 @@ export function CampaignStateTag({
     }
 
     const bankLabel = bankHealthLabels[bankDistributionStatus] ?? "Bank issue";
+    const badgeLabel = bankBadgeLabels[bankDistributionStatus] ?? "Issue";
 
     return (
-        <span
-            style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "0.25rem",
-            }}
-        >
+        <span className={styles.campaignStateTag}>
             {statusBadge}
             <Tooltip content={bankLabel}>
                 <Badge
@@ -62,16 +63,7 @@ export function CampaignStateTag({
                     }
                     size="small"
                 >
-                    {bankDistributionStatus === "depleted"
-                        ? "No funds"
-                        : bankDistributionStatus === "paused"
-                          ? "Paused"
-                          : bankDistributionStatus === "low_funds"
-                            ? "Low funds"
-                            : bankDistributionStatus ===
-                                "insufficient_allowance"
-                              ? "Allowance"
-                              : "Setup needed"}
+                    {badgeLabel}
                 </Badge>
             </Tooltip>
         </span>

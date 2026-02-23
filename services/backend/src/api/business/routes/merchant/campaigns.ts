@@ -120,7 +120,7 @@ export const merchantCampaignsRoutes = new Elysia({
                 ? (query.status.split(",") as CampaignStatus[])
                 : undefined;
 
-            const [campaigns, bankStatus, tokenDecimals] = await Promise.all([
+            const [campaigns, bankStatus] = await Promise.all([
                 CampaignContext.services.management.getByMerchant(
                     merchantId,
                     statusFilter
@@ -128,19 +128,28 @@ export const merchantCampaignsRoutes = new Elysia({
                 CampaignBankContext.services.campaignBank.getBankStatus(
                     merchantId
                 ),
-                getTokenDecimals(),
             ]);
+
+            let distributionStatus: DistributionStatus | undefined;
+            if (bankStatus.bankAddress) {
+                const [onChainState, tokenDecimals] = await Promise.all([
+                    CampaignBankContext.repositories.campaignBank.getBankOnChainState(
+                        bankStatus.bankAddress,
+                        currentStablecoinsList
+                    ),
+                    getTokenDecimals(),
+                ]);
+                distributionStatus = computeDistributionStatus(
+                    onChainState,
+                    tokenDecimals
+                );
+            } else {
+                distributionStatus = computeDistributionStatus(null, new Map());
+            }
 
             return {
                 campaigns: campaigns.map((campaign) =>
-                    formatCampaign(
-                        campaign,
-                        computeDistributionStatus(
-                            bankStatus.onChainState,
-                            campaign.rule.rewards,
-                            tokenDecimals
-                        )
-                    )
+                    formatCampaign(campaign, distributionStatus)
                 ),
             };
         },
@@ -179,21 +188,29 @@ export const merchantCampaignsRoutes = new Elysia({
                 return status(404, "Campaign not found");
             }
 
-            const [bankStatus, tokenDecimals] = await Promise.all([
-                CampaignBankContext.services.campaignBank.getBankStatus(
+            const bankStatus =
+                await CampaignBankContext.services.campaignBank.getBankStatus(
                     merchantId
-                ),
-                getTokenDecimals(),
-            ]);
+                );
 
-            return formatCampaign(
-                campaign,
-                computeDistributionStatus(
-                    bankStatus.onChainState,
-                    campaign.rule.rewards,
+            let distributionStatus: DistributionStatus | undefined;
+            if (bankStatus.bankAddress) {
+                const [onChainState, tokenDecimals] = await Promise.all([
+                    CampaignBankContext.repositories.campaignBank.getBankOnChainState(
+                        bankStatus.bankAddress,
+                        currentStablecoinsList
+                    ),
+                    getTokenDecimals(),
+                ]);
+                distributionStatus = computeDistributionStatus(
+                    onChainState,
                     tokenDecimals
-                )
-            );
+                );
+            } else {
+                distributionStatus = computeDistributionStatus(null, new Map());
+            }
+
+            return formatCampaign(campaign, distributionStatus);
         },
         {
             params: t.Object({

@@ -1,5 +1,6 @@
 import { log, viemClient } from "@backend-infrastructure";
 import { addresses } from "@frak-labs/app-essentials";
+import { LRUCache } from "lru-cache";
 import {
     type Address,
     encodeFunctionData,
@@ -30,6 +31,18 @@ type RoleOperationResult = {
 };
 
 export class CampaignBankRepository {
+    private readonly onChainStateCache = new LRUCache<
+        Address,
+        {
+            isOpen: boolean;
+            balances: Map<Address, bigint>;
+            allowances: Map<Address, bigint>;
+        }
+    >({
+        max: 64,
+        ttl: 10 * 60 * 1000,
+    });
+
     private computeBankSalt(merchantId: string): Hex {
         return keccak256(`0x${Buffer.from(merchantId).toString("hex")}` as Hex);
     }
@@ -253,6 +266,11 @@ export class CampaignBankRepository {
         balances: Map<Address, bigint>;
         allowances: Map<Address, bigint>;
     }> {
+        const cachedState = this.onChainStateCache.get(bankAddress);
+        if (cachedState) {
+            return cachedState;
+        }
+
         const contracts = [
             {
                 address: bankAddress,
@@ -312,7 +330,19 @@ export class CampaignBankRepository {
             );
         });
 
-        return { isOpen, balances, allowances };
+        const state = { isOpen, balances, allowances };
+        this.onChainStateCache.set(bankAddress, state);
+
+        return state;
+    }
+
+    clearOnChainCache(bankAddress?: Address): void {
+        if (bankAddress) {
+            this.onChainStateCache.delete(bankAddress);
+            return;
+        }
+
+        this.onChainStateCache.clear();
     }
 
     async getBanksTotalBalance(
