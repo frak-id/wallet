@@ -80,6 +80,17 @@ bun run deploy-gcp:staging # GCP staging
 bun run deploy-gcp:prod    # GCP prod (all production apps)
 ```
 
+## Quality Gates (Mandatory)
+
+Before completing any task, **always run**:
+```bash
+bun run format             # Biome format
+bun run lint               # Biome lint
+bun run typecheck          # TypeScript check all packages
+bun run test               # Vitest (all projects)
+```
+All four must pass. Do not commit or report completion with failures.
+
 ## Conventions
 
 ### TypeScript

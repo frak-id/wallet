@@ -136,8 +136,6 @@ bun run test             # vitest run
 bun run test:watch       # vitest (watch mode)
 ```
 
-Quality checks script: `checks.sh` → format + typecheck + build.
-
 ## DEPLOYMENT
 
 Dual deploy: **SST** (AWS infra via `sst.aws.React`) + **Shopify CLI** (app config + extensions).
