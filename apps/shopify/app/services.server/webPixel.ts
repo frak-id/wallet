@@ -22,6 +22,23 @@ export type DeleteWebPixelReturnType = {
     }[];
 };
 
+export type UpdateWebPixelReturnType = {
+    userErrors: {
+        field: string;
+        message: string;
+    }[];
+    webPixel: GetWebPixelReturnType;
+};
+
+/**
+ * Build the pixel settings with the current environment's backend URL.
+ */
+function buildPixelSettings(): { backendUrl: string } {
+    return {
+        backendUrl: process.env.BACKEND_URL ?? "",
+    };
+}
+
 /**
  * Get the web pixel
  */
@@ -43,14 +60,15 @@ query getWebPixel {
 }
 
 /**
- * Create the web pixel
+ * Create the web pixel with environment-specific backend URL in settings.
  */
 export async function createWebPixel({
     admin: { graphql },
 }: AuthenticatedContext): Promise<CreateWebPixelReturnType> {
-    const response = await graphql(`
-mutation {
-  webPixelCreate(webPixel: { settings: "{}" }) {
+    const response = await graphql(
+        `#graphql
+mutation webPixelCreate($webPixel: WebPixelInput!) {
+  webPixelCreate(webPixel: $webPixel) {
     userErrors {
       field
       message
@@ -60,12 +78,57 @@ mutation {
       settings
     }
   }
-}`);
+}`,
+        {
+            variables: {
+                webPixel: {
+                    settings: buildPixelSettings(),
+                },
+            },
+        }
+    );
     const {
         data: { webPixelCreate },
     } = await response.json();
 
     return webPixelCreate;
+}
+
+/**
+ * Update the web pixel settings (e.g. after redeployment with new env URLs).
+ */
+export async function updateWebPixelSettings({
+    admin: { graphql },
+    id,
+}: AuthenticatedContext & { id: string }): Promise<UpdateWebPixelReturnType> {
+    const response = await graphql(
+        `#graphql
+mutation webPixelUpdate($id: ID!, $webPixel: WebPixelInput!) {
+  webPixelUpdate(id: $id, webPixel: $webPixel) {
+    userErrors {
+      field
+      message
+    }
+    webPixel {
+      id
+      settings
+    }
+  }
+}`,
+        {
+            variables: {
+                id,
+                webPixel: {
+                    settings: buildPixelSettings(),
+                },
+            },
+        }
+    );
+    const {
+        data: { webPixelUpdate },
+    } = await response.json();
+
+    return webPixelUpdate;
 }
 
 /**
