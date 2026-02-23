@@ -35,3 +35,5 @@ export type CampaignActions = {
 export type CampaignWithActions = {
     actions: CampaignActions;
 } & CampaignResponse;
+
+export type { DistributionStatus } from "@frak-labs/backend-elysia/domain/campaign-bank";

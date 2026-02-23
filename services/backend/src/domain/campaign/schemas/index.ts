@@ -1,5 +1,6 @@
 import { t } from "@backend-utils";
 import type { Static, TSchema } from "elysia";
+import { DistributionStatusSchema } from "../../campaign-bank/schemas";
 import {
     AssetTypeSchema,
     type InteractionType,
@@ -256,6 +257,7 @@ export const CampaignResponseSchema = t.Object({
     metadata: t.Union([CampaignMetadataSchema, t.Null()]),
     budgetConfig: t.Union([BudgetConfigSchema, t.Null()]),
     budgetUsed: t.Union([BudgetUsedSchema, t.Null()]),
+    bankDistributionStatus: t.Union([DistributionStatusSchema, t.Null()]),
     expiresAt: t.Union([t.String(), t.Null()]),
     publishedAt: t.Union([t.String(), t.Null()]),
     createdAt: t.String(),

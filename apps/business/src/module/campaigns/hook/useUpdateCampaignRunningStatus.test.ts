@@ -36,6 +36,7 @@ const mockCampaignResponse: Campaign = {
     publishedAt: "2024-01-01T00:00:00Z",
     createdAt: "2024-01-01T00:00:00Z",
     updatedAt: "2024-01-01T00:00:00Z",
+    bankDistributionStatus: "distributing",
 };
 
 describe("useUpdateCampaignRunningStatus", () => {

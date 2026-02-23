@@ -91,14 +91,14 @@ export class AssetLogRepository {
 
     async updateStatusBatch(
         ids: string[],
-        status: AssetStatus,
+        status: AssetStatus | "bank_depleted",
         onchainData?: { txHash: Hex; blockNumber: bigint }
     ): Promise<number> {
         if (ids.length === 0) return 0;
 
         const now = new Date();
         const updateData: Partial<AssetLogInsert> = {
-            status,
+            status: status as AssetStatus,
             statusChangedAt: now,
         };
 

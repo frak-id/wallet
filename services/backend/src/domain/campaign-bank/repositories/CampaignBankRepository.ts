@@ -1,5 +1,6 @@
 import { log, viemClient } from "@backend-infrastructure";
 import { addresses } from "@frak-labs/app-essentials";
+import { LRUCache } from "lru-cache";
 import {
     type Address,
     encodeFunctionData,
@@ -8,6 +9,7 @@ import {
     maxUint256,
 } from "viem";
 import {
+    multicall,
     readContract,
     sendTransaction,
     waitForTransactionReceipt,
@@ -29,6 +31,18 @@ type RoleOperationResult = {
 };
 
 export class CampaignBankRepository {
+    private readonly onChainStateCache = new LRUCache<
+        Address,
+        {
+            isOpen: boolean;
+            balances: Map<Address, bigint>;
+            allowances: Map<Address, bigint>;
+        }
+    >({
+        max: 64,
+        ttl: 10 * 60 * 1000,
+    });
+
     private computeBankSalt(merchantId: string): Hex {
         return keccak256(`0x${Buffer.from(merchantId).toString("hex")}` as Hex);
     }
@@ -242,6 +256,123 @@ export class CampaignBankRepository {
                 blockNumber: receipt.blockNumber,
             };
         });
+    }
+
+    async getBankOnChainState(
+        bankAddress: Address,
+        tokens: Address[]
+    ): Promise<{
+        isOpen: boolean;
+        balances: Map<Address, bigint>;
+        allowances: Map<Address, bigint>;
+    }> {
+        const cachedState = this.onChainStateCache.get(bankAddress);
+        if (cachedState) {
+            return cachedState;
+        }
+
+        const contracts = [
+            {
+                address: bankAddress,
+                abi: campaignBankAbi,
+                functionName: "isOpen",
+            } as const,
+            ...tokens.flatMap((token) => [
+                {
+                    address: bankAddress,
+                    abi: campaignBankAbi,
+                    functionName: "getBalance",
+                    args: [token],
+                } as const,
+                {
+                    address: bankAddress,
+                    abi: campaignBankAbi,
+                    functionName: "getAllowance",
+                    args: [token],
+                } as const,
+            ]),
+        ];
+
+        const results = await multicall(viemClient, {
+            contracts,
+            allowFailure: true,
+        });
+
+        const isOpenResult = results[0];
+        const isOpen =
+            isOpenResult?.status === "success" &&
+            typeof isOpenResult.result === "boolean"
+                ? isOpenResult.result
+                : false;
+        const tokenResults = results.slice(1);
+        const balances = new Map<Address, bigint>();
+        const allowances = new Map<Address, bigint>();
+
+        tokens.forEach((token, index) => {
+            const balanceResult = tokenResults[index * 2];
+            const allowanceResult = tokenResults[index * 2 + 1];
+
+            balances.set(
+                token,
+                balanceResult?.status === "success"
+                    ? typeof balanceResult.result === "bigint"
+                        ? balanceResult.result
+                        : 0n
+                    : 0n
+            );
+            allowances.set(
+                token,
+                allowanceResult?.status === "success"
+                    ? typeof allowanceResult.result === "bigint"
+                        ? allowanceResult.result
+                        : 0n
+                    : 0n
+            );
+        });
+
+        const state = { isOpen, balances, allowances };
+        this.onChainStateCache.set(bankAddress, state);
+
+        return state;
+    }
+
+    clearOnChainCache(bankAddress?: Address): void {
+        if (bankAddress) {
+            this.onChainStateCache.delete(bankAddress);
+            return;
+        }
+
+        this.onChainStateCache.clear();
+    }
+
+    async getBanksTotalBalance(
+        bankAddresses: Map<string, Address>,
+        tokens: Address[]
+    ): Promise<Map<Address, { isOpen: boolean; totalBalance: bigint }>> {
+        const result = new Map<
+            Address,
+            { isOpen: boolean; totalBalance: bigint }
+        >();
+
+        await Promise.all(
+            [...bankAddresses.entries()].map(async ([, bankAddress]) => {
+                const state = await this.getBankOnChainState(
+                    bankAddress,
+                    tokens
+                );
+                let totalBalance = 0n;
+                for (const balance of state.balances.values()) {
+                    totalBalance += balance;
+                }
+
+                result.set(bankAddress, {
+                    isOpen: state.isOpen,
+                    totalBalance,
+                });
+            })
+        );
+
+        return result;
     }
 
     async enableDistribution(

@@ -59,6 +59,7 @@ const mockCampaign: CampaignWithActions = {
     publishedAt: null,
     createdAt: "2024-01-01T00:00:00Z",
     updatedAt: "2024-01-01T00:00:00Z",
+    bankDistributionStatus: null,
     actions: {
         canEdit: true,
         canDelete: true,

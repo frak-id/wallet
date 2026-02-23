@@ -25,9 +25,16 @@ export const merchantBankRoutes = new Elysia({
                 return status(403, "Access denied");
             }
 
-            return CampaignBankContext.services.campaignBank.getBankStatus(
-                merchantId
-            );
+            const result =
+                await CampaignBankContext.services.campaignBank.getBankStatus(
+                    merchantId
+                );
+
+            return {
+                deployed: result.deployed,
+                bankAddress: result.bankAddress,
+                ownerHasManagerRole: result.ownerHasManagerRole,
+            };
         },
         {
             params: t.Object({

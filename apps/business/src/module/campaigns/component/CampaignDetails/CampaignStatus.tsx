@@ -21,7 +21,10 @@ export function CampaignStatus({ campaign }: { campaign: Campaign }) {
             <Column fullWidth={true}>
                 <Row>
                     <strong>Status:</strong>
-                    <CampaignStateTag status={campaign.status} />
+                    <CampaignStateTag
+                        status={campaign.status}
+                        bankDistributionStatus={campaign.bankDistributionStatus}
+                    />
                 </Row>
                 <Row>
                     <strong>Created:</strong>

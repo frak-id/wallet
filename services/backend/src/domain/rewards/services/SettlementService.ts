@@ -41,6 +41,7 @@ export class SettlementService {
             failedCount: 0,
             txHashes: [],
             errors: [],
+            banks: new Set(),
         };
 
         if (rewards.length === 0) {
@@ -57,45 +58,70 @@ export class SettlementService {
             return result;
         }
 
-        await this.assetLogRepository.markSettlementProcessing(
-            prepared.validAssetLogIds
-        );
+        const rewardsByBank = new Map<
+            Address,
+            { rewards: PushRewardParams[]; assetLogIds: string[] }
+        >();
 
-        try {
-            const txResult = await this.rewardsHub.pushRewards(
-                prepared.rewards
-            );
-
-            result.txHashes.push(txResult.txHash);
-            result.settledCount = prepared.rewards.length;
-
-            await this.assetLogRepository.updateStatusBatch(
-                prepared.validAssetLogIds,
-                "settled",
-                { txHash: txResult.txHash, blockNumber: txResult.blockNumber }
-            );
-        } catch (error) {
-            log.error(
-                {
-                    error,
-                    count: prepared.rewards.length,
-                },
-                "Failed to execute settlement, will retry on next run"
-            );
-
-            const errorMessage =
-                error instanceof Error ? error.message : "Unknown error";
-
-            await this.assetLogRepository.revertSettlementToPending(
-                prepared.validAssetLogIds,
-                errorMessage
-            );
-
-            for (const assetLogId of prepared.validAssetLogIds) {
-                result.errors.push({ assetLogId, error: errorMessage });
+        prepared.rewards.forEach((reward, index) => {
+            const existing = rewardsByBank.get(reward.bank);
+            if (!existing) {
+                rewardsByBank.set(reward.bank, {
+                    rewards: [reward],
+                    assetLogIds: [prepared.validAssetLogIds[index]],
+                });
+                return;
             }
-            result.failedCount += prepared.validAssetLogIds.length;
-            result.settledCount = 0;
+
+            existing.rewards.push(reward);
+            existing.assetLogIds.push(prepared.validAssetLogIds[index]);
+        });
+
+        for (const [bank, bankBatch] of rewardsByBank.entries()) {
+            await this.assetLogRepository.markSettlementProcessing(
+                bankBatch.assetLogIds
+            );
+
+            try {
+                const txResult = await this.rewardsHub.pushRewards(
+                    bankBatch.rewards
+                );
+
+                result.txHashes.push(txResult.txHash);
+                result.banks.add(bank);
+                result.settledCount += bankBatch.rewards.length;
+
+                await this.assetLogRepository.updateStatusBatch(
+                    bankBatch.assetLogIds,
+                    "settled",
+                    {
+                        txHash: txResult.txHash,
+                        blockNumber: txResult.blockNumber,
+                    }
+                );
+            } catch (error) {
+                log.error(
+                    {
+                        error,
+                        bank,
+                        count: bankBatch.rewards.length,
+                    },
+                    "Failed to execute settlement for bank, will retry on next run"
+                );
+
+                const errorMessage =
+                    error instanceof Error ? error.message : "Unknown error";
+
+                await this.assetLogRepository.revertSettlementToPending(
+                    bankBatch.assetLogIds,
+                    errorMessage
+                );
+
+                for (const assetLogId of bankBatch.assetLogIds) {
+                    result.errors.push({ assetLogId, error: errorMessage });
+                }
+                result.failedCount += bankBatch.assetLogIds.length;
+            }
         }
 
         log.info(

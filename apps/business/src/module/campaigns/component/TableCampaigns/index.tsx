@@ -58,8 +58,13 @@ export function TableCampaigns() {
                     enableSorting: true,
                     header: () => "Status",
                     id: "status",
-                    cell: ({ getValue }) => (
-                        <CampaignStateTag status={getValue()} />
+                    cell: ({ getValue, row }) => (
+                        <CampaignStateTag
+                            status={getValue()}
+                            bankDistributionStatus={
+                                row.original.bankDistributionStatus
+                            }
+                        />
                     ),
                 }),
                 {

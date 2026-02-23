@@ -235,7 +235,6 @@ export class CampaignBankService {
                 ownerHasManagerRole: false,
             };
         }
-
         const ownerHasManagerRole =
             await this.campaignBankRepository.hasManagerRole(
                 merchant.bankAddress,
