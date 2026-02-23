@@ -35,8 +35,9 @@ export default function FundingPage() {
                     </>
                 )}
                 {!bankStatus && (
-                    // TODO: Link to the settings / setup instructions
-                    <p>Nope</p>
+                    <s-banner tone="info">
+                        <p>{t("status.bank.notDeployed")}</p>
+                    </s-banner>
                 )}
             </s-stack>
         </s-page>

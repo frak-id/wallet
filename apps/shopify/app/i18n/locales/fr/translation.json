@@ -192,12 +192,34 @@
             "toastCreated": "Création de campagne (mock) : Succès !"
         },
         "bank": {
-            "title": "Banques",
-            "description": "Les banques sont la source de fonds qui seront utilisés pour distribuer des récompenses aux utilisateurs finaux.",
+            "title": "Budget de récompenses",
+            "description": "Votre budget de récompenses est la source de fonds utilisée pour distribuer des récompenses aux utilisateurs finaux à travers toutes vos campagnes.",
             "token": "Token",
             "balance": "Solde",
-
-            "address": "Adresse"
+            "statusColumn": "Statut",
+            "actionsColumn": "Actions",
+            "address": "Adresse",
+            "notDeployed": "Votre budget de récompenses n'est pas encore déployé. Complétez l'assistant de configuration pour commencer.",
+            "emptyWarning": "Votre budget n'a aucun fonds. Les campagnes actives ne peuvent pas distribuer de récompenses tant que vous n'ajoutez pas de fonds.",
+            "connectWallet": "Connectez votre portefeuille Frak pour gérer les paramètres de distribution, les allocations et les retraits.",
+            "distribution": "Distribution",
+            "distributionActive": "Active",
+            "distributionPaused": "En pause",
+            "enableDistribution": "Activer",
+            "disableDistribution": "Désactiver",
+            "tokenEmpty": "Aucun fonds",
+            "tokenActive": "Active",
+            "tokenWarning": "Action requise",
+            "tokenPaused": "En pause",
+            "increaseLimit": "Augmenter la limite",
+            "pauseRewards": "Suspendre les récompenses",
+            "withdraw": "Retirer",
+            "setAllowanceFor": "Définir la limite de distribution pour {{token}}",
+            "withdrawFrom": "Retirer {{token}}",
+            "allowanceAmount": "Limite de distribution",
+            "withdrawAmount": "Montant à retirer",
+            "confirm": "Confirmer",
+            "cancel": "Annuler"
         },
         "purchase": {
             "title": "Achat",

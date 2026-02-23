@@ -191,12 +191,34 @@
             "toastCreated": "Campaign creation (mock): Success!"
         },
         "bank": {
-            "title": "Banks",
-            "description": "The banks are the source of cash that will be used to distribute rewards to end users.",
+            "title": "Reward Budget",
+            "description": "Your reward budget is the source of funds used to distribute rewards to end users across all your campaigns.",
             "token": "Token",
             "balance": "Balance",
-
-            "address": "Address"
+            "statusColumn": "Status",
+            "actionsColumn": "Actions",
+            "address": "Address",
+            "notDeployed": "Your reward budget is not deployed yet. Complete the setup wizard to get started.",
+            "emptyWarning": "Your budget has no funds. Active campaigns cannot distribute rewards until you add funds.",
+            "connectWallet": "Connect your Frak wallet to manage distribution settings, allowances, and withdrawals.",
+            "distribution": "Distribution",
+            "distributionActive": "Active",
+            "distributionPaused": "Paused",
+            "enableDistribution": "Enable",
+            "disableDistribution": "Disable",
+            "tokenEmpty": "No funds",
+            "tokenActive": "Active",
+            "tokenWarning": "Action needed",
+            "tokenPaused": "Paused",
+            "increaseLimit": "Increase limit",
+            "pauseRewards": "Pause rewards",
+            "withdraw": "Withdraw",
+            "setAllowanceFor": "Set distribution limit for {{token}}",
+            "withdrawFrom": "Withdraw {{token}}",
+            "allowanceAmount": "Distribution limit",
+            "withdrawAmount": "Amount to withdraw",
+            "confirm": "Confirm",
+            "cancel": "Cancel"
         },
         "purchase": {
             "title": "Purchase",
