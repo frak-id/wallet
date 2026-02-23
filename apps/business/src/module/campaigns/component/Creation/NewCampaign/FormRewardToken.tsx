@@ -3,8 +3,7 @@ import {
     getTokenAddressForStablecoin,
     type Stablecoin,
 } from "@frak-labs/app-essentials";
-import { CheckCircle2, Star } from "lucide-react";
-import { useEffect } from "react";
+import { CheckCircle2, Pin, Star } from "lucide-react";
 import { useFormContext } from "react-hook-form";
 import type { Address } from "viem";
 import { formatUnits } from "viem";
@@ -41,8 +40,7 @@ function detectStablecoinFromAddress(address: Address): Stablecoin | undefined {
 }
 
 export function FormRewardToken() {
-    const { control, watch, setValue, getValues } =
-        useFormContext<CampaignDraft>();
+    const { control, watch } = useFormContext<CampaignDraft>();
     const merchantId = watch("merchantId");
 
     const { data: merchantData } = useMerchant({ merchantId });
@@ -52,13 +50,6 @@ export function FormRewardToken() {
     const merchantDefaultStablecoin = merchantDefaultToken
         ? detectStablecoinFromAddress(merchantDefaultToken)
         : undefined;
-
-    useEffect(() => {
-        if (!merchantDefaultToken) return;
-        const currentValue = getValues("rewardToken");
-        if (currentValue) return;
-        setValue("rewardToken", merchantDefaultToken);
-    }, [merchantDefaultToken, getValues, setValue]);
 
     const availableCurrencies = currencyOptions.flatMap((group) =>
         group.options.map((option) => ({
@@ -86,8 +77,8 @@ export function FormRewardToken() {
             <FormField
                 control={control}
                 name="rewardToken"
-                rules={{ required: "Select a reward currency" }}
                 render={({ field }) => {
+                    const isDefaultSelected = !field.value;
                     const selectedStablecoin = field.value
                         ? detectStablecoinFromAddress(field.value)
                         : undefined;
@@ -96,6 +87,64 @@ export function FormRewardToken() {
                         <FormItem>
                             <FormControl>
                                 <div className={styles.tokenGrid}>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            field.onChange(undefined);
+                                        }}
+                                        className={`${styles.tokenCard} ${isDefaultSelected ? styles.tokenCardSelected : ""}`}
+                                    >
+                                        {isDefaultSelected && (
+                                            <div
+                                                className={
+                                                    styles.selectedIndicator
+                                                }
+                                            >
+                                                <CheckCircle2
+                                                    size={20}
+                                                    strokeWidth={2.5}
+                                                />
+                                            </div>
+                                        )}
+                                        <div className={styles.tokenCardHeader}>
+                                            <Pin
+                                                size={24}
+                                                className={
+                                                    styles.defaultTokenIcon
+                                                }
+                                            />
+                                            <span className={styles.tokenName}>
+                                                Merchant default
+                                            </span>
+                                            <div className={styles.tokenBadges}>
+                                                {merchantDefaultStablecoin && (
+                                                    <Badge
+                                                        size="small"
+                                                        variant="success"
+                                                    >
+                                                        {
+                                                            tokenDisplayNames[
+                                                                merchantDefaultStablecoin
+                                                            ]
+                                                        }
+                                                    </Badge>
+                                                )}
+                                            </div>
+                                        </div>
+                                        {merchantDefaultToken && (
+                                            <TokenBalanceDisplay
+                                                balance={
+                                                    getTokenData(
+                                                        merchantDefaultStablecoin ??
+                                                            "usdc"
+                                                    )?.balance ?? 0n
+                                                }
+                                                tokenAddress={
+                                                    merchantDefaultToken
+                                                }
+                                            />
+                                        )}
+                                    </button>
                                     {availableCurrencies.map((currency) => {
                                         const stablecoin =
                                             currency.value as Stablecoin;

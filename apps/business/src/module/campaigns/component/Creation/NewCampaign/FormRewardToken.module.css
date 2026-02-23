@@ -1,6 +1,6 @@
 .tokenGrid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    grid-template-columns: repeat(3, 1fr);
     gap: 12px;
     padding: 4px;
     margin: 16px 0;
@@ -64,6 +64,10 @@
     display: flex;
     align-items: center;
     gap: 6px;
+}
+
+.defaultTokenIcon {
+    color: var(--color-text-secondary);
 }
 
 .recommendedBadge {
