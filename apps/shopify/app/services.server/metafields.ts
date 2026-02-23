@@ -5,6 +5,7 @@ const FRAK_NAMESPACE = "frak";
 const MODAL_I18N_KEY = "modal_i18n";
 const APPEARANCE_KEY = "appearance";
 const MERCHANT_ID_KEY = "merchant_id";
+const WALLET_URL_KEY = "wallet_url";
 
 export type AppearanceMetafieldValue = {
     logoUrl?: string;
@@ -339,4 +340,30 @@ export async function writeMerchantIdMetafield(
 export async function getShopId(ctx: AuthenticatedContext): Promise<string> {
     const info = await shopInfo(ctx);
     return info.id;
+}
+
+/* -------------------------------------------------------------------------- */
+/*                                Wallet URL                                  */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Read the wallet URL from shop metafields.
+ */
+export async function getWalletUrlMetafield({
+    admin: { graphql },
+}: AuthenticatedContext): Promise<string | null> {
+    return readMetafield<string>(graphql, WALLET_URL_KEY);
+}
+
+/**
+ * Write wallet URL to shop metafields so listener.liquid can read it.
+ */
+export async function writeWalletUrlMetafield(
+    context: AuthenticatedContext,
+    walletUrl: string
+): Promise<{
+    success: boolean;
+    userErrors: Array<{ field: string; message: string }>;
+}> {
+    return writeMetafield(context, WALLET_URL_KEY, walletUrl);
 }
