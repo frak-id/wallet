@@ -1,11 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { AuthenticatedContext } from "../types/context";
+import { getMerchantIdMetafield } from "./metafields";
 import {
     createWebPixel,
     deleteWebPixel,
     getWebPixel,
     updateWebPixelSettings,
 } from "./webPixel";
+
+vi.mock("./metafields", () => ({
+    getMerchantIdMetafield: vi.fn().mockResolvedValue("test-merchant-id"),
+}));
 
 const mockGraphql = vi.fn();
 const mockContext = {
@@ -69,13 +74,41 @@ describe("createWebPixel", () => {
             expect.objectContaining({
                 variables: {
                     webPixel: {
-                        settings: { backendUrl: "https://backend.frak.id" },
+                        settings: {
+                            backendUrl: "https://backend.frak.id",
+                            merchantId: "test-merchant-id",
+                        },
                     },
                 },
             })
         );
         expect(result.userErrors).toHaveLength(0);
         expect(result.webPixel).toEqual(pixel);
+    });
+
+    it("should not include merchantId in settings when metafield is null", async () => {
+        vi.mocked(getMerchantIdMetafield).mockResolvedValueOnce(null);
+        const pixel = { id: "gid://shopify/WebPixel/2", settings: "{}" };
+        const webPixelCreate = {
+            userErrors: [],
+            webPixel: pixel,
+        };
+        mockGraphql.mockResolvedValueOnce({
+            json: () => Promise.resolve({ data: { webPixelCreate } }),
+        });
+
+        await createWebPixel(mockContext);
+
+        expect(mockGraphql).toHaveBeenCalledWith(
+            expect.stringContaining("webPixelCreate"),
+            expect.objectContaining({
+                variables: {
+                    webPixel: {
+                        settings: { backendUrl: "https://backend.frak.id" },
+                    },
+                },
+            })
+        );
     });
 
     it("should return userErrors when creation fails", async () => {
@@ -120,7 +153,10 @@ describe("updateWebPixelSettings", () => {
                 variables: {
                     id: "gid://shopify/WebPixel/1",
                     webPixel: {
-                        settings: { backendUrl: "https://backend.frak.id" },
+                        settings: {
+                            backendUrl: "https://backend.frak.id",
+                            merchantId: "test-merchant-id",
+                        },
                     },
                 },
             })
