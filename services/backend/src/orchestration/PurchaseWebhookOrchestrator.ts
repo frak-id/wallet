@@ -150,7 +150,7 @@ export class PurchaseWebhookOrchestrator {
             existingGroup &&
             existingGroup.id !== claim.claimingIdentityGroupId
         ) {
-            await this.identityOrchestrator.associate(
+            const { finalGroupId } = await this.identityOrchestrator.associate(
                 claim.claimingIdentityGroupId,
                 existingGroup.id
             );
@@ -159,11 +159,12 @@ export class PurchaseWebhookOrchestrator {
                 {
                     claimingGroupId: claim.claimingIdentityGroupId,
                     existingGroupId: existingGroup.id,
+                    finalGroupId,
                 },
                 "Merged claiming group into existing merchant_customer group"
             );
 
-            return existingGroup.id;
+            return finalGroupId;
         }
 
         if (!existingGroup) {

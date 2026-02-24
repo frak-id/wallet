@@ -65,7 +65,10 @@ export class IdentityRepository {
         const cached = this.identityGroupIdCache.get(cacheKey);
         if (cached) {
             if (!cached.value) return null;
-            return this.findGroupById(cached.value);
+            const group = await this.findGroupById(cached.value);
+            if (group) return group;
+            // Group was deleted (merged), invalidate stale cache entry and re-query
+            this.identityGroupIdCache.delete(cacheKey);
         }
 
         const normalizedValue = this.normalizeValue(params.type, params.value);

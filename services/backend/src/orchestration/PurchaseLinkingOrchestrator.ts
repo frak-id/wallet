@@ -89,7 +89,7 @@ export class PurchaseLinkingOrchestrator {
             purchase.identityGroupId &&
             purchase.identityGroupId !== claimingGroupId
         ) {
-            await this.identityOrchestrator.associate(
+            const { finalGroupId } = await this.identityOrchestrator.associate(
                 claimingGroupId,
                 purchase.identityGroupId
             );
@@ -99,6 +99,7 @@ export class PurchaseLinkingOrchestrator {
                     purchaseId: purchase.id,
                     claimingGroupId,
                     purchaseGroupId: purchase.identityGroupId,
+                    finalGroupId,
                 },
                 "Merged claiming group with purchase group"
             );
@@ -106,7 +107,7 @@ export class PurchaseLinkingOrchestrator {
             return {
                 success: true,
                 purchaseId: purchase.id,
-                identityGroupId: purchase.identityGroupId,
+                identityGroupId: finalGroupId,
                 merged: true,
             };
         }
