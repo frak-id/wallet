@@ -134,6 +134,13 @@
             "when": 1771498486787,
             "tag": "0018_add_signature_request_expires_at",
             "breakpoints": true
+        },
+        {
+            "idx": 19,
+            "version": "7",
+            "when": 1771954142794,
+            "tag": "0019_powerful_crusher_hogan",
+            "breakpoints": true
         }
     ]
 }

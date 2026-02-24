@@ -39,11 +39,9 @@ export const identityNodesTable = pgTable(
         createdAt: timestamp("created_at").defaultNow(),
     },
     (table) => [
-        unique("identity_nodes_unique_identity").on(
-            table.identityType,
-            table.identityValue,
-            table.merchantId
-        ),
+        unique("identity_nodes_unique_identity")
+            .on(table.identityType, table.identityValue, table.merchantId)
+            .nullsNotDistinct(),
         index("identity_nodes_group_idx").on(table.groupId),
         index("identity_nodes_type_value_idx").on(
             table.identityType,

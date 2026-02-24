@@ -36,6 +36,13 @@
             "when": 1771951883960,
             "tag": "0004_milky_terror",
             "breakpoints": true
+        },
+        {
+            "idx": 5,
+            "version": "7",
+            "when": 1771954288683,
+            "tag": "0005_same_ikaris",
+            "breakpoints": true
         }
     ]
 }

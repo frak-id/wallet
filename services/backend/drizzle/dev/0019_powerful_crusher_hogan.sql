@@ -1,0 +1,2 @@
+ALTER TABLE "identity_nodes" DROP CONSTRAINT "identity_nodes_unique_identity";--> statement-breakpoint
+ALTER TABLE "identity_nodes" ADD CONSTRAINT "identity_nodes_unique_identity" UNIQUE NULLS NOT DISTINCT("identity_type","identity_value","merchant_id");
