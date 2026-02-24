@@ -43,6 +43,7 @@ function getMerchantMockData(merchantId: string): MerchantData {
 export const merchantQueryOptions = (merchantId: string, isDemoMode: boolean) =>
     queryOptions({
         queryKey: ["merchant", merchantId, isDemoMode ? "demo" : "live"],
+        enabled: !!merchantId,
         queryFn: async (): Promise<MerchantData> => {
             const isDemo = checkDemoMode(isDemoMode);
 
