@@ -1,6 +1,6 @@
 import { log } from "@backend-infrastructure";
 import { currentStablecoinsList } from "@frak-labs/app-essentials";
-import type { Address } from "viem";
+import { type Address, getAddress } from "viem";
 import type { CampaignBankRepository } from "../domain/campaign-bank/repositories/CampaignBankRepository";
 import type { IdentityRepository } from "../domain/identity/repositories/IdentityRepository";
 import type { MerchantRepository } from "../domain/merchant/repositories/MerchantRepository";
@@ -224,7 +224,7 @@ export class SettlementOrchestrator {
             return false;
         }
 
-        const rewardToken = reward.tokenAddress as Address;
+        const rewardToken = getAddress(reward.tokenAddress as Address);
         const tokenBalance = bankState.balances.get(rewardToken) ?? 0n;
         const tokenAllowance = bankState.allowances.get(rewardToken) ?? 0n;
         if (tokenBalance === 0n || tokenAllowance === 0n) {
