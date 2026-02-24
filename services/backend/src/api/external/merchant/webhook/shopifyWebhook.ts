@@ -31,7 +31,8 @@ export const shopifyWebhook = new Elysia()
         }
         if (
             headers["x-shopify-api-version"] !== "2024-10" &&
-            headers["x-shopify-api-version"] !== "2025-01"
+            headers["x-shopify-api-version"] !== "2025-01" &&
+            headers["x-shopify-api-version"] !== "2025-04"
         ) {
             log.warn(
                 {
