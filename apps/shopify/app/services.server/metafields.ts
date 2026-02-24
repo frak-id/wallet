@@ -6,6 +6,7 @@ const MODAL_I18N_KEY = "modal_i18n";
 const APPEARANCE_KEY = "appearance";
 const MERCHANT_ID_KEY = "merchant_id";
 const WALLET_URL_KEY = "wallet_url";
+const COMPONENTS_URL_KEY = "components_url";
 
 export type AppearanceMetafieldValue = {
     logoUrl?: string;
@@ -366,4 +367,30 @@ export async function writeWalletUrlMetafield(
     userErrors: Array<{ field: string; message: string }>;
 }> {
     return writeMetafield(context, WALLET_URL_KEY, walletUrl);
+}
+
+/* -------------------------------------------------------------------------- */
+/*                              Components URL                                */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Read the components CDN URL from shop metafields.
+ */
+export async function getComponentsUrlMetafield({
+    admin: { graphql },
+}: AuthenticatedContext): Promise<string | null> {
+    return readMetafield<string>(graphql, COMPONENTS_URL_KEY);
+}
+
+/**
+ * Write components CDN URL to shop metafields so listener.liquid can read it.
+ */
+export async function writeComponentsUrlMetafield(
+    context: AuthenticatedContext,
+    componentsUrl: string
+): Promise<{
+    success: boolean;
+    userErrors: Array<{ field: string; message: string }>;
+}> {
+    return writeMetafield(context, COMPONENTS_URL_KEY, componentsUrl);
 }

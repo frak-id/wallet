@@ -47,6 +47,9 @@ export default defineConfig(() => {
             "process.env.FRAK_WALLET_URL": JSON.stringify(
                 process.env.FRAK_WALLET_URL
             ),
+            "process.env.FRAK_COMPONENTS_URL": JSON.stringify(
+                process.env.FRAK_COMPONENTS_URL
+            ),
             "process.env.BUSINESS_URL": JSON.stringify(
                 process.env.BUSINESS_URL
             ),

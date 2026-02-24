@@ -44,6 +44,10 @@ export const walletUrl = getStaticVariable({
     dev: "https://wallet-dev.frak.id",
     local: "https://localhost:3000",
 });
+export const componentsUrl = getStaticVariable({
+    prod: "https://cdn.jsdelivr.net/npm/@frak-labs/components@latest",
+    dev: "https://cdn.jsdelivr.net/npm/@frak-labs/components@beta",
+});
 export const businessUrl = getStaticVariable({
     prod: "https://business.frak.id",
     dev: "https://business-dev.frak.id",
