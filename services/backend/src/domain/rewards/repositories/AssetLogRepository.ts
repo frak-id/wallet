@@ -91,7 +91,7 @@ export class AssetLogRepository {
 
     async updateStatusBatch(
         ids: string[],
-        status: AssetStatus | "bank_depleted",
+        status: AssetStatus,
         onchainData?: { txHash: Hex; blockNumber: bigint }
     ): Promise<number> {
         if (ids.length === 0) return 0;
