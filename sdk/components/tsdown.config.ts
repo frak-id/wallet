@@ -131,6 +131,9 @@ export default defineConfig([
         },
         define: {
             "process.env.BUILD_TIMESTAMP": JSON.stringify(Date.now()),
+            "process.env.CDN_TAG": JSON.stringify(
+                process.env.CDN_TAG || "latest"
+            ),
         },
         outputOptions(options) {
             return {

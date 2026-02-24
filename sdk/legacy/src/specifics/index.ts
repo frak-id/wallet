@@ -12,7 +12,7 @@ export function websiteOverrides() {
 
         loadScript(
             "frak-components",
-            "https://cdn.jsdelivr.net/npm/@frak-labs/components@latest/cdn/components.js",
+            `https://cdn.jsdelivr.net/npm/@frak-labs/components@${process.env.CDN_TAG}/cdn/components.js`,
             "module"
         );
     }
