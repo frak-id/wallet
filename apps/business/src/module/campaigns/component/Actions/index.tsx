@@ -1,7 +1,7 @@
 import { Button } from "@frak-labs/ui/component/Button";
 import { useLocation, useNavigate } from "@tanstack/react-router";
 import { Check, X } from "lucide-react";
-import { memo, useCallback } from "react";
+import { memo, useCallback, useEffect } from "react";
 import { ActionsWrapper } from "@/module/common/component/ActionsWrapper";
 import { campaignStore } from "@/stores/campaignStore";
 import styles from "./index.module.css";
@@ -36,10 +36,16 @@ export const Actions = memo(function Actions({
     const navigate = useNavigate();
     const location = useLocation();
     const isSuccess = campaignStore((state) => state.isSuccess);
+    const setSuccess = campaignStore((state) => state.setSuccess);
     const campaignId = campaignStore((state) => state.draft.id);
 
     const step = getStepFromPath(location.pathname);
     const previousPath = getPreviousPath(location.pathname, campaignId);
+
+    useEffect(() => {
+        if (!isSuccess || step === 3) return;
+        setSuccess(false);
+    }, [isSuccess, setSuccess, step]);
 
     const handlePrevious = useCallback(() => {
         if (previousPath) {
