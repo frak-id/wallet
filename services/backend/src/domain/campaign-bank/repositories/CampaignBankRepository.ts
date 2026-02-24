@@ -120,6 +120,7 @@ export class CampaignBankRepository {
     }
 
     async getRolesOf(bankAddress: Address, user: Address): Promise<bigint> {
+        if (!bankAddress) return 0n;
         return readContract(viemClient, {
             address: bankAddress,
             abi: campaignBankAbi,
@@ -132,6 +133,7 @@ export class CampaignBankRepository {
         bankAddress: Address,
         user: Address
     ): Promise<boolean> {
+        if (!bankAddress) return false;
         const roles = await this.getRolesOf(bankAddress, user);
         return (roles & CAMPAIGN_BANK_MANAGER_ROLE) !== 0n;
     }
