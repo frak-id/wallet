@@ -3,7 +3,10 @@ import { AppProvider } from "@shopify/shopify-app-react-router/react";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { Skeleton } from "app/components/Skeleton";
 import { WalletGated } from "app/components/WalletGated";
-import { resolveMerchantId } from "app/services.server/merchant";
+import {
+    ensureWalletUrlMetafield,
+    resolveMerchantId,
+} from "app/services.server/merchant";
 import { shopInfo } from "app/services.server/shop";
 import { doesThemeSupportBlock } from "app/services.server/theme";
 import { shouldShowOutletSkeleton } from "app/utils/navigationLoading";
@@ -33,6 +36,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
         shopInfo(context),
         resolveMerchantId(context),
     ]);
+
+    // Fire-and-forget: sync wallet URL metafield for listener.liquid
+    ensureWalletUrlMetafield(context).catch(() => {});
 
     return {
         apiKey: process.env.SHOPIFY_API_KEY || "",

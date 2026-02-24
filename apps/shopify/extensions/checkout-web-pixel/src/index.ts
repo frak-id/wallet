@@ -1,6 +1,7 @@
 import { register } from "@shopify/web-pixels-extension";
 
-register(({ analytics, browser }) => {
+register(({ analytics, browser, settings }) => {
+    const backendUrl = settings.backendUrl ?? "https://backend.frak.id";
     // Sample subscribe to the checkout completed event
     analytics.subscribe("checkout_completed", async (event) => {
         const interactionToken = await browser.sessionStorage.getItem(
@@ -31,7 +32,7 @@ register(({ analytics, browser }) => {
             token: checkout.token,
         };
 
-        await fetch("https://backend.frak.id/interactions/listenForPurchase", {
+        await fetch(`${backendUrl}/interactions/listenForPurchase`, {
             method: "POST",
             headers: {
                 Accept: "application/json",

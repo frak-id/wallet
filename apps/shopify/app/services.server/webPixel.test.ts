@@ -1,14 +1,26 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { AuthenticatedContext } from "../types/context";
-import { createWebPixel, deleteWebPixel, getWebPixel } from "./webPixel";
+import {
+    createWebPixel,
+    deleteWebPixel,
+    getWebPixel,
+    updateWebPixelSettings,
+} from "./webPixel";
 
 const mockGraphql = vi.fn();
 const mockContext = {
     admin: { graphql: mockGraphql },
 } as unknown as AuthenticatedContext;
 
+const savedBackendUrl = process.env.BACKEND_URL;
+
 beforeEach(() => {
     mockGraphql.mockClear();
+    process.env.BACKEND_URL = "https://backend.frak.id";
+});
+
+afterEach(() => {
+    process.env.BACKEND_URL = savedBackendUrl;
 });
 
 describe("getWebPixel", () => {
@@ -39,7 +51,7 @@ describe("getWebPixel", () => {
 });
 
 describe("createWebPixel", () => {
-    it("should return created pixel with no errors on success", async () => {
+    it("should pass backend URL in settings", async () => {
         const pixel = { id: "gid://shopify/WebPixel/2", settings: "{}" };
         const webPixelCreate = {
             userErrors: [],
@@ -53,7 +65,14 @@ describe("createWebPixel", () => {
 
         expect(mockGraphql).toHaveBeenCalledOnce();
         expect(mockGraphql).toHaveBeenCalledWith(
-            expect.stringContaining("webPixelCreate")
+            expect.stringContaining("webPixelCreate"),
+            expect.objectContaining({
+                variables: {
+                    webPixel: {
+                        settings: { backendUrl: "https://backend.frak.id" },
+                    },
+                },
+            })
         );
         expect(result.userErrors).toHaveLength(0);
         expect(result.webPixel).toEqual(pixel);
@@ -72,6 +91,42 @@ describe("createWebPixel", () => {
 
         expect(result.userErrors).toHaveLength(1);
         expect(result.userErrors[0].message).toBe("Invalid settings");
+    });
+});
+
+describe("updateWebPixelSettings", () => {
+    it("should pass pixel id and backend URL in settings", async () => {
+        const pixel = {
+            id: "gid://shopify/WebPixel/1",
+            settings: '{"backendUrl":"https://backend.frak.id"}',
+        };
+        const webPixelUpdate = {
+            userErrors: [],
+            webPixel: pixel,
+        };
+        mockGraphql.mockResolvedValueOnce({
+            json: () => Promise.resolve({ data: { webPixelUpdate } }),
+        });
+
+        const result = await updateWebPixelSettings({
+            ...mockContext,
+            id: "gid://shopify/WebPixel/1",
+        });
+
+        expect(mockGraphql).toHaveBeenCalledOnce();
+        expect(mockGraphql).toHaveBeenCalledWith(
+            expect.stringContaining("webPixelUpdate"),
+            expect.objectContaining({
+                variables: {
+                    id: "gid://shopify/WebPixel/1",
+                    webPixel: {
+                        settings: { backendUrl: "https://backend.frak.id" },
+                    },
+                },
+            })
+        );
+        expect(result.userErrors).toHaveLength(0);
+        expect(result.webPixel).toEqual(pixel);
     });
 });
 

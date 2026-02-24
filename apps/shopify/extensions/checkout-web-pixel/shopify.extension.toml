@@ -18,4 +18,10 @@ network_access = true
 
 [settings]
 type = "object"
-fields = {}
+[settings.fields.backendUrl]
+name = "Backend URL"
+description = "The backend API endpoint for tracking purchase events"
+type = "single_line_text_field"
+validations = [
+  { name = "min", value = "1" }
+]

@@ -1,7 +1,12 @@
 import type { AuthenticatedContext } from "app/types/context";
 import { LRUCache } from "lru-cache";
 import { backendApi } from "../utils/backendApi";
-import { getMerchantIdMetafield, writeMerchantIdMetafield } from "./metafields";
+import {
+    getMerchantIdMetafield,
+    getWalletUrlMetafield,
+    writeMerchantIdMetafield,
+    writeWalletUrlMetafield,
+} from "./metafields";
 import { shopInfo } from "./shop";
 
 export type MerchantResolveResponse = {
@@ -20,6 +25,11 @@ const merchantIdCache = new LRUCache<string, string>({
 const merchantInfoCache = new LRUCache<string, MerchantResolveResponse>({
     max: 512,
     ttl: 5 * 60_000,
+});
+
+const walletUrlSyncedShops = new LRUCache<string, boolean>({
+    max: 512,
+    ttl: 30 * 60_000,
 });
 
 /**
@@ -134,5 +144,34 @@ async function fetchMerchantFromBackend(
     } catch (error) {
         console.error(`[merchantId] fetch failed for domain ${domain}:`, error);
         return null;
+    }
+}
+
+/**
+ * Ensure the wallet URL metafield matches the current environment.
+ * Uses an in-memory cache to avoid redundant GraphQL calls.
+ */
+export async function ensureWalletUrlMetafield(
+    context: AuthenticatedContext
+): Promise<void> {
+    const expectedUrl = process.env.FRAK_WALLET_URL ?? "";
+    if (!expectedUrl) return;
+
+    const shop = await shopInfo(context);
+    const cacheKey = shop.normalizedDomain;
+
+    if (walletUrlSyncedShops.get(cacheKey)) return;
+
+    try {
+        const current = await getWalletUrlMetafield(context);
+        if (current === expectedUrl) {
+            walletUrlSyncedShops.set(cacheKey, true);
+            return;
+        }
+
+        await writeWalletUrlMetafield(context, expectedUrl);
+        walletUrlSyncedShops.set(cacheKey, true);
+    } catch (error) {
+        console.error("[walletUrl] metafield sync failed:", error);
     }
 }

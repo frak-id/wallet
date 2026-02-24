@@ -35,9 +35,12 @@
   // Read merchantId from metafield
   {% assign merchant_id_metafield = shop.metafields.frak.merchant_id %}
 
+
+  // Read wallet URL from metafield (set by the app per environment)
+  {% assign wallet_url_metafield = shop.metafields.frak.wallet_url %}
   // Top level Frak SDK config
   const frakConfig = {
-    walletUrl: 'https://wallet.frak.id',
+    walletUrl: {{ wallet_url_metafield.value | default: 'https://wallet.frak.id' | json }},
     metadata: {
       // Your app name (will be displayed on some modals and in the SSO)
       name: '{{ shop.name }}',

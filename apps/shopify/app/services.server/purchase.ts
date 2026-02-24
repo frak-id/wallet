@@ -54,7 +54,7 @@ export async function startupPurchase(
         {
             variables: {
                 name: generatedName,
-                returnUrl: "https://extension-shop.frak.id/purchase",
+                returnUrl: `${process.env.SHOPIFY_APP_URL}/purchase`,
                 price: {
                     amount: amount,
                     currencyCode:
