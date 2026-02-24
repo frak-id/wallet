@@ -4,6 +4,8 @@
 
 import { getBackendUrl } from "./backendUrl";
 
+const MERCHANT_ID_STORAGE_KEY = "frak-merchant-id";
+
 /**
  * Response from the merchant lookup endpoint
  */
@@ -39,9 +41,18 @@ export async function fetchMerchantId(
     domain?: string,
     walletUrl?: string
 ): Promise<string | undefined> {
-    // Use cached value if available
+    // Use in-memory cache if available
     if (cachedMerchantId) {
         return cachedMerchantId;
+    }
+
+    // Check sessionStorage (survives page navigations)
+    if (typeof window !== "undefined") {
+        const stored = window.sessionStorage.getItem(MERCHANT_ID_STORAGE_KEY);
+        if (stored) {
+            cachedMerchantId = stored;
+            return stored;
+        }
     }
 
     // If a fetch is already in progress, wait for it
@@ -85,6 +96,13 @@ async function fetchMerchantIdInternal(
 
         const data = (await response.json()) as MerchantLookupResponse;
         cachedMerchantId = data.merchantId;
+        // Persist to sessionStorage so it survives page navigations
+        if (typeof window !== "undefined") {
+            window.sessionStorage.setItem(
+                MERCHANT_ID_STORAGE_KEY,
+                data.merchantId
+            );
+        }
         return cachedMerchantId;
     } catch (error) {
         console.warn("[Frak SDK] Failed to fetch merchantId:", error);
@@ -99,6 +117,9 @@ async function fetchMerchantIdInternal(
 export function clearMerchantIdCache(): void {
     cachedMerchantId = undefined;
     cachePromise = undefined;
+    if (typeof window !== "undefined") {
+        window.sessionStorage.removeItem(MERCHANT_ID_STORAGE_KEY);
+    }
 }
 
 /**
