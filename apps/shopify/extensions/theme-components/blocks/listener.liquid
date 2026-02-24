@@ -87,6 +87,13 @@
     modalWalletConfig,
   };
 
+  // Store merchantId in sessionStorage for the checkout pixel fallback
+  {% if merchant_id_metafield.value %}
+    try {
+      sessionStorage.setItem('frak-merchant-id', {{ merchant_id_metafield.value | json }});
+    } catch (e) {}
+  {% endif %}
+
   // Inject custom JavaScript
   try {
     const script = document.createElement('script');

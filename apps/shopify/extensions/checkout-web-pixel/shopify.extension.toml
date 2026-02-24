@@ -25,3 +25,8 @@ type = "single_line_text_field"
 validations = [
   { name = "min", value = "1" }
 ]
+
+[settings.fields.merchantId]
+name = "Merchant ID"
+description = "The Frak merchant UUID for purchase attribution"
+type = "single_line_text_field"

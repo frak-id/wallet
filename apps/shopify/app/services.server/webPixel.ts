@@ -1,4 +1,5 @@
 import type { AuthenticatedContext } from "app/types/context";
+import { getMerchantIdMetafield } from "./metafields";
 
 export type GetWebPixelReturnType = {
     id: string;
@@ -33,10 +34,18 @@ export type UpdateWebPixelReturnType = {
 /**
  * Build the pixel settings with the current environment's backend URL.
  */
-function buildPixelSettings(): { backendUrl: string } {
-    return {
+function buildPixelSettings(
+    merchantId?: string | null
+): Record<string, string> {
+    const settings: Record<string, string> = {
         backendUrl: process.env.BACKEND_URL ?? "",
     };
+
+    if (merchantId) {
+        settings.merchantId = merchantId;
+    }
+
+    return settings;
 }
 
 /**
@@ -62,10 +71,11 @@ query getWebPixel {
 /**
  * Create the web pixel with environment-specific backend URL in settings.
  */
-export async function createWebPixel({
-    admin: { graphql },
-}: AuthenticatedContext): Promise<CreateWebPixelReturnType> {
-    const response = await graphql(
+export async function createWebPixel(
+    context: AuthenticatedContext
+): Promise<CreateWebPixelReturnType> {
+    const merchantId = await getMerchantIdMetafield(context);
+    const response = await context.admin.graphql(
         `#graphql
 mutation webPixelCreate($webPixel: WebPixelInput!) {
   webPixelCreate(webPixel: $webPixel) {
@@ -82,7 +92,7 @@ mutation webPixelCreate($webPixel: WebPixelInput!) {
         {
             variables: {
                 webPixel: {
-                    settings: buildPixelSettings(),
+                    settings: buildPixelSettings(merchantId),
                 },
             },
         }
@@ -97,11 +107,11 @@ mutation webPixelCreate($webPixel: WebPixelInput!) {
 /**
  * Update the web pixel settings (e.g. after redeployment with new env URLs).
  */
-export async function updateWebPixelSettings({
-    admin: { graphql },
-    id,
-}: AuthenticatedContext & { id: string }): Promise<UpdateWebPixelReturnType> {
-    const response = await graphql(
+export async function updateWebPixelSettings(
+    context: AuthenticatedContext & { id: string }
+): Promise<UpdateWebPixelReturnType> {
+    const merchantId = await getMerchantIdMetafield(context);
+    const response = await context.admin.graphql(
         `#graphql
 mutation webPixelUpdate($id: ID!, $webPixel: WebPixelInput!) {
   webPixelUpdate(id: $id, webPixel: $webPixel) {
@@ -117,9 +127,9 @@ mutation webPixelUpdate($id: ID!, $webPixel: WebPixelInput!) {
 }`,
         {
             variables: {
-                id,
+                id: context.id,
                 webPixel: {
-                    settings: buildPixelSettings(),
+                    settings: buildPixelSettings(merchantId),
                 },
             },
         }

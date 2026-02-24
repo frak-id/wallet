@@ -2,18 +2,30 @@ import { register } from "@shopify/web-pixels-extension";
 
 register(({ analytics, browser, settings }) => {
     const backendUrl = settings.backendUrl ?? "https://backend.frak.id";
-    // Sample subscribe to the checkout completed event
+    const settingsMerchantId = settings.merchantId;
+
     analytics.subscribe("checkout_completed", async (event) => {
         const interactionToken = await browser.sessionStorage.getItem(
             "frak-wallet-interaction-token"
         );
-        if (!interactionToken) {
+        const clientId = await browser.localStorage.getItem("frak-client-id");
+
+        if (!interactionToken && !clientId) {
+            return;
+        }
+
+        const merchantId =
+            settingsMerchantId ||
+            (await browser.sessionStorage.getItem("frak-merchant-id"));
+        if (!merchantId) {
+            console.log(
+                "[FRAK] No merchantId available, skipping purchase tracking"
+            );
             return;
         }
 
         const checkout = event.data.checkout;
 
-        // Check if we got all the right fields
         if (
             !(
                 checkout.order?.customer?.id &&
@@ -25,20 +37,27 @@ register(({ analytics, browser, settings }) => {
             return;
         }
 
-        // Build the payload and send it
         const payload = {
             customerId: checkout.order.customer.id,
             orderId: checkout.order.id,
             token: checkout.token,
+            merchantId,
         };
 
-        await fetch(`${backendUrl}/interactions/listenForPurchase`, {
+        const headers: Record<string, string> = {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+        };
+        if (interactionToken) {
+            headers["x-wallet-sdk-auth"] = interactionToken;
+        }
+        if (clientId) {
+            headers["x-frak-client-id"] = clientId;
+        }
+
+        await fetch(`${backendUrl}/user/track/purchase`, {
             method: "POST",
-            headers: {
-                Accept: "application/json",
-                "Content-Type": "application/json",
-                "x-wallet-sdk-auth": interactionToken,
-            },
+            headers,
             body: JSON.stringify(payload),
             keepalive: true,
         });

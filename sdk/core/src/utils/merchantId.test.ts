@@ -17,8 +17,9 @@ vi.mock("./backendUrl", () => ({
 
 describe("merchantId", () => {
     beforeEach(() => {
-        // Clear cache before each test
+        // Clear cache before each test (also clears sessionStorage)
         clearMerchantIdCache();
+        window.sessionStorage.clear();
         // Clear all mocks
         vi.clearAllMocks();
         // Mock console methods to avoid noise in test output
@@ -263,6 +264,70 @@ describe("merchantId", () => {
             expect(result2).toBe("merchant-cached");
             expect(global.fetch).not.toHaveBeenCalled();
         });
+
+        it("should persist merchantId to sessionStorage after fetch", async () => {
+            const mockResponse = {
+                merchantId: "merchant-persisted",
+                name: "Test Merchant",
+                domain: "shop.example.com",
+            };
+
+            global.fetch = vi.fn().mockResolvedValueOnce({
+                ok: true,
+                json: async () => mockResponse,
+            });
+
+            await fetchMerchantId("shop.example.com");
+
+            expect(window.sessionStorage.getItem("frak-merchant-id")).toBe(
+                "merchant-persisted"
+            );
+        });
+
+        it("should restore merchantId from sessionStorage when in-memory cache is cleared", async () => {
+            const mockResponse = {
+                merchantId: "merchant-storage",
+                name: "Test Merchant",
+                domain: "shop.example.com",
+            };
+
+            global.fetch = vi.fn().mockResolvedValueOnce({
+                ok: true,
+                json: async () => mockResponse,
+            });
+
+            // First call populates both caches
+            const result1 = await fetchMerchantId("shop.example.com");
+            expect(result1).toBe("merchant-storage");
+            expect(global.fetch).toHaveBeenCalledTimes(1);
+
+            // Clear only in-memory cache (not sessionStorage)
+            vi.clearAllMocks();
+            global.fetch = vi.fn();
+
+            // Manually clear in-memory but keep sessionStorage
+            // We do this by calling the internal clear then restoring sessionStorage
+            const stored = window.sessionStorage.getItem("frak-merchant-id");
+            clearMerchantIdCache();
+            window.sessionStorage.setItem("frak-merchant-id", stored!);
+
+            // Second call should restore from sessionStorage without fetch
+            const result2 = await fetchMerchantId("shop.example.com");
+            expect(result2).toBe("merchant-storage");
+            expect(global.fetch).not.toHaveBeenCalled();
+        });
+
+        it("should not write to sessionStorage when fetch fails", async () => {
+            global.fetch = vi
+                .fn()
+                .mockRejectedValueOnce(new Error("Network error"));
+
+            await fetchMerchantId("shop.example.com");
+
+            expect(
+                window.sessionStorage.getItem("frak-merchant-id")
+            ).toBeNull();
+        });
     });
 
     describe("clearMerchantIdCache", () => {
@@ -323,6 +388,30 @@ describe("merchantId", () => {
 
             const result2 = await fetchMerchantId("shop2.example.com");
             expect(result2).toBe("merchant-second");
+        });
+
+        it("should clear sessionStorage when clearing cache", async () => {
+            const mockResponse = {
+                merchantId: "merchant-session-clear",
+                name: "Test Merchant",
+                domain: "shop.example.com",
+            };
+
+            global.fetch = vi.fn().mockResolvedValueOnce({
+                ok: true,
+                json: async () => mockResponse,
+            });
+
+            await fetchMerchantId("shop.example.com");
+            expect(window.sessionStorage.getItem("frak-merchant-id")).toBe(
+                "merchant-session-clear"
+            );
+
+            clearMerchantIdCache();
+
+            expect(
+                window.sessionStorage.getItem("frak-merchant-id")
+            ).toBeNull();
         });
     });
 
