@@ -46,11 +46,21 @@ export function useSaveCampaign() {
             }
 
             const payload = buildApiPayload(draft);
-
             if (draft.id) {
-                return updateCampaign({ campaignId: draft.id, ...payload });
+                // On update, only send rule if rewards are present.
+                // The backend validates rule.rewards on PUT but not
+                // on POST (create). Step 1 doesn't manage rewards
+                // (that's step 2), so sending an empty rewards array
+                // on update causes a 400 "Rule must have at least
+                // one reward".
+                const { rule, ...rest } = payload;
+                const includeRule = rule.rewards.length > 0;
+                return updateCampaign({
+                    campaignId: draft.id,
+                    ...rest,
+                    ...(includeRule ? { rule } : {}),
+                });
             }
-
             const created = await createCampaign(payload);
             campaignStore.getState().updateDraft((d) => ({
                 ...d,

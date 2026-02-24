@@ -35,6 +35,11 @@ export function NewCampaign({ title }: { title: string }) {
         });
     }
 
+    const handleSaveDraft = form.handleSubmit(async (values: CampaignDraft) => {
+        updateDraft(() => values);
+        await saveCampaign.mutateAsync(values);
+    });
+
     return (
         <FormLayout>
             <Head
@@ -53,7 +58,12 @@ export function NewCampaign({ title }: { title: string }) {
                     <FormBudget />
                     <FormTerritory />
                     <FormSchedule />
-                    <Actions isLoading={saveCampaign.isPending} />
+                    <Actions
+                        isLoading={saveCampaign.isPending}
+                        onSaveDraft={handleSaveDraft}
+                        isSaving={saveCampaign.isPending}
+                        isSaved={saveCampaign.isSuccess}
+                    />
                 </form>
             </Form>
         </FormLayout>

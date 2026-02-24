@@ -255,15 +255,12 @@ describe("buildApiPayload", () => {
             ])
         );
     });
-
     test("should set expiresAt from endDate", () => {
         const result = buildApiPayload(mockCampaignDraft);
-
         expect(result.expiresAt).toBe(
             mockCampaignDraft.scheduled.endDate?.toISOString()
         );
     });
-
     test("should preserve existing non-timestamp conditions", () => {
         const draftWithConditions: CampaignDraft = {
             ...mockCampaignDraft,
@@ -283,8 +280,23 @@ describe("buildApiPayload", () => {
             ])
         );
     });
-});
 
+    test("should always include rule in payload (validation handled by save hook)", () => {
+        const draftWithEmptyRewards: CampaignDraft = {
+            ...mockCampaignDraft,
+            id: "existing-campaign-id",
+            rule: {
+                ...mockCampaignDraft.rule,
+                rewards: [],
+            },
+        };
+
+        const result = buildApiPayload(draftWithEmptyRewards);
+
+        expect(result.rule).toBeDefined();
+        expect(result.rule.rewards).toEqual([]);
+    });
+});
 describe("campaignToDraft", () => {
     test("should convert campaign to draft", () => {
         const campaign = {
