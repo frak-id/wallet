@@ -4,6 +4,7 @@ import { boundary } from "@shopify/shopify-app-react-router/server";
 import { Skeleton } from "app/components/Skeleton";
 import { WalletGated } from "app/components/WalletGated";
 import {
+    ensureComponentsUrlMetafield,
     ensureWalletUrlMetafield,
     resolveMerchantId,
 } from "app/services.server/merchant";
@@ -39,6 +40,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
     // Fire-and-forget: sync wallet URL metafield for listener.liquid
     ensureWalletUrlMetafield(context).catch(() => {});
+    // Fire-and-forget: sync components CDN URL metafield for listener.liquid
+    ensureComponentsUrlMetafield(context).catch(() => {});
 
     return {
         apiKey: process.env.SHOPIFY_API_KEY || "",

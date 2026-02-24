@@ -1,4 +1,5 @@
-<script src="https://cdn.jsdelivr.net/npm/@frak-labs/components" defer="defer"></script>
+{% assign components_url_metafield = shop.metafields.frak.components_url %}
+<script src="{{ components_url_metafield.value | default: 'https://cdn.jsdelivr.net/npm/@frak-labs/components@latest' }}" defer="defer"></script>
 {% comment %} <script src="{{ 'components.js' | asset_url }}" defer></script> {% endcomment %}
 <script
   type="text/javascript"

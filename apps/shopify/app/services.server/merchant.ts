@@ -2,8 +2,10 @@ import type { AuthenticatedContext } from "app/types/context";
 import { LRUCache } from "lru-cache";
 import { backendApi } from "../utils/backendApi";
 import {
+    getComponentsUrlMetafield,
     getMerchantIdMetafield,
     getWalletUrlMetafield,
+    writeComponentsUrlMetafield,
     writeMerchantIdMetafield,
     writeWalletUrlMetafield,
 } from "./metafields";
@@ -28,6 +30,11 @@ const merchantInfoCache = new LRUCache<string, MerchantResolveResponse>({
 });
 
 const walletUrlSyncedShops = new LRUCache<string, boolean>({
+    max: 512,
+    ttl: 30 * 60_000,
+});
+
+const componentsUrlSyncedShops = new LRUCache<string, boolean>({
     max: 512,
     ttl: 30 * 60_000,
 });
@@ -173,5 +180,34 @@ export async function ensureWalletUrlMetafield(
         walletUrlSyncedShops.set(cacheKey, true);
     } catch (error) {
         console.error("[walletUrl] metafield sync failed:", error);
+    }
+}
+
+/**
+ * Ensure the components CDN URL metafield matches the current environment.
+ * Uses an in-memory cache to avoid redundant GraphQL calls.
+ */
+export async function ensureComponentsUrlMetafield(
+    context: AuthenticatedContext
+): Promise<void> {
+    const expectedUrl = process.env.FRAK_COMPONENTS_URL ?? "";
+    if (!expectedUrl) return;
+
+    const shop = await shopInfo(context);
+    const cacheKey = shop.normalizedDomain;
+
+    if (componentsUrlSyncedShops.get(cacheKey)) return;
+
+    try {
+        const current = await getComponentsUrlMetafield(context);
+        if (current === expectedUrl) {
+            componentsUrlSyncedShops.set(cacheKey, true);
+            return;
+        }
+
+        await writeComponentsUrlMetafield(context, expectedUrl);
+        componentsUrlSyncedShops.set(cacheKey, true);
+    } catch (error) {
+        console.error("[componentsUrl] metafield sync failed:", error);
     }
 }

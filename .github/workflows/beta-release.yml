@@ -32,6 +32,8 @@ jobs:
 
       - name: "📦 Build SDK packages"
         run: bun run build:sdk
+        env:
+          CDN_TAG: beta
 
       - name: "🏷️ Generate beta version with content hash"
         id: version
