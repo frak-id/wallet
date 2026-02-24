@@ -81,6 +81,14 @@ export function MetricsCampaign() {
         });
     }
 
+    const handleSaveDraft = form.handleSubmit(
+        async (values: MetricsFormValues) => {
+            const updatedDraft = formValuesToDraft(values, draft);
+            updateDraft(() => updatedDraft);
+            await saveCampaign.mutateAsync(updatedDraft);
+        }
+    );
+
     return (
         <FormLayout>
             <Form {...form}>
@@ -119,7 +127,12 @@ export function MetricsCampaign() {
                         <ChainingConfig />
                     </Panel>
 
-                    <Actions isLoading={saveCampaign.isPending} />
+                    <Actions
+                        isLoading={saveCampaign.isPending}
+                        onSaveDraft={handleSaveDraft}
+                        isSaving={saveCampaign.isPending}
+                        isSaved={saveCampaign.isSuccess}
+                    />
                 </form>
             </Form>
         </FormLayout>

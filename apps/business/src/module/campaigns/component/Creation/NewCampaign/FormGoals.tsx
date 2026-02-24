@@ -133,7 +133,7 @@ export function FormGoals() {
                                                     )
                                                 );
                                             }}
-                                            defaultValue={field.value}
+                                            value={field.value}
                                         >
                                             {itemsGoals.map((item) => (
                                                 <FormItem

@@ -65,6 +65,10 @@ export function ValidationCampaign() {
         saveAndPublish(values);
     }
 
+    const handleSaveDraft = form.handleSubmit(async (values: CampaignDraft) => {
+        await saveCampaign.mutateAsync(values);
+    });
+
     const isLoading = isPending || saveCampaign.isPending;
 
     return (
@@ -82,7 +86,12 @@ export function ValidationCampaign() {
                 <form onSubmit={form.handleSubmit(handleSubmit)}>
                     {!isSuccess && <FormCheck />}
                     {isSuccess && <SuccessMessage />}
-                    <Actions isLoading={isLoading} />
+                    <Actions
+                        isLoading={isLoading}
+                        onSaveDraft={handleSaveDraft}
+                        isSaving={saveCampaign.isPending}
+                        isSaved={saveCampaign.isSuccess}
+                    />
                 </form>
             </Form>
         </FormLayout>

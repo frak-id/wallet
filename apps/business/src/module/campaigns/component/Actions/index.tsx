@@ -24,8 +24,14 @@ function getPreviousPath(pathname: string, campaignId?: string): string | null {
 
 export const Actions = memo(function Actions({
     isLoading = false,
+    onSaveDraft,
+    isSaving = false,
+    isSaved = false,
 }: {
     isLoading?: boolean;
+    onSaveDraft?: () => void;
+    isSaving?: boolean;
+    isSaved?: boolean;
 }) {
     const navigate = useNavigate();
     const location = useLocation();
@@ -42,12 +48,23 @@ export const Actions = memo(function Actions({
         }
     }, [navigate, previousPath]);
 
+    if (isSuccess) return null;
+
     return (
         <ActionsWrapper
             left={
-                <Button type={"submit"} variant={"outline"}>
-                    Save Draft
-                </Button>
+                <>
+                    <Button
+                        type={"button"}
+                        variant={"outline"}
+                        onClick={onSaveDraft}
+                        disabled={isLoading || isSaving}
+                        isLoading={isSaving}
+                    >
+                        Save Draft
+                    </Button>
+                    {isSaved && <ActionsMessageSuccess />}
+                </>
             }
             right={
                 <>
