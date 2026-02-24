@@ -1,13 +1,12 @@
 import type { CampaignRuleInsert } from "@backend/domain/campaign/db/schema";
 import type { CampaignRuleDefinition } from "@backend/domain/campaign/schemas";
 import type {
-    MerchantAdminInsert,
-    MerchantInsert,
+    merchantAdminsTable,
+    merchantsTable,
 } from "@backend/domain/merchant/db/schema";
 import type { Address, Hex } from "viem";
-
-export type V2MerchantInsert = MerchantInsert;
-export type V2MerchantAdminInsert = MerchantAdminInsert;
+export type V2MerchantInsert = typeof merchantsTable.$inferInsert;
+export type V2MerchantAdminInsert = typeof merchantAdminsTable.$inferInsert;
 export type V2CampaignRuleInsert = CampaignRuleInsert;
 export type V2CampaignRuleDefinition = CampaignRuleDefinition;
 

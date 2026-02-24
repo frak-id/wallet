@@ -215,24 +215,41 @@ async function fetchCampaignConfigs(
 
         const isLegacy = baseData[idx].campaignType === LEGACY_CAMPAIGN_TYPE;
         if (isLegacy) {
-            const [capConfig, activationPeriod, bank] = result.result as [
-                { period: bigint; amount: bigint },
-                { start: bigint; end: bigint },
-                Address,
-            ];
-            return { capConfig, activationPeriod, bankAddress: bank };
+            const [capConfig, activationPeriod, bank] =
+                result.result as readonly [
+                    { period: number; amount: bigint },
+                    { start: number; end: number },
+                    Address,
+                ];
+            return {
+                capConfig: {
+                    period: BigInt(capConfig.period),
+                    amount: capConfig.amount,
+                },
+                activationPeriod: {
+                    start: BigInt(activationPeriod.start),
+                    end: BigInt(activationPeriod.end),
+                },
+                bankAddress: bank,
+            };
         }
 
         const [capConfig, activationPeriod, bank, chainingConfig] =
-            result.result as [
-                { period: bigint; amount: bigint },
-                { start: bigint; end: bigint },
+            result.result as readonly [
+                { period: number; amount: bigint },
+                { start: number; end: number },
                 Address,
                 { userPercent: bigint; deperditionPerLevel: bigint },
             ];
         return {
-            capConfig,
-            activationPeriod,
+            capConfig: {
+                period: BigInt(capConfig.period),
+                amount: capConfig.amount,
+            },
+            activationPeriod: {
+                start: BigInt(activationPeriod.start),
+                end: BigInt(activationPeriod.end),
+            },
             bankAddress: bank,
             chainingConfig,
         };
