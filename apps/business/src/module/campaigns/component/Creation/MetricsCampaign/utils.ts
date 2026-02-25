@@ -1,5 +1,7 @@
 import type {
+    CampaignGoal,
     CampaignRuleDefinition,
+    CampaignTrigger,
     FixedRewardDefinition,
 } from "@/types/Campaign";
 
@@ -178,4 +180,49 @@ export function extractFormStateFromRule(
             hasReferralCondition ||
             (Array.isArray(rule.conditions) && rule.conditions.length === 0),
     };
+}
+
+/**
+ * Trigger options available in the campaign creation form.
+ * Each trigger is mapped to the goals it is relevant for.
+ */
+export type TriggerOption = {
+    value: CampaignTrigger;
+    label: string;
+};
+
+export const allTriggerOptions: TriggerOption[] = [
+    { value: "referral", label: "Referral" },
+    { value: "create_referral_link", label: "Referral Link Created" },
+    { value: "purchase", label: "Purchase completed" },
+    { value: "custom", label: "Custom" },
+];
+
+/**
+ * Maps each campaign goal to the triggers that are relevant for it.
+ *
+ * - traffic: referral visits + link sharing drive traffic
+ * - registration: referral arrivals + custom signup events
+ * - sales: completed purchases
+ * - awareness: link creation + referral visits increase visibility
+ * - retention: repeat purchases + custom engagement events
+ */
+const triggersByGoal: Record<CampaignGoal, CampaignTrigger[]> = {
+    traffic: ["referral", "create_referral_link"],
+    registration: ["referral", "custom"],
+    sales: ["purchase"],
+    awareness: ["create_referral_link", "referral"],
+    retention: ["purchase", "custom"],
+};
+
+/**
+ * Returns the trigger options filtered by the selected campaign goal.
+ * Falls back to all options when no goal is set.
+ */
+export function getTriggersForGoal(
+    goal: CampaignGoal | undefined
+): TriggerOption[] {
+    if (!goal) return allTriggerOptions;
+    const allowed = triggersByGoal[goal];
+    return allTriggerOptions.filter((t) => allowed.includes(t.value));
 }
