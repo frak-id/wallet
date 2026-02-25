@@ -88,8 +88,7 @@ describe("ReferralService", () => {
             expect(repository.wouldCreateCycle).toHaveBeenCalledWith(
                 merchantId,
                 groupA,
-                groupB,
-                5
+                groupB
             );
             expect(repository.create).not.toHaveBeenCalled();
         });
