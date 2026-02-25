@@ -44,6 +44,25 @@ export class ReferralService {
             };
         }
 
+        // Check if this would create a referral chain cycle
+        const wouldCycle = await this.repository.wouldCreateCycle(
+            params.merchantId,
+            params.referrerIdentityGroupId,
+            params.refereeIdentityGroupId,
+            DEFAULT_MAX_CHAIN_DEPTH
+        );
+        if (wouldCycle) {
+            log.debug(
+                {
+                    merchantId: params.merchantId,
+                    referrerId: params.referrerIdentityGroupId,
+                    refereeId: params.refereeIdentityGroupId,
+                },
+                "Referral would create cycle, skipping"
+            );
+            return { registered: false };
+        }
+
         const created = await this.repository.create({
             merchantId: params.merchantId,
             referrerIdentityGroupId: params.referrerIdentityGroupId,
