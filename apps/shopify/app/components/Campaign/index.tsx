@@ -85,6 +85,9 @@ function CampaignTable({ campaigns }: { campaigns: CampaignResponse[] }) {
                         {t("status.campaign.budgetColumn")}
                     </s-table-header>
                     <s-table-header>
+                        {t("status.campaign.rewardsColumn")}
+                    </s-table-header>
+                    <s-table-header>
                         {t("status.campaign.actionsColumn")}
                     </s-table-header>
                 </s-table-header-row>
@@ -183,9 +186,46 @@ function CampaignTableRow({
         : "-";
 
     const firstBudget = campaign.budgetConfig?.[0];
-    const formattedBudget = firstBudget
-        ? `${formatAmount(Number(firstBudget.amount), currencySymbol)}${firstBudget.label ? ` (${firstBudget.label})` : ""}`
-        : t("status.campaign.noBudget");
+    const budgetUsage = firstBudget
+        ? campaign.budgetUsed?.[firstBudget.label]
+        : undefined;
+    const formattedBudget = useMemo(() => {
+        if (!firstBudget) return t("status.campaign.noBudget");
+        const total = Number(firstBudget.amount);
+        const used = budgetUsage?.used ?? 0;
+        const remaining = Math.max(total - used, 0);
+        const resetAt = budgetUsage?.resetAt
+            ? new Date(budgetUsage.resetAt).toLocaleDateString()
+            : null;
+        const label = firstBudget.label ? ` (${firstBudget.label})` : "";
+        const base = `${formatAmount(remaining, currencySymbol)} / ${formatAmount(total, currencySymbol)}${label}`;
+        return resetAt
+            ? `${base} — ${t("status.campaign.resetAt", { date: resetAt })}`
+            : base;
+    }, [firstBudget, budgetUsage, currencySymbol, t]);
+
+    const rewardSummary = useMemo(() => {
+        const rewards = campaign.rule?.rewards;
+        if (!rewards?.length) return "-";
+        return rewards
+            .map((r) => {
+                const who =
+                    r.recipient === "referrer"
+                        ? t("status.campaign.referrer")
+                        : t("status.campaign.referee");
+                if (r.amountType === "fixed") {
+                    return `${who}: ${formatAmount(r.amount, currencySymbol)}`;
+                }
+                if (r.amountType === "percentage") {
+                    return `${who}: ${r.percent}%`;
+                }
+                if (r.amountType === "tiered") {
+                    return `${who}: ${t("status.campaign.tiered")}`;
+                }
+                return who;
+            })
+            .join(", ");
+    }, [campaign.rule?.rewards, currencySymbol, t]);
 
     const handleSubmit = useCallback(
         (
@@ -217,6 +257,7 @@ function CampaignTableRow({
             </s-table-cell>
             <s-table-cell>{formattedDate}</s-table-cell>
             <s-table-cell>{formattedBudget}</s-table-cell>
+            <s-table-cell>{rewardSummary}</s-table-cell>
             <s-table-cell>
                 <s-stack>
                     {actions.map((intent) => (
@@ -228,6 +269,17 @@ function CampaignTableRow({
                             onSubmit={handleSubmit}
                         />
                     ))}
+                    <s-button
+                        variant="tertiary"
+                        onClick={() =>
+                            window.open(
+                                `${process.env.BUSINESS_URL}/campaigns/${campaign.id}`,
+                                "_blank"
+                            )
+                        }
+                    >
+                        {t("status.campaign.viewDetails")}
+                    </s-button>
                 </s-stack>
             </s-table-cell>
         </s-table-row>

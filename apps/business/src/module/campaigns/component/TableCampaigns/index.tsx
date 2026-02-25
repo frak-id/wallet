@@ -118,19 +118,24 @@ function CellBudget({
     row,
 }: Pick<CellContext<CampaignWithActions, unknown>, "row">) {
     const budgetConfig = row.original.budgetConfig;
+    const budgetUsed = row.original.budgetUsed;
     const firstBudget = budgetConfig?.[0];
 
     if (!firstBudget) {
         return <span className={styles.table__budget}>-</span>;
     }
 
+    const used = budgetUsed?.[firstBudget.label]?.used ?? 0;
+    const remaining = firstBudget.amount - used;
+
     return (
         <span className={styles.table__budget}>
             <span className={styles.table__budgetAmount}>
+                {formatPrice(remaining, undefined, "EUR")} /{" "}
                 {formatPrice(firstBudget.amount, undefined, "EUR")}
             </span>
             <span className={styles.table__budgetType}>
-                {firstBudget.label || "Daily"}
+                {firstBudget.label || "Global"}
             </span>
         </span>
     );

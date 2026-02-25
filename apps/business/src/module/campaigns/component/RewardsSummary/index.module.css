@@ -47,3 +47,9 @@
     color: var(--frak-color-gray-9);
     font-size: 13px;
 }
+
+.rewards__details {
+    color: var(--frak-color-gray-9);
+    font-size: 13px;
+    font-weight: 400;
+}

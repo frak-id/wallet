@@ -38,6 +38,68 @@ export function RewardsSummary({ rewards }: RewardsSummaryProps) {
     );
 }
 
+function formatPercentOf(value: string): string {
+    return value.replace(/_/g, " ");
+}
+
+function RewardAmount({
+    reward,
+    currency,
+}: {
+    reward: RewardDefinition;
+    currency: string;
+}) {
+    if (reward.amountType === "fixed") {
+        return (
+            <span className={styles.rewards__amount}>
+                {reward.amount} {currency}
+            </span>
+        );
+    }
+
+    if (reward.amountType === "percentage") {
+        const bounds = [];
+        if (reward.minAmount !== undefined) {
+            bounds.push(`min ${reward.minAmount} ${currency}`);
+        }
+        if (reward.maxAmount !== undefined) {
+            bounds.push(`max ${reward.maxAmount} ${currency}`);
+        }
+        return (
+            <>
+                <span className={styles.rewards__amount}>
+                    {reward.percent}% of {formatPercentOf(reward.percentOf)}
+                </span>
+                {bounds.length > 0 && (
+                    <span className={styles.rewards__details}>
+                        ({bounds.join(", ")})
+                    </span>
+                )}
+            </>
+        );
+    }
+
+    if (reward.amountType === "tiered") {
+        return (
+            <span className={styles.rewards__amount}>
+                Tiered by {reward.tierField}
+                {reward.tiers.map((tier, i) => (
+                    <span key={i} className={styles.rewards__details}>
+                        {" "}
+                        {tier.minValue}
+                        {tier.maxValue !== undefined
+                            ? `–${tier.maxValue}`
+                            : "+"}
+                        : {tier.amount} {currency}
+                    </span>
+                ))}
+            </span>
+        );
+    }
+
+    return null;
+}
+
 function RewardItem({
     reward,
     currency,
@@ -45,8 +107,7 @@ function RewardItem({
     reward: RewardDefinition;
     currency: string;
 }) {
-    const amount = reward.amountType === "fixed" ? reward.amount : 0;
-    const hasChaining = reward.amountType === "fixed" && reward.chaining;
+    const hasChaining = !!reward.chaining;
 
     return (
         <li className={styles.rewards__item}>
@@ -54,9 +115,7 @@ function RewardItem({
                 {capitalize(reward.recipient)}
             </span>
             <span className={styles.rewards__separator}>:</span>
-            <span className={styles.rewards__amount}>
-                {amount} {currency}
-            </span>
+            <RewardAmount reward={reward} currency={currency} />
             {hasChaining && (
                 <span className={styles.rewards__chaining}>
                     — Chaining enabled ({reward.chaining?.deperditionPerLevel}%

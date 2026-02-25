@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { FormBudget } from "@/module/campaigns/component/Creation/NewCampaign/FormBudget";
 import { FormSchedule } from "@/module/campaigns/component/Creation/NewCampaign/FormSchedule";
+import { FormTitle } from "@/module/campaigns/component/Creation/NewCampaign/FormTitle";
 import { useSaveCampaign } from "@/module/campaigns/hook/useSaveCampaign";
 import { ActionsWrapper } from "@/module/common/component/ActionsWrapper";
 import { Head } from "@/module/common/component/Head";
@@ -34,6 +35,7 @@ export function CampaignEdit({ campaignId }: { campaignId: string }) {
             <Head title={{ content: "Edit campaign", size: "small" }} />
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)}>
+                    <FormTitle />
                     <FormBudget />
                     <FormSchedule />
                     <ActionsWrapper
