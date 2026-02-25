@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-    isAbsoluteUrl,
-    parseChargeId,
-    validateMintParams,
-} from "./url";
+import { isAbsoluteUrl, parseChargeId, validateMintParams } from "./url";
 
 /**
  * Tests for URL utility functions extracted from routes and hooks.
