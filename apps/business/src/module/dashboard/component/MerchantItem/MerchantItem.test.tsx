@@ -1,6 +1,6 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { ProductItem } from "./index";
+import { MerchantItem } from "./index";
 
 vi.mock("@tanstack/react-router", () => ({
     Link: ({ children, to, params, ...props }: any) => (
@@ -10,7 +10,7 @@ vi.mock("@tanstack/react-router", () => ({
     ),
 }));
 
-describe("ProductItem", () => {
+describe("MerchantItem", () => {
     beforeEach(() => {
         vi.clearAllMocks();
     });
@@ -20,13 +20,13 @@ describe("ProductItem", () => {
     });
 
     it("should render with name", () => {
-        render(<ProductItem name="Test Product" />);
+        render(<MerchantItem name="Test Product" />);
 
         expect(screen.getByText("Test Product")).toBeInTheDocument();
     });
 
     it("should render with domain as link when isLink is true", () => {
-        render(<ProductItem name="Product" domain="example.com" />);
+        render(<MerchantItem name="Product" domain="example.com" />);
 
         const domainLink = screen.getByText("example.com");
         expect(domainLink).toBeInTheDocument();
@@ -37,7 +37,7 @@ describe("ProductItem", () => {
 
     it("should render with domain as span when isLink is false", () => {
         const { container } = render(
-            <ProductItem
+            <MerchantItem
                 name="Product"
                 domain="example.com"
                 isLink={false}
@@ -55,7 +55,11 @@ describe("ProductItem", () => {
 
     it("should render actions when showActions is true", () => {
         render(
-            <ProductItem name="Product" merchantId="merchant-123" showActions />
+            <MerchantItem
+                name="Product"
+                merchantId="merchant-123"
+                showActions
+            />
         );
 
         const links = screen.getAllByRole("link");
@@ -64,7 +68,7 @@ describe("ProductItem", () => {
 
     it("should not render actions when showActions is false", () => {
         const { container } = render(
-            <ProductItem
+            <MerchantItem
                 name="Product"
                 merchantId="merchant-123"
                 showActions={false}
@@ -79,7 +83,7 @@ describe("ProductItem", () => {
     });
 
     it("should not render actions when merchantId is not provided", () => {
-        render(<ProductItem name="Product" showActions />);
+        render(<MerchantItem name="Product" showActions />);
 
         const links = screen.queryAllByRole("link");
         expect(links).toHaveLength(0);
@@ -87,7 +91,9 @@ describe("ProductItem", () => {
 
     it("should render with ReactElement name", () => {
         render(
-            <ProductItem name={<span data-testid="custom-name">Custom</span>} />
+            <MerchantItem
+                name={<span data-testid="custom-name">Custom</span>}
+            />
         );
 
         expect(screen.getByTestId("custom-name")).toBeInTheDocument();

@@ -281,8 +281,3 @@ export function MerchantInformationPanel({
         </PanelAccordion>
     );
 }
-
-/**
- * @deprecated Use MerchantInformationPanel instead
- */
-export const ProductInformationPanel = MerchantInformationPanel;

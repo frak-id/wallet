@@ -84,13 +84,3 @@ function MerchantActions({ merchantId }: { merchantId?: string }) {
         </ul>
     );
 }
-
-/**
- * @deprecated Use MerchantItem instead
- */
-export const ProductItem = MerchantItem;
-
-/**
- * @deprecated Use MerchantItemProps instead
- */
-export type ProductItemProps = MerchantItemProps;
