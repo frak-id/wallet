@@ -65,6 +65,7 @@ export class ReferralLinkRepository {
         maxDepth: number
     ): Promise<ReferralChainItem[]> {
         const chain: ReferralChainItem[] = [];
+        const visited = new Set<string>([startIdentityGroupId]);
         let currentId = startIdentityGroupId;
         let depth = 0;
 
@@ -83,11 +84,36 @@ export class ReferralLinkRepository {
 
             if (!referrerId) break;
 
+            // Cycle detected in existing data — stop traversal
+            if (visited.has(referrerId)) break;
+            visited.add(referrerId);
+
             depth++;
             chain.push({ identityGroupId: referrerId, depth });
             currentId = referrerId;
         }
 
         return chain;
+    }
+
+    /**
+     * Check if creating a link (referrer → referee) would form a cycle.
+     * Walks the chain upward from the proposed referrer — if the proposed
+     * referee appears anywhere in that chain, a cycle would be created.
+     */
+    async wouldCreateCycle(
+        merchantId: string,
+        referrerIdentityGroupId: string,
+        refereeIdentityGroupId: string,
+        maxDepth: number
+    ): Promise<boolean> {
+        const chain = await this.findChain(
+            merchantId,
+            referrerIdentityGroupId,
+            maxDepth
+        );
+        return chain.some(
+            (member) => member.identityGroupId === refereeIdentityGroupId
+        );
     }
 }
