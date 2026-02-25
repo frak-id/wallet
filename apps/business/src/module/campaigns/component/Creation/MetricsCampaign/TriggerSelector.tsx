@@ -1,3 +1,4 @@
+import { useEffect, useMemo } from "react";
 import { useFormContext } from "react-hook-form";
 import {
     FormControl,
@@ -6,10 +7,27 @@ import {
     FormLabel,
 } from "@/module/forms/Form";
 import { RadioGroup, RadioGroupItem } from "@/module/forms/RadioGroup";
+import { campaignStore } from "@/stores/campaignStore";
 import styles from "./index.module.css";
+import { getTriggersForGoal } from "./utils";
 
 export function TriggerSelector() {
-    const { control } = useFormContext();
+    const { control, setValue, watch } = useFormContext();
+    const goal = campaignStore((s) => s.draft.metadata.goal);
+    const currentTrigger = watch("trigger");
+
+    const availableTriggers = useMemo(() => getTriggersForGoal(goal), [goal]);
+
+    // Auto-select first valid trigger when current selection is not allowed
+    useEffect(() => {
+        if (availableTriggers.length === 0) return;
+        const isCurrentValid = availableTriggers.some(
+            (t) => t.value === currentTrigger
+        );
+        if (!isCurrentValid) {
+            setValue("trigger", availableTriggers[0].value);
+        }
+    }, [availableTriggers, currentTrigger, setValue]);
 
     return (
         <FormField
@@ -24,49 +42,16 @@ export function TriggerSelector() {
                             value={field.value}
                             className={styles.triggerGroup}
                         >
-                            <FormItem variant="radio">
-                                <FormControl>
-                                    <RadioGroupItem value="referral" />
-                                </FormControl>
-                                <FormLabel variant="radio">Referral</FormLabel>
-                            </FormItem>
-
-                            <FormItem variant="radio">
-                                <FormControl>
-                                    <RadioGroupItem value="create_referral_link" />
-                                </FormControl>
-                                <FormLabel variant="radio">
-                                    Referral Link Created
-                                </FormLabel>
-                            </FormItem>
-
-                            <FormItem variant="radio">
-                                <FormControl>
-                                    <RadioGroupItem value="purchase" />
-                                </FormControl>
-                                <FormLabel variant="radio">
-                                    Purchase completed
-                                </FormLabel>
-                            </FormItem>
-
-                            <FormItem variant="radio">
-                                <FormControl>
-                                    <RadioGroupItem value="custom" />
-                                </FormControl>
-                                <FormLabel variant="radio">Custom</FormLabel>
-                            </FormItem>
-
-                            <FormItem
-                                variant="radio"
-                                className={styles.triggerDisabled}
-                            >
-                                <FormControl>
-                                    <RadioGroupItem value="" disabled />
-                                </FormControl>
-                                <FormLabel variant="radio">
-                                    More to come
-                                </FormLabel>
-                            </FormItem>
+                            {availableTriggers.map((trigger) => (
+                                <FormItem variant="radio" key={trigger.value}>
+                                    <FormControl>
+                                        <RadioGroupItem value={trigger.value} />
+                                    </FormControl>
+                                    <FormLabel variant="radio">
+                                        {trigger.label}
+                                    </FormLabel>
+                                </FormItem>
+                            ))}
                         </RadioGroup>
                     </FormControl>
                 </FormItem>
