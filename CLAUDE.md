@@ -73,7 +73,7 @@ bun run test:watch            # Run in watch mode
 
 **Testing Strategy**:
 - **Framework**: Vitest 4.0 with Projects API (workspace mode)
-  - 7 test projects: wallet, listener, business, wallet-shared, core-sdk, react-sdk, backend
+  - 10 test projects: wallet, listener, business, shopify, wallet-shared, ui, core-sdk, react-sdk, components, backend
   - Frontend projects use jsdom environment; backend uses Node environment
   - Run from root with `bun run test` to execute all projects in parallel
 - **E2E Tests**: Comprehensive Playwright tests (19 specs) covering user flows
@@ -91,15 +91,15 @@ bun run test:watch            # Run in watch mode
 
 **Test Configuration Architecture**:
 - `vitest.config.ts` - Root workspace config (Vitest 4.0 Projects API)
-- `test-setup/vitest.shared.ts` - Shared config with performance optimizations (pool config, plugin helpers)
-- `test-setup/index.ts` - Centralized test utilities barrel export (@test-setup alias)
-- `test-setup/shared-setup.ts` - Browser API mocks (crypto, MessageChannel, IntersectionObserver, ResizeObserver, matchMedia)
-- `test-setup/react-setup.ts` - BigInt serialization for Zustand persist
-- `test-setup/router-mocks.ts` - Router mock factories (react-router, @tanstack/react-router)
-- `test-setup/dom-mocks.ts` - DOM mocking utilities (window.origin, document.referrer)
-- `test-setup/wallet-mocks.ts` - Wagmi, WebAuthn, idb-keyval mocks (uses router-mocks)
-- `test-setup/apps-setup.ts` - Environment variables for frontend apps
-- `test-setup/README.md` - Comprehensive test architecture documentation
+- `packages/test-foundation/src/vitest.shared.ts` - Shared config with performance optimizations (pool config, plugin helpers)
+- `packages/test-foundation/src/index.ts` - Centralized test utilities barrel export (@frak-labs/test-foundation)
+- `packages/test-foundation/src/shared-setup.ts` - Browser API mocks (crypto, MessageChannel, IntersectionObserver, ResizeObserver, matchMedia)
+- `packages/test-foundation/src/react-setup.ts` - BigInt serialization for Zustand persist
+- `packages/test-foundation/src/router-mocks.ts` - Router mock factories (react-router, @tanstack/react-router)
+- `packages/test-foundation/src/dom-mocks.ts` - DOM mocking utilities (window.origin, document.referrer)
+- `packages/test-foundation/src/wallet-mocks.ts` - Wagmi, WebAuthn, idb-keyval mocks (uses router-mocks)
+- `packages/test-foundation/src/apps-setup.ts` - Environment variables for frontend apps
+- `packages/test-foundation/README.md` - Comprehensive test architecture documentation
 - `services/backend/vitest.config.ts` - Backend-specific config (Node environment, path aliases)
 - `services/backend/test/vitest-setup.ts` - Backend mocks (Viem, Drizzle, WebAuthn, Bun runtime)
 - `services/backend/test/mock/` - Backend mock modules (viem.ts, webauthn.ts, common.ts)
@@ -314,3 +314,4 @@ All SDK packages use tsdown (powered by Rolldown) for building both NPM and CDN 
 - **Module Architecture**: Wallet app organizes code by feature modules in `app/module/`, backend by domains in `src/domain/`
 - **WebAuthn + ERC-4337**: Core authentication flow combines WebAuthn passkeys with Account Abstraction smart wallets
 - **Multi-chain Support**: Viem abstractions enable seamless blockchain interactions across multiple networks
+- Vite aliased to `rolldown-vite` (`npm:rolldown-vite@^7.3.1`) — faster Rust-based bundler

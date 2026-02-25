@@ -1,8 +1,8 @@
 # AGENTS.md
 
-**Generated:** 2026-02-18  
-**Commit:** bbb5bee29  
-**Branch:** feat/shopify-migration
+**Generated:** 2026-02-25  
+**Commit:** e83f896b4  
+**Branch:** dev
 
 ## Overview
 
@@ -46,8 +46,8 @@ frak-wallet/
 | Shared wallet logic | `packages/wallet-shared/src/` | Stores, auth, blockchain |
 | UI components | `packages/ui/component/` | Radix-based, CSS Modules |
 | Core SDK actions | `sdk/core/src/actions/` | Blockchain interactions |
-| React hooks | `sdk/react/src/hook/` | 9 hooks + providers |
-| Backend domains | `services/backend/src/domain/` | auth, wallet, oracle, etc. |
+| React hooks | `sdk/react/src/hook/` | 10 hooks + providers |
+| Backend domains | `services/backend/src/domain/` | auth, wallet, rewards, campaign, etc. |
 | Shopify app | `apps/shopify/app/` | React Router v7, Polaris v13 |
 | Shopify services | `apps/shopify/app/services.server/` | Shopify GraphQL, merchant resolution |
 | Shopify extensions | `apps/shopify/extensions/` | Theme blocks, checkout pixel |
@@ -68,7 +68,7 @@ bun run format             # Biome format (4-space, double quotes)
 bun run typecheck          # TypeScript check all packages
 
 # Testing - CRITICAL: use "bun run test", NOT "bun test"
-bun run test               # All 11 Vitest projects in parallel
+bun run test               # All 10 Vitest projects in parallel
 bun run test --project wallet-unit  # Single project
 bun run test:coverage      # With coverage (40% target)
 cd apps/wallet && bun run test:e2e  # Playwright E2E
@@ -152,7 +152,7 @@ All four must pass. Do not commit or report completion with failures.
 
 ## Testing
 
-- **11 Vitest projects**: wallet, listener, business, wallet-shared, ui, core-sdk, react-sdk, components, shopify, backend + others
+- **10 Vitest projects**: wallet, listener, business, shopify, wallet-shared, ui, core-sdk, react-sdk, components, backend
 - **Frontend**: jsdom environment, mock Wagmi/WebAuthn/TanStack Query
 - **Backend**: Node environment, mock Viem/Drizzle/Bun runtime
 - **Shopify**: Node environment, co-located `*.test.ts` files
@@ -229,3 +229,5 @@ Purpose-based agents in `.opencode/agent/`:
 - Drizzle schemas: `src/domain/*/db/schema.ts` pattern
 - Linked packages (Changesets): frame-connector, core-sdk, react-sdk
 - Workspace exports use `development` condition for source in monorepo
+- Vite aliased to `rolldown-vite` (`npm:rolldown-vite@^7.3.1`) — faster Rust-based bundler
+- Shopify app uses relative imports (exception to `@/...` paths convention)

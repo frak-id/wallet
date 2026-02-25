@@ -1,6 +1,6 @@
 # PROJECT KNOWLEDGE BASE
 
-**Generated:** 2026-02-12 · **Commit:** e39140c · **Branch:** main
+**Generated:** 2026-02-25 · **Commit:** e83f896b4 · **Branch:** dev
 
 ## OVERVIEW
 
@@ -161,4 +161,3 @@ Env vars injected at build time via `vite.config.ts` `define` block. Secrets fro
 - **Blockchain**: Arbitrum (prod) / Arbitrum Sepolia (dev). RPC via erpc.gcp.frak.id. viem multicall with 50ms batching.
 - **Node requirement**: ^20.10 || >=21.0.0.
 - **Third Shopify config**: `shopify.app.frakdevr.toml` for staging (FrakDevR), uses Cloudflare tunnel, API v2025-04.
-- **Debug log**: `backendMerchant.ts:86` has `console.log(1, sessionToken)` left in code.
