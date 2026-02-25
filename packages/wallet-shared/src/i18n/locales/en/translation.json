@@ -290,7 +290,8 @@
         "inAppBrowser": {
             "warning": "You're using an embedded browser. Your experience may be degraded. Tap to open in your browser.",
             "clickToOpen": "Tap to open in your browser.",
-            "dismiss": "Dismiss inapp browser warning"
+            "dismiss": "Dismiss inapp browser warning",
+            "clipboardAlert": "This browser doesn't support all features needed.\n\nThe link has been copied to your clipboard.\n\nTo continue:\n1. Open Safari\n2. Tap the address bar\n3. Paste and go"
         },
         "toastLoading": {
             "stuck": "Stuck? See the <pLink>Troubleshooting</pLink> section for more information.<br /><br />You can try to <button>cleanup</button>.<br />(this will logout and you will need to redo a login / pairing)",

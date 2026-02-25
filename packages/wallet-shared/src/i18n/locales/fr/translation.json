@@ -288,7 +288,8 @@
         "inAppBrowser": {
             "warning": "Vous utilisez un navigateur intégré. Votre expérience pourrait être dégradée. Appuyez pour ouvrir dans votre navigateur.",
             "clickToOpen": "Appuyez pour ouvrir dans votre navigateur",
-            "dismiss": "Masquer le message"
+            "dismiss": "Masquer le message",
+            "clipboardAlert": "Ce navigateur ne prend pas en charge toutes les fonctionnalités.\n\nLe lien a été copié dans votre presse-papiers.\n\nPour continuer :\n1. Ouvrez Safari\n2. Appuyez sur la barre d'adresse\n3. Collez et validez"
         },
         "toastLoading": {
             "stuck": "Vous êtes bloqué ? Consulter la section <pLink>Dépannage</pLink> pour plus d'informations.<br /><br />Vous pouvez essayer de <button>nettoyer</button>.<br />(cela vous déconnectera et vous devrez redémarrer une connexion / appairage)",

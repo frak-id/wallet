@@ -16,9 +16,9 @@ type InAppBrowserToastProps = {
     getMergeToken?: () => Promise<string | undefined>;
     /**
      * Parent page URL from SDK handshake (iframe path only).
-     * Used on iPad where all redirect approaches are blocked by
-     * WKWebView — navigator.share() opens native share sheet
-     * with "Open in Safari" option.
+     * Used on iPad where all programmatic redirect approaches
+     * are blocked by WKWebView — clipboard copy is the only
+     * reliable escape path.
      */
     parentUrl?: string;
 };
@@ -39,12 +39,11 @@ export function InAppBrowserToast({
         if (isInIframe) {
             if (isIPad && parentUrl) {
                 // iPad WKWebView blocks all programmatic escapes:
-                // x-safari-https://, window.open, <a target="_blank">
-                // all fail. navigator.share() invokes the native iOS
-                // share sheet which has "Open in Safari" — system-level
-                // UI that WKWebView cannot intercept.
+                // x-safari-https://, window.open, <a target="_blank">,
+                // navigator.share (no Safari option in share sheet).
+                // Clipboard copy + instruction is the only path.
                 trackGenericEvent("in-app-browser-redirect", {
-                    target: "sd-iframe-share",
+                    target: "sd-iframe-clipboard",
                 });
                 const mergeToken = await getMergeToken?.();
                 let targetUrl = parentUrl;
@@ -53,7 +52,8 @@ export function InAppBrowserToast({
                     url.searchParams.set("fmt", mergeToken);
                     targetUrl = url.toString();
                 }
-                await triggerNativeShare(targetUrl);
+                await copyToClipboard(targetUrl);
+                alert(t("wallet.inAppBrowser.clipboardAlert"));
             } else {
                 // iPhone/other: lifecycle event → parent uses x-safari-https://
                 trackGenericEvent("in-app-browser-redirect", {
@@ -77,7 +77,7 @@ export function InAppBrowserToast({
     }, [getMergeToken, parentUrl]);
 
     // Auto-redirect on first detection — skip on iPad since
-    // navigator.share requires user gesture.
+    // clipboard copy without user gesture has no visible feedback.
     useEffect(() => {
         if (!isInAppBrowser || hasAttemptedRedirect) return;
         if (isIPad && isInIframe) return;
@@ -108,24 +108,6 @@ export function InAppBrowserToast({
             onDismiss={handleDismiss}
         />
     );
-}
-
-/**
- * Trigger native share sheet via Web Share API.
- * Falls back to clipboard copy if share is unavailable.
- */
-async function triggerNativeShare(url: string): Promise<void> {
-    if (navigator.share) {
-        try {
-            await navigator.share({ url });
-            return;
-        } catch {
-            // User cancelled or API blocked — fall through to clipboard
-        }
-    }
-    // Fallback: copy to clipboard
-    await copyToClipboard(url);
-    alert("Link copied! Open Safari and paste in the address bar.");
 }
 
 /**
