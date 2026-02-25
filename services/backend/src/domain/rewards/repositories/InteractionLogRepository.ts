@@ -1,4 +1,4 @@
-import { and, inArray, isNotNull, isNull, lt, sql } from "drizzle-orm";
+import { and, inArray, isNotNull, isNull } from "drizzle-orm";
 import { db } from "../../../infrastructure/persistence/postgres";
 import {
     type InteractionLogInsert,
@@ -27,17 +27,12 @@ export class InteractionLogRepository {
 
     async findUnprocessedForRewards({
         limit,
-        minAgeSeconds,
     }: {
         limit: number;
-        minAgeSeconds: number;
     }): Promise<InteractionLogSelect[]> {
-        const minAgeThreshold = sql`NOW() - INTERVAL '${sql.raw(minAgeSeconds.toString())} seconds'`;
-
         const conditions = [
             isNull(interactionLogsTable.processedAt),
             isNotNull(interactionLogsTable.identityGroupId),
-            lt(interactionLogsTable.createdAt, minAgeThreshold),
         ];
 
         return db

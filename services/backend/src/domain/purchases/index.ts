@@ -10,6 +10,7 @@ export {
     type MerchantWebhook,
     type PurchaseInsert,
     type PurchaseItemInsert,
+    type PurchaseItemSelect,
     PurchaseRepository,
 } from "./repositories/PurchaseRepository";
 export {

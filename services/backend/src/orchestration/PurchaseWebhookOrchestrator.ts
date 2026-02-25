@@ -1,4 +1,4 @@
-import { eventEmitter, log } from "@backend-infrastructure";
+import { log } from "@backend-infrastructure";
 import type { IdentityRepository } from "../domain/identity/repositories/IdentityRepository";
 import type {
     PurchaseClaimRepository,
@@ -6,9 +6,8 @@ import type {
     PurchaseItemInsert,
     PurchaseRepository,
 } from "../domain/purchases";
-import type { InteractionLogRepository } from "../domain/rewards/repositories/InteractionLogRepository";
-import type { PurchasePayload } from "../domain/rewards/types";
 import type { IdentityOrchestrator } from "./identity";
+import type { PurchaseInteractionCreator } from "./PurchaseInteractionCreator";
 
 type UpsertPurchaseParams = {
     purchase: PurchaseInsert;
@@ -18,9 +17,10 @@ type UpsertPurchaseParams = {
 
 type UpsertPurchaseResult = {
     purchaseId: string;
-    identityGroupId: string;
+    identityGroupId: string | null;
     interactionLogId: string | null;
     isDuplicate: boolean;
+    pendingClaim: boolean;
 };
 
 export class PurchaseWebhookOrchestrator {
@@ -29,7 +29,7 @@ export class PurchaseWebhookOrchestrator {
         private readonly purchaseClaimRepository: PurchaseClaimRepository,
         private readonly identityRepository: IdentityRepository,
         private readonly identityOrchestrator: IdentityOrchestrator,
-        private readonly interactionLogRepository: InteractionLogRepository
+        private readonly purchaseInteractionCreator: PurchaseInteractionCreator
     ) {}
 
     async upsertPurchase({
@@ -37,12 +37,46 @@ export class PurchaseWebhookOrchestrator {
         purchaseItems,
         merchantId,
     }: UpsertPurchaseParams): Promise<UpsertPurchaseResult> {
-        const identityGroupId = await this.resolveIdentityForPurchase({
+        // Check if a claim exists for this purchase
+        const claim = await this.purchaseClaimRepository.findByPurchaseKey({
             merchantId,
-            customerId: purchase.externalCustomerId,
             orderId: purchase.externalId,
             purchaseToken: purchase.purchaseToken ?? "",
         });
+
+        if (!claim) {
+            // No claim yet — store the purchase and wait for the claim to arrive.
+            // The interaction will be created when PurchaseLinkingOrchestrator
+            // reconciles the late claim with this purchase.
+            const purchaseId = await this.purchaseRepository.upsertWithItems({
+                purchase,
+                items: purchaseItems,
+            });
+
+            log.info(
+                {
+                    purchaseId,
+                    merchantId,
+                    orderId: purchase.externalId,
+                },
+                "Purchase stored, pending claim for interaction creation"
+            );
+
+            return {
+                purchaseId,
+                identityGroupId: null,
+                interactionLogId: null,
+                isDuplicate: false,
+                pendingClaim: true,
+            };
+        }
+
+        // Claim exists — resolve identity, store purchase, create interaction
+        const identityGroupId = await this.resolveWithValidatedClaim(claim, {
+            merchantId,
+            customerId: purchase.externalCustomerId,
+        });
+        await this.purchaseClaimRepository.delete(claim.id);
 
         const purchaseId = await this.purchaseRepository.upsertWithItems({
             purchase,
@@ -50,88 +84,29 @@ export class PurchaseWebhookOrchestrator {
             identityGroupId,
         });
 
-        const payload: PurchasePayload = {
-            orderId: purchase.externalId,
+        const interactionLogId = await this.purchaseInteractionCreator.create({
+            purchaseId,
+            externalId: purchase.externalId,
             externalCustomerId: purchase.externalCustomerId,
-            amount: Number(purchase.totalPrice),
-            currency: purchase.currencyCode,
+            totalPrice: purchase.totalPrice,
+            currencyCode: purchase.currencyCode,
             items: purchaseItems.map((item) => ({
-                productId: item.externalId,
+                externalId: item.externalId,
                 name: item.name,
                 quantity: item.quantity,
-                unitPrice: Number(item.price),
-                totalPrice: Number(item.price) * item.quantity,
+                price: item.price,
             })),
-            purchaseId,
-        };
-
-        const externalEventId = `purchase:${purchase.externalId}`;
-        const interactionLog =
-            await this.interactionLogRepository.createIdempotent({
-                type: "purchase",
-                identityGroupId,
-                merchantId,
-                externalEventId,
-                payload,
-            });
-
-        if (!interactionLog) {
-            log.debug(
-                { purchaseId, externalEventId },
-                "Duplicate purchase webhook, skipping interaction creation"
-            );
-            return {
-                purchaseId,
-                identityGroupId,
-                interactionLogId: null,
-                isDuplicate: true,
-            };
-        }
-
-        eventEmitter.emit("newInteraction", { type: "purchase" });
-
-        log.info(
-            {
-                purchaseId,
-                identityGroupId,
-                interactionLogId: interactionLog.id,
-            },
-            "Purchase processed with identity"
-        );
+            identityGroupId,
+            merchantId,
+        });
 
         return {
             purchaseId,
             identityGroupId,
-            interactionLogId: interactionLog.id,
-            isDuplicate: false,
+            interactionLogId,
+            isDuplicate: interactionLogId === null,
+            pendingClaim: false,
         };
-    }
-
-    private async resolveIdentityForPurchase(params: {
-        merchantId: string;
-        customerId: string;
-        orderId: string;
-        purchaseToken: string;
-    }): Promise<string> {
-        const claim = await this.purchaseClaimRepository.findByPurchaseKey({
-            merchantId: params.merchantId,
-            orderId: params.orderId,
-            purchaseToken: params.purchaseToken,
-        });
-
-        if (claim) {
-            const groupId = await this.resolveWithValidatedClaim(claim, params);
-            await this.purchaseClaimRepository.delete(claim.id);
-            return groupId;
-        }
-
-        const { groupId } = await this.identityOrchestrator.resolve({
-            type: "merchant_customer",
-            value: params.customerId,
-            merchantId: params.merchantId,
-        });
-
-        return groupId;
     }
 
     private async resolveWithValidatedClaim(

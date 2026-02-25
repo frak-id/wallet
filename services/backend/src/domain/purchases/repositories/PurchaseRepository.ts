@@ -12,6 +12,7 @@ export type PurchaseItemInsert = Omit<
     typeof purchaseItemsTable.$inferInsert,
     "id" | "purchaseId"
 >;
+export type PurchaseItemSelect = typeof purchaseItemsTable.$inferSelect;
 export type MerchantWebhook = typeof merchantWebhooksTable.$inferSelect;
 
 export class PurchaseRepository {
@@ -88,5 +89,14 @@ export class PurchaseRepository {
             where: eq(merchantWebhooksTable.merchantId, merchantId),
         });
         return result ?? null;
+    }
+
+    async findItemsByPurchaseId(
+        purchaseId: string
+    ): Promise<PurchaseItemSelect[]> {
+        return db
+            .select()
+            .from(purchaseItemsTable)
+            .where(eq(purchaseItemsTable.purchaseId, purchaseId));
     }
 }

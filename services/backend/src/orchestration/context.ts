@@ -16,6 +16,7 @@ import {
 } from "./identity";
 import { InteractionSubmissionOrchestrator } from "./interaction-submission";
 import { MemberQueryOrchestrator } from "./MemberQueryOrchestrator";
+import { PurchaseInteractionCreator } from "./PurchaseInteractionCreator";
 import { PurchaseLinkingOrchestrator } from "./PurchaseLinkingOrchestrator";
 import { PurchaseWebhookOrchestrator } from "./PurchaseWebhookOrchestrator";
 import { RewardExpirationOrchestrator } from "./RewardExpirationOrchestrator";
@@ -55,10 +56,15 @@ const batchRewardOrchestrator = new BatchRewardOrchestrator(
     MerchantContext.repositories.merchant
 );
 
+const purchaseInteractionCreator = new PurchaseInteractionCreator(
+    RewardsContext.repositories.interactionLog
+);
+
 const purchaseLinkingOrchestrator = new PurchaseLinkingOrchestrator(
     PurchasesContext.repositories.purchase,
     PurchasesContext.repositories.purchaseClaim,
-    identityOrchestrator
+    identityOrchestrator,
+    purchaseInteractionCreator
 );
 
 const purchaseWebhookOrchestrator = new PurchaseWebhookOrchestrator(
@@ -66,7 +72,7 @@ const purchaseWebhookOrchestrator = new PurchaseWebhookOrchestrator(
     PurchasesContext.repositories.purchaseClaim,
     IdentityContext.repositories.identity,
     identityOrchestrator,
-    RewardsContext.repositories.interactionLog
+    purchaseInteractionCreator
 );
 
 const settlementOrchestrator = new SettlementOrchestrator(

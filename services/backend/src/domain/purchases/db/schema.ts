@@ -84,11 +84,18 @@ export const purchaseItemsTable = pgTable(
 /**
  * Purchase claims table - tracks SDK claims awaiting webhook validation.
  *
- * Flow:
- * 1. SDK calls /track/purchase → creates claim with (order_id, token) → claiming_identity_group_id
- * 2. Webhook arrives → looks up claim by (merchant_id, order_id, token)
- *    - If found: validates claim, links purchase to claiming group, deletes claim
- *    - If not found: resolves merchant_customer directly (returning user or no SDK)
+ * Bidirectional flow — interaction is only created when both claim and webhook are present:
+ *
+ * Path A (claim first):
+ * 1. SDK calls /track/purchase → creates claim with (order_id, token)
+ * 2. Webhook arrives → finds claim → resolves identity → creates interaction → deletes claim
+ *
+ * Path B (webhook first):
+ * 1. Webhook arrives → no claim found → stores purchase without interaction (pending claim)
+ * 2. SDK calls /track/purchase → finds stored purchase → reconciles identity → creates interaction
+ *
+ * Purchases without a claim will have no interaction (no claim = no interaction).
+ * These are identifiable in the DB as purchases with a NULL identity_group_id.
  *
  * Security: Claims are keyed by (merchant_id, order_id, token) - attackers can't guess order_id + token
  */
