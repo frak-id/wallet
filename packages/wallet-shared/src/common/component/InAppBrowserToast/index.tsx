@@ -37,7 +37,7 @@ export function InAppBrowserToast({
 
     const handleRedirect = useCallback(async () => {
         if (isInIframe) {
-            if (isIPad && parentUrl) {
+            if (isIPad) {
                 // iPad WKWebView blocks all programmatic escapes:
                 // x-safari-https://, window.open, <a target="_blank">,
                 // navigator.share (no Safari option in share sheet).
@@ -46,14 +46,18 @@ export function InAppBrowserToast({
                     target: "sd-iframe-clipboard",
                 });
                 const mergeToken = await getMergeToken?.();
-                let targetUrl = parentUrl;
-                if (mergeToken) {
-                    const url = new URL(parentUrl);
-                    url.searchParams.set("fmt", mergeToken);
-                    targetUrl = url.toString();
-                }
-                await copyToClipboard(targetUrl);
-                alert(t("wallet.inAppBrowser.clipboardAlert"));
+                const targetUrl = appendMergeToken(
+                    parentUrl ?? window.location.href,
+                    mergeToken
+                );
+                const hasCopiedLink = await copyToClipboard(targetUrl);
+                alert(
+                    hasCopiedLink
+                        ? t("wallet.inAppBrowser.clipboardAlert")
+                        : t("wallet.inAppBrowser.clipboardManualAlert", {
+                              url: targetUrl,
+                          })
+                );
             } else {
                 // iPhone/other: lifecycle event → parent uses x-safari-https://
                 trackGenericEvent("in-app-browser-redirect", {
@@ -74,7 +78,7 @@ export function InAppBrowserToast({
             });
             redirectToExternalBrowser(window.location.href);
         }
-    }, [getMergeToken, parentUrl]);
+    }, [getMergeToken, parentUrl, t]);
 
     // Auto-redirect on first detection — skip on iPad since
     // clipboard copy without user gesture has no visible feedback.
@@ -114,17 +118,39 @@ export function InAppBrowserToast({
  * Copy text to clipboard with execCommand fallback for cross-origin
  * iframes where navigator.clipboard may be blocked by Permissions-Policy.
  */
-async function copyToClipboard(text: string): Promise<void> {
+async function copyToClipboard(text: string): Promise<boolean> {
     try {
         await navigator.clipboard.writeText(text);
+        return true;
+    } catch {} // Expected in cross-origin iframes; falls through to execCommand
+
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.style.position = "fixed";
+    textarea.style.opacity = "0";
+    document.body.appendChild(textarea);
+    textarea.select();
+
+    try {
+        return document.execCommand("copy");
     } catch {
-        const textarea = document.createElement("textarea");
-        textarea.value = text;
-        textarea.style.position = "fixed";
-        textarea.style.opacity = "0";
-        document.body.appendChild(textarea);
-        textarea.select();
-        document.execCommand("copy");
+        return false;
+    } finally {
         document.body.removeChild(textarea);
+    }
+}
+
+function appendMergeToken(urlString: string, mergeToken?: string): string {
+    if (!mergeToken) {
+        return urlString;
+    }
+
+    try {
+        const url = new URL(urlString);
+        url.searchParams.set("fmt", mergeToken);
+        return url.toString();
+    } catch {
+        const separator = urlString.includes("?") ? "&" : "?";
+        return `${urlString}${separator}fmt=${encodeURIComponent(mergeToken)}`;
     }
 }

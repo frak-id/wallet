@@ -203,6 +203,8 @@ interface Resources {
         wallet: {
             activateNotifications: "<strong>Enable notifications</strong> <br /> to be notified when your gains are paid";
             inAppBrowser: {
+                clipboardAlert: "This browser doesn't support all features needed.\n\nThe link has been copied to your clipboard.\n\nTo continue:\n1. Open Safari\n2. Tap the address bar\n3. Paste and go";
+                clipboardManualAlert: "This browser doesn't support all features needed.\n\nAutomatic copy failed.\n\nCopy this link manually:\n{{url}}\n\nThen:\n1. Open Safari\n2. Tap the address bar\n3. Paste and go";
                 clickToOpen: "Tap to open in your browser.";
                 dismiss: "Dismiss inapp browser warning";
                 warning: "You're using an embedded browser. Your experience may be degraded. Tap to open in your browser.";
