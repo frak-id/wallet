@@ -1,4 +1,4 @@
-import { afterAll, describe, expect, it, vi } from "vitest";
+import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { ReferralLinkRepository } from "./ReferralLinkRepository";
 
 vi.mock("@backend-infrastructure", () => ({
@@ -11,8 +11,13 @@ vi.mock("@backend-infrastructure", () => ({
 }));
 
 /**
- * Mock the DB layer — we test the cycle detection logic, not the SQL.
+ * Mock the DB layer. db.execute returns T[] directly with postgres-js.
+ * vi.hoisted ensures mockExecute is available when vi.mock is hoisted.
  */
+const { mockExecute } = vi.hoisted(() => ({
+    mockExecute: vi.fn(),
+}));
+
 vi.mock("../../../infrastructure/persistence/postgres", () => ({
     db: {
         select: vi.fn().mockReturnThis(),
@@ -22,6 +27,7 @@ vi.mock("../../../infrastructure/persistence/postgres", () => ({
         insert: vi.fn().mockReturnThis(),
         values: vi.fn().mockReturnThis(),
         returning: vi.fn().mockResolvedValue([]),
+        execute: mockExecute,
     },
 }));
 
@@ -30,136 +36,106 @@ describe("ReferralLinkRepository", () => {
         vi.restoreAllMocks();
     });
 
+    beforeEach(() => {
+        mockExecute.mockReset();
+    });
+
     const merchantId = "merchant-1";
     const groupA = "group-a";
     const groupB = "group-b";
     const groupC = "group-c";
-    const groupD = "group-d";
 
-    describe("findChain - cycle defense", () => {
-        it("should stop traversal when a cycle is detected in existing data", async () => {
+    describe("findChain (recursive CTE)", () => {
+        it("should return chain from CTE results", async () => {
             const repository = new ReferralLinkRepository();
 
-            // Simulate a cyclic chain: A→B→C→A
-            // findByReferee(merchant, X) returns "who referred X"
-            const referralMap: Record<string, string> = {
-                [groupA]: groupB, // B referred A
-                [groupB]: groupC, // C referred B
-                [groupC]: groupA, // A referred C (cycle!)
-            };
+            // Simulate CTE returning a 2-level chain: A→B→C
+            mockExecute.mockResolvedValue([
+                { identity_group_id: groupB, depth: 1 },
+                { identity_group_id: groupC, depth: 2 },
+            ]);
 
-            vi.spyOn(repository, "findByReferee").mockImplementation(
-                async (_merchantId, refereeId) => {
-                    const referrerId = referralMap[refereeId];
-                    if (!referrerId) return null;
-                    return {
-                        id: `link-${refereeId}`,
-                        merchantId,
-                        referrerIdentityGroupId: referrerId,
-                        refereeIdentityGroupId: refereeId,
-                        createdAt: new Date(),
-                    };
-                }
-            );
-
-            // Starting from A, chain should be B(1), C(2) then stop
-            // because A is in the visited set (it's the start)
-            const chain = await repository.findChain(merchantId, groupA, 10);
+            const chain = await repository.findChain(merchantId, groupA, 5);
 
             expect(chain).toEqual([
                 { identityGroupId: groupB, depth: 1 },
                 { identityGroupId: groupC, depth: 2 },
             ]);
-            // Should NOT include groupA again (cycle break)
-            expect(
-                chain.find((m) => m.identityGroupId === groupA)
-            ).toBeUndefined();
+            expect(mockExecute).toHaveBeenCalledTimes(1);
         });
 
-        it("should stop at maxDepth even without cycle", async () => {
+        it("should return empty chain when no referrer exists", async () => {
             const repository = new ReferralLinkRepository();
 
-            // Linear chain: A→B→C→D
-            const referralMap: Record<string, string> = {
-                [groupA]: groupB,
-                [groupB]: groupC,
-                [groupC]: groupD,
-            };
+            mockExecute.mockResolvedValue([]);
 
-            vi.spyOn(repository, "findByReferee").mockImplementation(
-                async (_merchantId, refereeId) => {
-                    const referrerId = referralMap[refereeId];
-                    if (!referrerId) return null;
-                    return {
-                        id: `link-${refereeId}`,
-                        merchantId,
-                        referrerIdentityGroupId: referrerId,
-                        refereeIdentityGroupId: refereeId,
-                        createdAt: new Date(),
-                    };
-                }
-            );
+            const chain = await repository.findChain(merchantId, groupA, 5);
 
-            const chain = await repository.findChain(merchantId, groupA, 2);
+            expect(chain).toEqual([]);
+        });
 
-            expect(chain).toHaveLength(2);
-            expect(chain[0]).toEqual({
-                identityGroupId: groupB,
-                depth: 1,
-            });
-            expect(chain[1]).toEqual({
-                identityGroupId: groupC,
-                depth: 2,
-            });
+        it("should cache chain results for repeated calls", async () => {
+            const repository = new ReferralLinkRepository();
+
+            mockExecute.mockResolvedValue([
+                { identity_group_id: groupB, depth: 1 },
+            ]);
+
+            // First call — hits DB
+            await repository.findChain(merchantId, groupA, 5);
+            // Second call — should use cache
+            await repository.findChain(merchantId, groupA, 5);
+
+            expect(mockExecute).toHaveBeenCalledTimes(1);
+        });
+
+        it("should not share cache across different maxDepth", async () => {
+            const repository = new ReferralLinkRepository();
+
+            mockExecute
+                .mockResolvedValueOnce([
+                    { identity_group_id: groupB, depth: 1 },
+                ])
+                .mockResolvedValueOnce([
+                    { identity_group_id: groupB, depth: 1 },
+                    { identity_group_id: groupC, depth: 2 },
+                ]);
+
+            const chain1 = await repository.findChain(merchantId, groupA, 1);
+            const chain2 = await repository.findChain(merchantId, groupA, 5);
+
+            expect(chain1).toHaveLength(1);
+            expect(chain2).toHaveLength(2);
+            expect(mockExecute).toHaveBeenCalledTimes(2);
         });
     });
 
-    describe("wouldCreateCycle", () => {
-        it("should detect direct cycle (A→B, proposed B→A)", async () => {
+    describe("wouldCreateCycle (recursive CTE)", () => {
+        it("should detect direct cycle (B→A exists, proposed A→B)", async () => {
             const repository = new ReferralLinkRepository();
 
-            // Existing: B referred A (B→A link).
-            // wouldCreateCycle(merchant, A, B, 5) calls findChain(merchant, A, 5)
-            // which walks A's referrer chain: A's referrer is B.
-            // Chain from A = [B at depth 1].
-            // Is B (the proposed referee) in A's chain? Yes → cycle!
-            vi.spyOn(repository, "findChain").mockResolvedValue([
-                { identityGroupId: groupB, depth: 1 },
-            ]);
+            // CTE returns would_cycle = true
+            mockExecute.mockResolvedValue([{ would_cycle: true }]);
 
             const result = await repository.wouldCreateCycle(
                 merchantId,
                 groupA, // referrer
-                groupB, // referee
-                5
+                groupB // referee
             );
 
             expect(result).toBe(true);
-            expect(repository.findChain).toHaveBeenCalledWith(
-                merchantId,
-                groupA,
-                5
-            );
+            expect(mockExecute).toHaveBeenCalledTimes(1);
         });
 
-        it("should detect indirect cycle (A→B→C, proposed C→A)", async () => {
+        it("should detect indirect cycle (A→B→C exists, proposed C→A)", async () => {
             const repository = new ReferralLinkRepository();
 
-            // Existing: A referred B, B referred C.
-            // wouldCreateCycle(merchant, C, A, 5) calls findChain(merchant, C, 5)
-            // which walks C's referrer chain: C's referrer is B, B's referrer is A.
-            // Chain from C = [B at depth 1, A at depth 2].
-            // Is A (the proposed referee) in C's chain? Yes → cycle!
-            vi.spyOn(repository, "findChain").mockResolvedValue([
-                { identityGroupId: groupB, depth: 1 },
-                { identityGroupId: groupA, depth: 2 },
-            ]);
+            mockExecute.mockResolvedValue([{ would_cycle: true }]);
 
             const result = await repository.wouldCreateCycle(
                 merchantId,
                 groupC, // referrer
-                groupA, // referee
-                5
+                groupA // referee
             );
 
             expect(result).toBe(true);
@@ -168,17 +144,12 @@ describe("ReferralLinkRepository", () => {
         it("should allow valid chain (no cycle)", async () => {
             const repository = new ReferralLinkRepository();
 
-            // Chain from A: A's referrer is B
-            vi.spyOn(repository, "findChain").mockResolvedValue([
-                { identityGroupId: groupB, depth: 1 },
-            ]);
+            mockExecute.mockResolvedValue([{ would_cycle: false }]);
 
-            // Proposed: A refers C — C is NOT in A's chain
             const result = await repository.wouldCreateCycle(
                 merchantId,
                 groupA,
-                groupC,
-                5
+                groupC
             );
 
             expect(result).toBe(false);
@@ -187,16 +158,41 @@ describe("ReferralLinkRepository", () => {
         it("should allow when referrer has no chain", async () => {
             const repository = new ReferralLinkRepository();
 
-            vi.spyOn(repository, "findChain").mockResolvedValue([]);
+            mockExecute.mockResolvedValue([{ would_cycle: false }]);
 
             const result = await repository.wouldCreateCycle(
                 merchantId,
                 groupA,
-                groupB,
-                5
+                groupB
             );
 
             expect(result).toBe(false);
+        });
+
+        it("should default to false on empty result", async () => {
+            const repository = new ReferralLinkRepository();
+
+            mockExecute.mockResolvedValue([]);
+
+            const result = await repository.wouldCreateCycle(
+                merchantId,
+                groupA,
+                groupB
+            );
+
+            expect(result).toBe(false);
+        });
+
+        it("should not use cache (needs fresh data for write path)", async () => {
+            const repository = new ReferralLinkRepository();
+
+            mockExecute.mockResolvedValue([{ would_cycle: false }]);
+
+            // Two calls should both hit DB
+            await repository.wouldCreateCycle(merchantId, groupA, groupB);
+            await repository.wouldCreateCycle(merchantId, groupA, groupB);
+
+            expect(mockExecute).toHaveBeenCalledTimes(2);
         });
     });
 });
