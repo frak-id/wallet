@@ -22,6 +22,7 @@ export type CampaignDraft = {
         endDate?: Date;
     };
     priority: number;
+    referralOnly: boolean;
 };
 
 const initialDraft: CampaignDraft = {
@@ -40,6 +41,7 @@ const initialDraft: CampaignDraft = {
     budgetConfig: [],
     scheduled: {},
     priority: 0,
+    referralOnly: true,
 };
 
 type CampaignState = {
@@ -102,22 +104,38 @@ export function buildScheduleConditions(
     return conditions;
 }
 
+export const REFERRAL_CONDITION = {
+    field: "attribution.referrerIdentityGroupId",
+    operator: "exists" as const,
+    value: true,
+};
+
 export function buildApiPayload(draft: CampaignDraft) {
     const scheduleConditions = buildScheduleConditions(draft.scheduled);
 
     const existingConditions = Array.isArray(draft.rule.conditions)
-        ? draft.rule.conditions.filter(
-              (c) => !("field" in c && c.field === "time.timestamp")
-          )
+        ? draft.rule.conditions
+              .filter((c) => !("field" in c && c.field === "time.timestamp"))
+              .filter(
+                  (c) =>
+                      !(
+                          "field" in c &&
+                          c.field === "attribution.referrerIdentityGroupId"
+                      )
+              )
         : draft.rule.conditions;
+
+    const referralConditions =
+        (draft.referralOnly ?? true) ? [REFERRAL_CONDITION] : [];
 
     const allConditions: RuleCondition[] | ConditionGroup = Array.isArray(
         existingConditions
     )
-        ? [...existingConditions, ...scheduleConditions]
+        ? [...referralConditions, ...existingConditions, ...scheduleConditions]
         : {
               ...existingConditions,
               conditions: [
+                  ...referralConditions,
                   ...existingConditions.conditions,
                   ...scheduleConditions,
               ],
@@ -164,6 +182,15 @@ export function campaignToDraft(campaign: {
         | Hex
         | undefined;
 
+    const hasReferralCondition = Array.isArray(campaign.rule.conditions)
+        ? campaign.rule.conditions.some(
+              (c) =>
+                  "field" in c &&
+                  c.field === "attribution.referrerIdentityGroupId" &&
+                  c.operator === "exists"
+          )
+        : false;
+
     return {
         id: campaign.id,
         merchantId: campaign.merchantId,
@@ -182,5 +209,9 @@ export function campaignToDraft(campaign: {
                 : undefined,
         },
         priority: campaign.priority,
+        referralOnly:
+            hasReferralCondition ||
+            (Array.isArray(campaign.rule.conditions) &&
+                campaign.rule.conditions.length === 0),
     };
 }

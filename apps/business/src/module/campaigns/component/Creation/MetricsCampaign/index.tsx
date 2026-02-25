@@ -1,3 +1,4 @@
+import { Switch } from "@frak-labs/ui/component/Switch";
 import { useNavigate } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { useForm } from "react-hook-form";
@@ -6,7 +7,13 @@ import { ButtonCancel } from "@/module/campaigns/component/Creation/NewCampaign/
 import { useSaveCampaign } from "@/module/campaigns/hook/useSaveCampaign";
 import { Head } from "@/module/common/component/Head";
 import { Panel } from "@/module/common/component/Panel";
-import { Form, FormLayout } from "@/module/forms/Form";
+import {
+    Form,
+    FormControl,
+    FormField,
+    FormItem,
+    FormLayout,
+} from "@/module/forms/Form";
 import { type CampaignDraft, campaignStore } from "@/stores/campaignStore";
 import type { CampaignTrigger } from "@/types/Campaign";
 import { CacInput } from "./CacInput";
@@ -47,10 +54,12 @@ function formValuesToDraft(
         chainingEnabled: values.chainingEnabled,
         deperditionPerLevel: values.deperditionPerLevel,
         maxDepth: values.maxDepth,
+        referralOnly: values.referralOnly,
     });
 
     return {
         ...currentDraft,
+        referralOnly: values.referralOnly,
         rule: {
             ...updatedRule,
             trigger: values.trigger,
@@ -101,6 +110,42 @@ export function MetricsCampaign() {
                             />
                         }
                     />
+
+                    <Panel title="Campaign type">
+                        <div className={styles.chaining}>
+                            <div className={styles.chaining__header}>
+                                <div className={styles.chaining__headerText}>
+                                    <span className={styles.chaining__title}>
+                                        Referral campaign
+                                    </span>
+                                    <span
+                                        className={styles.chaining__description}
+                                    >
+                                        Only reward users who were referred by
+                                        another user
+                                    </span>
+                                </div>
+                                <FormField
+                                    control={form.control}
+                                    name="referralOnly"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormControl>
+                                                <Switch
+                                                    checked={
+                                                        field.value ?? true
+                                                    }
+                                                    onCheckedChange={
+                                                        field.onChange
+                                                    }
+                                                />
+                                            </FormControl>
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+                        </div>
+                    </Panel>
 
                     <Panel title="Set a target cost per action">
                         <p className={styles.panelDescription}>

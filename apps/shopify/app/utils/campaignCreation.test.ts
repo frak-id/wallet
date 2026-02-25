@@ -7,7 +7,13 @@ describe("buildCampaignRule", () => {
         const rule = buildCampaignRule({ cacBrut: 10, ratio: 50 });
 
         expect(rule.trigger).toBe("purchase");
-        expect(rule.conditions).toEqual([]);
+        expect(rule.conditions).toEqual([
+            {
+                field: "attribution.referrerIdentityGroupId",
+                operator: "exists",
+                value: true,
+            },
+        ]);
         expect(rule.rewards).toHaveLength(2);
         expect(rule.rewards[0]).toEqual({
             recipient: "referrer",
