@@ -146,6 +146,7 @@ export const CampaignRuleDefinitionSchema = t.Object({
     conditions: RuleConditionsSchema,
     rewards: t.Array(RewardDefinitionSchema),
     pendingRewardExpirationDays: t.Optional(t.Number()),
+    maxRewardsPerUser: t.Optional(t.Number()),
 });
 // Manual type def needed - recursive ConditionGroupSchema breaks Static<> inference
 export type CampaignRuleDefinition = {
@@ -153,6 +154,7 @@ export type CampaignRuleDefinition = {
     conditions: RuleConditions;
     rewards: RewardDefinition[];
     pendingRewardExpirationDays?: number;
+    maxRewardsPerUser?: number;
 };
 
 export const BudgetConfigItemSchema = t.Object({

@@ -1,4 +1,5 @@
 import { log } from "@backend-infrastructure";
+import type { AssetLogRepository } from "../../rewards/repositories/AssetLogRepository";
 import type { CampaignRuleSelect } from "../db/schema";
 import type { CampaignRuleRepository } from "../repositories/CampaignRuleRepository";
 import type {
@@ -34,7 +35,8 @@ export class RuleEngineService {
     constructor(
         private readonly repository: CampaignRuleRepository,
         private readonly conditionEvaluator: RuleConditionEvaluator,
-        private readonly rewardCalculator: RewardCalculator
+        private readonly rewardCalculator: RewardCalculator,
+        private readonly assetLogRepository: AssetLogRepository
     ) {}
 
     async evaluateRules(
@@ -117,6 +119,32 @@ export class RuleEngineService {
         if (!conditionsMatch) {
             return {
                 matched: false,
+                rewards: [],
+                budgetExceeded: false,
+                errors: [],
+            };
+        }
+
+        // Check per-user reward cap (defaults to 1 per referee)
+        const maxPerUser = campaign.rule.maxRewardsPerUser ?? 1;
+        const userRewardCount =
+            await this.assetLogRepository.countByCampaignAndUser(
+                campaign.id,
+                context.user.identityGroupId
+            );
+
+        if (userRewardCount >= maxPerUser) {
+            log.debug(
+                {
+                    campaignId: campaign.id,
+                    identityGroupId: context.user.identityGroupId,
+                    userRewardCount,
+                    maxPerUser,
+                },
+                "Per-user reward cap reached"
+            );
+            return {
+                matched: true,
                 rewards: [],
                 budgetExceeded: false,
                 errors: [],

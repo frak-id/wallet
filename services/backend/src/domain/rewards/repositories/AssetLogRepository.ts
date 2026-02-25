@@ -265,4 +265,25 @@ export class AssetLogRepository {
             .where(and(...whereConditions))
             .orderBy(desc(assetLogsTable.createdAt));
     }
+
+    async countByCampaignAndUser(
+        campaignRuleId: string,
+        identityGroupId: string
+    ): Promise<number> {
+        const [result] = await db
+            .select({ count: sql<number>`count(*)::int` })
+            .from(assetLogsTable)
+            .where(
+                and(
+                    eq(assetLogsTable.campaignRuleId, campaignRuleId),
+                    eq(assetLogsTable.identityGroupId, identityGroupId),
+                    inArray(assetLogsTable.status, [
+                        "pending",
+                        "processing",
+                        "settled",
+                    ])
+                )
+            );
+        return result?.count ?? 0;
+    }
 }
