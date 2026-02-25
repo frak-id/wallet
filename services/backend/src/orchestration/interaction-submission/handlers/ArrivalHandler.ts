@@ -52,19 +52,21 @@ export class ArrivalHandler
             input.referrerWallet
         );
 
-        const touchpoint = await this.attributionService.recordTouchpoint({
-            identityGroupId: context.identity.identityGroupId,
-            merchantId: input.merchantId,
-            source: sourceData.type,
-            sourceData,
-            landingUrl: input.landingUrl,
-            referrerIdentityGroupId,
-        });
+        const { touchpoint, referralRegistered } =
+            await this.attributionService.recordTouchpoint({
+                identityGroupId: context.identity.identityGroupId,
+                merchantId: input.merchantId,
+                source: sourceData.type,
+                sourceData,
+                landingUrl: input.landingUrl,
+                referrerIdentityGroupId,
+            });
 
         return {
             referrerWallet: input.referrerWallet as Address,
             landingUrl: input.landingUrl,
             touchpointId: touchpoint.id,
+            referralRegistered,
         };
     }
 
@@ -79,8 +81,13 @@ export class ArrivalHandler
         };
     }
 
-    shouldCreateInteractionLog(input: ArrivalInput): boolean {
-        return this.isReferralSource(input);
+    shouldCreateInteractionLog(
+        input: ArrivalInput,
+        payload: ReferralArrivalPayload
+    ): boolean {
+        return (
+            this.isReferralSource(input) && payload.referralRegistered === true
+        );
     }
 
     private isReferralSource(input: ArrivalInput): boolean {

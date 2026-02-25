@@ -44,6 +44,26 @@ export class ReferralService {
             };
         }
 
+        // Check if this would create a referral chain cycle
+        // No depth ceiling — CTE explores the full chain with path-based
+        // cycle detection to guarantee termination
+        const wouldCycle = await this.repository.wouldCreateCycle(
+            params.merchantId,
+            params.referrerIdentityGroupId,
+            params.refereeIdentityGroupId
+        );
+        if (wouldCycle) {
+            log.debug(
+                {
+                    merchantId: params.merchantId,
+                    referrerId: params.referrerIdentityGroupId,
+                    refereeId: params.refereeIdentityGroupId,
+                },
+                "Referral would create cycle, skipping"
+            );
+            return { registered: false };
+        }
+
         const created = await this.repository.create({
             merchantId: params.merchantId,
             referrerIdentityGroupId: params.referrerIdentityGroupId,
