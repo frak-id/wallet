@@ -281,6 +281,7 @@ export class AssetLogRepository {
                         "pending",
                         "processing",
                         "settled",
+                        "bank_depleted",
                     ])
                 )
             );
