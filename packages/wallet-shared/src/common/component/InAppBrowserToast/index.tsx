@@ -16,9 +16,9 @@ type InAppBrowserToastProps = {
     getMergeToken?: () => Promise<string | undefined>;
     /**
      * Parent page URL from SDK handshake (iframe path only).
-     * Used on iPad where x-safari-https:// is blocked — we
-     * window.open the parent URL directly from the iframe to
-     * preserve user gesture context.
+     * Used on iPad where all redirect approaches are blocked by
+     * WKWebView — navigator.share() opens native share sheet
+     * with "Open in Safari" option.
      */
     parentUrl?: string;
 };
@@ -38,11 +38,13 @@ export function InAppBrowserToast({
     const handleRedirect = useCallback(async () => {
         if (isInIframe) {
             if (isIPad && parentUrl) {
-                // iPad: x-safari-https:// silently blocked by WKWebView,
-                // window.open treated as internal navigation.
-                // <a target="_blank"> click may be handled differently.
+                // iPad WKWebView blocks all programmatic escapes:
+                // x-safari-https://, window.open, <a target="_blank">
+                // all fail. navigator.share() invokes the native iOS
+                // share sheet which has "Open in Safari" — system-level
+                // UI that WKWebView cannot intercept.
                 trackGenericEvent("in-app-browser-redirect", {
-                    target: "sd-iframe-anchor-click",
+                    target: "sd-iframe-share",
                 });
                 const mergeToken = await getMergeToken?.();
                 let targetUrl = parentUrl;
@@ -51,13 +53,7 @@ export function InAppBrowserToast({
                     url.searchParams.set("fmt", mergeToken);
                     targetUrl = url.toString();
                 }
-                const anchor = document.createElement("a");
-                anchor.href = targetUrl;
-                anchor.target = "_blank";
-                anchor.rel = "noopener noreferrer";
-                document.body.appendChild(anchor);
-                anchor.click();
-                document.body.removeChild(anchor);
+                await triggerNativeShare(targetUrl);
             } else {
                 // iPhone/other: lifecycle event → parent uses x-safari-https://
                 trackGenericEvent("in-app-browser-redirect", {
@@ -80,9 +76,11 @@ export function InAppBrowserToast({
         }
     }, [getMergeToken, parentUrl]);
 
-    // Auto-redirect if this is the first time detecting in-app browser and no redirect has been attempted
+    // Auto-redirect on first detection — skip on iPad since
+    // navigator.share requires user gesture.
     useEffect(() => {
         if (!isInAppBrowser || hasAttemptedRedirect) return;
+        if (isIPad && isInIframe) return;
 
         setHasAttemptedRedirect(true);
         handleRedirect();
@@ -110,4 +108,41 @@ export function InAppBrowserToast({
             onDismiss={handleDismiss}
         />
     );
+}
+
+/**
+ * Trigger native share sheet via Web Share API.
+ * Falls back to clipboard copy if share is unavailable.
+ */
+async function triggerNativeShare(url: string): Promise<void> {
+    if (navigator.share) {
+        try {
+            await navigator.share({ url });
+            return;
+        } catch {
+            // User cancelled or API blocked — fall through to clipboard
+        }
+    }
+    // Fallback: copy to clipboard
+    await copyToClipboard(url);
+    alert("Link copied! Open Safari and paste in the address bar.");
+}
+
+/**
+ * Copy text to clipboard with execCommand fallback for cross-origin
+ * iframes where navigator.clipboard may be blocked by Permissions-Policy.
+ */
+async function copyToClipboard(text: string): Promise<void> {
+    try {
+        await navigator.clipboard.writeText(text);
+    } catch {
+        const textarea = document.createElement("textarea");
+        textarea.value = text;
+        textarea.style.position = "fixed";
+        textarea.style.opacity = "0";
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+    }
 }
