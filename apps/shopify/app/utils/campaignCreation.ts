@@ -60,7 +60,13 @@ export function buildCampaignRule({
 
     return {
         trigger: "purchase",
-        conditions: [],
+        conditions: [
+            {
+                field: "attribution.referrerIdentityGroupId",
+                operator: "exists" as const,
+                value: true,
+            },
+        ],
         rewards,
         maxRewardsPerUser: 1,
     };

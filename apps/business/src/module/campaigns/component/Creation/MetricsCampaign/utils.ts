@@ -9,6 +9,7 @@ export type RewardFormState = {
     chainingEnabled: boolean;
     deperditionPerLevel: number;
     maxDepth: number;
+    referralOnly: boolean;
 };
 
 export const DEFAULT_REWARD_STATE: RewardFormState = {
@@ -17,6 +18,7 @@ export const DEFAULT_REWARD_STATE: RewardFormState = {
     chainingEnabled: true,
     deperditionPerLevel: 80,
     maxDepth: 5,
+    referralOnly: true,
 };
 
 const FRAK_COMMISSION_PERCENT = 20;
@@ -157,11 +159,23 @@ export function extractFormStateFromRule(
             ? referrerReward.chaining
             : undefined;
 
+    const hasReferralCondition = Array.isArray(rule.conditions)
+        ? rule.conditions.some(
+              (c) =>
+                  "field" in c &&
+                  c.field === "attribution.referrerIdentityGroupId" &&
+                  c.operator === "exists"
+          )
+        : false;
+
     return {
         cac,
         ratio,
         chainingEnabled: true,
         deperditionPerLevel: chaining?.deperditionPerLevel ?? 80,
         maxDepth: chaining?.maxDepth ?? 5,
+        referralOnly:
+            hasReferralCondition ||
+            (Array.isArray(rule.conditions) && rule.conditions.length === 0),
     };
 }

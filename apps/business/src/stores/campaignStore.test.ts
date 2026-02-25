@@ -43,6 +43,7 @@ const mockCampaignDraft: CampaignDraft = {
         endDate: new Date("2024-12-31"),
     },
     priority: 0,
+    referralOnly: true,
 };
 
 describe("campaignStore", () => {
@@ -297,6 +298,28 @@ describe("buildApiPayload", () => {
         expect(result.rule.rewards).toEqual([]);
     });
 });
+
+test("should include referral condition when referralOnly is true", () => {
+    const draft = { ...mockCampaignDraft, referralOnly: true };
+    const result = buildApiPayload(draft);
+    expect(result.rule.conditions).toEqual(
+        expect.arrayContaining([
+            expect.objectContaining({
+                field: "attribution.referrerIdentityGroupId",
+                operator: "exists",
+            }),
+        ])
+    );
+});
+
+test("should not include referral condition when referralOnly is false", () => {
+    const draft = { ...mockCampaignDraft, referralOnly: false };
+    const result = buildApiPayload(draft);
+    const hasReferralCondition = (
+        result.rule.conditions as Array<{ field: string }>
+    ).some((c) => c.field === "attribution.referrerIdentityGroupId");
+    expect(hasReferralCondition).toBe(false);
+});
 describe("campaignToDraft", () => {
     test("should convert campaign to draft", () => {
         const campaign = {
@@ -367,4 +390,73 @@ describe("campaignToDraft", () => {
         expect(result.budgetConfig).toEqual([]);
         expect(result.scheduled.endDate).toBeUndefined();
     });
+});
+
+test("should detect referralOnly from conditions", () => {
+    const campaign = {
+        id: "campaign-123",
+        merchantId: "merchant-456",
+        name: "Test Campaign",
+        rule: {
+            trigger: "purchase" as const,
+            conditions: [
+                {
+                    field: "attribution.referrerIdentityGroupId",
+                    operator: "exists" as const,
+                    value: true,
+                },
+            ],
+            rewards: [],
+        },
+        metadata: null,
+        budgetConfig: null,
+        expiresAt: null,
+        priority: 0,
+    };
+    const result = campaignToDraft(campaign);
+    expect(result.referralOnly).toBe(true);
+});
+
+test("should set referralOnly to false when condition is absent", () => {
+    const campaign = {
+        id: "campaign-123",
+        merchantId: "merchant-456",
+        name: "Test Campaign",
+        rule: {
+            trigger: "purchase" as const,
+            conditions: [
+                {
+                    field: "user.country",
+                    operator: "eq" as const,
+                    value: "US",
+                },
+            ],
+            rewards: [],
+        },
+        metadata: null,
+        budgetConfig: null,
+        expiresAt: null,
+        priority: 0,
+    };
+    const result = campaignToDraft(campaign);
+    expect(result.referralOnly).toBe(false);
+});
+
+test("should default referralOnly to true for empty conditions", () => {
+    const campaign = {
+        id: "campaign-123",
+        merchantId: "merchant-456",
+        name: "Test Campaign",
+        rule: {
+            trigger: "purchase" as const,
+            conditions: [],
+            rewards: [],
+        },
+        metadata: null,
+        budgetConfig: null,
+        expiresAt: null,
+        priority: 0,
+    };
+    const result = campaignToDraft(campaign);
+    expect(result.referralOnly).toBe(true);
 });
