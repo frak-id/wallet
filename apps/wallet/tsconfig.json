@@ -15,10 +15,10 @@
     "allowJs": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "baseUrl": ".",
     "paths": {
       "@/*": ["./app/*"],
       "@/tests/vitest-fixtures": ["./tests/vitest-fixtures.ts"],
+      "tests/*": ["./tests/*"],
       "@frak-labs/wallet-shared/*": ["../../packages/wallet-shared/src/*"],
       "@backend-utils": ["../../services/backend/src/utils/index.ts"],
       "@backend-infrastructure": ["../../services/backend/src/infrastructure/index.ts"],

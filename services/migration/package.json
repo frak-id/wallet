@@ -5,7 +5,7 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "typecheck": "tsc --noEmit",
+        "typecheck": "tsgo --noEmit",
         "migrate": "bun run src/migrate.ts",
         "migrate:dry-run": "DRY_RUN=true bun run src/migrate.ts",
         "migrate:live": "DRY_RUN=false bun run src/migrate.ts",

@@ -9,7 +9,7 @@
         "dev": "vite dev --port 3014",
         "build": "vite build",
         "preview": "vite preview",
-        "typecheck": "tsc --noEmit",
+        "typecheck": "tsgo --noEmit",
         "lint": "biome lint .",
         "format": "biome check --write .",
         "format:check": "biome check ."

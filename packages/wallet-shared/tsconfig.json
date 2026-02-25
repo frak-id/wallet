@@ -15,7 +15,6 @@
         "incremental": true,
         "verbatimModuleSyntax": true,
         "types": ["bun-types"],
-        "baseUrl": ".",
         "paths": {
             "@/*": ["./src/*"],
             "@backend-utils": ["../../services/backend/src/utils/index.ts"],

@@ -23,7 +23,7 @@
     "start": "react-router-serve ./build/server/index.js",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "react-router typegen && tsc --noEmit",
+    "typecheck": "react-router typegen && tsgo --noEmit",
     "vite": "vite"
   },
   "dependencies": {

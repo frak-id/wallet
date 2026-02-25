@@ -80,7 +80,7 @@
     "build": "tsdown",
     "build:watch": "tsdown --watch",
     "check-exports": "attw --pack --profile node16 .",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsgo --noEmit",
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",

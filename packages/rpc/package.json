@@ -58,7 +58,7 @@
         "build": "tsdown",
         "build:watch": "tsdown --watch",
         "check-exports": "attw --pack .",
-        "typecheck": "tsc --noEmit",
+        "typecheck": "tsgo --noEmit",
         "prepublish": "bun run lint && bun run build",
         "publish": "echo 'Publishing rpc...'"
     },
