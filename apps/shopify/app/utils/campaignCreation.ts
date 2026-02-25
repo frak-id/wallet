@@ -62,5 +62,6 @@ export function buildCampaignRule({
         trigger: "purchase",
         conditions: [],
         rewards,
+        maxRewardsPerUser: 1,
     };
 }

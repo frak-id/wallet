@@ -1,3 +1,4 @@
+import { RewardsContext } from "../rewards/context";
 import { CampaignRuleRepository } from "./repositories/CampaignRuleRepository";
 import { CampaignManagementService } from "./services/CampaignManagementService";
 import { EstimatedRewardService } from "./services/EstimatedRewardService";
@@ -11,7 +12,8 @@ const rewardCalculator = new RewardCalculator(ruleConditionEvaluator);
 const ruleEngineService = new RuleEngineService(
     campaignRuleRepository,
     ruleConditionEvaluator,
-    rewardCalculator
+    rewardCalculator,
+    RewardsContext.repositories.assetLog
 );
 const campaignManagementService = new CampaignManagementService(
     campaignRuleRepository

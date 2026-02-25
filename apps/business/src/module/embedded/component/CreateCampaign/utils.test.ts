@@ -354,5 +354,11 @@ describe("CreateCampaign utils", () => {
             expect(rule.rewards[0]).toHaveProperty("amount", 7);
             expect(rule.rewards[1]).toHaveProperty("amount", 3);
         });
+
+        test("should default maxRewardsPerUser to 1", () => {
+            const rule = buildCampaignRule({ cacBrut: 10, ratio: 50 });
+
+            expect(rule.maxRewardsPerUser).toBe(1);
+        });
     });
 });
