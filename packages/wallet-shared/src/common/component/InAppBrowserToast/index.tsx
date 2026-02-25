@@ -3,7 +3,12 @@ import { useTranslation } from "react-i18next";
 import { emitLifecycleEvent } from "../../../sdk/utils/lifecycleEvents";
 import { trackGenericEvent } from "../../analytics";
 import { useSessionFlag } from "../../hook/useSessionFlag";
-import { inAppRedirectUrl, isInAppBrowser, isInIframe } from "../../lib/inApp";
+import {
+    inAppRedirectUrl,
+    isInAppBrowser,
+    isInIframe,
+    redirectToExternalBrowser,
+} from "../../lib/inApp";
 import { Toast } from "../Toast";
 
 type InAppBrowserToastProps = {
@@ -38,7 +43,7 @@ export function InAppBrowserToast({ getMergeToken }: InAppBrowserToastProps) {
             trackGenericEvent("in-app-browser-redirect", {
                 target: "window",
             });
-            window.location.href = `${inAppRedirectUrl}${encodeURIComponent(window.location.href)}`;
+            redirectToExternalBrowser(window.location.href);
         }
     }, [getMergeToken]);
 

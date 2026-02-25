@@ -24,7 +24,9 @@ vi.mock("../../hook/useSessionFlag", () => ({
 vi.mock("../../lib/inApp", () => ({
     isInAppBrowser: false,
     isInIframe: false,
+    isIOS: false,
     inAppRedirectUrl: "https://example.com/redirect",
+    redirectToExternalBrowser: vi.fn(),
 }));
 
 vi.mock("../Toast", () => ({
