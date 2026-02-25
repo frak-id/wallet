@@ -20,7 +20,6 @@ export const rewardCalculationJobs = new Elysia({
                 await OrchestrationContext.orchestrators.batchReward.processPendingInteractions(
                     {
                         limit: RewardConfig.batch.size,
-                        minAgeSeconds: RewardConfig.batch.minAgeSeconds,
                     }
                 );
 

@@ -9,8 +9,6 @@ export const RewardConfig = {
     batch: {
         /** Maximum interactions to process per batch */
         size: 100,
-        /** Minimum age in seconds before processing an interaction */
-        minAgeSeconds: 60,
     },
 
     /**

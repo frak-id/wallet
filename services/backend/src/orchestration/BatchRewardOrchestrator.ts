@@ -41,12 +41,10 @@ export class BatchRewardOrchestrator {
 
     async processPendingInteractions(options: {
         limit: number;
-        minAgeSeconds: number;
     }): Promise<BatchProcessResult> {
         const interactions =
             await this.interactionLogRepository.findUnprocessedForRewards({
                 limit: options.limit,
-                minAgeSeconds: options.minAgeSeconds,
             });
 
         if (interactions.length === 0) {

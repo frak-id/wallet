@@ -2,8 +2,10 @@ import { log } from "@backend-infrastructure";
 import type {
     PurchaseClaimRepository,
     PurchaseRepository,
+    PurchaseSelect,
 } from "../domain/purchases";
 import type { IdentityNode, IdentityOrchestrator } from "./identity";
+import type { PurchaseInteractionCreator } from "./PurchaseInteractionCreator";
 
 type ClaimPurchaseParams = {
     identityNodes: IdentityNode[];
@@ -25,7 +27,8 @@ export class PurchaseLinkingOrchestrator {
     constructor(
         private readonly purchaseRepository: PurchaseRepository,
         private readonly purchaseClaimRepository: PurchaseClaimRepository,
-        private readonly identityOrchestrator: IdentityOrchestrator
+        private readonly identityOrchestrator: IdentityOrchestrator,
+        private readonly purchaseInteractionCreator: PurchaseInteractionCreator
     ) {}
 
     async claimPurchase(
@@ -52,11 +55,12 @@ export class PurchaseLinkingOrchestrator {
         );
 
         if (purchase) {
-            // Validation: finding the purchase by orderId+token proves caller knows the real purchase
+            // Webhook already arrived — reconcile identities and create interaction
             return this.reconcileWithExistingPurchase(
                 purchase,
                 finalGroupId,
-                merged
+                merged,
+                params.merchantId
             );
         }
 
@@ -81,10 +85,14 @@ export class PurchaseLinkingOrchestrator {
     }
 
     private async reconcileWithExistingPurchase(
-        purchase: { id: string; identityGroupId: string | null },
+        purchase: PurchaseSelect,
         claimingGroupId: string,
-        alreadyMerged: boolean
+        alreadyMerged: boolean,
+        merchantId: string
     ): Promise<ClaimPurchaseResult> {
+        let finalIdentityGroupId = claimingGroupId;
+        let merged = alreadyMerged;
+
         if (
             purchase.identityGroupId &&
             purchase.identityGroupId !== claimingGroupId
@@ -104,19 +112,49 @@ export class PurchaseLinkingOrchestrator {
                 "Merged claiming group with purchase group"
             );
 
-            return {
-                success: true,
-                purchaseId: purchase.id,
-                identityGroupId: finalGroupId,
-                merged: true,
-            };
+            finalIdentityGroupId = finalGroupId;
+            merged = true;
+        }
+
+        // Create the interaction now that we have a claimed identity.
+        // The webhook stored the purchase data but deferred interaction
+        // creation until a claim arrived.
+        const items = await this.purchaseRepository.findItemsByPurchaseId(
+            purchase.id
+        );
+
+        const interactionLogId = await this.purchaseInteractionCreator.create({
+            purchaseId: purchase.id,
+            externalId: purchase.externalId,
+            externalCustomerId: purchase.externalCustomerId,
+            totalPrice: purchase.totalPrice,
+            currencyCode: purchase.currencyCode,
+            items: items.map((item) => ({
+                externalId: item.externalId,
+                name: item.name,
+                quantity: item.quantity,
+                price: item.price,
+            })),
+            identityGroupId: finalIdentityGroupId,
+            merchantId,
+        });
+
+        if (interactionLogId) {
+            log.info(
+                {
+                    purchaseId: purchase.id,
+                    interactionLogId,
+                    identityGroupId: finalIdentityGroupId,
+                },
+                "Late-claim: created interaction for existing purchase"
+            );
         }
 
         return {
             success: true,
             purchaseId: purchase.id,
-            identityGroupId: purchase.identityGroupId ?? claimingGroupId,
-            merged: alreadyMerged,
+            identityGroupId: finalIdentityGroupId,
+            merged,
         };
     }
 }
