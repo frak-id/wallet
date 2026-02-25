@@ -4,7 +4,7 @@ import type { Page } from "@playwright/test";
 import {
     ON_DEVICE_STORAGE_STATE,
     PAIRED_STORAGE_STATE,
-} from "playwright.config";
+} from "../../playwright.config";
 
 /**
  * Load the frak storage state in the given page
