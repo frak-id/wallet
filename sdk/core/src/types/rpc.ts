@@ -136,11 +136,15 @@ export type IFrameRpcSchema = [
     /**
      * Method to send interactions (arrival, sharing, custom events)
      * Fire-and-forget method - no return value expected
-     * merchantId and clientId are resolved from context
+     * merchantId is resolved from context
+     * clientId is passed via metadata as safeguard against handshake race condition
      */
     {
         Method: "frak_sendInteraction";
-        Parameters: [interaction: SendInteractionParamsType];
+        Parameters: [
+            interaction: SendInteractionParamsType,
+            metadata?: { clientId?: string },
+        ];
         ReturnType: undefined;
     },
 ];

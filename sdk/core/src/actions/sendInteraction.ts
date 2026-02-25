@@ -1,5 +1,6 @@
 import type { FrakClient } from "../types";
 import type { SendInteractionParamsType } from "../types/rpc/interaction";
+import { getClientId } from "../utils/clientId";
 
 /**
  * Send an interaction to the backend via the listener RPC.
@@ -46,7 +47,7 @@ export async function sendInteraction(
     try {
         await client.request({
             method: "frak_sendInteraction",
-            params: [params],
+            params: [params, { clientId: getClientId() }],
         });
     } catch {
         // Silent failure - fire-and-forget
