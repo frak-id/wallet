@@ -1,12 +1,10 @@
 import { log } from "@backend-infrastructure";
-import type { IdentityRepository } from "../domain/identity/repositories/IdentityRepository";
 import type {
     PurchaseClaimRepository,
     PurchaseInsert,
     PurchaseItemInsert,
     PurchaseRepository,
 } from "../domain/purchases";
-import type { IdentityOrchestrator } from "./identity";
 import type { PurchaseInteractionCreator } from "./PurchaseInteractionCreator";
 
 type UpsertPurchaseParams = {
@@ -27,8 +25,6 @@ export class PurchaseWebhookOrchestrator {
     constructor(
         private readonly purchaseRepository: PurchaseRepository,
         private readonly purchaseClaimRepository: PurchaseClaimRepository,
-        private readonly identityRepository: IdentityRepository,
-        private readonly identityOrchestrator: IdentityOrchestrator,
         private readonly purchaseInteractionCreator: PurchaseInteractionCreator
     ) {}
 
@@ -71,11 +67,8 @@ export class PurchaseWebhookOrchestrator {
             };
         }
 
-        // Claim exists — resolve identity, store purchase, create interaction
-        const identityGroupId = await this.resolveWithValidatedClaim(claim, {
-            merchantId,
-            customerId: purchase.externalCustomerId,
-        });
+        // Claim exists — use the claiming identity group, store purchase, create interaction
+        const identityGroupId = claim.claimingIdentityGroupId;
         await this.purchaseClaimRepository.delete(claim.id);
 
         const purchaseId = await this.purchaseRepository.upsertWithItems({
@@ -107,50 +100,5 @@ export class PurchaseWebhookOrchestrator {
             isDuplicate: interactionLogId === null,
             pendingClaim: false,
         };
-    }
-
-    private async resolveWithValidatedClaim(
-        claim: { claimingIdentityGroupId: string },
-        params: { merchantId: string; customerId: string }
-    ): Promise<string> {
-        const existingGroup = await this.identityRepository.findGroupByIdentity(
-            {
-                type: "merchant_customer",
-                value: params.customerId,
-                merchantId: params.merchantId,
-            }
-        );
-
-        if (
-            existingGroup &&
-            existingGroup.id !== claim.claimingIdentityGroupId
-        ) {
-            const { finalGroupId } = await this.identityOrchestrator.associate(
-                claim.claimingIdentityGroupId,
-                existingGroup.id
-            );
-
-            log.info(
-                {
-                    claimingGroupId: claim.claimingIdentityGroupId,
-                    existingGroupId: existingGroup.id,
-                    finalGroupId,
-                },
-                "Merged claiming group into existing merchant_customer group"
-            );
-
-            return finalGroupId;
-        }
-
-        if (!existingGroup) {
-            await this.identityRepository.addNode({
-                groupId: claim.claimingIdentityGroupId,
-                type: "merchant_customer",
-                value: params.customerId,
-                merchantId: params.merchantId,
-            });
-        }
-
-        return claim.claimingIdentityGroupId;
     }
 }
