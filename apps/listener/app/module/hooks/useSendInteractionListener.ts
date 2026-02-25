@@ -19,13 +19,16 @@ export function useSendInteractionListener(): OnSendInteraction {
 
     return useCallback(
         async (params, context) => {
-            const [interaction] = params;
+            const [interaction, metadata] = params;
 
-            // Fire-and-forget: trigger mutation but don't await
+            // Use clientId from RPC metadata (sent by SDK) as primary source,
+            // falling back to context.clientId (from handshake).
+            // This safeguards against the race condition where the interaction
+            // arrives before the handshake-response sets clientId in the store.
             sendInteraction({
                 interaction,
                 merchantId: context.merchantId,
-                clientId: context.clientId,
+                clientId: metadata?.clientId ?? context.clientId,
             });
         },
         [sendInteraction]

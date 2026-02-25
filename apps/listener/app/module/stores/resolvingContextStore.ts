@@ -151,6 +151,15 @@ async function resolveIFrameContext(
     const clientId = event?.data?.data?.clientId;
     const pendingMergeToken = event?.data?.data?.pendingMergeToken;
 
+    // Set clientId in store IMMEDIATELY — before the async merchant fetch.
+    // This prevents a race condition where the SDK sends an interaction
+    // (e.g. arrival from referral link) right after "connected" is emitted,
+    // but before resolveIFrameContext completes. The clientId is a simple UUID
+    // from the partner site and has no dependency on merchant data.
+    if (clientId) {
+        clientIdStore.getState().setClientId(clientId);
+    }
+
     // Prefer explicit config domain from SDK handshake over URL-derived domain
     // (handles proxied/tunneled environments like Shopify dev with Cloudflare tunnel)
     const configDomain = event?.data?.data?.configDomain;
@@ -166,10 +175,6 @@ async function resolveIFrameContext(
         isAutoContext,
         ...(clientId && { clientId }),
     });
-
-    if (clientId) {
-        clientIdStore.getState().setClientId(clientId);
-    }
 
     if (pendingMergeToken && clientId && merchantData.merchantId) {
         authenticatedBackendApi.user.identity.merge.execute
