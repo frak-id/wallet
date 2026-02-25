@@ -1,7 +1,6 @@
 {
   "exclude": ["**/*.test.ts", "**/*.spec.ts", "**/__mock__/*"],
   "compilerOptions": {
-    "baseUrl": "./src",
     "target": "esnext",
     "lib": ["es2023", "esnext"],
     "module": "esnext",
@@ -12,10 +11,10 @@
     "strict": true,
     "skipLibCheck": true,
     "paths": {
-      "@backend-utils": ["utils/index.ts"],
-      "@backend-infrastructure": ["infrastructure/index.ts"],
-      "@backend-infrastructure/*": ["infrastructure/*"],
-      "@backend-domain/*": ["domain/*"]
+      "@backend-utils": ["./src/utils/index.ts"],
+      "@backend-infrastructure": ["./src/infrastructure/index.ts"],
+      "@backend-infrastructure/*": ["./src/infrastructure/*"],
+      "@backend-domain/*": ["./src/domain/*"]
     }
   },
 }

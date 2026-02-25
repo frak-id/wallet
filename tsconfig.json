@@ -12,7 +12,6 @@
     "incremental": true,
     "target": "esnext",
     "allowImportingTsExtensions": true,
-    "baseUrl": ".",
     "paths": {
       "@backend-utils": ["./services/backend/src/utils/index.ts"],
       "@backend-infrastructure": ["./services/backend/src/infrastructure/index.ts"],
