@@ -3,6 +3,9 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { getCampaignDetail } from "@/module/campaigns/api/campaignApi";
+import { BudgetUsage } from "@/module/campaigns/component/CampaignDetails/BudgetUsage";
+import { CampaignConditions } from "@/module/campaigns/component/CampaignDetails/CampaignConditions";
+import { CampaignRewardToken } from "@/module/campaigns/component/CampaignDetails/CampaignRewardToken";
 import { CampaignStatus } from "@/module/campaigns/component/CampaignDetails/CampaignStatus";
 import { CampaignTerritory } from "@/module/campaigns/component/CampaignDetails/CampaignTerritory";
 import { FormBudgetRow } from "@/module/campaigns/component/Creation/NewCampaign/FormBudgetRow";
@@ -81,8 +84,11 @@ export function CampaignDetails({
                     <FormAdvertising />
                     <FormGoal />
                     <FormTrigger />
+                    <CampaignConditions conditions={campaign.rule.conditions} />
                     <RewardsSummary rewards={rewards} />
+                    <CampaignRewardToken campaign={campaign} />
                     <FormBudgetRow disabled={true} />
+                    <BudgetUsage campaign={campaign} />
                     <CampaignTerritory campaign={campaign} />
                 </Form>
             </Panel>
