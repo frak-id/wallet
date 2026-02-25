@@ -38,10 +38,11 @@ export function InAppBrowserToast({
     const handleRedirect = useCallback(async () => {
         if (isInIframe) {
             if (isIPad && parentUrl) {
-                // iPad: x-safari-https:// silently blocked by WKWebView.
-                // window.open from iframe preserves user gesture context.
+                // iPad: x-safari-https:// silently blocked by WKWebView,
+                // window.open treated as internal navigation.
+                // <a target="_blank"> click may be handled differently.
                 trackGenericEvent("in-app-browser-redirect", {
-                    target: "sd-iframe-window-open",
+                    target: "sd-iframe-anchor-click",
                 });
                 const mergeToken = await getMergeToken?.();
                 let targetUrl = parentUrl;
@@ -50,7 +51,13 @@ export function InAppBrowserToast({
                     url.searchParams.set("fmt", mergeToken);
                     targetUrl = url.toString();
                 }
-                window.open(targetUrl, "_blank");
+                const anchor = document.createElement("a");
+                anchor.href = targetUrl;
+                anchor.target = "_blank";
+                anchor.rel = "noopener noreferrer";
+                document.body.appendChild(anchor);
+                anchor.click();
+                document.body.removeChild(anchor);
             } else {
                 // iPhone/other: lifecycle event → parent uses x-safari-https://
                 trackGenericEvent("in-app-browser-redirect", {
