@@ -20,6 +20,7 @@ export type ReferralArrivalPayload = {
     referrerWallet: Address;
     landingUrl?: string;
     touchpointId: string;
+    referralRegistered: boolean;
 };
 
 /**

@@ -32,7 +32,7 @@ export class AttributionService {
 
     async recordTouchpoint(
         params: RecordTouchpointParams
-    ): Promise<Touchpoint> {
+    ): Promise<{ touchpoint: Touchpoint; referralRegistered: boolean }> {
         const createParams: CreateTouchpointParams = {
             identityGroupId: params.identityGroupId,
             merchantId: params.merchantId,
@@ -44,18 +44,20 @@ export class AttributionService {
 
         const touchpoint = await this.touchpointRepository.create(createParams);
 
+        let referralRegistered = false;
         if (
             params.source === "referral_link" &&
             params.referrerIdentityGroupId
         ) {
-            await this.referralService.registerReferral({
+            const result = await this.referralService.registerReferral({
                 merchantId: params.merchantId,
                 referrerIdentityGroupId: params.referrerIdentityGroupId,
                 refereeIdentityGroupId: params.identityGroupId,
             });
+            referralRegistered = result.registered;
         }
 
-        return touchpoint;
+        return { touchpoint, referralRegistered };
     }
 
     async attributeConversion(params: {
