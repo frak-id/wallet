@@ -91,7 +91,7 @@ export class InteractionSubmissionOrchestrator {
         const type = handler.getInteractionType(input);
 
         const shouldCreate =
-            handler.shouldCreateInteractionLog?.(input) ?? true;
+            handler.shouldCreateInteractionLog?.(input, payload) ?? true;
         if (shouldCreate) {
             const externalEventId = handler.buildExternalEventId(
                 input,

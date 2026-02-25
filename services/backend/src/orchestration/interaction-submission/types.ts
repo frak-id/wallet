@@ -47,5 +47,5 @@ export interface InteractionHandler<
 
     validateContext?(input: TInput, context: HandlerContext): void;
 
-    shouldCreateInteractionLog?(input: TInput): boolean;
+    shouldCreateInteractionLog?(input: TInput, payload: TPayload): boolean;
 }
