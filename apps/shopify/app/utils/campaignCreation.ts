@@ -3,9 +3,18 @@ import type {
     FixedRewardDefinition,
 } from "@frak-labs/backend-elysia/domain/campaign";
 
+const FRAK_COMMISSION_PERCENT = 20;
+const DEFAULT_DEPERDITION_PER_LEVEL = 80;
+const DEFAULT_MAX_DEPTH = 5;
+
 /**
  * Build a campaign rule definition from CAC and referrer/referee ratio.
  * Ported from business app embedded creation flow.
+ *
+ * The CAC is first reduced by the Frak commission (20%), then the
+ * remaining amount is split between referrer and referee according
+ * to the given ratio.  The referrer reward includes a default chaining
+ * configuration so rewards propagate along the referral chain.
  */
 export function buildCampaignRule({
     cacBrut,
@@ -14,6 +23,10 @@ export function buildCampaignRule({
     cacBrut: number;
     ratio: number;
 }): CampaignRuleDefinition {
+    const frakCommission =
+        Math.round(cacBrut * (FRAK_COMMISSION_PERCENT / 100) * 100) / 100;
+    const distributableAmount = cacBrut - frakCommission;
+
     const referrerPercent = ratio / 100;
     const refereePercent = 1 - referrerPercent;
 
@@ -24,8 +37,13 @@ export function buildCampaignRule({
             recipient: "referrer",
             type: "token",
             amountType: "fixed",
-            amount: Math.round(cacBrut * referrerPercent * 100) / 100,
+            amount:
+                Math.round(distributableAmount * referrerPercent * 100) / 100,
             description: "Referrer reward",
+            chaining: {
+                deperditionPerLevel: DEFAULT_DEPERDITION_PER_LEVEL,
+                maxDepth: DEFAULT_MAX_DEPTH,
+            },
         });
     }
 
@@ -34,7 +52,8 @@ export function buildCampaignRule({
             recipient: "referee",
             type: "token",
             amountType: "fixed",
-            amount: Math.round(cacBrut * refereePercent * 100) / 100,
+            amount:
+                Math.round(distributableAmount * refereePercent * 100) / 100,
             description: "Referee reward",
         });
     }
