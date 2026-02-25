@@ -1,10 +1,7 @@
 import { log } from "@backend-infrastructure";
 import { type Hex, isHex } from "viem";
 import type { MerchantRepository } from "../domain/merchant/repositories/MerchantRepository";
-import type {
-    MerchantWebhook,
-    PurchaseRepository,
-} from "../domain/purchases/repositories/PurchaseRepository";
+import type { MerchantWebhook, PurchaseRepository } from "../domain/purchases";
 
 type ResolvedWebhook = {
     webhook: MerchantWebhook;

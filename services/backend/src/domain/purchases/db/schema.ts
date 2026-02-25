@@ -123,3 +123,12 @@ export const purchaseClaimsTable = pgTable(
         index("purchase_claims_merchant_idx").on(table.merchantId),
     ]
 );
+
+export type PurchaseSelect = typeof purchasesTable.$inferSelect;
+export type PurchaseInsert = Omit<typeof purchasesTable.$inferInsert, "id">;
+export type PurchaseItemInsert = Omit<
+    typeof purchaseItemsTable.$inferInsert,
+    "id" | "purchaseId"
+>;
+export type PurchaseItemSelect = typeof purchaseItemsTable.$inferSelect;
+export type MerchantWebhook = typeof merchantWebhooksTable.$inferSelect;

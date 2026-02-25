@@ -1,25 +1,21 @@
 import { db } from "@backend-infrastructure";
 import { and, eq } from "drizzle-orm";
 import {
+    type MerchantWebhook,
     merchantWebhooksTable,
+    type PurchaseInsert,
+    type PurchaseItemInsert,
+    type PurchaseItemSelect,
+    type PurchaseSelect,
     purchaseItemsTable,
     purchasesTable,
 } from "../db/schema";
-
-type Purchase = typeof purchasesTable.$inferSelect;
-export type PurchaseInsert = Omit<typeof purchasesTable.$inferInsert, "id">;
-export type PurchaseItemInsert = Omit<
-    typeof purchaseItemsTable.$inferInsert,
-    "id" | "purchaseId"
->;
-export type PurchaseItemSelect = typeof purchaseItemsTable.$inferSelect;
-export type MerchantWebhook = typeof merchantWebhooksTable.$inferSelect;
 
 export class PurchaseRepository {
     async findByOrderAndToken(
         orderId: string,
         token: string
-    ): Promise<Purchase | null> {
+    ): Promise<PurchaseSelect | null> {
         const result = await db.query.purchasesTable.findFirst({
             where: and(
                 eq(purchasesTable.externalId, orderId),

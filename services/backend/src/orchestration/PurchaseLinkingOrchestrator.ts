@@ -2,6 +2,7 @@ import { log } from "@backend-infrastructure";
 import type {
     PurchaseClaimRepository,
     PurchaseRepository,
+    PurchaseSelect,
 } from "../domain/purchases";
 import type { IdentityNode, IdentityOrchestrator } from "./identity";
 import type { PurchaseInteractionCreator } from "./PurchaseInteractionCreator";
@@ -20,15 +21,6 @@ type ClaimPurchaseResult = {
     purchaseId?: string;
     pendingWebhook?: boolean;
     merged?: boolean;
-};
-
-type StoredPurchase = {
-    id: string;
-    externalId: string;
-    externalCustomerId: string;
-    totalPrice: string;
-    currencyCode: string;
-    identityGroupId: string | null;
 };
 
 export class PurchaseLinkingOrchestrator {
@@ -93,7 +85,7 @@ export class PurchaseLinkingOrchestrator {
     }
 
     private async reconcileWithExistingPurchase(
-        purchase: StoredPurchase,
+        purchase: PurchaseSelect,
         claimingGroupId: string,
         alreadyMerged: boolean,
         merchantId: string
