@@ -16,7 +16,11 @@ import { changeIframeVisibility } from "../../utils/iframeHelper";
 const isIOSInAppBrowser = (() => {
     if (typeof navigator === "undefined") return false;
     const ua = navigator.userAgent;
-    if (!/iPhone|iPad|iPod/i.test(ua)) return false;
+    // Standard iOS or iPadOS 13+ (reports as Macintosh with touch)
+    const isIOS =
+        /iPhone|iPad|iPod/i.test(ua) ||
+        (/Macintosh/i.test(ua) && navigator.maxTouchPoints > 1);
+    if (!isIOS) return false;
     const lower = ua.toLowerCase();
     return (
         lower.includes("instagram") ||

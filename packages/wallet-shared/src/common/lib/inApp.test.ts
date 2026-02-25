@@ -139,6 +139,38 @@ describe("inApp utilities", () => {
             expect(isIOS).toBe(true);
         });
 
+        it("should return true for iPadOS 13+ (Macintosh UA with touch)", async () => {
+            Object.defineProperty(global.navigator, "userAgent", {
+                value: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15",
+                writable: true,
+                configurable: true,
+            });
+            Object.defineProperty(global.navigator, "maxTouchPoints", {
+                value: 5,
+                writable: true,
+                configurable: true,
+            });
+
+            const { isIOS } = await import("./inApp");
+            expect(isIOS).toBe(true);
+        });
+
+        it("should return false for real Mac (Macintosh UA, no touch)", async () => {
+            Object.defineProperty(global.navigator, "userAgent", {
+                value: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15",
+                writable: true,
+                configurable: true,
+            });
+            Object.defineProperty(global.navigator, "maxTouchPoints", {
+                value: 0,
+                writable: true,
+                configurable: true,
+            });
+
+            const { isIOS } = await import("./inApp");
+            expect(isIOS).toBe(false);
+        });
+
         it("should return false for Android user agent", async () => {
             Object.defineProperty(global.navigator, "userAgent", {
                 value: "Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 Instagram",
