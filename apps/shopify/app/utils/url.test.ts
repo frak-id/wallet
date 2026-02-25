@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import {
-    buildCampaignLink,
     isAbsoluteUrl,
     parseChargeId,
     validateMintParams,
@@ -123,50 +122,5 @@ describe("validateMintParams", () => {
             "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed"
         );
         expect(result.valid).toBe(true);
-    });
-});
-
-/* ------------------------------------------------------------------ */
-/*  buildCampaignLink                                                  */
-/* ------------------------------------------------------------------ */
-
-describe("buildCampaignLink", () => {
-    it("builds URL with all parameters", () => {
-        const url = buildCampaignLink({
-            businessUrl: "https://business.frak.id",
-            name: "Summer Campaign",
-            bankId: "0xabc",
-            domain: "shop.example.com",
-            globalBudget: 1000,
-            rawCAC: 5,
-            ratio: 0.3,
-            preferredCurrency: "eur",
-            merchantId: "1312",
-        });
-        const parsed = new URL(url);
-        expect(parsed.pathname).toBe("/embedded/create-campaign");
-        expect(parsed.searchParams.get("n")).toBe("Summer Campaign");
-        expect(parsed.searchParams.get("bid")).toBe("0xabc");
-        expect(parsed.searchParams.get("d")).toBe("shop.example.com");
-        expect(parsed.searchParams.get("gb")).toBe("1000");
-        expect(parsed.searchParams.get("cac")).toBe("5");
-        expect(parsed.searchParams.get("r")).toBe("0.3");
-        expect(parsed.searchParams.get("sc")).toBe("eur");
-        expect(parsed.searchParams.get("mid")).toBe("1312");
-    });
-
-    it("omits currency param when not provided", () => {
-        const url = buildCampaignLink({
-            businessUrl: "https://business.frak.id",
-            name: "Test",
-            bankId: "0x1",
-            domain: "test.com",
-            globalBudget: 100,
-            rawCAC: 1,
-            ratio: 0.5,
-            merchantId: "1312",
-        });
-        const parsed = new URL(url);
-        expect(parsed.searchParams.has("sc")).toBe(false);
     });
 });

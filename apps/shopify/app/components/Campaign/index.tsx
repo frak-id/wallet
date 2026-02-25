@@ -1,17 +1,17 @@
+import type { DistributionStatus } from "@frak-labs/backend-elysia/domain/campaign-bank";
 import { type Currency, formatAmount } from "@frak-labs/core-sdk";
 import { Collapsible } from "app/components/ui/Collapsible";
 import { RangeSlider } from "app/components/ui/RangeSlider";
 import type { loader as rootLoader } from "app/routes/app";
+import type { action } from "app/routes/app.campaigns";
 import type {
     BankStatus,
     CampaignResponse,
 } from "app/services.server/backendMerchant";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useRouteLoaderData } from "react-router";
+import { useFetcher, useRouteLoaderData } from "react-router";
 import type { Address } from "viem";
-import { useCreateCampaignLink } from "../../hooks/useCreateCampaignLink";
-import { useRefreshData } from "../../hooks/useRefreshData";
 
 export function CampaignStatus({
     campaigns,
@@ -44,7 +44,10 @@ export function CampaignStatus({
                         timingFunction: "ease-in-out",
                     }}
                 >
-                    <CampaignCreation bankAddress={bankStatus.bankAddress} />
+                    <CampaignCreation
+                        bankAddress={bankStatus.bankAddress}
+                        onCreated={() => setCreationOpen(false)}
+                    />
                 </Collapsible>
             </s-stack>
         </s-section>
@@ -53,7 +56,19 @@ export function CampaignStatus({
 
 function CampaignTable({ campaigns }: { campaigns: CampaignResponse[] }) {
     const { t } = useTranslation();
-    const activeCampaigns = campaigns.filter((c) => c.status === "active");
+    const rootData = useRouteLoaderData<typeof rootLoader>("routes/app");
+    const currencySymbol = (rootData?.shop.preferredCurrency ??
+        "usd") as Currency;
+
+    if (campaigns.length === 0) {
+        return (
+            <s-section>
+                <s-text tone="neutral">
+                    {t("status.campaign.noCampaigns")}
+                </s-text>
+            </s-section>
+        );
+    }
 
     return (
         <s-section padding="none">
@@ -62,20 +77,24 @@ function CampaignTable({ campaigns }: { campaigns: CampaignResponse[] }) {
                     <s-table-header listSlot="primary">
                         {t("status.campaign.name")}
                     </s-table-header>
-                    <s-table-header>{t("status.campaign.type")}</s-table-header>
                     <s-table-header>
-                        {t("status.campaign.active")}
+                        {t("status.campaign.status")}
+                    </s-table-header>
+                    <s-table-header>{t("status.campaign.date")}</s-table-header>
+                    <s-table-header>
+                        {t("status.campaign.budgetColumn")}
+                    </s-table-header>
+                    <s-table-header>
+                        {t("status.campaign.actionsColumn")}
                     </s-table-header>
                 </s-table-header-row>
                 <s-table-body>
-                    {activeCampaigns.map((campaign) => (
-                        <s-table-row key={campaign.id}>
-                            <s-table-cell>{campaign.name}</s-table-cell>
-                            <s-table-cell>{campaign.rule.trigger}</s-table-cell>
-                            <s-table-cell>
-                                <CampaignStatusBadge status={campaign.status} />
-                            </s-table-cell>
-                        </s-table-row>
+                    {campaigns.map((campaign) => (
+                        <CampaignTableRow
+                            key={campaign.id}
+                            campaign={campaign}
+                            currencySymbol={currencySymbol}
+                        />
                     ))}
                 </s-table-body>
             </s-table>
@@ -83,35 +102,292 @@ function CampaignTable({ campaigns }: { campaigns: CampaignResponse[] }) {
     );
 }
 
+type CampaignActionIntent =
+    | "pause-campaign"
+    | "resume-campaign"
+    | "archive-campaign"
+    | "delete-campaign";
+
+type CampaignActionConfig = {
+    intent: CampaignActionIntent;
+    labelKey: string;
+    loadingKey: string;
+    variant: "primary" | "tertiary";
+    tone?: "critical";
+};
+
+const campaignActionConfig: Record<CampaignActionIntent, CampaignActionConfig> =
+    {
+        "pause-campaign": {
+            intent: "pause-campaign",
+            labelKey: "status.campaign.pause",
+            loadingKey: "status.campaign.pausing",
+            variant: "tertiary",
+        },
+        "resume-campaign": {
+            intent: "resume-campaign",
+            labelKey: "status.campaign.resume",
+            loadingKey: "status.campaign.resuming",
+            variant: "primary",
+        },
+        "archive-campaign": {
+            intent: "archive-campaign",
+            labelKey: "status.campaign.archive",
+            loadingKey: "status.campaign.archiving",
+            variant: "tertiary",
+        },
+        "delete-campaign": {
+            intent: "delete-campaign",
+            labelKey: "status.campaign.delete",
+            loadingKey: "status.campaign.deleting",
+            variant: "tertiary",
+            tone: "critical",
+        },
+    };
+
+function getCampaignActions(
+    status: CampaignResponse["status"]
+): CampaignActionIntent[] {
+    if (status === "active") {
+        return ["pause-campaign", "archive-campaign"];
+    }
+
+    if (status === "paused") {
+        return ["resume-campaign", "archive-campaign"];
+    }
+
+    if (status === "draft") {
+        return ["delete-campaign"];
+    }
+
+    return [];
+}
+
+function CampaignTableRow({
+    campaign,
+    currencySymbol,
+}: {
+    campaign: CampaignResponse;
+    currencySymbol: Currency;
+}) {
+    const fetcher = useFetcher<typeof action>();
+    const { t } = useTranslation();
+
+    const isSubmitting = fetcher.state !== "idle";
+    const submittingIntent = fetcher.formData?.get("intent");
+    const actions = getCampaignActions(campaign.status);
+
+    const dateValue = campaign.publishedAt ?? campaign.createdAt;
+    const formattedDate = dateValue
+        ? new Date(dateValue).toLocaleDateString()
+        : "-";
+
+    const firstBudget = campaign.budgetConfig?.[0];
+    const formattedBudget = firstBudget
+        ? `${formatAmount(Number(firstBudget.amount), currencySymbol)}${firstBudget.label ? ` (${firstBudget.label})` : ""}`
+        : t("status.campaign.noBudget");
+
+    const handleSubmit = useCallback(
+        (
+            intent:
+                | "pause-campaign"
+                | "resume-campaign"
+                | "archive-campaign"
+                | "delete-campaign"
+        ) => {
+            fetcher.submit(
+                {
+                    intent,
+                    campaignId: campaign.id,
+                },
+                { method: "POST" }
+            );
+        },
+        [fetcher, campaign.id]
+    );
+
+    return (
+        <s-table-row>
+            <s-table-cell>{campaign.name}</s-table-cell>
+            <s-table-cell>
+                <CampaignStatusBadge
+                    status={campaign.status}
+                    bankDistributionStatus={campaign.bankDistributionStatus}
+                />
+            </s-table-cell>
+            <s-table-cell>{formattedDate}</s-table-cell>
+            <s-table-cell>{formattedBudget}</s-table-cell>
+            <s-table-cell>
+                <s-stack>
+                    {actions.map((intent) => (
+                        <CampaignActionButton
+                            key={intent}
+                            intent={intent}
+                            isSubmitting={isSubmitting}
+                            submittingIntent={submittingIntent}
+                            onSubmit={handleSubmit}
+                        />
+                    ))}
+                </s-stack>
+            </s-table-cell>
+        </s-table-row>
+    );
+}
+
+function CampaignActionButton({
+    intent,
+    isSubmitting,
+    submittingIntent,
+    onSubmit,
+}: {
+    intent: CampaignActionIntent;
+    isSubmitting: boolean;
+    submittingIntent: FormDataEntryValue | null | undefined;
+    onSubmit: (intent: CampaignActionIntent) => void;
+}) {
+    const { t } = useTranslation();
+    const config = campaignActionConfig[intent];
+    const isLoading = isSubmitting && submittingIntent === intent;
+
+    return (
+        <s-button
+            variant={config.variant}
+            tone={config.tone}
+            loading={isLoading}
+            disabled={isSubmitting}
+            onClick={() => onSubmit(intent)}
+        >
+            {isLoading ? t(config.loadingKey) : t(config.labelKey)}
+        </s-button>
+    );
+}
+
 function CampaignStatusBadge({
     status,
+    bankDistributionStatus,
 }: {
     status: CampaignResponse["status"];
+    bankDistributionStatus: DistributionStatus | null;
 }) {
     const { t } = useTranslation();
 
-    const tone = status === "active" ? "success" : "warning";
+    const statusBadge = (() => {
+        switch (status) {
+            case "draft":
+                return (
+                    <s-badge tone="info">
+                        {t("status.campaign.statusDraft")}
+                    </s-badge>
+                );
+            case "active":
+                return (
+                    <s-badge tone="success">
+                        {t("status.campaign.statusActive")}
+                    </s-badge>
+                );
+            case "paused":
+                return (
+                    <s-badge tone="warning">
+                        {t("status.campaign.statusPaused")}
+                    </s-badge>
+                );
+            case "archived":
+                return <s-badge>{t("status.campaign.statusArchived")}</s-badge>;
+            default:
+                return <s-badge>{status}</s-badge>;
+        }
+    })();
 
-    return <s-badge tone={tone}>{t("status.campaign.active")}</s-badge>;
+    const showBankWarning =
+        status === "active" &&
+        bankDistributionStatus !== null &&
+        bankDistributionStatus !== "distributing";
+
+    if (!showBankWarning) {
+        return statusBadge;
+    }
+
+    const bankBadge = (() => {
+        switch (bankDistributionStatus) {
+            case "depleted":
+                return (
+                    <s-badge tone="critical">
+                        {t("status.campaign.bankDepleted")}
+                    </s-badge>
+                );
+            case "paused":
+                return (
+                    <s-badge tone="warning">
+                        {t("status.campaign.bankPaused")}
+                    </s-badge>
+                );
+            case "warning":
+                return (
+                    <s-badge tone="warning">
+                        {t("status.campaign.bankWarning")}
+                    </s-badge>
+                );
+            case "not_deployed":
+                return (
+                    <s-badge tone="warning">
+                        {t("status.campaign.bankNotDeployed")}
+                    </s-badge>
+                );
+            default:
+                return null;
+        }
+    })();
+
+    if (!bankBadge) {
+        return statusBadge;
+    }
+
+    return (
+        <s-stack>
+            {statusBadge}
+            {bankBadge}
+        </s-stack>
+    );
 }
 
-function CampaignCreation({ bankAddress }: { bankAddress: Address | null }) {
+function CampaignCreation({
+    bankAddress,
+    onCreated,
+}: {
+    bankAddress: Address | null;
+    onCreated: () => void;
+}) {
     const { t } = useTranslation();
     const rootData = useRouteLoaderData<typeof rootLoader>("routes/app");
+    const fetcher = useFetcher<typeof action>();
 
     const [globalBudget, setGlobalBudget] = useState("");
     const [rawCAC, setRawCAC] = useState("");
-    const [ratio, setRatio] = useState(90); // 90% referrer, 10% referee
+    const [ratio, setRatio] = useState(90);
     const [name, setName] = useState("");
+
+    const isSubmitting = fetcher.state !== "idle";
+    const actionResult = fetcher.data;
+
+    useEffect(() => {
+        if (actionResult?.success) {
+            setName("");
+            setGlobalBudget("");
+            setRawCAC("");
+            setRatio(90);
+            onCreated();
+        }
+    }, [actionResult?.success, onCreated]);
 
     const isCreationDisabled = useMemo(() => {
         if (!bankAddress) return true;
+        if (!name.trim()) return true;
         if (!globalBudget || !rawCAC) return true;
+        if (isSubmitting) return true;
 
         return false;
-    }, [globalBudget, rawCAC, bankAddress]);
+    }, [globalBudget, rawCAC, bankAddress, name, isSubmitting]);
 
-    // Breakdown calculations
     const breakdown = useMemo(() => {
         const cac = Number(rawCAC) || 0;
 
@@ -135,39 +411,18 @@ function CampaignCreation({ bankAddress }: { bankAddress: Address | null }) {
     const currencySymbol = (rootData?.shop.preferredCurrency ??
         "usd") as Currency;
 
-    // The creation link
-    const creationLink = useCreateCampaignLink({
-        bankId: bankAddress ?? "0x",
-        globalBudget: Number(globalBudget),
-        rawCAC: Number(rawCAC),
-        ratio,
-        name,
-        merchantId: rootData?.merchantId ?? "",
-    });
-    const refresh = useRefreshData();
-
-    // Open creation link
     const handleCreate = useCallback(() => {
-        console.log("creationLink", creationLink);
-        const openedWindow = window.open(
-            creationLink,
-            "frak-business",
-            "menubar=no,status=no,scrollbars=no,fullscreen=no,width=500, height=800"
+        fetcher.submit(
+            {
+                intent: "create-campaign",
+                name,
+                globalBudget,
+                rawCAC,
+                ratio: ratio.toString(),
+            },
+            { method: "POST" }
         );
-
-        if (openedWindow) {
-            openedWindow.focus();
-
-            // Check every 500ms if the window is closed
-            // If it is, revalidate the page
-            const timer = setInterval(() => {
-                if (openedWindow.closed) {
-                    clearInterval(timer);
-                    setTimeout(() => refresh(), 1000);
-                }
-            }, 500);
-        }
-    }, [creationLink, refresh]);
+    }, [fetcher, name, globalBudget, rawCAC, ratio]);
 
     if (!bankAddress) {
         return null;
@@ -175,6 +430,12 @@ function CampaignCreation({ bankAddress }: { bankAddress: Address | null }) {
 
     return (
         <s-stack gap="base">
+            {actionResult?.error && (
+                <s-banner tone="critical" dismissible>
+                    {actionResult.error}
+                </s-banner>
+            )}
+
             <s-grid gridTemplateColumns="repeat(2, 1fr)" gap="small">
                 <s-grid-item>
                     <s-text-field
@@ -264,7 +525,9 @@ function CampaignCreation({ bankAddress }: { bankAddress: Address | null }) {
                 onClick={handleCreate}
                 disabled={isCreationDisabled}
             >
-                {t("status.campaign.createButton")}
+                {isSubmitting
+                    ? t("status.campaign.creating")
+                    : t("status.campaign.createButton")}
             </s-button>
         </s-stack>
     );
