@@ -40,6 +40,7 @@ import {
     selectIsDismissed,
     selectShouldFinish,
 } from "@/module/stores/modalStore";
+import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 import { ToastLoading } from "../../../component/ToastLoading";
 import styles from "./index.module.css";
 import { ModalStepIndicator } from "./Step";
@@ -55,7 +56,7 @@ export function ListenerModal({
     const { clearRequest } = useListenerUI();
     const [isOpen, setIsOpen] = useState(true);
     const getMergeToken = useGetMergeToken();
-
+    const parentUrl = resolvingContextStore((s) => s.context?.sourceUrl);
     /**
      * Method to close the modal
      */
@@ -201,7 +202,10 @@ export function ListenerModal({
             onOpenChange={onOpenChange}
         >
             <Toaster position="top-center" />
-            <InAppBrowserToast getMergeToken={getMergeToken} />
+            <InAppBrowserToast
+                getMergeToken={getMergeToken}
+                parentUrl={parentUrl}
+            />
             <ToastLoading />
 
             {icon}

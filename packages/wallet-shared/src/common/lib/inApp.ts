@@ -21,6 +21,20 @@ function checkIsIOS() {
 
 export const isIOS = checkIsIOS();
 
+function checkIsIPad() {
+    if (typeof navigator === "undefined") {
+        return false;
+    }
+    const ua = navigator.userAgent;
+    // iPadOS 13+ reports as Macintosh — detect via touch support
+    if (/Macintosh/i.test(ua) && navigator.maxTouchPoints > 1) return true;
+    // Pre-iPadOS 13
+    if (/iPad/i.test(ua)) return true;
+    return false;
+}
+
+export const isIPad = checkIsIPad();
+
 function checkInAppBrowser() {
     if (typeof navigator === "undefined") {
         return false;

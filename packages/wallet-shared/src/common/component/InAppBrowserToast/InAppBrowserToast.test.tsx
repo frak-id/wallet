@@ -25,6 +25,7 @@ vi.mock("../../lib/inApp", () => ({
     isInAppBrowser: false,
     isInIframe: false,
     isIOS: false,
+    isIPad: false,
     inAppRedirectUrl: "https://example.com/redirect",
     redirectToExternalBrowser: vi.fn(),
 }));
