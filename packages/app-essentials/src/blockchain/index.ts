@@ -2,22 +2,15 @@
 
 export {
     campaignBankAbi,
-    campaignBankFactoryAbi,
     rewarderHubAbi,
 } from "./abis/abis";
-export {
-    interactionCampaignAbi,
-    referralCampaignAbi,
-} from "./abis/campaignAbis";
+
 export { getExecutionAbi, mintAbi } from "./abis/custom";
 export {
     KernelExecuteAbi,
     KernelInitAbi,
 } from "./abis/kernelAccountAbis";
-export {
-    multiWebAuthNRecoveryActionAbi,
-    multiWebAuthNValidatorV2Abi,
-} from "./abis/kernelV2Abis";
+export { multiWebAuthNValidatorV2Abi } from "./abis/kernelV2Abis";
 export {
     addresses,
     currentStablecoins,
