@@ -240,7 +240,7 @@ function CampaignTableRow({
                     intent,
                     campaignId: campaign.id,
                 },
-                { method: "POST" }
+                { method: "POST", action: "/app/campaigns" }
             );
         },
         [fetcher, campaign.id]
@@ -472,7 +472,7 @@ function CampaignCreation({
                 rawCAC,
                 ratio: ratio.toString(),
             },
-            { method: "POST" }
+            { method: "POST", action: "/app/campaigns" }
         );
     }, [fetcher, name, globalBudget, rawCAC, ratio]);
 
