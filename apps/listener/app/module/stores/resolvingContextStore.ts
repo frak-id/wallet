@@ -24,8 +24,13 @@ const iframeClientId =
 
 // Set clientId in store immediately at module load — before any async work.
 // This ensures the x-frak-client-id header is available for the earliest API calls.
+// Also re-set after persist rehydration to prevent stale localStorage values from
+// overwriting the fresh URL param (race: sync setClientId vs async rehydration).
 if (iframeClientId) {
     clientIdStore.getState().setClientId(iframeClientId);
+    clientIdStore.persist.onFinishHydration(() => {
+        clientIdStore.getState().setClientId(iframeClientId);
+    });
 }
 
 /**
@@ -90,10 +95,11 @@ export const resolvingContextStore = create<ResolvingContextStore>(
                 return false;
             }
 
-            // Belt & suspenders: if URL param didn't carry clientId (SSR case),
-            // use the handshake-delivered clientId as fallback
+            // Always update clientId from handshake — the SDK is the source of truth.
+            // Previously guarded by !clientIdStore.getState().clientId, but a stale
+            // rehydrated value would block fresh handshake updates.
             const handshakeClientId = event.data.data.clientId;
-            if (handshakeClientId && !clientIdStore.getState().clientId) {
+            if (handshakeClientId) {
                 clientIdStore.getState().setClientId(handshakeClientId);
             }
 
