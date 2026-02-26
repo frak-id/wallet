@@ -42,6 +42,7 @@ export default async function handleRequest(
             defaultNS,
             resources,
             interpolation,
+            showSupportNotice: false,
             lng,
             ns,
             backend: {

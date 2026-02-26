@@ -76,6 +76,7 @@ async function main() {
             resources,
             debug: isRunningLocally,
             interpolation,
+            showSupportNotice: false,
             detection: {
                 order: [
                     "querystring",
