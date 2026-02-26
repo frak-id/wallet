@@ -13,12 +13,18 @@ vi.mock("react-i18next", () => ({
 vi.mock("@/module/common/component/Panel", () => ({
     Panel: ({
         isDismissible,
+        dismissKey,
         children,
     }: {
         isDismissible?: boolean;
+        dismissKey?: string;
         children: React.ReactNode;
     }) => (
-        <div data-testid="panel" data-dismissible={isDismissible}>
+        <div
+            data-testid="panel"
+            data-dismissible={isDismissible}
+            data-dismiss-key={dismissKey}
+        >
             {children}
         </div>
     ),
@@ -48,6 +54,13 @@ describe("Welcome", () => {
 
         const panel = screen.getByTestId("panel");
         expect(panel).toHaveAttribute("data-dismissible", "true");
+    });
+
+    it("should render Panel with dismissKey prop", () => {
+        render(<Welcome />);
+
+        const panel = screen.getByTestId("panel");
+        expect(panel).toHaveAttribute("data-dismiss-key", "welcome");
     });
 
     it("should render Title with big size", () => {

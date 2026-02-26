@@ -4,7 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { LogOut } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Panel } from "@/module/common/component/Panel";
+import { Panel, panelDismissedPrefix } from "@/module/common/component/Panel";
 
 function cleanLocalStorage() {
     // Clear static local storage items
@@ -17,7 +17,16 @@ function cleanLocalStorage() {
         "frak_user",
         "frak_userSetupLater",
     ];
-    localStorageItems.map((item) => window.localStorage.removeItem(item));
+    for (const item of localStorageItems) {
+        window.localStorage.removeItem(item);
+    }
+
+    // Clear all dismissed panel states
+    for (const key of Object.keys(window.localStorage)) {
+        if (key.startsWith(panelDismissedPrefix)) {
+            window.localStorage.removeItem(key);
+        }
+    }
 }
 
 /**
