@@ -18,6 +18,7 @@ export type ShopifyOrderUpdateWebhookDto = Readonly<{
         name: string; // The name of the product
         title: string; // The title of the product
     }[];
+    note_attributes?: { name: string; value: string }[];
 }>;
 
 export type OrderFinancialStatus =

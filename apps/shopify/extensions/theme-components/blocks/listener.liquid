@@ -94,6 +94,30 @@
     } catch (e) {}
   {% endif %}
 
+  // Sync frak-client-id to Shopify cart attributes for server-side purchase tracking.
+  // Cart attributes flow through to the order webhook as note_attributes,
+  // enabling ad-blocker-resistant identity linking without the checkout pixel.
+  function syncFrakCartAttributes() {
+    try {
+      const clientId = localStorage.getItem('frak-client-id');
+      if (clientId && !sessionStorage.getItem('frak-cart-synced')) {
+        fetch(window.Shopify.routes.root + 'cart/update.js', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            attributes: { '_frak-client-id': clientId }
+          })
+        }).then(function() {
+          sessionStorage.setItem('frak-cart-synced', '1');
+        }).catch(function() {});
+      }
+    } catch (e) {}
+  }
+  // Immediate attempt for returning visitors (clientId already in localStorage).
+  syncFrakCartAttributes();
+  // Delayed attempt for first-time visitors (SDK needs time to initialize and set clientId).
+  setTimeout(syncFrakCartAttributes, 2500);
+
   // Inject custom JavaScript
   try {
     const script = document.createElement('script');

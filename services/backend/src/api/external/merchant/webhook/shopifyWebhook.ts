@@ -87,6 +87,11 @@ export const shopifyWebhook = new Elysia()
                 webhookData.financial_status
             );
 
+            // Extract frak-client-id from cart note_attributes for ad-blocker-resistant identity linking
+            const frakClientId = webhookData.note_attributes?.find(
+                (attr) => attr.name === "_frak-client-id"
+            )?.value;
+
             log.debug(
                 {
                     merchantId: resolved.merchantId,
@@ -117,6 +122,7 @@ export const shopifyWebhook = new Elysia()
                         quantity: item.quantity,
                     })),
                     merchantId: resolved.merchantId,
+                    clientId: frakClientId,
                 }
             );
 

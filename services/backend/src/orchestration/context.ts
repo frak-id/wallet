@@ -70,7 +70,8 @@ const purchaseLinkingOrchestrator = new PurchaseLinkingOrchestrator(
 const purchaseWebhookOrchestrator = new PurchaseWebhookOrchestrator(
     PurchasesContext.repositories.purchase,
     PurchasesContext.repositories.purchaseClaim,
-    purchaseInteractionCreator
+    purchaseInteractionCreator,
+    identityOrchestrator
 );
 
 const settlementOrchestrator = new SettlementOrchestrator(
