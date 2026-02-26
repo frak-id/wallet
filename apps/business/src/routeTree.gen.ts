@@ -20,9 +20,7 @@ import { Route as RestrictedSettingsRouteImport } from './routes/_restricted/set
 import { Route as RestrictedMintRouteImport } from './routes/_restricted/mint'
 import { Route as RestrictedMembersRouteImport } from './routes/_restricted/members'
 import { Route as RestrictedDashboardRouteImport } from './routes/_restricted/dashboard'
-import { Route as EmbeddedLayoutPurchaseTrackerRouteImport } from './routes/embedded/_layout/purchase-tracker'
 import { Route as EmbeddedLayoutMintRouteImport } from './routes/embedded/_layout/mint'
-import { Route as EmbeddedLayoutCreateCampaignRouteImport } from './routes/embedded/_layout/create-campaign'
 import { Route as RestrictedPushCreateRouteImport } from './routes/_restricted/push/create'
 import { Route as RestrictedPushConfirmRouteImport } from './routes/_restricted/push/confirm'
 import { Route as RestrictedCampaignsPerformanceRouteImport } from './routes/_restricted/campaigns/performance'
@@ -92,23 +90,11 @@ const RestrictedDashboardRoute = RestrictedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => RestrictedRoute,
 } as any)
-const EmbeddedLayoutPurchaseTrackerRoute =
-  EmbeddedLayoutPurchaseTrackerRouteImport.update({
-    id: '/purchase-tracker',
-    path: '/purchase-tracker',
-    getParentRoute: () => EmbeddedLayoutRoute,
-  } as any)
 const EmbeddedLayoutMintRoute = EmbeddedLayoutMintRouteImport.update({
   id: '/mint',
   path: '/mint',
   getParentRoute: () => EmbeddedLayoutRoute,
 } as any)
-const EmbeddedLayoutCreateCampaignRoute =
-  EmbeddedLayoutCreateCampaignRouteImport.update({
-    id: '/create-campaign',
-    path: '/create-campaign',
-    getParentRoute: () => EmbeddedLayoutRoute,
-  } as any)
 const RestrictedPushCreateRoute = RestrictedPushCreateRouteImport.update({
   id: '/push/create',
   path: '/push/create',
@@ -207,9 +193,7 @@ export interface FileRoutesByFullPath {
   '/campaigns/performance': typeof RestrictedCampaignsPerformanceRoute
   '/push/confirm': typeof RestrictedPushConfirmRoute
   '/push/create': typeof RestrictedPushCreateRoute
-  '/embedded/create-campaign': typeof EmbeddedLayoutCreateCampaignRoute
   '/embedded/mint': typeof EmbeddedLayoutMintRoute
-  '/embedded/purchase-tracker': typeof EmbeddedLayoutPurchaseTrackerRoute
   '/campaigns/draft/new': typeof RestrictedCampaignsDraftNewRoute
   '/campaigns/edit/$campaignId': typeof RestrictedCampaignsEditCampaignIdRoute
   '/merchant/$id/funding': typeof RestrictedMerchantIdFundingRoute
@@ -236,9 +220,7 @@ export interface FileRoutesByTo {
   '/campaigns/performance': typeof RestrictedCampaignsPerformanceRoute
   '/push/confirm': typeof RestrictedPushConfirmRoute
   '/push/create': typeof RestrictedPushCreateRoute
-  '/embedded/create-campaign': typeof EmbeddedLayoutCreateCampaignRoute
   '/embedded/mint': typeof EmbeddedLayoutMintRoute
-  '/embedded/purchase-tracker': typeof EmbeddedLayoutPurchaseTrackerRoute
   '/campaigns/draft/new': typeof RestrictedCampaignsDraftNewRoute
   '/campaigns/edit/$campaignId': typeof RestrictedCampaignsEditCampaignIdRoute
   '/merchant/$id/funding': typeof RestrictedMerchantIdFundingRoute
@@ -267,9 +249,7 @@ export interface FileRoutesById {
   '/_restricted/campaigns/performance': typeof RestrictedCampaignsPerformanceRoute
   '/_restricted/push/confirm': typeof RestrictedPushConfirmRoute
   '/_restricted/push/create': typeof RestrictedPushCreateRoute
-  '/embedded/_layout/create-campaign': typeof EmbeddedLayoutCreateCampaignRoute
   '/embedded/_layout/mint': typeof EmbeddedLayoutMintRoute
-  '/embedded/_layout/purchase-tracker': typeof EmbeddedLayoutPurchaseTrackerRoute
   '/_restricted/campaigns/draft/new': typeof RestrictedCampaignsDraftNewRoute
   '/_restricted/campaigns/edit/$campaignId': typeof RestrictedCampaignsEditCampaignIdRoute
   '/_restricted/merchant/$id/funding': typeof RestrictedMerchantIdFundingRoute
@@ -298,9 +278,7 @@ export interface FileRouteTypes {
     | '/campaigns/performance'
     | '/push/confirm'
     | '/push/create'
-    | '/embedded/create-campaign'
     | '/embedded/mint'
-    | '/embedded/purchase-tracker'
     | '/campaigns/draft/new'
     | '/campaigns/edit/$campaignId'
     | '/merchant/$id/funding'
@@ -327,9 +305,7 @@ export interface FileRouteTypes {
     | '/campaigns/performance'
     | '/push/confirm'
     | '/push/create'
-    | '/embedded/create-campaign'
     | '/embedded/mint'
-    | '/embedded/purchase-tracker'
     | '/campaigns/draft/new'
     | '/campaigns/edit/$campaignId'
     | '/merchant/$id/funding'
@@ -357,9 +333,7 @@ export interface FileRouteTypes {
     | '/_restricted/campaigns/performance'
     | '/_restricted/push/confirm'
     | '/_restricted/push/create'
-    | '/embedded/_layout/create-campaign'
     | '/embedded/_layout/mint'
-    | '/embedded/_layout/purchase-tracker'
     | '/_restricted/campaigns/draft/new'
     | '/_restricted/campaigns/edit/$campaignId'
     | '/_restricted/merchant/$id/funding'
@@ -460,25 +434,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RestrictedDashboardRouteImport
       parentRoute: typeof RestrictedRoute
     }
-    '/embedded/_layout/purchase-tracker': {
-      id: '/embedded/_layout/purchase-tracker'
-      path: '/purchase-tracker'
-      fullPath: '/embedded/purchase-tracker'
-      preLoaderRoute: typeof EmbeddedLayoutPurchaseTrackerRouteImport
-      parentRoute: typeof EmbeddedLayoutRoute
-    }
     '/embedded/_layout/mint': {
       id: '/embedded/_layout/mint'
       path: '/mint'
       fullPath: '/embedded/mint'
       preLoaderRoute: typeof EmbeddedLayoutMintRouteImport
-      parentRoute: typeof EmbeddedLayoutRoute
-    }
-    '/embedded/_layout/create-campaign': {
-      id: '/embedded/_layout/create-campaign'
-      path: '/create-campaign'
-      fullPath: '/embedded/create-campaign'
-      preLoaderRoute: typeof EmbeddedLayoutCreateCampaignRouteImport
       parentRoute: typeof EmbeddedLayoutRoute
     }
     '/_restricted/push/create': {
@@ -633,15 +593,11 @@ const RestrictedRouteWithChildren = RestrictedRoute._addFileChildren(
 )
 
 interface EmbeddedLayoutRouteChildren {
-  EmbeddedLayoutCreateCampaignRoute: typeof EmbeddedLayoutCreateCampaignRoute
   EmbeddedLayoutMintRoute: typeof EmbeddedLayoutMintRoute
-  EmbeddedLayoutPurchaseTrackerRoute: typeof EmbeddedLayoutPurchaseTrackerRoute
 }
 
 const EmbeddedLayoutRouteChildren: EmbeddedLayoutRouteChildren = {
-  EmbeddedLayoutCreateCampaignRoute: EmbeddedLayoutCreateCampaignRoute,
   EmbeddedLayoutMintRoute: EmbeddedLayoutMintRoute,
-  EmbeddedLayoutPurchaseTrackerRoute: EmbeddedLayoutPurchaseTrackerRoute,
 }
 
 const EmbeddedLayoutRouteWithChildren = EmbeddedLayoutRoute._addFileChildren(
