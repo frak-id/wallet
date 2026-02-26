@@ -142,7 +142,8 @@ async function fetchMerchantFromBackend(
         });
         if (error) {
             console.error(
-                `[merchantId] backend resolve failed (${error.status}) for ${domain}`
+                `[merchantId] backend resolve failed (${error.status}) for ${domain}`,
+                error
             );
             return null;
         }
