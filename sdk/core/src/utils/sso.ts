@@ -24,8 +24,8 @@ export type FullSsoParams = Omit<PrepareSsoParamsType, "metadata"> & {
  * @param params - SSO parameters
  * @param merchantId - Merchant identifier
  * @param name - Application name
- * @param css - Optional custom CSS
  * @param clientId - Client identifier for identity tracking
+ * @param css - Optional custom CSS
  * @returns Complete SSO URL ready to open in popup or redirect
  *
  * @example
@@ -44,8 +44,8 @@ export function generateSsoUrl(
     params: PrepareSsoParamsType,
     merchantId: string,
     name: string,
-    css: string | undefined,
-    clientId: string
+    clientId: string,
+    css?: string
 ): string {
     // Build full params with app-specific metadata
     const fullParams: FullSsoParams = {

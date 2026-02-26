@@ -24,6 +24,10 @@ vi.mock("../../utils/iframeHelper", () => ({
     changeIframeVisibility: vi.fn(),
 }));
 
+vi.mock("../../utils/clientId", () => ({
+    getClientId: vi.fn(() => "mock-client-id"),
+}));
+
 vi.mock("../../utils/deepLinkWithFallback", () => ({
     isFrakDeepLink: vi.fn((url: string) => url.startsWith("frakwallet://")),
     triggerDeepLinkWithFallback: vi.fn(),
@@ -261,6 +265,7 @@ describe("createIFrameLifecycleManager", () => {
                     data: {
                         token: "handshake-token-123",
                         currentUrl: "https://test.com",
+                        clientId: "mock-client-id",
                     },
                 },
                 "https://wallet.frak.id"

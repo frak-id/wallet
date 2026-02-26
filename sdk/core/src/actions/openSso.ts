@@ -94,8 +94,8 @@ export async function openSso(
             args,
             computeLegacyProductId(),
             metadata.name,
-            customizations?.css,
-            getClientId()
+            getClientId(),
+            customizations?.css
         );
 
     // Step 2: Open popup synchronously (critical for popup blocker prevention)

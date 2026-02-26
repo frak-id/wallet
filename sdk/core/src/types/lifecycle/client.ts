@@ -45,6 +45,11 @@ type HandshakeResponse = {
          */
         pendingMergeToken?: string;
         /**
+         * Client ID for identity tracking (belt & suspenders fallback)
+         * Primary delivery is via iframe URL query param; handshake is backup for SSR
+         */
+        clientId?: string;
+        /**
          * Explicit domain from SDK config (FrakWalletSdkConfig.domain)
          * When present, listener should prefer this over URL-derived domain
          * for merchant resolution (handles proxied/tunneled environments)

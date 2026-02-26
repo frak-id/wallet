@@ -90,6 +90,13 @@ export const resolvingContextStore = create<ResolvingContextStore>(
                 return false;
             }
 
+            // Belt & suspenders: if URL param didn't carry clientId (SSR case),
+            // use the handshake-delivered clientId as fallback
+            const handshakeClientId = event.data.data.clientId;
+            if (handshakeClientId && !clientIdStore.getState().clientId) {
+                clientIdStore.getState().setClientId(handshakeClientId);
+            }
+
             // Resolve context async (fetches merchantId from backend)
             // Token stays in handshakeTokens until resolution to block concurrent heartbeats
             resolveIFrameContext(
