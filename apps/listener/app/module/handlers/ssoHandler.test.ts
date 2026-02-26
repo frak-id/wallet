@@ -144,8 +144,8 @@ describe("ssoHandler", () => {
                 ssoInfo,
                 "merchant-123",
                 name,
-                css,
-                "client-456"
+                "client-456",
+                css
             );
         });
     });

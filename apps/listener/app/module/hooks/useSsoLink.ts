@@ -44,8 +44,8 @@ export function useSsoLink({
                 { directExit, redirectUrl, metadata, lang },
                 merchantId,
                 metadata.name,
-                metadata.css,
-                clientId ?? undefined
+                clientId ?? "",
+                metadata.css
             ),
         [merchantId, metadata, directExit, redirectUrl, lang, clientId]
     );

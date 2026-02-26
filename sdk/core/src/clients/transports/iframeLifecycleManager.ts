@@ -69,9 +69,9 @@ function handleHandshake(
             data: {
                 token,
                 currentUrl: window.location.href,
-                clientId: getClientId(),
                 pendingMergeToken,
                 configDomain,
+                clientId: getClientId(),
             },
         },
         targetOrigin

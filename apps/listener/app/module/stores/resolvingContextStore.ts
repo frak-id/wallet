@@ -13,6 +13,22 @@ import { create } from "zustand";
 import type { IFrameResolvingContext, ResolvingContextStore } from "./types";
 
 /**
+ * Read clientId from iframe URL query param (set by SDK at iframe creation).
+ * Available from the very first line of code — no round-trip needed.
+ */
+const iframeClientId =
+    typeof window !== "undefined"
+        ? (new URLSearchParams(window.location.search).get("clientId") ??
+          undefined)
+        : undefined;
+
+// Set clientId in store immediately at module load — before any async work.
+// This ensures the x-frak-client-id header is available for the earliest API calls.
+if (iframeClientId) {
+    clientIdStore.getState().setClientId(iframeClientId);
+}
+
+/**
  * Cache for merchant lookups by domain
  */
 const merchantCache = new Map<string, { merchantId: string }>();
@@ -72,6 +88,13 @@ export const resolvingContextStore = create<ResolvingContextStore>(
             if (!tokens.has(responseToken)) {
                 console.warn(`Invalid handshake token ${responseToken}`);
                 return false;
+            }
+
+            // Belt & suspenders: if URL param didn't carry clientId (SSR case),
+            // use the handshake-delivered clientId as fallback
+            const handshakeClientId = event.data.data.clientId;
+            if (handshakeClientId && !clientIdStore.getState().clientId) {
+                clientIdStore.getState().setClientId(handshakeClientId);
             }
 
             // Resolve context async (fetches merchantId from backend)
@@ -148,17 +171,7 @@ async function resolveIFrameContext(
     const urlDomain = originUrl.host.replace("www.", "");
     const origin = originUrl.origin;
     const isAutoContext = event === undefined;
-    const clientId = event?.data?.data?.clientId;
     const pendingMergeToken = event?.data?.data?.pendingMergeToken;
-
-    // Set clientId in store IMMEDIATELY — before the async merchant fetch.
-    // This prevents a race condition where the SDK sends an interaction
-    // (e.g. arrival from referral link) right after "connected" is emitted,
-    // but before resolveIFrameContext completes. The clientId is a simple UUID
-    // from the partner site and has no dependency on merchant data.
-    if (clientId) {
-        clientIdStore.getState().setClientId(clientId);
-    }
 
     // Prefer explicit config domain from SDK handshake over URL-derived domain
     // (handles proxied/tunneled environments like Shopify dev with Cloudflare tunnel)
@@ -173,14 +186,14 @@ async function resolveIFrameContext(
         origin,
         merchantId: merchantData.merchantId,
         isAutoContext,
-        ...(clientId && { clientId }),
+        ...(iframeClientId && { clientId: iframeClientId }),
     });
 
-    if (pendingMergeToken && clientId && merchantData.merchantId) {
+    if (pendingMergeToken && iframeClientId && merchantData.merchantId) {
         authenticatedBackendApi.user.identity.merge.execute
             .post({
                 mergeToken: pendingMergeToken,
-                targetAnonymousId: clientId,
+                targetAnonymousId: iframeClientId,
                 merchantId: merchantData.merchantId,
             })
             .catch((error) => {
@@ -193,7 +206,7 @@ async function resolveIFrameContext(
         origin,
         sourceUrl,
         isAutoContext,
-        ...(clientId && { clientId }),
+        ...(iframeClientId && { clientId: iframeClientId }),
     };
 }
 

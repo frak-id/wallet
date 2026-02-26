@@ -49,8 +49,8 @@ describe("useSsoLink", () => {
             },
             mockMerchantId,
             mockMetadata.name,
-            mockMetadata.css,
-            undefined
+            "",
+            mockMetadata.css
         );
     });
 
@@ -82,8 +82,8 @@ describe("useSsoLink", () => {
             },
             mockMerchantId,
             mockMetadata.name,
-            mockMetadata.css,
-            undefined
+            "",
+            mockMetadata.css
         );
     });
 
@@ -147,8 +147,8 @@ describe("useSsoLink", () => {
             },
             mockMerchantId,
             mockMetadata.name,
-            mockMetadata.css,
-            undefined
+            "",
+            mockMetadata.css
         );
     });
 

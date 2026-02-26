@@ -1,4 +1,5 @@
 import type { FrakWalletSdkConfig } from "../types";
+import { getClientId } from "./clientId";
 
 /**
  * Base props for the iframe
@@ -55,13 +56,15 @@ export function createIframe({
     // Set src BEFORE appending to DOM to avoid about:blank load event
     const walletUrl =
         config?.walletUrl ?? walletBaseUrl ?? "https://wallet.frak.id";
-    iframe.src = `${walletUrl}/listener`;
+    const clientId = getClientId();
+    iframe.src = `${walletUrl}/listener?clientId=${encodeURIComponent(clientId)}`;
 
     return new Promise((resolve) => {
         iframe.addEventListener("load", () => resolve(iframe));
         document.body.appendChild(iframe);
     });
 }
+
 /**
  * Change the visibility of the given iframe
  * @ignore

@@ -1,6 +1,5 @@
 import type { Hex } from "viem";
 import type { PrepareSsoParamsType, SsoMetadata } from "../types";
-import { getClientId } from "./clientId";
 import { compressJsonToB64 } from "./compression/compress";
 
 export type AppSpecificSsoMetadata = SsoMetadata & {
@@ -25,8 +24,8 @@ export type FullSsoParams = Omit<PrepareSsoParamsType, "metadata"> & {
  * @param params - SSO parameters
  * @param merchantId - Merchant identifier
  * @param name - Application name
+ * @param clientId - Client identifier for identity tracking
  * @param css - Optional custom CSS
- * @param clientId - Optional client identifier (auto-generated if omitted)
  * @returns Complete SSO URL ready to open in popup or redirect
  *
  * @example
@@ -45,8 +44,8 @@ export function generateSsoUrl(
     params: PrepareSsoParamsType,
     merchantId: string,
     name: string,
-    css?: string,
-    clientId?: string
+    clientId: string,
+    css?: string
 ): string {
     // Build full params with app-specific metadata
     const fullParams: FullSsoParams = {
@@ -60,7 +59,7 @@ export function generateSsoUrl(
             logoUrl: params.metadata?.logoUrl,
             homepageLink: params.metadata?.homepageLink,
         },
-        clientId: clientId ?? getClientId(),
+        clientId,
     };
 
     // Compress params to minimal format

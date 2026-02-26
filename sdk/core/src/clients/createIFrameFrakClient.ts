@@ -46,9 +46,6 @@ export function createIFrameFrakClient({
 }): FrakClient {
     const frakWalletUrl = config?.walletUrl ?? "https://wallet.frak.id";
 
-    // Eagerly generate a clientId, to ensure we got our local storage populated
-    getClientId();
-
     // Create lifecycle manager
     const lifecycleManager = createIFrameLifecycleManager({
         iframe,
