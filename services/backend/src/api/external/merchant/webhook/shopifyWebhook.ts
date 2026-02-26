@@ -98,7 +98,7 @@ export const shopifyWebhook = new Elysia()
                     purchaseStatus,
                     purchaseExternalId: webhookData.id,
                     status: webhookData.financial_status,
-                    notes: webhookData.note_attributes
+                    notes: webhookData.note_attributes,
                 },
                 "Handling new shopify webhook event"
             );

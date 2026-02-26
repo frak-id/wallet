@@ -9,9 +9,9 @@ import type { FrakLifecycleEvent } from "../types";
 import type { FrakClient } from "../types/client";
 import type { FrakWalletSdkConfig } from "../types/config";
 import type { IFrameRpcSchema } from "../types/rpc";
+import { getClientId } from "../utils";
 import { BACKUP_KEY } from "../utils/constants";
 import { setupSsoUrlListener } from "../utils/ssoUrlListener";
-
 import { DebugInfoGatherer } from "./DebugInfo";
 import {
     createIFrameLifecycleManager,
@@ -45,6 +45,9 @@ export function createIFrameFrakClient({
     iframe: HTMLIFrameElement;
 }): FrakClient {
     const frakWalletUrl = config?.walletUrl ?? "https://wallet.frak.id";
+
+    // Eagerly generate a clientId, to ensure we got our local storage populated
+    getClientId();
 
     // Create lifecycle manager
     const lifecycleManager = createIFrameLifecycleManager({
@@ -142,6 +145,7 @@ export function createIFrameFrakClient({
                     payload.properties = {
                         ...payload.properties,
                         sdkVersion: process.env.SDK_VERSION,
+                        userAnonymousClientId: getClientId(),
                     };
                 }
 
@@ -150,6 +154,7 @@ export function createIFrameFrakClient({
         });
         openPanel.setGlobalProperties({
             sdkVersion: process.env.SDK_VERSION,
+            userAnonymousClientId: getClientId(),
         });
         openPanel.init();
     }

@@ -28,6 +28,9 @@ function generateUUID(): string {
 export function getClientId(): string {
     if (typeof window === "undefined" || !window.localStorage) {
         // SSR or no localStorage - generate ephemeral ID
+        console.warn(
+            "[Frak SDK] No Window / localStorage available to save the clientId"
+        );
         return generateUUID();
     }
 
