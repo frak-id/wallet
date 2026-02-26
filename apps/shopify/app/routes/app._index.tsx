@@ -36,15 +36,22 @@ export default function Index() {
 
     return (
         <s-page heading={t("common.title")}>
-            <PageHeading>{t("common.title")}</PageHeading>
-            <s-button
-                slot="primary-action"
-                variant="primary"
-                href={process.env.BUSINESS_URL}
-                target="_blank"
+            <div
+                style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                }}
             >
-                {t("common.goToDashboard")}
-            </s-button>
+                <PageHeading>{t("common.title")}</PageHeading>
+                <s-button
+                    variant="primary"
+                    href={process.env.BUSINESS_URL}
+                    target="_blank"
+                >
+                    {t("common.goToDashboard")}
+                </s-button>
+            </div>
             <s-stack gap="large">
                 <Suspense>
                     <Await resolve={isThemeSupportedPromise}>
