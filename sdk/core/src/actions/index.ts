@@ -1,5 +1,6 @@
 export { displayEmbeddedWallet } from "./displayEmbeddedWallet";
 export { displayModal } from "./displayModal";
+export { ensureIdentity } from "./ensureIdentity";
 export { getMerchantInformation } from "./getMerchantInformation";
 export { openSso } from "./openSso";
 export { prepareSso } from "./prepareSso";

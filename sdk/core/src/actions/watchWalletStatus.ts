@@ -1,6 +1,7 @@
 import { Deferred } from "@frak-labs/frame-connector";
 import type { FrakClient } from "../types/client";
 import type { WalletStatusReturnType } from "../types/rpc/walletStatus";
+import { ensureIdentity } from "./ensureIdentity";
 
 /**
  * Function used to watch the current frak wallet status
@@ -81,13 +82,12 @@ function walletStatusSideEffect(
     });
 
     if (status.interactionToken) {
-        // If we got an interaction token, save it
         window.sessionStorage.setItem(
             "frak-wallet-interaction-token",
             status.interactionToken
         );
+        ensureIdentity(status.interactionToken);
     } else {
-        // Otherwise, remove it
         window.sessionStorage.removeItem("frak-wallet-interaction-token");
     }
 }
