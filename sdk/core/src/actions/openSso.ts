@@ -3,6 +3,7 @@ import type {
     OpenSsoParamsType,
     OpenSsoReturnType,
 } from "../types";
+import { getClientId } from "../utils/clientId";
 import { computeLegacyProductId } from "../utils/computeLegacyProductId";
 import { generateSsoUrl } from "../utils/sso";
 
@@ -93,7 +94,8 @@ export async function openSso(
             args,
             computeLegacyProductId(),
             metadata.name,
-            customizations?.css
+            customizations?.css,
+            getClientId()
         );
 
     // Step 2: Open popup synchronously (critical for popup blocker prevention)

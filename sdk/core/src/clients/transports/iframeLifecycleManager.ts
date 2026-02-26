@@ -1,6 +1,5 @@
 import { Deferred } from "@frak-labs/frame-connector";
 import type { FrakLifecycleEvent } from "../../types";
-import { getClientId } from "../../utils/clientId";
 import { BACKUP_KEY } from "../../utils/constants";
 import {
     isFrakDeepLink,
@@ -69,7 +68,6 @@ function handleHandshake(
             data: {
                 token,
                 currentUrl: window.location.href,
-                clientId: getClientId(),
                 pendingMergeToken,
                 configDomain,
             },
