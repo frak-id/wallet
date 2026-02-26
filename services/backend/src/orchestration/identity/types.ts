@@ -2,8 +2,7 @@ import type { Address } from "viem";
 
 export type IdentityNode =
     | { type: "wallet"; value: Address }
-    | { type: "anonymous_fingerprint"; value: string; merchantId: string }
-    | { type: "merchant_customer"; value: string; merchantId: string };
+    | { type: "anonymous_fingerprint"; value: string; merchantId: string };
 
 export type ResolveResult = {
     groupId: string;

@@ -34,20 +34,16 @@ export class PurchaseLinkingOrchestrator {
     async claimPurchase(
         params: ClaimPurchaseParams
     ): Promise<ClaimPurchaseResult> {
-        // Security: Only resolve trusted identity types (anon/wallet), NOT merchant_customer
-        // merchant_customer is only created after webhook validates the claim
-        const trustedNodes = params.identityNodes.filter(
-            (n) => n.type !== "merchant_customer"
-        );
-
-        if (trustedNodes.length === 0) {
+        if (params.identityNodes.length === 0) {
             throw new Error(
-                "At least one trusted identity node (anon/wallet) is required"
+                "At least one identity node (anon/wallet) is required"
             );
         }
 
         const { finalGroupId, merged } =
-            await this.identityOrchestrator.resolveAndAssociate(trustedNodes);
+            await this.identityOrchestrator.resolveAndAssociate(
+                params.identityNodes
+            );
 
         const purchase = await this.purchaseRepository.findByOrderAndToken(
             params.orderId,

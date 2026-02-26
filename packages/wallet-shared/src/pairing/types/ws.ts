@@ -13,7 +13,6 @@ import type { DistantWebAuthnWallet } from "../../types/Session";
  */
 export type OriginIdentityNode =
     | { type: "anonymous_fingerprint"; value: string; merchantId: string }
-    | { type: "merchant_customer"; value: string; merchantId: string }
     | { type: "wallet"; value: Address };
 
 /**
