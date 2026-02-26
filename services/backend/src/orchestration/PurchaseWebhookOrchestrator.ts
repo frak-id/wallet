@@ -45,17 +45,36 @@ export class PurchaseWebhookOrchestrator {
             purchaseToken: purchase.purchaseToken ?? "",
         });
 
-        if (!claim) {
-            // No claim from pixel — try cart-attribute identity (ad-blocker-resistant path)
-            if (clientId) {
-                return this.upsertWithCartAttributeIdentity({
-                    purchase,
-                    purchaseItems,
-                    merchantId,
-                    clientId,
-                });
-            }
+        // Claim + client present, check they match (claim will take over client id)
+        if (claim?.claimingIdentityGroupId && clientId) {
+            log.debug(
+                {
+                    claimIdentityGroupId: claim.claimingIdentityGroupId,
+                    purchaseClientId: clientId,
+                },
+                "Got both a pending claim, and client id note for a purchase"
+            );
+        }
 
+        // No claim from pixel — try cart-attribute identity (ad-blocker-resistant path)
+        if (!claim && clientId) {
+            log.debug(
+                {
+                    clientId,
+                    merchantId,
+                    purchaseId: purchase.externalId,
+                },
+                "Resolved client id from webhook data"
+            );
+            return this.upsertWithCartAttributeIdentity({
+                purchase,
+                purchaseItems,
+                merchantId,
+                clientId,
+            });
+        }
+
+        if (!claim) {
             // No claim, no cart-attribute identity — store the purchase and wait.
             // The interaction will be created when PurchaseLinkingOrchestrator
             // reconciles the late claim with this purchase.
