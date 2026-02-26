@@ -128,7 +128,7 @@ export class RuleEngineService {
         // Check per-user reward cap (defaults to 1 per referee)
         const maxPerUser = campaign.rule.maxRewardsPerUser ?? 1;
         const userRewardCount =
-            await this.assetLogRepository.countByCampaignAndUser(
+            await this.assetLogRepository.countByCampaignAndUserAsReferee(
                 campaign.id,
                 context.user.identityGroupId
             );

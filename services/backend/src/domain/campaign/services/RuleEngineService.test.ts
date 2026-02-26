@@ -129,7 +129,7 @@ describe("RuleEngineService", () => {
             ]);
             vi.mocked(mockConditionEvaluator.evaluate).mockReturnValue(true);
             vi.mocked(
-                mockAssetLogRepository.countByCampaignAndUser
+                mockAssetLogRepository.countByCampaignAndUserAsReferee
             ).mockResolvedValue(1);
 
             const service = new RuleEngineService(
@@ -180,7 +180,7 @@ describe("RuleEngineService", () => {
             ]);
             vi.mocked(mockConditionEvaluator.evaluate).mockReturnValue(true);
             vi.mocked(
-                mockAssetLogRepository.countByCampaignAndUser
+                mockAssetLogRepository.countByCampaignAndUserAsReferee
             ).mockResolvedValue(2);
             vi.mocked(mockRewardCalculator.calculateAll).mockReturnValue({
                 calculated: [calculatedReward],
@@ -236,7 +236,7 @@ describe("RuleEngineService", () => {
             ]);
             vi.mocked(mockConditionEvaluator.evaluate).mockReturnValue(true);
             vi.mocked(
-                mockAssetLogRepository.countByCampaignAndUser
+                mockAssetLogRepository.countByCampaignAndUserAsReferee
             ).mockResolvedValue(1);
 
             const service = new RuleEngineService(
@@ -287,7 +287,7 @@ describe("RuleEngineService", () => {
             vi.mocked(mockConditionEvaluator.evaluate).mockReturnValue(true);
             // User has 4 rewards, cap is 5, so should proceed
             vi.mocked(
-                mockAssetLogRepository.countByCampaignAndUser
+                mockAssetLogRepository.countByCampaignAndUserAsReferee
             ).mockResolvedValue(4);
             vi.mocked(mockRewardCalculator.calculateAll).mockReturnValue({
                 calculated: [calculatedReward],
@@ -343,7 +343,7 @@ describe("RuleEngineService", () => {
             vi.mocked(mockConditionEvaluator.evaluate).mockReturnValue(true);
             // User has 5 rewards, cap is 5, so should not proceed
             vi.mocked(
-                mockAssetLogRepository.countByCampaignAndUser
+                mockAssetLogRepository.countByCampaignAndUserAsReferee
             ).mockResolvedValue(5);
 
             const service = new RuleEngineService(

@@ -266,7 +266,7 @@ export class AssetLogRepository {
             .orderBy(desc(assetLogsTable.createdAt));
     }
 
-    async countByCampaignAndUser(
+    async countByCampaignAndUserAsReferee(
         campaignRuleId: string,
         identityGroupId: string
     ): Promise<number> {
@@ -282,7 +282,8 @@ export class AssetLogRepository {
                         "processing",
                         "settled",
                         "bank_depleted",
-                    ])
+                    ]),
+                    eq(assetLogsTable.recipientType, "referee")
                 )
             );
         return result?.count ?? 0;
