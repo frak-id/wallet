@@ -55,8 +55,13 @@ export function ListenerModal({
 }: ModalUiType & GenericWalletUiType) {
     const { clearRequest } = useListenerUI();
     const [isOpen, setIsOpen] = useState(true);
+    const [logoFailed, setLogoFailed] = useState(false);
     const getMergeToken = useGetMergeToken();
     const parentUrl = resolvingContextStore((s) => s.context?.sourceUrl);
+
+    useEffect(() => {
+        setLogoFailed(false);
+    }, [logoUrl]);
     /**
      * Method to close the modal
      */
@@ -147,7 +152,7 @@ export function ListenerModal({
     /**
      * The inner component to display
      */
-    const { titleComponent, icon, footer } = useMemo(() => {
+    const { titleComponent, providedBy, footer } = useMemo(() => {
         // Build the title component we will display
         const titleComponent = metadata?.header?.title ? (
             metadata.header.title
@@ -168,32 +173,21 @@ export function ListenerModal({
             </span>
         );
 
-        // Build the header icon component (only if we got an icon)
-        const icon = logoUrl ? (
-            <div className={styles.modalListener__iconContainer}>
-                <img
-                    src={logoUrl}
-                    alt={""}
-                    className={styles.modalListener__icon}
-                />
-                {providedBy}
-            </div>
-        ) : null;
-
         // Build the footer (only if no icon present)
-        const footer = logoUrl ? null : (
-            <div className={styles.modalListener__footer}>
-                <OriginPairingState type="modal" />
-                {providedBy}
-            </div>
-        );
+        const footer =
+            logoUrl && !logoFailed ? null : (
+                <div className={styles.modalListener__footer}>
+                    <OriginPairingState type="modal" />
+                    {providedBy}
+                </div>
+            );
 
         return {
             titleComponent,
+            providedBy,
             footer,
-            icon,
         };
-    }, [metadata, logoUrl]);
+    }, [metadata, logoUrl, logoFailed]);
 
     return (
         <ModalComponent
@@ -208,7 +202,12 @@ export function ListenerModal({
             />
             <ToastLoading />
 
-            {icon}
+            <ModalLogoIcon
+                logoUrl={logoUrl}
+                logoFailed={logoFailed}
+                providedBy={providedBy}
+                onError={() => setLogoFailed(true)}
+            />
             <CurrentModalMetadataInfo />
             <ModalStepIndicator />
             <CurrentModalStepComponent onError={onError} />
@@ -356,4 +355,33 @@ function CurrentModalStepComponent({
                 return <>Can't handle {currentStep} yet</>;
         }
     }, [onError, currentStep]);
+}
+
+/**
+ * Logo icon with 404 fallback — hides itself on load failure
+ */
+function ModalLogoIcon({
+    logoUrl,
+    logoFailed,
+    providedBy,
+    onError,
+}: {
+    logoUrl?: string;
+    logoFailed: boolean;
+    providedBy: ReactNode;
+    onError: () => void;
+}) {
+    if (!logoUrl || logoFailed) return null;
+
+    return (
+        <div className={styles.modalListener__iconContainer}>
+            <img
+                src={logoUrl}
+                alt=""
+                className={styles.modalListener__icon}
+                onError={onError}
+            />
+            {providedBy}
+        </div>
+    );
 }

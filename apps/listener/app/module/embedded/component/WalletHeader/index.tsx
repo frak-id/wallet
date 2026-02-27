@@ -2,6 +2,7 @@ import { LogoFrakWithName } from "@frak-labs/ui/icons/LogoFrakWithName";
 import { prefixWalletCss } from "@frak-labs/ui/utils/prefixWalletCss";
 import { sessionStore } from "@frak-labs/wallet-shared";
 import { cx } from "class-variance-authority";
+import { useState } from "react";
 import { useEmbeddedListenerUI } from "@/module/providers/ListenerUiProvider";
 import styles from "../Wallet/index.module.css";
 
@@ -14,6 +15,7 @@ export function ListenerWalletHeader() {
     const {
         currentRequest: { logoUrl },
     } = useEmbeddedListenerUI();
+    const [logoFailed, setLogoFailed] = useState(false);
 
     return (
         <div
@@ -32,7 +34,7 @@ export function ListenerWalletHeader() {
                     )}
                 />
             )}
-            {logoUrl && (
+            {logoUrl && !logoFailed && (
                 <h1>
                     <img
                         src={logoUrl}
@@ -41,6 +43,7 @@ export function ListenerWalletHeader() {
                             prefixWalletCss("modalListenerWallet__logo")
                         )}
                         alt=""
+                        onError={() => setLogoFailed(true)}
                     />
                 </h1>
             )}
