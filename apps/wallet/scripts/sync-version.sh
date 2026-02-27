@@ -10,6 +10,15 @@ WALLET_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 TAURI_DIR="$WALLET_DIR/src-tauri"
 INFO_PLIST="$TAURI_DIR/gen/apple/app_iOS/Info.plist"
 
+sed_in_place() {
+    local expression="$1"
+    local file="$2"
+
+    # `-i.bak` works on both GNU and BSD sed.
+    sed -i.bak -e "$expression" "$file"
+    rm -f "${file}.bak"
+}
+
 # Resolve version: argument > package.json
 if [ -n "$1" ]; then
     VERSION="$1"
@@ -35,12 +44,12 @@ biome format --write "$TAURI_DIR/tauri.conf.json" > /dev/null 2>&1
 echo "[sync-version] Updated tauri.conf.json"
 
 # 2. Cargo.toml
-sed -i '' "s/^version = \".*\"/version = \"$VERSION\"/" "$TAURI_DIR/Cargo.toml"
+sed_in_place "s/^version = \".*\"/version = \"$VERSION\"/" "$TAURI_DIR/Cargo.toml"
 echo "[sync-version] Updated Cargo.toml"
 
 # 3. project.yml (CFBundleShortVersionString + CFBundleVersion)
-sed -i '' "s/CFBundleShortVersionString: .*/CFBundleShortVersionString: $VERSION/" "$TAURI_DIR/gen/apple/project.yml"
-sed -i '' "s/CFBundleVersion: .*/CFBundleVersion: $VERSION/" "$TAURI_DIR/gen/apple/project.yml"
+sed_in_place "s/CFBundleShortVersionString: .*/CFBundleShortVersionString: $VERSION/" "$TAURI_DIR/gen/apple/project.yml"
+sed_in_place "s/CFBundleVersion: .*/CFBundleVersion: $VERSION/" "$TAURI_DIR/gen/apple/project.yml"
 echo "[sync-version] Updated project.yml"
 
 # 4. Info.plist (CFBundleShortVersionString + CFBundleVersion)
