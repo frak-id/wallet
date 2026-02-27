@@ -1,7 +1,9 @@
+import type { Stablecoin } from "@frak-labs/app-essentials";
 import type { DistributionStatus } from "@frak-labs/backend-elysia/domain/campaign-bank";
 import { type Currency, formatAmount } from "@frak-labs/core-sdk";
 import { Collapsible } from "app/components/ui/Collapsible";
 import { RangeSlider } from "app/components/ui/RangeSlider";
+import { SkeletonDisplayText } from "app/components/ui/SkeletonDisplayText";
 import type { loader as rootLoader } from "app/routes/app";
 import type { action } from "app/routes/app.campaigns";
 import type {
@@ -12,6 +14,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useFetcher, useRouteLoaderData } from "react-router";
 import type { Address } from "viem";
+import { useMerchantBank } from "../../hooks/useMerchantBank";
+import { currencyMetadata, formatTokenBalance } from "../../utils/tokenStatus";
 
 export function CampaignStatus({
     campaigns,
@@ -402,6 +406,57 @@ function CampaignStatusBadge({
     );
 }
 
+function TokenSelect({
+    bankAddress,
+    value,
+    onChange,
+}: {
+    bankAddress: Address;
+    value: string;
+    onChange: (value: string) => void;
+}) {
+    const { data: bankData, isLoading } = useMerchantBank({ bankAddress });
+    const { t } = useTranslation();
+
+    if (isLoading || !bankData) {
+        return <SkeletonDisplayText size="small" />;
+    }
+
+    const options = bankData.tokens.map((token) => {
+        const stablecoin = token.symbol as Stablecoin;
+        const meta = currencyMetadata[stablecoin];
+        const formattedBalance = formatTokenBalance(
+            token.balance,
+            stablecoin,
+            token.decimals
+        );
+        return {
+            value: token.address,
+            label: `${meta.label} (${meta.provider}) — ${formattedBalance}`,
+        };
+    });
+
+    return (
+        <s-select
+            label={t("status.campaign.rewardToken")}
+            value={value}
+            onChange={(e) => {
+                const target = e.currentTarget;
+                if ("value" in target) {
+                    onChange(String(target.value));
+                }
+            }}
+        >
+            <s-option value="">{t("status.campaign.selectToken")}</s-option>
+            {options.map((opt) => (
+                <s-option key={opt.value} value={opt.value}>
+                    {opt.label}
+                </s-option>
+            ))}
+        </s-select>
+    );
+}
+
 function CampaignCreation({
     bankAddress,
     onCreated,
@@ -417,6 +472,7 @@ function CampaignCreation({
     const [rawCAC, setRawCAC] = useState("");
     const [ratio, setRatio] = useState(90);
     const [name, setName] = useState("");
+    const [rewardToken, setRewardToken] = useState("");
 
     const isSubmitting = fetcher.state !== "idle";
     const actionResult = fetcher.data;
@@ -424,6 +480,7 @@ function CampaignCreation({
     useEffect(() => {
         if (actionResult?.success) {
             setName("");
+            setRewardToken("");
             setGlobalBudget("");
             setRawCAC("");
             setRatio(90);
@@ -434,11 +491,12 @@ function CampaignCreation({
     const isCreationDisabled = useMemo(() => {
         if (!bankAddress) return true;
         if (!name.trim()) return true;
+        if (!rewardToken) return true;
         if (!globalBudget || !rawCAC) return true;
         if (isSubmitting) return true;
 
         return false;
-    }, [globalBudget, rawCAC, bankAddress, name, isSubmitting]);
+    }, [globalBudget, rawCAC, bankAddress, name, rewardToken, isSubmitting]);
 
     const breakdown = useMemo(() => {
         const cac = Number(rawCAC) || 0;
@@ -468,13 +526,14 @@ function CampaignCreation({
             {
                 intent: "create-campaign",
                 name,
+                rewardToken,
                 globalBudget,
                 rawCAC,
                 ratio: ratio.toString(),
             },
             { method: "POST", action: "/app/campaigns" }
         );
-    }, [fetcher, name, globalBudget, rawCAC, ratio]);
+    }, [fetcher, name, rewardToken, globalBudget, rawCAC, ratio]);
 
     if (!bankAddress) {
         return null;
@@ -498,9 +557,11 @@ function CampaignCreation({
                     />
                 </s-grid-item>
                 <s-grid-item>
-                    <s-text>
-                        {t("status.campaign.bankSelect")}: {bankAddress}
-                    </s-text>
+                    <TokenSelect
+                        bankAddress={bankAddress}
+                        value={rewardToken}
+                        onChange={setRewardToken}
+                    />
                 </s-grid-item>
             </s-grid>
             <s-grid gridTemplateColumns="repeat(2, 1fr)" gap="small">

@@ -2,6 +2,7 @@ import type {
     CampaignRuleDefinition,
     FixedRewardDefinition,
 } from "@frak-labs/backend-elysia/domain/campaign";
+import type { Hex } from "viem";
 
 const FRAK_COMMISSION_PERCENT = 20;
 const DEFAULT_DEPERDITION_PER_LEVEL = 80;
@@ -19,9 +20,11 @@ const DEFAULT_MAX_DEPTH = 5;
 export function buildCampaignRule({
     cacBrut,
     ratio,
+    rewardToken,
 }: {
     cacBrut: number;
     ratio: number;
+    rewardToken?: string;
 }): CampaignRuleDefinition {
     const frakCommission =
         Math.round(cacBrut * (FRAK_COMMISSION_PERCENT / 100) * 100) / 100;
@@ -39,6 +42,7 @@ export function buildCampaignRule({
             amountType: "fixed",
             amount:
                 Math.round(distributableAmount * referrerPercent * 100) / 100,
+            token: rewardToken as Hex | undefined,
             description: "Referrer reward",
             chaining: {
                 deperditionPerLevel: DEFAULT_DEPERDITION_PER_LEVEL,
@@ -54,6 +58,7 @@ export function buildCampaignRule({
             amountType: "fixed",
             amount:
                 Math.round(distributableAmount * refereePercent * 100) / 100,
+            token: rewardToken as Hex | undefined,
             description: "Referee reward",
         });
     }
