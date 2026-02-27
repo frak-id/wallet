@@ -1,7 +1,9 @@
+import type { Stablecoin } from "@frak-labs/app-essentials";
 import type { DistributionStatus } from "@frak-labs/backend-elysia/domain/campaign-bank";
 import { type Currency, formatAmount } from "@frak-labs/core-sdk";
 import { Collapsible } from "app/components/ui/Collapsible";
 import { RangeSlider } from "app/components/ui/RangeSlider";
+import { SkeletonDisplayText } from "app/components/ui/SkeletonDisplayText";
 import type { loader as rootLoader } from "app/routes/app";
 import type { action } from "app/routes/app.campaigns";
 import type {
@@ -12,6 +14,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useFetcher, useRouteLoaderData } from "react-router";
 import type { Address } from "viem";
+import { useMerchantBank } from "../../hooks/useMerchantBank";
+import { currencyMetadata, formatTokenBalance } from "../../utils/tokenStatus";
 
 export function CampaignStatus({
     campaigns,
@@ -402,6 +406,54 @@ function CampaignStatusBadge({
     );
 }
 
+function BankTokenOverview({ bankAddress }: { bankAddress: Address }) {
+    const { data: bankData, isLoading } = useMerchantBank({ bankAddress });
+    const { t } = useTranslation();
+
+    if (isLoading || !bankData) {
+        return <SkeletonDisplayText size="small" />;
+    }
+
+    return (
+        <s-section padding="none">
+            <s-stack gap="small">
+                <s-text>{t("status.campaign.availableTokens")}</s-text>
+                <s-table>
+                    <s-table-header-row>
+                        <s-table-header listSlot="primary">
+                            {t("status.bank.token")}
+                        </s-table-header>
+                        <s-table-header>
+                            {t("status.bank.balance")}
+                        </s-table-header>
+                    </s-table-header-row>
+                    <s-table-body>
+                        {bankData.tokens.map((token) => {
+                            const stablecoin = token.symbol as Stablecoin;
+                            const meta = currencyMetadata[stablecoin];
+                            const formattedBalance = formatTokenBalance(
+                                token.balance,
+                                stablecoin,
+                                token.decimals
+                            );
+                            return (
+                                <s-table-row key={token.address}>
+                                    <s-table-cell>
+                                        {meta.label} ({meta.provider})
+                                    </s-table-cell>
+                                    <s-table-cell>
+                                        {formattedBalance}
+                                    </s-table-cell>
+                                </s-table-row>
+                            );
+                        })}
+                    </s-table-body>
+                </s-table>
+            </s-stack>
+        </s-section>
+    );
+}
+
 function CampaignCreation({
     bankAddress,
     onCreated,
@@ -488,21 +540,14 @@ function CampaignCreation({
                 </s-banner>
             )}
 
-            <s-grid gridTemplateColumns="repeat(2, 1fr)" gap="small">
-                <s-grid-item>
-                    <s-text-field
-                        label={t("status.campaign.nameInput")}
-                        value={name}
-                        onChange={(e) => setName(e.currentTarget.value)}
-                        autocomplete="off"
-                    />
-                </s-grid-item>
-                <s-grid-item>
-                    <s-text>
-                        {t("status.campaign.bankSelect")}: {bankAddress}
-                    </s-text>
-                </s-grid-item>
-            </s-grid>
+            <s-text-field
+                label={t("status.campaign.nameInput")}
+                value={name}
+                onChange={(e) => setName(e.currentTarget.value)}
+                autocomplete="off"
+            />
+
+            <BankTokenOverview bankAddress={bankAddress} />
             <s-grid gridTemplateColumns="repeat(2, 1fr)" gap="small">
                 <s-grid-item>
                     <s-stack gap="small">
