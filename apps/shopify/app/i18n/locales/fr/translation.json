@@ -175,8 +175,8 @@
             "noCampaigns": "Aucune campagne pour le moment. Créez votre première campagne pour commencer à distribuer des récompenses.",
 
             "nameInput": "Nom de la campagne",
-            "bankSelect": "Sélectionner la banque",
-            "bankBalance": "Solde de la banque",
+            "rewardToken": "Token de récompense",
+            "selectToken": "Sélectionner un token",
             "budget": "Budget global",
             "budgetInfo": "Ce montant est le montant maximum qui sera distribué par cette campagne.",
             "rawCAC": "CAC brut par nouvel utilisateur",

@@ -62,18 +62,23 @@ async function handleCreateCampaign(
     formData: FormData
 ): Promise<CampaignActionResult> {
     const name = formData.get("name") as string;
+    const rewardToken = formData.get("rewardToken") as string | null;
     const globalBudget = Number(formData.get("globalBudget"));
     const rawCAC = Number(formData.get("rawCAC"));
     const ratio = Number(formData.get("ratio"));
 
-    if (!name || !globalBudget || !rawCAC || !ratio) {
+    if (!name || !rewardToken || !globalBudget || !rawCAC || !ratio) {
         return {
             success: false,
             error: "Missing required campaign fields",
         };
     }
 
-    const rule = buildCampaignRule({ cacBrut: rawCAC, ratio });
+    const rule = buildCampaignRule({
+        cacBrut: rawCAC,
+        ratio,
+        rewardToken,
+    });
 
     const campaign = await createMerchantCampaign(context, request, {
         name,
