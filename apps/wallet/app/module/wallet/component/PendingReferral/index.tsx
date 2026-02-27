@@ -21,14 +21,6 @@ import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
 import styles from "./index.module.css";
 
-/**
- * sessionStorage key tracking the block where the last claim tx was confirmed.
- * Used to pin the multicall read to that block, bypassing ERPC cache that may
- * still serve pre-claim state for "latest".
- * sessionStorage is ideal — survives reload, clears on tab close.
- */
-const LAST_CLAIM_BLOCK_KEY = "frak_last_claim_block";
-
 export function PendingReferral() {
     const queryClient = useQueryClient();
     const { t } = useTranslation();
@@ -59,20 +51,10 @@ export function PendingReferral() {
                     ] as const
             );
 
-            // Pin to the last claim block to bypass ERPC cache, then clear
-            const lastClaimBlock = sessionStorage.getItem(
-                LAST_CLAIM_BLOCK_KEY
-            );
             const result = await multicall(currentViemClient, {
                 contracts,
                 allowFailure: false,
-                ...(lastClaimBlock
-                    ? { blockNumber: BigInt(lastClaimBlock) }
-                    : {}),
             });
-            if (lastClaimBlock) {
-                sessionStorage.removeItem(LAST_CLAIM_BLOCK_KEY);
-            }
 
             // Results alternate: [claimable0, decimals0, claimable1, decimals1, ...]
             return currentStablecoinsList
@@ -125,16 +107,10 @@ export function PendingReferral() {
                 claimableKey.pending.byAddress(address),
                 []
             );
-            // Wait for on-chain confirmation, then persist the block number
-            // so reloads can pin reads past the ERPC cache
-            const receipt = await waitForTransactionReceipt(
-                currentViemClient,
-                { hash: txHash }
-            );
-            sessionStorage.setItem(
-                LAST_CLAIM_BLOCK_KEY,
-                receipt.blockNumber.toString()
-            );
+            // Wait for on-chain confirmation before refreshing queries
+            await waitForTransactionReceipt(currentViemClient, {
+                hash: txHash,
+            });
             await refetchPendingReward();
             await queryClient.invalidateQueries({
                 queryKey: balanceKey.baseKey,
