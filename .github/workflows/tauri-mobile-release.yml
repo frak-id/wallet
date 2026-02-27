@@ -1,0 +1,168 @@
+name: "📱 Mobile Release"
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release (e.g. 0.0.36)"
+        required: true
+        type: string
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  CI: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  ios:
+    name: "🍎 iOS"
+    runs-on: macos-15
+
+    steps:
+      - name: "📥 Checkout"
+        uses: actions/checkout@v4
+
+      - name: "🧅 Setup Bun"
+        uses: oven-sh/setup-bun@v2
+
+      - name: "📦 Install dependencies"
+        run: bun install --frozen-lockfile
+
+      - name: "🦀 Setup Rust"
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-ios
+
+      - name: "💾 Setup SST Cache"
+        id: sst-caching
+        uses: actions/cache@v4
+        with:
+          path: |
+            .sst/platform/
+            .sst/provider-lock.json
+            .sst/esbuild.json
+          key: ${{ runner.os }}-sst-v2-${{ hashFiles('./sst.config.ts') }}
+          restore-keys: ${{ runner.os }}-sst-v2-
+
+      - name: "👥 Configure AWS Credentials"
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::262732185023:role/github-action-deploy-role
+          aws-region: eu-west-1
+          retry-max-attempts: 5
+
+      - name: "🔄 Sync version"
+        run: bun run --cwd apps/wallet tauri:version ${{ inputs.version }}
+
+      - name: "🔑 Write App Store Connect API key"
+        run: echo "${{ secrets.APPSTORE_API_PRIVATE_KEY }}" > "$RUNNER_TEMP/AuthKey.p8"
+
+      - name: "🏗️ Build iOS"
+        run: bun run --cwd apps/wallet tauri:ios:build:prod
+        env:
+          APPLE_API_ISSUER: ${{ secrets.APPSTORE_ISSUER_ID }}
+          APPLE_API_KEY: ${{ secrets.APPSTORE_API_KEY_ID }}
+          APPLE_API_KEY_PATH: ${{ runner.temp }}/AuthKey.p8
+
+      - name: "🚀 Upload to TestFlight"
+        uses: apple-actions/upload-testflight-build@v4
+        with:
+          app-path: "apps/wallet/src-tauri/gen/apple/build/arm64/Frak Wallet.ipa"
+          issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }}
+          api-key-id: ${{ secrets.APPSTORE_API_KEY_ID }}
+          api-private-key: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}
+
+      - name: "📦 Upload iOS artifact"
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-ipa
+          path: "apps/wallet/src-tauri/gen/apple/build/arm64/Frak Wallet.ipa"
+
+  android:
+    name: "🤖 Android"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: "📥 Checkout"
+        uses: actions/checkout@v4
+
+      - name: "🧅 Setup Bun"
+        uses: oven-sh/setup-bun@v2
+
+      - name: "📦 Install dependencies"
+        run: bun install --frozen-lockfile
+
+      - name: "☕ Setup Java 17"
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: "📱 Setup Android SDK"
+        uses: android-actions/setup-android@v3
+
+      - name: "🔧 Install Android NDK"
+        run: sdkmanager --install "ndk;27.0.12077973"
+
+      - name: "🦀 Setup Rust"
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android,armv7-linux-androideabi,i686-linux-android,x86_64-linux-android
+
+      - name: "💾 Setup SST Cache"
+        id: sst-caching
+        uses: actions/cache@v4
+        with:
+          path: |
+            .sst/platform/
+            .sst/provider-lock.json
+            .sst/esbuild.json
+          key: ${{ runner.os }}-sst-v2-${{ hashFiles('./sst.config.ts') }}
+          restore-keys: ${{ runner.os }}-sst-v2-
+
+      - name: "👥 Configure AWS Credentials"
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::262732185023:role/github-action-deploy-role
+          aws-region: eu-west-1
+          retry-max-attempts: 5
+
+      - name: "🔄 Sync version"
+        run: bun run --cwd apps/wallet tauri:version ${{ inputs.version }}
+
+      - name: "🔑 Write Android signing files"
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > apps/wallet/src-tauri/gen/android/upload-keystore.jks
+          cat > apps/wallet/src-tauri/gen/android/key.properties << EOF
+          storeFile=../upload-keystore.jks
+          storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          keyAlias=upload
+          keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
+          EOF
+
+      - name: "🏗️ Build Android"
+        run: bun run --cwd apps/wallet tauri:android:build
+
+      - name: "🚀 Upload to Play Store"
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: id.frak.wallet
+          releaseFiles: apps/wallet/src-tauri/gen/android/app/build/outputs/bundle/release/app-release.aab
+          track: internal
+
+      - name: "📦 Upload Android artifact"
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-aab
+          path: apps/wallet/src-tauri/gen/android/app/build/outputs/bundle/release/app-release.aab
