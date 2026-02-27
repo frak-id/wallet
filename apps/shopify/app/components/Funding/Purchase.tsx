@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useRouteLoaderData } from "react-router";
 import type { PurchaseTable } from "../../../db/schema/purchaseTable";
+import { ExternalButton, ExternalLink } from "../ui/ExternalLink";
 
 export function PurchaseStatus({
     bankStatus,
@@ -86,12 +87,11 @@ function ActivePurchases({
                                 </s-table-cell>
                                 <s-table-cell>
                                     {purchase.status === "pending" && (
-                                        <s-link
+                                        <ExternalLink
                                             href={purchase.confirmationUrl}
-                                            target="_blank"
                                         >
                                             {t("status.purchase.confirm")}
-                                        </s-link>
+                                        </ExternalLink>
                                     )}
                                 </s-table-cell>
                             </s-table-row>
@@ -169,13 +169,9 @@ function CreatePurchase({ bankAddress }: { bankAddress: string }) {
             {error && <s-text tone="critical">{error}</s-text>}
 
             {confirmationUrl && (
-                <s-button
-                    href={confirmationUrl}
-                    target="_blank"
-                    variant="primary"
-                >
+                <ExternalButton href={confirmationUrl} variant="primary">
                     {t("status.purchase.confirmPurchase")}
-                </s-button>
+                </ExternalButton>
             )}
         </s-stack>
     );

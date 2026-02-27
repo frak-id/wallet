@@ -4,6 +4,7 @@ import { useRouteLoaderData } from "react-router";
 import screenWalletButton from "../../assets/wallet-button.png";
 import { Activated } from "../Activated";
 import { Instructions } from "../Instructions";
+import { ExternalLink } from "../ui/ExternalLink";
 
 interface WalletButtonTabProps {
     themeWalletButton?: string | null;
@@ -23,12 +24,11 @@ export function WalletButtonTab({ themeWalletButton }: WalletButtonTabProps) {
                             text={t("appearance.walletButton.activated")}
                         />
                         <s-box paddingBlockStart="small">
-                            <s-link
+                            <ExternalLink
                                 href={`${editorUrl}?context=apps&appEmbed=${themeWalletButton}%2Fwallet_button`}
-                                target="_blank"
                             >
                                 {t("appearance.walletButton.link")}
-                            </s-link>
+                            </ExternalLink>
                         </s-box>
                     </>
                 )}
@@ -49,9 +49,9 @@ function WalletButtonNotActivated() {
             todoText={t("appearance.walletButton.todo")}
             image={screenWalletButton}
         >
-            <s-link href={`${editorUrl}?context=apps`} target="_blank">
+            <ExternalLink href={`${editorUrl}?context=apps`}>
                 {t("appearance.walletButton.link")}
-            </s-link>
+            </ExternalLink>
         </Instructions>
     );
 }

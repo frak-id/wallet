@@ -1,6 +1,7 @@
 import screenFrakListener from "app/assets/frak-listener.png";
 import { Activated } from "app/components/Activated";
 import { Instructions } from "app/components/Instructions";
+import { ExternalLink } from "app/components/ui/ExternalLink";
 import { useRefreshData } from "app/hooks/useRefreshData";
 import { useVisibilityChange } from "app/hooks/useVisibilityChange";
 import type { loader as rootLoader } from "app/routes/app";
@@ -44,12 +45,11 @@ export default function SettingsThemePage() {
                         <>
                             <Activated text={t("theme.connected")} />
                             <s-box paddingBlockStart="small">
-                                <s-link
+                                <ExternalLink
                                     href={`${editorUrl}?context=apps&appEmbed=${id}/listener`}
-                                    target="_blank"
                                 >
                                     {t("theme.link")}
-                                </s-link>
+                                </ExternalLink>
                             </s-box>
                         </>
                     )}
@@ -71,9 +71,9 @@ function ThemeNotActivated() {
             todoText={t("theme.todo")}
             image={screenFrakListener}
         >
-            <s-link href={`${editorUrl}?context=apps`} target="_blank">
+            <ExternalLink href={`${editorUrl}?context=apps`}>
                 {t("theme.link")}
-            </s-link>
+            </ExternalLink>
         </Instructions>
     );
 }

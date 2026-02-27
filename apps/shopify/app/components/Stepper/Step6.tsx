@@ -3,11 +3,11 @@ import {
     type OnboardingStepData,
     validateCompleteOnboarding,
 } from "app/utils/onboarding";
-import { useCallback } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { useRouteLoaderData } from "react-router";
 import screenShareButton from "../../assets/share-button.png";
 import screenWalletButton from "../../assets/wallet-button.png";
+import { ExternalButton } from "../ui/ExternalLink";
 import { CollapsibleStep } from "./CollapsibleStep";
 
 export function Step6({
@@ -24,19 +24,6 @@ export function Step6({
     const isCompleted = !!(isThemeHasFrakButton || themeWalletButton);
     const { failedSteps } = validateCompleteOnboarding(onboardingData);
 
-    // Open editor synchronously on click — avoids Safari popup blocker
-    // (no async gap between user gesture and window.open)
-    const handleOpenShareEditor = useCallback(() => {
-        window.open(
-            `${editorUrl}?previewPath=/products/${firstProduct?.handle}`,
-            "_blank"
-        );
-    }, [editorUrl, firstProduct?.handle]);
-
-    const handleOpenWalletEditor = useCallback(() => {
-        window.open(`${editorUrl}?context=apps`, "_blank");
-    }, [editorUrl]);
-
     return (
         <CollapsibleStep
             step={6}
@@ -52,12 +39,12 @@ export function Step6({
                                 <Trans i18nKey="stepper.step6.descriptionShare" />
                             </s-text>
                             <img src={screenShareButton} alt="" />
-                            <s-button
+                            <ExternalButton
                                 variant="primary"
-                                onClick={handleOpenShareEditor}
+                                href={`${editorUrl}?previewPath=/products/${firstProduct.handle}`}
                             >
                                 {t("stepper.step6.linkShare")}
-                            </s-button>
+                            </ExternalButton>
                         </s-stack>
                     </div>
                 )}
@@ -68,12 +55,12 @@ export function Step6({
                                 <Trans i18nKey="stepper.step6.descriptionWallet" />
                             </s-text>
                             <img src={screenWalletButton} alt="" />
-                            <s-button
+                            <ExternalButton
                                 variant="primary"
-                                onClick={handleOpenWalletEditor}
+                                href={`${editorUrl}?context=apps`}
                             >
                                 {t("stepper.step6.linkWallet")}
-                            </s-button>
+                            </ExternalButton>
                         </s-stack>
                     </div>
                 )}

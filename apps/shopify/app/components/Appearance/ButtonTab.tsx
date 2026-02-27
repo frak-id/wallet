@@ -5,6 +5,7 @@ import { useLoaderData, useRouteLoaderData } from "react-router";
 import screenShareButton from "../../assets/share-button.png";
 import { Activated } from "../Activated";
 import { Instructions } from "../Instructions";
+import { ExternalLink } from "../ui/ExternalLink";
 
 interface ButtonTabProps {
     isThemeHasFrakButton: boolean;
@@ -31,12 +32,11 @@ export function ButtonTab({
                         />
                         <s-box paddingBlockStart="small">
                             {firstProduct ? (
-                                <s-link
+                                <ExternalLink
                                     href={`${editorUrl}?previewPath=/products/${firstProduct.handle}`}
-                                    target="_blank"
                                 >
                                     {t("appearance.shareButton.link")}
-                                </s-link>
+                                </ExternalLink>
                             ) : (
                                 t("appearance.shareButton.noProduct")
                             )}
@@ -63,12 +63,11 @@ function ButtonNotActivated() {
             image={screenShareButton}
         >
             {firstProduct ? (
-                <s-link
+                <ExternalLink
                     href={`${editorUrl}?previewPath=/products/${firstProduct.handle}`}
-                    target="_blank"
                 >
                     {t("appearance.shareButton.link")}
-                </s-link>
+                </ExternalLink>
             ) : (
                 t("appearance.shareButton.noProduct")
             )}
