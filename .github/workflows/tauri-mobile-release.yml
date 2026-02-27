@@ -70,6 +70,7 @@ jobs:
       - name: "🏗️ Build iOS"
         run: bun run --cwd apps/wallet tauri:ios:build:prod
         env:
+          STAGE: dev
           APPLE_API_ISSUER: ${{ secrets.APPSTORE_ISSUER_ID }}
           APPLE_API_KEY: ${{ secrets.APPSTORE_API_KEY_ID }}
           APPLE_API_KEY_PATH: ${{ runner.temp }}/AuthKey.p8
@@ -155,13 +156,15 @@ jobs:
 
       - name: "🏗️ Build Android"
         run: bun run --cwd apps/wallet tauri:android:build
+        env:
+          STAGE: dev
 
       - name: "🚀 Upload to Play Store"
         uses: r0adkll/upload-google-play@v1
         with:
           serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
           packageName: id.frak.wallet
-          releaseFiles: apps/wallet/src-tauri/gen/android/app/build/outputs/bundle/release/app-release.aab
+          releaseFiles: apps/wallet/src-tauri/gen/android/app/build/outputs/bundle/universalRelease/app-universal-release.aab
           track: internal
 
       - name: "📦 Upload Android artifact"
@@ -169,4 +172,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: android-aab
-          path: apps/wallet/src-tauri/gen/android/app/build/outputs/bundle/release/app-release.aab
+          path: apps/wallet/src-tauri/gen/android/app/build/outputs/bundle/universalRelease/app-universal-release.aab
