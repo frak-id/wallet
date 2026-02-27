@@ -43,7 +43,7 @@ describe("RuleEngineService", () => {
 
     const createMockAssetLogRepository = (): AssetLogRepository =>
         ({
-            countByCampaignAndUser: vi.fn(),
+            countByCampaignAndUserAsReferee: vi.fn(),
         }) as unknown as AssetLogRepository;
 
     const createMockCampaign = (
