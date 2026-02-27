@@ -5,7 +5,7 @@ import {
     type OnboardingStepData,
     validateCompleteOnboarding,
 } from "app/utils/onboarding";
-import { Suspense } from "react";
+import { Suspense, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import type { LoaderFunctionArgs } from "react-router";
 import { Await, data, useLoaderData, useRouteLoaderData } from "react-router";
@@ -34,6 +34,11 @@ export default function Index() {
     const onboardingDataPromise = rootData?.onboardingDataPromise;
     const { t } = useTranslation();
 
+    // Open dashboard synchronously on click — avoids Safari popup blocker
+    const handleOpenDashboard = useCallback(() => {
+        window.open(process.env.BUSINESS_URL, "_blank");
+    }, []);
+
     return (
         <s-page heading={t("common.title")}>
             <div
@@ -44,11 +49,7 @@ export default function Index() {
                 }}
             >
                 <PageHeading>{t("common.title")}</PageHeading>
-                <s-button
-                    variant="primary"
-                    href={process.env.BUSINESS_URL}
-                    target="_blank"
-                >
+                <s-button variant="primary" onClick={handleOpenDashboard}>
                     {t("common.goToDashboard")}
                 </s-button>
             </div>
