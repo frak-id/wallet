@@ -3,6 +3,7 @@ import {
     type OnboardingStepData,
     validateCompleteOnboarding,
 } from "app/utils/onboarding";
+import { useCallback } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { useRouteLoaderData } from "react-router";
 import screenShareButton from "../../assets/share-button.png";
@@ -23,6 +24,19 @@ export function Step6({
     const isCompleted = !!(isThemeHasFrakButton || themeWalletButton);
     const { failedSteps } = validateCompleteOnboarding(onboardingData);
 
+    // Open editor synchronously on click — avoids Safari popup blocker
+    // (no async gap between user gesture and window.open)
+    const handleOpenShareEditor = useCallback(() => {
+        window.open(
+            `${editorUrl}?previewPath=/products/${firstProduct?.handle}`,
+            "_blank"
+        );
+    }, [editorUrl, firstProduct?.handle]);
+
+    const handleOpenWalletEditor = useCallback(() => {
+        window.open(`${editorUrl}?context=apps`, "_blank");
+    }, [editorUrl]);
+
     return (
         <CollapsibleStep
             step={6}
@@ -40,8 +54,7 @@ export function Step6({
                             <img src={screenShareButton} alt="" />
                             <s-button
                                 variant="primary"
-                                href={`${editorUrl}?previewPath=/products/${firstProduct.handle}`}
-                                target="_blank"
+                                onClick={handleOpenShareEditor}
                             >
                                 {t("stepper.step6.linkShare")}
                             </s-button>
@@ -57,8 +70,7 @@ export function Step6({
                             <img src={screenWalletButton} alt="" />
                             <s-button
                                 variant="primary"
-                                href={`${editorUrl}?context=apps`}
-                                target="_blank"
+                                onClick={handleOpenWalletEditor}
                             >
                                 {t("stepper.step6.linkWallet")}
                             </s-button>

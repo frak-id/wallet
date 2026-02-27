@@ -3,6 +3,7 @@ import {
     type OnboardingStepData,
     validateCompleteOnboarding,
 } from "app/utils/onboarding";
+import { useCallback } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { useRouteLoaderData } from "react-router";
 import screenFrakListener from "../../assets/frak-listener.png";
@@ -21,6 +22,15 @@ export function Step5({
     const isFrakActivated = !!isThemeHasFrakActivated;
     const { failedSteps } = validateCompleteOnboarding(onboardingData);
 
+    // Open editor synchronously on click — avoids Safari popup blocker
+    // (no async gap between user gesture and window.open)
+    const handleOpenEditor = useCallback(() => {
+        window.open(
+            `${editorUrl}?context=apps&appEmbed=${id}/listener`,
+            "_blank"
+        );
+    }, [editorUrl, id]);
+
     return (
         <CollapsibleStep
             step={5}
@@ -32,11 +42,7 @@ export function Step5({
                 <Trans i18nKey="stepper.step5.description" />
             </s-text>
             <img src={screenFrakListener} alt="" />
-            <s-button
-                variant="primary"
-                href={`${editorUrl}?context=apps&appEmbed=${id}/listener`}
-                target="_blank"
-            >
+            <s-button variant="primary" onClick={handleOpenEditor}>
                 {t("stepper.step5.link")}
             </s-button>
         </CollapsibleStep>
