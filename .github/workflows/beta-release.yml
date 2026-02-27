@@ -124,3 +124,12 @@ jobs:
           done
         env:
           NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - uses: gacts/purge-jsdelivr-cache@v1
+        with:
+          url: |
+            https://cdn.jsdelivr.net/npm/@frak-labs/nexus-sdk@beta/dist/bundle/bundle.js
+            https://cdn.jsdelivr.net/npm/@frak-labs/core-sdk@beta/cdn/bundle.js
+            https://cdn.jsdelivr.net/npm/@frak-labs/components@beta/cdn/components.js
+            https://cdn.jsdelivr.net/npm/@frak-labs/components@beta/cdn/loader.js
+            https://cdn.jsdelivr.net/npm/@frak-labs/components@beta/cdn/loader.css
