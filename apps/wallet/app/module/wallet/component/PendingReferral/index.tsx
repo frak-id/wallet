@@ -66,6 +66,8 @@ export function PendingReferral() {
                 .filter((item) => item.amount > 0n);
         },
         enabled: !!address,
+        // Volatile on-chain state — must always fetch fresh, never persist to localStorage
+        meta: { storable: false },
     });
 
     // Calculate total claimable in fiat (stablecoins ~1:1)
@@ -99,6 +101,12 @@ export function PendingReferral() {
                 data,
             });
 
+            // Optimistically clear claimable data before refetch —
+            // prevents stale data persisting if RPC cache lags behind on-chain state
+            queryClient.setQueryData(
+                claimableKey.pending.byAddress(address),
+                []
+            );
             // Wait for on-chain confirmation before refreshing queries
             await waitForTransactionReceipt(currentViemClient, {
                 hash: txHash,
