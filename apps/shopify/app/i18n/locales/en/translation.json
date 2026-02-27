@@ -174,7 +174,8 @@
             "noCampaigns": "No campaigns yet. Create your first campaign to start distributing rewards.",
 
             "nameInput": "Campaign name",
-            "availableTokens": "Available tokens in your bank",
+            "bankSelect": "Select bank",
+            "bankBalance": "Bank balance",
             "budget": "Global budget",
             "budgetInfo": "This is the max amount of money that will be distributed to end users by this campaign.",
             "rawCAC": "Raw CAC per new user",
