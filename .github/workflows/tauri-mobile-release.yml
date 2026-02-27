@@ -60,7 +60,9 @@ jobs:
           retry-max-attempts: 5
 
       - name: "🔄 Sync version"
-        run: bun run --cwd apps/wallet tauri:version ${{ inputs.version }}
+        run: bun run --cwd apps/wallet tauri:version "$VERSION"
+        env:
+          VERSION: ${{ inputs.version }}
 
       - name: "🔑 Write App Store Connect API key"
         run: echo "${{ secrets.APPSTORE_API_PRIVATE_KEY }}" > "$RUNNER_TEMP/AuthKey.p8"
@@ -137,7 +139,9 @@ jobs:
           retry-max-attempts: 5
 
       - name: "🔄 Sync version"
-        run: bun run --cwd apps/wallet tauri:version ${{ inputs.version }}
+        run: bun run --cwd apps/wallet tauri:version "$VERSION"
+        env:
+          VERSION: ${{ inputs.version }}
 
       - name: "🔑 Write Android signing files"
         run: |
