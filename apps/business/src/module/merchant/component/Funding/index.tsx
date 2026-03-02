@@ -34,6 +34,7 @@ import { useSyncMerchantBank } from "@/module/merchant/hook/useSyncMerchantBank"
 import { useUpdateBankAllowance } from "@/module/merchant/hook/useUpdateBankAllowance";
 import { useWithdrawFromBank } from "@/module/merchant/hook/useWithdrawFromBank";
 import styles from "./index.module.css";
+import { LegacyBankMigration } from "./LegacyBankMigration";
 
 export function MerchantFunding({ merchantId }: { merchantId: string }) {
     const { data, isLoading, isError } = useGetMerchantBank({ merchantId });
@@ -140,6 +141,11 @@ function RewardBudgetView({
                         />
                     )}
                 </div>
+
+                <LegacyBankMigration
+                    merchantId={merchantId}
+                    newBankAddress={bankAddress}
+                />
 
                 {allTokensEmpty && isOpen && (
                     <div className={styles.bankWarning}>
