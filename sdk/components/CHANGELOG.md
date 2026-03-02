@@ -1,5 +1,15 @@
 # @frak-labs/components
 
+## 0.0.25
+
+### Patch Changes
+
+- [#130](https://github.com/frak-id/wallet/pull/130) [`e93ee6f`](https://github.com/frak-id/wallet/commit/e93ee6f30733aaf92b9572b479d9a72e9bf0b5b4) Thanks [@KONFeature](https://github.com/KONFeature)! - Make CDN imports environment-aware using build-time CDN_TAG replacement, ensuring beta releases point to `@beta` tag instead of `@latest`
+
+- Updated dependencies [[`a6c77fd`](https://github.com/frak-id/wallet/commit/a6c77fd2155a7a2038a13e6a766b160897aa2f98), [`a6c77fd`](https://github.com/frak-id/wallet/commit/a6c77fd2155a7a2038a13e6a766b160897aa2f98), [`a6c77fd`](https://github.com/frak-id/wallet/commit/a6c77fd2155a7a2038a13e6a766b160897aa2f98)]:
+  - @frak-labs/frame-connector@0.2.0
+  - @frak-labs/core-sdk@0.2.0
+
 ## 0.0.24
 
 ### Patch Changes

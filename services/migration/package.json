@@ -1,7 +1,7 @@
 {
     "name": "@frak-labs/migration",
     "description": "V1 to V2 migration scripts",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "private": true,
     "type": "module",
     "scripts": {

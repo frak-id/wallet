@@ -1,5 +1,19 @@
 # @frak-labs/react-sdk
 
+## 0.2.0
+
+### Minor Changes
+
+- [#133](https://github.com/frak-id/wallet/pull/133) [`a6c77fd`](https://github.com/frak-id/wallet/commit/a6c77fd2155a7a2038a13e6a766b160897aa2f98) Thanks [@srod](https://github.com/srod)! - Remove deprecated `useTrackArrival`, `useLogin`, and `useSendInteraction` hooks in favor of unified interaction tracking API.
+
+- [#133](https://github.com/frak-id/wallet/pull/133) [`a6c77fd`](https://github.com/frak-id/wallet/commit/a6c77fd2155a7a2038a13e6a766b160897aa2f98) Thanks [@srod](https://github.com/srod)! - SDK v2: Add `ensureIdentity` action, `merchantId` session persistence, `trackArrival` action, SSO param generation and redirect handling. Add `clientId` to iframe URL params and analytics events. Hide internal types and fix `QueryOptions` generic.
+
+### Patch Changes
+
+- Updated dependencies [[`a6c77fd`](https://github.com/frak-id/wallet/commit/a6c77fd2155a7a2038a13e6a766b160897aa2f98), [`a6c77fd`](https://github.com/frak-id/wallet/commit/a6c77fd2155a7a2038a13e6a766b160897aa2f98), [`a6c77fd`](https://github.com/frak-id/wallet/commit/a6c77fd2155a7a2038a13e6a766b160897aa2f98)]:
+  - @frak-labs/frame-connector@0.2.0
+  - @frak-labs/core-sdk@0.2.0
+
 ## 0.1.1
 
 ### Patch Changes
