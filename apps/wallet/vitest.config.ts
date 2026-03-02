@@ -15,7 +15,10 @@ export default mergeConfig(
                 "@frak-labs/test-foundation/apps-setup",
                 "../../packages/wallet-shared/src/test/setup-msw.ts",
             ],
-            include: ["app/**/*.{test,spec}.{ts,tsx}"],
+            include: [
+                "app/**/*.{test,spec}.{ts,tsx}",
+                "scripts/**/*.{test,spec}.{ts,tsx}",
+            ],
             exclude: [
                 "tests/**/*",
                 "playwright.config.ts",

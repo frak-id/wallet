@@ -15,6 +15,8 @@ const createdDirs: string[] = [];
 
 const thisFileDir = dirname(fileURLToPath(import.meta.url));
 
+const hasJq = spawnSync("jq", ["--version"]).status === 0;
+
 const createTempWalletFixture = () => {
     const tempDir = mkdtempSync(join(tmpdir(), "sync-version-script-"));
     createdDirs.push(tempDir);
@@ -29,7 +31,7 @@ const createTempWalletFixture = () => {
     mkdirSync(appleDir, { recursive: true });
     mkdirSync(fakeBinDir, { recursive: true });
 
-    const sourceScript = resolve(thisFileDir, "../../scripts/sync-version.sh");
+    const sourceScript = resolve(thisFileDir, "sync-version.sh");
     const targetScript = join(scriptsDir, "sync-version.sh");
     writeFileSync(targetScript, readFileSync(sourceScript, "utf8"));
 
@@ -111,12 +113,7 @@ afterEach(() => {
     }
 });
 
-test("should sync version with GNU-like sed semantics", () => {
-    const hasJq = spawnSync("jq", ["--version"]).status === 0;
-    if (!hasJq) {
-        return;
-    }
-
+test.skipIf(!hasJq)("should sync version with GNU-like sed semantics", () => {
     const { fakeBinDir, scriptPath, tauriDir, walletDir } =
         createTempWalletFixture();
 
