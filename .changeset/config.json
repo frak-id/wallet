@@ -18,7 +18,6 @@
         "@frak-labs-example/vanilla-js",
         "@frak-labs-example/showcase",
 
-        "@frak-labs/dashboard-admin",
         "@frak-labs/nexus-wallet",
         "@frak-labs/nexus-business",
         "@frak-labs/nexus-listener",
