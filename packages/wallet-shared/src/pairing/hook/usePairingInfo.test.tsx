@@ -8,7 +8,16 @@ import {
     test,
 } from "../../../tests/vitest-fixtures";
 import { authenticatedWalletApi } from "../../common/api/backendClient";
-import { usePairingInfo } from "./usePairingInfo";
+import { isPairingNotFoundError, usePairingInfo } from "./usePairingInfo";
+
+/**
+ * Helper to mock `authenticatedWalletApi.pairings.find().get()` chain.
+ * Extracts the real return type to avoid `as any`.
+ */
+type FindReturn = ReturnType<typeof authenticatedWalletApi.pairings.find>;
+function mockFindReturn(get: ReturnType<typeof vi.fn>): FindReturn {
+    return { get } as unknown as FindReturn;
+}
 
 vi.mock("../../common/api/backendClient", () => ({
     authenticatedWalletApi: {
@@ -49,12 +58,14 @@ describe("usePairingInfo", () => {
             publicKey: "0x1234567890abcdef",
         };
 
-        vi.mocked(authenticatedWalletApi.pairings.find).mockReturnValue({
-            get: vi.fn().mockResolvedValue({
-                data: mockPairingData,
-                error: null,
-            }),
-        } as any);
+        vi.mocked(authenticatedWalletApi.pairings.find).mockReturnValue(
+            mockFindReturn(
+                vi.fn().mockResolvedValue({
+                    data: mockPairingData,
+                    error: null,
+                })
+            )
+        );
 
         const { result } = renderHook(
             () => usePairingInfo({ id: "pairing-1" }),
@@ -71,12 +82,14 @@ describe("usePairingInfo", () => {
     });
 
     test("should throw error when data is null", async ({ queryWrapper }) => {
-        vi.mocked(authenticatedWalletApi.pairings.find).mockReturnValue({
-            get: vi.fn().mockResolvedValue({
-                data: null,
-                error: null,
-            }),
-        } as any);
+        vi.mocked(authenticatedWalletApi.pairings.find).mockReturnValue(
+            mockFindReturn(
+                vi.fn().mockResolvedValue({
+                    data: null,
+                    error: null,
+                })
+            )
+        );
 
         const { result } = renderHook(() => usePairingInfo({ id: "test-id" }), {
             wrapper: queryWrapper.wrapper,
@@ -86,7 +99,56 @@ describe("usePairingInfo", () => {
             expect(result.current.isError).toBe(true);
         });
 
-        expect(result.current.error?.message).toBe(
+        expect(result.current.error?.message).toContain(
+            "Failed to fetch pairing info"
+        );
+    });
+
+    test("should expose not-found error when backend returns 404", async ({
+        queryWrapper,
+    }) => {
+        vi.mocked(authenticatedWalletApi.pairings.find).mockReturnValue(
+            mockFindReturn(
+                vi.fn().mockResolvedValue({
+                    data: null,
+                    error: { status: 404 },
+                })
+            )
+        );
+
+        const { result } = renderHook(() => usePairingInfo({ id: "test-id" }), {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        await waitFor(() => {
+            expect(result.current.isError).toBe(true);
+        });
+
+        expect(isPairingNotFoundError(result.current.error)).toBe(true);
+    });
+
+    test("should keep non-404 failures as generic errors", async ({
+        queryWrapper,
+    }) => {
+        vi.mocked(authenticatedWalletApi.pairings.find).mockReturnValue(
+            mockFindReturn(
+                vi.fn().mockResolvedValue({
+                    data: null,
+                    error: { status: 500 },
+                })
+            )
+        );
+
+        const { result } = renderHook(() => usePairingInfo({ id: "test-id" }), {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        await waitFor(() => {
+            expect(result.current.isError).toBe(true);
+        });
+
+        expect(isPairingNotFoundError(result.current.error)).toBe(false);
+        expect(result.current.error?.message).toContain(
             "Failed to fetch pairing info"
         );
     });
@@ -119,9 +181,9 @@ describe("usePairingInfo", () => {
                 error: null,
             });
 
-        vi.mocked(authenticatedWalletApi.pairings.find).mockReturnValue({
-            get: mockGet,
-        } as any);
+        vi.mocked(authenticatedWalletApi.pairings.find).mockReturnValue(
+            mockFindReturn(mockGet)
+        );
 
         const { result } = renderHook(() => usePairingInfo({ id: "test-id" }), {
             wrapper: queryWrapper.wrapper,
@@ -147,9 +209,9 @@ describe("usePairingInfo", () => {
     }) => {
         const mockGet = vi.fn();
 
-        vi.mocked(authenticatedWalletApi.pairings.find).mockReturnValue({
-            get: mockGet,
-        } as any);
+        vi.mocked(authenticatedWalletApi.pairings.find).mockReturnValue(
+            mockFindReturn(mockGet)
+        );
 
         const { result, rerender } = renderHook(
             ({ id }: { id?: string }) => usePairingInfo({ id }),

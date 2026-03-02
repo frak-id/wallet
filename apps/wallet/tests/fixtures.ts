@@ -1,9 +1,7 @@
 import { test as base } from "@playwright/test";
 import { AnalyticsApi } from "./api/analytics.api";
 import { BackendApi } from "./api/backend.api";
-import { IndexerApi } from "./api/indexer.api";
 import { RpcApi } from "./api/rpc.api";
-import { BlockchainHelper } from "./helpers/blockchain.helper";
 import { ClipboardHelper } from "./helpers/clipboard.helper";
 import { MockedWebAuthNHelper } from "./helpers/mockedWebauthn.helper";
 import { PairingTabHelper } from "./helpers/pairingTab.helper";
@@ -23,12 +21,10 @@ type TestFixtures = {
     mockedWebAuthN: MockedWebAuthNHelper;
     storageHelper: StorageHelper;
     clipboardHelper: ClipboardHelper;
-    blockchainHelper: BlockchainHelper;
     sdkHelper: SdkHelper;
     // APIs
     backendApi: BackendApi;
     analyticsApi: AnalyticsApi;
-    indexerApi: IndexerApi;
     rpcApi: RpcApi;
     // Pages
     authPage: AuthPage;
@@ -80,18 +76,12 @@ export const test = base.extend<TestFixtures, WorkerFixture>({
     clipboardHelper: async ({ page }, use) => {
         await use(new ClipboardHelper(page));
     },
-    blockchainHelper: async ({ page }, use) => {
-        await use(new BlockchainHelper(page));
-    },
     sdkHelper: async ({ page }, use) => {
         await use(new SdkHelper(page));
     },
     // APIs
     backendApi: async ({ page }, use) => {
         await use(new BackendApi(page));
-    },
-    indexerApi: async ({ page }, use) => {
-        await use(new IndexerApi(page));
     },
     rpcApi: async ({ page }, use) => {
         await use(new RpcApi(page));

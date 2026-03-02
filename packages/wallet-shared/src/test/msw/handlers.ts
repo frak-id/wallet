@@ -8,14 +8,14 @@ const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:3030";
  */
 export const handlers = [
     // Balance endpoints
-    http.get(`${BACKEND_URL}/wallet/balance`, () => {
+    http.get(`${BACKEND_URL}/user/wallet/balance`, () => {
         return HttpResponse.json({
             balance: "1000000000000000000",
             formatted: "1.0",
         });
     }),
 
-    http.get(`${BACKEND_URL}/wallet/balance/pending`, () => {
+    http.get(`${BACKEND_URL}/user/wallet/balance/pending`, () => {
         return HttpResponse.json({
             pending: "500000000000000000",
             formatted: "0.5",
@@ -23,14 +23,17 @@ export const handlers = [
     }),
 
     // SDK auth endpoints
-    http.post(`${BACKEND_URL}/wallet/auth/sdk/fromWebAuthNSignature`, () => {
-        return HttpResponse.json({
-            token: "sdk-session-token",
-            expires: Date.now() + 3600000,
-        });
-    }),
+    http.post(
+        `${BACKEND_URL}/user/wallet/auth/sdk/fromWebAuthNSignature`,
+        () => {
+            return HttpResponse.json({
+                token: "sdk-session-token",
+                expires: Date.now() + 3600000,
+            });
+        }
+    ),
 
-    http.get(`${BACKEND_URL}/wallet/auth/sdk/isValid`, ({ request }) => {
+    http.get(`${BACKEND_URL}/user/wallet/auth/sdk/isValid`, ({ request }) => {
         const url = new URL(request.url);
         const token = url.searchParams.get("token");
 
@@ -41,7 +44,7 @@ export const handlers = [
         return HttpResponse.json({ valid: true });
     }),
 
-    http.get(`${BACKEND_URL}/wallet/auth/sdk/generate`, () => {
+    http.get(`${BACKEND_URL}/user/wallet/auth/sdk/generate`, () => {
         return HttpResponse.json({
             token: "new-sdk-token",
             expires: Date.now() + 3600000,
@@ -50,7 +53,7 @@ export const handlers = [
 
     // Interaction endpoints
     http.post(
-        `${BACKEND_URL}/wallet/interactions/push`,
+        `${BACKEND_URL}/user/wallet/interactions/push`,
         async ({ request }) => {
             const body = (await request.json()) as { interactions?: unknown[] };
             const interactions = body.interactions || [];
@@ -63,7 +66,7 @@ export const handlers = [
         }
     ),
 
-    http.post(`${BACKEND_URL}/wallet/interactions/session-status`, () => {
+    http.post(`${BACKEND_URL}/user/wallet/interactions/session-status`, () => {
         return HttpResponse.json({
             status: "opened",
             sessionStart: new Date(Date.now() - 1800000),
@@ -72,7 +75,7 @@ export const handlers = [
     }),
 
     // Pairing endpoints
-    http.get(`${BACKEND_URL}/wallet/pairings/list`, () => {
+    http.get(`${BACKEND_URL}/user/wallet/pairings/list`, () => {
         return HttpResponse.json([
             {
                 pairingId: "pairing-1",
@@ -91,7 +94,7 @@ export const handlers = [
         ]);
     }),
 
-    http.get(`${BACKEND_URL}/wallet/pairings/:id`, ({ params }) => {
+    http.get(`${BACKEND_URL}/user/wallet/pairings/:id`, ({ params }) => {
         const { id } = params;
 
         if (id === "not-found") {
@@ -106,7 +109,7 @@ export const handlers = [
         });
     }),
 
-    http.get(`${BACKEND_URL}/wallet/pairings/find`, ({ request }) => {
+    http.get(`${BACKEND_URL}/user/wallet/pairings/find`, ({ request }) => {
         const url = new URL(request.url);
         const id = url.searchParams.get("id");
 
@@ -122,18 +125,21 @@ export const handlers = [
         });
     }),
 
-    http.post(`${BACKEND_URL}/wallet/pairings/:id/delete`, ({ params }) => {
-        const { id } = params;
+    http.post(
+        `${BACKEND_URL}/user/wallet/pairings/:id/delete`,
+        ({ params }) => {
+            const { id } = params;
 
-        if (id === "not-found") {
-            return new HttpResponse(null, { status: 404 });
+            if (id === "not-found") {
+                return new HttpResponse(null, { status: 404 });
+            }
+
+            return HttpResponse.json({ success: true });
         }
-
-        return HttpResponse.json({ success: true });
-    }),
+    ),
 
     // Wallet auth endpoints
-    http.post(`${BACKEND_URL}/wallet/auth/login`, async ({ request }) => {
+    http.post(`${BACKEND_URL}/user/wallet/auth/login`, async ({ request }) => {
         const body = (await request.json()) as {
             signature?: unknown;
             challenge?: unknown;

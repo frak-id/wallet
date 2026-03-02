@@ -13,7 +13,13 @@ import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 export function useDemoLogin() {
     return useMutation({
         mutationKey: authKey.demo.login,
-        async mutationFn({ pkey }: { pkey: Hex }) {
+        async mutationFn({
+            pkey,
+            merchantId,
+        }: {
+            pkey: Hex;
+            merchantId?: string;
+        }) {
             // Identify the user and track the event
             const events = [trackAuthInitiated("demo")];
 
@@ -35,6 +41,7 @@ export function useDemoLogin() {
                     signature,
                     wallet: account.address as Address,
                     demoPkey: pkey,
+                    merchantId: merchantId || undefined,
                 });
             if (error) {
                 throw error;

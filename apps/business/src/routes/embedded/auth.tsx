@@ -1,9 +1,9 @@
-import { useSiweAuthenticate, useWalletStatus } from "@frak-labs/react-sdk";
+import { useSiweAuthenticate } from "@frak-labs/react-sdk";
 import { Button } from "@frak-labs/ui/component/Button";
 import { Spinner } from "@frak-labs/ui/component/Spinner";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useMemo } from "react";
-import { authenticatedBackendApi } from "@/context/api/backendClient";
+import { useTransition } from "react";
+import { authenticatedBackendApi } from "@/api/backendClient";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
 import { useAuthStore } from "@/stores/authStore";
@@ -21,12 +21,7 @@ export const Route = createFileRoute("/embedded/auth")({
 function EmbeddedAuthPage() {
     const navigate = useNavigate();
     const { redirect } = Route.useSearch();
-
-    const {
-        data: walletStatus,
-        refetch: refetchWalletStatus,
-        isLoading: isLoadingWalletStatus,
-    } = useWalletStatus();
+    const [, startTransition] = useTransition();
 
     const isAuthenticatedInStore = useAuthStore((state) =>
         state.isAuthenticated()
@@ -46,7 +41,6 @@ function EmbeddedAuthPage() {
                     return;
                 }
 
-                // Store token in Zustand
                 useAuthStore
                     .getState()
                     .setAuth(
@@ -55,30 +49,19 @@ function EmbeddedAuthPage() {
                         response.data.expiresAt
                     );
 
-                // Refresh the wallet status
-                await refetchWalletStatus();
-
-                // Redirect to original destination
-                navigate({ to: redirect });
+                startTransition(() => {
+                    navigate({ to: redirect });
+                });
             },
         },
     });
 
-    const isAuthenticated = useMemo(() => {
-        return walletStatus?.key === "connected" && isAuthenticatedInStore;
-    }, [walletStatus, isAuthenticatedInStore]);
-
-    const isLoading = useMemo(() => {
-        return isLoadingWalletStatus || isPending;
-    }, [isLoadingWalletStatus, isPending]);
-
-    // If already authenticated, redirect immediately
-    if (isAuthenticated) {
+    if (isAuthenticatedInStore) {
         navigate({ to: redirect });
         return null;
     }
 
-    if (isLoading || walletStatus === undefined) {
+    if (isPending) {
         return (
             <div className={styles.container}>
                 <Spinner />

@@ -79,3 +79,12 @@ export type GetResponse = Pick<
     Partial<Pick<AuthenticationCredential, "toJSON">> & {
         response: ParsableAuthenticatorAssertionResponse;
     };
+
+/**
+ * WebAuthn JSON response types missing from tsgo's DOM lib.
+ * Only used as `as` casts on dummy toJSON() returns in test helpers.
+ */
+declare global {
+    type RegistrationResponseJSON = Record<string, unknown>;
+    type AuthenticationResponseJSON = Record<string, unknown>;
+}

@@ -146,124 +146,6 @@ describe("useConvertToPreferredCurrency", () => {
         });
     });
 
-    describe("with balance and decimals", () => {
-        test("should convert balance with decimals to preferred currency", async ({
-            queryWrapper,
-            freshCurrencyStore,
-        }: TestContext) => {
-            freshCurrencyStore.getState().setCurrency("eur");
-
-            // Mock conversion rate response
-            vi.mocked(backendApi.common.rate.get).mockResolvedValueOnce({
-                data: {
-                    eur: 0.92,
-                    usd: 1.0,
-                    gbp: 0.79,
-                },
-                error: null,
-                response: {} as Response,
-                status: 200,
-                headers: {},
-            });
-
-            // 1000000000000000000n (1e18) with 18 decimals = 1.0
-            const { result } = renderHook(
-                () =>
-                    useConvertToPreferredCurrency({
-                        token: mockToken,
-                        balance: 1000000000000000000n,
-                        decimals: 18,
-                    }),
-                { wrapper: queryWrapper.wrapper }
-            );
-
-            await waitFor(() => {
-                expect(result.current).toBeDefined();
-            });
-
-            // 1.0 * 0.92 = 0.92 EUR
-            expect(result.current).toContain("0.92");
-            expect(result.current).toContain("€");
-        });
-
-        test("should handle large balance values", async ({
-            queryWrapper,
-            freshCurrencyStore,
-        }: TestContext) => {
-            freshCurrencyStore.getState().setCurrency("usd");
-
-            // Mock conversion rate response
-            vi.mocked(backendApi.common.rate.get).mockResolvedValueOnce({
-                data: {
-                    eur: 0.92,
-                    usd: 1.0,
-                    gbp: 0.79,
-                },
-                error: null,
-                response: {} as Response,
-                status: 200,
-                headers: {},
-            });
-
-            // 1000 tokens (1000 * 1e18)
-            const { result } = renderHook(
-                () =>
-                    useConvertToPreferredCurrency({
-                        token: mockToken,
-                        balance: 1000000000000000000000n,
-                        decimals: 18,
-                    }),
-                { wrapper: queryWrapper.wrapper }
-            );
-
-            await waitFor(() => {
-                expect(result.current).toBeDefined();
-            });
-
-            // 1000 * 1.0 = 1000 USD
-            expect(result.current).toContain("1,000");
-            expect(result.current).toContain("$");
-        });
-
-        test("should handle tokens with 6 decimals (USDC-like)", async ({
-            queryWrapper,
-            freshCurrencyStore,
-        }: TestContext) => {
-            freshCurrencyStore.getState().setCurrency("usd");
-
-            // Mock conversion rate response
-            vi.mocked(backendApi.common.rate.get).mockResolvedValueOnce({
-                data: {
-                    eur: 0.92,
-                    usd: 1.0,
-                    gbp: 0.79,
-                },
-                error: null,
-                response: {} as Response,
-                status: 200,
-                headers: {},
-            });
-
-            // 100 USDC (100 * 1e6)
-            const { result } = renderHook(
-                () =>
-                    useConvertToPreferredCurrency({
-                        token: mockToken,
-                        balance: 100000000n,
-                        decimals: 6,
-                    }),
-                { wrapper: queryWrapper.wrapper }
-            );
-
-            await waitFor(() => {
-                expect(result.current).toBeDefined();
-            });
-
-            // 100 * 1.0 = 100 USD
-            expect(result.current).toContain("100");
-        });
-    });
-
     describe("edge cases", () => {
         test("should return undefined when no token provided", ({
             queryWrapper,
@@ -333,37 +215,6 @@ describe("useConvertToPreferredCurrency", () => {
                 expect(result.current).toBeUndefined();
             });
         });
-
-        test("should return undefined when balance provided without decimals", async ({
-            queryWrapper,
-        }: TestContext) => {
-            // Mock conversion rate response
-            vi.mocked(backendApi.common.rate.get).mockResolvedValueOnce({
-                data: {
-                    eur: 0.92,
-                    usd: 1.0,
-                    gbp: 0.79,
-                },
-                error: null,
-                response: {} as Response,
-                status: 200,
-                headers: {},
-            });
-
-            const { result } = renderHook(
-                () =>
-                    useConvertToPreferredCurrency({
-                        token: mockToken,
-                        balance: 1000000000000000000n,
-                        // Missing decimals parameter
-                    }),
-                { wrapper: queryWrapper.wrapper }
-            );
-
-            await waitFor(() => {
-                expect(result.current).toBeUndefined();
-            });
-        });
     });
 
     describe("currency preference updates", () => {
@@ -407,46 +258,6 @@ describe("useConvertToPreferredCurrency", () => {
             await waitFor(() => {
                 expect(result.current).toContain("$");
             });
-        });
-    });
-
-    describe("amount vs balance priority", () => {
-        test("should prefer amount over balance when both provided", async ({
-            queryWrapper,
-            freshCurrencyStore,
-        }: TestContext) => {
-            freshCurrencyStore.getState().setCurrency("usd");
-
-            // Mock conversion rate response
-            vi.mocked(backendApi.common.rate.get).mockResolvedValueOnce({
-                data: {
-                    eur: 0.92,
-                    usd: 1.0,
-                    gbp: 0.79,
-                },
-                error: null,
-                response: {} as Response,
-                status: 200,
-                headers: {},
-            });
-
-            const { result } = renderHook(
-                () =>
-                    useConvertToPreferredCurrency({
-                        token: mockToken,
-                        amount: 100, // Should use this
-                        balance: 1000000000000000000n, // Should ignore this
-                        decimals: 18,
-                    }),
-                { wrapper: queryWrapper.wrapper }
-            );
-
-            await waitFor(() => {
-                expect(result.current).toBeDefined();
-            });
-
-            // Should be 100 USD (from amount), not 1 USD (from balance)
-            expect(result.current).toContain("100");
         });
     });
 });

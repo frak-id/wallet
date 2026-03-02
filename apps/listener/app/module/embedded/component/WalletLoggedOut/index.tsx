@@ -19,7 +19,7 @@ export function LoggedOutComponent() {
         currentRequest: { logoUrl, homepageLink },
     } = useEmbeddedListenerUI();
     const { t } = useListenerTranslation();
-    const productId = useSafeResolvingContext()?.productId;
+    const merchantId = useSafeResolvingContext()?.merchantId;
 
     return (
         <>
@@ -31,10 +31,10 @@ export function LoggedOutComponent() {
             >
                 <Markdown md={t("sdk.wallet.login.text")} />
             </div>
-            {productId && (
+            {merchantId && (
                 <>
                     <SsoButton
-                        productId={productId}
+                        merchantId={merchantId as `0x${string}`}
                         ssoMetadata={{
                             logoUrl,
                             homepageLink,

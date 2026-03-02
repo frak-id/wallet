@@ -55,3 +55,22 @@
     font-size: 16px;
     font-weight: 500;
 }
+
+.formGoals__warning {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 16px;
+    margin-top: 16px;
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    border-radius: 8px;
+    color: #856404;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.formGoals__warning svg {
+    flex-shrink: 0;
+    margin-top: 2px;
+}

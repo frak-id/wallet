@@ -31,7 +31,6 @@ export default defineConfig([
         entry: {
             index: "./src/index.ts",
             actions: "./src/actions/index.ts",
-            interactions: "./src/interactions/index.ts",
             bundle: "./src/bundle.ts",
         },
         format: ["esm", "cjs"],
@@ -61,8 +60,15 @@ export default defineConfig([
         dts: false,
         outDir: "./cdn",
         noExternal: [/.*/],
+        inlineOnly: false,
         treeshake: {
             moduleSideEffects: false,
+        },
+        outputOptions(options) {
+            return {
+                ...options,
+                entryFileNames: "[name].js",
+            };
         },
         define: buildDefine,
         plugins: [nodePolyfills()],

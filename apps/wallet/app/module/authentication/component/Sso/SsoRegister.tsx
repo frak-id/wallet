@@ -2,6 +2,7 @@ import { ButtonAuth } from "@frak-labs/ui/component/ButtonAuth";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useRegister } from "@/module/authentication/hook/useRegister";
+import { isAuthenticatorAlreadyRegistered } from "@/module/authentication/lib/isAuthenticatorAlreadyRegistered";
 import { Notice } from "@/module/common/component/Notice";
 import styles from "./index.module.css";
 
@@ -13,10 +14,12 @@ export function SsoRegisterComponent({
     isPrimary,
     onSuccess,
     onError,
+    merchantId,
 }: {
     isPrimary: boolean;
     onSuccess: () => void;
     onError: (error: Error | null) => void;
+    merchantId?: string;
 }) {
     const { t } = useTranslation();
     const { register, error, isRegisterInProgress } = useRegister({
@@ -28,10 +31,7 @@ export function SsoRegisterComponent({
      * Boolean used to know if the error is about a previously used authenticator
      */
     const isPreviouslyUsedAuthenticatorError = useMemo(
-        () =>
-            !!error &&
-            "code" in error &&
-            error.code === "ERROR_AUTHENTICATOR_PREVIOUSLY_REGISTERED",
+        () => !!error && isAuthenticatorAlreadyRegistered(error),
         [error]
     );
 
@@ -60,7 +60,7 @@ export function SsoRegisterComponent({
                         // Reset the error
                         onError(null);
 
-                        register();
+                        register({ merchantId });
                     }}
                     disabled={
                         isRegisterInProgress ||
@@ -85,7 +85,7 @@ export function SsoRegisterComponent({
                     // Reset the error
                     onError(null);
 
-                    register();
+                    register({ merchantId });
                 }}
                 type={"button"}
             >

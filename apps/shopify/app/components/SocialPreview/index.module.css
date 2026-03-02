@@ -1,0 +1,104 @@
+.socialPreview {
+    padding: 20px;
+    background-color: #0b141a;
+}
+
+.chatArea {
+    margin: 0 auto;
+    padding-bottom: 20px;
+}
+
+.messageBubble {
+    background-color: #202c33;
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin: 8px 0;
+    max-width: 70%;
+    position: relative;
+    color: #e9edef;
+    font-size: 14px;
+    line-height: 1.4;
+    word-wrap: break-word;
+
+    a {
+        color: #00a884;
+        text-decoration: none;
+    }
+}
+
+.inputContainer {
+    background-color: #202c33;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.addButton {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: transparent;
+    border: none;
+    color: #8696a0;
+    font-size: 24px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &:hover {
+        background-color: #2a3942;
+    }
+}
+
+.messageInput {
+    flex: 1;
+    background-color: #2a3942;
+    border: none;
+    border-radius: 20px;
+    padding: 10px 16px;
+    color: #e9edef;
+    font-size: 14px;
+    outline: none;
+}
+
+.messageInput::placeholder {
+    color: #8696a0;
+}
+
+.emojiButton {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: transparent;
+    border: none;
+    color: #8696a0;
+    font-size: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &:hover {
+        background-color: #2a3942;
+    }
+}
+
+.sendButton {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #00a884;
+    border: none;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+
+    &:hover {
+        background-color: #06cf9c;
+    }
+}

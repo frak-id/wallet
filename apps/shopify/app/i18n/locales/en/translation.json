@@ -1,0 +1,379 @@
+{
+    "common": {
+        "title": "Frak configuration",
+        "goToDashboard": "Go to dashboard",
+        "loading": "Loading...",
+        "loadingTimeout": "The loading has expired. Please try again.",
+        "allSet": "Frak application is correctly set up",
+        "getStarted": "Start application setup",
+        "dashboardDataUnavailableTitle": "Dashboard data is temporarily unavailable.",
+        "dashboardDataUnavailableDescription": "Please refresh the page in a few seconds."
+    },
+    "navigation": {
+        "campaigns": "Campaigns",
+        "appearance": "Appearance",
+        "funding": "Funding",
+        "settings": {
+            "title": "Settings",
+            "general": "General",
+            "pixel": "Application pixel",
+            "webhook": "Webhook",
+            "theme": "Theme"
+        }
+    },
+    "stepper": {
+        "title": "Setup guide",
+        "description": "Use this guide to setup your Frak app.",
+        "completedStep": "{{completedStep}} of {{totalSteps}} tasks completed",
+        "footer": "If you experience any issues or have any questions, just send us an email to <a />.",
+        "step1": {
+            "title": "Connection Status",
+            "description": "You need to connect your shop to the Frak ecosystem."
+        },
+        "step2": {
+            "title": "Application pixel",
+            "description": "You need to connect your pixel to your store to track your customers purchases."
+        },
+        "step3": {
+            "title": "Shopify Webhook",
+            "description": "You are going to connect your Shopify webhook to your store."
+        },
+        "step4": {
+            "title": "Frak Webhook",
+            "description": "You are going to connect your Frak webhook to your store."
+        },
+        "step5": {
+            "title": "Setup Frak embedded app within your theme",
+            "link": "Activate Frak embedded application in your theme",
+            "description": "Please activate the <strong>Frak Listener</strong> using the switch as shown below"
+        },
+        "step6": {
+            "title": "Add the share or wallet button in your theme",
+            "descriptionShare": "Please add <strong>Frak Sharing Button</strong> as shown below",
+            "descriptionWallet": "Please activate <strong>Frak Wallet Button</strong> as shown below",
+            "linkShare": "Add the Frak Sharing Button to your product page",
+            "linkWallet": "Activate the Frak Wallet Button"
+        }
+    },
+    "pixel": {
+        "title": "Application pixel",
+        "connected": "Your pixel is connected to your store.",
+        "notConnected": "Your pixel is not connected to your store.",
+        "needConnection": "You need to connect your pixel to your store to track your customers purchases.",
+        "actions": {
+            "cta": {
+                "connect": "Connect application pixel",
+                "disconnect": "Disconnect application pixel"
+            },
+            "messages": {
+                "connect": "Application pixel connected successfully",
+                "disconnect": "Application pixel disconnected successfully",
+                "error": "Application pixel deletion error"
+            }
+        }
+    },
+    "webhook": {
+        "title": "Webhook",
+        "connected": "Your Shopify webhook is connected to your store.",
+        "notConnected": "Your Shopify webhook is not connected to your store.",
+        "frakConnected": "Your Frak purchase tracker is connected to your store.",
+        "frakNotConnected": "Your Frak purchase tracker is not connected to your store.",
+        "needConnection": "You need to connect your Shopify webhook to your store to track your customers purchases.",
+        "needFrakConnection": "You need to connect your Frak purchase tracker to your store to track your customers purchases.",
+        "noWebhooks": "No webhooks configured.",
+        "list": {
+            "title": "Active Webhooks",
+            "topic": "Topic",
+            "endpoint": "Endpoint",
+            "noEndpoint": "No endpoint configured"
+        },
+        "actions": {
+            "cta": {
+                "connect": "Connect Shopify webhook",
+                "disconnect": "Disconnect Shopify webhook",
+                "frakConnect": "Connect Frak purchase tracker",
+                "delete": "Delete"
+            },
+            "messages": {
+                "connect": "Shopify webhook connected successfully",
+                "disconnect": "Shopify webhook disconnected successfully",
+                "error": "Webhook deletion error",
+                "setup": "Frak purchase tracker is setup",
+                "frakSetupError": "Error connecting Frak purchase tracker"
+            }
+        }
+    },
+    "theme": {
+        "title": "Theme",
+        "connected": "Frak application is activated",
+        "notConnected": "Frak application is not activated",
+        "link": "Configuring Frak application in your theme",
+        "todo": "Please activate the Frak application in your theme by following the instructions below"
+    },
+    "gated": {
+        "configure": "Configure Frak",
+        "create": "CREATE AN ACCOUNT",
+        "start": "Create a Frak wallet to start using the app.",
+        "alreadyGotAnAccount": "I already have an account"
+    },
+    "status": {
+        "connected": "Connected to Frak",
+        "connectedShop": {
+            "title": "Your Shop on Frak",
+            "merchantName": "Merchant Name",
+            "domain": "Domain",
+            "merchantId": "Merchant ID",
+            "description": "Your shop is successfully connected to the Frak ecosystem and ready to use all features."
+        },
+        "connectionStatus": {
+            "title": "Connection Status",
+            "loading": "Checking Connection Status...",
+            "checking": "We're checking if your shop is connected to the Frak ecosystem.",
+            "connected": "Your shop is successfully connected to the Frak ecosystem.",
+            "notConnected": "Your shop is not yet connected to the Frak ecosystem. Follow the instructions below to complete setup."
+        },
+        "modal": {
+            "title": "Register your shop",
+            "button": "Register your shop in the Frak ecosystem",
+            "close": "Close"
+        },
+
+        "campaign": {
+            "title": "Campaigns",
+            "description": "The campaigns are the core parts of your monetization strategy with Frak. It will define what rewards will be distributed to end users.",
+            "name": "Name",
+            "type": "Type",
+            "active": "Active",
+            "status": "Status",
+            "date": "Date",
+            "budgetColumn": "Budget",
+            "actionsColumn": "Actions",
+            "rewardsColumn": "Rewards",
+            "resetAt": "Resets {{date}}",
+            "referrer": "Referrer",
+            "referee": "Referee",
+            "tiered": "Tiered",
+            "viewDetails": "View details",
+            "statusDraft": "Draft",
+            "statusActive": "Active",
+            "statusPaused": "Paused",
+            "statusArchived": "Archived",
+            "bankDepleted": "No funds",
+            "bankPaused": "Paused",
+            "bankWarning": "Needs attention",
+            "bankNotDeployed": "Setup needed",
+            "noBudget": "-",
+            "pause": "Pause",
+            "resume": "Resume",
+            "archive": "Archive",
+            "delete": "Delete",
+            "pausing": "Pausing...",
+            "resuming": "Resuming...",
+            "archiving": "Archiving...",
+            "deleting": "Deleting...",
+            "noCampaigns": "No campaigns yet. Create your first campaign to start distributing rewards.",
+
+            "nameInput": "Campaign name",
+            "rewardToken": "Reward token",
+            "selectToken": "Select a token",
+            "budget": "Global budget",
+            "budgetInfo": "This is the max amount of money that will be distributed to end users by this campaign.",
+            "rawCAC": "Raw CAC per new user",
+            "rawCACInfo": "This is the raw amount that will be distributed to referrer and referee.",
+            "ratio": "Referrer/Referee ratio",
+            "ratioHelp": "Adjust the split between referrer and referee (max 90-10%)",
+            "ratioReferrer": "Referrer",
+            "ratioReferee": "Referee",
+            "breakdown": {
+                "rawCAC": "Raw CAC",
+                "commission": "Frak commission (20%)",
+                "referrer": "Amount for referrer",
+                "referee": "Amount for referee",
+                "newUser": "New user"
+            },
+            "createOpen": "Campaign creation form",
+            "createButton": "Create campaign",
+            "creating": "Creating campaign...",
+            "toastCreated": "Campaign creation (mock): Success!"
+        },
+        "bank": {
+            "title": "Reward Budget",
+            "description": "Your reward budget is the source of funds used to distribute rewards to end users across all your campaigns.",
+            "token": "Token",
+            "balance": "Balance",
+            "statusColumn": "Status",
+            "actionsColumn": "Actions",
+            "address": "Address",
+            "notDeployed": "Your reward budget is not deployed yet. Complete the setup wizard to get started.",
+            "emptyWarning": "Your budget has no funds. Active campaigns cannot distribute rewards until you add funds.",
+            "connectWallet": "Connect your Frak wallet to manage distribution settings, allowances, and withdrawals.",
+            "distribution": "Distribution",
+            "distributionActive": "Active",
+            "distributionPaused": "Paused",
+            "enableDistribution": "Enable",
+            "disableDistribution": "Disable",
+            "tokenEmpty": "No funds",
+            "tokenActive": "Active",
+            "tokenWarning": "Action needed",
+            "tokenPaused": "Paused",
+            "increaseLimit": "Increase limit",
+            "pauseRewards": "Pause rewards",
+            "withdraw": "Withdraw",
+            "setAllowanceFor": "Set distribution limit for {{token}}",
+            "withdrawFrom": "Withdraw {{token}}",
+            "allowanceAmount": "Distribution limit",
+            "withdrawAmount": "Amount to withdraw",
+            "confirm": "Confirm",
+            "cancel": "Cancel"
+        },
+        "purchase": {
+            "title": "Purchase",
+            "description": "By making a Purchase you will add funds to the bank. The fund will be be used to distribute rewards to end users.",
+            "activePurchases": "Active Purchases",
+            "amount": "Amount",
+            "status": "Status",
+            "txHash": "Tx Hash",
+            "createdAt": "Created At",
+            "actions": "Actions",
+            "selectBank": "Select bank to fund",
+            "amountToFund": "Amount to fund",
+            "fundBank": "Fund bank",
+            "confirm": "Confirm",
+            "confirmPurchase": "Confirm the purchase",
+            "errorInvalidAmount": "Please enter a valid amount.",
+
+            "errorBilling": "Failed to start billing process.",
+            "done": "Done",
+            "pendingProcessing": "Pending processing",
+            "declined": "Declined",
+            "expired": "Expired",
+            "waitingConfirmation": "Waiting your confirmation",
+            "pending": "Pending"
+        }
+    },
+    "customizations": {
+        "description": "Customize the text displayed in Frak modals for different languages. These customizations will override the default text for your store.",
+        "save": "Save Customizations",
+        "saved": "Customizations saved successfully!",
+        "error": "Error saving customizations",
+        "french": "French (fr) Translations",
+        "english": "English (en) Translations",
+        "languageMode": {
+            "title": "Language Configuration",
+            "choiceTitle": "Choose your language setup",
+            "single": {
+                "label": "Single Language",
+                "helpText": "Use the same text for all users regardless of their location"
+            },
+            "multi": {
+                "label": "Multiple Languages",
+                "helpText": "Provide different text for French and English. Users will see text based on their browser language or location"
+            }
+        },
+        "sharing": {
+            "title": "Sharing Customization",
+            "description": "Customize the text displayed when sharing your store."
+        },
+        "modal": {
+            "title": "Frak Modal Customization",
+            "description": "Customize the text displayed in Frak modals for different languages. The text fields support markdown formatting and special variables.",
+            "logo": {
+                "title": "Wallet Logo",
+                "description": "Personalize the wallet modal with your own logo."
+            },
+            "formatting": {
+                "title": "Text Formatting Guide",
+                "description": "You can use the following formatting options to enhance your text:",
+                "bold": "Use **text** to make text bold (e.g., **Get rewards** displays as bold text)",
+                "italic": "Use *text* to make text italic (e.g., *amazing offer* displays as italic text)",
+                "variable": "Use {{ estimatedReward }} to show the potential reward amount that users can earn (automatically calculated based on your campaign settings)",
+                "preview": "Note: The preview below shows $42.00 as an example amount. Your customers will see actual reward amounts based on your campaign settings."
+            }
+        },
+        "fields": {
+            "logoUrl": {
+                "label": "Wallet Logo URL",
+                "description": "The URL of the logo that will be displayed in the wallet modal. This will override the default logo.",
+                "placeholder": "Example: 'https://example.com/logo.png'"
+            },
+            "sharing.title": {
+                "label": "Sharing Modal Title",
+                "description": "The title that appears when users share your content on social media or messaging apps",
+                "placeholder": "Example: 'Share this amazing product with your friends!'"
+            },
+            "sharing.text": {
+                "label": "Sharing Message Text",
+                "description": "The default message that will be shared along with your product link",
+                "placeholder": "Example: 'Check out this amazing product I found!'"
+            },
+            "sdk.wallet.login.primaryAction": {
+                "label": "Wallet Login Button Text",
+                "description": "The text displayed on the main action button in the wallet login modal",
+                "placeholder": "Example: 'Create your wallet in 2 seconds!'"
+            },
+            "sdk.wallet.login.text_sharing": {
+                "label": "Login Text for Sharing",
+                "description": "Message shown to users when they need to login to share content and earn rewards. You can use **bold text**, *italic text*, and {{ estimatedReward }} to show the reward amount.",
+                "placeholder": "Example: 'Share, Refer, Earn up to **{{ estimatedReward }}** per successful referral'"
+            },
+            "sdk.wallet.login.text_referred": {
+                "label": "Welcome Text for Referred Users",
+                "description": "Message shown to users who clicked on a shared link. You can use **bold text**, *italic text*, and {{ estimatedReward }} to show the reward amount.",
+                "placeholder": "Example: 'Welcome! Receive **{{ estimatedReward }}** when you make a purchase'"
+            }
+        },
+        "preview": {
+            "sharing": {
+                "title": "Preview sharing modal",
+                "description": "Preview the text displayed in Frak modals.",
+                "placeholder": "Share, Refer, Earn up to **{{ estimatedReward }}** per successful referral",
+                "button": "Create your wallet in 2 seconds!"
+            },
+            "referred": {
+                "title": "Preview referred modal",
+                "description": "Preview the text displayed in Frak modals.",
+                "placeholder": "Welcome! Receive **{{ estimatedReward }}** when you make a purchase",
+                "button": "Create your wallet in 2 seconds!"
+            },
+            "social": {
+                "title": "Preview social sharing",
+                "description": "Preview the text displayed in social sharing.",
+                "sharingTitle": "Do you know the Example site ? 😊",
+                "sharingText": "I have an amazing product to share with you ! 😉"
+            }
+        }
+    },
+    "campaigns": {
+        "title": "Campaigns",
+        "description": "Manage your marketing campaigns and track their performance. Create new campaigns to distribute rewards to users and grow your customer base."
+    },
+    "appearance": {
+        "title": "Appearance",
+        "description": "Customize the look and feel of your Frak integration across your store.",
+        "tabs": {
+            "customizations": "Text Customizations",
+            "shareButton": "Share Button",
+            "walletButton": "Wallet Button"
+        },
+        "shareButton": {
+            "link": "Configure button in your product page",
+            "noProduct": "You need to add a product to your store to add the sharing button",
+            "activated": "Share button is on your product page",
+            "notActivated": "Share button is not in your product page",
+            "todo": "Please add the button as shown below"
+        },
+        "walletButton": {
+            "link": "Configure wallet button in theme editor",
+            "activated": "Wallet button is in your theme",
+            "notActivated": "Wallet button is not in your theme",
+            "todo": "Please add the button as shown below"
+        }
+    },
+    "funding": {
+        "title": "Funding",
+        "description": "Manage your funding sources and purchase history. Add funds to your banks to ensure your campaigns can distribute rewards to users."
+    },
+    "settings": {
+        "title": "Settings"
+    }
+}

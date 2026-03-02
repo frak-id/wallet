@@ -30,17 +30,27 @@ const config: KnipConfig = {
             project: ["app/**/*.{ts,tsx}"],
         },
 
-        "apps/dashboard-admin": {
-            entry: ["app/root.tsx", "app.routes.ts", "app/routes/**/*.tsx"],
-            project: ["app/**/*.{ts,tsx}"],
+        "apps/shopify": {
+            entry: [
+                "app/root.tsx",
+                "app/routes.ts",
+                "app/routes/**/*.tsx",
+                "app/entry.client.tsx",
+                "app/entry.server.tsx",
+            ],
+            project: ["app/**/*.{ts,tsx}", "db/**/*.ts"],
+            ignore: ["extensions/**", ".shopify/**", ".react-router/**"],
         },
         "apps/business": {
             entry: ["src/router.tsx", "src/routes/**/*.tsx"],
             project: ["src/**/*.{ts,tsx}"],
         },
-        "packages/backend-elysia": {
-            entry: "src/index.ts",
+        "services/backend": {
+            entry: ["src/index.ts", "src/jobs/*.ts"],
             project: "src/**/*.ts",
+            ignore: ["test/**", "scripts/**"],
+            // Enable class member detection for backend (DDD with repositories/services)
+            includeEntryExports: true,
         },
         "sdk/core": {
             entry: ["src/**/index.ts"],

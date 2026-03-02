@@ -1,22 +1,25 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect } from "react";
+import { isDemoMode } from "@/config/auth";
 import { CampaignEdit } from "@/module/campaigns/component/CampaignEdit";
 import {
     campaignQueryOptions,
     validateEditCampaign,
 } from "@/module/campaigns/queries/queryOptions";
+import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { CampaignError } from "@/module/common/component/RouteError";
 import { queryClient } from "@/module/common/provider/RootProvider";
-import { campaignStore } from "@/stores/campaignStore";
+import { campaignStore, campaignToDraft } from "@/stores/campaignStore";
 
 export const Route = createFileRoute("/_restricted/campaigns/edit/$campaignId")(
     {
-        // Prefetch into TanStack Query cache with validation
         loader: ({ params }) => {
-            return queryClient.ensureQueryData(
+            queryClient.prefetchQuery(
                 campaignQueryOptions(
                     params.campaignId,
+                    isDemoMode(),
+                    undefined,
                     validateEditCampaign(params.campaignId)
                 )
             );
@@ -28,21 +31,21 @@ export const Route = createFileRoute("/_restricted/campaigns/edit/$campaignId")(
 
 function CampaignsEditPage() {
     const { campaignId } = Route.useParams();
+    const isDemo = useIsDemoMode();
     const { data: campaign } = useSuspenseQuery(
-        campaignQueryOptions(campaignId, validateEditCampaign(campaignId))
+        campaignQueryOptions(
+            campaignId,
+            isDemo,
+            undefined,
+            validateEditCampaign(campaignId)
+        )
     );
 
-    // Use individual selectors to avoid infinite loop
-    const setCampaign = campaignStore((state) => state.setCampaign);
-    const setAction = campaignStore((state) => state.setAction);
-    const setIsFetched = campaignStore((state) => state.setIsFetched);
+    const setDraft = campaignStore((state) => state.setDraft);
 
-    // Set campaign in store on mount (maintaining existing behavior from CampaignLoad)
     useEffect(() => {
-        setCampaign({ ...campaign, id: campaignId });
-        setAction("edit");
-        setIsFetched(true);
-    }, [campaign, campaignId, setCampaign, setAction, setIsFetched]);
+        setDraft(campaignToDraft(campaign));
+    }, [campaign, setDraft]);
 
-    return <CampaignEdit />;
+    return <CampaignEdit campaignId={campaignId} />;
 }

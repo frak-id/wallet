@@ -1,0 +1,1 @@
+ALTER TABLE "merchants" ADD COLUMN "default_reward_token" "bytea";

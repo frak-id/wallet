@@ -13,11 +13,9 @@ import {
     selectSession,
     sessionStore,
     trackGenericEvent,
-    useInteractionSessionStatus,
 } from "@frak-labs/wallet-shared";
 import { useCallback, useEffect, useRef } from "react";
 import type { Hex } from "viem";
-import { useAccount } from "wagmi";
 import { useListenerUI } from "@/module/providers/ListenerUiProvider";
 import type { WalletRpcContext } from "@/module/types/context";
 
@@ -37,33 +35,27 @@ export function useDisplayEmbeddedWallet(): OnDisplayEmbeddedWalletRequest {
     // Get the session
     const session = sessionStore(selectSession);
 
-    // Get the session status
-    const { address } = useAccount();
-    const { data: sessionStatus } = useInteractionSessionStatus({
-        address,
-    });
-
     // Store the current deferred promise for completion
     const currentDeferredRef = useRef<Deferred<{ wallet: Hex }> | null>(null);
 
     /**
-     * Watch for user login and active session
-     * - Resolves the deferred when user is logged in and has an active session
+     * Watch for user login
+     * - Resolves the deferred when user is logged in
      * - This handles the completion flow for embedded wallet
      */
     useEffect(() => {
         const deferred = currentDeferredRef.current;
         if (!deferred) return;
 
-        // Check if user is logged in and has an active session
-        if (session?.address && sessionStatus) {
+        // Check if user is logged in
+        if (session?.address) {
             // Resolve the deferred with the wallet address
             deferred.resolve({
                 wallet: session.address,
             });
             currentDeferredRef.current = null;
         }
-    }, [session?.address, sessionStatus]);
+    }, [session?.address]);
 
     /**
      * Cleanup on component unmount

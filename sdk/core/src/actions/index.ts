@@ -1,6 +1,7 @@
 export { displayEmbeddedWallet } from "./displayEmbeddedWallet";
 export { displayModal } from "./displayModal";
-export { getProductInformation } from "./getProductInformation";
+export { ensureIdentity } from "./ensureIdentity";
+export { getMerchantInformation } from "./getMerchantInformation";
 export { openSso } from "./openSso";
 export { prepareSso } from "./prepareSso";
 export {
@@ -13,6 +14,7 @@ export { sendInteraction } from "./sendInteraction";
 // Helper to track the purchase status
 export { trackPurchaseStatus } from "./trackPurchaseStatus";
 export { watchWalletStatus } from "./watchWalletStatus";
+// Modal wrappers
 export {
     type ModalBuilder,
     type ModalStepBuilder,
@@ -22,7 +24,6 @@ export {
     type SendTransactionParams,
     sendTransaction,
 } from "./wrapper/sendTransaction";
-// Modal wrappers
 export {
     type SiweAuthenticateModalParams,
     siweAuthenticate,

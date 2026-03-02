@@ -21,11 +21,11 @@ import {
 } from "react";
 import { Toaster } from "sonner";
 import { useShallow } from "zustand/react/shallow";
+import { useGetMergeToken } from "@/module/hooks/useGetMergeToken";
 import { SiweAuthenticateModalStep } from "@/module/modal/component/Authenticate";
 import { FinalModalStep } from "@/module/modal/component/Final";
 import { MetadataInfo } from "@/module/modal/component/Generic";
 import { LoginModalStep } from "@/module/modal/component/Login";
-import { OpenSessionModalStep } from "@/module/modal/component/OpenSession";
 import { TransactionModalStep } from "@/module/modal/component/Transaction";
 import {
     type GenericWalletUiType,
@@ -40,6 +40,7 @@ import {
     selectIsDismissed,
     selectShouldFinish,
 } from "@/module/stores/modalStore";
+import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 import { ToastLoading } from "../../../component/ToastLoading";
 import styles from "./index.module.css";
 import { ModalStepIndicator } from "./Step";
@@ -54,7 +55,13 @@ export function ListenerModal({
 }: ModalUiType & GenericWalletUiType) {
     const { clearRequest } = useListenerUI();
     const [isOpen, setIsOpen] = useState(true);
+    const [logoFailed, setLogoFailed] = useState(false);
+    const getMergeToken = useGetMergeToken();
+    const parentUrl = resolvingContextStore((s) => s.context?.sourceUrl);
 
+    useEffect(() => {
+        setLogoFailed(false);
+    }, [logoUrl]);
     /**
      * Method to close the modal
      */
@@ -145,7 +152,7 @@ export function ListenerModal({
     /**
      * The inner component to display
      */
-    const { titleComponent, icon, footer } = useMemo(() => {
+    const { titleComponent, providedBy, footer } = useMemo(() => {
         // Build the title component we will display
         const titleComponent = metadata?.header?.title ? (
             metadata.header.title
@@ -166,32 +173,21 @@ export function ListenerModal({
             </span>
         );
 
-        // Build the header icon component (only if we got an icon)
-        const icon = logoUrl ? (
-            <div className={styles.modalListener__iconContainer}>
-                <img
-                    src={logoUrl}
-                    alt={""}
-                    className={styles.modalListener__icon}
-                />
-                {providedBy}
-            </div>
-        ) : null;
-
         // Build the footer (only if no icon present)
-        const footer = logoUrl ? null : (
-            <div className={styles.modalListener__footer}>
-                <OriginPairingState type="modal" />
-                {providedBy}
-            </div>
-        );
+        const footer =
+            logoUrl && !logoFailed ? null : (
+                <div className={styles.modalListener__footer}>
+                    <OriginPairingState type="modal" />
+                    {providedBy}
+                </div>
+            );
 
         return {
             titleComponent,
+            providedBy,
             footer,
-            icon,
         };
-    }, [metadata, logoUrl]);
+    }, [metadata, logoUrl, logoFailed]);
 
     return (
         <ModalComponent
@@ -200,10 +196,18 @@ export function ListenerModal({
             onOpenChange={onOpenChange}
         >
             <Toaster position="top-center" />
-            <InAppBrowserToast />
+            <InAppBrowserToast
+                getMergeToken={getMergeToken}
+                parentUrl={parentUrl}
+            />
             <ToastLoading />
 
-            {icon}
+            <ModalLogoIcon
+                logoUrl={logoUrl}
+                logoFailed={logoFailed}
+                providedBy={providedBy}
+                onError={() => setLogoFailed(true)}
+            />
             <CurrentModalMetadataInfo />
             <ModalStepIndicator />
             <CurrentModalStepComponent onError={onError} />
@@ -340,13 +344,6 @@ function CurrentModalStepComponent({
                         onFinish={currentStep.onResponse}
                     />
                 );
-            case "openSession":
-                return (
-                    <OpenSessionModalStep
-                        onFinish={currentStep.onResponse}
-                        onError={onError}
-                    />
-                );
             case "final":
                 return (
                     <FinalModalStep
@@ -358,4 +355,33 @@ function CurrentModalStepComponent({
                 return <>Can't handle {currentStep} yet</>;
         }
     }, [onError, currentStep]);
+}
+
+/**
+ * Logo icon with 404 fallback — hides itself on load failure
+ */
+function ModalLogoIcon({
+    logoUrl,
+    logoFailed,
+    providedBy,
+    onError,
+}: {
+    logoUrl?: string;
+    logoFailed: boolean;
+    providedBy: ReactNode;
+    onError: () => void;
+}) {
+    if (!logoUrl || logoFailed) return null;
+
+    return (
+        <div className={styles.modalListener__iconContainer}>
+            <img
+                src={logoUrl}
+                alt=""
+                className={styles.modalListener__icon}
+                onError={onError}
+            />
+            {providedBy}
+        </div>
+    );
 }

@@ -1,6 +1,6 @@
 # Frak Business Dashboard
 
-The Frak Business Dashboard is a comprehensive SaaS application built with TanStack Start for companies to manage their referral campaigns, track performance metrics, and interact with blockchain-based reward systems.
+The Frak Business Dashboard is a comprehensive SaaS application built with TanStack Router (SPA) for companies to manage their referral campaigns, track performance metrics, and interact with blockchain-based reward systems.
 
 ## Overview
 
@@ -14,17 +14,15 @@ This application provides:
 
 ## Tech Stack
 
-- **Framework**: TanStack Start with SSR
-- **Routing**: TanStack Router
+- **Framework**: TanStack Router (SPA)
 - **State Management**: Zustand with persist middleware
 - **Data Fetching**: TanStack Query (React Query)
 - **Blockchain**: Viem, Wagmi, Account Abstraction
 - **UI Components**: Radix UI primitives
 - **Styling**: CSS Modules (no Tailwind)
 - **Build Tool**: Vite
-- **Server Output**: Nitro
-- **Database**: MongoDB
-- **Authentication**: Iron Session with WebAuthn
+- **Production Server**: nginx (static files)
+- **Authentication**: JWT via backend API + Zustand store
 
 ## Development
 
@@ -32,7 +30,7 @@ This application provides:
 # Install dependencies (from monorepo root)
 bun install
 
-# Start development server (port 3022)
+# Start development server (port 3001)
 cd apps/business
 bun run dev
 
@@ -48,14 +46,8 @@ bun run format
 ## Building
 
 ```bash
-# Production build
+# Production build (outputs static files to dist/)
 bun run build
-
-# Preview production build
-bun run start
-
-# Run production build
-bun run start:prod
 ```
 
 ## Testing
@@ -79,7 +71,7 @@ bun run test:coverage
 
 - `src/routes/` - File-based routing (TanStack Router)
 - `src/module/` - Feature modules (campaigns, members, products, etc.)
-- `src/context/` - Server-side logic (MongoDB, blockchain, API integrations)
+- `src/config/` - App configuration (auth, environment)
 - `src/stores/` - Zustand state stores
 - `src/components/` - Shared components
 - `src/styles/` - Global CSS and themes
@@ -127,7 +119,6 @@ import { Link } from "@tanstack/react-router";
 Data fetching uses a combination of:
 1. **TanStack Query** - For client-side data fetching and caching
 2. **TanStack Router Loaders** - For route-level data loading
-3. **Server Functions** - For server-side operations
 
 Example with loader:
 ```tsx

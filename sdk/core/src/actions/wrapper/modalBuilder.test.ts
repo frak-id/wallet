@@ -25,7 +25,6 @@ describe("modalBuilder", () => {
 
             expect(builder.params).toBeDefined();
             expect(builder.params.steps.login).toEqual({});
-            expect(builder.params.steps.openSession).toEqual({});
         });
 
         it("should create builder with custom login params", () => {
@@ -34,14 +33,6 @@ describe("modalBuilder", () => {
             });
 
             expect(builder.params.steps.login).toEqual({ allowSso: true });
-        });
-
-        it("should create builder with custom openSession params", () => {
-            const builder = modalBuilder(mockClient, {
-                openSession: {},
-            });
-
-            expect(builder.params.steps.openSession).toEqual({});
         });
 
         it("should create builder with metadata", () => {
@@ -197,10 +188,6 @@ describe("modalBuilder", () => {
                 login: {
                     wallet: "0x1234567890123456789012345678901234567890" as Address,
                 },
-                openSession: {
-                    startTimestamp: 1234567890,
-                    endTimestamp: 1234567900,
-                },
             };
             vi.mocked(displayModal).mockResolvedValue(mockResponse as any);
 
@@ -240,7 +227,6 @@ describe("modalBuilder", () => {
                 login: {
                     wallet: "0x1234567890123456789012345678901234567890" as Address,
                 },
-                openSession: {},
             };
             vi.mocked(displayModal).mockResolvedValue(mockResponse as any);
 

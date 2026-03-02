@@ -1,3 +1,9 @@
+import { vi } from "vitest";
+
+vi.mock("./clientId", () => ({
+    getClientId: vi.fn(() => "mock-client-id-for-test"),
+}));
+
 /**
  * Tests for iframe helper utilities
  * Tests iframe creation, visibility management, and finder functions
@@ -9,7 +15,6 @@ import {
     describe,
     expect,
     it,
-    vi,
 } from "../../tests/vitest-fixtures";
 import type { FrakWalletSdkConfig } from "../types";
 import {
@@ -106,7 +111,9 @@ describe("iframeHelper", () => {
         it("should set iframe src to default wallet URL", async () => {
             await createIframe({});
 
-            expect(mockIframe.src).toBe("https://wallet.frak.id/listener");
+            expect(mockIframe.src).toBe(
+                "https://wallet.frak.id/listener?clientId=mock-client-id-for-test"
+            );
         });
 
         it("should use config walletUrl when provided", async () => {
@@ -117,13 +124,17 @@ describe("iframeHelper", () => {
 
             await createIframe({ config });
 
-            expect(mockIframe.src).toBe("https://custom-wallet.com/listener");
+            expect(mockIframe.src).toBe(
+                "https://custom-wallet.com/listener?clientId=mock-client-id-for-test"
+            );
         });
 
         it("should use deprecated walletBaseUrl when provided", async () => {
             await createIframe({ walletBaseUrl: "https://legacy-wallet.com" });
 
-            expect(mockIframe.src).toBe("https://legacy-wallet.com/listener");
+            expect(mockIframe.src).toBe(
+                "https://legacy-wallet.com/listener?clientId=mock-client-id-for-test"
+            );
         });
 
         it("should prefer config.walletUrl over walletBaseUrl", async () => {
@@ -137,7 +148,9 @@ describe("iframeHelper", () => {
                 config,
             });
 
-            expect(mockIframe.src).toBe("https://new-wallet.com/listener");
+            expect(mockIframe.src).toBe(
+                "https://new-wallet.com/listener?clientId=mock-client-id-for-test"
+            );
         });
 
         it("should remove existing iframe before creating new one", async () => {

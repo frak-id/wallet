@@ -1,7 +1,7 @@
 # AGENTS.md
 
-**Generated:** 2026-01-03  
-**Commit:** bdef56f09  
+**Generated:** 2026-02-25  
+**Commit:** e83f896b4  
 **Branch:** dev
 
 ## Overview
@@ -14,9 +14,9 @@ Frak Wallet monorepo - Web3 referral tracking & rewards infrastructure. TypeScri
 frak-wallet/
 ├── apps/
 │   ├── wallet/        # TanStack Router SPA - user wallet (SSR disabled)
-│   ├── business/      # TanStack Start SSR - business dashboard
+│   ├── business/      # TanStack Router SPA - business dashboard
 │   ├── listener/      # Iframe RPC handler for SDK communication
-│   └── dashboard-admin/  # Admin interface
+│   └── shopify/       # React Router v7 embedded Shopify app
 ├── packages/
 │   ├── wallet-shared/ # Shared code for wallet + listener ONLY
 │   ├── ui/            # Radix-based component library
@@ -41,13 +41,16 @@ frak-wallet/
 | Task | Location | Notes |
 |------|----------|-------|
 | Wallet features | `apps/wallet/app/module/` | Module-based architecture |
-| Business dashboard | `apps/business/src/module/` | SSR-enabled, TanStack Start |
+| Business dashboard | `apps/business/src/module/` | SPA, TanStack Router |
 | SDK iframe communication | `apps/listener/app/module/hooks/` | RPC message handlers |
 | Shared wallet logic | `packages/wallet-shared/src/` | Stores, auth, blockchain |
 | UI components | `packages/ui/component/` | Radix-based, CSS Modules |
 | Core SDK actions | `sdk/core/src/actions/` | Blockchain interactions |
-| React hooks | `sdk/react/src/hook/` | 9 hooks + providers |
-| Backend domains | `services/backend/src/domain/` | auth, wallet, oracle, etc. |
+| React hooks | `sdk/react/src/hook/` | 10 hooks + providers |
+| Backend domains | `services/backend/src/domain/` | auth, wallet, rewards, campaign, etc. |
+| Shopify app | `apps/shopify/app/` | React Router v7, Polaris v13 |
+| Shopify services | `apps/shopify/app/services.server/` | Shopify GraphQL, merchant resolution |
+| Shopify extensions | `apps/shopify/extensions/` | Theme blocks, checkout pixel |
 | Vite/CSS config | `packages/dev-tooling/src/vite.ts` | Lightning CSS central config |
 | Test mocks | `packages/test-foundation/src/` | Wagmi, WebAuthn, router mocks |
 
@@ -65,7 +68,7 @@ bun run format             # Biome format (4-space, double quotes)
 bun run typecheck          # TypeScript check all packages
 
 # Testing - CRITICAL: use "bun run test", NOT "bun test"
-bun run test               # All 7 Vitest projects in parallel
+bun run test               # All 10 Vitest projects in parallel
 bun run test --project wallet-unit  # Single project
 bun run test:coverage      # With coverage (40% target)
 cd apps/wallet && bun run test:e2e  # Playwright E2E
@@ -73,8 +76,20 @@ cd apps/wallet && bun run test:e2e  # Playwright E2E
 # Deployment
 bun run deploy             # AWS dev
 bun run deploy:prod        # AWS prod
-bun run deploy-gcp:prod    # GCP prod (backend)
+bun run deploy-gcp:staging # GCP staging
+bun run deploy-gcp:prod    # GCP prod (all production apps)
 ```
+
+## Quality Gates (Mandatory)
+
+Before completing any task, **always run**:
+```bash
+bun run format             # Biome format
+bun run lint               # Biome lint
+bun run typecheck          # TypeScript check all packages
+bun run test               # Vitest (all projects)
+```
+All four must pass. Do not commit or report completion with failures.
 
 ## Conventions
 
@@ -105,6 +120,24 @@ bun run deploy-gcp:prod    # GCP prod (backend)
 - **Always use individual selectors**: `store((s) => s.value)`
 - Never subscribe to entire store
 
+### Commit Messages
+- **Always prefix with emoji** matching the change type
+- Concise, no conventional commit prefix (`fix:`, `feat:`) — emoji replaces it
+- Match existing patterns from `git log`
+
+| Emoji | Usage |
+|-------|-------|
+| ✨ | New feature |
+| 🐛 | Bug fix |
+| ♻️ | Refactor |
+| 🔧 | Config / tooling |
+| ⬆️ | Dependency / version bump |
+| 🗑️ | Remove code / deprecation |
+| 🎨 | UI / styling |
+| ⚡ | Performance |
+| 🧪 | Tests |
+| 📝 | Documentation |
+
 ## Anti-Patterns
 
 | Forbidden | Reason |
@@ -119,9 +152,10 @@ bun run deploy-gcp:prod    # GCP prod (backend)
 
 ## Testing
 
-- **7 Vitest projects**: wallet, listener, business, wallet-shared, core-sdk, react-sdk, backend
+- **10 Vitest projects**: wallet, listener, business, shopify, wallet-shared, ui, core-sdk, react-sdk, components, backend
 - **Frontend**: jsdom environment, mock Wagmi/WebAuthn/TanStack Query
 - **Backend**: Node environment, mock Viem/Drizzle/Bun runtime
+- **Shopify**: Node environment, co-located `*.test.ts` files
 - **E2E**: Playwright (19 specs) in `apps/wallet/tests/specs/`
 - **Mocks**: Centralized in `packages/test-foundation/src/`
 - **Naming**: "should [behavior] when [condition]"
@@ -142,9 +176,51 @@ Build order: `rpc → core → legacy → react → components`
 ## Infrastructure
 
 - **AWS (SST v3)**: Static sites (admin, examples), dev deployments
-- **GCP (Pulumi)**: Production (backend, wallet, business) on GKE
+- **GCP (Pulumi)**: Production (backend, wallet, business, listener) on GKE
 - **Stages**: dev, prod, gcp-staging, gcp-production
-- **Docker**: Multi-stage with SDK pre-building optimization
+- **Docker**: Multi-stage with SDK pre-building optimization (shared base image)
+
+## Custom Agents
+
+Purpose-based agents in `.opencode/agent/`:
+
+### Orchestrator
+
+| Agent | Purpose | Activation |
+|-------|---------|------------|
+| `frak-builder` | Plans, delegates, executes complex tasks | Include `frakwork` or `fw` in prompt |
+
+**FrakBuilder** auto-delegates to specialists, runs parallel tasks, and enforces todo completion (Sisyphus mode).
+
+### Specialists
+
+| Agent | Purpose | When to Use |
+|-------|---------|-------------|
+| `explore` | Fast codebase search | Finding files, patterns, quick navigation |
+| `architect` | Strategic thinking | Complex bugs, design decisions, code review |
+| `librarian` | Knowledge research | Documentation, implementation examples |
+| `frontend-builder` | UI/UX implementation | Components, styling, accessibility |
+| `backend-builder` | API & data work | Endpoints, schemas, business logic |
+| `infra-ops` | Infrastructure | Deployment, config, CI/CD |
+
+**Domain-specific context** in `AGENTS.md` files per directory:
+- `services/backend/AGENTS.md` - Backend patterns
+- `apps/wallet/AGENTS.md` - Wallet app patterns
+- `apps/business/AGENTS.md` - Business dashboard patterns
+- `apps/listener/AGENTS.md` - Listener patterns
+- `apps/shopify/AGENTS.md` - Shopify app patterns (React Router v7, Polaris)
+- `apps/shopify/app/services.server/AGENTS.md` - Shopify server services
+- `apps/shopify/app/components/AGENTS.md` - Shopify Polaris components
+- `apps/shopify/app/hooks/AGENTS.md` - Shopify client hooks
+- `apps/shopify/app/routes/AGENTS.md` - Shopify route patterns
+- `apps/shopify/extensions/AGENTS.md` - Shopify theme + pixel extensions
+- `sdk/AGENTS.md` - SDK architecture
+- `sdk/core/AGENTS.md`, `sdk/react/AGENTS.md`, `sdk/components/AGENTS.md` - SDK package specifics
+- `packages/AGENTS.md` - Shared packages overview
+- `packages/wallet-shared/AGENTS.md`, `packages/ui/AGENTS.md` - Package specifics
+- `packages/app-essentials/AGENTS.md` - Blockchain + WebAuthn config
+- `packages/test-foundation/AGENTS.md` - Test infrastructure
+- `infra/AGENTS.md` - Infrastructure patterns
 
 ## Notes
 
@@ -153,3 +229,5 @@ Build order: `rpc → core → legacy → react → components`
 - Drizzle schemas: `src/domain/*/db/schema.ts` pattern
 - Linked packages (Changesets): frame-connector, core-sdk, react-sdk
 - Workspace exports use `development` condition for source in monorepo
+- Vite aliased to `rolldown-vite` (`npm:rolldown-vite@^7.3.1`) — faster Rust-based bundler
+- Shopify app uses relative imports (exception to `@/...` paths convention)

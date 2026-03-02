@@ -66,11 +66,29 @@ describe("trackEvent", () => {
             );
         });
 
-        it("should track user_referred event", () => {
-            trackEvent(mockClient, "user_referred");
+        it("should track user_referred_started event", () => {
+            trackEvent(mockClient, "user_referred_started");
 
             expect(mockClient.openPanel?.track).toHaveBeenCalledWith(
-                "user_referred",
+                "user_referred_started",
+                {}
+            );
+        });
+
+        it("should track user_referred_completed event", () => {
+            trackEvent(mockClient, "user_referred_completed");
+
+            expect(mockClient.openPanel?.track).toHaveBeenCalledWith(
+                "user_referred_completed",
+                {}
+            );
+        });
+
+        it("should track user_referred_error event", () => {
+            trackEvent(mockClient, "user_referred_error");
+
+            expect(mockClient.openPanel?.track).toHaveBeenCalledWith(
+                "user_referred_error",
                 {}
             );
         });
@@ -151,10 +169,10 @@ describe("trackEvent", () => {
                 timestamp: Date.now(),
             };
 
-            trackEvent(mockClient, "user_referred", complexProps);
+            trackEvent(mockClient, "user_referred_completed", complexProps);
 
             expect(mockClient.openPanel?.track).toHaveBeenCalledWith(
-                "user_referred",
+                "user_referred_completed",
                 complexProps
             );
         });

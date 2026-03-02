@@ -1,32 +1,56 @@
-import type {
-    FrakClient,
-    SendInteractionParamsType,
-    SendInteractionReturnType,
-} from "../types";
-import { computeProductId } from "../utils/computeProductId";
+import type { FrakClient } from "../types";
+import type { SendInteractionParamsType } from "../types/rpc/interaction";
+import { getClientId } from "../utils/clientId";
 
 /**
- * Function used to send an interaction
- * @param client - The current Frak Client
- * @param args
+ * Send an interaction to the backend via the listener RPC.
+ * Fire-and-forget: errors are caught and logged, not thrown.
+ *
+ * @param client - The Frak client instance
+ * @param params - The interaction parameters
+ *
+ * @description Sends a user interaction event through the wallet iframe RPC. Supports three interaction types: arrival tracking, sharing events, and custom interactions.
  *
  * @example
- * const interaction = PressInteractionEncoder.openArticle({
- *     articleId: keccak256(toHex("article-slug")),
+ * Track a user arrival with referral attribution:
+ * ```ts
+ * await sendInteraction(client, {
+ *     type: "arrival",
+ *     referrerWallet: "0x1234...abcd",
+ *     landingUrl: window.location.href,
+ *     utmSource: "twitter",
+ *     utmMedium: "social",
+ *     utmCampaign: "launch-2026",
  * });
- * const { delegationId } = await sendInteraction(frakConfig, {
- *     interaction,
+ * ```
+ *
+ * @example
+ * Track a sharing event:
+ * ```ts
+ * await sendInteraction(client, { type: "sharing" });
+ * ```
+ *
+ * @example
+ * Send a custom interaction:
+ * ```ts
+ * await sendInteraction(client, {
+ *     type: "custom",
+ *     customType: "newsletter_signup",
+ *     data: { email: "user@example.com" },
  * });
- * console.log("Delegated interaction id", delegationId);
+ * ```
  */
 export async function sendInteraction(
     client: FrakClient,
-    { productId, interaction, validation }: SendInteractionParamsType
-): Promise<SendInteractionReturnType> {
-    const pId = productId ?? computeProductId(client.config);
-
-    return await client.request({
-        method: "frak_sendInteraction",
-        params: [pId, interaction, validation],
-    });
+    params: SendInteractionParamsType
+): Promise<void> {
+    try {
+        await client.request({
+            method: "frak_sendInteraction",
+            params: [params, { clientId: getClientId() }],
+        });
+    } catch {
+        // Silent failure - fire-and-forget
+        console.warn("[Frak SDK] Failed to send interaction:", params.type);
+    }
 }

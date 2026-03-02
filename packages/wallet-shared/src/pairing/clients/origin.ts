@@ -4,6 +4,7 @@ import { trackAuthCompleted } from "../../common/analytics";
 import { getSafeSession } from "../../common/utils/safeSession";
 import { sessionStore } from "../../stores/sessionStore";
 import type {
+    OriginIdentityNode,
     OriginPairingState,
     WsOriginMessage,
     WsOriginRequest,
@@ -41,21 +42,24 @@ export class OriginPairingClient extends BasePairingClient<
         };
     }
 
-    /**
-     * Initiate a new pairing
-     */
-    async initiatePairing(onSuccess?: OnPairingSuccessCallback) {
-        this.onPairingSuccess = onSuccess ?? null;
+    async initiatePairing(options?: {
+        onSuccess?: OnPairingSuccessCallback;
+        originNode?: OriginIdentityNode;
+    }) {
+        this.onPairingSuccess = options?.onSuccess ?? null;
 
         this.forceConnect(() =>
             this.connect({
                 action: "initiate",
+                originNode: options?.originNode,
             })
         );
     }
 
     /**
-     * Reconnect to all the pairing associated with the current wallet
+     * Reconnect to all the pairing associated with the current wallet.
+     * Uses isAlive() to detect and clean up zombie connections left
+     * after the app was backgrounded on mobile.
      */
     reconnect() {
         const session = getSafeSession();
@@ -71,6 +75,12 @@ export class OriginPairingClient extends BasePairingClient<
             return;
         }
 
+        // If the connection is still alive, nothing to do
+        if (this.isAlive()) return;
+
+        // Reset stale ping state from previous connection
+        this.pendingPings = 0;
+
         // Launch the WS connection
         this.connect({
             wallet: session.token,
@@ -80,14 +90,30 @@ export class OriginPairingClient extends BasePairingClient<
         this.startPingInterval();
     }
 
-    /**
-     * Send a signature request to the pairing server
-     */
+    private static readonly SIGNATURE_TIMEOUT_MS = 10 * 60 * 1_000; // 10 minutes
+
     async sendSignatureRequest(request: Hex, context?: object): Promise<Hex> {
         return new Promise((resolve, reject) => {
             const id = nanoid(16);
+
+            const timer = setTimeout(() => {
+                this.removeSignatureRequest(id);
+                reject(
+                    new Error("Signature request timed out after 10 minutes")
+                );
+            }, OriginPairingClient.SIGNATURE_TIMEOUT_MS);
+
             const signatureRequests = new Map(this.state.signatureRequests);
-            signatureRequests.set(id, { resolve, reject });
+            signatureRequests.set(id, {
+                resolve: (value: Hex) => {
+                    clearTimeout(timer);
+                    resolve(value);
+                },
+                reject: (reason: unknown) => {
+                    clearTimeout(timer);
+                    reject(reason);
+                },
+            });
             this.setState({ signatureRequests });
 
             this.send({
@@ -99,6 +125,12 @@ export class OriginPairingClient extends BasePairingClient<
                 },
             });
         });
+    }
+
+    private removeSignatureRequest(id: string) {
+        const signatureRequests = new Map(this.state.signatureRequests);
+        signatureRequests.delete(id);
+        this.setState({ signatureRequests });
     }
 
     /**
@@ -116,30 +148,24 @@ export class OriginPairingClient extends BasePairingClient<
             });
         }
 
-        // Signature response
         if (message.type === "signature-response") {
             const request = this.state.signatureRequests.get(
                 message.payload.id
             );
             if (request) {
                 request.resolve(message.payload.signature);
-                const signatureRequests = new Map(this.state.signatureRequests);
-                signatureRequests.delete(message.payload.id);
-                this.setState({ signatureRequests });
+                this.removeSignatureRequest(message.payload.id);
             }
             return;
         }
 
-        // Signature reject
         if (message.type === "signature-reject") {
             const request = this.state.signatureRequests.get(
                 message.payload.id
             );
             if (request) {
                 request.reject(message.payload.reason);
-                const signatureRequests = new Map(this.state.signatureRequests);
-                signatureRequests.delete(message.payload.id);
-                this.setState({ signatureRequests });
+                this.removeSignatureRequest(message.payload.id);
             }
             return;
         }

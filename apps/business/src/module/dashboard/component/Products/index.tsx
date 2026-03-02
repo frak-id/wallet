@@ -1,41 +1,31 @@
 import { Button } from "@frak-labs/ui/component/Button";
 import { useNavigate } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
-import type { Hex } from "viem";
 import { Panel } from "@/module/common/component/Panel";
-import { ProductItem } from "@/module/dashboard/component/ProductItem";
-import { useMyProducts } from "@/module/dashboard/hooks/useMyProducts";
+import { MerchantItem } from "@/module/dashboard/component/MerchantItem";
+import { useMyMerchants } from "@/module/dashboard/hooks/useMyMerchants";
 import styles from "./index.module.css";
 
-/**
- * Component to display all the current user product
- * @constructor
- */
-export function MyProducts() {
-    const { products } = useMyProducts();
+export function MyMerchants() {
+    const { merchants } = useMyMerchants();
 
     return (
-        <Panel variant={"ghost"} title={"My Products"} withBadge={false}>
-            <ProductListSection
-                products={[
-                    ...(products?.operator ?? []),
-                    ...(products?.owner ?? []),
-                ]}
-            />
+        <Panel variant={"ghost"} title={"My Merchants"} withBadge={false}>
+            <MerchantListSection merchants={merchants} />
         </Panel>
     );
 }
 
-function ProductListSection({
-    products,
+function MerchantListSection({
+    merchants,
 }: {
-    products: { id: Hex; name: string; domain: string }[];
+    merchants: { id: string; name: string; domain: string }[];
 }) {
     const navigate = useNavigate();
     return (
         <div className={styles.contentListSection}>
-            {products.map((content) => (
-                <ProductListItem key={content.id} product={content} />
+            {merchants.map((merchant) => (
+                <MerchantListItem key={merchant.id} merchant={merchant} />
             ))}
 
             <Button
@@ -45,11 +35,11 @@ function ProductListSection({
                     navigate({ to: "/mint" });
                 }}
             >
-                <ProductItem
+                <MerchantItem
                     name={
                         <>
                             <Plus />
-                            List a Product
+                            Add a Merchant
                         </>
                     }
                     domain={"domain.com"}
@@ -61,11 +51,11 @@ function ProductListSection({
     );
 }
 
-function ProductListItem({
-    product,
+function MerchantListItem({
+    merchant,
 }: {
-    product: { id: Hex; name: string; domain: string };
+    merchant: { id: string; name: string; domain: string };
 }) {
-    const { id, name, domain } = product;
-    return <ProductItem id={id} name={name} domain={domain} />;
+    const { id, name, domain } = merchant;
+    return <MerchantItem merchantId={id} name={name} domain={domain} />;
 }

@@ -6,16 +6,15 @@ Core SDK for Frak ecosystem integration. Framework-agnostic, published as `@frak
 
 ```
 src/
-├── actions/          # Blockchain interactions (17 files)
+├── actions/          # Blockchain interactions (14 files)
 │   ├── displayModal.ts
 │   ├── sendInteraction.ts
-│   ├── siweAuthenticate.ts
+│   ├── displayEmbeddedWallet.ts
 │   └── ...
 ├── clients/          # FrakClient + iframe communication
 ├── constants/        # Chain configs, addresses
-├── interactions/     # Interaction type builders (11 files)
 ├── types/            # TypeScript definitions
-└── utils/            # Helpers (23 files)
+└── utils/            # Helpers (20 files)
 ```
 
 ## Where to Look
@@ -23,7 +22,6 @@ src/
 | Task | Location |
 |------|----------|
 | Add blockchain action | `src/actions/` |
-| Interaction types | `src/interactions/` |
 | Client setup | `src/clients/FrakClient.ts` |
 | Type definitions | `src/types/` |
 | Utility helpers | `src/utils/` |
@@ -57,7 +55,6 @@ bun run check-exports # Verify package exports
 ```typescript
 import { FrakClient } from "@frak-labs/core-sdk";           // Main client
 import { sendInteraction } from "@frak-labs/core-sdk/actions";  // Actions
-import { PressInteraction } from "@frak-labs/core-sdk/interactions"; // Builders
 ```
 
 ## Anti-Patterns

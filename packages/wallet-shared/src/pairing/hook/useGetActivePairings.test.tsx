@@ -101,7 +101,7 @@ describe("useGetActivePairings", () => {
         ]);
     });
 
-    test("should return null when API returns no data", async ({
+    test("should return empty array when API returns no data", async ({
         queryWrapper,
         mockSession,
     }) => {
@@ -112,7 +112,7 @@ describe("useGetActivePairings", () => {
 
         server.use(
             http.get(
-                `${process.env.BACKEND_URL || "http://localhost:3030"}/wallet/pairings/list`,
+                `${process.env.BACKEND_URL || "http://localhost:3030"}/user/wallet/pairings/list`,
                 () => {
                     return HttpResponse.json(null);
                 }
@@ -150,7 +150,7 @@ describe("useGetActivePairings", () => {
             expect(result.current.isSuccess).toBe(true);
         });
 
-        expect(result.current.data).toBeNull();
+        expect(result.current.data).toEqual([]);
         expect(consoleWarnSpy).toHaveBeenCalledWith("No pairings found");
 
         consoleWarnSpy.mockRestore();
@@ -164,7 +164,7 @@ describe("useGetActivePairings", () => {
 
         server.use(
             http.get(
-                `${process.env.BACKEND_URL || "http://localhost:3030"}/wallet/pairings/list`,
+                `${process.env.BACKEND_URL || "http://localhost:3030"}/user/wallet/pairings/list`,
                 () => {
                     return HttpResponse.json([]);
                 }
@@ -214,7 +214,7 @@ describe("useGetActivePairings", () => {
 
         server.use(
             http.get(
-                `${process.env.BACKEND_URL || "http://localhost:3030"}/wallet/pairings/list`,
+                `${process.env.BACKEND_URL || "http://localhost:3030"}/user/wallet/pairings/list`,
                 () => {
                     callCount++;
                     return HttpResponse.json([

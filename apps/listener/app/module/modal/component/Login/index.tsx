@@ -2,6 +2,7 @@ import type { LoginModalStepType } from "@frak-labs/core-sdk";
 import { Spinner } from "@frak-labs/ui/component/Spinner";
 import { prefixModalCss } from "@frak-labs/ui/utils/prefixModalCss";
 import {
+    authenticationStore,
     HandleErrors,
     isWebAuthNSupported,
     selectSession,
@@ -51,7 +52,19 @@ export function LoginModalStep({
 
     const { login, isSuccess, isLoading, isError, error } = useLogin({
         // On success, transmit the wallet address up a level
-        onSuccess: (session) => onFinish({ wallet: session.address }),
+        onSuccess: (session) => {
+            const lastWebAuthN =
+                authenticationStore.getState().lastWebAuthNAction;
+            const webauthnProof = lastWebAuthN
+                ? {
+                      challenge: lastWebAuthN.challenge,
+                      authenticatorResponse: btoa(
+                          JSON.stringify(lastWebAuthN.signature)
+                      ),
+                  }
+                : undefined;
+            onFinish({ wallet: session.address, webauthnProof });
+        },
     });
 
     const session = sessionStore(selectSession);
@@ -62,7 +75,17 @@ export function LoginModalStep({
      */
     useEffect(() => {
         if (session) {
-            onFinish({ wallet: session.address });
+            const lastWebAuthN =
+                authenticationStore.getState().lastWebAuthNAction;
+            const webauthnProof = lastWebAuthN
+                ? {
+                      challenge: lastWebAuthN.challenge,
+                      authenticatorResponse: btoa(
+                          JSON.stringify(lastWebAuthN.signature)
+                      ),
+                  }
+                : undefined;
+            onFinish({ wallet: session.address, webauthnProof });
         }
     }, [onFinish, session]);
 
@@ -74,7 +97,10 @@ export function LoginModalStep({
                 {allowSso && (
                     <div>
                         <SsoButton
-                            productId={resolvingContext?.productId ?? "0x"}
+                            merchantId={
+                                (resolvingContext?.merchantId as `0x${string}`) ??
+                                "0x"
+                            }
                             ssoMetadata={ssoMetadata}
                             text={t("sdk.modal.login.primaryAction")}
                             className={`${styles.modalListener__buttonPrimary} ${prefixModalCss("button-primary")}`}

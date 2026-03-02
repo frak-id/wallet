@@ -1,14 +1,9 @@
 import type { Output } from "@pulumi/pulumi";
 import { isProd, normalizedStageName } from "../utils";
 
-/**
- * The base domain name we will use for deployment
- */
+// Base domain: v2.gcp.frak.id or v2.gcp-dev.frak.id for V2, gcp.frak.id or gcp-dev.frak.id for V1
 export const baseDomainName = isProd ? "gcp.frak.id" : "gcp-dev.frak.id";
 
-/**
- * The domain name we will use for deployment
- */
 export const domainName = `backend.${baseDomainName}`;
 
 // Create a dedicated namespace for the wallet

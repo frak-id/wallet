@@ -1,10 +1,9 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { sleep } from "radash";
-import { authenticatedBackendApi } from "@/context/api/backendClient";
+import { authenticatedBackendApi } from "@/api/backendClient";
 
 /**
  * Hook to fetch the dns record to be set
- * @param name
  * @param domain
  * @param enabled
  */
@@ -16,7 +15,7 @@ export function useDnsTxtRecordToSet({
     enabled: boolean;
 }) {
     return useQuery({
-        queryKey: ["mint", "dns-record", domain],
+        queryKey: ["merchant", "register", "dns-record", domain],
         queryFn: async ({ signal }) => {
             if (!domain) return "";
 
@@ -25,24 +24,25 @@ export function useDnsTxtRecordToSet({
             if (signal.aborted) return "";
 
             // Fetch the dns txt string
-            const { data } =
-                await authenticatedBackendApi.product.mint.dnsTxt.get({
-                    query: { domain },
-                });
-            return data ?? "";
+            const { data } = await authenticatedBackendApi.merchant.register[
+                "dns-txt"
+            ].get({
+                query: { domain },
+            });
+            return data?.dnsTxt ?? "";
         },
         enabled: enabled && !!domain,
     });
 }
 
 /**
- * Function ot check:
- *  - if the product isn't already minted
+ * Function to check:
+ *  - if the merchant isn't already registered
  *  - if the dns record is set
  */
 export function useCheckDomainName() {
     return useMutation({
-        mutationKey: ["mint", "check-domain-name"],
+        mutationKey: ["merchant", "register", "check-domain-name"],
         mutationFn: async ({
             domain,
             setupCode,
@@ -51,12 +51,15 @@ export function useCheckDomainName() {
             setupCode?: string;
         }) => {
             const { data, error } =
-                await authenticatedBackendApi.product.mint.verify.get({
+                await authenticatedBackendApi.merchant.register.verify.get({
                     query: { domain, setupCode },
                 });
             if (error) throw error;
 
-            return data;
+            return {
+                isDomainValid: data?.isDomainValid ?? false,
+                isAlreadyRegistered: data?.isAlreadyRegistered ?? false,
+            };
         },
     });
 }
@@ -64,7 +67,7 @@ export function useCheckDomainName() {
 /**
  * Hook to listen to the domain name setup
  * @param domain
- * @param enabled
+ * @param setupCode
  */
 export function useListenToDomainNameSetup({
     domain,
@@ -74,10 +77,16 @@ export function useListenToDomainNameSetup({
     setupCode: string;
 }) {
     return useQuery({
-        queryKey: ["mint", "listen-to-domain-name-setup", domain, setupCode],
+        queryKey: [
+            "merchant",
+            "register",
+            "listen-to-domain-setup",
+            domain,
+            setupCode,
+        ],
         queryFn: async () => {
             const { data, error } =
-                await authenticatedBackendApi.product.mint.verify.get({
+                await authenticatedBackendApi.merchant.register.verify.get({
                     query: { domain, setupCode },
                 });
             if (error) {
@@ -88,7 +97,7 @@ export function useListenToDomainNameSetup({
                 return false;
             }
 
-            if (data?.isAlreadyMinted) {
+            if (data?.isAlreadyRegistered) {
                 return false;
             }
 

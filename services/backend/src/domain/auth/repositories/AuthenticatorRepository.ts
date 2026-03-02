@@ -1,6 +1,5 @@
 import { getMongoDb } from "@backend-infrastructure";
 import type { Collection } from "mongodb";
-import type { Address } from "viem";
 import type { AuthenticatorDocument } from "../models/dto/AuthenticatorDocument";
 
 /**
@@ -53,57 +52,5 @@ export class AuthenticatorRepository {
 
         const collection = await this.getCollection();
         await collection.insertOne(authenticator);
-    }
-
-    /**
-     * Update the counter for the given authenticator
-     * @param authenticatorId
-     * @param counter
-     */
-    public async updateCounter({
-        credentialId,
-        counter,
-    }: {
-        credentialId: string;
-        counter: number;
-    }): Promise<void> {
-        const collection = await this.getCollection();
-        await collection.updateOne(
-            { _id: credentialId },
-            { $set: { counter } }
-        );
-    }
-
-    /**
-     * Update the counter for the given authenticator
-     * @param authenticatorId
-     * @param counter
-     */
-    public async getByWallet({
-        wallet,
-    }: {
-        wallet: Address;
-    }): Promise<AuthenticatorDocument | null> {
-        const collection = await this.getCollection();
-        return collection.findOne({ smartWalletAddress: wallet });
-    }
-
-    /**
-     * Set the smart wallet address for the given credential
-     * @param credentialId
-     * @param smartWalletAddress
-     */
-    public async updateSmartWalletAddress({
-        credentialId,
-        smartWalletAddress,
-    }: {
-        credentialId: string;
-        smartWalletAddress: Address;
-    }): Promise<void> {
-        const collection = await this.getCollection();
-        await collection.updateOne(
-            { _id: credentialId },
-            { $set: { smartWalletAddress } }
-        );
     }
 }

@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { isDemoMode } from "@/config/auth";
 import { ButtonNewCampaign } from "@/module/campaigns/component/ButtonNewCampaign";
 import { TableCampaignPerformance } from "@/module/campaigns/component/TableCampaignPerformance";
 import { campaignsStatsQueryOptions } from "@/module/campaigns/queries/queryOptions";
@@ -9,7 +10,7 @@ import { queryClient } from "@/module/common/provider/RootProvider";
 
 export const Route = createFileRoute("/_restricted/campaigns/performance")({
     loader: () => {
-        return queryClient.ensureQueryData(campaignsStatsQueryOptions());
+        queryClient.prefetchQuery(campaignsStatsQueryOptions(isDemoMode()));
     },
     component: CampaignsPerformancePage,
     errorComponent: (props) => (

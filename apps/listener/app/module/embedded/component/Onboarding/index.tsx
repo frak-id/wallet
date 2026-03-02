@@ -1,10 +1,8 @@
-import { useInteractionSessionStatus } from "@frak-labs/wallet-shared";
 import { cx } from "class-variance-authority";
 import {
     type CSSProperties,
     type PropsWithChildren,
     useEffect,
-    useRef,
     useState,
 } from "react";
 import { Trans } from "react-i18next";
@@ -53,24 +51,13 @@ function OnboardingArrow({ style }: { style?: CSSProperties }) {
 
 export function OnboardingWelcome() {
     const { lang, i18n } = useListenerTranslation();
-    const { data: currentSession } = useInteractionSessionStatus();
     const [hidden, setHidden] = useState(false);
-    const calledOnce = useRef(false);
 
     useEffect(() => {
         // Hide the onboarding after 2.5 seconds
-        setTimeout(() => setHidden(true), 2_500);
+        const timer = setTimeout(() => setHidden(true), 2_500);
+        return () => clearTimeout(timer);
     }, []);
-
-    useEffect(() => {
-        if (calledOnce.current) return;
-        // Hide the onboarding if the session is active
-        const isSessionActive = !!currentSession;
-        setHidden(isSessionActive);
-        if (isSessionActive) {
-            calledOnce.current = true;
-        }
-    }, [currentSession]);
 
     return (
         <div
@@ -91,60 +78,6 @@ export function OnboardingWelcome() {
                     top: "45px",
                     right: "-51px",
                     transform: "scaleY(-1) rotate(33deg)",
-                }}
-            />
-        </div>
-    );
-}
-
-export function OnboardingActivate({
-    isReverse,
-    isHidden = true,
-}: {
-    isReverse?: boolean;
-    isHidden?: boolean;
-}) {
-    const { lang, i18n } = useListenerTranslation();
-    const DELAY_MS = 1_500;
-
-    const [isVisible, setIsVisible] = useState(false);
-
-    useEffect(() => {
-        const showOnboardingTimer = setTimeout(() => {
-            setIsVisible(true);
-        }, DELAY_MS);
-
-        // Cleanup timer on component unmount
-        return () => clearTimeout(showOnboardingTimer);
-    }, []);
-
-    useEffect(() => {
-        if (!isVisible) return;
-        setIsVisible(!isHidden);
-    }, [isHidden, isVisible]);
-
-    return (
-        <div
-            className={cx(
-                styles.onboardingWrapper,
-                !isVisible && styles["onboardingWrapper--hidden"]
-            )}
-        >
-            <Onboarding
-                style={{ top: "-68px", left: "0px" }}
-                isReverse={isReverse}
-            >
-                <Trans
-                    i18nKey={"sdk.wallet.loggedIn.onboarding.activate"}
-                    tOptions={{ lng: lang }}
-                    i18n={i18n}
-                />
-            </Onboarding>
-            <OnboardingArrow
-                style={{
-                    top: "-34px",
-                    left: "-33px",
-                    transform: "scaleY(-1) rotate(185deg)",
                 }}
             />
         </div>

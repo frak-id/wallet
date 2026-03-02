@@ -1,17 +1,18 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect } from "react";
+import { isDemoMode } from "@/config/auth";
 import { CampaignDetails } from "@/module/campaigns/component/CampaignDetails";
 import { campaignQueryOptions } from "@/module/campaigns/queries/queryOptions";
+import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { CampaignError } from "@/module/common/component/RouteError";
 import { queryClient } from "@/module/common/provider/RootProvider";
-import { campaignStore } from "@/stores/campaignStore";
+import { campaignStore, campaignToDraft } from "@/stores/campaignStore";
 
 export const Route = createFileRoute("/_restricted/campaigns/$campaignId")({
-    // Prefetch into TanStack Query cache
     loader: ({ params }) => {
-        return queryClient.ensureQueryData(
-            campaignQueryOptions(params.campaignId)
+        queryClient.prefetchQuery(
+            campaignQueryOptions(params.campaignId, isDemoMode())
         );
     },
     component: CampaignsContentPage,
@@ -20,19 +21,16 @@ export const Route = createFileRoute("/_restricted/campaigns/$campaignId")({
 
 function CampaignsContentPage() {
     const { campaignId } = Route.useParams();
+    const isDemo = useIsDemoMode();
     const { data: campaign } = useSuspenseQuery(
-        campaignQueryOptions(campaignId)
+        campaignQueryOptions(campaignId, isDemo)
     );
 
-    // Use individual selectors to avoid infinite loop
-    const setCampaign = campaignStore((state) => state.setCampaign);
-    const setIsFetched = campaignStore((state) => state.setIsFetched);
+    const setDraft = campaignStore((state) => state.setDraft);
 
-    // Set campaign in store on mount (maintaining existing behavior from CampaignLoad)
     useEffect(() => {
-        setCampaign({ ...campaign, id: campaignId });
-        setIsFetched(true);
-    }, [campaign, campaignId, setCampaign, setIsFetched]);
+        setDraft(campaignToDraft(campaign));
+    }, [campaign, setDraft]);
 
     return <CampaignDetails campaignId={campaignId} campaign={campaign} />;
 }

@@ -1,15 +1,21 @@
-import { campaignBankAbi } from "@frak-labs/app-essentials/blockchain";
+import {
+    addresses,
+    currentStablecoinsList,
+    rewarderHubAbi,
+} from "@frak-labs/app-essentials/blockchain";
 import { Button } from "@frak-labs/ui/component/Button";
 import {
-    authenticatedBackendApi,
     balanceKey,
     claimableKey,
-    encodeWalletMulticall,
+    currentViemClient,
+    rewardsKey,
 } from "@frak-labs/wallet-shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CircleDollarSign } from "lucide-react";
+import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { encodeFunctionData } from "viem";
+import { encodeFunctionData, erc20Abi, formatUnits } from "viem";
+import { multicall, waitForTransactionReceipt } from "viem/actions";
 import { useAccount, useSendTransaction } from "wagmi";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
@@ -18,25 +24,63 @@ import styles from "./index.module.css";
 export function PendingReferral() {
     const queryClient = useQueryClient();
     const { t } = useTranslation();
-    // Get the user wallet address
     const { address } = useAccount();
-
     const { sendTransactionAsync } = useSendTransaction();
 
-    // Fetch the pending reward
+    // Fetch claimable amounts + decimals for all known stablecoins via on-chain multicall
     const { data: pendingReward, refetch: refetchPendingReward } = useQuery({
         queryKey: claimableKey.pending.byAddress(address),
         queryFn: async () => {
-            const { data, error } =
-                await authenticatedBackendApi.wallet.balance.claimable.get();
-            if (error) throw error;
+            if (!address) return [];
 
-            return data;
+            // Batch claimable + decimals calls in a single multicall
+            const contracts = currentStablecoinsList.flatMap(
+                (token) =>
+                    [
+                        {
+                            address: addresses.rewarderHub,
+                            abi: rewarderHubAbi,
+                            functionName: "getClaimable",
+                            args: [address, token],
+                        },
+                        {
+                            address: token,
+                            abi: erc20Abi,
+                            functionName: "decimals",
+                        },
+                    ] as const
+            );
+
+            const result = await multicall(currentViemClient, {
+                contracts,
+                allowFailure: false,
+            });
+
+            // Results alternate: [claimable0, decimals0, claimable1, decimals1, ...]
+            return currentStablecoinsList
+                .map((token, index) => ({
+                    token,
+                    amount: result[index * 2] as bigint,
+                    decimals: result[index * 2 + 1] as number,
+                }))
+                .filter((item) => item.amount > 0n);
         },
         enabled: !!address,
+        // Volatile on-chain state — must always fetch fresh, never persist to localStorage
+        meta: { storable: false },
     });
 
-    // Mutation to send the claim txs
+    // Calculate total claimable in fiat (stablecoins ~1:1)
+    const totalClaimable = useMemo(() => {
+        if (!pendingReward?.length) return 0;
+        return pendingReward.reduce(
+            (sum, item) =>
+                sum + Number(formatUnits(item.amount, item.decimals)),
+            0
+        );
+    }, [pendingReward]);
+
+    // Mutation to send the batch claim tx
     const {
         mutateAsync: sendClaimTxs,
         isPending,
@@ -44,42 +88,43 @@ export function PendingReferral() {
     } = useMutation({
         mutationKey: claimableKey.claim.byAddress(address),
         mutationFn: async () => {
-            if (!(pendingReward?.claimables && address)) return;
+            if (!(pendingReward?.length && address)) return;
 
-            // Build each claim tx
-            const claimTxs = pendingReward.claimables.map((claimable) => ({
-                to: claimable.contract,
-                data: encodeFunctionData({
-                    abi: campaignBankAbi,
-                    functionName: "pullReward",
-                    args: [address],
-                }),
-                value: 0n,
-            }));
-
-            // For each pending rewards, launch a tx
-            const txs = encodeWalletMulticall(claimTxs);
-
-            // Send the user op
-            const txHash = await sendTransactionAsync({
-                to: address,
-                data: txs,
+            const data = encodeFunctionData({
+                abi: rewarderHubAbi,
+                functionName: "claimBatch",
+                args: [pendingReward.map(({ token }) => token)],
             });
 
-            // Refetch the pending reward
-            await refetchPendingReward();
+            const txHash = await sendTransactionAsync({
+                to: addresses.rewarderHub,
+                data,
+            });
 
-            // And refetch the user balance
+            // Optimistically clear claimable data before refetch —
+            // prevents stale data persisting if RPC cache lags behind on-chain state
+            queryClient.setQueryData(
+                claimableKey.pending.byAddress(address),
+                []
+            );
+            // Wait for on-chain confirmation before refreshing queries
+            await waitForTransactionReceipt(currentViemClient, {
+                hash: txHash,
+            });
+            await refetchPendingReward();
             await queryClient.invalidateQueries({
                 queryKey: balanceKey.baseKey,
                 exact: false,
             });
-
+            await queryClient.invalidateQueries({
+                queryKey: rewardsKey.all,
+                exact: false,
+            });
             return txHash;
         },
     });
 
-    if (!pendingReward?.total?.eurAmount) {
+    if (!pendingReward?.length || totalClaimable <= 0) {
         return null;
     }
 
@@ -97,8 +142,7 @@ export function PendingReferral() {
                 <>
                     <p>
                         {t("wallet.pendingReferral.text", {
-                            eurClaimable:
-                                pendingReward?.total?.eurAmount?.toFixed(2),
+                            eurClaimable: totalClaimable.toFixed(2),
                         })}
                     </p>
                     <Button

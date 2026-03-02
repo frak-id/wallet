@@ -1,44 +1,57 @@
-import { useSendTransactionAction } from "@frak-labs/react-sdk";
 import { renderHook, waitFor } from "@testing-library/react";
-import type { Hex } from "viem";
-import { vi } from "vitest";
-import { useWaitForTxAndInvalidateQueries } from "@/module/common/utils/useWaitForTxAndInvalidateQueries";
+import { beforeEach, vi } from "vitest";
 import {
-    createMockAddress,
+    pauseCampaign,
+    resumeCampaign,
+} from "@/module/campaigns/api/campaignApi";
+import {
     describe,
     expect,
     type TestContext,
     test,
 } from "@/tests/vitest-fixtures";
+import type { Campaign } from "@/types/Campaign";
 import { useUpdateCampaignRunningStatus } from "./useUpdateCampaignRunningStatus";
 
-// Mock Frak SDK
-vi.mock("@frak-labs/react-sdk", () => ({
-    useSendTransactionAction: vi.fn(),
+vi.mock("@/module/campaigns/api/campaignApi", () => ({
+    pauseCampaign: vi.fn(),
+    resumeCampaign: vi.fn(),
 }));
 
-// Mock wait for tx utility
-vi.mock("@/module/common/utils/useWaitForTxAndInvalidateQueries", () => ({
-    useWaitForTxAndInvalidateQueries: vi.fn(),
-}));
+const mockCampaignResponse: Campaign = {
+    id: "campaign-123",
+    merchantId: "merchant-456",
+    name: "Test Campaign",
+    status: "active",
+    priority: 0,
+    rule: {
+        trigger: "purchase",
+        conditions: [],
+        rewards: [],
+    },
+    metadata: null,
+    budgetConfig: null,
+    budgetUsed: null,
+    expiresAt: null,
+    publishedAt: "2024-01-01T00:00:00Z",
+    createdAt: "2024-01-01T00:00:00Z",
+    updatedAt: "2024-01-01T00:00:00Z",
+    bankDistributionStatus: "distributing",
+};
 
 describe("useUpdateCampaignRunningStatus", () => {
-    const mockCampaignAddress = createMockAddress("campaign");
+    beforeEach(() => {
+        vi.clearAllMocks();
+    });
 
-    describe("pause campaign (set to not running)", () => {
-        test("should pause campaign successfully", async ({
+    describe("pause campaign", () => {
+        test("should pause campaign when shouldRun is false", async ({
             queryWrapper,
         }: TestContext) => {
-            const mockHash = "0xabcdef123456789" as Hex;
-            const mockSendTx = vi.fn().mockResolvedValue({ hash: mockHash });
-            const mockWaitForTx = vi.fn().mockResolvedValue(undefined);
-
-            vi.mocked(useSendTransactionAction).mockReturnValue({
-                mutateAsync: mockSendTx,
-            } as any);
-            vi.mocked(useWaitForTxAndInvalidateQueries).mockReturnValue(
-                mockWaitForTx
-            );
+            vi.mocked(pauseCampaign).mockResolvedValue({
+                ...mockCampaignResponse,
+                status: "paused",
+            });
 
             const { result } = renderHook(
                 () => useUpdateCampaignRunningStatus(),
@@ -46,41 +59,24 @@ describe("useUpdateCampaignRunningStatus", () => {
             );
 
             await result.current.mutateAsync({
-                campaign: mockCampaignAddress,
-                newRunningStatus: false,
+                merchantId: "merchant-456",
+                campaignId: "campaign-123",
+                shouldRun: false,
             });
 
-            expect(mockSendTx).toHaveBeenCalledWith({
-                tx: expect.objectContaining({
-                    to: mockCampaignAddress,
-                    data: expect.any(String),
-                }),
-                metadata: expect.objectContaining({
-                    header: { title: "Update campaign" },
-                }),
+            expect(pauseCampaign).toHaveBeenCalledWith({
+                merchantId: "merchant-456",
+                campaignId: "campaign-123",
             });
-
-            expect(mockWaitForTx).toHaveBeenCalledWith({
-                hash: mockHash,
-                queryKey: ["campaigns"],
-            });
+            expect(resumeCampaign).not.toHaveBeenCalled();
         });
     });
 
-    describe("resume campaign (set to running)", () => {
-        test("should resume campaign successfully", async ({
+    describe("resume campaign", () => {
+        test("should resume campaign when shouldRun is true", async ({
             queryWrapper,
         }: TestContext) => {
-            const mockHash = "0x123abc" as Hex;
-            const mockSendTx = vi.fn().mockResolvedValue({ hash: mockHash });
-            const mockWaitForTx = vi.fn().mockResolvedValue(undefined);
-
-            vi.mocked(useSendTransactionAction).mockReturnValue({
-                mutateAsync: mockSendTx,
-            } as any);
-            vi.mocked(useWaitForTxAndInvalidateQueries).mockReturnValue(
-                mockWaitForTx
-            );
+            vi.mocked(resumeCampaign).mockResolvedValue(mockCampaignResponse);
 
             const { result } = renderHook(
                 () => useUpdateCampaignRunningStatus(),
@@ -88,93 +84,25 @@ describe("useUpdateCampaignRunningStatus", () => {
             );
 
             await result.current.mutateAsync({
-                campaign: mockCampaignAddress,
-                newRunningStatus: true,
+                merchantId: "merchant-456",
+                campaignId: "campaign-123",
+                shouldRun: true,
             });
 
-            expect(mockSendTx).toHaveBeenCalled();
-            expect(mockWaitForTx).toHaveBeenCalledWith({
-                hash: mockHash,
-                queryKey: ["campaigns"],
+            expect(resumeCampaign).toHaveBeenCalledWith({
+                merchantId: "merchant-456",
+                campaignId: "campaign-123",
             });
-        });
-    });
-
-    describe("i18n metadata", () => {
-        test("should include French translation", async ({
-            queryWrapper,
-        }: TestContext) => {
-            const mockSendTx = vi.fn().mockResolvedValue({ hash: "0xabc" });
-            const mockWaitForTx = vi.fn().mockResolvedValue(undefined);
-
-            vi.mocked(useSendTransactionAction).mockReturnValue({
-                mutateAsync: mockSendTx,
-            } as any);
-            vi.mocked(useWaitForTxAndInvalidateQueries).mockReturnValue(
-                mockWaitForTx
-            );
-
-            const { result } = renderHook(
-                () => useUpdateCampaignRunningStatus(),
-                { wrapper: queryWrapper.wrapper }
-            );
-
-            await result.current.mutateAsync({
-                campaign: mockCampaignAddress,
-                newRunningStatus: false,
-            });
-
-            const metadata = mockSendTx.mock.calls[0][0].metadata;
-            expect(metadata.i18n.fr).toEqual({
-                "sdk.modal.sendTransaction.description":
-                    "Mettre à jour le statut d'exécution de la campagne",
-            });
-        });
-
-        test("should include English translation", async ({
-            queryWrapper,
-        }: TestContext) => {
-            const mockSendTx = vi.fn().mockResolvedValue({ hash: "0xabc" });
-            const mockWaitForTx = vi.fn().mockResolvedValue(undefined);
-
-            vi.mocked(useSendTransactionAction).mockReturnValue({
-                mutateAsync: mockSendTx,
-            } as any);
-            vi.mocked(useWaitForTxAndInvalidateQueries).mockReturnValue(
-                mockWaitForTx
-            );
-
-            const { result } = renderHook(
-                () => useUpdateCampaignRunningStatus(),
-                { wrapper: queryWrapper.wrapper }
-            );
-
-            await result.current.mutateAsync({
-                campaign: mockCampaignAddress,
-                newRunningStatus: true,
-            });
-
-            const metadata = mockSendTx.mock.calls[0][0].metadata;
-            expect(metadata.i18n.en).toEqual({
-                "sdk.modal.sendTransaction.description":
-                    "Update the running status of the campaign",
-            });
+            expect(pauseCampaign).not.toHaveBeenCalled();
         });
     });
 
     describe("error handling", () => {
-        test("should handle transaction errors", async ({
+        test("should handle pause errors", async ({
             queryWrapper,
         }: TestContext) => {
-            const mockSendTx = vi
-                .fn()
-                .mockRejectedValue(new Error("Transaction failed"));
-
-            vi.mocked(useSendTransactionAction).mockReturnValue({
-                mutateAsync: mockSendTx,
-            } as any);
-            vi.mocked(useWaitForTxAndInvalidateQueries).mockReturnValue(
-                vi.fn()
+            vi.mocked(pauseCampaign).mockRejectedValue(
+                new Error("Failed to pause campaign")
             );
 
             const { result } = renderHook(
@@ -184,25 +112,18 @@ describe("useUpdateCampaignRunningStatus", () => {
 
             await expect(
                 result.current.mutateAsync({
-                    campaign: mockCampaignAddress,
-                    newRunningStatus: false,
+                    merchantId: "merchant-456",
+                    campaignId: "campaign-123",
+                    shouldRun: false,
                 })
-            ).rejects.toThrow("Transaction failed");
+            ).rejects.toThrow("Failed to pause campaign");
         });
 
-        test("should handle wait for tx errors", async ({
+        test("should handle resume errors", async ({
             queryWrapper,
         }: TestContext) => {
-            const mockSendTx = vi.fn().mockResolvedValue({ hash: "0xabc" });
-            const mockWaitForTx = vi
-                .fn()
-                .mockRejectedValue(new Error("Transaction wait failed"));
-
-            vi.mocked(useSendTransactionAction).mockReturnValue({
-                mutateAsync: mockSendTx,
-            } as any);
-            vi.mocked(useWaitForTxAndInvalidateQueries).mockReturnValue(
-                mockWaitForTx
+            vi.mocked(resumeCampaign).mockRejectedValue(
+                new Error("Failed to resume campaign")
             );
 
             const { result } = renderHook(
@@ -212,10 +133,11 @@ describe("useUpdateCampaignRunningStatus", () => {
 
             await expect(
                 result.current.mutateAsync({
-                    campaign: mockCampaignAddress,
-                    newRunningStatus: true,
+                    merchantId: "merchant-456",
+                    campaignId: "campaign-123",
+                    shouldRun: true,
                 })
-            ).rejects.toThrow("Transaction wait failed");
+            ).rejects.toThrow("Failed to resume campaign");
         });
     });
 
@@ -223,21 +145,18 @@ describe("useUpdateCampaignRunningStatus", () => {
         test("should track mutation loading state", async ({
             queryWrapper,
         }: TestContext) => {
-            const mockSendTx = vi
-                .fn()
-                .mockImplementation(
-                    () =>
-                        new Promise((resolve) =>
-                            setTimeout(() => resolve({ hash: "0xabc" }), 100)
+            vi.mocked(pauseCampaign).mockImplementation(
+                () =>
+                    new Promise((resolve) =>
+                        setTimeout(
+                            () =>
+                                resolve({
+                                    ...mockCampaignResponse,
+                                    status: "paused" as const,
+                                }),
+                            100
                         )
-                );
-            const mockWaitForTx = vi.fn().mockResolvedValue(undefined);
-
-            vi.mocked(useSendTransactionAction).mockReturnValue({
-                mutateAsync: mockSendTx,
-            } as any);
-            vi.mocked(useWaitForTxAndInvalidateQueries).mockReturnValue(
-                mockWaitForTx
+                    )
             );
 
             const { result } = renderHook(
@@ -248,8 +167,9 @@ describe("useUpdateCampaignRunningStatus", () => {
             expect(result.current.isPending).toBe(false);
 
             const mutationPromise = result.current.mutateAsync({
-                campaign: mockCampaignAddress,
-                newRunningStatus: false,
+                merchantId: "merchant-456",
+                campaignId: "campaign-123",
+                shouldRun: false,
             });
 
             await waitFor(() => {
@@ -268,35 +188,31 @@ describe("useUpdateCampaignRunningStatus", () => {
         test("should handle updating different campaigns", async ({
             queryWrapper,
         }: TestContext) => {
-            const mockSendTx = vi.fn().mockResolvedValue({ hash: "0xabc" });
-            const mockWaitForTx = vi.fn().mockResolvedValue(undefined);
-
-            vi.mocked(useSendTransactionAction).mockReturnValue({
-                mutateAsync: mockSendTx,
-            } as any);
-            vi.mocked(useWaitForTxAndInvalidateQueries).mockReturnValue(
-                mockWaitForTx
-            );
+            vi.mocked(pauseCampaign).mockResolvedValue({
+                ...mockCampaignResponse,
+                status: "paused",
+            });
+            vi.mocked(resumeCampaign).mockResolvedValue(mockCampaignResponse);
 
             const { result } = renderHook(
                 () => useUpdateCampaignRunningStatus(),
                 { wrapper: queryWrapper.wrapper }
             );
 
-            const campaign1 = createMockAddress("campaign1");
-            const campaign2 = createMockAddress("campaign2");
-
             await result.current.mutateAsync({
-                campaign: campaign1,
-                newRunningStatus: false,
+                merchantId: "merchant-456",
+                campaignId: "campaign-1",
+                shouldRun: false,
             });
 
             await result.current.mutateAsync({
-                campaign: campaign2,
-                newRunningStatus: true,
+                merchantId: "merchant-456",
+                campaignId: "campaign-2",
+                shouldRun: true,
             });
 
-            expect(mockSendTx).toHaveBeenCalledTimes(2);
+            expect(pauseCampaign).toHaveBeenCalledTimes(1);
+            expect(resumeCampaign).toHaveBeenCalledTimes(1);
         });
     });
 });

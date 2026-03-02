@@ -10,15 +10,14 @@
         "referredInteractions": 1360,
         "createReferredLinkInteractions": 3164,
         "purchaseInteractions": 163,
-        "totalRewards": "3265000000",
+        "totalRewards": 3265.0,
         "uniqueWallets": 6910,
         "ambassador": 5550,
         "sharingRate": 0.57,
         "ctr": 0.43,
         "amountSpent": 3265.0,
-        "costPerShare": 1.03,
-        "costPerPurchase": 20.0,
-        "customerMeetingInteractions": 120
+        "costPerShare": 10.3,
+        "costPerPurchase": 20.0
     },
     {
         "title": "Awareness Campaign",
@@ -31,15 +30,14 @@
         "referredInteractions": 25,
         "createReferredLinkInteractions": 77,
         "purchaseInteractions": 3,
-        "totalRewards": "74000000",
+        "totalRewards": 74.0,
         "uniqueWallets": 176,
         "ambassador": 151,
         "sharingRate": 0.51,
         "ctr": 0.32,
         "amountSpent": 74.0,
         "costPerShare": 0.96,
-        "costPerPurchase": 3.0,
-        "customerMeetingInteractions": 5
+        "costPerPurchase": 3.0
     },
     {
         "title": "Traffic Boost",
@@ -52,15 +50,14 @@
         "referredInteractions": 330,
         "createReferredLinkInteractions": 1180,
         "purchaseInteractions": 40,
-        "totalRewards": "1652000000",
+        "totalRewards": 1652.0,
         "uniqueWallets": 3140,
         "ambassador": 2810,
         "sharingRate": 0.42,
         "ctr": 0.28,
         "amountSpent": 1652.0,
         "costPerShare": 1.4,
-        "costPerPurchase": 5.0,
-        "customerMeetingInteractions": 32
+        "costPerPurchase": 5.0
     },
     {
         "title": "Retention / Loyal",
@@ -73,14 +70,13 @@
         "referredInteractions": 669,
         "createReferredLinkInteractions": 2789,
         "purchaseInteractions": 80,
-        "totalRewards": "964000000",
+        "totalRewards": 964.0,
         "uniqueWallets": 6604,
         "ambassador": 5935,
         "sharingRate": 0.47,
         "ctr": 0.24,
         "amountSpent": 964.0,
         "costPerShare": 0.35,
-        "costPerPurchase": 12.0,
-        "customerMeetingInteractions": 65
+        "costPerPurchase": 12.0
     }
 ]

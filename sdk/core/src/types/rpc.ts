@@ -1,4 +1,3 @@
-import type { Hex } from "viem";
 import type { FrakWalletSdkConfig } from "./config";
 import type {
     ModalRpcMetadata,
@@ -9,11 +8,8 @@ import type {
     DisplayEmbeddedWalletParamsType,
     DisplayEmbeddedWalletResultType,
 } from "./rpc/embedded";
-import type {
-    PreparedInteraction,
-    SendInteractionReturnType,
-} from "./rpc/interaction";
-import type { GetProductInformationReturnType } from "./rpc/productInformation";
+import type { SendInteractionParamsType } from "./rpc/interaction";
+import type { GetMerchantInformationReturnType } from "./rpc/merchantInformation";
 import type {
     OpenSsoParamsType,
     OpenSsoReturnType,
@@ -46,19 +42,14 @@ import type { WalletStatusReturnType } from "./rpc/walletStatus";
  * - Returns: {@link ModalRpcStepsResultType}
  * - Response Type: promise (one-shot)
  *
- * #### frak_sendInteraction
- *  - Params: [productId: Hex, interaction: {@link PreparedInteraction}, signature?: Hex]
- *  - Returns: {@link SendInteractionReturnType}
- *  - Response Type: promise (one-shot)
- *
  * #### frak_sso
  *  - Params: [params: {@link OpenSsoParamsType}, name: string, customCss?: string]
  *  - Returns: {@link OpenSsoReturnType}
  *  - Response Type: promise (one-shot)
  *
- * #### frak_getProductInformation
+ * #### frak_getMerchantInformation
  *  - Params: None
- *  - Returns: {@link GetProductInformationReturnType}
+ *  - Returns: {@link GetMerchantInformationReturnType}
  *  - Response Type: promise (one-shot)
  *
  * #### frak_displayEmbeddedWallet
@@ -90,19 +81,6 @@ export type IFrameRpcSchema = [
         ReturnType: ModalRpcStepsResultType;
     },
     /**
-     * Method to transmit a user interaction
-     * This is a one-shot request
-     */
-    {
-        Method: "frak_sendInteraction";
-        Parameters: [
-            productId: Hex,
-            interaction: PreparedInteraction,
-            signature?: Hex,
-        ];
-        ReturnType: SendInteractionReturnType;
-    },
-    /**
      * Method to prepare SSO (generate URL for popup)
      * Returns the SSO URL that should be opened in a popup
      * Only used for popup flows (not redirect flows)
@@ -132,16 +110,16 @@ export type IFrameRpcSchema = [
         ReturnType: OpenSsoReturnType;
     },
     /**
-     * Method to get current product information's
-     *  - Is product minted?
+     * Method to get current merchant information
+     *  - Is merchant registered?
      *  - Does it have running campaign?
      *  - Estimated reward on actions
      * This is a one-shot request
      */
     {
-        Method: "frak_getProductInformation";
+        Method: "frak_getMerchantInformation";
         Parameters?: undefined;
-        ReturnType: GetProductInformationReturnType;
+        ReturnType: GetMerchantInformationReturnType;
     },
     /**
      * Method to show the embedded wallet, with potential customization
@@ -154,5 +132,19 @@ export type IFrameRpcSchema = [
             metadata: FrakWalletSdkConfig["metadata"],
         ];
         ReturnType: DisplayEmbeddedWalletResultType;
+    },
+    /**
+     * Method to send interactions (arrival, sharing, custom events)
+     * Fire-and-forget method - no return value expected
+     * merchantId is resolved from context
+     * clientId is passed via metadata as safeguard against handshake race condition
+     */
+    {
+        Method: "frak_sendInteraction";
+        Parameters: [
+            interaction: SendInteractionParamsType,
+            metadata?: { clientId?: string },
+        ];
+        ReturnType: undefined;
     },
 ];

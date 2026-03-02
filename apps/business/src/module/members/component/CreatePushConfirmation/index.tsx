@@ -2,12 +2,13 @@ import { Button } from "@frak-labs/ui/component/Button";
 import { Spinner } from "@frak-labs/ui/component/Spinner";
 import { useMutation } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { authenticatedBackendApi } from "@/context/api/backendClient";
+import { authenticatedBackendApi } from "@/api/backendClient";
 import { ActionsMessageError } from "@/module/campaigns/component/Actions";
 import { ActionsWrapper } from "@/module/common/component/ActionsWrapper";
 import { ButtonWithConfirmationAlert } from "@/module/common/component/ButtonWithConfirmationAlert";
 import { Head } from "@/module/common/component/Head";
 import { Panel } from "@/module/common/component/Panel";
+import { useMyMerchants } from "@/module/dashboard/hooks/useMyMerchants";
 import { FormLayout } from "@/module/forms/Form";
 import { PushRecap } from "@/module/members/component/CreatePushConfirmation/PushRecap";
 import { pushCreationStore } from "@/stores/pushCreationStore";
@@ -51,6 +52,7 @@ function ConfirmationContent() {
     );
     const setForm = pushCreationStore((state) => state.setForm);
     const navigate = useNavigate();
+    const { merchants } = useMyMerchants();
 
     const {
         mutate: publishPushCampaign,
@@ -63,9 +65,14 @@ function ConfirmationContent() {
                 throw new Error("No target specified");
             }
 
-            const { payload, target } = currentPushCreation;
+            const firstMerchant = merchants[0];
+            if (!firstMerchant) {
+                throw new Error("No merchant available");
+            }
 
+            const { payload, target } = currentPushCreation;
             await authenticatedBackendApi.notifications.send.post({
+                merchantId: firstMerchant.id,
                 targets: target,
                 payload: {
                     ...payload,

@@ -4,12 +4,12 @@ import {
     type RpcClient,
     RpcErrorCodes,
 } from "@frak-labs/frame-connector";
-import { createClientCompressionMiddleware } from "@frak-labs/frame-connector/middleware";
 import { OpenPanel } from "@openpanel/web";
 import type { FrakLifecycleEvent } from "../types";
 import type { FrakClient } from "../types/client";
 import type { FrakWalletSdkConfig } from "../types/config";
 import type { IFrameRpcSchema } from "../types/rpc";
+import { getClientId } from "../utils";
 import { BACKUP_KEY } from "../utils/constants";
 import { setupSsoUrlListener } from "../utils/ssoUrlListener";
 import { DebugInfoGatherer } from "./DebugInfo";
@@ -23,7 +23,8 @@ type SdkRpcClient = RpcClient<IFrameRpcSchema, FrakLifecycleEvent>;
 /**
  * Create a new iframe Frak client
  * @param args
- * @param args.config - The configuration to use for the Frak Wallet SDK
+ * @param args.config - The configuration to use for the Frak Wallet SDK.
+ *   When `config.domain` is set, it is forwarded to the iframe handshake so the listener resolves the correct merchant in tunneled/proxied environments (e.g. Shopify dev with Cloudflare tunnel).
  * @param args.iframe - The iframe to use for the communication
  * @returns The created Frak Client
  *
@@ -46,7 +47,11 @@ export function createIFrameFrakClient({
     const frakWalletUrl = config?.walletUrl ?? "https://wallet.frak.id";
 
     // Create lifecycle manager
-    const lifecycleManager = createIFrameLifecycleManager({ iframe });
+    const lifecycleManager = createIFrameLifecycleManager({
+        iframe,
+        targetOrigin: frakWalletUrl,
+        configDomain: config.domain,
+    });
 
     // Create our debug info gatherer
     const debugInfo = new DebugInfoGatherer(config, iframe);
@@ -64,7 +69,6 @@ export function createIFrameFrakClient({
         emittingTransport: iframe.contentWindow,
         listeningTransport: window,
         targetOrigin: frakWalletUrl,
-        // Add compression middleware to handle request/response compression
         middleware: [
             // Ensure we are connected before sending request
             {
@@ -80,7 +84,6 @@ export function createIFrameFrakClient({
                     return ctx;
                 },
             },
-            createClientCompressionMiddleware(),
             // Save debug info
             {
                 onRequest(message, ctx) {
@@ -139,6 +142,7 @@ export function createIFrameFrakClient({
                     payload.properties = {
                         ...payload.properties,
                         sdkVersion: process.env.SDK_VERSION,
+                        userAnonymousClientId: getClientId(),
                     };
                 }
 
@@ -147,6 +151,7 @@ export function createIFrameFrakClient({
         });
         openPanel.setGlobalProperties({
             sdkVersion: process.env.SDK_VERSION,
+            userAnonymousClientId: getClientId(),
         });
         openPanel.init();
     }

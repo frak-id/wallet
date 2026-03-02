@@ -22,7 +22,6 @@ const config = {
             "src/index.ts",
             // Core SDK custom entry points (these will be ignored for packages without them)
             "src/actions/index.ts",
-            "src/interactions/index.ts",
         ],
     },
     out: "./generated-docs/",
@@ -53,6 +52,8 @@ const config = {
     hidePageHeader: true,
     // Frontmatter
     frontmatterCommentTags: ["description"],
+    // Exclude @internal tagged symbols from generated docs
+    excludeInternal: true,
     // Validation settings - suppress expected warnings
     validation: {
         // Don't warn about types marked @ignore but referenced elsewhere

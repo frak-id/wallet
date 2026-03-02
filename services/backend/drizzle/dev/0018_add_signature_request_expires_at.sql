@@ -1,0 +1,1 @@
+ALTER TABLE "pairing_signature_request" ADD COLUMN "expires_at" timestamp NOT NULL;

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { managementRoutes } from "../../../src/api/wallet/routes/pairing/management";
+import { managementRoutes } from "../../../src/api/user/wallet/routes/pairing/management";
 import { dbMock, JwtContextMock } from "../../mock/common";
 
 describe("Wallet Pairing Management Routes API", () => {

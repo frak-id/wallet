@@ -1,18 +1,43 @@
 import { Button } from "@frak-labs/ui/component/Button";
 import { ButtonAuth } from "@frak-labs/ui/component/ButtonAuth";
-import { isWebAuthNSupported } from "@frak-labs/wallet-shared";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import {
+    authenticatorStorage,
+    isWebAuthNSupported,
+} from "@frak-labs/wallet-shared";
+import {
+    createFileRoute,
+    Link,
+    redirect,
+    useNavigate,
+} from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { AuthenticateWithPhone } from "@/module/authentication/component/AuthenticateWithPhone";
 import { useRegister } from "@/module/authentication/hook/useRegister";
+import { isAuthenticatorAlreadyRegistered } from "@/module/authentication/lib/isAuthenticatorAlreadyRegistered";
 import styles from "@/module/authentication/page/RegisterPage.module.css";
 import { Grid } from "@/module/common/component/Grid";
 import { Notice } from "@/module/common/component/Notice";
 import { PairingInProgress } from "@/module/pairing/component/PairingInProgress";
+import { usePendingPairingInfo } from "@/module/pairing/hook/usePendingPairingInfo";
+import { consumePendingDeepLink } from "@/utils/deepLink";
 
 export const Route = createFileRoute("/_wallet/_auth/register")({
     component: RegisterPage,
+    beforeLoad: async ({ location }) => {
+        // Skip redirect if user explicitly requested new account creation
+        const search = new URLSearchParams(location.search);
+        if (search.has("new")) return;
+
+        // If the user already has passkeys stored, redirect to login
+        const previousAuthenticators = await authenticatorStorage.getAll();
+        if (previousAuthenticators.length > 0) {
+            throw redirect({
+                to: "/login",
+                replace: true,
+            });
+        }
+    },
 });
 
 /**
@@ -27,6 +52,8 @@ export const Route = createFileRoute("/_wallet/_auth/register")({
 function RegisterPage() {
     const { t } = useTranslation();
     const navigate = useNavigate();
+    const { pairingInfo } = usePendingPairingInfo();
+    const hasPendingPairing = Boolean(pairingInfo?.id);
     const [disabled, setDisabled] = useState(false);
     const { register, error, isRegisterInProgress, isSuccess } = useRegister(
         {}
@@ -36,10 +63,7 @@ function RegisterPage() {
      * Boolean used to know if the error is about a previously used authenticator
      */
     const isPreviouslyUsedAuthenticatorError = useMemo(
-        () =>
-            !!error &&
-            "code" in error &&
-            error.code === "ERROR_AUTHENTICATOR_PREVIOUSLY_REGISTERED",
+        () => !!error && isAuthenticatorAlreadyRegistered(error),
         [error]
     );
 
@@ -82,12 +106,16 @@ function RegisterPage() {
         }, 3000);
     }, [isPreviouslyUsedAuthenticatorError, navigate]);
 
-    // Redirect to wallet after successful registration
+    // Redirect after successful registration: pending deep link > pairing > wallet
     useEffect(() => {
         if (isSuccess) {
-            navigate({ to: "/wallet", replace: true });
+            if (consumePendingDeepLink(navigate)) return;
+            navigate({
+                to: hasPendingPairing ? "/pairing" : "/wallet",
+                replace: true,
+            });
         }
-    }, [isSuccess, navigate]);
+    }, [isSuccess, navigate, hasPendingPairing]);
 
     return (
         <Grid

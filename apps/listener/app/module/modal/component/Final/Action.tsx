@@ -6,12 +6,12 @@ import { Copy, Share } from "lucide-react";
 import { useMemo } from "react";
 import { toast } from "sonner";
 import { useAccount } from "wagmi";
-import { useTriggerPushInterraction } from "@/module/hooks/useTriggerPushInterraction";
 import { ButtonAction } from "@/module/modal/component/ButtonAction";
 import styles from "@/module/modal/component/Modal/index.module.css";
 import { useListenerTranslation } from "@/module/providers/ListenerUiProvider";
 import { useSafeResolvingContext } from "@/module/stores/hooks";
 import { useShareLink } from "../../../hooks/useShareLink";
+import { useTrackSharing } from "../../../hooks/useTrackSharing";
 
 export function FinalModalActionComponent({
     action,
@@ -63,8 +63,9 @@ function SharingButtons({
 }) {
     const { sourceUrl } = useSafeResolvingContext();
     const { address } = useAccount();
-    const { copied, copy } = useCopyToClipboardWithState();
+    const { copy } = useCopyToClipboardWithState();
     const { t } = useListenerTranslation();
+    const { mutate: trackSharing } = useTrackSharing();
 
     // Get our final sharing link
     const finalSharingLink = useMemo(() => {
@@ -84,20 +85,14 @@ function SharingButtons({
     }, [link, isModalSuccess, address, sourceUrl]);
 
     // Trigger native sharing
-    const {
-        data: shareResult,
-        mutate: triggerSharing,
-        isPending: isSharing,
-    } = useShareLink(finalSharingLink, {
-        onSuccess: (message) => {
-            message && toast.success(message as string);
-        },
-    });
-
-    // Listen to different stuff to trigger the interaction push
-    useTriggerPushInterraction({
-        conditionToTrigger: isModalSuccess && (copied || !!shareResult),
-    });
+    const { mutate: triggerSharing, isPending: isSharing } = useShareLink(
+        finalSharingLink,
+        {
+            onSuccess: (message) => {
+                message && toast.success(message as string);
+            },
+        }
+    );
 
     return (
         <div className={styles.modalListener__sharingButtons}>
@@ -108,6 +103,7 @@ function SharingButtons({
                     trackGenericEvent("sharing-copy-link", {
                         link: finalSharingLink,
                     });
+                    trackSharing();
                     toast.success(t("sharing.btn.copySuccess"));
                 }}
             >

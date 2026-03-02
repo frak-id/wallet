@@ -18,7 +18,7 @@ export function TokenList({
     return (
         userBalance && (
             <ul className={styles.tokenList}>
-                {userBalance.balances.map((balance) => (
+                {userBalance.balances.map((balance: BalanceItem) => (
                     <TokenItem
                         token={balance}
                         key={balance.token}

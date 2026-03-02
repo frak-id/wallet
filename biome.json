@@ -11,6 +11,7 @@
             "!**/cdn",
             "!**/node_modules",
             "!**/.sst",
+            "!**/.react-router",
             "!**/.output",
             "!**/.nitro",
             "!**/tsconfig.json",

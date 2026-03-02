@@ -1,9 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Logout } from "@/module/authentication/component/Logout";
+import { BiometricSettings } from "@/module/biometrics";
 import { Grid } from "@/module/common/component/Grid";
 import { RemoveAllNotification } from "@/module/notification/component/RemoveAllNotification";
 import { PairingList } from "@/module/pairing/component/PairingList";
-import { CloseSession } from "@/module/settings/component/CloseSession";
 import { PrivateKey } from "@/module/settings/component/PrivateKey";
 import { RecoveryLink } from "@/module/settings/component/Recovery";
 import { SessionInfo } from "@/module/settings/component/SessionInfo";
@@ -30,7 +30,7 @@ function SettingsPage() {
             }
         >
             <SessionInfo />
-            <CloseSession />
+            <BiometricSettings />
             <RecoveryLink />
             <RemoveAllNotification />
             <PrivateKey />

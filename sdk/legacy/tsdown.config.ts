@@ -28,8 +28,18 @@ export default defineConfig({
     dts: false,
     outDir: "./dist/bundle",
     noExternal: [/.*/],
+    inlineOnly: false,
     treeshake: {
         moduleSideEffects: false,
+    },
+    define: {
+        "process.env.CDN_TAG": JSON.stringify(process.env.CDN_TAG || "latest"),
+    },
+    outputOptions(options) {
+        return {
+            ...options,
+            entryFileNames: "[name].js",
+        };
     },
     plugins: [nodePolyfills()],
 });

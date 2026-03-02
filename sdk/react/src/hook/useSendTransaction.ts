@@ -30,7 +30,7 @@ interface UseSendTransactionParams {
  *
  * It's a {@link @tanstack/react-query!home | `tanstack`} wrapper around the {@link @frak-labs/core-sdk!actions.sendTransaction | `sendTransaction()`} action
  *
- * @param args
+ * @param args - Optional config object with `mutations` for customizing the underlying {@link @tanstack/react-query!useMutation | `useMutation()`}
  *
  * @group hooks
  *

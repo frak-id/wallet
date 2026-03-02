@@ -1,0 +1,30 @@
+.emptyState {
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+    align-items: center;
+}
+
+.imageContainer {
+    display: flex;
+    justify-content: center;
+}
+
+.image {
+    max-width: 250px;
+    height: auto;
+}
+
+.heading {
+    margin: 0;
+    font-weight: 600;
+    color: #303030;
+}
+
+.children {
+    color: #616161;
+}
+
+.footer {
+    color: #616161;
+}

@@ -1,8 +1,7 @@
-# Use pre-built SDK from base image
+# Build business app using pre-built SDK from base image
 ARG BASE_IMAGE=frak-wallet-base:latest
 FROM ${BASE_IMAGE} AS builder
 
-# Set the working directory to the root of the monorepo
 WORKDIR /app
 
 # Install dependencies (SDK already built in base image)
@@ -19,7 +18,6 @@ ARG NODE_ENV
 ARG STAGE
 ARG FRAK_WALLET_URL
 ARG BACKEND_URL
-ARG INDEXER_URL
 ARG ERPC_URL
 ARG OPEN_PANEL_API_URL
 
@@ -27,7 +25,6 @@ ENV NODE_ENV=$NODE_ENV
 ENV STAGE=$STAGE
 ENV FRAK_WALLET_URL=$FRAK_WALLET_URL
 ENV BACKEND_URL=$BACKEND_URL
-ENV INDEXER_URL=$INDEXER_URL
 ENV ERPC_URL=$ERPC_URL
 ENV OPEN_PANEL_API_URL=$OPEN_PANEL_API_URL
 
@@ -43,17 +40,22 @@ RUN --mount=type=secret,id=OPEN_PANEL_BUSINESS_CLIENT_ID \
     export FUNDING_ON_RAMP_URL=$(cat /run/secrets/FUNDING_ON_RAMP_URL) && \
     bun run build
 
-# Start a new stage for the final image
-FROM oven/bun:1.3.5
+# Pre-compress all compressible static assets in builder stage
+# This creates .gz files alongside originals (e.g., app.js + app.js.gz)
+RUN find dist -type f \
+    \( -name '*.js' -o -name '*.css' -o -name '*.html' -o -name '*.json' \
+    -o -name '*.svg' -o -name '*.txt' -o -name '*.xml' -o -name '*.ico' \) \
+    -exec gzip -9 -k {} \; && \
+    echo "Pre-compressed $(find dist -name '*.gz' | wc -l) files"
 
-WORKDIR /app
+# Final nginx image
+FROM nginx:1.29.1
 
-# Copy the bundled stuff
-COPY --from=builder /app/apps/business/package.json .
-COPY --from=builder /app/apps/business/.output ./.output
+# Copy built static files (including pre-compressed .gz files) from builder
+COPY --from=builder /app/apps/business/dist /usr/share/nginx/html
 
-# Runtime port
-EXPOSE 3022
+# Copy nginx configuration
+COPY apps/business/nginx.conf /etc/nginx/conf.d/default.conf
 
-ENV NODE_ENV=production
-CMD ["bun", "run", "start:prod"]
+# Expose port 80
+EXPOSE 80

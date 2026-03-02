@@ -1,8 +1,14 @@
 import { Slot } from "@radix-ui/react-slot";
 import { cx } from "class-variance-authority";
 import { X } from "lucide-react";
-import { type PropsWithChildren, useState } from "react";
+import { type PropsWithChildren, useCallback, useState } from "react";
 import styles from "./index.module.css";
+
+/**
+ * localStorage key prefix for dismissed panels.
+ * Keys matching this prefix are cleared on logout.
+ */
+export const panelDismissedPrefix = "frak_panel_dismissed:";
 
 type PanelVariant =
     | "primary"
@@ -18,7 +24,16 @@ type PanelProps = {
     asChild?: boolean;
     className?: string;
     cover?: string;
+    /**
+     * When true, shows a dismiss button.
+     * Pair with `dismissKey` to persist the dismissed state across sessions.
+     */
     isDismissible?: boolean;
+    /**
+     * Unique key to persist the dismissed state in localStorage.
+     * When provided, dismissing the panel is permanent until logout.
+     */
+    dismissKey?: string;
 };
 
 export function Panel({
@@ -29,9 +44,24 @@ export function Panel({
     className = "",
     cover,
     isDismissible = false,
+    dismissKey,
     children,
 }: PropsWithChildren<PanelProps>) {
-    const [isVisible, setIsVisible] = useState(true);
+    const storageKey = dismissKey
+        ? `${panelDismissedPrefix}${dismissKey}`
+        : undefined;
+
+    const [isVisible, setIsVisible] = useState(() => {
+        if (!storageKey) return true;
+        return localStorage.getItem(storageKey) === null;
+    });
+
+    const handleDismiss = useCallback(() => {
+        if (storageKey) {
+            localStorage.setItem(storageKey, "1");
+        }
+        setIsVisible(false);
+    }, [storageKey]);
 
     if (!isVisible) {
         return null;
@@ -48,7 +78,7 @@ export function Panel({
             <button
                 type="button"
                 className={styles.dismissible__button}
-                onClick={() => setIsVisible(false)}
+                onClick={handleDismiss}
             >
                 <X />
             </button>

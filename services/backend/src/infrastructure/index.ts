@@ -1,19 +1,17 @@
-// Logging
-
 // Blockchain
 export { viemClient } from "./blockchain/client";
 export {
-    InteractionDiamondRepository,
-    interactionDiamondRepository,
-} from "./blockchain/contracts/InteractionDiamondRepository";
-export {
-    OnChainRolesRepository,
-    onChainRolesRepository,
-} from "./blockchain/contracts/OnChainRolesRepository";
+    type TokenMetadata,
+    TokenMetadataRepository,
+    tokenMetadataRepository,
+} from "./blockchain/TokenMetadataRepository";
 // External services
-export { indexerApi } from "./external/indexer";
 export { JwtContext } from "./external/jwt";
 export { log } from "./external/logger";
+export {
+    extractShopDomain,
+    verifyShopifySessionToken,
+} from "./external/shopifyJwt";
 // Repositories
 export {
     AdminWalletsRepository,
@@ -24,9 +22,16 @@ export { sessionContext } from "./macro";
 // Events
 export { eventEmitter } from "./messaging/events";
 // Database
-export { type GetMongoDb, getMongoDb } from "./persistence/mongodb";
+export { getMongoDb } from "./persistence/mongodb";
 export { db } from "./persistence/postgres";
 export {
     PricingRepository,
     pricingRepository,
+    type TokenPrice,
 } from "./pricing/PricingRepository";
+// Rate limiting
+export { getClientIp } from "./rateLimit/ipExtraction";
+export {
+    createRateLimitStore,
+    rateLimitMiddleware,
+} from "./rateLimit/rateLimiter";

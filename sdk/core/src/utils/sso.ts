@@ -12,7 +12,8 @@ export type AppSpecificSsoMetadata = SsoMetadata & {
  */
 export type FullSsoParams = Omit<PrepareSsoParamsType, "metadata"> & {
     metadata: AppSpecificSsoMetadata;
-    productId: Hex;
+    merchantId: string;
+    clientId: string;
 };
 
 /**
@@ -21,8 +22,9 @@ export type FullSsoParams = Omit<PrepareSsoParamsType, "metadata"> & {
  *
  * @param walletUrl - Base wallet URL (e.g., "https://wallet.frak.id")
  * @param params - SSO parameters
- * @param productId - Product identifier
+ * @param merchantId - Merchant identifier
  * @param name - Application name
+ * @param clientId - Client identifier for identity tracking
  * @param css - Optional custom CSS
  * @returns Complete SSO URL ready to open in popup or redirect
  *
@@ -40,8 +42,9 @@ export type FullSsoParams = Omit<PrepareSsoParamsType, "metadata"> & {
 export function generateSsoUrl(
     walletUrl: string,
     params: PrepareSsoParamsType,
-    productId: Hex,
+    merchantId: string,
     name: string,
+    clientId: string,
     css?: string
 ): string {
     // Build full params with app-specific metadata
@@ -49,13 +52,14 @@ export function generateSsoUrl(
         redirectUrl: params.redirectUrl,
         directExit: params.directExit,
         lang: params.lang,
-        productId,
+        merchantId,
         metadata: {
             name,
             css,
             logoUrl: params.metadata?.logoUrl,
             homepageLink: params.metadata?.homepageLink,
         },
+        clientId,
     };
 
     // Compress params to minimal format
@@ -76,13 +80,14 @@ export function generateSsoUrl(
  * Map full sso params to compressed sso params
  * @param params
  */
-function ssoParamsToCompressed(params: FullSsoParams) {
+function ssoParamsToCompressed(params: FullSsoParams): CompressedSsoData {
     return {
         r: params.redirectUrl,
+        cId: params.clientId,
         d: params.directExit,
         l: params.lang,
-        p: params.productId,
-        m: {
+        m: params.merchantId,
+        md: {
             n: params.metadata?.name,
             css: params.metadata?.css,
             l: params.metadata?.logoUrl,
@@ -97,17 +102,19 @@ function ssoParamsToCompressed(params: FullSsoParams) {
 export type CompressedSsoData = {
     // Potential id from backend
     id?: Hex;
+    // Client id
+    cId: string;
     // redirect url
     r?: string;
     // direct exit
     d?: boolean;
     // language
     l?: "en" | "fr";
-    // product id
-    p: Hex;
+    // merchant id
+    m: string;
     // metadata
-    m: {
-        // product name
+    md: {
+        // merchant name
         n: string;
         // custom css
         css?: string;

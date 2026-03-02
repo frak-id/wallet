@@ -1,0 +1,32 @@
+api_version = "2025-01"
+
+name = "checkout-web-pixel"
+handle = "checkout-web-pixel"
+description = "Pixel tracker to trigger referral reward on user purchase."
+uid = "55012454-a101-46ea-c8d6-c82738315af4c9c621a9"
+type = "web_pixel_extension"
+runtime_context = "strict"
+
+[customer_privacy]
+analytics = false
+marketing = false
+preferences = false
+sale_of_data = "disabled"
+
+[capabilities]
+network_access = true
+
+[settings]
+type = "object"
+[settings.fields.backendUrl]
+name = "Backend URL"
+description = "The backend API endpoint for tracking purchase events"
+type = "single_line_text_field"
+validations = [
+  { name = "min", value = "1" }
+]
+
+[settings.fields.merchantId]
+name = "Merchant ID"
+description = "The Frak merchant UUID for purchase attribution"
+type = "single_line_text_field"

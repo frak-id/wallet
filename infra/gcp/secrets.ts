@@ -1,10 +1,13 @@
 import {
+    androidSha256Fingerprint,
     drpcApiKey,
     erpcUrl,
-    indexerUrl,
     jwtBusinessSecret,
     nexusRpcSecret,
     pimlicoApiKey,
+    productSetupCodeSalt,
+    shopifyApiSecret,
+    shopifyClientId,
     vapidPublicKey,
 } from "../config";
 import { isProd, normalizedStageName } from "../utils";
@@ -34,12 +37,12 @@ export const postgresEnv = {
     POSTGRES_USER: `wallet-backend_${dbStage}`,
     POSTGRES_PASSWORD: dbPassword,
     POSTGRES_HOST: dbInstance.privateIpAddress,
+    POSTGRES_SCHEMA: "public",
 };
 
 export const elysiaEnv = {
     // Global
     STAGE: normalizedStageName,
-    INDEXER_URL: indexerUrl,
     ERPC_URL: erpcUrl,
     MASTER_KEY_SECRET: masterPkey,
     // Postgres related
@@ -52,7 +55,7 @@ export const elysiaEnv = {
     JWT_SECRET: new sst.Secret("JWT_SECRET").value,
     JWT_SDK_SECRET: new sst.Secret("JWT_SDK_SECRET").value,
     JWT_BUSINESS_SECRET: jwtBusinessSecret.value,
-    PRODUCT_SETUP_CODE_SALT: new sst.Secret("PRODUCT_SETUP_CODE_SALT").value,
+    PRODUCT_SETUP_CODE_SALT: productSetupCodeSalt.value,
 
     // Notifications
     VAPID_PUBLIC_KEY: vapidPublicKey.value,
@@ -68,5 +71,9 @@ export const elysiaEnv = {
     SLACK_BOT_TOKEN: new sst.Secret("SLACK_BOT_TOKEN").value,
 
     // Shopify related
-    SHOPIFY_API_SECRET: new sst.Secret("SHOPIFY_API_SECRET").value,
+    SHOPIFY_API_SECRET: shopifyApiSecret.value,
+    SHOPIFY_CLIENT_ID: shopifyClientId.value,
+
+    // Mobile
+    ANDROID_SHA256_FINGERPRINT: androidSha256Fingerprint.value,
 };

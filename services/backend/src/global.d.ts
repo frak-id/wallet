@@ -13,6 +13,9 @@ declare global {
             VAPID_PRIVATE_KEY: string;
             // Other services
             WORLD_NEWS_API_KEY: string;
+            // Shopify
+            SHOPIFY_API_SECRET: string;
+            SHOPIFY_CLIENT_ID: string;
         }
     }
 }

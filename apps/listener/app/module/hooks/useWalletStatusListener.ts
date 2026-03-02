@@ -9,13 +9,19 @@ import type {
 import {
     getSafeSdkSession,
     getSafeSession,
-    interactionSessionStatusQuery,
     pushBackupData,
     sessionStore,
 } from "@frak-labs/wallet-shared";
-import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef } from "react";
 import type { WalletRpcContext } from "@/module/types/context";
+
+function extractDomainFromUrl(url: string): string {
+    try {
+        return new URL(url).host.replace("www.", "");
+    } catch {
+        return url;
+    }
+}
 
 type OnListenToWallet = RpcStreamHandler<
     IFrameRpcSchema,
@@ -36,23 +42,14 @@ export function useWalletStatusListener(): OnListenToWallet {
     }>({ wallet: session, sdk: sdkSession });
     const unsubscribeRef = useRef<(() => void) | null>(null);
 
-    // Get our query client, to check if we got some cached data
-    const queryClient = useQueryClient();
-
     useEffect(() => {
         sessionsRef.current = { wallet: session, sdk: sdkSession };
     }, [session, sdkSession]);
 
-    /**
-     * Emit the current wallet status
-     * @param emitter
-     * @param productId - From augmented context (Hex type)
-     * @param signal
-     */
     const emitCurrentStatus = useCallback(
         async (
             emitter: StreamEmitter<WalletStatusReturnType>,
-            productId: `0x${string}`,
+            domain: string,
             signal?: AbortSignal
         ) => {
             // Check if the operation has been aborted
@@ -75,23 +72,9 @@ export function useWalletStatusListener(): OnListenToWallet {
                 emitter({
                     key: "not-connected",
                 });
-                // And push fresh backup data with no session
-                await pushBackupData({ productId });
+                await pushBackupData({ domain });
                 return;
             }
-
-            // Get the on chain status (or a cached version if present)
-            const interactionSession = await queryClient
-                .ensureQueryData(interactionSessionStatusQuery(wallet.address))
-                .catch(() => undefined)
-                .then((interactionSession) =>
-                    interactionSession
-                        ? {
-                              startTimestamp: interactionSession.sessionStart,
-                              endTimestamp: interactionSession.sessionEnd,
-                          }
-                        : undefined
-                );
 
             // Check again if aborted before emitting
             if (signal?.aborted) {
@@ -104,7 +87,6 @@ export function useWalletStatusListener(): OnListenToWallet {
                 key: "connected",
                 wallet: wallet.address,
                 interactionToken: sdk?.token,
-                interactionSession,
             });
 
             // Check again if aborted before pushing backup data
@@ -113,10 +95,9 @@ export function useWalletStatusListener(): OnListenToWallet {
                 return;
             }
 
-            // And push some backup data if we got ones
-            await pushBackupData({ productId });
+            await pushBackupData({ domain });
         },
-        [queryClient]
+        []
     );
 
     // Clean up on unmount
@@ -126,10 +107,6 @@ export function useWalletStatusListener(): OnListenToWallet {
         };
     }, []);
 
-    /**
-     * The function that will be called when a wallet status is requested
-     * Context is augmented by middleware with productId, sourceUrl, etc.
-     */
     return useCallback(
         async (_params, emitter, context) => {
             // Clean up previous subscription if it exists
@@ -137,22 +114,14 @@ export function useWalletStatusListener(): OnListenToWallet {
 
             let abortController = new AbortController();
 
-            // Emit the first status (using productId from context)
-            await emitCurrentStatus(
-                emitter,
-                context.productId,
-                abortController.signal
-            );
+            const domain = extractDomainFromUrl(context.sourceUrl);
 
-            // Listen to zustand store updates (both session and sdkSession)
+            await emitCurrentStatus(emitter, domain, abortController.signal);
+
             unsubscribeRef.current = sessionStore.subscribe(() => {
                 abortController.abort();
                 abortController = new AbortController();
-                emitCurrentStatus(
-                    emitter,
-                    context.productId,
-                    abortController.signal
-                );
+                emitCurrentStatus(emitter, domain, abortController.signal);
             });
         },
         [emitCurrentStatus]

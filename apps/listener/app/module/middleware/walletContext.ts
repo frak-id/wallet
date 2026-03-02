@@ -4,7 +4,6 @@ import {
     RpcErrorCodes,
     type RpcMiddleware,
 } from "@frak-labs/frame-connector";
-import { keccak256, toHex } from "viem";
 import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 import type {
     CombinedRpcSchema,
@@ -19,7 +18,7 @@ import type {
  *
  * This centralizes:
  * - Reading from resolvingContextStore
- * - ProductId validation against message origin
+ * - Origin validation against stored context
  * - Context availability checks
  *
  * Performance impact: Reduces store reads from N (one per handler) to 1 per request
@@ -34,7 +33,7 @@ import type {
  *
  * // Handlers now receive augmented context
  * listener.handle('frak_sendInteraction', async (params, context) => {
- *   // context.productId, context.sourceUrl, etc. are directly available
+ *   // context.merchantId, context.sourceUrl, etc. are directly available
  *   // No need to read from store!
  * })
  * ```
@@ -64,27 +63,22 @@ export const walletContextMiddleware: RpcMiddleware<
             );
             return {
                 ...context,
-                productId: "0x",
+                merchantId: "",
                 sourceUrl: context.origin,
                 isAutoContext: false,
+                clientId: resolvingContext.clientId,
             };
         }
 
-        // Compute productId from message origin for validation
-        // This ensures the request is from the expected domain
-        const normalizedDomain = new URL(context.origin).host.replace(
-            "www.",
-            ""
-        );
-        const computedProductId = keccak256(toHex(normalizedDomain));
-
-        // Validate that computed productId matches the stored context
+        // Validate origin matches the stored context origin
         // This prevents cross-domain attacks
-        if (BigInt(computedProductId) !== BigInt(resolvingContext.productId)) {
-            console.error("Mismatching product id, rejecting RPC request", {
-                computedProductId,
-                storedProductId: resolvingContext.productId,
-                origin: context.origin,
+        const normalizedRequestOrigin = new URL(context.origin).origin;
+        const normalizedStoredOrigin = resolvingContext.origin;
+
+        if (normalizedRequestOrigin !== normalizedStoredOrigin) {
+            console.error("Origin mismatch, rejecting RPC request", {
+                requestOrigin: normalizedRequestOrigin,
+                storedOrigin: normalizedStoredOrigin,
                 method: msg.topic,
             });
 
@@ -92,7 +86,7 @@ export const walletContextMiddleware: RpcMiddleware<
             if (!isRunningLocally) {
                 throw new FrakRpcError(
                     RpcErrorCodes.configError,
-                    "Product ID mismatch - origin does not match expected domain"
+                    "Origin mismatch - request origin does not match expected domain"
                 );
             }
         }
@@ -101,10 +95,10 @@ export const walletContextMiddleware: RpcMiddleware<
         // Handlers can now access these fields directly from context parameter
         return {
             ...context,
-            productId: resolvingContext.productId,
+            merchantId: resolvingContext.merchantId,
             sourceUrl: resolvingContext.sourceUrl,
             isAutoContext: resolvingContext.isAutoContext,
-            walletReferrer: resolvingContext.walletReferrer,
+            clientId: resolvingContext.clientId,
         };
     },
 } as const;

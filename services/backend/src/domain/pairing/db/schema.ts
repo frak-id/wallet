@@ -1,12 +1,14 @@
 import {
     index,
     json,
+    jsonb,
     pgTable,
     serial,
     timestamp,
     uniqueIndex,
     varchar,
 } from "drizzle-orm/pg-core";
+import type { IdentityNode } from "../../../orchestration/identity/types";
 import { customHex } from "../../../utils/drizzle/customTypes";
 
 export const pairingTable = pgTable(
@@ -19,6 +21,10 @@ export const pairingTable = pgTable(
         // Origin device info
         originUserAgent: varchar("origin_user_agent").notNull(),
         originName: varchar("origin_name").notNull(), // "Chrome on Windows", etc.
+
+        // Identity context from origin device (SDK)
+        // Used for identity resolution when pairing completes
+        originNode: jsonb("origin_node").$type<IdentityNode>(),
 
         // Target device info
         targetUserAgent: varchar("target_user_agent"), // Null until paired
@@ -48,12 +54,11 @@ export const pairingSignatureRequestTable = pgTable(
         request: customHex("request").notNull(), // b64 serialized WebAuthn options
         context: json("context"), // Origin, operation type, description
 
-        // Status tracking
         createdAt: timestamp("created_at").defaultNow(),
-        processedAt: timestamp("processed_at"), // When target processed request
+        expiresAt: timestamp("expires_at").notNull(),
+        processedAt: timestamp("processed_at"),
 
-        // Result (null until processed)
-        signature: customHex("signature"), // WebAuthn credential response
+        signature: customHex("signature"),
     },
     (table) => [
         index("request_id_idx").on(table.requestId),

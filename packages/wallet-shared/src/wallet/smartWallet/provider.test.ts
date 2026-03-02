@@ -166,7 +166,7 @@ describe("getSmartAccountProvider", () => {
                 "permissionless/actions/pimlico"
             );
 
-            const mockSession = createMockSession({ type: "webauthn" });
+            const mockSession = createMockSession();
             vi.mocked(getSafeSession).mockReturnValue(mockSession);
 
             const mockSmartAccount = {
@@ -548,7 +548,7 @@ describe("getSmartAccountProvider", () => {
                 "permissionless/actions/pimlico"
             );
 
-            const mockSession = createMockSession({ type: "webauthn" });
+            const mockSession = createMockSession();
             vi.mocked(getSafeSession).mockReturnValue(mockSession);
 
             const mockSignature = "0xwebauthn-signature" as Hex;

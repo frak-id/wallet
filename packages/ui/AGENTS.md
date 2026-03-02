@@ -5,7 +5,7 @@ Radix-based component library. Generic, reusable across all apps.
 ## Structure
 
 ```
-├── component/        # UI components (21 components)
+├── component/        # UI components (22 components)
 │   ├── AlertDialog/
 │   ├── Button/
 │   ├── Dialog/

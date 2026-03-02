@@ -6,7 +6,6 @@ import {
 import { ClientNotFound } from "@frak-labs/frame-connector";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
-import type { Hex } from "viem";
 import { useFrakClient } from "../useFrakClient";
 import { useWalletStatus } from "../useWalletStatus";
 import { useFrakContext } from "../utils/useFrakContext";
@@ -17,7 +16,6 @@ import { useFrakContext } from "../utils/useFrakContext";
  * @group hooks
  *
  * @param args
- * @param args.productId - The product id to interact with (if not specified will be recomputed from the current domain)
  * @param args.modalConfig - The modal configuration to display if the user is not logged in
  * @param args.options - Some options for the referral interaction
  *
@@ -28,11 +26,9 @@ import { useFrakContext } from "../utils/useFrakContext";
  * @see {@link @frak-labs/core-sdk!actions.processReferral | `processReferral()`} for more details on the automatic referral handling process
  */
 export function useReferralInteraction({
-    productId,
     modalConfig,
     options,
 }: {
-    productId?: Hex;
     modalConfig?: DisplayEmbeddedWalletParamsType;
     options?: ProcessReferralOptions;
 } = {}) {
@@ -58,7 +54,6 @@ export function useReferralInteraction({
             "auto-referral-interaction",
             frakContext?.r ?? "no-referrer",
             walletStatus?.key ?? "no-wallet-status",
-            productId ?? "no-product-id",
         ],
         queryFn: () => {
             if (!client) {
@@ -69,7 +64,6 @@ export function useReferralInteraction({
                 walletStatus,
                 frakContext,
                 modalConfig,
-                productId,
                 options,
             });
         },

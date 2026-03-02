@@ -1,0 +1,100 @@
+import { log } from "@backend-infrastructure";
+import type { ReferralLinkRepository } from "../repositories/ReferralLinkRepository";
+
+type ReferralChainMember = {
+    identityGroupId: string;
+    depth: number;
+};
+
+const DEFAULT_MAX_CHAIN_DEPTH = 5;
+
+export class ReferralService {
+    constructor(private readonly repository: ReferralLinkRepository) {}
+
+    async registerReferral(params: {
+        merchantId: string;
+        referrerIdentityGroupId: string;
+        refereeIdentityGroupId: string;
+    }): Promise<{ registered: boolean; existingReferrer?: string }> {
+        if (params.referrerIdentityGroupId === params.refereeIdentityGroupId) {
+            log.debug(
+                { merchantId: params.merchantId },
+                "Self-referral attempted, skipping"
+            );
+            return { registered: false };
+        }
+
+        const existing = await this.repository.findByReferee(
+            params.merchantId,
+            params.refereeIdentityGroupId
+        );
+
+        if (existing) {
+            log.debug(
+                {
+                    merchantId: params.merchantId,
+                    refereeId: params.refereeIdentityGroupId,
+                    existingReferrerId: existing.referrerIdentityGroupId,
+                },
+                "Referral already exists, first referrer wins"
+            );
+            return {
+                registered: false,
+                existingReferrer: existing.referrerIdentityGroupId,
+            };
+        }
+
+        // Check if this would create a referral chain cycle
+        // No depth ceiling — CTE explores the full chain with path-based
+        // cycle detection to guarantee termination
+        const wouldCycle = await this.repository.wouldCreateCycle(
+            params.merchantId,
+            params.referrerIdentityGroupId,
+            params.refereeIdentityGroupId
+        );
+        if (wouldCycle) {
+            log.debug(
+                {
+                    merchantId: params.merchantId,
+                    referrerId: params.referrerIdentityGroupId,
+                    refereeId: params.refereeIdentityGroupId,
+                },
+                "Referral would create cycle, skipping"
+            );
+            return { registered: false };
+        }
+
+        const created = await this.repository.create({
+            merchantId: params.merchantId,
+            referrerIdentityGroupId: params.referrerIdentityGroupId,
+            refereeIdentityGroupId: params.refereeIdentityGroupId,
+        });
+
+        if (!created) {
+            return { registered: false };
+        }
+
+        log.debug(
+            {
+                merchantId: params.merchantId,
+                referrerId: params.referrerIdentityGroupId,
+                refereeId: params.refereeIdentityGroupId,
+            },
+            "Referral link registered"
+        );
+
+        return { registered: true };
+    }
+
+    async getReferralChain(params: {
+        merchantId: string;
+        identityGroupId: string;
+        maxDepth?: number;
+    }): Promise<ReferralChainMember[]> {
+        return this.repository.findChain(
+            params.merchantId,
+            params.identityGroupId,
+            params.maxDepth ?? DEFAULT_MAX_CHAIN_DEPTH
+        );
+    }
+}

@@ -1,9 +1,0 @@
-.formPermission__description,
-.formPermission__descriptionTitle {
-    font-size: 14px;
-}
-
-.tooltipPermissions {
-    color: var(--frak-text-color);
-    background-color: var(--frak-color-dark);
-}

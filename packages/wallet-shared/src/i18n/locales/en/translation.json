@@ -18,7 +18,9 @@
                 }
             },
             "description": "Before continuing, please make sure you are using a device that belongs to you.<br />Frak is a solution allowing <strong>{{productName}}</strong> to reward its community for the help provided in promoting its offers. <strong>Frak is a decentralized and open-source solution, which does not store any personal or biometric data.</strong><br />To learn more about <strong>{{productName}}</strong>, please review our Privacy Policy and Terms of Use.",
-            "header": { "title": "Login with Frak Wallet" },
+            "header": {
+                "title": "Login with Frak Wallet"
+            },
             "recover": "Recover wallet from file",
             "redirect": "You will be redirected to {{ productName }} in a few seconds.",
             "redirectNow": "Redirect now",
@@ -30,7 +32,6 @@
         }
     },
     "common": {
-        "activated": "Activated",
         "amountRequired": "Amount is required",
         "added": "added",
         "at": "at",
@@ -40,7 +41,6 @@
         "claimed": "claimed",
         "copied": "Copied!",
         "copyAddress": "Copy address",
-        "disabled": "Disabled",
         "enterAddress": "Enter address",
         "interactions": "Interactions",
         "logout": "Logout",
@@ -58,7 +58,8 @@
         "wallet": "Wallet:",
         "walletAddress": "Wallet address:",
         "walletAddressRequired": "Wallet address is required",
-        "walletInvalid": "Invalid wallet address"
+        "walletInvalid": "Invalid wallet address",
+        "back-to-wallet": "Back to Wallet"
     },
     "sharing": {
         "btn": {
@@ -80,16 +81,6 @@
             "deletePrivateKey": "Delete private key"
         },
         "installWebApp": "<strong>Install wallet on home screen</strong> <br /> to find your gains at any time",
-        "interaction": {
-            "CREATE_REFERRAL_LINK": "Created share link",
-            "OPEN_ARTICLE": "Opened article",
-            "PURCHASE_COMPLETED": "Completed purchase",
-            "PURCHASE_STARTED": "Started purchase",
-            "READ_ARTICLE": "Read article",
-            "REFERRED": "Referred",
-            "WEBSHOP_OPENNED": "Opened webshop",
-            "CUSTOMER_MEETING": "Appointment in store"
-        },
         "invite": {
             "title": "Invite friends, earn $5",
             "text": "Earn $5 for each friend you invite. T&C apply"
@@ -174,17 +165,6 @@
                 "inProgress": "Wallet creation in progress"
             }
         },
-        "session": {
-            "closed": "Your wallet is not activated. You can’t be rewarded.",
-            "open": "Your wallet is activated",
-            "openSession": "Activate your wallet",
-            "titleActivated": "Wallet is activated",
-            "titleNotActivated": "Wallet not activated",
-            "tooltip": {
-                "active": "You got an active wallet since {{sessionStart}} and until {{sessionEnd}}",
-                "inactive": "The wallet activation will permit us to send interaction data"
-            }
-        },
         "share-and-earn": "Share<br />& Earn",
         "tokens": {
             "amountLessThanBalance": "Amount must be less than balance",
@@ -242,9 +222,11 @@
                 "device": "Device:"
             },
             "code": "Check that the code is correct",
+            "noCodeNotice": "Confirm this pairing request to continue.",
             "error": {
                 "title": "Invalid pairing request",
-                "noCode": "No pairing code provided"
+                "noCode": "No pairing code provided",
+                "notFound": "Pairing request not found or expired"
             },
             "loading": {
                 "title": "Please wait"
@@ -308,12 +290,37 @@
         "inAppBrowser": {
             "warning": "You're using an embedded browser. Your experience may be degraded. Tap to open in your browser.",
             "clickToOpen": "Tap to open in your browser.",
-            "dismiss": "Dismiss inapp browser warning"
+            "dismiss": "Dismiss inapp browser warning",
+            "clipboardAlert": "This browser doesn't support all features needed.\n\nThe link has been copied to your clipboard.\n\nTo continue:\n1. Open Safari\n2. Tap the address bar\n3. Paste and go",
+            "clipboardManualAlert": "This browser doesn't support all features needed.\n\nAutomatic copy failed.\n\nCopy this link manually:\n{{url}}\n\nThen:\n1. Open Safari\n2. Tap the address bar\n3. Paste and go"
         },
         "toastLoading": {
             "stuck": "Stuck? See the <pLink>Troubleshooting</pLink> section for more information.<br /><br />You can try to <button>cleanup</button>.<br />(this will logout and you will need to redo a login / pairing)",
             "dismiss": "Dismiss inapp browser warning"
+        },
+        "openLogin": {
+            "login": "Connect with biometrics",
+            "webauthnNotSupported": "WebAuthn is not supported on this device"
         }
+    },
+    "biometrics": {
+        "locked": "Wallet Locked",
+        "unlockWith": "Use {{type}} to unlock",
+        "unlockReason": "Authenticate to access your wallet",
+        "unlock": "Unlock",
+        "error": "Authentication failed. Please try again.",
+        "settings": {
+            "title": "Biometric Lock",
+            "description": "Require biometric authentication to access your wallet",
+            "enable": "Enable biometric lock",
+            "timeout": "Lock after",
+            "timeoutImmediate": "Immediately",
+            "timeout1min": "1 minute",
+            "timeout5min": "5 minutes",
+            "timeout15min": "15 minutes",
+            "notAvailable": "Biometrics not available on this device"
+        },
+        "confirmAction": "Confirm with {{type}}"
     },
     "error": {
         "webauthn": {
@@ -321,5 +328,45 @@
             "userOperationExecution": "An error occurred while executing the transaction. Please try again.",
             "generic": "An error occurred. Please try again."
         }
+    },
+    "reward": {
+        "status": {
+            "pending": "Pending",
+            "processing": "Processing",
+            "settled": "Settled",
+            "consumed": "Consumed",
+            "cancelled": "Cancelled",
+            "expired": "Expired"
+        },
+        "trigger": {
+            "unknown": "Reward",
+            "referral": "Referral",
+            "create_referral_link": "Shared Link",
+            "purchase": "Purchase",
+            "custom": "Custom"
+        },
+        "history": {
+            "empty": "No rewards yet",
+            "emptyDescription": "Your rewards will appear here once you start earning"
+        }
+    },
+    "mobile-sso": {
+        "connecting": "Connecting...",
+        "openWallet": "Open in Frak Wallet",
+        "waiting": "Waiting for wallet app...",
+        "retry": "Connection timed out. Retry?",
+        "appNotFound": "Frak Wallet app not found",
+        "continueInBrowser": "Continue in browser"
+    },
+    "mobile-tx": {
+        "sendTransaction": "Send transaction",
+        "explanation": "Approve this transaction in your wallet app",
+        "waiting": "Waiting for approval...",
+        "openWallet": "Open wallet to approve",
+        "reopenWallet": "Re-open wallet",
+        "timeout": "Approval timed out. Try again?",
+        "retry": "Retry",
+        "appNotFound": "Frak Wallet app not found",
+        "appNotFoundHint": "Please reinstall the app or try again"
     }
 }

@@ -1,0 +1,31 @@
+.biometricSettings {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.biometricSettings__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.biometricSettings__label {
+    font-size: 0.875rem;
+}
+
+.biometricSettings__select {
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--background);
+    font-size: 0.875rem;
+    cursor: pointer;
+}
+
+.biometricSettings__notAvailable {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    font-style: italic;
+}

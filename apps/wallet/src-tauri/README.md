@@ -21,7 +21,7 @@ The Frak Wallet mobile app is built using [Tauri 2.x](https://tauri.app/), which
 - **Xcode**: Latest version with iOS SDK
 - **Xcode Command Line Tools**: `xcode-select --install`
 - **CocoaPods**: `sudo gem install cocoapods`
-- **Apple Developer Account**: For code signing (Team ID: `6Y48FFCGMY`)
+- **Apple Developer Account**: For code signing (Team ID: `57DZ6Z2235`)
 - **iOS Simulator**: Available devices can be listed with `xcrun simctl list devices`
 
 ### Android Development
@@ -113,7 +113,7 @@ This allows the app to share WebAuthn credentials with the web domain.
 #### Code Signing
 
 - **Bundle ID**: `id.frak.wallet`
-- **Development Team**: `6Y48FFCGMY`
+- **Development Team**: `57DZ6Z2235`
 - Configured in: `tauri.conf.json`
 
 ### Android
@@ -145,6 +145,28 @@ Android-specific Tauri plugins:
 - **Min SDK**: 28 (Android 9.0)
 - **Target SDK**: 36
 - **Package**: `id.frak.wallet`
+
+## Deep Linking
+
+The app supports deep linking via a custom URL scheme.
+
+### URL Schemes
+
+**Custom URL Scheme:**
+- `frakwallet://wallet` - Open wallet home
+- `frakwallet://send?to=0x...` - Pre-filled send screen
+- `frakwallet://receive` - Receive screen
+- `frakwallet://settings` - Settings
+- `frakwallet://recovery` - Recovery settings
+- `frakwallet://notifications` - Notifications
+- `frakwallet://history` - Transaction history
+- `frakwallet://pair?id=<id>&mode=embedded` - Pairing confirmation (iframe flow)
+
+### Configuration Files
+
+- **iOS URL Scheme**: `gen/apple/app_iOS/Info.plist` (CFBundleURLTypes)
+- **Android Intent Filters**: `gen/android/app/src/main/AndroidManifest.xml`
+- **Frontend Handler**: `app/utils/deepLink.ts`
 
 ## Environment Configuration
 
@@ -223,19 +245,26 @@ bun run test
 
 ## Version Management
 
-Version numbers are currently duplicated across:
+Version is synced across 4 files via a single command:
+
+```bash
+bun run tauri:version 0.0.33
+```
+
+This updates:
 - `apps/wallet/package.json`
 - `apps/wallet/src-tauri/Cargo.toml`
 - `apps/wallet/src-tauri/tauri.conf.json`
+- `apps/wallet/src-tauri/gen/apple/project.yml`
 
-Ensure all three files are updated when bumping versions.
+Script: `apps/wallet/scripts/sync-version.sh`
 
 ## Security Considerations
 
-- **CSP (Content Security Policy)**: Currently disabled (`csp: null` in `tauri.conf.json`)
-  - **Rationale**: Disabled to allow flexible development and testing of WebAuthn flows, SDK integrations, and dynamic content loading
-  - **Note**: For production builds, consider configuring appropriate CSP rules if additional security is required
-  - **Location**: `tauri.conf.json` → `app.security.csp`
+- **CSP (Content Security Policy)**: Configured in `tauri.conf.json` → `app.security.csp`
+  - **Current policy**: `default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://*.frak.id https://*.drpc.org https://*.pimlico.io wss://*.frak.id`
+  - **Rationale**: Restricts content sources while allowing necessary connections for WebAuthn, blockchain RPCs, and WebSocket communication
+  - **Note**: Update CSP if adding new external resources or third-party integrations
 - **Code Signing**: Required for both iOS and Android production builds
 - **WebAuthn Origins**: Properly validated on backend to prevent origin spoofing
 - **Associated Domains**: Required for iOS WebAuthn credential sharing

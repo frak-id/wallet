@@ -8,8 +8,6 @@ export * from "./blockchain";
 export * from "./common";
 // i18n
 export * from "./i18n";
-// Interaction
-export * from "./interaction";
 // Pairing
 export * from "./pairing";
 // Polyfills
@@ -21,9 +19,10 @@ export * from "./recovery";
 // SDK utilities
 export * from "./sdk";
 export * from "./stores/authenticationStore";
+export * from "./stores/clientIdStore";
+export * from "./stores/pairingStore";
 export * from "./stores/sessionStore";
 export * from "./stores/userStore";
-export * from "./stores/walletStore";
 // Tokens
 export * from "./tokens";
 // Types

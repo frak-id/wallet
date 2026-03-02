@@ -30,6 +30,9 @@ build
 dist
 cdn
 
+# rust / tauri
+**/target
+
 # misc
 .DS_Store
 *.pem
@@ -43,6 +46,7 @@ yarn-error.log*
 .env
 .env.tmp
 .env*.local
+.env.sandbox
 
 # typescript
 *.tsbuildinfo
@@ -54,3 +58,4 @@ sst-env.d.ts
 
 # IDE
 .idea
+.sisyphus/

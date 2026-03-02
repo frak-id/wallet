@@ -1,11 +1,11 @@
 {
     "$schema": "../../../node_modules/@tauri-apps/cli/config.schema.json",
     "productName": "Frak Wallet",
-    "version": "0.0.26",
+    "version": "0.0.35",
     "identifier": "id.frak.wallet",
     "build": {
         "frontendDist": "../dist",
-        "devUrl": "http://localhost:3000",
+        "devUrl": "http://localhost:3010",
         "beforeDevCommand": "NODE_ENV=development TAURI_CLI_RUNNING=1 vite dev",
         "beforeBuildCommand": "bun run build"
     },
@@ -33,6 +33,9 @@
             "icons/128x128@2x.png",
             "icons/icon.icns",
             "icons/icon.ico"
-        ]
+        ],
+        "iOS": {
+            "developmentTeam": "57DZ6Z2235"
+        }
     }
 }

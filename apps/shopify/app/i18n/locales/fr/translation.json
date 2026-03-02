@@ -1,0 +1,380 @@
+{
+    "common": {
+        "title": "Configuration Frak",
+        "goToDashboard": "Aller au tableau de bord",
+        "loading": "Chargement...",
+        "loadingTimeout": "Le chargement a expiré. Veuillez réessayer.",
+        "allSet": "L'application Frak est correctement configurée",
+        "getStarted": "Commencer la configuration de l'application",
+        "dashboardDataUnavailableTitle": "Les donnees du tableau de bord sont temporairement indisponibles.",
+        "dashboardDataUnavailableDescription": "Veuillez actualiser la page dans quelques secondes."
+    },
+    "navigation": {
+        "campaigns": "Campagnes",
+        "appearance": "Apparence",
+        "funding": "Financement",
+        "settings": {
+            "title": "Paramètres",
+            "general": "Général",
+            "pixel": "Pixel d'application",
+            "webhook": "Webhook",
+            "theme": "Thème"
+        }
+    },
+    "stepper": {
+        "title": "Guide de configuration",
+        "description": "Utilisez ce guide pour configurer votre application Frak.",
+        "completedStep": "{{completedStep}} de {{totalSteps}} tâches terminées",
+        "footer": "Si vous rencontrez des problèmes ou avez des questions, envoyez-nous un email à <a />.",
+        "step1": {
+            "title": "Statut de connexion",
+            "description": "Vous devez connecter votre boutique à l'écosystème Frak."
+        },
+        "step2": {
+            "title": "Pixel d'application",
+            "description": "Nous avons besoin d'implémenter un pixel d'application pour suivre les achats de vos clients."
+        },
+        "step3": {
+            "title": "Webhook Shopify",
+            "description": "Nous avons besoin de configurer un webhook pour passer les informations sur les commandes."
+        },
+        "step4": {
+            "title": "Webhook Frak",
+            "description": "Vous allez connecter votre webhook Frak à votre boutique."
+        },
+        "step5": {
+            "title": "Configurer l'application Frak intégrée dans votre thème",
+            "link": "Activer l'application intégrée Frak dans votre thème",
+            "description": "Veuillez activer l'<strong>application Frak intégrée</strong> dans votre thème à l'aide de l'interrupteur comme illustré ci-dessous"
+        },
+        "step6": {
+            "title": "Ajouter le bouton de partage ou de porte-monnaie dans votre thème",
+            "descriptionShare": "Veuillez ajouter le <strong>Frak Sharing Button</strong> comme illustré ci-dessous",
+            "descriptionWallet": "Veuillez activer le <strong>Frak Wallet Button</strong> comme illustré ci-dessous",
+            "linkShare": "Ajoutez le bouton Frak Sharing Button à votre page produit",
+            "linkWallet": "Activez le bouton Frak Wallet Button"
+        }
+    },
+    "pixel": {
+        "title": "Pixel d'application",
+        "connected": "Votre pixel est connecté à votre boutique.",
+        "notConnected": "Votre pixel n'est pas connecté à votre boutique.",
+        "needConnection": "Vous devez connecter votre pixel à votre boutique pour suivre les achats de vos clients.",
+        "actions": {
+            "cta": {
+                "connect": "Connecter le pixel d'application",
+                "disconnect": "Déconnecter le pixel d'application"
+            },
+            "messages": {
+                "connect": "Pixel d'application connecté avec succès",
+                "disconnect": "Pixel d'application déconnecté avec succès",
+                "error": "Erreur de suppression du pixel d'application"
+            }
+        }
+    },
+    "webhook": {
+        "title": "Webhook",
+        "connected": "Votre webhook Shopify est connecté à votre boutique.",
+        "notConnected": "Votre webhook Shopify n'est pas connecté à votre boutique.",
+        "frakConnected": "Le tracker de commande Frak est configuré",
+        "frakNotConnected": "Le tracker de commande Frak n'est pas configuré",
+        "needConnection": "Vous devez connecter votre webhook Shopify à votre boutique pour suivre les achats de vos clients.",
+        "needFrakConnection": "Vous devez connecter votre tracker de commande Frak à votre boutique pour suivre les achats de vos clients.",
+        "noWebhooks": "Aucun webhook configuré.",
+        "list": {
+            "title": "Webhooks Actifs",
+            "topic": "Sujet",
+            "endpoint": "Point de terminaison",
+            "noEndpoint": "Aucun point de terminaison configuré"
+        },
+        "actions": {
+            "cta": {
+                "connect": "Connecter le webhook Shopify",
+                "disconnect": "Déconnecter le webhook Shopify",
+                "frakConnect": "Connecter le tracker de commande Frak",
+                "delete": "Supprimer"
+            },
+            "messages": {
+                "connect": "Webhook Shopify connecté avec succès",
+                "disconnect": "Webhook Shopify déconnecté avec succès",
+                "error": "Erreur de suppression du webhook",
+                "setup": "Le tracker de commande Frak est configuré",
+                "frakSetupError": "Erreur de connexion du tracker de commande Frak"
+            }
+        }
+    },
+    "theme": {
+        "title": "Thème",
+        "connected": "L'application Frak est activée",
+        "notConnected": "L'application Frak n'est pas activée",
+        "link": "Configuration de l'application dans votre thème",
+        "todo": "Veuillez activer l'application Frak dans votre thème en suivant les instructions ci-dessous"
+    },
+
+    "gated": {
+        "configure": "Configurer Frak",
+        "create": "CREER UN COMPTE",
+        "start": "Créez un porte-monnaie Frak pour commencer à utiliser l'application.",
+        "alreadyGotAnAccount": "J'ai déjà un compte"
+    },
+    "status": {
+        "connected": "Connecté à Frak",
+        "connectedShop": {
+            "title": "Votre boutique sur Frak",
+            "merchantName": "Nom du marchand",
+            "domain": "Domaine",
+            "merchantId": "Identifiant marchand",
+            "description": "Votre boutique est correctement connectée à l'écosystème Frak et prête à utiliser toutes les fonctionnalités."
+        },
+        "connectionStatus": {
+            "title": "Statut de connexion",
+            "loading": "Vérification du statut de connexion...",
+            "checking": "Nous vérifions si votre boutique est connectée à l'écosystème Frak.",
+            "connected": "Votre boutique est correctement connectée à l'écosystème Frak.",
+            "notConnected": "Votre boutique n'est pas encore connectée à l'écosystème Frak. Suivez les instructions ci-dessous pour terminer la configuration."
+        },
+        "modal": {
+            "title": "Enregistrer votre boutique",
+            "button": "Enregistrer votre boutique dans l'écosystème Frak",
+            "close": "Fermer"
+        },
+
+        "campaign": {
+            "title": "Campagnes",
+            "description": "Les campagnes sont le cœur de votre stratégie de monétisation avec Frak. Elles définissent les récompenses qui seront distribuées aux utilisateurs finaux.",
+            "name": "Nom",
+            "type": "Type",
+            "active": "Active",
+            "status": "Statut",
+            "date": "Date",
+            "budgetColumn": "Budget",
+            "actionsColumn": "Actions",
+            "rewardsColumn": "Récompenses",
+            "resetAt": "Réinitialisation le {{date}}",
+            "referrer": "Parrain",
+            "referee": "Filleul",
+            "tiered": "Par paliers",
+            "viewDetails": "Voir les détails",
+            "statusDraft": "Brouillon",
+            "statusActive": "Active",
+            "statusPaused": "En pause",
+            "statusArchived": "Archivée",
+            "bankDepleted": "Aucun fonds",
+            "bankPaused": "En pause",
+            "bankWarning": "Attention requise",
+            "bankNotDeployed": "Configuration nécessaire",
+            "noBudget": "-",
+            "pause": "Pause",
+            "resume": "Reprendre",
+            "archive": "Archiver",
+            "delete": "Supprimer",
+            "pausing": "Mise en pause...",
+            "resuming": "Reprise...",
+            "archiving": "Archivage...",
+            "deleting": "Suppression...",
+            "noCampaigns": "Aucune campagne pour le moment. Créez votre première campagne pour commencer à distribuer des récompenses.",
+
+            "nameInput": "Nom de la campagne",
+            "rewardToken": "Token de récompense",
+            "selectToken": "Sélectionner un token",
+            "budget": "Budget global",
+            "budgetInfo": "Ce montant est le montant maximum qui sera distribué par cette campagne.",
+            "rawCAC": "CAC brut par nouvel utilisateur",
+            "rawCACInfo": "Ceci est le montant brut qui sera distribué au parrain et au filleul.",
+            "ratio": "Ratio Parrain/Filleul",
+            "ratioHelp": "Ajustez la répartition entre parrain et filleul (max 90-10%)",
+            "ratioReferrer": "Parrain",
+            "ratioReferee": "Filleul",
+            "breakdown": {
+                "rawCAC": "CAC brut",
+                "commission": "Commission Frak (20%)",
+                "referrer": "Récompense pour le parrain/marraine",
+                "referee": "Récompense pour le-a filleul-e",
+                "newUser": "Nombre de nouveaux clients"
+            },
+            "createOpen": "Formulaire de création de campagne",
+            "createButton": "Créer la campagne",
+            "creating": "Création de la campagne...",
+            "toastCreated": "Création de campagne (mock) : Succès !"
+        },
+        "bank": {
+            "title": "Budget de récompenses",
+            "description": "Votre budget de récompenses est la source de fonds utilisée pour distribuer des récompenses aux utilisateurs finaux à travers toutes vos campagnes.",
+            "token": "Token",
+            "balance": "Solde",
+            "statusColumn": "Statut",
+            "actionsColumn": "Actions",
+            "address": "Adresse",
+            "notDeployed": "Votre budget de récompenses n'est pas encore déployé. Complétez l'assistant de configuration pour commencer.",
+            "emptyWarning": "Votre budget n'a aucun fonds. Les campagnes actives ne peuvent pas distribuer de récompenses tant que vous n'ajoutez pas de fonds.",
+            "connectWallet": "Connectez votre portefeuille Frak pour gérer les paramètres de distribution, les allocations et les retraits.",
+            "distribution": "Distribution",
+            "distributionActive": "Active",
+            "distributionPaused": "En pause",
+            "enableDistribution": "Activer",
+            "disableDistribution": "Désactiver",
+            "tokenEmpty": "Aucun fonds",
+            "tokenActive": "Active",
+            "tokenWarning": "Action requise",
+            "tokenPaused": "En pause",
+            "increaseLimit": "Augmenter la limite",
+            "pauseRewards": "Suspendre les récompenses",
+            "withdraw": "Retirer",
+            "setAllowanceFor": "Définir la limite de distribution pour {{token}}",
+            "withdrawFrom": "Retirer {{token}}",
+            "allowanceAmount": "Limite de distribution",
+            "withdrawAmount": "Montant à retirer",
+            "confirm": "Confirmer",
+            "cancel": "Annuler"
+        },
+        "purchase": {
+            "title": "Achat",
+            "description": "En effectuant un achat, vous ajoutez des fonds à la banque. Les fonds seront utilisés pour distribuer des récompenses aux utilisateurs finaux.",
+            "activePurchases": "Achats actifs",
+            "amount": "Montant",
+            "status": "Statut",
+            "txHash": "Hash Tx",
+            "createdAt": "Créé le",
+            "actions": "Actions",
+            "selectBank": "Sélectionner la banque à alimenter",
+            "amountToFund": "Montant à alimenter",
+            "fundBank": "Alimenter la banque",
+            "confirm": "Confirmer",
+            "confirmPurchase": "Confirmer l'achat",
+            "errorInvalidAmount": "Veuillez entrer un montant valide.",
+
+            "errorBilling": "Échec du démarrage du processus de facturation.",
+            "done": "Terminé",
+            "pendingProcessing": "Traitement en cours",
+            "declined": "Refusé",
+            "expired": "Expiré",
+            "waitingConfirmation": "En attente de votre confirmation",
+            "pending": "En attente"
+        }
+    },
+    "customizations": {
+        "description": "Personnalisez les textes affichés dans les modales Frak pour différentes langues. Ces personnalisations remplaceront les textes par défaut de votre boutique.",
+        "save": "Enregistrer les personnalisations",
+        "saved": "Personnalisations enregistrées avec succès !",
+        "error": "Erreur lors de l'enregistrement des personnalisations",
+        "french": "Traductions françaises (fr)",
+        "english": "Traductions anglaises (en)",
+        "languageMode": {
+            "title": "Configuration des langues",
+            "choiceTitle": "Choisissez votre configuration linguistique",
+            "single": {
+                "label": "Langue unique",
+                "helpText": "Utilisez le même texte pour tous les utilisateurs, quelle que soit leur localisation"
+            },
+            "multi": {
+                "label": "Langues multiples",
+                "helpText": "Fournissez différents textes en français et en anglais. Les utilisateurs verront le texte basé sur la langue de leur navigateur ou leur localisation"
+            }
+        },
+        "sharing": {
+            "title": "Personnalisation du partage",
+            "description": "Personnalisez le texte affiché lors du partage de votre boutique."
+        },
+        "modal": {
+            "title": "Personnalisation des modales Frak",
+            "description": "Personnalisez les textes affichés dans les modales Frak pour différentes langues. Les champs de texte supportent le formatage markdown et des variables spéciales.",
+            "logo": {
+                "title": "Logo du portefeuille",
+                "description": "Personnalisez la modale de connexion au portefeuille avec votre propre logo."
+            },
+            "formatting": {
+                "title": "Guide de formatage du texte",
+                "description": "Vous pouvez utiliser les options de formatage suivantes pour améliorer votre texte :",
+                "bold": "Utilisez **texte** pour mettre le texte en gras (ex: **Obtenez des récompenses** s'affiche en gras)",
+                "italic": "Utilisez *texte* pour mettre le texte en italique (ex: *offre incroyable* s'affiche en italique)",
+                "variable": "Utilisez {{ estimatedReward }} pour afficher le montant de récompense potentiel que les utilisateurs peuvent gagner (calculé automatiquement selon vos paramètres de campagne)",
+                "preview": "Note : L'aperçu ci-dessous affiche 42,00 € comme montant d'exemple. Vos clients verront les montants de récompense réels basés sur vos paramètres de campagne."
+            }
+        },
+        "fields": {
+            "logoUrl": {
+                "label": "URL de l'image de logo du portefeuille",
+                "description": "L'URL de l'image de logo qui sera affichée dans la modale de connexion au portefeuille. Cela remplacera l'image par défaut.",
+                "placeholder": "Exemple : 'https://example.com/logo.png'"
+            },
+            "sharing.title": {
+                "label": "Titre de la modale de partage",
+                "description": "Le titre qui apparaît lorsque les utilisateurs partagent votre contenu sur les réseaux sociaux ou les applications de messagerie",
+                "placeholder": "Exemple : 'Partagez ce produit incroyable avec vos amis !'"
+            },
+            "sharing.text": {
+                "label": "Texte du message de partage",
+                "description": "Le message par défaut qui sera partagé avec le lien de votre produit",
+                "placeholder": "Exemple : 'Découvrez ce produit incroyable que j'ai trouvé !'"
+            },
+            "sdk.wallet.login.primaryAction": {
+                "label": "Texte du bouton de connexion au portefeuille",
+                "description": "Le texte affiché sur le bouton d'action principal dans la modale de connexion au portefeuille",
+                "placeholder": "Exemple : 'Créez votre portefeuille en 2 secondes !'"
+            },
+            "sdk.wallet.login.text_sharing": {
+                "label": "Texte de bienvenue pour le parrain/marraine",
+                "description": "Message affiché aux utilisateurs lorsqu'ils ont cliqué sur un bouton de partage. Vous pouvez utiliser **texte en gras**, *texte en italique*, et {{ estimatedReward }} pour afficher le montant de la récompense.",
+                "placeholder": "Exemple : 'Partagez, Parrainez, Gagnez jusqu'à **{{ estimatedReward }}** par parrainage réussi'"
+            },
+            "sdk.wallet.login.text_referred": {
+                "label": "Texte de bienvenue pour le-a filleul-e",
+                "description": "Message affiché aux utilisateurs qui ont cliqué sur un lien partagé. Vous pouvez utiliser **texte en gras**, *texte en italique*, et {{ estimatedReward }} pour afficher le montant de la récompense.",
+                "placeholder": "Exemple : 'Bienvenue ! Recevez **{{ estimatedReward }}** lors de votre achat'"
+            }
+        },
+        "preview": {
+            "sharing": {
+                "title": "Aperçu parrain/marraine",
+                "description": "Aperçu du texte affiché dans les modales Frak.",
+                "placeholder": "Partagez, Parrainez, Gagnez jusqu'à **{{ estimatedReward }}** par parrainage réussi",
+                "button": "Créer votre portefeuille en 2 secondes !"
+            },
+            "referred": {
+                "title": "Aperçu filleul/filleul",
+                "description": "Aperçu du texte affiché dans les modales Frak.",
+                "placeholder": "Bienvenue ! Recevez **{{ estimatedReward }}** lors de votre achat",
+                "button": "Créer votre portefeuille en 2 secondes !"
+            },
+            "social": {
+                "title": "Aperçu du partage social",
+                "description": "Aperçu du texte affiché lors du partage social.",
+                "sharingTitle": "Tu connais le site Example ? 😊",
+                "sharingText": "J'ai un produit incroyable à te partager ! 😉"
+            }
+        }
+    },
+    "campaigns": {
+        "title": "Campagnes",
+        "description": "Gérez vos campagnes marketing et suivez leurs performances. Créez de nouvelles campagnes pour distribuer des récompenses aux utilisateurs et développer votre base client."
+    },
+    "appearance": {
+        "title": "Apparence",
+        "description": "Personnalisez l'apparence de votre intégration Frak dans votre boutique.",
+        "tabs": {
+            "customizations": "Personnalisations de texte",
+            "shareButton": "Bouton de partage",
+            "walletButton": "Bouton porte-monnaie"
+        },
+        "shareButton": {
+            "link": "Configurer le bouton dans votre page produit",
+            "noProduct": "Vous devez ajouter un produit à votre boutique pour ajouter le bouton de partage",
+            "activated": "Le bouton de partage est dans votre page produit",
+            "notActivated": "Le bouton de partage n'est pas dans votre page produit",
+            "todo": "Veuillez ajouter le bouton comme illustré ci-dessous"
+        },
+        "walletButton": {
+            "link": "Configurer le bouton porte-monnaie dans l'éditeur de thème",
+            "activated": "Le bouton porte-monnaie est dans votre thème",
+            "notActivated": "Le bouton porte-monnaie n'est pas dans votre thème",
+            "todo": "Veuillez ajouter le bouton comme illustré ci-dessous"
+        }
+    },
+    "funding": {
+        "title": "Financement",
+        "description": "Gérez vos sources de financement et l'historique de vos achats. Ajoutez des fonds à vos banques pour vous assurer que vos campagnes peuvent distribuer des récompenses aux utilisateurs."
+    },
+    "settings": {
+        "title": "Paramètres"
+    }
+}

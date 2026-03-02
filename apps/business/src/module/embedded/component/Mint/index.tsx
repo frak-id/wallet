@@ -6,20 +6,19 @@ import { useCallback, useMemo } from "react";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
 import { useListenToDomainNameSetup } from "@/module/dashboard/hooks/dnsRecordHooks";
-import { useMintMyProduct } from "@/module/dashboard/hooks/useMintMyProduct";
+import { useRegisterMerchant } from "@/module/dashboard/hooks/useMintMyMerchant";
 import styles from "./index.module.css";
 
 export function EmbeddedMint() {
     const search = useSearch({ from: "/embedded/_layout/mint" });
 
-    const { name, domain, setupCode, productTypes, currency } = useMemo(() => {
+    const { name, domain, setupCode, currency } = useMemo(() => {
         const name = search.n;
         const domain = search.d;
         const setupCode = search.sc;
-        const productTypes = search.pt;
         const currency = search.c as Stablecoin | null;
 
-        if (!domain || !setupCode || !productTypes) {
+        if (!domain || !setupCode) {
             throw new Error("Missing required parameters");
         }
 
@@ -27,7 +26,6 @@ export function EmbeddedMint() {
             name: name ?? undefined,
             domain,
             setupCode,
-            productTypes,
             currency: currency ?? ("usde" as Stablecoin),
         };
     }, [search]);
@@ -57,7 +55,6 @@ export function EmbeddedMint() {
                         name={name}
                         domain={domain}
                         setupCode={setupCode}
-                        productTypes={productTypes}
                         currency={currency}
                     />
                 ) : (
@@ -96,35 +93,23 @@ function DoMintComponent({
     name,
     domain,
     setupCode,
-    productTypes,
     currency,
 }: {
     name?: string;
     domain: string;
     setupCode: string;
-    productTypes: string;
     currency: Stablecoin;
 }) {
     // Mint hook
     const {
         infoTxt,
         mutation: { mutate: triggerMintMyContent, isPending, error },
-    } = useMintMyProduct({
+    } = useRegisterMerchant({
         onSuccess: () => {
             // Close the current window
             window.close();
         },
     });
-
-    // Map the product types to the correct type
-    const productTypesArray = productTypes.split(",") as (
-        | "dapp"
-        | "press"
-        | "webshop"
-        | "retail"
-        | "referral"
-        | "purchase"
-    )[];
 
     return (
         <>
@@ -137,7 +122,6 @@ function DoMintComponent({
                         name: name ?? domain,
                         domain,
                         setupCode,
-                        productTypes: productTypesArray,
                         currency,
                     })
                 }

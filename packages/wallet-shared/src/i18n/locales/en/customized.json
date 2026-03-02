@@ -26,11 +26,6 @@
                 "title": "Connection",
                 "success": "Connection successful"
             },
-            "openSession": {
-                "description": "Congratulations, your wallet has been created! Click on the button below to activate it and receive your winnings.",
-                "primaryAction": "Activate my wallet",
-                "title": "Activation"
-            },
             "sendTransaction": {
                 "description": "To complete, authorize this transaction in your wallet. This ensures secure processing.",
                 "primaryAction_one": "Send transaction",
@@ -52,9 +47,7 @@
             "loggedIn": {
                 "onboarding": {
                     "welcome": "🥳 Congratulations! Your wallet is created.",
-                    "activate": "💫 Enable it to be able to share.",
                     "share": "🚀 Let's go! Share this product and receive your rewards directly.",
-                    "activate_referred": "💫 Enable it to receive your gains.",
                     "share_referred": "🚀 Share your turn to win more!"
                 }
             }

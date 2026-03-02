@@ -48,16 +48,6 @@
                 "types": "./dist/index.d.cts",
                 "default": "./dist/index.cjs"
             }
-        },
-        "./middleware": {
-            "import": {
-                "types": "./dist/middleware.d.ts",
-                "default": "./dist/middleware.js"
-            },
-            "require": {
-                "types": "./dist/middleware.d.cts",
-                "default": "./dist/middleware.cjs"
-            }
         }
     },
     "scripts": {
@@ -68,12 +58,9 @@
         "build": "tsdown",
         "build:watch": "tsdown --watch",
         "check-exports": "attw --pack .",
-        "typecheck": "tsc --noEmit",
+        "typecheck": "tsgo --noEmit",
         "prepublish": "bun run lint && bun run build",
         "publish": "echo 'Publishing rpc...'"
-    },
-    "dependencies": {
-        "@jsonjoy.com/json-pack": "^1.21.0"
     },
     "peerDependencies": {
         "viem": "^2.x"
@@ -81,9 +68,9 @@
     "devDependencies": {
         "@arethetypeswrong/cli": "^0.18.2",
         "@frak-labs/dev-tooling": "workspace:*",
-        "@rolldown/plugin-node-polyfills": "^1.0.0",
+        "@rolldown/plugin-node-polyfills": "^1.0.3",
         "@types/node": "catalog:",
-        "tsdown": "^0.18.2",
+        "tsdown": "^0.20.3",
         "typescript": "^5",
         "viem": "catalog:"
     }

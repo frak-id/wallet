@@ -73,7 +73,7 @@ bun run test:watch            # Run in watch mode
 
 **Testing Strategy**:
 - **Framework**: Vitest 4.0 with Projects API (workspace mode)
-  - 7 test projects: wallet, listener, business, wallet-shared, core-sdk, react-sdk, backend
+  - 10 test projects: wallet, listener, business, shopify, wallet-shared, ui, core-sdk, react-sdk, components, backend
   - Frontend projects use jsdom environment; backend uses Node environment
   - Run from root with `bun run test` to execute all projects in parallel
 - **E2E Tests**: Comprehensive Playwright tests (19 specs) covering user flows
@@ -91,15 +91,15 @@ bun run test:watch            # Run in watch mode
 
 **Test Configuration Architecture**:
 - `vitest.config.ts` - Root workspace config (Vitest 4.0 Projects API)
-- `test-setup/vitest.shared.ts` - Shared config with performance optimizations (pool config, plugin helpers)
-- `test-setup/index.ts` - Centralized test utilities barrel export (@test-setup alias)
-- `test-setup/shared-setup.ts` - Browser API mocks (crypto, MessageChannel, IntersectionObserver, ResizeObserver, matchMedia)
-- `test-setup/react-setup.ts` - BigInt serialization for Zustand persist
-- `test-setup/router-mocks.ts` - Router mock factories (react-router, @tanstack/react-router)
-- `test-setup/dom-mocks.ts` - DOM mocking utilities (window.origin, document.referrer)
-- `test-setup/wallet-mocks.ts` - Wagmi, WebAuthn, idb-keyval mocks (uses router-mocks)
-- `test-setup/apps-setup.ts` - Environment variables for frontend apps
-- `test-setup/README.md` - Comprehensive test architecture documentation
+- `packages/test-foundation/src/vitest.shared.ts` - Shared config with performance optimizations (pool config, plugin helpers)
+- `packages/test-foundation/src/index.ts` - Centralized test utilities barrel export (@frak-labs/test-foundation)
+- `packages/test-foundation/src/shared-setup.ts` - Browser API mocks (crypto, MessageChannel, IntersectionObserver, ResizeObserver, matchMedia)
+- `packages/test-foundation/src/react-setup.ts` - BigInt serialization for Zustand persist
+- `packages/test-foundation/src/router-mocks.ts` - Router mock factories (react-router, @tanstack/react-router)
+- `packages/test-foundation/src/dom-mocks.ts` - DOM mocking utilities (window.origin, document.referrer)
+- `packages/test-foundation/src/wallet-mocks.ts` - Wagmi, WebAuthn, idb-keyval mocks (uses router-mocks)
+- `packages/test-foundation/src/apps-setup.ts` - Environment variables for frontend apps
+- `packages/test-foundation/README.md` - Comprehensive test architecture documentation
 - `services/backend/vitest.config.ts` - Backend-specific config (Node environment, path aliases)
 - `services/backend/test/vitest-setup.ts` - Backend mocks (Viem, Drizzle, WebAuthn, Bun runtime)
 - `services/backend/test/mock/` - Backend mock modules (viem.ts, webauthn.ts, common.ts)
@@ -137,8 +137,7 @@ bun run changeset:release
 ### Monorepo Structure
 - **`apps/`** - Frontend applications
   - `wallet/` - TanStack Router user wallet (SSR disabled, module-based architecture)
-  - `business/` - TanStack Start business dashboard (SSR enabled)
-  - `dashboard-admin/` - TanStack Router admin interface
+  - `business/` - TanStack Router business dashboard (SPA, nginx in production)
   - `listener/` - Iframe communication app for SDK interactions
 - **`packages/`** - Shared internal libraries (workspace-only)
   - `test-foundation/` - Centralized test configuration and utilities (`@frak-labs/test-foundation`)
@@ -156,7 +155,7 @@ bun run changeset:release
       - `types/` - Shared TypeScript type definitions (Session, Balance, WebAuthN, etc.)
       - `common/` - Shared utilities (components, analytics via OpenPanel, storage via idb-keyval)
       - `blockchain/` - Blockchain providers (Viem, Account Abstraction, connectors)
-      - `i18n/` - Internationalization configuration (react-i18next setup)
+      - `i18n/` - Internationalization configuration (react-i18next setup, `bun run i18n:types` to regenerate types)
       - `sdk/` - SDK lifecycle utilities and event handlers
       - `providers/` - React context providers (FrakContext for SDK integration)
       - `polyfills/` - Runtime polyfills (BigInt serialization)
@@ -188,7 +187,7 @@ bun run changeset:release
 - **`example/`** - Integration examples
 
 ### Key Technologies
-- **Frontend**: React 19, TanStack Query, Zustand, Viem, Wagmi, CSS Modules, TanStack Start, TanStack Router
+- **Frontend**: React 19, TanStack Query, Zustand, Viem, Wagmi, CSS Modules, TanStack Router
 - **Styling**: Lightning CSS for all Vite apps (wallet, listener, business, showcase)
 - **Backend**: Elysia.js, PostgreSQL (Drizzle ORM), MongoDB
 - **Blockchain**: Account Abstraction (ERC-4337), WebAuthn, Multi-chain support, Pimlico, ZeroDev
@@ -220,17 +219,14 @@ bun run dev          # Development (builds service worker first, then starts SST
 bun run build        # Production build (builds service worker, then TanStack Router)
 bun run build:sw     # Build service worker separately (vite --mode sw)
 bun run typecheck    # Type checking with TanStack Router typegen (run typegen first)
-bun run i18n:types   # Generate i18n types from locales
 bun run bundle:check # Analyze bundle with vite-bundle-visualizer
 ```
 
 **Business Dashboard (`apps/business/`)**:
 ```bash
 cd apps/business
-bun run dev          # TanStack Start development (Vite dev server on port 3022)
-bun run build        # Production build (Nitro output)
-bun run start        # Preview production build locally
-bun run start:prod   # Run production build
+bun run dev          # SST dev + Vite (port 3001)
+bun run build        # Production build (static output)
 bun run typecheck    # Type checking
 bun run test         # Run Vitest tests
 ```
@@ -318,3 +314,4 @@ All SDK packages use tsdown (powered by Rolldown) for building both NPM and CDN 
 - **Module Architecture**: Wallet app organizes code by feature modules in `app/module/`, backend by domains in `src/domain/`
 - **WebAuthn + ERC-4337**: Core authentication flow combines WebAuthn passkeys with Account Abstraction smart wallets
 - **Multi-chain Support**: Viem abstractions enable seamless blockchain interactions across multiple networks
+- Vite aliased to `rolldown-vite` (`npm:rolldown-vite@^7.3.1`) — faster Rust-based bundler

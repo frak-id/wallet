@@ -6,14 +6,15 @@ import { queryClient } from "@/module/common/provider/RootProvider";
 import { ButtonSendPush } from "@/module/members/component/ButtonSendPush";
 import { TableMembers } from "@/module/members/component/TableMembers";
 import { membersPageQueryOptions } from "@/module/members/queries/queryOptions";
+import { useAuthStore } from "@/stores/authStore";
 import { membersStore } from "@/stores/membersStore";
 
 export const Route = createFileRoute("/_restricted/members")({
-    // Prefetch first page of members
     loader: () => {
         const initialFilters = membersStore.getState().tableFilters;
-        return queryClient.ensureQueryData(
-            membersPageQueryOptions(initialFilters)
+        const isDemoMode = useAuthStore.getState().token === "demo-token";
+        queryClient.prefetchQuery(
+            membersPageQueryOptions(initialFilters, isDemoMode)
         );
     },
     component: MembersListPage,

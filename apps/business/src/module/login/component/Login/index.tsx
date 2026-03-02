@@ -4,7 +4,7 @@ import { Spinner } from "@frak-labs/ui/component/Spinner";
 import { useMediaQuery } from "@frak-labs/ui/hook/useMediaQuery";
 import { useNavigate } from "@tanstack/react-router";
 import { useTransition } from "react";
-import { authenticatedBackendApi } from "@/context/api/backendClient";
+import { authenticatedBackendApi } from "@/api/backendClient";
 import { useAuthStore } from "@/stores/authStore";
 import styles from "./index.module.css";
 import logo from "./logo-frak.svg";
@@ -28,7 +28,6 @@ export function Login() {
                     return;
                 }
 
-                // Store token in Zustand
                 useAuthStore
                     .getState()
                     .setAuth(
@@ -37,7 +36,6 @@ export function Login() {
                         response.data.expiresAt
                     );
 
-                // Redirect to /dashboard
                 startTransition(() => {
                     navigate({ to: "/dashboard" });
                 });
@@ -109,7 +107,7 @@ export function Login() {
                 </div>
             </div>
             <footer className={styles.footer}>
-                <p>© 2024 Frak Labs Copyright and rights reserved</p>
+                <p>© 2026 Frak Labs Copyright and rights reserved</p>
                 <ul className={styles.list}>
                     <li className={styles.list__item}>
                         <a href="/">Terms and Conditions</a>

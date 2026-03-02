@@ -26,44 +26,24 @@ test("should open embeded wallet on js trigger", async ({
     await modalPage.verifyModalNotDisplayed();
 });
 
-// Verify  disabled share and copy buttons with disable session
-test("should display disabled copy and share button when disable session", async ({
+// Verify copy and share buttons are enabled
+test("should display enabled copy and share buttons", async ({
     sdkHelper,
     modalPage,
-    blockchainHelper,
 }) => {
-    await blockchainHelper.withDisabledSession();
-    await sdkHelper.init();
-
-    await sdkHelper.openWalletModal();
-    await modalPage.verifyModalDisplayed();
-    await modalPage.verifyDisableCopyAndShareButton();
-    await modalPage.verifyDesactivatedButton();
-});
-
-// Verify  enabled copy and share button with enable session
-test("should display enabled copy and share button when enable session", async ({
-    sdkHelper,
-    modalPage,
-    blockchainHelper,
-}) => {
-    await blockchainHelper.withEnabledSession();
     await sdkHelper.init();
 
     await sdkHelper.openWalletModal();
     await modalPage.verifyModalDisplayed();
     await modalPage.verifyEnableCopyAndShareButton();
-    await modalPage.verifyActivatedButton();
 });
 
-// Click copy button with enable session
+// Click copy button
 test("should be able to click the copy button", async ({
     sdkHelper,
     modalPage,
-    blockchainHelper,
     clipboardHelper,
 }) => {
-    await blockchainHelper.withEnabledSession();
     await sdkHelper.init();
 
     await sdkHelper.openWalletModal();
@@ -72,13 +52,11 @@ test("should be able to click the copy button", async ({
     await clipboardHelper.verifyClipboardNotEmpty();
 });
 
-// Click share button whith enable session
+// Click share button
 test("should be able to click the share button", async ({
     sdkHelper,
     modalPage,
-    blockchainHelper,
 }) => {
-    await blockchainHelper.withEnabledSession();
     await sdkHelper.init();
 
     await sdkHelper.openWalletModal();
@@ -87,11 +65,9 @@ test("should be able to click the share button", async ({
 });
 
 // Verify that the sharing window api as been called
-
 test("should call navigator.share with correct data when Share button is clicked", async ({
     sdkHelper,
     modalPage,
-    blockchainHelper,
     page,
 }) => {
     type WindowOverride = typeof window & {
@@ -113,7 +89,6 @@ test("should call navigator.share with correct data when Share button is clicked
         };
     });
 
-    await blockchainHelper.withEnabledSession();
     await sdkHelper.init();
     await sdkHelper.openWalletModal();
     await modalPage.verifyModalDisplayed();

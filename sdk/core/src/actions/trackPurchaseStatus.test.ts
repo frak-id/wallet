@@ -1,86 +1,271 @@
-/**
- * Tests for trackPurchaseStatus action
- * Tests webhook registration for purchase tracking
- */
-
+import { vi } from "vitest";
 import {
     afterEach,
     beforeEach,
     describe,
     expect,
-    it,
-    vi,
+    test,
 } from "../../tests/vitest-fixtures";
+
+vi.mock("../utils/clientId", () => ({
+    getClientId: vi.fn().mockReturnValue("test-client-id"),
+}));
+
+vi.mock("../utils/merchantId", () => ({
+    fetchMerchantId: vi.fn().mockResolvedValue(undefined),
+}));
+
+import { getClientId } from "../utils/clientId";
+import { fetchMerchantId } from "../utils/merchantId";
 import { trackPurchaseStatus } from "./trackPurchaseStatus";
 
-describe("trackPurchaseStatus", () => {
+describe.sequential("trackPurchaseStatus", () => {
+    const TRACK_PURCHASE_URL = "https://backend.frak.id/user/track/purchase";
+
     let mockSessionStorage: {
         getItem: ReturnType<typeof vi.fn>;
         setItem: ReturnType<typeof vi.fn>;
         removeItem: ReturnType<typeof vi.fn>;
     };
-    let fetchSpy: any;
-    let consoleWarnSpy: any;
+    let mockLocalStorage: {
+        getItem: ReturnType<typeof vi.fn>;
+        setItem: ReturnType<typeof vi.fn>;
+        removeItem: ReturnType<typeof vi.fn>;
+    };
+    let fetchSpy: ReturnType<typeof vi.fn>;
+    let consoleWarnSpy: ReturnType<typeof vi.spyOn>;
+
+    function setupStorage(values: {
+        interactionToken?: string | null;
+        merchantId?: string | null;
+        clientId?: string | null;
+    }) {
+        mockSessionStorage.getItem.mockImplementation((key: string) => {
+            if (key === "frak-wallet-interaction-token") {
+                return values.interactionToken ?? null;
+            }
+            if (key === "frak-merchant-id") {
+                return values.merchantId ?? null;
+            }
+            return null;
+        });
+
+        mockLocalStorage.getItem.mockImplementation((key: string) => {
+            if (key === "frak-client-id") {
+                return values.clientId ?? null;
+            }
+            return null;
+        });
+    }
+
+    function getTrackingRequests() {
+        return fetchSpy.mock.calls.filter(
+            ([url]) => url === TRACK_PURCHASE_URL
+        );
+    }
+
+    function getLastTrackingRequest() {
+        return getTrackingRequests().at(-1);
+    }
 
     beforeEach(() => {
-        // Mock sessionStorage
         mockSessionStorage = {
             getItem: vi.fn(),
             setItem: vi.fn(),
             removeItem: vi.fn(),
         };
+
+        mockLocalStorage = {
+            getItem: vi.fn(),
+            setItem: vi.fn(),
+            removeItem: vi.fn(),
+        };
+
         Object.defineProperty(window, "sessionStorage", {
             value: mockSessionStorage,
             writable: true,
             configurable: true,
         });
 
-        // Mock fetch
+        Object.defineProperty(window, "localStorage", {
+            value: mockLocalStorage,
+            writable: true,
+            configurable: true,
+        });
+
+        setupStorage({
+            interactionToken: "token-123",
+            merchantId: null,
+            clientId: "test-client-id",
+        });
+
+        vi.mocked(getClientId).mockReturnValue("test-client-id");
+        vi.mocked(fetchMerchantId).mockResolvedValue(undefined);
+
         fetchSpy = vi.fn().mockResolvedValue({
             ok: true,
             status: 200,
         });
-        global.fetch = fetchSpy;
+        global.fetch = fetchSpy as typeof fetch;
 
-        // Mock console.warn
         consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
     });
 
     afterEach(() => {
-        vi.clearAllMocks();
         consoleWarnSpy.mockRestore();
+        vi.clearAllMocks();
     });
 
     describe("successful tracking", () => {
-        it("should send POST request with correct parameters", async () => {
-            mockSessionStorage.getItem.mockReturnValue("token-123");
+        test("should send POST request with correct parameters including merchantId", async () => {
+            const callCountBefore = getTrackingRequests().length;
 
             await trackPurchaseStatus({
                 customerId: "cust-456",
                 orderId: "order-789",
                 token: "purchase-token",
+                merchantId: "merchant-explicit",
             });
 
-            expect(fetchSpy).toHaveBeenCalledWith(
-                "https://backend.frak.id/interactions/listenForPurchase",
+            expect(getTrackingRequests().length).toBe(callCountBefore + 1);
+            expect(getLastTrackingRequest()).toEqual([
+                TRACK_PURCHASE_URL,
                 {
                     method: "POST",
                     headers: {
                         Accept: "application/json",
                         "Content-Type": "application/json",
                         "x-wallet-sdk-auth": "token-123",
+                        "x-frak-client-id": "test-client-id",
                     },
                     body: JSON.stringify({
                         customerId: "cust-456",
                         orderId: "order-789",
                         token: "purchase-token",
+                        merchantId: "merchant-explicit",
                     }),
-                }
+                },
+            ]);
+        });
+
+        test("should include x-frak-client-id header", async () => {
+            setupStorage({
+                interactionToken: null,
+                merchantId: null,
+                clientId: "test-client-id",
+            });
+
+            await trackPurchaseStatus({
+                customerId: "cust-1",
+                orderId: "order-1",
+                token: "token-1",
+                merchantId: "merchant-1",
+            });
+
+            const requestInit = getLastTrackingRequest()?.[1] as {
+                headers: Record<string, string>;
+            };
+            expect(requestInit.headers).toEqual({
+                Accept: "application/json",
+                "Content-Type": "application/json",
+                "x-frak-client-id": "test-client-id",
+            });
+        });
+
+        test("should include x-wallet-sdk-auth header when interaction token exists", async () => {
+            await trackPurchaseStatus({
+                customerId: "cust-1",
+                orderId: "order-1",
+                token: "token-1",
+                merchantId: "merchant-1",
+            });
+
+            const requestInit = getLastTrackingRequest()?.[1] as {
+                headers: Record<string, string>;
+            };
+            expect(requestInit.headers).toEqual({
+                Accept: "application/json",
+                "Content-Type": "application/json",
+                "x-wallet-sdk-auth": "token-123",
+                "x-frak-client-id": "test-client-id",
+            });
+        });
+
+        test("should handle numeric customerId and orderId", async () => {
+            await trackPurchaseStatus({
+                customerId: 12345,
+                orderId: 67890,
+                token: "purchase-token",
+                merchantId: "merchant-1",
+            });
+
+            const requestInit = getLastTrackingRequest()?.[1] as {
+                body: string;
+            };
+            expect(requestInit.body).toBe(
+                JSON.stringify({
+                    customerId: 12345,
+                    orderId: 67890,
+                    token: "purchase-token",
+                    merchantId: "merchant-1",
+                })
             );
         });
 
-        it("should read interaction token from sessionStorage", async () => {
-            mockSessionStorage.getItem.mockReturnValue("my-token");
+        test("should use new endpoint URL /user/track/purchase", async () => {
+            await trackPurchaseStatus({
+                customerId: "cust-1",
+                orderId: "order-1",
+                token: "token-1",
+                merchantId: "merchant-1",
+            });
+
+            expect(getLastTrackingRequest()?.[0]).toBe(TRACK_PURCHASE_URL);
+        });
+    });
+
+    describe("merchantId resolution", () => {
+        test("should resolve merchantId from explicit param first", async () => {
+            setupStorage({
+                interactionToken: "token-123",
+                merchantId: "session-merchant-id",
+                clientId: "test-client-id",
+            });
+            vi.mocked(fetchMerchantId).mockResolvedValue("fetched-merchant-id");
+            const merchantLookupCallsBefore =
+                vi.mocked(fetchMerchantId).mock.calls.length;
+
+            await trackPurchaseStatus({
+                customerId: "cust-1",
+                orderId: "order-1",
+                token: "token-1",
+                merchantId: "explicit-merchant-id",
+            });
+
+            const requestInit = getLastTrackingRequest()?.[1] as {
+                body: string;
+            };
+            expect(requestInit.body).toBe(
+                JSON.stringify({
+                    customerId: "cust-1",
+                    orderId: "order-1",
+                    token: "token-1",
+                    merchantId: "explicit-merchant-id",
+                })
+            );
+            expect(vi.mocked(fetchMerchantId).mock.calls.length).toBe(
+                merchantLookupCallsBefore
+            );
+        });
+
+        test("should fall back to sessionStorage for merchantId", async () => {
+            setupStorage({
+                interactionToken: "token-123",
+                merchantId: "session-merchant-id",
+                clientId: "test-client-id",
+            });
+            const merchantLookupCallsBefore =
+                vi.mocked(fetchMerchantId).mock.calls.length;
 
             await trackPurchaseStatus({
                 customerId: "cust-1",
@@ -88,79 +273,152 @@ describe("trackPurchaseStatus", () => {
                 token: "token-1",
             });
 
-            expect(mockSessionStorage.getItem).toHaveBeenCalledWith(
-                "frak-wallet-interaction-token"
+            const requestInit = getLastTrackingRequest()?.[1] as {
+                body: string;
+            };
+            expect(requestInit.body).toBe(
+                JSON.stringify({
+                    customerId: "cust-1",
+                    orderId: "order-1",
+                    token: "token-1",
+                    merchantId: "session-merchant-id",
+                })
             );
-            expect(fetchSpy).toHaveBeenCalled();
+            expect(vi.mocked(fetchMerchantId).mock.calls.length).toBe(
+                merchantLookupCallsBefore
+            );
         });
 
-        it("should handle numeric customerId", async () => {
-            mockSessionStorage.getItem.mockReturnValue("token-123");
+        test("should fall back to fetchMerchantId when no explicit or sessionStorage", async () => {
+            setupStorage({
+                interactionToken: "token-123",
+                merchantId: null,
+                clientId: "test-client-id",
+            });
+            vi.mocked(fetchMerchantId).mockResolvedValue("fetched-merchant-id");
 
             await trackPurchaseStatus({
-                customerId: 12345,
-                orderId: "order-789",
-                token: "purchase-token",
+                customerId: "cust-1",
+                orderId: "order-1",
+                token: "token-1",
             });
 
-            expect(fetchSpy).toHaveBeenCalledWith(
-                expect.any(String),
-                expect.objectContaining({
-                    body: JSON.stringify({
-                        customerId: 12345,
-                        orderId: "order-789",
-                        token: "purchase-token",
-                    }),
+            const requestInit = getLastTrackingRequest()?.[1] as {
+                body: string;
+            };
+            expect(requestInit.body).toBe(
+                JSON.stringify({
+                    customerId: "cust-1",
+                    orderId: "order-1",
+                    token: "token-1",
+                    merchantId: "fetched-merchant-id",
                 })
             );
         });
 
-        it("should handle numeric orderId", async () => {
-            mockSessionStorage.getItem.mockReturnValue("token-123");
+        test("should warn and skip when no merchantId available", async () => {
+            setupStorage({
+                interactionToken: "token-123",
+                merchantId: null,
+                clientId: "test-client-id",
+            });
+            vi.mocked(fetchMerchantId).mockResolvedValue(undefined);
+            const callCountBefore = getTrackingRequests().length;
 
             await trackPurchaseStatus({
-                customerId: "cust-456",
-                orderId: 67890,
-                token: "purchase-token",
+                customerId: "cust-1",
+                orderId: "order-1",
+                token: "token-1",
             });
 
-            expect(fetchSpy).toHaveBeenCalledWith(
-                expect.any(String),
-                expect.objectContaining({
-                    body: JSON.stringify({
-                        customerId: "cust-456",
-                        orderId: 67890,
-                        token: "purchase-token",
-                    }),
-                })
+            expect(consoleWarnSpy).toHaveBeenCalledWith(
+                "[Frak] No merchant id found, skipping purchase check"
             );
-        });
-
-        it("should handle both numeric customerId and orderId", async () => {
-            mockSessionStorage.getItem.mockReturnValue("token-123");
-
-            await trackPurchaseStatus({
-                customerId: 12345,
-                orderId: 67890,
-                token: "purchase-token",
-            });
-
-            expect(fetchSpy).toHaveBeenCalledWith(
-                expect.any(String),
-                expect.objectContaining({
-                    body: JSON.stringify({
-                        customerId: 12345,
-                        orderId: 67890,
-                        token: "purchase-token",
-                    }),
-                })
-            );
+            expect(getTrackingRequests().length).toBe(callCountBefore);
         });
     });
 
-    describe("missing interaction token", () => {
-        it("should warn when no interaction token found", async () => {
-            mockSessionStorage.getItem.mockReturnValue(null);
+    describe("anonymous user support", () => {
+        test("should send request with only x-frak-client-id when no interaction token", async () => {
+            setupStorage({
+                interactionToken: null,
+                merchantId: null,
+                clientId: "test-client-id",
+            });
+
+            await trackPurchaseStatus({
+                customerId: "cust-1",
+                orderId: "order-1",
+                token: "token-1",
+                merchantId: "merchant-1",
+            });
+
+            const requestInit = getLastTrackingRequest()?.[1] as {
+                headers: Record<string, string>;
+            };
+            expect(requestInit.headers).toEqual({
+                Accept: "application/json",
+                "Content-Type": "application/json",
+                "x-frak-client-id": "test-client-id",
+            });
+        });
+
+        test("should send request with both headers when both available", async () => {
+            setupStorage({
+                interactionToken: "token-123",
+                merchantId: null,
+                clientId: "test-client-id",
+            });
+
+            await trackPurchaseStatus({
+                customerId: "cust-1",
+                orderId: "order-1",
+                token: "token-1",
+                merchantId: "merchant-1",
+            });
+
+            const requestInit = getLastTrackingRequest()?.[1] as {
+                headers: Record<string, string>;
+            };
+            expect(requestInit.headers).toEqual({
+                Accept: "application/json",
+                "Content-Type": "application/json",
+                "x-wallet-sdk-auth": "token-123",
+                "x-frak-client-id": "test-client-id",
+            });
+        });
+
+        test("should skip when no identity available", async () => {
+            setupStorage({
+                interactionToken: null,
+                merchantId: "merchant-1",
+                clientId: null,
+            });
+            vi.mocked(getClientId).mockReturnValue("");
+            const callCountBefore = getTrackingRequests().length;
+
+            await trackPurchaseStatus({
+                customerId: "cust-1",
+                orderId: "order-1",
+                token: "token-1",
+            });
+
+            expect(consoleWarnSpy).toHaveBeenCalledWith(
+                "[Frak] No identity found, skipping purchase check"
+            );
+            expect(getTrackingRequests().length).toBe(callCountBefore);
+        });
+    });
+
+    describe("missing identity", () => {
+        test("should warn when no identity sources available", async () => {
+            setupStorage({
+                interactionToken: null,
+                merchantId: "merchant-1",
+                clientId: null,
+            });
+            vi.mocked(getClientId).mockReturnValue("");
+            const callCountBefore = getTrackingRequests().length;
 
             await trackPurchaseStatus({
                 customerId: "cust-456",
@@ -169,119 +427,74 @@ describe("trackPurchaseStatus", () => {
             });
 
             expect(consoleWarnSpy).toHaveBeenCalledWith(
-                "[Frak] No frak session found, skipping purchase check"
+                "[Frak] No identity found, skipping purchase check"
             );
+            expect(getTrackingRequests().length).toBe(callCountBefore);
         });
+    });
 
-        it("should not send request when no interaction token", async () => {
-            mockSessionStorage.getItem.mockReturnValue(null);
+    describe("non-browser environment", () => {
+        test("should warn and skip when window is undefined", async () => {
+            const savedWindow = globalThis.window;
+            Reflect.deleteProperty(globalThis, "window");
+            const callCountBefore = getTrackingRequests().length;
 
-            await trackPurchaseStatus({
-                customerId: "cust-456",
-                orderId: "order-789",
-                token: "purchase-token",
-            });
+            try {
+                await trackPurchaseStatus({
+                    customerId: "cust-1",
+                    orderId: "order-1",
+                    token: "token-1",
+                    merchantId: "merchant-1",
+                });
+            } finally {
+                Object.defineProperty(globalThis, "window", {
+                    value: savedWindow,
+                    writable: true,
+                    configurable: true,
+                });
+            }
 
-            expect(fetchSpy).not.toHaveBeenCalled();
-        });
-
-        it("should not send request when interaction token is empty string", async () => {
-            mockSessionStorage.getItem.mockReturnValue("");
-
-            await trackPurchaseStatus({
-                customerId: "cust-456",
-                orderId: "order-789",
-                token: "purchase-token",
-            });
-
-            expect(fetchSpy).not.toHaveBeenCalled();
+            expect(consoleWarnSpy).toHaveBeenCalledWith(
+                "[Frak] No window found, can't track purchase"
+            );
+            expect(getTrackingRequests().length).toBe(callCountBefore);
         });
     });
 
     describe("network errors", () => {
-        it("should handle fetch rejection", async () => {
-            mockSessionStorage.getItem.mockReturnValue("token-123");
-            fetchSpy.mockRejectedValue(new Error("Network error"));
+        test("should handle fetch rejection", async () => {
+            vi.mocked(getClientId).mockReturnValue("test-client-id");
+            setupStorage({
+                interactionToken: "token-123",
+                merchantId: null,
+                clientId: "test-client-id",
+            });
+            fetchSpy.mockRejectedValueOnce(new Error("Network error"));
 
             await expect(
                 trackPurchaseStatus({
                     customerId: "cust-456",
                     orderId: "order-789",
                     token: "purchase-token",
+                    merchantId: "merchant-1",
                 })
             ).rejects.toThrow("Network error");
         });
 
-        it("should handle fetch with error response", async () => {
-            mockSessionStorage.getItem.mockReturnValue("token-123");
+        test("should handle fetch with error response", async () => {
             fetchSpy.mockResolvedValue({
                 ok: false,
                 status: 500,
             });
 
-            // Function doesn't check response, so it should complete
             await trackPurchaseStatus({
                 customerId: "cust-456",
                 orderId: "order-789",
                 token: "purchase-token",
+                merchantId: "merchant-1",
             });
 
             expect(fetchSpy).toHaveBeenCalled();
-        });
-    });
-
-    describe("request format", () => {
-        it("should include correct headers", async () => {
-            mockSessionStorage.getItem.mockReturnValue("my-auth-token");
-
-            await trackPurchaseStatus({
-                customerId: "cust-1",
-                orderId: "order-1",
-                token: "token-1",
-            });
-
-            expect(fetchSpy).toHaveBeenCalledWith(
-                expect.any(String),
-                expect.objectContaining({
-                    headers: {
-                        Accept: "application/json",
-                        "Content-Type": "application/json",
-                        "x-wallet-sdk-auth": "my-auth-token",
-                    },
-                })
-            );
-        });
-
-        it("should use POST method", async () => {
-            mockSessionStorage.getItem.mockReturnValue("token-123");
-
-            await trackPurchaseStatus({
-                customerId: "cust-1",
-                orderId: "order-1",
-                token: "token-1",
-            });
-
-            expect(fetchSpy).toHaveBeenCalledWith(
-                expect.any(String),
-                expect.objectContaining({
-                    method: "POST",
-                })
-            );
-        });
-
-        it("should target correct backend URL", async () => {
-            mockSessionStorage.getItem.mockReturnValue("token-123");
-
-            await trackPurchaseStatus({
-                customerId: "cust-1",
-                orderId: "order-1",
-                token: "token-1",
-            });
-
-            expect(fetchSpy).toHaveBeenCalledWith(
-                "https://backend.frak.id/interactions/listenForPurchase",
-                expect.any(Object)
-            );
         });
     });
 });

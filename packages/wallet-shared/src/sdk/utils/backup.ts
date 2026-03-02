@@ -1,12 +1,6 @@
 import { base64urlDecode, base64urlEncode } from "@frak-labs/core-sdk";
-import {
-    decompressDataAndCheckHash,
-    hashAndCompressData,
-} from "@frak-labs/frame-connector";
-import type { Hex } from "viem";
+import { sha256 } from "viem";
 import { sessionStore } from "../../stores/sessionStore";
-import { walletStore } from "../../stores/walletStore";
-import type { PendingInteraction } from "../../types/Interaction";
 import type { SdkSession, Session } from "../../types/Session";
 import { emitLifecycleEvent } from "./lifecycleEvents";
 
@@ -14,43 +8,59 @@ import { emitLifecycleEvent } from "./lifecycleEvents";
  * Represent backed up data
  */
 type BackupData = {
-    productId: Hex;
+    domain: string;
     session?: Session;
-    pendingInteractions?: PendingInteraction[];
     sdkSession?: SdkSession;
     expireAtTimestamp: number;
 };
 
 /**
+ * Backup data with hash validation
+ */
+type HashProtectedBackup = BackupData & { validationHash: string };
+
+/**
+ * Hash JSON data with SHA256
+ * @param data - Data to hash
+ * @returns SHA256 hash as hex string
+ */
+function hashJson(data: unknown): string {
+    return sha256(new TextEncoder().encode(JSON.stringify(data)));
+}
+
+/**
  * Restore received backup data
  * @param backup
- * @param productId
+ * @param domain
  */
 export async function restoreBackupData({
     backup,
-    productId,
+    domain,
 }: {
     backup: string;
-    productId: Hex;
+    domain: string;
 }) {
-    // Decompress the backup data and
     let data: BackupData | undefined;
     try {
-        const decompressed = base64urlDecode(backup);
-        data = decompressDataAndCheckHash<BackupData>(decompressed);
+        // Decode base64url + JSON
+        const decoded = JSON.parse(
+            new TextDecoder().decode(base64urlDecode(backup))
+        ) as HashProtectedBackup;
+
+        // Extract and verify hash
+        const { validationHash, ...backupData } = decoded;
+        if (hashJson(backupData) !== validationHash) {
+            throw new Error("Invalid backup hash");
+        }
+
+        data = backupData;
     } catch (e) {
-        console.error("Error decompressing backup data", {
-            e,
-            backup,
-        });
-    }
-    if (!data) {
-        console.log("restoreBackupData - invalid backup data", { data });
+        console.error("[Backup] Failed to restore:", e);
         return;
     }
 
-    // Ensure that the backup data is for the current product
-    if (data.productId !== productId) {
+    // Ensure that the backup data is for the current domain
+    if (data.domain !== domain) {
         throw new Error("Invalid backup data");
     }
 
@@ -69,58 +79,58 @@ export async function restoreBackupData({
     if (data.sdkSession) {
         sessionStore.getState().setSdkSession(data.sdkSession);
     }
-    if (data.pendingInteractions) {
-        walletStore.getState().addPendingInteractions(data.pendingInteractions);
-    }
 }
 
 /**
  * Push new backup data
  */
-export async function pushBackupData(args?: { productId?: Hex }) {
-    // Get the product ID from args (optional for cleanup scenarios)
-    const productId = args?.productId;
-    if (!productId) {
-        console.log("No productId provided - skipping backup");
+export async function pushBackupData(args?: { domain?: string }) {
+    // Get the domain from args (optional for cleanup scenarios)
+    const domain = args?.domain;
+    if (!domain) {
+        console.log("[Backup] No domain provided - skipping backup");
         return;
     }
     // Get the current backup data from stores
     const sessionState = sessionStore.getState();
-    const walletState = walletStore.getState();
 
     const session = sessionState.session;
     const sdkSession = sessionState.sdkSession;
-    const pendingInteractions = walletState.pendingInteractions.interactions;
 
     // Build backup datas
     const backup: BackupData = {
         session: session?.token ? session : undefined,
         sdkSession: sdkSession?.token ? sdkSession : undefined,
-        pendingInteractions,
-        productId,
+        domain,
         // Backup will expire in a week
         expireAtTimestamp: Date.now() + 7 * 24 * 60 * 60_000,
     };
-    console.log("Pushing new backup data to parent client", { backup });
+    console.log("[Backup] Pushing new backup data to parent client", {
+        backup,
+    });
 
     // If nothing to back up, just remove it
-    if (
-        !backup.session?.token &&
-        !backup.sdkSession?.token &&
-        !backup.pendingInteractions?.length
-    ) {
+    if (!backup.session?.token && !backup.sdkSession?.token) {
         emitLifecycleEvent({
             iframeLifecycle: "remove-backup",
         });
         return;
     }
 
-    // Create a compressed backup
-    const compressedBackup = hashAndCompressData(backup);
+    // Add hash to backup data
+    const hashProtected: HashProtectedBackup = {
+        ...backup,
+        validationHash: hashJson(backup),
+    };
+
+    // Encode as JSON + base64url
+    const encoded = base64urlEncode(
+        new TextEncoder().encode(JSON.stringify(hashProtected))
+    );
 
     // And then push the event
     emitLifecycleEvent({
         iframeLifecycle: "do-backup",
-        data: { backup: base64urlEncode(compressedBackup) },
+        data: { backup: encoded },
     });
 }

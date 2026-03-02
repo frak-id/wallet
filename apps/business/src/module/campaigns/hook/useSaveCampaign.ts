@@ -1,38 +1,78 @@
-import { useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
-import { saveCampaignDraft } from "@/context/campaigns/action/createCampaign";
-import { campaignStore } from "@/stores/campaignStore";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+    createCampaign,
+    updateCampaign,
+} from "@/module/campaigns/api/campaignApi";
+import { useIsDemoMode } from "@/module/common/atoms/demoMode";
+import {
+    buildApiPayload,
+    type CampaignDraft,
+    campaignStore,
+} from "@/stores/campaignStore";
 import type { Campaign } from "@/types/Campaign";
 
+function buildDemoCampaign(draft: CampaignDraft): Campaign {
+    return {
+        id: draft.id ?? crypto.randomUUID(),
+        merchantId: draft.merchantId,
+        name: draft.name,
+        status: "draft",
+        createdAt: new Date().toISOString(),
+        publishedAt: null,
+        rule: draft.rule,
+        metadata: draft.metadata,
+        budgetConfig: draft.budgetConfig,
+        budgetUsed: null,
+        expiresAt: null,
+        priority: draft.priority,
+    } as Campaign;
+}
+
 export function useSaveCampaign() {
-    const setCampaign = campaignStore((state) => state.setCampaign);
-    const setStep = campaignStore((state) => state.setStep);
-    const campaignIsClosing = campaignStore((state) => state.isClosing);
     const queryClient = useQueryClient();
-    const navigate = useNavigate();
+    const isDemoMode = useIsDemoMode();
 
-    return async function save(values: Campaign) {
-        setCampaign(values);
+    return useMutation({
+        mutationKey: ["campaigns", "save"],
+        mutationFn: async (draft: CampaignDraft): Promise<Campaign> => {
+            if (isDemoMode) {
+                await new Promise((resolve) => setTimeout(resolve, 300));
+                const demoCampaign = buildDemoCampaign(draft);
+                campaignStore.getState().updateDraft((d) => ({
+                    ...d,
+                    id: demoCampaign.id,
+                }));
+                return demoCampaign;
+            }
 
-        if (campaignIsClosing) {
-            const { id } = await saveCampaignDraft({
-                data: { campaign: values },
-            });
-            if (id) {
-                setCampaign({ ...values, id });
-                // Invalidate my campaigns query
-                await queryClient.invalidateQueries({
-                    queryKey: ["campaigns", "my-campaigns"],
-                });
-                // Invalidate campaign query
-                await queryClient.invalidateQueries({
-                    queryKey: ["campaign", id],
+            const payload = buildApiPayload(draft);
+            if (draft.id) {
+                // On update, only send rule if rewards are present.
+                // The backend validates rule.rewards on PUT but not
+                // on POST (create). Step 1 doesn't manage rewards
+                // (that's step 2), so sending an empty rewards array
+                // on update causes a 400 "Rule must have at least
+                // one reward".
+                const { rule, ...rest } = payload;
+                const includeRule = rule.rewards.length > 0;
+                return updateCampaign({
+                    campaignId: draft.id,
+                    ...rest,
+                    ...(includeRule ? { rule } : {}),
                 });
             }
-            setTimeout(() => navigate({ to: "/campaigns/list" }), 0);
-            return;
-        }
-
-        setStep((prev) => prev + 1);
-    };
+            const created = await createCampaign(payload);
+            campaignStore.getState().updateDraft((d) => ({
+                ...d,
+                id: created.id,
+            }));
+            return created;
+        },
+        onSuccess: async (campaign) => {
+            await queryClient.invalidateQueries({ queryKey: ["campaigns"] });
+            await queryClient.invalidateQueries({
+                queryKey: ["campaign", campaign.id],
+            });
+        },
+    });
 }

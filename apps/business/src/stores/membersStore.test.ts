@@ -1,4 +1,4 @@
-import type { GetMembersParam } from "@/context/members/action/getProductMembers";
+import type { GetMembersParam } from "@/module/members/api/getMerchantMembers";
 import {
     createMockAddress,
     describe,

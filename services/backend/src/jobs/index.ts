@@ -1,9 +1,13 @@
 import { Elysia } from "elysia";
-import { interactionsJobs } from "./interactions";
-import { oracleJobs } from "./oracle";
+import { attributionJobs } from "./attribution";
+import { expirationJobs } from "./expiration";
 import { pairingJobs } from "./pairing";
+import { rewardCalculationJobs } from "./rewardCalculation";
+import { settlementJobs } from "./settlement";
 
 export const jobs = new Elysia({ name: "Jobs" })
     .use(pairingJobs)
-    .use(interactionsJobs)
-    .use(oracleJobs);
+    .use(attributionJobs)
+    .use(rewardCalculationJobs)
+    .use(settlementJobs)
+    .use(expirationJobs);

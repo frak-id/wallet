@@ -1,0 +1,33 @@
+# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "de34932679bc2a2c5a8dddb21a216247"
+name = "FrakDev"
+application_url = "https://extension-shop-dev.frak.id"
+embedded = true
+handle = "frakdev"
+
+[build]
+automatically_update_urls_on_dev = true
+include_config_on_deploy = true
+
+[webhooks]
+api_version = "2025-01"
+
+  [[webhooks.subscriptions]]
+  topics = [ "app_purchases_one_time/update", "app/uninstalled" ]
+  uri = "/webhooks"
+  compliance_topics = [ "customers/data_request", "customers/redact", "shop/redact" ]
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "read_customer_events,read_orders,read_pixels,read_products,read_themes,write_pixels"
+
+[auth]
+redirect_urls = [
+  "https://extension-shop-dev.frak.id/auth/callback",
+  "https://extension-shop-dev.frak.id/auth/shopify/callback",
+  "https://extension-shop-dev.frak.id/api/auth/callback"
+]
+
+[pos]
+embedded = false

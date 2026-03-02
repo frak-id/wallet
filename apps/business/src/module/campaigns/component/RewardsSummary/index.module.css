@@ -1,0 +1,55 @@
+.rewards__empty {
+    font-size: 14px;
+    color: var(--frak-color-gray-9);
+    font-style: italic;
+    padding: 8px 12px;
+    background: var(--frak-color-gray-1);
+    border: 1px solid var(--frak-color-gray-4);
+    border-radius: var(--frak-radius-2);
+}
+
+.rewards__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.rewards__item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 14px;
+    color: var(--frak-color-gray-11);
+    padding: 8px 12px;
+    background: var(--frak-color-gray-1);
+    border: 1px solid var(--frak-color-gray-4);
+    border-radius: var(--frak-radius-2);
+}
+
+.rewards__recipient {
+    font-weight: 500;
+    color: var(--frak-color-gray-12);
+}
+
+.rewards__separator {
+    color: var(--frak-color-gray-9);
+}
+
+.rewards__amount {
+    font-weight: 600;
+    color: var(--frak-color-primary);
+}
+
+.rewards__chaining {
+    color: var(--frak-color-gray-9);
+    font-size: 13px;
+}
+
+.rewards__details {
+    color: var(--frak-color-gray-9);
+    font-size: 13px;
+    font-weight: 400;
+}

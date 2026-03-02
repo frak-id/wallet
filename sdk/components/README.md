@@ -66,3 +66,25 @@ Button with custom class:
 ```html
 <frak-button-wallet classname="button button-primary"></frak-button-wallet>
 ```
+
+## Sample usage for Open In App button
+
+Sample code to use open in app button:
+
+```html
+<frak-open-in-app></frak-open-in-app>
+```
+
+Button with custom text:
+
+```html
+<frak-open-in-app text="Get the App"></frak-open-in-app>
+```
+
+Button with custom class:
+
+```html
+<frak-open-in-app classname="button button-primary"></frak-open-in-app>
+```
+
+**Note:** This component only renders on mobile devices. On desktop, it returns null.

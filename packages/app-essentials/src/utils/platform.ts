@@ -31,15 +31,6 @@ export function isTauri(): boolean {
 }
 
 /**
- * Check if the app is running in a web browser (not Tauri)
- *
- * @returns {boolean} True if running in web browser, false if in Tauri
- */
-export function isWeb(): boolean {
-    return !isTauri();
-}
-
-/**
  * Check if the app is running on iOS (Tauri iOS app)
  *
  * @returns {boolean} True if running on iOS, false otherwise

@@ -6,12 +6,20 @@ TanStack Router SPA for user wallet. SSR disabled, module-based architecture wit
 
 ```
 app/
-├── module/           # Feature modules (main code lives here)
-│   ├── common/       # Shared components, hooks, utils
-│   ├── listener/     # SDK listener integration
-│   ├── notifications/ # Push notifications
+├── module/           # Feature modules (14 modules)
+│   ├── authentication/ # WebAuthn login/register
+│   ├── biometrics/   # Biometric lock & settings
+│   ├── common/       # Shared components (Header, Nav, Layout)
+│   ├── history/      # Transaction & interaction history
+│   ├── membrs/       # User profile & membership
+│   ├── notification/ # Push notification management
+│   ├── pairing/      # Device pairing (QR + WebSocket)
 │   ├── recovery/     # Account recovery flows
+│   ├── recovery-setup/ # Recovery passkey setup wizard
+│   ├── root/         # Root layout & initialization
 │   ├── settings/     # User settings management
+│   ├── stores/       # App-level Zustand stores (recoveryStore)
+│   ├── tokens/       # Token balances, send/receive
 │   └── wallet/       # Core wallet operations
 ├── routes/           # TanStack Router file-based routes
 │   └── _wallet/      # Protected wallet routes
@@ -44,7 +52,7 @@ bun run test:e2e     # Playwright E2E tests
 
 - **Module pattern**: Each feature in `app/module/{name}/` with own components, hooks, utils
 - **Route guards**: Use `_wallet` layout for authenticated routes
-- **i18n**: Translations in `public/locales/`, types via `bun run i18n:types`
+- **i18n**: Translations in `@frak-labs/wallet-shared` (`packages/wallet-shared/src/i18n/locales/`), types via `cd packages/wallet-shared && bun run i18n:types`
 - **Service Worker**: Must be built before dev/build (`bun run build:sw`)
 
 ## Anti-Patterns

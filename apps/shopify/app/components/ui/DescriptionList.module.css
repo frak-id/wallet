@@ -1,0 +1,18 @@
+.descriptionList {
+    margin: 0;
+    padding: 0;
+}
+
+.term {
+    font-weight: 600;
+    color: #6d7175;
+    margin-bottom: 4px;
+    font-size: 14px;
+}
+
+.description {
+    margin: 0;
+    margin-left: 0;
+    margin-bottom: 16px;
+    font-size: 14px;
+}

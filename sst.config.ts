@@ -12,10 +12,10 @@ export default $config({
                 },
             },
             providers: {
-                kubernetes: "4.23.0",
-                "docker-build": "0.0.12",
+                kubernetes: "4.25.0",
+                "docker-build": "0.0.15",
                 gcp: {
-                    version: "8.32.0",
+                    version: "9.10.0",
                     project: "frak-main-v1",
                     region: "europe-west1",
                 },
@@ -45,8 +45,9 @@ export default $config({
             await import("./infra/gcp/dev.ts");
             await import("./infra/gcp/wallet.ts");
             await import("./infra/gcp/business.ts");
-            await import("./infra/dashboard-admin.ts");
+            await import("./infra/gcp/sandbox.ts");
             await import("./infra/example.ts");
+            await import("./infra/shopify.ts");
 
             // SDK build command helper
             new sst.x.DevCommand("sdk:build", {
@@ -61,6 +62,6 @@ export default $config({
             return;
         }
 
-        await import("./infra/dashboard-admin.ts");
+        await import("./infra/shopify.ts");
     },
 });

@@ -1,7 +1,7 @@
 import { backendApi } from "@frak-labs/client/server";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
-import { type Address, formatUnits } from "viem";
+import type { Address } from "viem";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 import { currencyStore } from "@/stores/currencyStore";
 import { formatPrice } from "../utils/formatPrice";
@@ -44,14 +44,9 @@ function useConversionRate({ token }: { token?: Address }) {
  */
 export function useConvertToPreferredCurrency({
     token,
-    balance,
-    decimals,
     amount,
 }: {
     token?: Address;
-    // For raw blockchain balance
-    balance?: bigint;
-    decimals?: number;
     // For simple decimal conversion
     amount?: number;
 }) {
@@ -62,22 +57,12 @@ export function useConvertToPreferredCurrency({
         if (!rate) return undefined;
 
         // Get the decimal amount to convert
-        let decimalAmount = amount;
-        if (!amount && balance && decimals) {
-            decimalAmount = Number.parseFloat(
-                formatUnits(BigInt(balance), decimals)
-            );
-        }
-        if (decimalAmount === undefined) return undefined;
+        if (amount === undefined) return undefined;
 
         const rateValue = rate[preferredCurrency];
         if (!rateValue) return undefined;
 
         // Return the price formatted
-        return formatPrice(
-            decimalAmount * rateValue,
-            undefined,
-            preferredCurrency
-        );
-    }, [rate, preferredCurrency, balance, decimals, amount]);
+        return formatPrice(amount * rateValue, undefined, preferredCurrency);
+    }, [rate, preferredCurrency, amount]);
 }

@@ -34,10 +34,10 @@ const result = await client.request(
 console.log('Interaction result:', result)
 // { status: 'success', hash: '0x...' }
 
-// Get product information
-const productInfo = await client.request('frak_getProductInformation')
-console.log('Product info:', productInfo)
-// { productId: '0x...', hasActiveCampaign: true }
+// Get merchant information
+const merchantInfo = await client.request('frak_getMerchantInformation')
+console.log('Merchant info:', merchantInfo)
+// { merchantId: '0x...', hasActiveCampaign: true }
 
 // Open SSO
 const ssoResult = await client.request(
@@ -156,14 +156,14 @@ listener.handle('frak_sendInteraction', async (params, context) => {
   }
 })
 
-// Handle product info requests
-listener.handle('frak_getProductInformation', async (params, context) => {
+// Handle merchant info requests
+listener.handle('frak_getMerchantInformation', async (params, context) => {
   // params is undefined for this method
-  const productId = getCurrentProductId()
-  const hasActiveCampaign = await checkActiveCampaigns(productId)
+  const merchantId = getCurrentMerchantId()
+  const hasActiveCampaign = await checkActiveCampaigns(merchantId)
 
   return {
-    productId,
+    merchantId,
     hasActiveCampaign
   }
 })

@@ -6,18 +6,10 @@ export {
     DebugInfoGatherer,
     setupClient,
 } from "./clients";
-export {
-    type FullInteractionTypesKey,
-    type InteractionTypesKey,
-    interactionTypes,
-} from "./constants/interactionTypes";
+
+export type { InteractionTypeKey } from "./constants/interactionTypes";
 export { type LocalesKey, locales } from "./constants/locales";
-// Constants
-export {
-    type ProductTypesKey,
-    productTypes,
-    productTypesMask,
-} from "./constants/productTypes";
+
 // Types
 export type {
     ClientLifecycleEvent,
@@ -29,6 +21,7 @@ export type {
     DisplayModalParamsType,
     EmbeddedViewActionReferred,
     EmbeddedViewActionSharing,
+    EstimatedReward,
     FinalActionType,
     FinalModalStepType,
     // Client
@@ -38,7 +31,7 @@ export type {
     FrakLifecycleEvent,
     // Config
     FrakWalletSdkConfig,
-    GetProductInformationReturnType,
+    GetMerchantInformationReturnType,
     HashProtectedData,
     I18nConfig,
     IFrameLifecycleEvent,
@@ -59,15 +52,13 @@ export type {
     ModalStepMetadata,
     // RPC Modal generics
     ModalStepTypes,
-    OpenInteractionSessionModalStepType,
-    OpenInteractionSessionReturnType,
     OpenSsoParamsType,
     OpenSsoReturnType,
-    PreparedInteraction,
     PrepareSsoParamsType,
     PrepareSsoReturnType,
+    RewardTier,
+    // RPC Interaction
     SendInteractionParamsType,
-    SendInteractionReturnType,
     SendTransactionModalStepType,
     SendTransactionReturnType,
     SendTransactionTxType,
@@ -76,6 +67,10 @@ export type {
     SiweAuthenticationParams,
     SsoMetadata,
     TokenAmountType,
+    // Tracking
+    TrackArrivalParams,
+    TrackArrivalResult,
+    UtmParams,
     // Rpc
     WalletStatusReturnType,
 } from "./types";
@@ -86,16 +81,29 @@ export {
     base64urlEncode,
     baseIframeProps,
     type CompressedSsoData,
+    clearMerchantIdCache,
     compressJsonToB64,
     createIframe,
+    DEEP_LINK_SCHEME,
+    type DeepLinkFallbackOptions,
     decompressJsonFromB64,
     FrakContextManager,
+    type FrakEvent,
     type FullSsoParams,
+    fetchMerchantId,
     findIframeInOpener,
     formatAmount,
     generateSsoUrl,
+    getBackendUrl,
+    getClientId,
     getCurrencyAmountKey,
     getSupportedCurrency,
     getSupportedLocale,
+    isChromiumAndroid,
+    isFrakDeepLink,
+    resolveMerchantId,
+    toAndroidIntentUrl,
     trackEvent,
+    triggerDeepLinkWithFallback,
 } from "./utils";
+export { computeLegacyProductId } from "./utils/computeLegacyProductId";

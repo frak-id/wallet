@@ -29,7 +29,7 @@ export function PairingList() {
                 {t("wallet.pairing.list.title")}
             </Title>
             <div className={styles.pairing__list}>
-                {pairings?.map((pairing) => (
+                {pairings?.map((pairing: Pairing) => (
                     <PairingItem key={pairing.pairingId} pairing={pairing} />
                 ))}
             </div>

@@ -81,7 +81,7 @@ export function createTanStackRouterMock(options: RouterMockOptions = {}) {
         useParams: vi.fn(() => ({})),
         useSearch: vi.fn(() => ({})),
         useLocation: vi.fn(() => ({
-            href: `http://localhost:3022${pathname}${search}${hash}`,
+            href: `http://localhost:3001${pathname}${search}${hash}`,
             pathname,
             search,
             hash,
@@ -125,7 +125,7 @@ export async function setupTanStackRouterMock(options?: RouterMockOptions) {
             useParams: vi.fn(() => ({})),
             useSearch: vi.fn(() => ({})),
             useLocation: vi.fn(() => ({
-                href: `http://localhost:3022${pathname}${search}${hash}`,
+                href: `http://localhost:3001${pathname}${search}${hash}`,
                 pathname,
                 search,
                 hash,

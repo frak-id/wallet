@@ -60,4 +60,16 @@
     --frak-slider-track-background-color: rgba(0, 0, 0, 0.5);
     --frak-slider-range-background-color: var(--frak-color-white);
     --frak-slider-thumb-background-color: var(--frak-color-white);
+    --frak-select-trigger-background-color: var(--frak-input-background-color);
+    --frak-select-trigger-border-color: var(--frak-input-border-color);
+    --frak-select-trigger-text-color: var(--frak-input-text-color);
+    --frak-select-icon-color: var(--frak-input-text-color);
+    --frak-select-content-background-color: var(
+        --frak-color-blue-zodiac-darker
+    );
+    --frak-select-content-border-color: var(--frak-panel-border-color);
+    --frak-select-content-shadow: none;
+    --frak-select-item-text-color: var(--frak-text-color);
+    --frak-select-item-hover-background-color: rgba(129, 140, 156, 0.2);
+    --frak-select-label-text-color: var(--frak-notice-text-color);
 }

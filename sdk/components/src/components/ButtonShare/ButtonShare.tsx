@@ -61,11 +61,11 @@ async function modalEmbeddedWallet() {
  * @example
  * Using reward information for specific reward and fallback text:
  * ```html
- * <frak-button-share use-reward text="Share and earn up to {REWARD}!" no-reward-text="Share and earn!" target-interaction="retail.customerMeeting"></frak-button-share>
+ * <frak-button-share use-reward text="Share and earn up to {REWARD}!" no-reward-text="Share and earn!" target-interaction="custom.customerMeeting"></frak-button-share>
  * ```
  *
  * @see {@link @frak-labs/core-sdk!actions.modalBuilder | `modalBuilder()`} for more info about the modal display
- * @see {@link @frak-labs/core-sdk!actions.getProductInformation | `getProductInformation()`} for more info about the estimated reward fetching
+ * @see {@link @frak-labs/core-sdk!actions.getMerchantInformation | `getMerchantInformation()`} for more info about the estimated reward fetching
  */
 export function ButtonShare({
     text = "Share and earn!",

@@ -3,7 +3,7 @@ import type { AirtableRequestBody } from "./config";
 /**
  * Mapping from request body field names to Airtable field names
  */
-export const AIRTABLE_FIELD_MAPPING: Record<string, string> = {
+const AIRTABLE_FIELD_MAPPING: Record<string, string> = {
     lastName: "Last Name",
     firstName: "First Name",
     company: "Company",

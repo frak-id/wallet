@@ -1,9 +1,9 @@
 import { redirect } from "@tanstack/react-router";
-import { getAuthToken, getWallet, isDemoMode } from "@/context/auth/authEnv";
+import { getAuthToken, getWallet, isDemoMode } from "@/config/auth";
 import { useAuthStore } from "@/stores/authStore";
 
 /**
- * Check if user is authenticated (works on both server and client)
+ * Check if user is authenticated
  */
 export function isAuthenticated(): boolean {
     const token = getAuthToken();
@@ -19,25 +19,15 @@ export function isAuthenticated(): boolean {
         return false;
     }
 
-    // Server-side: assume token is valid (will be verified by authMiddleware)
-    if (typeof window === "undefined") {
-        return true;
-    }
-
-    // Client-side: check expiration
+    // Check expiration
     return useAuthStore.getState().isAuthenticated();
 }
 
 /**
  * beforeLoad hook for protected routes
  * Use this in route definitions to require authentication
- * Works correctly during both SSR and client-side navigation
  */
-export async function requireAuth({
-    location,
-}: {
-    location: { href: string };
-}) {
+export function requireAuth({ location }: { location: { href: string } }) {
     const authenticated = isAuthenticated();
 
     if (!authenticated) {
@@ -49,7 +39,7 @@ export async function requireAuth({
         });
     }
 
-    const wallet = await getWallet();
+    const wallet = getWallet();
 
     return {
         session: {
@@ -61,7 +51,6 @@ export async function requireAuth({
 /**
  * beforeLoad hook for login route
  * Redirects to dashboard if already authenticated
- * Works correctly during both SSR and client-side navigation
  */
 export function redirectIfAuthenticated() {
     const authenticated = isAuthenticated();

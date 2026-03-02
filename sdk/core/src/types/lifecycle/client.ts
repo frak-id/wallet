@@ -10,7 +10,8 @@ export type ClientLifecycleEvent =
     | RestoreBackupEvent
     | HearbeatEvent
     | HandshakeResponse
-    | SsoRedirectCompleteEvent;
+    | SsoRedirectCompleteEvent
+    | DeepLinkFailedEvent;
 
 type CustomCssEvent = {
     clientLifecycle: "modal-css";
@@ -37,10 +38,32 @@ type HandshakeResponse = {
     data: {
         token: string;
         currentUrl: string;
+        /**
+         * Pending merge token extracted from URL (?fmt= parameter)
+         * When present, listener should execute identity merge in background
+         * URL is cleaned after handshake response is sent
+         */
+        pendingMergeToken?: string;
+        /**
+         * Client ID for identity tracking (belt & suspenders fallback)
+         * Primary delivery is via iframe URL query param; handshake is backup for SSR
+         */
+        clientId?: string;
+        /**
+         * Explicit domain from SDK config (FrakWalletSdkConfig.domain)
+         * When present, listener should prefer this over URL-derived domain
+         * for merchant resolution (handles proxied/tunneled environments)
+         */
+        configDomain?: string;
     };
 };
 
 type SsoRedirectCompleteEvent = {
     clientLifecycle: "sso-redirect-complete";
     data: { compressed: string };
+};
+
+type DeepLinkFailedEvent = {
+    clientLifecycle: "deep-link-failed";
+    data: { originalUrl: string };
 };

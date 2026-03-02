@@ -1,0 +1,29 @@
+{
+  "include": ["env.d.ts", "**/*.ts", "**/*.tsx", ".react-router/types/**/*"],
+  "compilerOptions": {
+    "lib": ["DOM", "DOM.Iterable", "ES2022"],
+    "strict": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "allowSyntheticDefaultImports": true,
+    "removeComments": false,
+    "forceConsistentCasingInFileNames": true,
+    "noEmit": true,
+    "allowJs": true,
+    "resolveJsonModule": true,
+    "jsx": "react-jsx",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "target": "ES2022",
+    "rootDirs": [".", "./.react-router/types"],
+    "types": ["node", "@shopify/polaris-types", "@shopify/app-bridge-types", "bun-types"],
+    "paths": {
+      "app/*": ["./app/*"],
+      "db/*": ["./db/*"],
+      "@backend-utils": ["../../services/backend/src/utils/index.ts"],
+      "@backend-infrastructure": ["../../services/backend/src/infrastructure/index.ts"],
+      "@backend-infrastructure/*": ["../../services/backend/src/infrastructure/*"],
+      "@backend-domain/*": ["../../services/backend/src/domain/*"]
+    }
+  }
+}

@@ -1,6 +1,6 @@
+import type { InteractionType } from "../domain/rewards";
+
 export type FrakEvents = {
-    newTrackedPurchase: [];
-    newInteractions: [];
-    simulatedInteractions: [];
-    oracleUpdated: [];
+    newInteraction: [{ type: InteractionType }];
+    newPendingRewards: [{ count: number }];
 };

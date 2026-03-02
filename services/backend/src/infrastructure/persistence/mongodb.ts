@@ -34,5 +34,3 @@ export function getMongoDb({ urlKey, db }: { urlKey: string; db: string }) {
         return client.db(db);
     });
 }
-
-export type GetMongoDb = typeof getMongoDb;

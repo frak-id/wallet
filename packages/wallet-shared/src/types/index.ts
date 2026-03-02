@@ -1,8 +1,6 @@
 // Types
 export type { BalanceItem } from "./Balance";
 export type { HistoryGroup } from "./HistoryGroup";
-export type { PendingInteraction } from "./Interaction";
-export type { InteractionHistory } from "./InteractionHistory";
 // i18n types are ambient declarations (i18n.d.ts, resources.d.ts)
 // and are automatically included by TypeScript
 export type {
@@ -12,9 +10,16 @@ export type {
 } from "./Recovery";
 export type { RewardHistory } from "./RewardHistory";
 export type {
+    MerchantInfo,
+    RecipientType,
+    RewardHistoryItem,
+    RewardStatus,
+    TokenInfo,
+    TriggerType,
+} from "./RewardHistoryItem";
+export type {
     DistantWebAuthnWallet,
     EcdsaWallet,
-    InteractionSession,
     SdkSession,
     SdkSessionPayload,
     Session,

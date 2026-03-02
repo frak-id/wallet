@@ -28,8 +28,7 @@ function filterOutUndefined(obj: FormMembersFiltering): string[] {
     const result: string[] = [];
 
     for (const key in obj) {
-        // @ts-expect-error
-        const value = obj[key];
+        const value = obj[key as keyof FormMembersFiltering];
 
         // Check if min/max are defined, or if the value is an array and not empty
         if (Array.isArray(value) && value.length > 0) {

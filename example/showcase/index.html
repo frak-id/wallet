@@ -11,27 +11,37 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <script>
-        const config = localStorage.getItem("frak-wallet-sdk-config");
+        const detectWalletUrl = <%- detectWalletUrl %>;
 
-        if (config) {
-            window.FrakSetup = {
-                config: {
-                    walletUrl: "<%- walletUrl %>",
-                    ...JSON.parse(config),
-                },
-            };
-        } else {
-            window.FrakSetup = {
-                config: {
-                    walletUrl: "<%- walletUrl %>",
-                    metadata: {
-                        name: "Example components",
+        (async () => {
+            const walletUrl = await detectWalletUrl(<%= useLocal %>, "<%= walletUrl %>");
+            const config = localStorage.getItem("frak-wallet-sdk-config");
+
+            if (config) {
+                window.FrakSetup = {
+                    config: {
+                        walletUrl,
+                        ...JSON.parse(config),
                     },
-                },
-            };
-        }
+                };
+            } else {
+                window.FrakSetup = {
+                    config: {
+                        walletUrl,
+                        metadata: {
+                            name: "Example components",
+                        },
+                    },
+                };
+            }
+
+            // Load SDK components script
+            const sdkScript = document.createElement('script');
+            sdkScript.type = 'module';
+            sdkScript.src = '<%- sdkScriptSrc %>';
+            document.head.appendChild(sdkScript);
+        })();
     </script>
-    <%- injectScript %>
 </head>
 
 <body>

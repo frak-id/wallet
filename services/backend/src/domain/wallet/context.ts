@@ -1,5 +1,4 @@
 import { BalancesRepository } from "./repositories/BalancesRepository";
-import { PendingBalanceRepository } from "./repositories/PendingBalanceRepository";
 
 /**
  * Context for the wallet service
@@ -7,6 +6,5 @@ import { PendingBalanceRepository } from "./repositories/PendingBalanceRepositor
 export namespace WalletContext {
     export const repositories = {
         balances: new BalancesRepository(),
-        pendingBalance: new PendingBalanceRepository(),
     };
 }

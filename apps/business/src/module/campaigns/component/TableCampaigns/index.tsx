@@ -7,106 +7,88 @@ import {
     type ColumnFiltersState,
     createColumnHelper,
 } from "@tanstack/react-table";
-import { Eye, Pencil, Trash2 } from "lucide-react";
-import { capitalize } from "radash";
+import { Archive, Eye, Pause, Pencil, Play, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { CampaignStateTag } from "@/module/campaigns/component/TableCampaigns/CampaignStateTag";
 import { TableCampaignFilters } from "@/module/campaigns/component/TableCampaigns/Filter";
 import { useDeleteCampaign } from "@/module/campaigns/hook/useDeleteCampaign";
 import { useGetCampaigns } from "@/module/campaigns/hook/useGetCampaigns";
-import { useUpdateCampaignRunningStatus } from "@/module/campaigns/hook/useUpdateCampaignRunningStatus";
+import { useStatusTransition } from "@/module/campaigns/hook/useStatusTransition";
 import { AlertDialog } from "@/module/common/component/AlertDialog";
 import { Table } from "@/module/common/component/Table";
 import { formatDate } from "@/module/common/utils/formatDate";
 import { formatPrice } from "@/module/common/utils/formatPrice";
-import { Switch } from "@/module/forms/Switch";
 import { campaignStore } from "@/stores/campaignStore";
-import type { CampaignWithState } from "@/types/Campaign";
+import type { CampaignWithActions } from "@/types/Campaign";
 import styles from "./index.module.css";
 
-const columnHelper = createColumnHelper<CampaignWithState>();
+const columnHelper = createColumnHelper<CampaignWithActions>();
 
 export function TableCampaigns() {
     const { data } = useGetCampaigns();
-    const {
-        mutate: onUpdateCampaignRunningStatus,
-        isPending: isUpdatingCampaignState,
-    } = useUpdateCampaignRunningStatus();
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
     const columns = useMemo(
         () =>
             [
-                columnHelper.accessor("state", {
+                columnHelper.accessor("name", {
                     enableSorting: false,
-                    header: "On/Off",
-                    id: "state-running",
+                    header: () => "Campaign",
                     cell: ({ getValue, row }) => {
-                        const state = getValue();
-                        const isCreated = state.key === "created";
-                        return (
-                            <Switch
-                                checked={isCreated && state.isRunning}
-                                disabled={
-                                    !isCreated ||
-                                    isUpdatingCampaignState ||
-                                    !row.original.actions.canToggleRunningStatus
-                                }
-                                onCheckedChange={() => {
-                                    if (!isCreated || isUpdatingCampaignState)
-                                        return;
-                                    onUpdateCampaignRunningStatus({
-                                        campaign: state.address,
-                                        newRunningStatus: !state.isRunning,
-                                    });
-                                }}
-                            />
+                        const isDraft = row.original.status === "draft";
+                        const name = getValue() as string;
+                        return isDraft ? (
+                            <Link
+                                to="/campaigns/draft/$campaignId"
+                                params={{ campaignId: row.original.id }}
+                            >
+                                {name}
+                            </Link>
+                        ) : (
+                            <Link
+                                to="/campaigns/$campaignId"
+                                params={{ campaignId: row.original.id }}
+                            >
+                                {name}
+                            </Link>
                         );
                     },
                 }),
-                columnHelper.accessor("title", {
-                    enableSorting: false,
-                    header: () => "Campaign",
-                    cell: ({ getValue, row }) => (
-                        <Link
-                            to="/campaigns/$campaignId"
-                            params={{ campaignId: row.original._id }}
-                        >
-                            {getValue()}
-                        </Link>
-                    ),
-                }),
-                columnHelper.accessor("state", {
+                columnHelper.accessor("status", {
                     enableSorting: true,
                     header: () => "Status",
-                    id: "state",
-                    cell: ({ getValue }) => (
-                        <CampaignStateTag state={getValue()} />
+                    id: "status",
+                    cell: ({ getValue, row }) => (
+                        <CampaignStateTag
+                            status={getValue()}
+                            bankDistributionStatus={
+                                row.original.bankDistributionStatus
+                            }
+                        />
                     ),
                 }),
                 {
                     id: "date",
                     header: () => "Date",
                     accessorFn: (row) =>
-                        row?.scheduled?.dateStart &&
-                        formatDate(new Date(row.scheduled.dateStart)),
-                    filterFn: (row, _, value) =>
-                        row?.original?.scheduled?.dateStart &&
-                        new Date(row.original.scheduled.dateStart).getDate() >
-                            new Date(value).getDate(),
+                        formatDate(new Date(row.publishedAt || row.createdAt)),
+                    filterFn: (row, _, value) => {
+                        const date = new Date(
+                            row.original.publishedAt || row.original.createdAt
+                        );
+                        return date.getDate() > new Date(value).getDate();
+                    },
                 },
-                columnHelper.accessor("budget.maxEuroDaily", {
+                columnHelper.accessor("budgetConfig", {
                     header: () => "Budget",
-                    cell: ({ row, getValue }) => (
-                        <CellBudget row={row} getValue={getValue} />
-                    ),
+                    cell: ({ row }) => <CellBudget row={row} />,
                 }),
                 columnHelper.display({
                     header: "Action",
                     cell: ({ row }) => <CellActions row={row} />,
                 }),
-            ] as ColumnDef<CampaignWithState>[],
-        [onUpdateCampaignRunningStatus, isUpdatingCampaignState]
+            ] as ColumnDef<CampaignWithActions>[],
+        []
     );
 
     if (!data) {
@@ -132,80 +114,248 @@ export function TableCampaigns() {
     );
 }
 
-/**
- * todo: we need to review the campaign object for a better support of each currencies
- */
 function CellBudget({
     row,
-    getValue,
-}: Pick<CellContext<CampaignWithState, undefined>, "row" | "getValue">) {
-    // const { bankInfo } = useGetBankInfo({ bank: row.original.bank });
-    // const converted = useConvertToPreferredCurrency({
-    //     amount: getValue(),
-    //     token: bankInfo?.token,
-    // });
+}: Pick<CellContext<CampaignWithActions, unknown>, "row">) {
+    const budgetConfig = row.original.budgetConfig;
+    const budgetUsed = row.original.budgetUsed;
+    const firstBudget = budgetConfig?.[0];
 
-    // if (!converted) return <Spinner />;
+    if (!firstBudget) {
+        return <span className={styles.table__budget}>-</span>;
+    }
+
+    const used = budgetUsed?.[firstBudget.label]?.used ?? 0;
+    const remaining = firstBudget.amount - used;
 
     return (
         <span className={styles.table__budget}>
             <span className={styles.table__budgetAmount}>
-                {formatPrice(getValue(), undefined, "EUR")}
+                {formatPrice(remaining, undefined, "EUR")} /{" "}
+                {formatPrice(firstBudget.amount, undefined, "EUR")}
             </span>
-            {row.original.budget?.type && (
-                <span className={styles.table__budgetType}>
-                    {capitalize(row.original.budget.type)}
-                </span>
-            )}
+            <span className={styles.table__budgetType}>
+                {firstBudget.label || "Global"}
+            </span>
         </span>
     );
 }
 
-/**
- * Component representing the possible cell actions
- * @param row
- * @constructor
- */
 function CellActions({
     row,
-}: Pick<CellContext<CampaignWithState, unknown>, "row">) {
+}: Pick<CellContext<CampaignWithActions, unknown>, "row">) {
     const actions = useMemo(() => row.original.actions, [row.original.actions]);
     const reset = campaignStore((state) => state.reset);
+    const status = row.original.status;
+    const isDraft = status === "draft";
+    const isArchived = status === "archived";
 
     return (
         <div className={styles.table__actions}>
-            <Link
-                to="/campaigns/$campaignId"
-                params={{ campaignId: row.original._id }}
-            >
-                <Eye size={20} absoluteStrokeWidth={true} />
-            </Link>
-            {actions.canEdit && (
+            {isDraft ? (
                 <Link
-                    to={
-                        row.original.state.key === "draft"
-                            ? "/campaigns/draft/$campaignId"
-                            : "/campaigns/edit/$campaignId"
-                    }
-                    params={{ campaignId: row.original._id }}
+                    to="/campaigns/draft/$campaignId"
+                    params={{ campaignId: row.original.id }}
+                    onClick={() => reset()}
+                >
+                    <Eye size={20} absoluteStrokeWidth={true} />
+                </Link>
+            ) : (
+                <Link
+                    to="/campaigns/$campaignId"
+                    params={{ campaignId: row.original.id }}
+                >
+                    <Eye size={20} absoluteStrokeWidth={true} />
+                </Link>
+            )}
+            {isDraft && (
+                <Link
+                    to="/campaigns/draft/$campaignId"
+                    params={{ campaignId: row.original.id }}
                     onClick={() => reset()}
                 >
                     <Pencil size={20} absoluteStrokeWidth={true} />
                 </Link>
             )}
+            {!isDraft && !isArchived && (
+                <Link
+                    to="/campaigns/edit/$campaignId"
+                    params={{ campaignId: row.original.id }}
+                    onClick={() => reset()}
+                >
+                    <Pencil size={20} absoluteStrokeWidth={true} />
+                </Link>
+            )}
+            {actions.canPause && <ModalPause row={row} />}
+            {actions.canResume && <ModalResume row={row} />}
+            {actions.canArchive && <ModalArchive row={row} />}
             {actions.canDelete && <ModalDelete row={row} />}
         </div>
     );
 }
 
-/**
- * Component representing the delete modal
- * @param row
- * @constructor
- */
+function ModalPause({
+    row,
+}: Pick<CellContext<CampaignWithActions, unknown>, "row">) {
+    const [open, setOpen] = useState(false);
+    const {
+        mutateAsync: onPauseClick,
+        isPending: isPausing,
+        isError,
+    } = useStatusTransition();
+
+    return (
+        <AlertDialog
+            open={open}
+            onOpenChange={setOpen}
+            title={"Pause campaign"}
+            buttonElement={
+                <button type={"button"}>
+                    <Pause size={20} absoluteStrokeWidth={true} />
+                </button>
+            }
+            description={
+                <>
+                    Are you sure you want to pause the campaign{" "}
+                    <strong>{row.original.name}</strong>?
+                </>
+            }
+            text={
+                isError ? (
+                    <p className={"error"}>An error occurred, try again</p>
+                ) : undefined
+            }
+            cancel={<Button variant={"outline"}>Cancel</Button>}
+            action={
+                <Button
+                    variant={"secondary"}
+                    isLoading={isPausing}
+                    disabled={isPausing}
+                    onClick={async () => {
+                        await onPauseClick({
+                            campaignId: row.original.id,
+                            merchantId: row.original.merchantId,
+                            action: "pause",
+                        });
+                        setOpen(false);
+                    }}
+                >
+                    Pause
+                </Button>
+            }
+        />
+    );
+}
+
+function ModalResume({
+    row,
+}: Pick<CellContext<CampaignWithActions, unknown>, "row">) {
+    const [open, setOpen] = useState(false);
+    const {
+        mutateAsync: onResumeClick,
+        isPending: isResuming,
+        isError,
+    } = useStatusTransition();
+
+    return (
+        <AlertDialog
+            open={open}
+            onOpenChange={setOpen}
+            title={"Resume campaign"}
+            buttonElement={
+                <button type={"button"}>
+                    <Play size={20} absoluteStrokeWidth={true} />
+                </button>
+            }
+            description={
+                <>
+                    Are you sure you want to resume the campaign{" "}
+                    <strong>{row.original.name}</strong>?
+                </>
+            }
+            text={
+                isError ? (
+                    <p className={"error"}>An error occurred, try again</p>
+                ) : undefined
+            }
+            cancel={<Button variant={"outline"}>Cancel</Button>}
+            action={
+                <Button
+                    variant={"submit"}
+                    isLoading={isResuming}
+                    disabled={isResuming}
+                    onClick={async () => {
+                        await onResumeClick({
+                            campaignId: row.original.id,
+                            merchantId: row.original.merchantId,
+                            action: "resume",
+                        });
+                        setOpen(false);
+                    }}
+                >
+                    Resume
+                </Button>
+            }
+        />
+    );
+}
+
+function ModalArchive({
+    row,
+}: Pick<CellContext<CampaignWithActions, unknown>, "row">) {
+    const [open, setOpen] = useState(false);
+    const {
+        mutateAsync: onArchiveClick,
+        isPending: isArchiving,
+        isError,
+    } = useStatusTransition();
+
+    return (
+        <AlertDialog
+            open={open}
+            onOpenChange={setOpen}
+            title={"Archive campaign"}
+            buttonElement={
+                <button type={"button"}>
+                    <Archive size={20} absoluteStrokeWidth={true} />
+                </button>
+            }
+            description={
+                <>
+                    Are you sure you want to archive the campaign{" "}
+                    <strong>{row.original.name}</strong>?
+                </>
+            }
+            text={
+                isError ? (
+                    <p className={"error"}>An error occurred, try again</p>
+                ) : undefined
+            }
+            cancel={<Button variant={"outline"}>Cancel</Button>}
+            action={
+                <Button
+                    variant={"secondary"}
+                    isLoading={isArchiving}
+                    disabled={isArchiving}
+                    onClick={async () => {
+                        await onArchiveClick({
+                            campaignId: row.original.id,
+                            merchantId: row.original.merchantId,
+                            action: "archive",
+                        });
+                        setOpen(false);
+                    }}
+                >
+                    Archive
+                </Button>
+            }
+        />
+    );
+}
+
 function ModalDelete({
     row,
-}: Pick<CellContext<CampaignWithState, unknown>, "row">) {
+}: Pick<CellContext<CampaignWithActions, unknown>, "row">) {
     const [open, setOpen] = useState(false);
     const {
         mutateAsync: onDeleteClick,
@@ -226,7 +376,7 @@ function ModalDelete({
             description={
                 <>
                     Are you sure you want to delete the campaign{" "}
-                    <strong>{row.original.title}</strong>?
+                    <strong>{row.original.name}</strong>?
                 </>
             }
             text={
@@ -242,7 +392,8 @@ function ModalDelete({
                     disabled={isDeleting}
                     onClick={async () => {
                         await onDeleteClick({
-                            campaignId: row.original._id,
+                            campaignId: row.original.id,
+                            merchantId: row.original.merchantId,
                         });
                         setOpen(false);
                     }}

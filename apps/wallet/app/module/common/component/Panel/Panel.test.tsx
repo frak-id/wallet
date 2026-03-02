@@ -1,8 +1,16 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
-import { Panel } from "./index";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { Panel, panelDismissedPrefix } from "./index";
 
 describe("Panel", () => {
+    beforeEach(() => {
+        localStorage.clear();
+    });
+
+    afterEach(() => {
+        localStorage.clear();
+    });
+
     it("should render with default props", () => {
         render(<Panel>Content</Panel>);
 
@@ -78,6 +86,46 @@ describe("Panel", () => {
         fireEvent.click(dismissButton);
 
         expect(screen.queryByText("Content")).not.toBeInTheDocument();
+    });
+
+    it("should persist dismiss in localStorage when dismissKey is provided", () => {
+        render(
+            <Panel isDismissible dismissKey="test-panel">
+                Content
+            </Panel>
+        );
+
+        const dismissButton = screen.getByRole("button");
+        fireEvent.click(dismissButton);
+
+        expect(localStorage.getItem(`${panelDismissedPrefix}test-panel`)).toBe(
+            "1"
+        );
+        expect(screen.queryByText("Content")).not.toBeInTheDocument();
+    });
+
+    it("should not render when dismissKey was previously dismissed", () => {
+        localStorage.setItem(`${panelDismissedPrefix}test-panel`, "1");
+
+        render(
+            <Panel isDismissible dismissKey="test-panel">
+                Content
+            </Panel>
+        );
+
+        expect(screen.queryByText("Content")).not.toBeInTheDocument();
+    });
+
+    it("should not persist dismiss without dismissKey", () => {
+        render(<Panel isDismissible>Content</Panel>);
+
+        const dismissButton = screen.getByRole("button");
+        fireEvent.click(dismissButton);
+
+        const panelKeys = Object.keys(localStorage).filter((k) =>
+            k.startsWith(panelDismissedPrefix)
+        );
+        expect(panelKeys).toHaveLength(0);
     });
 
     it("should not render dismiss button when isDismissible is false", () => {

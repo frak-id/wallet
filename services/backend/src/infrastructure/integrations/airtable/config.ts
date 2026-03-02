@@ -27,7 +27,7 @@ export const AirtableRequestBodyType = t.Union([
 
 export type AirtableRequestBody = typeof AirtableRequestBodyType.static;
 
-export interface AirtableTableConfig {
+interface AirtableTableConfig {
     tableId: string;
     baseId: string;
 }

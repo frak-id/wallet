@@ -6,8 +6,7 @@ import type { SsoMetadata } from "@frak-labs/core-sdk";
 import type { Signature } from "ox";
 import type { SignMetadata } from "ox/WebAuthnP256";
 import type { Address, Hex } from "viem";
-import type { PendingInteraction } from "../types/Interaction";
-import type { InteractionSession, SdkSession, Session } from "../types/Session";
+import type { SdkSession, Session } from "../types/Session";
 import type { User } from "../types/User";
 
 /**
@@ -63,7 +62,7 @@ export type LastWebAuthNAction = {
 export type LastAuthentication = Session & { type: "webauthn" };
 
 export type SsoContext = {
-    productId?: string;
+    merchantId?: string;
     redirectUrl?: string;
     directExit?: boolean;
     metadata?: AppSpecificSsoMetadata;
@@ -89,21 +88,28 @@ export type AuthenticationStore = {
 };
 
 /**
- * Wallet Store Types
+ * Pairing Store Types
  */
-export type PendingInteractionsStorage = {
-    interactions: PendingInteraction[];
-};
-
-export type WalletStore = {
+export type PairingStore = {
     // State
-    interactionSession: InteractionSession | null;
-    pendingInteractions: PendingInteractionsStorage;
+    pendingPairingId: string | null;
+    pendingPairingExpiresAt: number | null;
 
     // Actions
-    setInteractionSession: (session: InteractionSession | null) => void;
-    addPendingInteraction: (interaction: PendingInteraction) => void;
-    addPendingInteractions: (interactions: PendingInteraction[]) => void;
-    cleanPendingInteractions: () => void;
-    clearWallet: () => void;
+    setPendingPairingId: (id: string) => void;
+    clearPendingPairing: () => void;
+};
+
+/**
+ * Client ID Store Types
+ *
+ * TODO: Evolve to Record<merchantId, clientId> for per-merchant tracking
+ */
+export type ClientIdStore = {
+    // State
+    clientId: string | null;
+
+    // Actions
+    setClientId: (clientId: string | null) => void;
+    clearClientId: () => void;
 };

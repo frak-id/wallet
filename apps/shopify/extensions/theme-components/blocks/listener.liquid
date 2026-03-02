@@ -1,0 +1,185 @@
+{% assign components_url_metafield = shop.metafields.frak.components_url %}
+<script src="{{ components_url_metafield.value | default: 'https://cdn.jsdelivr.net/npm/@frak-labs/components@latest' }}" defer="defer"></script>
+{% comment %} <script src="{{ 'components.js' | asset_url }}" defer></script> {% endcomment %}
+<script
+  type="text/javascript"
+>
+  // Precompute a few stuff
+  const lang = '{{ block.settings.modal_lng }}' === 'default' ? undefined : '{{ block.settings.modal_lng }}';
+
+  // Get the logo URL
+  {% assign appearance_metafield = shop.metafields.frak.appearance %}
+  let logoUrl = '{{ block.settings.logo.src }}';
+  if (!logoUrl.startsWith('cdn.shopify.com')) {
+    logoUrl = `https://${Shopify.shop}/cdn/shop/${logoUrl}`;
+  }
+
+  {% if appearance_metafield.value %}
+    try {
+      logoUrl = {{ appearance_metafield.value | json }}.logoUrl;
+    } catch (error) {
+      console.error('Error parsing appearance customizations:', error);
+    }
+  {% endif %}
+
+  // Get i18n customizations from metafield
+  {% assign i18n_metafield = shop.metafields.frak.modal_i18n %}
+  let customI18n = {};
+  {% if i18n_metafield.value %}
+    try {
+      customI18n = {{ i18n_metafield.value | json }};
+    } catch (error) {
+      console.error('Error parsing i18n customizations:', error);
+    }
+  {% endif %}
+
+  // Read merchantId from metafield
+  {% assign merchant_id_metafield = shop.metafields.frak.merchant_id %}
+
+
+  // Read wallet URL from metafield (set by the app per environment)
+  {% assign wallet_url_metafield = shop.metafields.frak.wallet_url %}
+  // Top level Frak SDK config
+  const frakConfig = {
+    walletUrl: {{ wallet_url_metafield.value | default: 'https://wallet.frak.id' | json }},
+    metadata: {
+      // Your app name (will be displayed on some modals and in the SSO)
+      name: '{{ shop.name }}',
+      // You can also setup custom styles here
+      lang,
+      logoUrl,
+      {% if merchant_id_metafield.value %}
+      // Merchant ID from Frak dashboard (avoids domain-based lookup)
+      merchantId: {{ merchant_id_metafield.value | json }},
+      {% endif %}
+    },
+    customizations: {
+      css: "{{ 'customizations.css' | asset_url }}",
+      i18n: customI18n,
+    },
+    domain: window.location.host,
+  };
+
+  // Base config for the modals (not rly used for client side stuff)
+  const baseModalConfig = {
+    login: {
+      allowSso: true,
+      ssoMetadata: {
+        logoUrl,
+        homepageLink: window.location.host,
+      },
+    },
+  };
+
+  // Sharing config
+  const sharingConfig = { link: window.location.href };
+
+  const modalWalletConfig = {
+    metadata: {
+      position: '{{ block.settings.wallet_button_position }}',
+    },
+  };
+
+  window.FrakSetup = {
+    config: frakConfig,
+    modalConfig: baseModalConfig,
+    modalShareConfig: sharingConfig,
+    modalWalletConfig,
+  };
+
+  // Store merchantId in sessionStorage for the checkout pixel fallback
+  {% if merchant_id_metafield.value %}
+    try {
+      sessionStorage.setItem('frak-merchant-id', {{ merchant_id_metafield.value | json }});
+    } catch (e) {}
+  {% endif %}
+
+  // Sync frak-client-id to Shopify cart attributes for server-side purchase tracking.
+  // Cart attributes are additive (shallow merge) and flow through to the order webhook
+  // as note_attributes, enabling ad-blocker-resistant identity linking without the checkout pixel.
+  function syncFrakCartAttributes() {
+    try {
+      // Prefer SDK method (creates ID if needed), fallback to direct localStorage read
+      const clientId = window.FrakSetup?.core?.getClientId?.()
+        ?? localStorage.getItem('frak-client-id');
+      if (!clientId) return;
+
+      fetch(window.Shopify.routes.root + 'cart/update.js', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          attributes: { '_frak-client-id': clientId }
+        })
+      }).catch(function() {});
+    } catch (e) {}
+  }
+  // Immediate attempt for returning visitors (clientId already in localStorage).
+  syncFrakCartAttributes();
+  // Re-sync once SDK is ready (handles first-time visitors + guarantees correct ID).
+  window.addEventListener('frakClientReady', syncFrakCartAttributes, { once: true });
+
+  // Inject custom JavaScript
+  try {
+    const script = document.createElement('script');
+    script.textContent = `{{ block.settings.custom_javascript }}`;
+    document.head.appendChild(script);
+  } catch (error) {
+    console.error('Failed to inject JavaScript:', error.message);
+  }
+</script>
+
+{% schema %}
+{
+  "name": "Frak Listener",
+  "target": "head",
+  "settings": [
+    {
+      "type": "image_picker",
+      "id": "logo",
+      "label": "Logo that will be displayed on the modal"
+    },
+    {
+      "type": "select",
+      "id": "modal_lng",
+      "label": "Sharing modal language",
+      "options": [
+        {
+          "value": "en",
+          "label": "English"
+        },
+        {
+          "value": "fr",
+          "label": "Français"
+        },
+        {
+          "value": "default",
+          "label": "Default user language"
+        }
+      ],
+      "default": "default"
+    },
+    {
+      "type": "select",
+      "id": "wallet_button_position",
+      "label": "Wallet Button Position",
+      "options": [
+        {
+          "value": "left",
+          "label": "Left"
+        },
+        {
+          "value": "right",
+          "label": "Right"
+        }
+      ],
+      "default": "right"
+    },
+    {
+      "type": "textarea",
+      "id": "custom_javascript",
+      "label": "Custom JavaScript",
+      "info": "Enter custom JavaScript code to be injected"
+    }
+  ]
+}
+{% endschema %}

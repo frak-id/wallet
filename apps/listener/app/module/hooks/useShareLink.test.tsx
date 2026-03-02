@@ -11,6 +11,14 @@ vi.mock("@frak-labs/wallet-shared", () => ({
     },
 }));
 
+// Mock useTrackSharing
+const mockTrackSharing = vi.fn().mockResolvedValue(undefined);
+vi.mock("./useTrackSharing", () => ({
+    useTrackSharing: () => ({
+        mutateAsync: mockTrackSharing,
+    }),
+}));
+
 // Mock ListenerUiProvider
 const mockT = vi.fn((key: string) => {
     const translations: Record<string, string> = {

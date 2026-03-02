@@ -114,14 +114,14 @@ describe("ButtonWallet", () => {
         render(
             <ButtonWallet
                 useReward
-                targetInteraction="retail.customerMeeting"
+                targetInteraction="custom.customerMeeting"
             />
         );
 
         // shouldUseReward is true (useReward !== undefined), and isClientReady is true
         expect(useRewardHook.useReward).toHaveBeenCalledWith(
             true,
-            "retail.customerMeeting"
+            "custom.customerMeeting"
         );
     });
 

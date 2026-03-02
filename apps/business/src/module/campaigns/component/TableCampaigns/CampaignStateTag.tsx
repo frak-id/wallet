@@ -1,52 +1,71 @@
 import { Tooltip } from "@frak-labs/ui/component/Tooltip";
 import { Badge } from "@/module/common/component/Badge";
-import type { CampaignState } from "@/types/Campaign";
+import type { CampaignStatus, DistributionStatus } from "@/types/Campaign";
+import styles from "./CampaignStateTag.module.css";
 
-/**
- * If state == created, display additional badges (isActive, isAttached)
- * @param state
- * @constructor
- */
-export function CampaignStateTag({ state }: { state: CampaignState }) {
-    // Draft and creationFailed are simple badges
-    if (state.key === "draft") {
-        return <Badge variant={"secondary"}>Draft</Badge>;
-    }
-    if (state.key !== "created") {
-        return <Badge variant={"danger"}>Setup failed</Badge>;
+const bankHealthLabels: Record<string, string> = {
+    depleted: "Bank empty — rewards can't distribute",
+    paused: "Bank paused — distribution stopped",
+    warning: "Needs attention — check your reward budget",
+    not_deployed: "Bank not set up",
+};
+
+const bankBadgeLabels: Record<string, string> = {
+    depleted: "No funds",
+    paused: "Paused",
+    warning: "Needs attention",
+    not_deployed: "Setup needed",
+};
+
+export function CampaignStateTag({
+    status,
+    bankDistributionStatus,
+}: {
+    status: CampaignStatus;
+    bankDistributionStatus?: DistributionStatus | null;
+}) {
+    const statusBadge = (() => {
+        switch (status) {
+            case "draft":
+                return <Badge variant={"secondary"}>Draft</Badge>;
+            case "active":
+                return <Badge variant={"success"}>Active</Badge>;
+            case "paused":
+                return <Badge variant={"warning"}>Paused</Badge>;
+            case "archived":
+                return <Badge variant={"secondary"}>Archived</Badge>;
+            default:
+                return <Badge variant={"danger"}>Unknown</Badge>;
+        }
+    })();
+
+    const showBankWarning =
+        status === "active" &&
+        bankDistributionStatus &&
+        bankDistributionStatus !== "distributing";
+
+    if (!showBankWarning) {
+        return statusBadge;
     }
 
-    // Check if the campaign is running
-    if (!state.isRunning) {
-        return <Badge variant="primary">Paused</Badge>;
-    }
+    const bankLabel = bankHealthLabels[bankDistributionStatus] ?? "Bank issue";
+    const badgeLabel = bankBadgeLabels[bankDistributionStatus] ?? "Issue";
 
-    // Check if the campaign is active
-    if (!state.isActive) {
-        return (
-            <Tooltip
-                content={
-                    "The campaign isn't active, check the funding and the activation date to enable it"
-                }
-            >
-                <Badge variant="danger">Stopped</Badge>
+    return (
+        <span className={styles.campaignStateTag}>
+            {statusBadge}
+            <Tooltip content={bankLabel}>
+                <Badge
+                    variant={
+                        bankDistributionStatus === "depleted"
+                            ? "danger"
+                            : "warning"
+                    }
+                    size="small"
+                >
+                    {badgeLabel}
+                </Badge>
             </Tooltip>
-        );
-    }
-
-    // Check if for any reason it can't be executed
-    if (!state.interactionLink?.isAttached) {
-        return (
-            <Tooltip
-                content={
-                    "The campaign is stopped since it's not attached to the user interactions"
-                }
-            >
-                <Badge variant="danger">Stopped</Badge>
-            </Tooltip>
-        );
-    }
-
-    // If we are here, all good
-    return <Badge variant="success">Running</Badge>;
+        </span>
+    );
 }

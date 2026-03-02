@@ -20,7 +20,6 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
-    "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
       "@/tests/vitest-fixtures": ["./tests/vitest-fixtures.ts"],
@@ -28,7 +27,8 @@
       "@frak-labs/wallet-shared/tests/vitest-fixtures": ["../../packages/wallet-shared/tests/vitest-fixtures.ts"],
       "@backend-utils": ["../../services/backend/src/utils/index.ts"],
       "@backend-infrastructure": ["../../services/backend/src/infrastructure/index.ts"],
-      "@backend-infrastructure/*": ["../../services/backend/src/infrastructure/*"]
+      "@backend-infrastructure/*": ["../../services/backend/src/infrastructure/*"],
+      "@backend-domain/*": ["../../services/backend/src/domain/*"]
     }
   }
 }

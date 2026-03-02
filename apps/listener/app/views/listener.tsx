@@ -1,8 +1,5 @@
 import type { FrakLifecycleEvent } from "@frak-labs/core-sdk";
-import {
-    createListenerCompressionMiddleware,
-    createRpcListener,
-} from "@frak-labs/frame-connector";
+import { createRpcListener } from "@frak-labs/frame-connector";
 import { loadPolyfills } from "@frak-labs/ui/utils/polyfills";
 import { useEffect } from "react";
 import { ListenerUiRenderer } from "@/module/component/ListenerUiRenderer";
@@ -19,7 +16,7 @@ import {
 import { useDisplayEmbeddedWallet } from "@/module/hooks/useDisplayEmbeddedWallet";
 import { useDisplayModalListener } from "@/module/hooks/useDisplayModalListener";
 import { useListenerDataPreload } from "@/module/hooks/useListenerDataPreload";
-import { useOnGetProductInformation } from "@/module/hooks/useOnGetProductInformation";
+import { useOnGetMerchantInformation } from "@/module/hooks/useOnGetMerchantInformation";
 import { useSendInteractionListener } from "@/module/hooks/useSendInteractionListener";
 import { useSendPing } from "@/module/hooks/useSendPing";
 import { useWalletStatusListener } from "@/module/hooks/useWalletStatusListener";
@@ -55,17 +52,15 @@ function ListenerContent() {
     // Hook used when a wallet status is requested
     const onWalletListenRequest = useWalletStatusListener();
 
-    // Hook used when a dashboard action is requested
-    const onInteractionRequest = useSendInteractionListener();
-
     // Hook when a modal display is asked
     const onDisplayModalRequest = useDisplayModalListener();
 
     // Hook when a embedded wallet display is asked
     const onDisplayEmbeddedWallet = useDisplayEmbeddedWallet();
 
-    // Hook when the product information are asked
-    const onGetProductInformation = useOnGetProductInformation();
+    const onGetMerchantInformation = useOnGetMerchantInformation();
+
+    const onSendInteraction = useSendInteractionListener();
 
     // Create the RPC listener with centralized message handling
     useEffect(() => {
@@ -77,8 +72,9 @@ function ListenerContent() {
         let isReady = false;
         const setReadyToHandleRequest = () => {
             if (isReady) return;
-            isReady = true;
-            checkContextAndEmitReady();
+            if (checkContextAndEmitReady()) {
+                isReady = true;
+            }
         };
 
         // Create lifecycle handler
@@ -92,17 +88,16 @@ function ListenerContent() {
         // - SsoRpcSchema: SSO window -> wallet communication
         //
         // Note: We accept all origins with "*" because the actual security validation
-        // happens in walletContextMiddleware (matching computed productId from origin
+        // happens in walletContextMiddleware (matching merchantId from origin
         // against stored iframeResolvingContext)
         //
         // Message routing:
-        // 1. Lifecycle messages -> clientLifecycleHandler (no middleware, no compression)
+        // 1. Lifecycle messages -> clientLifecycleHandler (no middleware)
         // 2. RPC messages -> middleware stack -> handlers
         //
         // Middleware stack order (RPC messages only):
-        // 1. compressionMiddleware - Decompresses incoming CBOR data with hash validation
-        // 2. loggingMiddleware - Logs requests/responses (development only)
-        // 3. walletContextMiddleware - Augments context with productId, sourceUrl, etc.
+        // 1. loggingMiddleware - Logs requests/responses (development only)
+        // 2. walletContextMiddleware - Augments context with merchantId, sourceUrl, etc.
         const listener = createRpcListener<
             CombinedRpcSchema,
             WalletRpcContext,
@@ -110,23 +105,22 @@ function ListenerContent() {
         >({
             transport: window,
             allowedOrigins: "*",
-            middleware: [
-                createListenerCompressionMiddleware(),
-                loggingMiddleware,
-                walletContextMiddleware,
-            ],
+            middleware: [loggingMiddleware, walletContextMiddleware],
             lifecycleHandlers: {
                 clientLifecycle: clientLifecycleHandler,
             },
         });
 
         // Register promise-based handlers (IFrameRpcSchema)
-        listener.handle("frak_sendInteraction", onInteractionRequest);
         listener.handle("frak_displayModal", onDisplayModalRequest);
         listener.handle("frak_prepareSso", handlePrepareSso);
         listener.handle("frak_openSso", handleOpenSso);
-        listener.handle("frak_getProductInformation", onGetProductInformation);
+        listener.handle(
+            "frak_getMerchantInformation",
+            onGetMerchantInformation
+        );
         listener.handle("frak_displayEmbeddedWallet", onDisplayEmbeddedWallet);
+        listener.handle("frak_sendInteraction", onSendInteraction);
 
         // Register streaming handlers (IFrameRpcSchema)
         listener.handleStream(
@@ -146,10 +140,10 @@ function ListenerContent() {
         };
     }, [
         onWalletListenRequest,
-        onInteractionRequest,
         onDisplayModalRequest,
-        onGetProductInformation,
+        onGetMerchantInformation,
         onDisplayEmbeddedWallet,
+        onSendInteraction,
     ]);
 
     /**

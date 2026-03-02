@@ -11,14 +11,14 @@
     "lint": "biome lint .",
     "format:check": "biome check .",
     "format": "biome check --write .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsgo --noEmit"
   },
   "devDependencies": {
     "@frak-labs/app-essentials": "workspace:*",
     "@frak-labs/components": "workspace:*",
     "@frak-labs/core-sdk": "workspace:*",
     "typescript": "^5",
-    "rolldown-vite": "^7.3.0",
+    "rolldown-vite": "^7.3.1",
     "vite": "catalog:",
     "vite-plugin-html": "^3.2.2"
   }

@@ -48,8 +48,9 @@ jobs:
             .sst/platform/
             .sst/provider-lock.json
             .sst/esbuild.json
-          key: ${{ runner.os }}-sst-${{ hashFiles('./sst.config.ts') }}
-          restore-keys: ${{ runner.os }}-sst-
+          # Bump v2 when Pulumi/SST updates require cache invalidation
+          key: ${{ runner.os }}-sst-v2-${{ hashFiles('./sst.config.ts') }}
+          restore-keys: ${{ runner.os }}-sst-v2-
 
       - uses: dorny/paths-filter@v3
         name: Check changes
@@ -135,7 +136,7 @@ jobs:
       - name: "🚀 Deploy Services"
         if: steps.changes.outputs.services == 'true' || github.event.inputs.force_deploy == 'true'
         run: |
-          if [[ $STAGE == "prod" ]]; then
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
             bun sst deploy --stage gcp-production
           else
             bun sst deploy --stage gcp-staging
@@ -156,6 +157,7 @@ jobs:
 
       - name: "🚀 Deploy Example"
         if: steps.changes.outputs.example == 'true' || github.event.inputs.force_deploy == 'true'
-        run: bun sst deploy --stage example
+        run: |
+            bun sst deploy --stage example
         env:
           STAGE: ${{ env.STAGE }}

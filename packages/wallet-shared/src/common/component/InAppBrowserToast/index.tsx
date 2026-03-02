@@ -3,13 +3,30 @@ import { useTranslation } from "react-i18next";
 import { emitLifecycleEvent } from "../../../sdk/utils/lifecycleEvents";
 import { trackGenericEvent } from "../../analytics";
 import { useSessionFlag } from "../../hook/useSessionFlag";
-import { inAppRedirectUrl, isInAppBrowser, isInIframe } from "../../lib/inApp";
+import {
+    inAppRedirectUrl,
+    isInAppBrowser,
+    isInIframe,
+    isIPad,
+    redirectToExternalBrowser,
+} from "../../lib/inApp";
 import { Toast } from "../Toast";
 
-/**
- * Toast component that displays when user is in an in-app browser
- */
-export function InAppBrowserToast() {
+type InAppBrowserToastProps = {
+    getMergeToken?: () => Promise<string | undefined>;
+    /**
+     * Parent page URL from SDK handshake (iframe path only).
+     * Used on iPad where all programmatic redirect approaches
+     * are blocked by WKWebView — clipboard copy is the only
+     * reliable escape path.
+     */
+    parentUrl?: string;
+};
+
+export function InAppBrowserToast({
+    getMergeToken,
+    parentUrl,
+}: InAppBrowserToastProps) {
     const { t } = useTranslation();
     const [isDismissed, setIsDismissed] = useSessionFlag(
         "inAppBrowserToastDismissed"
@@ -18,30 +35,56 @@ export function InAppBrowserToast() {
         "socialRedirectAttempted"
     );
 
-    const handleRedirect = useCallback(() => {
+    const handleRedirect = useCallback(async () => {
         if (isInIframe) {
-            // If in an iframe, ask the parent to redirect to the new url
-            trackGenericEvent("in-app-browser-redirect", {
-                target: "sd-iframe",
-            });
-            emitLifecycleEvent({
-                iframeLifecycle: "redirect",
-                data: {
-                    baseRedirectUrl: inAppRedirectUrl,
-                },
-            });
+            if (isIPad) {
+                // iPad WKWebView blocks all programmatic escapes:
+                // x-safari-https://, window.open, <a target="_blank">,
+                // navigator.share (no Safari option in share sheet).
+                // Clipboard copy + instruction is the only path.
+                trackGenericEvent("in-app-browser-redirect", {
+                    target: "sd-iframe-clipboard",
+                });
+                const mergeToken = await getMergeToken?.();
+                const targetUrl = appendMergeToken(
+                    parentUrl ?? window.location.href,
+                    mergeToken
+                );
+                const hasCopiedLink = await copyToClipboard(targetUrl);
+                alert(
+                    hasCopiedLink
+                        ? t("wallet.inAppBrowser.clipboardAlert")
+                        : t("wallet.inAppBrowser.clipboardManualAlert", {
+                              url: targetUrl,
+                          })
+                );
+            } else {
+                // iPhone/other: lifecycle event → parent uses x-safari-https://
+                trackGenericEvent("in-app-browser-redirect", {
+                    target: "sd-iframe",
+                });
+                const mergeToken = await getMergeToken?.();
+                emitLifecycleEvent({
+                    iframeLifecycle: "redirect",
+                    data: {
+                        baseRedirectUrl: inAppRedirectUrl,
+                        mergeToken,
+                    },
+                });
+            }
         } else {
-            // Otherwise, redirect directly
             trackGenericEvent("in-app-browser-redirect", {
                 target: "window",
             });
-            window.location.href = `${inAppRedirectUrl}${encodeURIComponent(window.location.href)}`;
+            redirectToExternalBrowser(window.location.href);
         }
-    }, []);
+    }, [getMergeToken, parentUrl, t]);
 
-    // Auto-redirect if this is the first time detecting in-app browser and no redirect has been attempted
+    // Auto-redirect on first detection — skip on iPad since
+    // clipboard copy without user gesture has no visible feedback.
     useEffect(() => {
         if (!isInAppBrowser || hasAttemptedRedirect) return;
+        if (isIPad && isInIframe) return;
 
         setHasAttemptedRedirect(true);
         handleRedirect();
@@ -69,4 +112,45 @@ export function InAppBrowserToast() {
             onDismiss={handleDismiss}
         />
     );
+}
+
+/**
+ * Copy text to clipboard with execCommand fallback for cross-origin
+ * iframes where navigator.clipboard may be blocked by Permissions-Policy.
+ */
+async function copyToClipboard(text: string): Promise<boolean> {
+    try {
+        await navigator.clipboard.writeText(text);
+        return true;
+    } catch {} // Expected in cross-origin iframes; falls through to execCommand
+
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.style.position = "fixed";
+    textarea.style.opacity = "0";
+    document.body.appendChild(textarea);
+    textarea.select();
+
+    try {
+        return document.execCommand("copy");
+    } catch {
+        return false;
+    } finally {
+        document.body.removeChild(textarea);
+    }
+}
+
+function appendMergeToken(urlString: string, mergeToken?: string): string {
+    if (!mergeToken) {
+        return urlString;
+    }
+
+    try {
+        const url = new URL(urlString);
+        url.searchParams.set("fmt", mergeToken);
+        return url.toString();
+    } catch {
+        const separator = urlString.includes("?") ? "&" : "?";
+        return `${urlString}${separator}fmt=${encodeURIComponent(mergeToken)}`;
+    }
 }

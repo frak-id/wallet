@@ -4,6 +4,7 @@ import { createStore } from "zustand/vanilla";
 import { authenticatedWalletApi } from "../../common/api/backendClient";
 import {
     type BasePairingState,
+    type OriginIdentityNode,
     WsCloseCode,
     type WsOriginMessage,
     type WsOriginRequest,
@@ -22,6 +23,7 @@ export type PairingWsEventListener = (
 type ConnectionParams =
     | {
           action: "initiate";
+          originNode?: OriginIdentityNode;
       }
     | {
           action: "join";
@@ -33,6 +35,30 @@ type ConnectionParams =
           wallet: string;
       };
 
+/**
+ * Reconnection backoff configuration.
+ *
+ * Uses exponential backoff with full jitter:
+ *   delay = random(0, min(MAX_DELAY, BASE_DELAY * 2^attempt))
+ *
+ * Combined with a time-based retry budget: instead of a hard retry cap,
+ * we keep retrying for up to RETRY_BUDGET_MS while the app is in the
+ * foreground. This is critical for mobile wallets where connectivity
+ * can be lost for several seconds during cell handoffs.
+ */
+const RECONNECT_BASE_DELAY_MS = 1_000;
+const RECONNECT_MAX_DELAY_MS = 30_000;
+const RECONNECT_RETRY_BUDGET_MS = 2 * 60 * 1_000; // 2 minutes
+
+function computeBackoffDelay(attempt: number): number {
+    const exponentialDelay = Math.min(
+        RECONNECT_MAX_DELAY_MS,
+        RECONNECT_BASE_DELAY_MS * 2 ** attempt
+    );
+    // Full jitter: pick a random value in [0, exponentialDelay]
+    return Math.round(Math.random() * exponentialDelay);
+}
+
 export abstract class BasePairingClient<
     TRequest extends WsOriginRequest | WsTargetRequest,
     TMessage extends WsOriginMessage | WsTargetMessage,
@@ -43,6 +69,11 @@ export abstract class BasePairingClient<
 
     private onCloseHook: (() => void) | null = null;
     private reconnectRetryCount = 0;
+    /**
+     * Timestamp of the first reconnect attempt in the current retry window.
+     * Used to enforce the time-based retry budget.
+     */
+    private reconnectBudgetStart: number | null = null;
 
     /**
      * The Zustand store for the pairing client
@@ -87,16 +118,49 @@ export abstract class BasePairingClient<
     }
 
     /**
-     * Connect to the pairing websocket
+     * Check WebSocket liveness, cleaning up zombie connections.
+     * A zombie occurs when the OS kills the socket while the app is backgrounded
+     * without firing a close event — the connection object lingers in CLOSED state.
+     *
+     * Returns true if connection is active or closing (let close handler finish).
      */
+    protected isAlive(): boolean {
+        if (!this.connection) return false;
+
+        const { readyState } = this.connection.ws;
+
+        // Active, handshaking, or tearing down — leave it alone
+        if (
+            readyState === WebSocket.OPEN ||
+            readyState === WebSocket.CONNECTING ||
+            readyState === WebSocket.CLOSING
+        ) {
+            return true;
+        }
+
+        console.log("[Pairing] Cleaning up zombie WebSocket connection");
+        this.connection = null;
+        this.resetReconnectState();
+        this.cleanupConnection();
+        return false;
+    }
+
     protected connect(params: ConnectionParams) {
         if (this.connection) {
             console.warn("Pairing client is already connected");
             return;
         }
 
+        const query =
+            "originNode" in params && params.originNode
+                ? {
+                      ...params,
+                      originNode: btoa(JSON.stringify(params.originNode)),
+                  }
+                : params;
+
         this.connection = authenticatedWalletApi.pairings.ws.subscribe({
-            query: params,
+            query,
         });
         this.setState({ status: "connecting" } as Partial<TState>);
 
@@ -161,7 +225,7 @@ export abstract class BasePairingClient<
 
         this.connection.on("open", () => {
             console.log("Pairing websocket opened");
-            this.reconnectRetryCount = 0;
+            this.resetReconnectState();
         });
 
         this.connection.on("close", (event: CloseEvent) =>
@@ -200,52 +264,66 @@ export abstract class BasePairingClient<
     }
 
     /**
-     * Handle a websocket close event
+     * Lightweight cleanup that only clears the ping interval without
+     * resetting store state. Used by isAlive() to avoid a UI flash
+     * (idle → connecting) when recovering from a zombie connection.
      */
+    protected cleanupConnection() {
+        if (this.pingInterval) {
+            clearInterval(this.pingInterval);
+            this.pingInterval = null;
+        }
+    }
+
     private handleClose({ code, reason }: CloseEvent) {
         console.log("Pairing websocket closed", { code, reason });
         this.cleanup();
         this.connection = null;
 
-        // If we have a function to call on close, call it and clean it up
         if (this.onCloseHook) {
             this.onCloseHook();
             this.onCloseHook = null;
             return;
         }
 
-        // Check if we can retry this
         const isRetryable = code !== WsCloseCode.NO_CONNECTION_TO_CONNECT_TO;
         if (!isRetryable) {
-            // Nothing to do, we can't retry this
             this.setState({
                 status: "idle",
                 closeInfo: { code, reason },
             } as Partial<TState>);
+            this.resetReconnectState();
             return;
         }
 
-        // If we have too many reconnect retries, give up
-        if (this.reconnectRetryCount > 5) {
-            console.warn("Too many reconnect retries, giving up");
+        if (this.reconnectBudgetStart === null) {
+            this.reconnectBudgetStart = Date.now();
+        }
+
+        const elapsed = Date.now() - this.reconnectBudgetStart;
+        if (elapsed > RECONNECT_RETRY_BUDGET_MS) {
+            console.warn(
+                `Reconnect budget exhausted after ${Math.round(elapsed / 1000)}s`
+            );
             this.setState({
                 status: "retry-error",
-                closeInfo: {
-                    code,
-                    reason,
-                },
+                closeInfo: { code, reason },
             } as Partial<TState>);
+            this.resetReconnectState();
             return;
         }
 
-        // Otherwise, just try to reconnect in 200ms
+        const delay = computeBackoffDelay(this.reconnectRetryCount);
+        this.reconnectRetryCount++;
+
         setTimeout(() => {
-            console.log(
-                "Reconnecting to pairing websocket, since no onCloseHook"
-            );
-            this.reconnectRetryCount++;
             this.reconnect();
-        }, 500);
+        }, delay);
+    }
+
+    private resetReconnectState() {
+        this.reconnectRetryCount = 0;
+        this.reconnectBudgetStart = null;
     }
 
     /**

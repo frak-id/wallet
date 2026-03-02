@@ -1,260 +1,241 @@
 [
     {
-        "_id": "507f1f77bcf86cd799439011",
-        "title": "Summer Referral Campaign",
-        "productId": "0x0000000000000000000000000000000000000000000000000000000000000001",
-        "type": "sales",
-        "specialCategories": [],
-        "budget": {
-            "type": "monthly",
-            "maxEuroDaily": 5000
+        "id": "camp_001",
+        "merchantId": "merch_11111111",
+        "name": "Summer Referral Campaign",
+        "status": "active",
+        "priority": 1,
+        "rule": {
+            "trigger": "purchase",
+            "conditions": [],
+            "rewards": [
+                {
+                    "recipient": "referrer",
+                    "type": "token",
+                    "amountType": "fixed",
+                    "amount": 5000000000000000000,
+                    "description": "5 FRK per purchase"
+                },
+                {
+                    "recipient": "referee",
+                    "type": "token",
+                    "amountType": "fixed",
+                    "amount": 2500000000000000000,
+                    "description": "2.5 FRK per purchase"
+                }
+            ]
         },
-        "territories": ["US", "GB", "FR", "DE"],
-        "bank": "0x1234567890123456789012345678901234567890",
-        "scheduled": {
-            "dateStart": "2025-01-01T00:00:00.000Z",
-            "dateEnd": "2025-06-30T23:59:59.999Z"
+        "metadata": {
+            "goal": "sales",
+            "territories": ["US", "GB", "FR", "DE"]
         },
-        "rewardChaining": {
-            "userPercent": 80,
-            "deperditionPerLevel": 10
-        },
-        "distribution": {
-            "type": "range",
-            "minMultiplier": 0.8,
-            "maxMultiplier": 2.5
-        },
-        "triggers": {
-            "completed": {
-                "cac": 10,
-                "maxCountPerUser": 5
-            },
-            "referred": {
-                "cac": 2,
-                "maxCountPerUser": 10
+        "budgetConfig": [
+            {
+                "label": "Daily",
+                "durationInSeconds": 86400,
+                "amount": 5000
             }
+        ],
+        "budgetUsed": {
+            "daily": 2500
         },
-        "setupCurrency": "eur",
-        "creator": "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0",
-        "state": {
-            "key": "created",
-            "address": "0xabcdef1234567890abcdef1234567890abcdef12",
-            "interactionLink": {
-                "isAttached": true,
-                "attachTimestamp": "1704067200",
-                "detachTimestamp": null
-            },
-            "isActive": true,
-            "isRunning": true
-        },
-        "actions": {
-            "canEdit": true,
-            "canDelete": true,
-            "canToggleRunningStatus": true
-        }
+        "expiresAt": "2025-06-30T23:59:59Z",
+        "publishedAt": "2025-01-01T00:00:00Z",
+        "createdAt": "2024-12-15T10:00:00Z",
+        "updatedAt": "2026-01-27T15:30:00Z",
+        "bankDistributionStatus": "distributing"
     },
     {
-        "_id": "507f1f77bcf86cd799439012",
-        "title": "Awareness Campaign Q1",
-        "productId": "0x0000000000000000000000000000000000000000000000000000000000000002",
-        "type": "awareness",
-        "specialCategories": [],
-        "budget": {
-            "type": "daily",
-            "maxEuroDaily": 100
+        "id": "camp_002",
+        "merchantId": "merch_22222222",
+        "name": "Awareness Campaign Q1",
+        "status": "paused",
+        "priority": 2,
+        "rule": {
+            "trigger": "referral",
+            "conditions": [],
+            "rewards": [
+                {
+                    "recipient": "referrer",
+                    "type": "token",
+                    "amountType": "fixed",
+                    "amount": 1000000000000000000,
+                    "description": "1 FRK for referral"
+                }
+            ]
         },
-        "territories": ["US", "CA"],
-        "bank": "0x2345678901234567890123456789012345678901",
-        "scheduled": {
-            "dateStart": "2025-01-15T00:00:00.000Z"
+        "metadata": {
+            "goal": "awareness",
+            "territories": ["US", "CA"]
         },
-        "distribution": {
-            "type": "fixed"
-        },
-        "triggers": {
-            "readArticle": {
-                "cac": 0.5,
-                "maxCountPerUser": 20
-            },
-            "open": {
-                "cac": 0.2,
-                "maxCountPerUser": 50
+        "budgetConfig": [
+            {
+                "label": "Daily",
+                "durationInSeconds": 86400,
+                "amount": 100
             }
+        ],
+        "budgetUsed": {
+            "daily": 50
         },
-        "setupCurrency": "usd",
-        "creator": "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0",
-        "state": {
-            "key": "created",
-            "address": "0xbcdef1234567890abcdef1234567890abcdef123",
-            "interactionLink": {
-                "isAttached": true,
-                "attachTimestamp": "1705276800",
-                "detachTimestamp": null
-            },
-            "isActive": true,
-            "isRunning": false
-        },
-        "actions": {
-            "canEdit": true,
-            "canDelete": true,
-            "canToggleRunningStatus": true
-        }
+        "expiresAt": null,
+        "publishedAt": "2025-01-15T00:00:00Z",
+        "createdAt": "2025-01-10T08:30:00Z",
+        "updatedAt": "2026-01-25T12:00:00Z",
+        "bankDistributionStatus": null
     },
     {
-        "_id": "507f1f77bcf86cd799439013",
-        "title": "Draft Campaign - Registration Focus",
-        "productId": "0x0000000000000000000000000000000000000000000000000000000000000001",
-        "type": "registration",
-        "specialCategories": [],
-        "budget": {
-            "type": "weekly",
-            "maxEuroDaily": 750
+        "id": "camp_003",
+        "merchantId": "merch_11111111",
+        "name": "Draft Campaign - Registration Focus",
+        "status": "draft",
+        "priority": 3,
+        "rule": {
+            "trigger": "create_referral_link",
+            "conditions": [],
+            "rewards": [
+                {
+                    "recipient": "referrer",
+                    "type": "token",
+                    "amountType": "fixed",
+                    "amount": 3000000000000000000,
+                    "description": "3 FRK for sharing referral link"
+                }
+            ]
         },
-        "territories": ["FR", "BE", "CH"],
-        "bank": "0x3456789012345678901234567890123456789012",
-        "distribution": {
-            "type": "fixed"
+        "metadata": {
+            "goal": "registration",
+            "territories": ["FR", "BE", "CH"]
         },
-        "triggers": {
-            "referred": {
-                "cac": 5,
-                "maxCountPerUser": 3
+        "budgetConfig": [
+            {
+                "label": "Weekly",
+                "durationInSeconds": 604800,
+                "amount": 750
             }
-        },
-        "setupCurrency": "eur",
-        "creator": "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0",
-        "state": {
-            "key": "draft"
-        },
-        "actions": {
-            "canEdit": true,
-            "canDelete": true,
-            "canToggleRunningStatus": false
-        }
+        ],
+        "budgetUsed": null,
+        "expiresAt": null,
+        "publishedAt": null,
+        "createdAt": "2026-01-20T14:00:00Z",
+        "updatedAt": "2026-01-27T10:15:00Z",
+        "bankDistributionStatus": null
     },
     {
-        "_id": "507f1f77bcf86cd799439014",
-        "title": "Traffic Boost Campaign",
-        "productId": "0x0000000000000000000000000000000000000000000000000000000000000002",
-        "type": "traffic",
-        "specialCategories": [],
-        "budget": {
-            "type": "global",
-            "maxEuroDaily": 10000
+        "id": "camp_004",
+        "merchantId": "merch_22222222",
+        "name": "Traffic Boost Campaign",
+        "status": "active",
+        "priority": 1,
+        "rule": {
+            "trigger": "purchase",
+            "conditions": [],
+            "rewards": [
+                {
+                    "recipient": "referrer",
+                    "type": "token",
+                    "amountType": "fixed",
+                    "amount": 7500000000000000000,
+                    "description": "7.5 FRK per purchase"
+                },
+                {
+                    "recipient": "referee",
+                    "type": "token",
+                    "amountType": "fixed",
+                    "amount": 3750000000000000000,
+                    "description": "3.75 FRK per purchase"
+                }
+            ]
         },
-        "territories": ["US", "GB", "CA", "AU", "NZ"],
-        "bank": "0x4567890123456789012345678901234567890123",
-        "scheduled": {
-            "dateStart": "2025-02-01T00:00:00.000Z",
-            "dateEnd": "2025-04-30T23:59:59.999Z"
+        "metadata": {
+            "goal": "traffic",
+            "territories": ["US", "GB", "CA", "AU", "NZ"]
         },
-        "rewardChaining": {
-            "userPercent": 75,
-            "deperditionPerLevel": 15
-        },
-        "distribution": {
-            "type": "range",
-            "minMultiplier": 0.7,
-            "maxMultiplier": 1.5
-        },
-        "triggers": {
-            "referred": {
-                "cac": 1.5,
-                "maxCountPerUser": 15
+        "budgetConfig": [
+            {
+                "label": "Monthly",
+                "durationInSeconds": 2592000,
+                "amount": 10000
             }
+        ],
+        "budgetUsed": {
+            "monthly": 4200
         },
-        "setupCurrency": "usd",
-        "creator": "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0",
-        "state": {
-            "key": "created",
-            "address": "0xcdef1234567890abcdef1234567890abcdef1234",
-            "interactionLink": {
-                "isAttached": true,
-                "attachTimestamp": "1706486400",
-                "detachTimestamp": null
-            },
-            "isActive": true,
-            "isRunning": true
-        },
-        "actions": {
-            "canEdit": true,
-            "canDelete": true,
-            "canToggleRunningStatus": true
-        }
+        "expiresAt": "2025-04-30T23:59:59Z",
+        "publishedAt": "2025-02-01T00:00:00Z",
+        "createdAt": "2025-01-25T09:45:00Z",
+        "updatedAt": "2026-01-27T14:20:00Z",
+        "bankDistributionStatus": "distributing"
     },
     {
-        "_id": "507f1f77bcf86cd799439015",
-        "title": "Retention Campaign - Loyal Customers",
-        "productId": "0x0000000000000000000000000000000000000000000000000000000000000003",
-        "type": "retention",
-        "specialCategories": [],
-        "budget": {
-            "type": "monthly",
-            "maxEuroDaily": 2000
+        "id": "camp_005",
+        "merchantId": "merch_33333333",
+        "name": "Retention Campaign - Loyal Customers",
+        "status": "archived",
+        "priority": 2,
+        "rule": {
+            "trigger": "purchase",
+            "conditions": [],
+            "rewards": [
+                {
+                    "recipient": "user",
+                    "type": "token",
+                    "amountType": "fixed",
+                    "amount": 10000000000000000000,
+                    "description": "10 FRK for repeat purchase"
+                }
+            ]
         },
-        "territories": ["FR", "DE", "IT", "ES"],
-        "bank": "0x5678901234567890123456789012345678901234",
-        "scheduled": {
-            "dateStart": "2025-01-01T00:00:00.000Z"
+        "metadata": {
+            "goal": "retention",
+            "territories": ["FR", "DE", "IT", "ES"]
         },
-        "distribution": {
-            "type": "fixed"
-        },
-        "triggers": {
-            "completed": {
-                "cac": 15,
-                "maxCountPerUser": 100
+        "budgetConfig": [
+            {
+                "label": "Monthly",
+                "durationInSeconds": 2592000,
+                "amount": 2000
             }
+        ],
+        "budgetUsed": {
+            "monthly": 1800
         },
-        "setupCurrency": "eur",
-        "creator": "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0",
-        "state": {
-            "key": "created",
-            "address": "0xdef1234567890abcdef1234567890abcdef12345",
-            "interactionLink": {
-                "isAttached": false,
-                "attachTimestamp": "1704067200",
-                "detachTimestamp": "1706745600"
-            },
-            "isActive": false,
-            "isRunning": false
-        },
-        "actions": {
-            "canEdit": false,
-            "canDelete": false,
-            "canToggleRunningStatus": false
-        }
+        "expiresAt": "2025-12-31T23:59:59Z",
+        "publishedAt": "2025-01-01T00:00:00Z",
+        "createdAt": "2024-11-15T11:20:00Z",
+        "updatedAt": "2026-01-15T16:45:00Z",
+        "bankDistributionStatus": null
     },
     {
-        "_id": "507f1f77bcf86cd799439016",
-        "title": "Failed Campaign - Network Issues",
-        "productId": "0x0000000000000000000000000000000000000000000000000000000000000001",
-        "type": "sales",
-        "specialCategories": [],
-        "budget": {
-            "type": "weekly",
-            "maxEuroDaily": 500
+        "id": "camp_006",
+        "merchantId": "merch_11111111",
+        "name": "Custom Event Campaign",
+        "status": "draft",
+        "priority": 4,
+        "rule": {
+            "trigger": "custom",
+            "conditions": [],
+            "rewards": [
+                {
+                    "recipient": "referrer",
+                    "type": "token",
+                    "amountType": "fixed",
+                    "amount": 5000000000000000000,
+                    "description": "5 FRK for custom event"
+                }
+            ]
         },
-        "territories": ["US"],
-        "bank": "0x6789012345678901234567890123456789012345",
-        "distribution": {
-            "type": "fixed"
+        "metadata": {
+            "goal": "awareness",
+            "specialCategories": ["jobs"],
+            "territories": ["US"]
         },
-        "triggers": {
-            "completed": {
-                "cac": 8,
-                "maxCountPerUser": 5
-            }
-        },
-        "setupCurrency": "usd",
-        "creator": "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0",
-        "state": {
-            "key": "creationFailed"
-        },
-        "actions": {
-            "canEdit": false,
-            "canDelete": true,
-            "canToggleRunningStatus": false
-        }
+        "budgetConfig": null,
+        "budgetUsed": null,
+        "expiresAt": null,
+        "publishedAt": null,
+        "createdAt": "2026-01-22T13:30:00Z",
+        "updatedAt": "2026-01-27T09:00:00Z",
+        "bankDistributionStatus": null
     }
 ]

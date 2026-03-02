@@ -1,4 +1,5 @@
 import { walletUrl } from "./config";
+import { normalizedStageName } from "./utils";
 
 /**
  * EthCC wallet demo website
@@ -18,7 +19,7 @@ export const ethccWebsite = new sst.aws.StaticSite("WalletExampleEthCC", {
     },
     // Environment variables
     environment: {
-        STAGE: $app.stage,
+        STAGE: normalizedStageName,
         FRAK_WALLET_URL: walletUrl,
     },
     dev: { autostart: false },
@@ -40,6 +41,10 @@ export const vanillaJsWebsite = new sst.aws.StaticSite("VanillaJsDemo", {
     vite: {
         types: "./sst-env.d.ts",
     },
+    environment: {
+        STAGE: normalizedStageName,
+        FRAK_WALLET_URL: walletUrl,
+    },
     dev: { autostart: false },
 });
 
@@ -58,6 +63,10 @@ export const showcaseWebsite = new sst.aws.StaticSite("ShowcaseDemo", {
     },
     vite: {
         types: "./sst-env.d.ts",
+    },
+    environment: {
+        STAGE: normalizedStageName,
+        FRAK_WALLET_URL: walletUrl,
     },
     dev: { autostart: false },
 });

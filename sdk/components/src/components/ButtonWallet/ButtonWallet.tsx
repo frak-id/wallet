@@ -37,11 +37,11 @@ import { openWalletModal } from "./utils";
  * @example
  * Using reward information for specific reward:
  * ```html
- * <frak-button-wallet use-reward target-interaction="retail.customerMeeting"></frak-button-wallet>
+ * <frak-button-wallet use-reward target-interaction="custom.customerMeeting"></frak-button-wallet>
  * ```
  *
  * @see {@link @frak-labs/core-sdk!actions.modalBuilder | `modalBuilder()`} for more info about the modal display
- * @see {@link @frak-labs/core-sdk!actions.getProductInformation | `getProductInformation()`} for more info about the estimated reward fetching
+ * @see {@link @frak-labs/core-sdk!actions.getMerchantInformation | `getMerchantInformation()`} for more info about the estimated reward fetching
  */
 export function ButtonWallet({
     classname = "",

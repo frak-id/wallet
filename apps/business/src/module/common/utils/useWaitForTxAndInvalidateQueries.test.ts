@@ -17,7 +17,7 @@ vi.mock("viem/actions", () => ({
 }));
 
 // Mock the blockchain provider
-vi.mock("@/context/blockchain/provider", () => ({
+vi.mock("@/config/blockchain", () => ({
     viemClient: {},
 }));
 

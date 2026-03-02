@@ -8,6 +8,7 @@ import {
     test,
 } from "../../../tests/vitest-fixtures";
 import type { LastWebAuthNAction } from "../../stores/types";
+import type { SdkSession, Session } from "../../types/Session";
 import { useGetSafeSdkSession } from "./useGetSafeSdkSession";
 
 // Mock dependencies
@@ -61,12 +62,8 @@ vi.mock("../queryKeys/sdk", () => ({
 describe("useGetSafeSdkSession", () => {
     let mockSetSdkSession: (sdkSession: any) => void;
     let mockSessionState: {
-        sdkSession: null | ReturnType<
-            typeof import("../../test/factories").createMockSdkSession
-        >;
-        session: null | ReturnType<
-            typeof import("../../test/factories").createMockSession
-        >;
+        sdkSession: SdkSession | null;
+        session: Session | null;
         setSdkSession: (sdkSession: any) => void;
     };
     let mockAuthState: {

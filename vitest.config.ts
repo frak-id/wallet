@@ -17,10 +17,13 @@
  * Projects:
  * - wallet-unit: Wallet app (TanStack Router)
  * - listener-unit: Listener iframe app
- * - business-unit: Business dashboard (TanStack Start)
+ * - business-unit: Business dashboard (TanStack Router SPA)
+ * - shopify-unit: Shopify embedded app (React Router v7)
  * - wallet-shared-unit: Shared wallet utilities package
+ * - ui-unit: Radix-based UI component library
  * - core-sdk-unit: Core SDK (framework-agnostic)
  * - react-sdk-unit: React SDK (hooks and providers)
+ * - components-unit: Web Components (Preact)
  * - backend-unit: Elysia backend service (Node environment)
  */
 import { defineConfig } from "vitest/config";

@@ -33,7 +33,8 @@
   },
   "type": "module",
   "files": [
-    "/dist"
+    "/dist",
+    "/src"
   ],
   "main": "./dist/index.cjs",
   "types": "./dist/index.d.cts",
@@ -58,7 +59,7 @@
     "build": "tsdown",
     "build:watch": "tsdown --watch",
     "check-exports": "attw --pack .",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsgo --noEmit",
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
@@ -81,19 +82,19 @@
     "@frak-labs/wallet-shared": "workspace:*",
     "@tanstack/react-query": "catalog:",
     "@testing-library/jest-dom": "^6.9.1",
-    "@testing-library/react": "^16.3.1",
+    "@testing-library/react": "^16.3.2",
     "@testing-library/react-hooks": "^8.0.1",
     "@testing-library/user-event": "^14.6.1",
     "@types/jsdom": "^27.0.0",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
-    "@vitest/coverage-v8": "^4.0.16",
-    "@vitest/ui": "^4.0.16",
-    "jsdom": "^27.3.0",
+    "@vitest/coverage-v8": "^4.0.18",
+    "@vitest/ui": "^4.0.18",
+    "jsdom": "^28.0.0",
     "react": "catalog:",
-    "tsdown": "^0.18.2",
+    "tsdown": "^0.20.3",
     "typescript": "^5",
     "viem": "catalog:",
-    "vitest": "^4.0.16"
+    "vitest": "^4.0.18"
   }
 }
