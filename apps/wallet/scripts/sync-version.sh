@@ -4,7 +4,7 @@
 #   If no version arg, reads from package.json
 #   CFBundleVersion uses x.x.x format (matches CFBundleShortVersionString)
 
-set -e
+set -euo pipefail
 
 WALLET_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 TAURI_DIR="$WALLET_DIR/src-tauri"

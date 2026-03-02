@@ -151,3 +151,43 @@ test.skipIf(!hasJq)("should sync version with GNU-like sed semantics", () => {
     expect(projectYml).toContain("CFBundleShortVersionString: 1.2.3");
     expect(projectYml).toContain('CFBundleVersion: "1.2.3"');
 });
+
+test.skipIf(!hasJq)(
+    "should read version from package.json when no argument is given",
+    () => {
+        const { fakeBinDir, scriptPath, tauriDir, walletDir } =
+            createTempWalletFixture();
+
+        // Run with no version argument — script must read from package.json (0.0.35)
+        const run = spawnSync("bash", [scriptPath], {
+            encoding: "utf8",
+            env: {
+                ...process.env,
+                PATH: `${fakeBinDir}:${process.env.PATH ?? ""}`,
+            },
+        });
+
+        expect(run.status, `${run.stdout}\n${run.stderr}`).toBe(0);
+
+        // package.json should be untouched (no version arg = no write-back)
+        const packageJson = JSON.parse(
+            readFileSync(join(walletDir, "package.json"), "utf8")
+        ) as { version: string };
+        expect(packageJson.version).toBe("0.0.35");
+
+        const tauriConf = JSON.parse(
+            readFileSync(join(tauriDir, "tauri.conf.json"), "utf8")
+        ) as { version: string };
+        expect(tauriConf.version).toBe("0.0.35");
+
+        const cargoToml = readFileSync(join(tauriDir, "Cargo.toml"), "utf8");
+        expect(cargoToml).toContain('version = "0.0.35"');
+
+        const projectYml = readFileSync(
+            join(tauriDir, "gen", "apple", "project.yml"),
+            "utf8"
+        );
+        expect(projectYml).toContain("CFBundleShortVersionString: 0.0.35");
+        expect(projectYml).toContain('CFBundleVersion: "0.0.35"');
+    }
+);
