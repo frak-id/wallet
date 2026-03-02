@@ -1,4 +1,5 @@
 import type { Stablecoin } from "@frak-labs/app-essentials";
+import { isRunningInProd } from "@frak-labs/app-essentials";
 import { useWalletStatus } from "@frak-labs/react-sdk";
 import { Button, buttonVariants } from "@frak-labs/ui/component/Button";
 import { Input } from "@frak-labs/ui/component/forms/Input";
@@ -167,7 +168,9 @@ function RewardBudgetView({
                     >
                         Add funds via Stripe
                     </a>
-                    <TestFundButton bankAddress={bankAddress} />
+                    {!isRunningInProd && (
+                        <TestFundButton bankAddress={bankAddress} />
+                    )}
                 </div>
             </div>
         </Panel>
