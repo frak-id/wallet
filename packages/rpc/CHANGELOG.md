@@ -1,5 +1,11 @@
 # @frak-labs/frame-connector
 
+## 0.2.0
+
+### Minor Changes
+
+- [#133](https://github.com/frak-id/wallet/pull/133) [`a6c77fd`](https://github.com/frak-id/wallet/commit/a6c77fd2155a7a2038a13e6a766b160897aa2f98) Thanks [@srod](https://github.com/srod)! - Replace CBOR with JSON compression, add inter-window RPC for SSO communication, fix param extraction from data envelope, and add SSO redirect handling with lifecycle middleware.
+
 ## 0.1.0
 
 ### Minor Changes

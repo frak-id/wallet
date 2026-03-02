@@ -1,5 +1,18 @@
 # @frak-labs/core-sdk
 
+## 0.2.0
+
+### Minor Changes
+
+- [#133](https://github.com/frak-id/wallet/pull/133) [`a6c77fd`](https://github.com/frak-id/wallet/commit/a6c77fd2155a7a2038a13e6a766b160897aa2f98) Thanks [@srod](https://github.com/srod)! - SDK v2: Add `ensureIdentity` action, `merchantId` session persistence, `trackArrival` action, SSO param generation and redirect handling. Add `clientId` to iframe URL params and analytics events. Hide internal types and fix `QueryOptions` generic.
+
+### Patch Changes
+
+- [#133](https://github.com/frak-id/wallet/pull/133) [`a6c77fd`](https://github.com/frak-id/wallet/commit/a6c77fd2155a7a2038a13e6a766b160897aa2f98) Thanks [@srod](https://github.com/srod)! - Fix iPad detection for iPadOS 13+ Macintosh UA, iOS in-app browser redirect via x-safari-https scheme, Android intent URL Play Store redirect, arrival interaction clientId race condition, purchase status tracking with merchantId and anonymous user support, and Chrome Android deep link confirmation bar.
+
+- Updated dependencies [[`a6c77fd`](https://github.com/frak-id/wallet/commit/a6c77fd2155a7a2038a13e6a766b160897aa2f98)]:
+  - @frak-labs/frame-connector@0.2.0
+
 ## 0.1.1
 
 ### Patch Changes
