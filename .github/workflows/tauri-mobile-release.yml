@@ -65,6 +65,10 @@ jobs:
         with:
           targets: aarch64-apple-ios
 
+      - name: "💾 Cache Rust"
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/wallet/src-tauri
       - name: "💾 Setup SST Cache"
         id: sst-caching
         uses: actions/cache@v4
@@ -152,6 +156,10 @@ jobs:
         with:
           targets: aarch64-linux-android,armv7-linux-androideabi,i686-linux-android,x86_64-linux-android
 
+      - name: "💾 Cache Rust"
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/wallet/src-tauri
       - name: "💾 Setup SST Cache"
         id: sst-caching
         uses: actions/cache@v4
