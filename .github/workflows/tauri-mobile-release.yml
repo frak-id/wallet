@@ -292,7 +292,6 @@ jobs:
           STAGE: ${{ inputs.stage }}
 
       # TODO: Graduate from `internal` track to `production` when ready for public release
-      # status: draft because Google Play app is not yet published — draft apps only accept draft releases
       - name: "🚀 Upload to Play Store"
         uses: r0adkll/upload-google-play@v1.1.3
         with:
@@ -300,7 +299,7 @@ jobs:
           packageName: id.frak.wallet
           releaseFiles: apps/wallet/src-tauri/gen/android/app/build/outputs/bundle/universalRelease/app-universal-release.aab
           track: internal
-          status: draft
+          status: completed
 
       - name: "📦 Upload Android artifact"
         if: always()
