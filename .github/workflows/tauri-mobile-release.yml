@@ -152,7 +152,9 @@ jobs:
           APPLE_API_KEY_CONTENT: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}
 
       - name: "🏗️ Build iOS"
-        run: bunx sst shell --stage "$STAGE" --print-logs -- tauri ios build --export-method app-store-connect
+        run: |
+          export PATH="./node_modules/.bin:$PATH"
+          sst shell --stage "$STAGE" --print-logs -- tauri ios build --export-method app-store-connect
         env:
           STAGE: ${{ inputs.stage }}
           APPLE_API_ISSUER: ${{ secrets.APPSTORE_ISSUER_ID }}
@@ -266,7 +268,9 @@ jobs:
           KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
 
       - name: "🏗️ Build Android"
-        run: bunx sst shell --stage "$STAGE" --print-logs -- tauri android build
+        run: |
+          export PATH="./node_modules/.bin:$PATH"
+          sst shell --stage "$STAGE" --print-logs -- tauri android build
         env:
           STAGE: ${{ inputs.stage }}
 
