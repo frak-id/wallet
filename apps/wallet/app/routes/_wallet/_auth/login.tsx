@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AuthActions } from "@/module/authentication/component/AuthActions";
 import { AuthenticateWithPhone } from "@/module/authentication/component/AuthenticateWithPhone";
+import { DemoTapZone } from "@/module/authentication/component/DemoTapZone";
 import { LoginList } from "@/module/authentication/component/LoginList";
 import styles from "@/module/authentication/page/LoginPage.module.css";
 import { Back } from "@/module/common/component/Back";
@@ -78,6 +79,7 @@ function LoginPage() {
                     </>
                 }
             >
+                <DemoTapZone navigate={navigate} />
                 <PairingInProgress />
 
                 <AuthActions

@@ -10,7 +10,7 @@ import { useDemoLogin } from "@/module/authentication/hook/useDemoLogin";
 import { Grid } from "@/module/common/component/Grid";
 import styles from "./register.module.css";
 
-export const Route = createFileRoute("/_wallet/_auth/register/demo")({
+export const Route = createFileRoute("/_wallet/_auth/register-demo")({
     component: RegisterDemo,
 });
 
