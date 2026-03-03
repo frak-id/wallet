@@ -6,7 +6,9 @@ pub fn run() {
 
   #[cfg(mobile)]
   {
-    builder = builder.plugin(tauri_plugin_biometric::init());
+    builder = builder
+      .plugin(tauri_plugin_biometric::init())
+      .plugin(tauri_plugin_notification::init());
   }
 
   // Android-only plugins: WebAuthn, Share, and FS
