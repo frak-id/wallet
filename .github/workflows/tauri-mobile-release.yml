@@ -165,13 +165,23 @@ jobs:
           APPLE_API_KEY: ${{ secrets.APPSTORE_API_KEY_ID }}
           APPLE_API_KEY_PATH: ${{ runner.temp }}/AuthKey.p8
 
+      # apple-actions/upload-testflight-build@v4 uses iTMSTransporter which was removed in Xcode 14+.
+      # xcrun altool is the supported replacement on macos-15 (Xcode 16.4).
       - name: "🚀 Upload to TestFlight"
-        uses: apple-actions/upload-testflight-build@v4
-        with:
-          app-path: "apps/wallet/src-tauri/gen/apple/build/arm64/Frak Wallet.ipa"
-          issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }}
-          api-key-id: ${{ secrets.APPSTORE_API_KEY_ID }}
-          api-private-key: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}
+        run: |
+          mkdir -p "$API_PRIVATE_KEYS_DIR"
+          echo "$APPLE_API_KEY_CONTENT" > "$API_PRIVATE_KEYS_DIR/AuthKey_$APPLE_API_KEY.p8"
+          xcrun altool --upload-app \
+            -f "apps/wallet/src-tauri/gen/apple/build/arm64/Frak Wallet.ipa" \
+            -t ios \
+            --apiKey "$APPLE_API_KEY" \
+            --apiIssuer "$APPLE_API_ISSUER"
+          rm -rf "$API_PRIVATE_KEYS_DIR"
+        env:
+          API_PRIVATE_KEYS_DIR: ${{ runner.temp }}/private_keys
+          APPLE_API_KEY: ${{ secrets.APPSTORE_API_KEY_ID }}
+          APPLE_API_ISSUER: ${{ secrets.APPSTORE_ISSUER_ID }}
+          APPLE_API_KEY_CONTENT: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}
 
       - name: "📦 Upload iOS artifact"
         if: always()
