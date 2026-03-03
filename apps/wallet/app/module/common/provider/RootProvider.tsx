@@ -1,6 +1,5 @@
 import { isTauri } from "@frak-labs/app-essentials/utils/platform";
 import {
-    authenticatedWalletApi,
     setProfileId,
     usePersistentPairingClient,
     WagmiProviderWithDynamicConfig,
@@ -62,8 +61,7 @@ export function RootProvider({ children }: PropsWithChildren) {
 
     const content = (
         <NotificationProvider>
-            {/* Only setup service worker in web mode, not in Tauri */}
-            {!isNativeApp && <SetupServiceWorker />}
+            <SetupNotifications />
             <WagmiProviderWithDynamicConfig>
                 <SessionStateManager />
                 {children}
@@ -90,62 +88,17 @@ export function RootProvider({ children }: PropsWithChildren) {
     );
 }
 
-/**
- * Setup the service worker for push notifications
- * @constructor
- */
-function SetupServiceWorker() {
-    const { setSubscription } = useNotificationContext();
+function SetupNotifications() {
+    const { adapter, setIsSubscribed } = useNotificationContext();
 
-    // Hook to automatically register the service worker if possible
     useEffect(() => {
-        // Early exit if not supported
-        if (
-            typeof navigator === "undefined" ||
-            !("serviceWorker" in navigator)
-        ) {
-            return;
-        }
-
-        const loadServiceWorker = async () => {
-            // Ask the navigator to register the service worker
-            const registration = await navigator.serviceWorker.register(
-                "/sw.js",
-                {
-                    scope: "/",
-                    updateViaCache: "none",
-                }
-            );
-            // Get potential subscription already present in the service worker
-            const subscription =
-                "pushManager" in registration
-                    ? await registration.pushManager.getSubscription()
-                    : undefined;
-            if (!subscription) {
-                console.log(
-                    "No previous subscription found on this service worker"
-                );
-                return;
-            }
-            setSubscription(subscription);
-
-            // Save this new subscription
-            const jsonSubscription = subscription.toJSON();
-            await authenticatedWalletApi.notifications.tokens.put({
-                subscription: {
-                    endpoint: jsonSubscription.endpoint ?? "no-endpoint",
-                    keys: {
-                        p256dh: jsonSubscription.keys?.p256dh ?? "no-p256",
-                        auth: jsonSubscription.keys?.auth ?? "no-auth",
-                    },
-                    expirationTime:
-                        jsonSubscription.expirationTime ?? undefined,
-                },
-            });
+        const setupNotifications = async () => {
+            const result = await adapter.initialize();
+            setIsSubscribed(result.isSubscribed);
         };
 
-        loadServiceWorker();
-    }, [setSubscription]);
+        setupNotifications();
+    }, [adapter, setIsSubscribed]);
 
     return null;
 }

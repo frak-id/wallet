@@ -2,200 +2,163 @@ import { renderHook } from "@testing-library/react";
 import { vi } from "vitest";
 import * as NotificationContext from "@/module/notification/context/NotificationContext";
 import { useNotificationSetupStatus } from "@/module/notification/hook/useNotificationSetupStatus";
-import { beforeEach, describe, expect, test } from "@/tests/vitest-fixtures";
+import {
+    beforeEach,
+    describe,
+    expect,
+    test,
+    type WalletTestFixtures,
+} from "@/tests/vitest-fixtures";
 
-// Mock the notification context
 vi.mock("@/module/notification/context/NotificationContext", () => ({
     useNotificationContext: vi.fn(() => ({
-        subscription: undefined,
-        setSubscription: vi.fn(),
-        clearSubscription: vi.fn(),
+        isSubscribed: false,
+        setIsSubscribed: vi.fn(),
+        adapter: {
+            isSupported: vi.fn().mockReturnValue(false),
+            getPermissionStatus: vi.fn().mockReturnValue("default"),
+            requestPermission: vi.fn().mockResolvedValue("granted"),
+            subscribe: vi.fn().mockResolvedValue(undefined),
+            unsubscribe: vi.fn().mockResolvedValue(undefined),
+            isSubscribed: vi.fn().mockResolvedValue(false),
+            initialize: vi.fn().mockResolvedValue({ isSubscribed: false }),
+            showLocalNotification: vi.fn().mockResolvedValue(undefined),
+        },
     })),
 }));
 
-describe("useNotificationSetupStatus", () => {
-    // Use fixture for automatic browser API cleanup!
-    beforeEach(({ mockNotificationContext }) => {
-        vi.clearAllMocks();
-        // Reset mock implementation using fixture
+describe.sequential("useNotificationSetupStatus", () => {
+    beforeEach(({ mockNotificationContext }: WalletTestFixtures) => {
+        mockNotificationContext.adapter.isSupported.mockReset();
+        mockNotificationContext.adapter.getPermissionStatus.mockReset();
+        mockNotificationContext.adapter.requestPermission.mockReset();
+        mockNotificationContext.adapter.subscribe.mockReset();
+        mockNotificationContext.adapter.unsubscribe.mockReset();
+        mockNotificationContext.adapter.isSubscribed.mockReset();
+        mockNotificationContext.adapter.initialize.mockReset();
+        mockNotificationContext.adapter.showLocalNotification.mockReset();
+
+        mockNotificationContext.adapter.isSupported.mockReturnValue(false);
+        mockNotificationContext.adapter.getPermissionStatus.mockReturnValue(
+            "default"
+        );
+        mockNotificationContext.adapter.requestPermission.mockResolvedValue(
+            "granted"
+        );
+        mockNotificationContext.adapter.subscribe.mockResolvedValue(undefined);
+        mockNotificationContext.adapter.unsubscribe.mockResolvedValue(
+            undefined
+        );
+        mockNotificationContext.adapter.isSubscribed.mockResolvedValue(false);
+        mockNotificationContext.adapter.initialize.mockResolvedValue({
+            isSubscribed: false,
+        });
+        mockNotificationContext.adapter.showLocalNotification.mockResolvedValue(
+            undefined
+        );
+
+        const contextValue = mockNotificationContext as unknown as ReturnType<
+            typeof NotificationContext.useNotificationContext
+        >;
         vi.mocked(NotificationContext.useNotificationContext).mockReturnValue(
-            mockNotificationContext as any
+            contextValue
         );
     });
 
-    test("should return not supported when required APIs are missing", () => {
-        // No browser API mocking = unsupported environment
+    test("should return not supported when adapter reports unsupported", ({
+        mockNotificationContext,
+    }: WalletTestFixtures) => {
+        mockNotificationContext.adapter.isSupported.mockReturnValue(false);
+
         const { result } = renderHook(() => useNotificationSetupStatus());
 
-        expect(result.current.isSupported).toBe(false);
+        expect(result.current).toEqual({ isSupported: false });
+        expect(
+            mockNotificationContext.adapter.isSupported
+        ).toHaveBeenCalledTimes(1);
     });
 
-    test("should detect browser notification support when APIs are available", ({
-        mockBrowserAPIs,
-    }) => {
-        // Use fixture to setup browser APIs
-        mockBrowserAPIs.mockNotificationAPI("default");
-        mockBrowserAPIs.mockServiceWorkerAPI();
-        mockBrowserAPIs.mockPushManagerAPI();
+    test("should return supported status and permission data", ({
+        mockNotificationContext,
+    }: WalletTestFixtures) => {
+        mockNotificationContext.adapter.isSupported.mockReturnValue(true);
+        mockNotificationContext.adapter.getPermissionStatus.mockReturnValue(
+            "granted"
+        );
 
         const { result } = renderHook(() => useNotificationSetupStatus());
 
         expect(result.current.isSupported).toBe(true);
-    });
-
-    test("should return notification permission status structure", ({
-        mockBrowserAPIs,
-    }) => {
-        // Setup full browser API support
-        mockBrowserAPIs.mockNotificationAPI("default");
-        mockBrowserAPIs.mockServiceWorkerAPI();
-        mockBrowserAPIs.mockPushManagerAPI();
-
-        const { result } = renderHook(() => useNotificationSetupStatus());
-
-        // The hook should have all required properties when supported
-        expect(result.current).toHaveProperty("isSupported");
-        expect(result.current.isSupported).toBe(true);
-        expect(result.current).toHaveProperty("isNotificationAllowed");
-        expect(result.current).toHaveProperty("askForNotificationPermission");
-        expect(result.current).toHaveProperty("subscription");
-    });
-
-    test("should provide askForNotificationPermission callback when supported", ({
-        mockBrowserAPIs,
-    }) => {
-        // Setup full browser API support
-        mockBrowserAPIs.mockNotificationAPI("default");
-        mockBrowserAPIs.mockServiceWorkerAPI();
-        mockBrowserAPIs.mockPushManagerAPI();
-
-        const { result } = renderHook(() => useNotificationSetupStatus());
-
-        expect(result.current.isSupported).toBe(true);
-        expect(typeof result.current.askForNotificationPermission).toBe(
+        expect(result.current.isNotificationAllowed).toBe(true);
+        expect(result.current.isSubscribed).toBe(false);
+        expect(result.current.askForNotificationPermission).toBeTypeOf(
             "function"
         );
     });
 
-    test("should integrate with notification context for subscription", ({
-        mockBrowserAPIs,
-    }) => {
-        // Setup full browser API support
-        mockBrowserAPIs.mockNotificationAPI("default");
-        mockBrowserAPIs.mockServiceWorkerAPI();
-        mockBrowserAPIs.mockPushManagerAPI();
+    test("should expose isSubscribed from context", ({
+        mockNotificationContext,
+    }: WalletTestFixtures) => {
+        mockNotificationContext.isSubscribed = true;
+        mockNotificationContext.adapter.isSupported.mockReturnValue(true);
+        mockNotificationContext.adapter.getPermissionStatus.mockReturnValue(
+            "default"
+        );
+
+        const contextValue = mockNotificationContext as unknown as ReturnType<
+            typeof NotificationContext.useNotificationContext
+        >;
+        vi.mocked(NotificationContext.useNotificationContext).mockReturnValue(
+            contextValue
+        );
 
         const { result } = renderHook(() => useNotificationSetupStatus());
 
         expect(result.current.isSupported).toBe(true);
-        expect(result.current).toHaveProperty("subscription");
-        expect(result.current.subscription).toBeUndefined(); // From fixture default
+        expect(result.current.isSubscribed).toBe(true);
     });
 
-    test("should call Notification.requestPermission when askForNotificationPermission is invoked", async ({
-        mockBrowserAPIs,
-    }) => {
-        // Setup browser APIs with fixture - so much cleaner!
-        mockBrowserAPIs.mockNotificationAPI("default");
-        mockBrowserAPIs.mockServiceWorkerAPI();
-        mockBrowserAPIs.mockPushManagerAPI();
+    test("should call adapter.requestPermission when callback is invoked", async ({
+        mockNotificationContext,
+    }: WalletTestFixtures) => {
+        mockNotificationContext.adapter.isSupported.mockReturnValue(true);
+        mockNotificationContext.adapter.getPermissionStatus.mockReturnValue(
+            "default"
+        );
 
         const { result } = renderHook(() => useNotificationSetupStatus());
-
-        expect(result.current.isSupported).toBe(true);
-
-        // Mock the requestPermission spy after setup
-        const mockRequestPermission = vi.fn().mockResolvedValue("granted");
-        global.Notification.requestPermission = mockRequestPermission;
 
         await result.current.askForNotificationPermission?.();
-        expect(mockRequestPermission).toHaveBeenCalledTimes(1);
+        expect(
+            mockNotificationContext.adapter.requestPermission
+        ).toHaveBeenCalledTimes(1);
     });
 
-    test("should handle errors when requesting notification permission fails", async ({
-        mockBrowserAPIs,
-    }) => {
+    test("should handle adapter permission request errors", async ({
+        mockNotificationContext,
+    }: WalletTestFixtures) => {
         const consoleErrorSpy = vi
             .spyOn(console, "error")
             .mockImplementation(() => {});
         const mockError = new Error("Permission denied");
 
-        // Setup browser APIs with fixture
-        mockBrowserAPIs.mockNotificationAPI("default");
-        mockBrowserAPIs.mockServiceWorkerAPI();
-        mockBrowserAPIs.mockPushManagerAPI();
+        mockNotificationContext.adapter.isSupported.mockReturnValue(true);
+        mockNotificationContext.adapter.getPermissionStatus.mockReturnValue(
+            "default"
+        );
+        mockNotificationContext.adapter.requestPermission.mockRejectedValue(
+            mockError
+        );
 
         const { result } = renderHook(() => useNotificationSetupStatus());
 
-        expect(result.current.isSupported).toBe(true);
-
-        // Mock requestPermission to reject
-        const mockRequestPermission = vi.fn().mockRejectedValue(mockError);
-        global.Notification.requestPermission = mockRequestPermission;
-
         await result.current.askForNotificationPermission?.();
+
         expect(consoleErrorSpy).toHaveBeenCalledWith(
             "Failed to request notification permission: ",
             mockError
         );
 
         consoleErrorSpy.mockRestore();
-    });
-
-    test("should detect granted notification permission", ({
-        mockBrowserAPIs,
-    }) => {
-        // Setup with granted permission - fixture makes this trivial!
-        mockBrowserAPIs.mockNotificationAPI("granted");
-        mockBrowserAPIs.mockServiceWorkerAPI();
-        mockBrowserAPIs.mockPushManagerAPI();
-
-        const { result } = renderHook(() => useNotificationSetupStatus());
-
-        expect(result.current.isSupported).toBe(true);
-        expect(result.current.isNotificationAllowed).toBe(true);
-    });
-
-    test("should detect denied notification permission", ({
-        mockBrowserAPIs,
-    }) => {
-        // Setup with denied permission - fixture makes this trivial!
-        mockBrowserAPIs.mockNotificationAPI("denied");
-        mockBrowserAPIs.mockServiceWorkerAPI();
-        mockBrowserAPIs.mockPushManagerAPI();
-
-        const { result } = renderHook(() => useNotificationSetupStatus());
-
-        expect(result.current.isSupported).toBe(true);
-        expect(result.current.isNotificationAllowed).toBe(false);
-    });
-
-    test("should include subscription from context when available", ({
-        mockBrowserAPIs,
-    }) => {
-        const mockSubscription = {
-            endpoint: "https://example.com/push",
-            keys: {
-                p256dh: "key1",
-                auth: "key2",
-            },
-        } as unknown as PushSubscription;
-
-        // Mock notification context with subscription
-        vi.mocked(NotificationContext.useNotificationContext).mockReturnValue({
-            subscription: mockSubscription,
-            setSubscription: vi.fn(),
-            clearSubscription: vi.fn(),
-        });
-
-        // Setup browser APIs with fixture
-        mockBrowserAPIs.mockNotificationAPI("granted");
-        mockBrowserAPIs.mockServiceWorkerAPI();
-        mockBrowserAPIs.mockPushManagerAPI();
-
-        const { result } = renderHook(() => useNotificationSetupStatus());
-
-        expect(result.current.isSupported).toBe(true);
-        expect(result.current.subscription).toEqual(mockSubscription);
     });
 });

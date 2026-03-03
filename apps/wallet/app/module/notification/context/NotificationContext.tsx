@@ -1,4 +1,8 @@
 import {
+    getNotificationAdapter,
+    type NotificationAdapter,
+} from "@frak-labs/wallet-shared";
+import {
     createContext,
     type PropsWithChildren,
     useContext,
@@ -7,9 +11,9 @@ import {
 } from "react";
 
 type NotificationContextValue = {
-    subscription: PushSubscription | undefined;
-    setSubscription: (subscription: PushSubscription | undefined) => void;
-    clearSubscription: () => void;
+    isSubscribed: boolean;
+    setIsSubscribed: (value: boolean) => void;
+    adapter: NotificationAdapter;
 };
 
 const NotificationContext = createContext<NotificationContextValue | null>(
@@ -17,17 +21,12 @@ const NotificationContext = createContext<NotificationContextValue | null>(
 );
 
 export function NotificationProvider({ children }: PropsWithChildren) {
-    const [subscription, setSubscription] = useState<
-        PushSubscription | undefined
-    >();
+    const [isSubscribed, setIsSubscribed] = useState(false);
+    const adapter = useMemo(() => getNotificationAdapter(), []);
 
     const value = useMemo(
-        () => ({
-            subscription,
-            setSubscription,
-            clearSubscription: () => setSubscription(undefined),
-        }),
-        [subscription]
+        () => ({ isSubscribed, setIsSubscribed, adapter }),
+        [isSubscribed, adapter]
     );
 
     return (
