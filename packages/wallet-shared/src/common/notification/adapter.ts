@@ -1,5 +1,7 @@
 import { isTauri } from "@frak-labs/app-essentials/utils/platform";
 import type { NotificationPayload } from "@frak-labs/ui/types/NotificationPayload";
+import { createTauriNotificationAdapter } from "./tauriAdapter";
+import { createWebNotificationAdapter } from "./webAdapter";
 
 export type NotificationAdapter = {
     isSupported: () => boolean;
@@ -13,29 +15,11 @@ export type NotificationAdapter = {
 };
 
 function getWebAdapter(): NotificationAdapter {
-    return {
-        isSupported: () => false,
-        getPermissionStatus: () => "denied" as NotificationPermission,
-        requestPermission: async () => "denied" as NotificationPermission,
-        subscribe: async () => {},
-        unsubscribe: async () => {},
-        isSubscribed: async () => false,
-        initialize: async () => ({ isSubscribed: false }),
-        showLocalNotification: async () => {},
-    };
+    return createWebNotificationAdapter();
 }
 
 function getTauriAdapter(): NotificationAdapter {
-    return {
-        isSupported: () => true,
-        getPermissionStatus: () => "granted" as NotificationPermission,
-        requestPermission: async () => "granted" as NotificationPermission,
-        subscribe: async () => {},
-        unsubscribe: async () => {},
-        isSubscribed: async () => true,
-        initialize: async () => ({ isSubscribed: true }),
-        showLocalNotification: async () => {},
-    };
+    return createTauriNotificationAdapter();
 }
 
 export function getNotificationAdapter(): NotificationAdapter {

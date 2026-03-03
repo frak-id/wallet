@@ -518,6 +518,7 @@
       },
       "devDependencies": {
         "@frak-labs/test-foundation": "workspace:*",
+        "@tauri-apps/plugin-notification": "^2",
         "@testing-library/jest-dom": "^6.9.1",
         "@testing-library/react": "^16.3.2",
         "@types/node": "catalog:",
