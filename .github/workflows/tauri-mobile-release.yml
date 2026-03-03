@@ -107,6 +107,11 @@ jobs:
       - name: "📦 Install dependencies"
         run: bun install --frozen-lockfile
 
+      - name: "🔗 Add node_modules binaries to PATH"
+        run: |
+          echo "$PWD/node_modules/.bin" >> "$GITHUB_PATH"
+          echo "$PWD/apps/wallet/node_modules/.bin" >> "$GITHUB_PATH"
+
       - name: "📥 Download SDK artifact"
         uses: actions/download-artifact@v4
         with:
@@ -152,7 +157,7 @@ jobs:
           APPLE_API_KEY_CONTENT: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}
 
       - name: "🏗️ Build iOS"
-        run: bun run --cwd apps/wallet sst shell --stage "$STAGE" --print-logs -- tauri ios build --export-method app-store-connect
+        run: sst shell --stage "$STAGE" --print-logs -- tauri ios build --export-method app-store-connect
         env:
           STAGE: ${{ inputs.stage }}
           APPLE_API_ISSUER: ${{ secrets.APPSTORE_ISSUER_ID }}
@@ -197,6 +202,11 @@ jobs:
 
       - name: "📦 Install dependencies"
         run: bun install --frozen-lockfile
+
+      - name: "🔗 Add node_modules binaries to PATH"
+        run: |
+          echo "$PWD/node_modules/.bin" >> "$GITHUB_PATH"
+          echo "$PWD/apps/wallet/node_modules/.bin" >> "$GITHUB_PATH"
 
       - name: "📥 Download SDK artifact"
         uses: actions/download-artifact@v4
@@ -266,7 +276,7 @@ jobs:
           KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
 
       - name: "🏗️ Build Android"
-        run: bun run --cwd apps/wallet sst shell --stage "$STAGE" --print-logs -- tauri android build
+        run: sst shell --stage "$STAGE" --print-logs -- tauri android build
         env:
           STAGE: ${{ inputs.stage }}
 
