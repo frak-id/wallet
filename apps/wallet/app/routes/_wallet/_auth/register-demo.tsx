@@ -6,11 +6,12 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { generatePrivateKey } from "viem/accounts";
+import { DemoTapZone } from "@/module/authentication/component/DemoTapZone";
 import { useDemoLogin } from "@/module/authentication/hook/useDemoLogin";
 import { Grid } from "@/module/common/component/Grid";
 import styles from "./register.module.css";
 
-export const Route = createFileRoute("/_wallet/_auth/register/demo")({
+export const Route = createFileRoute("/_wallet/_auth/register-demo")({
     component: RegisterDemo,
 });
 
@@ -43,6 +44,7 @@ function RegisterDemo() {
 
     return (
         <Grid className={styles.register__grid}>
+            <DemoTapZone navigate={navigate} to="/register?new=true" />
             <ButtonAuth onClick={() => register()} disabled={disabled}>
                 {message}
             </ButtonAuth>

@@ -46,21 +46,11 @@ function resolveRpOrigin(rpId: string): string {
     return "https://wallet.frak.id";
 }
 
-/**
- * Derive the Android APK origin from the colon-hex SHA-256 fingerprint.
- *
- * Both `assetlinks.json` (colon-hex) and WebAuthn origin verification
- * (base64url) need the same signing key — deriving one from the other
- * ensures they can never diverge.
- *
- * @see https://developer.android.com/identity/sign-in/credential-manager#add-support-dal
- */
-function resolveAndroidApkOrigin(): string {
-    const hex = process.env.ANDROID_SHA256_FINGERPRINT;
-    if (!hex) return "";
+const sha256FingerprintPattern = /^([0-9A-Fa-f]{2}:){31}[0-9A-Fa-f]{2}$/;
 
+function toAndroidApkOrigin(colonHexFingerprint: string): string {
     const bytes = new Uint8Array(
-        hex.split(":").map((b) => Number.parseInt(b, 16))
+        colonHexFingerprint.split(":").map((byte) => Number.parseInt(byte, 16))
     );
     const base64 = btoa(String.fromCharCode(...bytes));
     const base64url = base64
@@ -68,6 +58,36 @@ function resolveAndroidApkOrigin(): string {
         .replace(/\//g, "_")
         .replace(/=+$/, "");
     return `android:apk-key-hash:${base64url}`;
+}
+
+/**
+ * Derive Android APK origin(s) from SHA-256 fingerprint(s).
+ *
+ * Supports a single fingerprint or a comma-separated list to cover
+ * multiple signing keys (e.g. upload key + Play App Signing key).
+ *
+ * @see https://developer.android.com/identity/sign-in/credential-manager#add-support-dal
+ */
+function resolveAndroidApkOrigins(): string[] {
+    const rawFingerprints = process.env.ANDROID_SHA256_FINGERPRINT;
+    if (!rawFingerprints) return [];
+
+    const trimmed = rawFingerprints
+        .split(",")
+        .map((fingerprint) => fingerprint.trim())
+        .filter(Boolean);
+
+    const valid: string[] = [];
+    for (const fingerprint of trimmed) {
+        if (sha256FingerprintPattern.test(fingerprint)) {
+            valid.push(toAndroidApkOrigin(fingerprint));
+        } else {
+            console.warn(
+                `[WebAuthN] Ignoring malformed SHA-256 fingerprint: "${fingerprint}"`
+            );
+        }
+    }
+    return valid;
 }
 
 const rpName = "Frak wallet";
@@ -80,12 +100,13 @@ const rpOrigin = resolveRpOrigin(rpId);
  *   (same key used in /.well-known/assetlinks.json)
  * - iOS: tauri://localhost
  */
-const androidApkOrigin = resolveAndroidApkOrigin();
+const androidApkOrigins = resolveAndroidApkOrigins();
+const androidApkOrigin = androidApkOrigins[0] ?? "";
 const iosTauriOrigin = "tauri://localhost";
 
 /** All allowed origins for WebAuthn verification (web + mobile) */
-const rpAllowedOrigins = [rpOrigin, androidApkOrigin, iosTauriOrigin].filter(
-    Boolean
+const rpAllowedOrigins = Array.from(
+    new Set([rpOrigin, ...androidApkOrigins, iosTauriOrigin].filter(Boolean))
 );
 
 /**
@@ -107,5 +128,6 @@ export const WebAuthN = {
     rpAllowedIds,
     defaultUsername,
     androidApkOrigin,
+    androidApkOrigins,
     iosTauriOrigin,
 };

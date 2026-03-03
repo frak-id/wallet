@@ -37,6 +37,7 @@ const subdomain = isProd ? "extension-shop" : "extension-shop-dev";
 new sst.aws.React("Shopify", {
     path: "apps/shopify",
     dev: {
+        autostart: false,
         command: "bun run shopify:dev",
     },
     domain: {

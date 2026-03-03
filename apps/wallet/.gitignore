@@ -15,4 +15,3 @@
 
 # Rust
 **/*.rs.bk
-Cargo.lock

@@ -13,6 +13,7 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { AuthenticateWithPhone } from "@/module/authentication/component/AuthenticateWithPhone";
+import { DemoTapZone } from "@/module/authentication/component/DemoTapZone";
 import { useRegister } from "@/module/authentication/hook/useRegister";
 import { isAuthenticatorAlreadyRegistered } from "@/module/authentication/lib/isAuthenticatorAlreadyRegistered";
 import styles from "@/module/authentication/page/RegisterPage.module.css";
@@ -136,6 +137,7 @@ function RegisterPage() {
                 </>
             }
         >
+            <DemoTapZone navigate={navigate} />
             <PairingInProgress />
             <ButtonAuth
                 onClick={() => register()}
