@@ -32,6 +32,9 @@ if [ -n "$2" ]; then
 else
     if [ -f "$INFO_PLIST" ]; then
         CURRENT_BUILD=$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$INFO_PLIST" 2>/dev/null || echo "0")
+        # Strip non-numeric chars (CFBundleVersion must be integer build number)
+        CURRENT_BUILD="${CURRENT_BUILD//[!0-9]/}"
+        CURRENT_BUILD="${CURRENT_BUILD:-0}"
         BUILD_NUMBER=$((CURRENT_BUILD + 1))
     else
         BUILD_NUMBER=1
@@ -43,6 +46,7 @@ echo "[sync-version] Syncing version $VERSION (build $BUILD_NUMBER)"
 # 1. tauri.conf.json
 tmp=$(mktemp)
 jq --arg v "$VERSION" '.version = $v' "$TAURI_DIR/tauri.conf.json" > "$tmp" && mv "$tmp" "$TAURI_DIR/tauri.conf.json"
+biome format --write "$TAURI_DIR/tauri.conf.json" > /dev/null 2>&1
 echo "[sync-version] Updated tauri.conf.json"
 
 # 2. Cargo.toml
