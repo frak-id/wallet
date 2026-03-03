@@ -299,7 +299,7 @@ jobs:
           packageName: id.frak.wallet
           releaseFiles: apps/wallet/src-tauri/gen/android/app/build/outputs/bundle/universalRelease/app-universal-release.aab
           track: internal
-          status: completed
+          status: draft
 
       - name: "📦 Upload Android artifact"
         if: always()
