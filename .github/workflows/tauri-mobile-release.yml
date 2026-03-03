@@ -121,6 +121,7 @@ jobs:
         uses: Swatinem/rust-cache@v2
         with:
           workspaces: apps/wallet/src-tauri
+          cache-on-failure: true
 
       - name: "💾 Setup SST Cache"
         id: sst-caching
@@ -225,6 +226,7 @@ jobs:
         uses: Swatinem/rust-cache@v2
         with:
           workspaces: apps/wallet/src-tauri
+          cache-on-failure: true
 
       - name: "💾 Setup SST Cache"
         id: sst-caching

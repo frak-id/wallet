@@ -20,7 +20,7 @@ sed_in_place() {
 }
 
 # Resolve version: argument > package.json
-if [ -n "$1" ]; then
+if [ $# -gt 0 ]; then
     VERSION="$1"
     # Also update package.json
     tmp=$(mktemp)
@@ -40,7 +40,7 @@ echo "[sync-version] Syncing version $VERSION"
 # 1. tauri.conf.json
 tmp=$(mktemp)
 jq --arg v "$VERSION" '.version = $v' "$TAURI_DIR/tauri.conf.json" > "$tmp" && mv "$tmp" "$TAURI_DIR/tauri.conf.json"
-biome format --write "$TAURI_DIR/tauri.conf.json" > /dev/null 2>&1
+bunx biome format --write "$TAURI_DIR/tauri.conf.json" > /dev/null 2>&1
 echo "[sync-version] Updated tauri.conf.json"
 
 # 2. Cargo.toml
@@ -49,7 +49,7 @@ echo "[sync-version] Updated Cargo.toml"
 
 # 3. project.yml (CFBundleShortVersionString + CFBundleVersion)
 sed_in_place "s/CFBundleShortVersionString: .*/CFBundleShortVersionString: $VERSION/" "$TAURI_DIR/gen/apple/project.yml"
-sed_in_place "s/CFBundleVersion: .*/CFBundleVersion: $VERSION/" "$TAURI_DIR/gen/apple/project.yml"
+sed_in_place "s/CFBundleVersion: .*/CFBundleVersion: \"$VERSION\"/" "$TAURI_DIR/gen/apple/project.yml"
 echo "[sync-version] Updated project.yml"
 
 # 4. Info.plist (CFBundleShortVersionString + CFBundleVersion)
