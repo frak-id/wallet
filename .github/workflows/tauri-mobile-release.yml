@@ -22,7 +22,7 @@ concurrency:
 
 permissions:
   id-token: write
-  contents: read
+  contents: write
 
 env:
   CI: true
@@ -285,3 +285,40 @@ jobs:
         with:
           name: android-aab
           path: apps/wallet/src-tauri/gen/android/app/build/outputs/bundle/universalRelease/app-universal-release.aab
+
+  commit-version:
+    name: "📌 Commit Version"
+    needs: [ios, android]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: "📥 Checkout"
+        uses: actions/checkout@v4
+
+      - name: "🧅 Setup Bun"
+        uses: oven-sh/setup-bun@v2
+
+      - name: "💾 Cache Bun modules"
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
+          restore-keys: ${{ runner.os }}-bun-
+
+      - name: "📦 Install dependencies"
+        run: bun install --frozen-lockfile
+
+      - name: "🔄 Sync version"
+        run: bun run --cwd apps/wallet tauri:version "$VERSION"
+        env:
+          VERSION: ${{ inputs.version }}
+
+      - name: "📌 Commit & push"
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "⬆️ v$VERSION" || echo "No changes to commit"
+          git push
+        env:
+          VERSION: ${{ inputs.version }}
