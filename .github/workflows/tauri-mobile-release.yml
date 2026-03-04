@@ -342,6 +342,9 @@ jobs:
       - name: "📦 Install dependencies"
         run: bun install --frozen-lockfile
 
+      - name: "🦀 Setup Rust"
+        uses: dtolnay/rust-toolchain@stable
+
       - name: "🔄 Sync version"
         run: bun run --cwd apps/wallet tauri:version "$VERSION"
         env:

@@ -45,7 +45,8 @@ echo "[sync-version] Updated tauri.conf.json"
 
 # 2. Cargo.toml
 sed_in_place "s/^version = \".*\"/version = \"$VERSION\"/" "$TAURI_DIR/Cargo.toml"
-echo "[sync-version] Updated Cargo.toml"
+cargo update --manifest-path "$TAURI_DIR/Cargo.toml" --package app 2>/dev/null || true
+echo "[sync-version] Updated Cargo.toml + Cargo.lock"
 
 # 3. project.yml (CFBundleShortVersionString + CFBundleVersion)
 sed_in_place "s/CFBundleShortVersionString: .*/CFBundleShortVersionString: $VERSION/" "$TAURI_DIR/gen/apple/project.yml"
