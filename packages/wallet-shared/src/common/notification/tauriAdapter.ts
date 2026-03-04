@@ -14,7 +14,7 @@ async function getTauriNotificationPlugin() {
 export function createTauriNotificationAdapter(): NotificationAdapter {
     let permissionGranted = false;
 
-    return {
+    const adapter: NotificationAdapter = {
         isSupported: () => true,
         getPermissionStatus: () => (permissionGranted ? "granted" : "default"),
         requestPermission: async () => {
@@ -29,12 +29,7 @@ export function createTauriNotificationAdapter(): NotificationAdapter {
             }
         },
         subscribe: async () => {
-            try {
-                const plugin = await getTauriNotificationPlugin();
-                if (!plugin) return;
-                const result = await plugin.requestPermission();
-                permissionGranted = result === "granted";
-            } catch {}
+            await adapter.requestPermission();
         },
         unsubscribe: async () => {},
         isSubscribed: async () => permissionGranted,
@@ -68,7 +63,9 @@ export function createTauriNotificationAdapter(): NotificationAdapter {
                         icon: payload.icon,
                     });
                 }
-            } catch {}
+            } catch (error) {
+                console.warn("Failed to send Tauri notification", error);
+            }
 
             await notificationStorage.add({
                 id: crypto.randomUUID(),
@@ -80,4 +77,6 @@ export function createTauriNotificationAdapter(): NotificationAdapter {
             });
         },
     };
+
+    return adapter;
 }

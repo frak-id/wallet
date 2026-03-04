@@ -12,8 +12,7 @@ export function useNotificationSetupStatus() {
      */
     const askForNotificationPermission = useCallback(async () => {
         try {
-            const result = await adapter.requestPermission();
-            console.log("Notification permission: ", result);
+            await adapter.requestPermission();
         } catch (e) {
             console.error("Failed to request notification permission: ", e);
         }
