@@ -118,7 +118,14 @@ export function createWebNotificationAdapter(): NotificationAdapter {
             subscription = existingSubscription;
 
             if (existingSubscription) {
-                await syncSubscriptionToBackend(existingSubscription);
+                syncSubscriptionToBackend(existingSubscription).catch(
+                    (error) => {
+                        console.warn(
+                            "Failed to sync subscription to backend",
+                            error
+                        );
+                    }
+                );
             }
 
             return {

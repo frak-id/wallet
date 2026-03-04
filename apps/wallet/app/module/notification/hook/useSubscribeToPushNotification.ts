@@ -22,7 +22,8 @@ export function useSubscribeToPushNotification(
         mutationKey: notificationKey.push.subscribe,
         mutationFn: async () => {
             await adapter.subscribe();
-            setIsSubscribed(true);
+            const subscribed = await adapter.isSubscribed();
+            setIsSubscribed(subscribed);
         },
     });
 

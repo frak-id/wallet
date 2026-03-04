@@ -31,7 +31,9 @@ export function createTauriNotificationAdapter(): NotificationAdapter {
         subscribe: async () => {
             await adapter.requestPermission();
         },
-        unsubscribe: async () => {},
+        unsubscribe: async () => {
+            permissionGranted = false;
+        },
         isSubscribed: async () => permissionGranted,
         initialize: async () => {
             try {
