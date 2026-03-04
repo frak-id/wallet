@@ -20,13 +20,17 @@ export function createWebNotificationAdapter(): NotificationAdapter {
     let subscription: PushSubscription | null | undefined;
     const syncSubscriptionToBackend = async (sub: PushSubscription) => {
         const jsonSubscription = sub.toJSON();
+        const endpoint = jsonSubscription.endpoint;
+        const p256dh = jsonSubscription.keys?.p256dh;
+        const auth = jsonSubscription.keys?.auth;
+        if (!endpoint || !p256dh || !auth) {
+            console.warn("Invalid push subscription: missing required fields");
+            return;
+        }
         await authenticatedWalletApi.notifications.tokens.put({
             subscription: {
-                endpoint: jsonSubscription.endpoint ?? "no-endpoint",
-                keys: {
-                    p256dh: jsonSubscription.keys?.p256dh ?? "no-p256",
-                    auth: jsonSubscription.keys?.auth ?? "no-auth",
-                },
+                endpoint,
+                keys: { p256dh, auth },
                 expirationTime: jsonSubscription.expirationTime ?? undefined,
             },
         });

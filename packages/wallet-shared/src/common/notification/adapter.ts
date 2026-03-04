@@ -14,9 +14,13 @@ export type NotificationAdapter = {
     showLocalNotification: (payload: NotificationPayload) => Promise<void>;
 };
 
+let cachedAdapter: NotificationAdapter | undefined;
+
 export function getNotificationAdapter(): NotificationAdapter {
-    if (isTauri()) {
-        return createTauriNotificationAdapter();
+    if (!cachedAdapter) {
+        cachedAdapter = isTauri()
+            ? createTauriNotificationAdapter()
+            : createWebNotificationAdapter();
     }
-    return createWebNotificationAdapter();
+    return cachedAdapter;
 }
