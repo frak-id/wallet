@@ -136,8 +136,16 @@ jobs:
             .sst/platform/
             .sst/provider-lock.json
             .sst/esbuild.json
+            ~/Library/Application Support/sst/bin/
           key: ${{ runner.os }}-sst-v2-${{ hashFiles('./sst.config.ts') }}
           restore-keys: ${{ runner.os }}-sst-v2-
+
+      - name: "💾 Cache Xcode DerivedData"
+        uses: actions/cache@v4
+        with:
+          path: ~/Library/Developer/Xcode/DerivedData
+          key: ${{ runner.os }}-xcode-derived-${{ hashFiles('apps/wallet/src-tauri/gen/apple/**') }}
+          restore-keys: ${{ runner.os }}-xcode-derived-
 
       - name: "👥 Configure AWS Credentials"
         uses: aws-actions/configure-aws-credentials@v4
@@ -256,6 +264,7 @@ jobs:
             .sst/platform/
             .sst/provider-lock.json
             .sst/esbuild.json
+            ~/.config/sst/bin/
           key: ${{ runner.os }}-sst-v2-${{ hashFiles('./sst.config.ts') }}
           restore-keys: ${{ runner.os }}-sst-v2-
 
