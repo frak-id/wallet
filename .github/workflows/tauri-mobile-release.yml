@@ -241,9 +241,19 @@ jobs:
       - name: "📱 Setup Android SDK"
         uses: android-actions/setup-android@v3
 
-      - name: "🔧 Install Android NDK"
-        # Version required by Tauri Rust Android targets (aarch64, armv7, i686, x86_64)
-        run: sdkmanager --install "ndk;27.0.12077973"
+      - name: "🔧 Setup Android NDK"
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r27
+          link-to-sdk: true
+          local-cache: true
+
+      - name: "💾 Cache Gradle wrapper"
+        uses: actions/cache@v4
+        with:
+          path: ~/.gradle/wrapper/dists
+          key: ${{ runner.os }}-gradle-wrapper-${{ hashFiles('apps/wallet/src-tauri/gen/android/gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: ${{ runner.os }}-gradle-wrapper-
 
       - name: "🦀 Setup Rust"
         uses: dtolnay/rust-toolchain@stable
