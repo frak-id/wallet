@@ -241,13 +241,6 @@ jobs:
       - name: "📱 Setup Android SDK"
         uses: android-actions/setup-android@v3
 
-      - name: "🔧 Setup Android NDK"
-        uses: nttld/setup-ndk@v1
-        with:
-          ndk-version: r27
-          link-to-sdk: true
-          local-cache: true
-
       - name: "💾 Cache Gradle wrapper"
         uses: actions/cache@v4
         with:

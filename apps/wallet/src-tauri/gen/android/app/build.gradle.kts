@@ -22,6 +22,7 @@ val keyProperties = Properties().apply {
 
 android {
     compileSdk = 36
+    ndkVersion = "29.0.14206865"
     namespace = "id.frak.wallet"
     defaultConfig {
         manifestPlaceholders["usesCleartextTraffic"] = "false"
