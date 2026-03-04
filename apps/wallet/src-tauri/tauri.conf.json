@@ -17,6 +17,7 @@
                 "height": 600,
                 "resizable": true,
                 "fullscreen": false,
+                "backgroundColor": "#001432",
                 "disableInputAccessoryView": true
             }
         ],
