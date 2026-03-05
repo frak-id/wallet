@@ -15,6 +15,7 @@ describe("Wallet Notifications Token Routes API", () => {
 
     describe("PUT /tokens", () => {
         const validSubscription = {
+            type: "web-push" as const,
             subscription: {
                 endpoint:
                     "https://fcm.googleapis.com/fcm/send/test-endpoint-123",
@@ -65,6 +66,7 @@ describe("Wallet Notifications Token Routes API", () => {
             dbMock.__setInsertResponse(() => Promise.resolve([]));
 
             const subscriptionWithExpiration = {
+                type: "web-push" as const,
                 subscription: {
                     ...validSubscription.subscription,
                     expirationTime: Date.now() + 86400000, // 24 hours from now
@@ -160,6 +162,7 @@ describe("Wallet Notifications Token Routes API", () => {
             } as never);
 
             const invalidSubscription = {
+                type: "web-push" as const,
                 subscription: {
                     keys: {
                         p256dh: "test-p256dh",
@@ -193,6 +196,7 @@ describe("Wallet Notifications Token Routes API", () => {
             } as never);
 
             const invalidSubscription = {
+                type: "web-push" as const,
                 subscription: {
                     endpoint: "https://fcm.googleapis.com/fcm/send/test",
                     keys: {
@@ -226,6 +230,7 @@ describe("Wallet Notifications Token Routes API", () => {
             } as never);
 
             const invalidSubscription = {
+                type: "web-push" as const,
                 subscription: {
                     endpoint: "https://fcm.googleapis.com/fcm/send/test",
                     keys: {
