@@ -106,11 +106,18 @@
 
     <body class="scrollbars">
         <style>
+        html {
+            height: 100vh;
+        }
+
         /* Splash overlay styles — must be in <style> block, not inline attributes,
            because Tauri v2 CSP blocks inline style attributes (nonce-based policy) */
         #splash-overlay {
             position: fixed;
-            inset: 0;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
             z-index: 99999;
             display: none;
             flex-direction: column;

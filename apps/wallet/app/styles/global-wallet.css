@@ -4,6 +4,7 @@
  */
 
 html {
+    height: 100vh;
     transition: background 0.3s;
     background: var(--frak-contrast-background-color);
 }
