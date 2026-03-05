@@ -1,6 +1,6 @@
 import { FrakRpcError, RpcErrorCodes } from "@frak-labs/frame-connector";
 import type { Address } from "viem";
-import { vi } from "vitest"; // Keep vi from vitest for vi.mock() hoisting
+import { vi } from "vitest";
 import {
     afterEach,
     beforeEach,
@@ -11,11 +11,11 @@ import {
 import type {
     FrakClient,
     FrakContext,
+    FrakContextV2,
     WalletStatusReturnType,
 } from "../../types";
 import { processReferral } from "./processReferral";
 
-// Mock dependencies
 vi.mock("../displayEmbeddedWallet", () => ({
     displayEmbeddedWallet: vi.fn(),
 }));
@@ -30,21 +30,18 @@ vi.mock("../../utils", () => ({
     },
     trackEvent: vi.fn(),
     resolveMerchantId: vi.fn().mockResolvedValue(undefined),
+    getClientId: vi.fn().mockReturnValue("test-client-id"),
 }));
 
 describe("processReferral", () => {
     let mockClient: FrakClient;
     let mockAddress: Address;
-    let mockReferrerAddress: Address;
     let mockWalletStatus: WalletStatusReturnType;
-    let mockFrakContext: Partial<FrakContext>;
 
     beforeEach(async () => {
         vi.clearAllMocks();
 
         mockAddress = "0x1234567890123456789012345678901234567890" as Address;
-        mockReferrerAddress =
-            "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd" as Address;
 
         mockClient = {
             openPanel: {
@@ -64,11 +61,6 @@ describe("processReferral", () => {
             wallet: mockAddress,
         };
 
-        mockFrakContext = {
-            r: mockReferrerAddress,
-        };
-
-        // Mock window.location
         Object.defineProperty(window, "location", {
             value: {
                 href: "https://example.com/test",
@@ -81,15 +73,6 @@ describe("processReferral", () => {
         vi.clearAllMocks();
     });
 
-    it("should return 'no-referrer' when frakContext has no referrer", async () => {
-        const result = await processReferral(mockClient, {
-            walletStatus: mockWalletStatus,
-            frakContext: {},
-        });
-
-        expect(result).toBe("no-referrer");
-    });
-
     it("should return 'no-referrer' when frakContext is null", async () => {
         const result = await processReferral(mockClient, {
             walletStatus: mockWalletStatus,
@@ -99,49 +82,71 @@ describe("processReferral", () => {
         expect(result).toBe("no-referrer");
     });
 
-    it("should return 'self-referral' when referrer equals current wallet", async () => {
-        const result = await processReferral(mockClient, {
-            walletStatus: mockWalletStatus,
-            frakContext: {
-                r: mockAddress, // Same as wallet
-            },
-        });
+    describe("V2 context", () => {
+        const v2Context: FrakContextV2 = {
+            v: 2,
+            c: "referrer-client-id",
+            m: "merchant-uuid",
+            t: 1709654400,
+        };
 
-        expect(result).toBe("self-referral");
+        it("should successfully process v2 referral", async () => {
+            const utils = await import("../../utils");
+            const { sendInteraction } = await import("../sendInteraction");
+
+            const result = await processReferral(mockClient, {
+                walletStatus: mockWalletStatus,
+                frakContext: v2Context,
+            });
+
+            expect(result).toBe("success");
+
+            expect(utils.trackEvent).toHaveBeenCalledWith(
+                mockClient,
+                "user_referred_started",
+                {
+                    properties: {
+                        referrerClientId: "referrer-client-id",
+                        walletStatus: "connected",
+                    },
+                }
+            );
+
+            expect(sendInteraction).toHaveBeenCalledWith(mockClient, {
+                type: "arrival",
+                referrerClientId: "referrer-client-id",
+                referrerMerchantId: "merchant-uuid",
+                landingUrl: "https://example.com/test",
+            });
+        });
     });
 
-    it("should successfully process referral when all conditions are met", async () => {
-        const utils = await import("../../utils");
+    describe("V1 context (backward compat)", () => {
+        const v1Context: FrakContext = {
+            r: "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd" as Address,
+        };
 
-        const result = await processReferral(mockClient, {
-            walletStatus: mockWalletStatus,
-            frakContext: mockFrakContext,
+        it("should successfully process v1 referral", async () => {
+            const utils = await import("../../utils");
+
+            const result = await processReferral(mockClient, {
+                walletStatus: mockWalletStatus,
+                frakContext: v1Context,
+            });
+
+            expect(result).toBe("success");
+
+            expect(utils.trackEvent).toHaveBeenCalledWith(
+                mockClient,
+                "user_referred_started",
+                {
+                    properties: {
+                        referrer: "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd",
+                        walletStatus: "connected",
+                    },
+                }
+            );
         });
-
-        expect(result).toBe("success");
-
-        expect(utils.trackEvent).toHaveBeenCalledWith(
-            mockClient,
-            "user_referred_started",
-            {
-                properties: {
-                    referrer: mockReferrerAddress,
-                    walletStatus: "connected",
-                },
-            }
-        );
-
-        expect(utils.trackEvent).toHaveBeenCalledWith(
-            mockClient,
-            "user_referred_completed",
-            {
-                properties: {
-                    status: "success",
-                    referrer: mockReferrerAddress,
-                    wallet: mockAddress,
-                },
-            }
-        );
     });
 
     it("should handle wallet not connected scenario", async () => {
@@ -149,14 +154,21 @@ describe("processReferral", () => {
             "../displayEmbeddedWallet"
         );
 
-        // Mock displayEmbeddedWallet to return a wallet
         vi.mocked(displayEmbeddedWallet).mockResolvedValue({
             wallet: mockAddress,
         } as any);
 
+        const v2Context: FrakContextV2 = {
+            v: 2,
+            c: "referrer-client-id",
+            m: "merchant-uuid",
+            t: 1709654400,
+        };
+
         const result = await processReferral(mockClient, {
             walletStatus: undefined,
-            frakContext: mockFrakContext,
+            frakContext: v2Context,
+            modalConfig: {} as any,
         });
 
         expect(result).toBe("success");
@@ -174,9 +186,17 @@ describe("processReferral", () => {
         );
         vi.mocked(displayEmbeddedWallet).mockRejectedValue(error);
 
+        const v2Context: FrakContextV2 = {
+            v: 2,
+            c: "referrer-client-id",
+            m: "merchant-uuid",
+            t: 1709654400,
+        };
+
         const result = await processReferral(mockClient, {
             walletStatus: undefined,
-            frakContext: mockFrakContext,
+            frakContext: v2Context,
+            modalConfig: {} as any,
         });
 
         expect(result).toBe("no-wallet");
@@ -190,9 +210,17 @@ describe("processReferral", () => {
         const error = new Error("Unknown error");
         vi.mocked(displayEmbeddedWallet).mockRejectedValue(error);
 
+        const v2Context: FrakContextV2 = {
+            v: 2,
+            c: "referrer-client-id",
+            m: "merchant-uuid",
+            t: 1709654400,
+        };
+
         const result = await processReferral(mockClient, {
             walletStatus: undefined,
-            frakContext: mockFrakContext,
+            frakContext: v2Context,
+            modalConfig: {} as any,
         });
 
         expect(result).toBe("error");
@@ -201,9 +229,16 @@ describe("processReferral", () => {
     it("should update URL context when alwaysAppendUrl is true", async () => {
         const utils = await import("../../utils");
 
+        const v2Context: FrakContextV2 = {
+            v: 2,
+            c: "referrer-client-id",
+            m: "merchant-uuid",
+            t: 1709654400,
+        };
+
         await processReferral(mockClient, {
             walletStatus: mockWalletStatus,
-            frakContext: mockFrakContext,
+            frakContext: v2Context,
             options: {
                 alwaysAppendUrl: true,
             },
@@ -211,33 +246,29 @@ describe("processReferral", () => {
 
         expect(utils.FrakContextManager.replaceUrl).toHaveBeenCalledWith({
             url: window.location.href,
-            context: { r: mockAddress },
+            context: expect.objectContaining({
+                v: 2,
+                c: "test-client-id",
+            }),
         });
     });
 
     it("should remove URL context when alwaysAppendUrl is false", async () => {
         const utils = await import("../../utils");
 
+        const v2Context: FrakContextV2 = {
+            v: 2,
+            c: "referrer-client-id",
+            m: "merchant-uuid",
+            t: 1709654400,
+        };
+
         await processReferral(mockClient, {
             walletStatus: mockWalletStatus,
-            frakContext: mockFrakContext,
+            frakContext: v2Context,
             options: {
                 alwaysAppendUrl: false,
             },
-        });
-
-        expect(utils.FrakContextManager.replaceUrl).toHaveBeenCalledWith({
-            url: window.location.href,
-            context: null,
-        });
-    });
-
-    it("should remove URL context by default", async () => {
-        const utils = await import("../../utils");
-
-        await processReferral(mockClient, {
-            walletStatus: mockWalletStatus,
-            frakContext: mockFrakContext,
         });
 
         expect(utils.FrakContextManager.replaceUrl).toHaveBeenCalledWith({
