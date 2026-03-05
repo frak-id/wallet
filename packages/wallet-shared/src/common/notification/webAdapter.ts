@@ -28,6 +28,7 @@ export function createWebNotificationAdapter(): NotificationAdapter {
             return;
         }
         await authenticatedWalletApi.notifications.tokens.put({
+            type: "web-push" as const,
             subscription: {
                 endpoint,
                 keys: { p256dh, auth },

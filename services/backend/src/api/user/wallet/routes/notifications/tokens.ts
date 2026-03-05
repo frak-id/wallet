@@ -4,8 +4,58 @@ import { eq } from "drizzle-orm";
 import { Elysia } from "elysia";
 import {
     notificationMacro,
+    type PushTokenType,
     pushTokensTable,
 } from "../../../../../domain/notifications";
+
+const WebPushSubscriptionBody = t.Object({
+    type: t.Literal("web-push"),
+    subscription: t.Object({
+        endpoint: t.String(),
+        keys: t.Object({
+            p256dh: t.String(),
+            auth: t.String(),
+        }),
+        expirationTime: t.Optional(t.Number()),
+    }),
+    deviceId: t.Optional(t.String()),
+});
+
+const FcmTokenBody = t.Object({
+    type: t.Literal("fcm"),
+    token: t.String(),
+    deviceId: t.Optional(t.String()),
+});
+
+const RegisterTokenBody = t.Union([WebPushSubscriptionBody, FcmTokenBody]);
+
+function tokenValuesFromBody(
+    body: typeof RegisterTokenBody.static,
+    wallet: `0x${string}`
+) {
+    if (body.type === "fcm") {
+        return {
+            wallet,
+            type: "fcm" as PushTokenType,
+            endpoint: body.token,
+            keyP256dh: null,
+            keyAuth: null,
+            deviceId: body.deviceId ?? null,
+        };
+    }
+
+    return {
+        wallet,
+        type: "web-push" as PushTokenType,
+        endpoint: body.subscription.endpoint,
+        keyP256dh: body.subscription.keys.p256dh,
+        keyAuth: body.subscription.keys.auth,
+        deviceId: body.deviceId ?? null,
+        expireAt: body.subscription.expirationTime
+            ? new Date(body.subscription.expirationTime)
+            : null,
+    };
+}
 
 export const tokensRoutes = new Elysia({ prefix: "/tokens" })
     .use(notificationMacro)
@@ -13,44 +63,21 @@ export const tokensRoutes = new Elysia({ prefix: "/tokens" })
     .put(
         "",
         async ({ body, walletSession }) => {
-            // Insert our push token
+            const values = tokenValuesFromBody(body, walletSession.address);
             await db
                 .insert(pushTokensTable)
-                .values({
-                    wallet: walletSession.address,
-                    endpoint: body.subscription.endpoint,
-                    keyP256dh: body.subscription.keys.p256dh,
-                    keyAuth: body.subscription.keys.auth,
-                    expireAt: body.subscription.expirationTime
-                        ? new Date(body.subscription.expirationTime)
-                        : null,
-                })
+                .values(values)
                 .onConflictDoNothing();
         },
         {
-            // Enforce wallet authentication
             withWalletAuthent: true,
-
-            // Cleanup expired tokens
             cleanupTokens: true,
-
-            // Body schema
-            body: t.Object({
-                subscription: t.Object({
-                    endpoint: t.String(),
-                    keys: t.Object({
-                        p256dh: t.String(),
-                        auth: t.String(),
-                    }),
-                    expirationTime: t.Optional(t.Number()),
-                }),
-            }),
+            body: RegisterTokenBody,
         }
     )
     .delete(
         "",
         async ({ walletSession }) => {
-            // Remove all the push tokens for this wallet
             await db
                 .delete(pushTokensTable)
                 .where(eq(pushTokensTable.wallet, walletSession.address))
@@ -64,11 +91,9 @@ export const tokensRoutes = new Elysia({ prefix: "/tokens" })
     .get(
         "/hasAny",
         async ({ walletSession }) => {
-            // Try to find the first push token
             const item = await db.query.pushTokensTable.findFirst({
                 where: eq(pushTokensTable.wallet, walletSession.address),
             });
-            // Return if we found something
             return !!item;
         },
         {
