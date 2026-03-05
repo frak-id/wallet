@@ -1,11 +1,5 @@
-import { vi } from "vitest";
-import {
-    afterEach,
-    beforeEach,
-    describe,
-    expect,
-    test,
-} from "@/tests/vitest-fixtures";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { closeSplashscreen } from "./splashscreen";
 
 describe("closeSplashscreen", () => {
     let splashElement: HTMLDivElement;
@@ -28,20 +22,15 @@ describe("closeSplashscreen", () => {
         splashElement.remove();
     });
 
-    test("should do nothing when splash-overlay is absent", async () => {
+    test("should do nothing when splash-overlay is absent", () => {
         splashElement.remove();
-
-        const { closeSplashscreen } = await import("./splashscreen");
         closeSplashscreen();
-
         vi.runAllTimers();
         // No error thrown — graceful no-op
     });
 
-    test("should wait for MIN_DISPLAY_MS before fading", async () => {
+    test("should wait for MIN_DISPLAY_MS before fading", () => {
         window.__SPLASH_SHOWN_AT__ = Date.now();
-
-        const { closeSplashscreen } = await import("./splashscreen");
         closeSplashscreen();
 
         // Before 2s, splash should still be visible
@@ -53,54 +42,40 @@ describe("closeSplashscreen", () => {
         expect(splashElement.style.opacity).toBe("0");
     });
 
-    test("should skip delay when MIN_DISPLAY_MS already elapsed", async () => {
-        // Splash was shown 3s ago
+    test("should skip delay when MIN_DISPLAY_MS already elapsed", () => {
         window.__SPLASH_SHOWN_AT__ = Date.now() - 3000;
-
-        const { closeSplashscreen } = await import("./splashscreen");
         closeSplashscreen();
 
-        // Should fade immediately (delay = 0)
-        vi.advanceTimersByTime(0);
+        vi.runAllTimers();
         expect(splashElement.style.opacity).toBe("0");
     });
 
-    test("should remove element on transitionend", async () => {
+    test("should remove element on transitionend", () => {
         window.__SPLASH_SHOWN_AT__ = Date.now() - 3000;
-
-        const { closeSplashscreen } = await import("./splashscreen");
         closeSplashscreen();
+        vi.runAllTimers();
 
-        vi.advanceTimersByTime(0);
-
-        // Simulate browser firing transitionend
         splashElement.dispatchEvent(new Event("transitionend"));
-
         expect(document.getElementById("splash-overlay")).toBeNull();
     });
 
-    test("should remove element via fallback timeout when transitionend never fires", async () => {
+    test("should remove element via fallback timeout when transitionend never fires", () => {
         window.__SPLASH_SHOWN_AT__ = Date.now() - 3000;
-
-        const { closeSplashscreen } = await import("./splashscreen");
         closeSplashscreen();
 
+        // Fade starts immediately (delay=0) after first timer tick
         vi.advanceTimersByTime(0);
         expect(splashElement.style.opacity).toBe("0");
 
-        // Don't fire transitionend — simulate reduced-motion or detached node
-        // Fallback fires at TRANSITION_MS (300) + FALLBACK_BUFFER_MS (100) = 400ms
+        // Fallback removes after 350ms even without transitionend
         vi.advanceTimersByTime(400);
 
         expect(document.getElementById("splash-overlay")).toBeNull();
     });
 
-    test("should default to Date.now() when __SPLASH_SHOWN_AT__ is not set", async () => {
-        // Don't set __SPLASH_SHOWN_AT__ — simulates non-Tauri or late init
-        const { closeSplashscreen } = await import("./splashscreen");
+    test("should default to Date.now() when __SPLASH_SHOWN_AT__ is not set", () => {
         closeSplashscreen();
 
-        // elapsed ≈ 0, so delay should be full MIN_DISPLAY_MS
         vi.advanceTimersByTime(1999);
         expect(splashElement.style.opacity).toBe("1");
 
@@ -108,19 +83,13 @@ describe("closeSplashscreen", () => {
         expect(splashElement.style.opacity).toBe("0");
     });
 
-    test("should handle double-remove gracefully", async () => {
+    test("should handle double-remove gracefully", () => {
         window.__SPLASH_SHOWN_AT__ = Date.now() - 3000;
-
-        const { closeSplashscreen } = await import("./splashscreen");
         closeSplashscreen();
+        vi.runAllTimers();
 
-        vi.advanceTimersByTime(0);
-
-        // Both transitionend and fallback fire — second remove is a no-op
+        // Both transitionend and fallback fire — no error
         splashElement.dispatchEvent(new Event("transitionend"));
         expect(document.getElementById("splash-overlay")).toBeNull();
-
-        // Fallback timeout fires — should not throw
-        vi.advanceTimersByTime(400);
     });
 });

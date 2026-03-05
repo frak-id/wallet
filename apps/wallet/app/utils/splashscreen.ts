@@ -21,8 +21,17 @@ export function closeSplashscreen() {
 
     setTimeout(() => {
         splash.style.opacity = "0";
-        splash.addEventListener("transitionend", () => splash.remove(), {
-            once: true,
-        });
+
+        // Remove on transition end, with a fallback timeout
+        // in case the transitionend event never fires (e.g. jsdom, reduced motion)
+        let removed = false;
+        const remove = () => {
+            if (removed) return;
+            removed = true;
+            splash.remove();
+        };
+
+        splash.addEventListener("transitionend", remove, { once: true });
+        setTimeout(remove, 350);
     }, delay);
 }
