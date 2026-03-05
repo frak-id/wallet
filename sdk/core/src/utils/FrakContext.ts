@@ -1,20 +1,37 @@
-import { type Address, bytesToHex, hexToBytes } from "viem";
-import type { FrakContext } from "../types";
+import { type Address, bytesToHex, hexToBytes, isAddress } from "viem";
+import type { FrakContext, FrakContextV2 } from "../types";
 import { base64urlDecode, base64urlEncode } from "./compression/b64";
+import { compressJsonToB64 } from "./compression/compress";
+import { decompressJsonFromB64 } from "./compression/decompress";
 
-/**
- * The context key
- */
 const contextKey = "fCtx";
 
-/**
- * Compress the current Frak context
- * @param context - The context to be compressed
- * @returns A compressed string containing the Frak context
- */
-function compress(context?: Partial<FrakContext>): string | undefined {
-    if (!context?.r) return;
+type FrakContextInput = {
+    r?: Address;
+    v?: 2;
+    c?: string;
+    m?: string;
+    t?: number;
+};
+
+function isV2Input(context: FrakContextInput): boolean {
+    return context.v === 2 && !!context.c && !!context.m && !!context.t;
+}
+
+function compress(context?: FrakContextInput): string | undefined {
+    if (!context) return;
     try {
+        if (isV2Input(context)) {
+            return compressJsonToB64({
+                v: 2,
+                c: context.c,
+                m: context.m,
+                t: context.t,
+            });
+        }
+
+        // V1 legacy: compress wallet address as raw bytes
+        if (!context.r) return;
         const bytes = hexToBytes(context.r);
         return base64urlEncode(bytes);
     } catch (e) {
@@ -23,131 +40,83 @@ function compress(context?: Partial<FrakContext>): string | undefined {
     return undefined;
 }
 
-/**
- * Decompress the given Frak context
- * @param context - The raw context to be decompressed into a `FrakContext`
- * @returns The decompressed Frak context, or undefined if it fails
- */
 function decompress(context?: string): FrakContext | undefined {
     if (!context || context.length === 0) return;
     try {
+        // Try V2 JSON first — V2 payloads are longer than V1's 20-byte address
+        const json = decompressJsonFromB64<FrakContextV2>(context);
+        if (json && typeof json === "object" && json.v === 2) {
+            if (json.c && json.m && json.t) {
+                return { v: 2, c: json.c, m: json.m, t: json.t };
+            }
+            return undefined;
+        }
+
+        // Fall back to V1: raw 20-byte address
         const bytes = base64urlDecode(context);
-        return { r: bytesToHex(bytes, { size: 20 }) as Address };
+        const hex = bytesToHex(bytes, { size: 20 }) as Address;
+        if (isAddress(hex)) {
+            return { r: hex };
+        }
     } catch (e) {
         console.error("Error decompressing Frak context", { e, context });
     }
     return undefined;
 }
 
-/**
- * Parse the current URL into a Frak Context
- * @param args
- * @param args.url - The url to parse
- * @returns The parsed Frak context
- */
 function parse({ url }: { url: string }) {
     if (!url) return null;
 
-    // Check if the url contain the frak context key
     const urlObj = new URL(url);
     const frakContext = urlObj.searchParams.get(contextKey);
     if (!frakContext) return null;
 
-    // Decompress and return it
     return decompress(frakContext);
 }
 
-/**
- * Populate the current url with the given Frak context
- * @param args
- * @param args.url - The url to update
- * @param args.context - The context to update
- * @returns The new url with the Frak context
- */
-function update({
-    url,
-    context,
-}: {
-    url?: string;
-    context: Partial<FrakContext>;
-}) {
+function update({ url, context }: { url?: string; context: FrakContextInput }) {
     if (!url) return null;
 
-    // Parse the current context
-    const currentContext = parse({ url });
-
-    // Merge the current context with the new context
-    const mergedContext = currentContext
-        ? { ...currentContext, ...context }
-        : context;
-
-    // If we don't have a referrer, early exit
-    if (!mergedContext.r) return null;
-
-    // Compress it
-    const compressedContext = compress(mergedContext);
+    const compressedContext = compress(context);
     if (!compressedContext) return null;
 
-    // Build the new url and return it
     const urlObj = new URL(url);
     urlObj.searchParams.set(contextKey, compressedContext);
     return urlObj.toString();
 }
 
-/**
- * Remove Frak context from current url
- * @param url - The url to update
- * @returns The new url without the Frak context
- */
 function remove(url: string) {
     const urlObj = new URL(url);
     urlObj.searchParams.delete(contextKey);
     return urlObj.toString();
 }
 
-/**
- * Replace the current url with the given Frak context
- * @param args
- * @param args.url - The url to update
- * @param args.context - The context to update
- */
 function replaceUrl({
     url: baseUrl,
     context,
 }: {
     url?: string;
-    context: Partial<FrakContext> | null;
+    context: FrakContextInput | null;
 }) {
-    // If no window here early exit
     if (!window.location?.href || typeof window === "undefined") {
         console.error("No window found, can't update context");
         return;
     }
 
-    // If no url, try to use the current one
     const url = baseUrl ?? window.location.href;
 
-    // Get our new url with the frak context
     let newUrl: string | null;
     if (context !== null) {
-        newUrl = update({
-            url,
-            context,
-        });
+        newUrl = update({ url, context });
     } else {
         newUrl = remove(url);
     }
 
-    // If no new url, early exit
     if (!newUrl) return;
 
-    // Update the url
     window.history.replaceState(null, "", newUrl.toString());
 }
 
-/**
- * Export our frak context
- */
 export const FrakContextManager = {
     compress,
     decompress,
