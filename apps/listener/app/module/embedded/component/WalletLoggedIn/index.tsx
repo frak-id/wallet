@@ -9,13 +9,13 @@ import { Copy } from "@frak-labs/ui/icons/Copy";
 import { Share } from "@frak-labs/ui/icons/Share";
 import { prefixWalletCss } from "@frak-labs/ui/utils/prefixWalletCss";
 import {
+    clientIdStore,
     OriginPairingState,
     trackGenericEvent,
     useGetUserBalance,
 } from "@frak-labs/wallet-shared";
 import { cx } from "class-variance-authority";
 import { toast } from "sonner";
-import { useAccount } from "wagmi";
 import { ButtonWallet } from "@/module/embedded/component/ButtonWallet";
 import {
     OnboardingShare,
@@ -81,7 +81,6 @@ function Balance({ amount, currency }: { amount: number; currency: Currency }) {
 }
 
 function ActionButtons() {
-    const { address } = useAccount();
     const {
         currentRequest: {
             params: { loggedIn },
@@ -89,15 +88,21 @@ function ActionButtons() {
     } = useEmbeddedListenerUI();
 
     const link = loggedIn?.action?.options?.link;
-    const { sourceUrl } = useSafeResolvingContext();
+    const { sourceUrl, merchantId } = useSafeResolvingContext();
+    const clientId = clientIdStore((s) => s.clientId);
 
-    // Ensure the sharing link contain the current frak wallet as referrer
-    const finalSharingLink = FrakContextManager.update({
-        url: link ?? sourceUrl,
-        context: {
-            r: address,
-        },
-    });
+    const finalSharingLink =
+        clientId && merchantId
+            ? FrakContextManager.update({
+                  url: link ?? sourceUrl,
+                  context: {
+                      v: 2,
+                      c: clientId,
+                      m: merchantId,
+                      t: Math.floor(Date.now() / 1000),
+                  },
+              })
+            : null;
 
     return (
         <div
