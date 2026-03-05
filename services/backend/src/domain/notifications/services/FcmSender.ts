@@ -1,5 +1,10 @@
 import { log } from "@backend-infrastructure";
-import { cert, getApps, initializeApp } from "firebase-admin/app";
+import {
+    cert,
+    getApps,
+    initializeApp,
+    type ServiceAccount,
+} from "firebase-admin/app";
 import { type BatchResponse, getMessaging } from "firebase-admin/messaging";
 import type { SendNotificationPayload } from "../dto/SendNotificationDto";
 
@@ -16,11 +21,27 @@ function getFirebaseApp() {
         return null;
     }
 
-    const serviceAccount = JSON.parse(serviceAccountJson);
-    return initializeApp({
-        credential: cert(serviceAccount),
-        projectId: serviceAccount.project_id,
-    });
+    let serviceAccount: ServiceAccount;
+    try {
+        serviceAccount = JSON.parse(serviceAccountJson);
+    } catch {
+        log.error(
+            "[FcmSender] FCM_SERVICE_ACCOUNT_JSON is not valid JSON, skipping Firebase init"
+        );
+        return null;
+    }
+
+    try {
+        return initializeApp({
+            credential: cert(serviceAccount),
+        });
+    } catch (error) {
+        log.error(
+            { error },
+            "[FcmSender] Failed to initialize Firebase app — check FCM_SERVICE_ACCOUNT_JSON format"
+        );
+        return null;
+    }
 }
 
 export class FcmSender {

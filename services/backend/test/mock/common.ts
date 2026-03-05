@@ -497,7 +497,6 @@ vi.mock("../../src/domain/notifications", () => ({
     },
     notificationMacro: notificationMacroMock,
     pushTokensTable: {},
-    PushTokenType: {},
     FcmSender: vi.fn(() => fcmSenderMocks),
     SendNotificationPayloadDto,
     SendNotificationTargetsDto,

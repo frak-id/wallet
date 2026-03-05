@@ -8,6 +8,13 @@ import type { FcmSender } from "./FcmSender";
 
 type PushToken = typeof pushTokensTable.$inferSelect;
 
+/** Web push token with guaranteed non-null crypto keys */
+type WebPushToken = PushToken & { keyP256dh: string; keyAuth: string };
+
+function isValidWebPushToken(token: PushToken): token is WebPushToken {
+    return token.keyP256dh !== null && token.keyAuth !== null;
+}
+
 export class NotificationsService {
     constructor(readonly fcmSender: FcmSender) {}
 
@@ -46,14 +53,19 @@ export class NotificationsService {
     }
 
     private partitionByType(tokens: PushToken[]) {
-        const webPushTokens: PushToken[] = [];
+        const webPushTokens: WebPushToken[] = [];
         const fcmTokens: PushToken[] = [];
 
         for (const token of tokens) {
             if (token.type === "fcm") {
                 fcmTokens.push(token);
-            } else {
+            } else if (isValidWebPushToken(token)) {
                 webPushTokens.push(token);
+            } else {
+                log.warn(
+                    { endpoint: token.endpoint },
+                    "[NotificationsService] Skipping web-push token with missing keys"
+                );
             }
         }
 
@@ -61,7 +73,7 @@ export class NotificationsService {
     }
 
     private async sendWebPush(
-        tokens: PushToken[],
+        tokens: WebPushToken[],
         payload: SendNotificationPayload
     ) {
         if (tokens.length === 0) return;
@@ -80,8 +92,8 @@ export class NotificationsService {
                         {
                             endpoint: token.endpoint,
                             keys: {
-                                p256dh: token.keyP256dh ?? "",
-                                auth: token.keyAuth ?? "",
+                                p256dh: token.keyP256dh,
+                                auth: token.keyAuth,
                             },
                         },
                         JSON.stringify(payload)
