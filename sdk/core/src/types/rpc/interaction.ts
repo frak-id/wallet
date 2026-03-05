@@ -11,7 +11,10 @@ import type { Address } from "viem";
 export type SendInteractionParamsType =
     | {
           type: "arrival";
+          /** @deprecated V1 legacy — use referrerClientId for v2 */
           referrerWallet?: Address;
+          referrerClientId?: string;
+          referrerMerchantId?: string;
           landingUrl?: string;
           utmSource?: string;
           utmMedium?: string;
