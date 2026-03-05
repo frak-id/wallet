@@ -66,7 +66,7 @@ export class TouchpointRepository {
     async findLatestReferralTouchpoint(params: {
         identityGroupId: string;
         merchantId: string;
-    }): Promise<(Touchpoint & { referrerWallet: Address }) | null> {
+    }): Promise<(Touchpoint & { referrerWallet: Address | null }) | null> {
         const now = new Date();
 
         const touchpoints = await db
@@ -95,9 +95,12 @@ export class TouchpointRepository {
         const sourceData = touchpoint.sourceData as TouchpointSourceData;
         if (sourceData.type !== "referral_link") return null;
 
+        const referrerWallet =
+            "referrerWallet" in sourceData ? sourceData.referrerWallet : null;
+
         return {
             ...touchpoint,
-            referrerWallet: sourceData.referrerWallet,
+            referrerWallet,
         };
     }
 

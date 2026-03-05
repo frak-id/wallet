@@ -8,6 +8,8 @@ const arrivalSchema = t.Object({
     type: t.Literal("arrival"),
     merchantId: t.String({ format: "uuid" }),
     referrerWallet: t.Optional(t.String()),
+    referrerClientId: t.Optional(t.String()),
+    referrerMerchantId: t.Optional(t.String({ format: "uuid" })),
     landingUrl: t.Optional(t.String()),
     utmSource: t.Optional(t.String()),
     utmMedium: t.Optional(t.String()),

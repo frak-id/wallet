@@ -12,6 +12,8 @@ import type { HandlerContext, InteractionHandler } from "../types";
 export type ArrivalInput = {
     merchantId: string;
     referrerWallet?: string;
+    referrerClientId?: string;
+    referrerMerchantId?: string;
     landingUrl?: string;
     utmSource?: string;
     utmMedium?: string;
@@ -48,9 +50,8 @@ export class ArrivalHandler
         context: HandlerContext
     ): Promise<ReferralArrivalPayload> {
         const sourceData = this.buildSourceData(input);
-        const referrerIdentityGroupId = await this.resolveReferrerGroupId(
-            input.referrerWallet
-        );
+        const referrerIdentityGroupId =
+            await this.resolveReferrerGroupId(input);
 
         const { touchpoint, referralRegistered } =
             await this.attributionService.recordTouchpoint({
@@ -91,10 +92,21 @@ export class ArrivalHandler
     }
 
     private isReferralSource(input: ArrivalInput): boolean {
+        if (input.referrerClientId && input.referrerMerchantId) {
+            return true;
+        }
         return Boolean(input.referrerWallet && isAddress(input.referrerWallet));
     }
 
     private buildSourceData(input: ArrivalInput): TouchpointSourceData {
+        if (input.referrerClientId && input.referrerMerchantId) {
+            return {
+                type: "referral_link",
+                referrerClientId: input.referrerClientId,
+                referrerMerchantId: input.referrerMerchantId,
+            };
+        }
+
         if (input.referrerWallet && isAddress(input.referrerWallet)) {
             return {
                 type: "referral_link",
@@ -117,15 +129,27 @@ export class ArrivalHandler
     }
 
     private async resolveReferrerGroupId(
-        referrerWallet: string | undefined
+        input: ArrivalInput
     ): Promise<string | undefined> {
-        if (!referrerWallet || !isAddress(referrerWallet)) {
+        if (input.referrerClientId && input.referrerMerchantId) {
+            const group =
+                await IdentityContext.repositories.identity.findGroupByIdentity(
+                    {
+                        type: "anonymous_fingerprint",
+                        value: input.referrerClientId,
+                        merchantId: input.referrerMerchantId,
+                    }
+                );
+            return group?.id ?? undefined;
+        }
+
+        if (!input.referrerWallet || !isAddress(input.referrerWallet)) {
             return undefined;
         }
         const group =
             await IdentityContext.repositories.identity.findGroupByIdentity({
                 type: "wallet",
-                value: referrerWallet,
+                value: input.referrerWallet,
             });
         return group?.id ?? undefined;
     }
