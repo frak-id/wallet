@@ -9,5 +9,7 @@
 		<string>applinks:wallet.frak.id</string>
 		<string>applinks:wallet-dev.frak.id</string>
 	</array>
+	<key>aps-environment</key>
+	<string>development</string>
 </dict>
 </plist>
