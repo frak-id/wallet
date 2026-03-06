@@ -164,14 +164,14 @@ jobs:
         env:
           APPLE_API_KEY_CONTENT: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}
 
-      - name: "🔥 Write Firebase config"
-        run: echo "$FIREBASE_GOOGLE_SERVICE_INFO_BASE64" | base64 -d > apps/wallet/src-tauri/gen/apple/app_iOS/GoogleService-Info.plist
-        env:
-          FIREBASE_GOOGLE_SERVICE_INFO_BASE64: ${{ secrets.FIREBASE_GOOGLE_SERVICE_INFO_BASE64 }}
-
       - name: "🏗️ Build iOS"
         # cd into wallet app so tauri finds src-tauri/ and beforeBuildCommand runs in correct directory
-        run: sst shell --stage "$STAGE" --print-logs -- bash -c "cd apps/wallet && tauri ios build --export-method app-store-connect"
+        # Firebase plist is written inside sst shell since the secret lives in SST
+        run: |
+          sst shell --stage "$STAGE" --print-logs -- bash -c '
+            echo "$FIREBASE_GOOGLE_SERVICE_INFO_BASE64" | base64 -d > apps/wallet/src-tauri/gen/apple/app_iOS/GoogleService-Info.plist
+            cd apps/wallet && tauri ios build --export-method app-store-connect
+          '
         env:
           STAGE: ${{ inputs.stage }}
           APPLE_API_ISSUER: ${{ secrets.APPSTORE_ISSUER_ID }}
@@ -302,14 +302,14 @@ jobs:
           KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
 
-      - name: "🔥 Write Firebase config"
-        run: echo "$FIREBASE_GOOGLE_SERVICES_JSON_BASE64" | base64 -d > apps/wallet/src-tauri/gen/android/app/google-services.json
-        env:
-          FIREBASE_GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.FIREBASE_GOOGLE_SERVICES_JSON_BASE64 }}
-
       - name: "🏗️ Build Android"
         # cd into wallet app so tauri finds src-tauri/ and beforeBuildCommand runs in correct directory
-        run: sst shell --stage "$STAGE" --print-logs -- bash -c "cd apps/wallet && tauri android build"
+        # Firebase config is written inside sst shell since the secret lives in SST
+        run: |
+          sst shell --stage "$STAGE" --print-logs -- bash -c '
+            echo "$FIREBASE_GOOGLE_SERVICES_JSON_BASE64" | base64 -d > apps/wallet/src-tauri/gen/android/app/google-services.json
+            cd apps/wallet && tauri android build
+          '
         env:
           STAGE: ${{ inputs.stage }}
 
