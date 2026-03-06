@@ -1,4 +1,3 @@
-import type { DisplayEmbeddedWalletParamsType } from "@frak-labs/core-sdk";
 import {
     type ProcessReferralOptions,
     processReferral,
@@ -16,7 +15,6 @@ import { useFrakContext } from "../utils/useFrakContext";
  * @group hooks
  *
  * @param args
- * @param args.modalConfig - The modal configuration to display if the user is not logged in
  * @param args.options - Some options for the referral interaction
  *
  * @returns  The resulting referral state, or a potential error
@@ -26,10 +24,8 @@ import { useFrakContext } from "../utils/useFrakContext";
  * @see {@link @frak-labs/core-sdk!actions.processReferral | `processReferral()`} for more details on the automatic referral handling process
  */
 export function useReferralInteraction({
-    modalConfig,
     options,
 }: {
-    modalConfig?: DisplayEmbeddedWalletParamsType;
     options?: ProcessReferralOptions;
 } = {}) {
     // Get the frak client
@@ -63,7 +59,6 @@ export function useReferralInteraction({
             return processReferral(client, {
                 walletStatus,
                 frakContext,
-                modalConfig,
                 options,
             });
         },
