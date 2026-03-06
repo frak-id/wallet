@@ -26,12 +26,14 @@ vi.mock("@choochmeque/tauri-plugin-notifications-api", () => ({
     unregisterForPushNotifications: unregisterForPushNotificationsMock,
 }));
 
-const { isAndroidMock } = vi.hoisted(() => ({
+const { isAndroidMock, isIOSMock } = vi.hoisted(() => ({
     isAndroidMock: vi.fn(),
+    isIOSMock: vi.fn(),
 }));
 
 vi.mock("@frak-labs/app-essentials/utils/platform", () => ({
     isAndroid: isAndroidMock,
+    isIOS: isIOSMock,
     isTauri: vi.fn().mockReturnValue(true),
 }));
 
@@ -45,12 +47,14 @@ vi.mock("../storage/notifications", () => ({
     },
 }));
 
-const { addPluginListenerMock } = vi.hoisted(() => ({
+const { addPluginListenerMock, invokeMock } = vi.hoisted(() => ({
     addPluginListenerMock: vi.fn(),
+    invokeMock: vi.fn(),
 }));
 
 vi.mock("@tauri-apps/api/core", () => ({
     addPluginListener: addPluginListenerMock,
+    invoke: invokeMock,
 }));
 
 const { putMock, deleteMock, hasAnyGetMock } = vi.hoisted(() => ({
@@ -84,16 +88,23 @@ describe.sequential("createTauriNotificationAdapter", () => {
         registerForPushNotificationsMock.mockReset();
         unregisterForPushNotificationsMock.mockReset();
         isAndroidMock.mockReset();
+        isIOSMock.mockReset();
         addMock.mockReset();
         addPluginListenerMock.mockReset();
+        invokeMock.mockReset();
         putMock.mockReset();
         deleteMock.mockReset();
         hasAnyGetMock.mockReset();
+
+        // Default: Android context (most existing tests assume non-iOS)
+        isAndroidMock.mockReturnValue(true);
+        isIOSMock.mockReturnValue(false);
 
         // Default mock return values
         registerForPushNotificationsMock.mockResolvedValue("mock-fcm-token");
         unregisterForPushNotificationsMock.mockResolvedValue(undefined);
         addPluginListenerMock.mockResolvedValue(undefined);
+        invokeMock.mockResolvedValue({ token: "mock-fcm-token" });
         putMock.mockResolvedValue(undefined);
         deleteMock.mockResolvedValue(undefined);
         hasAnyGetMock.mockResolvedValue({ data: false });
@@ -356,9 +367,10 @@ describe.sequential("createTauriNotificationAdapter", () => {
         warnSpy.mockRestore();
     });
 
-    it("should initialize: set up token refresh listener when permission granted", async () => {
+    it("should initialize: set up token refresh listener when permission granted (Android)", async () => {
         isPermissionGrantedMock.mockResolvedValue(true);
-        isAndroidMock.mockReturnValue(false);
+        isAndroidMock.mockReturnValue(true);
+        isIOSMock.mockReturnValue(false);
         hasAnyGetMock.mockResolvedValue({ data: true });
 
         const adapter = createTauriNotificationAdapter();
@@ -371,9 +383,26 @@ describe.sequential("createTauriNotificationAdapter", () => {
         );
     });
 
-    it("should initialize: token refresh event re-syncs to backend", async () => {
+    it("should initialize: set up FCM token refresh listener when permission granted (iOS)", async () => {
         isPermissionGrantedMock.mockResolvedValue(true);
         isAndroidMock.mockReturnValue(false);
+        isIOSMock.mockReturnValue(true);
+        hasAnyGetMock.mockResolvedValue({ data: true });
+
+        const adapter = createTauriNotificationAdapter();
+        await adapter.initialize();
+
+        expect(addPluginListenerMock).toHaveBeenCalledWith(
+            "firebase",
+            "fcm-token",
+            expect.any(Function)
+        );
+    });
+
+    it("should initialize: token refresh event re-syncs to backend (Android)", async () => {
+        isPermissionGrantedMock.mockResolvedValue(true);
+        isAndroidMock.mockReturnValue(true);
+        isIOSMock.mockReturnValue(false);
         hasAnyGetMock.mockResolvedValue({ data: true });
 
         // Capture the callback passed to addPluginListener
@@ -409,10 +438,73 @@ describe.sequential("createTauriNotificationAdapter", () => {
     it("should initialize: NOT set up listener when permission denied", async () => {
         isPermissionGrantedMock.mockResolvedValue(false);
         isAndroidMock.mockReturnValue(false);
+        isIOSMock.mockReturnValue(false);
 
         const adapter = createTauriNotificationAdapter();
         await adapter.initialize();
 
         expect(addPluginListenerMock).not.toHaveBeenCalled();
+    });
+
+    // --- iOS FCM token exchange tests ---
+
+    it("should subscribe on iOS: fetch FCM token via Firebase plugin and sync to backend", async () => {
+        isAndroidMock.mockReturnValue(false);
+        isIOSMock.mockReturnValue(true);
+        requestPermissionMock.mockResolvedValue("granted");
+        registerForPushNotificationsMock.mockResolvedValue("raw-apns-hex");
+        invokeMock.mockResolvedValue({ token: "ios-fcm-token" });
+
+        const adapter = createTauriNotificationAdapter();
+        await adapter.subscribe();
+
+        expect(registerForPushNotificationsMock).toHaveBeenCalledOnce();
+        expect(invokeMock).toHaveBeenCalledWith(
+            "plugin:firebase|get_fcm_token"
+        );
+        expect(putMock).toHaveBeenCalledWith({
+            type: "fcm",
+            token: "ios-fcm-token",
+        });
+    });
+
+    it("should subscribe on iOS: fall back to APNs token when Firebase plugin fails", async () => {
+        isAndroidMock.mockReturnValue(false);
+        isIOSMock.mockReturnValue(true);
+        requestPermissionMock.mockResolvedValue("granted");
+        registerForPushNotificationsMock.mockResolvedValue("raw-apns-hex");
+        invokeMock.mockRejectedValue(new Error("Firebase plugin unavailable"));
+
+        const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+        const adapter = createTauriNotificationAdapter();
+        await adapter.subscribe();
+
+        expect(warnSpy).toHaveBeenCalledWith(
+            "Failed to get FCM token from Firebase plugin, falling back to APNs token",
+            expect.any(Error)
+        );
+        expect(putMock).toHaveBeenCalledWith({
+            type: "fcm",
+            token: "raw-apns-hex",
+        });
+
+        warnSpy.mockRestore();
+    });
+
+    it("should subscribe on Android: use token from registerForPushNotifications directly", async () => {
+        isAndroidMock.mockReturnValue(true);
+        isIOSMock.mockReturnValue(false);
+        requestPermissionMock.mockResolvedValue("granted");
+        registerForPushNotificationsMock.mockResolvedValue("android-fcm-token");
+
+        const adapter = createTauriNotificationAdapter();
+        await adapter.subscribe();
+
+        expect(invokeMock).not.toHaveBeenCalled();
+        expect(putMock).toHaveBeenCalledWith({
+            type: "fcm",
+            token: "android-fcm-token",
+        });
     });
 });

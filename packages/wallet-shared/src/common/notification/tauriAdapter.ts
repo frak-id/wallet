@@ -1,6 +1,6 @@
-import { isAndroid } from "@frak-labs/app-essentials/utils/platform";
+import { isAndroid, isIOS } from "@frak-labs/app-essentials/utils/platform";
 import type { NotificationPayload } from "@frak-labs/ui/types/NotificationPayload";
-import { addPluginListener } from "@tauri-apps/api/core";
+import { addPluginListener, invoke } from "@tauri-apps/api/core";
 import { authenticatedWalletApi } from "../api/backendClient";
 import { notificationStorage } from "../storage/notifications";
 import type { NotificationAdapter } from "./adapter";
@@ -10,6 +10,32 @@ async function getTauriNotificationPlugin() {
         return await import("@choochmeque/tauri-plugin-notifications-api");
     } catch {
         return undefined;
+    }
+}
+
+/**
+ * On iOS, registerForPushNotifications() returns a raw APNs hex token (not an FCM token).
+ * Firebase's MessagingDelegate receives the FCM token asynchronously after the APNs token
+ * is processed. We fetch it explicitly via the local "firebase" plugin's getFcmToken command.
+ *
+ * On Android, registerForPushNotifications() returns the FCM token directly.
+ */
+async function getFcmToken(apnsOrFcmToken: string): Promise<string> {
+    if (!isIOS()) {
+        return apnsOrFcmToken;
+    }
+
+    try {
+        const result = await invoke<{ token: string }>(
+            "plugin:firebase|get_fcm_token"
+        );
+        return result.token;
+    } catch (error) {
+        console.warn(
+            "Failed to get FCM token from Firebase plugin, falling back to APNs token",
+            error
+        );
+        return apnsOrFcmToken;
     }
 }
 
@@ -34,18 +60,39 @@ export function createTauriNotificationAdapter(): NotificationAdapter {
         }
 
         try {
-            await addPluginListener(
-                "notifications",
-                "push-token",
-                (event: { token: string }) => {
-                    syncTokenToBackend(event.token).catch((error) => {
-                        console.warn(
-                            "Failed to sync refreshed push token to backend",
-                            error
-                        );
-                    });
-                }
-            );
+            // On iOS, listen for FCM token updates from our Firebase plugin
+            if (isIOS()) {
+                await addPluginListener(
+                    "firebase",
+                    "fcm-token",
+                    (event: { token: string }) => {
+                        syncTokenToBackend(event.token).catch((error) => {
+                            console.warn(
+                                "Failed to sync refreshed FCM token to backend",
+                                error
+                            );
+                        });
+                    }
+                );
+            }
+
+            // On Android, listen for push token refreshes from the notifications plugin
+            // (which already returns FCM tokens directly)
+            if (isAndroid()) {
+                await addPluginListener(
+                    "notifications",
+                    "push-token",
+                    (event: { token: string }) => {
+                        syncTokenToBackend(event.token).catch((error) => {
+                            console.warn(
+                                "Failed to sync refreshed push token to backend",
+                                error
+                            );
+                        });
+                    }
+                );
+            }
+
             hasPushTokenListener = true;
         } catch (error) {
             console.warn("Failed to register push token listener", error);
@@ -77,7 +124,10 @@ export function createTauriNotificationAdapter(): NotificationAdapter {
                 return;
             }
 
-            const token = await plugin.registerForPushNotifications();
+            // registerForPushNotifications returns FCM token on Android,
+            // raw APNs hex token on iOS — getFcmToken handles the exchange
+            const rawToken = await plugin.registerForPushNotifications();
+            const token = await getFcmToken(rawToken);
             await ensurePushTokenListener();
             await syncTokenToBackend(token);
         },

@@ -11,6 +11,12 @@ pub fn run() {
             .plugin(tauri_plugin_notifications::init());
     }
 
+    // iOS-only: Firebase plugin for FCM token exchange (APNs → FCM)
+    #[cfg(target_os = "ios")]
+    {
+        builder = builder.plugin(tauri::plugin::Builder::new("firebase").build());
+    }
+
     // Android-only plugins: WebAuthn, Share, and FS
     // (iOS uses native WKWebView WebAuthn and Web Share API works natively)
     #[cfg(target_os = "android")]
