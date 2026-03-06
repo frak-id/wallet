@@ -14,10 +14,10 @@
 
 ## packages/wallet-shared/
 
-Shared between wallet and listener apps only.
+Shared between wallet and listener apps only. 201 files, 15 domains.
 
 **Key Exports:**
-- `src/stores/` - Zustand stores (sessionStore, walletStore, authenticationStore)
+- `src/stores/` - Zustand stores (sessionStore, userStore, walletStore, authenticationStore)
 - `src/wallet/smartWallet/` - Smart wallet logic
 - `src/authentication/` - WebAuthn flows
 
@@ -40,7 +40,7 @@ const session = sessionStore((s) => s.session);
 
 ## packages/ui/
 
-Radix-based component library.
+Radix-based component library. 22 components, 95 TS/TSX files.
 
 **Structure:**
 ```
@@ -58,7 +58,7 @@ import { Button } from "@frak-labs/ui/component/Button";
 
 ## packages/app-essentials/
 
-Core blockchain configuration.
+Core blockchain configuration. Consumed by backend (10), business (7), wallet (5).
 
 **Key Files:**
 - `src/blockchain/connector/` - FrakSmartWallet connector
@@ -76,9 +76,13 @@ export const wagmiConfig = createConfig({
 });
 ```
 
+## packages/client/
+
+Elysia Eden Treaty API client for type-safe backend communication.
+
 ## packages/test-foundation/
 
-Shared test setup and mocks.
+Shared test setup and mocks for 10 Vitest projects.
 
 **Setup Files:**
 - `shared-setup.ts` - Browser API mocks
@@ -103,6 +107,11 @@ test("my test", async ({
 ## packages/dev-tooling/
 
 Vite and CSS configuration.
+
+**Exports:**
+- `lightningCssConfig` - Centralized Lightning CSS settings
+- `onwarn()` - Rollup warning suppression
+- `getSandboxEnv()` - Atelier sandbox environment config
 
 **Lightning CSS Config:**
 - CSS Modules with camelCase

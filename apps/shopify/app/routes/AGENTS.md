@@ -1,6 +1,6 @@
 # routes/ — React Router v7 Flat Routes
 
-19 route files. Three categories: `app.*` (authenticated admin), `api.*` (JSON endpoints), `auth.*` (OAuth), plus standalone `webhooks.tsx` and `purchase.tsx`.
+17 route files. Three categories: `app.*` (authenticated admin), `api.*` (JSON endpoints), `auth.*` (OAuth), plus standalone `webhooks.tsx` and `purchase.tsx`.
 
 ## ROUTE HIERARCHY
 

@@ -6,22 +6,14 @@ Elysia.js API with domain-driven design. PostgreSQL (Drizzle) + MongoDB.
 
 ```
 src/
-├── api/              # API route composition (BFF pattern)
-├── orchestration/    # Cross-domain coordination layer (11+ orchestrators)
-│   ├── context.ts    # Singleton orchestrator instances
-│   ├── BatchRewardOrchestrator.ts
-│   ├── CampaignStatsOrchestrator.ts
-│   ├── MemberQueryOrchestrator.ts
-│   ├── PurchaseLinkingOrchestrator.ts
-│   ├── PurchaseWebhookOrchestrator.ts
-│   ├── RewardExpirationOrchestrator.ts
-│   ├── SettlementOrchestrator.ts
-│   ├── WebhookResolverOrchestrator.ts
-│   ├── identity/     # Identity + anonymous merge orchestrators
-│   ├── interaction-submission/ # Interaction submission orchestrators
-│   ├── reward/       # Reward orchestrators
-│   └── schemas/      # Shared orchestration schemas
-├── domain/           # DDD bounded contexts
+├── api/              # BFF API layer (user, business, external, common)
+├── orchestration/    # Cross-domain coordination (11+ orchestrators)
+│   ├── identity/     # Identity resolution
+│   ├── interaction-submission/
+│   ├── reward/
+│   ├── schemas/
+│   └── context.ts
+├── domain/           # DDD bounded contexts (11 domains)
 │   ├── attribution/  # Touchpoint tracking, conversion attribution
 │   ├── auth/         # WebAuthn authentication
 │   ├── campaign/     # Campaign rules, reward calculation
@@ -33,9 +25,18 @@ src/
 │   ├── purchases/    # Purchase tracking, webhooks
 │   ├── rewards/      # Asset logs, settlements
 │   └── wallet/       # Wallet operations
-├── infrastructure/   # DB, external services
-├── jobs/             # Background jobs
-└── utils/            # Shared utilities
+├── infrastructure/   # Technical capabilities
+│   ├── blockchain/   # Viem, AA, RPC
+│   ├── persistence/  # Drizzle, MongoDB, Redis
+│   ├── messaging/    # Email, SMS, Push
+│   ├── integrations/ # Shopify, Stripe, etc.
+│   ├── keys/         # KMS, encryption
+│   ├── dns/          # Domain management
+│   ├── pricing/      # Token price feeds
+│   ├── rateLimit/    # Throttling
+│   └── macro/        # Elysia middleware
+├── jobs/             # Background tasks
+└── utils/            # Shared helpers
 ```
 
 ## Architecture: Orchestration Layer

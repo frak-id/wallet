@@ -1,6 +1,6 @@
 # PROJECT KNOWLEDGE BASE
 
-**Generated:** 2026-02-25 · **Commit:** e83f896b4 · **Branch:** dev
+**Generated:** 2026-03-06 · **Commit:** 03e50a956 · **Branch:** dev
 
 ## OVERVIEW
 
@@ -11,8 +11,8 @@ Frak Shopify app — embedded React Router v7 app enabling referral/share-to-ear
 ```
 .
 ├── app/
-│   ├── routes/             # React Router flat routes (19 files) → see routes/AGENTS.md
-│   ├── services.server/    # Server business logic (11 services + 6 tests) → see services.server/AGENTS.md
+│   ├── routes/             # React Router flat routes (17 files) → see routes/AGENTS.md
+│   ├── services.server/    # Server business logic (11 services + 9 tests) → see services.server/AGENTS.md
 │   ├── hooks/              # Client hooks (blockchain, React Query) → see hooks/AGENTS.md
 │   ├── components/         # Polaris-based UI, feature-organized → see components/AGENTS.md
 │   ├── utils/              # ABI defs, API clients, viem, onboarding logic
@@ -155,7 +155,8 @@ Env vars injected at build time via `vite.config.ts` `define` block. Secrets fro
 - **Onboarding flow**: 6-step wizard validates merchant registered, pixel created, webhooks configured, Frak webhook active, theme blocks installed, buttons added. See `app/utils/onboarding.ts`.
 - **Frak ecosystem URLs**: backend.frak.id (API), wallet.frak.id (wallet), business.frak.id (dashboard). Dev variants: `*.v2.gcp-dev.frak.id` or `*-dev.frak.id`.
 - **Session storage conditional**: Memory for localhost, Drizzle for deployed. See `app/shopify.server.ts:14`.
-- **Shopify API version**: `ApiVersion.January25` in app config.
+- **Shopify API version**: `ApiVersion.January25` or newer in app config.
+- **Web Components**: 3 components available: `frak-button-wallet`, `frak-button-share`, `frak-open-in-app`.
 - **Scopes**: `read_customer_events,read_orders,read_pixels,read_products,read_themes,write_pixels`.
 - **vite.config.ts** injects SST secrets into `process.env.*` via `define` — build-time replacements, not runtime env vars.
 - **Blockchain**: Arbitrum (prod) / Arbitrum Sepolia (dev). RPC via erpc.gcp.frak.id. viem multicall with 50ms batching.

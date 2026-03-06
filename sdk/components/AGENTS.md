@@ -1,76 +1,56 @@
 # sdk/components
 
-Web Components for Frak integration. Preact-based, published as `@frak-labs/components`.
+Preact-based Web Components with Shadow DOM.
+
+## Components
+
+- `<frak-button-wallet>`: Wallet modal trigger.
+- `<frak-button-share>`: Share/referral button.
+- `<frak-open-in-app>`: App store redirect (mobile only).
 
 ## Structure
 
 ```
 src/
 ├── components/
-│   ├── ButtonWallet/    # frak-button-wallet Web Component
-│   ├── ButtonShare/     # frak-button-share Web Component
-│   └── OpenInAppButton/ # frak-open-in-app Web Component (app store redirect)
-├── hooks/              # Preact hooks (8 files)
-├── utils/              # Shared utilities (14 files)
+│   ├── ButtonWallet/
+│   ├── ButtonShare/
+│   └── OpenInAppButton/
+├── hooks/              # Preact hooks
+├── utils/              # Shared utilities
 └── index.ts            # NPM entry
 ```
 
-## Where to Look
+## Build & Output
 
-| Task | Location |
-|------|----------|
-| Modify ButtonWallet | `src/components/ButtonWallet/` |
-| Modify ButtonShare | `src/components/ButtonShare/` |
-| Internal hooks | `src/hooks/` |
-| CSS handling | Build config + utils |
-
-## Build Output
-
-```bash
-bun run build         # Build NPM + CDN
-bun run build:watch   # Watch mode
-```
+Uses Lightning CSS + custom plugins for embedding and combining CSS.
 
 | Format | Output | Usage |
 |--------|--------|-------|
-| ESM | `dist/` | NPM imports |
-| CDN | `cdn/` | `<script type="module">` |
-| CSS | `cdn/loader.css` | Required stylesheet |
+| NPM | `dist/` | Separate entry points per component |
+| CDN | `cdn/` | ESM with code splitting (hashed chunks) |
 
-## Web Components
+**CDN Entry Points:** `components.ts`, `loader.ts`
+**CSS:** `combineCssPlugin` merges CSS into `loader.css`.
+
+## Usage
 
 ```html
-<!-- CDN usage -->
 <script type="module" src="https://cdn.frak.id/components/loader.js"></script>
 <link rel="stylesheet" href="https://cdn.frak.id/components/loader.css">
 
 <frak-button-wallet></frak-button-wallet>
-<frak-button-share></frak-button-share>
 ```
 
 ## Conventions
 
-- **Preact**: Lightweight React alternative for bundle size
-- **Shadow DOM**: Components use shadow DOM for style isolation
-- **CSS Modules**: Lightning CSS with custom plugin for embedding
-- **Code splitting**: CDN uses hashed chunks for caching
-
-## Anti-Patterns
-
-- React imports (use Preact)
-- Global CSS (use CSS Modules)
-- Heavy dependencies (bundle size critical)
-
-## Build Config
-
-Complex tsdown config with:
-- Lightning CSS plugin for CSS processing
-- Custom CSS combining plugin
-- Separate NPM/CDN output directories
-- Preact JSX transformation
+- **Preact**: Lightweight React alternative.
+- **Shadow DOM**: Style isolation.
+- **CSS Modules**: Lightning CSS with custom embedding plugin.
+- **Code Splitting**: CDN uses hashed chunks for caching.
 
 ## Notes
 
-- Depends on `@frak-labs/core-sdk`
-- No React Query (pure Preact)
-- Custom elements auto-register on import
+- Depends on `@frak-labs/core-sdk`.
+- Custom elements auto-register on import.
+

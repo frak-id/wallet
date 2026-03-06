@@ -1,17 +1,21 @@
 # apps/listener
 
-Iframe RPC handler for SDK-to-wallet communication. Embedded in partner sites via SDK.
+**Generated:** 2026-03-06
+**Commit:** 03e50a956
+**Branch:** dev
+
+Iframe RPC handler for SDK-to-wallet communication. Embedded in partner sites via SDK. Deployed at `/listener` path on wallet ingress.
 
 ## Structure
 
 ```
 app/
-├── module/
+├── module/           # 13 modules
 │   ├── common/       # Shared utilities
 │   ├── component/    # Shared components (SsoButton, ToastLoading)
 │   ├── embedded/     # Embedded wallet UI components
 │   ├── handlers/     # RPC message handler wrappers
-│   ├── hooks/        # RPC message handlers (14 hooks - core logic)
+│   ├── hooks/        # 14 RPC hooks (core logic)
 │   ├── middleware/    # Request/response middleware
 │   ├── modal/        # Modal UI for wallet operations
 │   ├── providers/    # RootProvider (Wagmi, QueryClient)
@@ -44,23 +48,18 @@ bun run test         # Unit tests (listener-unit project)
 ## Conventions
 
 - **RPC pattern**: Each message type has handler in `hooks/`
-- **Minimal bundle**: Critical for iframe load time
+- **Minimal bundle**: Critical for iframe load time (avoid heavy deps)
 - **No routing**: Single-page app, no navigation
-
-## Anti-Patterns
-
-- Heavy dependencies (bundle size critical)
-- Complex state (keep minimal)
-- Direct window.parent access (use postMessage abstraction)
+- **Shared logic**: Uses `@frak-labs/wallet-shared` for core wallet state
 
 ## Testing
 
 - Mock iframe communication via `@frak-labs/test-foundation`
 - Test RPC handlers in isolation
-- Coverage in `coverage/app/module/hooks/`
+- Coverage target in `app/module/hooks/`
 
 ## Notes
 
 - Communicates with SDK via `@frak-labs/frame-connector` protocol
 - Renders modals for wallet operations (auth, transactions)
-- Shares code with wallet via `@frak-labs/wallet-shared`
+- Not a standalone app; served via wallet ingress

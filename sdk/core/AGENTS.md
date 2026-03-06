@@ -1,76 +1,50 @@
 # sdk/core
 
-Core SDK for Frak ecosystem integration. Framework-agnostic, published as `@frak-labs/core-sdk`.
+Framework-agnostic core SDK. 111 total exports.
 
 ## Structure
 
 ```
 src/
-├── actions/          # Blockchain interactions (14 files)
-│   ├── displayModal.ts
-│   ├── sendInteraction.ts
-│   ├── displayEmbeddedWallet.ts
-│   └── ...
+├── actions/          # 14 files (displayModal, sendInteraction, displayEmbeddedWallet, etc.)
 ├── clients/          # FrakClient + iframe communication
 ├── constants/        # Chain configs, addresses
 ├── types/            # TypeScript definitions
-└── utils/            # Helpers (20 files)
+└── utils/            # 20 files (compression, URL builders, etc.)
 ```
 
-## Where to Look
+## Build & Exports
 
-| Task | Location |
-|------|----------|
-| Add blockchain action | `src/actions/` |
-| Client setup | `src/clients/FrakClient.ts` |
-| Type definitions | `src/types/` |
-| Utility helpers | `src/utils/` |
-
-## Build Output
-
-```bash
-bun run build         # Build NPM + CDN
-bun run build:watch   # Watch mode
-bun run check-exports # Verify package exports
-```
+Dual tsdown config for NPM and CDN.
 
 | Format | Output | Usage |
 |--------|--------|-------|
-| ESM | `dist/index.mjs` | Modern bundlers |
-| CJS | `dist/index.cjs` | Node.js require() |
-| IIFE | `cdn/bundle.global.js` | Browser `<script>` tag |
-| Types | `dist/index.d.ts` | TypeScript |
+| NPM | `dist/` | ESM/CJS (index, actions, bundle entry points) |
+| CDN | `cdn/bundle.js` | IIFE with `window.FrakSDK` global |
 
-**CDN Global**: `window.FrakSDK`
+**Subpath Exports:** `.`, `./actions`, `./bundle`
+**Browser Field:** `./cdn/bundle.js`
+
+**Defined Variables:**
+- `OPEN_PANEL_API_URL`
+- `SDK_VERSION`
 
 ## Conventions
 
-- **Pure functions**: No side effects in actions
-- **Type-first**: All exports fully typed
-- **Tree-shakeable**: Named exports only
-- **No React**: Framework-agnostic (see `sdk/react` for hooks)
+- **Pure functions**: No side effects in actions.
+- **Type-first**: All exports fully typed.
+- **Tree-shakeable**: Named exports only.
+- **No React**: Keep framework-agnostic.
 
-## Entry Points
+## Usage
 
 ```typescript
-import { FrakClient } from "@frak-labs/core-sdk";           // Main client
-import { sendInteraction } from "@frak-labs/core-sdk/actions";  // Actions
+import { FrakClient } from "@frak-labs/core-sdk";
+import { sendInteraction } from "@frak-labs/core-sdk/actions";
 ```
-
-## Anti-Patterns
-
-- React/DOM dependencies (keep framework-agnostic)
-- Side effects in module scope
-- Default exports
 
 ## Testing
 
-- Vitest with jsdom (`core-sdk-unit` project)
-- Tests in `tests/` directory
-- Mock iframe communication
+- Vitest with jsdom (`core-sdk-unit` project).
+- Mock iframe communication.
 
-## Notes
-
-- Build order: `rpc → core → legacy → react → components`
-- Changesets for versioning (linked with react-sdk, frame-connector)
-- CDN published to `cdn.frak.id`

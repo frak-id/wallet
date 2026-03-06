@@ -1,6 +1,6 @@
 # components/ — Polaris UI Components
 
-29 files across 14 feature directories. All use Shopify Polaris v13. No custom design system.
+38 files across 14 feature directories. All use Shopify Polaris v13. No custom design system.
 
 ## STRUCTURE
 
@@ -24,7 +24,7 @@ components/
 │   └── LanguageSelector.tsx
 ├── ModalPreview/         # Markdown → React preview (uses CSS modules)
 ├── SocialPreview/        # Social media preview (uses CSS modules)
-├── WalletGated/          # Wallet connection gate + timeout error
+├── WalletGated/          # Wallet connection gate + timeout error (connection gate)
 ├── Webhook/              # Webhook status + create/delete
 ├── Pixel/                # Web pixel create/delete
 ├── Instructions/         # Reusable instruction card
