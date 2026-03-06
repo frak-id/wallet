@@ -1,0 +1,2126 @@
+{
+    "id": "3065c3cf-743b-4da9-9645-114d0008070f",
+    "prevId": "7ea31e0a-b357-4c04-b566-cfb23c9fde73",
+    "version": "7",
+    "dialect": "postgresql",
+    "tables": {
+        "public.referral_links": {
+            "name": "referral_links",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true,
+                    "default": "gen_random_uuid()"
+                },
+                "merchant_id": {
+                    "name": "merchant_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "referrer_identity_group_id": {
+                    "name": "referrer_identity_group_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "referee_identity_group_id": {
+                    "name": "referee_identity_group_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {
+                "referral_links_merchant_idx": {
+                    "name": "referral_links_merchant_idx",
+                    "columns": [
+                        {
+                            "expression": "merchant_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "referral_links_referrer_idx": {
+                    "name": "referral_links_referrer_idx",
+                    "columns": [
+                        {
+                            "expression": "referrer_identity_group_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "referral_links_referee_idx": {
+                    "name": "referral_links_referee_idx",
+                    "columns": [
+                        {
+                            "expression": "referee_identity_group_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {},
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {
+                "referral_links_merchant_referee_unique": {
+                    "name": "referral_links_merchant_referee_unique",
+                    "nullsNotDistinct": false,
+                    "columns": ["merchant_id", "referee_identity_group_id"]
+                }
+            },
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.touchpoints": {
+            "name": "touchpoints",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true,
+                    "default": "gen_random_uuid()"
+                },
+                "identity_group_id": {
+                    "name": "identity_group_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "merchant_id": {
+                    "name": "merchant_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "source": {
+                    "name": "source",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "source_data": {
+                    "name": "source_data",
+                    "type": "jsonb",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "landing_url": {
+                    "name": "landing_url",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                },
+                "expires_at": {
+                    "name": "expires_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": false
+                }
+            },
+            "indexes": {
+                "touchpoints_identity_group_idx": {
+                    "name": "touchpoints_identity_group_idx",
+                    "columns": [
+                        {
+                            "expression": "identity_group_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "touchpoints_merchant_idx": {
+                    "name": "touchpoints_merchant_idx",
+                    "columns": [
+                        {
+                            "expression": "merchant_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "touchpoints_identity_merchant_idx": {
+                    "name": "touchpoints_identity_merchant_idx",
+                    "columns": [
+                        {
+                            "expression": "identity_group_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        },
+                        {
+                            "expression": "merchant_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "touchpoints_expires_at_idx": {
+                    "name": "touchpoints_expires_at_idx",
+                    "columns": [
+                        {
+                            "expression": "expires_at",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {},
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.campaign_rules": {
+            "name": "campaign_rules",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true,
+                    "default": "gen_random_uuid()"
+                },
+                "merchant_id": {
+                    "name": "merchant_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "name": {
+                    "name": "name",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "status": {
+                    "name": "status",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "'draft'"
+                },
+                "priority": {
+                    "name": "priority",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": 0
+                },
+                "rule": {
+                    "name": "rule",
+                    "type": "jsonb",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "metadata": {
+                    "name": "metadata",
+                    "type": "jsonb",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "budget_config": {
+                    "name": "budget_config",
+                    "type": "jsonb",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "budget_used": {
+                    "name": "budget_used",
+                    "type": "jsonb",
+                    "primaryKey": false,
+                    "notNull": false,
+                    "default": "'{}'::jsonb"
+                },
+                "expires_at": {
+                    "name": "expires_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "published_at": {
+                    "name": "published_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "deactivated_at": {
+                    "name": "deactivated_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {
+                "campaign_rules_merchant_idx": {
+                    "name": "campaign_rules_merchant_idx",
+                    "columns": [
+                        {
+                            "expression": "merchant_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "campaign_rules_merchant_status_idx": {
+                    "name": "campaign_rules_merchant_status_idx",
+                    "columns": [
+                        {
+                            "expression": "merchant_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        },
+                        {
+                            "expression": "status",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "campaign_rules_priority_idx": {
+                    "name": "campaign_rules_priority_idx",
+                    "columns": [
+                        {
+                            "expression": "priority",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {},
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.identity_groups": {
+            "name": "identity_groups",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true,
+                    "default": "gen_random_uuid()"
+                },
+                "merged_groups": {
+                    "name": "merged_groups",
+                    "type": "jsonb",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": false,
+                    "default": "now()"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": false,
+                    "default": "now()"
+                }
+            },
+            "indexes": {},
+            "foreignKeys": {},
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.identity_nodes": {
+            "name": "identity_nodes",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true,
+                    "default": "gen_random_uuid()"
+                },
+                "group_id": {
+                    "name": "group_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "identity_type": {
+                    "name": "identity_type",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "identity_value": {
+                    "name": "identity_value",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "merchant_id": {
+                    "name": "merchant_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "validation_data": {
+                    "name": "validation_data",
+                    "type": "jsonb",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": false,
+                    "default": "now()"
+                }
+            },
+            "indexes": {
+                "identity_nodes_group_idx": {
+                    "name": "identity_nodes_group_idx",
+                    "columns": [
+                        {
+                            "expression": "group_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "identity_nodes_type_value_idx": {
+                    "name": "identity_nodes_type_value_idx",
+                    "columns": [
+                        {
+                            "expression": "identity_type",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        },
+                        {
+                            "expression": "identity_value",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "identity_nodes_merchant_idx": {
+                    "name": "identity_nodes_merchant_idx",
+                    "columns": [
+                        {
+                            "expression": "merchant_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {},
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {
+                "identity_nodes_unique_identity": {
+                    "name": "identity_nodes_unique_identity",
+                    "nullsNotDistinct": true,
+                    "columns": [
+                        "identity_type",
+                        "identity_value",
+                        "merchant_id"
+                    ]
+                }
+            },
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.merchant_admins": {
+            "name": "merchant_admins",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true,
+                    "default": "gen_random_uuid()"
+                },
+                "merchant_id": {
+                    "name": "merchant_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "wallet": {
+                    "name": "wallet",
+                    "type": "bytea",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "added_by": {
+                    "name": "added_by",
+                    "type": "bytea",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "added_at": {
+                    "name": "added_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {
+                "merchant_admins_merchant_idx": {
+                    "name": "merchant_admins_merchant_idx",
+                    "columns": [
+                        {
+                            "expression": "merchant_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "merchant_admins_wallet_idx": {
+                    "name": "merchant_admins_wallet_idx",
+                    "columns": [
+                        {
+                            "expression": "wallet",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {},
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {
+                "merchant_admins_unique": {
+                    "name": "merchant_admins_unique",
+                    "nullsNotDistinct": false,
+                    "columns": ["merchant_id", "wallet"]
+                }
+            },
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.merchant_ownership_transfers": {
+            "name": "merchant_ownership_transfers",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true,
+                    "default": "gen_random_uuid()"
+                },
+                "merchant_id": {
+                    "name": "merchant_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "from_wallet": {
+                    "name": "from_wallet",
+                    "type": "bytea",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "to_wallet": {
+                    "name": "to_wallet",
+                    "type": "bytea",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "initiated_at": {
+                    "name": "initiated_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                },
+                "expires_at": {
+                    "name": "expires_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": true
+                }
+            },
+            "indexes": {
+                "merchant_ownership_transfers_to_wallet_idx": {
+                    "name": "merchant_ownership_transfers_to_wallet_idx",
+                    "columns": [
+                        {
+                            "expression": "to_wallet",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {},
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {
+                "merchant_ownership_transfers_merchant_id_unique": {
+                    "name": "merchant_ownership_transfers_merchant_id_unique",
+                    "nullsNotDistinct": false,
+                    "columns": ["merchant_id"]
+                }
+            },
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.merchants": {
+            "name": "merchants",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true,
+                    "default": "gen_random_uuid()"
+                },
+                "product_id": {
+                    "name": "product_id",
+                    "type": "bytea",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "domain": {
+                    "name": "domain",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "name": {
+                    "name": "name",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "owner_wallet": {
+                    "name": "owner_wallet",
+                    "type": "bytea",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "bank_address": {
+                    "name": "bank_address",
+                    "type": "bytea",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "default_reward_token": {
+                    "name": "default_reward_token",
+                    "type": "bytea",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "webhook_signature_key": {
+                    "name": "webhook_signature_key",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "webhook_platform": {
+                    "name": "webhook_platform",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "config": {
+                    "name": "config",
+                    "type": "jsonb",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "verified_at": {
+                    "name": "verified_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": false,
+                    "default": "now()"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": false,
+                    "default": "now()"
+                }
+            },
+            "indexes": {
+                "merchants_product_id_idx": {
+                    "name": "merchants_product_id_idx",
+                    "columns": [
+                        {
+                            "expression": "product_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "merchants_domain_idx": {
+                    "name": "merchants_domain_idx",
+                    "columns": [
+                        {
+                            "expression": "domain",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "merchants_owner_wallet_idx": {
+                    "name": "merchants_owner_wallet_idx",
+                    "columns": [
+                        {
+                            "expression": "owner_wallet",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {},
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {
+                "merchants_product_id_unique": {
+                    "name": "merchants_product_id_unique",
+                    "nullsNotDistinct": false,
+                    "columns": ["product_id"]
+                },
+                "merchants_domain_unique": {
+                    "name": "merchants_domain_unique",
+                    "nullsNotDistinct": false,
+                    "columns": ["domain"]
+                }
+            },
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.push_tokens": {
+            "name": "push_tokens",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "serial",
+                    "primaryKey": true,
+                    "notNull": true
+                },
+                "wallet": {
+                    "name": "wallet",
+                    "type": "bytea",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "type": {
+                    "name": "type",
+                    "type": "varchar(16)",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "'web-push'"
+                },
+                "endpoint": {
+                    "name": "endpoint",
+                    "type": "varchar",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "key_p256dh": {
+                    "name": "key_p256dh",
+                    "type": "varchar",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "key_auth": {
+                    "name": "key_auth",
+                    "type": "varchar",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "expire_at": {
+                    "name": "expire_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": false,
+                    "default": "now()"
+                }
+            },
+            "indexes": {
+                "wallet_push_tokens_idx": {
+                    "name": "wallet_push_tokens_idx",
+                    "columns": [
+                        {
+                            "expression": "wallet",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {},
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {
+                "unique_push_token": {
+                    "name": "unique_push_token",
+                    "nullsNotDistinct": false,
+                    "columns": ["wallet", "type", "endpoint"]
+                }
+            },
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.pairing_signature_request": {
+            "name": "pairing_signature_request",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "serial",
+                    "primaryKey": true,
+                    "notNull": true
+                },
+                "request_id": {
+                    "name": "request_id",
+                    "type": "varchar",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "pairing_id": {
+                    "name": "pairing_id",
+                    "type": "varchar",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "request": {
+                    "name": "request",
+                    "type": "bytea",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "context": {
+                    "name": "context",
+                    "type": "json",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": false,
+                    "default": "now()"
+                },
+                "expires_at": {
+                    "name": "expires_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "processed_at": {
+                    "name": "processed_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "signature": {
+                    "name": "signature",
+                    "type": "bytea",
+                    "primaryKey": false,
+                    "notNull": false
+                }
+            },
+            "indexes": {
+                "request_id_idx": {
+                    "name": "request_id_idx",
+                    "columns": [
+                        {
+                            "expression": "request_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "signature_pairing_id_idx": {
+                    "name": "signature_pairing_id_idx",
+                    "columns": [
+                        {
+                            "expression": "pairing_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {},
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.device_pairing": {
+            "name": "device_pairing",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "serial",
+                    "primaryKey": true,
+                    "notNull": true
+                },
+                "pairing_id": {
+                    "name": "pairing_id",
+                    "type": "varchar",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "wallet": {
+                    "name": "wallet",
+                    "type": "bytea",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "origin_user_agent": {
+                    "name": "origin_user_agent",
+                    "type": "varchar",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "origin_name": {
+                    "name": "origin_name",
+                    "type": "varchar",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "origin_node": {
+                    "name": "origin_node",
+                    "type": "jsonb",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "target_user_agent": {
+                    "name": "target_user_agent",
+                    "type": "varchar",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "target_name": {
+                    "name": "target_name",
+                    "type": "varchar",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "pairing_code": {
+                    "name": "pairing_code",
+                    "type": "varchar",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                },
+                "resolved_at": {
+                    "name": "resolved_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "last_active_at": {
+                    "name": "last_active_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {
+                "pairing_id_idx": {
+                    "name": "pairing_id_idx",
+                    "columns": [
+                        {
+                            "expression": "pairing_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": true,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "wallet_id_idx": {
+                    "name": "wallet_id_idx",
+                    "columns": [
+                        {
+                            "expression": "wallet",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "pairing_code_idx": {
+                    "name": "pairing_code_idx",
+                    "columns": [
+                        {
+                            "expression": "pairing_code",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": true,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {},
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.merchant_webhooks": {
+            "name": "merchant_webhooks",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "serial",
+                    "primaryKey": true,
+                    "notNull": true
+                },
+                "merchant_id": {
+                    "name": "merchant_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "hook_signature_key": {
+                    "name": "hook_signature_key",
+                    "type": "varchar",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": false,
+                    "default": "now()"
+                },
+                "platform": {
+                    "name": "platform",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "'shopify'"
+                }
+            },
+            "indexes": {
+                "merchant_webhooks_merchant_id_idx": {
+                    "name": "merchant_webhooks_merchant_id_idx",
+                    "columns": [
+                        {
+                            "expression": "merchant_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": true,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {},
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.purchase_claims": {
+            "name": "purchase_claims",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true,
+                    "default": "gen_random_uuid()"
+                },
+                "merchant_id": {
+                    "name": "merchant_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "customer_id": {
+                    "name": "customer_id",
+                    "type": "varchar",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "order_id": {
+                    "name": "order_id",
+                    "type": "varchar",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "purchase_token": {
+                    "name": "purchase_token",
+                    "type": "varchar",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "claiming_identity_group_id": {
+                    "name": "claiming_identity_group_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": false,
+                    "default": "now()"
+                }
+            },
+            "indexes": {
+                "purchase_claims_unique_purchase": {
+                    "name": "purchase_claims_unique_purchase",
+                    "columns": [
+                        {
+                            "expression": "merchant_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        },
+                        {
+                            "expression": "order_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        },
+                        {
+                            "expression": "purchase_token",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": true,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "purchase_claims_identity_group_idx": {
+                    "name": "purchase_claims_identity_group_idx",
+                    "columns": [
+                        {
+                            "expression": "claiming_identity_group_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "purchase_claims_merchant_idx": {
+                    "name": "purchase_claims_merchant_idx",
+                    "columns": [
+                        {
+                            "expression": "merchant_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {},
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.purchase_items": {
+            "name": "purchase_items",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true,
+                    "default": "gen_random_uuid()"
+                },
+                "purchase_id": {
+                    "name": "purchase_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "external_id": {
+                    "name": "external_id",
+                    "type": "varchar",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "price": {
+                    "name": "price",
+                    "type": "numeric",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "name": {
+                    "name": "name",
+                    "type": "varchar",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "title": {
+                    "name": "title",
+                    "type": "varchar",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "image_url": {
+                    "name": "image_url",
+                    "type": "varchar",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "quantity": {
+                    "name": "quantity",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": false,
+                    "default": "now()"
+                }
+            },
+            "indexes": {
+                "purchase_items_purchase_id_idx": {
+                    "name": "purchase_items_purchase_id_idx",
+                    "columns": [
+                        {
+                            "expression": "purchase_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "purchase_items_external_id_idx": {
+                    "name": "purchase_items_external_id_idx",
+                    "columns": [
+                        {
+                            "expression": "external_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        },
+                        {
+                            "expression": "purchase_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": true,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {},
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.purchases": {
+            "name": "purchases",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true,
+                    "default": "gen_random_uuid()"
+                },
+                "webhook_id": {
+                    "name": "webhook_id",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "external_id": {
+                    "name": "external_id",
+                    "type": "varchar",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "external_customer_id": {
+                    "name": "external_customer_id",
+                    "type": "varchar",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "purchase_token": {
+                    "name": "purchase_token",
+                    "type": "varchar",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "total_price": {
+                    "name": "total_price",
+                    "type": "numeric",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "currency_code": {
+                    "name": "currency_code",
+                    "type": "varchar(4)",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "status": {
+                    "name": "status",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": false,
+                    "default": "now()"
+                },
+                "updated_at": {
+                    "name": "updated_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": false,
+                    "default": "now()"
+                },
+                "identity_group_id": {
+                    "name": "identity_group_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": false
+                }
+            },
+            "indexes": {
+                "purchases_external_id_webhook_idx": {
+                    "name": "purchases_external_id_webhook_idx",
+                    "columns": [
+                        {
+                            "expression": "external_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        },
+                        {
+                            "expression": "webhook_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": true,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "purchases_external_listener_idx": {
+                    "name": "purchases_external_listener_idx",
+                    "columns": [
+                        {
+                            "expression": "external_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        },
+                        {
+                            "expression": "purchase_token",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": true,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "purchases_identity_group_idx": {
+                    "name": "purchases_identity_group_idx",
+                    "columns": [
+                        {
+                            "expression": "identity_group_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "purchases_webhook_id_idx": {
+                    "name": "purchases_webhook_id_idx",
+                    "columns": [
+                        {
+                            "expression": "webhook_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {},
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.asset_logs": {
+            "name": "asset_logs",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true,
+                    "default": "gen_random_uuid()"
+                },
+                "identity_group_id": {
+                    "name": "identity_group_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "merchant_id": {
+                    "name": "merchant_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "campaign_rule_id": {
+                    "name": "campaign_rule_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "asset_type": {
+                    "name": "asset_type",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "amount": {
+                    "name": "amount",
+                    "type": "numeric(36, 18)",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "token_address": {
+                    "name": "token_address",
+                    "type": "bytea",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "recipient_type": {
+                    "name": "recipient_type",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "recipient_wallet": {
+                    "name": "recipient_wallet",
+                    "type": "bytea",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "chain_depth": {
+                    "name": "chain_depth",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "status": {
+                    "name": "status",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "'pending'"
+                },
+                "status_changed_at": {
+                    "name": "status_changed_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                },
+                "touchpoint_id": {
+                    "name": "touchpoint_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "interaction_log_id": {
+                    "name": "interaction_log_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "onchain_tx_hash": {
+                    "name": "onchain_tx_hash",
+                    "type": "bytea",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "onchain_block": {
+                    "name": "onchain_block",
+                    "type": "bigint",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "settlement_attempts": {
+                    "name": "settlement_attempts",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": 0
+                },
+                "last_settlement_error": {
+                    "name": "last_settlement_error",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                },
+                "settled_at": {
+                    "name": "settled_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "expires_at": {
+                    "name": "expires_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": false
+                }
+            },
+            "indexes": {
+                "asset_logs_identity_group_idx": {
+                    "name": "asset_logs_identity_group_idx",
+                    "columns": [
+                        {
+                            "expression": "identity_group_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "asset_logs_merchant_idx": {
+                    "name": "asset_logs_merchant_idx",
+                    "columns": [
+                        {
+                            "expression": "merchant_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "asset_logs_campaign_rule_idx": {
+                    "name": "asset_logs_campaign_rule_idx",
+                    "columns": [
+                        {
+                            "expression": "campaign_rule_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "asset_logs_status_idx": {
+                    "name": "asset_logs_status_idx",
+                    "columns": [
+                        {
+                            "expression": "status",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "asset_logs_status_merchant_idx": {
+                    "name": "asset_logs_status_merchant_idx",
+                    "columns": [
+                        {
+                            "expression": "status",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        },
+                        {
+                            "expression": "merchant_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "asset_logs_recipient_wallet_idx": {
+                    "name": "asset_logs_recipient_wallet_idx",
+                    "columns": [
+                        {
+                            "expression": "recipient_wallet",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "asset_logs_interaction_log_idx": {
+                    "name": "asset_logs_interaction_log_idx",
+                    "columns": [
+                        {
+                            "expression": "interaction_log_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "asset_logs_created_at_idx": {
+                    "name": "asset_logs_created_at_idx",
+                    "columns": [
+                        {
+                            "expression": "created_at",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "asset_logs_settlement_retry_idx": {
+                    "name": "asset_logs_settlement_retry_idx",
+                    "columns": [
+                        {
+                            "expression": "status",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        },
+                        {
+                            "expression": "settlement_attempts",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "asset_logs_settlement_pending_idx": {
+                    "name": "asset_logs_settlement_pending_idx",
+                    "columns": [
+                        {
+                            "expression": "status",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        },
+                        {
+                            "expression": "asset_type",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        },
+                        {
+                            "expression": "settlement_attempts",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        },
+                        {
+                            "expression": "created_at",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "asset_logs_expires_at_idx": {
+                    "name": "asset_logs_expires_at_idx",
+                    "columns": [
+                        {
+                            "expression": "expires_at",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {},
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        },
+        "public.interaction_logs": {
+            "name": "interaction_logs",
+            "schema": "",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "uuid",
+                    "primaryKey": true,
+                    "notNull": true,
+                    "default": "gen_random_uuid()"
+                },
+                "type": {
+                    "name": "type",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "identity_group_id": {
+                    "name": "identity_group_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "merchant_id": {
+                    "name": "merchant_id",
+                    "type": "uuid",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "external_event_id": {
+                    "name": "external_event_id",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "payload": {
+                    "name": "payload",
+                    "type": "jsonb",
+                    "primaryKey": false,
+                    "notNull": true
+                },
+                "processed_at": {
+                    "name": "processed_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": false
+                },
+                "created_at": {
+                    "name": "created_at",
+                    "type": "timestamp",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "now()"
+                }
+            },
+            "indexes": {
+                "interaction_logs_identity_group_idx": {
+                    "name": "interaction_logs_identity_group_idx",
+                    "columns": [
+                        {
+                            "expression": "identity_group_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "interaction_logs_merchant_idx": {
+                    "name": "interaction_logs_merchant_idx",
+                    "columns": [
+                        {
+                            "expression": "merchant_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "interaction_logs_type_idx": {
+                    "name": "interaction_logs_type_idx",
+                    "columns": [
+                        {
+                            "expression": "type",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "interaction_logs_created_at_idx": {
+                    "name": "interaction_logs_created_at_idx",
+                    "columns": [
+                        {
+                            "expression": "created_at",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "interaction_logs_processed_at_idx": {
+                    "name": "interaction_logs_processed_at_idx",
+                    "columns": [
+                        {
+                            "expression": "processed_at",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": false,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                },
+                "interaction_logs_external_event_unique_idx": {
+                    "name": "interaction_logs_external_event_unique_idx",
+                    "columns": [
+                        {
+                            "expression": "merchant_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        },
+                        {
+                            "expression": "type",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        },
+                        {
+                            "expression": "external_event_id",
+                            "isExpression": false,
+                            "asc": true,
+                            "nulls": "last"
+                        }
+                    ],
+                    "isUnique": true,
+                    "concurrently": false,
+                    "method": "btree",
+                    "with": {}
+                }
+            },
+            "foreignKeys": {},
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "policies": {},
+            "checkConstraints": {},
+            "isRLSEnabled": false
+        }
+    },
+    "enums": {},
+    "schemas": {},
+    "sequences": {},
+    "roles": {},
+    "policies": {},
+    "views": {},
+    "_meta": {
+        "columns": {},
+        "schemas": {},
+        "tables": {}
+    }
+}
