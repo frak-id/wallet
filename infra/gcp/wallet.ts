@@ -2,6 +2,8 @@ import path from "node:path";
 import type { Resource } from "@pulumi/pulumi";
 import { KubernetesService } from "../components/KubernetesService";
 import {
+    androidKeyPropertiesBase64,
+    androidKeystoreBase64,
     androidSha256Fingerprint,
     backendUrl,
     drpcApiKey,
@@ -332,6 +334,9 @@ if ($dev) {
         // This allows Android/iOS emulators and physical devices to connect
         BACKEND_URL: `http://${localIp}:3030`,
         TAURI_CLI_RUNNING: "1",
+        // Android signing (written to disk by tauri-dev.sh before build)
+        ANDROID_KEYSTORE_BASE64: androidKeystoreBase64.value,
+        ANDROID_KEY_PROPERTIES_BASE64: androidKeyPropertiesBase64.value,
     };
 
     new sst.x.DevCommand("wallet:tauri", {

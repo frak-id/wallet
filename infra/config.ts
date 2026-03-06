@@ -89,6 +89,14 @@ export const androidSha256Fingerprint = new sst.Secret(
     "ANDROID_SHA256_FINGERPRINT"
 );
 
+// Android keystore for signing (base64-encoded files, decoded by tauri-dev.sh)
+export const androidKeystoreBase64 = new sst.Secret(
+    "ANDROID_KEYSTORE_BASE64"
+);
+export const androidKeyPropertiesBase64 = new sst.Secret(
+    "ANDROID_KEY_PROPERTIES_BASE64"
+);
+
 // Open panel secrets
 export const openPanelWalletClientId = new sst.Secret(
     "OPEN_PANEL_WALLET_CLIENT_ID"

@@ -63,7 +63,41 @@ setup_adb_reverse() {
     echo "[tauri-dev] ADB reverse ports configured (3010=wallet, 3013-3014=examples, 3030=backend)"
 }
 
+setup_android_signing() {
+    local ANDROID_DIR="$WALLET_DIR/src-tauri/gen/android"
+    local KEYSTORE_FILE="$ANDROID_DIR/upload-keystore.jks"
+    local KEY_PROPS_FILE="$ANDROID_DIR/key.properties"
+
+    # Skip if both files already exist
+    if [ -f "$KEYSTORE_FILE" ] && [ -f "$KEY_PROPS_FILE" ]; then
+        echo "[tauri-dev] Android signing files already present"
+        return 0
+    fi
+
+    # Decode keystore from SST secret
+    if [ -n "${ANDROID_KEYSTORE_BASE64:-}" ]; then
+        echo "[tauri-dev] Writing Android keystore from SST secret..."
+        echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > "$KEYSTORE_FILE"
+    else
+        echo "[tauri-dev] WARNING: ANDROID_KEYSTORE_BASE64 not set, skipping keystore setup"
+        echo "[tauri-dev] Run: sst secret set ANDROID_KEYSTORE_BASE64 \"\$(base64 -i upload-keystore.jks)\""
+        return 0
+    fi
+
+    # Decode key.properties from SST secret
+    if [ -n "${ANDROID_KEY_PROPERTIES_BASE64:-}" ]; then
+        echo "[tauri-dev] Writing key.properties from SST secret..."
+        echo "$ANDROID_KEY_PROPERTIES_BASE64" | base64 -d > "$KEY_PROPS_FILE"
+    else
+        echo "[tauri-dev] WARNING: ANDROID_KEY_PROPERTIES_BASE64 not set, skipping key.properties setup"
+        echo "[tauri-dev] Run: sst secret set ANDROID_KEY_PROPERTIES_BASE64 \"\$(base64 -i key.properties)\""
+    fi
+
+    echo "[tauri-dev] Android signing configured"
+}
+
 run_android() {
+    setup_android_signing
     start_dev_server
     setup_adb_reverse
     cd "$WALLET_DIR"
