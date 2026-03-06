@@ -2,6 +2,7 @@ import {
     androidSha256Fingerprint,
     drpcApiKey,
     erpcUrl,
+    fcmServiceAccount,
     jwtBusinessSecret,
     nexusRpcSecret,
     pimlicoApiKey,
@@ -76,4 +77,7 @@ export const elysiaEnv = {
 
     // Mobile
     ANDROID_SHA256_FINGERPRINT: androidSha256Fingerprint.value,
+
+    // FCM
+    FCM_SERVICE_ACCOUNT_JSON: fcmServiceAccount.value,
 };
