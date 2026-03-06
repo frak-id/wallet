@@ -8,7 +8,7 @@ import {
     it,
     vi,
 } from "../../tests/vitest-fixtures";
-import type { FrakContext, FrakContextV1, FrakContextV2 } from "../types";
+import type { FrakContextV1, FrakContextV2 } from "../types";
 import { FrakContextManager } from "./FrakContext";
 
 describe("FrakContextManager", () => {
@@ -45,7 +45,7 @@ describe("FrakContextManager", () => {
             it("should return undefined when v2 context is missing clientId", () => {
                 const partial = { v: 2 as const, m: "m", t: 123 };
                 const result = FrakContextManager.compress(
-                    partial as Partial<FrakContextV2>
+                    partial as FrakContextV2
                 );
                 expect(result).toBeUndefined();
             });
@@ -53,7 +53,7 @@ describe("FrakContextManager", () => {
             it("should return undefined when v2 context is missing merchantId", () => {
                 const partial = { v: 2 as const, c: "c", t: 123 };
                 const result = FrakContextManager.compress(
-                    partial as Partial<FrakContextV2>
+                    partial as FrakContextV2
                 );
                 expect(result).toBeUndefined();
             });
@@ -61,7 +61,7 @@ describe("FrakContextManager", () => {
             it("should return undefined when v2 context is missing timestamp", () => {
                 const partial = { v: 2 as const, c: "c", m: "m" };
                 const result = FrakContextManager.compress(
-                    partial as Partial<FrakContextV2>
+                    partial as FrakContextV2
                 );
                 expect(result).toBeUndefined();
             });
@@ -127,7 +127,7 @@ describe("FrakContextManager", () => {
     describe("V1 backward compatibility", () => {
         describe("compress", () => {
             it("should compress context with referrer address", () => {
-                const context: Partial<FrakContext> = {
+                const context: FrakContextV1 = {
                     r: "0x1234567890123456789012345678901234567890" as Address,
                 };
 
@@ -140,7 +140,7 @@ describe("FrakContextManager", () => {
             });
 
             it("should return undefined when context has no referrer", () => {
-                const context: Partial<FrakContext> = {};
+                const context = {} as FrakContextV1;
 
                 const result = FrakContextManager.compress(context);
 
@@ -296,7 +296,8 @@ describe("FrakContextManager", () => {
 
             it("should return null when context has no data", () => {
                 const url = "https://example.com";
-                const context: Partial<FrakContext> = {};
+                // Runtime robustness: invalid object shape should return null.
+                const context = {} as any;
 
                 const result = FrakContextManager.update({ url, context });
 
@@ -459,7 +460,7 @@ describe("FrakContextManager", () => {
 
         it("should not call replaceState when context has no data", () => {
             const url = "https://example.com/test";
-            const context: Partial<FrakContext> = {};
+            const context = {} as FrakContextV1;
 
             FrakContextManager.replaceUrl({ url, context });
 
