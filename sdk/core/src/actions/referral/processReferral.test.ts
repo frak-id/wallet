@@ -116,8 +116,29 @@ describe("processReferral", () => {
                 type: "arrival",
                 referrerClientId: "referrer-client-id",
                 referrerMerchantId: "merchant-uuid",
+                referralTimestamp: 1709654400,
                 landingUrl: "https://example.com/test",
             });
+        });
+
+        it("should return 'self-referral' when v2 context has same clientId as current user", async () => {
+            const utils = await import("../../utils");
+            vi.mocked(utils.getClientId).mockReturnValue("referrer-client-id");
+
+            const v2SelfReferralContext: FrakContextV2 = {
+                v: 2,
+                c: "referrer-client-id",
+                m: "merchant-uuid",
+                t: 1709654400,
+            };
+
+            const result = await processReferral(mockClient, {
+                walletStatus: mockWalletStatus,
+                frakContext: v2SelfReferralContext,
+            });
+
+            expect(result).toBe("self-referral");
+            vi.mocked(utils.getClientId).mockReturnValue("test-client-id");
         });
     });
 
@@ -146,6 +167,17 @@ describe("processReferral", () => {
                     },
                 }
             );
+        });
+
+        it("should return 'self-referral' when v1 referrer matches current wallet", async () => {
+            const result = await processReferral(mockClient, {
+                walletStatus: mockWalletStatus,
+                frakContext: {
+                    r: mockAddress,
+                },
+            });
+
+            expect(result).toBe("self-referral");
         });
     });
 
@@ -244,11 +276,14 @@ describe("processReferral", () => {
             },
         });
 
+        expect(utils.getClientId()).toBe("test-client-id");
+
         expect(utils.FrakContextManager.replaceUrl).toHaveBeenCalledWith({
             url: window.location.href,
             context: expect.objectContaining({
                 v: 2,
                 c: "test-client-id",
+                m: "merchant-uuid",
             }),
         });
     });
