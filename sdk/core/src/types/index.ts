@@ -16,6 +16,7 @@ export type {
 } from "./config";
 // Utils
 export type { FrakContext, FrakContextV1, FrakContextV2 } from "./context";
+export { isV1Context, isV2Context } from "./context";
 
 export type {
     ClientLifecycleEvent,

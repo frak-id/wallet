@@ -15,6 +15,8 @@ export type SendInteractionParamsType =
           referrerWallet?: Address;
           referrerClientId?: string;
           referrerMerchantId?: string;
+          /** Epoch seconds timestamp from the referral link creation */
+          referralTimestamp?: number;
           landingUrl?: string;
           utmSource?: string;
           utmMedium?: string;

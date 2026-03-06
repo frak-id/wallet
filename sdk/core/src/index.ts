@@ -28,6 +28,8 @@ export type {
     FrakClient,
     // Utils
     FrakContext,
+    FrakContextV1,
+    FrakContextV2,
     FrakLifecycleEvent,
     // Config
     FrakWalletSdkConfig,
@@ -74,6 +76,7 @@ export type {
     // Rpc
     WalletStatusReturnType,
 } from "./types";
+export { isV1Context, isV2Context } from "./types";
 // Utils
 export {
     type AppSpecificSsoMetadata,

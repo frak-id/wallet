@@ -6,7 +6,7 @@ import type { Address } from "viem";
  * @ignore
  */
 export type FrakContextV1 = {
-    // Referrer wallet address
+    /** Referrer wallet address */
     r: Address;
 };
 
@@ -16,13 +16,13 @@ export type FrakContextV1 = {
  * @ignore
  */
 export type FrakContextV2 = {
-    // Version discriminator
+    /** Version discriminator */
     v: 2;
-    // Sharer's anonymous clientId (from localStorage)
+    /** Sharer's anonymous clientId (UUID from localStorage) */
     c: string;
-    // Merchant ID (UUID, for future-proofing / fallback)
+    /** Merchant ID (UUID) */
     m: string;
-    // Link creation timestamp (epoch seconds)
+    /** Link creation timestamp (epoch seconds) */
     t: number;
 };
 
@@ -35,3 +35,21 @@ export type FrakContextV2 = {
  * @ignore
  */
 export type FrakContext = FrakContextV1 | FrakContextV2;
+
+/**
+ * Type guard: check if a context is V1 (legacy wallet address).
+ * @param ctx - The Frak context to check
+ * @returns True if the context is a V1 context
+ */
+export function isV1Context(ctx: FrakContext): ctx is FrakContextV1 {
+    return "r" in ctx && !("v" in ctx);
+}
+
+/**
+ * Type guard: check if a context is V2 (anonymous clientId-based).
+ * @param ctx - The Frak context to check
+ * @returns True if the context is a V2 context
+ */
+export function isV2Context(ctx: FrakContext): ctx is FrakContextV2 {
+    return "v" in ctx && ctx.v === 2;
+}

@@ -13,6 +13,8 @@ export type TrackArrivalParams = {
     referrerWallet?: Address;
     referrerClientId?: string;
     referrerMerchantId?: string;
+    /** Epoch seconds timestamp from the referral link creation */
+    referralTimestamp?: number;
     landingUrl?: string;
     utmParams?: UtmParams;
 };
