@@ -164,14 +164,23 @@ jobs:
         env:
           APPLE_API_KEY_CONTENT: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}
 
+      - name: "🔥 Write Firebase config"
+        # sst shell exposes secrets as SST_RESOURCE_* JSON, not raw env vars.
+        # Simpler to extract directly via sst secret list.
+        run: |
+          VALUE=$(bunx sst secret list --stage "$STAGE" | sed -n 's/^FIREBASE_GOOGLE_SERVICE_INFO_BASE64=//p')
+          if [ -z "$VALUE" ]; then
+            echo "::error::FIREBASE_GOOGLE_SERVICE_INFO_BASE64 not set for stage $STAGE"
+            exit 1
+          fi
+          echo "$VALUE" | base64 -d > apps/wallet/src-tauri/gen/apple/app_iOS/GoogleService-Info.plist
+          echo "[ci] GoogleService-Info.plist written ($(wc -c < apps/wallet/src-tauri/gen/apple/app_iOS/GoogleService-Info.plist) bytes)"
+        env:
+          STAGE: ${{ inputs.stage }}
+
       - name: "🏗️ Build iOS"
         # cd into wallet app so tauri finds src-tauri/ and beforeBuildCommand runs in correct directory
-        # Firebase plist is written inside sst shell since the secret lives in SST
-        run: |
-          sst shell --stage "$STAGE" --print-logs -- bash -c '
-            echo "$FIREBASE_GOOGLE_SERVICE_INFO_BASE64" | base64 -d > apps/wallet/src-tauri/gen/apple/app_iOS/GoogleService-Info.plist
-            cd apps/wallet && tauri ios build --export-method app-store-connect
-          '
+        run: sst shell --stage "$STAGE" --print-logs -- bash -c "cd apps/wallet && tauri ios build --export-method app-store-connect"
         env:
           STAGE: ${{ inputs.stage }}
           APPLE_API_ISSUER: ${{ secrets.APPSTORE_ISSUER_ID }}
@@ -302,14 +311,21 @@ jobs:
           KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
 
+      - name: "🔥 Write Firebase config"
+        run: |
+          VALUE=$(bunx sst secret list --stage "$STAGE" | sed -n 's/^FIREBASE_GOOGLE_SERVICES_JSON_BASE64=//p')
+          if [ -z "$VALUE" ]; then
+            echo "::error::FIREBASE_GOOGLE_SERVICES_JSON_BASE64 not set for stage $STAGE"
+            exit 1
+          fi
+          echo "$VALUE" | base64 -d > apps/wallet/src-tauri/gen/android/app/google-services.json
+          echo "[ci] google-services.json written ($(wc -c < apps/wallet/src-tauri/gen/android/app/google-services.json) bytes)"
+        env:
+          STAGE: ${{ inputs.stage }}
+
       - name: "🏗️ Build Android"
         # cd into wallet app so tauri finds src-tauri/ and beforeBuildCommand runs in correct directory
-        # Firebase config is written inside sst shell since the secret lives in SST
-        run: |
-          sst shell --stage "$STAGE" --print-logs -- bash -c '
-            echo "$FIREBASE_GOOGLE_SERVICES_JSON_BASE64" | base64 -d > apps/wallet/src-tauri/gen/android/app/google-services.json
-            cd apps/wallet && tauri android build
-          '
+        run: sst shell --stage "$STAGE" --print-logs -- bash -c "cd apps/wallet && tauri android build"
         env:
           STAGE: ${{ inputs.stage }}
 
