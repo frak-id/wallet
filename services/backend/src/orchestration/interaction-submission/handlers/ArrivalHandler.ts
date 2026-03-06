@@ -14,6 +14,7 @@ export type ArrivalInput = {
     referrerWallet?: string;
     referrerClientId?: string;
     referrerMerchantId?: string;
+    referralTimestamp?: number;
     landingUrl?: string;
     utmSource?: string;
     utmMedium?: string;
@@ -102,8 +103,10 @@ export class ArrivalHandler
         if (input.referrerClientId && input.referrerMerchantId) {
             return {
                 type: "referral_link",
+                v: 2,
                 referrerClientId: input.referrerClientId,
                 referrerMerchantId: input.referrerMerchantId,
+                referralTimestamp: input.referralTimestamp,
             };
         }
 

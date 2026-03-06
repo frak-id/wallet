@@ -24,8 +24,10 @@ export const ReferralLinkSourceDataSchema = t.Union([
     }),
     t.Object({
         type: t.Literal("referral_link"),
+        v: t.Literal(2),
         referrerClientId: t.String(),
         referrerMerchantId: t.String(),
+        referralTimestamp: t.Optional(t.Number()),
     }),
 ]);
 export type ReferralLinkSourceData = Static<
