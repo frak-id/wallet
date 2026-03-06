@@ -289,6 +289,13 @@ describe.sequential("createTauriNotificationAdapter", () => {
         const adapter = createTauriNotificationAdapter();
         await adapter.subscribe();
 
+        // Listener must be set up before registration to avoid missing events
+        const listenerCallOrder =
+            addPluginListenerMock.mock.invocationCallOrder[0];
+        const registerCallOrder =
+            registerForPushNotificationsMock.mock.invocationCallOrder[0];
+        expect(listenerCallOrder).toBeLessThan(registerCallOrder);
+
         expect(registerForPushNotificationsMock).toHaveBeenCalledOnce();
         expect(putMock).toHaveBeenCalledWith({
             type: "fcm",
@@ -313,23 +320,16 @@ describe.sequential("createTauriNotificationAdapter", () => {
         expect(putMock).not.toHaveBeenCalled();
     });
 
-    it("should subscribe: handle backend sync failure gracefully", async () => {
+    it("should subscribe: surface backend sync failure to caller", async () => {
         requestPermissionMock.mockResolvedValue("granted");
         registerForPushNotificationsMock.mockResolvedValue("mock-fcm-token");
         putMock.mockRejectedValue(new Error("Backend sync failed"));
 
-        const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-
         const adapter = createTauriNotificationAdapter();
-        // syncTokenToBackend wraps in try/catch with console.warn
-        await adapter.subscribe();
 
-        expect(warnSpy).toHaveBeenCalledWith(
-            "Failed to sync push token to backend",
-            expect.any(Error)
+        await expect(adapter.subscribe()).rejects.toThrow(
+            "Backend sync failed"
         );
-
-        warnSpy.mockRestore();
     });
 
     it("should unsubscribe: call unregisterForPushNotifications and delete backend token", async () => {
@@ -468,28 +468,20 @@ describe.sequential("createTauriNotificationAdapter", () => {
         });
     });
 
-    it("should subscribe on iOS: fall back to APNs token when Firebase plugin fails", async () => {
+    it("should subscribe on iOS: throw when Firebase plugin fails (no APNs fallback)", async () => {
         isAndroidMock.mockReturnValue(false);
         isIOSMock.mockReturnValue(true);
         requestPermissionMock.mockResolvedValue("granted");
         registerForPushNotificationsMock.mockResolvedValue("raw-apns-hex");
         invokeMock.mockRejectedValue(new Error("Firebase plugin unavailable"));
 
-        const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-
         const adapter = createTauriNotificationAdapter();
-        await adapter.subscribe();
 
-        expect(warnSpy).toHaveBeenCalledWith(
-            "Failed to get FCM token from Firebase plugin, falling back to APNs token",
-            expect.any(Error)
+        // Must throw — storing APNs token as FCM would silently fail on dispatch
+        await expect(adapter.subscribe()).rejects.toThrow(
+            "Firebase plugin unavailable"
         );
-        expect(putMock).toHaveBeenCalledWith({
-            type: "fcm",
-            token: "raw-apns-hex",
-        });
-
-        warnSpy.mockRestore();
+        expect(putMock).not.toHaveBeenCalled();
     });
 
     it("should subscribe on Android: use token from registerForPushNotifications directly", async () => {

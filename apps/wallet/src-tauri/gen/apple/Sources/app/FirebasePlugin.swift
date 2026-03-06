@@ -27,6 +27,11 @@ class FirebasePlugin: Plugin {
 
         // Set FCM messaging delegate to receive token updates
         Messaging.messaging().delegate = FirebaseTokenBridge.messagingDelegate
+
+        // Defensive: swizzle didRegisterForRemoteNotificationsWithDeviceToken
+        // to forward APNs token to Firebase explicitly, protecting against
+        // swizzle chain breakage when Choochmeque also swizzles the same method
+        FirebaseTokenBridge.swizzleApnsForwarding()
     }
 
     /// Called by FirebaseTokenBridge when FCM token is received or refreshed

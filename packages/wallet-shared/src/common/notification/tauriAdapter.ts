@@ -19,24 +19,20 @@ async function getTauriNotificationPlugin() {
  * is processed. We fetch it explicitly via the local "firebase" plugin's getFcmToken command.
  *
  * On Android, registerForPushNotifications() returns the FCM token directly.
+ *
+ * Throws on iOS if the FCM token is unavailable — storing an APNs token as "fcm" type
+ * would silently fail on backend dispatch. The token refresh listener will handle
+ * eventual delivery when Firebase completes the APNs→FCM exchange.
  */
 async function getFcmToken(apnsOrFcmToken: string): Promise<string> {
     if (!isIOS()) {
         return apnsOrFcmToken;
     }
 
-    try {
-        const result = await invoke<{ token: string }>(
-            "plugin:firebase|get_fcm_token"
-        );
-        return result.token;
-    } catch (error) {
-        console.warn(
-            "Failed to get FCM token from Firebase plugin, falling back to APNs token",
-            error
-        );
-        return apnsOrFcmToken;
-    }
+    const result = await invoke<{ token: string }>(
+        "plugin:firebase|get_fcm_token"
+    );
+    return result.token;
 }
 
 export function createTauriNotificationAdapter(): NotificationAdapter {
@@ -44,14 +40,10 @@ export function createTauriNotificationAdapter(): NotificationAdapter {
     let hasPushTokenListener = false;
 
     const syncTokenToBackend = async (token: string) => {
-        try {
-            await authenticatedWalletApi.notifications.tokens.put({
-                type: "fcm" as const,
-                token,
-            });
-        } catch (error) {
-            console.warn("Failed to sync push token to backend", error);
-        }
+        await authenticatedWalletApi.notifications.tokens.put({
+            type: "fcm" as const,
+            token,
+        });
     };
 
     const ensurePushTokenListener = async () => {
@@ -124,11 +116,14 @@ export function createTauriNotificationAdapter(): NotificationAdapter {
                 return;
             }
 
+            // Set up token refresh listener BEFORE registration so we don't
+            // miss the first FCM token event from Firebase's MessagingDelegate
+            await ensurePushTokenListener();
+
             // registerForPushNotifications returns FCM token on Android,
             // raw APNs hex token on iOS — getFcmToken handles the exchange
             const rawToken = await plugin.registerForPushNotifications();
             const token = await getFcmToken(rawToken);
-            await ensurePushTokenListener();
             await syncTokenToBackend(token);
         },
         unsubscribe: async () => {
@@ -182,7 +177,7 @@ export function createTauriNotificationAdapter(): NotificationAdapter {
             try {
                 const plugin = await getTauriNotificationPlugin();
                 if (plugin) {
-                    plugin.sendNotification({
+                    await plugin.sendNotification({
                         title: payload.title,
                         body: payload.body,
                         icon: payload.icon,
