@@ -1,9 +1,20 @@
 import { isAndroid, isIOS } from "@frak-labs/app-essentials/utils/platform";
 import type { NotificationPayload } from "@frak-labs/ui/types/NotificationPayload";
-import { addPluginListener, invoke } from "@tauri-apps/api/core";
+import { addPluginListener } from "@tauri-apps/api/core";
 import { authenticatedWalletApi } from "../api/backendClient";
 import { notificationStorage } from "../storage/notifications";
 import type { NotificationAdapter } from "./adapter";
+
+// Augment Window for the FCM token set by native Swift code (FirebaseManager.swift).
+// On iOS, FirebaseManager evaluates JavaScript to set this global and dispatch a custom event.
+declare global {
+    interface Window {
+        __frakFcmToken?: string;
+    }
+    interface WindowEventMap {
+        "frak:fcm-token": CustomEvent<{ token: string }>;
+    }
+}
 
 async function getTauriNotificationPlugin() {
     try {
@@ -16,23 +27,40 @@ async function getTauriNotificationPlugin() {
 /**
  * On iOS, registerForPushNotifications() returns a raw APNs hex token (not an FCM token).
  * Firebase's MessagingDelegate receives the FCM token asynchronously after the APNs token
- * is processed. We fetch it explicitly via the local "firebase" plugin's getFcmToken command.
+ * is processed. The native FirebaseManager.swift sets `window.__frakFcmToken` and dispatches
+ * a `frak:fcm-token` CustomEvent via `evaluateJavaScript` on the WKWebView.
  *
  * On Android, registerForPushNotifications() returns the FCM token directly.
  *
- * Throws on iOS if the FCM token is unavailable — storing an APNs token as "fcm" type
- * would silently fail on backend dispatch. The token refresh listener will handle
- * eventual delivery when Firebase completes the APNs→FCM exchange.
+ * Throws on iOS if the FCM token is unavailable within the timeout — storing an APNs token
+ * as "fcm" type would silently fail on backend dispatch. The token refresh listener will
+ * handle eventual delivery when Firebase completes the APNs→FCM exchange.
  */
 async function getFcmToken(apnsOrFcmToken: string): Promise<string> {
     if (!isIOS()) {
         return apnsOrFcmToken;
     }
 
-    const result = await invoke<{ token: string }>(
-        "plugin:firebase|get_fcm_token"
-    );
-    return result.token;
+    // Check if Firebase has already delivered the FCM token via evaluateJavaScript
+    if (window.__frakFcmToken) {
+        return window.__frakFcmToken;
+    }
+
+    // Wait for the FCM token from Firebase's MessagingDelegate
+    return new Promise<string>((resolve, reject) => {
+        const timeout = setTimeout(() => {
+            window.removeEventListener("frak:fcm-token", handler);
+            reject(new Error("FCM token not received within timeout"));
+        }, 10_000);
+
+        const handler = (event: CustomEvent<{ token: string }>) => {
+            clearTimeout(timeout);
+            window.removeEventListener("frak:fcm-token", handler);
+            resolve(event.detail.token);
+        };
+
+        window.addEventListener("frak:fcm-token", handler);
+    });
 }
 
 export function createTauriNotificationAdapter(): NotificationAdapter {
@@ -52,20 +80,17 @@ export function createTauriNotificationAdapter(): NotificationAdapter {
         }
 
         try {
-            // On iOS, listen for FCM token updates from our Firebase plugin
+            // On iOS, listen for FCM token updates from native FirebaseManager.swift
+            // (delivered via evaluateJavaScript → CustomEvent on window)
             if (isIOS()) {
-                await addPluginListener(
-                    "firebase",
-                    "fcm-token",
-                    (event: { token: string }) => {
-                        syncTokenToBackend(event.token).catch((error) => {
-                            console.warn(
-                                "Failed to sync refreshed FCM token to backend",
-                                error
-                            );
-                        });
-                    }
-                );
+                window.addEventListener("frak:fcm-token", (event) => {
+                    syncTokenToBackend(event.detail.token).catch((error) => {
+                        console.warn(
+                            "Failed to sync refreshed FCM token to backend",
+                            error
+                        );
+                    });
+                });
             }
 
             // On Android, listen for push token refreshes from the notifications plugin
@@ -121,8 +146,19 @@ export function createTauriNotificationAdapter(): NotificationAdapter {
             await ensurePushTokenListener();
 
             // registerForPushNotifications returns FCM token on Android,
-            // raw APNs hex token on iOS — getFcmToken handles the exchange
-            const rawToken = await plugin.registerForPushNotifications();
+            // raw APNs hex token on iOS — getFcmToken handles the exchange.
+            // Wrapped in try-catch: on iOS simulator, APNs registration crashes
+            // or rejects because there is no push transport.
+            let rawToken: string;
+            try {
+                rawToken = await plugin.registerForPushNotifications();
+            } catch (error) {
+                console.warn(
+                    "registerForPushNotifications failed (simulator?)",
+                    error
+                );
+                return;
+            }
             const token = await getFcmToken(rawToken);
             await syncTokenToBackend(token);
         },

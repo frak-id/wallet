@@ -7,6 +7,10 @@ fileGroups: [../../src]
 configs:
   debug: debug
   release: release
+packages:
+  Firebase:
+    url: https://github.com/firebase/firebase-ios-sdk
+    from: "11.0.0"
 settingGroups:
   app:
     base:
@@ -73,6 +77,9 @@ targets:
           - webcredentials:wallet.frak.id
           - applinks:wallet.frak.id
           - applinks:wallet-dev.frak.id
+        # development here is correct — Xcode overrides to "production" when
+        # exporting with --export-method app-store-connect (CI workflow).
+        aps-environment: development
     scheme:
       environmentVariables:
         RUST_BACKTRACE: full
@@ -93,6 +100,8 @@ targets:
     dependencies:
       - framework: libapp.a
         embed: false
+      - package: Firebase
+        product: FirebaseMessaging
       - sdk: CoreGraphics.framework
       - sdk: Metal.framework
       - sdk: MetalKit.framework

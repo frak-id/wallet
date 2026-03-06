@@ -47,14 +47,12 @@ vi.mock("../storage/notifications", () => ({
     },
 }));
 
-const { addPluginListenerMock, invokeMock } = vi.hoisted(() => ({
+const { addPluginListenerMock } = vi.hoisted(() => ({
     addPluginListenerMock: vi.fn(),
-    invokeMock: vi.fn(),
 }));
 
 vi.mock("@tauri-apps/api/core", () => ({
     addPluginListener: addPluginListenerMock,
-    invoke: invokeMock,
 }));
 
 const { putMock, deleteMock, hasAnyGetMock } = vi.hoisted(() => ({
@@ -91,7 +89,6 @@ describe.sequential("createTauriNotificationAdapter", () => {
         isIOSMock.mockReset();
         addMock.mockReset();
         addPluginListenerMock.mockReset();
-        invokeMock.mockReset();
         putMock.mockReset();
         deleteMock.mockReset();
         hasAnyGetMock.mockReset();
@@ -104,7 +101,6 @@ describe.sequential("createTauriNotificationAdapter", () => {
         registerForPushNotificationsMock.mockResolvedValue("mock-fcm-token");
         unregisterForPushNotificationsMock.mockResolvedValue(undefined);
         addPluginListenerMock.mockResolvedValue(undefined);
-        invokeMock.mockResolvedValue({ token: "mock-fcm-token" });
         putMock.mockResolvedValue(undefined);
         deleteMock.mockResolvedValue(undefined);
         hasAnyGetMock.mockResolvedValue({ data: false });
@@ -112,6 +108,9 @@ describe.sequential("createTauriNotificationAdapter", () => {
         vi.stubGlobal("crypto", {
             randomUUID: vi.fn().mockReturnValue(mockUUID),
         });
+
+        // Clean up iOS FCM token global set by native Swift code
+        delete window.__frakFcmToken;
     });
 
     it("should return true for isSupported", () => {
@@ -311,12 +310,9 @@ describe.sequential("createTauriNotificationAdapter", () => {
 
         const adapter = createTauriNotificationAdapter();
 
-        // subscribe should not throw — the error propagates since there's no try/catch around registerForPushNotifications in subscribe
-        // Actually looking at the code, subscribe does NOT wrap registerForPushNotifications in try/catch,
-        // so the error will propagate. Let's verify it throws.
-        await expect(adapter.subscribe()).rejects.toThrow(
-            "FCM registration failed"
-        );
+        // subscribe should NOT throw — registerForPushNotifications failure
+        // is caught (e.g. iOS simulator has no APNs transport)
+        await expect(adapter.subscribe()).resolves.toBeUndefined();
         expect(putMock).not.toHaveBeenCalled();
     });
 
@@ -389,14 +385,17 @@ describe.sequential("createTauriNotificationAdapter", () => {
         isIOSMock.mockReturnValue(true);
         hasAnyGetMock.mockResolvedValue({ data: true });
 
+        const addEventListenerSpy = vi.spyOn(window, "addEventListener");
+
         const adapter = createTauriNotificationAdapter();
         await adapter.initialize();
 
-        expect(addPluginListenerMock).toHaveBeenCalledWith(
-            "firebase",
-            "fcm-token",
+        expect(addEventListenerSpy).toHaveBeenCalledWith(
+            "frak:fcm-token",
             expect.any(Function)
         );
+
+        addEventListenerSpy.mockRestore();
     });
 
     it("should initialize: token refresh event re-syncs to backend (Android)", async () => {
@@ -435,53 +434,122 @@ describe.sequential("createTauriNotificationAdapter", () => {
         });
     });
 
+    it("should initialize: token refresh event re-syncs to backend (iOS)", async () => {
+        isPermissionGrantedMock.mockResolvedValue(true);
+        isAndroidMock.mockReturnValue(false);
+        isIOSMock.mockReturnValue(true);
+        hasAnyGetMock.mockResolvedValue({ data: true });
+
+        const adapter = createTauriNotificationAdapter();
+        await adapter.initialize();
+
+        // Simulate native FirebaseManager.swift emitting a refreshed FCM token
+        window.dispatchEvent(
+            new CustomEvent("frak:fcm-token", {
+                detail: { token: "refreshed-ios-token" },
+            })
+        );
+
+        // Wait for the async syncTokenToBackend to complete
+        await vi.waitFor(() => {
+            expect(putMock).toHaveBeenCalledWith({
+                type: "fcm",
+                token: "refreshed-ios-token",
+            });
+        });
+    });
+
     it("should initialize: NOT set up listener when permission denied", async () => {
         isPermissionGrantedMock.mockResolvedValue(false);
         isAndroidMock.mockReturnValue(false);
         isIOSMock.mockReturnValue(false);
 
+        const addEventListenerSpy = vi.spyOn(window, "addEventListener");
+
         const adapter = createTauriNotificationAdapter();
         await adapter.initialize();
 
         expect(addPluginListenerMock).not.toHaveBeenCalled();
+        expect(addEventListenerSpy).not.toHaveBeenCalledWith(
+            "frak:fcm-token",
+            expect.any(Function)
+        );
+
+        addEventListenerSpy.mockRestore();
     });
 
     // --- iOS FCM token exchange tests ---
 
-    it("should subscribe on iOS: fetch FCM token via Firebase plugin and sync to backend", async () => {
+    it("should subscribe on iOS: read FCM token from window global and sync to backend", async () => {
         isAndroidMock.mockReturnValue(false);
         isIOSMock.mockReturnValue(true);
         requestPermissionMock.mockResolvedValue("granted");
         registerForPushNotificationsMock.mockResolvedValue("raw-apns-hex");
-        invokeMock.mockResolvedValue({ token: "ios-fcm-token" });
+        // Simulate native FirebaseManager.swift having already set the token
+        window.__frakFcmToken = "ios-fcm-token";
 
         const adapter = createTauriNotificationAdapter();
         await adapter.subscribe();
 
         expect(registerForPushNotificationsMock).toHaveBeenCalledOnce();
-        expect(invokeMock).toHaveBeenCalledWith(
-            "plugin:firebase|get_fcm_token"
-        );
         expect(putMock).toHaveBeenCalledWith({
             type: "fcm",
             token: "ios-fcm-token",
         });
     });
 
-    it("should subscribe on iOS: throw when Firebase plugin fails (no APNs fallback)", async () => {
+    it("should subscribe on iOS: wait for FCM token event when not immediately available", async () => {
         isAndroidMock.mockReturnValue(false);
         isIOSMock.mockReturnValue(true);
         requestPermissionMock.mockResolvedValue("granted");
         registerForPushNotificationsMock.mockResolvedValue("raw-apns-hex");
-        invokeMock.mockRejectedValue(new Error("Firebase plugin unavailable"));
+        // window.__frakFcmToken is NOT set — token arrives via event
 
         const adapter = createTauriNotificationAdapter();
+        const subscribePromise = adapter.subscribe();
 
-        // Must throw — storing APNs token as FCM would silently fail on dispatch
-        await expect(adapter.subscribe()).rejects.toThrow(
-            "Firebase plugin unavailable"
+        // Simulate native Firebase delivering the token after a delay
+        setTimeout(() => {
+            window.dispatchEvent(
+                new CustomEvent("frak:fcm-token", {
+                    detail: { token: "delayed-ios-fcm-token" },
+                })
+            );
+        }, 50);
+
+        await subscribePromise;
+
+        expect(putMock).toHaveBeenCalledWith({
+            type: "fcm",
+            token: "delayed-ios-fcm-token",
+        });
+    });
+
+    it("should subscribe on iOS: throw when FCM token not received within timeout", async () => {
+        vi.useFakeTimers();
+
+        isAndroidMock.mockReturnValue(false);
+        isIOSMock.mockReturnValue(true);
+        requestPermissionMock.mockResolvedValue("granted");
+        registerForPushNotificationsMock.mockResolvedValue("raw-apns-hex");
+        // window.__frakFcmToken is NOT set, no event dispatched → timeout
+
+        const adapter = createTauriNotificationAdapter();
+        const subscribePromise = adapter.subscribe();
+
+        // Set up the rejection expectation BEFORE advancing time
+        // so the rejection doesn't fire as "unhandled"
+        const rejectAssertion = expect(subscribePromise).rejects.toThrow(
+            "FCM token not received within timeout"
         );
+
+        // Advance past the 10s timeout
+        await vi.advanceTimersByTimeAsync(10_000);
+
+        await rejectAssertion;
         expect(putMock).not.toHaveBeenCalled();
+
+        vi.useRealTimers();
     });
 
     it("should subscribe on Android: use token from registerForPushNotifications directly", async () => {
@@ -493,7 +561,6 @@ describe.sequential("createTauriNotificationAdapter", () => {
         const adapter = createTauriNotificationAdapter();
         await adapter.subscribe();
 
-        expect(invokeMock).not.toHaveBeenCalled();
         expect(putMock).toHaveBeenCalledWith({
             type: "fcm",
             token: "android-fcm-token",
