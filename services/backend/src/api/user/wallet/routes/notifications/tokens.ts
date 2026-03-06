@@ -18,13 +18,11 @@ const WebPushSubscriptionBody = t.Object({
         }),
         expirationTime: t.Optional(t.Number()),
     }),
-    deviceId: t.Optional(t.String()),
 });
 
 const FcmTokenBody = t.Object({
     type: t.Literal("fcm"),
     token: t.String(),
-    deviceId: t.Optional(t.String()),
 });
 
 const RegisterTokenBody = t.Union([WebPushSubscriptionBody, FcmTokenBody]);
@@ -40,7 +38,6 @@ function tokenValuesFromBody(
             endpoint: body.token,
             keyP256dh: null,
             keyAuth: null,
-            deviceId: body.deviceId ?? null,
         };
     }
 
@@ -50,7 +47,6 @@ function tokenValuesFromBody(
         endpoint: body.subscription.endpoint,
         keyP256dh: body.subscription.keys.p256dh,
         keyAuth: body.subscription.keys.auth,
-        deviceId: body.deviceId ?? null,
         expireAt: body.subscription.expirationTime
             ? new Date(body.subscription.expirationTime)
             : null,

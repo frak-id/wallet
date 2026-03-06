@@ -122,7 +122,7 @@ export class FcmSender {
                 invalid.push(tokens[i]);
             } else {
                 log.warn(
-                    { errorCode, token: tokens[i] },
+                    { errorCode, tokenPrefix: tokens[i].slice(0, 8) },
                     "[FcmSender] Non-fatal send error"
                 );
             }

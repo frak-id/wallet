@@ -30,7 +30,6 @@ export const pushTokensTable = pgTable(
         keyP256dh: varchar("key_p256dh"),
         /** Authentication secret — null for FCM tokens */
         keyAuth: varchar("key_auth"),
-        deviceId: varchar("device_id"),
         expireAt: timestamp("expire_at"),
         createdAt: timestamp("created_at").defaultNow(),
     },

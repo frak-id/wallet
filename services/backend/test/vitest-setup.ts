@@ -13,6 +13,8 @@ process.env.JWT_SDK_SECRET = "test-jwt-sdk-secret-for-vitest-testing";
 process.env.JWT_BUSINESS_SECRET = "test-jwt-business-secret-for-vitest-testing";
 process.env.PRODUCT_SETUP_CODE_SALT = "test-salt";
 process.env.MASTER_KEY_SECRET = JSON.stringify({ masterPrivateKey: "123456" });
+process.env.VAPID_PUBLIC_KEY = "test-vapid-public-key";
+process.env.VAPID_PRIVATE_KEY = "test-vapid-private-key";
 
 import { afterEach, vi } from "vitest";
 
