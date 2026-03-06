@@ -178,6 +178,7 @@ describe.sequential("createWebNotificationAdapter", () => {
         });
         expect(putMock).toHaveBeenCalledTimes(1);
         expect(putMock).toHaveBeenCalledWith({
+            type: "web-push",
             subscription: {
                 endpoint: "https://example.com/endpoint",
                 keys: {
@@ -247,6 +248,7 @@ describe.sequential("createWebNotificationAdapter", () => {
             updateViaCache: "none",
         });
         expect(putMock).toHaveBeenCalledWith({
+            type: "web-push",
             subscription: {
                 endpoint: "https://example.com/existing",
                 keys: {
