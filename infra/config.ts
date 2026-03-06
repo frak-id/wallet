@@ -96,6 +96,14 @@ export const androidKeyPropertiesBase64 = new sst.Secret(
     "ANDROID_KEY_PROPERTIES_BASE64"
 );
 
+// Firebase config files for push notifications (base64-encoded, decoded by tauri-dev.sh)
+export const firebaseGoogleServiceInfoBase64 = new sst.Secret(
+    "FIREBASE_GOOGLE_SERVICE_INFO_BASE64"
+);
+export const firebaseGoogleServicesJsonBase64 = new sst.Secret(
+    "FIREBASE_GOOGLE_SERVICES_JSON_BASE64"
+);
+
 // Open panel secrets
 export const openPanelWalletClientId = new sst.Secret(
     "OPEN_PANEL_WALLET_CLIENT_ID"

@@ -8,6 +8,8 @@ import {
     backendUrl,
     drpcApiKey,
     erpcUrl,
+    firebaseGoogleServiceInfoBase64,
+    firebaseGoogleServicesJsonBase64,
     nexusRpcSecret,
     openPanelApiUrl,
     openPanelWalletClientId,
@@ -337,6 +339,11 @@ if ($dev) {
         // Android signing (written to disk by tauri-dev.sh before build)
         ANDROID_KEYSTORE_BASE64: androidKeystoreBase64.value,
         ANDROID_KEY_PROPERTIES_BASE64: androidKeyPropertiesBase64.value,
+        // Firebase config files (written to disk by tauri-dev.sh before build)
+        FIREBASE_GOOGLE_SERVICE_INFO_BASE64:
+            firebaseGoogleServiceInfoBase64.value,
+        FIREBASE_GOOGLE_SERVICES_JSON_BASE64:
+            firebaseGoogleServicesJsonBase64.value,
     };
 
     new sst.x.DevCommand("wallet:tauri", {

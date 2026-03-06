@@ -96,8 +96,36 @@ setup_android_signing() {
     echo "[tauri-dev] Android signing configured"
 }
 
+setup_firebase_config() {
+    local IOS_PLIST="$WALLET_DIR/src-tauri/gen/apple/app_iOS/GoogleService-Info.plist"
+    local ANDROID_JSON="$WALLET_DIR/src-tauri/gen/android/app/google-services.json"
+
+    # iOS: decode GoogleService-Info.plist from SST secret
+    if [ -f "$IOS_PLIST" ]; then
+        echo "[tauri-dev] iOS Firebase config already present"
+    elif [ -n "${FIREBASE_GOOGLE_SERVICE_INFO_BASE64:-}" ]; then
+        echo "[tauri-dev] Writing iOS GoogleService-Info.plist from SST secret..."
+        echo "$FIREBASE_GOOGLE_SERVICE_INFO_BASE64" | base64 -d > "$IOS_PLIST"
+    else
+        echo "[tauri-dev] WARNING: FIREBASE_GOOGLE_SERVICE_INFO_BASE64 not set, skipping iOS Firebase config"
+        echo "[tauri-dev] Run: sst secret set FIREBASE_GOOGLE_SERVICE_INFO_BASE64 \"\$(base64 -i GoogleService-Info.plist)\""
+    fi
+
+    # Android: decode google-services.json from SST secret
+    if [ -f "$ANDROID_JSON" ]; then
+        echo "[tauri-dev] Android Firebase config already present"
+    elif [ -n "${FIREBASE_GOOGLE_SERVICES_JSON_BASE64:-}" ]; then
+        echo "[tauri-dev] Writing Android google-services.json from SST secret..."
+        echo "$FIREBASE_GOOGLE_SERVICES_JSON_BASE64" | base64 -d > "$ANDROID_JSON"
+    else
+        echo "[tauri-dev] WARNING: FIREBASE_GOOGLE_SERVICES_JSON_BASE64 not set, skipping Android Firebase config"
+        echo "[tauri-dev] Run: sst secret set FIREBASE_GOOGLE_SERVICES_JSON_BASE64 \"\$(base64 -i google-services.json)\""
+    fi
+}
+
 run_android() {
     setup_android_signing
+    setup_firebase_config
     start_dev_server
     setup_adb_reverse
     cd "$WALLET_DIR"
@@ -106,6 +134,7 @@ run_android() {
 
 run_ios() {
     local device="${1:-iPhone 17}"
+    setup_firebase_config
     start_dev_server
     cd "$WALLET_DIR"
     bun run tauri ios dev --no-dev-server -c '{"build":{"beforeDevCommand":""}}' "$device"

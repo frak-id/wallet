@@ -33,6 +33,10 @@ cdn
 # rust / tauri
 **/target
 
+# Firebase config files (decoded from SST secrets / CI secrets)
+GoogleService-Info.plist
+google-services.json
+
 # misc
 .DS_Store
 *.pem

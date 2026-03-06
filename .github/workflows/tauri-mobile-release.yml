@@ -164,6 +164,11 @@ jobs:
         env:
           APPLE_API_KEY_CONTENT: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}
 
+      - name: "🔥 Write Firebase config"
+        run: echo "$FIREBASE_GOOGLE_SERVICE_INFO_BASE64" | base64 -d > apps/wallet/src-tauri/gen/apple/app_iOS/GoogleService-Info.plist
+        env:
+          FIREBASE_GOOGLE_SERVICE_INFO_BASE64: ${{ secrets.FIREBASE_GOOGLE_SERVICE_INFO_BASE64 }}
+
       - name: "🏗️ Build iOS"
         # cd into wallet app so tauri finds src-tauri/ and beforeBuildCommand runs in correct directory
         run: sst shell --stage "$STAGE" --print-logs -- bash -c "cd apps/wallet && tauri ios build --export-method app-store-connect"
@@ -296,6 +301,11 @@ jobs:
           KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+
+      - name: "🔥 Write Firebase config"
+        run: echo "$FIREBASE_GOOGLE_SERVICES_JSON_BASE64" | base64 -d > apps/wallet/src-tauri/gen/android/app/google-services.json
+        env:
+          FIREBASE_GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.FIREBASE_GOOGLE_SERVICES_JSON_BASE64 }}
 
       - name: "🏗️ Build Android"
         # cd into wallet app so tauri finds src-tauri/ and beforeBuildCommand runs in correct directory
