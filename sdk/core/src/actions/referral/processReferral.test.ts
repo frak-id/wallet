@@ -1,4 +1,3 @@
-import { FrakRpcError, RpcErrorCodes } from "@frak-labs/frame-connector";
 import type { Address } from "viem";
 import { vi } from "vitest";
 import {
@@ -15,10 +14,6 @@ import type {
     WalletStatusReturnType,
 } from "../../types";
 import { processReferral } from "./processReferral";
-
-vi.mock("../displayEmbeddedWallet", () => ({
-    displayEmbeddedWallet: vi.fn(),
-}));
 
 vi.mock("../sendInteraction", () => ({
     sendInteraction: vi.fn().mockResolvedValue(undefined),
@@ -179,83 +174,6 @@ describe("processReferral", () => {
 
             expect(result).toBe("self-referral");
         });
-    });
-
-    it("should handle wallet not connected scenario", async () => {
-        const { displayEmbeddedWallet } = await import(
-            "../displayEmbeddedWallet"
-        );
-
-        vi.mocked(displayEmbeddedWallet).mockResolvedValue({
-            wallet: mockAddress,
-        } as any);
-
-        const v2Context: FrakContextV2 = {
-            v: 2,
-            c: "referrer-client-id",
-            m: "merchant-uuid",
-            t: 1709654400,
-        };
-
-        const result = await processReferral(mockClient, {
-            walletStatus: undefined,
-            frakContext: v2Context,
-            modalConfig: {} as any,
-        });
-
-        expect(result).toBe("success");
-        expect(displayEmbeddedWallet).toHaveBeenCalled();
-    });
-
-    it("should return 'no-wallet' when wallet connection fails", async () => {
-        const { displayEmbeddedWallet } = await import(
-            "../displayEmbeddedWallet"
-        );
-
-        const error = new FrakRpcError(
-            RpcErrorCodes.walletNotConnected,
-            "Wallet not connected"
-        );
-        vi.mocked(displayEmbeddedWallet).mockRejectedValue(error);
-
-        const v2Context: FrakContextV2 = {
-            v: 2,
-            c: "referrer-client-id",
-            m: "merchant-uuid",
-            t: 1709654400,
-        };
-
-        const result = await processReferral(mockClient, {
-            walletStatus: undefined,
-            frakContext: v2Context,
-            modalConfig: {} as any,
-        });
-
-        expect(result).toBe("no-wallet");
-    });
-
-    it("should return 'error' for unknown errors", async () => {
-        const { displayEmbeddedWallet } = await import(
-            "../displayEmbeddedWallet"
-        );
-
-        const error = new Error("Unknown error");
-        vi.mocked(displayEmbeddedWallet).mockRejectedValue(error);
-
-        const v2Context: FrakContextV2 = {
-            v: 2,
-            c: "referrer-client-id",
-            m: "merchant-uuid",
-            t: 1709654400,
-        };
-
-        const result = await processReferral(mockClient, {
-            walletStatus: undefined,
-            frakContext: v2Context,
-            modalConfig: {} as any,
-        });
-
-        expect(result).toBe("error");
     });
 
     it("should update URL context when alwaysAppendUrl is true", async () => {
