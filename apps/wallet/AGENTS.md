@@ -10,12 +10,11 @@ TanStack Router SPA for user wallet. SSR disabled, module-based architecture wit
 
 ```
 app/
-├── module/           # Feature modules (14 modules)
+├── module/           # Feature modules (13 modules)
 │   ├── authentication/ # WebAuthn login/register
 │   ├── biometrics/   # Biometric lock & settings
 │   ├── common/       # Shared components (Header, Nav, Layout)
 │   ├── history/      # Transaction & interaction history
-│   ├── membrs/       # User profile & membership
 │   ├── notification/ # Push notification management
 │   ├── pairing/      # Device pairing (QR + WebSocket)
 │   ├── recovery/     # Account recovery flows

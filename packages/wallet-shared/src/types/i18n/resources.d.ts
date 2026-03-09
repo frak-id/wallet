@@ -222,40 +222,6 @@ interface Resources {
                 useQRCode: "Use QR code to connect";
                 walletsOnDevice: "Wallets used on this device";
             };
-            membrs: {
-                fanclub: {
-                    button: "Discover the Fanclub";
-                    text: "Discover the Fanclub of {{productName}}";
-                    title: "Fanclub";
-                };
-                introduction: {
-                    button: "Enter";
-                    title: "Exclusive access to your favorite stars and franchise";
-                };
-                profile: {
-                    avatar: {
-                        capture: "Capture photo";
-                        save: "Save";
-                        stop: "Stop camera";
-                        take: "Take photo with camera";
-                        title: "Choose profile picture";
-                        upload: "Upload or drag profile picture";
-                        zoom: "Zoom";
-                    };
-                    edit: "Edit my profile";
-                    form: {
-                        button: "Save";
-                        error: "An error occurred while saving your profile. Please try again.";
-                        later: "Later";
-                        name: "Enter username";
-                        nameLength: "Minimum username length is 3";
-                        nameRequired: "Username is required";
-                    };
-                    text1: "Custom your profile to join creators’ community and be rewarded for your engagement";
-                    text2: "Benefit from the advantages offered by designers and their partners";
-                    title: "Custom your profile";
-                };
-            };
             notifications: {
                 noNotifications: "No notifications";
             };
