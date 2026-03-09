@@ -145,7 +145,6 @@ function distributeChainedRewards(params: {
             rewards.push({
                 recipient: "referrer",
                 recipientIdentityGroupId: member.identityGroupId,
-                recipientWallet: null,
                 type: params.rewardType,
                 amount: roundAmount(rewardAmount),
                 token: params.token,
@@ -239,7 +238,6 @@ export class RewardCalculator {
             calculated.push({
                 recipient: reward.recipient,
                 recipientIdentityGroupId: recipientData.identityGroupId,
-                recipientWallet: recipientData.wallet,
                 type: reward.type,
                 amount: result.amount,
                 token: result.token,
@@ -255,20 +253,18 @@ export class RewardCalculator {
     private resolveRecipient(
         recipient: RecipientType,
         context: RuleContext
-    ): { identityGroupId: string; wallet: Address | null } | null {
+    ): { identityGroupId: string } | null {
         switch (recipient) {
             case "referrer": {
                 const groupId = context.attribution?.referrerIdentityGroupId;
                 if (!groupId) return null;
                 return {
                     identityGroupId: groupId,
-                    wallet: context.attribution?.referrerWallet ?? null,
                 };
             }
             case "referee":
                 return {
                     identityGroupId: context.user.identityGroupId,
-                    wallet: context.user.walletAddress,
                 };
             default:
                 return null;

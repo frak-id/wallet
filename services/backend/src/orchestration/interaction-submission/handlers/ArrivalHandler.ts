@@ -12,6 +12,9 @@ import type { HandlerContext, InteractionHandler } from "../types";
 export type ArrivalInput = {
     merchantId: string;
     referrerWallet?: string;
+    referrerClientId?: string;
+    referrerMerchantId?: string;
+    referralTimestamp?: number;
     landingUrl?: string;
     utmSource?: string;
     utmMedium?: string;
@@ -22,7 +25,6 @@ export type ArrivalInput = {
 
 export type ArrivalExtra = {
     touchpointId: string;
-    referrerWallet?: Address;
 };
 
 export class ArrivalHandler
@@ -48,9 +50,8 @@ export class ArrivalHandler
         context: HandlerContext
     ): Promise<ReferralArrivalPayload> {
         const sourceData = this.buildSourceData(input);
-        const referrerIdentityGroupId = await this.resolveReferrerGroupId(
-            input.referrerWallet
-        );
+        const referrerIdentityGroupId =
+            await this.resolveReferrerGroupId(input);
 
         const { touchpoint, referralRegistered } =
             await this.attributionService.recordTouchpoint({
@@ -63,7 +64,10 @@ export class ArrivalHandler
             });
 
         return {
-            referrerWallet: input.referrerWallet as Address,
+            referrerWallet: input.referrerWallet as Address | undefined,
+            referrerClientId: input.referrerClientId,
+            referrerMerchantId: input.referrerMerchantId,
+            referralTimestamp: input.referralTimestamp,
             landingUrl: input.landingUrl,
             touchpointId: touchpoint.id,
             referralRegistered,
@@ -77,7 +81,6 @@ export class ArrivalHandler
     ): Promise<ArrivalExtra> {
         return {
             touchpointId: payload?.touchpointId ?? "",
-            referrerWallet: payload?.referrerWallet,
         };
     }
 
@@ -91,13 +94,27 @@ export class ArrivalHandler
     }
 
     private isReferralSource(input: ArrivalInput): boolean {
+        if (input.referrerClientId && input.referrerMerchantId) {
+            return true;
+        }
         return Boolean(input.referrerWallet && isAddress(input.referrerWallet));
     }
 
     private buildSourceData(input: ArrivalInput): TouchpointSourceData {
+        if (input.referrerClientId && input.referrerMerchantId) {
+            return {
+                type: "referral_link",
+                v: 2,
+                referrerClientId: input.referrerClientId,
+                referrerMerchantId: input.referrerMerchantId,
+                referralTimestamp: input.referralTimestamp,
+            };
+        }
+
         if (input.referrerWallet && isAddress(input.referrerWallet)) {
             return {
                 type: "referral_link",
+                v: 1,
                 referrerWallet: input.referrerWallet as Address,
             };
         }
@@ -117,15 +134,27 @@ export class ArrivalHandler
     }
 
     private async resolveReferrerGroupId(
-        referrerWallet: string | undefined
+        input: ArrivalInput
     ): Promise<string | undefined> {
-        if (!referrerWallet || !isAddress(referrerWallet)) {
+        if (input.referrerClientId && input.referrerMerchantId) {
+            const group =
+                await IdentityContext.repositories.identity.findGroupByIdentity(
+                    {
+                        type: "anonymous_fingerprint",
+                        value: input.referrerClientId,
+                        merchantId: input.referrerMerchantId,
+                    }
+                );
+            return group?.id ?? undefined;
+        }
+
+        if (!input.referrerWallet || !isAddress(input.referrerWallet)) {
             return undefined;
         }
         const group =
             await IdentityContext.repositories.identity.findGroupByIdentity({
                 type: "wallet",
-                value: referrerWallet,
+                value: input.referrerWallet,
             });
         return group?.id ?? undefined;
     }

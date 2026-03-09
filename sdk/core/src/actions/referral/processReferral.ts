@@ -1,232 +1,186 @@
-import { FrakRpcError, RpcErrorCodes } from "@frak-labs/frame-connector";
-import { type Address, isAddressEqual } from "viem";
+import { isAddressEqual } from "viem";
 import type {
-    DisplayEmbeddedWalletParamsType,
     FrakClient,
     FrakContext,
+    FrakContextV2,
     WalletStatusReturnType,
 } from "../../types";
-import { FrakContextManager, trackEvent } from "../../utils";
-import { displayEmbeddedWallet } from "../displayEmbeddedWallet";
+import { isV1Context, isV2Context } from "../../types";
+import { FrakContextManager, getClientId, trackEvent } from "../../utils";
 import { sendInteraction } from "../sendInteraction";
 
 /**
- * The different states of the referral process
+ * Options for the referral auto-interaction process.
+ */
+export type ProcessReferralOptions = {
+    /**
+     * If true, always replace the URL with the current user's referral context
+     * so the next visitor gets referred by this user.
+     * @defaultValue false
+     */
+    alwaysAppendUrl?: boolean;
+    /**
+     * Merchant ID for building the current user's referral context.
+     * Required when `alwaysAppendUrl` is true and the incoming context is V1.
+     * For V2 contexts, the merchantId is already embedded in the context.
+     */
+    merchantId?: string;
+};
+
+/**
+ * The different states of the referral process.
  * @inline
  */
 type ReferralState =
     | "idle"
     | "processing"
     | "success"
-    | "no-wallet"
-    | "error"
     | "no-referrer"
     | "self-referral";
 
 /**
- * Options for the referral auto-interaction process
+ * Track an arrival event if the context version is recognized.
+ * Sends both tracking analytics and the arrival interaction RPC.
+ *
+ * @returns true if the context was valid and tracked, false otherwise
  */
-export type ProcessReferralOptions = {
-    /**
-     * If we want to always append the url with the frak context or not
-     * @defaultValue false
-     */
-    alwaysAppendUrl?: boolean;
-};
+function trackArrivalIfValid(
+    client: FrakClient,
+    frakContext: FrakContext,
+    walletStatus?: WalletStatusReturnType
+): boolean {
+    const landingUrl =
+        typeof window !== "undefined" ? window.location.href : undefined;
+
+    if (isV2Context(frakContext)) {
+        trackEvent(client, "user_referred_started", {
+            properties: {
+                referrerClientId: frakContext.c,
+                walletStatus: walletStatus?.key,
+            },
+        });
+        sendInteraction(client, {
+            type: "arrival",
+            referrerClientId: frakContext.c,
+            referrerMerchantId: frakContext.m,
+            referralTimestamp: frakContext.t,
+            landingUrl,
+        });
+        return true;
+    }
+
+    if (isV1Context(frakContext)) {
+        trackEvent(client, "user_referred_started", {
+            properties: {
+                referrer: frakContext.r,
+                walletStatus: walletStatus?.key,
+            },
+        });
+        sendInteraction(client, {
+            type: "arrival",
+            referrerWallet: frakContext.r,
+            landingUrl,
+        });
+        return true;
+    }
+
+    return false;
+}
 
 /**
- * This function handle all the heavy lifting of the referral interaction process
- *  1. Check if the user has been referred or not (if not, early exit)
- *  2. Then check if the user is logged in or not
- *  2.1 If not logged in, try a soft login, if it fail, display a modal for the user to login
- *  3. Check if that's not a self-referral (if yes, early exit)
- *  4. Track the referral event
- *  5. Update the current url with the right data
- *  6. Return the resulting referral state
+ * Build a V2 context representing the current user for URL replacement.
+ * @returns A V2 context, or null if clientId or merchantId is unavailable
+ */
+function buildCurrentUserContext(merchantId: string): FrakContextV2 | null {
+    const clientId = getClientId();
+    if (!clientId) return null;
+    return {
+        v: 2,
+        c: clientId,
+        m: merchantId,
+        t: Math.floor(Date.now() / 1000),
+    };
+}
+
+/**
+ * Client-side self-referral preflight check.
+ * Prevents unnecessary backend round-trips for obvious self-referrals.
+ */
+function isSelfReferral(
+    frakContext: FrakContext,
+    walletStatus?: WalletStatusReturnType
+): boolean {
+    if (isV2Context(frakContext)) {
+        return getClientId() === frakContext.c;
+    }
+    if (isV1Context(frakContext) && walletStatus?.wallet) {
+        return isAddressEqual(frakContext.r, walletStatus.wallet);
+    }
+    return false;
+}
+
+/**
+ * Handle the full referral interaction flow:
  *
- *  If any error occurs during the process, the function will catch it and return an error state
+ *  1. Check if the user has been referred (if not, early exit)
+ *  2. Preflight self-referral check (if yes, early exit)
+ *  3. Track the arrival event
+ *  4. Replace the current URL with the user's own referral context
+ *  5. Return the resulting referral state
  *
  * @param client - The current Frak Client
  * @param args
  * @param args.walletStatus - The current user wallet status
- * @param args.frakContext - The current frak context
- * @param args.modalConfig - The modal configuration to display if the user is not logged in
- * @param args.options - Some options for the referral interaction
- * @returns  A promise with the resulting referral state
+ * @param args.frakContext - The referral context parsed from the URL
+ * @param args.options - Options for URL replacement and merchant context
+ * @returns The referral state
  *
- * @see {@link displayModal} for more details about the displayed modal
- * @see {@link @frak-labs/core-sdk!ModalStepTypes} for more details on each modal steps types
+ * @see {@link @frak-labs/core-sdk!ModalStepTypes} for modal step types
  */
-export async function processReferral(
+export function processReferral(
     client: FrakClient,
     {
         walletStatus,
         frakContext,
-        modalConfig,
         options,
     }: {
         walletStatus?: WalletStatusReturnType;
-        frakContext?: Partial<FrakContext> | null;
-        modalConfig?: DisplayEmbeddedWalletParamsType;
+        frakContext?: FrakContext | null;
         options?: ProcessReferralOptions;
     }
-) {
-    // Early exit if we don't have any referral informations
-    if (!frakContext?.r) {
+): ReferralState {
+    if (!frakContext) {
         return "no-referrer";
     }
 
-    // If we got a context, log an event
-    trackEvent(client, "user_referred_started", {
+    if (isSelfReferral(frakContext, walletStatus)) {
+        return "self-referral";
+    }
+
+    if (!trackArrivalIfValid(client, frakContext, walletStatus)) {
+        return "no-referrer";
+    }
+
+    // V2 context embeds merchantId; V1 falls back to options
+    const contextMerchantId = isV2Context(frakContext)
+        ? frakContext.m
+        : options?.merchantId;
+
+    const replaceContext =
+        options?.alwaysAppendUrl && contextMerchantId
+            ? buildCurrentUserContext(contextMerchantId)
+            : null;
+
+    FrakContextManager.replaceUrl({
+        url: window.location?.href,
+        context: replaceContext,
+    });
+
+    trackEvent(client, "user_referred_completed", {
         properties: {
-            referrer: frakContext?.r,
-            walletStatus: walletStatus?.key,
+            status: "success",
         },
     });
 
-    sendInteraction(client, {
-        type: "arrival",
-        referrerWallet: frakContext.r,
-        landingUrl:
-            typeof window !== "undefined" ? window.location.href : undefined,
-    });
-
-    // Helper to fetch a fresh wallet status
-    let walletRequest = false;
-    async function getFreshWalletStatus() {
-        if (walletRequest) {
-            return;
-        }
-        walletRequest = true;
-        return ensureWalletConnected(client, {
-            modalConfig: {
-                ...modalConfig,
-                loggedIn: {
-                    action: {
-                        key: "referred",
-                    },
-                },
-            },
-            walletStatus,
-        });
-    }
-
-    try {
-        // Do the core processing logic
-        const { status, currentWallet } = await processReferralLogic({
-            initialWalletStatus: walletStatus,
-            getFreshWalletStatus,
-            // We can enforce this type cause of the condition at the start
-            frakContext: frakContext as Pick<FrakContext, "r">,
-        });
-
-        // Update the current url with the right data
-        FrakContextManager.replaceUrl({
-            url: window.location?.href,
-            context: options?.alwaysAppendUrl ? { r: currentWallet } : null,
-        });
-
-        // Track the event
-        trackEvent(client, "user_referred_completed", {
-            properties: {
-                status,
-                referrer: frakContext?.r,
-                wallet: currentWallet,
-            },
-        });
-
-        return status;
-    } catch (error) {
-        console.log("Error processing referral", { error });
-
-        // Track the error event
-        trackEvent(client, "user_referred_error", {
-            properties: {
-                referrer: frakContext?.r,
-                error:
-                    error instanceof FrakRpcError
-                        ? `[${error.code}] ${error.name} - ${error.message}`
-                        : error instanceof Error
-                          ? error.message
-                          : "undefined",
-            },
-        });
-
-        // Update the current url with the right data
-        FrakContextManager.replaceUrl({
-            url: window.location?.href,
-            context: options?.alwaysAppendUrl
-                ? { r: walletStatus?.wallet }
-                : null,
-        });
-
-        // And map the error a state
-        return mapErrorToState(error);
-    }
-}
-
-/**
- * Process referral logic - ensure user is logged in and check for self-referral
- */
-async function processReferralLogic({
-    initialWalletStatus,
-    getFreshWalletStatus,
-    frakContext,
-}: {
-    initialWalletStatus?: WalletStatusReturnType;
-    getFreshWalletStatus: () => Promise<Address | undefined>;
-    frakContext: Pick<FrakContext, "r">;
-}) {
-    // Get the current wallet, without auto displaying the modal
-    let currentWallet = initialWalletStatus?.wallet;
-
-    // If we don't have a current wallet, display the modal to log in
-    if (!currentWallet) {
-        currentWallet = await getFreshWalletStatus();
-    }
-
-    // Check for self-referral
-    if (currentWallet && isAddressEqual(frakContext.r, currentWallet)) {
-        return { status: "self-referral", currentWallet } as const;
-    }
-
-    return { status: "success", currentWallet } as const;
-}
-
-/**
- * Helper to ensure a wallet is connected, and display a modal if we got everything needed
- */
-async function ensureWalletConnected(
-    client: FrakClient,
-    {
-        modalConfig,
-        walletStatus,
-    }: {
-        modalConfig?: DisplayEmbeddedWalletParamsType;
-        walletStatus?: WalletStatusReturnType;
-    }
-) {
-    // If wallet not connected, display modal
-    if (walletStatus?.key !== "connected") {
-        const result = await displayEmbeddedWallet(client, modalConfig ?? {});
-        return result?.wallet ?? undefined;
-    }
-
-    return walletStatus.wallet ?? undefined;
-}
-
-/**
- * Helper to map an error to a state
- * @param error
- */
-function mapErrorToState(error: unknown): ReferralState {
-    if (error instanceof FrakRpcError) {
-        switch (error.code) {
-            case RpcErrorCodes.walletNotConnected:
-                return "no-wallet";
-            default:
-                return "error";
-        }
-    }
-    return "error";
+    return "success";
 }

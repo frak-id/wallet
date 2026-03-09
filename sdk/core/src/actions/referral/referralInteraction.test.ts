@@ -69,7 +69,6 @@ describe("referralInteraction", () => {
 
         const mockContext = { r: "0xreferrer" as Hex };
         const mockWalletStatus = { wallet: "0x123" as Hex };
-        const mockModalConfig = { type: "login" };
         const mockOptions = { alwaysAppendUrl: true };
 
         vi.mocked(FrakContextManager.parse).mockReturnValue(mockContext as any);
@@ -77,14 +76,12 @@ describe("referralInteraction", () => {
         vi.mocked(processReferral).mockResolvedValue("success");
 
         await referralInteraction(mockClient, {
-            modalConfig: mockModalConfig as any,
             options: mockOptions,
         });
 
         expect(processReferral).toHaveBeenCalledWith(mockClient, {
             walletStatus: mockWalletStatus,
             frakContext: mockContext,
-            modalConfig: mockModalConfig,
             options: mockOptions,
         });
     });
@@ -110,7 +107,9 @@ describe("referralInteraction", () => {
 
         vi.mocked(FrakContextManager.parse).mockReturnValue({} as any);
         vi.mocked(watchWalletStatus).mockResolvedValue(null as any);
-        vi.mocked(processReferral).mockRejectedValue(new Error("Test error"));
+        vi.mocked(processReferral).mockImplementation(() => {
+            throw new Error("Test error");
+        });
 
         const consoleSpy = vi
             .spyOn(console, "warn")
@@ -139,7 +138,6 @@ describe("referralInteraction", () => {
         expect(processReferral).toHaveBeenCalledWith(
             mockClient,
             expect.objectContaining({
-                modalConfig: undefined,
                 options: undefined,
             })
         );

@@ -1,4 +1,4 @@
-import type { Address } from "viem";
+import type { IdentityNode } from "../../../orchestration/identity";
 import type {
     CreateTouchpointParams,
     Touchpoint,
@@ -21,7 +21,7 @@ type AttributionResult = {
     attributed: boolean;
     source: TouchpointSource | null;
     touchpointId: string | null;
-    referrerWallet: Address | null;
+    referrerIdentity?: IdentityNode;
 };
 
 export class AttributionService {
@@ -70,12 +70,16 @@ export class AttributionService {
                 merchantId: params.merchantId,
             });
 
-        if (referralTouchpoint) {
+        if (
+            referralTouchpoint &&
+            referralTouchpoint.sourceData.type === "referral_link"
+        ) {
             return {
                 attributed: true,
                 source: "referral_link",
                 touchpointId: referralTouchpoint.id,
-                referrerWallet: referralTouchpoint.referrerWallet,
+                referrerIdentity:
+                    this.getReferrerIdentityForTouchpoint(referralTouchpoint),
             };
         }
 
@@ -91,7 +95,6 @@ export class AttributionService {
                 attributed: true,
                 source: latestTouchpoint.source,
                 touchpointId: latestTouchpoint.id,
-                referrerWallet: null,
             };
         }
 
@@ -99,7 +102,25 @@ export class AttributionService {
             attributed: false,
             source: null,
             touchpointId: null,
-            referrerWallet: null,
+        };
+    }
+
+    private getReferrerIdentityForTouchpoint({
+        sourceData,
+    }: Touchpoint): IdentityNode | undefined {
+        if (sourceData.type !== "referral_link") return undefined;
+
+        if (sourceData.v === 2) {
+            return {
+                type: "anonymous_fingerprint",
+                value: sourceData.referrerClientId,
+                merchantId: sourceData.referrerMerchantId,
+            };
+        }
+
+        return {
+            type: "wallet",
+            value: sourceData.referrerWallet,
         };
     }
 

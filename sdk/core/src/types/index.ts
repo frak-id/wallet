@@ -15,7 +15,8 @@ export type {
     LocalizedI18nConfig,
 } from "./config";
 // Utils
-export type { FrakContext } from "./context";
+export type { FrakContext, FrakContextV1, FrakContextV2 } from "./context";
+export { isV1Context, isV2Context } from "./context";
 
 export type {
     ClientLifecycleEvent,

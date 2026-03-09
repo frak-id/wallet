@@ -82,57 +82,8 @@ describe("useReferralInteraction", () => {
         expect(processReferral).toHaveBeenCalledWith(mockFrakClient, {
             walletStatus: mockWalletStatus,
             frakContext: mockFrakContext,
-            modalConfig: undefined,
             options: undefined,
         });
-    });
-
-    test("should process referral with modalConfig", async ({
-        queryWrapper,
-        mockFrakClient,
-    }) => {
-        const mockReferralState = "success";
-
-        const modalConfig = {
-            metadata: {
-                logo: "https://example.com/logo.png",
-            },
-        };
-
-        const mockWalletStatus: WalletStatusReturnType = {
-            key: "connected",
-            wallet: "0x1234567890123456789012345678901234567890",
-        };
-
-        vi.mocked(useFrakClient).mockReturnValue(mockFrakClient);
-        vi.mocked(useFrakContext).mockReturnValue({
-            frakContext: { r: "0x4567890123456789012345678901234567890123" },
-            updateContext: vi.fn(),
-        });
-        vi.mocked(useWalletStatus).mockReturnValue({
-            data: mockWalletStatus,
-            isSuccess: true,
-            isPending: false,
-        } as ReturnType<typeof useWalletStatus>);
-        vi.mocked(processReferral).mockResolvedValue(mockReferralState);
-
-        const { result } = renderHook(
-            () => useReferralInteraction({ modalConfig }),
-            {
-                wrapper: queryWrapper.wrapper,
-            }
-        );
-
-        await waitFor(() => {
-            expect(result.current).toEqual(mockReferralState);
-        });
-
-        expect(processReferral).toHaveBeenCalledWith(
-            mockFrakClient,
-            expect.objectContaining({
-                modalConfig,
-            })
-        );
     });
 
     test("should process referral with options", async ({

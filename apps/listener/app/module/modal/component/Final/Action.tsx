@@ -1,11 +1,10 @@
 import { type FinalActionType, FrakContextManager } from "@frak-labs/core-sdk";
 import { useCopyToClipboardWithState } from "@frak-labs/ui/hook/useCopyToClipboardWithState";
 import { prefixModalCss } from "@frak-labs/ui/utils/prefixModalCss";
-import { trackGenericEvent } from "@frak-labs/wallet-shared";
+import { clientIdStore, trackGenericEvent } from "@frak-labs/wallet-shared";
 import { Copy, Share } from "lucide-react";
 import { useMemo } from "react";
 import { toast } from "sonner";
-import { useAccount } from "wagmi";
 import { ButtonAction } from "@/module/modal/component/ButtonAction";
 import styles from "@/module/modal/component/Modal/index.module.css";
 import { useListenerTranslation } from "@/module/providers/ListenerUiProvider";
@@ -61,28 +60,28 @@ function SharingButtons({
     isModalSuccess: boolean;
     link?: string;
 }) {
-    const { sourceUrl } = useSafeResolvingContext();
-    const { address } = useAccount();
+    const { sourceUrl, merchantId } = useSafeResolvingContext();
+    const clientId = clientIdStore((s) => s.clientId);
     const { copy } = useCopyToClipboardWithState();
     const { t } = useListenerTranslation();
     const { mutate: trackSharing } = useTrackSharing();
 
-    // Get our final sharing link
     const finalSharingLink = useMemo(() => {
         const url = link ?? sourceUrl;
-        if (isModalSuccess) {
-            // Ensure the sharing link contain the current frak wallet as referrer
+        if (isModalSuccess && clientId && merchantId) {
             return FrakContextManager.update({
                 url,
                 context: {
-                    r: address,
+                    v: 2,
+                    c: clientId,
+                    m: merchantId,
+                    t: Math.floor(Date.now() / 1000),
                 },
             });
         }
 
-        // Remove the referrer from the sharing link
         return FrakContextManager.remove(url);
-    }, [link, isModalSuccess, address, sourceUrl]);
+    }, [link, isModalSuccess, clientId, merchantId, sourceUrl]);
 
     // Trigger native sharing
     const { mutate: triggerSharing, isPending: isSharing } = useShareLink(
