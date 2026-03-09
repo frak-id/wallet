@@ -97,11 +97,11 @@ export const androidKeyPropertiesBase64 = new sst.Secret(
 );
 
 // Firebase config files for push notifications (base64-encoded, decoded by tauri-dev.sh)
-export const firebaseGoogleServiceInfoBase64 = new sst.Secret(
-    "FIREBASE_GOOGLE_SERVICE_INFO_BASE64"
+export const firebaseIosConfigBase64 = new sst.Secret(
+    "FIREBASE_IOS_CONFIG_BASE64"
 );
-export const firebaseGoogleServicesJsonBase64 = new sst.Secret(
-    "FIREBASE_GOOGLE_SERVICES_JSON_BASE64"
+export const firebaseAndroidConfigBase64 = new sst.Secret(
+    "FIREBASE_ANDROID_CONFIG_BASE64"
 );
 
 // Open panel secrets
