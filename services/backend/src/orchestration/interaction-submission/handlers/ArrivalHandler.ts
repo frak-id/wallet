@@ -25,7 +25,6 @@ export type ArrivalInput = {
 
 export type ArrivalExtra = {
     touchpointId: string;
-    referrerWallet?: Address;
 };
 
 export class ArrivalHandler
@@ -65,7 +64,10 @@ export class ArrivalHandler
             });
 
         return {
-            referrerWallet: input.referrerWallet as Address,
+            referrerWallet: input.referrerWallet as Address | undefined,
+            referrerClientId: input.referrerClientId,
+            referrerMerchantId: input.referrerMerchantId,
+            referralTimestamp: input.referralTimestamp,
             landingUrl: input.landingUrl,
             touchpointId: touchpoint.id,
             referralRegistered,
@@ -79,7 +81,6 @@ export class ArrivalHandler
     ): Promise<ArrivalExtra> {
         return {
             touchpointId: payload?.touchpointId ?? "",
-            referrerWallet: payload?.referrerWallet,
         };
     }
 
