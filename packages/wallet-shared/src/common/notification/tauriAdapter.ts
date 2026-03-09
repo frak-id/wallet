@@ -25,6 +25,29 @@ async function getTauriNotificationPlugin() {
 }
 
 /**
+ * Race a promise against a timeout. Rejects with a descriptive error if the
+ * promise doesn't settle within `ms` milliseconds.
+ *
+ * Primary use: guard against Choochmeque's `registerForPushNotifications` hanging
+ * on iOS when the APNs token callback never fires (background-thread Timer bug).
+ */
+function withTimeout<T>(
+    promise: Promise<T>,
+    ms: number,
+    label: string
+): Promise<T> {
+    return Promise.race([
+        promise,
+        new Promise<never>((_, reject) => {
+            setTimeout(
+                () => reject(new Error(`${label} timed out after ${ms}ms`)),
+                ms
+            );
+        }),
+    ]);
+}
+
+/**
  * On iOS, registerForPushNotifications() returns a raw APNs hex token (not an FCM token).
  * Firebase's MessagingDelegate receives the FCM token asynchronously after the APNs token
  * is processed. The native FirebaseManager.swift sets `window.__frakFcmToken` and dispatches
@@ -124,7 +147,14 @@ export function createTauriNotificationAdapter(): NotificationAdapter {
                 const plugin = await getTauriNotificationPlugin();
                 if (!plugin) return "denied";
                 const result = await plugin.requestPermission();
-                permissionGranted = result === "granted";
+                // Choochmeque's Swift resolves with { permissionState: "granted" }
+                // (an object), not the string "granted". Handle both shapes.
+                const state =
+                    typeof result === "string"
+                        ? result
+                        : (result as { permissionState?: string })
+                              ?.permissionState;
+                permissionGranted = state === "granted";
                 return permissionGranted ? "granted" : "denied";
             } catch {
                 return "denied";
@@ -147,20 +177,32 @@ export function createTauriNotificationAdapter(): NotificationAdapter {
 
             // registerForPushNotifications returns FCM token on Android,
             // raw APNs hex token on iOS — getFcmToken handles the exchange.
-            // Wrapped in try-catch: on iOS simulator, APNs registration crashes
-            // or rejects because there is no push transport.
+            //
+            // Timeout guard: Choochmeque's iOS impl creates a Timer on a
+            // background thread (UNUserNotificationCenter callback) whose
+            // RunLoop never runs — so the invoke can hang forever if the
+            // APNs token callback doesn't fire. 15 s is generous enough for
+            // real devices while preventing infinite hangs.
             let rawToken: string;
             try {
-                rawToken = await plugin.registerForPushNotifications();
+                rawToken = await withTimeout(
+                    plugin.registerForPushNotifications(),
+                    15_000,
+                    "registerForPushNotifications"
+                );
             } catch (error) {
                 console.warn(
-                    "registerForPushNotifications failed (simulator?)",
+                    "registerForPushNotifications failed (simulator / timeout?)",
                     error
                 );
                 return;
             }
             const token = await getFcmToken(rawToken);
-            await syncTokenToBackend(token);
+            await withTimeout(
+                syncTokenToBackend(token),
+                10_000,
+                "syncTokenToBackend"
+            );
         },
         unsubscribe: async () => {
             permissionGranted = false;

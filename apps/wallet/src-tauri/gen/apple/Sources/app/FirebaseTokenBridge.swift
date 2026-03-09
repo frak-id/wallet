@@ -10,82 +10,70 @@ final class FrakMessagingDelegate: NSObject, MessagingDelegate {
     }
 }
 
-/// Swizzled AppDelegate forwarder that defensively passes the APNs device
-/// token to Firebase, protecting against multi-plugin swizzle chain failures.
-///
-/// After swizzling, the `frak_application` selector is added to the AppDelegate
-/// class and its IMP is exchanged with the original. When called:
-/// - `self` is the AppDelegate instance (which now has both selectors)
-/// - calling `frak_application(...)` invokes the *original* IMP (swizzle chain)
-final class FrakApnsForwarder: NSObject {
-    @objc func frak_application(
-        _ application: UIApplication,
-        didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data
-    ) {
-        // Defensive: set APNs token explicitly even with Firebase swizzling enabled.
-        // Idempotent — no harm if Firebase already received it via its own swizzle.
-        Messaging.messaging().apnsToken = deviceToken
-
-        // Call through to the previous implementation (swizzle chain).
-        let chainSelector = #selector(
-            FrakApnsForwarder.frak_application(_:didRegisterForRemoteNotificationsWithDeviceToken:)
-        )
-        if responds(to: chainSelector) {
-            frak_application(application, didRegisterForRemoteNotificationsWithDeviceToken: deviceToken)
-        }
-    }
-}
-
 enum FirebaseTokenBridge {
     static let messagingDelegate = FrakMessagingDelegate()
 
     /// Whether swizzling has already been performed.
     private static var hasSwizzled = false
 
-    /// Swizzle didRegisterForRemoteNotificationsWithDeviceToken on the
-    /// current AppDelegate to defensively forward APNs tokens to Firebase.
+    /// IMP signature for application:didRegisterForRemoteNotificationsWithDeviceToken:
+    private typealias APNsTokenIMP = @convention(c) (AnyObject, Selector, UIApplication, Data) -> Void
+
+    /// Insert our APNs-to-Firebase forwarder into the delegate method chain using
+    /// `method_setImplementation` + captured previous IMP.
+    ///
+    /// This avoids `method_exchangeImplementations` entirely, which is fragile when
+    /// three swizzlers operate on the same selector (Firebase ISA swizzle, our
+    /// forwarder, and Choochmeque's push-token handler). The exchange pattern can
+    /// leave selectors pointing at the wrong IMP, causing either infinite recursion
+    /// or a broken chain where Choochmeque's invoke never resolves.
+    ///
+    /// By capturing the previous IMP as a function pointer and calling it directly,
+    /// we guarantee: (1) our code runs, (2) the previous handler (Choochmeque) runs,
+    /// and (3) no selector-based dispatch can loop back to us.
     static func swizzleApnsForwarding() {
         guard !hasSwizzled else { return }
         guard let delegate = UIApplication.shared.delegate else { return }
         let delegateClass: AnyClass = type(of: delegate)
 
-        let originalSelector = #selector(
+        let sel = #selector(
             UIApplicationDelegate.application(_:didRegisterForRemoteNotificationsWithDeviceToken:)
         )
-        let swizzledSelector = #selector(
-            FrakApnsForwarder.frak_application(_:didRegisterForRemoteNotificationsWithDeviceToken:)
-        )
 
-        guard let swizzledMethod = class_getInstanceMethod(FrakApnsForwarder.self, swizzledSelector) else {
-            return
+        // Capture the previous IMP (Choochmeque's, Firebase's, or nil).
+        let previousIMP: IMP? = {
+            if let method = class_getInstanceMethod(delegateClass, sel) {
+                return method_getImplementation(method)
+            }
+            return nil
+        }()
+
+        // Block-based IMP: sets the APNs token in Firebase, then chains to previous.
+        // imp_implementationWithBlock signature: (self, method_args...) → return_type
+        let block: @convention(block) (AnyObject, UIApplication, Data) -> Void = {
+            selfObj, app, token in
+            // Defensive: set APNs token explicitly so Firebase can exchange APNs→FCM.
+            // Idempotent — no harm if Firebase already received it via its own swizzle.
+            Messaging.messaging().apnsToken = token
+
+            // Chain to the previous handler (typically Choochmeque's PushForwarder,
+            // which resolves the registerForPushNotifications invoke).
+            if let prev = previousIMP {
+                let fn = unsafeBitCast(prev, to: APNsTokenIMP.self)
+                fn(selfObj, sel, app, token)
+            }
         }
 
-        guard let originalMethod = class_getInstanceMethod(delegateClass, originalSelector) else {
-            // No existing implementation — add ours directly under the original selector.
-            class_addMethod(
-                delegateClass,
-                originalSelector,
-                method_getImplementation(swizzledMethod),
-                method_getTypeEncoding(swizzledMethod)
-            )
-            hasSwizzled = true
-            return
+        let newIMP = imp_implementationWithBlock(block)
+
+        if let existingMethod = class_getInstanceMethod(delegateClass, sel) {
+            method_setImplementation(existingMethod, newIMP)
+        } else {
+            // No existing implementation — add directly.
+            // Type encoding: v=void @=id(self) :=SEL @=id(UIApplication) @=id(Data)
+            class_addMethod(delegateClass, sel, newIMP, "v@:@@")
         }
 
-        // Add the swizzled method to the delegate class under its own selector.
-        class_addMethod(
-            delegateClass,
-            swizzledSelector,
-            method_getImplementation(swizzledMethod),
-            method_getTypeEncoding(swizzledMethod)
-        )
-
-        guard let addedMethod = class_getInstanceMethod(delegateClass, swizzledSelector) else {
-            return
-        }
-
-        // Exchange: originalSelector IMP ↔ swizzledSelector IMP
-        method_exchangeImplementations(originalMethod, addedMethod)
         hasSwizzled = true
     }
 }
