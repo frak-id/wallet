@@ -30,11 +30,11 @@ export class InteractionContextBuilder {
             merchantId,
         });
 
-        const referrerIdentityGroup = attribution.referrerWallet
-            ? await this.identityRepository.findGroupByIdentity({
-                  type: "wallet",
-                  value: attribution.referrerWallet,
-              })
+        // Get the referrer identity group
+        const referrerIdentityGroup = attribution.referrerIdentity
+            ? await this.identityRepository.findGroupByIdentity(
+                  attribution.referrerIdentity
+              )
             : null;
 
         const { trigger, typeContext } = this.buildTypeSpecific(interaction);
@@ -46,7 +46,6 @@ export class InteractionContextBuilder {
                 attribution: {
                     source: attribution.source,
                     touchpointId: attribution.touchpointId,
-                    referrerWallet: attribution.referrerWallet,
                     referrerIdentityGroupId: referrerIdentityGroup?.id ?? null,
                 },
                 user: {

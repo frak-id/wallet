@@ -113,6 +113,7 @@ export class ArrivalHandler
         if (input.referrerWallet && isAddress(input.referrerWallet)) {
             return {
                 type: "referral_link",
+                v: 1,
                 referrerWallet: input.referrerWallet as Address,
             };
         }

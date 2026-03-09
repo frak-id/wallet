@@ -250,7 +250,6 @@ export class BatchRewardOrchestrator {
                 amount: reward.amount,
                 tokenAddress: resolvedToken,
                 recipientType: reward.recipient as RecipientType,
-                recipientWallet: reward.recipientWallet ?? undefined,
                 touchpointId,
                 interactionLogId,
                 chainDepth: reward.chainDepth,

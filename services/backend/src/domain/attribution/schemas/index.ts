@@ -20,6 +20,7 @@ export type TouchpointSource = Static<typeof TouchpointSourceSchema>;
 export const ReferralLinkSourceDataSchema = t.Union([
     t.Object({
         type: t.Literal("referral_link"),
+        v: t.Union([t.Literal(1), t.Undefined(), t.Null()]),
         referrerWallet: t.Hex(),
     }),
     t.Object({

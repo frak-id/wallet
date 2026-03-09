@@ -1,5 +1,4 @@
 import { and, desc, eq, gt, isNull, lt, or } from "drizzle-orm";
-import type { Address } from "viem";
 import { db } from "../../../infrastructure/persistence/postgres";
 import { touchpointsTable } from "../db/schema";
 import type { TouchpointSource, TouchpointSourceData } from "../schemas/index";
@@ -66,7 +65,7 @@ export class TouchpointRepository {
     async findLatestReferralTouchpoint(params: {
         identityGroupId: string;
         merchantId: string;
-    }): Promise<(Touchpoint & { referrerWallet: Address | null }) | null> {
+    }): Promise<Touchpoint | null> {
         const now = new Date();
 
         const touchpoints = await db
@@ -95,13 +94,7 @@ export class TouchpointRepository {
         const sourceData = touchpoint.sourceData as TouchpointSourceData;
         if (sourceData.type !== "referral_link") return null;
 
-        const referrerWallet =
-            "referrerWallet" in sourceData ? sourceData.referrerWallet : null;
-
-        return {
-            ...touchpoint,
-            referrerWallet,
-        };
+        return touchpoint;
     }
 
     async deleteExpired(): Promise<number> {
