@@ -54,10 +54,9 @@ sed_in_place "s/CFBundleVersion: .*/CFBundleVersion: \"$VERSION\"/" "$TAURI_DIR/
 echo "[sync-version] Updated project.yml"
 
 # 4. Info.plist (CFBundleShortVersionString + CFBundleVersion)
-# PlistBuddy is macOS-only — skip on Linux CI runners
-if [ -f "$INFO_PLIST" ] && [ -x /usr/libexec/PlistBuddy ]; then
-    /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" "$INFO_PLIST"
-    /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $VERSION" "$INFO_PLIST"
+if [ -f "$INFO_PLIST" ]; then
+    sed_in_place "/<key>CFBundleShortVersionString<\/key>/{n;s/<string>.*<\/string>/<string>$VERSION<\/string>/;}" "$INFO_PLIST"
+    sed_in_place "/<key>CFBundleVersion<\/key>/{n;s/<string>.*<\/string>/<string>$VERSION<\/string>/;}" "$INFO_PLIST"
     echo "[sync-version] Updated Info.plist"
 fi
 

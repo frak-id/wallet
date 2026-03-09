@@ -25,10 +25,11 @@ const createTempWalletFixture = () => {
     const scriptsDir = join(walletDir, "scripts");
     const tauriDir = join(walletDir, "src-tauri");
     const appleDir = join(tauriDir, "gen", "apple");
+    const iosDir = join(appleDir, "app_iOS");
     const fakeBinDir = join(tempDir, "bin");
 
     mkdirSync(scriptsDir, { recursive: true });
-    mkdirSync(appleDir, { recursive: true });
+    mkdirSync(iosDir, { recursive: true });
     mkdirSync(fakeBinDir, { recursive: true });
 
     const sourceScript = resolve(thisFileDir, "sync-version.sh");
@@ -75,6 +76,22 @@ const createTempWalletFixture = () => {
             "  base:",
             "    CFBundleShortVersionString: 0.0.35",
             '    CFBundleVersion: "0.0.35"',
+            "",
+        ].join("\n")
+    );
+
+    writeFileSync(
+        join(iosDir, "Info.plist"),
+        [
+            '<?xml version="1.0" encoding="UTF-8"?>',
+            '<plist version="1.0">',
+            "<dict>",
+            "\t<key>CFBundleShortVersionString</key>",
+            "\t<string>0.0.35</string>",
+            "\t<key>CFBundleVersion</key>",
+            "\t<string>0.0.35</string>",
+            "</dict>",
+            "</plist>",
             "",
         ].join("\n")
     );
@@ -150,6 +167,13 @@ test.skipIf(!hasJq)("should sync version with GNU-like sed semantics", () => {
     );
     expect(projectYml).toContain("CFBundleShortVersionString: 1.2.3");
     expect(projectYml).toContain('CFBundleVersion: "1.2.3"');
+
+    const infoPlist = readFileSync(
+        join(tauriDir, "gen", "apple", "app_iOS", "Info.plist"),
+        "utf8"
+    );
+    expect(infoPlist).toContain("<string>1.2.3</string>");
+    expect(infoPlist).not.toContain("<string>0.0.35</string>");
 });
 
 test.skipIf(!hasJq)(
@@ -189,5 +213,11 @@ test.skipIf(!hasJq)(
         );
         expect(projectYml).toContain("CFBundleShortVersionString: 0.0.35");
         expect(projectYml).toContain('CFBundleVersion: "0.0.35"');
+
+        const infoPlist = readFileSync(
+            join(tauriDir, "gen", "apple", "app_iOS", "Info.plist"),
+            "utf8"
+        );
+        expect(infoPlist).toContain("<string>0.0.35</string>");
     }
 );
