@@ -167,8 +167,8 @@ jobs:
 
       - name: "🔥 Write Firebase config"
         run: |
-          VALUE=$(sst shell --stage "$STAGE" -- bash -c 'echo "$SST_RESOURCE_FIREBASE_IOS_CONFIG_BASE64" | jq -r .value')
-          if [ -z "$VALUE" ] || [ "$VALUE" = "null" ]; then
+          VALUE=$(bunx sst secret list --stage "$STAGE" | sed -n 's/^FIREBASE_IOS_CONFIG_BASE64=//p' | tail -1)
+          if [ -z "$VALUE" ]; then
             echo "::error::FIREBASE_IOS_CONFIG_BASE64 not set for stage $STAGE"
             exit 1
           fi
@@ -312,8 +312,8 @@ jobs:
 
       - name: "🔥 Write Firebase config"
         run: |
-          VALUE=$(sst shell --stage "$STAGE" -- bash -c 'echo "$SST_RESOURCE_FIREBASE_ANDROID_CONFIG_BASE64" | jq -r .value')
-          if [ -z "$VALUE" ] || [ "$VALUE" = "null" ]; then
+          VALUE=$(bunx sst secret list --stage "$STAGE" | sed -n 's/^FIREBASE_ANDROID_CONFIG_BASE64=//p' | tail -1)
+          if [ -z "$VALUE" ]; then
             echo "::error::FIREBASE_ANDROID_CONFIG_BASE64 not set for stage $STAGE"
             exit 1
           fi
