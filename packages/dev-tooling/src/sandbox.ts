@@ -18,18 +18,32 @@ async function getAtelierWellKnown(): Promise<AtelierWellKnown | null> {
 export async function getSandboxEnv() {
     const wk = await getAtelierWellKnown();
 
-    const backendUrl =
-        wk?.routes?.dev?.named?.["wallet-backend"] ??
-        process.env.BACKEND_URL ??
-        "https://backend.gcp-dev.frak.id";
-    const walletUrl =
-        wk?.routes?.dev?.named?.wallet ??
-        wk?.routes?.dev?.default ??
-        process.env.FRAK_WALLET_URL ??
-        "https://wallet-dev.frak.id";
-
     return {
-        backendUrl,
-        walletUrl,
+        backendUrl: wk?.routes?.dev?.named?.["wallet-backend"],
+        walletUrl: wk?.routes?.dev?.named?.wallet ?? wk?.routes?.dev?.default,
     };
+}
+
+/**
+ * Read an SST resource value from the environment.
+ *
+ * Handles all SST injection modes:
+ *  - Plain env var (Docker build args, `sst dev` DevCommand environment)
+ *  - `SST_RESOURCE_*` JSON (secrets and Linkables exposed by `sst shell`)
+ */
+export function getSstResource(name: string): string | undefined {
+    const plainValue = process.env[name];
+    if (plainValue) return plainValue;
+
+    const resourceValue = process.env[`SST_RESOURCE_${name}`];
+    if (resourceValue) {
+        try {
+            const parsed = JSON.parse(resourceValue);
+            return parsed.value;
+        } catch {
+            return undefined;
+        }
+    }
+
+    return undefined;
 }

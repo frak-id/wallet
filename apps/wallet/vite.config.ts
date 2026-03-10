@@ -8,6 +8,7 @@ import removeConsole from "vite-plugin-remove-console";
 import tsconfigPaths from "vite-tsconfig-paths";
 import {
     getSandboxEnv,
+    getSstResource,
     lightningCssConfig,
     onwarn,
 } from "../../packages/dev-tooling";
@@ -17,35 +18,6 @@ const DEBUG = JSON.stringify(false);
 const isProd = process.env.STAGE?.includes("prod") ?? false;
 const isTauri = !!process.env.TAURI_CLI_RUNNING;
 const isSandbox = !!process.env.ATELIER_SANDBOX_ID;
-
-/**
- * Get SST secret value - handles both sst dev (plain env) and sst shell (SST_RESOURCE_* JSON format)
- */
-function getSstSecret(name: string): string | undefined {
-    // First check plain env var (from sst dev)
-    const plainValue = process.env[name];
-    if (plainValue) return plainValue;
-
-    // Then check SST resource format (from sst shell)
-    const resourceValue = process.env[`SST_RESOURCE_${name}`];
-    if (resourceValue) {
-        try {
-            const parsed = JSON.parse(resourceValue);
-            return parsed.value;
-        } catch {
-            return undefined;
-        }
-    }
-
-    return undefined;
-}
-
-/**
- * Get env var with fallback for Tauri builds (sst shell doesn't provide non-secret env vars)
- */
-function getEnvWithFallback(name: string, fallback: string): string {
-    return process.env[name] ?? fallback;
-}
 
 export default defineConfig(
     async ({ mode, command }: ConfigEnv): Promise<UserConfig> => {
@@ -57,32 +29,28 @@ export default defineConfig(
             envPrefix: ["VITE_", "TAURI_"],
             define: {
                 "process.env.STAGE": JSON.stringify(
-                    getEnvWithFallback("STAGE", "dev")
+                    getSstResource("STAGE") ?? "dev"
                 ),
                 "process.env.BACKEND_URL": JSON.stringify(
                     sandboxEnv.backendUrl ??
-                        getEnvWithFallback(
-                            "BACKEND_URL",
-                            "https://backend.gcp-dev.frak.id"
-                        )
+                        getSstResource("BACKEND_URL") ??
+                        "https://backend.gcp-dev.frak.id"
                 ),
                 "process.env.ERPC_URL": JSON.stringify(
-                    getEnvWithFallback(
-                        "ERPC_URL",
+                    getSstResource("ERPC_URL") ??
                         "https://erpc.gcp-dev.frak.id/nexus-rpc/evm/"
-                    )
                 ),
                 "process.env.DRPC_API_KEY": JSON.stringify(
-                    getSstSecret("DRPC_API_KEY")
+                    getSstResource("DRPC_API_KEY")
                 ),
                 "process.env.PIMLICO_API_KEY": JSON.stringify(
-                    getSstSecret("PIMLICO_API_KEY")
+                    getSstResource("PIMLICO_API_KEY")
                 ),
                 "process.env.NEXUS_RPC_SECRET": JSON.stringify(
-                    getSstSecret("NEXUS_RPC_SECRET")
+                    getSstResource("NEXUS_RPC_SECRET")
                 ),
                 "process.env.VAPID_PUBLIC_KEY": JSON.stringify(
-                    getSstSecret("VAPID_PUBLIC_KEY")
+                    getSstResource("VAPID_PUBLIC_KEY")
                 ),
                 "process.env.DEBUG": JSON.stringify(DEBUG),
                 "process.env.APP_VERSION": JSON.stringify(
@@ -90,25 +58,21 @@ export default defineConfig(
                 ),
                 "process.env.FRAK_WALLET_URL": JSON.stringify(
                     sandboxEnv.walletUrl ??
-                        getEnvWithFallback(
-                            "FRAK_WALLET_URL",
-                            "https://wallet-dev.frak.id"
-                        )
+                        getSstResource("FRAK_WALLET_URL") ??
+                        "https://wallet-dev.frak.id"
                 ),
                 "process.env.OPEN_PANEL_API_URL": JSON.stringify(
-                    getEnvWithFallback(
-                        "OPEN_PANEL_API_URL",
+                    getSstResource("OPEN_PANEL_API_URL") ??
                         "https://op-api.gcp.frak.id"
-                    )
                 ),
                 "process.env.OPEN_PANEL_WALLET_CLIENT_ID": JSON.stringify(
-                    getSstSecret("OPEN_PANEL_WALLET_CLIENT_ID")
+                    getSstResource("OPEN_PANEL_WALLET_CLIENT_ID")
                 ),
                 "process.env.WEBAUTHN_RP_ID": JSON.stringify(
                     process.env.WEBAUTHN_RP_ID
                 ),
                 "process.env.ANDROID_SHA256_FINGERPRINT": JSON.stringify(
-                    getSstSecret("ANDROID_SHA256_FINGERPRINT")
+                    getSstResource("ANDROID_SHA256_FINGERPRINT")
                 ),
             },
         };

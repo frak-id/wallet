@@ -12,9 +12,9 @@ on:
         required: false
         type: choice
         options:
-          - dev
           - prod
-        default: dev
+          - dev
+        default: prod
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

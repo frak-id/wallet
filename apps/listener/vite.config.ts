@@ -7,6 +7,7 @@ import removeConsole from "vite-plugin-remove-console";
 import tsconfigPaths from "vite-tsconfig-paths";
 import {
     getSandboxEnv,
+    getSstResource,
     lightningCssConfig,
     onwarn,
 } from "../../packages/dev-tooling";
@@ -31,38 +32,38 @@ export default defineConfig(async () => {
                     : ["development"],
         },
         define: {
-            "process.env.STAGE": JSON.stringify(process.env.STAGE),
+            "process.env.STAGE": JSON.stringify(getSstResource("STAGE")),
             "process.env.BACKEND_URL": JSON.stringify(
-                sandboxEnv.backendUrl ?? process.env.BACKEND_URL
+                sandboxEnv.backendUrl ?? getSstResource("BACKEND_URL")
             ),
-            "process.env.ERPC_URL": JSON.stringify(process.env.ERPC_URL),
+            "process.env.ERPC_URL": JSON.stringify(getSstResource("ERPC_URL")),
             "process.env.DRPC_API_KEY": JSON.stringify(
-                process.env.DRPC_API_KEY
+                getSstResource("DRPC_API_KEY")
             ),
             "process.env.PIMLICO_API_KEY": JSON.stringify(
-                process.env.PIMLICO_API_KEY
+                getSstResource("PIMLICO_API_KEY")
             ),
             "process.env.NEXUS_RPC_SECRET": JSON.stringify(
-                process.env.NEXUS_RPC_SECRET
+                getSstResource("NEXUS_RPC_SECRET")
             ),
             "process.env.DEBUG": JSON.stringify(DEBUG),
             "process.env.APP_VERSION": JSON.stringify(
                 process.env.COMMIT_HASH ?? "UNKNOWN"
             ),
             "process.env.FRAK_WALLET_URL": JSON.stringify(
-                sandboxEnv.walletUrl ?? process.env.FRAK_WALLET_URL
+                sandboxEnv.walletUrl ?? getSstResource("FRAK_WALLET_URL")
             ),
             "process.env.OPEN_PANEL_API_URL": JSON.stringify(
-                process.env.OPEN_PANEL_API_URL
+                getSstResource("OPEN_PANEL_API_URL")
             ),
             "process.env.OPEN_PANEL_LISTENER_CLIENT_ID": JSON.stringify(
-                process.env.OPEN_PANEL_LISTENER_CLIENT_ID
+                getSstResource("OPEN_PANEL_LISTENER_CLIENT_ID")
             ),
             "process.env.WEBAUTHN_RP_ID": JSON.stringify(
                 process.env.WEBAUTHN_RP_ID
             ),
             "process.env.ANDROID_SHA256_FINGERPRINT": JSON.stringify(
-                process.env.ANDROID_SHA256_FINGERPRINT
+                getSstResource("ANDROID_SHA256_FINGERPRINT")
             ),
         },
         plugins: [

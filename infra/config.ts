@@ -1,4 +1,4 @@
-import { isProd } from "./utils";
+import { isProd, normalizedStageName } from "./utils";
 
 // Get some info about the deployment env
 const isLocal = $dev ?? false;
@@ -112,3 +112,27 @@ export const openPanelSdkClientId = new sst.Secret("OPEN_PANEL_SDK_CLIENT_ID");
 export const openPanelBusinessClientId = new sst.Secret(
     "OPEN_PANEL_BUSINESS_CLIENT_ID"
 );
+
+/**
+ * Expose stage-dependent computed env vars as SST Linkable resources.
+ *
+ * SST Secrets are already available in `sst shell`, but computed values
+ * like backendUrl are plain JS variables — invisible to SST unless linked.
+ * Using `{ properties: { value } }` so the existing `getSstResource()` helper
+ * can parse them with the same `JSON.parse(env).value` pattern used for secrets.
+ */
+new sst.Linkable("STAGE", {
+    properties: { value: normalizedStageName },
+});
+new sst.Linkable("BACKEND_URL", {
+    properties: { value: backendUrl },
+});
+new sst.Linkable("ERPC_URL", {
+    properties: { value: erpcUrl },
+});
+new sst.Linkable("FRAK_WALLET_URL", {
+    properties: { value: walletUrl },
+});
+new sst.Linkable("OPEN_PANEL_API_URL", {
+    properties: { value: openPanelApiUrl },
+});
