@@ -175,6 +175,20 @@ export function createTauriNotificationAdapter(): NotificationAdapter {
             // miss the first FCM token event from Firebase's MessagingDelegate
             await ensurePushTokenListener();
 
+            // Clear any stale native FCM registration before re-registering.
+            // The Choochmeque plugin hangs on Android if registerForPushNotifications()
+            // is called when a previous registration is still active (e.g. after
+            // reinstall, backend token expiry, or data wipe).
+            try {
+                await withTimeout(
+                    plugin.unregisterForPushNotifications(),
+                    5_000,
+                    "unregisterForPushNotifications (pre-cleanup)"
+                );
+            } catch {
+                // Ignore — no prior registration to clean up
+            }
+
             // registerForPushNotifications returns FCM token on Android,
             // raw APNs hex token on iOS — getFcmToken handles the exchange.
             //
