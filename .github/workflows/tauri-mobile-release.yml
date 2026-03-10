@@ -166,11 +166,9 @@ jobs:
           APPLE_API_KEY_CONTENT: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}
 
       - name: "🔥 Write Firebase config"
-        # sst shell exposes secrets as SST_RESOURCE_* JSON, not raw env vars.
-        # Simpler to extract directly via sst secret list.
         run: |
-          VALUE=$(bunx sst secret list --stage "$STAGE" | sed -n 's/^FIREBASE_IOS_CONFIG_BASE64=//p')
-          if [ -z "$VALUE" ]; then
+          VALUE=$(sst shell --stage "$STAGE" -- bash -c 'echo "$SST_RESOURCE_FIREBASE_IOS_CONFIG_BASE64" | jq -r .value')
+          if [ -z "$VALUE" ] || [ "$VALUE" = "null" ]; then
             echo "::error::FIREBASE_IOS_CONFIG_BASE64 not set for stage $STAGE"
             exit 1
           fi
@@ -314,8 +312,8 @@ jobs:
 
       - name: "🔥 Write Firebase config"
         run: |
-          VALUE=$(bunx sst secret list --stage "$STAGE" | sed -n 's/^FIREBASE_ANDROID_CONFIG_BASE64=//p')
-          if [ -z "$VALUE" ]; then
+          VALUE=$(sst shell --stage "$STAGE" -- bash -c 'echo "$SST_RESOURCE_FIREBASE_ANDROID_CONFIG_BASE64" | jq -r .value')
+          if [ -z "$VALUE" ] || [ "$VALUE" = "null" ]; then
             echo "::error::FIREBASE_ANDROID_CONFIG_BASE64 not set for stage $STAGE"
             exit 1
           fi
