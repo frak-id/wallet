@@ -1,17 +1,20 @@
 # apps/wallet
 
+**Generated:** 2026-03-06
+**Commit:** 03e50a956
+**Branch:** dev
+
 TanStack Router SPA for user wallet. SSR disabled, module-based architecture with service worker.
 
 ## Structure
 
 ```
 app/
-├── module/           # Feature modules (14 modules)
+├── module/           # Feature modules (13 modules)
 │   ├── authentication/ # WebAuthn login/register
 │   ├── biometrics/   # Biometric lock & settings
 │   ├── common/       # Shared components (Header, Nav, Layout)
 │   ├── history/      # Transaction & interaction history
-│   ├── membrs/       # User profile & membership
 │   ├── notification/ # Push notification management
 │   ├── pairing/      # Device pairing (QR + WebSocket)
 │   ├── recovery/     # Account recovery flows
@@ -52,15 +55,9 @@ bun run test:e2e     # Playwright E2E tests
 
 - **Module pattern**: Each feature in `app/module/{name}/` with own components, hooks, utils
 - **Route guards**: Use `_wallet` layout for authenticated routes
-- **i18n**: Translations in `@frak-labs/wallet-shared` (`packages/wallet-shared/src/i18n/locales/`), types via `cd packages/wallet-shared && bun run i18n:types`
+- **i18n**: Translations in `@frak-labs/wallet-shared` (`packages/wallet-shared/src/i18n/locales/`), types via `bun run i18n:types` in root
 - **Service Worker**: Must be built before dev/build (`bun run build:sw`)
-
-## Anti-Patterns
-
-- Direct store subscription (use selectors)
-- Skipping service worker build
-- Adding routes outside file-based routing
-- CSS outside modules (use CSS Modules)
+- **Tauri**: Mobile/desktop support via `src-tauri/`
 
 ## Testing
 
@@ -70,6 +67,5 @@ bun run test:e2e     # Playwright E2E tests
 
 ## Notes
 
-- Tauri support for desktop/mobile builds (`src-tauri/`)
 - PWA detection and safe area handling in `main.tsx`
 - Route typegen is automatic via TanStack Router plugin

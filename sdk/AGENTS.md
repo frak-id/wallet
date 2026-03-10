@@ -9,97 +9,27 @@
          |              \
 @frak-labs/react-sdk    @frak-labs/components
          |
-@frak-labs/legacy (deprecated)
+@frak-labs/legacy (deprecated, ignored by Knip)
 ```
 
 **Build Order:** `rpc -> core -> legacy -> react -> components`
-
-## sdk/core/ - Core SDK
-
-**Entry Points:**
-- `index.ts` - Main exports
-- `actions/index.ts` - Action methods
-- `bundle.ts` - Combined bundle for CDN
-
-**Build Outputs:**
-- NPM: `dist/` (ESM + CJS + types)
-- CDN: `cdn/bundle.js` (IIFE with global `FrakSDK`)
-
-**Action Pattern:**
-```typescript
-async function sendInteraction(
-  client: FrakClient,
-  params: { productId: Hex; interaction: Interaction }
-): Promise<SendInteractionReturnType> {
-  return await client.request({
-    method: "frak_sendInteraction",
-    params: [params.productId, params.interaction],
-  });
-}
-```
-
-## sdk/react/ - React SDK
-
-**Public API:**
-- Providers: `FrakConfigProvider`, `FrakIFrameClientProvider`
-- Hooks: `useWalletStatus()`, `useDisplayModal()`, `useSendTransactionAction()`, `useReferralInteraction()`, `useGetMerchantInformation()`
-
-**Pattern (TanStack Query):**
-```typescript
-// Queries for reads
-export function useWalletStatus(options?: UseQueryOptions) {
-  const client = useFrakClient();
-  return useQuery({
-    queryKey: ["walletStatus"],
-    queryFn: () => watchWalletStatus(client),
-    ...options,
-  });
-}
-
-// Mutations for writes
-export function useSendTransactionAction({
-  mutations,
-}: UseSendTransactionParams = {}) {
-  const client = useFrakClient();
-  return useMutation({
-    ...mutations,
-    mutationKey: ["frak-sdk", "send-transaction"],
-    mutationFn: async (params: SendTransactionParams) => {
-      return sendTransaction(client, params);
-    },
-  });
-}
-```
-
-## sdk/components/ - Web Components
-
-**Components:**
-- `<frak-button-wallet>` - Wallet modal trigger
-- `<frak-button-share>` - Share/referral button
-
-**CDN Usage:**
-```html
-<script type="module" src="https://cdn.jsdelivr.net/npm/@frak-labs/components" defer></script>
-<script>
-window.FrakSetup = { config: { metadata: { name: "My App" } } };
-</script>
-<frak-button-wallet></frak-button-wallet>
-```
+**Linked Packages (Changesets):** `frame-connector`, `core-sdk`, `react-sdk`
 
 ## Build System (tsdown)
 
-**NPM Builds:**
+Uses array configs for dual output (NPM + CDN).
+
+**NPM Builds:** `dist/` (ESM + CJS + types)
 ```typescript
 { format: ["esm", "cjs"], outDir: "dist", dts: true }
 ```
 
-**CDN Builds:**
+**CDN Builds:** `cdn/` (IIFE/ESM, fully bundled)
 ```typescript
 { format: "iife", globalName: "FrakSDK", outDir: "cdn", noExternal: [/.*/] }
 ```
 
-## Package Exports (Development Mode)
-
+**Development Exports:** Monorepo apps use source directly via `"development"` condition.
 ```json
 "exports": {
   ".": {
@@ -109,20 +39,34 @@ window.FrakSetup = { config: { metadata: { name: "My App" } } };
 }
 ```
 
-Monorepo apps use source directly (faster dev), external consumers use built files.
+## Patterns
+
+**Action Pattern (Core):**
+```typescript
+async function sendInteraction(client: FrakClient, params: Params): Promise<Result> {
+  return await client.request({ method: "frak_sendInteraction", params: [params.id, params.data] });
+}
+```
+
+**Hook Pattern (React):**
+```typescript
+export function useWalletStatus(options?: UseQueryOptions) {
+  const client = useFrakClient();
+  return useQuery({ queryKey: ["walletStatus"], queryFn: () => watchWalletStatus(client), ...options });
+}
+```
 
 ## Adding New Action
 
-1. Define types in `sdk/core/src/types/rpc/*.ts`
-2. Add to `IFrameRpcSchema`
-3. Implement in `sdk/core/src/actions/myAction.ts`
-4. Export from `sdk/core/src/actions/index.ts`
-5. Create React hook in `sdk/react/src/hook/useMyAction.ts`
+1. Define types in `sdk/core/src/types/rpc/*.ts` and add to `IFrameRpcSchema`.
+2. Implement in `sdk/core/src/actions/myAction.ts`.
+3. Export from `sdk/core/src/actions/index.ts`.
+4. Create React hook in `sdk/react/src/hook/useMyAction.ts`.
 
 ## Commands
 
 ```bash
-bun run build:sdk        # Build all SDKs
+bun run build:sdk        # Build all SDKs sequentially
 bun run test --project core-sdk-unit
 bun run test --project react-sdk-unit
 ```

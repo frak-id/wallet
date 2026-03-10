@@ -60,6 +60,6 @@ component/
 
 ## Notes
 
-- 95 TS/TSX files
+- 95 TS/TSX files total
 - Used across all frontend apps
 - ⚠️ AlertDialog also exists in wallet-shared (duplication)

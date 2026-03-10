@@ -10,7 +10,8 @@ extensions/
 │   ├── blocks/
 │   │   ├── listener.liquid     # HEAD block: loads Frak SDK, sets global config
 │   │   ├── referral_button.liquid  # Share button web component
-│   │   └── wallet_button.liquid    # Wallet button web component
+│   │   ├── wallet_button.liquid    # Wallet button web component
+│   └── open_in_app.liquid      # Open in app web component
 │   ├── locales/                # en.default.json, fr.json
 │   ├── assets/customizations.css
 │   └── shopify.extension.toml
@@ -29,8 +30,8 @@ Theme blocks (listener.liquid)
   → Sets window.FrakSetup config (wallet URL, shop metadata, appearance)
   → Reads metafields: frak.appearance, frak.modal_i18n, frak.merchant_id
 
-referral_button.liquid / wallet_button.liquid
-  → Renders <frak-button-share> / <frak-button-wallet> web components
+referral_button.liquid / wallet_button.liquid / open_in_app.liquid
+  → Renders <frak-button-share> / <frak-button-wallet> / <frak-open-in-app> web components
   → User interaction → stores token in sessionStorage
 
 checkout-web-pixel

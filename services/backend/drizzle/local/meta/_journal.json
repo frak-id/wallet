@@ -43,6 +43,13 @@
             "when": 1771954288683,
             "tag": "0005_same_ikaris",
             "breakpoints": true
+        },
+        {
+            "idx": 6,
+            "version": "7",
+            "when": 1772804003813,
+            "tag": "0006_sudden_skin",
+            "breakpoints": true
         }
     ]
 }

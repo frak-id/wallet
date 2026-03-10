@@ -29,7 +29,6 @@ export { useAddToHomeScreenPrompt } from "./hook/useAddToHomeScreenPrompt";
 export { useGetSafeSdkSession } from "./hook/useGetSafeSdkSession";
 export { useMountedTimeout } from "./hook/useMountedTimeout";
 export { useSessionFlag } from "./hook/useSessionFlag";
-
 // Lib
 export {
     inAppRedirectUrl,
@@ -38,6 +37,9 @@ export {
 } from "./lib/inApp";
 export { ua } from "./lib/ua";
 export { isWebAuthNSupported } from "./lib/webauthn";
+// Notification
+export type { NotificationAdapter } from "./notification";
+export { getNotificationAdapter } from "./notification";
 
 // Query Keys
 export { balanceKey } from "./queryKeys/balance";

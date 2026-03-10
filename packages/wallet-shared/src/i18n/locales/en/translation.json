@@ -179,40 +179,6 @@
             "title": "Welcome in your wallet",
             "text": "This wallet will enable you to collect all the rewards and much more."
         },
-        "membrs": {
-            "introduction": {
-                "title": "Exclusive access to your favorite stars and franchise",
-                "button": "Enter"
-            },
-            "profile": {
-                "title": "Custom your profile",
-                "text1": "Custom your profile to join creators’ community and be rewarded for your engagement",
-                "text2": "Benefit from the advantages offered by designers and their partners",
-                "edit": "Edit my profile",
-                "form": {
-                    "name": "Enter username",
-                    "nameRequired": "Username is required",
-                    "nameLength": "Minimum username length is 3",
-                    "button": "Save",
-                    "later": "Later",
-                    "error": "An error occurred while saving your profile. Please try again."
-                },
-                "avatar": {
-                    "title": "Choose profile picture",
-                    "upload": "Upload or drag profile picture",
-                    "zoom": "Zoom",
-                    "save": "Save",
-                    "take": "Take photo with camera",
-                    "stop": "Stop camera",
-                    "capture": "Capture photo"
-                }
-            },
-            "fanclub": {
-                "title": "Fanclub",
-                "text": "Discover the Fanclub of {{productName}}",
-                "button": "Discover the Fanclub"
-            }
-        },
         "pairing": {
             "title": "Confirm device pairing",
             "text": "You're about to connect this device to your account",

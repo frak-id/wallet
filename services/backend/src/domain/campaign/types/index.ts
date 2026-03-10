@@ -48,7 +48,6 @@ export type PurchaseContext = {
 type AttributionContext = {
     source: "referral_link" | "organic" | "paid_ad" | "direct" | null;
     touchpointId: string | null;
-    referrerWallet: Address | null;
     referrerIdentityGroupId: string | null;
     utmSource?: string;
     utmMedium?: string;
@@ -95,7 +94,6 @@ export type RuleContext = {
 export type CalculatedReward = {
     recipient: RecipientType;
     recipientIdentityGroupId: string;
-    recipientWallet: Address | null;
     type: AssetType;
     amount: number;
     token: Address | null;

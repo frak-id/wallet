@@ -5,31 +5,25 @@ import { useNotificationContext } from "@/module/notification/context/Notificati
  * Get the notification setup status
  */
 export function useNotificationSetupStatus() {
+    const { adapter, isSubscribed } = useNotificationContext();
+
     /**
      * Ask for the permissions to display notification
      */
     const askForNotificationPermission = useCallback(async () => {
         try {
-            const result = await Notification.requestPermission();
-            console.log("Notification permission: ", result);
+            await adapter.requestPermission();
         } catch (e) {
             console.error("Failed to request notification permission: ", e);
         }
-    }, []);
+    }, [adapter]);
 
     /**
      * Check if notification are supported or not
      */
     const isSupported = useMemo(() => {
-        if (typeof window === "undefined" || typeof navigator === "undefined") {
-            return false;
-        }
-        return (
-            "serviceWorker" in navigator &&
-            "PushManager" in window &&
-            "showNotification" in ServiceWorkerRegistration.prototype
-        );
-    }, []);
+        return adapter.isSupported();
+    }, [adapter]);
 
     /**
      * Fetch the status
@@ -39,15 +33,10 @@ export function useNotificationSetupStatus() {
             return { isSupported, isNotificationAllowed: false };
         }
 
-        const notificationPermission = Notification.permission;
-        const isNotificationAllowed = notificationPermission === "granted";
+        const permissionStatus = adapter.getPermissionStatus();
+        const isNotificationAllowed = permissionStatus === "granted";
         return { isSupported, isNotificationAllowed };
-    }, [isSupported]);
-
-    /**
-     * The current subscription from the context
-     */
-    const { subscription } = useNotificationContext();
+    }, [isSupported, adapter]);
 
     return useMemo(() => {
         if (!statusResult?.isSupported) {
@@ -58,7 +47,7 @@ export function useNotificationSetupStatus() {
             isSupported: true,
             isNotificationAllowed: statusResult.isNotificationAllowed,
             askForNotificationPermission,
-            subscription,
+            isSubscribed,
         };
-    }, [statusResult, subscription, askForNotificationPermission]);
+    }, [statusResult, isSubscribed, askForNotificationPermission]);
 }

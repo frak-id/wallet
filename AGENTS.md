@@ -1,93 +1,94 @@
 # AGENTS.md
 
-**Generated:** 2026-02-25  
-**Commit:** e83f896b4  
+**Generated:** 2026-03-06
+**Commit:** 03e50a956
 **Branch:** dev
 
 ## Overview
 
-Frak Wallet monorepo - Web3 referral tracking & rewards infrastructure. TypeScript/React/Bun stack with Account Abstraction (ERC-4337) + WebAuthn authentication.
+Frak Wallet monorepo — Web3 referral tracking & rewards infrastructure. TypeScript/React/Bun stack with Account Abstraction (ERC-4337) + WebAuthn authentication. 3166 files, 226k TS/TSX lines.
 
 ## Structure
 
 ```
 frak-wallet/
 ├── apps/
-│   ├── wallet/        # TanStack Router SPA - user wallet (SSR disabled)
-│   ├── business/      # TanStack Router SPA - business dashboard
-│   ├── listener/      # Iframe RPC handler for SDK communication
-│   └── shopify/       # React Router v7 embedded Shopify app
+│   ├── wallet/        # TanStack Router SPA - user wallet (SSR disabled, 14 modules)
+│   ├── business/      # TanStack Router SPA - business dashboard (10 modules, largest app)
+│   ├── listener/      # Iframe RPC handler for SDK communication (13 modules)
+│   └── shopify/       # React Router v7 embedded Shopify app (ONLY non-TanStack app)
 ├── packages/
-│   ├── wallet-shared/ # Shared code for wallet + listener ONLY
-│   ├── ui/            # Radix-based component library
+│   ├── wallet-shared/ # Shared code for wallet + listener ONLY (201 files, 15 domains)
+│   ├── ui/            # Radix-based component library (22 components)
 │   ├── app-essentials/ # Core blockchain + WebAuthn config
 │   ├── client/        # Elysia Eden Treaty API client
-│   ├── dev-tooling/   # Vite configs, Lightning CSS
+│   ├── dev-tooling/   # Vite configs, Lightning CSS (centralized for all apps)
 │   ├── rpc/           # Published as @frak-labs/frame-connector
-│   └── test-foundation/ # Vitest shared setup + mocks
+│   └── test-foundation/ # Vitest shared setup + mocks (10 projects)
 ├── sdk/
-│   ├── core/          # @frak-labs/core-sdk (NPM + CDN IIFE)
-│   ├── react/         # @frak-labs/react-sdk (NPM only)
-│   ├── components/    # @frak-labs/components (Preact Web Components)
-│   └── legacy/        # @frak-labs/nexus-sdk (backward compat)
+│   ├── core/          # @frak-labs/core-sdk (NPM ESM/CJS + CDN IIFE as FrakSDK)
+│   ├── react/         # @frak-labs/react-sdk (NPM only, 10 hooks)
+│   ├── components/    # @frak-labs/components (Preact Web Components, CDN ESM split)
+│   └── legacy/        # @frak-labs/nexus-sdk (deprecated, IIFE as NexusSDK)
 ├── services/
-│   └── backend/       # Elysia.js API with DDD structure
+│   └── backend/       # Elysia.js API with DDD (11 domains + orchestration layer)
 ├── infra/             # SST v3 (AWS) + Pulumi (GCP)
-└── example/           # Integration examples
+└── example/           # Integration examples (showcase, vanilla-js, wallet-ethcc)
 ```
 
 ## Where to Look
 
 | Task | Location | Notes |
 |------|----------|-------|
-| Wallet features | `apps/wallet/app/module/` | Module-based architecture |
-| Business dashboard | `apps/business/src/module/` | SPA, TanStack Router |
-| SDK iframe communication | `apps/listener/app/module/hooks/` | RPC message handlers |
-| Shared wallet logic | `packages/wallet-shared/src/` | Stores, auth, blockchain |
+| Wallet features | `apps/wallet/app/module/` | Module-based: auth, tokens, wallet, pairing, recovery |
+| Business dashboard | `apps/business/src/module/` | campaigns (29 hooks), merchant (17 hooks), product (29 hooks) |
+| SDK iframe comms | `apps/listener/app/module/hooks/` | 14 RPC message handlers |
+| Shared wallet logic | `packages/wallet-shared/src/` | 4 Zustand stores, WebAuthn, smart wallet |
 | UI components | `packages/ui/component/` | Radix-based, CSS Modules |
-| Core SDK actions | `sdk/core/src/actions/` | Blockchain interactions |
-| React hooks | `sdk/react/src/hook/` | 10 hooks + providers |
-| Backend domains | `services/backend/src/domain/` | auth, wallet, rewards, campaign, etc. |
-| Shopify app | `apps/shopify/app/` | React Router v7, Polaris v13 |
-| Shopify services | `apps/shopify/app/services.server/` | Shopify GraphQL, merchant resolution |
-| Shopify extensions | `apps/shopify/extensions/` | Theme blocks, checkout pixel |
-| Vite/CSS config | `packages/dev-tooling/src/vite.ts` | Lightning CSS central config |
-| Test mocks | `packages/test-foundation/src/` | Wagmi, WebAuthn, router mocks |
+| Blockchain config | `packages/app-essentials/src/blockchain/` | ABIs, addresses, transports, Wagmi config |
+| Core SDK actions | `sdk/core/src/actions/` | 14 actions: displayModal, sendInteraction, etc. |
+| React hooks | `sdk/react/src/hook/` | 10 hooks wrapping core-sdk via TanStack Query |
+| Backend domains | `services/backend/src/domain/` | auth, wallet, rewards, campaign, identity, etc. |
+| Cross-domain logic | `services/backend/src/orchestration/` | 11+ orchestrators (NEVER in services) |
+| Shopify app | `apps/shopify/app/` | React Router v7, Polaris v13, relative imports |
+| Shopify services | `apps/shopify/app/services.server/` | 11 server services, Shopify GraphQL |
+| Shopify extensions | `apps/shopify/extensions/` | Theme blocks (Liquid) + checkout pixel |
+| Vite/CSS config | `packages/dev-tooling/src/vite.ts` | Lightning CSS, centralized browser targets |
+| Test mocks | `packages/test-foundation/src/` | Wagmi, WebAuthn, router, DOM mocks |
+| Infrastructure | `infra/gcp/` | K8s services, Docker images, secrets |
 
 ## Commands
 
 ```bash
 # Package manager: Bun ONLY (never npm/pnpm/yarn)
 bun dev                    # Start SST dev server
-bun run build:sdk          # Build all SDK packages
+bun run build:sdk          # Build all SDK packages (rpc → core → legacy → react → components)
 bun run build:infra        # Build infrastructure
 
 # Code quality
 bun run lint               # Biome lint
 bun run format             # Biome format (4-space, double quotes)
 bun run typecheck          # TypeScript check all packages
+bun run knip               # Dead code elimination
 
 # Testing - CRITICAL: use "bun run test", NOT "bun test"
 bun run test               # All 10 Vitest projects in parallel
 bun run test --project wallet-unit  # Single project
 bun run test:coverage      # With coverage (40% target)
-cd apps/wallet && bun run test:e2e  # Playwright E2E
+cd apps/wallet && bun run test:e2e  # Playwright E2E (19 specs)
 
 # Deployment
 bun run deploy             # AWS dev
 bun run deploy:prod        # AWS prod
-bun run deploy-gcp:staging # GCP staging
-bun run deploy-gcp:prod    # GCP prod (all production apps)
+bun run deploy-gcp:staging # GCP staging (backend)
+bun run deploy-gcp:prod    # GCP prod (all production apps on GKE)
 ```
 
 ## Quality Gates (Mandatory)
 
 Before completing any task, **always run**:
 ```bash
-bun run format             # Biome format
-bun run lint               # Biome lint
-bun run typecheck          # TypeScript check all packages
-bun run test               # Vitest (all projects)
+bun run format && bun run lint && bun run typecheck && bun run test
 ```
 All four must pass. Do not commit or report completion with failures.
 
@@ -95,17 +96,18 @@ All four must pass. Do not commit or report completion with failures.
 
 ### TypeScript
 - `type` over `interface`, no enums (use maps)
-- Absolute imports: `@/...` paths
-- No `as any`, `@ts-ignore`, `@ts-expect-error`
+- Absolute imports: `@/...` paths (exception: Shopify uses relative)
+- No `as any`, `@ts-ignore`, `@ts-expect-error`, `!` non-null assertion
+- `useImportType` / `useExportType` enforced by Biome
 
 ### Styling
-- **CSS Modules only** - NO Tailwind
-- Lightning CSS (100x faster than PostCSS)
+- **CSS Modules only** — NO Tailwind
+- Lightning CSS via `packages/dev-tooling/src/vite.ts` (all Vite apps)
 - BEM naming: `block__element--modifier`
 - Browser targets: Chrome 100+, Safari 14+, Firefox 91+, Edge 100+
 
 ### Formatting (Biome)
-- 4-space indent, double quotes, semicolons
+- 4-space indent, double quotes, semicolons, LF
 - ES5 trailing commas
 - Cognitive complexity limit: 16
 
@@ -113,7 +115,7 @@ All four must pass. Do not commit or report completion with failures.
 - Functional programming, avoid classes
 - Early returns, async/await (no callbacks)
 - Event handlers: `handle` prefix (`handleClick`)
-- Named exports for components
+- Named exports only (no default exports)
 
 ### State Management
 - Zustand everywhere with persist middleware
@@ -123,7 +125,6 @@ All four must pass. Do not commit or report completion with failures.
 ### Commit Messages
 - **Always prefix with emoji** matching the change type
 - Concise, no conventional commit prefix (`fix:`, `feat:`) — emoji replaces it
-- Match existing patterns from `git log`
 
 | Emoji | Usage |
 |-------|-------|
@@ -147,87 +148,79 @@ All four must pass. Do not commit or report completion with failures.
 | Tailwind | CSS Modules + Lightning CSS |
 | `try/catch` everywhere | Only for abstraction/translation |
 | Classes | Functional patterns preferred |
-| Type suppression | No `as any`, `@ts-ignore` |
+| `as any`, `@ts-ignore`, `!` | Type safety is non-negotiable |
 | Entire store subscription | Performance killer |
+| `interface` | Use `type` (interface only for declaration merging) |
+| Cross-domain service imports | Use orchestration layer (backend) |
+| `<a>` tags in Shopify | Use `Link` — embedded app loses session |
 
 ## Testing
 
 - **10 Vitest projects**: wallet, listener, business, shopify, wallet-shared, ui, core-sdk, react-sdk, components, backend
-- **Frontend**: jsdom environment, mock Wagmi/WebAuthn/TanStack Query
-- **Backend**: Node environment, mock Viem/Drizzle/Bun runtime
-- **Shopify**: Node environment, co-located `*.test.ts` files
+- **Frontend**: jsdom, mock Wagmi/WebAuthn/TanStack Query, concurrent
+- **Backend**: Node environment, sequential (stateful mocks)
+- **Shopify**: jsdom, co-located `*.test.ts`, React Router v7
 - **E2E**: Playwright (19 specs) in `apps/wallet/tests/specs/`
 - **Mocks**: Centralized in `packages/test-foundation/src/`
+- **Fixtures**: `test.extend()` with auto-reset stores per test
 - **Naming**: "should [behavior] when [condition]"
+- **Coverage**: V8, 40% threshold, disabled locally (CI-only)
 
 ## SDK Build (tsdown)
 
-All SDK packages use tsdown (Rolldown-powered):
+All SDK packages use tsdown (Rolldown-powered). Build is sequential:
+
+`rpc → core → legacy → react → components`
 
 | Package | NPM Output | CDN Output | Global |
 |---------|------------|------------|--------|
+| frame-connector | ESM+CJS → `dist/` | — | — |
 | core | ESM+CJS → `dist/` | IIFE → `cdn/` | `FrakSDK` |
-| react | ESM+CJS → `dist/` | - | - |
-| components | ESM → `dist/` | ESM split → `cdn/` | - |
-| legacy | - | IIFE → `dist/bundle/` | `NexusSDK` |
+| react | ESM+CJS → `dist/` | — | — |
+| components | ESM → `dist/` | ESM split → `cdn/` | — |
+| legacy | — | IIFE → `dist/bundle/` | `NexusSDK` |
 
-Build order: `rpc → core → legacy → react → components`
+- **Development exports**: `"development"` condition → source files for fast monorepo dev
+- **CDN bundles**: `noExternal: [/.*/]` — fully self-contained
+- **Linked versions**: frame-connector, core-sdk, react-sdk (Changesets)
 
 ## Infrastructure
 
 - **AWS (SST v3)**: Static sites (admin, examples), dev deployments
-- **GCP (Pulumi)**: Production (backend, wallet, business, listener) on GKE
-- **Stages**: dev, prod, gcp-staging, gcp-production
-- **Docker**: Multi-stage with SDK pre-building optimization (shared base image)
+- **GCP (Pulumi)**: Production apps on GKE (backend, wallet, business, listener)
+- **Stages**: `$dev` (local), dev, prod (AWS), gcp-staging, gcp-production (GCP)
+- **Docker**: `Dockerfile.base` pre-builds SDK (shared layer), app Dockerfiles extend it
+- **Frontend secrets**: BuildKit `--mount=type=secret` (build-time only, never in runtime)
+- **Backend secrets**: K8s env vars from GCP Secret Manager
+- **DB migrations**: `KubernetesJob` runs before backend deploy
+- **Listener routing**: Served at `/listener` path on wallet ingress (not standalone)
 
-## Custom Agents
+## CI/CD
 
-Purpose-based agents in `.opencode/agent/`:
+- **deploy.yml**: Path-based triggers, `main` → prod, `dev` → staging
+- **release.yml**: Changesets → npm publish + jsDelivr cache purge
+- **beta-release.yml**: SDK changes on `dev` → beta publish with content hash
+- **tauri-mobile-release.yml**: Manual trigger → iOS (TestFlight) + Android (Play Store)
 
-### Orchestrator
+## Hierarchical AGENTS.md
 
-| Agent | Purpose | Activation |
-|-------|---------|------------|
-| `frak-builder` | Plans, delegates, executes complex tasks | Include `frakwork` or `fw` in prompt |
+Domain-specific context per directory (20 sub-files):
 
-**FrakBuilder** auto-delegates to specialists, runs parallel tasks, and enforces todo completion (Sisyphus mode).
-
-### Specialists
-
-| Agent | Purpose | When to Use |
-|-------|---------|-------------|
-| `explore` | Fast codebase search | Finding files, patterns, quick navigation |
-| `architect` | Strategic thinking | Complex bugs, design decisions, code review |
-| `librarian` | Knowledge research | Documentation, implementation examples |
-| `frontend-builder` | UI/UX implementation | Components, styling, accessibility |
-| `backend-builder` | API & data work | Endpoints, schemas, business logic |
-| `infra-ops` | Infrastructure | Deployment, config, CI/CD |
-
-**Domain-specific context** in `AGENTS.md` files per directory:
-- `services/backend/AGENTS.md` - Backend patterns
-- `apps/wallet/AGENTS.md` - Wallet app patterns
-- `apps/business/AGENTS.md` - Business dashboard patterns
-- `apps/listener/AGENTS.md` - Listener patterns
-- `apps/shopify/AGENTS.md` - Shopify app patterns (React Router v7, Polaris)
-- `apps/shopify/app/services.server/AGENTS.md` - Shopify server services
-- `apps/shopify/app/components/AGENTS.md` - Shopify Polaris components
-- `apps/shopify/app/hooks/AGENTS.md` - Shopify client hooks
-- `apps/shopify/app/routes/AGENTS.md` - Shopify route patterns
-- `apps/shopify/extensions/AGENTS.md` - Shopify theme + pixel extensions
-- `sdk/AGENTS.md` - SDK architecture
-- `sdk/core/AGENTS.md`, `sdk/react/AGENTS.md`, `sdk/components/AGENTS.md` - SDK package specifics
-- `packages/AGENTS.md` - Shared packages overview
-- `packages/wallet-shared/AGENTS.md`, `packages/ui/AGENTS.md` - Package specifics
-- `packages/app-essentials/AGENTS.md` - Blockchain + WebAuthn config
-- `packages/test-foundation/AGENTS.md` - Test infrastructure
-- `infra/AGENTS.md` - Infrastructure patterns
+| Area | Files |
+|------|-------|
+| Apps | `apps/{wallet,business,listener,shopify}/AGENTS.md` |
+| Shopify sub | `apps/shopify/app/{services.server,components,hooks,routes}/AGENTS.md`, `apps/shopify/extensions/AGENTS.md` |
+| SDK | `sdk/AGENTS.md`, `sdk/{core,react,components}/AGENTS.md` |
+| Packages | `packages/AGENTS.md`, `packages/{wallet-shared,ui,app-essentials,test-foundation}/AGENTS.md` |
+| Backend | `services/backend/AGENTS.md` |
+| Infra | `infra/AGENTS.md` |
 
 ## Notes
 
 - Service worker required before wallet dev/build: `bun run build:sw`
 - TanStack Router typegen before typecheck: runs automatically
 - Drizzle schemas: `src/domain/*/db/schema.ts` pattern
-- Linked packages (Changesets): frame-connector, core-sdk, react-sdk
-- Workspace exports use `development` condition for source in monorepo
-- Vite aliased to `rolldown-vite` (`npm:rolldown-vite@^7.3.1`) — faster Rust-based bundler
-- Shopify app uses relative imports (exception to `@/...` paths convention)
+- Vite aliased to `rolldown-vite` (`npm:rolldown-vite@^7.3.1`) — Rust-based bundler
+- `@wagmi/connectors` stubbed in resolutions (avoids MetaMask SDK bloat)
+- Shopify app uses relative imports (exception to `@/...` convention)
+- Backend uses `@backend-utils`, `@backend-infrastructure/*`, `@backend-domain/*` path aliases

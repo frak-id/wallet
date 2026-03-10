@@ -45,7 +45,8 @@ echo "[sync-version] Updated tauri.conf.json"
 
 # 2. Cargo.toml
 sed_in_place "s/^version = \".*\"/version = \"$VERSION\"/" "$TAURI_DIR/Cargo.toml"
-echo "[sync-version] Updated Cargo.toml"
+cargo update --manifest-path "$TAURI_DIR/Cargo.toml" --package app 2>/dev/null || true
+echo "[sync-version] Updated Cargo.toml + Cargo.lock"
 
 # 3. project.yml (CFBundleShortVersionString + CFBundleVersion)
 sed_in_place "s/CFBundleShortVersionString: .*/CFBundleShortVersionString: $VERSION/" "$TAURI_DIR/gen/apple/project.yml"
@@ -53,10 +54,9 @@ sed_in_place "s/CFBundleVersion: .*/CFBundleVersion: \"$VERSION\"/" "$TAURI_DIR/
 echo "[sync-version] Updated project.yml"
 
 # 4. Info.plist (CFBundleShortVersionString + CFBundleVersion)
-# PlistBuddy is macOS-only — skip on Linux CI runners
-if [ -f "$INFO_PLIST" ] && [ -x /usr/libexec/PlistBuddy ]; then
-    /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" "$INFO_PLIST"
-    /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $VERSION" "$INFO_PLIST"
+if [ -f "$INFO_PLIST" ]; then
+    sed_in_place "/<key>CFBundleShortVersionString<\/key>/{n;s/<string>.*<\/string>/<string>$VERSION<\/string>/;}" "$INFO_PLIST"
+    sed_in_place "/<key>CFBundleVersion<\/key>/{n;s/<string>.*<\/string>/<string>$VERSION<\/string>/;}" "$INFO_PLIST"
     echo "[sync-version] Updated Info.plist"
 fi
 

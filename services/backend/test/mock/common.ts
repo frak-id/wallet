@@ -383,8 +383,38 @@ export const webPushMocks = {
 vi.mock("web-push", () => webPushMocks);
 
 /* -------------------------------------------------------------------------- */
+/*                          Firebase Admin FCM Mock                           */
+/* -------------------------------------------------------------------------- */
+
+export const fcmMocks = {
+    sendEachForMulticast: vi.fn(() =>
+        Promise.resolve({
+            successCount: 0,
+            failureCount: 0,
+            responses: [],
+        })
+    ),
+};
+
+vi.mock("firebase-admin/app", () => ({
+    getApps: vi.fn(() => [{ name: "mock-app" }]),
+    initializeApp: vi.fn(() => ({ name: "mock-app" })),
+    cert: vi.fn((account: unknown) => account),
+}));
+
+vi.mock("firebase-admin/messaging", () => ({
+    getMessaging: vi.fn(() => ({
+        sendEachForMulticast: fcmMocks.sendEachForMulticast,
+    })),
+}));
+
+/* -------------------------------------------------------------------------- */
 /*                            Notification Context                            */
 /* -------------------------------------------------------------------------- */
+
+export const fcmSenderMocks = {
+    send: vi.fn(() => Promise.resolve([])),
+};
 
 export const notificationServiceMocks = {
     cleanupExpiredTokens: vi.fn(() => Promise.resolve()),
@@ -467,6 +497,7 @@ vi.mock("../../src/domain/notifications", () => ({
     },
     notificationMacro: notificationMacroMock,
     pushTokensTable: {},
+    FcmSender: vi.fn(() => fcmSenderMocks),
     SendNotificationPayloadDto,
     SendNotificationTargetsDto,
 }));

@@ -1,24 +1,29 @@
 # apps/business
 
-TanStack Router SPA dashboard for business users. Campaign management, product setup, analytics. Served via nginx in production.
+**Generated:** 2026-03-06
+**Commit:** 03e50a956
+**Branch:** dev
+
+Largest app in monorepo (345 TS/TSX files). TanStack Router SPA dashboard for business users. Campaign management, product setup, analytics. Served via nginx in production.
 
 ## Structure
 
 ```
 src/
-├── module/           # Feature modules
-│   ├── campaigns/    # Campaign creation, management, analytics
+├── module/           # Feature modules (10 modules)
+│   ├── campaigns/    # 29 hooks, 15 components
 │   ├── common/       # Shared components, hooks, layouts
 │   ├── dashboard/    # Overview dashboard
 │   ├── embedded/     # Embedded integration views
 │   ├── forms/        # Form components
 │   ├── login/        # Authentication flows
 │   ├── members/      # Team member management
-│   ├── merchant/     # Merchant management (17 hooks)
-│   ├── product/      # Product setup, configuration
+│   ├── merchant/     # 17 hooks
+│   ├── product/      # 29 hooks
 │   └── settings/     # Business settings
 ├── routes/           # TanStack Router file-based routes
-├── stores/           # Zustand stores
+│   └── _restricted/  # Protected routes layout
+├── stores/           # Zustand stores (separate from modules)
 ├── styles/           # Global CSS
 └── utils/            # App-level utilities
 ```
@@ -27,12 +32,11 @@ src/
 
 | Task | Location |
 |------|----------|
-| Campaign logic | `src/module/campaigns/` (29 hooks, 15 components) |
-| Product setup | `src/module/product/` (29 hooks) |
+| Campaign logic | `src/module/campaigns/` |
+| Product setup | `src/module/product/` |
+| Protected routes | `src/routes/_restricted/` |
 | Root component | `src/routes/__root.tsx` |
-| HTML shell | `index.html` |
 | Nginx config | `nginx.conf` |
-| Stores | `src/stores/` |
 
 ## Commands
 
@@ -47,16 +51,14 @@ bun run test         # Unit tests (business-unit project)
 
 - **SPA**: Static HTML shell in `index.html`, client-side routing
 - **Module pattern**: Features in `src/module/{name}/`
-- **Stores**: Zustand with persist, located in `src/stores/`
 - **Production**: nginx serves static files with pre-compressed gzip
+- **Config**: Baked at build time via Vite `define` (no runtime env vars)
 
-## Anti-Patterns
+## Testing
 
-- Direct DOM manipulation (use React state)
-- Entire store subscriptions
+- Vitest with jsdom, co-located `*.test.ts` files
+- Mocks from `@frak-labs/test-foundation`
 
 ## Notes
 
-- Largest app in monorepo (345 TS/TSX files)
-- Config baked at build time via Vite `define` (no runtime env vars)
 - Dockerfile uses nginx:1.29.1 with pre-compressed static assets

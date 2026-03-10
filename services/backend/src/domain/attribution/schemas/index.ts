@@ -17,10 +17,20 @@ export type TouchpointSource = Static<typeof TouchpointSourceSchema>;
 // TOUCHPOINT SOURCE DATA SCHEMAS (Discriminated Union)
 // =============================================================================
 
-export const ReferralLinkSourceDataSchema = t.Object({
-    type: t.Literal("referral_link"),
-    referrerWallet: t.Hex(),
-});
+export const ReferralLinkSourceDataSchema = t.Union([
+    t.Object({
+        type: t.Literal("referral_link"),
+        v: t.Union([t.Literal(1), t.Undefined(), t.Null()]),
+        referrerWallet: t.Hex(),
+    }),
+    t.Object({
+        type: t.Literal("referral_link"),
+        v: t.Literal(2),
+        referrerClientId: t.String(),
+        referrerMerchantId: t.String(),
+        referralTimestamp: t.Optional(t.Number()),
+    }),
+]);
 export type ReferralLinkSourceData = Static<
     typeof ReferralLinkSourceDataSchema
 >;

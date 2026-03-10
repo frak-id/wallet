@@ -4,16 +4,25 @@ import type { Address } from "viem";
 import { sendNotification, setVapidDetails } from "web-push";
 import { pushTokensTable } from "../db/schema";
 import type { SendNotificationPayload } from "../dto/SendNotificationDto";
+import type { FcmSender } from "./FcmSender";
 
 type PushToken = typeof pushTokensTable.$inferSelect;
 
+/** Web push token with guaranteed non-null crypto keys */
+type WebPushToken = PushToken & { keyP256dh: string; keyAuth: string };
+
+function isValidWebPushToken(token: PushToken): token is WebPushToken {
+    return token.keyP256dh !== null && token.keyAuth !== null;
+}
+
+/** Status codes indicating a permanently dead web-push subscription */
+function isGoneStatus(statusCode: number): boolean {
+    return statusCode === 404 || statusCode === 410;
+}
+
 export class NotificationsService {
-    /**
-     * Send a notification to a list of wallets
-     * @param wallets - The wallets to send the notification to
-     * @param payload - The payload to send
-     * @returns The number of notifications sent
-     */
+    constructor(readonly fcmSender: FcmSender) {}
+
     async sendNotification({
         wallets,
         payload,
@@ -31,44 +40,67 @@ export class NotificationsService {
             return;
         }
 
-        // Set the vapid details for the notification
-        setVapidDetails(
-            "mailto:hello@frak.id",
-            process.env.VAPID_PUBLIC_KEY as string,
-            process.env.VAPID_PRIVATE_KEY as string
-        );
+        const { webPushTokens, fcmTokens } = this.partitionByType(tokens);
 
-        // Send all the notification in chunks
-        try {
-            await this.sendNotificationChunked(tokens, payload);
-        } catch (error) {
-            log.warn(
-                { error },
-                "[NotificationsService] Error sending notification"
-            );
+        const results = await Promise.allSettled([
+            this.sendWebPush(webPushTokens, payload),
+            this.sendFcm(fcmTokens, payload),
+        ]);
+
+        for (const result of results) {
+            if (result.status === "rejected") {
+                log.warn(
+                    { error: result.reason },
+                    "[NotificationsService] Sender failed"
+                );
+            }
         }
     }
 
-    /**
-     * Send a notification to a list of wallets in chunks of 30
-     * @param tokens - The tokens to send the notification to
-     * @param payload - The payload to send
-     */
-    private async sendNotificationChunked(
-        tokens: PushToken[],
+    private partitionByType(tokens: PushToken[]) {
+        const webPushTokens: WebPushToken[] = [];
+        const fcmTokens: PushToken[] = [];
+
+        for (const token of tokens) {
+            if (token.type === "fcm") {
+                fcmTokens.push(token);
+            } else if (isValidWebPushToken(token)) {
+                webPushTokens.push(token);
+            } else {
+                log.warn(
+                    { endpoint: token.endpoint },
+                    "[NotificationsService] Skipping web-push token with missing keys"
+                );
+            }
+        }
+
+        return { webPushTokens, fcmTokens };
+    }
+
+    private async sendWebPush(
+        tokens: WebPushToken[],
         payload: SendNotificationPayload
     ) {
-        // Create chunks of 30 tokens
-        const chunks = tokens.reduce((acc, token, index) => {
-            const chunkIndex = Math.floor(index / 30);
-            if (!acc[chunkIndex]) {
-                acc[chunkIndex] = [];
-            }
-            acc[chunkIndex].push(token);
-            return acc;
-        }, [] as PushToken[][]);
+        if (tokens.length === 0) return;
 
-        // Iterate over each chunk to send the notification
+        const vapidPublicKey = process.env.VAPID_PUBLIC_KEY;
+        const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
+        if (!vapidPublicKey || !vapidPrivateKey) {
+            log.warn(
+                "[NotificationsService] VAPID keys not configured, skipping web push"
+            );
+            return;
+        }
+
+        setVapidDetails(
+            "mailto:hello@frak.id",
+            vapidPublicKey,
+            vapidPrivateKey
+        );
+
+        const staleTokenIds: number[] = [];
+
+        const chunks = this.chunk(tokens, 30);
         for (const chunk of chunks) {
             const worker = chunk.map(async (token) => {
                 try {
@@ -82,24 +114,84 @@ export class NotificationsService {
                         },
                         JSON.stringify(payload)
                     );
-                } catch (error) {
-                    log.warn(
-                        { error },
-                        "[NotificationsService] Error sending notification"
-                    );
+                } catch (error: unknown) {
+                    const statusCode =
+                        error instanceof Error &&
+                        "statusCode" in error &&
+                        typeof (error as { statusCode: unknown }).statusCode ===
+                            "number"
+                            ? (error as { statusCode: number }).statusCode
+                            : undefined;
+
+                    if (statusCode && isGoneStatus(statusCode)) {
+                        staleTokenIds.push(token.id);
+                    } else {
+                        log.warn(
+                            { error },
+                            "[NotificationsService] Web push send error"
+                        );
+                    }
                 }
             });
             await Promise.allSettled(worker);
         }
+
+        if (staleTokenIds.length > 0) {
+            log.info(
+                { count: staleTokenIds.length },
+                "[NotificationsService] Cleaning up stale web-push tokens"
+            );
+            await this.deleteTokensByIds(staleTokenIds);
+        }
     }
 
-    /**
-     * Cleanup expired notification tokens
-     */
+    private async sendFcm(
+        tokens: PushToken[],
+        payload: SendNotificationPayload
+    ) {
+        if (tokens.length === 0) return;
+
+        // Build endpoint → row id map for scoped cleanup
+        const endpointToId = new Map<string, number>();
+        for (const token of tokens) {
+            endpointToId.set(token.endpoint, token.id);
+        }
+
+        const invalidEndpoints = await this.fcmSender.send({
+            tokens: tokens.map((t) => t.endpoint),
+            payload,
+        });
+
+        if (invalidEndpoints.length > 0) {
+            const idsToDelete = invalidEndpoints
+                .map((ep) => endpointToId.get(ep))
+                .filter((id): id is number => id !== undefined);
+
+            if (idsToDelete.length > 0) {
+                await this.deleteTokensByIds(idsToDelete);
+            }
+        }
+    }
+
     async cleanupExpiredTokens() {
         await db
             .delete(pushTokensTable)
             .where(lt(pushTokensTable.expireAt, new Date()))
             .execute();
+    }
+
+    private async deleteTokensByIds(ids: number[]) {
+        await db
+            .delete(pushTokensTable)
+            .where(inArray(pushTokensTable.id, ids))
+            .execute();
+    }
+
+    private chunk<T>(array: T[], size: number): T[][] {
+        const chunks: T[][] = [];
+        for (let i = 0; i < array.length; i += size) {
+            chunks.push(array.slice(i, i + size));
+        }
+        return chunks;
     }
 }

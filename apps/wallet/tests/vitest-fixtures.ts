@@ -21,9 +21,18 @@ export type WalletTestFixtures = BaseTestFixtures & {
      * Mock notification context with default values
      */
     mockNotificationContext: {
-        subscription: PushSubscription | undefined;
-        setSubscription: ReturnType<typeof import("vitest").vi.fn>;
-        clearSubscription: ReturnType<typeof import("vitest").vi.fn>;
+        isSubscribed: boolean;
+        setIsSubscribed: ReturnType<typeof import("vitest").vi.fn>;
+        adapter: {
+            isSupported: ReturnType<typeof import("vitest").vi.fn>;
+            getPermissionStatus: ReturnType<typeof import("vitest").vi.fn>;
+            requestPermission: ReturnType<typeof import("vitest").vi.fn>;
+            subscribe: ReturnType<typeof import("vitest").vi.fn>;
+            unsubscribe: ReturnType<typeof import("vitest").vi.fn>;
+            isSubscribed: ReturnType<typeof import("vitest").vi.fn>;
+            initialize: ReturnType<typeof import("vitest").vi.fn>;
+            showLocalNotification: ReturnType<typeof import("vitest").vi.fn>;
+        };
     };
 
     /**
@@ -88,16 +97,36 @@ export const test = baseTest.extend<
         // biome-ignore lint/correctness/noEmptyPattern: Vitest requires object destructuring
         {},
         use: (value: {
-            subscription: PushSubscription | undefined;
-            setSubscription: ReturnType<typeof import("vitest").vi.fn>;
-            clearSubscription: ReturnType<typeof import("vitest").vi.fn>;
+            isSubscribed: boolean;
+            setIsSubscribed: ReturnType<typeof import("vitest").vi.fn>;
+            adapter: {
+                isSupported: ReturnType<typeof import("vitest").vi.fn>;
+                getPermissionStatus: ReturnType<typeof import("vitest").vi.fn>;
+                requestPermission: ReturnType<typeof import("vitest").vi.fn>;
+                subscribe: ReturnType<typeof import("vitest").vi.fn>;
+                unsubscribe: ReturnType<typeof import("vitest").vi.fn>;
+                isSubscribed: ReturnType<typeof import("vitest").vi.fn>;
+                initialize: ReturnType<typeof import("vitest").vi.fn>;
+                showLocalNotification: ReturnType<
+                    typeof import("vitest").vi.fn
+                >;
+            };
         }) => Promise<void>
     ) => {
         const { vi } = await import("vitest");
         const context = {
-            subscription: undefined as PushSubscription | undefined,
-            setSubscription: vi.fn(),
-            clearSubscription: vi.fn(),
+            isSubscribed: false,
+            setIsSubscribed: vi.fn(),
+            adapter: {
+                isSupported: vi.fn().mockReturnValue(false),
+                getPermissionStatus: vi.fn().mockReturnValue("default"),
+                requestPermission: vi.fn().mockResolvedValue("granted"),
+                subscribe: vi.fn().mockResolvedValue(undefined),
+                unsubscribe: vi.fn().mockResolvedValue(undefined),
+                isSubscribed: vi.fn().mockResolvedValue(false),
+                initialize: vi.fn().mockResolvedValue({ isSubscribed: false }),
+                showLocalNotification: vi.fn().mockResolvedValue(undefined),
+            },
         };
 
         await use(context);

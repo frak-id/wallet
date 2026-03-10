@@ -64,6 +64,7 @@ export const sessionEncryptionKy = new sst.Secret("SESSION_ENCRYPTION_KEY");
 export const mongoBusinessDb = new sst.Secret("MONGODB_BUSINESS_URI");
 export const onRampUrl = new sst.Secret("FUNDING_ON_RAMP_URL");
 export const jwtBusinessSecret = new sst.Secret("JWT_BUSINESS_SECRET");
+export const fcmServiceAccount = new sst.Secret("FCM_SERVICE_ACCOUNT_JSON");
 
 // Shopify
 export const shopifyClientId = new sst.Secret("SHOPIFY_CLIENT_ID");
@@ -87,6 +88,20 @@ export const shopifyApiKey = isProd
 // Android signing key fingerprint (shared by frontend + backend for WebAuthn + assetlinks)
 export const androidSha256Fingerprint = new sst.Secret(
     "ANDROID_SHA256_FINGERPRINT"
+);
+
+// Android keystore for signing (base64-encoded files, decoded by tauri-dev.sh)
+export const androidKeystoreBase64 = new sst.Secret("ANDROID_KEYSTORE_BASE64");
+export const androidKeyPropertiesBase64 = new sst.Secret(
+    "ANDROID_KEY_PROPERTIES_BASE64"
+);
+
+// Firebase config files for push notifications (base64-encoded, decoded by tauri-dev.sh)
+export const firebaseIosConfigBase64 = new sst.Secret(
+    "FIREBASE_IOS_CONFIG_BASE64"
+);
+export const firebaseAndroidConfigBase64 = new sst.Secret(
+    "FIREBASE_ANDROID_CONFIG_BASE64"
 );
 
 // Open panel secrets

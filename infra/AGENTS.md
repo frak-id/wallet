@@ -27,47 +27,52 @@
 **`KubernetesJob`**:
 - One-shot K8s Job (e.g., database migrations)
 
-## Docker Build Strategy
+## Docker Strategy
 
-1. `Dockerfile.base` builds SDK packages once (shared layer)
-2. App Dockerfiles extend base, build specific app with Vite
-3. Frontend apps: final stage copies static files to `nginx:1.29.1`
-4. **Secrets**: Frontend secrets are build-time only (BuildKit `--mount=type=secret`), backend secrets are runtime K8s env vars
+- **`Dockerfile.base`**: Builds SDK packages once (3-4min), providing a shared layer for all apps.
+- **Frontends**: Multi-stage builds ending in `nginx:1.29.1` with pre-compressed gzip assets.
+- **Backend**: Bun runtime for high-performance execution.
+- **Secrets**: Frontend secrets are build-time only (BuildKit `--mount=type=secret`), backend secrets are runtime K8s env vars.
 
-## GCP Production Architecture
+## GCP Architecture
 
 **Stages**: `gcp-staging`, `gcp-production`
 
-**Routing**: Path-based ingress — listener is NOT standalone, served via wallet ingress at `/listener` path
+**K8s (GKE)**:
+- **Backend**: HPA min=1, max=2, CPU=120%. Health probes on `/health`.
+- **Routing**: Path-based ingress. Listener served via wallet ingress at `/listener`.
 
-**HPA**: Backend min=1, max=2, target CPU=120%
+**Database**: Cloud SQL PostgreSQL.
+- **Schema**: `staging_v2` or `production_v2`.
+- **Migrations**: `KubernetesJob` runs Drizzle migrate before deployment.
+- **Access**: Local dev via `cloud-sql-proxy` tunnel.
 
-**Database**: PostgreSQL on Cloud SQL
-- Schema naming: `staging_v2`, `production_v2`
-- Local access: GCP tunnel (`cloud-sql-proxy`)
-- Migrations: `KubernetesJob` runs Drizzle migrate
+## SST Config
 
-## SST v3 (AWS)
-
-**Stages**: `$dev` (local), `dev`, `prod`
-
-**Deploys**: Admin dashboard, example apps only (production frontends are on GCP)
+**AWS (eu-west-1)**: Deploys admin dashboard and example apps.
+**GCP (europe-west1)**: Provider `frak-main-v1` for production apps.
 
 ```typescript
 export default $config({
     app(input) {
-        return { name: "frak-wallet", home: "aws" };
+        return { 
+            name: "wallet", 
+            home: "aws",
+            providers: { aws: { region: "eu-west-1" } }
+        };
     },
     async run() {
-        await import("./infra/dashboard");
-        await import("./infra/example");
+        // ... imports for dashboard and example
     },
 });
 ```
 
-## CI/CD
+## CI/CD Workflows
 
-**GitHub Actions**: `.github/workflows/deploy.yml` — path-based triggers
+- **`deploy.yml`**: Path-based triggers. `main` → prod, `dev` → staging.
+- **`release.yml`**: Changesets → npm publish + jsDelivr cache purge.
+- **`beta-release.yml`**: SDK changes on `dev` → beta publish with content hash.
+- **`tauri-mobile-release.yml`**: Manual trigger → iOS TestFlight + Android Play Store.
 
 ## Environment Variables
 

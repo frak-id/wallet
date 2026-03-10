@@ -1,8 +1,11 @@
 import { createStore, get, set } from "idb-keyval";
 import type { NotificationModel } from "./NotificationModel";
 
-// Custom store: database "frak-wallet", store "notifications"
-const notificationStore = createStore("frak-wallet", "notifications");
+// Custom store: separate database to avoid object store conflicts
+const notificationStore = createStore(
+    "frak-wallet-notifications",
+    "notifications"
+);
 const NOTIFICATIONS_KEY = "notifications";
 
 /**

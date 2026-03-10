@@ -86,7 +86,7 @@ jobs:
   ios:
     name: "🍎 iOS"
     needs: prepare
-    runs-on: macos-15
+    runs-on: macos-26
 
     steps:
       - name: "📥 Checkout"
@@ -106,6 +106,11 @@ jobs:
 
       - name: "📦 Install dependencies"
         run: bun install --frozen-lockfile
+
+      - name: "🔗 Add node_modules binaries to PATH"
+        run: |
+          echo "$PWD/node_modules/.bin" >> "$GITHUB_PATH"
+          echo "$PWD/apps/wallet/node_modules/.bin" >> "$GITHUB_PATH"
 
       - name: "📥 Download SDK artifact"
         uses: actions/download-artifact@v4
@@ -131,8 +136,16 @@ jobs:
             .sst/platform/
             .sst/provider-lock.json
             .sst/esbuild.json
+            ~/Library/Application Support/sst/bin/
           key: ${{ runner.os }}-sst-v2-${{ hashFiles('./sst.config.ts') }}
           restore-keys: ${{ runner.os }}-sst-v2-
+
+      - name: "💾 Cache Xcode DerivedData"
+        uses: actions/cache@v4
+        with:
+          path: ~/Library/Developer/Xcode/DerivedData
+          key: ${{ runner.os }}-xcode-derived-${{ hashFiles('apps/wallet/src-tauri/gen/apple/**') }}
+          restore-keys: ${{ runner.os }}-xcode-derived-
 
       - name: "👥 Configure AWS Credentials"
         uses: aws-actions/configure-aws-credentials@v4
@@ -151,21 +164,46 @@ jobs:
         env:
           APPLE_API_KEY_CONTENT: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}
 
+      - name: "🔥 Write Firebase config"
+        # sst shell exposes secrets as SST_RESOURCE_* JSON, not raw env vars.
+        # Simpler to extract directly via sst secret list.
+        run: |
+          VALUE=$(bunx sst secret list --stage "$STAGE" | sed -n 's/^FIREBASE_IOS_CONFIG_BASE64=//p')
+          if [ -z "$VALUE" ]; then
+            echo "::error::FIREBASE_IOS_CONFIG_BASE64 not set for stage $STAGE"
+            exit 1
+          fi
+          echo "$VALUE" | base64 -d > apps/wallet/src-tauri/gen/apple/app_iOS/GoogleService-Info.plist
+          echo "[ci] GoogleService-Info.plist written ($(wc -c < apps/wallet/src-tauri/gen/apple/app_iOS/GoogleService-Info.plist) bytes)"
+        env:
+          STAGE: ${{ inputs.stage }}
+
       - name: "🏗️ Build iOS"
-        run: bun run --cwd apps/wallet tauri:ios:build:prod
+        # cd into wallet app so tauri finds src-tauri/ and beforeBuildCommand runs in correct directory
+        run: sst shell --stage "$STAGE" --print-logs -- bash -c "cd apps/wallet && tauri ios build --export-method app-store-connect"
         env:
           STAGE: ${{ inputs.stage }}
           APPLE_API_ISSUER: ${{ secrets.APPSTORE_ISSUER_ID }}
           APPLE_API_KEY: ${{ secrets.APPSTORE_API_KEY_ID }}
           APPLE_API_KEY_PATH: ${{ runner.temp }}/AuthKey.p8
 
+      # apple-actions/upload-testflight-build@v4 uses iTMSTransporter which was removed in Xcode 14+.
+      # xcrun altool is the supported replacement on macos-15 (Xcode 16.4).
       - name: "🚀 Upload to TestFlight"
-        uses: apple-actions/upload-testflight-build@v4
-        with:
-          app-path: "apps/wallet/src-tauri/gen/apple/build/arm64/Frak Wallet.ipa"
-          issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }}
-          api-key-id: ${{ secrets.APPSTORE_API_KEY_ID }}
-          api-private-key: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}
+        run: |
+          mkdir -p "$API_PRIVATE_KEYS_DIR"
+          echo "$APPLE_API_KEY_CONTENT" > "$API_PRIVATE_KEYS_DIR/AuthKey_$APPLE_API_KEY.p8"
+          xcrun altool --upload-app \
+            -f "apps/wallet/src-tauri/gen/apple/build/arm64/Frak Wallet.ipa" \
+            -t ios \
+            --apiKey "$APPLE_API_KEY" \
+            --apiIssuer "$APPLE_API_ISSUER"
+          rm -rf "$API_PRIVATE_KEYS_DIR"
+        env:
+          API_PRIVATE_KEYS_DIR: ${{ runner.temp }}/private_keys
+          APPLE_API_KEY: ${{ secrets.APPSTORE_API_KEY_ID }}
+          APPLE_API_ISSUER: ${{ secrets.APPSTORE_ISSUER_ID }}
+          APPLE_API_KEY_CONTENT: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}
 
       - name: "📦 Upload iOS artifact"
         if: always()
@@ -198,6 +236,11 @@ jobs:
       - name: "📦 Install dependencies"
         run: bun install --frozen-lockfile
 
+      - name: "🔗 Add node_modules binaries to PATH"
+        run: |
+          echo "$PWD/node_modules/.bin" >> "$GITHUB_PATH"
+          echo "$PWD/apps/wallet/node_modules/.bin" >> "$GITHUB_PATH"
+
       - name: "📥 Download SDK artifact"
         uses: actions/download-artifact@v4
         with:
@@ -208,14 +251,16 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
-          cache: gradle
 
       - name: "📱 Setup Android SDK"
         uses: android-actions/setup-android@v3
 
-      - name: "🔧 Install Android NDK"
-        # Version required by Tauri Rust Android targets (aarch64, armv7, i686, x86_64)
-        run: sdkmanager --install "ndk;27.0.12077973"
+      - name: "💾 Cache Gradle wrapper"
+        uses: actions/cache@v4
+        with:
+          path: ~/.gradle/wrapper/dists
+          key: ${{ runner.os }}-gradle-wrapper-${{ hashFiles('apps/wallet/src-tauri/gen/android/gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: ${{ runner.os }}-gradle-wrapper-
 
       - name: "🦀 Setup Rust"
         uses: dtolnay/rust-toolchain@stable
@@ -236,6 +281,7 @@ jobs:
             .sst/platform/
             .sst/provider-lock.json
             .sst/esbuild.json
+            ~/.config/sst/bin/
           key: ${{ runner.os }}-sst-v2-${{ hashFiles('./sst.config.ts') }}
           restore-keys: ${{ runner.os }}-sst-v2-
 
@@ -265,8 +311,21 @@ jobs:
           KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
 
+      - name: "🔥 Write Firebase config"
+        run: |
+          VALUE=$(bunx sst secret list --stage "$STAGE" | sed -n 's/^FIREBASE_ANDROID_CONFIG_BASE64=//p')
+          if [ -z "$VALUE" ]; then
+            echo "::error::FIREBASE_ANDROID_CONFIG_BASE64 not set for stage $STAGE"
+            exit 1
+          fi
+          echo "$VALUE" | base64 -d > apps/wallet/src-tauri/gen/android/app/google-services.json
+          echo "[ci] google-services.json written ($(wc -c < apps/wallet/src-tauri/gen/android/app/google-services.json) bytes)"
+        env:
+          STAGE: ${{ inputs.stage }}
+
       - name: "🏗️ Build Android"
-        run: bun run --cwd apps/wallet tauri:android:build
+        # cd into wallet app so tauri finds src-tauri/ and beforeBuildCommand runs in correct directory
+        run: sst shell --stage "$STAGE" --print-logs -- bash -c "cd apps/wallet && tauri android build"
         env:
           STAGE: ${{ inputs.stage }}
 
@@ -278,6 +337,7 @@ jobs:
           packageName: id.frak.wallet
           releaseFiles: apps/wallet/src-tauri/gen/android/app/build/outputs/bundle/universalRelease/app-universal-release.aab
           track: internal
+          status: draft
 
       - name: "📦 Upload Android artifact"
         if: always()
@@ -307,6 +367,9 @@ jobs:
 
       - name: "📦 Install dependencies"
         run: bun install --frozen-lockfile
+
+      - name: "🦀 Setup Rust"
+        uses: dtolnay/rust-toolchain@stable
 
       - name: "🔄 Sync version"
         run: bun run --cwd apps/wallet tauri:version "$VERSION"

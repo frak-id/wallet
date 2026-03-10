@@ -25,7 +25,7 @@ src/
 
 | Task | Location |
 |------|----------|
-| Session management | `src/stores/` (sessionStore, userStore, walletStore) |
+| Session management | `src/stores/` (sessionStore, userStore, walletStore, authenticationStore) |
 | WebAuthn flows | `src/authentication/` |
 | Wallet operations | `src/wallet/` |
 | Device pairing | `src/pairing/` |
@@ -44,7 +44,7 @@ src/
 
 - **Barrel exports**: Import from `@frak-labs/wallet-shared`
 - **Store selectors**: Always use `store((s) => s.field)`
-- **idb-keyval**: IndexedDB via lightweight idb-keyval (SW-optimized)
+- **idb-keyval**: IndexedDB via lightweight idb-keyval (1.73 KB gzipped, SW-optimized)
 
 ## Anti-Patterns
 
@@ -66,6 +66,6 @@ src/
 
 ## Notes
 
-- 201 TS/TSX files - largest shared package
+- 201 TS/TSX files, 15 domain subdirectories
 - Used 228 times: wallet (153) + listener (75)
 - ⚠️ Known issue: AlertDialog duplicated with `ui` package

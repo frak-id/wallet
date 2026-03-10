@@ -17,7 +17,10 @@ export { InteractionTypeSchema } from "../schemas";
  * Payload for referral arrival interaction.
  */
 export type ReferralArrivalPayload = {
-    referrerWallet: Address;
+    referrerWallet?: Address;
+    referrerClientId?: string;
+    referrerMerchantId?: string;
+    referralTimestamp?: number;
     landingUrl?: string;
     touchpointId: string;
     referralRegistered: boolean;

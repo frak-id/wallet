@@ -7,11 +7,11 @@ import { useNotificationSetupStatus } from "@/module/notification/hook/useNotifi
 import { useSubscribeToPushNotification } from "@/module/notification/hook/useSubscribeToPushNotification";
 
 export function EnableNotification() {
-    const { isSupported, subscription } = useNotificationSetupStatus();
+    const { isSupported, isSubscribed } = useNotificationSetupStatus();
     const { subscribeToPush, isPending } = useSubscribeToPushNotification();
 
     // If not supported, or already got a subscription, return nothing
-    if (!isSupported || subscription) {
+    if (!isSupported || isSubscribed) {
         return null;
     }
 

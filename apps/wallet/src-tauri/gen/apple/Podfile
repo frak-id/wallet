@@ -2,6 +2,7 @@
 
 target 'app_iOS' do
 platform :ios, '14.0'
+  pod 'FirebaseMessaging'
   # Pods for app_iOS
 end
 

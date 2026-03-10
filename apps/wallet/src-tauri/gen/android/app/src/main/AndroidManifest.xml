@@ -5,7 +5,7 @@
     <application
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android:theme="@style/Theme.app"
+        android:theme="@style/Theme.app.Splash"
         android:usesCleartextTraffic="${usesCleartextTraffic}">
         <!-- Asset statements for WebAuthn Digital Asset Links verification -->
         <meta-data android:name="asset_statements" android:resource="@string/asset_statements" />

@@ -1,6 +1,6 @@
 # services.server/ — Server Business Logic
 
-11 service files + 6 test files. All Shopify Admin API + external API interactions live here. **Never import these from client code.**
+11 service files + 9 test files. All Shopify Admin API + external API interactions live here. **Never import these from client code.**
 
 ## PATTERN
 
@@ -44,7 +44,7 @@ export async function doSomething(
 - **Metafield namespace**: `"frak"`. Keys: `modal_i18n`, `appearance`, `merchant_id`. Values: JSON-stringified.
 - **Generic helpers**: `metafields.ts` has `readMetafield<T>()` / `writeMetafield<T>()` — reuse for new metafields.
 - **Error handling**: try-catch with `console.error`, return `null`/`undefined` on failure. Never throw from services.
-- **Tests**: Co-located `*.test.ts` files (6 total). Run with `bun run test`.
+- **Tests**: Co-located `*.test.ts` files (9 total). Run with `bun run test`.
 - **Types over interfaces**: Prefer `type` aliases. Use `interface` only when declaration merging is required.
 
 ## WHERE TO LOOK

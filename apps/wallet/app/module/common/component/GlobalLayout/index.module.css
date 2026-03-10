@@ -7,6 +7,12 @@
         47px +
         var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px))
     );
+    height: calc(
+        100dvh -
+        94px -
+        var(--safe-area-inset-top, env(safe-area-inset-top, 0px)) -
+        var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px))
+    );
     overflow: auto;
     display: flex;
     flex-direction: column;

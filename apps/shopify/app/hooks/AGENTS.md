@@ -1,18 +1,16 @@
 # hooks/ — Client-Side Data Hooks
 
-8 hooks. Three patterns: React Query data fetching, `useMemo` URL builders, utility listeners.
+4 hooks. Three patterns: React Query data fetching, `useMemo` URL builders, utility listeners.
 
 ## INVENTORY
 
-| Hook                     | Pattern            | External   | Purpose                                                                      |
-| ------------------------ | ------------------ | ---------- | ---------------------------------------------------------------------------- |
-| `useOnChainCampaignInfo` | React Query + viem | viemClient | Campaign metadata/status via multicall                                       |
-| `usetokenInfo`           | React Query + viem | viemClient | ERC20 name/symbol/decimals/balance via multicall (`useTokenInfoWithBalance`) |
-| `useConversionRate`      | React Query        | backendApi | Token→fiat rates, hardcoded fallback (USD 1, EUR 0.85, GBP 0.72)             |
-| `useCreateCampaignLink`  | useMemo            | none       | Builds business.frak.id campaign URL from loader data                        |
-| `useFrakWebhookLink`     | useMemo            | none       | Builds business.frak.id webhook URL with merchantId                          |
-| `useRefreshData`         | useCallback        | none       | Dual refresh: React Query `refetchQueries` + React Router `revalidate`       |
-| `useVisibilityChange`    | useEffect          | none       | Fires callback when tab becomes visible                                      |
+| Hook                               | Pattern            | External   | Purpose                                                                      |
+| ---------------------------------- | ------------------ | ---------- | ---------------------------------------------------------------------------- |
+| `useMerchantBank`                  | React Query + viem | viemClient | Bank metadata/status via multicall                                           |
+| `useBankActions`                   | useMutation        | none       | Open/close bank, update/revoke allowance, withdraw                           |
+| `useWaitForTxAndInvalidateQueries` | useCallback        | viemClient | Waits for tx receipt then invalidates React Query cache                      |
+| `useRefreshData`                   | useCallback        | none       | Dual refresh: React Query `refetchQueries` + React Router `revalidate`       |
+| `useVisibilityChange`              | useEffect          | none       | Fires callback when tab becomes visible                                      |
 
 ## REACT QUERY PATTERN
 
