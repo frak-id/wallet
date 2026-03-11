@@ -8,7 +8,7 @@
         "log:default",
         "safe-area-insets:default",
         "biometric:default",
-        "notifications:default",
+        "fcm:default",
         "deep-link:default"
     ]
 }

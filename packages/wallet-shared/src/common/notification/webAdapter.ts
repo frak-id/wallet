@@ -68,12 +68,16 @@ export function createWebNotificationAdapter(): NotificationAdapter {
                 typeof navigator === "undefined" ||
                 !("serviceWorker" in navigator)
             ) {
-                return;
+                throw new Error(
+                    "Push notifications not supported: no service worker available"
+                );
             }
 
             const registration = await navigator.serviceWorker.ready;
             if (!hasPushManager(registration)) {
-                return;
+                throw new Error(
+                    "Push notifications not supported: PushManager unavailable"
+                );
             }
 
             const createdSubscription =

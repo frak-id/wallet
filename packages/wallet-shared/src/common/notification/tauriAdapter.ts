@@ -1,94 +1,37 @@
-import { isAndroid, isIOS } from "@frak-labs/app-essentials/utils/platform";
 import type { NotificationPayload } from "@frak-labs/ui/types/NotificationPayload";
-import { addPluginListener } from "@tauri-apps/api/core";
+import type { PluginListener } from "@tauri-apps/api/core";
+import {
+    checkPermissions,
+    createChannel,
+    deleteToken,
+    getToken,
+    onTokenRefresh,
+    type PermissionState,
+    register,
+    requestPermissions,
+    sendNotification,
+} from "tauri-plugin-fcm";
 import { authenticatedWalletApi } from "../api/backendClient";
 import { notificationStorage } from "../storage/notifications";
 import type { NotificationAdapter } from "./adapter";
 
-// Augment Window for the FCM token set by native Swift code (FirebaseManager.swift).
-// On iOS, FirebaseManager evaluates JavaScript to set this global and dispatch a custom event.
-declare global {
-    interface Window {
-        __frakFcmToken?: string;
-    }
-    interface WindowEventMap {
-        "frak:fcm-token": CustomEvent<{ token: string }>;
-    }
-}
+/** Time to wait for FCM to deliver a token after cold-start registration */
+const FCM_TOKEN_DELIVERY_TIMEOUT_MS = 10_000;
 
-async function getTauriNotificationPlugin() {
-    try {
-        return await import("@choochmeque/tauri-plugin-notifications-api");
-    } catch {
-        return undefined;
-    }
-}
-
-/**
- * Race a promise against a timeout. Rejects with a descriptive error if the
- * promise doesn't settle within `ms` milliseconds.
- *
- * Primary use: guard against Choochmeque's `registerForPushNotifications` hanging
- * on iOS when the APNs token callback never fires (background-thread Timer bug).
- */
-function withTimeout<T>(
-    promise: Promise<T>,
-    ms: number,
-    label: string
-): Promise<T> {
-    return Promise.race([
-        promise,
-        new Promise<never>((_, reject) => {
-            setTimeout(
-                () => reject(new Error(`${label} timed out after ${ms}ms`)),
-                ms
-            );
-        }),
-    ]);
-}
-
-/**
- * On iOS, registerForPushNotifications() returns a raw APNs hex token (not an FCM token).
- * Firebase's MessagingDelegate receives the FCM token asynchronously after the APNs token
- * is processed. The native FirebaseManager.swift sets `window.__frakFcmToken` and dispatches
- * a `frak:fcm-token` CustomEvent via `evaluateJavaScript` on the WKWebView.
- *
- * On Android, registerForPushNotifications() returns the FCM token directly.
- *
- * Throws on iOS if the FCM token is unavailable within the timeout — storing an APNs token
- * as "fcm" type would silently fail on backend dispatch. The token refresh listener will
- * handle eventual delivery when Firebase completes the APNs→FCM exchange.
- */
-async function getFcmToken(apnsOrFcmToken: string): Promise<string> {
-    if (!isIOS()) {
-        return apnsOrFcmToken;
-    }
-
-    // Check if Firebase has already delivered the FCM token via evaluateJavaScript
-    if (window.__frakFcmToken) {
-        return window.__frakFcmToken;
-    }
-
-    // Wait for the FCM token from Firebase's MessagingDelegate
-    return new Promise<string>((resolve, reject) => {
-        const timeout = setTimeout(() => {
-            window.removeEventListener("frak:fcm-token", handler);
-            reject(new Error("FCM token not received within timeout"));
-        }, 10_000);
-
-        const handler = (event: CustomEvent<{ token: string }>) => {
-            clearTimeout(timeout);
-            window.removeEventListener("frak:fcm-token", handler);
-            resolve(event.detail.token);
-        };
-
-        window.addEventListener("frak:fcm-token", handler);
-    });
+function mapPermission(state: PermissionState): NotificationPermission {
+    if (state === "granted") return "granted";
+    if (state === "denied") return "denied";
+    return "default";
 }
 
 export function createTauriNotificationAdapter(): NotificationAdapter {
     let permissionGranted = false;
-    let hasPushTokenListener = false;
+    let hasTokenRefreshListener = false;
+    let tokenRefreshListener: PluginListener | undefined;
+    let pendingTokenResolve: ((token: string) => void) | undefined;
+    /** Buffers early token-refresh events that arrive before subscribe()
+     *  installs pendingTokenResolve (between register() and getToken()). */
+    let earlyToken: string | undefined;
 
     const syncTokenToBackend = async (token: string) => {
         await authenticatedWalletApi.notifications.tokens.put({
@@ -97,143 +40,134 @@ export function createTauriNotificationAdapter(): NotificationAdapter {
         });
     };
 
-    const ensurePushTokenListener = async () => {
-        if (hasPushTokenListener) {
+    /**
+     * Shared handler for FCM token refresh events.
+     *
+     * Always buffers the token for an in-flight subscribe() that hasn't
+     * reached its pending-delivery await yet. If subscribe() IS already
+     * waiting, resolves the pending promise directly. Otherwise performs
+     * a fire-and-forget backend sync.
+     */
+    const handleTokenRefresh = (event: { token: string }) => {
+        earlyToken = event.token;
+        if (pendingTokenResolve) {
+            pendingTokenResolve(event.token);
+            pendingTokenResolve = undefined;
             return;
         }
+        syncTokenToBackend(event.token).catch((error) => {
+            console.warn(
+                "Failed to sync refreshed FCM token to backend",
+                error
+            );
+        });
+    };
 
+    /**
+     * Best-effort setup of the token refresh listener.
+     * Returns true if listener is active, false if the plugin doesn't
+     * support registerListener (command not found).
+     */
+    const trySetupTokenRefreshListener = async (): Promise<boolean> => {
+        if (hasTokenRefreshListener) return true;
         try {
-            // On iOS, listen for FCM token updates from native FirebaseManager.swift
-            // (delivered via evaluateJavaScript → CustomEvent on window)
-            if (isIOS()) {
-                window.addEventListener("frak:fcm-token", (event) => {
-                    syncTokenToBackend(event.detail.token).catch((error) => {
-                        console.warn(
-                            "Failed to sync refreshed FCM token to backend",
-                            error
-                        );
-                    });
-                });
-            }
-
-            // On Android, listen for push token refreshes from the notifications plugin
-            // (which already returns FCM tokens directly)
-            if (isAndroid()) {
-                await addPluginListener(
-                    "notifications",
-                    "push-token",
-                    (event: { token: string }) => {
-                        syncTokenToBackend(event.token).catch((error) => {
-                            console.warn(
-                                "Failed to sync refreshed push token to backend",
-                                error
-                            );
-                        });
-                    }
-                );
-            }
-
-            hasPushTokenListener = true;
+            tokenRefreshListener = await onTokenRefresh(handleTokenRefresh);
+            hasTokenRefreshListener = true;
+            return true;
         } catch (error) {
-            console.warn("Failed to register push token listener", error);
+            console.warn(
+                "FCM token refresh listener unavailable, will retry getToken instead:",
+                error
+            );
+            return false;
         }
+    };
+
+    /**
+     * Obtain the FCM token after registration.
+     * First tries getToken() directly, then falls back to the
+     * earlyToken buffer or waits for delivery via onTokenRefresh.
+     */
+    const obtainToken = async (): Promise<string> => {
+        // First attempt — plugin rejects when token isn't ready yet
+        // on cold start, so catch and fall through to listener delivery
+        try {
+            const response = await getToken();
+            if (response.token) return response.token;
+        } catch {
+            // Expected on cold start; token arrives via onTokenRefresh
+        }
+
+        // If the listener captured an early token, use it
+        if (earlyToken) {
+            const token = earlyToken;
+            earlyToken = undefined;
+            return token;
+        }
+
+        // Wait for token delivery via onTokenRefresh
+        return new Promise<string>((resolve, reject) => {
+            const timer = setTimeout(() => {
+                pendingTokenResolve = undefined;
+                reject(new Error("FCM token delivery timed out"));
+            }, FCM_TOKEN_DELIVERY_TIMEOUT_MS);
+            pendingTokenResolve = (t: string) => {
+                clearTimeout(timer);
+                resolve(t);
+            };
+        });
     };
 
     const adapter: NotificationAdapter = {
         isSupported: () => true,
+
         getPermissionStatus: () => (permissionGranted ? "granted" : "default"),
+
         requestPermission: async () => {
-            try {
-                const plugin = await getTauriNotificationPlugin();
-                if (!plugin) return "denied";
-
-                // Workaround for Choochmeque plugin bug: on Android 13+,
-                // requestPermission() never resolves if permission is already
-                // granted (missing else branch in NotificationPlugin.kt).
-                // Check first and skip the call entirely if already granted.
-                const alreadyGranted = await plugin.isPermissionGranted();
-                if (alreadyGranted) {
-                    permissionGranted = true;
-                    return "granted";
-                }
-
-                const result = await plugin.requestPermission();
-                // Choochmeque's Swift resolves with { permissionState: "granted" }
-                // (an object), not the string "granted". Handle both shapes.
-                const state =
-                    typeof result === "string"
-                        ? result
-                        : (result as { permissionState?: string })
-                              ?.permissionState;
-                permissionGranted = state === "granted";
-                return permissionGranted ? "granted" : "denied";
-            } catch {
-                return "denied";
-            }
+            const state = await requestPermissions();
+            const permission = mapPermission(state);
+            permissionGranted = permission === "granted";
+            return permission;
         },
+
         subscribe: async () => {
             const permission = await adapter.requestPermission();
             if (permission !== "granted") {
-                return;
-            }
-
-            const plugin = await getTauriNotificationPlugin();
-            if (!plugin) {
-                return;
-            }
-
-            // Set up token refresh listener BEFORE registration so we don't
-            // miss the first FCM token event from Firebase's MessagingDelegate
-            await ensurePushTokenListener();
-
-            // Clear any stale native FCM registration before re-registering.
-            // The Choochmeque plugin hangs on Android if registerForPushNotifications()
-            // is called when a previous registration is still active (e.g. after
-            // reinstall, backend token expiry, or data wipe).
-            try {
-                await withTimeout(
-                    plugin.unregisterForPushNotifications(),
-                    5_000,
-                    "unregisterForPushNotifications (pre-cleanup)"
+                throw new Error(
+                    `Notification permission ${permission}: user denied or dismissed the prompt`
                 );
-            } catch {
-                // Ignore — no prior registration to clean up
             }
 
-            // registerForPushNotifications returns FCM token on Android,
-            // raw APNs hex token on iOS — getFcmToken handles the exchange.
-            //
-            // Timeout guard: Choochmeque's iOS impl creates a Timer on a
-            // background thread (UNUserNotificationCenter callback) whose
-            // RunLoop never runs — so the invoke can hang forever if the
-            // APNs token callback doesn't fire. 15 s is generous enough for
-            // real devices while preventing infinite hangs.
-            let rawToken: string;
-            try {
-                rawToken = await withTimeout(
-                    plugin.registerForPushNotifications(),
-                    15_000,
-                    "registerForPushNotifications"
-                );
-            } catch (error) {
-                console.warn(
-                    "registerForPushNotifications failed (simulator / timeout?)",
-                    error
-                );
-                return;
-            }
-            const token = await getFcmToken(rawToken);
-            await withTimeout(
-                syncTokenToBackend(token),
-                10_000,
-                "syncTokenToBackend"
-            );
+            // Clear stale buffer from previous background refreshes
+            earlyToken = undefined;
+
+            // Set up token refresh listener BEFORE registration
+            await trySetupTokenRefreshListener();
+
+            // Register for push notifications
+            await register();
+
+            // Get current token — may fail on cold start (race condition)
+            const token = await obtainToken();
+
+            // Sync to backend — failure must propagate to caller
+            await syncTokenToBackend(token);
         },
+
         unsubscribe: async () => {
             permissionGranted = false;
-            const plugin = await getTauriNotificationPlugin();
-            if (plugin) {
-                await plugin.unregisterForPushNotifications();
+
+            // Clean up token refresh listener to prevent stale re-subscriptions
+            if (tokenRefreshListener) {
+                await tokenRefreshListener.unregister();
+                tokenRefreshListener = undefined;
+                hasTokenRefreshListener = false;
+            }
+
+            try {
+                await deleteToken();
+            } catch (error) {
+                console.warn("Failed to delete FCM token", error);
             }
 
             try {
@@ -242,6 +176,7 @@ export function createTauriNotificationAdapter(): NotificationAdapter {
                 console.warn("Failed to delete push token from backend", error);
             }
         },
+
         isSubscribed: async () => {
             try {
                 const result =
@@ -252,40 +187,44 @@ export function createTauriNotificationAdapter(): NotificationAdapter {
                 return false;
             }
         },
+
         initialize: async () => {
             try {
-                const plugin = await getTauriNotificationPlugin();
-                if (!plugin) return { isSubscribed: false };
-                const granted = await plugin.isPermissionGranted();
-                permissionGranted = granted;
+                const state = await checkPermissions();
+                const permission = mapPermission(state);
+                permissionGranted = permission === "granted";
 
-                if (granted) {
-                    await ensurePushTokenListener();
-                }
-
-                if (isAndroid()) {
-                    await plugin.createChannel({
+                if (permission === "granted") {
+                    // Create notification channel (Android requirement)
+                    await createChannel({
                         id: "default",
                         name: "Frak Wallet",
                         importance: 4,
                     });
                 }
 
-                return { isSubscribed: await adapter.isSubscribed() };
+                const isSubscribed = await adapter.isSubscribed();
+
+                // Only attach token refresh listener when user opted in,
+                // otherwise a plugin-minted token on app start silently
+                // re-subscribes users who explicitly unsubscribed.
+                if (permission === "granted" && isSubscribed) {
+                    await trySetupTokenRefreshListener();
+                }
+
+                return { isSubscribed };
             } catch {
                 return { isSubscribed: false };
             }
         },
+
         showLocalNotification: async (payload: NotificationPayload) => {
             try {
-                const plugin = await getTauriNotificationPlugin();
-                if (plugin) {
-                    await plugin.sendNotification({
-                        title: payload.title,
-                        body: payload.body,
-                        icon: payload.icon,
-                    });
-                }
+                await sendNotification({
+                    title: payload.title,
+                    body: payload.body,
+                    icon: payload.icon,
+                });
             } catch (error) {
                 console.warn("Failed to send Tauri notification", error);
             }
