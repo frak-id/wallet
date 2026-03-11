@@ -76,7 +76,10 @@
             "ecdsaInfo": "Informations de connection",
             "ecdsaWallet": "Portefeuille Ecdsa",
             "privateKey": "Clé privée",
-            "deletePrivateKey": "Supprimer la clé privée"
+            "deletePrivateKey": "Supprimer la clé privée",
+            "legal": "Légal",
+            "termsOfUse": "Conditions Générales d'Utilisation",
+            "deleteAccount": "Supprimer mon compte"
         },
         "installWebApp": "<strong>Installer le wallet sur l'écran d'accueil</strong><br /> pour retrouver vos gains à tout moment",
         "invite": {

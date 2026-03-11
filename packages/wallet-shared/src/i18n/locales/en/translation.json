@@ -78,7 +78,10 @@
             "ecdsaInfo": "Login informations",
             "ecdsaWallet": "Ecdsa wallet",
             "privateKey": "Private key",
-            "deletePrivateKey": "Delete private key"
+            "deletePrivateKey": "Delete private key",
+            "legal": "Legal",
+            "termsOfUse": "Terms of Use",
+            "deleteAccount": "Delete my account"
         },
         "installWebApp": "<strong>Install wallet on home screen</strong> <br /> to find your gains at any time",
         "invite": {
