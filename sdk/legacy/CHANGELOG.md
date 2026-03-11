@@ -1,5 +1,14 @@
 # @frak-labs/nexus-sdk
 
+## 0.0.44
+
+### Patch Changes
+
+- [#137](https://github.com/frak-id/wallet/pull/137) [`42b83e7`](https://github.com/frak-id/wallet/commit/42b83e79adaabcc9b67ce88ddb95075046c379e4) Thanks [@KONFeature](https://github.com/KONFeature)! - Add support for anonymous sharing link creation
+
+- Updated dependencies [[`42b83e7`](https://github.com/frak-id/wallet/commit/42b83e79adaabcc9b67ce88ddb95075046c379e4)]:
+  - @frak-labs/core-sdk@0.2.1
+
 ## 0.0.43
 
 ### Patch Changes
