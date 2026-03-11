@@ -1,5 +1,6 @@
 import type { NotificationPayload } from "@frak-labs/ui/types/NotificationPayload";
 import type { PluginListener } from "@tauri-apps/api/core";
+import { createStore, get, set } from "idb-keyval";
 import {
     checkPermissions,
     createChannel,
@@ -14,6 +15,29 @@ import {
 import { authenticatedWalletApi } from "../api/backendClient";
 import { notificationStorage } from "../storage/notifications";
 import type { NotificationAdapter } from "./adapter";
+
+/**
+ * Persisted opt-out flag for push notifications.
+ *
+ * Distinguishes "user explicitly unsubscribed" (opt-out = true) from
+ * "backend pruned a stale token" (opt-out = false, hasAny = false).
+ * Without this, both states collapse into permission-granted + no-backend-token,
+ * making auto-recovery from server-side cleanup impossible without also
+ * ghost-resubscribing users who opted out.
+ */
+const notificationPrefsStore = createStore(
+    "frak-wallet-notifications",
+    "preferences"
+);
+const OPT_OUT_KEY = "push-opt-out";
+
+async function getPushOptOut(): Promise<boolean> {
+    return (await get<boolean>(OPT_OUT_KEY, notificationPrefsStore)) ?? false;
+}
+
+async function setPushOptOut(value: boolean): Promise<void> {
+    await set(OPT_OUT_KEY, value, notificationPrefsStore);
+}
 
 /** Time to wait for FCM to deliver a token after cold-start registration */
 const FCM_TOKEN_DELIVERY_TIMEOUT_MS = 10_000;
@@ -45,8 +69,8 @@ export function createTauriNotificationAdapter(): NotificationAdapter {
      *
      * Always buffers the token for an in-flight subscribe() that hasn't
      * reached its pending-delivery await yet. If subscribe() IS already
-     * waiting, resolves the pending promise directly. Otherwise performs
-     * a fire-and-forget backend sync.
+     * waiting, resolves the pending promise directly. Otherwise syncs to
+     * backend only when the user has not explicitly opted out.
      */
     const handleTokenRefresh = (event: { token: string }) => {
         earlyToken = event.token;
@@ -55,12 +79,20 @@ export function createTauriNotificationAdapter(): NotificationAdapter {
             pendingTokenResolve = undefined;
             return;
         }
-        syncTokenToBackend(event.token).catch((error) => {
-            console.warn(
-                "Failed to sync refreshed FCM token to backend",
-                error
-            );
-        });
+        // Background refresh: only sync if user hasn't explicitly opted out.
+        // This distinguishes "backend pruned stale token" (should recover)
+        // from "user clicked unsubscribe" (should stay unsubscribed).
+        getPushOptOut()
+            .then((optedOut) => {
+                if (optedOut) return;
+                return syncTokenToBackend(event.token);
+            })
+            .catch((error) => {
+                console.warn(
+                    "Failed to sync refreshed FCM token to backend",
+                    error
+                );
+            });
     };
 
     /**
@@ -85,17 +117,28 @@ export function createTauriNotificationAdapter(): NotificationAdapter {
 
     /**
      * Obtain the FCM token after registration.
-     * First tries getToken() directly, then falls back to the
-     * earlyToken buffer or waits for delivery via onTokenRefresh.
+     *
+     * First tries getToken() directly — the plugin now surfaces APNs
+     * registration errors (missing entitlement, cert mismatch) through
+     * getToken() rejection, so no separate onPushError listener is needed.
+     * Falls back to the earlyToken buffer or waits for delivery via
+     * onTokenRefresh on cold start.
      */
     const obtainToken = async (): Promise<string> => {
-        // First attempt — plugin rejects when token isn't ready yet
-        // on cold start, so catch and fall through to listener delivery
+        // First attempt — plugin rejects with the actual APNs error when
+        // registration failed (missing entitlement, cert mismatch, etc.),
+        // or with "FCM token not available" on cold-start race.
+        // Re-throw real registration errors immediately instead of falling
+        // through to the 10s timeout where no token-refresh will ever arrive.
         try {
             const response = await getToken();
             if (response.token) return response.token;
-        } catch {
-            // Expected on cold start; token arrives via onTokenRefresh
+        } catch (error) {
+            const msg = error instanceof Error ? error.message : String(error);
+            if (!msg.includes("FCM token not available")) {
+                throw error;
+            }
+            // Cold-start race — token arrives via onTokenRefresh below
         }
 
         // If the listener captured an early token, use it
@@ -152,10 +195,19 @@ export function createTauriNotificationAdapter(): NotificationAdapter {
 
             // Sync to backend — failure must propagate to caller
             await syncTokenToBackend(token);
+
+            // Clear opt-out only after full subscribe succeeds.
+            // If any step above threw, the flag stays set so the
+            // always-active token refresh listener won't ghost-resubscribe.
+            await setPushOptOut(false);
         },
 
         unsubscribe: async () => {
             permissionGranted = false;
+
+            // Mark explicit opt-out BEFORE cleanup so that any in-flight
+            // token-refresh handler sees the flag immediately.
+            await setPushOptOut(true);
 
             // Clean up token refresh listener to prevent stale re-subscriptions
             if (tokenRefreshListener) {
@@ -201,17 +253,16 @@ export function createTauriNotificationAdapter(): NotificationAdapter {
                         name: "Frak Wallet",
                         importance: 4,
                     });
-                }
 
-                const isSubscribed = await adapter.isSubscribed();
-
-                // Only attach token refresh listener when user opted in,
-                // otherwise a plugin-minted token on app start silently
-                // re-subscribes users who explicitly unsubscribed.
-                if (permission === "granted" && isSubscribed) {
+                    // Always listen for token refreshes when permission is
+                    // granted. The opt-out flag in handleTokenRefresh prevents
+                    // ghost re-subscriptions for users who explicitly
+                    // unsubscribed, while allowing auto-recovery when the
+                    // backend pruned a stale token.
                     await trySetupTokenRefreshListener();
                 }
 
+                const isSubscribed = await adapter.isSubscribed();
                 return { isSubscribed };
             } catch {
                 return { isSubscribed: false };

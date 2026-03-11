@@ -46,6 +46,17 @@ vi.mock("../storage/notifications", () => ({
     },
 }));
 
+const { idbGetMock, idbSetMock } = vi.hoisted(() => ({
+    idbGetMock: vi.fn(),
+    idbSetMock: vi.fn(),
+}));
+
+vi.mock("idb-keyval", () => ({
+    createStore: vi.fn(() => ({})),
+    get: idbGetMock,
+    set: idbSetMock,
+}));
+
 const { putMock, deleteMock, hasAnyGetMock } = vi.hoisted(() => ({
     putMock: vi.fn(),
     deleteMock: vi.fn(),
@@ -82,6 +93,8 @@ describe.sequential("createTauriNotificationAdapter", () => {
         putMock.mockReset();
         deleteMock.mockReset();
         hasAnyGetMock.mockReset();
+        idbGetMock.mockReset();
+        idbSetMock.mockReset();
         capturedTokenRefreshHandler = undefined;
 
         // Default mock return values
@@ -101,6 +114,9 @@ describe.sequential("createTauriNotificationAdapter", () => {
         putMock.mockResolvedValue(undefined);
         deleteMock.mockResolvedValue(undefined);
         hasAnyGetMock.mockResolvedValue({ data: false });
+        // Default: user has not opted out
+        idbGetMock.mockResolvedValue(false);
+        idbSetMock.mockResolvedValue(undefined);
 
         vi.stubGlobal("crypto", {
             randomUUID: vi.fn().mockReturnValue(mockUUID),
@@ -164,6 +180,39 @@ describe.sequential("createTauriNotificationAdapter", () => {
         });
     });
 
+    it("should subscribe: clear opt-out only after backend sync succeeds", async () => {
+        requestPermissionsMock.mockResolvedValue("granted");
+        getTokenMock.mockResolvedValue({ token: "new-fcm-token" });
+
+        const adapter = createTauriNotificationAdapter();
+        await adapter.subscribe();
+
+        // Opt-out cleared with false after full success
+        expect(idbSetMock).toHaveBeenCalledWith(
+            "push-opt-out",
+            false,
+            expect.anything()
+        );
+        // Backend sync must happen before opt-out clear
+        const putOrder = putMock.mock.invocationCallOrder[0];
+        const setOrder = idbSetMock.mock.invocationCallOrder[0];
+        expect(putOrder).toBeLessThan(setOrder);
+    });
+
+    it("should subscribe: keep opt-out flag set when backend sync fails", async () => {
+        requestPermissionsMock.mockResolvedValue("granted");
+        getTokenMock.mockResolvedValue({ token: "new-fcm-token" });
+        putMock.mockRejectedValue(new Error("Backend sync failed"));
+
+        const adapter = createTauriNotificationAdapter();
+        await expect(adapter.subscribe()).rejects.toThrow(
+            "Backend sync failed"
+        );
+
+        // setPushOptOut(false) should NOT have been called
+        expect(idbSetMock).not.toHaveBeenCalled();
+    });
+
     it("should subscribe: set up onTokenRefresh listener BEFORE register", async () => {
         requestPermissionsMock.mockResolvedValue("granted");
         getTokenMock.mockResolvedValue({ token: "new-fcm-token" });
@@ -180,7 +229,7 @@ describe.sequential("createTauriNotificationAdapter", () => {
 
     it("should subscribe: wait for token via onTokenRefresh when getToken rejects (cold start)", async () => {
         requestPermissionsMock.mockResolvedValue("granted");
-        getTokenMock.mockRejectedValue(new Error("Token not ready"));
+        getTokenMock.mockRejectedValue(new Error("FCM token not available"));
 
         const adapter = createTauriNotificationAdapter();
         const subscribePromise = adapter.subscribe();
@@ -199,10 +248,23 @@ describe.sequential("createTauriNotificationAdapter", () => {
         });
     });
 
+    it("should subscribe: propagate real APNs error from getToken instead of timing out", async () => {
+        requestPermissionsMock.mockResolvedValue("granted");
+        getTokenMock.mockRejectedValue(new Error("APNs entitlement missing"));
+
+        const adapter = createTauriNotificationAdapter();
+        await expect(adapter.subscribe()).rejects.toThrow(
+            "APNs entitlement missing"
+        );
+
+        // Should fail fast — no backend sync attempted
+        expect(putMock).not.toHaveBeenCalled();
+    });
+
     it("should subscribe: reject when token delivery times out", async () => {
         vi.useFakeTimers();
         requestPermissionsMock.mockResolvedValue("granted");
-        getTokenMock.mockRejectedValue(new Error("Token not ready"));
+        getTokenMock.mockRejectedValue(new Error("FCM token not available"));
 
         const adapter = createTauriNotificationAdapter();
         const subscribePromise = adapter.subscribe();
@@ -223,7 +285,7 @@ describe.sequential("createTauriNotificationAdapter", () => {
 
     it("should subscribe: use buffered token when refresh arrives before getToken", async () => {
         requestPermissionsMock.mockResolvedValue("granted");
-        getTokenMock.mockRejectedValue(new Error("Token not ready"));
+        getTokenMock.mockRejectedValue(new Error("FCM token not available"));
 
         // register() triggers a token-refresh before getToken runs
         registerMock.mockImplementation(async () => {
@@ -408,7 +470,7 @@ describe.sequential("createTauriNotificationAdapter", () => {
         expect(onTokenRefreshMock).toHaveBeenCalledOnce();
     });
 
-    it("should initialize: NOT set up listener when granted but not subscribed", async () => {
+    it("should initialize: set up listener when granted even if not subscribed (auto-recovery)", async () => {
         checkPermissionsMock.mockResolvedValue("granted");
         hasAnyGetMock.mockResolvedValue({ data: false });
 
@@ -416,7 +478,10 @@ describe.sequential("createTauriNotificationAdapter", () => {
         await adapter.initialize();
 
         expect(createChannelMock).toHaveBeenCalled();
-        expect(onTokenRefreshMock).not.toHaveBeenCalled();
+        // Listener is always active when permission is granted so that
+        // token refreshes can auto-recover from backend stale-token cleanup.
+        // The opt-out flag in handleTokenRefresh prevents ghost resubscribes.
+        expect(onTokenRefreshMock).toHaveBeenCalledOnce();
     });
 
     it("should initialize: NOT set up listener when denied", async () => {

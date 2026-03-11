@@ -4159,9 +4159,9 @@ dependencies = [
 
 [[package]]
 name = "tauri-plugin-fcm"
-version = "0.1.5"
+version = "0.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d896fd0bf8be2b8025a6d507d35bedafee3ab6ddffd0cf8d662cf7d093844630"
+checksum = "a98cd8417519ba6ae4021f30edb9874a6664c53849558d8b9ab6273071739584"
 dependencies = [
  "log",
  "serde",
