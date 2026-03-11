@@ -7,6 +7,7 @@
       "dependencies": {
         "@tauri-apps/api": "^2.10.1",
         "caniuse-lite": "^1.0.30001769",
+        "tauri-plugin-fcm": "^0.1.6",
       },
       "devDependencies": {
         "@biomejs/biome": "2.3.14",
@@ -210,9 +211,8 @@
     },
     "apps/wallet": {
       "name": "@frak-labs/nexus-wallet",
-      "version": "1.0.10",
+      "version": "1.0.14",
       "dependencies": {
-        "@choochmeque/tauri-plugin-notifications-api": "^0.4",
         "@frak-labs/app-essentials": "workspace:*",
         "@frak-labs/client": "workspace:*",
         "@frak-labs/core-sdk": "workspace:*",
@@ -248,6 +248,7 @@
         "react-i18next": "^16.5.4",
         "react-loading-skeleton": "^3.5.0",
         "remix-utils": "^9.0.1",
+        "tauri-plugin-fcm": "^0.1.0",
         "tauri-plugin-safe-area-insets": "^0.1.0",
         "tauri-plugin-share": "^2.0.4",
         "tauri-plugin-webauthn-api": "^0.2.0",
@@ -514,7 +515,6 @@
         "zustand": "catalog:",
       },
       "devDependencies": {
-        "@choochmeque/tauri-plugin-notifications-api": "^0.4",
         "@frak-labs/test-foundation": "workspace:*",
         "@testing-library/jest-dom": "^6.9.1",
         "@testing-library/react": "^16.3.2",
@@ -528,6 +528,7 @@
         "i18next-resources-for-ts": "^2.0.0",
         "jsdom": "^28.0.0",
         "msw": "^2.12.10",
+        "tauri-plugin-fcm": "^0.1.0",
         "typescript": "catalog:",
         "vitest": "^4.0.18",
       },
@@ -895,8 +896,6 @@
     "@changesets/types": ["@changesets/types@6.1.0", "", {}, "sha512-rKQcJ+o1nKNgeoYRHKOS07tAMNd3YSN0uHaJOZYjBAgxfV7TUE7JE+z4BzZdQwb5hKaYbayKN5KrYV7ODb2rAA=="],
 
     "@changesets/write": ["@changesets/write@0.4.0", "", { "dependencies": { "@changesets/types": "^6.1.0", "fs-extra": "^7.0.1", "human-id": "^4.1.1", "prettier": "^2.7.1" } }, "sha512-CdTLvIOPiCNuH71pyDu3rA+Q0n65cmAbXnwWH84rKGiFumFzkmHNT8KHTMEchcxN+Kl8I54xGUhJ7l3E7X396Q=="],
-
-    "@choochmeque/tauri-plugin-notifications-api": ["@choochmeque/tauri-plugin-notifications-api@0.4.3", "", { "dependencies": { "@tauri-apps/api": "^2.8.0" } }, "sha512-nq8dL7z9ZFC+G9cWmy/FTkjURIYDwvg7PklaIQQLwwOZmPEfBfLyvJsHNE+xTXRZYWdP79nkVchxjwxja35fUw=="],
 
     "@clack/core": ["@clack/core@0.3.5", "", { "dependencies": { "picocolors": "^1.0.0", "sisteransi": "^1.0.5" } }, "sha512-5cfhQNH+1VQ2xLQlmzXMqUoiaH0lRBq9/CLW9lTyMbuKLC3+xEK01tHVvyut++mLOn5urSHmkm6I0Lg9MaJSTQ=="],
 
@@ -3651,6 +3650,8 @@
     "tagged-tag": ["tagged-tag@1.0.0", "", {}, "sha512-yEFYrVhod+hdNyx7g5Bnkkb0G6si8HJurOoOEgC8B/O0uXLHlaey/65KRv6cuWBNhBgHKAROVpc7QyYqE5gFng=="],
 
     "tar": ["tar@7.5.9", "", { "dependencies": { "@isaacs/fs-minipass": "^4.0.0", "chownr": "^3.0.0", "minipass": "^7.1.2", "minizlib": "^3.1.0", "yallist": "^5.0.0" } }, "sha512-BTLcK0xsDh2+PUe9F6c2TlRp4zOOBMTkoQHQIWSIzI0R7KG46uEwq4OPk2W7bZcprBMsuaeFsqwYr7pjh6CuHg=="],
+
+    "tauri-plugin-fcm": ["tauri-plugin-fcm@0.1.6", "", { "dependencies": { "@tauri-apps/api": "^2.0.0" } }, "sha512-MbzqUEG5xEu7xBho7pkrL+p3eyhAbxo2MiBKLNaZ4bdi2eemf5yA8aqU0VBIZElQPw3avabKz5xDvyyt8YGJgA=="],
 
     "tauri-plugin-safe-area-insets": ["tauri-plugin-safe-area-insets@0.1.0", "", { "dependencies": { "@tauri-apps/api": ">=2.0.0-beta.6" } }, "sha512-NhtxSQdU7+laTJiO4WZFlTB1CBzRlNE5EuHflGAGXS55fiwOkkaWztfNishFQO+eZtb9i5jLHX3Yho48lnqcRQ=="],
 

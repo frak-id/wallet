@@ -2,39 +2,38 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createTauriNotificationAdapter } from "./tauriAdapter";
 
 const {
-    sendNotificationMock,
-    isPermissionGrantedMock,
-    requestPermissionMock,
+    getTokenMock,
+    requestPermissionsMock,
+    checkPermissionsMock,
+    registerMock,
+    deleteTokenMock,
     createChannelMock,
-    registerForPushNotificationsMock,
-    unregisterForPushNotificationsMock,
+    sendNotificationMock,
+    onTokenRefreshMock,
 } = vi.hoisted(() => ({
-    sendNotificationMock: vi.fn(),
-    isPermissionGrantedMock: vi.fn(),
-    requestPermissionMock: vi.fn(),
+    getTokenMock: vi.fn(),
+    requestPermissionsMock: vi.fn(),
+    checkPermissionsMock: vi.fn(),
+    registerMock: vi.fn(),
+    deleteTokenMock: vi.fn(),
     createChannelMock: vi.fn(),
-    registerForPushNotificationsMock: vi.fn(),
-    unregisterForPushNotificationsMock: vi.fn(),
+    sendNotificationMock: vi.fn(),
+    onTokenRefreshMock: vi.fn(),
 }));
 
-vi.mock("@choochmeque/tauri-plugin-notifications-api", () => ({
-    sendNotification: sendNotificationMock,
-    isPermissionGranted: isPermissionGrantedMock,
-    requestPermission: requestPermissionMock,
+let capturedTokenRefreshHandler:
+    | ((event: { token: string }) => void)
+    | undefined;
+
+vi.mock("tauri-plugin-fcm", () => ({
+    getToken: getTokenMock,
+    requestPermissions: requestPermissionsMock,
+    checkPermissions: checkPermissionsMock,
+    register: registerMock,
+    deleteToken: deleteTokenMock,
     createChannel: createChannelMock,
-    registerForPushNotifications: registerForPushNotificationsMock,
-    unregisterForPushNotifications: unregisterForPushNotificationsMock,
-}));
-
-const { isAndroidMock, isIOSMock } = vi.hoisted(() => ({
-    isAndroidMock: vi.fn(),
-    isIOSMock: vi.fn(),
-}));
-
-vi.mock("@frak-labs/app-essentials/utils/platform", () => ({
-    isAndroid: isAndroidMock,
-    isIOS: isIOSMock,
-    isTauri: vi.fn().mockReturnValue(true),
+    sendNotification: sendNotificationMock,
+    onTokenRefresh: onTokenRefreshMock,
 }));
 
 const { addMock } = vi.hoisted(() => ({
@@ -47,12 +46,15 @@ vi.mock("../storage/notifications", () => ({
     },
 }));
 
-const { addPluginListenerMock } = vi.hoisted(() => ({
-    addPluginListenerMock: vi.fn(),
+const { idbGetMock, idbSetMock } = vi.hoisted(() => ({
+    idbGetMock: vi.fn(),
+    idbSetMock: vi.fn(),
 }));
 
-vi.mock("@tauri-apps/api/core", () => ({
-    addPluginListener: addPluginListenerMock,
+vi.mock("idb-keyval", () => ({
+    createStore: vi.fn(() => ({})),
+    get: idbGetMock,
+    set: idbSetMock,
 }));
 
 const { putMock, deleteMock, hasAnyGetMock } = vi.hoisted(() => ({
@@ -79,38 +81,46 @@ describe.sequential("createTauriNotificationAdapter", () => {
     const mockUUID = "test-uuid-1234-5678";
 
     beforeEach(() => {
-        sendNotificationMock.mockReset();
-        isPermissionGrantedMock.mockReset();
-        requestPermissionMock.mockReset();
+        getTokenMock.mockReset();
+        requestPermissionsMock.mockReset();
+        checkPermissionsMock.mockReset();
+        registerMock.mockReset();
+        deleteTokenMock.mockReset();
         createChannelMock.mockReset();
-        registerForPushNotificationsMock.mockReset();
-        unregisterForPushNotificationsMock.mockReset();
-        isAndroidMock.mockReset();
-        isIOSMock.mockReset();
+        sendNotificationMock.mockReset();
+        onTokenRefreshMock.mockReset();
         addMock.mockReset();
-        addPluginListenerMock.mockReset();
         putMock.mockReset();
         deleteMock.mockReset();
         hasAnyGetMock.mockReset();
-
-        // Default: Android context (most existing tests assume non-iOS)
-        isAndroidMock.mockReturnValue(true);
-        isIOSMock.mockReturnValue(false);
+        idbGetMock.mockReset();
+        idbSetMock.mockReset();
+        capturedTokenRefreshHandler = undefined;
 
         // Default mock return values
-        registerForPushNotificationsMock.mockResolvedValue("mock-fcm-token");
-        unregisterForPushNotificationsMock.mockResolvedValue(undefined);
-        addPluginListenerMock.mockResolvedValue(undefined);
+        getTokenMock.mockResolvedValue({ token: "mock-fcm-token" });
+        requestPermissionsMock.mockResolvedValue("granted");
+        checkPermissionsMock.mockResolvedValue("granted");
+        registerMock.mockResolvedValue(undefined);
+        deleteTokenMock.mockResolvedValue(undefined);
+        createChannelMock.mockResolvedValue(undefined);
+        sendNotificationMock.mockResolvedValue(undefined);
+        onTokenRefreshMock.mockImplementation(
+            (handler: (event: { token: string }) => void) => {
+                capturedTokenRefreshHandler = handler;
+                return Promise.resolve({ unregister: vi.fn() });
+            }
+        );
         putMock.mockResolvedValue(undefined);
         deleteMock.mockResolvedValue(undefined);
         hasAnyGetMock.mockResolvedValue({ data: false });
+        // Default: user has not opted out
+        idbGetMock.mockResolvedValue(false);
+        idbSetMock.mockResolvedValue(undefined);
 
         vi.stubGlobal("crypto", {
             randomUUID: vi.fn().mockReturnValue(mockUUID),
         });
-
-        // Clean up iOS FCM token global set by native Swift code
-        delete window.__frakFcmToken;
     });
 
     it("should return true for isSupported", () => {
@@ -125,215 +135,277 @@ describe.sequential("createTauriNotificationAdapter", () => {
         expect(adapter.getPermissionStatus()).toBe("default");
     });
 
-    it("should return 'granted' for getPermissionStatus after initialize when permission is granted", async () => {
-        isPermissionGrantedMock.mockResolvedValue(true);
-        isAndroidMock.mockReturnValue(false);
-        hasAnyGetMock.mockResolvedValue({ data: true });
-
-        const adapter = createTauriNotificationAdapter();
-        await adapter.initialize();
-
-        expect(adapter.getPermissionStatus()).toBe("granted");
-    });
-
-    it("should call plugin requestPermission and return 'granted'", async () => {
-        requestPermissionMock.mockResolvedValue("granted");
+    it("should return 'granted' for requestPermission when plugin returns 'granted'", async () => {
+        requestPermissionsMock.mockResolvedValue("granted");
 
         const adapter = createTauriNotificationAdapter();
         const result = await adapter.requestPermission();
 
-        expect(requestPermissionMock).toHaveBeenCalledOnce();
+        expect(requestPermissionsMock).toHaveBeenCalledOnce();
         expect(result).toBe("granted");
     });
 
-    it("should call plugin requestPermission and return 'denied'", async () => {
-        requestPermissionMock.mockResolvedValue("denied");
+    it("should return 'denied' for requestPermission when plugin returns 'denied'", async () => {
+        requestPermissionsMock.mockResolvedValue("denied");
 
         const adapter = createTauriNotificationAdapter();
         const result = await adapter.requestPermission();
 
-        expect(requestPermissionMock).toHaveBeenCalledOnce();
+        expect(requestPermissionsMock).toHaveBeenCalledOnce();
         expect(result).toBe("denied");
     });
 
-    it("should call requestPermission internally when subscribing", async () => {
-        requestPermissionMock.mockResolvedValue("granted");
+    it("should map 'prompt' to 'default' for requestPermission", async () => {
+        requestPermissionsMock.mockResolvedValue("prompt");
+
+        const adapter = createTauriNotificationAdapter();
+        const result = await adapter.requestPermission();
+
+        expect(result).toBe("default");
+    });
+
+    it("should subscribe: call requestPermissions, register, getToken, and sync to backend", async () => {
+        requestPermissionsMock.mockResolvedValue("granted");
+        getTokenMock.mockResolvedValue({ token: "new-fcm-token" });
 
         const adapter = createTauriNotificationAdapter();
         await adapter.subscribe();
 
-        expect(requestPermissionMock).toHaveBeenCalledOnce();
-    });
-
-    it("should not throw when unsubscribing (no-op)", async () => {
-        const adapter = createTauriNotificationAdapter();
-
-        await expect(adapter.unsubscribe()).resolves.toBeUndefined();
-    });
-
-    it("should return false for isSubscribed initially", async () => {
-        const adapter = createTauriNotificationAdapter();
-
-        const result = await adapter.isSubscribed();
-
-        expect(result).toBe(false);
-    });
-
-    it("should return true for isSubscribed after permission granted", async () => {
-        isPermissionGrantedMock.mockResolvedValue(true);
-        isAndroidMock.mockReturnValue(false);
-        hasAnyGetMock.mockResolvedValue({ data: true });
-
-        const adapter = createTauriNotificationAdapter();
-        await adapter.initialize();
-        const result = await adapter.isSubscribed();
-
-        expect(result).toBe(true);
-    });
-
-    it("should check permission and create Android channel when isAndroid is true", async () => {
-        isPermissionGrantedMock.mockResolvedValue(true);
-        isAndroidMock.mockReturnValue(true);
-        hasAnyGetMock.mockResolvedValue({ data: true });
-
-        const adapter = createTauriNotificationAdapter();
-        await adapter.initialize();
-
-        expect(isPermissionGrantedMock).toHaveBeenCalledOnce();
-        expect(createChannelMock).toHaveBeenCalledWith({
-            id: "default",
-            name: "Frak Wallet",
-            importance: 4,
-        });
-    });
-
-    it("should not create channel when isAndroid is false", async () => {
-        isPermissionGrantedMock.mockResolvedValue(true);
-        isAndroidMock.mockReturnValue(false);
-        hasAnyGetMock.mockResolvedValue({ data: true });
-
-        const adapter = createTauriNotificationAdapter();
-        await adapter.initialize();
-
-        expect(isPermissionGrantedMock).toHaveBeenCalledOnce();
-        expect(createChannelMock).not.toHaveBeenCalled();
-    });
-
-    it("should return isSubscribed true when permission granted on initialize", async () => {
-        isPermissionGrantedMock.mockResolvedValue(true);
-        isAndroidMock.mockReturnValue(false);
-        hasAnyGetMock.mockResolvedValue({ data: true });
-
-        const adapter = createTauriNotificationAdapter();
-        const result = await adapter.initialize();
-
-        expect(result).toEqual({ isSubscribed: true });
-    });
-
-    it("should return isSubscribed false when permission denied on initialize", async () => {
-        isPermissionGrantedMock.mockResolvedValue(false);
-        isAndroidMock.mockReturnValue(false);
-
-        const adapter = createTauriNotificationAdapter();
-        const result = await adapter.initialize();
-
-        expect(result).toEqual({ isSubscribed: false });
-    });
-
-    it("should call sendNotification with mapped payload", async () => {
-        const adapter = createTauriNotificationAdapter();
-
-        await adapter.showLocalNotification({
-            title: "Test Title",
-            body: "Test Body",
-            icon: "test-icon.png",
-        });
-
-        expect(sendNotificationMock).toHaveBeenCalledWith({
-            title: "Test Title",
-            body: "Test Body",
-            icon: "test-icon.png",
-        });
-    });
-
-    it("should call notificationStorage.add with correct NotificationModel shape", async () => {
-        const now = 1700000000000;
-        vi.spyOn(Date, "now").mockReturnValue(now);
-
-        const adapter = createTauriNotificationAdapter();
-
-        await adapter.showLocalNotification({
-            title: "Test Title",
-            body: "Test Body",
-            icon: "test-icon.png",
-            data: { url: "https://example.com" },
-        });
-
-        expect(addMock).toHaveBeenCalledWith({
-            id: mockUUID,
-            title: "Test Title",
-            body: "Test Body",
-            icon: "test-icon.png",
-            data: { url: "https://example.com" },
-            timestamp: now,
-        });
-    });
-
-    // --- FCM push flow tests ---
-
-    it("should subscribe: register for push notifications and sync token to backend", async () => {
-        requestPermissionMock.mockResolvedValue("granted");
-        registerForPushNotificationsMock.mockResolvedValue("mock-fcm-token");
-
-        const adapter = createTauriNotificationAdapter();
-        await adapter.subscribe();
-
-        // Listener must be set up before registration to avoid missing events
-        const listenerCallOrder =
-            addPluginListenerMock.mock.invocationCallOrder[0];
-        const registerCallOrder =
-            registerForPushNotificationsMock.mock.invocationCallOrder[0];
-        expect(listenerCallOrder).toBeLessThan(registerCallOrder);
-
-        expect(registerForPushNotificationsMock).toHaveBeenCalledOnce();
+        expect(requestPermissionsMock).toHaveBeenCalledOnce();
+        expect(registerMock).toHaveBeenCalledOnce();
+        expect(getTokenMock).toHaveBeenCalledOnce();
         expect(putMock).toHaveBeenCalledWith({
             type: "fcm",
-            token: "mock-fcm-token",
+            token: "new-fcm-token",
         });
     });
 
-    it("should subscribe: handle registerForPushNotifications failure gracefully", async () => {
-        requestPermissionMock.mockResolvedValue("granted");
-        registerForPushNotificationsMock.mockRejectedValue(
-            new Error("FCM registration failed")
-        );
+    it("should subscribe: clear opt-out only after backend sync succeeds", async () => {
+        requestPermissionsMock.mockResolvedValue("granted");
+        getTokenMock.mockResolvedValue({ token: "new-fcm-token" });
 
         const adapter = createTauriNotificationAdapter();
+        await adapter.subscribe();
 
-        // subscribe should NOT throw — registerForPushNotifications failure
-        // is caught (e.g. iOS simulator has no APNs transport)
-        await expect(adapter.subscribe()).resolves.toBeUndefined();
-        expect(putMock).not.toHaveBeenCalled();
+        // Opt-out cleared with false after full success
+        expect(idbSetMock).toHaveBeenCalledWith(
+            "push-opt-out",
+            false,
+            expect.anything()
+        );
+        // Backend sync must happen before opt-out clear
+        const putOrder = putMock.mock.invocationCallOrder[0];
+        const setOrder = idbSetMock.mock.invocationCallOrder[0];
+        expect(putOrder).toBeLessThan(setOrder);
     });
 
-    it("should subscribe: surface backend sync failure to caller", async () => {
-        requestPermissionMock.mockResolvedValue("granted");
-        registerForPushNotificationsMock.mockResolvedValue("mock-fcm-token");
+    it("should subscribe: keep opt-out flag set when backend sync fails", async () => {
+        requestPermissionsMock.mockResolvedValue("granted");
+        getTokenMock.mockResolvedValue({ token: "new-fcm-token" });
         putMock.mockRejectedValue(new Error("Backend sync failed"));
 
         const adapter = createTauriNotificationAdapter();
+        await expect(adapter.subscribe()).rejects.toThrow(
+            "Backend sync failed"
+        );
 
+        // setPushOptOut(false) should NOT have been called
+        expect(idbSetMock).not.toHaveBeenCalled();
+    });
+
+    it("should subscribe: set up onTokenRefresh listener BEFORE register", async () => {
+        requestPermissionsMock.mockResolvedValue("granted");
+        getTokenMock.mockResolvedValue({ token: "new-fcm-token" });
+
+        const adapter = createTauriNotificationAdapter();
+        await adapter.subscribe();
+
+        // onTokenRefresh must be called before register
+        const listenerCallOrder =
+            onTokenRefreshMock.mock.invocationCallOrder[0];
+        const registerCallOrder = registerMock.mock.invocationCallOrder[0];
+        expect(listenerCallOrder).toBeLessThan(registerCallOrder);
+    });
+
+    it("should subscribe: wait for token via onTokenRefresh when getToken rejects (cold start)", async () => {
+        requestPermissionsMock.mockResolvedValue("granted");
+        getTokenMock.mockRejectedValue(new Error("FCM token not available"));
+
+        const adapter = createTauriNotificationAdapter();
+        const subscribePromise = adapter.subscribe();
+
+        // Let subscribe() reach the pending-delivery await
+        await new Promise((r) => setTimeout(r, 0));
+
+        // FCM delivers the token via onTokenRefresh
+        capturedTokenRefreshHandler?.({ token: "late-delivered-token" });
+
+        await subscribePromise;
+
+        expect(putMock).toHaveBeenCalledWith({
+            type: "fcm",
+            token: "late-delivered-token",
+        });
+    });
+
+    it("should subscribe: propagate real APNs error from getToken instead of timing out", async () => {
+        requestPermissionsMock.mockResolvedValue("granted");
+        getTokenMock.mockRejectedValue(new Error("APNs entitlement missing"));
+
+        const adapter = createTauriNotificationAdapter();
+        await expect(adapter.subscribe()).rejects.toThrow(
+            "APNs entitlement missing"
+        );
+
+        // Should fail fast — no backend sync attempted
+        expect(putMock).not.toHaveBeenCalled();
+    });
+
+    it("should subscribe: reject when token delivery times out", async () => {
+        vi.useFakeTimers();
+        requestPermissionsMock.mockResolvedValue("granted");
+        getTokenMock.mockRejectedValue(new Error("FCM token not available"));
+
+        const adapter = createTauriNotificationAdapter();
+        const subscribePromise = adapter.subscribe();
+
+        // Attach rejection handler BEFORE advancing timers to avoid unhandled rejection
+        const assertion = expect(subscribePromise).rejects.toThrow(
+            "FCM token delivery timed out"
+        );
+
+        // Advance past the 10s timeout
+        await vi.advanceTimersByTimeAsync(10_000);
+
+        await assertion;
+        expect(putMock).not.toHaveBeenCalled();
+
+        vi.useRealTimers();
+    });
+
+    it("should subscribe: use buffered token when refresh arrives before getToken", async () => {
+        requestPermissionsMock.mockResolvedValue("granted");
+        getTokenMock.mockRejectedValue(new Error("FCM token not available"));
+
+        // register() triggers a token-refresh before getToken runs
+        registerMock.mockImplementation(async () => {
+            capturedTokenRefreshHandler?.({ token: "early-token" });
+        });
+
+        const adapter = createTauriNotificationAdapter();
+        await adapter.subscribe();
+
+        // subscribe() should use the buffered token (handler also synced
+        // fire-and-forget, so putMock is called twice with the same token)
+        expect(putMock).toHaveBeenCalledWith({
+            type: "fcm",
+            token: "early-token",
+        });
+    });
+
+    it("should subscribe: propagate backend sync failure to caller", async () => {
+        requestPermissionsMock.mockResolvedValue("granted");
+        getTokenMock.mockResolvedValue({ token: "new-fcm-token" });
+        putMock.mockRejectedValue(new Error("Backend sync failed"));
+
+        const adapter = createTauriNotificationAdapter();
         await expect(adapter.subscribe()).rejects.toThrow(
             "Backend sync failed"
         );
     });
 
-    it("should unsubscribe: call unregisterForPushNotifications and delete backend token", async () => {
+    it("should subscribe: throw when requestPermissions returns denied", async () => {
+        requestPermissionsMock.mockResolvedValue("denied");
+
+        const adapter = createTauriNotificationAdapter();
+        await expect(adapter.subscribe()).rejects.toThrow(
+            "Notification permission denied"
+        );
+
+        expect(registerMock).not.toHaveBeenCalled();
+        expect(getTokenMock).not.toHaveBeenCalled();
+        expect(putMock).not.toHaveBeenCalled();
+    });
+
+    it("should subscribe: throw when register fails", async () => {
+        requestPermissionsMock.mockResolvedValue("granted");
+        registerMock.mockRejectedValue(new Error("FCM registration failed"));
+
+        const adapter = createTauriNotificationAdapter();
+        await expect(adapter.subscribe()).rejects.toThrow(
+            "FCM registration failed"
+        );
+
+        expect(putMock).not.toHaveBeenCalled();
+    });
+
+    it("should subscribe: warn and continue when listener setup fails", async () => {
+        requestPermissionsMock.mockResolvedValue("granted");
+        onTokenRefreshMock.mockRejectedValue(
+            new Error("registerListener not allowed")
+        );
+        getTokenMock.mockResolvedValue({ token: "direct-token" });
+
+        const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+        const adapter = createTauriNotificationAdapter();
+        await adapter.subscribe();
+
+        expect(warnSpy).toHaveBeenCalledWith(
+            expect.stringContaining("FCM token refresh listener unavailable"),
+            expect.any(Error)
+        );
+        warnSpy.mockRestore();
+
+        expect(putMock).toHaveBeenCalledWith({
+            type: "fcm",
+            token: "direct-token",
+        });
+    });
+
+    it("should requestPermission: propagate plugin errors", async () => {
+        requestPermissionsMock.mockRejectedValue(
+            new Error("Plugin not available")
+        );
+
+        const adapter = createTauriNotificationAdapter();
+        await expect(adapter.requestPermission()).rejects.toThrow(
+            "Plugin not available"
+        );
+    });
+
+    it("should unsubscribe: call deleteToken and backend DELETE", async () => {
         const adapter = createTauriNotificationAdapter();
         await adapter.unsubscribe();
 
-        expect(unregisterForPushNotificationsMock).toHaveBeenCalledOnce();
+        expect(deleteTokenMock).toHaveBeenCalledOnce();
         expect(deleteMock).toHaveBeenCalledOnce();
+    });
+
+    it("should unsubscribe: clean up token refresh listener", async () => {
+        const unregisterMock = vi.fn().mockResolvedValue(undefined);
+        onTokenRefreshMock.mockImplementation(
+            (handler: (event: { token: string }) => void) => {
+                capturedTokenRefreshHandler = handler;
+                return Promise.resolve({ unregister: unregisterMock });
+            }
+        );
+
+        const adapter = createTauriNotificationAdapter();
+
+        // Subscribe first to set up the listener
+        requestPermissionsMock.mockResolvedValue("granted");
+        getTokenMock.mockResolvedValue({ token: "fcm-token" });
+        await adapter.subscribe();
+        expect(onTokenRefreshMock).toHaveBeenCalledOnce();
+
+        // Unsubscribe should clean up the listener
+        await adapter.unsubscribe();
+        expect(unregisterMock).toHaveBeenCalledOnce();
+
+        // Re-subscribing should set up a fresh listener
+        onTokenRefreshMock.mockClear();
+        await adapter.subscribe();
+        expect(onTokenRefreshMock).toHaveBeenCalledOnce();
     });
 
     it("should isSubscribed: check backend and return true", async () => {
@@ -363,69 +435,93 @@ describe.sequential("createTauriNotificationAdapter", () => {
         warnSpy.mockRestore();
     });
 
-    it("should initialize: set up token refresh listener when permission granted (Android)", async () => {
-        isPermissionGrantedMock.mockResolvedValue(true);
-        isAndroidMock.mockReturnValue(true);
-        isIOSMock.mockReturnValue(false);
+    it("should initialize: call checkPermissions and return subscription status", async () => {
+        checkPermissionsMock.mockResolvedValue("granted");
         hasAnyGetMock.mockResolvedValue({ data: true });
 
         const adapter = createTauriNotificationAdapter();
-        await adapter.initialize();
+        const result = await adapter.initialize();
 
-        expect(addPluginListenerMock).toHaveBeenCalledWith(
-            "notifications",
-            "push-token",
-            expect.any(Function)
-        );
+        expect(checkPermissionsMock).toHaveBeenCalledOnce();
+        expect(result).toEqual({ isSubscribed: true });
     });
 
-    it("should initialize: set up FCM token refresh listener when permission granted (iOS)", async () => {
-        isPermissionGrantedMock.mockResolvedValue(true);
-        isAndroidMock.mockReturnValue(false);
-        isIOSMock.mockReturnValue(true);
+    it("should initialize: create channel unconditionally when granted", async () => {
+        checkPermissionsMock.mockResolvedValue("granted");
         hasAnyGetMock.mockResolvedValue({ data: true });
-
-        const addEventListenerSpy = vi.spyOn(window, "addEventListener");
 
         const adapter = createTauriNotificationAdapter();
         await adapter.initialize();
 
-        expect(addEventListenerSpy).toHaveBeenCalledWith(
-            "frak:fcm-token",
-            expect.any(Function)
-        );
-
-        addEventListenerSpy.mockRestore();
+        expect(createChannelMock).toHaveBeenCalledWith({
+            id: "default",
+            name: "Frak Wallet",
+            importance: 4,
+        });
     });
 
-    it("should initialize: token refresh event re-syncs to backend (Android)", async () => {
-        isPermissionGrantedMock.mockResolvedValue(true);
-        isAndroidMock.mockReturnValue(true);
-        isIOSMock.mockReturnValue(false);
+    it("should initialize: set up onTokenRefresh listener when granted", async () => {
+        checkPermissionsMock.mockResolvedValue("granted");
         hasAnyGetMock.mockResolvedValue({ data: true });
-
-        // Capture the callback passed to addPluginListener
-        let capturedCallback: ((event: { token: string }) => void) | undefined;
-        addPluginListenerMock.mockImplementation(
-            (
-                _plugin: string,
-                _event: string,
-                callback: (event: { token: string }) => void
-            ) => {
-                capturedCallback = callback;
-                return Promise.resolve(undefined);
-            }
-        );
 
         const adapter = createTauriNotificationAdapter();
         await adapter.initialize();
 
-        expect(capturedCallback).toBeDefined();
+        expect(onTokenRefreshMock).toHaveBeenCalledOnce();
+    });
 
-        // Trigger the token refresh callback
-        capturedCallback?.({ token: "refreshed-token" });
+    it("should initialize: set up listener when granted even if not subscribed (auto-recovery)", async () => {
+        checkPermissionsMock.mockResolvedValue("granted");
+        hasAnyGetMock.mockResolvedValue({ data: false });
 
-        // Wait for the async syncTokenToBackend to complete
+        const adapter = createTauriNotificationAdapter();
+        await adapter.initialize();
+
+        expect(createChannelMock).toHaveBeenCalled();
+        // Listener is always active when permission is granted so that
+        // token refreshes can auto-recover from backend stale-token cleanup.
+        // The opt-out flag in handleTokenRefresh prevents ghost resubscribes.
+        expect(onTokenRefreshMock).toHaveBeenCalledOnce();
+    });
+
+    it("should initialize: NOT set up listener when denied", async () => {
+        checkPermissionsMock.mockResolvedValue("denied");
+
+        const adapter = createTauriNotificationAdapter();
+        await adapter.initialize();
+
+        expect(onTokenRefreshMock).not.toHaveBeenCalled();
+    });
+
+    it("should initialize: succeed even when listener setup fails", async () => {
+        checkPermissionsMock.mockResolvedValue("granted");
+        hasAnyGetMock.mockResolvedValue({ data: true });
+        onTokenRefreshMock.mockRejectedValue(
+            new Error("registerListener not allowed")
+        );
+
+        const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+        const adapter = createTauriNotificationAdapter();
+        const result = await adapter.initialize();
+        warnSpy.mockRestore();
+
+        expect(result).toEqual({ isSubscribed: true });
+        expect(createChannelMock).toHaveBeenCalled();
+    });
+
+    it("should onTokenRefresh event: sync token to backend", async () => {
+        checkPermissionsMock.mockResolvedValue("granted");
+        hasAnyGetMock.mockResolvedValue({ data: true });
+
+        const adapter = createTauriNotificationAdapter();
+        await adapter.initialize();
+
+        expect(capturedTokenRefreshHandler).toBeDefined();
+
+        // Invoke the captured handler
+        capturedTokenRefreshHandler?.({ token: "refreshed-token" });
+
+        // Wait for async syncTokenToBackend to complete
         await vi.waitFor(() => {
             expect(putMock).toHaveBeenCalledWith({
                 type: "fcm",
@@ -434,136 +530,32 @@ describe.sequential("createTauriNotificationAdapter", () => {
         });
     });
 
-    it("should initialize: token refresh event re-syncs to backend (iOS)", async () => {
-        isPermissionGrantedMock.mockResolvedValue(true);
-        isAndroidMock.mockReturnValue(false);
-        isIOSMock.mockReturnValue(true);
-        hasAnyGetMock.mockResolvedValue({ data: true });
+    it("should showLocalNotification: call sendNotification and store in IndexedDB", async () => {
+        const now = 1700000000000;
+        vi.spyOn(Date, "now").mockReturnValue(now);
 
         const adapter = createTauriNotificationAdapter();
-        await adapter.initialize();
 
-        // Simulate native FirebaseManager.swift emitting a refreshed FCM token
-        window.dispatchEvent(
-            new CustomEvent("frak:fcm-token", {
-                detail: { token: "refreshed-ios-token" },
-            })
-        );
-
-        // Wait for the async syncTokenToBackend to complete
-        await vi.waitFor(() => {
-            expect(putMock).toHaveBeenCalledWith({
-                type: "fcm",
-                token: "refreshed-ios-token",
-            });
+        await adapter.showLocalNotification({
+            title: "Test Title",
+            body: "Test Body",
+            icon: "test-icon.png",
+            data: { url: "https://example.com" },
         });
-    });
 
-    it("should initialize: NOT set up listener when permission denied", async () => {
-        isPermissionGrantedMock.mockResolvedValue(false);
-        isAndroidMock.mockReturnValue(false);
-        isIOSMock.mockReturnValue(false);
-
-        const addEventListenerSpy = vi.spyOn(window, "addEventListener");
-
-        const adapter = createTauriNotificationAdapter();
-        await adapter.initialize();
-
-        expect(addPluginListenerMock).not.toHaveBeenCalled();
-        expect(addEventListenerSpy).not.toHaveBeenCalledWith(
-            "frak:fcm-token",
-            expect.any(Function)
-        );
-
-        addEventListenerSpy.mockRestore();
-    });
-
-    // --- iOS FCM token exchange tests ---
-
-    it("should subscribe on iOS: read FCM token from window global and sync to backend", async () => {
-        isAndroidMock.mockReturnValue(false);
-        isIOSMock.mockReturnValue(true);
-        requestPermissionMock.mockResolvedValue("granted");
-        registerForPushNotificationsMock.mockResolvedValue("raw-apns-hex");
-        // Simulate native FirebaseManager.swift having already set the token
-        window.__frakFcmToken = "ios-fcm-token";
-
-        const adapter = createTauriNotificationAdapter();
-        await adapter.subscribe();
-
-        expect(registerForPushNotificationsMock).toHaveBeenCalledOnce();
-        expect(putMock).toHaveBeenCalledWith({
-            type: "fcm",
-            token: "ios-fcm-token",
+        expect(sendNotificationMock).toHaveBeenCalledWith({
+            title: "Test Title",
+            body: "Test Body",
+            icon: "test-icon.png",
         });
-    });
 
-    it("should subscribe on iOS: wait for FCM token event when not immediately available", async () => {
-        isAndroidMock.mockReturnValue(false);
-        isIOSMock.mockReturnValue(true);
-        requestPermissionMock.mockResolvedValue("granted");
-        registerForPushNotificationsMock.mockResolvedValue("raw-apns-hex");
-        // window.__frakFcmToken is NOT set — token arrives via event
-
-        const adapter = createTauriNotificationAdapter();
-        const subscribePromise = adapter.subscribe();
-
-        // Simulate native Firebase delivering the token after a delay
-        setTimeout(() => {
-            window.dispatchEvent(
-                new CustomEvent("frak:fcm-token", {
-                    detail: { token: "delayed-ios-fcm-token" },
-                })
-            );
-        }, 50);
-
-        await subscribePromise;
-
-        expect(putMock).toHaveBeenCalledWith({
-            type: "fcm",
-            token: "delayed-ios-fcm-token",
-        });
-    });
-
-    it("should subscribe on iOS: throw when FCM token not received within timeout", async () => {
-        vi.useFakeTimers();
-
-        isAndroidMock.mockReturnValue(false);
-        isIOSMock.mockReturnValue(true);
-        requestPermissionMock.mockResolvedValue("granted");
-        registerForPushNotificationsMock.mockResolvedValue("raw-apns-hex");
-        // window.__frakFcmToken is NOT set, no event dispatched → timeout
-
-        const adapter = createTauriNotificationAdapter();
-        const subscribePromise = adapter.subscribe();
-
-        // Set up the rejection expectation BEFORE advancing time
-        // so the rejection doesn't fire as "unhandled"
-        const rejectAssertion = expect(subscribePromise).rejects.toThrow(
-            "FCM token not received within timeout"
-        );
-
-        // Advance past the 10s timeout
-        await vi.advanceTimersByTimeAsync(10_000);
-
-        await rejectAssertion;
-        expect(putMock).not.toHaveBeenCalled();
-
-        vi.useRealTimers();
-    });
-
-    it("should subscribe on Android: use token from registerForPushNotifications directly", async () => {
-        isAndroidMock.mockReturnValue(true);
-        isIOSMock.mockReturnValue(false);
-        requestPermissionMock.mockResolvedValue("granted");
-        registerForPushNotificationsMock.mockResolvedValue("android-fcm-token");
-
-        const adapter = createTauriNotificationAdapter();
-        await adapter.subscribe();
-
-        expect(putMock).toHaveBeenCalledWith({
-            type: "fcm",
-            token: "android-fcm-token",
+        expect(addMock).toHaveBeenCalledWith({
+            id: mockUUID,
+            title: "Test Title",
+            body: "Test Body",
+            icon: "test-icon.png",
+            data: { url: "https://example.com" },
+            timestamp: now,
         });
     });
 });

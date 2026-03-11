@@ -7,10 +7,6 @@ fileGroups: [../../src]
 configs:
   debug: debug
   release: release
-packages:
-  Firebase:
-    url: https://github.com/firebase/firebase-ios-sdk
-    from: "11.0.0"
 settingGroups:
   app:
     base:
@@ -100,8 +96,6 @@ targets:
     dependencies:
       - framework: libapp.a
         embed: false
-      - package: Firebase
-        product: FirebaseMessaging
       - sdk: CoreGraphics.framework
       - sdk: Metal.framework
       - sdk: MetalKit.framework
