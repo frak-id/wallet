@@ -21,9 +21,7 @@ export function setupModalConfig(client: FrakClient) {
  * @param client
  */
 export async function setupReferral(client: FrakClient) {
-    const referral = await referralInteraction(client, {
-        modalConfig: window.FrakSetup?.modalWalletConfig,
-    });
+    const referral = await referralInteraction(client);
     console.log("referral", referral);
 }
 

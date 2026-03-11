@@ -69,10 +69,7 @@ describe("setup", () => {
             await setupReferral(window.FrakSetup.client!);
 
             expect(coreSdkActions.referralInteraction).toHaveBeenCalledWith(
-                window.FrakSetup.client!,
-                {
-                    modalConfig: window.FrakSetup.modalWalletConfig,
-                }
+                window.FrakSetup.client!
             );
             expect(consoleLogSpy).toHaveBeenCalledWith(
                 "referral",
