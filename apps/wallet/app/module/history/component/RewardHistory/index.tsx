@@ -3,6 +3,7 @@ import { Gift } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Panel } from "@/module/common/component/Panel";
 import { Skeleton } from "@/module/common/component/Skeleton";
+import { isCryptoMode } from "@/module/common/utils/walletMode";
 import { useGetRewardHistory } from "@/module/history/hook/useGetRewardHistory";
 import styles from "./index.module.css";
 
@@ -57,7 +58,8 @@ function RewardHistoryItem({ reward }: { reward: RewardHistoryItemType }) {
                     {reward.merchant.name}
                 </span>
                 <span className={styles.item__amount}>
-                    +{reward.amount.toFixed(2)} {reward.token.symbol}
+                    +{reward.amount.toFixed(2)}
+                    {isCryptoMode ? ` ${reward.token.symbol}` : "€"}
                 </span>
             </div>
             <div className={styles.item__badges}>
@@ -70,7 +72,7 @@ function RewardHistoryItem({ reward }: { reward: RewardHistoryItemType }) {
                 <span className={styles.item__date}>
                     {new Date(reward.timestamp).toLocaleString()}
                 </span>
-                {reward.txHash && (
+                {isCryptoMode && reward.txHash && (
                     <span className={styles.item__txHash}>
                         {reward.txHash.slice(0, 10)}...
                     </span>

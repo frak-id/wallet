@@ -18,6 +18,12 @@ import {
     walletUrl,
 } from "../config";
 import { getLocalIp, isProd, normalizedStageName } from "../utils";
+
+/**
+ * Wallet display mode: loyalty in prod hides crypto UI, crypto in dev/staging shows full wallet.
+ */
+const walletMode = isProd ? "loyalty" : "crypto";
+
 import { baseDomainName, getRegistryPath, walletNamespace } from "./utils";
 
 // Resolve backend service name only in non-dev (avoids triggering Docker builds locally)
@@ -70,6 +76,7 @@ if (!$dev) {
             ERPC_URL: walletEnv.ERPC_URL,
             FRAK_WALLET_URL: walletEnv.FRAK_WALLET_URL,
             OPEN_PANEL_API_URL: walletEnv.OPEN_PANEL_API_URL,
+            VITE_WALLET_MODE: walletMode,
         },
         // Secrets passed via BuildKit (not stored in layers)
         secrets: {

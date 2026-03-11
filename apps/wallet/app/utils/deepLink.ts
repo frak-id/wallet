@@ -1,5 +1,6 @@
 import { isTauri } from "@frak-labs/app-essentials/utils/platform";
 import { getSafeSession, pairingStore } from "@frak-labs/wallet-shared";
+import { isCryptoMode } from "@/module/common/utils/walletMode";
 
 type DeepLinkParams = {
     action: string;
@@ -117,14 +118,22 @@ function handleDeepLinkAction(navigate: NavigateFn, params: DeepLinkParams) {
 export function routeDeepLink(navigate: NavigateFn, params: DeepLinkParams) {
     switch (params.action) {
         case "send":
-            navigate({
-                to: "/tokens/send",
-                search: params.to ? { to: params.to } : undefined,
-            });
+            if (isCryptoMode) {
+                navigate({
+                    to: "/tokens/send",
+                    search: params.to ? { to: params.to } : undefined,
+                });
+            } else {
+                navigate({ to: "/wallet" });
+            }
             break;
 
         case "receive":
-            navigate({ to: "/tokens/receive" });
+            if (isCryptoMode) {
+                navigate({ to: "/tokens/receive" });
+            } else {
+                navigate({ to: "/wallet" });
+            }
             break;
 
         case "settings":

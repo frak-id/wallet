@@ -3,21 +3,16 @@ import { Link } from "@tanstack/react-router";
 import { HandCoins, RefreshCcw, Send } from "lucide-react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
+import { isCryptoMode } from "@/module/common/utils/walletMode";
 import styles from "./index.module.css";
 
 export function HomeNavigation() {
     const { t } = useTranslation();
+
+    if (!isCryptoMode) return null;
+
     return (
         <div className={styles.homeNavigation}>
-            {/* <Link
-                to={"/earn"}
-                className={`${styles.button} ${styles.button__lines}`}
-                viewTransition
-            >
-                <Button icon={<Medal />}>
-                    <Trans i18nKey={"wallet.share-and-earn"} />
-                </Button>
-            </Link> */}
             <Link
                 to={"/tokens/receive"}
                 className={styles.button}

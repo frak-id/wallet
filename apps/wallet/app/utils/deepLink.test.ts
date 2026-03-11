@@ -44,6 +44,10 @@ vi.mock("@frak-labs/wallet-shared", async (importOriginal) => {
     };
 });
 
+vi.mock("@/module/common/utils/walletMode", () => ({
+    isCryptoMode: true,
+}));
+
 describe("initDeepLinks", () => {
     beforeEach(async () => {
         vi.clearAllMocks();

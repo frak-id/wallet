@@ -15,6 +15,10 @@ vi.mock("react-i18next", () => ({
     }),
 }));
 
+vi.mock("@/module/common/utils/walletMode", () => ({
+    isCryptoMode: true,
+}));
+
 vi.mock("@/module/common/component/Title", () => ({
     Title: ({
         size,
