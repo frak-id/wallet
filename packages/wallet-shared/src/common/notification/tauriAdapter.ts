@@ -146,6 +146,17 @@ export function createTauriNotificationAdapter(): NotificationAdapter {
             try {
                 const plugin = await getTauriNotificationPlugin();
                 if (!plugin) return "denied";
+
+                // Workaround for Choochmeque plugin bug: on Android 13+,
+                // requestPermission() never resolves if permission is already
+                // granted (missing else branch in NotificationPlugin.kt).
+                // Check first and skip the call entirely if already granted.
+                const alreadyGranted = await plugin.isPermissionGranted();
+                if (alreadyGranted) {
+                    permissionGranted = true;
+                    return "granted";
+                }
+
                 const result = await plugin.requestPermission();
                 // Choochmeque's Swift resolves with { permissionState: "granted" }
                 // (an object), not the string "granted". Handle both shapes.
