@@ -27,6 +27,8 @@ const getSafeSessionMock = vi.fn<() => { token: string } | null | undefined>(
 );
 
 vi.mock("@frak-labs/app-essentials/utils/platform", () => ({
+    isAndroid: vi.fn(() => false),
+    isIOS: vi.fn(() => false),
     isTauri: vi.fn(() => true),
 }));
 

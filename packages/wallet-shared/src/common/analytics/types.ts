@@ -8,6 +8,8 @@ export type AnalyticsGlobalProperties = {
     wallet?: Address;
     isIframe: boolean;
     isPwa: boolean;
+    isTauri?: boolean;
+    platform?: "ios" | "android" | "web" | "unknown";
     // Pass a custom iframe referrer (since the event referrer could be overridden if user got multiple websites using frak open, see: https://github.com/Openpanel-dev/openpanel/issues/172)
     iframeReferrer: string;
     // Embedded specifics

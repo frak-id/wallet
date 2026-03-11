@@ -1,7 +1,13 @@
+import {
+    isAndroid,
+    isIOS,
+    isTauri,
+} from "@frak-labs/app-essentials/utils/platform";
 import type { Address, Hex } from "viem";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { WebAuthNWallet } from "../../types/WebAuthN";
 import {
+    getPlatformInfo,
     openPanel,
     setProfileId,
     trackAuthCompleted,
@@ -11,13 +17,39 @@ import {
     updateGlobalProperties,
 } from "./index";
 
-// Create mock functions that we can spy on
-const mockTrack = vi.fn().mockResolvedValue(undefined);
-const mockIdentify = vi.fn().mockResolvedValue(undefined);
-const mockSetGlobalProperties = vi.fn();
-const mockInit = vi.fn();
+// Create mock functions that we can spy on (hoisted for vi.mock)
+const { mockTrack, mockIdentify, mockSetGlobalProperties, mockInit } =
+    vi.hoisted(() => ({
+        mockTrack: vi.fn().mockResolvedValue(undefined),
+        mockIdentify: vi.fn().mockResolvedValue(undefined),
+        mockSetGlobalProperties: vi.fn(),
+        mockInit: vi.fn(),
+    }));
 
-// Mock the OpenPanel instance
+type MockOpenPanelInstance = {
+    global: Record<string, unknown>;
+    identify: typeof mockIdentify;
+    init: typeof mockInit;
+    profileId: string | undefined;
+    setGlobalProperties: typeof mockSetGlobalProperties;
+    track: typeof mockTrack;
+};
+
+// Mock OpenPanel constructor
+vi.mock("@openpanel/web", () => ({
+    OpenPanel: vi.fn(function (this: MockOpenPanelInstance) {
+        Object.assign(this, {
+            init: mockInit,
+            track: mockTrack,
+            identify: mockIdentify,
+            setGlobalProperties: mockSetGlobalProperties,
+            profileId: undefined,
+            global: {},
+        });
+    }),
+}));
+
+// Mock the OpenPanel instance (for reference in tests)
 const mockOpenPanelInstance = {
     init: mockInit,
     track: mockTrack,
@@ -27,17 +59,18 @@ const mockOpenPanelInstance = {
     global: {} as Record<string, unknown>,
 };
 
-// Mock OpenPanel constructor
-vi.mock("@openpanel/web", () => ({
-    OpenPanel: vi.fn().mockImplementation(() => mockOpenPanelInstance),
-}));
-
 vi.mock("../lib/inApp", () => ({
     isInIframe: false,
 }));
 
 vi.mock("ua-parser-js/helpers", () => ({
     isStandalonePWA: vi.fn(() => false),
+}));
+
+vi.mock("@frak-labs/app-essentials/utils/platform", () => ({
+    isTauri: vi.fn(() => false),
+    isIOS: vi.fn(() => false),
+    isAndroid: vi.fn(() => false),
 }));
 
 describe("Analytics", () => {
@@ -63,6 +96,39 @@ describe("Analytics", () => {
             setProfileId(undefined);
             // Should not throw
             expect(true).toBe(true);
+        });
+    });
+
+    describe("getPlatformInfo", () => {
+        beforeEach(() => {
+            vi.mocked(isTauri).mockReturnValue(false);
+            vi.mocked(isIOS).mockReturnValue(false);
+            vi.mocked(isAndroid).mockReturnValue(false);
+        });
+
+        it("should return web platform when not in Tauri", () => {
+            const result = getPlatformInfo();
+            expect(result).toEqual({ isTauri: false, platform: "web" });
+        });
+
+        it("should return ios platform when in Tauri iOS", () => {
+            vi.mocked(isTauri).mockReturnValue(true);
+            vi.mocked(isIOS).mockReturnValue(true);
+            const result = getPlatformInfo();
+            expect(result).toEqual({ isTauri: true, platform: "ios" });
+        });
+
+        it("should return android platform when in Tauri Android", () => {
+            vi.mocked(isTauri).mockReturnValue(true);
+            vi.mocked(isAndroid).mockReturnValue(true);
+            const result = getPlatformInfo();
+            expect(result).toEqual({ isTauri: true, platform: "android" });
+        });
+
+        it("should return unknown platform for desktop Tauri", () => {
+            vi.mocked(isTauri).mockReturnValue(true);
+            const result = getPlatformInfo();
+            expect(result).toEqual({ isTauri: true, platform: "unknown" });
         });
     });
 
@@ -282,6 +348,28 @@ describe("Analytics", () => {
             expect(mockIdentify).toHaveBeenCalled();
             expect(mockTrack).toHaveBeenCalledWith("login_completed");
             expect(mockTrack).toHaveBeenCalledWith("user_logged_in");
+        });
+
+        it("should call identify with platform properties in trackAuthCompleted", async () => {
+            vi.mocked(isTauri).mockReturnValue(true);
+            vi.mocked(isIOS).mockReturnValue(true);
+
+            const session: WebAuthNWallet = {
+                type: "webauthn",
+                address: "0xplatform123" as Address,
+                publicKey: { x: "0xpubkey" as Hex, y: "0xpubkey2" as Hex },
+                authenticatorId: "auth-platform",
+            };
+
+            await trackAuthCompleted("login", session);
+            expect(mockIdentify).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    properties: expect.objectContaining({
+                        isTauri: true,
+                        platform: "ios",
+                    }),
+                })
+            );
         });
 
         it("should handle session without type in trackAuthCompleted", async () => {

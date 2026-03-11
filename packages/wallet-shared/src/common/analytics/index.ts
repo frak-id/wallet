@@ -1,3 +1,8 @@
+import {
+    isAndroid,
+    isIOS,
+    isTauri,
+} from "@frak-labs/app-essentials/utils/platform";
 import { OpenPanel } from "@openpanel/web";
 import { isStandalonePWA } from "ua-parser-js/helpers";
 import type { Session } from "../../types/Session";
@@ -6,6 +11,23 @@ import type {
     AnalyticsAuthenticationType,
     AnalyticsGlobalProperties,
 } from "./types";
+
+/**
+ * Get platform information for analytics
+ */
+export function getPlatformInfo() {
+    const tauri = isTauri();
+    return {
+        isTauri: tauri,
+        platform: tauri
+            ? isIOS()
+                ? "ios"
+                : isAndroid()
+                  ? "android"
+                  : "unknown"
+            : "web",
+    } as const;
+}
 
 /**
  * Create the open panel instance if the env variables are set
@@ -41,14 +63,30 @@ export const openPanel =
 /**
  * Get the properties to init open panel
  */
+function getIsStandalonePwa() {
+    if (
+        typeof window === "undefined" ||
+        typeof window.matchMedia !== "function"
+    ) {
+        return false;
+    }
+
+    try {
+        return isStandalonePWA();
+    } catch {
+        return false;
+    }
+}
+
 function getInitProperties() {
     if (typeof window === "undefined") return {};
     const referrer =
         isInIframe && document.referrer !== "" ? document.referrer : undefined;
     return {
         isIframe: isInIframe,
-        isPwa: isStandalonePWA(),
+        isPwa: getIsStandalonePwa(),
         iframeReferrer: referrer,
+        ...getPlatformInfo(),
     };
 }
 
@@ -116,6 +154,7 @@ export async function trackAuthCompleted(
             properties: {
                 sessionType: wallet.type ?? "webauthn",
                 sessionSrc: "pairing",
+                ...getPlatformInfo(),
             },
         }),
         // Track the auth related event
