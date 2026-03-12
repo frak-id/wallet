@@ -120,6 +120,10 @@ export function createTauriNotificationAdapter(): NotificationAdapter {
         },
 
         requestPermission: async () => {
+            // Check the current permission, if granted, early exit
+            const current = await checkPermissions();
+            if (current === "granted") return mapPermission(current);
+
             const state = await requestPermissions();
             return mapPermission(state);
         },
