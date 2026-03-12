@@ -1,4 +1,7 @@
-import type { PushTokenPayload } from "@frak-labs/wallet-shared";
+import type {
+    NotificationPermissionStatus,
+    PushTokenPayload,
+} from "@frak-labs/wallet-shared";
 import { renderHook, waitFor } from "@testing-library/react";
 import { vi } from "vitest";
 import { useNotificationStatus } from "@/module/notification/hook/useNotificationSetupStatus";
@@ -19,13 +22,14 @@ const mockTokensApi = vi.hoisted(() => ({
 const mockAdapter = vi.hoisted(() => ({
     getPermissionStatus: vi
         .fn()
-        .mockResolvedValue("default" as NotificationPermission),
+        .mockResolvedValue("prompt" satisfies NotificationPermissionStatus),
     requestPermission: vi
         .fn()
-        .mockResolvedValue("granted" as NotificationPermission),
+        .mockResolvedValue("granted" satisfies NotificationPermissionStatus),
     getToken: vi.fn().mockResolvedValue(null as PushTokenPayload | null),
     subscribe: vi.fn().mockResolvedValue(undefined),
     unsubscribe: vi.fn().mockResolvedValue(undefined),
+    openSettings: vi.fn().mockResolvedValue(undefined),
     initPromise: Promise.resolve(),
 }));
 
@@ -47,7 +51,7 @@ describe.sequential("useNotificationStatus", () => {
 
         mockAdapter.getPermissionStatus
             .mockReset()
-            .mockResolvedValue("default" as NotificationPermission);
+            .mockResolvedValue("prompt" satisfies NotificationPermissionStatus);
         mockAdapter.getToken.mockReset().mockResolvedValue(null);
         mockAdapter.subscribe.mockReset();
         mockAdapter.unsubscribe.mockReset().mockResolvedValue(undefined);
@@ -62,7 +66,7 @@ describe.sequential("useNotificationStatus", () => {
         queryWrapper,
     }: WalletTestFixtures) => {
         mockAdapter.getPermissionStatus.mockResolvedValue(
-            "granted" as NotificationPermission
+            "granted" satisfies NotificationPermissionStatus
         );
 
         const { result } = renderHook(() => useNotificationStatus(), {
@@ -71,6 +75,7 @@ describe.sequential("useNotificationStatus", () => {
 
         await waitFor(() => {
             expect(result.current).toEqual({
+                permissionStatus: "granted",
                 permissionGranted: true,
                 hasLocalCapability: false,
                 hasBackendToken: false,
@@ -82,7 +87,7 @@ describe.sequential("useNotificationStatus", () => {
         queryWrapper,
     }: WalletTestFixtures) => {
         mockAdapter.getPermissionStatus.mockResolvedValue(
-            "granted" as NotificationPermission
+            "granted" satisfies NotificationPermissionStatus
         );
         mockAdapter.getToken.mockResolvedValue({
             type: "web-push",
@@ -99,6 +104,7 @@ describe.sequential("useNotificationStatus", () => {
 
         await waitFor(() => {
             expect(result.current).toEqual({
+                permissionStatus: "granted",
                 permissionGranted: true,
                 hasLocalCapability: true,
                 hasBackendToken: true,
@@ -110,7 +116,7 @@ describe.sequential("useNotificationStatus", () => {
         queryWrapper,
     }: WalletTestFixtures) => {
         mockAdapter.getPermissionStatus.mockResolvedValue(
-            "granted" as NotificationPermission
+            "granted" satisfies NotificationPermissionStatus
         );
         mockTokensApi.hasAny.get.mockResolvedValue({ data: true });
 
@@ -120,6 +126,7 @@ describe.sequential("useNotificationStatus", () => {
 
         await waitFor(() => {
             expect(result.current).toEqual({
+                permissionStatus: "granted",
                 permissionGranted: true,
                 hasLocalCapability: false,
                 hasBackendToken: true,
@@ -131,7 +138,7 @@ describe.sequential("useNotificationStatus", () => {
         queryWrapper,
     }: WalletTestFixtures) => {
         mockAdapter.getPermissionStatus.mockReturnValue(
-            new Promise(() => {}) as Promise<NotificationPermission>
+            new Promise(() => {}) as Promise<NotificationPermissionStatus>
         );
 
         const { result } = renderHook(() => useNotificationStatus(), {
@@ -139,6 +146,7 @@ describe.sequential("useNotificationStatus", () => {
         });
 
         expect(result.current).toEqual({
+            permissionStatus: "prompt",
             permissionGranted: false,
             hasLocalCapability: false,
             hasBackendToken: false,

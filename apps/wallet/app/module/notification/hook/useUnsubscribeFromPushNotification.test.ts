@@ -1,4 +1,7 @@
-import type { PushTokenPayload } from "@frak-labs/wallet-shared";
+import type {
+    NotificationPermissionStatus,
+    PushTokenPayload,
+} from "@frak-labs/wallet-shared";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { vi } from "vitest";
 import { useUnsubscribeFromPushNotification } from "@/module/notification/hook/useUnsubscribeFromPushNotification";
@@ -19,13 +22,14 @@ const mockTokensApi = vi.hoisted(() => ({
 const mockAdapter = vi.hoisted(() => ({
     getPermissionStatus: vi
         .fn()
-        .mockResolvedValue("granted" as NotificationPermission),
+        .mockResolvedValue("granted" satisfies NotificationPermissionStatus),
     requestPermission: vi
         .fn()
-        .mockResolvedValue("granted" as NotificationPermission),
+        .mockResolvedValue("granted" satisfies NotificationPermissionStatus),
     getToken: vi.fn().mockResolvedValue(null as PushTokenPayload | null),
     subscribe: vi.fn().mockResolvedValue(undefined),
     unsubscribe: vi.fn().mockResolvedValue(undefined),
+    openSettings: vi.fn().mockResolvedValue(undefined),
     initPromise: Promise.resolve(),
 }));
 
@@ -104,7 +108,7 @@ describe.sequential("useUnsubscribeFromPushNotification", () => {
                 queryWrapper.client.getQueryData(
                     notificationKey.push.permission
                 )
-            ).toBe("default");
+            ).toBe("prompt");
             expect(
                 queryWrapper.client.getQueryData(
                     notificationKey.push.backendToken

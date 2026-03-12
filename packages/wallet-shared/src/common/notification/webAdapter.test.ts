@@ -102,12 +102,12 @@ describe.sequential("createWebNotificationAdapter", () => {
         });
     });
 
-    it("should return current notification permission status when getPermissionStatus called", async () => {
+    it("should return 'prompt' as current notification permission status when getPermissionStatus called", async () => {
         const adapter = createWebNotificationAdapter();
 
         const result = await adapter.getPermissionStatus();
 
-        expect(result).toBe("default");
+        expect(result).toBe("prompt");
     });
 
     it("should request notification permission when requestPermission called", async () => {

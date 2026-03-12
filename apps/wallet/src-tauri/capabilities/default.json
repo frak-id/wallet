@@ -9,6 +9,7 @@
         "safe-area-insets:default",
         "biometric:default",
         "fcm:default",
-        "deep-link:default"
+        "deep-link:default",
+        "opener:default"
     ]
 }

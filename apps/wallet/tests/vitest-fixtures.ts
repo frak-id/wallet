@@ -3,7 +3,10 @@
  * Adds wallet-specific fixtures to the shared base fixtures
  */
 
-import type { PushTokenPayload } from "@frak-labs/wallet-shared";
+import type {
+    NotificationPermissionStatus,
+    PushTokenPayload,
+} from "@frak-labs/wallet-shared";
 import {
     type BaseTestFixtures,
     test as baseTest,
@@ -23,11 +26,12 @@ export type WalletTestFixtures = BaseTestFixtures & {
      * Mock notification adapter matching the NotificationAdapter shape
      */
     mockNotificationAdapter: {
-        getPermissionStatus: Mock<() => Promise<NotificationPermission>>;
-        requestPermission: Mock<() => Promise<NotificationPermission>>;
+        getPermissionStatus: Mock<() => Promise<NotificationPermissionStatus>>;
+        requestPermission: Mock<() => Promise<NotificationPermissionStatus>>;
         getToken: Mock<() => Promise<PushTokenPayload | null>>;
         subscribe: Mock<() => Promise<PushTokenPayload>>;
         unsubscribe: Mock<() => Promise<void>>;
+        openSettings: Mock<() => Promise<void>>;
         initPromise: Promise<void>;
     };
 
@@ -99,16 +103,19 @@ export const test = baseTest.extend<
         const { vi } = await import("vitest");
         const adapter: WalletTestFixtures["mockNotificationAdapter"] = {
             getPermissionStatus: vi
-                .fn<() => Promise<NotificationPermission>>()
-                .mockResolvedValue("default"),
+                .fn<() => Promise<NotificationPermissionStatus>>()
+                .mockResolvedValue("prompt"),
             requestPermission: vi
-                .fn<() => Promise<NotificationPermission>>()
+                .fn<() => Promise<NotificationPermissionStatus>>()
                 .mockResolvedValue("granted"),
             getToken: vi
                 .fn<() => Promise<PushTokenPayload | null>>()
                 .mockResolvedValue(null),
             subscribe: vi.fn<() => Promise<PushTokenPayload>>(),
             unsubscribe: vi
+                .fn<() => Promise<void>>()
+                .mockResolvedValue(undefined),
+            openSettings: vi
                 .fn<() => Promise<void>>()
                 .mockResolvedValue(undefined),
             initPromise: Promise.resolve(),

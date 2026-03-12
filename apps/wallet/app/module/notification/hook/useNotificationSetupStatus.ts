@@ -1,5 +1,6 @@
 import {
     authenticatedWalletApi,
+    type NotificationPermissionStatus,
     notificationAdapter,
 } from "@frak-labs/wallet-shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -72,10 +73,12 @@ export function useNotificationStatus() {
 
     return useMemo(
         () => ({
+            permissionStatus: (permission ??
+                "prompt") as NotificationPermissionStatus,
             permissionGranted,
             hasLocalCapability,
             hasBackendToken: hasBackendToken ?? false,
         }),
-        [permissionGranted, hasLocalCapability, hasBackendToken]
+        [permission, permissionGranted, hasLocalCapability, hasBackendToken]
     );
 }

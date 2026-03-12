@@ -1,5 +1,6 @@
 import {
     authenticatedWalletApi,
+    type NotificationPermissionStatus,
     notificationAdapter,
 } from "@frak-labs/wallet-shared";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -22,7 +23,7 @@ export function useSubscribeToPushNotification() {
         onSuccess: (tokenPayload) => {
             queryClient.setQueryData(
                 notificationKey.push.permission,
-                "granted" as NotificationPermission
+                "granted" satisfies NotificationPermissionStatus
             );
             queryClient.setQueryData(
                 notificationKey.push.localToken,

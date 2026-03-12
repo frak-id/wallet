@@ -1,5 +1,6 @@
 import {
     authenticatedWalletApi,
+    type NotificationPermissionStatus,
     notificationAdapter,
 } from "@frak-labs/wallet-shared";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -21,7 +22,7 @@ export function useUnsubscribeFromPushNotification() {
         onSuccess: () => {
             queryClient.setQueryData(
                 notificationKey.push.permission,
-                "default" as NotificationPermission
+                "prompt" satisfies NotificationPermissionStatus
             );
             queryClient.setQueryData(notificationKey.push.localToken, null);
             queryClient.setQueryData(notificationKey.push.backendToken, false);

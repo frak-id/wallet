@@ -1,4 +1,8 @@
-import type { NotificationAdapter, PushTokenPayload } from "./adapter";
+import type {
+    NotificationAdapter,
+    NotificationPermissionStatus,
+    PushTokenPayload,
+} from "./adapter";
 
 type PushRegistration = {
     pushManager: PushManager;
@@ -12,6 +16,14 @@ function hasPushManager(
         registration !== null &&
         "pushManager" in registration
     );
+}
+
+function mapWebPermission(
+    permission: NotificationPermission
+): NotificationPermissionStatus {
+    if (permission === "granted") return "granted";
+    if (permission === "denied") return "denied";
+    return "prompt";
 }
 
 function subscriptionToPayload(sub: PushSubscription): PushTokenPayload | null {
@@ -52,16 +64,17 @@ export function createWebNotificationAdapter(): NotificationAdapter {
 
         getPermissionStatus: async () => {
             if (typeof Notification === "undefined") {
-                return "default";
+                return "prompt";
             }
-            return Notification.permission;
+            return mapWebPermission(Notification.permission);
         },
 
         requestPermission: async () => {
             if (typeof Notification === "undefined") {
-                return "default";
+                return "prompt";
             }
-            return await Notification.requestPermission();
+            const result = await Notification.requestPermission();
+            return mapWebPermission(result);
         },
 
         getToken: async () => {
@@ -114,6 +127,10 @@ export function createWebNotificationAdapter(): NotificationAdapter {
             if (sub) {
                 await sub.unsubscribe();
             }
+        },
+
+        openSettings: async () => {
+            // No-op on web: browsers handle notification permission via their own UI
         },
     };
 }

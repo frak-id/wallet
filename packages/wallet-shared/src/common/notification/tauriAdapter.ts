@@ -1,3 +1,4 @@
+import { isAndroid } from "@frak-labs/app-essentials/utils/platform";
 import type { PluginListener } from "@tauri-apps/api/core";
 import {
     checkPermissions,
@@ -10,14 +11,18 @@ import {
     requestPermissions,
 } from "tauri-plugin-fcm";
 import { authenticatedWalletApi } from "../api/backendClient";
-import type { NotificationAdapter } from "./adapter";
+import type {
+    NotificationAdapter,
+    NotificationPermissionStatus,
+} from "./adapter";
 
 const FCM_TOKEN_DELIVERY_TIMEOUT_MS = 10_000;
 
-function mapPermission(state: PermissionState): NotificationPermission {
+function mapPermission(state: PermissionState): NotificationPermissionStatus {
     if (state === "granted") return "granted";
     if (state === "denied") return "denied";
-    return "default";
+    if (state === "prompt-with-rationale") return "prompt-with-rationale";
+    return "prompt";
 }
 
 export function createTauriNotificationAdapter(): NotificationAdapter {
@@ -115,7 +120,7 @@ export function createTauriNotificationAdapter(): NotificationAdapter {
                 const state = await checkPermissions();
                 return mapPermission(state);
             } catch {
-                return "default";
+                return "prompt";
             }
         },
 
@@ -166,6 +171,16 @@ export function createTauriNotificationAdapter(): NotificationAdapter {
                 await deleteToken();
             } catch (error) {
                 console.warn("Failed to delete FCM token", error);
+            }
+        },
+
+        openSettings: async () => {
+            const { openUrl } = await import("@tauri-apps/plugin-opener");
+            if (isAndroid()) {
+                // TODO: Replace with custom Tauri command using ACTION_APP_NOTIFICATION_SETTINGS for direct notification settings
+                await openUrl("package:id.frak.wallet");
+            } else {
+                await openUrl("app-settings:");
             }
         },
     };

@@ -55,6 +55,7 @@
   },
   "devDependencies": {
     "@frak-labs/test-foundation": "workspace:*",
+    "@tauri-apps/plugin-opener": "~2",
     "tauri-plugin-fcm": "^0.1.7",
     "i18next-resources-for-ts": "^2.0.0",
     "@testing-library/jest-dom": "^6.9.1",

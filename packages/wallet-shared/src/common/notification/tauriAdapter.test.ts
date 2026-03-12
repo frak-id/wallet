@@ -9,6 +9,8 @@ const {
     deleteTokenMock,
     createChannelMock,
     onTokenRefreshMock,
+    isAndroidMock,
+    openUrlMock,
 } = vi.hoisted(() => ({
     getTokenMock: vi.fn(),
     requestPermissionsMock: vi.fn(),
@@ -17,6 +19,8 @@ const {
     deleteTokenMock: vi.fn(),
     createChannelMock: vi.fn(),
     onTokenRefreshMock: vi.fn(),
+    isAndroidMock: vi.fn(),
+    openUrlMock: vi.fn(),
 }));
 
 let capturedTokenRefreshHandler:
@@ -47,6 +51,14 @@ vi.mock("../api/backendClient", () => ({
     },
 }));
 
+vi.mock("@frak-labs/app-essentials/utils/platform", () => ({
+    isAndroid: isAndroidMock,
+}));
+
+vi.mock("@tauri-apps/plugin-opener", () => ({
+    openUrl: openUrlMock,
+}));
+
 describe.sequential("createTauriNotificationAdapter", () => {
     beforeEach(() => {
         getTokenMock.mockReset();
@@ -57,6 +69,8 @@ describe.sequential("createTauriNotificationAdapter", () => {
         createChannelMock.mockReset();
         onTokenRefreshMock.mockReset();
         putMock.mockReset();
+        isAndroidMock.mockReset();
+        openUrlMock.mockReset();
         capturedTokenRefreshHandler = undefined;
 
         getTokenMock.mockResolvedValue({ token: "mock-fcm-token" });
@@ -94,23 +108,33 @@ describe.sequential("createTauriNotificationAdapter", () => {
         expect(result).toBe("denied");
     });
 
-    it("should call checkPermissions and return 'default' when permission is prompt", async () => {
+    it("should call checkPermissions and return 'prompt' when permission is prompt", async () => {
         checkPermissionsMock.mockResolvedValue("prompt");
 
         const adapter = createTauriNotificationAdapter();
         const result = await adapter.getPermissionStatus();
 
         expect(checkPermissionsMock).toHaveBeenCalledOnce();
-        expect(result).toBe("default");
+        expect(result).toBe("prompt");
     });
 
-    it("should return 'default' when checkPermissions fails", async () => {
+    it("should return 'prompt' when checkPermissions fails", async () => {
         checkPermissionsMock.mockRejectedValue(new Error("Plugin error"));
 
         const adapter = createTauriNotificationAdapter();
         const result = await adapter.getPermissionStatus();
 
-        expect(result).toBe("default");
+        expect(result).toBe("prompt");
+    });
+
+    it("should return 'prompt-with-rationale' when plugin returns 'prompt-with-rationale'", async () => {
+        checkPermissionsMock.mockResolvedValue("prompt-with-rationale");
+
+        const adapter = createTauriNotificationAdapter();
+        const result = await adapter.getPermissionStatus();
+
+        expect(checkPermissionsMock).toHaveBeenCalledOnce();
+        expect(result).toBe("prompt-with-rationale");
     });
 
     it("should return 'granted' for requestPermission when plugin returns 'granted'", async () => {
@@ -133,13 +157,22 @@ describe.sequential("createTauriNotificationAdapter", () => {
         expect(result).toBe("denied");
     });
 
-    it("should map 'prompt' to 'default' for requestPermission", async () => {
+    it("should map 'prompt' to 'prompt' for requestPermission", async () => {
         requestPermissionsMock.mockResolvedValue("prompt");
 
         const adapter = createTauriNotificationAdapter();
         const result = await adapter.requestPermission();
 
-        expect(result).toBe("default");
+        expect(result).toBe("prompt");
+    });
+
+    it("should map 'prompt-with-rationale' to 'prompt-with-rationale' for requestPermission", async () => {
+        requestPermissionsMock.mockResolvedValue("prompt-with-rationale");
+
+        const adapter = createTauriNotificationAdapter();
+        const result = await adapter.requestPermission();
+
+        expect(result).toBe("prompt-with-rationale");
     });
 
     it("should requestPermission: propagate plugin errors", async () => {
@@ -364,5 +397,25 @@ describe.sequential("createTauriNotificationAdapter", () => {
                 token: "refreshed-token",
             });
         });
+    });
+
+    it("should openSettings: call openUrl with package URI on Android", async () => {
+        isAndroidMock.mockReturnValue(true);
+        openUrlMock.mockResolvedValue(undefined);
+
+        const adapter = createTauriNotificationAdapter();
+        await adapter.openSettings();
+
+        expect(openUrlMock).toHaveBeenCalledWith("package:id.frak.wallet");
+    });
+
+    it("should openSettings: call openUrl with app-settings on iOS", async () => {
+        isAndroidMock.mockReturnValue(false);
+        openUrlMock.mockResolvedValue(undefined);
+
+        const adapter = createTauriNotificationAdapter();
+        await adapter.openSettings();
+
+        expect(openUrlMock).toHaveBeenCalledWith("app-settings:");
     });
 });
