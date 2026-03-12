@@ -1,6 +1,9 @@
 import type { NotificationPayload } from "@frak-labs/ui/types/NotificationPayload";
-import { authenticatedWalletApi } from "../api/backendClient";
-import type { NotificationAdapter } from "./adapter";
+import type {
+    NotificationAdapter,
+    NotificationInitResult,
+    PushTokenPayload,
+} from "./adapter";
 
 type PushRegistration = {
     pushManager: PushManager;
@@ -16,28 +19,55 @@ function hasPushManager(
     );
 }
 
+function subscriptionToPayload(sub: PushSubscription): PushTokenPayload | null {
+    const json = sub.toJSON();
+    const endpoint = json.endpoint;
+    const p256dh = json.keys?.p256dh;
+    const auth = json.keys?.auth;
+    if (!endpoint || !p256dh || !auth) return null;
+    return {
+        type: "web-push" as const,
+        subscription: {
+            endpoint,
+            keys: { p256dh, auth },
+            expirationTime: json.expirationTime ?? undefined,
+        },
+    };
+}
+
 export function createWebNotificationAdapter(): NotificationAdapter {
     let subscription: PushSubscription | null | undefined;
-    const syncSubscriptionToBackend = async (sub: PushSubscription) => {
-        const jsonSubscription = sub.toJSON();
-        const endpoint = jsonSubscription.endpoint;
-        const p256dh = jsonSubscription.keys?.p256dh;
-        const auth = jsonSubscription.keys?.auth;
-        if (!endpoint || !p256dh || !auth) {
-            console.warn("Invalid push subscription: missing required fields");
-            return;
+
+    const initPromise: Promise<NotificationInitResult> = (async () => {
+        if (
+            typeof navigator === "undefined" ||
+            !("serviceWorker" in navigator)
+        ) {
+            return { permissionGranted: false, localToken: null };
         }
-        await authenticatedWalletApi.notifications.tokens.put({
-            type: "web-push" as const,
-            subscription: {
-                endpoint,
-                keys: { p256dh, auth },
-                expirationTime: jsonSubscription.expirationTime ?? undefined,
-            },
+
+        const registration = await navigator.serviceWorker.register("/sw.js", {
+            scope: "/",
+            updateViaCache: "none",
         });
-    };
+        const existingSubscription = hasPushManager(registration)
+            ? await registration.pushManager.getSubscription()
+            : null;
+        subscription = existingSubscription;
+
+        const permissionGranted =
+            typeof Notification !== "undefined" &&
+            Notification.permission === "granted";
+        const localToken = existingSubscription
+            ? subscriptionToPayload(existingSubscription)
+            : null;
+
+        return { permissionGranted, localToken };
+    })();
 
     return {
+        initPromise,
+
         isSupported: () => {
             if (
                 typeof window === "undefined" ||
@@ -51,18 +81,21 @@ export function createWebNotificationAdapter(): NotificationAdapter {
                 "showNotification" in ServiceWorkerRegistration.prototype
             );
         },
+
         getPermissionStatus: () => {
             if (typeof Notification === "undefined") {
                 return "default";
             }
             return Notification.permission;
         },
+
         requestPermission: async () => {
             if (typeof Notification === "undefined") {
                 return "default";
             }
             return await Notification.requestPermission();
         },
+
         subscribe: async () => {
             if (
                 typeof navigator === "undefined" ||
@@ -87,57 +120,22 @@ export function createWebNotificationAdapter(): NotificationAdapter {
                 });
             subscription = createdSubscription;
 
-            await syncSubscriptionToBackend(createdSubscription);
+            const payload = subscriptionToPayload(createdSubscription);
+            if (!payload) {
+                throw new Error(
+                    "Invalid push subscription: missing required fields"
+                );
+            }
+            return payload;
         },
+
         unsubscribe: async () => {
             if (subscription) {
                 await subscription.unsubscribe();
                 subscription = undefined;
             }
-
-            await authenticatedWalletApi.notifications.tokens.delete();
         },
-        isSubscribed: async () => {
-            const result =
-                await authenticatedWalletApi.notifications.tokens.hasAny.get();
-            return result.data ?? false;
-        },
-        initialize: async () => {
-            if (
-                typeof navigator === "undefined" ||
-                !("serviceWorker" in navigator)
-            ) {
-                return { isSubscribed: false };
-            }
 
-            const registration = await navigator.serviceWorker.register(
-                "/sw.js",
-                {
-                    scope: "/",
-                    updateViaCache: "none",
-                }
-            );
-            const existingSubscription = hasPushManager(registration)
-                ? await registration.pushManager.getSubscription()
-                : undefined;
-            subscription = existingSubscription;
-
-            if (existingSubscription) {
-                syncSubscriptionToBackend(existingSubscription).catch(
-                    (error) => {
-                        console.warn(
-                            "Failed to sync subscription to backend",
-                            error
-                        );
-                    }
-                );
-            }
-
-            return {
-                isSubscribed:
-                    subscription !== null && subscription !== undefined,
-            };
-        },
         showLocalNotification: async (_payload: NotificationPayload) => {},
     };
 }

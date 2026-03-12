@@ -2,18 +2,18 @@ import { Button } from "@frak-labs/ui/component/Button";
 import { BellOff } from "lucide-react";
 import { Panel } from "@/module/common/component/Panel";
 import { Row } from "@/module/common/component/Row";
+import { useNotificationStatus } from "@/module/notification/hook/useNotificationSetupStatus";
 import { useUnsubscribeFromPushNotification } from "@/module/notification/hook/useUnsubscribeFromPushNotification";
 
 export function RemoveAllNotification() {
-    const { hasPushToken, unsubscribeFromPush, isPending } =
+    const { hasLocalCapability } = useNotificationStatus();
+    const { unsubscribeFromPush, isPending } =
         useUnsubscribeFromPushNotification();
 
-    // If the user don't have any push token, early exit
-    if (!hasPushToken) {
+    if (!hasLocalCapability) {
         return null;
     }
 
-    // Otherwise, button to unsubscribe from all the notification
     return (
         <Panel size={"none"} variant={"empty"}>
             <Button

@@ -1,49 +1,30 @@
 import {
-    type UseMutationOptions,
-    useMutation,
-    useQueryClient,
-} from "@tanstack/react-query";
-import { useNotificationContext } from "@/module/notification/context/NotificationContext";
+    authenticatedWalletApi,
+    getNotificationAdapter,
+} from "@frak-labs/wallet-shared";
+import { useMutation } from "@tanstack/react-query";
 import { notificationKey } from "@/module/notification/queryKeys/notification";
 
-/**
- * Register the push notification handler
- */
-export function useSubscribeToPushNotification(
-    mutationOptions?: UseMutationOptions
-) {
-    const { adapter, setIsSubscribed } = useNotificationContext();
-    const queryClient = useQueryClient();
+export function useSubscribeToPushNotification() {
+    const adapter = getNotificationAdapter();
 
-    /**
-     * Mutation used to subscribe to the push notification
-     */
     const {
         mutate: subscribeToPush,
         mutateAsync: subscribeToPushAsync,
         ...mutationState
     } = useMutation({
-        ...mutationOptions,
         mutationKey: notificationKey.push.subscribe,
         mutationFn: async () => {
-            await adapter.subscribe();
-            const subscribed = await adapter.isSubscribed();
-            setIsSubscribed(subscribed);
-            // Sync the shared query cache so EnableNotification and
-            // RemoveAllNotification both reflect the new state immediately
-            queryClient.setQueryData(
-                notificationKey.push.tokenCount,
-                subscribed
-            );
+            const tokenPayload = await adapter.subscribe();
+            await authenticatedWalletApi.notifications.tokens.put(tokenPayload);
+            return tokenPayload;
         },
-        onError: (error, variables, onMutateResult, context) => {
-            console.error("[Notification] subscribe failed:", error);
-            mutationOptions?.onError?.(
-                error,
-                variables,
-                onMutateResult,
-                context
-            );
+        onSuccess: (tokenPayload, _variables, _onSuccess, { client }) => {
+            client.setQueryData(notificationKey.push.localState, {
+                permissionGranted: true,
+                localToken: tokenPayload,
+            });
+            client.setQueryData(notificationKey.push.backendToken, true);
         },
     });
 

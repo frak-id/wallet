@@ -1,75 +1,91 @@
-import { useQuery } from "@tanstack/react-query";
-import { useCallback, useMemo } from "react";
-import { useNotificationContext } from "@/module/notification/context/NotificationContext";
+import {
+    authenticatedWalletApi,
+    getNotificationAdapter,
+    type NotificationInitResult,
+} from "@frak-labs/wallet-shared";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useMemo } from "react";
 import { notificationKey } from "@/module/notification/queryKeys/notification";
 
-/**
- * Get the notification setup status
- */
-export function useNotificationSetupStatus() {
-    const {
-        adapter,
-        isSubscribed: initialSubscribedState,
-        isInitialized,
-    } = useNotificationContext();
+export function useNotificationStatus() {
+    const adapter = getNotificationAdapter();
+    const queryClient = useQueryClient();
 
-    /**
-     * Ask for the permissions to display notification
-     */
-    const askForNotificationPermission = useCallback(async () => {
-        try {
-            await adapter.requestPermission();
-        } catch (e) {
-            console.error("Failed to request notification permission: ", e);
-        }
-    }, [adapter]);
+    const isSupported = useMemo(() => adapter.isSupported(), [adapter]);
 
-    /**
-     * Check if notification are supported or not
-     */
-    const isSupported = useMemo(() => {
-        return adapter.isSupported();
-    }, [adapter]);
-
-    /**
-     * Fetch the status
-     */
-    const statusResult = useMemo(() => {
-        if (!isSupported) {
-            return { isSupported, isNotificationAllowed: false };
-        }
-
-        const permissionStatus = adapter.getPermissionStatus();
-        const isNotificationAllowed = permissionStatus === "granted";
-        return { isSupported, isNotificationAllowed };
-    }, [isSupported, adapter]);
-
-    // Gate on isInitialized to prevent a race on web/PWA: the fire-and-forget
-    // backend sync in webAdapter.initialize() may not have completed when
-    // adapter.isSubscribed() (backend hasAny) runs, returning a false negative
-    // that overwrites the correct local-subscription-based state.
-    // SetupNotifications seeds the cache before setting isInitialized=true,
-    // so the query starts with authoritative data and won't refetch until
-    // staleTime (60s), giving the sync time to land.
-    const { data: isSubscribed } = useQuery({
-        queryKey: notificationKey.push.tokenCount,
-        queryFn: async () => {
-            return await adapter.isSubscribed();
-        },
-        enabled: isSupported && isInitialized,
-        initialData: initialSubscribedState,
+    const { data: localState } = useQuery({
+        queryKey: notificationKey.push.localState,
+        queryFn: (): Promise<NotificationInitResult> => adapter.initPromise,
+        staleTime: Number.POSITIVE_INFINITY,
+        enabled: isSupported,
     });
 
+    const { data: hasBackendToken } = useQuery({
+        queryKey: notificationKey.push.backendToken,
+        queryFn: async () => {
+            const result =
+                await authenticatedWalletApi.notifications.tokens.hasAny.get();
+            return result.data ?? false;
+        },
+        enabled: isSupported,
+    });
+
+    const hasLocalCapability =
+        localState?.localToken !== null && localState?.localToken !== undefined;
+    const permissionGranted = localState?.permissionGranted ?? false;
+
+    // Reconciliation: keep local and backend states in sync
+    useEffect(() => {
+        if (!isSupported) return;
+
+        // Local sub exists but backend doesn't know → silent sync
+        if (
+            hasLocalCapability &&
+            hasBackendToken === false &&
+            localState?.localToken
+        ) {
+            authenticatedWalletApi.notifications.tokens
+                .put(localState.localToken)
+                .then(() =>
+                    queryClient.setQueryData(
+                        notificationKey.push.backendToken,
+                        true
+                    )
+                )
+                .catch(console.warn);
+        }
+
+        // Permission revoked but backend still has stale token → silent cleanup
+        if (!permissionGranted && hasBackendToken === true) {
+            authenticatedWalletApi.notifications.tokens
+                .delete()
+                .then(() =>
+                    queryClient.setQueryData(
+                        notificationKey.push.backendToken,
+                        false
+                    )
+                )
+                .catch(console.warn);
+        }
+    }, [
+        isSupported,
+        hasLocalCapability,
+        hasBackendToken,
+        permissionGranted,
+        localState?.localToken,
+        queryClient,
+    ]);
+
     return useMemo(() => {
-        if (!statusResult?.isSupported) {
-            return { isSupported: false };
+        if (!isSupported) {
+            return { isSupported: false as const };
         }
 
         return {
-            isSupported: true,
-            isNotificationAllowed: statusResult.isNotificationAllowed,
-            askForNotificationPermission,
-            isSubscribed,
+            isSupported: true as const,
+            permissionGranted,
+            hasLocalCapability,
+            hasBackendToken: hasBackendToken ?? false,
         };
-    }, [statusResult, isSubscribed, askForNotificationPermission]);
+    }, [isSupported, permissionGranted, hasLocalCapability, hasBackendToken]);
 }

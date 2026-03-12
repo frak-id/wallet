@@ -3,19 +3,17 @@ import { NotificationsMobile } from "@frak-labs/ui/icons/NotificationsMobile";
 import { Trans } from "react-i18next";
 import { ButtonLabel } from "@/module/common/component/ButtonLabel";
 import { Panel } from "@/module/common/component/Panel";
-import { useNotificationSetupStatus } from "@/module/notification/hook/useNotificationSetupStatus";
+import { useNotificationStatus } from "@/module/notification/hook/useNotificationSetupStatus";
 import { useSubscribeToPushNotification } from "@/module/notification/hook/useSubscribeToPushNotification";
 
 export function EnableNotification() {
-    const { isSupported, isSubscribed } = useNotificationSetupStatus();
+    const { isSupported, hasLocalCapability } = useNotificationStatus();
     const { subscribeToPush, isPending } = useSubscribeToPushNotification();
 
-    // If not supported, or already got a subscription, return nothing
-    if (!isSupported || isSubscribed) {
+    if (!isSupported || hasLocalCapability) {
         return null;
     }
 
-    // Otherwise, button to subscribe to the notification
     return (
         <Panel variant={"invisible"} size={"none"}>
             <Button

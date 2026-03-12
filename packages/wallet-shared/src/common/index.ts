@@ -38,7 +38,11 @@ export {
 export { ua } from "./lib/ua";
 export { isWebAuthNSupported } from "./lib/webauthn";
 // Notification
-export type { NotificationAdapter } from "./notification";
+export type {
+    NotificationAdapter,
+    NotificationInitResult,
+    PushTokenPayload,
+} from "./notification";
 export { getNotificationAdapter } from "./notification";
 
 // Query Keys

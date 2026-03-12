@@ -1,25 +1,13 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { useNotificationContext } from "@/module/notification/context/NotificationContext";
+import {
+    authenticatedWalletApi,
+    getNotificationAdapter,
+} from "@frak-labs/wallet-shared";
+import { useMutation } from "@tanstack/react-query";
 import { notificationKey } from "@/module/notification/queryKeys/notification";
 
-/**
- * Unsubscribe from the push notification
- */
 export function useUnsubscribeFromPushNotification() {
-    const { adapter, setIsSubscribed, isInitialized } =
-        useNotificationContext();
+    const adapter = getNotificationAdapter();
 
-    const { data: hasPushToken, refetch } = useQuery({
-        queryKey: notificationKey.push.tokenCount,
-        queryFn: async () => {
-            return await adapter.isSubscribed();
-        },
-        enabled: isInitialized,
-    });
-
-    /**
-     * Mutation used to unsubscribe from push notifications
-     */
     const {
         mutate: unsubscribeFromPush,
         mutateAsync: unsubscribeFromPushAsync,
@@ -28,13 +16,21 @@ export function useUnsubscribeFromPushNotification() {
         mutationKey: notificationKey.push.unsubscribe,
         mutationFn: async () => {
             await adapter.unsubscribe();
-            setIsSubscribed(false);
-            await refetch();
+            await authenticatedWalletApi.notifications.tokens.delete();
+        },
+        onSuccess: (_data, _error, _onSuccess, { client }) => {
+            client.setQueryData(
+                notificationKey.push.localState,
+                (prev: { permissionGranted: boolean } | undefined) => ({
+                    permissionGranted: prev?.permissionGranted ?? false,
+                    localToken: null,
+                })
+            );
+            client.setQueryData(notificationKey.push.backendToken, false);
         },
     });
 
     return {
-        hasPushToken,
         unsubscribeFromPush,
         unsubscribeFromPushAsync,
         ...mutationState,
