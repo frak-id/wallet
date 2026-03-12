@@ -39,13 +39,15 @@ export function useNotificationStatus() {
         },
     });
 
-    const hasLocalCapability = localToken !== null && localToken !== undefined;
+    const hasLocalCapability =
+        permissionGranted && localToken !== null && localToken !== undefined;
 
     useEffect(() => {
         const controller = new AbortController();
         notificationAdapter.events.addEventListener(
             "token-update",
             (e) => {
+                console.log("token update", e);
                 const token = (e as CustomEvent<PushTokenPayload>).detail;
                 queryClient.setQueryData(
                     notificationKey.push.localToken,
@@ -61,36 +63,29 @@ export function useNotificationStatus() {
     }, [queryClient]);
 
     useEffect(() => {
-        if (hasLocalCapability && hasBackendToken === false && localToken) {
+        if (permissionGranted && hasBackendToken === false && localToken) {
             authenticatedWalletApi.notifications.tokens
                 .put(localToken)
                 .then(() =>
-                    queryClient.setQueryData(
-                        notificationKey.push.backendToken,
-                        true
-                    )
+                    queryClient.invalidateQueries({
+                        queryKey: notificationKey.push.backendToken,
+                    })
                 )
                 .catch(console.warn);
+            return;
         }
 
         if (!permissionGranted && hasBackendToken === true) {
             authenticatedWalletApi.notifications.tokens
                 .delete()
                 .then(() =>
-                    queryClient.setQueryData(
-                        notificationKey.push.backendToken,
-                        false
-                    )
+                    queryClient.invalidateQueries({
+                        queryKey: notificationKey.push.backendToken,
+                    })
                 )
                 .catch(console.warn);
         }
-    }, [
-        hasLocalCapability,
-        hasBackendToken,
-        permissionGranted,
-        localToken,
-        queryClient,
-    ]);
+    }, [hasBackendToken, permissionGranted, localToken, queryClient]);
 
     return useMemo(
         () => ({

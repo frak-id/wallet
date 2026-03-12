@@ -17,12 +17,16 @@ export function useSubscribeToPushNotification() {
             await authenticatedWalletApi.notifications.tokens.put(tokenPayload);
             return tokenPayload;
         },
-        onSuccess: (tokenPayload, _variable, _onMutate, { client }) => {
+        onSuccess: (_tokenPayload, _variable, _onMutate, { client }) => {
             client.invalidateQueries({
                 queryKey: notificationKey.push.permission,
             });
-            client.setQueryData(notificationKey.push.localToken, tokenPayload);
-            client.setQueryData(notificationKey.push.backendToken, true);
+            client.invalidateQueries({
+                queryKey: notificationKey.push.localToken,
+            });
+            client.invalidateQueries({
+                queryKey: notificationKey.push.backendToken,
+            });
         },
     });
 
