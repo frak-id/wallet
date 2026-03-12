@@ -55,8 +55,8 @@ targets:
           - UIInterfaceOrientationPortraitUpsideDown
           - UIInterfaceOrientationLandscapeLeft
           - UIInterfaceOrientationLandscapeRight
-        CFBundleShortVersionString: 1.0.17
-        CFBundleVersion: "1.0.17"
+        CFBundleShortVersionString: 1.0.18
+        CFBundleVersion: "1.0.18"
         ITSAppUsesNonExemptEncryption: false
         UIBackgroundModes:
           - remote-notification
