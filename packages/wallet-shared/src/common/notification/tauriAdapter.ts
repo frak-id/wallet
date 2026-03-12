@@ -175,11 +175,11 @@ export function createTauriNotificationAdapter(): NotificationAdapter {
         },
 
         openSettings: async () => {
-            const { openUrl } = await import("@tauri-apps/plugin-opener");
             if (isAndroid()) {
-                // TODO: Replace with custom Tauri command using ACTION_APP_NOTIFICATION_SETTINGS for direct notification settings
-                await openUrl("package:id.frak.wallet");
+                const { invoke } = await import("@tauri-apps/api/core");
+                await invoke("plugin:app-settings|open_notification_settings");
             } else {
+                const { openUrl } = await import("@tauri-apps/plugin-opener");
                 await openUrl("app-settings:");
             }
         },

@@ -10,6 +10,11 @@
         "biometric:default",
         "fcm:default",
         "deep-link:default",
-        "opener:default"
+        "opener:default",
+        {
+            "identifier": "opener:allow-open-url",
+            "allow": [{ "url": "app-settings:*" }]
+        },
+        "app-settings:allow-open-notification-settings"
     ]
 }

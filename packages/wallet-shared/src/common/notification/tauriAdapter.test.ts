@@ -11,6 +11,7 @@ const {
     onTokenRefreshMock,
     isAndroidMock,
     openUrlMock,
+    invokeMock,
 } = vi.hoisted(() => ({
     getTokenMock: vi.fn(),
     requestPermissionsMock: vi.fn(),
@@ -21,6 +22,7 @@ const {
     onTokenRefreshMock: vi.fn(),
     isAndroidMock: vi.fn(),
     openUrlMock: vi.fn(),
+    invokeMock: vi.fn(),
 }));
 
 let capturedTokenRefreshHandler:
@@ -59,6 +61,10 @@ vi.mock("@tauri-apps/plugin-opener", () => ({
     openUrl: openUrlMock,
 }));
 
+vi.mock("@tauri-apps/api/core", () => ({
+    invoke: invokeMock,
+}));
+
 describe.sequential("createTauriNotificationAdapter", () => {
     beforeEach(() => {
         getTokenMock.mockReset();
@@ -71,6 +77,7 @@ describe.sequential("createTauriNotificationAdapter", () => {
         putMock.mockReset();
         isAndroidMock.mockReset();
         openUrlMock.mockReset();
+        invokeMock.mockReset();
         capturedTokenRefreshHandler = undefined;
 
         getTokenMock.mockResolvedValue({ token: "mock-fcm-token" });
@@ -399,14 +406,17 @@ describe.sequential("createTauriNotificationAdapter", () => {
         });
     });
 
-    it("should openSettings: call openUrl with package URI on Android", async () => {
+    it("should openSettings: call invoke with app-settings plugin on Android", async () => {
         isAndroidMock.mockReturnValue(true);
-        openUrlMock.mockResolvedValue(undefined);
+        invokeMock.mockResolvedValue(undefined);
 
         const adapter = createTauriNotificationAdapter();
         await adapter.openSettings();
 
-        expect(openUrlMock).toHaveBeenCalledWith("package:id.frak.wallet");
+        expect(invokeMock).toHaveBeenCalledWith(
+            "plugin:app-settings|open_notification_settings"
+        );
+        expect(openUrlMock).not.toHaveBeenCalled();
     });
 
     it("should openSettings: call openUrl with app-settings on iOS", async () => {
@@ -417,5 +427,6 @@ describe.sequential("createTauriNotificationAdapter", () => {
         await adapter.openSettings();
 
         expect(openUrlMock).toHaveBeenCalledWith("app-settings:");
+        expect(invokeMock).not.toHaveBeenCalled();
     });
 });

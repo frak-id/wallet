@@ -17,6 +17,7 @@ export function useNotificationStatus() {
         queryFn: () => notificationAdapter.getPermissionStatus(),
         staleTime: PERMISSION_POLL_INTERVAL,
         refetchInterval: PERMISSION_POLL_INTERVAL,
+        refetchOnWindowFocus: true,
     });
 
     const permissionGranted = permission === "granted";
@@ -26,6 +27,7 @@ export function useNotificationStatus() {
         queryFn: () => notificationAdapter.getToken(),
         enabled: permissionGranted,
         staleTime: Number.POSITIVE_INFINITY,
+        refetchOnWindowFocus: true,
     });
 
     const { data: hasBackendToken } = useQuery({
@@ -35,6 +37,7 @@ export function useNotificationStatus() {
                 await authenticatedWalletApi.notifications.tokens.hasAny.get();
             return result.data ?? false;
         },
+        refetchOnWindowFocus: true,
     });
 
     const hasLocalCapability = localToken !== null && localToken !== undefined;

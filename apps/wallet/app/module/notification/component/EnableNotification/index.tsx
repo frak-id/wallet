@@ -1,15 +1,18 @@
 import { Button } from "@frak-labs/ui/component/Button";
 import { NotificationsMobile } from "@frak-labs/ui/icons/NotificationsMobile";
 import { notificationAdapter } from "@frak-labs/wallet-shared";
+import { useQueryClient } from "@tanstack/react-query";
 import { Trans } from "react-i18next";
 import { ButtonLabel } from "@/module/common/component/ButtonLabel";
 import { Panel } from "@/module/common/component/Panel";
 import { useNotificationStatus } from "@/module/notification/hook/useNotificationSetupStatus";
 import { useSubscribeToPushNotification } from "@/module/notification/hook/useSubscribeToPushNotification";
+import { notificationKey } from "@/module/notification/queryKeys/notification";
 
 export function EnableNotification() {
     const { permissionStatus, hasLocalCapability } = useNotificationStatus();
     const { subscribeToPush, isPending } = useSubscribeToPushNotification();
+    const queryClient = useQueryClient();
 
     if (hasLocalCapability) {
         return null;
@@ -23,7 +26,12 @@ export function EnableNotification() {
                     width={"full"}
                     align={"left"}
                     gap={"big"}
-                    onClick={() => notificationAdapter.openSettings()}
+                    onClick={async () => {
+                        await notificationAdapter.openSettings();
+                        await queryClient.invalidateQueries({
+                            queryKey: notificationKey.push.permission,
+                        });
+                    }}
                     leftIcon={<NotificationsMobile />}
                 >
                     <ButtonLabel>
