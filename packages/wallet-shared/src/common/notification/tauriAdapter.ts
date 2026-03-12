@@ -1,4 +1,3 @@
-import type { NotificationPayload } from "@frak-labs/ui/types/NotificationPayload";
 import type { PluginListener } from "@tauri-apps/api/core";
 import {
     checkPermissions,
@@ -9,11 +8,9 @@ import {
     type PermissionState,
     register,
     requestPermissions,
-    sendNotification,
 } from "tauri-plugin-fcm";
 import { authenticatedWalletApi } from "../api/backendClient";
-import { notificationStorage } from "../storage/notifications";
-import type { NotificationAdapter, NotificationInitResult } from "./adapter";
+import type { NotificationAdapter } from "./adapter";
 
 const FCM_TOKEN_DELIVERY_TIMEOUT_MS = 10_000;
 
@@ -24,7 +21,6 @@ function mapPermission(state: PermissionState): NotificationPermission {
 }
 
 export function createTauriNotificationAdapter(): NotificationAdapter {
-    let permissionGranted = false;
     let tokenRefreshListener: PluginListener | undefined;
     let pendingTokenResolve: ((token: string) => void) | undefined;
     let earlyToken: string | undefined;
@@ -36,7 +32,6 @@ export function createTauriNotificationAdapter(): NotificationAdapter {
         });
     };
 
-    // Token refresh: buffer for in-flight subscribe, otherwise sync to backend
     const handleTokenRefresh = (event: { token: string }) => {
         earlyToken = event.token;
         if (pendingTokenResolve) {
@@ -44,7 +39,6 @@ export function createTauriNotificationAdapter(): NotificationAdapter {
             pendingTokenResolve = undefined;
             return;
         }
-        // Background refresh: proactively sync to backend
         syncTokenToBackend(event.token).catch((error) => {
             console.warn(
                 "Failed to sync refreshed FCM token to backend",
@@ -100,60 +94,51 @@ export function createTauriNotificationAdapter(): NotificationAdapter {
         });
     };
 
-    const initPromise: Promise<NotificationInitResult> = (async () => {
+    const initPromise: Promise<void> = (async () => {
         try {
-            const state = await checkPermissions();
-            const permission = mapPermission(state);
-            permissionGranted = permission === "granted";
-
-            if (!permissionGranted) {
-                return { permissionGranted: false, localToken: null };
-            }
-
             await createChannel({
                 id: "default",
                 name: "Frak Wallet",
                 importance: 4,
             });
-
-            // Best-effort token check — no waiting on cold start
-            try {
-                const response = await getToken();
-                if (response.token) {
-                    await setupTokenRefreshListener();
-                    return {
-                        permissionGranted: true,
-                        localToken: {
-                            type: "fcm" as const,
-                            token: response.token,
-                        },
-                    };
-                }
-            } catch {
-                // No existing token (cold start or never registered)
-            }
-
-            return { permissionGranted: true, localToken: null };
-        } catch {
-            return { permissionGranted: false, localToken: null };
+            await setupTokenRefreshListener();
+        } catch (error) {
+            console.warn("Tauri notification init failed:", error);
         }
     })();
 
     const adapter: NotificationAdapter = {
         initPromise,
 
-        isSupported: () => true,
-
-        getPermissionStatus: () => (permissionGranted ? "granted" : "default"),
+        getPermissionStatus: async () => {
+            try {
+                const state = await checkPermissions();
+                return mapPermission(state);
+            } catch {
+                return "default";
+            }
+        },
 
         requestPermission: async () => {
             const state = await requestPermissions();
-            const permission = mapPermission(state);
-            permissionGranted = permission === "granted";
-            return permission;
+            return mapPermission(state);
+        },
+
+        getToken: async () => {
+            await initPromise;
+
+            try {
+                const token = await obtainToken();
+                return { type: "fcm", token: token };
+            } catch (e) {
+                console.warn("Unable to obtain notification token", e);
+                return null;
+            }
         },
 
         subscribe: async () => {
+            await initPromise;
+
             const permission = await adapter.requestPermission();
             if (permission !== "granted") {
                 throw new Error(
@@ -171,8 +156,6 @@ export function createTauriNotificationAdapter(): NotificationAdapter {
         },
 
         unsubscribe: async () => {
-            permissionGranted = false;
-
             await teardownTokenRefreshListener();
 
             try {
@@ -180,27 +163,6 @@ export function createTauriNotificationAdapter(): NotificationAdapter {
             } catch (error) {
                 console.warn("Failed to delete FCM token", error);
             }
-        },
-
-        showLocalNotification: async (payload: NotificationPayload) => {
-            try {
-                await sendNotification({
-                    title: payload.title,
-                    body: payload.body,
-                    icon: payload.icon,
-                });
-            } catch (error) {
-                console.warn("Failed to send Tauri notification", error);
-            }
-
-            await notificationStorage.add({
-                id: crypto.randomUUID(),
-                title: payload.title,
-                body: payload.body,
-                icon: payload.icon,
-                data: payload.data,
-                timestamp: Date.now(),
-            });
         },
     };
 

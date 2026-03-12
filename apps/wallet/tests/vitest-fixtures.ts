@@ -3,10 +3,7 @@
  * Adds wallet-specific fixtures to the shared base fixtures
  */
 
-import type {
-    NotificationInitResult,
-    PushTokenPayload,
-} from "@frak-labs/wallet-shared";
+import type { PushTokenPayload } from "@frak-labs/wallet-shared";
 import {
     type BaseTestFixtures,
     test as baseTest,
@@ -26,13 +23,12 @@ export type WalletTestFixtures = BaseTestFixtures & {
      * Mock notification adapter matching the NotificationAdapter shape
      */
     mockNotificationAdapter: {
-        isSupported: Mock<() => boolean>;
-        getPermissionStatus: Mock<() => NotificationPermission>;
+        getPermissionStatus: Mock<() => Promise<NotificationPermission>>;
         requestPermission: Mock<() => Promise<NotificationPermission>>;
+        getToken: Mock<() => Promise<PushTokenPayload | null>>;
         subscribe: Mock<() => Promise<PushTokenPayload>>;
         unsubscribe: Mock<() => Promise<void>>;
-        showLocalNotification: Mock<(...args: unknown[]) => Promise<void>>;
-        initPromise: Promise<NotificationInitResult>;
+        initPromise: Promise<void>;
     };
 
     /**
@@ -102,24 +98,20 @@ export const test = baseTest.extend<
     ) => {
         const { vi } = await import("vitest");
         const adapter: WalletTestFixtures["mockNotificationAdapter"] = {
-            isSupported: vi.fn<() => boolean>().mockReturnValue(false),
             getPermissionStatus: vi
-                .fn<() => NotificationPermission>()
-                .mockReturnValue("default"),
+                .fn<() => Promise<NotificationPermission>>()
+                .mockResolvedValue("default"),
             requestPermission: vi
                 .fn<() => Promise<NotificationPermission>>()
                 .mockResolvedValue("granted"),
+            getToken: vi
+                .fn<() => Promise<PushTokenPayload | null>>()
+                .mockResolvedValue(null),
             subscribe: vi.fn<() => Promise<PushTokenPayload>>(),
             unsubscribe: vi
                 .fn<() => Promise<void>>()
                 .mockResolvedValue(undefined),
-            showLocalNotification: vi
-                .fn<(...args: unknown[]) => Promise<void>>()
-                .mockResolvedValue(undefined),
-            initPromise: Promise.resolve({
-                permissionGranted: false,
-                localToken: null,
-            }),
+            initPromise: Promise.resolve(),
         };
 
         await use(adapter);

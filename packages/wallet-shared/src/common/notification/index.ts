@@ -1,8 +1,4 @@
-export type {
-    NotificationAdapter,
-    NotificationInitResult,
-    PushTokenPayload,
-} from "./adapter";
-export { getNotificationAdapter } from "./adapter";
+export type { NotificationAdapter, PushTokenPayload } from "./adapter";
+export { notificationAdapter } from "./adapter";
 export { createTauriNotificationAdapter } from "./tauriAdapter";
 export { createWebNotificationAdapter } from "./webAdapter";

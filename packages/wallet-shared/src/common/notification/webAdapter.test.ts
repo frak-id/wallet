@@ -102,25 +102,76 @@ describe.sequential("createWebNotificationAdapter", () => {
         });
     });
 
-    it("should detect support from web notification APIs", () => {
+    it("should return current notification permission status when getPermissionStatus called", async () => {
         const adapter = createWebNotificationAdapter();
 
-        expect(adapter.isSupported()).toBe(true);
+        const result = await adapter.getPermissionStatus();
+
+        expect(result).toBe("default");
     });
 
-    it("should return current notification permission status", () => {
-        const adapter = createWebNotificationAdapter();
-
-        expect(adapter.getPermissionStatus()).toBe("default");
-    });
-
-    it("should request notification permission", async () => {
+    it("should request notification permission when requestPermission called", async () => {
         const adapter = createWebNotificationAdapter();
 
         const result = await adapter.requestPermission();
 
         expect(window.Notification.requestPermission).toHaveBeenCalledOnce();
         expect(result).toBe("granted");
+    });
+
+    it("should register service worker when initPromise awaited", async () => {
+        const adapter = createWebNotificationAdapter();
+
+        await adapter.initPromise;
+
+        expect(
+            globalThis.navigator.serviceWorker.register
+        ).toHaveBeenCalledWith("/sw.js", {
+            scope: "/",
+            updateViaCache: "none",
+        });
+    });
+
+    it("should return null from getToken when no existing subscription", async () => {
+        mockGetSubscription.mockResolvedValue(null);
+
+        const adapter = createWebNotificationAdapter();
+
+        const result = await adapter.getToken();
+
+        expect(result).toBeNull();
+    });
+
+    it("should return PushTokenPayload from getToken when existing subscription found", async () => {
+        const existingSubscription = {
+            toJSON: vi.fn().mockReturnValue({
+                endpoint: "https://example.com/existing",
+                keys: {
+                    p256dh: "existing-p256",
+                    auth: "existing-auth",
+                },
+                expirationTime: null,
+            }),
+            unsubscribe: mockUnsubscribe,
+        } as unknown as PushSubscription;
+
+        mockGetSubscription.mockResolvedValue(existingSubscription);
+
+        const adapter = createWebNotificationAdapter();
+
+        const result = await adapter.getToken();
+
+        expect(result).toEqual({
+            type: "web-push",
+            subscription: {
+                endpoint: "https://example.com/existing",
+                keys: {
+                    p256dh: "existing-p256",
+                    auth: "existing-auth",
+                },
+                expirationTime: undefined,
+            },
+        });
     });
 
     it("should return PushTokenPayload when subscribing", async () => {
@@ -159,7 +210,8 @@ describe.sequential("createWebNotificationAdapter", () => {
         });
     });
 
-    it("should unsubscribe current subscription without calling backend", async () => {
+    it("should unsubscribe current subscription when unsubscribe called", async () => {
+        const subscriptionUnsubscribe = vi.fn();
         const subscription = {
             toJSON: vi.fn().mockReturnValue({
                 endpoint: "https://example.com/endpoint",
@@ -169,90 +221,16 @@ describe.sequential("createWebNotificationAdapter", () => {
                 },
                 expirationTime: null,
             }),
-            unsubscribe: mockUnsubscribe,
+            unsubscribe: subscriptionUnsubscribe,
         } as unknown as PushSubscription;
 
         mockSubscribe.mockResolvedValue(subscription);
+        mockGetSubscription.mockResolvedValue(subscription);
 
         const adapter = createWebNotificationAdapter();
         await adapter.subscribe();
         await adapter.unsubscribe();
 
-        expect(mockUnsubscribe).toHaveBeenCalledOnce();
-    });
-
-    it("should register SW and return localToken when existing subscription found", async () => {
-        const existingSubscription = {
-            toJSON: vi.fn().mockReturnValue({
-                endpoint: "https://example.com/existing",
-                keys: {
-                    p256dh: "existing-p256",
-                    auth: "existing-auth",
-                },
-                expirationTime: null,
-            }),
-            unsubscribe: mockUnsubscribe,
-        } as unknown as PushSubscription;
-
-        mockGetSubscription.mockResolvedValue(existingSubscription);
-
-        Object.defineProperty(globalThis.window, "Notification", {
-            value: {
-                permission: "granted",
-                requestPermission: vi.fn().mockResolvedValue("granted"),
-            },
-            configurable: true,
-        });
-        Object.defineProperty(globalThis, "Notification", {
-            value: globalThis.window.Notification,
-            configurable: true,
-        });
-
-        const adapter = createWebNotificationAdapter();
-        const result = await adapter.initPromise;
-
-        expect(
-            globalThis.navigator.serviceWorker.register
-        ).toHaveBeenCalledWith("/sw.js", {
-            scope: "/",
-            updateViaCache: "none",
-        });
-        expect(result).toEqual({
-            permissionGranted: true,
-            localToken: {
-                type: "web-push",
-                subscription: {
-                    endpoint: "https://example.com/existing",
-                    keys: {
-                        p256dh: "existing-p256",
-                        auth: "existing-auth",
-                    },
-                    expirationTime: undefined,
-                },
-            },
-        });
-    });
-
-    it("should return no localToken when no existing subscription", async () => {
-        mockGetSubscription.mockResolvedValue(null);
-
-        const adapter = createWebNotificationAdapter();
-        const result = await adapter.initPromise;
-
-        expect(result).toEqual({
-            permissionGranted: false,
-            localToken: null,
-        });
-    });
-
-    it("should no-op when showing local notifications", async () => {
-        const adapter = createWebNotificationAdapter();
-
-        await expect(
-            adapter.showLocalNotification({
-                title: "title",
-                body: "body",
-            })
-        ).resolves.toBeUndefined();
+        expect(subscriptionUnsubscribe).toHaveBeenCalledOnce();
     });
 });

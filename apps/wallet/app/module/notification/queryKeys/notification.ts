@@ -8,7 +8,8 @@ export namespace notificationKey {
 
     const pushBase = "push" as const;
     export const push = {
-        localState: [base, pushBase, "local-state"] as const,
+        permission: [base, pushBase, "permission"] as const,
+        localToken: [base, pushBase, "local-token"] as const,
         backendToken: [base, pushBase, "backend-token"] as const,
         subscribe: [base, pushBase, "subscribe"] as const,
         unsubscribe: [base, pushBase, "unsubscribe"] as const,

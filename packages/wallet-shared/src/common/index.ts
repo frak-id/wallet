@@ -40,10 +40,9 @@ export { isWebAuthNSupported } from "./lib/webauthn";
 // Notification
 export type {
     NotificationAdapter,
-    NotificationInitResult,
     PushTokenPayload,
 } from "./notification";
-export { getNotificationAdapter } from "./notification";
+export { notificationAdapter } from "./notification";
 
 // Query Keys
 export { balanceKey } from "./queryKeys/balance";

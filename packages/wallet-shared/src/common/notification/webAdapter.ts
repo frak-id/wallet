@@ -1,9 +1,4 @@
-import type { NotificationPayload } from "@frak-labs/ui/types/NotificationPayload";
-import type {
-    NotificationAdapter,
-    NotificationInitResult,
-    PushTokenPayload,
-} from "./adapter";
+import type { NotificationAdapter, PushTokenPayload } from "./adapter";
 
 type PushRegistration = {
     pushManager: PushManager;
@@ -36,53 +31,26 @@ function subscriptionToPayload(sub: PushSubscription): PushTokenPayload | null {
 }
 
 export function createWebNotificationAdapter(): NotificationAdapter {
-    let subscription: PushSubscription | null | undefined;
+    let registration: ServiceWorkerRegistration | undefined;
 
-    const initPromise: Promise<NotificationInitResult> = (async () => {
+    const initPromise: Promise<void> = (async () => {
         if (
             typeof navigator === "undefined" ||
             !("serviceWorker" in navigator)
         ) {
-            return { permissionGranted: false, localToken: null };
+            return;
         }
 
-        const registration = await navigator.serviceWorker.register("/sw.js", {
+        registration = await navigator.serviceWorker.register("/sw.js", {
             scope: "/",
             updateViaCache: "none",
         });
-        const existingSubscription = hasPushManager(registration)
-            ? await registration.pushManager.getSubscription()
-            : null;
-        subscription = existingSubscription;
-
-        const permissionGranted =
-            typeof Notification !== "undefined" &&
-            Notification.permission === "granted";
-        const localToken = existingSubscription
-            ? subscriptionToPayload(existingSubscription)
-            : null;
-
-        return { permissionGranted, localToken };
     })();
 
     return {
         initPromise,
 
-        isSupported: () => {
-            if (
-                typeof window === "undefined" ||
-                typeof navigator === "undefined"
-            ) {
-                return false;
-            }
-            return (
-                "serviceWorker" in navigator &&
-                "PushManager" in window &&
-                "showNotification" in ServiceWorkerRegistration.prototype
-            );
-        },
-
-        getPermissionStatus: () => {
+        getPermissionStatus: async () => {
             if (typeof Notification === "undefined") {
                 return "default";
             }
@@ -96,7 +64,17 @@ export function createWebNotificationAdapter(): NotificationAdapter {
             return await Notification.requestPermission();
         },
 
+        getToken: async () => {
+            await initPromise;
+            if (!registration || !hasPushManager(registration)) {
+                return null;
+            }
+            const sub = await registration.pushManager.getSubscription();
+            return sub ? subscriptionToPayload(sub) : null;
+        },
+
         subscribe: async () => {
+            await initPromise;
             if (
                 typeof navigator === "undefined" ||
                 !("serviceWorker" in navigator)
@@ -106,19 +84,17 @@ export function createWebNotificationAdapter(): NotificationAdapter {
                 );
             }
 
-            const registration = await navigator.serviceWorker.ready;
-            if (!hasPushManager(registration)) {
+            const reg = await navigator.serviceWorker.ready;
+            if (!hasPushManager(reg)) {
                 throw new Error(
                     "Push notifications not supported: PushManager unavailable"
                 );
             }
 
-            const createdSubscription =
-                await registration.pushManager.subscribe({
-                    userVisibleOnly: true,
-                    applicationServerKey: process.env.VAPID_PUBLIC_KEY,
-                });
-            subscription = createdSubscription;
+            const createdSubscription = await reg.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: process.env.VAPID_PUBLIC_KEY,
+            });
 
             const payload = subscriptionToPayload(createdSubscription);
             if (!payload) {
@@ -130,12 +106,14 @@ export function createWebNotificationAdapter(): NotificationAdapter {
         },
 
         unsubscribe: async () => {
-            if (subscription) {
-                await subscription.unsubscribe();
-                subscription = undefined;
+            await initPromise;
+            if (!registration || !hasPushManager(registration)) {
+                return;
+            }
+            const sub = await registration.pushManager.getSubscription();
+            if (sub) {
+                await sub.unsubscribe();
             }
         },
-
-        showLocalNotification: async (_payload: NotificationPayload) => {},
     };
 }

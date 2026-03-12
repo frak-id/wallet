@@ -8,7 +8,6 @@ const {
     registerMock,
     deleteTokenMock,
     createChannelMock,
-    sendNotificationMock,
     onTokenRefreshMock,
 } = vi.hoisted(() => ({
     getTokenMock: vi.fn(),
@@ -17,7 +16,6 @@ const {
     registerMock: vi.fn(),
     deleteTokenMock: vi.fn(),
     createChannelMock: vi.fn(),
-    sendNotificationMock: vi.fn(),
     onTokenRefreshMock: vi.fn(),
 }));
 
@@ -32,18 +30,7 @@ vi.mock("tauri-plugin-fcm", () => ({
     register: registerMock,
     deleteToken: deleteTokenMock,
     createChannel: createChannelMock,
-    sendNotification: sendNotificationMock,
     onTokenRefresh: onTokenRefreshMock,
-}));
-
-const { addMock } = vi.hoisted(() => ({
-    addMock: vi.fn(),
-}));
-
-vi.mock("../storage/notifications", () => ({
-    notificationStorage: {
-        add: addMock,
-    },
 }));
 
 const { putMock } = vi.hoisted(() => ({
@@ -61,8 +48,6 @@ vi.mock("../api/backendClient", () => ({
 }));
 
 describe.sequential("createTauriNotificationAdapter", () => {
-    const mockUUID = "test-uuid-1234-5678";
-
     beforeEach(() => {
         getTokenMock.mockReset();
         requestPermissionsMock.mockReset();
@@ -70,9 +55,7 @@ describe.sequential("createTauriNotificationAdapter", () => {
         registerMock.mockReset();
         deleteTokenMock.mockReset();
         createChannelMock.mockReset();
-        sendNotificationMock.mockReset();
         onTokenRefreshMock.mockReset();
-        addMock.mockReset();
         putMock.mockReset();
         capturedTokenRefreshHandler = undefined;
 
@@ -82,7 +65,6 @@ describe.sequential("createTauriNotificationAdapter", () => {
         registerMock.mockResolvedValue(undefined);
         deleteTokenMock.mockResolvedValue(undefined);
         createChannelMock.mockResolvedValue(undefined);
-        sendNotificationMock.mockResolvedValue(undefined);
         onTokenRefreshMock.mockImplementation(
             (handler: (event: { token: string }) => void) => {
                 capturedTokenRefreshHandler = handler;
@@ -90,22 +72,45 @@ describe.sequential("createTauriNotificationAdapter", () => {
             }
         );
         putMock.mockResolvedValue(undefined);
-
-        vi.stubGlobal("crypto", {
-            randomUUID: vi.fn().mockReturnValue(mockUUID),
-        });
     });
 
-    it("should return true for isSupported", () => {
-        const adapter = createTauriNotificationAdapter();
+    it("should call checkPermissions and return 'granted' when permission is granted", async () => {
+        checkPermissionsMock.mockResolvedValue("granted");
 
-        expect(adapter.isSupported()).toBe(true);
+        const adapter = createTauriNotificationAdapter();
+        const result = await adapter.getPermissionStatus();
+
+        expect(checkPermissionsMock).toHaveBeenCalledOnce();
+        expect(result).toBe("granted");
     });
 
-    it("should return 'default' for getPermissionStatus initially", () => {
-        const adapter = createTauriNotificationAdapter();
+    it("should call checkPermissions and return 'denied' when permission is denied", async () => {
+        checkPermissionsMock.mockResolvedValue("denied");
 
-        expect(adapter.getPermissionStatus()).toBe("default");
+        const adapter = createTauriNotificationAdapter();
+        const result = await adapter.getPermissionStatus();
+
+        expect(checkPermissionsMock).toHaveBeenCalledOnce();
+        expect(result).toBe("denied");
+    });
+
+    it("should call checkPermissions and return 'default' when permission is prompt", async () => {
+        checkPermissionsMock.mockResolvedValue("prompt");
+
+        const adapter = createTauriNotificationAdapter();
+        const result = await adapter.getPermissionStatus();
+
+        expect(checkPermissionsMock).toHaveBeenCalledOnce();
+        expect(result).toBe("default");
+    });
+
+    it("should return 'default' when checkPermissions fails", async () => {
+        checkPermissionsMock.mockRejectedValue(new Error("Plugin error"));
+
+        const adapter = createTauriNotificationAdapter();
+        const result = await adapter.getPermissionStatus();
+
+        expect(result).toBe("default");
     });
 
     it("should return 'granted' for requestPermission when plugin returns 'granted'", async () => {
@@ -146,6 +151,52 @@ describe.sequential("createTauriNotificationAdapter", () => {
         await expect(adapter.requestPermission()).rejects.toThrow(
             "Plugin not available"
         );
+    });
+
+    it("should return token when getToken succeeds", async () => {
+        getTokenMock.mockResolvedValue({ token: "test-token" });
+
+        const adapter = createTauriNotificationAdapter();
+        const result = await adapter.getToken();
+
+        expect(result).toEqual({ type: "fcm", token: "test-token" });
+    });
+
+    it("should return null when getToken fails", async () => {
+        getTokenMock.mockRejectedValue(new Error("No token available"));
+
+        const adapter = createTauriNotificationAdapter();
+        const result = await adapter.getToken();
+
+        expect(result).toBeNull();
+    });
+
+    it("should create channel and set up listener during init", async () => {
+        const adapter = createTauriNotificationAdapter();
+        await adapter.initPromise;
+
+        expect(createChannelMock).toHaveBeenCalledWith({
+            id: "default",
+            name: "Frak Wallet",
+            importance: 4,
+        });
+        expect(onTokenRefreshMock).toHaveBeenCalledOnce();
+    });
+
+    it("should warn when init fails", async () => {
+        createChannelMock.mockRejectedValue(
+            new Error("Channel creation failed")
+        );
+
+        const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+        const adapter = createTauriNotificationAdapter();
+        await adapter.initPromise;
+
+        expect(warnSpy).toHaveBeenCalledWith(
+            expect.stringContaining("Tauri notification init failed"),
+            expect.any(Error)
+        );
+        warnSpy.mockRestore();
     });
 
     it("should subscribe: return PushTokenPayload and not call backend", async () => {
@@ -299,78 +350,7 @@ describe.sequential("createTauriNotificationAdapter", () => {
         expect(onTokenRefreshMock).toHaveBeenCalledOnce();
     });
 
-    it("should initPromise: check permissions, create channel, and return localToken when existing token", async () => {
-        checkPermissionsMock.mockResolvedValue("granted");
-        getTokenMock.mockResolvedValue({ token: "existing-token" });
-
-        const adapter = createTauriNotificationAdapter();
-        const result = await adapter.initPromise;
-
-        expect(checkPermissionsMock).toHaveBeenCalledOnce();
-        expect(createChannelMock).toHaveBeenCalledWith({
-            id: "default",
-            name: "Frak Wallet",
-            importance: 4,
-        });
-        expect(result).toEqual({
-            permissionGranted: true,
-            localToken: { type: "fcm", token: "existing-token" },
-        });
-    });
-
-    it("should initPromise: set up token refresh listener when token exists", async () => {
-        checkPermissionsMock.mockResolvedValue("granted");
-        getTokenMock.mockResolvedValue({ token: "existing-token" });
-
-        const adapter = createTauriNotificationAdapter();
-        await adapter.initPromise;
-
-        expect(onTokenRefreshMock).toHaveBeenCalledOnce();
-    });
-
-    it("should initPromise: return permissionGranted false when denied", async () => {
-        checkPermissionsMock.mockResolvedValue("denied");
-
-        const adapter = createTauriNotificationAdapter();
-        const result = await adapter.initPromise;
-
-        expect(result).toEqual({
-            permissionGranted: false,
-            localToken: null,
-        });
-        expect(createChannelMock).not.toHaveBeenCalled();
-    });
-
-    it("should initPromise: return localToken null when no existing token", async () => {
-        checkPermissionsMock.mockResolvedValue("granted");
-        getTokenMock.mockRejectedValue(new Error("No token"));
-
-        const adapter = createTauriNotificationAdapter();
-        const result = await adapter.initPromise;
-
-        expect(result).toEqual({
-            permissionGranted: true,
-            localToken: null,
-        });
-        expect(createChannelMock).toHaveBeenCalled();
-    });
-
-    it("should initPromise: return gracefully when checkPermissions fails", async () => {
-        checkPermissionsMock.mockRejectedValue(new Error("Plugin error"));
-
-        const adapter = createTauriNotificationAdapter();
-        const result = await adapter.initPromise;
-
-        expect(result).toEqual({
-            permissionGranted: false,
-            localToken: null,
-        });
-    });
-
     it("should onTokenRefresh event: sync token to backend", async () => {
-        checkPermissionsMock.mockResolvedValue("granted");
-        getTokenMock.mockResolvedValue({ token: "existing-token" });
-
         const adapter = createTauriNotificationAdapter();
         await adapter.initPromise;
 
@@ -383,35 +363,6 @@ describe.sequential("createTauriNotificationAdapter", () => {
                 type: "fcm",
                 token: "refreshed-token",
             });
-        });
-    });
-
-    it("should showLocalNotification: call sendNotification and store in IndexedDB", async () => {
-        const now = 1700000000000;
-        vi.spyOn(Date, "now").mockReturnValue(now);
-
-        const adapter = createTauriNotificationAdapter();
-
-        await adapter.showLocalNotification({
-            title: "Test Title",
-            body: "Test Body",
-            icon: "test-icon.png",
-            data: { url: "https://example.com" },
-        });
-
-        expect(sendNotificationMock).toHaveBeenCalledWith({
-            title: "Test Title",
-            body: "Test Body",
-            icon: "test-icon.png",
-        });
-
-        expect(addMock).toHaveBeenCalledWith({
-            id: mockUUID,
-            title: "Test Title",
-            body: "Test Body",
-            icon: "test-icon.png",
-            data: { url: "https://example.com" },
-            timestamp: now,
         });
     });
 });

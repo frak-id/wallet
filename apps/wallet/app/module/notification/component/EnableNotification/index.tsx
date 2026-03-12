@@ -7,10 +7,10 @@ import { useNotificationStatus } from "@/module/notification/hook/useNotificatio
 import { useSubscribeToPushNotification } from "@/module/notification/hook/useSubscribeToPushNotification";
 
 export function EnableNotification() {
-    const { isSupported, hasLocalCapability } = useNotificationStatus();
+    const { hasLocalCapability } = useNotificationStatus();
     const { subscribeToPush, isPending } = useSubscribeToPushNotification();
 
-    if (!isSupported || hasLocalCapability) {
+    if (hasLocalCapability) {
         return null;
     }
 

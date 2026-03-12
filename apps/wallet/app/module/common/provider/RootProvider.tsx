@@ -1,6 +1,5 @@
 import { isTauri } from "@frak-labs/app-essentials/utils/platform";
 import {
-    getNotificationAdapter,
     setProfileId,
     usePersistentPairingClient,
     WagmiProviderWithDynamicConfig,
@@ -58,7 +57,6 @@ export function RootProvider({ children }: PropsWithChildren) {
 
     const content = (
         <>
-            <SetupNotifications />
             <WagmiProviderWithDynamicConfig>
                 <SessionStateManager />
                 {children}
@@ -82,13 +80,6 @@ export function RootProvider({ children }: PropsWithChildren) {
             />
         </PersistQueryClientProvider>
     );
-}
-
-function SetupNotifications() {
-    useEffect(() => {
-        getNotificationAdapter();
-    }, []);
-    return null;
 }
 
 function SessionStateManager() {

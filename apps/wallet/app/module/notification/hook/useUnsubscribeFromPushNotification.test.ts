@@ -1,4 +1,4 @@
-import { getNotificationAdapter } from "@frak-labs/wallet-shared";
+import type { PushTokenPayload } from "@frak-labs/wallet-shared";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { vi } from "vitest";
 import { useUnsubscribeFromPushNotification } from "@/module/notification/hook/useUnsubscribeFromPushNotification";
@@ -16,23 +16,25 @@ const mockTokensApi = vi.hoisted(() => ({
     delete: vi.fn().mockResolvedValue(undefined),
 }));
 
+const mockAdapter = vi.hoisted(() => ({
+    getPermissionStatus: vi
+        .fn()
+        .mockResolvedValue("granted" as NotificationPermission),
+    requestPermission: vi
+        .fn()
+        .mockResolvedValue("granted" as NotificationPermission),
+    getToken: vi.fn().mockResolvedValue(null as PushTokenPayload | null),
+    subscribe: vi.fn().mockResolvedValue(undefined),
+    unsubscribe: vi.fn().mockResolvedValue(undefined),
+    initPromise: Promise.resolve(),
+}));
+
 vi.mock("@frak-labs/wallet-shared", async (importOriginal) => {
     const actual =
         await importOriginal<typeof import("@frak-labs/wallet-shared")>();
     return {
         ...actual,
-        getNotificationAdapter: vi.fn(() => ({
-            isSupported: vi.fn().mockReturnValue(true),
-            getPermissionStatus: vi.fn().mockReturnValue("granted"),
-            requestPermission: vi.fn().mockResolvedValue("granted"),
-            subscribe: vi.fn().mockResolvedValue(undefined),
-            unsubscribe: vi.fn().mockResolvedValue(undefined),
-            showLocalNotification: vi.fn().mockResolvedValue(undefined),
-            initPromise: Promise.resolve({
-                permissionGranted: true,
-                localToken: null,
-            }),
-        })),
+        notificationAdapter: mockAdapter,
         authenticatedWalletApi: {
             notifications: { tokens: mockTokensApi },
         },
@@ -40,24 +42,13 @@ vi.mock("@frak-labs/wallet-shared", async (importOriginal) => {
 });
 
 describe.sequential("useUnsubscribeFromPushNotification", () => {
-    beforeEach(
-        ({ mockNotificationAdapter, queryWrapper }: WalletTestFixtures) => {
-            queryWrapper.client.clear();
+    beforeEach(({ queryWrapper }: WalletTestFixtures) => {
+        queryWrapper.client.clear();
 
-            mockNotificationAdapter.isSupported
-                .mockReset()
-                .mockReturnValue(true);
-            mockNotificationAdapter.unsubscribe
-                .mockReset()
-                .mockResolvedValue(undefined);
+        mockAdapter.unsubscribe.mockReset().mockResolvedValue(undefined);
 
-            mockTokensApi.delete.mockReset().mockResolvedValue(undefined);
-
-            vi.mocked(getNotificationAdapter).mockReturnValue(
-                mockNotificationAdapter
-            );
-        }
-    );
+        mockTokensApi.delete.mockReset().mockResolvedValue(undefined);
+    });
 
     test("should return mutation functions and idle state initially", ({
         queryWrapper,
@@ -74,7 +65,6 @@ describe.sequential("useUnsubscribeFromPushNotification", () => {
     });
 
     test("should call adapter.unsubscribe and API delete on mutation", async ({
-        mockNotificationAdapter,
         queryWrapper,
     }: WalletTestFixtures) => {
         const { result } = renderHook(
@@ -86,12 +76,11 @@ describe.sequential("useUnsubscribeFromPushNotification", () => {
             await result.current.unsubscribeFromPushAsync();
         });
 
-        expect(mockNotificationAdapter.unsubscribe).toHaveBeenCalledOnce();
+        expect(mockAdapter.unsubscribe).toHaveBeenCalledOnce();
         expect(mockTokensApi.delete).toHaveBeenCalledOnce();
     });
 
     test("should update query cache on successful unsubscribe", async ({
-        mockNotificationAdapter,
         queryWrapper,
     }: WalletTestFixtures) => {
         const { notificationKey } = await import(
@@ -107,28 +96,27 @@ describe.sequential("useUnsubscribeFromPushNotification", () => {
             await result.current.unsubscribeFromPushAsync();
         });
 
-        expect(mockNotificationAdapter.unsubscribe).toHaveBeenCalledOnce();
+        expect(mockAdapter.unsubscribe).toHaveBeenCalledOnce();
         expect(mockTokensApi.delete).toHaveBeenCalledOnce();
 
-        const localState = queryWrapper.client.getQueryData(
-            notificationKey.push.localState
-        ) as { permissionGranted: boolean; localToken: null } | undefined;
-        expect(localState).toEqual({
-            permissionGranted: false,
-            localToken: null,
+        await waitFor(() => {
+            expect(
+                queryWrapper.client.getQueryData(
+                    notificationKey.push.permission
+                )
+            ).toBe("default");
+            expect(
+                queryWrapper.client.getQueryData(
+                    notificationKey.push.backendToken
+                )
+            ).toBe(false);
         });
-
-        const backendToken = queryWrapper.client.getQueryData(
-            notificationKey.push.backendToken
-        );
-        expect(backendToken).toBe(false);
     });
 
     test("should report error state when adapter.unsubscribe fails", async ({
-        mockNotificationAdapter,
         queryWrapper,
     }: WalletTestFixtures) => {
-        mockNotificationAdapter.unsubscribe.mockRejectedValue(
+        mockAdapter.unsubscribe.mockRejectedValue(
             new Error("unsubscribe failed")
         );
 

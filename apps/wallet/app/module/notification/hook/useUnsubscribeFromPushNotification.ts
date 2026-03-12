@@ -1,12 +1,12 @@
 import {
     authenticatedWalletApi,
-    getNotificationAdapter,
+    notificationAdapter,
 } from "@frak-labs/wallet-shared";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { notificationKey } from "@/module/notification/queryKeys/notification";
 
 export function useUnsubscribeFromPushNotification() {
-    const adapter = getNotificationAdapter();
+    const queryClient = useQueryClient();
 
     const {
         mutate: unsubscribeFromPush,
@@ -15,18 +15,16 @@ export function useUnsubscribeFromPushNotification() {
     } = useMutation({
         mutationKey: notificationKey.push.unsubscribe,
         mutationFn: async () => {
-            await adapter.unsubscribe();
+            await notificationAdapter.unsubscribe();
             await authenticatedWalletApi.notifications.tokens.delete();
         },
-        onSuccess: (_data, _error, _onSuccess, { client }) => {
-            client.setQueryData(
-                notificationKey.push.localState,
-                (prev: { permissionGranted: boolean } | undefined) => ({
-                    permissionGranted: prev?.permissionGranted ?? false,
-                    localToken: null,
-                })
+        onSuccess: () => {
+            queryClient.setQueryData(
+                notificationKey.push.permission,
+                "default" as NotificationPermission
             );
-            client.setQueryData(notificationKey.push.backendToken, false);
+            queryClient.setQueryData(notificationKey.push.localToken, null);
+            queryClient.setQueryData(notificationKey.push.backendToken, false);
         },
     });
 
