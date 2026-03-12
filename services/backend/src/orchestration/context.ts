@@ -8,6 +8,7 @@ import { RewardsContext } from "../domain/rewards/context";
 import { pricingRepository } from "../infrastructure/pricing/PricingRepository";
 import { BatchRewardOrchestrator } from "./BatchRewardOrchestrator";
 import { CampaignStatsOrchestrator } from "./CampaignStatsOrchestrator";
+import { ExplorerOrchestrator } from "./ExplorerOrchestrator";
 import {
     AnonymousMergeOrchestrator,
     IdentityMergeService,
@@ -94,6 +95,8 @@ const memberQueryOrchestrator = new MemberQueryOrchestrator(pricingRepository);
 
 const campaignStatsOrchestrator = new CampaignStatsOrchestrator();
 
+const explorerOrchestrator = new ExplorerOrchestrator();
+
 const interactionSubmissionOrchestrator = new InteractionSubmissionOrchestrator(
     RewardsContext.repositories.interactionLog,
     AttributionContext.services.attribution
@@ -109,6 +112,7 @@ const anonymousMergeOrchestrator = new AnonymousMergeOrchestrator(
 
 export namespace OrchestrationContext {
     export const orchestrators = {
+        explorer: explorerOrchestrator,
         interactionSubmission: interactionSubmissionOrchestrator,
         memberQuery: memberQueryOrchestrator,
         campaignStats: campaignStatsOrchestrator,

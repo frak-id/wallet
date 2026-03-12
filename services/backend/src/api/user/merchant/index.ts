@@ -3,6 +3,8 @@ import { keccak256, toHex } from "viem";
 import { CampaignContext } from "../../../domain/campaign/context";
 import { EstimatedRewardsResultSchema } from "../../../domain/campaign/schemas";
 import { MerchantContext } from "../../../domain/merchant/context";
+import { OrchestrationContext } from "../../../orchestration/context";
+import { ExplorerQueryResultSchema } from "../../../orchestration/schemas";
 
 export const userMerchantApi = new Elysia({ prefix: "/merchant" })
     .get(
@@ -53,6 +55,24 @@ export const userMerchantApi = new Elysia({ prefix: "/merchant" })
             }),
             response: {
                 200: EstimatedRewardsResultSchema,
+            },
+        }
+    )
+    .get(
+        "/explore",
+        async ({ query: { limit, offset } }) => {
+            return OrchestrationContext.orchestrators.explorer.queryMerchants({
+                limit,
+                offset,
+            });
+        },
+        {
+            query: t.Object({
+                limit: t.Optional(t.Number({ default: 20 })),
+                offset: t.Optional(t.Number({ default: 0 })),
+            }),
+            response: {
+                200: ExplorerQueryResultSchema,
             },
         }
     );

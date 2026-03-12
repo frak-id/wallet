@@ -1,8 +1,9 @@
 import { db } from "@backend-infrastructure";
-import { eq, inArray } from "drizzle-orm";
+import { eq, inArray, sql } from "drizzle-orm";
 import { LRUCache } from "lru-cache";
 import type { Address, Hex } from "viem";
 import { merchantsTable } from "../db/schema";
+import type { MerchantAppearance } from "../schemas";
 
 type MerchantInsert = typeof merchantsTable.$inferInsert;
 type MerchantSelect = typeof merchantsTable.$inferSelect;
@@ -252,6 +253,24 @@ export class MerchantRepository {
         const [result] = await db
             .update(merchantsTable)
             .set({ ...updates, updatedAt: new Date() })
+            .where(eq(merchantsTable.id, id))
+            .returning();
+        if (result) {
+            this.invalidateCache(result);
+        }
+        return result ?? null;
+    }
+
+    async updateAppearance(
+        id: string,
+        appearance: MerchantAppearance
+    ): Promise<MerchantSelect | null> {
+        const [result] = await db
+            .update(merchantsTable)
+            .set({
+                config: sql`COALESCE(${merchantsTable.config}, '{}'::jsonb) || jsonb_build_object('appearance', ${JSON.stringify(appearance)}::jsonb)`,
+                updatedAt: new Date(),
+            })
             .where(eq(merchantsTable.id, id))
             .returning();
         if (result) {

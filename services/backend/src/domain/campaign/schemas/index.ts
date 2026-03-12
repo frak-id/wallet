@@ -236,11 +236,18 @@ export type EstimatedReward = Static<typeof EstimatedRewardSchema>;
 export const EstimatedRewardItemSchema = t.Object({
     token: t.Optional(t.Address()),
     campaignId: t.String(),
+    name: t.String(),
     interactionTypeKey: t.String(),
     referrer: t.Optional(EstimatedRewardSchema),
     referee: t.Optional(EstimatedRewardSchema),
+    conditions: RuleConditionsSchema,
+    pendingRewardExpirationDays: t.Optional(t.Number()),
+    maxRewardsPerUser: t.Optional(t.Number()),
 });
-export type EstimatedRewardItem = Static<typeof EstimatedRewardItemSchema>;
+export type EstimatedRewardItem = Omit<
+    Static<typeof EstimatedRewardItemSchema>,
+    "conditions"
+> & { conditions: RuleConditions };
 
 export const EstimatedRewardsResultSchema = t.Object({
     rewards: t.Array(EstimatedRewardItemSchema),

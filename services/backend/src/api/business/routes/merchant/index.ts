@@ -1,6 +1,9 @@
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
-import { MerchantContext } from "../../../../domain/merchant";
+import {
+    MerchantAppearanceSchema,
+    MerchantContext,
+} from "../../../../domain/merchant";
 import { businessSessionContext } from "../../middleware/session";
 import { merchantAdminsRoutes } from "./admins";
 import { merchantBankRoutes } from "./bank";
@@ -46,6 +49,7 @@ export const merchantRoutes = new Elysia({ prefix: "/merchant" })
                 bankAddress: merchant.bankAddress,
                 defaultRewardToken: merchant.defaultRewardToken,
                 config: merchant.config,
+                appearance: merchant.config?.appearance ?? null,
                 verifiedAt: merchant.verifiedAt?.toISOString() ?? null,
                 createdAt: merchant.createdAt?.toISOString() ?? null,
                 role: access.role,
@@ -64,6 +68,7 @@ export const merchantRoutes = new Elysia({ prefix: "/merchant" })
                     bankAddress: t.Union([t.Hex(), t.Null()]),
                     defaultRewardToken: t.Hex(),
                     config: t.Union([t.Object({}), t.Null()]),
+                    appearance: t.Union([MerchantAppearanceSchema, t.Null()]),
                     verifiedAt: t.Union([t.String(), t.Null()]),
                     createdAt: t.Union([t.String(), t.Null()]),
                     role: t.Union([
@@ -165,6 +170,13 @@ export const merchantRoutes = new Elysia({ prefix: "/merchant" })
                 }
             );
 
+            if (body.appearance) {
+                await MerchantContext.repositories.merchant.updateAppearance(
+                    merchantId,
+                    body.appearance
+                );
+            }
+
             if (!updated) {
                 return status(404, "Merchant not found");
             }
@@ -176,6 +188,7 @@ export const merchantRoutes = new Elysia({ prefix: "/merchant" })
             body: t.Object({
                 name: t.Optional(t.String()),
                 defaultRewardToken: t.Optional(t.Hex()),
+                appearance: t.Optional(MerchantAppearanceSchema),
             }),
             response: {
                 200: t.Object({ success: t.Boolean() }),
