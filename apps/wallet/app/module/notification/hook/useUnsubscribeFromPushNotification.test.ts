@@ -85,11 +85,16 @@ describe.sequential("useUnsubscribeFromPushNotification", () => {
         expect(mockTokensApi.delete).toHaveBeenCalledOnce();
     });
 
-    test("should update query cache on successful unsubscribe", async ({
+    test("should invalidate query cache on successful unsubscribe", async ({
         queryWrapper,
     }: WalletTestFixtures) => {
         const { notificationKey } = await import(
             "@/module/notification/queryKeys/notification"
+        );
+
+        const invalidateSpy = vi.spyOn(
+            queryWrapper.client,
+            "invalidateQueries"
         );
 
         const { result } = renderHook(
@@ -105,17 +110,18 @@ describe.sequential("useUnsubscribeFromPushNotification", () => {
         expect(mockTokensApi.delete).toHaveBeenCalledOnce();
 
         await waitFor(() => {
-            expect(
-                queryWrapper.client.getQueryData(
-                    notificationKey.push.permission
-                )
-            ).toBe("prompt");
-            expect(
-                queryWrapper.client.getQueryData(
-                    notificationKey.push.backendToken
-                )
-            ).toBe(false);
+            expect(invalidateSpy).toHaveBeenCalledWith({
+                queryKey: notificationKey.push.permission,
+            });
+            expect(invalidateSpy).toHaveBeenCalledWith({
+                queryKey: notificationKey.push.localToken,
+            });
+            expect(invalidateSpy).toHaveBeenCalledWith({
+                queryKey: notificationKey.push.backendToken,
+            });
         });
+
+        invalidateSpy.mockRestore();
     });
 
     test("should report error state when adapter.unsubscribe fails", async ({

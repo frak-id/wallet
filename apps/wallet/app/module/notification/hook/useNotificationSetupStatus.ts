@@ -16,7 +16,6 @@ export function useNotificationStatus() {
     const { data: permission } = useQuery({
         queryKey: notificationKey.push.permission,
         queryFn: () => notificationAdapter.getPermissionStatus(),
-        staleTime: PERMISSION_POLL_INTERVAL,
         refetchInterval: PERMISSION_POLL_INTERVAL,
         refetchOnWindowFocus: "always",
     });
@@ -27,7 +26,7 @@ export function useNotificationStatus() {
         queryKey: notificationKey.push.localToken,
         queryFn: () => notificationAdapter.getToken(),
         enabled: permissionGranted,
-        staleTime: Number.POSITIVE_INFINITY,
+        refetchOnWindowFocus: "always",
     });
 
     const { data: hasBackendToken } = useQuery({
@@ -47,15 +46,15 @@ export function useNotificationStatus() {
         notificationAdapter.events.addEventListener(
             "token-update",
             (e) => {
-                console.log("token update", e);
                 const token = (e as CustomEvent<PushTokenPayload>).detail;
                 queryClient.setQueryData(
                     notificationKey.push.localToken,
                     token
                 );
-                queryClient.invalidateQueries({
-                    queryKey: notificationKey.push.permission,
-                });
+                queryClient.setQueryData(
+                    notificationKey.push.permission,
+                    "granted" satisfies NotificationPermissionStatus
+                );
             },
             { signal: controller.signal }
         );
