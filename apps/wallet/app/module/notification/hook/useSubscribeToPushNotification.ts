@@ -1,4 +1,8 @@
-import { type UseMutationOptions, useMutation } from "@tanstack/react-query";
+import {
+    type UseMutationOptions,
+    useMutation,
+    useQueryClient,
+} from "@tanstack/react-query";
 import { useNotificationContext } from "@/module/notification/context/NotificationContext";
 import { notificationKey } from "@/module/notification/queryKeys/notification";
 
@@ -9,6 +13,7 @@ export function useSubscribeToPushNotification(
     mutationOptions?: UseMutationOptions
 ) {
     const { adapter, setIsSubscribed } = useNotificationContext();
+    const queryClient = useQueryClient();
 
     /**
      * Mutation used to subscribe to the push notification
@@ -24,6 +29,12 @@ export function useSubscribeToPushNotification(
             await adapter.subscribe();
             const subscribed = await adapter.isSubscribed();
             setIsSubscribed(subscribed);
+            // Sync the shared query cache so EnableNotification and
+            // RemoveAllNotification both reflect the new state immediately
+            queryClient.setQueryData(
+                notificationKey.push.tokenCount,
+                subscribed
+            );
         },
         onError: (error, variables, onMutateResult, context) => {
             console.error("[Notification] subscribe failed:", error);

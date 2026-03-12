@@ -12,7 +12,9 @@ import {
 
 type NotificationContextValue = {
     isSubscribed: boolean;
+    isInitialized: boolean;
     setIsSubscribed: (value: boolean) => void;
+    setIsInitialized: (value: boolean) => void;
     adapter: NotificationAdapter;
 };
 
@@ -22,11 +24,18 @@ const NotificationContext = createContext<NotificationContextValue | null>(
 
 export function NotificationProvider({ children }: PropsWithChildren) {
     const [isSubscribed, setIsSubscribed] = useState(false);
+    const [isInitialized, setIsInitialized] = useState(false);
     const adapter = useMemo(() => getNotificationAdapter(), []);
 
     const value = useMemo(
-        () => ({ isSubscribed, setIsSubscribed, adapter }),
-        [isSubscribed, adapter]
+        () => ({
+            isSubscribed,
+            isInitialized,
+            setIsSubscribed,
+            setIsInitialized,
+            adapter,
+        }),
+        [isSubscribed, isInitialized, adapter]
     );
 
     return (

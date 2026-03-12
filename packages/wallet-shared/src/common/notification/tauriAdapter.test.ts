@@ -418,6 +418,17 @@ describe.sequential("createTauriNotificationAdapter", () => {
         expect(result).toBe(true);
     });
 
+    it("should isSubscribed: return false when user explicitly opted out", async () => {
+        idbGetMock.mockResolvedValue(true);
+        hasAnyGetMock.mockResolvedValue({ data: true });
+
+        const adapter = createTauriNotificationAdapter();
+        const result = await adapter.isSubscribed();
+
+        expect(result).toBe(false);
+        expect(hasAnyGetMock).not.toHaveBeenCalled();
+    });
+
     it("should isSubscribed: return false on backend error", async () => {
         hasAnyGetMock.mockRejectedValue(new Error("Backend error"));
 

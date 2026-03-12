@@ -22,7 +22,9 @@ export type WalletTestFixtures = BaseTestFixtures & {
      */
     mockNotificationContext: {
         isSubscribed: boolean;
+        isInitialized: boolean;
         setIsSubscribed: ReturnType<typeof import("vitest").vi.fn>;
+        setIsInitialized: ReturnType<typeof import("vitest").vi.fn>;
         adapter: {
             isSupported: ReturnType<typeof import("vitest").vi.fn>;
             getPermissionStatus: ReturnType<typeof import("vitest").vi.fn>;
@@ -98,7 +100,9 @@ export const test = baseTest.extend<
         {},
         use: (value: {
             isSubscribed: boolean;
+            isInitialized: boolean;
             setIsSubscribed: ReturnType<typeof import("vitest").vi.fn>;
+            setIsInitialized: ReturnType<typeof import("vitest").vi.fn>;
             adapter: {
                 isSupported: ReturnType<typeof import("vitest").vi.fn>;
                 getPermissionStatus: ReturnType<typeof import("vitest").vi.fn>;
@@ -116,7 +120,9 @@ export const test = baseTest.extend<
         const { vi } = await import("vitest");
         const context = {
             isSubscribed: false,
+            isInitialized: true,
             setIsSubscribed: vi.fn(),
+            setIsInitialized: vi.fn(),
             adapter: {
                 isSupported: vi.fn().mockReturnValue(false),
                 getPermissionStatus: vi.fn().mockReturnValue("default"),

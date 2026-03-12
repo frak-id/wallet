@@ -6,17 +6,19 @@ import { notificationKey } from "@/module/notification/queryKeys/notification";
  * Unsubscribe from the push notification
  */
 export function useUnsubscribeFromPushNotification() {
-    const { adapter, setIsSubscribed } = useNotificationContext();
+    const { adapter, setIsSubscribed, isInitialized } =
+        useNotificationContext();
 
     const { data: hasPushToken, refetch } = useQuery({
         queryKey: notificationKey.push.tokenCount,
         queryFn: async () => {
             return await adapter.isSubscribed();
         },
+        enabled: isInitialized,
     });
 
     /**
-     * Mutation used to subscribe to the push notification
+     * Mutation used to unsubscribe from push notifications
      */
     const {
         mutate: unsubscribeFromPush,

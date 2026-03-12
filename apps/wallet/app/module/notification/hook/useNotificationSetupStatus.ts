@@ -1,11 +1,17 @@
+import { useQuery } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
 import { useNotificationContext } from "@/module/notification/context/NotificationContext";
+import { notificationKey } from "@/module/notification/queryKeys/notification";
 
 /**
  * Get the notification setup status
  */
 export function useNotificationSetupStatus() {
-    const { adapter, isSubscribed } = useNotificationContext();
+    const {
+        adapter,
+        isSubscribed: initialSubscribedState,
+        isInitialized,
+    } = useNotificationContext();
 
     /**
      * Ask for the permissions to display notification
@@ -37,6 +43,22 @@ export function useNotificationSetupStatus() {
         const isNotificationAllowed = permissionStatus === "granted";
         return { isSupported, isNotificationAllowed };
     }, [isSupported, adapter]);
+
+    // Gate on isInitialized to prevent a race on web/PWA: the fire-and-forget
+    // backend sync in webAdapter.initialize() may not have completed when
+    // adapter.isSubscribed() (backend hasAny) runs, returning a false negative
+    // that overwrites the correct local-subscription-based state.
+    // SetupNotifications seeds the cache before setting isInitialized=true,
+    // so the query starts with authoritative data and won't refetch until
+    // staleTime (60s), giving the sync time to land.
+    const { data: isSubscribed } = useQuery({
+        queryKey: notificationKey.push.tokenCount,
+        queryFn: async () => {
+            return await adapter.isSubscribed();
+        },
+        enabled: isSupported && isInitialized,
+        initialData: initialSubscribedState,
+    });
 
     return useMemo(() => {
         if (!statusResult?.isSupported) {

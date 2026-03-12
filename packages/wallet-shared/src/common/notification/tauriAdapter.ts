@@ -231,6 +231,15 @@ export function createTauriNotificationAdapter(): NotificationAdapter {
 
         isSubscribed: async () => {
             try {
+                const optedOut = await getPushOptOut();
+                if (optedOut) {
+                    return false;
+                }
+            } catch (error) {
+                console.warn("Failed to read push opt-out status", error);
+            }
+
+            try {
                 const result =
                     await authenticatedWalletApi.notifications.tokens.hasAny.get();
                 return result.data ?? false;

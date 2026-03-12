@@ -1,4 +1,4 @@
-import { renderHook } from "@testing-library/react";
+import { renderHook, waitFor } from "@testing-library/react";
 import { vi } from "vitest";
 import * as NotificationContext from "@/module/notification/context/NotificationContext";
 import { useNotificationSetupStatus } from "@/module/notification/hook/useNotificationSetupStatus";
@@ -13,7 +13,9 @@ import {
 vi.mock("@/module/notification/context/NotificationContext", () => ({
     useNotificationContext: vi.fn(() => ({
         isSubscribed: false,
+        isInitialized: true,
         setIsSubscribed: vi.fn(),
+        setIsInitialized: vi.fn(),
         adapter: {
             isSupported: vi.fn().mockReturnValue(false),
             getPermissionStatus: vi.fn().mockReturnValue("default"),
@@ -28,49 +30,61 @@ vi.mock("@/module/notification/context/NotificationContext", () => ({
 }));
 
 describe.sequential("useNotificationSetupStatus", () => {
-    beforeEach(({ mockNotificationContext }: WalletTestFixtures) => {
-        mockNotificationContext.adapter.isSupported.mockReset();
-        mockNotificationContext.adapter.getPermissionStatus.mockReset();
-        mockNotificationContext.adapter.requestPermission.mockReset();
-        mockNotificationContext.adapter.subscribe.mockReset();
-        mockNotificationContext.adapter.unsubscribe.mockReset();
-        mockNotificationContext.adapter.isSubscribed.mockReset();
-        mockNotificationContext.adapter.initialize.mockReset();
-        mockNotificationContext.adapter.showLocalNotification.mockReset();
+    beforeEach(
+        ({ mockNotificationContext, queryWrapper }: WalletTestFixtures) => {
+            queryWrapper.client.clear();
 
-        mockNotificationContext.adapter.isSupported.mockReturnValue(false);
-        mockNotificationContext.adapter.getPermissionStatus.mockReturnValue(
-            "default"
-        );
-        mockNotificationContext.adapter.requestPermission.mockResolvedValue(
-            "granted"
-        );
-        mockNotificationContext.adapter.subscribe.mockResolvedValue(undefined);
-        mockNotificationContext.adapter.unsubscribe.mockResolvedValue(
-            undefined
-        );
-        mockNotificationContext.adapter.isSubscribed.mockResolvedValue(false);
-        mockNotificationContext.adapter.initialize.mockResolvedValue({
-            isSubscribed: false,
-        });
-        mockNotificationContext.adapter.showLocalNotification.mockResolvedValue(
-            undefined
-        );
+            mockNotificationContext.adapter.isSupported.mockReset();
+            mockNotificationContext.adapter.getPermissionStatus.mockReset();
+            mockNotificationContext.adapter.requestPermission.mockReset();
+            mockNotificationContext.adapter.subscribe.mockReset();
+            mockNotificationContext.adapter.unsubscribe.mockReset();
+            mockNotificationContext.adapter.isSubscribed.mockReset();
+            mockNotificationContext.adapter.initialize.mockReset();
+            mockNotificationContext.adapter.showLocalNotification.mockReset();
 
-        const contextValue = mockNotificationContext as unknown as ReturnType<
-            typeof NotificationContext.useNotificationContext
-        >;
-        vi.mocked(NotificationContext.useNotificationContext).mockReturnValue(
-            contextValue
-        );
-    });
+            mockNotificationContext.adapter.isSupported.mockReturnValue(false);
+            mockNotificationContext.adapter.getPermissionStatus.mockReturnValue(
+                "default"
+            );
+            mockNotificationContext.adapter.requestPermission.mockResolvedValue(
+                "granted"
+            );
+            mockNotificationContext.adapter.subscribe.mockResolvedValue(
+                undefined
+            );
+            mockNotificationContext.adapter.unsubscribe.mockResolvedValue(
+                undefined
+            );
+            mockNotificationContext.adapter.isSubscribed.mockResolvedValue(
+                false
+            );
+            mockNotificationContext.adapter.initialize.mockResolvedValue({
+                isSubscribed: false,
+            });
+            mockNotificationContext.adapter.showLocalNotification.mockResolvedValue(
+                undefined
+            );
+
+            const contextValue =
+                mockNotificationContext as unknown as ReturnType<
+                    typeof NotificationContext.useNotificationContext
+                >;
+            vi.mocked(
+                NotificationContext.useNotificationContext
+            ).mockReturnValue(contextValue);
+        }
+    );
 
     test("should return not supported when adapter reports unsupported", ({
         mockNotificationContext,
+        queryWrapper,
     }: WalletTestFixtures) => {
         mockNotificationContext.adapter.isSupported.mockReturnValue(false);
 
-        const { result } = renderHook(() => useNotificationSetupStatus());
+        const { result } = renderHook(() => useNotificationSetupStatus(), {
+            wrapper: queryWrapper.wrapper,
+        });
 
         expect(result.current).toEqual({ isSupported: false });
         expect(
@@ -80,13 +94,16 @@ describe.sequential("useNotificationSetupStatus", () => {
 
     test("should return supported status and permission data", ({
         mockNotificationContext,
+        queryWrapper,
     }: WalletTestFixtures) => {
         mockNotificationContext.adapter.isSupported.mockReturnValue(true);
         mockNotificationContext.adapter.getPermissionStatus.mockReturnValue(
             "granted"
         );
 
-        const { result } = renderHook(() => useNotificationSetupStatus());
+        const { result } = renderHook(() => useNotificationSetupStatus(), {
+            wrapper: queryWrapper.wrapper,
+        });
 
         expect(result.current.isSupported).toBe(true);
         expect(result.current.isNotificationAllowed).toBe(true);
@@ -96,14 +113,16 @@ describe.sequential("useNotificationSetupStatus", () => {
         );
     });
 
-    test("should expose isSubscribed from context", ({
+    test("should use adapter subscription state as source of truth", async ({
         mockNotificationContext,
+        queryWrapper,
     }: WalletTestFixtures) => {
-        mockNotificationContext.isSubscribed = true;
+        mockNotificationContext.isSubscribed = false;
         mockNotificationContext.adapter.isSupported.mockReturnValue(true);
         mockNotificationContext.adapter.getPermissionStatus.mockReturnValue(
             "default"
         );
+        mockNotificationContext.adapter.isSubscribed.mockResolvedValue(true);
 
         const contextValue = mockNotificationContext as unknown as ReturnType<
             typeof NotificationContext.useNotificationContext
@@ -112,21 +131,28 @@ describe.sequential("useNotificationSetupStatus", () => {
             contextValue
         );
 
-        const { result } = renderHook(() => useNotificationSetupStatus());
+        const { result } = renderHook(() => useNotificationSetupStatus(), {
+            wrapper: queryWrapper.wrapper,
+        });
 
-        expect(result.current.isSupported).toBe(true);
-        expect(result.current.isSubscribed).toBe(true);
+        await waitFor(() => {
+            expect(result.current.isSupported).toBe(true);
+            expect(result.current.isSubscribed).toBe(true);
+        });
     });
 
     test("should call adapter.requestPermission when callback is invoked", async ({
         mockNotificationContext,
+        queryWrapper,
     }: WalletTestFixtures) => {
         mockNotificationContext.adapter.isSupported.mockReturnValue(true);
         mockNotificationContext.adapter.getPermissionStatus.mockReturnValue(
             "default"
         );
 
-        const { result } = renderHook(() => useNotificationSetupStatus());
+        const { result } = renderHook(() => useNotificationSetupStatus(), {
+            wrapper: queryWrapper.wrapper,
+        });
 
         await result.current.askForNotificationPermission?.();
         expect(
@@ -136,6 +162,7 @@ describe.sequential("useNotificationSetupStatus", () => {
 
     test("should handle adapter permission request errors", async ({
         mockNotificationContext,
+        queryWrapper,
     }: WalletTestFixtures) => {
         const consoleErrorSpy = vi
             .spyOn(console, "error")
@@ -150,7 +177,9 @@ describe.sequential("useNotificationSetupStatus", () => {
             mockError
         );
 
-        const { result } = renderHook(() => useNotificationSetupStatus());
+        const { result } = renderHook(() => useNotificationSetupStatus(), {
+            wrapper: queryWrapper.wrapper,
+        });
 
         await result.current.askForNotificationPermission?.();
 
