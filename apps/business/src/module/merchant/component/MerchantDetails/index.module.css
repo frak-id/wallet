@@ -7,3 +7,34 @@
         opacity: 0.3;
     }
 }
+
+.textarea {
+    all: unset;
+    box-sizing: border-box;
+    padding: 9px 12px;
+    width: 320px;
+    min-height: 100px;
+    line-height: 20px;
+    font-size: 16px;
+    color: var(--frak-input-text-color);
+    font-weight: 400;
+    border: var(--frak-input-border-width) solid var(--frak-input-border-color);
+    border-radius: 8px;
+    background-color: var(--frak-input-background-color);
+    transition: border-color 0.2s;
+    resize: vertical;
+}
+
+.textarea:focus {
+    box-shadow: 0 0 0 1px var(--frak-focus-border-color);
+}
+
+.textarea::placeholder {
+    color: var(--frak-input-placeholder-color);
+    opacity: 1;
+}
+
+.textarea:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}

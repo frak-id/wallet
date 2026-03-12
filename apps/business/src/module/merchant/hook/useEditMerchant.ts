@@ -5,6 +5,10 @@ import { authenticatedBackendApi } from "@/api/backendClient";
 type EditMerchantInput = {
     name?: string;
     defaultRewardToken?: Address;
+    appearance?: {
+        heroImageUrl?: string;
+        description?: string;
+    };
 };
 
 export function useEditMerchant({ merchantId }: { merchantId: string }) {
