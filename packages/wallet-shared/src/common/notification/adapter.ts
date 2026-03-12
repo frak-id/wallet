@@ -27,6 +27,10 @@ export type NotificationPermissionStatus =
     | "prompt"
     | "prompt-with-rationale";
 
+export type NotificationAdapterEventMap = {
+    "token-update": CustomEvent<PushTokenPayload>;
+};
+
 export type NotificationAdapter = {
     initPromise: Promise<void>;
     getPermissionStatus: () => Promise<NotificationPermissionStatus>;
@@ -34,11 +38,8 @@ export type NotificationAdapter = {
     getToken: () => Promise<PushTokenPayload | null>;
     subscribe: () => Promise<PushTokenPayload>;
     unsubscribe: () => Promise<void>;
-    /**
-     * Open the OS app notification settings page.
-     * On web, this is a no-op (browser handles its own permission UI).
-     */
     openSettings: () => Promise<void>;
+    events: EventTarget;
 };
 
 export const notificationAdapter: NotificationAdapter = isTauri()

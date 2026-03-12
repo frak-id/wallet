@@ -2,6 +2,7 @@ import {
     authenticatedWalletApi,
     type NotificationPermissionStatus,
     notificationAdapter,
+    type PushTokenPayload,
 } from "@frak-labs/wallet-shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo } from "react";
@@ -17,7 +18,7 @@ export function useNotificationStatus() {
         queryFn: () => notificationAdapter.getPermissionStatus(),
         staleTime: PERMISSION_POLL_INTERVAL,
         refetchInterval: PERMISSION_POLL_INTERVAL,
-        refetchOnWindowFocus: true,
+        refetchOnWindowFocus: "always",
     });
 
     const permissionGranted = permission === "granted";
@@ -27,7 +28,6 @@ export function useNotificationStatus() {
         queryFn: () => notificationAdapter.getToken(),
         enabled: permissionGranted,
         staleTime: Number.POSITIVE_INFINITY,
-        refetchOnWindowFocus: true,
     });
 
     const { data: hasBackendToken } = useQuery({
@@ -37,10 +37,28 @@ export function useNotificationStatus() {
                 await authenticatedWalletApi.notifications.tokens.hasAny.get();
             return result.data ?? false;
         },
-        refetchOnWindowFocus: true,
     });
 
     const hasLocalCapability = localToken !== null && localToken !== undefined;
+
+    useEffect(() => {
+        const controller = new AbortController();
+        notificationAdapter.events.addEventListener(
+            "token-update",
+            (e) => {
+                const token = (e as CustomEvent<PushTokenPayload>).detail;
+                queryClient.setQueryData(
+                    notificationKey.push.localToken,
+                    token
+                );
+                queryClient.invalidateQueries({
+                    queryKey: notificationKey.push.permission,
+                });
+            },
+            { signal: controller.signal }
+        );
+        return () => controller.abort();
+    }, [queryClient]);
 
     useEffect(() => {
         if (hasLocalCapability && hasBackendToken === false && localToken) {

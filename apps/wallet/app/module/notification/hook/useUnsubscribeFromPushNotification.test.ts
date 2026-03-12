@@ -30,6 +30,7 @@ const mockAdapter = vi.hoisted(() => ({
     subscribe: vi.fn().mockResolvedValue(undefined),
     unsubscribe: vi.fn().mockResolvedValue(undefined),
     openSettings: vi.fn().mockResolvedValue(undefined),
+    events: new EventTarget(),
     initPromise: Promise.resolve(),
 }));
 

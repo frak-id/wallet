@@ -406,6 +406,44 @@ describe.sequential("createTauriNotificationAdapter", () => {
         });
     });
 
+    it("should onTokenRefresh event: emit token-update via EventTarget", async () => {
+        const adapter = createTauriNotificationAdapter();
+        await adapter.initPromise;
+
+        expect(capturedTokenRefreshHandler).toBeDefined();
+
+        const received: unknown[] = [];
+        const controller = new AbortController();
+        adapter.events.addEventListener(
+            "token-update",
+            (e) => received.push((e as CustomEvent).detail),
+            { signal: controller.signal }
+        );
+
+        capturedTokenRefreshHandler?.({ token: "event-token" });
+
+        expect(received).toEqual([{ type: "fcm", token: "event-token" }]);
+        controller.abort();
+    });
+
+    it("should events: not receive events after listener is removed", async () => {
+        const adapter = createTauriNotificationAdapter();
+        await adapter.initPromise;
+
+        const received: unknown[] = [];
+        const controller = new AbortController();
+        adapter.events.addEventListener(
+            "token-update",
+            (e) => received.push((e as CustomEvent).detail),
+            { signal: controller.signal }
+        );
+
+        controller.abort();
+        capturedTokenRefreshHandler?.({ token: "after-abort" });
+
+        expect(received).toEqual([]);
+    });
+
     it("should openSettings: call invoke with app-settings plugin on Android", async () => {
         isAndroidMock.mockReturnValue(true);
         invokeMock.mockResolvedValue(undefined);

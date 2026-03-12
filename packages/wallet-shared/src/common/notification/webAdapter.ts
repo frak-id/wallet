@@ -132,5 +132,7 @@ export function createWebNotificationAdapter(): NotificationAdapter {
         openSettings: async () => {
             // No-op on web: browsers handle notification permission via their own UI
         },
+
+        events: new EventTarget(),
     };
 }

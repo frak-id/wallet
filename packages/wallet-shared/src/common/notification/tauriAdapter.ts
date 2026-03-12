@@ -14,6 +14,7 @@ import { authenticatedWalletApi } from "../api/backendClient";
 import type {
     NotificationAdapter,
     NotificationPermissionStatus,
+    PushTokenPayload,
 } from "./adapter";
 
 const FCM_TOKEN_DELIVERY_TIMEOUT_MS = 10_000;
@@ -29,6 +30,7 @@ export function createTauriNotificationAdapter(): NotificationAdapter {
     let tokenRefreshListener: PluginListener | undefined;
     let pendingTokenResolve: ((token: string) => void) | undefined;
     let earlyToken: string | undefined;
+    const events = new EventTarget();
 
     const syncTokenToBackend = async (token: string) => {
         await authenticatedWalletApi.notifications.tokens.put({
@@ -39,6 +41,10 @@ export function createTauriNotificationAdapter(): NotificationAdapter {
 
     const handleTokenRefresh = (event: { token: string }) => {
         earlyToken = event.token;
+        const payload: PushTokenPayload = { type: "fcm", token: event.token };
+        events.dispatchEvent(
+            new CustomEvent("token-update", { detail: payload })
+        );
         if (pendingTokenResolve) {
             pendingTokenResolve(event.token);
             pendingTokenResolve = undefined;
@@ -183,6 +189,8 @@ export function createTauriNotificationAdapter(): NotificationAdapter {
                 await openUrl("app-settings:");
             }
         },
+
+        events,
     };
 
     return adapter;

@@ -32,6 +32,7 @@ export type WalletTestFixtures = BaseTestFixtures & {
         subscribe: Mock<() => Promise<PushTokenPayload>>;
         unsubscribe: Mock<() => Promise<void>>;
         openSettings: Mock<() => Promise<void>>;
+        events: EventTarget;
         initPromise: Promise<void>;
     };
 
@@ -118,6 +119,7 @@ export const test = baseTest.extend<
             openSettings: vi
                 .fn<() => Promise<void>>()
                 .mockResolvedValue(undefined),
+            events: new EventTarget(),
             initPromise: Promise.resolve(),
         };
 

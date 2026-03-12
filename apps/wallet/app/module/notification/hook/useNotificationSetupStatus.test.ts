@@ -30,6 +30,7 @@ const mockAdapter = vi.hoisted(() => ({
     subscribe: vi.fn().mockResolvedValue(undefined),
     unsubscribe: vi.fn().mockResolvedValue(undefined),
     openSettings: vi.fn().mockResolvedValue(undefined),
+    events: new EventTarget(),
     initPromise: Promise.resolve(),
 }));
 
@@ -48,6 +49,7 @@ vi.mock("@frak-labs/wallet-shared", async (importOriginal) => {
 describe.sequential("useNotificationStatus", () => {
     beforeEach(({ queryWrapper }: WalletTestFixtures) => {
         queryWrapper.client.clear();
+        mockAdapter.events = new EventTarget();
 
         mockAdapter.getPermissionStatus
             .mockReset()
@@ -150,6 +152,47 @@ describe.sequential("useNotificationStatus", () => {
             permissionGranted: false,
             hasLocalCapability: false,
             hasBackendToken: false,
+        });
+    });
+
+    test("should update localToken and permission when token-update event fires", async ({
+        queryWrapper,
+    }: WalletTestFixtures) => {
+        mockAdapter.getPermissionStatus.mockResolvedValue(
+            "denied" satisfies NotificationPermissionStatus
+        );
+
+        const { notificationKey } = await import(
+            "@/module/notification/queryKeys/notification"
+        );
+
+        renderHook(() => useNotificationStatus(), {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        await waitFor(() => {
+            expect(mockAdapter.getPermissionStatus).toHaveBeenCalled();
+        });
+
+        const tokenPayload: PushTokenPayload = {
+            type: "fcm",
+            token: "event-delivered-token",
+        };
+        mockAdapter.events.dispatchEvent(
+            new CustomEvent("token-update", { detail: tokenPayload })
+        );
+
+        await waitFor(() => {
+            expect(
+                queryWrapper.client.getQueryData(
+                    notificationKey.push.localToken
+                )
+            ).toEqual(tokenPayload);
+            expect(
+                queryWrapper.client.getQueryData(
+                    notificationKey.push.permission
+                )
+            ).toBe("granted");
         });
     });
 });
