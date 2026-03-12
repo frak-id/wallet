@@ -63,7 +63,11 @@ export const tokensRoutes = new Elysia({ prefix: "/tokens" })
             await db
                 .insert(pushTokensTable)
                 .values(values)
-                .onConflictDoNothing();
+                .onConflictDoUpdate({
+                    target: pushTokensTable.wallet,
+                    targetWhere: eq(pushTokensTable.wallet, values.wallet),
+                    set: { ...values },
+                });
         },
         {
             withWalletAuthent: true,

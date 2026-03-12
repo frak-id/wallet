@@ -18,7 +18,7 @@ export function useNotificationStatus() {
         queryFn: () => notificationAdapter.getPermissionStatus(),
         refetchInterval: PERMISSION_POLL_INTERVAL,
         refetchOnWindowFocus: "always",
-        meta: { storable: false }
+        meta: { storable: false },
     });
 
     const permissionGranted = permission === "granted";
@@ -28,7 +28,7 @@ export function useNotificationStatus() {
         queryFn: () => notificationAdapter.getToken(),
         enabled: permissionGranted,
         refetchOnWindowFocus: "always",
-        meta: { storable: false }
+        meta: { storable: false },
     });
 
     const { data: hasBackendToken } = useQuery({
