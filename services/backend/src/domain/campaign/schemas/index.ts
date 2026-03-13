@@ -37,7 +37,7 @@ export const ConditionOperatorSchema = t.Union([
 ]);
 export type ConditionOperator = Static<typeof ConditionOperatorSchema>;
 
-export const RuleConditionValue = t.Union([
+const RuleConditionValue = t.Union([
     t.String(),
     t.Number(),
     t.Boolean(),
@@ -83,14 +83,13 @@ export const RewardChainingSchema = t.Object({
 });
 export type RewardChaining = Static<typeof RewardChainingSchema>;
 
-export const RewardTierSchema = t.Object({
+const RewardTierSchema = t.Object({
     minValue: t.Number(),
     maxValue: t.Optional(t.Number()),
     amount: t.Number(),
 });
-export type RewardTier = Static<typeof RewardTierSchema>;
 
-export const FixedRewardDefinitionSchema = t.Object({
+const FixedRewardDefinitionSchema = t.Object({
     recipient: RecipientTypeSchema,
     type: AssetTypeSchema,
     amountType: t.Literal("fixed"),
@@ -101,7 +100,7 @@ export const FixedRewardDefinitionSchema = t.Object({
 });
 export type FixedRewardDefinition = Static<typeof FixedRewardDefinitionSchema>;
 
-export const PercentageRewardDefinitionSchema = t.Object({
+const PercentageRewardDefinitionSchema = t.Object({
     recipient: RecipientTypeSchema,
     type: AssetTypeSchema,
     amountType: t.Literal("percentage"),
@@ -120,7 +119,7 @@ export type PercentageRewardDefinition = Static<
     typeof PercentageRewardDefinitionSchema
 >;
 
-export const TieredRewardDefinitionSchema = t.Object({
+const TieredRewardDefinitionSchema = t.Object({
     recipient: RecipientTypeSchema,
     type: AssetTypeSchema,
     amountType: t.Literal("tiered"),
@@ -157,26 +156,25 @@ export type CampaignRuleDefinition = {
     maxRewardsPerUser?: number;
 };
 
-export const BudgetConfigItemSchema = t.Object({
+const BudgetConfigItemSchema = t.Object({
     label: t.String(),
     durationInSeconds: t.Union([t.Number(), t.Null()]),
     amount: t.Number(),
 });
 export type BudgetConfigItem = Static<typeof BudgetConfigItemSchema>;
 
-export const BudgetUsedItemSchema = t.Object({
+const BudgetUsedItemSchema = t.Object({
     resetAt: t.Optional(t.String()),
     used: t.Number(),
 });
-export type BudgetUsedItem = Static<typeof BudgetUsedItemSchema>;
 
-export const BudgetUsedSchema = t.Record(t.String(), BudgetUsedItemSchema);
+const BudgetUsedSchema = t.Record(t.String(), BudgetUsedItemSchema);
 export type BudgetUsed = Static<typeof BudgetUsedSchema>;
 
 export const BudgetConfigSchema = t.Array(BudgetConfigItemSchema);
 export type BudgetConfig = Static<typeof BudgetConfigSchema>;
 
-export const CampaignGoalSchema = t.Union([
+const CampaignGoalSchema = t.Union([
     t.Literal("awareness"),
     t.Literal("traffic"),
     t.Literal("registration"),
@@ -185,7 +183,7 @@ export const CampaignGoalSchema = t.Union([
 ]);
 export type CampaignGoal = Static<typeof CampaignGoalSchema>;
 
-export const SpecialCategorySchema = t.Union([
+const SpecialCategorySchema = t.Union([
     t.Literal("credit"),
     t.Literal("jobs"),
     t.Literal("housing"),
@@ -200,19 +198,18 @@ export const CampaignMetadataSchema = t.Object({
 });
 export type CampaignMetadata = Static<typeof CampaignMetadataSchema>;
 
-export const EstimatedRewardTierSchema = t.Object({
+const EstimatedRewardTierSchema = t.Object({
     minValue: t.Number(),
     maxValue: t.Optional(t.Number()),
     amount: t.TokenAmount,
 });
-export type EstimatedRewardTier = Static<typeof EstimatedRewardTierSchema>;
 
-export const FixedEstimatedRewardSchema = t.Object({
+const FixedEstimatedRewardSchema = t.Object({
     payoutType: t.Literal("fixed"),
     amount: t.TokenAmount,
 });
 
-export const PercentageEstimatedRewardSchema = t.Object({
+const PercentageEstimatedRewardSchema = t.Object({
     payoutType: t.Literal("percentage"),
     percent: t.Number(),
     percentOf: t.String(),
@@ -220,20 +217,20 @@ export const PercentageEstimatedRewardSchema = t.Object({
     minAmount: t.Optional(t.TokenAmount),
 });
 
-export const TieredEstimatedRewardSchema = t.Object({
+const TieredEstimatedRewardSchema = t.Object({
     payoutType: t.Literal("tiered"),
     tierField: t.String(),
     tiers: t.Array(EstimatedRewardTierSchema),
 });
 
-export const EstimatedRewardSchema = t.Union([
+const EstimatedRewardSchema = t.Union([
     FixedEstimatedRewardSchema,
     PercentageEstimatedRewardSchema,
     TieredEstimatedRewardSchema,
 ]);
 export type EstimatedReward = Static<typeof EstimatedRewardSchema>;
 
-export const EstimatedRewardItemSchema = t.Object({
+const EstimatedRewardItemSchema = t.Object({
     token: t.Optional(t.Address()),
     campaignId: t.String(),
     name: t.String(),

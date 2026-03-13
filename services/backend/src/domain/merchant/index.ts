@@ -10,7 +10,6 @@ export { MerchantRepository } from "./repositories/MerchantRepository";
 export {
     MerchantAppearanceSchema,
     type MerchantConfig,
-    MerchantConfigSchema,
 } from "./schemas";
 export { MerchantAuthorizationService } from "./services/MerchantAuthorizationService";
 export { MerchantRegistrationService } from "./services/MerchantRegistrationService";
