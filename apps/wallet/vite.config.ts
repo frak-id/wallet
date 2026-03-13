@@ -1,8 +1,8 @@
 import * as process from "node:process";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import viteReact from "@vitejs/plugin-react";
-import type { ConfigEnv, UserConfig } from "rolldown-vite";
-import { defineConfig } from "rolldown-vite";
+import type { ConfigEnv, UserConfig } from "vite";
+import { defineConfig } from "vite";
 import mkcert from "vite-plugin-mkcert";
 import removeConsole from "vite-plugin-remove-console";
 import tsconfigPaths from "vite-tsconfig-paths";

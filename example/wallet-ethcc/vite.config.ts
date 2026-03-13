@@ -1,7 +1,7 @@
 import tanstackRouter from "@tanstack/router-plugin/vite";
 import viteReact from "@vitejs/plugin-react";
-import type { UserConfig } from "rolldown-vite";
-import { defineConfig } from "rolldown-vite";
+import type { UserConfig } from "vite";
+import { defineConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 import { lightningCssConfig, onwarn } from "../../packages/dev-tooling";
 

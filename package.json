@@ -12,7 +12,7 @@
     "@testing-library/react": "^16.3.2",
     "@types/node": "^24.10.13",
     "@typescript/native-preview": "^7.0.0-dev.20260225.1",
-    "@vitejs/plugin-react": "^5.1.4",
+    "@vitejs/plugin-react": "catalog:",
     "@vitest/coverage-v8": "^4.0.18",
     "knip": "^5.83.1",
     "npm-check-updates": "^19.3.2",
@@ -85,7 +85,8 @@
     "@tanstack/react-query-devtools": "^5.91.3",
     "@tanstack/react-query-persist-client": "^5.90.22",
     "@tanstack/query-async-storage-persister": "^5.90.22",
-    "vite": "npm:rolldown-vite@^7.3.1"
+    "vite": "^8.0.0",
+    "@vitejs/plugin-react": "^6.0.0"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.10.1",

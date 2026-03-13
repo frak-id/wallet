@@ -1,6 +1,9 @@
-import type { LoggingFunction, RollupLog } from "rollup";
+import type { Rollup } from "vite";
 
-export function onwarn(warning: RollupLog, warn: LoggingFunction) {
+export function onwarn(
+    warning: Rollup.RollupLog,
+    warn: Rollup.LoggingFunction
+) {
     /**
      * Hide warnings about invalid annotations
      * ../../node_modules/ox/_esm/core/Json.js (1:21): A comment

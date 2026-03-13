@@ -1,7 +1,7 @@
 import * as process from "node:process";
 import react from "@vitejs/plugin-react";
-import type { UserConfig } from "rolldown-vite";
-import { defineConfig } from "rolldown-vite";
+import type { UserConfig } from "vite";
+import { defineConfig } from "vite";
 import mkcert from "vite-plugin-mkcert";
 import removeConsole from "vite-plugin-remove-console";
 import tsconfigPaths from "vite-tsconfig-paths";
