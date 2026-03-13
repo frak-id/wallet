@@ -2,7 +2,6 @@ import process from "node:process";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import viteReact from "@vitejs/plugin-react";
 import { defineConfig, type UserConfig } from "vite";
-import viteTsConfigPaths from "vite-tsconfig-paths";
 import {
     getSandboxEnv,
     getSstResource,
@@ -18,9 +17,6 @@ export default defineConfig(async () => {
     return {
         css: lightningCssConfig,
         plugins: [
-            viteTsConfigPaths({
-                projects: ["./tsconfig.json"],
-            }),
             tanstackRouter({
                 routesDirectory: "./src/routes",
                 generatedRouteTree: "./src/routeTree.gen.ts",
@@ -30,6 +26,7 @@ export default defineConfig(async () => {
             viteReact(),
         ],
         resolve: {
+            tsconfigPaths: true,
             // Prefer production exports for smaller bundles when building
             conditions:
                 process.env.NODE_ENV === "production"

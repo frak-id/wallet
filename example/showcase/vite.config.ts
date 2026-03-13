@@ -4,7 +4,6 @@ import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import viteReact from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 import { createHtmlPlugin } from "vite-plugin-html";
-import tsconfigPaths from "vite-tsconfig-paths";
 import { detectWalletUrl } from "../shared/detectWalletUrl";
 
 const projectRootDir = resolve(__dirname);
@@ -37,8 +36,10 @@ export default defineConfig(({ mode }) => {
                 },
             }),
             viteReact(),
-            tsconfigPaths(),
         ],
+        resolve: {
+            tsconfigPaths: true,
+        },
         css: {
             modules: {
                 localsConvention: "camelCase",

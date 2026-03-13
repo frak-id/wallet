@@ -101,7 +101,6 @@
     "tsdown": "^0.20.3",
     "typescript": "^5",
     "unplugin-lightningcss": "^0.4.5",
-    "vite-tsconfig-paths": "^6.1.0",
     "vitest": "^4.0.18"
   }
 }

@@ -2,7 +2,6 @@ import tanstackRouter from "@tanstack/router-plugin/vite";
 import viteReact from "@vitejs/plugin-react";
 import type { UserConfig } from "vite";
 import { defineConfig } from "vite";
-import tsconfigPaths from "vite-tsconfig-paths";
 import { lightningCssConfig, onwarn } from "../../packages/dev-tooling";
 
 const DEBUG = process.env.DEBUG === "true";
@@ -28,8 +27,10 @@ export default defineConfig((): UserConfig => {
                 autoCodeSplitting: true,
             }),
             viteReact(),
-            tsconfigPaths(),
         ],
+        resolve: {
+            tsconfigPaths: true,
+        },
         build: {
             target: "baseline-widely-available",
             chunkSizeWarningLimit: 400,

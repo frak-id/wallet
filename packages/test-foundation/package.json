@@ -27,7 +27,6 @@
         "idb-keyval": "*",
         "ox": "*",
         "react": "*",
-        "vite-tsconfig-paths": "*",
         "vitest": "*",
         "wagmi": "*"
     }

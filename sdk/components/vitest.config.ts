@@ -1,12 +1,14 @@
 import sharedConfig from "@frak-labs/test-foundation/vitest.shared";
 import preact from "@preact/preset-vite";
-import tsconfigPaths from "vite-tsconfig-paths";
 import { defineConfig, mergeConfig } from "vitest/config";
 
 export default mergeConfig(
     sharedConfig,
     defineConfig({
-        plugins: [preact(), tsconfigPaths()],
+        plugins: [preact()],
+        resolve: {
+            tsconfigPaths: true,
+        },
         test: {
             name: "components-sdk-unit",
             setupFiles: [

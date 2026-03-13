@@ -5,7 +5,6 @@ import type { ConfigEnv, UserConfig } from "vite";
 import { defineConfig } from "vite";
 import mkcert from "vite-plugin-mkcert";
 import removeConsole from "vite-plugin-remove-console";
-import tsconfigPaths from "vite-tsconfig-paths";
 import {
     getSandboxEnv,
     getSstResource,
@@ -82,7 +81,9 @@ export default defineConfig(
         if (isSW) {
             return {
                 ...baseConfig,
-                plugins: [tsconfigPaths()],
+                resolve: {
+                    tsconfigPaths: true,
+                },
                 publicDir: false,
                 build: {
                     target: "ES2020",
@@ -111,10 +112,10 @@ export default defineConfig(
                 viteReact(),
                 // Skip HTTPS for Tauri dev (simulators don't trust self-signed certs) and sandbox (proxy handles TLS)
                 ...(isTauri || isSandbox ? [] : [mkcert()]),
-                tsconfigPaths(),
                 ...(isProd ? [removeConsole()] : []),
             ],
             resolve: {
+                tsconfigPaths: true,
                 conditions:
                     process.env.NODE_ENV === "production"
                         ? ["production", "default"]

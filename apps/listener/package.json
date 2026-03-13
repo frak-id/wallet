@@ -59,7 +59,6 @@
     "vite": "catalog:",
     "vite-plugin-mkcert": "^1.17.9",
     "vite-plugin-remove-console": "^2.2.0",
-    "vite-tsconfig-paths": "^6.1.0",
     "vitest": "^4.0.18"
   }
 }

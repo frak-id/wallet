@@ -78,7 +78,6 @@
     "sst": "3.18.9",
     "typescript": "catalog:",
     "vite": "catalog:",
-    "vite-tsconfig-paths": "^6.1.0",
     "vitest": "^4.0.18"
   },
   "workspaces": [

@@ -4,7 +4,6 @@ import type { UserConfig } from "vite";
 import { defineConfig } from "vite";
 import mkcert from "vite-plugin-mkcert";
 import removeConsole from "vite-plugin-remove-console";
-import tsconfigPaths from "vite-tsconfig-paths";
 import {
     getSandboxEnv,
     getSstResource,
@@ -30,6 +29,7 @@ export default defineConfig(async () => {
                 process.env.NODE_ENV === "production"
                     ? ["production", "default"]
                     : ["development"],
+            tsconfigPaths: true,
         },
         define: {
             "process.env.STAGE": JSON.stringify(getSstResource("STAGE")),
@@ -69,7 +69,6 @@ export default defineConfig(async () => {
         plugins: [
             react(),
             ...(isSandbox ? [] : [mkcert()]),
-            tsconfigPaths(),
             ...(isProd ? [removeConsole()] : []),
         ],
         server: {
