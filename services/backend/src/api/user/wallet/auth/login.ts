@@ -6,9 +6,9 @@ import {
     AuthContext,
     type StaticWalletSdkTokenDto,
     WalletAuthResponseDto,
-} from "../../../../../domain/auth";
-import { OrchestrationContext } from "../../../../../orchestration/context";
-import type { IdentityNode } from "../../../../../orchestration/identity/types";
+} from "../../../../domain/auth";
+import { OrchestrationContext } from "../../../../orchestration/context";
+import type { IdentityNode } from "../../../../orchestration/identity/types";
 import { identityHeadersSchema } from "./schemas";
 
 export const loginRoutes = new Elysia()

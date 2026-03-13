@@ -2,14 +2,14 @@ import { sessionContext } from "@backend-infrastructure";
 import { t } from "@backend-utils";
 import { Elysia } from "elysia";
 import type { Address } from "viem";
-import { IdentityContext } from "../../../../domain/identity";
-import { RewardsContext } from "../../../../domain/rewards/context";
+import { IdentityContext } from "../../../domain/identity";
+import { RewardsContext } from "../../../domain/rewards/context";
 import {
     AssetStatusSchema,
     InteractionTypeSchema,
     RecipientTypeSchema,
-} from "../../../../domain/rewards/schemas";
-import { WalletContext } from "../../../../domain/wallet";
+} from "../../../domain/rewards/schemas";
+import { WalletContext } from "../../../domain/wallet";
 
 async function fetchTokenMetadata(
     tokenAddress: Address

@@ -2,7 +2,7 @@ import { pricingRepository, sessionContext } from "@backend-infrastructure";
 import { t } from "@backend-utils";
 import { Elysia } from "elysia";
 import { toHex } from "viem";
-import { WalletContext } from "../../../../domain/wallet";
+import { WalletContext } from "../../../domain/wallet";
 
 export const balanceRoutes = new Elysia({ prefix: "/balance" })
     .use(sessionContext)

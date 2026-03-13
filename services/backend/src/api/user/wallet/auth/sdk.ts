@@ -2,7 +2,7 @@ import { sessionContext } from "@backend-infrastructure";
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import { isAddressEqual } from "viem";
-import { AuthContext } from "../../../../../domain/auth";
+import { AuthContext } from "../../../../domain/auth";
 
 export const walletSdkRoutes = new Elysia({ prefix: "/sdk" })
     .use(sessionContext)

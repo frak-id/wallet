@@ -5,9 +5,9 @@ import {
     log,
 } from "@backend-infrastructure";
 import { Elysia } from "elysia";
-import type { StaticWalletTokenDto } from "../../../../../domain/auth";
-import { PairingContext } from "../../../../../domain/pairing";
-import { WsCloseCode } from "../../../../../domain/pairing/dto/WebSocketCloseCode";
+import type { StaticWalletTokenDto } from "../../../../domain/auth";
+import { PairingContext } from "../../../../domain/pairing";
+import { WsCloseCode } from "../../../../domain/pairing/dto/WebSocketCloseCode";
 
 const initiateRateLimit = { windowMs: 60_000, maxRequests: 10 };
 const initiateStore = createRateLimitStore();

@@ -6,7 +6,7 @@ import {
     notificationMacro,
     type PushTokenType,
     pushTokensTable,
-} from "../../../../../domain/notifications";
+} from "../../../../domain/notifications";
 
 const WebPushSubscriptionBody = t.Object({
     type: t.Literal("web-push"),

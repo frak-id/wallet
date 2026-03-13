@@ -3,7 +3,7 @@ import { t } from "@backend-utils";
 import { eq } from "drizzle-orm";
 import { Elysia, status } from "elysia";
 import { isAddressEqual } from "viem";
-import { pairingTable } from "../../../../../domain/pairing";
+import { pairingTable } from "../../../../domain/pairing";
 
 export const managementRoutes = new Elysia()
     .use(sessionContext)
