@@ -4,12 +4,8 @@ import { Elysia } from "elysia";
 import type { Address } from "viem";
 import { IdentityContext } from "../../../domain/identity";
 import { RewardsContext } from "../../../domain/rewards/context";
-import {
-    AssetStatusSchema,
-    InteractionTypeSchema,
-    RecipientTypeSchema,
-} from "../../../domain/rewards/schemas";
 import { WalletContext } from "../../../domain/wallet";
+import { RewardHistoryResponseSchema } from "../../schemas";
 
 async function fetchTokenMetadata(
     tokenAddress: Address
@@ -111,30 +107,7 @@ export const rewardsRoutes = new Elysia({ prefix: "/rewards" })
             withWalletOrSdkAuthent: true,
             response: {
                 401: t.String(),
-                200: t.Object({
-                    rewards: t.Array(
-                        t.Object({
-                            id: t.String(),
-                            amount: t.Number(),
-                            tokenAddress: t.Optional(t.String()),
-                            status: AssetStatusSchema,
-                            recipientType: RecipientTypeSchema,
-                            createdAt: t.Date(),
-                            settledAt: t.Optional(t.Date()),
-                            onchainTxHash: t.Optional(t.String()),
-                            trigger: t.Optional(InteractionTypeSchema),
-                            merchant: t.Object({
-                                name: t.String(),
-                                domain: t.String(),
-                            }),
-                            token: t.Object({
-                                symbol: t.String(),
-                                decimals: t.Number(),
-                                logo: t.Optional(t.String()),
-                            }),
-                        })
-                    ),
-                }),
+                200: RewardHistoryResponseSchema,
             },
         }
     );

@@ -3,6 +3,7 @@ import { t } from "@backend-utils";
 import { Elysia } from "elysia";
 import { toHex } from "viem";
 import { WalletContext } from "../../../domain/wallet";
+import { BalanceResponseSchema } from "../../schemas";
 
 export const balanceRoutes = new Elysia({ prefix: "/balance" })
     .use(sessionContext)
@@ -68,23 +69,7 @@ export const balanceRoutes = new Elysia({ prefix: "/balance" })
             withWalletAuthent: true,
             response: {
                 401: t.String(),
-                200: t.Object({
-                    // Total
-                    total: t.TokenAmount,
-                    // Details about the balances
-                    balances: t.Array(
-                        t.Composite([
-                            t.TokenAmount,
-                            t.Object({
-                                token: t.Address(),
-                                name: t.String(),
-                                symbol: t.String(),
-                                decimals: t.Number(),
-                                rawBalance: t.Hex(),
-                            }),
-                        ])
-                    ),
-                }),
+                200: BalanceResponseSchema,
             },
         }
     );
