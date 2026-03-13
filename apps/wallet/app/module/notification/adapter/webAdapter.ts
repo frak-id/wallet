@@ -1,3 +1,4 @@
+import { isTauri } from "@frak-labs/app-essentials/utils/platform";
 import type {
     NotificationAdapter,
     NotificationPermissionStatus,
@@ -48,7 +49,8 @@ export function createWebNotificationAdapter(): NotificationAdapter {
     const initPromise: Promise<void> = (async () => {
         if (
             typeof navigator === "undefined" ||
-            !("serviceWorker" in navigator)
+            !("serviceWorker" in navigator) ||
+            isTauri()
         ) {
             return;
         }
