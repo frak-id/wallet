@@ -1,12 +1,12 @@
 import { isTauri } from "@frak-labs/app-essentials/utils/platform";
 import { Button } from "@frak-labs/ui/component/Button";
-import { notificationAdapter } from "@frak-labs/wallet-shared";
 import { useQueryClient } from "@tanstack/react-query";
 import { BellOff, Settings } from "lucide-react";
 import { Trans } from "react-i18next";
 import { ButtonLabel } from "@/module/common/component/ButtonLabel";
 import { Panel } from "@/module/common/component/Panel";
 import { Row } from "@/module/common/component/Row";
+import { notificationAdapter } from "@/module/notification/adapter";
 import { useNotificationStatus } from "@/module/notification/hook/useNotificationSetupStatus";
 import { useUnsubscribeFromPushNotification } from "@/module/notification/hook/useUnsubscribeFromPushNotification";
 import { notificationKey } from "@/module/notification/queryKeys/notification";

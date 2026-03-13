@@ -1,4 +1,3 @@
-import { isTauri } from "@frak-labs/app-essentials/utils/platform";
 import { createTauriNotificationAdapter } from "./tauriAdapter";
 import { createWebNotificationAdapter } from "./webAdapter";
 
@@ -42,6 +41,10 @@ export type NotificationAdapter = {
     events: EventTarget;
 };
 
-export const notificationAdapter: NotificationAdapter = isTauri()
+/**
+ * Singleton notification adapter, selected at build time via `process.env.IS_TAURI`.
+ * Rolldown eliminates the unused platform branch and its transitive dependencies.
+ */
+export const notificationAdapter: NotificationAdapter = process.env.IS_TAURI
     ? createTauriNotificationAdapter()
     : createWebNotificationAdapter();

@@ -37,13 +37,6 @@ export {
 } from "./lib/inApp";
 export { ua } from "./lib/ua";
 export { isWebAuthNSupported } from "./lib/webauthn";
-// Notification
-export type {
-    NotificationAdapter,
-    NotificationPermissionStatus,
-    PushTokenPayload,
-} from "./notification";
-export { notificationAdapter } from "./notification";
 
 // Query Keys
 export { balanceKey } from "./queryKeys/balance";
@@ -52,8 +45,6 @@ export { sdkKey } from "./queryKeys/sdk";
 
 // Storage
 export { authenticatorStorage } from "./storage/authenticators";
-export type { NotificationModel } from "./storage/NotificationModel";
-export { notificationStorage } from "./storage/notifications";
 export type { PreviousAuthenticatorModel } from "./storage/PreviousAuthenticatorModel";
 
 // Utils

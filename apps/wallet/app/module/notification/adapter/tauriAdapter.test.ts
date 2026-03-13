@@ -43,7 +43,7 @@ const { putMock } = vi.hoisted(() => ({
     putMock: vi.fn(),
 }));
 
-vi.mock("../api/backendClient", () => ({
+vi.mock("@frak-labs/wallet-shared", () => ({
     authenticatedWalletApi: {
         notifications: {
             tokens: {

@@ -1,8 +1,6 @@
-import {
-    authenticatedWalletApi,
-    notificationAdapter,
-} from "@frak-labs/wallet-shared";
+import { authenticatedWalletApi } from "@frak-labs/wallet-shared";
 import { useMutation } from "@tanstack/react-query";
+import { notificationAdapter } from "@/module/notification/adapter";
 import { notificationKey } from "@/module/notification/queryKeys/notification";
 
 export function useUnsubscribeFromPushNotification() {

@@ -10,7 +10,7 @@ vi.mock("@frak-labs/app-essentials/utils/platform", () => ({
     isIOS: vi.fn(() => false),
 }));
 
-vi.mock("@frak-labs/wallet-shared", () => ({
+vi.mock("@/module/notification/adapter", () => ({
     notificationAdapter: {
         openSettings: vi.fn(() => Promise.resolve()),
         events: new EventTarget(),
@@ -160,7 +160,7 @@ describe("RemoveAllNotification", () => {
 
         test("should call openSettings and invalidate permission on click", async () => {
             const { notificationAdapter } = await import(
-                "@frak-labs/wallet-shared"
+                "@/module/notification/adapter"
             );
             const { RemoveAllNotification } = await import("./index");
             render(<RemoveAllNotification />);

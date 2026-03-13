@@ -1,5 +1,4 @@
 import type { Address, Hex } from "viem";
-import type { NotificationModel } from "../common/storage/NotificationModel";
 import type {
     DistantWebAuthnWallet,
     EcdsaWallet,
@@ -105,21 +104,6 @@ export function createMockSdkSession(
     return {
         token: "sdk-token",
         expires: Date.now() + 3600000, // 1 hour from now
-        ...overrides,
-    };
-}
-
-/**
- * Creates a mock notification with default values
- */
-export function createMockNotification(
-    overrides?: Partial<NotificationModel>
-): NotificationModel {
-    return {
-        id: `notif-${Date.now()}`,
-        title: "Test Notification",
-        body: "Test notification body",
-        timestamp: Date.now(),
         ...overrides,
     };
 }

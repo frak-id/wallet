@@ -1,3 +1,4 @@
+import { authenticatedWalletApi } from "@frak-labs/wallet-shared";
 import type { PluginListener } from "@tauri-apps/api/core";
 import {
     checkPermissions,
@@ -9,7 +10,6 @@ import {
     register,
     requestPermissions,
 } from "tauri-plugin-fcm";
-import { authenticatedWalletApi } from "../api/backendClient";
 import type {
     NotificationAdapter,
     NotificationPermissionStatus,

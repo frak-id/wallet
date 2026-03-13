@@ -3,15 +3,15 @@
  * Adds wallet-specific fixtures to the shared base fixtures
  */
 
-import type {
-    NotificationPermissionStatus,
-    PushTokenPayload,
-} from "@frak-labs/wallet-shared";
 import {
     type BaseTestFixtures,
     test as baseTest,
 } from "@frak-labs/wallet-shared/tests/vitest-fixtures";
 import type { Mock } from "vitest";
+import type {
+    NotificationPermissionStatus,
+    PushTokenPayload,
+} from "@/module/notification/adapter";
 
 /**
  * Wallet-specific test fixtures (extends BaseTestFixtures)

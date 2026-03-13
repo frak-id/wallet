@@ -1,6 +1,6 @@
 import * as idbKeyval from "idb-keyval";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { createMockNotification } from "../../test/factories";
+import { createMockNotification } from "../test-helpers";
 import type { NotificationModel } from "./NotificationModel";
 import { notificationStorage } from "./notifications";
 

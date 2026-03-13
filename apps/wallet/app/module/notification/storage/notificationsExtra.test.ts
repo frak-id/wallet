@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { createMockNotification } from "../../test/factories";
+import { createMockNotification } from "../test-helpers";
 import type { NotificationModel } from "./NotificationModel";
 
 // Mock idb-keyval

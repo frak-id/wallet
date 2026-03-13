@@ -1,9 +1,9 @@
+import { renderHook, waitFor } from "@testing-library/react";
+import { vi } from "vitest";
 import type {
     NotificationPermissionStatus,
     PushTokenPayload,
-} from "@frak-labs/wallet-shared";
-import { renderHook, waitFor } from "@testing-library/react";
-import { vi } from "vitest";
+} from "@/module/notification/adapter";
 import { useNotificationStatus } from "@/module/notification/hook/useNotificationSetupStatus";
 import {
     beforeEach,
@@ -34,12 +34,20 @@ const mockAdapter = vi.hoisted(() => ({
     initPromise: Promise.resolve(),
 }));
 
+vi.mock("@/module/notification/adapter", async (importOriginal) => {
+    const actual =
+        await importOriginal<typeof import("@/module/notification/adapter")>();
+    return {
+        ...actual,
+        notificationAdapter: mockAdapter,
+    };
+});
+
 vi.mock("@frak-labs/wallet-shared", async (importOriginal) => {
     const actual =
         await importOriginal<typeof import("@frak-labs/wallet-shared")>();
     return {
         ...actual,
-        notificationAdapter: mockAdapter,
         authenticatedWalletApi: {
             notifications: { tokens: mockTokensApi },
         },

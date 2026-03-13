@@ -1,11 +1,11 @@
+import { authenticatedWalletApi } from "@frak-labs/wallet-shared";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useMemo } from "react";
 import {
-    authenticatedWalletApi,
     type NotificationPermissionStatus,
     notificationAdapter,
     type PushTokenPayload,
-} from "@frak-labs/wallet-shared";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo } from "react";
+} from "@/module/notification/adapter";
 import { notificationKey } from "@/module/notification/queryKeys/notification";
 
 const PERMISSION_POLL_INTERVAL = 30_000;

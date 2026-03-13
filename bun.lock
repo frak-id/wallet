@@ -5,9 +5,7 @@
     "": {
       "name": "frak-wallet",
       "dependencies": {
-        "@tauri-apps/api": "^2.10.1",
         "caniuse-lite": "^1.0.30001769",
-        "tauri-plugin-fcm": "^0.1.7",
       },
       "devDependencies": {
         "@biomejs/biome": "2.3.14",
@@ -236,6 +234,7 @@
         "cuer": "^0.0.3",
         "i18next": "^25.8.4",
         "i18next-browser-languagedetector": "^8.2.0",
+        "idb-keyval": "^6.2.2",
         "jose": "^6.1.3",
         "lucide-react": "^0.563.0",
         "normalize.css": "^8.0.1",
@@ -517,7 +516,6 @@
       },
       "devDependencies": {
         "@frak-labs/test-foundation": "workspace:*",
-        "@tauri-apps/plugin-opener": "~2",
         "@testing-library/jest-dom": "^6.9.1",
         "@testing-library/react": "^16.3.2",
         "@types/node": "catalog:",
@@ -530,7 +528,6 @@
         "i18next-resources-for-ts": "^2.0.0",
         "jsdom": "^28.0.0",
         "msw": "^2.12.10",
-        "tauri-plugin-fcm": "^0.1.7",
         "typescript": "catalog:",
         "vitest": "^4.0.18",
       },
