@@ -12,6 +12,7 @@
 @media (min-width: 600px) {
     .header {
         position: relative;
+        padding-top: 0;
     }
 }
 

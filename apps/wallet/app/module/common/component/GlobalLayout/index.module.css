@@ -50,4 +50,8 @@
     .mainNoNav {
         height: 759px;
     }
+
+    .mainNoHeader.mainNoNav {
+        height: 759px;
+    }
 }

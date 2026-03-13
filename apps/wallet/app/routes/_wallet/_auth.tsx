@@ -3,7 +3,12 @@ import {
     getValidPendingPairingId,
     pairingStore,
 } from "@frak-labs/wallet-shared";
-import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
+import {
+    createFileRoute,
+    Outlet,
+    redirect,
+    useRouterState,
+} from "@tanstack/react-router";
 import { GlobalLayout } from "@/module/common/component/GlobalLayout";
 
 export const Route = createFileRoute("/_wallet/_auth")({
@@ -38,8 +43,11 @@ export const Route = createFileRoute("/_wallet/_auth")({
 });
 
 function AuthenticationLayout() {
+    const { location } = useRouterState();
+    const isRegisterRoute = location.pathname === "/register";
+
     return (
-        <GlobalLayout>
+        <GlobalLayout header={!isRegisterRoute}>
             <Outlet />
         </GlobalLayout>
     );
