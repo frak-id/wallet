@@ -1,3 +1,4 @@
+import { isTauri } from "@frak-labs/app-essentials/utils/platform";
 import { Button } from "@frak-labs/ui/component/Button";
 import { NotificationsMobile } from "@frak-labs/ui/icons/NotificationsMobile";
 import { notificationAdapter } from "@frak-labs/wallet-shared";
@@ -18,7 +19,13 @@ export function EnableNotification() {
         return null;
     }
 
+    // On web, browsers don't expose a way to re-prompt after denial — hide entirely.
+    // On native, redirect to OS notification settings.
     if (permissionStatus === "denied") {
+        if (!isTauri()) {
+            return null;
+        }
+
         return (
             <Panel variant={"invisible"} size={"none"}>
                 <Button
