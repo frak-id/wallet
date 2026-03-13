@@ -9,7 +9,7 @@ import { useTranslation } from "react-i18next";
 import { DemoTapZone } from "@/module/authentication/component/DemoTapZone";
 import { useRegister } from "@/module/authentication/hook/useRegister";
 import { isAuthenticatorAlreadyRegistered } from "@/module/authentication/lib/isAuthenticatorAlreadyRegistered";
-import { useNotificationSetupStatus } from "@/module/notification/hook/useNotificationSetupStatus";
+import { useNotificationStatus } from "@/module/notification/hook/useNotificationSetupStatus";
 import { useSubscribeToPushNotification } from "@/module/notification/hook/useSubscribeToPushNotification";
 import { Keypass } from "@/module/onboarding/component/Keypass";
 import { NotificationOptIn } from "@/module/onboarding/component/NotificationOptIn";
@@ -74,14 +74,20 @@ function RegisterPage() {
         if (isSuccess) setStep("notification");
     }, [isSuccess]);
 
-    const { isSupported, isSubscribed } = useNotificationSetupStatus();
+    const { permissionStatus, permissionGranted, hasBackendToken } =
+        useNotificationStatus();
     const { subscribeToPushAsync } = useSubscribeToPushNotification();
 
     useEffect(() => {
-        if (step === "notification" && (!isSupported || isSubscribed)) {
+        // Skip notification step if denied or already fully subscribed
+        if (
+            step === "notification" &&
+            (permissionStatus === "denied" ||
+                (permissionGranted && hasBackendToken))
+        ) {
             setStep("welcome");
         }
-    }, [step, isSupported, isSubscribed]);
+    }, [step, permissionStatus, permissionGranted, hasBackendToken]);
 
     return (
         <>
