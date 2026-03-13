@@ -53,6 +53,7 @@ export default defineConfig(
                     getSstResource("VAPID_PUBLIC_KEY")
                 ),
                 "process.env.DEBUG": JSON.stringify(DEBUG),
+                "process.env.IS_TAURI": JSON.stringify(isTauri),
                 "process.env.APP_VERSION": JSON.stringify(
                     process.env.COMMIT_HASH ?? "UNKNOWN"
                 ),

@@ -1,7 +1,10 @@
 import { renderHook, waitFor } from "@testing-library/react";
 import { vi } from "vitest";
-import * as NotificationContext from "@/module/notification/context/NotificationContext";
-import { useNotificationSetupStatus } from "@/module/notification/hook/useNotificationSetupStatus";
+import type {
+    NotificationPermissionStatus,
+    PushTokenPayload,
+} from "@/module/notification/adapter";
+import { useNotificationStatus } from "@/module/notification/hook/useNotificationSetupStatus";
 import {
     beforeEach,
     describe,
@@ -10,184 +13,194 @@ import {
     type WalletTestFixtures,
 } from "@/tests/vitest-fixtures";
 
-vi.mock("@/module/notification/context/NotificationContext", () => ({
-    useNotificationContext: vi.fn(() => ({
-        isSubscribed: false,
-        isInitialized: true,
-        setIsSubscribed: vi.fn(),
-        setIsInitialized: vi.fn(),
-        adapter: {
-            isSupported: vi.fn().mockReturnValue(false),
-            getPermissionStatus: vi.fn().mockReturnValue("default"),
-            requestPermission: vi.fn().mockResolvedValue("granted"),
-            subscribe: vi.fn().mockResolvedValue(undefined),
-            unsubscribe: vi.fn().mockResolvedValue(undefined),
-            isSubscribed: vi.fn().mockResolvedValue(false),
-            initialize: vi.fn().mockResolvedValue({ isSubscribed: false }),
-            showLocalNotification: vi.fn().mockResolvedValue(undefined),
-        },
-    })),
+const mockTokensApi = vi.hoisted(() => ({
+    hasAny: { get: vi.fn().mockResolvedValue({ data: false }) },
+    put: vi.fn().mockResolvedValue(undefined),
+    delete: vi.fn().mockResolvedValue(undefined),
 }));
 
-describe.sequential("useNotificationSetupStatus", () => {
-    beforeEach(
-        ({ mockNotificationContext, queryWrapper }: WalletTestFixtures) => {
-            queryWrapper.client.clear();
+const mockAdapter = vi.hoisted(() => ({
+    getPermissionStatus: vi
+        .fn()
+        .mockResolvedValue("prompt" satisfies NotificationPermissionStatus),
+    requestPermission: vi
+        .fn()
+        .mockResolvedValue("granted" satisfies NotificationPermissionStatus),
+    getToken: vi.fn().mockResolvedValue(null as PushTokenPayload | null),
+    subscribe: vi.fn().mockResolvedValue(undefined),
+    unsubscribe: vi.fn().mockResolvedValue(undefined),
+    openSettings: vi.fn().mockResolvedValue(undefined),
+    events: new EventTarget(),
+    initPromise: Promise.resolve(),
+}));
 
-            mockNotificationContext.adapter.isSupported.mockReset();
-            mockNotificationContext.adapter.getPermissionStatus.mockReset();
-            mockNotificationContext.adapter.requestPermission.mockReset();
-            mockNotificationContext.adapter.subscribe.mockReset();
-            mockNotificationContext.adapter.unsubscribe.mockReset();
-            mockNotificationContext.adapter.isSubscribed.mockReset();
-            mockNotificationContext.adapter.initialize.mockReset();
-            mockNotificationContext.adapter.showLocalNotification.mockReset();
+vi.mock("@/module/notification/adapter", async (importOriginal) => {
+    const actual =
+        await importOriginal<typeof import("@/module/notification/adapter")>();
+    return {
+        ...actual,
+        notificationAdapter: mockAdapter,
+    };
+});
 
-            mockNotificationContext.adapter.isSupported.mockReturnValue(false);
-            mockNotificationContext.adapter.getPermissionStatus.mockReturnValue(
-                "default"
-            );
-            mockNotificationContext.adapter.requestPermission.mockResolvedValue(
-                "granted"
-            );
-            mockNotificationContext.adapter.subscribe.mockResolvedValue(
-                undefined
-            );
-            mockNotificationContext.adapter.unsubscribe.mockResolvedValue(
-                undefined
-            );
-            mockNotificationContext.adapter.isSubscribed.mockResolvedValue(
-                false
-            );
-            mockNotificationContext.adapter.initialize.mockResolvedValue({
-                isSubscribed: false,
-            });
-            mockNotificationContext.adapter.showLocalNotification.mockResolvedValue(
-                undefined
-            );
+vi.mock("@frak-labs/wallet-shared", async (importOriginal) => {
+    const actual =
+        await importOriginal<typeof import("@frak-labs/wallet-shared")>();
+    return {
+        ...actual,
+        authenticatedWalletApi: {
+            notifications: { tokens: mockTokensApi },
+        },
+    };
+});
 
-            const contextValue =
-                mockNotificationContext as unknown as ReturnType<
-                    typeof NotificationContext.useNotificationContext
-                >;
-            vi.mocked(
-                NotificationContext.useNotificationContext
-            ).mockReturnValue(contextValue);
-        }
-    );
+describe.sequential("useNotificationStatus", () => {
+    beforeEach(({ queryWrapper }: WalletTestFixtures) => {
+        queryWrapper.client.clear();
+        mockAdapter.events = new EventTarget();
 
-    test("should return not supported when adapter reports unsupported", ({
-        mockNotificationContext,
-        queryWrapper,
-    }: WalletTestFixtures) => {
-        mockNotificationContext.adapter.isSupported.mockReturnValue(false);
+        mockAdapter.getPermissionStatus
+            .mockReset()
+            .mockResolvedValue("prompt" satisfies NotificationPermissionStatus);
+        mockAdapter.getToken.mockReset().mockResolvedValue(null);
+        mockAdapter.subscribe.mockReset();
+        mockAdapter.unsubscribe.mockReset().mockResolvedValue(undefined);
+        mockAdapter.initPromise = Promise.resolve();
 
-        const { result } = renderHook(() => useNotificationSetupStatus(), {
-            wrapper: queryWrapper.wrapper,
-        });
-
-        expect(result.current).toEqual({ isSupported: false });
-        expect(
-            mockNotificationContext.adapter.isSupported
-        ).toHaveBeenCalledTimes(1);
+        mockTokensApi.hasAny.get.mockReset().mockResolvedValue({ data: false });
+        mockTokensApi.put.mockReset().mockResolvedValue(undefined);
+        mockTokensApi.delete.mockReset().mockResolvedValue(undefined);
     });
 
-    test("should return supported status and permission data", ({
-        mockNotificationContext,
+    test("should return permissionGranted when permission is granted", async ({
         queryWrapper,
     }: WalletTestFixtures) => {
-        mockNotificationContext.adapter.isSupported.mockReturnValue(true);
-        mockNotificationContext.adapter.getPermissionStatus.mockReturnValue(
-            "granted"
+        mockAdapter.getPermissionStatus.mockResolvedValue(
+            "granted" satisfies NotificationPermissionStatus
         );
 
-        const { result } = renderHook(() => useNotificationSetupStatus(), {
-            wrapper: queryWrapper.wrapper,
-        });
-
-        expect(result.current.isSupported).toBe(true);
-        expect(result.current.isNotificationAllowed).toBe(true);
-        expect(result.current.isSubscribed).toBe(false);
-        expect(result.current.askForNotificationPermission).toBeTypeOf(
-            "function"
-        );
-    });
-
-    test("should use adapter subscription state as source of truth", async ({
-        mockNotificationContext,
-        queryWrapper,
-    }: WalletTestFixtures) => {
-        mockNotificationContext.isSubscribed = false;
-        mockNotificationContext.adapter.isSupported.mockReturnValue(true);
-        mockNotificationContext.adapter.getPermissionStatus.mockReturnValue(
-            "default"
-        );
-        mockNotificationContext.adapter.isSubscribed.mockResolvedValue(true);
-
-        const contextValue = mockNotificationContext as unknown as ReturnType<
-            typeof NotificationContext.useNotificationContext
-        >;
-        vi.mocked(NotificationContext.useNotificationContext).mockReturnValue(
-            contextValue
-        );
-
-        const { result } = renderHook(() => useNotificationSetupStatus(), {
+        const { result } = renderHook(() => useNotificationStatus(), {
             wrapper: queryWrapper.wrapper,
         });
 
         await waitFor(() => {
-            expect(result.current.isSupported).toBe(true);
-            expect(result.current.isSubscribed).toBe(true);
+            expect(result.current).toEqual({
+                permissionStatus: "granted",
+                permissionGranted: true,
+                hasLocalCapability: false,
+                hasBackendToken: false,
+            });
         });
     });
 
-    test("should call adapter.requestPermission when callback is invoked", async ({
-        mockNotificationContext,
+    test("should report hasLocalCapability when getToken returns a token", async ({
         queryWrapper,
     }: WalletTestFixtures) => {
-        mockNotificationContext.adapter.isSupported.mockReturnValue(true);
-        mockNotificationContext.adapter.getPermissionStatus.mockReturnValue(
-            "default"
+        mockAdapter.getPermissionStatus.mockResolvedValue(
+            "granted" satisfies NotificationPermissionStatus
         );
+        mockAdapter.getToken.mockResolvedValue({
+            type: "web-push",
+            subscription: {
+                endpoint: "https://push.example.com",
+                keys: { p256dh: "test-p256dh", auth: "test-auth" },
+            },
+        } satisfies PushTokenPayload);
+        mockTokensApi.hasAny.get.mockResolvedValue({ data: true });
 
-        const { result } = renderHook(() => useNotificationSetupStatus(), {
+        const { result } = renderHook(() => useNotificationStatus(), {
             wrapper: queryWrapper.wrapper,
         });
 
-        await result.current.askForNotificationPermission?.();
-        expect(
-            mockNotificationContext.adapter.requestPermission
-        ).toHaveBeenCalledTimes(1);
+        await waitFor(() => {
+            expect(result.current).toEqual({
+                permissionStatus: "granted",
+                permissionGranted: true,
+                hasLocalCapability: true,
+                hasBackendToken: true,
+            });
+        });
     });
 
-    test("should handle adapter permission request errors", async ({
-        mockNotificationContext,
+    test("should report hasBackendToken when backend confirms token", async ({
         queryWrapper,
     }: WalletTestFixtures) => {
-        const consoleErrorSpy = vi
-            .spyOn(console, "error")
-            .mockImplementation(() => {});
-        const mockError = new Error("Permission denied");
-
-        mockNotificationContext.adapter.isSupported.mockReturnValue(true);
-        mockNotificationContext.adapter.getPermissionStatus.mockReturnValue(
-            "default"
+        mockAdapter.getPermissionStatus.mockResolvedValue(
+            "granted" satisfies NotificationPermissionStatus
         );
-        mockNotificationContext.adapter.requestPermission.mockRejectedValue(
-            mockError
-        );
+        mockTokensApi.hasAny.get.mockResolvedValue({ data: true });
 
-        const { result } = renderHook(() => useNotificationSetupStatus(), {
+        const { result } = renderHook(() => useNotificationStatus(), {
             wrapper: queryWrapper.wrapper,
         });
 
-        await result.current.askForNotificationPermission?.();
+        await waitFor(() => {
+            expect(result.current).toEqual({
+                permissionStatus: "granted",
+                permissionGranted: true,
+                hasLocalCapability: false,
+                hasBackendToken: true,
+            });
+        });
+    });
 
-        expect(consoleErrorSpy).toHaveBeenCalledWith(
-            "Failed to request notification permission: ",
-            mockError
+    test("should default to false values when queries have not resolved", ({
+        queryWrapper,
+    }: WalletTestFixtures) => {
+        mockAdapter.getPermissionStatus.mockReturnValue(
+            new Promise(() => {}) as Promise<NotificationPermissionStatus>
         );
 
-        consoleErrorSpy.mockRestore();
+        const { result } = renderHook(() => useNotificationStatus(), {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        expect(result.current).toEqual({
+            permissionStatus: "prompt",
+            permissionGranted: false,
+            hasLocalCapability: false,
+            hasBackendToken: false,
+        });
+    });
+
+    test("should update localToken and permission when token-update event fires", async ({
+        queryWrapper,
+    }: WalletTestFixtures) => {
+        mockAdapter.getPermissionStatus.mockResolvedValue(
+            "denied" satisfies NotificationPermissionStatus
+        );
+
+        const { notificationKey } = await import(
+            "@/module/notification/queryKeys/notification"
+        );
+
+        renderHook(() => useNotificationStatus(), {
+            wrapper: queryWrapper.wrapper,
+        });
+
+        await waitFor(() => {
+            expect(mockAdapter.getPermissionStatus).toHaveBeenCalled();
+        });
+
+        const tokenPayload: PushTokenPayload = {
+            type: "fcm",
+            token: "event-delivered-token",
+        };
+        mockAdapter.events.dispatchEvent(
+            new CustomEvent("token-update", { detail: tokenPayload })
+        );
+
+        await waitFor(() => {
+            expect(
+                queryWrapper.client.getQueryData(
+                    notificationKey.push.localToken
+                )
+            ).toEqual(tokenPayload);
+            expect(
+                queryWrapper.client.getQueryData(
+                    notificationKey.push.permission
+                )
+            ).toBe("granted");
+        });
     });
 });

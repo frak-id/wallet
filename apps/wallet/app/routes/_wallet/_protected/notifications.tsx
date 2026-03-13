@@ -1,5 +1,3 @@
-import type { NotificationModel } from "@frak-labs/wallet-shared";
-import { notificationStorage } from "@frak-labs/wallet-shared";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { BellRing } from "lucide-react";
@@ -10,6 +8,8 @@ import { Row } from "@/module/common/component/Row";
 import { Skeleton } from "@/module/common/component/Skeleton";
 import { Title } from "@/module/common/component/Title";
 import { notificationKey } from "@/module/notification/queryKeys/notification";
+import type { NotificationModel } from "@/module/notification/storage/NotificationModel";
+import { notificationStorage } from "@/module/notification/storage/notifications";
 
 export const Route = createFileRoute("/_wallet/_protected/notifications")({
     component: NotificationsPage,

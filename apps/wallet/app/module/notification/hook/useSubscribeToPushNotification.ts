@@ -1,49 +1,30 @@
-import {
-    type UseMutationOptions,
-    useMutation,
-    useQueryClient,
-} from "@tanstack/react-query";
-import { useNotificationContext } from "@/module/notification/context/NotificationContext";
+import { authenticatedWalletApi } from "@frak-labs/wallet-shared";
+import { useMutation } from "@tanstack/react-query";
+import { notificationAdapter } from "@/module/notification/adapter";
 import { notificationKey } from "@/module/notification/queryKeys/notification";
 
-/**
- * Register the push notification handler
- */
-export function useSubscribeToPushNotification(
-    mutationOptions?: UseMutationOptions
-) {
-    const { adapter, setIsSubscribed } = useNotificationContext();
-    const queryClient = useQueryClient();
-
-    /**
-     * Mutation used to subscribe to the push notification
-     */
+export function useSubscribeToPushNotification() {
     const {
         mutate: subscribeToPush,
         mutateAsync: subscribeToPushAsync,
         ...mutationState
     } = useMutation({
-        ...mutationOptions,
         mutationKey: notificationKey.push.subscribe,
         mutationFn: async () => {
-            await adapter.subscribe();
-            const subscribed = await adapter.isSubscribed();
-            setIsSubscribed(subscribed);
-            // Sync the shared query cache so EnableNotification and
-            // RemoveAllNotification both reflect the new state immediately
-            queryClient.setQueryData(
-                notificationKey.push.tokenCount,
-                subscribed
-            );
+            const tokenPayload = await notificationAdapter.subscribe();
+            await authenticatedWalletApi.notifications.tokens.put(tokenPayload);
+            return tokenPayload;
         },
-        onError: (error, variables, onMutateResult, context) => {
-            console.error("[Notification] subscribe failed:", error);
-            mutationOptions?.onError?.(
-                error,
-                variables,
-                onMutateResult,
-                context
-            );
+        onSuccess: (_tokenPayload, _variable, _onMutate, { client }) => {
+            client.invalidateQueries({
+                queryKey: notificationKey.push.permission,
+            });
+            client.invalidateQueries({
+                queryKey: notificationKey.push.localToken,
+            });
+            client.invalidateQueries({
+                queryKey: notificationKey.push.backendToken,
+            });
         },
     });
 

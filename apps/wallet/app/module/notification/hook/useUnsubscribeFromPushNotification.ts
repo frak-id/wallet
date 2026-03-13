@@ -1,25 +1,9 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { useNotificationContext } from "@/module/notification/context/NotificationContext";
+import { authenticatedWalletApi } from "@frak-labs/wallet-shared";
+import { useMutation } from "@tanstack/react-query";
+import { notificationAdapter } from "@/module/notification/adapter";
 import { notificationKey } from "@/module/notification/queryKeys/notification";
 
-/**
- * Unsubscribe from the push notification
- */
 export function useUnsubscribeFromPushNotification() {
-    const { adapter, setIsSubscribed, isInitialized } =
-        useNotificationContext();
-
-    const { data: hasPushToken, refetch } = useQuery({
-        queryKey: notificationKey.push.tokenCount,
-        queryFn: async () => {
-            return await adapter.isSubscribed();
-        },
-        enabled: isInitialized,
-    });
-
-    /**
-     * Mutation used to unsubscribe from push notifications
-     */
     const {
         mutate: unsubscribeFromPush,
         mutateAsync: unsubscribeFromPushAsync,
@@ -27,14 +11,23 @@ export function useUnsubscribeFromPushNotification() {
     } = useMutation({
         mutationKey: notificationKey.push.unsubscribe,
         mutationFn: async () => {
-            await adapter.unsubscribe();
-            setIsSubscribed(false);
-            await refetch();
+            await notificationAdapter.unsubscribe();
+            await authenticatedWalletApi.notifications.tokens.delete();
+        },
+        onSuccess: (_data, _variable, _onResult, { client }) => {
+            client.invalidateQueries({
+                queryKey: notificationKey.push.permission,
+            });
+            client.invalidateQueries({
+                queryKey: notificationKey.push.localToken,
+            });
+            client.invalidateQueries({
+                queryKey: notificationKey.push.backendToken,
+            });
         },
     });
 
     return {
-        hasPushToken,
         unsubscribeFromPush,
         unsubscribeFromPushAsync,
         ...mutationState,

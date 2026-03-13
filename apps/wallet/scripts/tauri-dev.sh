@@ -8,11 +8,14 @@ WALLET_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 DEV_SERVER_PORT=3010
 DEV_SERVER_URL="http://localhost:$DEV_SERVER_PORT"
 VITE_PID=""
+TAURI_PID=""
 
 cleanup() {
-    if [ -n "$VITE_PID" ]; then
-        kill "$VITE_PID" 2>/dev/null || true
-    fi
+    trap - EXIT INT TERM
+    for pid in $VITE_PID $TAURI_PID; do
+        [ -n "$pid" ] && kill "$pid" 2>/dev/null
+    done
+    wait 2>/dev/null
 }
 trap cleanup EXIT INT TERM
 
@@ -129,7 +132,9 @@ run_android() {
     start_dev_server
     setup_adb_reverse
     cd "$WALLET_DIR"
-    bun run tauri android dev --no-dev-server -c '{"build":{"beforeDevCommand":""}}'
+    bun run tauri android dev --no-dev-server -c '{"build":{"beforeDevCommand":""}}' &
+    TAURI_PID=$!
+    wait $TAURI_PID
 }
 
 run_ios() {
@@ -137,13 +142,15 @@ run_ios() {
     setup_firebase_config
     start_dev_server
     cd "$WALLET_DIR"
-    bun run tauri ios dev --no-dev-server -c '{"build":{"beforeDevCommand":""}}' "$device"
+    bun run tauri ios dev --no-dev-server -c '{"build":{"beforeDevCommand":""}}' "$device" &
+    TAURI_PID=$!
+    wait $TAURI_PID
 }
 
 run_dev_only() {
     cd "$WALLET_DIR"
     bun run build:sw
-    vite dev
+    exec vite dev
 }
 
 case "${1:-}" in

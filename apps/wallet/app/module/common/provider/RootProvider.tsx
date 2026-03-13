@@ -5,7 +5,7 @@ import {
     WagmiProviderWithDynamicConfig,
 } from "@frak-labs/wallet-shared";
 import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
-import { QueryClient, useQueryClient } from "@tanstack/react-query";
+import { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import type { PersistQueryClientProviderProps } from "@tanstack/react-query-persist-client";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
@@ -13,11 +13,6 @@ import { type PropsWithChildren, useEffect } from "react";
 import { useAccount } from "wagmi";
 import { PwaInstallProvider } from "@/module/common/context/PwaInstallContext";
 import { useEnforceWagmiConnection } from "@/module/common/hook/useEnforceWagmiConnection";
-import {
-    NotificationProvider,
-    useNotificationContext,
-} from "@/module/notification/context/NotificationContext";
-import { notificationKey } from "@/module/notification/queryKeys/notification";
 
 /**
  * The query client that will be used by tanstack/react-query
@@ -61,13 +56,12 @@ export function RootProvider({ children }: PropsWithChildren) {
     const isNativeApp = isTauri();
 
     const content = (
-        <NotificationProvider>
-            <SetupNotifications />
+        <>
             <WagmiProviderWithDynamicConfig>
                 <SessionStateManager />
                 {children}
             </WagmiProviderWithDynamicConfig>
-        </NotificationProvider>
+        </>
     );
 
     return (
@@ -75,7 +69,6 @@ export function RootProvider({ children }: PropsWithChildren) {
             client={queryClient}
             persistOptions={persistOptions}
         >
-            {/* Only provide PWA install context in web mode, not in Tauri */}
             {isNativeApp ? (
                 content
             ) : (
@@ -87,33 +80,6 @@ export function RootProvider({ children }: PropsWithChildren) {
             />
         </PersistQueryClientProvider>
     );
-}
-
-function SetupNotifications() {
-    const { adapter, setIsSubscribed, setIsInitialized } =
-        useNotificationContext();
-    const queryClient = useQueryClient();
-
-    useEffect(() => {
-        const setupNotifications = async () => {
-            const result = await adapter.initialize();
-            setIsSubscribed(result.isSubscribed);
-            // Seed the query cache with the authoritative value from
-            // initialize() BEFORE enabling the query. This prevents a
-            // race where adapter.isSubscribed() (backend hasAny) resolves
-            // before a fire-and-forget sync completes on web, flipping the
-            // UI to "not subscribed" for users with a valid local sub.
-            queryClient.setQueryData(
-                notificationKey.push.tokenCount,
-                result.isSubscribed
-            );
-            setIsInitialized(true);
-        };
-
-        setupNotifications();
-    }, [adapter, setIsSubscribed, setIsInitialized, queryClient]);
-
-    return null;
 }
 
 function SessionStateManager() {

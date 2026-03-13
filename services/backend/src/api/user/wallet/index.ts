@@ -1,9 +1,9 @@
 import { Elysia } from "elysia";
-import { authRoutes } from "./routes/auth";
-import { balanceRoutes } from "./routes/balance";
-import { notificationRoutes } from "./routes/notifications";
-import { pairingRoutes } from "./routes/pairing";
-import { rewardsRoutes } from "./routes/rewards";
+import { authRoutes } from "./auth";
+import { balanceRoutes } from "./balance";
+import { notificationRoutes } from "./notifications";
+import { pairingRoutes } from "./pairing";
+import { rewardsRoutes } from "./rewards";
 
 export const walletApi = new Elysia({ prefix: "/wallet" })
     .use(authRoutes)

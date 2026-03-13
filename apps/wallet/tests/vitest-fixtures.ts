@@ -7,6 +7,11 @@ import {
     type BaseTestFixtures,
     test as baseTest,
 } from "@frak-labs/wallet-shared/tests/vitest-fixtures";
+import type { Mock } from "vitest";
+import type {
+    NotificationPermissionStatus,
+    PushTokenPayload,
+} from "@/module/notification/adapter";
 
 /**
  * Wallet-specific test fixtures (extends BaseTestFixtures)
@@ -18,23 +23,17 @@ export type WalletTestFixtures = BaseTestFixtures & {
     freshRecoveryStore: typeof import("@/module/stores/recoveryStore").recoveryStore;
 
     /**
-     * Mock notification context with default values
+     * Mock notification adapter matching the NotificationAdapter shape
      */
-    mockNotificationContext: {
-        isSubscribed: boolean;
-        isInitialized: boolean;
-        setIsSubscribed: ReturnType<typeof import("vitest").vi.fn>;
-        setIsInitialized: ReturnType<typeof import("vitest").vi.fn>;
-        adapter: {
-            isSupported: ReturnType<typeof import("vitest").vi.fn>;
-            getPermissionStatus: ReturnType<typeof import("vitest").vi.fn>;
-            requestPermission: ReturnType<typeof import("vitest").vi.fn>;
-            subscribe: ReturnType<typeof import("vitest").vi.fn>;
-            unsubscribe: ReturnType<typeof import("vitest").vi.fn>;
-            isSubscribed: ReturnType<typeof import("vitest").vi.fn>;
-            initialize: ReturnType<typeof import("vitest").vi.fn>;
-            showLocalNotification: ReturnType<typeof import("vitest").vi.fn>;
-        };
+    mockNotificationAdapter: {
+        getPermissionStatus: Mock<() => Promise<NotificationPermissionStatus>>;
+        requestPermission: Mock<() => Promise<NotificationPermissionStatus>>;
+        getToken: Mock<() => Promise<PushTokenPayload | null>>;
+        subscribe: Mock<() => Promise<PushTokenPayload>>;
+        unsubscribe: Mock<() => Promise<void>>;
+        openSettings: Mock<() => Promise<void>>;
+        events: EventTarget;
+        initPromise: Promise<void>;
     };
 
     /**
@@ -69,7 +68,7 @@ export type WalletTestFixtures = BaseTestFixtures & {
 export const test = baseTest.extend<
     Pick<
         WalletTestFixtures,
-        "freshRecoveryStore" | "mockNotificationContext" | "mockBrowserAPIs"
+        "freshRecoveryStore" | "mockNotificationAdapter" | "mockBrowserAPIs"
     >
 >({
     /**
@@ -92,50 +91,39 @@ export const test = baseTest.extend<
     },
 
     /**
-     * Provides a mock notification context
-     * Returns default mock values for testing notification features
+     * Provides a mock notification adapter
+     * Returns default mock values matching the NotificationAdapter shape
      */
-    mockNotificationContext: async (
+    mockNotificationAdapter: async (
         // biome-ignore lint/correctness/noEmptyPattern: Vitest requires object destructuring
         {},
-        use: (value: {
-            isSubscribed: boolean;
-            isInitialized: boolean;
-            setIsSubscribed: ReturnType<typeof import("vitest").vi.fn>;
-            setIsInitialized: ReturnType<typeof import("vitest").vi.fn>;
-            adapter: {
-                isSupported: ReturnType<typeof import("vitest").vi.fn>;
-                getPermissionStatus: ReturnType<typeof import("vitest").vi.fn>;
-                requestPermission: ReturnType<typeof import("vitest").vi.fn>;
-                subscribe: ReturnType<typeof import("vitest").vi.fn>;
-                unsubscribe: ReturnType<typeof import("vitest").vi.fn>;
-                isSubscribed: ReturnType<typeof import("vitest").vi.fn>;
-                initialize: ReturnType<typeof import("vitest").vi.fn>;
-                showLocalNotification: ReturnType<
-                    typeof import("vitest").vi.fn
-                >;
-            };
-        }) => Promise<void>
+        use: (
+            value: WalletTestFixtures["mockNotificationAdapter"]
+        ) => Promise<void>
     ) => {
         const { vi } = await import("vitest");
-        const context = {
-            isSubscribed: false,
-            isInitialized: true,
-            setIsSubscribed: vi.fn(),
-            setIsInitialized: vi.fn(),
-            adapter: {
-                isSupported: vi.fn().mockReturnValue(false),
-                getPermissionStatus: vi.fn().mockReturnValue("default"),
-                requestPermission: vi.fn().mockResolvedValue("granted"),
-                subscribe: vi.fn().mockResolvedValue(undefined),
-                unsubscribe: vi.fn().mockResolvedValue(undefined),
-                isSubscribed: vi.fn().mockResolvedValue(false),
-                initialize: vi.fn().mockResolvedValue({ isSubscribed: false }),
-                showLocalNotification: vi.fn().mockResolvedValue(undefined),
-            },
+        const adapter: WalletTestFixtures["mockNotificationAdapter"] = {
+            getPermissionStatus: vi
+                .fn<() => Promise<NotificationPermissionStatus>>()
+                .mockResolvedValue("prompt"),
+            requestPermission: vi
+                .fn<() => Promise<NotificationPermissionStatus>>()
+                .mockResolvedValue("granted"),
+            getToken: vi
+                .fn<() => Promise<PushTokenPayload | null>>()
+                .mockResolvedValue(null),
+            subscribe: vi.fn<() => Promise<PushTokenPayload>>(),
+            unsubscribe: vi
+                .fn<() => Promise<void>>()
+                .mockResolvedValue(undefined),
+            openSettings: vi
+                .fn<() => Promise<void>>()
+                .mockResolvedValue(undefined),
+            events: new EventTarget(),
+            initPromise: Promise.resolve(),
         };
 
-        await use(context);
+        await use(adapter);
     },
 
     /**

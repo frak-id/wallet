@@ -1,75 +1,101 @@
-import { useQuery } from "@tanstack/react-query";
-import { useCallback, useMemo } from "react";
-import { useNotificationContext } from "@/module/notification/context/NotificationContext";
+import { authenticatedWalletApi } from "@frak-labs/wallet-shared";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useMemo } from "react";
+import {
+    type NotificationPermissionStatus,
+    notificationAdapter,
+    type PushTokenPayload,
+} from "@/module/notification/adapter";
 import { notificationKey } from "@/module/notification/queryKeys/notification";
 
-/**
- * Get the notification setup status
- */
-export function useNotificationSetupStatus() {
-    const {
-        adapter,
-        isSubscribed: initialSubscribedState,
-        isInitialized,
-    } = useNotificationContext();
+const PERMISSION_POLL_INTERVAL = 30_000;
 
-    /**
-     * Ask for the permissions to display notification
-     */
-    const askForNotificationPermission = useCallback(async () => {
-        try {
-            await adapter.requestPermission();
-        } catch (e) {
-            console.error("Failed to request notification permission: ", e);
-        }
-    }, [adapter]);
+export function useNotificationStatus() {
+    const queryClient = useQueryClient();
 
-    /**
-     * Check if notification are supported or not
-     */
-    const isSupported = useMemo(() => {
-        return adapter.isSupported();
-    }, [adapter]);
-
-    /**
-     * Fetch the status
-     */
-    const statusResult = useMemo(() => {
-        if (!isSupported) {
-            return { isSupported, isNotificationAllowed: false };
-        }
-
-        const permissionStatus = adapter.getPermissionStatus();
-        const isNotificationAllowed = permissionStatus === "granted";
-        return { isSupported, isNotificationAllowed };
-    }, [isSupported, adapter]);
-
-    // Gate on isInitialized to prevent a race on web/PWA: the fire-and-forget
-    // backend sync in webAdapter.initialize() may not have completed when
-    // adapter.isSubscribed() (backend hasAny) runs, returning a false negative
-    // that overwrites the correct local-subscription-based state.
-    // SetupNotifications seeds the cache before setting isInitialized=true,
-    // so the query starts with authoritative data and won't refetch until
-    // staleTime (60s), giving the sync time to land.
-    const { data: isSubscribed } = useQuery({
-        queryKey: notificationKey.push.tokenCount,
-        queryFn: async () => {
-            return await adapter.isSubscribed();
-        },
-        enabled: isSupported && isInitialized,
-        initialData: initialSubscribedState,
+    const { data: permission } = useQuery({
+        queryKey: notificationKey.push.permission,
+        queryFn: () => notificationAdapter.getPermissionStatus(),
+        refetchInterval: PERMISSION_POLL_INTERVAL,
+        refetchOnWindowFocus: "always",
+        meta: { storable: false },
     });
 
-    return useMemo(() => {
-        if (!statusResult?.isSupported) {
-            return { isSupported: false };
+    const permissionGranted = permission === "granted";
+
+    const { data: localToken } = useQuery({
+        queryKey: notificationKey.push.localToken,
+        queryFn: () => notificationAdapter.getToken(),
+        enabled: permissionGranted,
+        refetchOnWindowFocus: "always",
+        meta: { storable: false },
+    });
+
+    const { data: hasBackendToken } = useQuery({
+        queryKey: notificationKey.push.backendToken,
+        queryFn: async () => {
+            const result =
+                await authenticatedWalletApi.notifications.tokens.hasAny.get();
+            return result.data ?? false;
+        },
+    });
+
+    const hasLocalCapability =
+        permissionGranted && localToken !== null && localToken !== undefined;
+
+    useEffect(() => {
+        const controller = new AbortController();
+        notificationAdapter.events.addEventListener(
+            "token-update",
+            (e) => {
+                const token = (e as CustomEvent<PushTokenPayload>).detail;
+                queryClient.setQueryData(
+                    notificationKey.push.localToken,
+                    token
+                );
+                queryClient.setQueryData(
+                    notificationKey.push.permission,
+                    "granted" satisfies NotificationPermissionStatus
+                );
+            },
+            { signal: controller.signal }
+        );
+        return () => controller.abort();
+    }, [queryClient]);
+
+    useEffect(() => {
+        if (permissionGranted && hasBackendToken === false && localToken) {
+            authenticatedWalletApi.notifications.tokens
+                .put(localToken)
+                .then(() =>
+                    queryClient.invalidateQueries({
+                        queryKey: notificationKey.push.backendToken,
+                    })
+                )
+                .catch(console.warn);
+            return;
         }
 
-        return {
-            isSupported: true,
-            isNotificationAllowed: statusResult.isNotificationAllowed,
-            askForNotificationPermission,
-            isSubscribed,
-        };
-    }, [statusResult, isSubscribed, askForNotificationPermission]);
+        if (!permissionGranted && hasBackendToken === true) {
+            authenticatedWalletApi.notifications.tokens
+                .delete()
+                .then(() =>
+                    queryClient.invalidateQueries({
+                        queryKey: notificationKey.push.backendToken,
+                    })
+                )
+                .catch(console.warn);
+        }
+    }, [hasBackendToken, permissionGranted, localToken, queryClient]);
+
+    return useMemo(
+        () => ({
+            permissionStatus: (permission ??
+                "prompt") as NotificationPermissionStatus,
+            permissionGranted,
+            hasLocalCapability,
+            hasBackendToken: hasBackendToken ?? false,
+        }),
+        [permission, permissionGranted, hasLocalCapability, hasBackendToken]
+    );
 }
