@@ -1,6 +1,7 @@
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import { MerchantContext } from "../../../../domain/merchant";
+import { MerchantIdParamSchema, SuccessResponseSchema } from "../../../schemas";
 import { businessSessionContext } from "../../middleware/session";
 
 export const merchantAdminsRoutes = new Elysia({
@@ -57,9 +58,7 @@ export const merchantAdminsRoutes = new Elysia({
             };
         },
         {
-            params: t.Object({
-                merchantId: t.String(),
-            }),
+            params: MerchantIdParamSchema,
             response: {
                 200: t.Object({
                     admins: t.Array(
@@ -112,9 +111,7 @@ export const merchantAdminsRoutes = new Elysia({
             };
         },
         {
-            params: t.Object({
-                merchantId: t.String(),
-            }),
+            params: MerchantIdParamSchema,
             body: t.Object({
                 wallet: t.Hex(),
             }),
@@ -165,9 +162,7 @@ export const merchantAdminsRoutes = new Elysia({
                 wallet: t.Hex(),
             }),
             response: {
-                200: t.Object({
-                    success: t.Boolean(),
-                }),
+                200: SuccessResponseSchema,
                 401: t.String(),
                 403: t.String(),
                 404: t.String(),

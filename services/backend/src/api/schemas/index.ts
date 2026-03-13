@@ -26,6 +26,16 @@ export {
     CampaignUpdateBodySchema,
 } from "./campaignApiSchemas";
 export {
+    type FrakClientIdHeader,
+    FrakClientIdHeaderSchema,
+    type MerchantCampaignParam,
+    MerchantCampaignParamSchema,
+    type MerchantIdParam,
+    MerchantIdParamSchema,
+    type SuccessResponse,
+    SuccessResponseSchema,
+} from "./commonApiSchemas";
+export {
     type InteractionSubmission,
     InteractionSubmissionSchema,
 } from "./interactionSchemas";

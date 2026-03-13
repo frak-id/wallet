@@ -1,7 +1,10 @@
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import { OrchestrationContext } from "../../../../orchestration/context";
-import { CampaignStatsResponseSchema } from "../../../schemas";
+import {
+    CampaignStatsResponseSchema,
+    MerchantIdParamSchema,
+} from "../../../schemas";
 import { businessSessionContext } from "../../middleware/session";
 
 export const merchantCampaignStatsRoutes = new Elysia({
@@ -33,7 +36,7 @@ export const merchantCampaignStatsRoutes = new Elysia({
             return { stats };
         },
         {
-            params: t.Object({ merchantId: t.String() }),
+            params: MerchantIdParamSchema,
             response: {
                 200: CampaignStatsResponseSchema,
                 401: t.String(),

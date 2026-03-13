@@ -9,14 +9,11 @@ import {
 } from "../../../../domain/auth";
 import { OrchestrationContext } from "../../../../orchestration/context";
 import type { IdentityNode } from "../../../../orchestration/identity/types";
-
-const identityHeadersSchema = t.Object({
-    "x-frak-client-id": t.Optional(t.String()),
-});
+import { FrakClientIdHeaderSchema } from "../../../schemas";
 
 export const loginRoutes = new Elysia()
     .guard({
-        headers: identityHeadersSchema,
+        headers: FrakClientIdHeaderSchema,
     })
     .post(
         "/ecdsaLogin",

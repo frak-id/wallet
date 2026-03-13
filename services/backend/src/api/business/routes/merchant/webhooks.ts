@@ -7,7 +7,11 @@ import {
     purchasesTable,
     WebhookPlatformSchema,
 } from "../../../../domain/purchases";
-import { WebhookStatusResponseSchema } from "../../../schemas";
+import {
+    MerchantIdParamSchema,
+    SuccessResponseSchema,
+    WebhookStatusResponseSchema,
+} from "../../../schemas";
 import { businessSessionContext } from "../../middleware/session";
 
 export const merchantWebhooksRoutes = new Elysia({
@@ -66,7 +70,7 @@ export const merchantWebhooksRoutes = new Elysia({
             };
         },
         {
-            params: t.Object({ merchantId: t.String() }),
+            params: MerchantIdParamSchema,
             response: {
                 200: WebhookStatusResponseSchema,
                 401: t.String(),
@@ -113,13 +117,13 @@ export const merchantWebhooksRoutes = new Elysia({
             return { success: true };
         },
         {
-            params: t.Object({ merchantId: t.String() }),
+            params: MerchantIdParamSchema,
             body: t.Object({
                 hookSignatureKey: t.String(),
                 platform: WebhookPlatformSchema,
             }),
             response: {
-                200: t.Object({ success: t.Boolean() }),
+                200: SuccessResponseSchema,
                 401: t.String(),
                 403: t.String(),
             },
@@ -169,9 +173,9 @@ export const merchantWebhooksRoutes = new Elysia({
             return { success: true };
         },
         {
-            params: t.Object({ merchantId: t.String() }),
+            params: MerchantIdParamSchema,
             response: {
-                200: t.Object({ success: t.Boolean() }),
+                200: SuccessResponseSchema,
                 401: t.String(),
                 403: t.String(),
                 404: t.String(),

@@ -3,6 +3,7 @@ import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import { CampaignBankContext } from "../../../../domain/campaign-bank";
 import { MerchantContext } from "../../../../domain/merchant";
+import { MerchantIdParamSchema, SuccessResponseSchema } from "../../../schemas";
 import { businessSessionContext } from "../../middleware/session";
 
 export const merchantTransferRoutes = new Elysia({
@@ -44,9 +45,7 @@ export const merchantTransferRoutes = new Elysia({
             };
         },
         {
-            params: t.Object({
-                merchantId: t.String(),
-            }),
+            params: MerchantIdParamSchema,
             response: {
                 200: t.Union([
                     t.Object({ pending: t.Literal(false) }),
@@ -86,18 +85,14 @@ export const merchantTransferRoutes = new Elysia({
             return { success: true };
         },
         {
-            params: t.Object({
-                merchantId: t.String(),
-            }),
+            params: MerchantIdParamSchema,
             body: t.Object({
                 message: t.String(),
                 signature: t.Hex(),
                 toWallet: t.Hex(),
             }),
             response: {
-                200: t.Object({
-                    success: t.Boolean(),
-                }),
+                200: SuccessResponseSchema,
                 400: t.String(),
             },
         }
@@ -165,17 +160,13 @@ export const merchantTransferRoutes = new Elysia({
             return { success: true };
         },
         {
-            params: t.Object({
-                merchantId: t.String(),
-            }),
+            params: MerchantIdParamSchema,
             body: t.Object({
                 message: t.String(),
                 signature: t.Hex(),
             }),
             response: {
-                200: t.Object({
-                    success: t.Boolean(),
-                }),
+                200: SuccessResponseSchema,
                 400: t.String(),
             },
         }
@@ -202,13 +193,9 @@ export const merchantTransferRoutes = new Elysia({
             return { success: true };
         },
         {
-            params: t.Object({
-                merchantId: t.String(),
-            }),
+            params: MerchantIdParamSchema,
             response: {
-                200: t.Object({
-                    success: t.Boolean(),
-                }),
+                200: SuccessResponseSchema,
                 400: t.String(),
                 401: t.String(),
             },
@@ -226,9 +213,7 @@ export const merchantTransferRoutes = new Elysia({
             return { statement };
         },
         {
-            params: t.Object({
-                merchantId: t.String(),
-            }),
+            params: MerchantIdParamSchema,
             query: t.Object({
                 toWallet: t.Hex(),
             }),
@@ -250,9 +235,7 @@ export const merchantTransferRoutes = new Elysia({
             return { statement };
         },
         {
-            params: t.Object({
-                merchantId: t.String(),
-            }),
+            params: MerchantIdParamSchema,
             response: {
                 200: t.Object({
                     statement: t.String(),

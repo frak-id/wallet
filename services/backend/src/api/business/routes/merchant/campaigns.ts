@@ -20,6 +20,9 @@ import { MerchantContext } from "../../../../domain/merchant";
 import {
     CampaignCreateBodySchema,
     CampaignUpdateBodySchema,
+    MerchantCampaignParamSchema,
+    MerchantIdParamSchema,
+    SuccessResponseSchema,
 } from "../../../schemas";
 import { businessSessionContext } from "../../middleware/session";
 
@@ -153,7 +156,7 @@ export const merchantCampaignsRoutes = new Elysia({
             };
         },
         {
-            params: t.Object({ merchantId: t.String() }),
+            params: MerchantIdParamSchema,
             query: t.Object({
                 status: t.Optional(t.String()),
             }),
@@ -210,10 +213,7 @@ export const merchantCampaignsRoutes = new Elysia({
             return formatCampaign(campaign, distributionStatus);
         },
         {
-            params: t.Object({
-                merchantId: t.String(),
-                campaignId: t.String(),
-            }),
+            params: MerchantCampaignParamSchema,
             response: {
                 200: CampaignResponseSchema,
                 401: t.String(),
@@ -268,7 +268,7 @@ export const merchantCampaignsRoutes = new Elysia({
             return formatCampaign(result.campaign, undefined);
         },
         {
-            params: t.Object({ merchantId: t.String() }),
+            params: MerchantIdParamSchema,
             body: CampaignCreateBodySchema,
             response: {
                 200: CampaignResponseSchema,
@@ -337,10 +337,7 @@ export const merchantCampaignsRoutes = new Elysia({
             return formatCampaign(result.campaign, undefined);
         },
         {
-            params: t.Object({
-                merchantId: t.String(),
-                campaignId: t.String(),
-            }),
+            params: MerchantCampaignParamSchema,
             body: CampaignUpdateBodySchema,
             response: {
                 200: CampaignResponseSchema,
@@ -384,10 +381,7 @@ export const merchantCampaignsRoutes = new Elysia({
             return formatCampaign(result.campaign, undefined);
         },
         {
-            params: t.Object({
-                merchantId: t.String(),
-                campaignId: t.String(),
-            }),
+            params: MerchantCampaignParamSchema,
             response: {
                 200: CampaignResponseSchema,
                 400: t.String(),
@@ -430,10 +424,7 @@ export const merchantCampaignsRoutes = new Elysia({
             return formatCampaign(result.campaign, undefined);
         },
         {
-            params: t.Object({
-                merchantId: t.String(),
-                campaignId: t.String(),
-            }),
+            params: MerchantCampaignParamSchema,
             response: {
                 200: CampaignResponseSchema,
                 400: t.String(),
@@ -476,10 +467,7 @@ export const merchantCampaignsRoutes = new Elysia({
             return formatCampaign(result.campaign, undefined);
         },
         {
-            params: t.Object({
-                merchantId: t.String(),
-                campaignId: t.String(),
-            }),
+            params: MerchantCampaignParamSchema,
             response: {
                 200: CampaignResponseSchema,
                 400: t.String(),
@@ -522,10 +510,7 @@ export const merchantCampaignsRoutes = new Elysia({
             return formatCampaign(result.campaign, undefined);
         },
         {
-            params: t.Object({
-                merchantId: t.String(),
-                campaignId: t.String(),
-            }),
+            params: MerchantCampaignParamSchema,
             response: {
                 200: CampaignResponseSchema,
                 400: t.String(),
@@ -568,12 +553,9 @@ export const merchantCampaignsRoutes = new Elysia({
             return { success: true };
         },
         {
-            params: t.Object({
-                merchantId: t.String(),
-                campaignId: t.String(),
-            }),
+            params: MerchantCampaignParamSchema,
             response: {
-                200: t.Object({ success: t.Boolean() }),
+                200: SuccessResponseSchema,
                 400: t.String(),
                 401: t.String(),
                 403: t.String(),

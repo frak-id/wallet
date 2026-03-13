@@ -2,6 +2,7 @@ import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import { CampaignBankContext } from "../../../../domain/campaign-bank";
 import { BankStatusSchema } from "../../../../domain/campaign-bank/schemas";
+import { MerchantIdParamSchema } from "../../../schemas";
 import { businessSessionContext } from "../../middleware/session";
 
 export const merchantBankRoutes = new Elysia({
@@ -37,9 +38,7 @@ export const merchantBankRoutes = new Elysia({
             };
         },
         {
-            params: t.Object({
-                merchantId: t.String(),
-            }),
+            params: MerchantIdParamSchema,
             response: {
                 200: BankStatusSchema,
                 401: t.String(),
@@ -80,9 +79,7 @@ export const merchantBankRoutes = new Elysia({
             };
         },
         {
-            params: t.Object({
-                merchantId: t.String(),
-            }),
+            params: MerchantIdParamSchema,
             response: {
                 200: t.Object({
                     success: t.Boolean(),
@@ -127,9 +124,7 @@ export const merchantBankRoutes = new Elysia({
             };
         },
         {
-            params: t.Object({
-                merchantId: t.String(),
-            }),
+            params: MerchantIdParamSchema,
             response: {
                 200: t.Object({
                     success: t.Boolean(),
