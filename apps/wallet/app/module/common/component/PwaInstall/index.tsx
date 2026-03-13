@@ -1,46 +1,19 @@
-import "@khmyznikov/pwa-install";
 import { useEffect } from "react";
 import { usePwaInstallRef } from "@/module/common/context/PwaInstallContext";
 
 /**
- * @description Register the beforeinstallprompt event.
- *
- * @example
- *
- * <PwaInstallScript />
- *
- * @returns {JSX.Element}
- */
-function _PwaInstallScript() {
-    return (
-        <script
-            dangerouslySetInnerHTML={{
-                __html: `
-                    window.addEventListener("beforeinstallprompt", (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        e.stopImmediatePropagation();
-
-                        // save it somewhere
-                        window.promptEvent = e;
-                    });
-                `,
-            }}
-        />
-    );
-}
-
-/**
  * @description Register the pwa-install element.
- *
- * @example
- *
- * <PwaInstall />
- *
- * @returns {JSX.Element}
+ *  The @khmyznikov/pwa-install import is loaded dynamically so the side-effecting
+ *  web component registration is tree-shaken from Tauri builds.
  */
 export function PwaInstall() {
     const pwaInstallRef = usePwaInstallRef();
+
+    // Dynamically import the pwa-install web component
+    // This ensures tree-shaking removes it from Tauri builds
+    useEffect(() => {
+        import("@khmyznikov/pwa-install");
+    }, []);
 
     useEffect(() => {
         const pwaInstall = pwaInstallRef?.current;
