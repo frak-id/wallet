@@ -5,7 +5,7 @@ import { CampaignContext } from "../../../domain/campaign/context";
 import { EstimatedRewardsResultSchema } from "../../../domain/campaign/schemas";
 import { MerchantContext } from "../../../domain/merchant/context";
 import { OrchestrationContext } from "../../../orchestration/context";
-import { ExplorerQueryResultSchema } from "../../../orchestration/schemas";
+import { ExplorerQueryResultSchema } from "../../schemas";
 
 const exploreApi = new Elysia()
     .use(rateLimitMiddleware({ windowMs: 60_000, maxRequests: 30 }))
