@@ -17,10 +17,39 @@ export class AuthPage {
         await this.page.waitForURL("/register");
     }
 
-    async clickRegister() {
+    /**
+     * Navigate through onboarding slides to reach the Keypass step.
+     * Does NOT trigger WebAuthn — use clickRegister() for full registration.
+     */
+    async navigateToKeypass() {
+        // Click through slides 1 and 2
+        await this.page.locator("button", { hasText: "Continue" }).click();
+        await this.page.waitForTimeout(600); // Allow scroll animation + IntersectionObserver
+        await this.page.locator("button", { hasText: "Continue" }).click();
+        // Wait for last slide button to appear (confirms slide 3 active)
+        await expect(
+            this.page.locator("button", {
+                hasText: "Activate my secure space",
+            })
+        ).toBeVisible({ timeout: 5_000 });
+        await this.page.waitForTimeout(600);
         await this.page
-            .locator("button", { hasText: "Create your wallet" })
+            .locator("button", {
+                hasText: "Activate my secure space",
+            })
             .click();
+        // Wait for Keypass screen
+        await expect(
+            this.page.getByRole("heading", {
+                name: "Secure your account",
+            })
+        ).toBeVisible({ timeout: 5_000 });
+    }
+
+    async clickRegister() {
+        await this.navigateToKeypass();
+        // Click "Continue" on Keypass — triggers WebAuthn
+        await this.page.locator("button", { hasText: "Continue" }).click();
     }
 
     async clickGoToLogin() {
@@ -31,21 +60,31 @@ export class AuthPage {
 
     async verifyRegistrationReady() {
         await expect(this.page).toHaveURL("/register");
-        // Verify the button is visible
-        const hasButton = await this.page
-            .locator("button", { hasText: "Create your wallet" })
-            .isVisible();
-        expect(hasButton).toBeTruthy();
+        // Verify the first onboarding slide is visible
+        await expect(
+            this.page.getByRole("heading", {
+                name: "Slide 1 — Title placeholder",
+            })
+        ).toBeVisible({ timeout: 10_000 });
     }
 
     async verifyRegistrationError() {
-        // Verify the error is visible
-        const hasErrorInButton = await this.page
-            .locator("button", {
-                hasText: "Error during registration, please try again",
+        // Wait for the Keypass screen to show an error message
+        await expect(this.page.locator("p.error")).toBeVisible({
+            timeout: 5_000,
+        });
+    }
+
+    async verifyWelcomeScreen() {
+        await expect(
+            this.page.getByRole("heading", {
+                name: "Welcome to your wallet",
             })
-            .isVisible();
-        expect(hasErrorInButton).toBeTruthy();
+        ).toBeVisible({ timeout: 10_000 });
+    }
+
+    async clickContinueOnWelcome() {
+        await this.page.locator("button", { hasText: "Get started" }).click();
     }
 
     async verifyDuplicateWalletError() {
@@ -99,7 +138,9 @@ export class AuthPage {
 
     async clickPairing() {
         await this.page
-            .locator("button", { hasText: "Use QR Code to connect" })
+            .locator("button", {
+                hasText: "Use QR code to connect",
+            })
             .click();
     }
 
