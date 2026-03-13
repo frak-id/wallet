@@ -1,7 +1,7 @@
 import { Button } from "@frak-labs/ui/component/Button";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { StepLayout } from "../StepLayout";
+import { StepLayout } from "@/module/common/component/StepLayout";
 
 type NotificationOptInProps = {
     onEnable: () => void;

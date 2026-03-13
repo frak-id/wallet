@@ -2,7 +2,7 @@ import { Button } from "@frak-labs/ui/component/Button";
 import { HandleErrors } from "@frak-labs/wallet-shared";
 import { useTranslation } from "react-i18next";
 import { AuthenticateWithPhone } from "@/module/authentication/component/AuthenticateWithPhone";
-import { StepLayout } from "../StepLayout";
+import { StepLayout } from "@/module/common/component/StepLayout";
 
 type KeypassProps = {
     onContinue: () => void;
