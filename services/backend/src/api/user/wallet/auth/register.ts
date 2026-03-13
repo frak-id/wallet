@@ -15,7 +15,10 @@ import {
 } from "../../../../domain/auth";
 import { OrchestrationContext } from "../../../../orchestration/context";
 import type { IdentityNode } from "../../../../orchestration/identity/types";
-import { identityHeadersSchema } from "./schemas";
+
+const identityHeadersSchema = t.Object({
+    "x-frak-client-id": t.Optional(t.String()),
+});
 
 export const registerRoutes = new Elysia()
     .guard({
