@@ -36,3 +36,15 @@ tauri-plugin-app-settings = { path = "plugins/tauri-plugin-app-settings" }
 tauri-plugin-webauthn = "0.2.0"
 tauri-plugin-share = "2.0.5"
 tauri-plugin-fs = "2.4.4"
+
+# Optimized release profile for smaller, faster builds
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+panic = "abort"
+strip = true
+
+# Fast incremental dev builds
+[profile.dev]
+incremental = true

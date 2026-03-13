@@ -85,13 +85,37 @@
         <link rel="author" href="https://github.com/srod">
         <link rel="author" href="https://github.com/KONFeature">
 
-        <!-- Fonts -->
-        <link rel="preconnect" href="https://fonts.googleapis.com">
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link
-            rel="stylesheet"
-            href="https://fonts.googleapis.com/css2?family=Sora:wght@100..800&display=swap"
-        >
+        <!-- Fonts: local for Tauri (no CDN dependency), Google Fonts CDN for web -->
+        <script>
+        (() => {
+            var link = document.createElement("link");
+            var preconnect2;
+            var fontLink;
+            if (window.__TAURI_INTERNALS__) {
+                // Tauri: load self-hosted font files for instant rendering
+                link.rel = "stylesheet";
+                link.href = "/fonts/sora.css";
+                document.head.appendChild(link);
+            } else {
+                // Web: load from Google Fonts CDN
+                link.rel = "preconnect";
+                link.href = "https://fonts.googleapis.com";
+                document.head.appendChild(link);
+
+                preconnect2 = document.createElement("link");
+                preconnect2.rel = "preconnect";
+                preconnect2.href = "https://fonts.gstatic.com";
+                preconnect2.crossOrigin = "";
+                document.head.appendChild(preconnect2);
+
+                fontLink = document.createElement("link");
+                fontLink.rel = "stylesheet";
+                fontLink.href =
+                    "https://fonts.googleapis.com/css2?family=Sora:wght@100..800&display=swap";
+                document.head.appendChild(fontLink);
+            }
+        })();
+        </script>
 
         <!-- PWA Install Prompt Handler -->
         <script>
