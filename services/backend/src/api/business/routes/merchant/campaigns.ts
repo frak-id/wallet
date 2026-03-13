@@ -6,12 +6,9 @@ import { Elysia, status } from "elysia";
 import type { Address } from "viem";
 import {
     type BudgetConfig,
-    BudgetConfigSchema,
     CampaignContext,
-    CampaignMetadataSchema,
     CampaignResponseSchema,
     type CampaignRuleDefinition,
-    CampaignRuleDefinitionSchema,
     type CampaignStatus,
 } from "../../../../domain/campaign";
 import {
@@ -20,6 +17,10 @@ import {
 } from "../../../../domain/campaign-bank";
 import type { DistributionStatus } from "../../../../domain/campaign-bank/schemas";
 import { MerchantContext } from "../../../../domain/merchant";
+import {
+    CampaignCreateBodySchema,
+    CampaignUpdateBodySchema,
+} from "../../../schemas";
 import { businessSessionContext } from "../../middleware/session";
 
 function resolveRewardTokens(
@@ -268,14 +269,7 @@ export const merchantCampaignsRoutes = new Elysia({
         },
         {
             params: t.Object({ merchantId: t.String() }),
-            body: t.Object({
-                name: t.String(),
-                rule: CampaignRuleDefinitionSchema,
-                metadata: t.Optional(CampaignMetadataSchema),
-                budgetConfig: t.Optional(BudgetConfigSchema),
-                expiresAt: t.Optional(t.String()),
-                priority: t.Optional(t.Number()),
-            }),
+            body: CampaignCreateBodySchema,
             response: {
                 200: CampaignResponseSchema,
                 400: t.String(),
@@ -347,14 +341,7 @@ export const merchantCampaignsRoutes = new Elysia({
                 merchantId: t.String(),
                 campaignId: t.String(),
             }),
-            body: t.Object({
-                name: t.Optional(t.String()),
-                rule: t.Optional(CampaignRuleDefinitionSchema),
-                metadata: t.Optional(CampaignMetadataSchema),
-                budgetConfig: t.Optional(BudgetConfigSchema),
-                expiresAt: t.Optional(t.Union([t.String(), t.Null()])),
-                priority: t.Optional(t.Number()),
-            }),
+            body: CampaignUpdateBodySchema,
             response: {
                 200: CampaignResponseSchema,
                 400: t.String(),

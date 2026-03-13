@@ -4,6 +4,10 @@ import {
     MerchantAppearanceSchema,
     MerchantContext,
 } from "../../../../domain/merchant";
+import {
+    MerchantDetailResponseSchema,
+    MyMerchantsResponseSchema,
+} from "../../../schemas";
 import { businessSessionContext } from "../../middleware/session";
 import { merchantAdminsRoutes } from "./admins";
 import { merchantBankRoutes } from "./bank";
@@ -60,23 +64,7 @@ export const merchantRoutes = new Elysia({ prefix: "/merchant" })
                 merchantId: t.String(),
             }),
             response: {
-                200: t.Object({
-                    id: t.String(),
-                    domain: t.String(),
-                    name: t.String(),
-                    ownerWallet: t.Hex(),
-                    bankAddress: t.Union([t.Hex(), t.Null()]),
-                    defaultRewardToken: t.Hex(),
-                    config: t.Union([t.Object({}), t.Null()]),
-                    appearance: t.Union([MerchantAppearanceSchema, t.Null()]),
-                    verifiedAt: t.Union([t.String(), t.Null()]),
-                    createdAt: t.Union([t.String(), t.Null()]),
-                    role: t.Union([
-                        t.Literal("owner"),
-                        t.Literal("admin"),
-                        t.Literal("none"),
-                    ]),
-                }),
+                200: MerchantDetailResponseSchema,
                 401: t.String(),
                 403: t.String(),
                 404: t.String(),
@@ -124,22 +112,7 @@ export const merchantRoutes = new Elysia({ prefix: "/merchant" })
         },
         {
             response: {
-                200: t.Object({
-                    owned: t.Array(
-                        t.Object({
-                            id: t.String(),
-                            domain: t.String(),
-                            name: t.String(),
-                        })
-                    ),
-                    adminOf: t.Array(
-                        t.Object({
-                            id: t.String(),
-                            domain: t.String(),
-                            name: t.String(),
-                        })
-                    ),
-                }),
+                200: MyMerchantsResponseSchema,
                 401: t.String(),
             },
         }

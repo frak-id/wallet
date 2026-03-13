@@ -7,6 +7,7 @@ import {
     purchasesTable,
     WebhookPlatformSchema,
 } from "../../../../domain/purchases";
+import { WebhookStatusResponseSchema } from "../../../schemas";
 import { businessSessionContext } from "../../middleware/session";
 
 export const merchantWebhooksRoutes = new Elysia({
@@ -67,24 +68,7 @@ export const merchantWebhooksRoutes = new Elysia({
         {
             params: t.Object({ merchantId: t.String() }),
             response: {
-                200: t.Union([
-                    t.Object({
-                        setup: t.Literal(false),
-                    }),
-                    t.Object({
-                        setup: t.Literal(true),
-                        platform: WebhookPlatformSchema,
-                        webhookSigninKey: t.String(),
-                        stats: t.Partial(
-                            t.Object({
-                                firstPurchase: t.Date(),
-                                lastPurchase: t.Date(),
-                                lastUpdate: t.Date(),
-                                totalPurchaseHandled: t.Number(),
-                            })
-                        ),
-                    }),
-                ]),
+                200: WebhookStatusResponseSchema,
                 401: t.String(),
                 403: t.String(),
             },
