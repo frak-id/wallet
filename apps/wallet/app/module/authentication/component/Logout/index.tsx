@@ -3,8 +3,10 @@ import { sessionStore, trackGenericEvent } from "@frak-labs/wallet-shared";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { LogOut } from "lucide-react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Panel, panelDismissedPrefix } from "@/module/common/component/Panel";
+import { useNotificationContext } from "@/module/notification/context/NotificationContext";
 
 function cleanLocalStorage() {
     // Clear static local storage items
@@ -37,6 +39,8 @@ export function Logout() {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const queryClient = useQueryClient();
+    const { adapter, setIsSubscribed } = useNotificationContext();
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
 
     return (
         <Panel size={"none"} variant={"invisible"}>
@@ -44,10 +48,15 @@ export function Logout() {
                 blur={"blur"}
                 width={"full"}
                 align={"left"}
+                isLoading={isLoggingOut}
+                disabled={isLoggingOut}
                 onClick={async () => {
+                    setIsLoggingOut(true);
                     trackGenericEvent("logout");
+                    // Unsubscribe from push notifications before clearing session (needs auth)
+                    await adapter.unsubscribe().catch(() => {});
+                    setIsSubscribed(false);
                     // Session deletion
-                    sessionStore.getState().clearSession();
                     sessionStore.getState().clearSession();
                     // Query cache
                     queryClient.removeQueries();
