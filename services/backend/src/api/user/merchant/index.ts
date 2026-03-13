@@ -1,34 +1,9 @@
-import { rateLimitMiddleware } from "@backend-infrastructure";
 import { Elysia, status, t } from "elysia";
 import { keccak256, toHex } from "viem";
 import { CampaignContext } from "../../../domain/campaign/context";
 import { EstimatedRewardsResultSchema } from "../../../domain/campaign/schemas";
 import { MerchantContext } from "../../../domain/merchant/context";
-import { OrchestrationContext } from "../../../orchestration/context";
-import { ExplorerQueryResultSchema } from "../../schemas";
-
-const exploreApi = new Elysia()
-    .use(rateLimitMiddleware({ windowMs: 60_000, maxRequests: 30 }))
-    .get(
-        "/explore",
-        async ({ query: { limit, offset } }) => {
-            return OrchestrationContext.orchestrators.explorer.queryMerchants({
-                limit,
-                offset,
-            });
-        },
-        {
-            query: t.Object({
-                limit: t.Optional(
-                    t.Number({ default: 20, minimum: 1, maximum: 100 })
-                ),
-                offset: t.Optional(t.Number({ default: 0, minimum: 0 })),
-            }),
-            response: {
-                200: ExplorerQueryResultSchema,
-            },
-        }
-    );
+import { exploreApi } from "./explorer";
 
 export const userMerchantApi = new Elysia({ prefix: "/merchant" })
     .get(

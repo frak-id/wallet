@@ -3,19 +3,10 @@ import { campaignRulesTable } from "../domain/campaign/db/schema";
 import { merchantsTable } from "../domain/merchant/db/schema";
 import type { MerchantAppearance } from "../domain/merchant/schemas";
 import { db } from "../infrastructure/persistence/postgres";
-
-type ExplorerMerchantItem = {
-    id: string;
-    name: string;
-    domain: string;
-    appearance: MerchantAppearance | null;
-    activeCampaignCount: number;
-};
-
-type ExplorerQueryResult = {
-    totalResult: number;
-    merchants: ExplorerMerchantItem[];
-};
+import type {
+    ExplorerMerchantItem,
+    ExplorerQueryResult,
+} from "./schemas/explorerSchemas";
 
 type ExplorerQueryParams = {
     limit?: number;

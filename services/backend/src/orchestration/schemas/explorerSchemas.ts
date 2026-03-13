@@ -1,4 +1,5 @@
 import { t } from "@backend-utils";
+import type { Static } from "elysia";
 import { MerchantAppearanceSchema } from "../../domain/merchant/schemas";
 
 export const ExplorerMerchantItemSchema = t.Object({
@@ -9,7 +10,11 @@ export const ExplorerMerchantItemSchema = t.Object({
     activeCampaignCount: t.Number(),
 });
 
+export type ExplorerMerchantItem = Static<typeof ExplorerMerchantItemSchema>;
+
 export const ExplorerQueryResultSchema = t.Object({
     totalResult: t.Number(),
     merchants: t.Array(ExplorerMerchantItemSchema),
 });
+
+export type ExplorerQueryResult = Static<typeof ExplorerQueryResultSchema>;
