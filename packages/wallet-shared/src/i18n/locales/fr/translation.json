@@ -299,6 +299,49 @@
             "generic": "Une erreur est survenue. Veuillez réessayer."
         }
     },
+    "onboarding": {
+        "continue": "Continuer",
+        "activateSecureSpace": "Activer mon espace sécurisé",
+        "slides": {
+            "one": {
+                "title": "Slide 1 — Titre placeholder",
+                "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+            },
+            "two": {
+                "title": "Slide 2 — Titre placeholder",
+                "description": "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."
+            },
+            "three": {
+                "title": "Slide 3 — Titre placeholder",
+                "description": "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur."
+            }
+        },
+        "keypass": {
+            "title": "Sécurisez votre compte",
+            "description": "Votre clé d'accès sera sauvegardée dans votre gestionnaire de mots de passe pour une connexion biométrique rapide.",
+            "unsupported": {
+                "title": "Navigateur non compatible",
+                "description": "Votre navigateur ne supporte pas l'authentification biométrique. Connectez-vous autrement pour accéder à votre portefeuille.",
+                "button": "Se connecter autrement"
+            },
+            "existingAccount": {
+                "title": "Bon retour parmi nous !",
+                "description": "Vous avez déjà un compte. Connectez-vous avec votre clé d'accès pour retrouver votre portefeuille.",
+                "button": "Se connecter"
+            }
+        },
+        "notification": {
+            "title": "Ne manquez aucun gain !",
+            "description": "Recevez des notifications pour suivre vos gains et vos récompenses en temps réel.",
+            "enable": "Oui, me prévenir",
+            "skip": "Plus tard"
+        },
+        "welcome": {
+            "title": "Bienvenue dans votre portefeuille",
+            "description": "Votre portefeuille sécurisé est prêt. Commencez à explorer et à gérer vos actifs numériques.",
+            "button": "Commencer"
+        }
+    },
     "reward": {
         "status": {
             "pending": "En attente",

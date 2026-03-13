@@ -301,6 +301,49 @@
             "generic": "An error occurred. Please try again."
         }
     },
+    "onboarding": {
+        "continue": "Continue",
+        "activateSecureSpace": "Activate my secure space",
+        "slides": {
+            "one": {
+                "title": "Slide 1 — Title placeholder",
+                "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+            },
+            "two": {
+                "title": "Slide 2 — Title placeholder",
+                "description": "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."
+            },
+            "three": {
+                "title": "Slide 3 — Title placeholder",
+                "description": "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur."
+            }
+        },
+        "keypass": {
+            "title": "Secure your account",
+            "description": "Your passkey will be saved in your password manager for fast biometric login.",
+            "unsupported": {
+                "title": "Browser not compatible",
+                "description": "Your browser does not support biometric authentication. Log in another way to access your wallet.",
+                "button": "Log in another way"
+            },
+            "existingAccount": {
+                "title": "Welcome back!",
+                "description": "You already have an account. Log in with your passkey to access your wallet.",
+                "button": "Log in"
+            }
+        },
+        "notification": {
+            "title": "Don't miss any reward!",
+            "description": "Receive notifications to track your rewards in real time.",
+            "enable": "Yes, notify me",
+            "skip": "Later"
+        },
+        "welcome": {
+            "title": "Welcome to your wallet",
+            "description": "Your secure wallet is ready. Start exploring and managing your digital assets.",
+            "button": "Get started"
+        }
+    },
     "reward": {
         "status": {
             "pending": "Pending",
