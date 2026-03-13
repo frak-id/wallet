@@ -21,8 +21,8 @@ export type MerchantData = {
     ownerWallet: Address;
     bankAddress: Address | null;
     defaultRewardToken: Address;
-    appearance: { heroImageUrl?: string; description?: string } | null;
-    config: { [key: string]: object } | null;
+    explorerConfig: { heroImageUrl?: string; description?: string } | null;
+    explorerEnabledAt: string | null;
     verifiedAt: string | null;
     createdAt: string | null;
     role: MerchantRole;
@@ -72,8 +72,8 @@ export const merchantQueryOptions = (merchantId: string, isDemoMode: boolean) =>
                 ownerWallet: data.ownerWallet,
                 bankAddress: data.bankAddress,
                 defaultRewardToken: data.defaultRewardToken,
-                appearance: data.appearance,
-                config: data.config,
+                explorerConfig: data.explorerConfig,
+                explorerEnabledAt: data.explorerEnabledAt,
                 verifiedAt: data.verifiedAt,
                 createdAt: data.createdAt,
                 role: data.role,

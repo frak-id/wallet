@@ -9,7 +9,7 @@ import {
 } from "drizzle-orm/pg-core";
 import type { Address } from "viem";
 import { customHex } from "../../../utils/drizzle/customTypes";
-import type { MerchantConfig } from "../schemas";
+import type { ExplorerConfig } from "../schemas";
 
 export const merchantsTable = pgTable(
     "merchants",
@@ -25,7 +25,8 @@ export const merchantsTable = pgTable(
             .notNull(),
         webhookSignatureKey: text("webhook_signature_key"),
         webhookPlatform: text("webhook_platform"),
-        config: jsonb("config").$type<MerchantConfig>(),
+        explorerConfig: jsonb("explorer_config").$type<ExplorerConfig>(),
+        explorerEnabledAt: timestamp("explorer_enabled_at"),
         verifiedAt: timestamp("verified_at"),
         createdAt: timestamp("created_at").defaultNow(),
         updatedAt: timestamp("updated_at").defaultNow(),

@@ -1,6 +1,6 @@
 import { t } from "@backend-utils";
 import type { Static } from "elysia";
-import { MerchantAppearanceSchema } from "../../domain/merchant/schemas";
+import { ExplorerConfigSchema } from "../../domain/merchant/schemas";
 
 export const MerchantDetailResponseSchema = t.Object({
     id: t.String(),
@@ -9,8 +9,8 @@ export const MerchantDetailResponseSchema = t.Object({
     ownerWallet: t.Hex(),
     bankAddress: t.Union([t.Hex(), t.Null()]),
     defaultRewardToken: t.Hex(),
-    config: t.Union([t.Object({}), t.Null()]),
-    appearance: t.Union([MerchantAppearanceSchema, t.Null()]),
+    explorerConfig: t.Union([ExplorerConfigSchema, t.Null()]),
+    explorerEnabledAt: t.Union([t.String(), t.Null()]),
     verifiedAt: t.Union([t.String(), t.Null()]),
     createdAt: t.Union([t.String(), t.Null()]),
     role: t.Union([t.Literal("owner"), t.Literal("admin"), t.Literal("none")]),

@@ -1,7 +1,6 @@
-import { and, count, eq, gt, isNull, or, sql } from "drizzle-orm";
+import { and, count, eq, gt, isNotNull, isNull, or, sql } from "drizzle-orm";
 import { campaignRulesTable } from "../domain/campaign/db/schema";
 import { merchantsTable } from "../domain/merchant/db/schema";
-import type { MerchantAppearance } from "../domain/merchant/schemas";
 import { db } from "../infrastructure/persistence/postgres";
 import type {
     ExplorerMerchantItem,
@@ -29,6 +28,8 @@ export class ExplorerOrchestrator {
             )
         );
 
+        const explorerFilter = isNotNull(merchantsTable.explorerEnabledAt);
+
         const baseQuery = db
             .select({
                 merchantId: merchantsTable.id,
@@ -44,6 +45,7 @@ export class ExplorerOrchestrator {
                     activeCampaignFilter
                 )
             )
+            .where(explorerFilter)
             .groupBy(merchantsTable.id);
 
         const [countResult] = await db
@@ -61,7 +63,7 @@ export class ExplorerOrchestrator {
                 id: merchantsTable.id,
                 name: merchantsTable.name,
                 domain: merchantsTable.domain,
-                config: merchantsTable.config,
+                explorerConfig: merchantsTable.explorerConfig,
                 activeCampaignCount: count(campaignRulesTable.id).as(
                     "active_campaign_count"
                 ),
@@ -74,6 +76,7 @@ export class ExplorerOrchestrator {
                     activeCampaignFilter
                 )
             )
+            .where(explorerFilter)
             .groupBy(merchantsTable.id)
             .orderBy(sql`COUNT(${campaignRulesTable.id}) DESC`)
             .limit(limit)
@@ -83,7 +86,7 @@ export class ExplorerOrchestrator {
             id: row.id,
             name: row.name,
             domain: row.domain,
-            appearance: (row.config?.appearance as MerchantAppearance) ?? null,
+            explorerConfig: row.explorerConfig ?? null,
             activeCampaignCount: Number(row.activeCampaignCount),
         }));
 

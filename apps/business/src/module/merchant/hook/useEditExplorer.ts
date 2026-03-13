@@ -1,24 +1,26 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { Address } from "viem";
 import { authenticatedBackendApi } from "@/api/backendClient";
 
-type EditMerchantInput = {
-    name?: string;
-    defaultRewardToken?: Address;
+type EditExplorerInput = {
+    enabled?: boolean;
+    config?: {
+        heroImageUrl?: string;
+        description?: string;
+    };
 };
 
-export function useEditMerchant({ merchantId }: { merchantId: string }) {
+export function useEditExplorer({ merchantId }: { merchantId: string }) {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationKey: ["merchant", "edit", merchantId],
-        mutationFn: async (input: EditMerchantInput) => {
+        mutationKey: ["merchant", "explorer", "edit", merchantId],
+        mutationFn: async (input: EditExplorerInput) => {
             const { error } = await authenticatedBackendApi
                 .merchant({ merchantId })
-                .put(input);
+                .explorer.put(input);
 
             if (error) {
-                throw new Error("Failed to update merchant");
+                throw new Error("Failed to update explorer settings");
             }
 
             return { success: true };

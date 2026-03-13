@@ -26,6 +26,7 @@ import {
 import { MerchantHead } from "@/module/merchant/component/MerchantHead";
 import { useEditMerchant } from "@/module/merchant/hook/useEditMerchant";
 import { useMerchant } from "@/module/merchant/hook/useMerchant";
+import { ExplorerSettings } from "./ExplorerSettings";
 import styles from "./index.module.css";
 import { PurchasseTrackerSetup } from "./PurchaseTracker";
 import { WebhookInteractionSetup } from "./WebhookInteraction";
@@ -34,8 +35,6 @@ type FormMerchant = {
     name: string;
     domain: string;
     defaultCurrency: Stablecoin;
-    heroImageUrl?: string;
-    description?: string;
 };
 
 function detectStablecoinFromAddress(address: Address): Stablecoin | undefined {
@@ -65,8 +64,6 @@ export function MerchantDetails({ merchantId }: { merchantId: string }) {
                           detectStablecoinFromAddress(
                               merchant.defaultRewardToken
                           ) ?? "eure",
-                      heroImageUrl: merchant.appearance?.heroImageUrl ?? "",
-                      description: merchant.appearance?.description ?? "",
                   }
                 : undefined,
         [merchant]
@@ -78,8 +75,6 @@ export function MerchantDetails({ merchantId }: { merchantId: string }) {
             name: "",
             domain: "",
             defaultCurrency: "eure",
-            heroImageUrl: "",
-            description: "",
         },
     });
 
@@ -89,20 +84,11 @@ export function MerchantDetails({ merchantId }: { merchantId: string }) {
     }, [editMerchantSuccess, form.reset, form.getValues, form]);
 
     function onSubmit(values: FormMerchant) {
-        const appearance =
-            values.heroImageUrl || values.description
-                ? {
-                      heroImageUrl: values.heroImageUrl,
-                      description: values.description,
-                  }
-                : undefined;
-
         editMerchant({
             name: values.name,
             defaultRewardToken: getTokenAddressForStablecoin(
                 values.defaultCurrency
             ),
-            appearance,
         });
     }
 
@@ -151,46 +137,6 @@ export function MerchantDetails({ merchantId }: { merchantId: string }) {
                                             placeholder={"Domain name...."}
                                             {...field}
                                             disabled={true}
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <FormField
-                            control={form.control}
-                            name="heroImageUrl"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel weight={"medium"}>
-                                        Hero image URL
-                                    </FormLabel>
-                                    <FormControl>
-                                        <InputWithToggle
-                                            length={"medium"}
-                                            placeholder={"https://..."}
-                                            {...field}
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <FormField
-                            control={form.control}
-                            name="description"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel weight={"medium"}>
-                                        Description
-                                    </FormLabel>
-                                    <FormControl>
-                                        <textarea
-                                            className={styles.textarea}
-                                            placeholder={
-                                                "Merchant description..."
-                                            }
-                                            {...field}
                                         />
                                     </FormControl>
                                     <FormMessage />
@@ -251,9 +197,10 @@ export function MerchantDetails({ merchantId }: { merchantId: string }) {
                         </Columns>
                     </Panel>
                 )}
-                <WebhookInteractionSetup merchantId={merchantId} />
-                <PurchasseTrackerSetup merchantId={merchantId} />
             </Form>
+            <ExplorerSettings merchantId={merchantId} />
+            <WebhookInteractionSetup merchantId={merchantId} />
+            <PurchasseTrackerSetup merchantId={merchantId} />
         </FormLayout>
     );
 }

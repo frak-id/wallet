@@ -1,9 +1,6 @@
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
-import {
-    MerchantAppearanceSchema,
-    MerchantContext,
-} from "../../../../domain/merchant";
+import { MerchantContext } from "../../../../domain/merchant";
 import {
     MerchantDetailResponseSchema,
     MerchantIdParamSchema,
@@ -15,6 +12,7 @@ import { merchantAdminsRoutes } from "./admins";
 import { merchantBankRoutes } from "./bank";
 import { merchantCampaignStatsRoutes } from "./campaignStats";
 import { merchantCampaignsRoutes } from "./campaigns";
+import { merchantExplorerRoutes } from "./explorer";
 import { merchantMembersRoutes } from "./members";
 import { merchantRegistrationRoutes } from "./registration";
 import { merchantTransferRoutes } from "./transfer";
@@ -54,8 +52,9 @@ export const merchantRoutes = new Elysia({ prefix: "/merchant" })
                 ownerWallet: merchant.ownerWallet,
                 bankAddress: merchant.bankAddress,
                 defaultRewardToken: merchant.defaultRewardToken,
-                config: merchant.config,
-                appearance: merchant.config?.appearance ?? null,
+                explorerConfig: merchant.explorerConfig ?? null,
+                explorerEnabledAt:
+                    merchant.explorerEnabledAt?.toISOString() ?? null,
                 verifiedAt: merchant.verifiedAt?.toISOString() ?? null,
                 createdAt: merchant.createdAt?.toISOString() ?? null,
                 role: access.role,
@@ -143,13 +142,6 @@ export const merchantRoutes = new Elysia({ prefix: "/merchant" })
                 }
             );
 
-            if (body.appearance) {
-                await MerchantContext.repositories.merchant.updateAppearance(
-                    merchantId,
-                    body.appearance
-                );
-            }
-
             if (!updated) {
                 return status(404, "Merchant not found");
             }
@@ -161,7 +153,6 @@ export const merchantRoutes = new Elysia({ prefix: "/merchant" })
             body: t.Object({
                 name: t.Optional(t.String()),
                 defaultRewardToken: t.Optional(t.Hex()),
-                appearance: t.Optional(MerchantAppearanceSchema),
             }),
             response: {
                 200: SuccessResponseSchema,
@@ -173,6 +164,7 @@ export const merchantRoutes = new Elysia({ prefix: "/merchant" })
     )
     .use(merchantAdminsRoutes)
     .use(merchantBankRoutes)
+    .use(merchantExplorerRoutes)
     .use(merchantTransferRoutes)
     .use(merchantCampaignsRoutes)
     .use(merchantCampaignStatsRoutes)

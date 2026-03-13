@@ -1,12 +1,12 @@
 import { t } from "@backend-utils";
 import type { Static } from "elysia";
-import { MerchantAppearanceSchema } from "../../domain/merchant/schemas";
+import { ExplorerConfigSchema } from "../../domain/merchant/schemas";
 
 export const ExplorerMerchantItemSchema = t.Object({
     id: t.String(),
     name: t.String(),
     domain: t.String(),
-    appearance: t.Union([MerchantAppearanceSchema, t.Null()]),
+    explorerConfig: t.Union([ExplorerConfigSchema, t.Null()]),
     activeCampaignCount: t.Number(),
 });
 
