@@ -88,6 +88,7 @@
     "vite": "npm:rolldown-vite@^7.3.1"
   },
   "dependencies": {
+    "@tauri-apps/api": "^2.10.1",
     "caniuse-lite": "^1.0.30001769"
   },
   "resolutions": {

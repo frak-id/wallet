@@ -5,6 +5,7 @@
     "": {
       "name": "frak-wallet",
       "dependencies": {
+        "@tauri-apps/api": "^2.10.1",
         "caniuse-lite": "^1.0.30001769",
       },
       "devDependencies": {
