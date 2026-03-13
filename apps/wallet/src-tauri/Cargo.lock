@@ -84,6 +84,7 @@ dependencies = [
  "serde_json",
  "tauri",
  "tauri-build",
+ "tauri-plugin-app-settings",
  "tauri-plugin-biometric",
  "tauri-plugin-deep-link",
  "tauri-plugin-fcm",
@@ -4452,6 +4453,15 @@ dependencies = [
  "tauri-utils",
  "toml 0.9.10+spec-1.1.0",
  "walkdir",
+]
+
+[[package]]
+name = "tauri-plugin-app-settings"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "tauri",
+ "tauri-plugin",
 ]
 
 [[package]]

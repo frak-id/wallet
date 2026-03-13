@@ -1,4 +1,3 @@
-import { isAndroid } from "@frak-labs/app-essentials/utils/platform";
 import type { PluginListener } from "@tauri-apps/api/core";
 import {
     checkPermissions,
@@ -181,13 +180,8 @@ export function createTauriNotificationAdapter(): NotificationAdapter {
         },
 
         openSettings: async () => {
-            if (isAndroid()) {
-                const { invoke } = await import("@tauri-apps/api/core");
-                await invoke("plugin:app-settings|open_notification_settings");
-            } else {
-                const { openUrl } = await import("@tauri-apps/plugin-opener");
-                await openUrl("app-settings:");
-            }
+            const { invoke } = await import("@tauri-apps/api/core");
+            await invoke("plugin:app-settings|open_notification_settings");
         },
 
         events,

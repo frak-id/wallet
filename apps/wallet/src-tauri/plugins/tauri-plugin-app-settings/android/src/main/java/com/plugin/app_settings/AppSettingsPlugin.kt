@@ -1,4 +1,4 @@
-package id.frak.wallet
+package com.plugin.app_settings
 
 import android.app.Activity
 import android.content.Intent
@@ -14,7 +14,6 @@ class AppSettingsPlugin(private val activity: Activity) : Plugin(activity) {
     @Command
     fun openNotificationSettings(invoke: Invoke) {
         try {
-            // Direct notification settings (API 26+, min SDK is 28)
             val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
                 putExtra(Settings.EXTRA_APP_PACKAGE, activity.packageName)
             }
@@ -22,7 +21,6 @@ class AppSettingsPlugin(private val activity: Activity) : Plugin(activity) {
             invoke.resolve()
         } catch (e: Exception) {
             try {
-                // Fallback to general app info page
                 val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
                     data = Uri.parse("package:${activity.packageName}")
                 }
