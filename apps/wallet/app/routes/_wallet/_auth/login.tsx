@@ -2,7 +2,7 @@ import { Button } from "@frak-labs/ui/component/Button";
 import { HandleErrors, sessionStore } from "@frak-labs/wallet-shared";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import { AuthActions } from "@/module/authentication/component/AuthActions";
 import { AuthenticateWithPhone } from "@/module/authentication/component/AuthenticateWithPhone";
 import { DemoTapZone } from "@/module/authentication/component/DemoTapZone";
@@ -63,7 +63,7 @@ function LoginPage() {
             <StepLayout
                 icon={<span>🔐</span>}
                 title={t("wallet.welcome.title")}
-                description={t("wallet.login.button")}
+                description={<Trans i18nKey={"wallet.login.button"} />}
                 footer={
                     <>
                         <AuthActions
@@ -79,23 +79,14 @@ function LoginPage() {
                         <Link to={"/recovery"} viewTransition>
                             {t("wallet.login.recover")}
                         </Link>
-                        <Button
-                            variant={"ghost"}
-                            width={"full"}
-                            onClick={() =>
-                                navigate({
-                                    to: "/register",
-                                    search: { new: "true" },
-                                })
-                            }
-                        >
+                        <Link to={"/register"} search={{ new: true }}>
                             {t("wallet.login.accountCreation")}
-                        </Button>
+                        </Link>
+                        <LoginList />
                     </>
                 }
             >
                 {error && <HandleErrors error={error} />}
-                <LoginList />
             </StepLayout>
         </>
     );
