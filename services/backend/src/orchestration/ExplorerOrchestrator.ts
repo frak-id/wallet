@@ -1,4 +1,5 @@
 import { and, count, eq, gt, isNotNull, isNull, or, sql } from "drizzle-orm";
+import { LRUCache } from "lru-cache";
 import { campaignRulesTable } from "../domain/campaign/db/schema";
 import { merchantsTable } from "../domain/merchant/db/schema";
 import { db } from "../infrastructure/persistence/postgres";
@@ -13,11 +14,39 @@ type ExplorerQueryParams = {
 };
 
 export class ExplorerOrchestrator {
+    private readonly cache = new LRUCache<
+        string,
+        { value: ExplorerQueryResult }
+    >({
+        max: 128,
+        ttl: 30_000,
+    });
+
     async queryMerchants(
         params: ExplorerQueryParams
     ): Promise<ExplorerQueryResult> {
         const limit = params.limit ?? 20;
         const offset = params.offset ?? 0;
+        const cacheKey = `${limit}:${offset}`;
+
+        const cached = this.cache.get(cacheKey);
+        if (cached) {
+            return cached.value;
+        }
+
+        const result = await this.fetchMerchants(limit, offset);
+        this.cache.set(cacheKey, { value: result });
+        return result;
+    }
+
+    invalidateCache(): void {
+        this.cache.clear();
+    }
+
+    private async fetchMerchants(
+        limit: number,
+        offset: number
+    ): Promise<ExplorerQueryResult> {
         const now = new Date();
 
         const activeCampaignFilter = and(
@@ -28,36 +57,6 @@ export class ExplorerOrchestrator {
             )
         );
 
-        const explorerFilter = isNotNull(merchantsTable.explorerEnabledAt);
-
-        const baseQuery = db
-            .select({
-                merchantId: merchantsTable.id,
-                activeCampaignCount: count(campaignRulesTable.id).as(
-                    "active_campaign_count"
-                ),
-            })
-            .from(merchantsTable)
-            .innerJoin(
-                campaignRulesTable,
-                and(
-                    eq(campaignRulesTable.merchantId, merchantsTable.id),
-                    activeCampaignFilter
-                )
-            )
-            .where(explorerFilter)
-            .groupBy(merchantsTable.id);
-
-        const [countResult] = await db
-            .select({ total: count() })
-            .from(baseQuery.as("merchants_with_campaigns"));
-
-        const totalResult = countResult?.total ?? 0;
-
-        if (totalResult === 0) {
-            return { totalResult: 0, merchants: [] };
-        }
-
         const rows = await db
             .select({
                 id: merchantsTable.id,
@@ -67,6 +66,9 @@ export class ExplorerOrchestrator {
                 activeCampaignCount: count(campaignRulesTable.id).as(
                     "active_campaign_count"
                 ),
+                totalResult: sql<number>`COUNT(*) OVER()`
+                    .mapWith(Number)
+                    .as("total_result"),
             })
             .from(merchantsTable)
             .innerJoin(
@@ -76,11 +78,17 @@ export class ExplorerOrchestrator {
                     activeCampaignFilter
                 )
             )
-            .where(explorerFilter)
+            .where(isNotNull(merchantsTable.explorerEnabledAt))
             .groupBy(merchantsTable.id)
             .orderBy(sql`COUNT(${campaignRulesTable.id}) DESC`)
             .limit(limit)
             .offset(offset);
+
+        if (rows.length === 0) {
+            return { totalResult: 0, merchants: [] };
+        }
+
+        const totalResult = rows[0]?.totalResult ?? 0;
 
         const merchants: ExplorerMerchantItem[] = rows.map((row) => ({
             id: row.id,

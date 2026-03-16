@@ -7,7 +7,6 @@ export type {
     SharingInput,
 } from "./handlers";
 export {
-    type InteractionSubmission,
     InteractionSubmissionOrchestrator,
     type SubmissionType,
 } from "./InteractionSubmissionOrchestrator";

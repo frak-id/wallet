@@ -1,7 +1,9 @@
 import { Elysia, status } from "elysia";
 import { OrchestrationContext } from "../../../orchestration/context";
-import type { InteractionSubmission } from "../../../orchestration/interaction-submission";
-import { InteractionSubmissionSchema } from "../../schemas";
+import {
+    type InteractionSubmission,
+    InteractionSubmissionSchema,
+} from "../../schemas";
 import { resolveSdkIdentity, sdkIdentityHeaderSchema } from "./sdkIdentity";
 
 export const trackInteractionRoute = new Elysia().post(

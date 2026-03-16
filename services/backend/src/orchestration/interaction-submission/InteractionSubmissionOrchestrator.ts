@@ -33,10 +33,6 @@ type InferExtra<H> =
 type InputFor<T extends SubmissionType> = InferInput<HandlerMap[T]>;
 type ExtraFor<T extends SubmissionType> = InferExtra<HandlerMap[T]>;
 
-export type InteractionSubmission = {
-    [T in SubmissionType]: { type: T } & InputFor<T>;
-}[SubmissionType];
-
 export class InteractionSubmissionOrchestrator {
     private readonly handlers: HandlerMap;
 
