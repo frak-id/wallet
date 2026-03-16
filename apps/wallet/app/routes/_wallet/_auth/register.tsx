@@ -40,7 +40,7 @@ export const Route = createFileRoute("/_wallet/_auth/register")({
     },
 });
 
-type FlowStep = "onboarding" | "keypass" | "notification" | "welcome";
+type FlowStep = "onboarding" | "notification" | "welcome";
 
 function RegisterPage() {
     const { t } = useTranslation();
@@ -48,6 +48,7 @@ function RegisterPage() {
     const { pairingInfo } = usePendingPairingInfo();
     const hasPendingPairing = Boolean(pairingInfo?.id);
     const [step, setStep] = useState<FlowStep>("onboarding");
+    const [showKeypassDrawer, setShowKeypassDrawer] = useState(false);
     const [isRegistering, setIsRegistering] = useState(false);
     const { register, error, isSuccess } = useRegister({});
     const {
@@ -55,7 +56,10 @@ function RegisterPage() {
         isLoading: isLoginLoading,
         error: loginError,
     } = useLogin({
-        onSuccess: () => setStep("notification"),
+        onSuccess: () => {
+            setShowKeypassDrawer(false);
+            setStep("notification");
+        },
     });
 
     /**
@@ -71,7 +75,10 @@ function RegisterPage() {
     }, [error]);
 
     useEffect(() => {
-        if (isSuccess) setStep("notification");
+        if (isSuccess) {
+            setShowKeypassDrawer(false);
+            setStep("notification");
+        }
     }, [isSuccess]);
 
     const { permissionStatus, permissionGranted, hasBackendToken } =
@@ -97,32 +104,32 @@ function RegisterPage() {
                 <Onboarding
                     buttonLabel={t("onboarding.continue")}
                     lastButtonLabel={t("onboarding.activateSecureSpace")}
-                    onFinish={() => setStep("keypass")}
+                    onFinish={() => setShowKeypassDrawer(true)}
                 >
                     <SlideOne />
                     <SlideTwo />
                     <SlideThree />
                 </Onboarding>
             )}
-            {step === "keypass" && (
-                <Keypass
-                    onContinue={() => {
-                        if (isRegistering) return;
-                        setIsRegistering(true);
-                        register().catch(() => {});
-                    }}
-                    isLoading={isRegistering}
-                    error={isPreviouslyUsedAuthenticatorError ? null : error}
-                    existingAccount={isPreviouslyUsedAuthenticatorError}
-                    isLoginLoading={isLoginLoading}
-                    loginError={loginError}
-                    onLogin={() => login()}
-                    webAuthNSupported={isWebAuthNSupported}
-                    onNavigateToLogin={() =>
-                        navigate({ to: "/login", replace: true })
-                    }
-                />
-            )}
+            <Keypass
+                open={showKeypassDrawer}
+                onOpenChange={setShowKeypassDrawer}
+                onContinue={() => {
+                    if (isRegistering) return;
+                    setIsRegistering(true);
+                    register().catch(() => {});
+                }}
+                isLoading={isRegistering}
+                error={isPreviouslyUsedAuthenticatorError ? null : error}
+                existingAccount={isPreviouslyUsedAuthenticatorError}
+                isLoginLoading={isLoginLoading}
+                loginError={loginError}
+                onLogin={() => login()}
+                webAuthNSupported={isWebAuthNSupported}
+                onNavigateToLogin={() =>
+                    navigate({ to: "/login", replace: true })
+                }
+            />
             {step === "notification" && (
                 <NotificationOptIn
                     onEnable={() =>
