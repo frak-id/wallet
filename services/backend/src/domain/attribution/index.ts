@@ -9,10 +9,6 @@ export {
 export { ReferralLinkRepository } from "./repositories/ReferralLinkRepository";
 export { TouchpointRepository } from "./repositories/TouchpointRepository";
 export {
-    type DirectSourceData,
-    type OrganicSourceData,
-    type PaidAdSourceData,
-    type ReferralLinkSourceData,
     type TouchpointSource,
     type TouchpointSourceData,
     TouchpointSourceDataSchema,

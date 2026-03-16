@@ -7,7 +7,7 @@ import {
     MemberFilterSchema,
     MemberQueryResultSchema,
     MemberSortSchema,
-} from "../../../../orchestration/schemas/memberSchemas";
+} from "../../../schemas";
 import { businessSessionContext } from "../../middleware/session";
 
 async function resolveAccessibleMerchantIds(

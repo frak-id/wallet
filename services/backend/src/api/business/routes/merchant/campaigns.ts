@@ -6,12 +6,9 @@ import { Elysia, status } from "elysia";
 import type { Address } from "viem";
 import {
     type BudgetConfig,
-    BudgetConfigSchema,
     CampaignContext,
-    CampaignMetadataSchema,
     CampaignResponseSchema,
     type CampaignRuleDefinition,
-    CampaignRuleDefinitionSchema,
     type CampaignStatus,
 } from "../../../../domain/campaign";
 import {
@@ -20,6 +17,13 @@ import {
 } from "../../../../domain/campaign-bank";
 import type { DistributionStatus } from "../../../../domain/campaign-bank/schemas";
 import { MerchantContext } from "../../../../domain/merchant";
+import {
+    CampaignCreateBodySchema,
+    CampaignUpdateBodySchema,
+    MerchantCampaignParamSchema,
+    MerchantIdParamSchema,
+    SuccessResponseSchema,
+} from "../../../schemas";
 import { businessSessionContext } from "../../middleware/session";
 
 function resolveRewardTokens(
@@ -152,7 +156,7 @@ export const merchantCampaignsRoutes = new Elysia({
             };
         },
         {
-            params: t.Object({ merchantId: t.String() }),
+            params: MerchantIdParamSchema,
             query: t.Object({
                 status: t.Optional(t.String()),
             }),
@@ -209,10 +213,7 @@ export const merchantCampaignsRoutes = new Elysia({
             return formatCampaign(campaign, distributionStatus);
         },
         {
-            params: t.Object({
-                merchantId: t.String(),
-                campaignId: t.String(),
-            }),
+            params: MerchantCampaignParamSchema,
             response: {
                 200: CampaignResponseSchema,
                 401: t.String(),
@@ -267,15 +268,8 @@ export const merchantCampaignsRoutes = new Elysia({
             return formatCampaign(result.campaign, undefined);
         },
         {
-            params: t.Object({ merchantId: t.String() }),
-            body: t.Object({
-                name: t.String(),
-                rule: CampaignRuleDefinitionSchema,
-                metadata: t.Optional(CampaignMetadataSchema),
-                budgetConfig: t.Optional(BudgetConfigSchema),
-                expiresAt: t.Optional(t.String()),
-                priority: t.Optional(t.Number()),
-            }),
+            params: MerchantIdParamSchema,
+            body: CampaignCreateBodySchema,
             response: {
                 200: CampaignResponseSchema,
                 400: t.String(),
@@ -343,18 +337,8 @@ export const merchantCampaignsRoutes = new Elysia({
             return formatCampaign(result.campaign, undefined);
         },
         {
-            params: t.Object({
-                merchantId: t.String(),
-                campaignId: t.String(),
-            }),
-            body: t.Object({
-                name: t.Optional(t.String()),
-                rule: t.Optional(CampaignRuleDefinitionSchema),
-                metadata: t.Optional(CampaignMetadataSchema),
-                budgetConfig: t.Optional(BudgetConfigSchema),
-                expiresAt: t.Optional(t.Union([t.String(), t.Null()])),
-                priority: t.Optional(t.Number()),
-            }),
+            params: MerchantCampaignParamSchema,
+            body: CampaignUpdateBodySchema,
             response: {
                 200: CampaignResponseSchema,
                 400: t.String(),
@@ -397,10 +381,7 @@ export const merchantCampaignsRoutes = new Elysia({
             return formatCampaign(result.campaign, undefined);
         },
         {
-            params: t.Object({
-                merchantId: t.String(),
-                campaignId: t.String(),
-            }),
+            params: MerchantCampaignParamSchema,
             response: {
                 200: CampaignResponseSchema,
                 400: t.String(),
@@ -443,10 +424,7 @@ export const merchantCampaignsRoutes = new Elysia({
             return formatCampaign(result.campaign, undefined);
         },
         {
-            params: t.Object({
-                merchantId: t.String(),
-                campaignId: t.String(),
-            }),
+            params: MerchantCampaignParamSchema,
             response: {
                 200: CampaignResponseSchema,
                 400: t.String(),
@@ -489,10 +467,7 @@ export const merchantCampaignsRoutes = new Elysia({
             return formatCampaign(result.campaign, undefined);
         },
         {
-            params: t.Object({
-                merchantId: t.String(),
-                campaignId: t.String(),
-            }),
+            params: MerchantCampaignParamSchema,
             response: {
                 200: CampaignResponseSchema,
                 400: t.String(),
@@ -535,10 +510,7 @@ export const merchantCampaignsRoutes = new Elysia({
             return formatCampaign(result.campaign, undefined);
         },
         {
-            params: t.Object({
-                merchantId: t.String(),
-                campaignId: t.String(),
-            }),
+            params: MerchantCampaignParamSchema,
             response: {
                 200: CampaignResponseSchema,
                 400: t.String(),
@@ -581,12 +553,9 @@ export const merchantCampaignsRoutes = new Elysia({
             return { success: true };
         },
         {
-            params: t.Object({
-                merchantId: t.String(),
-                campaignId: t.String(),
-            }),
+            params: MerchantCampaignParamSchema,
             response: {
-                200: t.Object({ success: t.Boolean() }),
+                200: SuccessResponseSchema,
                 400: t.String(),
                 401: t.String(),
                 403: t.String(),

@@ -3,6 +3,7 @@ import { keccak256, toHex } from "viem";
 import { CampaignContext } from "../../../domain/campaign/context";
 import { EstimatedRewardsResultSchema } from "../../../domain/campaign/schemas";
 import { MerchantContext } from "../../../domain/merchant/context";
+import { exploreApi } from "./explorer";
 
 export const userMerchantApi = new Elysia({ prefix: "/merchant" })
     .get(
@@ -55,4 +56,5 @@ export const userMerchantApi = new Elysia({ prefix: "/merchant" })
                 200: EstimatedRewardsResultSchema,
             },
         }
-    );
+    )
+    .use(exploreApi);

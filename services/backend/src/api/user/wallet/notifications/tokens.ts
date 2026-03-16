@@ -7,28 +7,10 @@ import {
     type PushTokenType,
     pushTokensTable,
 } from "../../../../domain/notifications";
-
-const WebPushSubscriptionBody = t.Object({
-    type: t.Literal("web-push"),
-    subscription: t.Object({
-        endpoint: t.String(),
-        keys: t.Object({
-            p256dh: t.String(),
-            auth: t.String(),
-        }),
-        expirationTime: t.Optional(t.Number()),
-    }),
-});
-
-const FcmTokenBody = t.Object({
-    type: t.Literal("fcm"),
-    token: t.String(),
-});
-
-const RegisterTokenBody = t.Union([WebPushSubscriptionBody, FcmTokenBody]);
+import { RegisterTokenBodySchema } from "../../../schemas";
 
 function tokenValuesFromBody(
-    body: typeof RegisterTokenBody.static,
+    body: typeof RegisterTokenBodySchema.static,
     wallet: `0x${string}`
 ) {
     if (body.type === "fcm") {
@@ -72,7 +54,7 @@ export const tokensRoutes = new Elysia({ prefix: "/tokens" })
         {
             withWalletAuthent: true,
             cleanupTokens: true,
-            body: RegisterTokenBody,
+            body: RegisterTokenBodySchema,
         }
     )
     .delete(

@@ -15,11 +15,11 @@ import {
 } from "../../../../domain/auth";
 import { OrchestrationContext } from "../../../../orchestration/context";
 import type { IdentityNode } from "../../../../orchestration/identity/types";
-import { identityHeadersSchema } from "./schemas";
+import { FrakClientIdHeaderSchema } from "../../../schemas";
 
 export const registerRoutes = new Elysia()
     .guard({
-        headers: identityHeadersSchema,
+        headers: FrakClientIdHeaderSchema,
     })
     .post(
         "/register",

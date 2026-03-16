@@ -85,9 +85,14 @@ export class EstimatedRewardService {
         return {
             token: campaignToken,
             campaignId: campaign.id,
+            name: campaign.name,
             interactionTypeKey: trigger,
             referrer,
             referee,
+            conditions: campaign.rule.conditions,
+            pendingRewardExpirationDays:
+                campaign.rule.pendingRewardExpirationDays,
+            maxRewardsPerUser: campaign.rule.maxRewardsPerUser,
         };
     }
 

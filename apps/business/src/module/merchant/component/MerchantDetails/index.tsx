@@ -26,6 +26,7 @@ import {
 import { MerchantHead } from "@/module/merchant/component/MerchantHead";
 import { useEditMerchant } from "@/module/merchant/hook/useEditMerchant";
 import { useMerchant } from "@/module/merchant/hook/useMerchant";
+import { ExplorerSettings } from "./ExplorerSettings";
 import styles from "./index.module.css";
 import { PurchasseTrackerSetup } from "./PurchaseTracker";
 import { WebhookInteractionSetup } from "./WebhookInteraction";
@@ -196,9 +197,10 @@ export function MerchantDetails({ merchantId }: { merchantId: string }) {
                         </Columns>
                     </Panel>
                 )}
-                <WebhookInteractionSetup merchantId={merchantId} />
-                <PurchasseTrackerSetup merchantId={merchantId} />
             </Form>
+            <ExplorerSettings merchantId={merchantId} />
+            <WebhookInteractionSetup merchantId={merchantId} />
+            <PurchasseTrackerSetup merchantId={merchantId} />
         </FormLayout>
     );
 }

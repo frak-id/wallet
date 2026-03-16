@@ -1,11 +1,18 @@
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
 import { MerchantContext } from "../../../../domain/merchant";
+import {
+    MerchantDetailResponseSchema,
+    MerchantIdParamSchema,
+    MyMerchantsResponseSchema,
+    SuccessResponseSchema,
+} from "../../../schemas";
 import { businessSessionContext } from "../../middleware/session";
 import { merchantAdminsRoutes } from "./admins";
 import { merchantBankRoutes } from "./bank";
 import { merchantCampaignStatsRoutes } from "./campaignStats";
 import { merchantCampaignsRoutes } from "./campaigns";
+import { merchantExplorerRoutes } from "./explorer";
 import { merchantMembersRoutes } from "./members";
 import { merchantRegistrationRoutes } from "./registration";
 import { merchantTransferRoutes } from "./transfer";
@@ -45,33 +52,18 @@ export const merchantRoutes = new Elysia({ prefix: "/merchant" })
                 ownerWallet: merchant.ownerWallet,
                 bankAddress: merchant.bankAddress,
                 defaultRewardToken: merchant.defaultRewardToken,
-                config: merchant.config,
+                explorerConfig: merchant.explorerConfig ?? null,
+                explorerEnabledAt:
+                    merchant.explorerEnabledAt?.toISOString() ?? null,
                 verifiedAt: merchant.verifiedAt?.toISOString() ?? null,
                 createdAt: merchant.createdAt?.toISOString() ?? null,
                 role: access.role,
             };
         },
         {
-            params: t.Object({
-                merchantId: t.String(),
-            }),
+            params: MerchantIdParamSchema,
             response: {
-                200: t.Object({
-                    id: t.String(),
-                    domain: t.String(),
-                    name: t.String(),
-                    ownerWallet: t.Hex(),
-                    bankAddress: t.Union([t.Hex(), t.Null()]),
-                    defaultRewardToken: t.Hex(),
-                    config: t.Union([t.Object({}), t.Null()]),
-                    verifiedAt: t.Union([t.String(), t.Null()]),
-                    createdAt: t.Union([t.String(), t.Null()]),
-                    role: t.Union([
-                        t.Literal("owner"),
-                        t.Literal("admin"),
-                        t.Literal("none"),
-                    ]),
-                }),
+                200: MerchantDetailResponseSchema,
                 401: t.String(),
                 403: t.String(),
                 404: t.String(),
@@ -119,22 +111,7 @@ export const merchantRoutes = new Elysia({ prefix: "/merchant" })
         },
         {
             response: {
-                200: t.Object({
-                    owned: t.Array(
-                        t.Object({
-                            id: t.String(),
-                            domain: t.String(),
-                            name: t.String(),
-                        })
-                    ),
-                    adminOf: t.Array(
-                        t.Object({
-                            id: t.String(),
-                            domain: t.String(),
-                            name: t.String(),
-                        })
-                    ),
-                }),
+                200: MyMerchantsResponseSchema,
                 401: t.String(),
             },
         }
@@ -172,13 +149,13 @@ export const merchantRoutes = new Elysia({ prefix: "/merchant" })
             return { success: true };
         },
         {
-            params: t.Object({ merchantId: t.String() }),
+            params: MerchantIdParamSchema,
             body: t.Object({
                 name: t.Optional(t.String()),
                 defaultRewardToken: t.Optional(t.Hex()),
             }),
             response: {
-                200: t.Object({ success: t.Boolean() }),
+                200: SuccessResponseSchema,
                 401: t.String(),
                 403: t.String(),
                 404: t.String(),
@@ -187,6 +164,7 @@ export const merchantRoutes = new Elysia({ prefix: "/merchant" })
     )
     .use(merchantAdminsRoutes)
     .use(merchantBankRoutes)
+    .use(merchantExplorerRoutes)
     .use(merchantTransferRoutes)
     .use(merchantCampaignsRoutes)
     .use(merchantCampaignStatsRoutes)

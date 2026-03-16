@@ -148,6 +148,13 @@
             "when": 1772804036014,
             "tag": "0020_misty_red_hulk",
             "breakpoints": true
+        },
+        {
+            "idx": 21,
+            "version": "7",
+            "when": 1773425204097,
+            "tag": "0021_merchant_explorer_columns",
+            "breakpoints": true
         }
     ]
 }

@@ -77,6 +77,7 @@
     "./domain/rewards": "./src/domain/rewards/index.ts",
     "./domain/rewards/schemas": "./src/domain/rewards/schemas/index.ts",
     "./orchestration/schemas": "./src/orchestration/schemas/index.ts",
+    "./api/schemas": "./src/api/schemas/index.ts",
     "./domain/pairing": "./src/domain/pairing/index.ts"
   },
   "module": "src/index.ts",
