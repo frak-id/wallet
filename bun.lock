@@ -240,7 +240,7 @@
         "react-i18next": "^16.5.4",
         "react-loading-skeleton": "^3.5.0",
         "remix-utils": "^9.0.1",
-        "tauri-plugin-fcm": "^0.1.7",
+        "tauri-plugin-fcm": "^0.1.9",
         "tauri-plugin-safe-area-insets": "^0.1.0",
         "tauri-plugin-share": "^2.0.4",
         "tauri-plugin-webauthn-api": "^0.2.0",
@@ -3621,7 +3621,7 @@
 
     "tar": ["tar@7.5.9", "", { "dependencies": { "@isaacs/fs-minipass": "^4.0.0", "chownr": "^3.0.0", "minipass": "^7.1.2", "minizlib": "^3.1.0", "yallist": "^5.0.0" } }, "sha512-BTLcK0xsDh2+PUe9F6c2TlRp4zOOBMTkoQHQIWSIzI0R7KG46uEwq4OPk2W7bZcprBMsuaeFsqwYr7pjh6CuHg=="],
 
-    "tauri-plugin-fcm": ["tauri-plugin-fcm@0.1.7", "", { "dependencies": { "@tauri-apps/api": "^2.0.0" } }, "sha512-FdWkfZmKUPkKue55qSxTJO4JYIhAQO8oMwTGNF9QGMecPuA7UaXLR7bcFajyfOyqxcpj9vgQjH17zSiq3rhfuw=="],
+    "tauri-plugin-fcm": ["tauri-plugin-fcm@0.1.9", "", { "dependencies": { "@tauri-apps/api": "^2.0.0" } }, "sha512-ll7DK/PthhpOkiwnP57F2Q7fWaotEmOFhLOIvFfi3vNr6J+5wVX2DoojXOEanKYsXazJuPf0RZlKyaQNjXi9Jw=="],
 
     "tauri-plugin-safe-area-insets": ["tauri-plugin-safe-area-insets@0.1.0", "", { "dependencies": { "@tauri-apps/api": ">=2.0.0-beta.6" } }, "sha512-NhtxSQdU7+laTJiO4WZFlTB1CBzRlNE5EuHflGAGXS55fiwOkkaWztfNishFQO+eZtb9i5jLHX3Yho48lnqcRQ=="],
 
