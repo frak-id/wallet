@@ -67,8 +67,8 @@
     "publish": "echo 'Publishing react...'"
   },
   "dependencies": {
-    "@frak-labs/frame-connector": "workspace:*",
-    "@frak-labs/core-sdk": "workspace:*"
+    "@frak-labs/core-sdk": "workspace:*",
+    "@frak-labs/frame-connector": "workspace:*"
   },
   "peerDependencies": {
     "viem": "^2.x",
@@ -88,13 +88,13 @@
     "@types/jsdom": "^27.0.0",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
-    "@vitest/coverage-v8": "^4.0.18",
-    "@vitest/ui": "^4.0.18",
-    "jsdom": "^28.0.0",
+    "@vitest/coverage-v8": "^4.1.0",
+    "@vitest/ui": "^4.1.0",
+    "jsdom": "^28.1.0",
     "react": "catalog:",
     "tsdown": "^0.20.3",
-    "typescript": "^5",
+    "typescript": "^5.9.3",
     "viem": "catalog:",
-    "vitest": "^4.0.18"
+    "vitest": "^4.1.0"
   }
 }
