@@ -3,10 +3,10 @@ import { Elysia, status } from "elysia";
 import {
     ExplorerConfigSchema,
     MerchantContext,
-} from "../../../../domain/merchant";
-import { OrchestrationContext } from "../../../../orchestration";
-import { MerchantIdParamSchema, SuccessResponseSchema } from "../../../schemas";
-import { businessSessionContext } from "../../middleware/session";
+} from "../../../domain/merchant";
+import { OrchestrationContext } from "../../../orchestration";
+import { MerchantIdParamSchema, SuccessResponseSchema } from "../../schemas";
+import { businessSessionContext } from "../middleware/session";
 
 export const merchantExplorerRoutes = new Elysia({
     prefix: "/:merchantId/explorer",

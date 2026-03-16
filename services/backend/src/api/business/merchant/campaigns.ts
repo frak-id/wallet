@@ -10,21 +10,21 @@ import {
     CampaignResponseSchema,
     type CampaignRuleDefinition,
     type CampaignStatus,
-} from "../../../../domain/campaign";
+} from "../../../domain/campaign";
 import {
     CampaignBankContext,
     computeDistributionStatus,
-} from "../../../../domain/campaign-bank";
-import type { DistributionStatus } from "../../../../domain/campaign-bank/schemas";
-import { MerchantContext } from "../../../../domain/merchant";
+} from "../../../domain/campaign-bank";
+import type { DistributionStatus } from "../../../domain/campaign-bank/schemas";
+import { MerchantContext } from "../../../domain/merchant";
 import {
     CampaignCreateBodySchema,
     CampaignUpdateBodySchema,
     MerchantCampaignParamSchema,
     MerchantIdParamSchema,
     SuccessResponseSchema,
-} from "../../../schemas";
-import { businessSessionContext } from "../../middleware/session";
+} from "../../schemas";
+import { businessSessionContext } from "../middleware/session";
 
 function resolveRewardTokens(
     rule: CampaignRuleDefinition,

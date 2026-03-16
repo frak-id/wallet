@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { sendRoutes } from "../../../src/api/business/routes/notifications/send";
+import { notificationsRoutes } from "../../../src/api/business/notifications";
 // Import mocks and routes
 import {
     JwtContextMock,
@@ -30,8 +30,8 @@ describe("Business Notifications Send Route API", () => {
         };
 
         it("should return 401 when businessSession is missing", async () => {
-            const response = await sendRoutes.handle(
-                new Request("http://localhost/send", {
+            const response = await notificationsRoutes.handle(
+                new Request("http://localhost/notifications/send", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -55,8 +55,8 @@ describe("Business Notifications Send Route API", () => {
         });
 
         it("should return 422 when targets are missing", async () => {
-            const response = await sendRoutes.handle(
-                new Request("http://localhost/send", {
+            const response = await notificationsRoutes.handle(
+                new Request("http://localhost/notifications/send", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -72,8 +72,8 @@ describe("Business Notifications Send Route API", () => {
         });
 
         it("should return 422 when payload is missing", async () => {
-            const response = await sendRoutes.handle(
-                new Request("http://localhost/send", {
+            const response = await notificationsRoutes.handle(
+                new Request("http://localhost/notifications/send", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -89,8 +89,8 @@ describe("Business Notifications Send Route API", () => {
         });
 
         it("should return 422 when payload.title is missing", async () => {
-            const response = await sendRoutes.handle(
-                new Request("http://localhost/send", {
+            const response = await notificationsRoutes.handle(
+                new Request("http://localhost/notifications/send", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -109,8 +109,8 @@ describe("Business Notifications Send Route API", () => {
         });
 
         it("should return 422 when payload.body is missing", async () => {
-            const response = await sendRoutes.handle(
-                new Request("http://localhost/send", {
+            const response = await notificationsRoutes.handle(
+                new Request("http://localhost/notifications/send", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -129,8 +129,8 @@ describe("Business Notifications Send Route API", () => {
         });
 
         it("should return 422 when targets.wallets contains invalid addresses", async () => {
-            const response = await sendRoutes.handle(
-                new Request("http://localhost/send", {
+            const response = await notificationsRoutes.handle(
+                new Request("http://localhost/notifications/send", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -149,8 +149,8 @@ describe("Business Notifications Send Route API", () => {
         });
 
         it("should return 422 when targets is empty object", async () => {
-            const response = await sendRoutes.handle(
-                new Request("http://localhost/send", {
+            const response = await notificationsRoutes.handle(
+                new Request("http://localhost/notifications/send", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -168,8 +168,8 @@ describe("Business Notifications Send Route API", () => {
 
         it("should return 400 when request body is invalid JSON", async () => {
             // Act: Make POST request with invalid JSON
-            const response = await sendRoutes.handle(
-                new Request("http://localhost/send", {
+            const response = await notificationsRoutes.handle(
+                new Request("http://localhost/notifications/send", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",

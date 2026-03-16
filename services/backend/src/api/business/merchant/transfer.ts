@@ -1,10 +1,10 @@
 import { log } from "@backend-infrastructure";
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
-import { CampaignBankContext } from "../../../../domain/campaign-bank";
-import { MerchantContext } from "../../../../domain/merchant";
-import { MerchantIdParamSchema, SuccessResponseSchema } from "../../../schemas";
-import { businessSessionContext } from "../../middleware/session";
+import { CampaignBankContext } from "../../../domain/campaign-bank";
+import { MerchantContext } from "../../../domain/merchant";
+import { MerchantIdParamSchema, SuccessResponseSchema } from "../../schemas";
+import { businessSessionContext } from "../middleware/session";
 
 export const merchantTransferRoutes = new Elysia({
     prefix: "/:merchantId/transfer",

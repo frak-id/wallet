@@ -1,9 +1,9 @@
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
-import { CampaignBankContext } from "../../../../domain/campaign-bank";
-import { BankStatusSchema } from "../../../../domain/campaign-bank/schemas";
-import { MerchantIdParamSchema } from "../../../schemas";
-import { businessSessionContext } from "../../middleware/session";
+import { CampaignBankContext } from "../../../domain/campaign-bank";
+import { BankStatusSchema } from "../../../domain/campaign-bank/schemas";
+import { MerchantIdParamSchema } from "../../schemas";
+import { businessSessionContext } from "../middleware/session";
 
 export const merchantBankRoutes = new Elysia({
     prefix: "/:merchantId/bank",

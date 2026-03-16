@@ -1,8 +1,8 @@
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
-import { MerchantContext } from "../../../../domain/merchant";
-import { MerchantIdParamSchema, SuccessResponseSchema } from "../../../schemas";
-import { businessSessionContext } from "../../middleware/session";
+import { MerchantContext } from "../../../domain/merchant";
+import { MerchantIdParamSchema, SuccessResponseSchema } from "../../schemas";
+import { businessSessionContext } from "../middleware/session";
 
 export const merchantAdminsRoutes = new Elysia({
     prefix: "/:merchantId/admins",

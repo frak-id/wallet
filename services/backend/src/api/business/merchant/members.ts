@@ -1,14 +1,14 @@
 import { extractShopDomain } from "@backend-infrastructure";
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
-import { MerchantContext } from "../../../../domain/merchant";
-import { OrchestrationContext } from "../../../../orchestration/context";
+import { MerchantContext } from "../../../domain/merchant";
+import { OrchestrationContext } from "../../../orchestration/context";
 import {
     MemberFilterSchema,
     MemberQueryResultSchema,
     MemberSortSchema,
-} from "../../../schemas";
-import { businessSessionContext } from "../../middleware/session";
+} from "../../schemas";
+import { businessSessionContext } from "../middleware/session";
 
 async function resolveAccessibleMerchantIds(
     businessSession: { wallet: `0x${string}` } | null,

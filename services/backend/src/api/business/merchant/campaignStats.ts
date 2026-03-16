@@ -1,11 +1,11 @@
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
-import { OrchestrationContext } from "../../../../orchestration/context";
+import { OrchestrationContext } from "../../../orchestration/context";
 import {
     CampaignStatsResponseSchema,
     MerchantIdParamSchema,
-} from "../../../schemas";
-import { businessSessionContext } from "../../middleware/session";
+} from "../../schemas";
+import { businessSessionContext } from "../middleware/session";
 
 export const merchantCampaignStatsRoutes = new Elysia({
     prefix: "/:merchantId/campaigns/stats",
