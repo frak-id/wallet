@@ -3,6 +3,8 @@ import { useMediaQuery } from "@frak-labs/ui/hook/useMediaQuery";
 import {
     Drawer,
     DrawerContent,
+    DrawerDescription,
+    DrawerTitle,
     HandleErrors,
     WalletModal,
 } from "@frak-labs/wallet-shared";
@@ -43,6 +45,7 @@ export function Keypass({
     webAuthNSupported = true,
     onNavigateToLogin,
 }: KeypassProps) {
+    const { t } = useTranslation();
     const isDesktop = useMediaQuery("(min-width: 600px)");
 
     const content = (
@@ -76,7 +79,15 @@ export function Keypass({
             shouldScaleBackground={false}
             modal={true}
         >
-            <DrawerContent hideHandle={true}>{content}</DrawerContent>
+            <DrawerContent hideHandle={true}>
+                <DrawerTitle className="sr-only">
+                    {t("onboarding.keypass.title")}
+                </DrawerTitle>
+                <DrawerDescription className="sr-only">
+                    {t("onboarding.keypass.description")}
+                </DrawerDescription>
+                {content}
+            </DrawerContent>
         </Drawer>
     );
 }

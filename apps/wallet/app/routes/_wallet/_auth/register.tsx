@@ -104,7 +104,14 @@ function RegisterPage() {
                 <Onboarding
                     buttonLabel={t("onboarding.continue")}
                     lastButtonLabel={t("onboarding.activateSecureSpace")}
-                    onFinish={() => setShowKeypassDrawer(true)}
+                    onFinish={() => {
+                        // Blur active element before opening drawer to prevent
+                        // aria-hidden conflict with focused element inside #root
+                        if (document.activeElement instanceof HTMLElement) {
+                            document.activeElement.blur();
+                        }
+                        setShowKeypassDrawer(true);
+                    }}
                 >
                     <SlideOne />
                     <SlideTwo />
