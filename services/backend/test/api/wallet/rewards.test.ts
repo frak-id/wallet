@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { rewardsRoutes } from "../../../src/api/user/wallet/routes/rewards";
+import { rewardsRoutes } from "../../../src/api/user/wallet/rewards";
 import { IdentityContext } from "../../../src/domain/identity";
 import { JwtContextMock } from "../../mock/common";
 

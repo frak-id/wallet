@@ -180,8 +180,16 @@ export function createTauriNotificationAdapter(): NotificationAdapter {
         },
 
         openSettings: async () => {
-            const { invoke } = await import("@tauri-apps/api/core");
-            await invoke("plugin:app-settings|open_notification_settings");
+            const { isAndroid } = await import(
+                "@frak-labs/app-essentials/utils/platform"
+            );
+            if (isAndroid()) {
+                const { invoke } = await import("@tauri-apps/api/core");
+                await invoke("plugin:app-settings|open_notification_settings");
+            } else {
+                const { openUrl } = await import("@tauri-apps/plugin-opener");
+                await openUrl("app-settings:");
+            }
         },
 
         events,
