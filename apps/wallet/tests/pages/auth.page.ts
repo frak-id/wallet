@@ -38,6 +38,8 @@ export class AuthPage {
                 hasText: "Activate my secure space",
             })
             .click();
+        // Wait for drawer animation (~250ms) + Vaul portal render
+        await this.page.waitForTimeout(400);
         // Wait for Keypass screen
         await expect(
             this.page.getByRole("heading", {
