@@ -16,7 +16,13 @@ export {
 } from "./api/backendClient";
 
 // Components
-export { Drawer, DrawerContent, DrawerTrigger } from "./component/Drawer";
+export {
+    Drawer,
+    DrawerContent,
+    DrawerDescription,
+    DrawerTitle,
+    DrawerTrigger,
+} from "./component/Drawer";
 export { InAppBrowserToast } from "./component/InAppBrowserToast";
 export { Markdown } from "./component/Markdown";
 export { TextData } from "./component/TextData";
