@@ -26,6 +26,10 @@ export type SendInteractionParamsType =
       }
     | {
           type: "sharing";
+          /** Epoch seconds timestamp matching the V2 context `t` field embedded in the referral link URL, used for backend correlation */
+          sharingTimestamp?: number;
+          /** Merchant order ID linking this sharing event to a purchase (stays server-side, never in URL) */
+          purchaseId?: string;
       }
     | {
           type: "custom";
