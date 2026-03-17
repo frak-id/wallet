@@ -33,6 +33,8 @@ export type CreateReferralLinkPayload = {
     sharerWallet: Address;
     merchantId: string;
     touchpointId?: string;
+    sharingTimestamp?: number;
+    purchaseId?: string;
 };
 
 /**
