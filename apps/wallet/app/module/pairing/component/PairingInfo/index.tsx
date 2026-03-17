@@ -1,3 +1,4 @@
+import { Box } from "@frak-labs/ui/component/Box";
 import { usePairingInfo } from "@frak-labs/wallet-shared";
 import type { TargetPairingState } from "@frak-labs/wallet-shared/pairing/types";
 import { Fingerprint } from "lucide-react";
@@ -5,7 +6,6 @@ import { useTranslation } from "react-i18next";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
 import { PairingStatus } from "@/module/pairing/component/PairingStatus";
-import styles from "./index.module.css";
 
 export function PairingInfo({
     state,
@@ -22,7 +22,7 @@ export function PairingInfo({
             <Title icon={<Fingerprint size={32} />}>
                 {t("wallet.pairing.info.title")}
             </Title>
-            <ul className={styles.pairing__list}>
+            <Box as={"ul"} direction={"column"} gap={"ms"} padding={"none"}>
                 <li>
                     {t("wallet.pairing.info.status")}{" "}
                     <PairingStatus status={state.status} />
@@ -33,7 +33,7 @@ export function PairingInfo({
                         {pairingInfo?.originName ?? "..."}
                     </li>
                 )}
-            </ul>
+            </Box>
         </Panel>
     );
 }

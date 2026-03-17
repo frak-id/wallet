@@ -1,3 +1,4 @@
+import { Box } from "@frak-labs/ui/component/Box";
 import { ExternalLink, Scale } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Panel } from "@/module/common/component/Panel";
@@ -12,7 +13,7 @@ export function LegalLinks() {
             <Title icon={<Scale size={32} />}>
                 {t("wallet.settings.legal")}
             </Title>
-            <ul className={styles.legalLinks__list}>
+            <Box as={"ul"} direction={"column"} gap={"ms"} padding={"none"}>
                 <li>
                     <a
                         href="https://frak.id/privacy"
@@ -35,7 +36,7 @@ export function LegalLinks() {
                         <ExternalLink size={16} />
                     </a>
                 </li>
-            </ul>
+            </Box>
         </Panel>
     );
 }

@@ -14,6 +14,10 @@
     padding: var(--frak-spacing-s);
 }
 
+.padding--ms {
+    padding: var(--frak-spacing-ms);
+}
+
 .padding--m {
     padding: var(--frak-spacing-m);
 }
@@ -36,6 +40,10 @@
 
 .gap--s {
     gap: var(--frak-spacing-s);
+}
+
+.gap--ms {
+    gap: var(--frak-spacing-ms);
 }
 
 .gap--m {

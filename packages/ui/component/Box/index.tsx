@@ -8,6 +8,7 @@ const boxVariants = cva(styles.box, {
             none: styles["padding--none"],
             xs: styles["padding--xs"],
             s: styles["padding--s"],
+            ms: styles["padding--ms"],
             m: styles["padding--m"],
             l: styles["padding--l"],
             xl: styles["padding--xl"],
@@ -16,6 +17,7 @@ const boxVariants = cva(styles.box, {
             none: styles["gap--none"],
             xs: styles["gap--xs"],
             s: styles["gap--s"],
+            ms: styles["gap--ms"],
             m: styles["gap--m"],
             l: styles["gap--l"],
             xl: styles["gap--xl"],
@@ -44,7 +46,15 @@ const boxVariants = cva(styles.box, {
     },
 });
 
-type BoxElement = "div" | "ul" | "ol" | "section" | "nav" | "aside" | "span";
+type BoxElement =
+    | "div"
+    | "ul"
+    | "ol"
+    | "li"
+    | "section"
+    | "nav"
+    | "aside"
+    | "span";
 
 type BoxProps = HTMLAttributes<HTMLElement> &
     VariantProps<typeof boxVariants> & {

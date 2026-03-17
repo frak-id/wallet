@@ -109,6 +109,7 @@
     --frak-spacing-none: var(--alias-spacing-none);
     --frak-spacing-xs: var(--alias-spacing-xs);
     --frak-spacing-s: var(--alias-spacing-s);
+    --frak-spacing-ms: var(--alias-spacing-ms);
     --frak-spacing-m: var(--alias-spacing-m);
     --frak-spacing-l: var(--alias-spacing-l);
     --frak-spacing-xl: var(--alias-spacing-xl);

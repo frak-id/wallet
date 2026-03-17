@@ -1,3 +1,4 @@
+import { Box } from "@frak-labs/ui/component/Box";
 import { WalletAddress } from "@frak-labs/ui/component/HashDisplay";
 import {
     selectEcdsaSession,
@@ -12,7 +13,6 @@ import { useAccount } from "wagmi";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
 import { isCryptoMode } from "@/module/common/utils/walletMode";
-import styles from "./index.module.css";
 
 export function SessionInfo() {
     const isHydrated = useHydrated();
@@ -31,7 +31,7 @@ export function SessionInfo() {
                 <Title icon={<Fingerprint size={32} />}>
                     {t("wallet.settings.biometryInfo")}
                 </Title>
-                <ul className={styles.settings__list}>
+                <Box as={"ul"} direction={"column"} gap={"ms"} padding={"none"}>
                     <li>
                         {t("common.authenticator")}{" "}
                         {isHydrated && (
@@ -51,7 +51,7 @@ export function SessionInfo() {
                             />
                         )}
                     </li>
-                </ul>
+                </Box>
             </Panel>
         );
     }
@@ -62,7 +62,7 @@ export function SessionInfo() {
                 <Title icon={<KeyRound size={32} />}>
                     {t("wallet.settings.ecdsaInfo")}
                 </Title>
-                <ul className={styles.settings__list}>
+                <Box as={"ul"} direction={"column"} gap={"ms"} padding={"none"}>
                     <li>
                         {t("wallet.settings.ecdsaWallet")}{" "}
                         {isHydrated && (
@@ -82,7 +82,7 @@ export function SessionInfo() {
                             />
                         )}
                     </li>
-                </ul>
+                </Box>
             </Panel>
         );
     }
