@@ -108,7 +108,7 @@ export const backendInstance = new KubernetesService(
                     resources: {
                         requests: {
                             cpu: isProd ? "200m" : "50m",
-                            memory: isProd ? "256Mi" : "128Mi",
+                            memory: "256Mi",
                         },
                         limits: { cpu: "400m", memory: "512Mi" },
                     },
