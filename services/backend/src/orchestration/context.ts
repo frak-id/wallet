@@ -3,6 +3,7 @@ import { CampaignContext } from "../domain/campaign/context";
 import { CampaignBankContext } from "../domain/campaign-bank/context";
 import { IdentityContext } from "../domain/identity/context";
 import { MerchantContext } from "../domain/merchant/context";
+import { NotificationContext } from "../domain/notifications/context";
 import { PurchasesContext } from "../domain/purchases/context";
 import { RewardsContext } from "../domain/rewards/context";
 import { WalletContext } from "../domain/wallet/context";
@@ -18,6 +19,7 @@ import {
 } from "./identity";
 import { InteractionSubmissionOrchestrator } from "./interaction-submission";
 import { MemberQueryOrchestrator } from "./MemberQueryOrchestrator";
+import { NotificationOrchestrator } from "./NotificationOrchestrator";
 import { PurchaseInteractionCreator } from "./PurchaseInteractionCreator";
 import { PurchaseLinkingOrchestrator } from "./PurchaseLinkingOrchestrator";
 import { PurchaseWebhookOrchestrator } from "./PurchaseWebhookOrchestrator";
@@ -49,6 +51,10 @@ const interactionContextBuilder = new InteractionContextBuilder(
     IdentityContext.repositories.identity
 );
 
+const notificationOrchestrator = new NotificationOrchestrator(
+    NotificationContext.services.notifications
+);
+
 const batchRewardOrchestrator = new BatchRewardOrchestrator(
     RewardsContext.repositories.interactionLog,
     RewardsContext.repositories.assetLog,
@@ -56,7 +62,8 @@ const batchRewardOrchestrator = new BatchRewardOrchestrator(
     AttributionContext.services.referral,
     identityOrchestrator,
     interactionContextBuilder,
-    MerchantContext.repositories.merchant
+    MerchantContext.repositories.merchant,
+    notificationOrchestrator
 );
 
 const purchaseInteractionCreator = new PurchaseInteractionCreator(
@@ -83,7 +90,8 @@ const settlementOrchestrator = new SettlementOrchestrator(
     MerchantContext.repositories.merchant,
     IdentityContext.repositories.identity,
     RewardsContext.repositories.interactionLog,
-    CampaignBankContext.repositories.campaignBank
+    CampaignBankContext.repositories.campaignBank,
+    notificationOrchestrator
 );
 
 const rewardExpirationOrchestrator = new RewardExpirationOrchestrator(
@@ -132,6 +140,7 @@ export namespace OrchestrationContext {
         anonymousMerge: anonymousMergeOrchestrator,
         batchReward: batchRewardOrchestrator,
         identity: identityOrchestrator,
+        notification: notificationOrchestrator,
         purchaseLinking: purchaseLinkingOrchestrator,
         purchaseWebhook: purchaseWebhookOrchestrator,
         rewardExpiration: rewardExpirationOrchestrator,

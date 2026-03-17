@@ -13,6 +13,7 @@ import type {
     SettlementService,
 } from "../domain/rewards/services/SettlementService";
 import type { SettlementResult } from "../domain/rewards/types";
+import type { NotificationOrchestrator } from "./NotificationOrchestrator";
 
 const defaultSettlementResult: SettlementResult = {
     settledCount: 0,
@@ -29,7 +30,8 @@ export class SettlementOrchestrator {
         private readonly merchantRepository: MerchantRepository,
         private readonly identityRepository: IdentityRepository,
         private readonly interactionLogRepository: InteractionLogRepository,
-        private readonly campaignBankRepository: CampaignBankRepository
+        private readonly campaignBankRepository: CampaignBankRepository,
+        private readonly notificationOrchestrator: NotificationOrchestrator
     ) {}
 
     async runSettlement(): Promise<SettlementResult> {
@@ -137,6 +139,16 @@ export class SettlementOrchestrator {
             merchantBanks
         );
 
+        if (results.settledCount > 0) {
+            this.sendRewardSettledNotifications(distributableRewards).catch(
+                (error) =>
+                    log.warn(
+                        { error },
+                        "Failed to send reward settled notifications"
+                    )
+            );
+        }
+
         // Invalidate all the banks cache for the results
         for (const bank of results.banks.values()) {
             this.campaignBankRepository.clearOnChainCache(bank);
@@ -232,5 +244,51 @@ export class SettlementOrchestrator {
         }
 
         return true;
+    }
+
+    private async sendRewardSettledNotifications(
+        rewards: AssetLogWithWallet[]
+    ) {
+        if (rewards.length === 0) return;
+
+        const merchantIds = [...new Set(rewards.map((r) => r.merchantId))];
+        const merchantNames = new Map<string, string>();
+        await Promise.all(
+            merchantIds.map(async (id) => {
+                const merchant = await this.merchantRepository.findById(id);
+                if (merchant?.name) {
+                    merchantNames.set(id, merchant.name);
+                }
+            })
+        );
+
+        const byWallet = new Map<
+            Address,
+            { merchantId: string; count: number }
+        >();
+        for (const reward of rewards) {
+            const existing = byWallet.get(reward.walletAddress);
+            if (existing) {
+                existing.count++;
+            } else {
+                byWallet.set(reward.walletAddress, {
+                    merchantId: reward.merchantId,
+                    count: 1,
+                });
+            }
+        }
+
+        const notifications = [...byWallet.entries()].map(
+            ([wallet, { merchantId, count }]) => ({
+                wallets: [wallet] as Address[],
+                template: {
+                    type: "reward_settled" as const,
+                    merchantName: merchantNames.get(merchantId) ?? "a merchant",
+                    rewardCount: count,
+                },
+            })
+        );
+
+        await this.notificationOrchestrator.sendNotifications(notifications);
     }
 }
