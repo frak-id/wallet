@@ -494,12 +494,46 @@ const SendNotificationPayloadDto = t.Object({
 vi.mock("../../src/domain/notifications", () => ({
     NotificationContext: {
         services: { notifications: notificationServiceMocks },
+        repositories: {
+            notificationBroadcast: {
+                create: vi.fn(() =>
+                    Promise.resolve({
+                        id: "00000000-0000-0000-0000-000000000001",
+                    })
+                ),
+                findByMerchant: vi.fn(() => Promise.resolve([])),
+            },
+            notificationSent: {
+                findByWallet: vi.fn(() => Promise.resolve([])),
+                markOpened: vi.fn(() => Promise.resolve(true)),
+            },
+        },
     },
     notificationMacro: notificationMacroMock,
     pushTokensTable: {},
     FcmSender: vi.fn(() => fcmSenderMocks),
     SendNotificationPayloadDto,
     SendNotificationTargetsDto,
+}));
+
+vi.mock("../../src/domain/notifications/context", () => ({
+    NotificationContext: {
+        services: { notifications: notificationServiceMocks },
+        repositories: {
+            notificationBroadcast: {
+                create: vi.fn(() =>
+                    Promise.resolve({
+                        id: "00000000-0000-0000-0000-000000000001",
+                    })
+                ),
+                findByMerchant: vi.fn(() => Promise.resolve([])),
+            },
+            notificationSent: {
+                findByWallet: vi.fn(() => Promise.resolve([])),
+                markOpened: vi.fn(() => Promise.resolve(true)),
+            },
+        },
+    },
 }));
 
 /* -------------------------------------------------------------------------- */
@@ -533,6 +567,18 @@ vi.mock("../../src/domain/business/context", () => ({
         repositories: {
             dnsCheck: dnsCheckRepositoryMocks,
             mint: mintRepositoryMocks,
+        },
+    },
+}));
+
+export const notificationOrchestratorMocks = {
+    sendNotifications: vi.fn(() => Promise.resolve()),
+};
+
+vi.mock("../../src/orchestration", () => ({
+    OrchestrationContext: {
+        orchestrators: {
+            notification: notificationOrchestratorMocks,
         },
     },
 }));

@@ -7,6 +7,7 @@ import {
     SendNotificationPayloadDto,
     SendNotificationTargetsDto,
 } from "../../domain/notifications";
+import { OrchestrationContext } from "../../orchestration";
 import { businessSessionContext } from "./middleware/session";
 
 async function getWalletsTargets({
@@ -51,10 +52,27 @@ export const notificationsRoutes = new Elysia({ prefix: "/notifications" })
                 wallet: businessSession.wallet,
             });
 
-            await NotificationContext.services.notifications.sendNotification({
-                wallets,
-                payload,
-            });
+            const broadcast =
+                await NotificationContext.repositories.notificationBroadcast.create(
+                    {
+                        merchantId,
+                        payload,
+                    }
+                );
+
+            await OrchestrationContext.orchestrators.notification.sendNotifications(
+                [
+                    {
+                        wallets,
+                        template: {
+                            type: "promotional",
+                            title: payload.title,
+                            body: payload.body,
+                            broadcastId: broadcast.id,
+                        },
+                    },
+                ]
+            );
         },
         {
             body: t.Object({
