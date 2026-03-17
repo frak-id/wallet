@@ -9,8 +9,5 @@
 }
 
 .historyGroup__item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
     margin: var(--alias-spacing-12) 0;
 }

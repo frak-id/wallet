@@ -1,3 +1,4 @@
+import { Box } from "@frak-labs/ui/component/Box";
 import type { HistoryGroup } from "@frak-labs/wallet-shared";
 import type { ReactNode } from "react";
 import { Panel } from "@/module/common/component/Panel";
@@ -20,12 +21,16 @@ export function HistoryDayGroup<T>({
             <Title>{day}</Title>
             <Panel size={"small"}>
                 {items.map((item, index) => (
-                    <div
+                    <Box
                         key={`${day}-${index}`}
+                        direction="row"
+                        padding="none"
+                        justify="between"
+                        align="center"
                         className={styles.historyGroup__item}
                     >
                         {innerComponent(item)}
-                    </div>
+                    </Box>
                 ))}
             </Panel>
         </div>

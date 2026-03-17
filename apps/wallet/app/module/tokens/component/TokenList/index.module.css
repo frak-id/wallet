@@ -1,5 +1,0 @@
-.tokenList {
-    display: flex;
-    flex-direction: column;
-    gap: var(--frak-spacing-s);
-}

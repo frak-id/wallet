@@ -1,5 +1,5 @@
 import { cva, type VariantProps } from "class-variance-authority";
-import type { ComponentPropsWithRef } from "react";
+import type { HTMLAttributes } from "react";
 import styles from "./index.module.css";
 
 const boxVariants = cva(styles.box, {
@@ -24,6 +24,19 @@ const boxVariants = cva(styles.box, {
             row: styles["direction--row"],
             column: styles["direction--column"],
         },
+        align: {
+            start: styles["align--start"],
+            center: styles["align--center"],
+            end: styles["align--end"],
+            stretch: styles["align--stretch"],
+            baseline: styles["align--baseline"],
+        },
+        justify: {
+            start: styles["justify--start"],
+            center: styles["justify--center"],
+            end: styles["justify--end"],
+            between: styles["justify--between"],
+        },
     },
     defaultVariants: {
         padding: "m",
@@ -31,18 +44,33 @@ const boxVariants = cva(styles.box, {
     },
 });
 
-type BoxProps = ComponentPropsWithRef<"div"> & VariantProps<typeof boxVariants>;
+type BoxElement = "div" | "ul" | "ol" | "section" | "nav" | "aside" | "span";
+
+type BoxProps = HTMLAttributes<HTMLElement> &
+    VariantProps<typeof boxVariants> & {
+        as?: BoxElement;
+    };
 
 export function Box({
+    as: Component = "div",
     padding,
     gap,
     direction,
+    align,
+    justify,
     className,
     ...props
 }: BoxProps) {
     return (
-        <div
-            className={boxVariants({ padding, gap, direction, className })}
+        <Component
+            className={boxVariants({
+                padding,
+                gap,
+                direction,
+                align,
+                justify,
+                className,
+            })}
             {...props}
         />
     );

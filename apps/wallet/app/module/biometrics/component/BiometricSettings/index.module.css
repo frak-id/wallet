@@ -1,13 +1,4 @@
-.biometricSettings {
-    display: flex;
-    flex-direction: column;
-    gap: var(--frak-spacing-m);
-}
-
 .biometricSettings__row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
     gap: var(--alias-spacing-12);
 }
 

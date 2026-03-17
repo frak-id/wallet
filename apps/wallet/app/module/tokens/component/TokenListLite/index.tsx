@@ -1,8 +1,8 @@
+import { Box } from "@frak-labs/ui/component/Box";
 import type { BalanceItem } from "@frak-labs/wallet-shared";
 import { useGetUserBalance } from "@frak-labs/wallet-shared";
 import { Skeleton } from "@/module/common/component/Skeleton";
 import { TokenItemLite } from "@/module/tokens/component/TokenItemLite";
-import styles from "./index.module.css";
 
 export function TokenListLite() {
     const { userBalance, isLoading } = useGetUserBalance();
@@ -13,11 +13,11 @@ export function TokenListLite() {
 
     return (
         userBalance && (
-            <ul className={styles.tokenListLite}>
+            <Box as="ul" direction="column" gap="s" padding="none">
                 {userBalance.balances.map((balance: BalanceItem) => (
                     <TokenItemLite token={balance} key={balance.token} />
                 ))}
-            </ul>
+            </Box>
         )
     );
 }

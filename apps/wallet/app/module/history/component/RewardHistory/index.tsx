@@ -54,7 +54,12 @@ function RewardHistoryItem({ reward }: { reward: RewardHistoryItemType }) {
 
     return (
         <Panel variant={"primary"} size={"small"} className={styles.item}>
-            <div className={styles.item__header}>
+            <Box
+                direction="row"
+                padding="none"
+                justify="between"
+                align="center"
+            >
                 <span className={styles.item__merchant}>
                     {reward.merchant.name}
                 </span>
@@ -62,14 +67,19 @@ function RewardHistoryItem({ reward }: { reward: RewardHistoryItemType }) {
                     +{reward.amount.toFixed(2)}
                     {isCryptoMode ? ` ${reward.token.symbol}` : "€"}
                 </span>
-            </div>
+            </Box>
             <div className={styles.item__badges}>
                 <span className={styles.item__badge}>{statusLabel}</span>
                 {triggerLabel && (
                     <span className={styles.item__badge}>{triggerLabel}</span>
                 )}
             </div>
-            <div className={styles.item__footer}>
+            <Box
+                direction="row"
+                padding="none"
+                justify="between"
+                align="center"
+            >
                 <span className={styles.item__date}>
                     {new Date(reward.timestamp).toLocaleString()}
                 </span>
@@ -78,7 +88,7 @@ function RewardHistoryItem({ reward }: { reward: RewardHistoryItemType }) {
                         {reward.txHash.slice(0, 10)}...
                     </span>
                 )}
-            </div>
+            </Box>
         </Panel>
     );
 }

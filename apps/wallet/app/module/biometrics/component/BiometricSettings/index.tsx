@@ -1,3 +1,4 @@
+import { Box } from "@frak-labs/ui/component/Box";
 import {
     Select,
     SelectContent,
@@ -54,15 +55,27 @@ export function BiometricSettings() {
             <Title icon={<Fingerprint size={32} />}>
                 {t("biometrics.settings.title")}
             </Title>
-            <div className={styles.biometricSettings}>
-                <div className={styles.biometricSettings__row}>
+            <Box direction="column" gap="m" padding="none">
+                <Box
+                    direction="row"
+                    padding="none"
+                    align="center"
+                    justify="between"
+                    className={styles.biometricSettings__row}
+                >
                     <span className={styles.biometricSettings__label}>
                         {t("biometrics.settings.enable")}
                     </span>
                     <Switch checked={enabled} onCheckedChange={handleToggle} />
-                </div>
+                </Box>
                 {enabled && (
-                    <div className={styles.biometricSettings__row}>
+                    <Box
+                        direction="row"
+                        padding="none"
+                        align="center"
+                        justify="between"
+                        className={styles.biometricSettings__row}
+                    >
                         <span className={styles.biometricSettings__label}>
                             {t("biometrics.settings.timeout")}
                         </span>
@@ -90,9 +103,9 @@ export function BiometricSettings() {
                                 </SelectItem>
                             </SelectContent>
                         </Select>
-                    </div>
+                    </Box>
                 )}
-            </div>
+            </Box>
         </Panel>
     );
 }
