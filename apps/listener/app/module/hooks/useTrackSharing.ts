@@ -1,4 +1,10 @@
+import type { SendInteractionParamsType } from "@frak-labs/core-sdk";
 import { useSendInteraction } from "./useSendInteraction";
+
+type SharingParams = Omit<
+    Extract<SendInteractionParamsType, { type: "sharing" }>,
+    "type"
+>;
 
 /**
  * Track sharing interaction.
@@ -9,7 +15,9 @@ export function useTrackSharing() {
 
     return {
         ...rest,
-        mutate: () => mutate({ type: "sharing" }),
-        mutateAsync: () => mutateAsync({ type: "sharing" }),
+        mutate: (params?: SharingParams) =>
+            mutate({ type: "sharing", ...params }),
+        mutateAsync: (params?: SharingParams) =>
+            mutateAsync({ type: "sharing", ...params }),
     };
 }
