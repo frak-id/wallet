@@ -1,7 +1,8 @@
 /**
  * Wallet design system bridge layer
  * Remaps all --frak-* CSS variables to new design system semantic tokens.
- * Loaded AFTER design-tokens.css so new values win over the old defaults.
+ * Loaded AFTER design-tokens.css (shared base + wallet extensions) so new
+ * values win over the old defaults.
  * Loaded BEFORE colors-wallet.css so wallet-specific overrides still win.
  *
  * Do NOT import directly — imported via apps/wallet/app/styles/all.css

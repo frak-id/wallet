@@ -1,0 +1,166 @@
+/**
+ * Wallet extensions — engineering additions for wallet-specific needs.
+ * Do NOT overwrite when importing design team updates.
+ * Loaded AFTER design-tokens.css (shared base).
+ */
+
+:root {
+    /* ── Brand / Font Size (wallet scale) ── */
+    --brand-fontsize-100: 10px;
+    --brand-fontsize-110: 11px;
+    --brand-fontsize-120: 12px;
+    --brand-fontsize-130: 13px;
+    --brand-fontsize-140: 14px;
+    --brand-fontsize-150: 15px;
+    --brand-fontsize-160: 16px;
+    --brand-fontsize-180: 18px;
+    --brand-fontsize-240: 24px;
+    --brand-fontsize-290: 29px;
+    --brand-fontsize-340: 34px;
+    --brand-fontsize-400: 40px;
+    --brand-fontsize-440: 44px;
+
+    /* ── Brand / Colors / Neutral (additions) ── */
+    --brand-grey-150: #f3f4f6;
+    --brand-grey-350: #e5e7eb;
+    --brand-grey-550: #6b7280;
+
+    /* ── Brand / Scale (non-standard additions) ── */
+    --brand-scale-75: 5px;
+    --brand-scale-125: 6px;
+    --brand-scale-150: 9px;
+    --brand-scale-175: 10px;
+    --brand-scale-225: 11px;
+    --brand-scale-275: 15px;
+    --brand-scale-325: 17px;
+    --brand-scale-350: 18px;
+    --brand-scale-550: 25px;
+    --brand-scale-575: 23px;
+    --brand-scale-750: 30px;
+    --brand-scale-875: 35px;
+    --brand-scale-1100: 50px;
+    --brand-scale-half: 50%;
+
+    /* ── Alias / Spacing (additions) ── */
+    --alias-spacing-2: var(--brand-scale-50);
+    --alias-spacing-2xs: var(--brand-scale-75);
+    --alias-spacing-6: var(--brand-scale-125);
+    --alias-spacing-9: var(--brand-scale-150);
+    --alias-spacing-ms: var(--brand-scale-175);
+    --alias-spacing-11: var(--brand-scale-225);
+    --alias-spacing-12: var(--brand-scale-300);
+    --alias-spacing-15: var(--brand-scale-275);
+    --alias-spacing-17: var(--brand-scale-325);
+    --alias-spacing-18: var(--brand-scale-350);
+    --alias-spacing-20: var(--brand-scale-500);
+    --alias-spacing-23: var(--brand-scale-575);
+    --alias-spacing-25: var(--brand-scale-550);
+    --alias-spacing-30: var(--brand-scale-750);
+    --alias-spacing-36: var(--brand-scale-900);
+    --alias-spacing-48: var(--brand-scale-1200);
+    --alias-spacing-2xl: var(--brand-scale-1100);
+
+    /* ── Alias / Corner Radius (additions) ── */
+    --alias-cornerradius-6: var(--brand-scale-125);
+    --alias-cornerradius-18: var(--brand-scale-350);
+    --alias-cornerradius-35: var(--brand-scale-875);
+    --alias-cornerradius-half: var(--brand-scale-half);
+
+    /* ── Alias / Font Size ── */
+    --alias-fontsize-2xs: var(--brand-fontsize-100);
+    --alias-fontsize-11: var(--brand-fontsize-110);
+    --alias-fontsize-xs: var(--brand-fontsize-120);
+    --alias-fontsize-13: var(--brand-fontsize-130);
+    --alias-fontsize-s: var(--brand-fontsize-140);
+    --alias-fontsize-15: var(--brand-fontsize-150);
+    --alias-fontsize-m: var(--brand-fontsize-160);
+    --alias-fontsize-l: var(--brand-fontsize-180);
+    --alias-fontsize-xl: var(--brand-fontsize-240);
+    --alias-fontsize-29: var(--brand-fontsize-290);
+    --alias-fontsize-2xl: var(--brand-fontsize-340);
+    --alias-fontsize-3xl: var(--brand-fontsize-400);
+    --alias-fontsize-4xl: var(--brand-fontsize-440);
+
+    /* ── Alias / Semantic Colors (additions) ── */
+    --alias-neutral-150: var(--brand-grey-150);
+    --alias-neutral-350: var(--brand-grey-350);
+    --alias-neutral-550: var(--brand-grey-550);
+
+    /* ── Z-Index ── */
+    --z-dropdown: 100;
+    --z-sticky: 200;
+    --z-fixed: 500;
+    --z-modal: 1000;
+    --z-popover: 1100;
+    --z-toast: 9999;
+
+    /* ── Transition / Easing ── */
+    --transition-fast: 0.15s;
+    --transition-base: 0.2s;
+    --transition-slow: 0.3s;
+    --easing-default: ease;
+    --easing-in-out: ease-in-out;
+    --easing-smooth: cubic-bezier(0.25, 0.1, 0.25, 1);
+    --easing-decelerate: cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* ── Shadow ── */
+    --shadow-panel: 4px 4px 4px 0;
+
+    /* ── Wallet / Semantic Colors (light) ── */
+    --color-wallet-gray-light: #c6c7c8;
+    --color-wallet-gray-mid: #656774;
+    --color-wallet-gray-dark: #575757;
+    --color-wallet-gray-darker: #4d4d4d;
+    --color-wallet-slate: #718096;
+    --color-wallet-error-accent: #f56565;
+    --color-wallet-sso-blue: #0171ec;
+    --color-wallet-sso-muted: #3e5889;
+    --color-wallet-pairing-bg: #536187;
+    --color-wallet-deep-blue: #1e3a5f;
+    --color-wallet-deep-blue-hover: #1a3252;
+    --color-wallet-navy-dark: #0d2247;
+    --color-wallet-navy-darker: #0a1a36;
+    --color-wallet-navy-darkest: #061224;
+    --color-wallet-overlay-light: rgba(0, 0, 0, 0.35);
+    --color-wallet-glass-subtle: rgba(255, 255, 255, 0.2);
+    --color-wallet-glass-medium: rgba(255, 255, 255, 0.3);
+    --color-wallet-glass-strong: rgba(255, 255, 255, 0.4);
+    --color-wallet-navy-solid: rgba(11, 47, 119, 1);
+    --color-wallet-border-light: rgb(209, 213, 219);
+    --color-wallet-text-muted: var(--text-tertiary);
+    --color-wallet-error: var(--text-error);
+    --color-wallet-border: var(--border-default);
+    --color-wallet-background: var(--surface-background);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   DARK THEME — Wallet extension overrides
+   ═══════════════════════════════════════════════════════════════════════ */
+
+[data-theme="dark"] {
+    /* Wallet / Semantic Colors (dark) */
+    --color-wallet-gray-light: #c6c7c8;
+    --color-wallet-gray-mid: #656774;
+    --color-wallet-gray-dark: #575757;
+    --color-wallet-gray-darker: #4d4d4d;
+    --color-wallet-slate: #718096;
+    --color-wallet-error-accent: #f56565;
+    --color-wallet-sso-blue: #0171ec;
+    --color-wallet-sso-muted: #3e5889;
+    --color-wallet-pairing-bg: #536187;
+    --color-wallet-deep-blue: #1e3a5f;
+    --color-wallet-deep-blue-hover: #1a3252;
+    --color-wallet-navy-dark: #0d2247;
+    --color-wallet-navy-darker: #0a1a36;
+    --color-wallet-navy-darkest: #061224;
+    --color-wallet-overlay-light: rgba(0, 0, 0, 0.35);
+    --color-wallet-glass-subtle: rgba(255, 255, 255, 0.2);
+    --color-wallet-glass-medium: rgba(255, 255, 255, 0.3);
+    --color-wallet-glass-strong: rgba(255, 255, 255, 0.4);
+    --color-wallet-navy-solid: rgba(11, 47, 119, 1);
+    --color-wallet-border-light: rgb(209, 213, 219);
+    --color-wallet-text-muted: var(--text-tertiary);
+    --color-wallet-error: var(--text-error);
+    --color-wallet-border: var(--border-default);
+    --color-wallet-background: var(--surface-background);
+}

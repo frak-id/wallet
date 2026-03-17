@@ -1,5 +1,5 @@
 /**
- * Shared spacing and radius CSS variables for wallet and listener apps.
+ * Shared spacing and radius CSS variables for all apps.
  *
  * Bridge mapping in apps/wallet/app/styles/token-bridge.css maps these to
  * the new design system alias tokens (--alias-spacing-*, --alias-cornerradius-*).
