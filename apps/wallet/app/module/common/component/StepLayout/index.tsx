@@ -1,5 +1,6 @@
 import { Box } from "@frak-labs/ui/component/Box";
 import type { ReactNode } from "react";
+import { ContentBlock } from "@/module/common/component/ContentBlock";
 import styles from "./index.module.css";
 
 type StepLayoutProps = {
@@ -10,6 +11,11 @@ type StepLayoutProps = {
     children?: ReactNode;
 };
 
+/**
+ * Full-page layout with safe-area insets, centered content, and bottom-pinned footer.
+ *
+ * Uses ContentBlock for the icon + title + description pattern.
+ */
 export function StepLayout({
     icon,
     title,
@@ -20,10 +26,14 @@ export function StepLayout({
     return (
         <div className={styles.stepLayout}>
             <Box gap="l" padding="none" className={styles.stepLayout__content}>
-                <div className={styles.stepLayout__icon}>{icon}</div>
-                <h1 className={styles.stepLayout__title}>{title}</h1>
-                <p className={styles.stepLayout__description}>{description}</p>
-                {children}
+                <ContentBlock
+                    icon={icon}
+                    titleAs="h1"
+                    title={title}
+                    description={description}
+                >
+                    {children}
+                </ContentBlock>
             </Box>
             <div className={styles.stepLayout__footer}>{footer}</div>
         </div>

@@ -1,36 +1,3 @@
 .keypass {
     padding: var(--frak-spacing-l) var(--alias-spacing-20);
 }
-
-.keypass__icon {
-    width: 80px;
-    height: 80px;
-    border-radius: var(--alias-cornerradius-half);
-    background-color: var(--alias-neutral-150);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: var(--alias-fontsize-3xl);
-    align-self: center;
-}
-
-.keypass__title {
-    font-size: var(--alias-fontsize-xl);
-    font-weight: var(--brand-fontweight-bold);
-    text-align: center;
-    margin: 0;
-}
-
-.keypass__description {
-    font-size: var(--alias-fontsize-m);
-    color: var(--alias-neutral-550);
-    text-align: center;
-    margin: 0;
-}
-
-.keypass__footer {
-    display: flex;
-    flex-direction: column;
-    gap: var(--alias-spacing-12);
-    align-items: center;
-}

@@ -11,6 +11,7 @@ import {
 } from "@frak-labs/wallet-shared";
 import { useTranslation } from "react-i18next";
 import { AuthenticateWithPhone } from "@/module/authentication/component/AuthenticateWithPhone";
+import { ContentBlock } from "@/module/common/component/ContentBlock";
 import styles from "./index.module.css";
 
 type KeypassProps = {
@@ -112,24 +113,22 @@ function KeypassContent({
     if (!webAuthNSupported) {
         return (
             <Box gap="l" padding="none" className={styles.keypass}>
-                <div className={styles.keypass__icon}>
-                    <span>⚠️</span>
-                </div>
-                <h2 className={styles.keypass__title}>
-                    {t("onboarding.keypass.unsupported.title")}
-                </h2>
-                <p className={styles.keypass__description}>
-                    {t("onboarding.keypass.unsupported.description")}
-                </p>
-                <div className={styles.keypass__footer}>
-                    <Button
-                        width={"full"}
-                        size={"medium"}
-                        onClick={onNavigateToLogin}
-                    >
-                        {t("onboarding.keypass.unsupported.button")}
-                    </Button>
-                </div>
+                <ContentBlock
+                    icon={<span>⚠️</span>}
+                    title={t("onboarding.keypass.unsupported.title")}
+                    description={t(
+                        "onboarding.keypass.unsupported.description"
+                    )}
+                    footer={
+                        <Button
+                            width={"full"}
+                            size={"medium"}
+                            onClick={onNavigateToLogin}
+                        >
+                            {t("onboarding.keypass.unsupported.button")}
+                        </Button>
+                    }
+                />
             </Box>
         );
     }
@@ -137,59 +136,57 @@ function KeypassContent({
     if (existingAccount) {
         return (
             <Box gap="l" padding="none" className={styles.keypass}>
-                <div className={styles.keypass__icon}>
-                    <span>👋</span>
-                </div>
-                <h2 className={styles.keypass__title}>
-                    {t("onboarding.keypass.existingAccount.title")}
-                </h2>
-                <p className={styles.keypass__description}>
-                    {t("onboarding.keypass.existingAccount.description")}
-                </p>
-                {loginError && <HandleErrors error={loginError} />}
-                <div className={styles.keypass__footer}>
-                    <Button
-                        width={"full"}
-                        size={"medium"}
-                        onClick={onLogin}
-                        disabled={isLoginLoading}
-                        isLoading={isLoginLoading}
-                    >
-                        {t("onboarding.keypass.existingAccount.button")}
-                    </Button>
-                </div>
+                <ContentBlock
+                    icon={<span>👋</span>}
+                    title={t("onboarding.keypass.existingAccount.title")}
+                    description={t(
+                        "onboarding.keypass.existingAccount.description"
+                    )}
+                    footer={
+                        <Button
+                            width={"full"}
+                            size={"medium"}
+                            onClick={onLogin}
+                            disabled={isLoginLoading}
+                            isLoading={isLoginLoading}
+                        >
+                            {t("onboarding.keypass.existingAccount.button")}
+                        </Button>
+                    }
+                >
+                    {loginError && <HandleErrors error={loginError} />}
+                </ContentBlock>
             </Box>
         );
     }
 
     return (
         <Box gap="l" padding="none" className={styles.keypass}>
-            <div className={styles.keypass__icon}>
-                <span>🔐</span>
-            </div>
-            <h2 className={styles.keypass__title}>
-                {t("onboarding.keypass.title")}
-            </h2>
-            <p className={styles.keypass__description}>
-                {t("onboarding.keypass.description")}
-            </p>
-            {error && <HandleErrors error={error} />}
-            <div className={styles.keypass__footer}>
-                <Button
-                    width={"full"}
-                    size={"medium"}
-                    onClick={onContinue}
-                    disabled={isLoading}
-                    isLoading={isLoading}
-                >
-                    {t("onboarding.continue")}
-                </Button>
-                <AuthenticateWithPhone
-                    as={Button}
-                    text={t("wallet.register.useQRCode")}
-                    width={"full"}
-                />
-            </div>
+            <ContentBlock
+                icon={<span>🔐</span>}
+                title={t("onboarding.keypass.title")}
+                description={t("onboarding.keypass.description")}
+                footer={
+                    <>
+                        <Button
+                            width={"full"}
+                            size={"medium"}
+                            onClick={onContinue}
+                            disabled={isLoading}
+                            isLoading={isLoading}
+                        >
+                            {t("onboarding.continue")}
+                        </Button>
+                        <AuthenticateWithPhone
+                            as={Button}
+                            text={t("wallet.register.useQRCode")}
+                            width={"full"}
+                        />
+                    </>
+                }
+            >
+                {error && <HandleErrors error={error} />}
+            </ContentBlock>
         </Box>
     );
 }
