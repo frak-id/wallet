@@ -6,13 +6,13 @@ import {
     merchantWebhooksTable,
     purchasesTable,
     WebhookPlatformSchema,
-} from "../../../../domain/purchases";
+} from "../../../domain/purchases";
 import {
     MerchantIdParamSchema,
     SuccessResponseSchema,
     WebhookStatusResponseSchema,
-} from "../../../schemas";
-import { businessSessionContext } from "../../middleware/session";
+} from "../../schemas";
+import { businessSessionContext } from "../middleware/session";
 
 export const merchantWebhooksRoutes = new Elysia({
     prefix: "/:merchantId/webhooks",

@@ -1,13 +1,13 @@
 import { t } from "@backend-utils";
 import { Elysia, status } from "elysia";
-import { MerchantContext } from "../../../../domain/merchant";
+import { MerchantContext } from "../../../domain/merchant";
 import {
     MerchantDetailResponseSchema,
     MerchantIdParamSchema,
     MyMerchantsResponseSchema,
     SuccessResponseSchema,
-} from "../../../schemas";
-import { businessSessionContext } from "../../middleware/session";
+} from "../../schemas";
+import { businessSessionContext } from "../middleware/session";
 import { merchantAdminsRoutes } from "./admins";
 import { merchantBankRoutes } from "./bank";
 import { merchantCampaignStatsRoutes } from "./campaignStats";

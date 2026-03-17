@@ -9,7 +9,7 @@ import { Elysia, status } from "elysia";
 import { keccak256, toHex } from "viem";
 import { verifyMessage } from "viem/actions";
 import { parseSiweMessage, validateSiweMessage } from "viem/siwe";
-import { BusinessAuthResponseDto } from "../../../domain/auth";
+import { BusinessAuthResponseDto } from "../../domain/auth";
 
 export const authRoutes = new Elysia({ prefix: "/auth" })
     .use(rateLimitMiddleware({ windowMs: 60_000, maxRequests: 10 }))
