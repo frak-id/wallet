@@ -85,37 +85,9 @@
         <link rel="author" href="https://github.com/srod">
         <link rel="author" href="https://github.com/KONFeature">
 
-        <!-- Fonts: local for Tauri (no CDN dependency), Google Fonts CDN for web -->
-        <script>
-        (() => {
-            var link = document.createElement("link");
-            var preconnect2;
-            var fontLink;
-            if (window.__TAURI_INTERNALS__) {
-                // Tauri: load self-hosted font files for instant rendering
-                link.rel = "stylesheet";
-                link.href = "/fonts/sora.css";
-                document.head.appendChild(link);
-            } else {
-                // Web: load from Google Fonts CDN
-                link.rel = "preconnect";
-                link.href = "https://fonts.googleapis.com";
-                document.head.appendChild(link);
-
-                preconnect2 = document.createElement("link");
-                preconnect2.rel = "preconnect";
-                preconnect2.href = "https://fonts.gstatic.com";
-                preconnect2.crossOrigin = "";
-                document.head.appendChild(preconnect2);
-
-                fontLink = document.createElement("link");
-                fontLink.rel = "stylesheet";
-                fontLink.href =
-                    "https://fonts.googleapis.com/css2?family=Sora:wght@100..800&display=swap";
-                document.head.appendChild(fontLink);
-            }
-        })();
-        </script>
+        <!-- Fonts: self-hosted Inter + Inter Tight (no CDN dependency) -->
+        <link rel="stylesheet" href="/fonts/inter.css">
+        <link rel="stylesheet" href="/fonts/inter-tight.css">
 
         <!-- PWA Install Prompt Handler -->
         <script>

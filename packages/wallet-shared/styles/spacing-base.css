@@ -1,0 +1,24 @@
+/**
+ * Shared spacing and radius CSS variables for wallet and listener apps
+ * These values match the exact px values currently used hardcoded in shared packages
+ * — zero visual change when Tasks 8/9 substitute hardcoded values with these vars.
+ *
+ * Bridge mapping in apps/wallet/app/styles/token-bridge.css maps these to
+ * the new design system alias tokens (--alias-spacing-*, --alias-cornerradius-*).
+ * Do NOT import directly — imported via each app's all.css.
+ */
+:root {
+    --frak-spacing-none: 0;
+    --frak-spacing-xs: 4px;
+    --frak-spacing-s: 8px;
+    --frak-spacing-m: 16px;
+    --frak-spacing-l: 24px;
+    --frak-spacing-xl: 32px;
+    --frak-radius-none: 0;
+    --frak-radius-xs: 4px;
+    --frak-radius-s: 8px;
+    --frak-radius-m: 12px;
+    --frak-radius-l: 16px;
+    --frak-radius-xl: 24px;
+    --frak-radius-full: 9999px;
+}

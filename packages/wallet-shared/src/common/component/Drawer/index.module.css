@@ -36,7 +36,7 @@
     margin: 16px auto 0 auto;
     height: 8px;
     width: 100px;
-    border-radius: 9999px;
+    border-radius: var(--frak-radius-full);
     background-color: var(--frak-drawer-handle-background-color);
 }
 
@@ -49,5 +49,5 @@
     margin-top: auto;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: var(--frak-spacing-s);
 }

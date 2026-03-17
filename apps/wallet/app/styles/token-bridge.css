@@ -1,0 +1,123 @@
+/**
+ * Wallet design system bridge layer
+ * Remaps all --frak-* CSS variables to new design system semantic tokens.
+ * Loaded AFTER design-tokens.css so new values win over the old defaults.
+ * Loaded BEFORE colors-wallet.css so wallet-specific overrides still win.
+ *
+ * Do NOT import directly — imported via apps/wallet/app/styles/all.css
+ */
+:root {
+    /* ── Text ── */
+    --frak-text-color: var(--text-primary);
+    --frak-link-color: var(--text-action);
+
+    /* ── Panels ── */
+    --frak-panel-background-color: var(--surface-elevated);
+    --frak-panel-outlined-border-color: var(--border-default);
+    --frak-panel-shadow-color: transparent;
+    --frak-panel-border-color: var(--border-subtle);
+    --frak-header-background-color: var(--surface-elevated);
+
+    /* ── Inputs ── */
+    --frak-input-background-color: var(--surface-muted);
+    --frak-input-border-color: var(--border-default);
+    --frak-input-text-color: var(--text-primary);
+    --frak-input-placeholder-color: var(--text-tertiary);
+    --frak-input-border-width: 1px;
+
+    /* ── Accordion ── */
+    --frak-accordion-content-background-color: var(--surface-tertiary);
+    --frak-accordion-trigger-color: var(--text-primary);
+
+    /* ── Notice ── */
+    --frak-notice-text-color: var(--text-secondary);
+
+    /* ── Alert Dialog ── */
+    --frak-alertDialog-background-color: var(--surface-overlay);
+    --frak-alertDialog-button-primary-background-color: var(--surface-primary);
+    --frak-alertDialog-button-primary-text-color: var(--text-on-action);
+    --frak-alertDialog-button-secondary-background-color: var(
+        --surface-background
+    );
+    --frak-alertDialog-button-secondary-text-color: var(--text-primary);
+    --frak-alertDialog-button-secondary-border-color: var(--border-default);
+
+    /* ── Buttons ── */
+    --frak-button-border-radius: var(--alias-cornerradius-l);
+    --frak-button-primary-background-color: var(--surface-primary);
+    --frak-button-secondary-background-color: var(--surface-secondary);
+    --frak-button-secondary-color: var(--text-action);
+    --frak-button-secondary-border-color: var(--border-default);
+    --frak-button-disabled-background-color: var(--surface-disabled);
+    --frak-button-disabled-text-color: var(--text-disabled);
+    --frak-button-danger-background-color: var(--alias-error-default);
+    --frak-button-danger-text-color: var(--text-on-action);
+
+    /* ── Navigation ── */
+    --frak-navigation-color: var(--text-primary);
+
+    /* ── Token item ── */
+    --frak-token-item-hover-color: var(--surface-tertiary);
+
+    /* ── Header wallet ── */
+    --frak-header-wallet-color: var(--text-secondary);
+
+    /* ── Auth fingerprint ── */
+    --frak-auth-fingerprint-background-color: var(--surface-muted);
+    --frak-auth-fingerprint-shadow-color: transparent;
+
+    /* ── Token max ── */
+    --frak-token-max-background-color: var(--surface-muted);
+    --frak-token-max-color: var(--text-primary);
+
+    /* ── Skeleton ── */
+    --frak-skeleton-base-color: var(--alias-neutral-200);
+    --frak-skeleton-highlight-color: var(--alias-neutral-50);
+    --frak-skeleton-border-color: var(--border-subtle);
+
+    /* ── Checkbox ── */
+    --frak-checkbox-background-color: var(--surface-background);
+    --frak-checkbox-border-color: var(--border-default);
+    --frak-checkbox-label-text-color: var(--text-secondary);
+    --frak-checkbox-checked-background-color: var(--surface-primary);
+    --frak-checkbox-checked-border-color: var(--border-focus);
+    --frak-checkbox-checked-text-color: var(--text-on-action);
+
+    /* ── Drawer ── */
+    --frak-drawer-background-color: var(--surface-background);
+    --frak-drawer-handle-background-color: var(--border-default);
+
+    /* ── Slider ── */
+    --frak-slider-track-background-color: var(--surface-disabled);
+    --frak-slider-range-background-color: var(--surface-primary);
+    --frak-slider-thumb-background-color: var(--surface-primary);
+
+    /* ── Select ── */
+    --frak-select-trigger-background-color: var(--surface-muted);
+    --frak-select-trigger-border-color: var(--border-default);
+    --frak-select-trigger-text-color: var(--text-primary);
+    --frak-select-icon-color: var(--text-secondary);
+    --frak-select-content-background-color: var(--surface-elevated);
+    --frak-select-content-border-color: var(--border-subtle);
+    --frak-select-content-shadow: none;
+    --frak-select-item-text-color: var(--text-primary);
+    --frak-select-item-hover-background-color: var(--surface-tertiary);
+    --frak-select-label-text-color: var(--text-secondary);
+
+    /* ── Spacing bridge ── */
+    --frak-spacing-none: var(--alias-spacing-none);
+    --frak-spacing-xs: var(--alias-spacing-xs);
+    --frak-spacing-s: var(--alias-spacing-s);
+    --frak-spacing-m: var(--alias-spacing-m);
+    --frak-spacing-l: var(--alias-spacing-l);
+    --frak-spacing-xl: var(--alias-spacing-xl);
+
+    /* ── Radius bridge ── */
+    --frak-radius-none: var(--alias-cornerradius-none);
+    --frak-radius-xs: var(--alias-cornerradius-xs);
+    --frak-radius-s: var(--alias-cornerradius-s);
+    --frak-radius-m: var(--alias-cornerradius-m);
+    --frak-radius-l: var(--alias-cornerradius-l);
+    --frak-radius-xl: var(--alias-cornerradius-xl);
+    --frak-radius-full: var(--alias-cornerradius-full);
+}

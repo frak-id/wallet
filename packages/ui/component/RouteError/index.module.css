@@ -11,7 +11,7 @@
     text-align: center;
     background: var(--frak-panel-background-color, #ffffff);
     border: 1px solid var(--frak-panel-border-color, #e5e7eb);
-    border-radius: 12px;
+    border-radius: var(--frak-radius-m);
     padding: 2.5rem 2rem;
     box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
     animation: fadeIn 0.3s ease-in-out;
@@ -61,7 +61,7 @@
     text-align: left;
     background-color: var(--frak-input-background-color, #f8fafc);
     border: 1px solid var(--frak-input-border-color, #e2e8f0);
-    border-radius: 8px;
+    border-radius: var(--frak-radius-s);
     padding: 1rem;
 }
 
