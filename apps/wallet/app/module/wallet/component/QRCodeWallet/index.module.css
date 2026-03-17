@@ -1,10 +1,10 @@
 .QRCodeWallet__code > svg {
     display: block;
-    margin: var(--brand-scale-175) auto 0 auto;
+    margin: var(--alias-spacing-ms) auto 0 auto;
 }
 
 .QRCodeWallet__address {
-    margin: var(--brand-scale-500) 0;
+    margin: var(--alias-spacing-20) 0;
     font-size: var(--alias-fontsize-xs);
     text-align: center;
 }

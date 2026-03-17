@@ -10,8 +10,8 @@
     display: flex;
     align-items: center;
     gap: var(--frak-spacing-s);
-    padding: var(--brand-scale-75) var(--brand-scale-175) var(--brand-scale-75)
-        var(--brand-scale-75);
+    padding: var(--alias-spacing-2xs) var(--alias-spacing-ms)
+        var(--alias-spacing-2xs) var(--alias-spacing-2xs);
     border-radius: var(--frak-radius-s);
     cursor: pointer;
     transition: background var(--transition-base) var(--easing-in-out);

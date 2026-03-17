@@ -2,19 +2,19 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: var(--brand-scale-175);
-    padding: var(--brand-scale-150) var(--brand-scale-300);
+    margin-bottom: var(--alias-spacing-ms);
+    padding: var(--alias-spacing-9) var(--alias-spacing-12);
     border-radius: var(--frak-radius-s);
     background: var(--color-wallet-overlay-light);
     backdrop-filter: blur(80px);
     color: var(--frak-color-white);
-    font-size: var(--brand-fontsize-150);
+    font-size: var(--alias-fontsize-15);
     font-weight: var(--brand-fontweight-bold);
 
     & > p {
         display: flex;
         align-items: center;
-        gap: var(--brand-scale-75);
+        gap: var(--alias-spacing-2xs);
     }
 }
 

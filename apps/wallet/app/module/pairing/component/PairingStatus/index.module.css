@@ -7,5 +7,5 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: var(--brand-scale-75);
+    gap: var(--alias-spacing-2xs);
 }

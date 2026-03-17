@@ -1,14 +1,14 @@
 .list {
     display: flex;
     flex-direction: column;
-    gap: var(--brand-scale-175);
+    gap: var(--alias-spacing-ms);
 }
 
 .empty {
     align-items: center;
     justify-content: center;
     min-height: 300px;
-    gap: var(--brand-scale-300);
+    gap: var(--alias-spacing-12);
     text-align: center;
 }
 
@@ -45,13 +45,13 @@
 }
 
 .item__merchant {
-    font-size: var(--brand-fontsize-150);
+    font-size: var(--alias-fontsize-15);
     font-weight: var(--brand-fontweight-semi-bold);
     color: var(--frak-text-color);
 }
 
 .item__amount {
-    font-size: var(--brand-fontsize-150);
+    font-size: var(--alias-fontsize-15);
     font-weight: var(--brand-fontweight-bold);
     color: var(--frak-color-green);
     white-space: nowrap;
@@ -65,10 +65,10 @@
 
 .item__badge {
     display: inline-block;
-    padding: var(--brand-scale-50) var(--brand-scale-175);
+    padding: var(--alias-spacing-2) var(--alias-spacing-ms);
     background: var(--frak-color-blue-zodiac-darker);
     border-radius: var(--frak-radius-m);
-    font-size: var(--brand-fontsize-110);
+    font-size: var(--alias-fontsize-11);
     color: var(--frak-text-color);
 }
 
@@ -84,7 +84,7 @@
 }
 
 .item__txHash {
-    font-size: var(--brand-fontsize-110);
+    font-size: var(--alias-fontsize-11);
     font-family: monospace;
     color: var(--frak-color-grayText);
 }

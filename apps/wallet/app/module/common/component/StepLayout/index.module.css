@@ -21,7 +21,7 @@
 .stepLayout__icon {
     width: 80px;
     height: 80px;
-    border-radius: var(--brand-scale-half);
+    border-radius: var(--alias-cornerradius-half);
     background-color: var(--alias-neutral-150);
     display: flex;
     align-items: center;
@@ -44,9 +44,9 @@
 }
 
 .stepLayout__footer {
-    padding: var(--frak-spacing-l) var(--brand-scale-500);
+    padding: var(--frak-spacing-l) var(--alias-spacing-20);
     display: flex;
     flex-direction: column;
-    gap: var(--brand-scale-300);
+    gap: var(--alias-spacing-12);
     align-items: center;
 }

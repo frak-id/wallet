@@ -1,5 +1,5 @@
 .balance {
-    padding: var(--brand-scale-1100) 0;
+    padding: var(--alias-spacing-2xl) 0;
 }
 
 .balance__amount {

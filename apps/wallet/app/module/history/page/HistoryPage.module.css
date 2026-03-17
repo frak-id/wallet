@@ -1,12 +1,12 @@
 .history__panel {
-    margin-bottom: var(--brand-scale-500);
+    margin-bottom: var(--alias-spacing-20);
 }
 
 .history__nav {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: var(--brand-scale-75);
+    gap: var(--alias-spacing-2xs);
 }
 
 .history__button {

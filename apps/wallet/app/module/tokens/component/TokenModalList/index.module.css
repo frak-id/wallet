@@ -1,9 +1,9 @@
 .tokenModalList__trigger {
     display: flex;
     align-items: center;
-    gap: var(--brand-scale-175);
-    padding: var(--brand-scale-125) var(--brand-scale-175)
-        var(--brand-scale-125) var(--brand-scale-125);
+    gap: var(--alias-spacing-ms);
+    padding: var(--alias-spacing-6) var(--alias-spacing-ms)
+        var(--alias-spacing-6) var(--alias-spacing-6);
     border-right: 1px solid var(--color-wallet-gray-mid);
     font-weight: var(--brand-fontweight-bold);
 }

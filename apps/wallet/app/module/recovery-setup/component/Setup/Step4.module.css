@@ -1,5 +1,5 @@
 .step4__button {
     width: 100%;
     text-align: left;
-    margin-bottom: var(--brand-scale-175);
+    margin-bottom: var(--alias-spacing-ms);
 }

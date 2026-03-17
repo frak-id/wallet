@@ -6,12 +6,23 @@
  *
  * Dark theme: Override semantic tier via [data-theme="dark"] attribute
  * Do NOT import directly — imported via apps/wallet/app/styles/all.css
+ *
+ * STRUCTURE:
+ *   Section 1 — Design System base (from design team, drop-in replaceable)
+ *   Section 2 — Wallet extensions (engineering additions, do NOT overwrite)
  */
 
 :root {
-    /* ========================================
-       Brand / Typography
-       ======================================== */
+    /* ═══════════════════════════════════════════════════════════════════
+       SECTION 1 — Design System Base
+
+       Source: design team export (Figma → CSS)
+       To update: replace this section with the new export, then fix
+       font-weight values (Figma exports "Regular"/"Bold", CSS needs 400/700)
+       and font-family values (add quotes + sans-serif fallback).
+       ═══════════════════════════════════════════════════════════════════ */
+
+    /* ── Brand / Typography ── */
     --brand-fontfamily-inter: "Inter", sans-serif;
     --brand-fontfamily-inter-tight: "Inter Tight", sans-serif;
     --brand-fontweight-regular: 400;
@@ -19,26 +30,7 @@
     --brand-fontweight-semi-bold: 600;
     --brand-fontweight-bold: 700;
 
-    /* ========================================
-        Brand / Font Size
-        ======================================== */
-    --brand-fontsize-100: 10px;
-    --brand-fontsize-110: 11px;
-    --brand-fontsize-120: 12px;
-    --brand-fontsize-130: 13px;
-    --brand-fontsize-140: 14px;
-    --brand-fontsize-150: 15px;
-    --brand-fontsize-160: 16px;
-    --brand-fontsize-180: 18px;
-    --brand-fontsize-240: 24px;
-    --brand-fontsize-290: 29px;
-    --brand-fontsize-340: 34px;
-    --brand-fontsize-400: 40px;
-    --brand-fontsize-440: 44px;
-
-    /* ========================================
-        Brand / Colors / Neutral
-        ======================================== */
+    /* ── Brand / Colors / Neutral ── */
     --brand-foundation-white: #ffffff;
     --brand-foundation-black-70: #000000b2;
     --brand-grey-50: #fafafa;
@@ -51,13 +43,8 @@
     --brand-grey-600: #525252;
     --brand-grey-700: #262626;
     --brand-grey-800: #000000;
-    --brand-grey-150: #f3f4f6;
-    --brand-grey-350: #e5e7eb;
-    --brand-grey-550: #6b7280;
 
-    /* ========================================
-        Brand / Colors / Primary (Lavender)
-        ======================================== */
+    /* ── Brand / Colors / Primary (Lavender) ── */
     --brand-lavender-50: #f6f4ff;
     --brand-lavender-100: #ede8ff;
     --brand-lavender-200: #dad1ff;
@@ -68,9 +55,7 @@
     --brand-lavender-700: #3916cb;
     --brand-lavender-800: #2b1098;
 
-    /* ========================================
-       Brand / Colors / Success (Green)
-       ======================================== */
+    /* ── Brand / Colors / Success (Green) ── */
     --brand-green-50: #f3fcf7;
     --brand-green-100: #e6f8f0;
     --brand-green-200: #cef2e1;
@@ -81,9 +66,7 @@
     --brand-green-700: #079852;
     --brand-green-800: #05723e;
 
-    /* ========================================
-       Brand / Colors / Warning (Orange)
-       ======================================== */
+    /* ── Brand / Colors / Warning (Orange) ── */
     --brand-orange-50: #fef9f2;
     --brand-orange-100: #fdf2e5;
     --brand-orange-200: #fbe5cc;
@@ -94,9 +77,7 @@
     --brand-orange-700: #bd6500;
     --brand-orange-800: #8e4c00;
 
-    /* ========================================
-       Brand / Colors / Error (Red)
-       ======================================== */
+    /* ── Brand / Colors / Error (Red) ── */
     --brand-red-50: #fef4f5;
     --brand-red-100: #fce8ea;
     --brand-red-200: #f9d2d6;
@@ -107,9 +88,7 @@
     --brand-red-700: #b61627;
     --brand-red-800: #88111d;
 
-    /* ========================================
-       Brand / Scale
-       ======================================== */
+    /* ── Brand / Scale ── */
     --brand-scale-0: 0;
     --brand-scale-25: 1px;
     --brand-scale-50: 2px;
@@ -127,24 +106,8 @@
     --brand-scale-1300: 52px;
     --brand-scale-1400: 56px;
     --brand-scale-full: 9999px;
-    --brand-scale-75: 5px;
-    --brand-scale-125: 6px;
-    --brand-scale-150: 9px;
-    --brand-scale-175: 10px;
-    --brand-scale-225: 11px;
-    --brand-scale-275: 15px;
-    --brand-scale-325: 17px;
-    --brand-scale-350: 18px;
-    --brand-scale-550: 25px;
-    --brand-scale-575: 23px;
-    --brand-scale-750: 30px;
-    --brand-scale-875: 35px;
-    --brand-scale-1100: 50px;
-    --brand-scale-half: 50%;
 
-    /* ========================================
-        Alias / Spacing & Size
-        ======================================== */
+    /* ── Alias / Spacing & Size ── */
     --alias-size-none: var(--brand-scale-0);
     --alias-size-xs: var(--brand-scale-100);
     --alias-size-s: var(--brand-scale-200);
@@ -158,13 +121,8 @@
     --alias-spacing-m: var(--brand-scale-400);
     --alias-spacing-l: var(--brand-scale-600);
     --alias-spacing-xl: var(--brand-scale-800);
-    --alias-spacing-2xs: var(--brand-scale-75);
-    --alias-spacing-ms: var(--brand-scale-175);
-    --alias-spacing-2xl: var(--brand-scale-1100);
 
-    /* ========================================
-        Alias / Radius & Border
-        ======================================== */
+    /* ── Alias / Radius & Border ── */
     --alias-borderwidth-none: var(--brand-scale-0);
     --alias-borderwidth-xs: var(--brand-scale-25);
     --alias-borderwidth-s: var(--brand-scale-25);
@@ -176,22 +134,7 @@
     --alias-cornerradius-xl: var(--brand-scale-600);
     --alias-cornerradius-full: var(--brand-scale-full);
 
-    /* ========================================
-        Alias / Font Size
-        ======================================== */
-    --alias-fontsize-2xs: var(--brand-fontsize-100);
-    --alias-fontsize-xs: var(--brand-fontsize-120);
-    --alias-fontsize-s: var(--brand-fontsize-140);
-    --alias-fontsize-m: var(--brand-fontsize-160);
-    --alias-fontsize-l: var(--brand-fontsize-180);
-    --alias-fontsize-xl: var(--brand-fontsize-240);
-    --alias-fontsize-2xl: var(--brand-fontsize-340);
-    --alias-fontsize-3xl: var(--brand-fontsize-400);
-    --alias-fontsize-4xl: var(--brand-fontsize-440);
-
-    /* ========================================
-        Alias / Semantic Colors
-        ======================================== */
+    /* ── Alias / Semantic Colors ── */
     --alias-neutral-50: var(--brand-grey-50);
     --alias-neutral-100: var(--brand-grey-100);
     --alias-neutral-200: var(--brand-grey-200);
@@ -201,9 +144,6 @@
     --alias-neutral-500: var(--brand-grey-500);
     --alias-neutral-600: var(--brand-grey-600);
     --alias-neutral-700: var(--brand-grey-700);
-    --alias-neutral-150: var(--brand-grey-150);
-    --alias-neutral-350: var(--brand-grey-350);
-    --alias-neutral-550: var(--brand-grey-550);
     --alias-neutral-overlay: var(--brand-foundation-black-70);
     --alias-neutral-white: var(--brand-foundation-white);
     --alias-neutral-default: var(--brand-grey-800);
@@ -244,9 +184,7 @@
     --alias-error-800: var(--brand-red-800);
     --alias-error-default: var(--brand-red-600);
 
-    /* ========================================
-       Semantic / Text
-       ======================================== */
+    /* ── Semantic / Text ── */
     --text-primary: var(--alias-neutral-default);
     --text-secondary: var(--alias-neutral-600);
     --text-tertiary: var(--alias-neutral-400);
@@ -258,9 +196,7 @@
     --text-success: var(--alias-success-default);
     --text-warning: var(--alias-warning-default);
 
-    /* ========================================
-       Semantic / Surface
-       ======================================== */
+    /* ── Semantic / Surface ── */
     --surface-primary: var(--alias-primary-default);
     --surface-secondary: var(--alias-primary-50);
     --surface-background: var(--alias-neutral-white);
@@ -277,9 +213,7 @@
     --surface-success: var(--alias-success-50);
     --surface-warning: var(--alias-warning-50);
 
-    /* ========================================
-       Semantic / Border
-       ======================================== */
+    /* ── Semantic / Border ── */
     --border-subtle: var(--alias-neutral-200);
     --border-focus: var(--alias-neutral-400);
     --border-error: var(--alias-error-default);
@@ -287,9 +221,7 @@
     --border-warning: var(--alias-warning-default);
     --border-default: var(--alias-neutral-250);
 
-    /* ========================================
-       Semantic / Icon
-       ======================================== */
+    /* ── Semantic / Icon ── */
     --icon-primary: var(--alias-neutral-default);
     --icon-secondary: var(--alias-neutral-600);
     --icon-tertiary: var(--alias-neutral-400);
@@ -301,9 +233,95 @@
     --icon-success: var(--alias-success-default);
     --icon-warning: var(--alias-warning-default);
 
-    /* ========================================
-        Z-Index
-        ======================================== */
+    /* ═══════════════════════════════════════════════════════════════════
+       SECTION 2 — Wallet Extensions
+
+       Engineering additions for wallet-specific needs.
+       Do NOT overwrite when importing design team updates.
+       ═══════════════════════════════════════════════════════════════════ */
+
+    /* ── Brand / Font Size (wallet scale) ── */
+    --brand-fontsize-100: 10px;
+    --brand-fontsize-110: 11px;
+    --brand-fontsize-120: 12px;
+    --brand-fontsize-130: 13px;
+    --brand-fontsize-140: 14px;
+    --brand-fontsize-150: 15px;
+    --brand-fontsize-160: 16px;
+    --brand-fontsize-180: 18px;
+    --brand-fontsize-240: 24px;
+    --brand-fontsize-290: 29px;
+    --brand-fontsize-340: 34px;
+    --brand-fontsize-400: 40px;
+    --brand-fontsize-440: 44px;
+
+    /* ── Brand / Colors / Neutral (additions) ── */
+    --brand-grey-150: #f3f4f6;
+    --brand-grey-350: #e5e7eb;
+    --brand-grey-550: #6b7280;
+
+    /* ── Brand / Scale (non-standard additions) ── */
+    --brand-scale-75: 5px;
+    --brand-scale-125: 6px;
+    --brand-scale-150: 9px;
+    --brand-scale-175: 10px;
+    --brand-scale-225: 11px;
+    --brand-scale-275: 15px;
+    --brand-scale-325: 17px;
+    --brand-scale-350: 18px;
+    --brand-scale-550: 25px;
+    --brand-scale-575: 23px;
+    --brand-scale-750: 30px;
+    --brand-scale-875: 35px;
+    --brand-scale-1100: 50px;
+    --brand-scale-half: 50%;
+
+    /* ── Alias / Spacing (additions) ── */
+    --alias-spacing-2: var(--brand-scale-50);
+    --alias-spacing-2xs: var(--brand-scale-75);
+    --alias-spacing-6: var(--brand-scale-125);
+    --alias-spacing-9: var(--brand-scale-150);
+    --alias-spacing-ms: var(--brand-scale-175);
+    --alias-spacing-11: var(--brand-scale-225);
+    --alias-spacing-12: var(--brand-scale-300);
+    --alias-spacing-15: var(--brand-scale-275);
+    --alias-spacing-17: var(--brand-scale-325);
+    --alias-spacing-18: var(--brand-scale-350);
+    --alias-spacing-20: var(--brand-scale-500);
+    --alias-spacing-23: var(--brand-scale-575);
+    --alias-spacing-25: var(--brand-scale-550);
+    --alias-spacing-30: var(--brand-scale-750);
+    --alias-spacing-36: var(--brand-scale-900);
+    --alias-spacing-48: var(--brand-scale-1200);
+    --alias-spacing-2xl: var(--brand-scale-1100);
+
+    /* ── Alias / Corner Radius (additions) ── */
+    --alias-cornerradius-6: var(--brand-scale-125);
+    --alias-cornerradius-18: var(--brand-scale-350);
+    --alias-cornerradius-35: var(--brand-scale-875);
+    --alias-cornerradius-half: var(--brand-scale-half);
+
+    /* ── Alias / Font Size ── */
+    --alias-fontsize-2xs: var(--brand-fontsize-100);
+    --alias-fontsize-11: var(--brand-fontsize-110);
+    --alias-fontsize-xs: var(--brand-fontsize-120);
+    --alias-fontsize-13: var(--brand-fontsize-130);
+    --alias-fontsize-s: var(--brand-fontsize-140);
+    --alias-fontsize-15: var(--brand-fontsize-150);
+    --alias-fontsize-m: var(--brand-fontsize-160);
+    --alias-fontsize-l: var(--brand-fontsize-180);
+    --alias-fontsize-xl: var(--brand-fontsize-240);
+    --alias-fontsize-29: var(--brand-fontsize-290);
+    --alias-fontsize-2xl: var(--brand-fontsize-340);
+    --alias-fontsize-3xl: var(--brand-fontsize-400);
+    --alias-fontsize-4xl: var(--brand-fontsize-440);
+
+    /* ── Alias / Semantic Colors (additions) ── */
+    --alias-neutral-150: var(--brand-grey-150);
+    --alias-neutral-350: var(--brand-grey-350);
+    --alias-neutral-550: var(--brand-grey-550);
+
+    /* ── Z-Index ── */
     --z-dropdown: 100;
     --z-sticky: 200;
     --z-fixed: 500;
@@ -311,9 +329,7 @@
     --z-popover: 1100;
     --z-toast: 9999;
 
-    /* ========================================
-        Transition / Easing
-        ======================================== */
+    /* ── Transition / Easing ── */
     --transition-fast: 0.15s;
     --transition-base: 0.2s;
     --transition-slow: 0.3s;
@@ -322,14 +338,10 @@
     --easing-smooth: cubic-bezier(0.25, 0.1, 0.25, 1);
     --easing-decelerate: cubic-bezier(0.4, 0, 0.2, 1);
 
-    /* ========================================
-        Shadow
-        ======================================== */
+    /* ── Shadow ── */
     --shadow-panel: 4px 4px 4px 0;
 
-    /* ========================================
-        Wallet / Semantic Colors (light)
-        ======================================== */
+    /* ── Wallet / Semantic Colors (light) ── */
     --color-wallet-gray-light: #c6c7c8;
     --color-wallet-gray-mid: #656774;
     --color-wallet-gray-dark: #575757;
@@ -356,10 +368,14 @@
     --color-wallet-background: var(--surface-background);
 }
 
+/* ═══════════════════════════════════════════════════════════════════════
+   DARK THEME
+   ═══════════════════════════════════════════════════════════════════════ */
+
 [data-theme="dark"] {
-    /* ========================================
-       Semantic / Text (Dark)
-       ======================================== */
+    /* ── SECTION 1 — Design System Base (dark overrides) ── */
+
+    /* Semantic / Text (Dark) */
     --text-primary: var(--alias-neutral-white);
     --text-secondary: var(--alias-neutral-50);
     --text-tertiary: var(--alias-neutral-100);
@@ -371,9 +387,7 @@
     --text-success: var(--alias-success-default);
     --text-warning: var(--alias-warning-default);
 
-    /* ========================================
-       Semantic / Surface (Dark)
-       ======================================== */
+    /* Semantic / Surface (Dark) */
     --surface-primary: var(--alias-primary-default);
     --surface-secondary: var(--alias-primary-50);
     --surface-background: var(--alias-neutral-default);
@@ -390,9 +404,7 @@
     --surface-success: var(--alias-success-50);
     --surface-warning: var(--alias-warning-50);
 
-    /* ========================================
-       Semantic / Border (Dark)
-       ======================================== */
+    /* Semantic / Border (Dark) */
     --border-subtle: var(--alias-neutral-500);
     --border-focus: var(--alias-neutral-400);
     --border-error: var(--alias-error-default);
@@ -400,9 +412,7 @@
     --border-warning: var(--alias-warning-default);
     --border-default: var(--alias-neutral-600);
 
-    /* ========================================
-       Semantic / Icon (Dark)
-       ======================================== */
+    /* Semantic / Icon (Dark) */
     --icon-primary: var(--alias-neutral-white);
     --icon-secondary: var(--alias-neutral-100);
     --icon-tertiary: var(--alias-neutral-100);
@@ -414,9 +424,9 @@
     --icon-success: var(--alias-success-default);
     --icon-warning: var(--alias-warning-default);
 
-    /* ========================================
-        Wallet / Semantic Colors (dark)
-        ======================================== */
+    /* ── SECTION 2 — Wallet Extensions (dark overrides) ── */
+
+    /* Wallet / Semantic Colors (dark) */
     --color-wallet-gray-light: #c6c7c8;
     --color-wallet-gray-mid: #656774;
     --color-wallet-gray-dark: #575757;

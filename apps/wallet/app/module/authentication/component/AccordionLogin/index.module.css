@@ -1,16 +1,16 @@
 .accordionLogin__trigger {
     display: flex;
     align-items: center;
-    gap: var(--brand-scale-175);
+    gap: var(--alias-spacing-ms);
     color: var(--frak-accordion-trigger-color);
     font-weight: var(--brand-fontweight-regular);
     font-size: var(--alias-fontsize-s);
 }
 
 .accordionLogin__content {
-    margin-right: calc(-1 * var(--brand-scale-175));
+    margin-right: calc(-1 * var(--alias-spacing-ms));
 }
 
 .accordionLogin__content > div {
-    margin-top: var(--brand-scale-500);
+    margin-top: var(--alias-spacing-20);
 }

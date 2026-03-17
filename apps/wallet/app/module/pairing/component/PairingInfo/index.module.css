@@ -1,5 +1,5 @@
 .pairing__list {
     display: flex;
     flex-direction: column;
-    gap: var(--brand-scale-175);
+    gap: var(--alias-spacing-ms);
 }

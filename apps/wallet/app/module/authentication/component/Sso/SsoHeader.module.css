@@ -1,14 +1,14 @@
 .ssoHeader {
     display: flex;
-    gap: var(--brand-scale-225);
+    gap: var(--alias-spacing-11);
     align-items: center;
-    padding: var(--frak-spacing-s) var(--brand-scale-175);
+    padding: var(--frak-spacing-s) var(--alias-spacing-ms);
     border-bottom: 1px solid var(--color-wallet-sso-muted);
 }
 
 .ssoHeader__title {
     margin: 0;
-    font-size: var(--brand-fontsize-110);
+    font-size: var(--alias-fontsize-11);
     font-weight: var(--brand-fontweight-regular);
     color: var(--alias-neutral-default);
 }

@@ -1,5 +1,5 @@
 .loginItem {
-    padding-right: var(--brand-scale-175);
+    padding-right: var(--alias-spacing-ms);
 }
 
 .loginItem__button {
@@ -8,14 +8,14 @@
     flex-direction: row !important;
     align-items: center !important;
     justify-content: space-between;
-    margin-bottom: var(--brand-scale-300);
+    margin-bottom: var(--alias-spacing-12);
 }
 
 .loginItem__name {
     display: flex;
     align-items: center;
-    gap: var(--brand-scale-175);
-    margin-bottom: var(--brand-scale-125);
+    gap: var(--alias-spacing-ms);
+    margin-bottom: var(--alias-spacing-6);
 }
 
 .loginItem__icon {

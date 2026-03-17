@@ -36,7 +36,7 @@
 
 .onboarding__footer {
     align-items: center;
-    padding: var(--frak-spacing-l) var(--brand-scale-500);
+    padding: var(--frak-spacing-l) var(--alias-spacing-20);
 }
 
 .onboarding__dots {
@@ -49,7 +49,7 @@
 .onboarding__dot {
     width: 8px;
     height: 8px;
-    border-radius: var(--brand-scale-half);
+    border-radius: var(--alias-cornerradius-half);
     background-color: var(--alias-neutral-350);
     transition: background-color var(--transition-slow) var(--easing-default);
 }

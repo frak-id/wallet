@@ -12,5 +12,5 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin: var(--brand-scale-300) 0;
+    margin: var(--alias-spacing-12) 0;
 }

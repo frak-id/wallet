@@ -1,5 +1,5 @@
 .authenticateWithPhone__fadeIn {
-    margin: var(--brand-scale-500);
+    margin: var(--alias-spacing-20);
     animation: fadeIn var(--transition-slow) var(--easing-in-out);
     opacity: 1;
     overflow: hidden;

@@ -3,9 +3,9 @@
     bottom: 0;
     z-index: var(--z-dropdown);
     width: 100%;
-    padding: var(--brand-scale-175) var(--frak-spacing-l);
+    padding: var(--alias-spacing-ms) var(--frak-spacing-l);
     padding-bottom: calc(
-        var(--brand-scale-175) +
+        var(--alias-spacing-ms) +
         var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px))
     );
     background: var(--frak-header-background-color);

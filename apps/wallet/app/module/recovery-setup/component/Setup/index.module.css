@@ -1,8 +1,8 @@
 .setupRecovery__disclaimer {
-    margin-bottom: var(--brand-scale-500);
+    margin-bottom: var(--alias-spacing-20);
 }
 
 .setupRecovery__disclaimer > svg {
-    margin: 0 var(--brand-scale-75) var(--brand-scale-75) 0;
+    margin: 0 var(--alias-spacing-2xs) var(--alias-spacing-2xs) 0;
     vertical-align: middle;
 }

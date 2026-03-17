@@ -1,7 +1,8 @@
 .homeNavigation {
     display: flex;
     justify-content: space-between;
-    margin: 0 var(--frak-spacing-s) var(--brand-scale-175) var(--frak-spacing-s);
+    margin: 0 var(--frak-spacing-s) var(--alias-spacing-ms)
+        var(--frak-spacing-s);
 }
 
 .button {
@@ -23,7 +24,7 @@
     justify-content: center;
     width: 55px;
     height: 55px;
-    border-radius: var(--brand-scale-875);
+    border-radius: var(--alias-cornerradius-35);
     background: var(--color-wallet-overlay-light);
     backdrop-filter: blur(14px);
 }

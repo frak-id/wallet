@@ -1,10 +1,10 @@
 .row {
     display: flex;
     align-items: center;
-    gap: var(--brand-scale-175);
+    gap: var(--alias-spacing-ms);
     width: 100%;
 }
 
 .row + .row {
-    margin-top: var(--brand-scale-175);
+    margin-top: var(--alias-spacing-ms);
 }

@@ -3,29 +3,29 @@
 }
 
 .signatureRequest__description {
-    margin: var(--brand-scale-175) 0 var(--brand-scale-275) 0;
+    margin: var(--alias-spacing-ms) 0 var(--alias-spacing-15) 0;
 }
 
 .signatureRequest__from {
     background: var(--frak-header-background-color);
-    border-radius: var(--brand-scale-125);
-    padding: var(--brand-scale-50) var(--frak-spacing-xs);
+    border-radius: var(--alias-cornerradius-6);
+    padding: var(--alias-spacing-2) var(--frak-spacing-xs);
     color: var(--alias-neutral-white);
     border: 1px solid var(--alias-neutral-white);
 }
 
 .signatureRequest__buttons {
     display: flex;
-    gap: var(--brand-scale-175);
+    gap: var(--alias-spacing-ms);
     justify-content: center;
-    margin: var(--brand-scale-175) 0;
+    margin: var(--alias-spacing-ms) 0;
 }
 
 .signatureRequest__state {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: var(--brand-scale-300);
+    padding: var(--alias-spacing-12);
     background-color: var(--frak-color-blue-zodiac-darker);
     border-radius: var(--frak-radius-s);
     font-size: var(--alias-fontsize-xs);
@@ -35,7 +35,7 @@
 .signatureRequest__stateLabel {
     display: flex;
     align-items: center;
-    gap: var(--brand-scale-75);
+    gap: var(--alias-spacing-2xs);
 }
 
 .signatureRequest__stateLabelError {

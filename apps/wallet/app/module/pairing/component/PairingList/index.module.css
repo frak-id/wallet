@@ -37,7 +37,7 @@
 .pairing__details {
     display: grid;
     grid-template-columns: auto 1fr;
-    gap: var(--brand-scale-300);
+    gap: var(--alias-spacing-12);
     font-size: var(--alias-fontsize-s);
 }
 

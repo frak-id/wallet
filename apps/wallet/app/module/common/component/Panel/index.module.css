@@ -1,5 +1,5 @@
 .panel {
-    border-radius: var(--brand-scale-350);
+    border-radius: var(--alias-cornerradius-18);
     transition: background var(--transition-slow);
     background-size: cover;
     background-position: -100%;
@@ -7,7 +7,7 @@
 }
 
 .panel + .panel {
-    margin-top: var(--brand-scale-175);
+    margin-top: var(--alias-spacing-ms);
 }
 
 .primary {
@@ -34,15 +34,15 @@
 }
 
 .size--small {
-    padding: var(--brand-scale-300);
+    padding: var(--alias-spacing-12);
 }
 
 .size--normal {
-    padding: var(--brand-scale-325) var(--brand-scale-300);
+    padding: var(--alias-spacing-17) var(--alias-spacing-12);
 }
 
 .size--big {
-    padding: var(--brand-scale-550) var(--brand-scale-300);
+    padding: var(--alias-spacing-25) var(--alias-spacing-12);
 }
 
 .shadow {

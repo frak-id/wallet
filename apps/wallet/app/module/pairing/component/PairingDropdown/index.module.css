@@ -6,8 +6,8 @@
     z-index: var(--z-dropdown);
     display: flex;
     flex-direction: column;
-    margin: 0 var(--brand-scale-175);
-    gap: var(--brand-scale-175);
+    margin: 0 var(--alias-spacing-ms);
+    gap: var(--alias-spacing-ms);
     animation: slideIn var(--transition-slow) var(--easing-smooth) forwards;
 }
 
