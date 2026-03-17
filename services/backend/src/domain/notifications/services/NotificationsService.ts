@@ -2,7 +2,11 @@ import { db, log } from "@backend-infrastructure";
 import { inArray, lt } from "drizzle-orm";
 import type { Address } from "viem";
 import { sendNotification, setVapidDetails } from "web-push";
-import { pushTokensTable } from "../db/schema";
+import {
+    type NotificationType,
+    notificationSentTable,
+    pushTokensTable,
+} from "../db/schema";
 import type { SendNotificationPayload } from "../dto/SendNotificationDto";
 import type { FcmSender } from "./FcmSender";
 
@@ -170,6 +174,40 @@ export class NotificationsService {
             if (idsToDelete.length > 0) {
                 await this.deleteTokensByIds(idsToDelete);
             }
+        }
+    }
+
+    async sendAndStore({
+        wallets,
+        payload,
+        type,
+        broadcastId,
+    }: {
+        wallets: Address[];
+        payload: SendNotificationPayload;
+        type: NotificationType;
+        broadcastId?: string;
+    }) {
+        await this.sendNotification({ wallets, payload });
+
+        if (wallets.length === 0) return;
+
+        const records = wallets.map((wallet) => ({
+            wallet,
+            type,
+            title: payload.title,
+            body: payload.body,
+            payload,
+            broadcastId,
+        }));
+
+        try {
+            await db.insert(notificationSentTable).values(records);
+        } catch (error) {
+            log.warn(
+                { error, count: records.length },
+                "[NotificationsService] Failed to store sent notifications"
+            );
         }
     }
 
