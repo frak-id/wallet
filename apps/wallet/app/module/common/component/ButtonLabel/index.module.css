@@ -1,12 +1,12 @@
 .buttonLabel {
-    font-size: 13px;
+    font-size: var(--brand-fontsize-130);
     color: var(--frak-color-grayText);
     line-height: 16px;
 
     & > strong {
         color: var(--frak-color-white);
-        font-size: 14px;
-        font-weight: 400;
+        font-size: var(--alias-fontsize-s);
+        font-weight: var(--brand-fontweight-regular);
         line-height: 19px;
     }
 }

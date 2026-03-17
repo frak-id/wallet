@@ -1,3 +1,4 @@
+import { Box } from "@frak-labs/ui/component/Box";
 import { Button } from "@frak-labs/ui/component/Button";
 import { cx } from "class-variance-authority";
 import {
@@ -100,7 +101,7 @@ export function Onboarding({
                 ))}
             </div>
 
-            <div className={styles.onboarding__footer}>
+            <Box gap="l" padding="none" className={styles.onboarding__footer}>
                 <div className={styles.onboarding__dots}>
                     {Array.from({ length: slidesCount }).map((_, index) => (
                         <div
@@ -119,7 +120,7 @@ export function Onboarding({
                         ? lastButtonLabel
                         : buttonLabel}
                 </Button>
-            </div>
+            </Box>
         </div>
     );
 }

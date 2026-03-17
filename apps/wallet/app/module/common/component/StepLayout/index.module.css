@@ -3,7 +3,7 @@
     flex-direction: column;
     flex: 1;
     min-height: 0;
-    background-color: var(--frak-contrast-background-color, #fff);
+    background-color: var(--frak-contrast-background-color);
     padding-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
     padding-bottom: var(
         --safe-area-inset-bottom,
@@ -13,43 +13,40 @@
 
 .stepLayout__content {
     flex: 1;
-    display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 32px 24px;
-    gap: 24px;
+    padding: var(--frak-spacing-xl) var(--frak-spacing-l);
 }
 
 .stepLayout__icon {
     width: 80px;
     height: 80px;
-    border-radius: 50%;
-    background-color: var(--frak-color-gray-100, #f3f4f6);
+    border-radius: var(--brand-scale-half);
+    background-color: var(--alias-neutral-150);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 40px;
+    font-size: var(--alias-fontsize-3xl);
 }
 
 .stepLayout__title {
-    font-size: 24px;
-    font-weight: 700;
+    font-size: var(--alias-fontsize-xl);
+    font-weight: var(--brand-fontweight-bold);
     text-align: center;
     margin: 0;
 }
 
 .stepLayout__description {
-    font-size: 16px;
-    color: var(--frak-color-gray-600, #6b7280);
+    font-size: var(--alias-fontsize-m);
+    color: var(--alias-neutral-550);
     text-align: center;
     margin: 0;
 }
 
 .stepLayout__footer {
-    padding: 24px 20px;
+    padding: var(--frak-spacing-l) var(--brand-scale-500);
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: var(--brand-scale-300);
     align-items: center;
 }

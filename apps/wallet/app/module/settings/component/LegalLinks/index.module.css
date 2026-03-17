@@ -1,11 +1,11 @@
 .legalLinks__list {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: var(--brand-scale-175);
 }
 
 .legalLinks__link {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: var(--frak-spacing-s);
 }

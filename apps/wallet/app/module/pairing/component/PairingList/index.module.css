@@ -1,32 +1,32 @@
 .pairing__list {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: var(--frak-spacing-m);
 }
 
 .pairing__item {
-    background-color: #1e3a5f;
-    border-radius: 0.5rem;
-    padding: 1rem;
+    background-color: var(--color-wallet-deep-blue);
+    border-radius: var(--frak-radius-s);
+    padding: var(--frak-spacing-m);
     transition-property: all;
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-    transition-duration: 0.15s;
+    transition-timing-function: var(--easing-decelerate);
+    transition-duration: var(--transition-fast);
 }
 
 .pairing__item:hover {
-    background-color: #1a3252;
+    background-color: var(--color-wallet-deep-blue-hover);
 }
 
 .pairing__header {
     display: flex;
     justify-content: space-between;
     align-items: start;
-    margin-bottom: 1rem;
+    margin-bottom: var(--frak-spacing-m);
 }
 
 .pairing__id {
-    font-size: 0.875rem;
-    color: #718096;
+    font-size: var(--alias-fontsize-s);
+    color: var(--color-wallet-slate);
 }
 
 .pairing__icon {
@@ -37,29 +37,29 @@
 .pairing__details {
     display: grid;
     grid-template-columns: auto 1fr;
-    gap: 0.75rem;
-    font-size: 0.875rem;
+    gap: var(--brand-scale-300);
+    font-size: var(--alias-fontsize-s);
 }
 
 .pairing__label {
-    color: #718096;
+    color: var(--color-wallet-slate);
     display: flex;
     align-items: center;
-    gap: 0.25rem;
+    gap: var(--frak-spacing-xs);
 }
 
 .pairing__value {
-    font-weight: 500;
+    font-weight: var(--brand-fontweight-medium);
 }
 
 .pairing__footer {
-    margin-top: 1rem;
+    margin-top: var(--frak-spacing-m);
 }
 
 .pairing__deleteButton {
     width: 100%;
-    color: #f56565;
+    color: var(--color-wallet-error-accent);
     transition:
-        color 0.3s,
-        background-color 0.3s;
+        color var(--transition-slow),
+        background-color var(--transition-slow);
 }

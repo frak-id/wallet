@@ -2,5 +2,5 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
-    gap: 36px;
+    gap: var(--brand-scale-900);
 }

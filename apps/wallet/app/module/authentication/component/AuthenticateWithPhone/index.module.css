@@ -1,10 +1,10 @@
 .authenticateWithPhone__fadeIn {
-    margin: 20px;
-    animation: fadeIn 0.3s ease-in-out;
+    margin: var(--brand-scale-500);
+    animation: fadeIn var(--transition-slow) var(--easing-in-out);
     opacity: 1;
     overflow: hidden;
     max-height: 0;
-    animation: fadeIn 0.3s ease-in-out forwards;
+    animation: fadeIn var(--transition-slow) var(--easing-in-out) forwards;
 }
 
 @keyframes fadeIn {

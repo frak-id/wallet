@@ -3,12 +3,12 @@
     top: 60px;
     left: 0;
     right: 0;
-    z-index: 100;
+    z-index: var(--z-dropdown);
     display: flex;
     flex-direction: column;
-    margin: 0 10px;
-    gap: 10px;
-    animation: slideIn 0.3s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+    margin: 0 var(--brand-scale-175);
+    gap: var(--brand-scale-175);
+    animation: slideIn var(--transition-slow) var(--easing-smooth) forwards;
 }
 
 @keyframes slideIn {

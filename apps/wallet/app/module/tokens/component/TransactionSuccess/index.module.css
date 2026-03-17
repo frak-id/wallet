@@ -1,7 +1,7 @@
 .transactionSuccess {
     display: block;
     text-align: center;
-    font-size: 12px;
+    font-size: var(--alias-fontsize-xs);
 }
 
 .transactionSuccess__polygonLink {

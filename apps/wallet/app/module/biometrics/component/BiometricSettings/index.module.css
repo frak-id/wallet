@@ -1,31 +1,31 @@
 .biometricSettings {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: var(--frak-spacing-m);
 }
 
 .biometricSettings__row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
+    gap: var(--brand-scale-300);
 }
 
 .biometricSettings__label {
-    font-size: 0.875rem;
+    font-size: var(--alias-fontsize-s);
 }
 
 .biometricSettings__select {
-    padding: 8px 12px;
-    border-radius: 8px;
+    padding: var(--frak-spacing-s) var(--brand-scale-300);
+    border-radius: var(--frak-radius-s);
     border: 1px solid var(--border);
     background: var(--background);
-    font-size: 0.875rem;
+    font-size: var(--alias-fontsize-s);
     cursor: pointer;
 }
 
 .biometricSettings__notAvailable {
-    font-size: 0.875rem;
+    font-size: var(--alias-fontsize-s);
     color: var(--text-muted);
     font-style: italic;
 }

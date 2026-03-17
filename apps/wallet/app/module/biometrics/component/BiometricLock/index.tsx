@@ -1,3 +1,4 @@
+import { Box } from "@frak-labs/ui/component/Box";
 import { Button } from "@frak-labs/ui/component/Button";
 import { LogoFrakWithName } from "@frak-labs/ui/icons/LogoFrakWithName";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -74,7 +75,7 @@ export function BiometricLock() {
     }
 
     return (
-        <div className={styles.lockScreen}>
+        <Box padding="l" gap="xl" className={styles.lockScreen}>
             <LogoFrakWithName className={styles.lockScreen__logo} />
             <div className={styles.lockScreen__content}>
                 <h2 className={styles.lockScreen__title}>
@@ -97,6 +98,6 @@ export function BiometricLock() {
             >
                 {t("biometrics.unlock")}
             </Button>
-        </div>
+        </Box>
     );
 }

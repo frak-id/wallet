@@ -2,13 +2,13 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 10px;
-    padding: 9px 12px;
-    border-radius: 8px;
-    background: rgba(0, 0, 0, 0.35);
+    margin-bottom: var(--brand-scale-175);
+    padding: var(--brand-scale-150) var(--brand-scale-300);
+    border-radius: var(--frak-radius-s);
+    background: var(--color-wallet-overlay-light);
     backdrop-filter: blur(80px);
     color: var(--frak-color-white);
-    font-size: 13px;
+    font-size: var(--brand-fontsize-130);
 }
 
 .warning__text {
@@ -16,5 +16,5 @@
         "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji",
         "Android Emoji", "EmojiOne Mozilla", "Twemoji Mozilla", "Noto Emoji",
         "Segoe UI Symbol", EmojiSymbols, emoji, sans-serif;
-    font-size: 12px;
+    font-size: var(--alias-fontsize-xs);
 }

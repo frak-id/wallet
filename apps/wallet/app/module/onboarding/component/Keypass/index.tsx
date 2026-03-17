@@ -1,3 +1,4 @@
+import { Box } from "@frak-labs/ui/component/Box";
 import { Button } from "@frak-labs/ui/component/Button";
 import { useMediaQuery } from "@frak-labs/ui/hook/useMediaQuery";
 import {
@@ -110,7 +111,7 @@ function KeypassContent({
 
     if (!webAuthNSupported) {
         return (
-            <div className={styles.keypass}>
+            <Box gap="l" padding="none" className={styles.keypass}>
                 <div className={styles.keypass__icon}>
                     <span>⚠️</span>
                 </div>
@@ -129,13 +130,13 @@ function KeypassContent({
                         {t("onboarding.keypass.unsupported.button")}
                     </Button>
                 </div>
-            </div>
+            </Box>
         );
     }
 
     if (existingAccount) {
         return (
-            <div className={styles.keypass}>
+            <Box gap="l" padding="none" className={styles.keypass}>
                 <div className={styles.keypass__icon}>
                     <span>👋</span>
                 </div>
@@ -157,12 +158,12 @@ function KeypassContent({
                         {t("onboarding.keypass.existingAccount.button")}
                     </Button>
                 </div>
-            </div>
+            </Box>
         );
     }
 
     return (
-        <div className={styles.keypass}>
+        <Box gap="l" padding="none" className={styles.keypass}>
             <div className={styles.keypass__icon}>
                 <span>🔐</span>
             </div>
@@ -189,6 +190,6 @@ function KeypassContent({
                     width={"full"}
                 />
             </div>
-        </div>
+        </Box>
     );
 }

@@ -1,13 +1,13 @@
 .panel {
-    border-radius: 18px;
-    transition: background 0.3s;
+    border-radius: var(--brand-scale-350);
+    transition: background var(--transition-slow);
     background-size: cover;
     background-position: -100%;
     border: 1px solid var(--frak-panel-border-color);
 }
 
 .panel + .panel {
-    margin-top: 10px;
+    margin-top: var(--brand-scale-175);
 }
 
 .primary {
@@ -34,15 +34,15 @@
 }
 
 .size--small {
-    padding: 12px;
+    padding: var(--brand-scale-300);
 }
 
 .size--normal {
-    padding: 17px 12px;
+    padding: var(--brand-scale-325) var(--brand-scale-300);
 }
 
 .size--big {
-    padding: 25px 12px;
+    padding: var(--brand-scale-550) var(--brand-scale-300);
 }
 
 .shadow {

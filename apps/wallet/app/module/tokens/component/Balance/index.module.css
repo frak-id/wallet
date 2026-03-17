@@ -1,10 +1,10 @@
 .balance {
-    padding: 50px 0;
+    padding: var(--brand-scale-1100) 0;
 }
 
 .balance__amount {
-    font-size: 34px;
-    font-weight: 600;
+    font-size: var(--alias-fontsize-2xl);
+    font-weight: var(--brand-fontweight-semi-bold);
     text-align: center;
-    text-shadow: 2px 2px 38px rgba(11, 47, 119, 1);
+    text-shadow: 2px 2px 38px var(--color-wallet-navy-solid);
 }

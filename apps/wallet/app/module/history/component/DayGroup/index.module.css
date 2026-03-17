@@ -1,10 +1,10 @@
 .historyGroup {
     display: flex;
     flex-direction: column;
-    margin-top: 16px;
+    margin-top: var(--frak-spacing-m);
 
     h2 {
-        margin-bottom: 8px;
+        margin-bottom: var(--frak-spacing-s);
     }
 }
 
@@ -12,5 +12,5 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin: 12px 0;
+    margin: var(--brand-scale-300) 0;
 }

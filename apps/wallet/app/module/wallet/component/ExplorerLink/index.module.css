@@ -2,7 +2,7 @@
     flex: 1;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: var(--brand-scale-175);
 }
 
 .explorerLink__icon {

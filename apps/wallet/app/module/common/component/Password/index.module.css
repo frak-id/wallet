@@ -1,9 +1,9 @@
 .password__input {
-    margin: 10px 0;
+    margin: var(--brand-scale-175) 0;
 }
 
 .password__error {
     display: block;
-    padding-bottom: 5px;
+    padding-bottom: var(--brand-scale-75);
     color: var(--frak-color-red);
 }

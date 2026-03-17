@@ -1,3 +1,4 @@
+import { Box } from "@frak-labs/ui/component/Box";
 import type { RewardHistoryItem as RewardHistoryItemType } from "@frak-labs/wallet-shared";
 import { Gift } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -29,7 +30,7 @@ function RewardHistoryEmpty() {
     const { t } = useTranslation();
 
     return (
-        <div className={styles.empty}>
+        <Box padding="l" className={styles.empty}>
             <Gift size={48} className={styles.empty__icon} />
             <span className={styles.empty__title}>
                 {t("reward.history.empty")}
@@ -40,7 +41,7 @@ function RewardHistoryEmpty() {
                     "Your rewards will appear here once you start earning"
                 )}
             </span>
-        </div>
+        </Box>
     );
 }
 

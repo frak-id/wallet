@@ -1,48 +1,49 @@
 .lockScreen {
     position: fixed;
     inset: 0;
-    z-index: 9999;
-    display: flex;
-    flex-direction: column;
+    z-index: var(--z-toast);
     align-items: center;
     justify-content: center;
-    gap: 32px;
-    padding: 24px;
-    background: linear-gradient(208deg, #0d2247 0%, #0a1a36 50%, #061224 100%);
+    background: linear-gradient(
+        208deg,
+        var(--color-wallet-navy-dark) 0%,
+        var(--color-wallet-navy-darker) 50%,
+        var(--color-wallet-navy-darkest) 100%
+    );
 }
 
 .lockScreen__logo {
     width: 120px;
     height: auto;
-    margin-bottom: 16px;
+    margin-bottom: var(--frak-spacing-m);
 }
 
 .lockScreen__content {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 16px;
+    gap: var(--frak-spacing-m);
     text-align: center;
 }
 
 .lockScreen__title {
-    font-size: 1.5rem;
-    font-weight: 600;
+    font-size: var(--alias-fontsize-xl);
+    font-weight: var(--brand-fontweight-semi-bold);
     margin: 0;
 }
 
 .lockScreen__subtitle {
-    font-size: 0.875rem;
+    font-size: var(--alias-fontsize-s);
     color: var(--text-muted);
     margin: 0;
 }
 
 .lockScreen__error {
-    font-size: 0.875rem;
+    font-size: var(--alias-fontsize-s);
     color: var(--error);
     margin: 0;
 }
 
 .lockScreen__button {
-    margin-top: 16px;
+    margin-top: var(--frak-spacing-m);
 }

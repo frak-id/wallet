@@ -2,18 +2,18 @@
     display: flex;
     flex-direction: column;
     height: 100%;
-    padding: 0 32px;
+    padding: 0 var(--frak-spacing-xl);
     justify-content: center;
     align-items: center;
-    gap: 16px;
+    gap: var(--frak-spacing-m);
 }
 
 .slide__title {
-    font-size: 24px;
-    font-weight: 700;
+    font-size: var(--alias-fontsize-xl);
+    font-weight: var(--brand-fontweight-bold);
 }
 
 .slide__description {
-    font-size: 16px;
-    color: var(--frak-color-gray-600, #6b7280);
+    font-size: var(--alias-fontsize-m);
+    color: var(--alias-neutral-550);
 }

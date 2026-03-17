@@ -120,4 +120,10 @@
     --frak-radius-l: var(--alias-cornerradius-l);
     --frak-radius-xl: var(--alias-cornerradius-xl);
     --frak-radius-full: var(--alias-cornerradius-full);
+
+    /* ── Biometrics legacy var aliases ── */
+    --text-muted: var(--color-wallet-text-muted);
+    --error: var(--color-wallet-error);
+    --border: var(--color-wallet-border);
+    --background: var(--color-wallet-background);
 }

@@ -1,13 +1,13 @@
 .step5__pushPasskey {
-    margin-top: 10px;
-    padding-top: 10px;
+    margin-top: var(--brand-scale-175);
+    padding-top: var(--brand-scale-175);
     border-top: 2px solid var(--frak-color-grayText);
 }
 
 .step5__buttonPush {
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: var(--brand-scale-75);
     margin: 0 auto;
 }
 

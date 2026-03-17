@@ -1,6 +1,6 @@
 .notice {
     display: block;
-    margin-top: 15px;
-    font-size: 12px;
+    margin-top: var(--brand-scale-275);
+    font-size: var(--alias-fontsize-xs);
     color: var(--frak-notice-text-color);
 }

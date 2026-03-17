@@ -1,10 +1,10 @@
 .back {
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-top: 10px;
-    margin-left: 17px;
-    font-size: 18px;
+    gap: var(--brand-scale-175);
+    margin-top: var(--brand-scale-175);
+    margin-left: var(--brand-scale-325);
+    font-size: var(--alias-fontsize-l);
     letter-spacing: -0.02em;
 }
 

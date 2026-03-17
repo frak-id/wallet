@@ -1,19 +1,20 @@
 .tokenItem {
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-size: 16px;
+    gap: var(--frak-spacing-s);
+    font-size: var(--alias-fontsize-m);
 }
 
 .tokenItem__button {
     all: unset;
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 5px 10px 5px 5px;
-    border-radius: 8px;
+    gap: var(--frak-spacing-s);
+    padding: var(--brand-scale-75) var(--brand-scale-175) var(--brand-scale-75)
+        var(--brand-scale-75);
+    border-radius: var(--frak-radius-s);
     cursor: pointer;
-    transition: background 0.2s ease-in-out;
+    transition: background var(--transition-base) var(--easing-in-out);
 }
 
 .tokenItem__button:hover {

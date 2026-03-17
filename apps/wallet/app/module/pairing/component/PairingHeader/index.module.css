@@ -1,8 +1,8 @@
 .pairingHeader {
-    margin-bottom: 1rem;
+    margin-bottom: var(--frak-spacing-m);
 }
 
 .pairingHeader__text {
     text-align: center;
-    margin: 0.5rem 0 1rem 0;
+    margin: var(--frak-spacing-s) 0 var(--frak-spacing-m) 0;
 }

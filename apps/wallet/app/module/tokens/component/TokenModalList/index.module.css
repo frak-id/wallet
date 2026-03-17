@@ -1,10 +1,11 @@
 .tokenModalList__trigger {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 6px 10px 6px 6px;
-    border-right: 1px solid #656774;
-    font-weight: 700;
+    gap: var(--brand-scale-175);
+    padding: var(--brand-scale-125) var(--brand-scale-175)
+        var(--brand-scale-125) var(--brand-scale-125);
+    border-right: 1px solid var(--color-wallet-gray-mid);
+    font-weight: var(--brand-fontweight-bold);
 }
 
 .tokenModalList__trigger::after {
@@ -13,6 +14,7 @@
     height: 0;
     border-style: solid;
     border-width: 5px 4px 0 4px;
-    border-color: #656774 transparent transparent transparent;
+    border-color: var(--color-wallet-gray-mid) transparent transparent
+        transparent;
     transform: rotate(0deg);
 }

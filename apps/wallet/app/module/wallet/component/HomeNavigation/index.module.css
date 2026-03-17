@@ -1,14 +1,14 @@
 .homeNavigation {
     display: flex;
     justify-content: space-between;
-    margin: 0 8px 10px 8px;
+    margin: 0 var(--frak-spacing-s) var(--brand-scale-175) var(--frak-spacing-s);
 }
 
 .button {
     display: flex;
     flex-direction: column;
     text-decoration: none;
-    gap: 4px;
+    gap: var(--frak-spacing-xs);
     text-align: center;
     width: 55px;
 }
@@ -23,7 +23,7 @@
     justify-content: center;
     width: 55px;
     height: 55px;
-    border-radius: 35px;
-    background: rgba(0, 0, 0, 0.35);
+    border-radius: var(--brand-scale-875);
+    background: var(--color-wallet-overlay-light);
     backdrop-filter: blur(14px);
 }

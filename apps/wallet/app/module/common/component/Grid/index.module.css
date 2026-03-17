@@ -1,5 +1,5 @@
 .grid {
-    padding: 20px 17px;
+    padding: var(--brand-scale-500) var(--brand-scale-325);
     display: grid;
     grid-template-columns: 1fr;
     grid-template-rows: 1fr auto;
@@ -11,5 +11,5 @@
 }
 
 .grid > div + div {
-    margin-top: 24px;
+    margin-top: var(--frak-spacing-l);
 }

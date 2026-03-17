@@ -20,8 +20,25 @@
     --brand-fontweight-bold: 700;
 
     /* ========================================
-       Brand / Colors / Neutral
-       ======================================== */
+        Brand / Font Size
+        ======================================== */
+    --brand-fontsize-100: 10px;
+    --brand-fontsize-110: 11px;
+    --brand-fontsize-120: 12px;
+    --brand-fontsize-130: 13px;
+    --brand-fontsize-140: 14px;
+    --brand-fontsize-150: 15px;
+    --brand-fontsize-160: 16px;
+    --brand-fontsize-180: 18px;
+    --brand-fontsize-240: 24px;
+    --brand-fontsize-290: 29px;
+    --brand-fontsize-340: 34px;
+    --brand-fontsize-400: 40px;
+    --brand-fontsize-440: 44px;
+
+    /* ========================================
+        Brand / Colors / Neutral
+        ======================================== */
     --brand-foundation-white: #ffffff;
     --brand-foundation-black-70: #000000b2;
     --brand-grey-50: #fafafa;
@@ -34,10 +51,13 @@
     --brand-grey-600: #525252;
     --brand-grey-700: #262626;
     --brand-grey-800: #000000;
+    --brand-grey-150: #f3f4f6;
+    --brand-grey-350: #e5e7eb;
+    --brand-grey-550: #6b7280;
 
     /* ========================================
-       Brand / Colors / Primary (Lavender)
-       ======================================== */
+        Brand / Colors / Primary (Lavender)
+        ======================================== */
     --brand-lavender-50: #f6f4ff;
     --brand-lavender-100: #ede8ff;
     --brand-lavender-200: #dad1ff;
@@ -107,10 +127,24 @@
     --brand-scale-1300: 52px;
     --brand-scale-1400: 56px;
     --brand-scale-full: 9999px;
+    --brand-scale-75: 5px;
+    --brand-scale-125: 6px;
+    --brand-scale-150: 9px;
+    --brand-scale-175: 10px;
+    --brand-scale-225: 11px;
+    --brand-scale-275: 15px;
+    --brand-scale-325: 17px;
+    --brand-scale-350: 18px;
+    --brand-scale-550: 25px;
+    --brand-scale-575: 23px;
+    --brand-scale-750: 30px;
+    --brand-scale-875: 35px;
+    --brand-scale-1100: 50px;
+    --brand-scale-half: 50%;
 
     /* ========================================
-       Alias / Spacing & Size
-       ======================================== */
+        Alias / Spacing & Size
+        ======================================== */
     --alias-size-none: var(--brand-scale-0);
     --alias-size-xs: var(--brand-scale-100);
     --alias-size-s: var(--brand-scale-200);
@@ -124,10 +158,13 @@
     --alias-spacing-m: var(--brand-scale-400);
     --alias-spacing-l: var(--brand-scale-600);
     --alias-spacing-xl: var(--brand-scale-800);
+    --alias-spacing-2xs: var(--brand-scale-75);
+    --alias-spacing-ms: var(--brand-scale-175);
+    --alias-spacing-2xl: var(--brand-scale-1100);
 
     /* ========================================
-       Alias / Radius & Border
-       ======================================== */
+        Alias / Radius & Border
+        ======================================== */
     --alias-borderwidth-none: var(--brand-scale-0);
     --alias-borderwidth-xs: var(--brand-scale-25);
     --alias-borderwidth-s: var(--brand-scale-25);
@@ -140,8 +177,21 @@
     --alias-cornerradius-full: var(--brand-scale-full);
 
     /* ========================================
-       Alias / Semantic Colors
-       ======================================== */
+        Alias / Font Size
+        ======================================== */
+    --alias-fontsize-2xs: var(--brand-fontsize-100);
+    --alias-fontsize-xs: var(--brand-fontsize-120);
+    --alias-fontsize-s: var(--brand-fontsize-140);
+    --alias-fontsize-m: var(--brand-fontsize-160);
+    --alias-fontsize-l: var(--brand-fontsize-180);
+    --alias-fontsize-xl: var(--brand-fontsize-240);
+    --alias-fontsize-2xl: var(--brand-fontsize-340);
+    --alias-fontsize-3xl: var(--brand-fontsize-400);
+    --alias-fontsize-4xl: var(--brand-fontsize-440);
+
+    /* ========================================
+        Alias / Semantic Colors
+        ======================================== */
     --alias-neutral-50: var(--brand-grey-50);
     --alias-neutral-100: var(--brand-grey-100);
     --alias-neutral-200: var(--brand-grey-200);
@@ -151,6 +201,9 @@
     --alias-neutral-500: var(--brand-grey-500);
     --alias-neutral-600: var(--brand-grey-600);
     --alias-neutral-700: var(--brand-grey-700);
+    --alias-neutral-150: var(--brand-grey-150);
+    --alias-neutral-350: var(--brand-grey-350);
+    --alias-neutral-550: var(--brand-grey-550);
     --alias-neutral-overlay: var(--brand-foundation-black-70);
     --alias-neutral-white: var(--brand-foundation-white);
     --alias-neutral-default: var(--brand-grey-800);
@@ -247,6 +300,60 @@
     --icon-error: var(--alias-error-default);
     --icon-success: var(--alias-success-default);
     --icon-warning: var(--alias-warning-default);
+
+    /* ========================================
+        Z-Index
+        ======================================== */
+    --z-dropdown: 100;
+    --z-sticky: 200;
+    --z-fixed: 500;
+    --z-modal: 1000;
+    --z-popover: 1100;
+    --z-toast: 9999;
+
+    /* ========================================
+        Transition / Easing
+        ======================================== */
+    --transition-fast: 0.15s;
+    --transition-base: 0.2s;
+    --transition-slow: 0.3s;
+    --easing-default: ease;
+    --easing-in-out: ease-in-out;
+    --easing-smooth: cubic-bezier(0.25, 0.1, 0.25, 1);
+    --easing-decelerate: cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* ========================================
+        Shadow
+        ======================================== */
+    --shadow-panel: 4px 4px 4px 0;
+
+    /* ========================================
+        Wallet / Semantic Colors (light)
+        ======================================== */
+    --color-wallet-gray-light: #c6c7c8;
+    --color-wallet-gray-mid: #656774;
+    --color-wallet-gray-dark: #575757;
+    --color-wallet-gray-darker: #4d4d4d;
+    --color-wallet-slate: #718096;
+    --color-wallet-error-accent: #f56565;
+    --color-wallet-sso-blue: #0171ec;
+    --color-wallet-sso-muted: #3e5889;
+    --color-wallet-pairing-bg: #536187;
+    --color-wallet-deep-blue: #1e3a5f;
+    --color-wallet-deep-blue-hover: #1a3252;
+    --color-wallet-navy-dark: #0d2247;
+    --color-wallet-navy-darker: #0a1a36;
+    --color-wallet-navy-darkest: #061224;
+    --color-wallet-overlay-light: rgba(0, 0, 0, 0.35);
+    --color-wallet-glass-subtle: rgba(255, 255, 255, 0.2);
+    --color-wallet-glass-medium: rgba(255, 255, 255, 0.3);
+    --color-wallet-glass-strong: rgba(255, 255, 255, 0.4);
+    --color-wallet-navy-solid: rgba(11, 47, 119, 1);
+    --color-wallet-border-light: rgb(209, 213, 219);
+    --color-wallet-text-muted: var(--text-tertiary);
+    --color-wallet-error: var(--text-error);
+    --color-wallet-border: var(--border-default);
+    --color-wallet-background: var(--surface-background);
 }
 
 [data-theme="dark"] {
@@ -306,4 +413,32 @@
     --icon-error: var(--alias-error-default);
     --icon-success: var(--alias-success-default);
     --icon-warning: var(--alias-warning-default);
+
+    /* ========================================
+        Wallet / Semantic Colors (dark)
+        ======================================== */
+    --color-wallet-gray-light: #c6c7c8;
+    --color-wallet-gray-mid: #656774;
+    --color-wallet-gray-dark: #575757;
+    --color-wallet-gray-darker: #4d4d4d;
+    --color-wallet-slate: #718096;
+    --color-wallet-error-accent: #f56565;
+    --color-wallet-sso-blue: #0171ec;
+    --color-wallet-sso-muted: #3e5889;
+    --color-wallet-pairing-bg: #536187;
+    --color-wallet-deep-blue: #1e3a5f;
+    --color-wallet-deep-blue-hover: #1a3252;
+    --color-wallet-navy-dark: #0d2247;
+    --color-wallet-navy-darker: #0a1a36;
+    --color-wallet-navy-darkest: #061224;
+    --color-wallet-overlay-light: rgba(0, 0, 0, 0.35);
+    --color-wallet-glass-subtle: rgba(255, 255, 255, 0.2);
+    --color-wallet-glass-medium: rgba(255, 255, 255, 0.3);
+    --color-wallet-glass-strong: rgba(255, 255, 255, 0.4);
+    --color-wallet-navy-solid: rgba(11, 47, 119, 1);
+    --color-wallet-border-light: rgb(209, 213, 219);
+    --color-wallet-text-muted: var(--text-tertiary);
+    --color-wallet-error: var(--text-error);
+    --color-wallet-border: var(--border-default);
+    --color-wallet-background: var(--surface-background);
 }

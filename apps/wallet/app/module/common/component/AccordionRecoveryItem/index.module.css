@@ -1,11 +1,11 @@
 .accordionRecoveryItem__trigger {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: var(--brand-scale-175);
     width: 100%;
     color: var(--frak-accordion-trigger-color);
-    font-weight: 400;
-    font-size: 14px;
+    font-weight: var(--brand-fontweight-regular);
+    font-size: var(--alias-fontsize-s);
     text-align: left;
 }
 
@@ -25,5 +25,5 @@
 }
 
 .accordionRecoveryItem__content > div {
-    margin-top: 20px;
+    margin-top: var(--brand-scale-500);
 }

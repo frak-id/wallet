@@ -3,7 +3,7 @@
     align-items: center;
     justify-content: center;
     width: 100%;
-    gap: 3rem;
+    gap: var(--brand-scale-1200);
 }
 
 .device {
@@ -15,36 +15,36 @@
 .device__icon {
     height: 4rem;
     width: 4rem;
-    border-radius: 9999px;
+    border-radius: var(--frak-radius-full);
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 0.5rem;
+    margin-bottom: var(--frak-spacing-s);
 }
 
 .device__icon--mobile {
-    background-color: #fff;
+    background-color: var(--alias-neutral-white);
 }
 
 .device__icon--mobile svg {
     height: 2rem;
     width: 2rem;
-    color: #000;
+    color: var(--alias-neutral-default);
 }
 
 .device__icon--desktop {
-    background-color: #fff;
+    background-color: var(--alias-neutral-white);
 }
 
 .device__icon--desktop svg {
     height: 2rem;
     width: 2rem;
-    color: #000;
+    color: var(--alias-neutral-default);
 }
 
 .device__label {
-    font-size: 0.875rem;
-    font-weight: 500;
+    font-size: var(--alias-fontsize-s);
+    font-weight: var(--brand-fontweight-medium);
 }
 
 .connector {
@@ -59,7 +59,7 @@
         content: "";
         width: 4rem;
         height: 0.125rem;
-        background-color: rgb(209 213 219);
+        background-color: var(--color-wallet-border-light);
         position: absolute;
         top: 50%;
         left: 0;

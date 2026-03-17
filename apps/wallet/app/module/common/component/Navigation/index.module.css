@@ -1,11 +1,11 @@
 .navigation {
     position: fixed;
     bottom: 0;
-    z-index: 100;
+    z-index: var(--z-dropdown);
     width: 100%;
-    padding: 10px 24px;
+    padding: var(--brand-scale-175) var(--frak-spacing-l);
     padding-bottom: calc(
-        10px +
+        var(--brand-scale-175) +
         var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px))
     );
     background: var(--frak-header-background-color);
