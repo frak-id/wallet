@@ -8,10 +8,7 @@ import type {
     RewardHistoryService,
     TokenMeta,
 } from "../domain/rewards/services/RewardHistoryService";
-import type {
-    CreateReferralLinkPayload,
-    DetailedAssetLog,
-} from "../domain/rewards/types";
+import type { DetailedAssetLog } from "../domain/rewards/types";
 import type { BalancesRepository } from "../domain/wallet/repositories/BalancesRepository";
 import type { PricingRepository } from "../infrastructure/pricing/PricingRepository";
 
@@ -29,21 +26,21 @@ export class RewardHistoryOrchestrator {
         walletAddress: Address,
         options: { limit: number; offset: number }
     ) {
-        const groupIds =
-            await this.identityRepository.findAllGroupIdsByWallet(
-                walletAddress
-            );
+        const group = await this.identityRepository.findGroupByIdentity({
+            type: "wallet",
+            value: walletAddress,
+        });
 
-        if (groupIds.length === 0) {
+        if (!group) {
             return { items: [], totalCount: 0 };
         }
 
         const [assetLogs, totalCount] = await Promise.all([
-            this.assetLogRepository.findDetailedByIdentityGroups(groupIds, {
+            this.assetLogRepository.findDetailedByIdentityGroup(group.id, {
                 limit: options.limit,
                 offset: options.offset,
             }),
-            this.assetLogRepository.countByIdentityGroups(groupIds),
+            this.assetLogRepository.countByIdentityGroup(group.id),
         ]);
 
         if (assetLogs.length === 0) {
@@ -62,10 +59,18 @@ export class RewardHistoryOrchestrator {
     private async buildEnrichmentData(
         assetLogs: DetailedAssetLog[]
     ): Promise<RewardEnrichmentData> {
+        const uniqueTokens = [
+            ...new Set(
+                assetLogs
+                    .map((log) => log.tokenAddress)
+                    .filter((addr): addr is Address => addr !== null)
+            ),
+        ];
+
         const [tokenMetadata, tokenPrices, purchaseAmounts] = await Promise.all(
             [
-                this.buildTokenMetadataMap(assetLogs),
-                this.buildTokenPriceMap(assetLogs),
+                this.buildTokenMetadataMap(uniqueTokens),
+                this.buildTokenPriceMap(uniqueTokens),
                 this.buildPurchaseAmountMap(assetLogs),
             ]
         );
@@ -73,23 +78,9 @@ export class RewardHistoryOrchestrator {
         return { tokenMetadata, tokenPrices, purchaseAmounts };
     }
 
-    private getUniqueTokenAddresses(
-        assetLogs: readonly { tokenAddress: Address | null }[]
-    ): Address[] {
-        return [
-            ...new Set(
-                assetLogs
-                    .map((log) => log.tokenAddress)
-                    .filter((addr): addr is Address => addr !== null)
-            ),
-        ];
-    }
-
     private async buildTokenMetadataMap(
-        assetLogs: readonly { tokenAddress: Address | null }[]
+        uniqueTokens: Address[]
     ): Promise<Map<string, TokenMeta>> {
-        const uniqueTokens = this.getUniqueTokenAddresses(assetLogs);
-
         const results = await Promise.all(
             uniqueTokens.map(async (token) => ({
                 token,
@@ -114,10 +105,8 @@ export class RewardHistoryOrchestrator {
     }
 
     private async buildTokenPriceMap(
-        assetLogs: readonly { tokenAddress: Address | null }[]
+        uniqueTokens: Address[]
     ): Promise<Map<string, TokenPrice | undefined>> {
-        const uniqueTokens = this.getUniqueTokenAddresses(assetLogs);
-
         const results = await Promise.all(
             uniqueTokens.map(async (token) => ({
                 token,
@@ -134,14 +123,11 @@ export class RewardHistoryOrchestrator {
         const purchaseIds: string[] = [];
         for (const log of assetLogs) {
             if (
-                log.interactionType === "create_referral_link" &&
-                log.interactionPayload
+                log.interactionPayload &&
+                "purchaseId" in log.interactionPayload &&
+                log.interactionPayload.purchaseId
             ) {
-                const payload =
-                    log.interactionPayload as CreateReferralLinkPayload;
-                if (payload.purchaseId) {
-                    purchaseIds.push(payload.purchaseId);
-                }
+                purchaseIds.push(log.interactionPayload.purchaseId);
             }
         }
 

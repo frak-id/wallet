@@ -1,11 +1,10 @@
 import type { TokenPrice } from "@backend-infrastructure";
+import type { RewardHistoryItem } from "../schemas";
 import type {
-    AssetStatus,
     CreateReferralLinkPayload,
     DetailedAssetLog,
     InteractionType,
     PurchasePayload,
-    RecipientType,
 } from "../types";
 
 export type TokenMeta = { symbol: string; decimals: number };
@@ -20,31 +19,6 @@ export type RewardEnrichmentData = {
     tokenMetadata: TokenMetadataMap;
     tokenPrices: TokenPriceMap;
     purchaseAmounts: PurchaseAmountMap;
-};
-
-export type RewardHistoryItem = {
-    merchant: {
-        name: string;
-        domain: string;
-        heroImageUrl: string | undefined;
-    };
-    token: {
-        symbol: string;
-        decimals: number;
-    };
-    amount: {
-        amount: number;
-        eurAmount: number;
-        usdAmount: number;
-        gbpAmount: number;
-    };
-    status: AssetStatus;
-    role: RecipientType;
-    trigger: InteractionType;
-    txHash: string | undefined;
-    createdAt: Date;
-    settledAt: Date | undefined;
-    purchase: { amount: number; currency: string } | undefined;
 };
 
 export class RewardHistoryService {

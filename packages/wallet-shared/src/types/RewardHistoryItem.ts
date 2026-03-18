@@ -1,4 +1,4 @@
-import type { RewardHistoryItem as BackendRewardHistoryItem } from "@frak-labs/backend-elysia/api/schemas";
+import type { RewardHistoryItem as BackendRewardHistoryItem } from "@frak-labs/backend-elysia/domain/rewards";
 
 export type {
     AssetStatus,

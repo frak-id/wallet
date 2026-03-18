@@ -268,8 +268,8 @@ export class AssetLogRepository {
             .orderBy(desc(assetLogsTable.createdAt));
     }
 
-    async findDetailedByIdentityGroups(
-        identityGroupIds: string[],
+    async findDetailedByIdentityGroup(
+        identityGroupId: string,
         options?: { limit?: number; offset?: number }
     ): Promise<DetailedAssetLog[]> {
         return db
@@ -300,7 +300,7 @@ export class AssetLogRepository {
             )
             .where(
                 and(
-                    inArray(assetLogsTable.identityGroupId, identityGroupIds),
+                    eq(assetLogsTable.identityGroupId, identityGroupId),
                     eq(assetLogsTable.assetType, "token"),
                     isNotNull(assetLogsTable.tokenAddress)
                 )
@@ -310,13 +310,13 @@ export class AssetLogRepository {
             .offset(options?.offset ?? 0);
     }
 
-    async countByIdentityGroups(identityGroupIds: string[]): Promise<number> {
+    async countByIdentityGroup(identityGroupId: string): Promise<number> {
         const [result] = await db
             .select({ count: sql<number>`count(*)::int` })
             .from(assetLogsTable)
             .where(
                 and(
-                    inArray(assetLogsTable.identityGroupId, identityGroupIds),
+                    eq(assetLogsTable.identityGroupId, identityGroupId),
                     eq(assetLogsTable.assetType, "token"),
                     isNotNull(assetLogsTable.tokenAddress)
                 )
