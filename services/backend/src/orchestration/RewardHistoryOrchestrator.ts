@@ -4,6 +4,7 @@ import type { IdentityRepository } from "../domain/identity";
 import type { PurchaseRepository } from "../domain/purchases/repositories/PurchaseRepository";
 import type { AssetLogRepository } from "../domain/rewards/repositories/AssetLogRepository";
 import type {
+    PurchaseAmountMap,
     RewardEnrichmentData,
     RewardHistoryService,
     TokenMeta,
@@ -119,7 +120,7 @@ export class RewardHistoryOrchestrator {
 
     private async buildPurchaseAmountMap(
         assetLogs: readonly DetailedAssetLog[]
-    ): Promise<Map<string, { totalPrice: string; currencyCode: string }>> {
+    ): Promise<PurchaseAmountMap> {
         const purchaseIds: string[] = [];
         for (const log of assetLogs) {
             if (

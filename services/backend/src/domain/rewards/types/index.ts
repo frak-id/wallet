@@ -1,3 +1,4 @@
+import type { ExplorerConfig } from "@backend-domain/merchant/schemas";
 import type { Address, Hex } from "viem";
 import type {
     AssetStatus,
@@ -27,7 +28,7 @@ export type DetailedAssetLog = {
     merchantId: string;
     merchantName: string;
     merchantDomain: string;
-    merchantExplorerConfig: { heroImageUrl?: string } | null;
+    merchantExplorerConfig: ExplorerConfig | null;
 };
 
 // =============================================================================

@@ -55,9 +55,11 @@ const TokenInfoSchema = t.Object({
 });
 
 const PurchaseInfoSchema = t.Object({
+    id: t.String(),
     amount: t.Number(),
     currency: t.String(),
 });
+export type PurchaseInfo = Static<typeof PurchaseInfoSchema>;
 
 export const RewardHistoryItemSchema = t.Object({
     merchant: MerchantInfoSchema,

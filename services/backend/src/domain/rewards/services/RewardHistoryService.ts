@@ -1,5 +1,5 @@
 import type { TokenPrice } from "@backend-infrastructure";
-import type { RewardHistoryItem } from "../schemas";
+import type { PurchaseInfo, RewardHistoryItem } from "../schemas";
 import type {
     CreateReferralLinkPayload,
     DetailedAssetLog,
@@ -80,10 +80,14 @@ export class RewardHistoryService {
     private extractPurchaseInfo(
         log: DetailedAssetLog,
         purchaseAmounts: PurchaseAmountMap
-    ): { amount: number; currency: string } | undefined {
+    ): PurchaseInfo | undefined {
         if (log.interactionType === "purchase" && log.interactionPayload) {
             const payload = log.interactionPayload as PurchasePayload;
-            return { amount: payload.amount, currency: payload.currency };
+            return {
+                id: payload.purchaseId,
+                amount: payload.amount,
+                currency: payload.currency,
+            };
         }
 
         if (
@@ -95,6 +99,7 @@ export class RewardHistoryService {
                 const purchase = purchaseAmounts.get(payload.purchaseId);
                 if (purchase) {
                     return {
+                        id: payload.purchaseId,
                         amount: Number.parseFloat(purchase.totalPrice),
                         currency: purchase.currencyCode,
                     };
