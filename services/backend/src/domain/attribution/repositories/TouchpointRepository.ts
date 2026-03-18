@@ -1,4 +1,4 @@
-import { and, desc, eq, gt, isNull, lt, or } from "drizzle-orm";
+import { and, desc, eq, gt, inArray, isNull, lt, or } from "drizzle-orm";
 import { db } from "../../../infrastructure/persistence/postgres";
 import { touchpointsTable } from "../db/schema";
 import type { TouchpointSource, TouchpointSourceData } from "../schemas/index";
@@ -106,5 +106,14 @@ export class TouchpointRepository {
             .returning({ id: touchpointsTable.id });
 
         return result.length;
+    }
+
+    async findByIds(ids: string[]): Promise<Touchpoint[]> {
+        if (ids.length === 0) return [];
+
+        return db
+            .select()
+            .from(touchpointsTable)
+            .where(inArray(touchpointsTable.id, ids));
     }
 }

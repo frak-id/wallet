@@ -14,11 +14,16 @@ export type PurchaseAmountMap = Map<
     string,
     { totalPrice: string; currencyCode: string }
 >;
+export type ReferrerPurchaseMap = Map<
+    string,
+    { purchaseId: string; totalPrice: string; currencyCode: string }
+>;
 
 export type RewardEnrichmentData = {
     tokenMetadata: TokenMetadataMap;
     tokenPrices: TokenPriceMap;
     purchaseAmounts: PurchaseAmountMap;
+    referrerPurchases: ReferrerPurchaseMap;
 };
 
 export class RewardHistoryService {
@@ -31,7 +36,12 @@ export class RewardHistoryService {
 
     private buildRewardItem(
         log: DetailedAssetLog,
-        { tokenMetadata, tokenPrices, purchaseAmounts }: RewardEnrichmentData
+        {
+            tokenMetadata,
+            tokenPrices,
+            purchaseAmounts,
+            referrerPurchases,
+        }: RewardEnrichmentData
     ): RewardHistoryItem {
         const meta = log.tokenAddress
             ? tokenMetadata.get(log.tokenAddress)
@@ -59,7 +69,11 @@ export class RewardHistoryService {
             txHash: log.onchainTxHash ?? undefined,
             createdAt: log.createdAt,
             settledAt: log.settledAt ?? undefined,
-            purchase: this.extractPurchaseInfo(log, purchaseAmounts),
+            purchase: this.extractPurchaseInfo(
+                log,
+                purchaseAmounts,
+                referrerPurchases
+            ),
         };
     }
 
@@ -79,8 +93,19 @@ export class RewardHistoryService {
 
     private extractPurchaseInfo(
         log: DetailedAssetLog,
-        purchaseAmounts: PurchaseAmountMap
+        purchaseAmounts: PurchaseAmountMap,
+        referrerPurchases: ReferrerPurchaseMap
     ): PurchaseInfo | undefined {
+        if (log.recipientType === "referrer") {
+            const referrerPurchase = referrerPurchases.get(log.id);
+            if (!referrerPurchase) return undefined;
+            return {
+                id: referrerPurchase.purchaseId,
+                amount: Number.parseFloat(referrerPurchase.totalPrice),
+                currency: referrerPurchase.currencyCode,
+            };
+        }
+
         if (log.interactionType === "purchase" && log.interactionPayload) {
             const payload = log.interactionPayload as PurchasePayload;
             return {

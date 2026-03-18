@@ -1,10 +1,14 @@
 import type { TokenPrice } from "@backend-infrastructure";
 import type { Address } from "viem";
+import type { TouchpointRepository } from "../domain/attribution/repositories/TouchpointRepository";
+import type { TouchpointSourceData } from "../domain/attribution/schemas";
 import type { IdentityRepository } from "../domain/identity";
 import type { PurchaseRepository } from "../domain/purchases/repositories/PurchaseRepository";
 import type { AssetLogRepository } from "../domain/rewards/repositories/AssetLogRepository";
+import type { InteractionLogRepository } from "../domain/rewards/repositories/InteractionLogRepository";
 import type {
     PurchaseAmountMap,
+    ReferrerPurchaseMap,
     RewardEnrichmentData,
     RewardHistoryService,
     TokenMeta,
@@ -20,7 +24,9 @@ export class RewardHistoryOrchestrator {
         readonly purchaseRepository: PurchaseRepository,
         readonly balancesRepository: BalancesRepository,
         readonly pricingRepository: PricingRepository,
-        readonly rewardHistoryService: RewardHistoryService
+        readonly rewardHistoryService: RewardHistoryService,
+        readonly touchpointRepository: TouchpointRepository,
+        readonly interactionLogRepository: InteractionLogRepository
     ) {}
 
     async getHistory(
@@ -68,15 +74,44 @@ export class RewardHistoryOrchestrator {
             ),
         ];
 
-        const [tokenMetadata, tokenPrices, purchaseAmounts] = await Promise.all(
-            [
-                this.buildTokenMetadataMap(uniqueTokens),
-                this.buildTokenPriceMap(uniqueTokens),
-                this.buildPurchaseAmountMap(assetLogs),
-            ]
-        );
+        const [
+            tokenMetadata,
+            tokenPrices,
+            directPurchaseIds,
+            referrerLogToPurchaseId,
+        ] = await Promise.all([
+            this.buildTokenMetadataMap(uniqueTokens),
+            this.buildTokenPriceMap(uniqueTokens),
+            this.collectDirectPurchaseIds(assetLogs),
+            this.buildReferrerPurchaseIdMap(assetLogs),
+        ]);
 
-        return { tokenMetadata, tokenPrices, purchaseAmounts };
+        const allPurchaseIds = [
+            ...new Set([
+                ...directPurchaseIds,
+                ...referrerLogToPurchaseId.values(),
+            ]),
+        ];
+
+        const purchaseLookup =
+            allPurchaseIds.length > 0
+                ? await this.fetchPurchaseLookup(allPurchaseIds)
+                : (new Map() as PurchaseAmountMap);
+
+        const referrerPurchases: ReferrerPurchaseMap = new Map();
+        for (const [logId, purchaseId] of referrerLogToPurchaseId) {
+            const purchase = purchaseLookup.get(purchaseId);
+            if (purchase) {
+                referrerPurchases.set(logId, { purchaseId, ...purchase });
+            }
+        }
+
+        return {
+            tokenMetadata,
+            tokenPrices,
+            purchaseAmounts: purchaseLookup,
+            referrerPurchases,
+        };
     }
 
     private async buildTokenMetadataMap(
@@ -118,9 +153,9 @@ export class RewardHistoryOrchestrator {
         return new Map(results.map(({ token, price }) => [token, price]));
     }
 
-    private async buildPurchaseAmountMap(
+    private collectDirectPurchaseIds(
         assetLogs: readonly DetailedAssetLog[]
-    ): Promise<PurchaseAmountMap> {
+    ): string[] {
         const purchaseIds: string[] = [];
         for (const log of assetLogs) {
             if (
@@ -131,9 +166,12 @@ export class RewardHistoryOrchestrator {
                 purchaseIds.push(log.interactionPayload.purchaseId);
             }
         }
+        return purchaseIds;
+    }
 
-        if (purchaseIds.length === 0) return new Map();
-
+    private async fetchPurchaseLookup(
+        purchaseIds: string[]
+    ): Promise<PurchaseAmountMap> {
         const purchases = await this.purchaseRepository.findByIds(purchaseIds);
         return new Map(
             purchases.map((p) => [
@@ -141,5 +179,131 @@ export class RewardHistoryOrchestrator {
                 { totalPrice: p.totalPrice, currencyCode: p.currencyCode },
             ])
         );
+    }
+
+    private async buildReferrerPurchaseIdMap(
+        assetLogs: readonly DetailedAssetLog[]
+    ): Promise<Map<string, string>> {
+        const referrerLogs = assetLogs.filter(
+            (log) => log.recipientType === "referrer" && log.touchpointId
+        );
+
+        if (referrerLogs.length === 0) return new Map();
+
+        const touchpointMap = await this.fetchTouchpointMap(referrerLogs);
+        const groupedLogs = this.groupLogsByTimestamp(
+            referrerLogs,
+            touchpointMap
+        );
+        if (groupedLogs.size === 0) return new Map();
+
+        const payloadsByGroup = await this.fetchSharingPayloads(groupedLogs);
+        return this.mapLogsToPurchaseIds(groupedLogs, payloadsByGroup);
+    }
+
+    private async fetchTouchpointMap(logs: readonly DetailedAssetLog[]) {
+        const touchpointIds = [
+            ...new Set(
+                logs
+                    .map((log) => log.touchpointId)
+                    .filter((id): id is string => id !== null)
+            ),
+        ];
+        const touchpoints =
+            await this.touchpointRepository.findByIds(touchpointIds);
+        return new Map(touchpoints.map((tp) => [tp.id, tp]));
+    }
+
+    private groupLogsByTimestamp(
+        logs: readonly DetailedAssetLog[],
+        touchpointMap: ReturnType<
+            RewardHistoryOrchestrator["fetchTouchpointMap"]
+        > extends Promise<infer R>
+            ? R
+            : never
+    ): Map<string, { logs: DetailedAssetLog[]; timestamps: number[] }> {
+        const grouped = new Map<
+            string,
+            { logs: DetailedAssetLog[]; timestamps: number[] }
+        >();
+
+        for (const log of logs) {
+            if (!log.touchpointId) continue;
+            const touchpoint = touchpointMap.get(log.touchpointId);
+            if (!touchpoint) continue;
+
+            const sourceData = touchpoint.sourceData as TouchpointSourceData;
+            if (sourceData.type !== "referral_link") continue;
+            if (!("v" in sourceData) || sourceData.v !== 2) continue;
+            if (!sourceData.referralTimestamp) continue;
+
+            const key = `${log.identityGroupId}:${log.merchantId}`;
+            const group = grouped.get(key) ?? { logs: [], timestamps: [] };
+            group.logs.push(log);
+            group.timestamps.push(sourceData.referralTimestamp);
+            grouped.set(key, group);
+        }
+
+        return grouped;
+    }
+
+    private async fetchSharingPayloads(
+        groupedLogs: Map<
+            string,
+            { logs: DetailedAssetLog[]; timestamps: number[] }
+        >
+    ) {
+        const results = await Promise.all(
+            [...groupedLogs.entries()].map(async ([key, group]) => {
+                const [identityGroupId, merchantId] = key.split(":") as [
+                    string,
+                    string,
+                ];
+                const payloads =
+                    await this.interactionLogRepository.findSharingInteractionsByTimestamps(
+                        {
+                            identityGroupId,
+                            merchantId,
+                            sharingTimestamps: [...new Set(group.timestamps)],
+                        }
+                    );
+                return [key, payloads] as const;
+            })
+        );
+        return new Map(results);
+    }
+
+    private mapLogsToPurchaseIds(
+        groupedLogs: Map<
+            string,
+            { logs: DetailedAssetLog[]; timestamps: number[] }
+        >,
+        payloadsByGroup: Map<
+            string,
+            Awaited<
+                ReturnType<
+                    InteractionLogRepository["findSharingInteractionsByTimestamps"]
+                >
+            >
+        >
+    ): Map<string, string> {
+        const logToPurchaseId = new Map<string, string>();
+
+        for (const [key, group] of groupedLogs) {
+            const payloads = payloadsByGroup.get(key);
+            if (!payloads) continue;
+
+            for (let i = 0; i < group.logs.length; i++) {
+                const log = group.logs[i];
+                const timestamp = group.timestamps[i];
+                if (!log || timestamp === undefined) continue;
+                const sharingPayload = payloads.get(timestamp);
+                if (sharingPayload?.purchaseId) {
+                    logToPurchaseId.set(log.id, sharingPayload.purchaseId);
+                }
+            }
+        }
+
+        return logToPurchaseId;
     }
 }

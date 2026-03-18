@@ -284,6 +284,8 @@ export class AssetLogRepository {
                 onchainTxHash: assetLogsTable.onchainTxHash,
                 interactionType: interactionLogsTable.type,
                 interactionPayload: interactionLogsTable.payload,
+                touchpointId: assetLogsTable.touchpointId,
+                identityGroupId: assetLogsTable.identityGroupId,
                 merchantId: merchantsTable.id,
                 merchantName: merchantsTable.name,
                 merchantDomain: merchantsTable.domain,

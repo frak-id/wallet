@@ -97,7 +97,9 @@ const rewardHistoryOrchestrator = new RewardHistoryOrchestrator(
     PurchasesContext.repositories.purchase,
     WalletContext.repositories.balances,
     pricingRepository,
-    RewardsContext.services.rewardHistory
+    RewardsContext.services.rewardHistory,
+    AttributionContext.repositories.touchpoint,
+    RewardsContext.repositories.interactionLog
 );
 
 // Anonymous merge orchestrator needs identityOrchestrator to auto-create

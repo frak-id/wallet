@@ -25,6 +25,8 @@ export type DetailedAssetLog = {
     onchainTxHash: Hex | null;
     interactionType: InteractionType | null;
     interactionPayload: InteractionPayload | null;
+    touchpointId: string | null;
+    identityGroupId: string;
     merchantId: string;
     merchantName: string;
     merchantDomain: string;
