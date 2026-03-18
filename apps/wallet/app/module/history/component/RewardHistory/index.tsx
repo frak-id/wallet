@@ -8,18 +8,21 @@ import { useGetRewardHistory } from "@/module/history/hook/useGetRewardHistory";
 import styles from "./index.module.css";
 
 export function RewardHistoryList() {
-    const { rewards, isLoading } = useGetRewardHistory();
+    const { items, isLoading } = useGetRewardHistory();
 
     if (isLoading) return <Skeleton count={3} height={110} />;
 
-    if (!rewards || rewards.length === 0) {
+    if (!items || items.length === 0) {
         return <RewardHistoryEmpty />;
     }
 
     return (
         <div className={styles.list}>
-            {rewards.map((reward) => (
-                <RewardHistoryItem key={reward.id} reward={reward} />
+            {items.map((item, index) => (
+                <RewardHistoryItem
+                    key={`${item.createdAt}-${index}`}
+                    item={item}
+                />
             ))}
         </div>
     );
@@ -44,37 +47,39 @@ function RewardHistoryEmpty() {
     );
 }
 
-function RewardHistoryItem({ reward }: { reward: RewardHistoryItemType }) {
+function RewardHistoryItem({ item }: { item: RewardHistoryItemType }) {
     const { t } = useTranslation();
-    const statusLabel = t(`reward.status.${reward.status}`, reward.status);
-    const triggerLabel = reward.trigger
-        ? t(`reward.trigger.${reward.trigger}`, reward.trigger)
-        : null;
+
+    const statusLabel = t(`reward.status.${item.status}`, item.status);
+
+    const triggerLabel = t(`reward.trigger.${item.trigger}`, item.trigger);
+
+    const roleLabel = t(`reward.role.${item.role}`, item.role);
+
+    const displayAmount = isCryptoMode
+        ? `+${item.amount.amount.toFixed(2)} ${item.token.symbol}`
+        : `+${item.amount.eurAmount.toFixed(2)}€`;
 
     return (
         <Panel variant={"primary"} size={"small"} className={styles.item}>
             <div className={styles.item__header}>
                 <span className={styles.item__merchant}>
-                    {reward.merchant.name}
+                    {item.merchant.name}
                 </span>
-                <span className={styles.item__amount}>
-                    +{reward.amount.toFixed(2)}
-                    {isCryptoMode ? ` ${reward.token.symbol}` : "€"}
-                </span>
+                <span className={styles.item__amount}>{displayAmount}</span>
             </div>
             <div className={styles.item__badges}>
                 <span className={styles.item__badge}>{statusLabel}</span>
-                {triggerLabel && (
-                    <span className={styles.item__badge}>{triggerLabel}</span>
-                )}
+                <span className={styles.item__badge}>{triggerLabel}</span>
+                <span className={styles.item__badge}>{roleLabel}</span>
             </div>
             <div className={styles.item__footer}>
                 <span className={styles.item__date}>
-                    {new Date(reward.timestamp).toLocaleString()}
+                    {new Date(item.createdAt).toLocaleString()}
                 </span>
-                {isCryptoMode && reward.txHash && (
+                {isCryptoMode && item.txHash && (
                     <span className={styles.item__txHash}>
-                        {reward.txHash.slice(0, 10)}...
+                        {item.txHash.slice(0, 10)}...
                     </span>
                 )}
             </div>

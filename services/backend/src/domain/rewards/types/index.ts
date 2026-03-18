@@ -10,6 +10,27 @@ export type { AssetStatus, AssetType, InteractionType, RecipientType };
 export { InteractionTypeSchema } from "../schemas";
 
 // =============================================================================
+// DETAILED ASSET LOG (joined view for reward history)
+// =============================================================================
+
+export type DetailedAssetLog = {
+    id: string;
+    amount: string;
+    tokenAddress: Address | null;
+    status: AssetStatus;
+    recipientType: RecipientType;
+    createdAt: Date;
+    settledAt: Date | null;
+    onchainTxHash: Hex | null;
+    interactionType: InteractionType | null;
+    interactionPayload: InteractionPayload | null;
+    merchantId: string;
+    merchantName: string;
+    merchantDomain: string;
+    merchantExplorerConfig: { heroImageUrl?: string } | null;
+};
+
+// =============================================================================
 // INTERACTION LOG TYPES
 // =============================================================================
 

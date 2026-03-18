@@ -10,12 +10,14 @@ export type {
 } from "./Recovery";
 export type { RewardHistory } from "./RewardHistory";
 export type {
+    AssetStatus,
+    InteractionType,
     MerchantInfo,
+    PurchaseInfo,
     RecipientType,
     RewardHistoryItem,
-    RewardStatus,
+    TokenAmount,
     TokenInfo,
-    TriggerType,
 } from "./RewardHistoryItem";
 export type {
     DistantWebAuthnWallet,

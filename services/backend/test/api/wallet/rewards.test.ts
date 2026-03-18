@@ -39,7 +39,7 @@ describe("Wallet Rewards Routes API", () => {
             );
 
             const data = await response.json();
-            expect(data).toEqual({ rewards: [] });
+            expect(data).toEqual({ items: [], totalCount: 0 });
         });
     });
 });

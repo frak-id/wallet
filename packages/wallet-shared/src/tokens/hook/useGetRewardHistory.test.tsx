@@ -24,32 +24,36 @@ vi.mock("../../common/api/backendClient", () => ({
     },
 }));
 
-const mockBackendRewards = [
+const mockBackendItems = [
     {
-        id: "reward-1",
-        amount: 100,
-        tokenAddress: "0xabc",
+        merchant: { name: "Test Merchant", domain: "test.com" },
+        token: { symbol: "USDC", decimals: 6 },
+        amount: {
+            amount: 100,
+            eurAmount: 90,
+            usdAmount: 100,
+            gbpAmount: 78,
+        },
         status: "settled" as const,
-        recipientType: "referrer" as const,
+        role: "referrer" as const,
+        trigger: "referral" as const,
+        txHash: "0xdef",
         createdAt: "2025-01-15T10:00:00Z",
         settledAt: "2025-01-15T12:00:00Z",
-        onchainTxHash: "0xdef",
-        trigger: "referral" as const,
-        merchant: { name: "Test Merchant", domain: "test.com" },
-        token: {
-            symbol: "USDC",
-            decimals: 6,
-            logo: "https://logo.com/usdc.png",
-        },
     },
     {
-        id: "reward-2",
-        amount: 50,
-        status: "pending" as const,
-        recipientType: "referee" as const,
-        createdAt: new Date("2025-01-16T10:00:00Z"),
         merchant: { name: "Other Merchant", domain: "other.com" },
         token: { symbol: "USDC", decimals: 6 },
+        amount: {
+            amount: 50,
+            eurAmount: 45,
+            usdAmount: 50,
+            gbpAmount: 39,
+        },
+        status: "pending" as const,
+        role: "referee" as const,
+        trigger: "purchase" as const,
+        createdAt: new Date("2025-01-16T10:00:00Z"),
     },
 ];
 
@@ -76,8 +80,8 @@ describe("useGetRewardHistory", () => {
         });
 
         await waitFor(() => {
-            expect(result.current.rewards).toEqual([]);
-            expect(result.current.total).toBe(0);
+            expect(result.current.items).toEqual([]);
+            expect(result.current.totalCount).toBe(0);
             expect(result.current.isLoading).toBe(false);
         });
 
@@ -98,7 +102,7 @@ describe("useGetRewardHistory", () => {
 
         vi.mocked(authenticatedWalletApi.rewards.history.get).mockResolvedValue(
             {
-                data: { rewards: mockBackendRewards },
+                data: { items: mockBackendItems, totalCount: 2 },
                 error: null,
             } as any
         );
@@ -109,28 +113,21 @@ describe("useGetRewardHistory", () => {
 
         await waitFor(() => {
             expect(result.current.isLoading).toBe(false);
-            expect(result.current.rewards).toHaveLength(2);
-            expect(result.current.total).toBe(2);
+            expect(result.current.items).toHaveLength(2);
+            expect(result.current.totalCount).toBe(2);
         });
 
-        // Verify first reward transformation
-        const reward1 = result.current.rewards[0];
-        expect(reward1.id).toBe("reward-1");
-        expect(reward1.amount).toBe(100);
-        expect(reward1.txHash).toBe("0xdef");
-        expect(reward1.status).toBe("settled");
-        expect(reward1.trigger).toBe("referral");
-        expect(reward1.recipientType).toBe("referrer");
-        expect(reward1.merchant).toEqual({
+        const item1 = result.current.items[0];
+        expect(item1.merchant).toEqual({
             name: "Test Merchant",
             domain: "test.com",
         });
-        expect(reward1.token).toEqual({
-            address: "0xabc",
+        expect(item1.token).toEqual({
             symbol: "USDC",
             decimals: 6,
-            logo: "https://logo.com/usdc.png",
         });
+        expect(item1.amount.amount).toBe(100);
+        expect(item1.role).toBe("referrer");
     });
 
     test("should convert createdAt string to timestamp", async ({
@@ -145,7 +142,7 @@ describe("useGetRewardHistory", () => {
 
         vi.mocked(authenticatedWalletApi.rewards.history.get).mockResolvedValue(
             {
-                data: { rewards: [mockBackendRewards[0]] },
+                data: { items: [mockBackendItems[0]], totalCount: 1 },
                 error: null,
             } as any
         );
@@ -159,7 +156,7 @@ describe("useGetRewardHistory", () => {
         });
 
         const expectedTimestamp = new Date("2025-01-15T10:00:00Z").getTime();
-        expect(result.current.rewards[0].timestamp).toBe(expectedTimestamp);
+        expect(result.current.items[0].createdAt).toBe(expectedTimestamp);
     });
 
     test("should convert createdAt Date object to timestamp", async ({
@@ -174,7 +171,7 @@ describe("useGetRewardHistory", () => {
 
         vi.mocked(authenticatedWalletApi.rewards.history.get).mockResolvedValue(
             {
-                data: { rewards: [mockBackendRewards[1]] },
+                data: { items: [mockBackendItems[1]], totalCount: 1 },
                 error: null,
             } as any
         );
@@ -188,7 +185,7 @@ describe("useGetRewardHistory", () => {
         });
 
         const expectedTimestamp = new Date("2025-01-16T10:00:00Z").getTime();
-        expect(result.current.rewards[0].timestamp).toBe(expectedTimestamp);
+        expect(result.current.items[0].createdAt).toBe(expectedTimestamp);
     });
 
     test("should return 0 timestamp for invalid date", async ({
@@ -201,14 +198,14 @@ describe("useGetRewardHistory", () => {
             address: mockAddress,
         } as any);
 
-        const invalidDateReward = {
-            ...mockBackendRewards[0],
+        const invalidDateItem = {
+            ...mockBackendItems[0],
             createdAt: "not-a-date",
         };
 
         vi.mocked(authenticatedWalletApi.rewards.history.get).mockResolvedValue(
             {
-                data: { rewards: [invalidDateReward] },
+                data: { items: [invalidDateItem], totalCount: 1 },
                 error: null,
             } as any
         );
@@ -221,12 +218,10 @@ describe("useGetRewardHistory", () => {
             expect(result.current.isLoading).toBe(false);
         });
 
-        expect(result.current.rewards[0].timestamp).toBe(0);
+        expect(result.current.items[0].createdAt).toBe(0);
     });
 
-    test("should default trigger to null when undefined", async ({
-        queryWrapper,
-    }) => {
+    test("should handle referee role", async ({ queryWrapper }) => {
         const mockAddress = "0x1234567890123456789012345678901234567890";
 
         const { useAccount } = await import("wagmi");
@@ -234,10 +229,9 @@ describe("useGetRewardHistory", () => {
             address: mockAddress,
         } as any);
 
-        // Second mock reward has no trigger
         vi.mocked(authenticatedWalletApi.rewards.history.get).mockResolvedValue(
             {
-                data: { rewards: [mockBackendRewards[1]] },
+                data: { items: [mockBackendItems[1]], totalCount: 1 },
                 error: null,
             } as any
         );
@@ -250,12 +244,10 @@ describe("useGetRewardHistory", () => {
             expect(result.current.isLoading).toBe(false);
         });
 
-        expect(result.current.rewards[0].trigger).toBeNull();
+        expect(result.current.items[0].role).toBe("referee");
     });
 
-    test("should default tokenAddress to empty string when undefined", async ({
-        queryWrapper,
-    }) => {
+    test("should handle referrer role", async ({ queryWrapper }) => {
         const mockAddress = "0x1234567890123456789012345678901234567890";
 
         const { useAccount } = await import("wagmi");
@@ -263,10 +255,9 @@ describe("useGetRewardHistory", () => {
             address: mockAddress,
         } as any);
 
-        // Second mock reward has no tokenAddress
         vi.mocked(authenticatedWalletApi.rewards.history.get).mockResolvedValue(
             {
-                data: { rewards: [mockBackendRewards[1]] },
+                data: { items: [mockBackendItems[0]], totalCount: 1 },
                 error: null,
             } as any
         );
@@ -279,7 +270,7 @@ describe("useGetRewardHistory", () => {
             expect(result.current.isLoading).toBe(false);
         });
 
-        expect(result.current.rewards[0].token.address).toBe("");
+        expect(result.current.items[0].role).toBe("referrer");
     });
 
     test("should handle API error", async ({ queryWrapper }) => {
@@ -305,7 +296,7 @@ describe("useGetRewardHistory", () => {
         await waitFor(() => {
             expect(result.current.isLoading).toBe(false);
             expect(result.current.error).toEqual(mockError);
-            expect(result.current.rewards).toEqual([]);
+            expect(result.current.items).toEqual([]);
         });
     });
 
@@ -330,12 +321,12 @@ describe("useGetRewardHistory", () => {
 
         await waitFor(() => {
             expect(result.current.isLoading).toBe(false);
-            expect(result.current.rewards).toEqual([]);
-            expect(result.current.total).toBe(0);
+            expect(result.current.items).toEqual([]);
+            expect(result.current.totalCount).toBe(0);
         });
     });
 
-    test("should handle empty rewards array", async ({ queryWrapper }) => {
+    test("should handle empty items array", async ({ queryWrapper }) => {
         const mockAddress = "0x1234567890123456789012345678901234567890";
 
         const { useAccount } = await import("wagmi");
@@ -345,7 +336,7 @@ describe("useGetRewardHistory", () => {
 
         vi.mocked(authenticatedWalletApi.rewards.history.get).mockResolvedValue(
             {
-                data: { rewards: [] },
+                data: { items: [], totalCount: 0 },
                 error: null,
             } as any
         );
@@ -356,8 +347,8 @@ describe("useGetRewardHistory", () => {
 
         await waitFor(() => {
             expect(result.current.isLoading).toBe(false);
-            expect(result.current.rewards).toEqual([]);
-            expect(result.current.total).toBe(0);
+            expect(result.current.items).toEqual([]);
+            expect(result.current.totalCount).toBe(0);
         });
     });
 });

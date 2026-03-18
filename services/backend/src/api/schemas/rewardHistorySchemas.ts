@@ -6,29 +6,38 @@ import {
     RecipientTypeSchema,
 } from "../../domain/rewards/schemas";
 
-export const RewardHistoryItemSchema = t.Object({
-    id: t.String(),
+const MerchantInfoSchema = t.Object({
+    name: t.String(),
+    domain: t.String(),
+    heroImageUrl: t.Optional(t.String()),
+});
+
+const TokenInfoSchema = t.Object({
+    symbol: t.String(),
+    decimals: t.Number(),
+});
+
+const PurchaseInfoSchema = t.Object({
     amount: t.Number(),
-    tokenAddress: t.Optional(t.String()),
+    currency: t.String(),
+});
+
+export const RewardHistoryItemSchema = t.Object({
+    merchant: MerchantInfoSchema,
+    token: TokenInfoSchema,
+    amount: t.TokenAmount,
     status: AssetStatusSchema,
-    recipientType: RecipientTypeSchema,
+    role: RecipientTypeSchema,
+    trigger: InteractionTypeSchema,
+    txHash: t.Optional(t.String()),
     createdAt: t.Date(),
     settledAt: t.Optional(t.Date()),
-    onchainTxHash: t.Optional(t.String()),
-    trigger: t.Optional(InteractionTypeSchema),
-    merchant: t.Object({
-        name: t.String(),
-        domain: t.String(),
-    }),
-    token: t.Object({
-        symbol: t.String(),
-        decimals: t.Number(),
-        logo: t.Optional(t.String()),
-    }),
+    purchase: t.Optional(PurchaseInfoSchema),
 });
 export type RewardHistoryItem = Static<typeof RewardHistoryItemSchema>;
 
 export const RewardHistoryResponseSchema = t.Object({
-    rewards: t.Array(RewardHistoryItemSchema),
+    items: t.Array(RewardHistoryItemSchema),
+    totalCount: t.Number(),
 });
 export type RewardHistoryResponse = Static<typeof RewardHistoryResponseSchema>;
