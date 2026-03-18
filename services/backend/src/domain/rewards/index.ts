@@ -18,11 +18,9 @@ export {
     InteractionTypeSchema,
     type RecipientType,
     RecipientTypeSchema,
-    type RewardHistoryItem
+    type RewardHistoryItem,
 } from "./schemas";
-export type {
-    RewardEnrichmentData,
-} from "./services/RewardHistoryService";
+export type { RewardEnrichmentData } from "./services/RewardHistoryService";
 
 export { RewardHistoryService } from "./services/RewardHistoryService";
 export {
