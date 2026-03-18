@@ -8,7 +8,7 @@ export type {
     GeneratedRecoveryData,
     RecoveryFileContent,
 } from "./Recovery";
-export type { RewardHistory } from "./RewardHistory";
+
 export type {
     AssetStatus,
     InteractionType,
