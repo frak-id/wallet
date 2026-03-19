@@ -1,5 +1,5 @@
+import { Box } from "@frak-labs/design-system/components/Box";
 import type { ReactNode } from "react";
-import { Box } from "@/components/Box";
 import { bottomTabBarStyles } from "./bottomTabBar.css";
 
 export type TabItem = {

@@ -11,7 +11,6 @@
     "./components/Accordion": "./src/components/Accordion/index.tsx",
     "./components/AlertDialog": "./src/components/AlertDialog/index.tsx",
     "./components/Badge": "./src/components/Badge/index.tsx",
-    "./components/BottomTabBar": "./src/components/BottomTabBar/index.tsx",
     "./components/Box": "./src/components/Box/index.tsx",
     "./components/Button": "./src/components/Button/index.tsx",
     "./components/Card": "./src/components/Card/index.tsx",

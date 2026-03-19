@@ -1,13 +1,13 @@
-import {
-    BottomTabBar,
-    type TabItem,
-} from "@frak-labs/design-system/components/BottomTabBar";
 import { Box } from "@frak-labs/design-system/components/Box";
 import { InAppBrowserToast } from "@frak-labs/wallet-shared";
 import { Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { History, Settings, Wallet } from "lucide-react";
 import type { ReactNode } from "react";
 import { useMemo } from "react";
+import {
+    BottomTabBar,
+    type TabItem,
+} from "@/module/common/component/BottomTabBar";
 import {
     bottomBar,
     mainContent,
