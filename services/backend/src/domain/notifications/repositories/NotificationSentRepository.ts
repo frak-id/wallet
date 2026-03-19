@@ -1,21 +1,12 @@
-import {
-    and,
-    count,
-    desc,
-    eq,
-    getTableColumns,
-    inArray,
-    sql,
-} from "drizzle-orm";
+import { and, desc, eq, getTableColumns, inArray, sql } from "drizzle-orm";
 import type { Address } from "viem";
 import { db } from "../../../infrastructure/persistence/postgres";
 import {
     type NotificationSentInsert,
     type NotificationSentWithStatus,
-    type NotificationStatus,
-    type NotificationType,
     notificationSentTable,
 } from "../db/schema";
+import type { NotificationStatus, NotificationType } from "../schemas";
 
 export class NotificationSentRepository {
     async insertBatch(
@@ -80,49 +71,5 @@ export class NotificationSentRepository {
             .returning({ id: notificationSentTable.id });
 
         return results.length > 0;
-    }
-
-    async countByBroadcast(
-        broadcastId: string
-    ): Promise<{ sent: number; opened: number }> {
-        const [result] = await db
-            .select({
-                sent: count(),
-                opened: count(notificationSentTable.openedAt),
-            })
-            .from(notificationSentTable)
-            .where(eq(notificationSentTable.broadcastId, broadcastId));
-
-        return {
-            sent: result?.sent ?? 0,
-            opened: result?.opened ?? 0,
-        };
-    }
-
-    async countByBroadcasts(
-        broadcastIds: string[]
-    ): Promise<Map<string, { sent: number; opened: number }>> {
-        if (broadcastIds.length === 0) return new Map();
-
-        const results = await db
-            .select({
-                broadcastId: notificationSentTable.broadcastId,
-                sent: count(),
-                opened: sql<number>`count(${notificationSentTable.openedAt})::int`,
-            })
-            .from(notificationSentTable)
-            .where(inArray(notificationSentTable.broadcastId, broadcastIds))
-            .groupBy(notificationSentTable.broadcastId);
-
-        const map = new Map<string, { sent: number; opened: number }>();
-        for (const row of results) {
-            if (row.broadcastId) {
-                map.set(row.broadcastId, {
-                    sent: row.sent,
-                    opened: row.opened,
-                });
-            }
-        }
-        return map;
     }
 }

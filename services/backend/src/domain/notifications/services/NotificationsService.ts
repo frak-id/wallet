@@ -2,12 +2,9 @@ import { db, log } from "@backend-infrastructure";
 import { inArray, lt } from "drizzle-orm";
 import type { Address } from "viem";
 import { sendNotification, setVapidDetails } from "web-push";
-import {
-    type NotificationType,
-    notificationSentTable,
-    pushTokensTable,
-} from "../db/schema";
+import { notificationSentTable, pushTokensTable } from "../db/schema";
 import type { SendNotificationPayload } from "../dto/SendNotificationDto";
+import type { NotificationType } from "../schemas";
 import type { FcmSender } from "./FcmSender";
 
 type PushToken = typeof pushTokensTable.$inferSelect;
@@ -188,9 +185,9 @@ export class NotificationsService {
         type: NotificationType;
         broadcastId?: string;
     }) {
-        await this.sendNotification({ wallets, payload });
-
         if (wallets.length === 0) return;
+
+        await this.sendNotification({ wallets, payload });
 
         const records = wallets.map((wallet) => ({
             wallet,

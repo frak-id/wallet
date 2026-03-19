@@ -1,7 +1,8 @@
+import { NotificationContext } from "@backend-domain/notifications";
+import { NotificationTypeSchema } from "@backend-domain/notifications/schemas";
 import { sessionContext } from "@backend-infrastructure";
 import { t } from "@backend-utils";
 import { Elysia } from "elysia";
-import { NotificationContext } from "../../../../domain/notifications";
 
 export const historyRoutes = new Elysia({ prefix: "/history" })
     .use(sessionContext)
@@ -10,15 +11,10 @@ export const historyRoutes = new Elysia({ prefix: "/history" })
         async ({ walletSession, query }) => {
             const limit = query.limit ?? 20;
             const offset = query.offset ?? 0;
-            const types = query.types
-                ? (query.types.split(",") as Array<
-                      "promotional" | "reward_pending" | "reward_settled"
-                  >)
-                : undefined;
 
             return NotificationContext.repositories.notificationSent.findByWallet(
                 walletSession.address,
-                { limit, offset, types }
+                { limit, offset, types: query.type ? [query.type] : undefined }
             );
         },
         {
@@ -26,7 +22,7 @@ export const historyRoutes = new Elysia({ prefix: "/history" })
             query: t.Object({
                 limit: t.Optional(t.Number({ minimum: 1, maximum: 100 })),
                 offset: t.Optional(t.Number({ minimum: 0 })),
-                types: t.Optional(t.String()),
+                type: t.Optional(NotificationTypeSchema),
             }),
         }
     )

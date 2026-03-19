@@ -18,10 +18,10 @@ import type { InteractionContextBuilder } from "./reward";
 type BatchProcessResult = {
     processedCount: number;
     rewardsCreated: number;
-    errors: Array<{
+    errors: {
         interactionLogId: string;
         error: string;
-    }>;
+    }[];
 };
 
 type ProcessSingleResult = {
@@ -274,7 +274,7 @@ export class BatchRewardOrchestrator {
     }
 
     private async sendRewardPendingNotifications(
-        assets: Array<{ identityGroupId: string }>,
+        assets: { identityGroupId: string }[],
         merchantId: string
     ) {
         if (assets.length === 0) return;

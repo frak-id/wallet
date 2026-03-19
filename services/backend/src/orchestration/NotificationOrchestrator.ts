@@ -1,6 +1,5 @@
 import { log } from "@backend-infrastructure";
 import type { Address } from "viem";
-import type { NotificationType } from "../domain/notifications/db/schema";
 import type { NotificationsService } from "../domain/notifications/services/NotificationsService";
 
 export type NotificationTemplate =
@@ -17,16 +16,15 @@ export class NotificationOrchestrator {
     constructor(private readonly notificationsService: NotificationsService) {}
 
     async sendNotifications(
-        notifications: Array<{
+        notifications: {
             wallets: Address[];
             template: NotificationTemplate;
-        }>
+        }[]
     ) {
         for (const { wallets, template } of notifications) {
             if (wallets.length === 0) continue;
 
             const { title, body } = this.resolveContent(template);
-            const type = this.resolveType(template);
             const broadcastId =
                 template.type === "promotional"
                     ? template.broadcastId
@@ -40,12 +38,12 @@ export class NotificationOrchestrator {
                         body,
                         data: { url: this.resolveUrl(template) },
                     },
-                    type,
+                    type: template.type,
                     broadcastId,
                 });
             } catch (error) {
                 log.warn(
-                    { error, type, walletCount: wallets.length },
+                    { error, type: template.type, walletCount: wallets.length },
                     "[NotificationOrchestrator] Failed to send notification"
                 );
             }
@@ -78,15 +76,10 @@ export class NotificationOrchestrator {
         }
     }
 
-    private resolveType(template: NotificationTemplate): NotificationType {
-        return template.type;
-    }
-
     private resolveUrl(template: NotificationTemplate): string {
         switch (template.type) {
             case "reward_pending":
             case "reward_settled":
-                return "https://wallet.frak.id/tokens";
             case "promotional":
                 return "https://wallet.frak.id/";
         }

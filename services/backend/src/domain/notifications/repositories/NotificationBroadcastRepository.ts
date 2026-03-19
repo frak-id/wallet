@@ -1,5 +1,4 @@
-import { desc, eq } from "drizzle-orm";
-import { db } from "../../../infrastructure/persistence/postgres";
+import { db } from "@backend-infrastructure";
 import {
     type NotificationBroadcastSelect,
     notificationBroadcastsTable,
@@ -16,33 +15,5 @@ export class NotificationBroadcastRepository {
             .values(params)
             .returning();
         return result;
-    }
-
-    async findByMerchant(
-        merchantId: string,
-        options?: { limit?: number; offset?: number }
-    ): Promise<NotificationBroadcastSelect[]> {
-        const query = db
-            .select()
-            .from(notificationBroadcastsTable)
-            .where(eq(notificationBroadcastsTable.merchantId, merchantId))
-            .orderBy(desc(notificationBroadcastsTable.createdAt));
-
-        if (options?.limit) {
-            query.limit(options.limit);
-        }
-        if (options?.offset) {
-            query.offset(options.offset);
-        }
-
-        return query;
-    }
-
-    async findById(
-        id: string
-    ): Promise<NotificationBroadcastSelect | undefined> {
-        return db.query.notificationBroadcastsTable.findFirst({
-            where: eq(notificationBroadcastsTable.id, id),
-        });
     }
 }

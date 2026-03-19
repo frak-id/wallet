@@ -501,7 +501,6 @@ vi.mock("../../src/domain/notifications", () => ({
                         id: "00000000-0000-0000-0000-000000000001",
                     })
                 ),
-                findByMerchant: vi.fn(() => Promise.resolve([])),
             },
             notificationSent: {
                 findByWallet: vi.fn(() => Promise.resolve([])),
@@ -526,7 +525,6 @@ vi.mock("../../src/domain/notifications/context", () => ({
                         id: "00000000-0000-0000-0000-000000000001",
                     })
                 ),
-                findByMerchant: vi.fn(() => Promise.resolve([])),
             },
             notificationSent: {
                 findByWallet: vi.fn(() => Promise.resolve([])),

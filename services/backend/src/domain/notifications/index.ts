@@ -5,8 +5,6 @@ export {
     type NotificationSentInsert,
     type NotificationSentSelect,
     type NotificationSentWithStatus,
-    type NotificationStatus,
-    type NotificationType,
     notificationBroadcastsTable,
     notificationSentTable,
     type PushTokenType,
@@ -19,7 +17,9 @@ export {
 } from "./dto/SendNotificationDto";
 export { notificationMacro } from "./macro";
 export {
+    type NotificationStatus,
     NotificationStatusSchema,
+    type NotificationType,
     NotificationTypeSchema,
 } from "./schemas/index";
 export { FcmSender } from "./services/FcmSender";

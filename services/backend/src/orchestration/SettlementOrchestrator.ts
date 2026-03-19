@@ -262,31 +262,29 @@ export class SettlementOrchestrator {
             })
         );
 
-        const byWallet = new Map<
-            Address,
-            { merchantId: string; count: number }
-        >();
+        const byWalletAndMerchant = new Map<`${Address}:${string}`, number>();
         for (const reward of rewards) {
-            const existing = byWallet.get(reward.walletAddress);
-            if (existing) {
-                existing.count++;
-            } else {
-                byWallet.set(reward.walletAddress, {
-                    merchantId: reward.merchantId,
-                    count: 1,
-                });
-            }
+            const key =
+                `${reward.walletAddress}:${reward.merchantId}` satisfies `${Address}:${string}`;
+            byWalletAndMerchant.set(
+                key,
+                (byWalletAndMerchant.get(key) ?? 0) + 1
+            );
         }
 
-        const notifications = [...byWallet.entries()].map(
-            ([wallet, { merchantId, count }]) => ({
-                wallets: [wallet] as Address[],
-                template: {
-                    type: "reward_settled" as const,
-                    merchantName: merchantNames.get(merchantId) ?? "a merchant",
-                    rewardCount: count,
-                },
-            })
+        const notifications = [...byWalletAndMerchant.entries()].map(
+            ([walletAndMerchant, count]) => {
+                const [wallet, merchantId] = walletAndMerchant.split(":");
+                return {
+                    wallets: [wallet] as Address[],
+                    template: {
+                        type: "reward_settled" as const,
+                        merchantName:
+                            merchantNames.get(merchantId) ?? "a merchant",
+                        rewardCount: count,
+                    },
+                };
+            }
         );
 
         await this.notificationOrchestrator.sendNotifications(notifications);

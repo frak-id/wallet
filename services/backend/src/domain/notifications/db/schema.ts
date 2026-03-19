@@ -12,6 +12,7 @@ import {
 import type { Address } from "viem";
 import { customHex } from "../../../utils/drizzle/customTypes";
 import type { SendNotificationPayload } from "../dto/SendNotificationDto";
+import type { NotificationStatus, NotificationType } from "../schemas";
 
 export type PushTokenType = "web-push" | "fcm";
 
@@ -46,13 +47,6 @@ export const pushTokensTable = pgTable(
         ),
     ]
 );
-
-export type NotificationType =
-    | "promotional"
-    | "reward_pending"
-    | "reward_settled";
-
-export type NotificationStatus = "sent" | "opened";
 
 /**
  * Groups individual notification_sent rows for a single merchant broadcast.
