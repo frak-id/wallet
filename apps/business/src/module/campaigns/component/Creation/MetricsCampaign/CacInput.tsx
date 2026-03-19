@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
-import { InputAmountCampaign } from "@/module/common/component/InputAmount";
+import { InputAmount } from "@/module/common/component/InputAmount";
 import {
     FormControl,
     FormDescription,
@@ -38,7 +38,7 @@ export function CacInput() {
                 <FormItem>
                     <FormLabel>CPA</FormLabel>
                     <FormControl>
-                        <InputAmountCampaign placeholder="100.00" {...field} />
+                        <InputAmount placeholder="100.00" {...field} />
                     </FormControl>
                     {cac > 0 && (
                         <FormDescription>
