@@ -1,5 +1,5 @@
 import { db } from "@backend-infrastructure";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import {
     type MerchantWebhook,
     merchantWebhooksTable,
@@ -85,6 +85,14 @@ export class PurchaseRepository {
             where: eq(merchantWebhooksTable.merchantId, merchantId),
         });
         return result ?? null;
+    }
+
+    async findByIds(ids: string[]): Promise<PurchaseSelect[]> {
+        if (ids.length === 0) return [];
+        return db
+            .select()
+            .from(purchasesTable)
+            .where(inArray(purchasesTable.id, ids));
     }
 
     async findItemsByPurchaseId(

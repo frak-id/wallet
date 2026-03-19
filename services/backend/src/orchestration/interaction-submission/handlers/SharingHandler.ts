@@ -7,6 +7,8 @@ import type { HandlerContext, InteractionHandler } from "../types";
 
 export type SharingInput = {
     merchantId: string;
+    sharingTimestamp?: number;
+    purchaseId?: string;
 };
 
 export type SharingExtra = Record<string, unknown>;
@@ -28,7 +30,8 @@ export class SharingHandler
         _payload: CreateReferralLinkPayload,
         context: HandlerContext
     ): string {
-        return `create_referral_link:${context.identity.identityGroupId}:${input.merchantId}:${Date.now()}`;
+        const key = input.purchaseId ?? Date.now();
+        return `create_referral_link:${context.identity.identityGroupId}:${input.merchantId}:${key}`;
     }
 
     async buildPayload(
@@ -43,6 +46,12 @@ export class SharingHandler
         return {
             sharerWallet: context.identity.walletAddress as Address,
             merchantId: input.merchantId,
+            ...(input.sharingTimestamp !== undefined && {
+                sharingTimestamp: input.sharingTimestamp,
+            }),
+            ...(input.purchaseId !== undefined && {
+                purchaseId: input.purchaseId,
+            }),
         };
     }
 

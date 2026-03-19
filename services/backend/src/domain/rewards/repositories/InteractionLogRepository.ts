@@ -1,11 +1,11 @@
-import { and, inArray, isNotNull, isNull } from "drizzle-orm";
+import { and, eq, inArray, isNotNull, isNull, sql } from "drizzle-orm";
 import { db } from "../../../infrastructure/persistence/postgres";
 import {
     type InteractionLogInsert,
     type InteractionLogSelect,
     interactionLogsTable,
 } from "../db/schema";
-import type { InteractionType } from "../types";
+import type { CreateReferralLinkPayload, InteractionType } from "../types";
 
 export class InteractionLogRepository {
     async createIdempotent(
@@ -67,5 +67,52 @@ export class InteractionLogRepository {
             .returning({ id: interactionLogsTable.id });
 
         return results.length;
+    }
+
+    /**
+     * Find create_referral_link interactions matching the given sharing timestamps
+     * for a specific identity group and merchant.
+     *
+     * Uses B-tree expression index on (payload->>'sharingTimestamp')::int.
+     *
+     * Returns a map of sharingTimestamp → CreateReferralLinkPayload.
+     */
+    async findSharingInteractionsByTimestamps(params: {
+        identityGroupId: string;
+        merchantId: string;
+        sharingTimestamps: number[];
+    }): Promise<Map<number, CreateReferralLinkPayload>> {
+        if (params.sharingTimestamps.length === 0) return new Map();
+
+        const result = new Map<number, CreateReferralLinkPayload>();
+
+        const rows = await db
+            .select({
+                payload: interactionLogsTable.payload,
+            })
+            .from(interactionLogsTable)
+            .where(
+                and(
+                    eq(interactionLogsTable.type, "create_referral_link"),
+                    eq(
+                        interactionLogsTable.identityGroupId,
+                        params.identityGroupId
+                    ),
+                    eq(interactionLogsTable.merchantId, params.merchantId),
+                    inArray(
+                        sql`(${interactionLogsTable.payload}->>'sharingTimestamp')::int`,
+                        params.sharingTimestamps
+                    )
+                )
+            );
+
+        for (const row of rows) {
+            const payload = row.payload as CreateReferralLinkPayload;
+            if (payload.sharingTimestamp) {
+                result.set(payload.sharingTimestamp, payload);
+            }
+        }
+
+        return result;
     }
 }

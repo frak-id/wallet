@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import {
     bigint,
     index,
@@ -43,6 +44,9 @@ export const interactionLogsTable = pgTable(
             table.type,
             table.externalEventId
         ),
+        index("interaction_logs_sharing_timestamp_idx")
+            .using("btree", sql`((payload->>'sharingTimestamp')::int)`)
+            .where(sql`"type" = 'create_referral_link'`),
     ]
 );
 

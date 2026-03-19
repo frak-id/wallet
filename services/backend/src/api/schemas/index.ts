@@ -50,8 +50,6 @@ export {
     RegisterTokenBodySchema,
 } from "./notificationTokenSchemas";
 export {
-    type RewardHistoryItem,
-    RewardHistoryItemSchema,
     type RewardHistoryResponse,
     RewardHistoryResponseSchema,
 } from "./rewardHistorySchemas";

@@ -5,6 +5,7 @@ import { IdentityContext } from "../domain/identity/context";
 import { MerchantContext } from "../domain/merchant/context";
 import { PurchasesContext } from "../domain/purchases/context";
 import { RewardsContext } from "../domain/rewards/context";
+import { WalletContext } from "../domain/wallet/context";
 import { pricingRepository } from "../infrastructure/pricing/PricingRepository";
 import { BatchRewardOrchestrator } from "./BatchRewardOrchestrator";
 import { CampaignStatsOrchestrator } from "./CampaignStatsOrchestrator";
@@ -21,6 +22,7 @@ import { PurchaseInteractionCreator } from "./PurchaseInteractionCreator";
 import { PurchaseLinkingOrchestrator } from "./PurchaseLinkingOrchestrator";
 import { PurchaseWebhookOrchestrator } from "./PurchaseWebhookOrchestrator";
 import { RewardExpirationOrchestrator } from "./RewardExpirationOrchestrator";
+import { RewardHistoryOrchestrator } from "./RewardHistoryOrchestrator";
 import { InteractionContextBuilder } from "./reward";
 import { SettlementOrchestrator } from "./SettlementOrchestrator";
 import { WebhookResolverOrchestrator } from "./WebhookResolverOrchestrator";
@@ -89,6 +91,17 @@ const rewardExpirationOrchestrator = new RewardExpirationOrchestrator(
     CampaignContext.repositories.campaignRule
 );
 
+const rewardHistoryOrchestrator = new RewardHistoryOrchestrator(
+    RewardsContext.repositories.assetLog,
+    IdentityContext.repositories.identity,
+    PurchasesContext.repositories.purchase,
+    WalletContext.repositories.balances,
+    pricingRepository,
+    RewardsContext.services.rewardHistory,
+    AttributionContext.repositories.touchpoint,
+    RewardsContext.repositories.interactionLog
+);
+
 // Anonymous merge orchestrator needs identityOrchestrator to auto-create
 // identity groups on merge token generation (same pattern as /track/arrival)
 const memberQueryOrchestrator = new MemberQueryOrchestrator(pricingRepository);
@@ -122,6 +135,7 @@ export namespace OrchestrationContext {
         purchaseLinking: purchaseLinkingOrchestrator,
         purchaseWebhook: purchaseWebhookOrchestrator,
         rewardExpiration: rewardExpirationOrchestrator,
+        rewardHistory: rewardHistoryOrchestrator,
         settlement: settlementOrchestrator,
         webhookResolver: webhookResolverOrchestrator,
     };

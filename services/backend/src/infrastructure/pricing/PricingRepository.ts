@@ -48,6 +48,13 @@ export class PricingRepository {
      * @param token
      */
     async getTokenPrice({ token }: { token: Address }) {
+        // Check cache outside mutex to avoid serializing cache hits
+        const finalToken = this.resolveToken(token);
+        const cached = this.cache.get(finalToken);
+        if (cached === "unknown") return undefined;
+        if (cached) return cached;
+
+        // Cache miss — acquire mutex for the API call
         return this.apiMutex.runExclusive(() => this._getTokenPrice({ token }));
     }
 
@@ -73,18 +80,17 @@ export class PricingRepository {
         return 1;
     }
 
-    /**
-     * Get a current token price in both eur and usd
-     */
-    private async _getTokenPrice({ token }: { token: Address }) {
-        // Handle special token mappings
-        let finalToken = token;
-
+    private resolveToken(token: Address): Address {
         if (isAddressEqual(token, stablecoins.testnet.usdc)) {
-            finalToken = usdcArbitrumAddress;
+            return usdcArbitrumAddress;
         }
+        return token;
+    }
 
-        // Check if we have the token in cache
+    private async _getTokenPrice({ token }: { token: Address }) {
+        const finalToken = this.resolveToken(token);
+
+        // Re-check cache inside mutex (another call may have populated it)
         const cached = this.cache.get(finalToken);
         if (cached === "unknown") {
             return undefined;

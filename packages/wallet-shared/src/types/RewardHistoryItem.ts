@@ -1,33 +1,20 @@
-import type {
+import type { RewardHistoryItem as BackendRewardHistoryItem } from "@frak-labs/backend-elysia/domain/rewards";
+
+export type {
     AssetStatus,
     InteractionType,
     RecipientType,
 } from "@frak-labs/backend-elysia/domain/rewards/schemas";
 
-export type RewardStatus = AssetStatus;
-export type TriggerType = InteractionType;
-export type { RecipientType };
-
-export type MerchantInfo = {
-    name: string;
-    domain: string;
+export type RewardHistoryItem = Omit<
+    BackendRewardHistoryItem,
+    "createdAt" | "settledAt"
+> & {
+    createdAt: number;
+    settledAt?: number;
 };
 
-export type TokenInfo = {
-    address: string;
-    symbol: string;
-    decimals: number;
-    logo?: string;
-};
-
-export type RewardHistoryItem = {
-    id: string;
-    amount: number;
-    timestamp: number;
-    txHash?: string;
-    status: RewardStatus;
-    trigger: TriggerType | null;
-    recipientType: RecipientType;
-    merchant: MerchantInfo;
-    token: TokenInfo;
-};
+export type MerchantInfo = RewardHistoryItem["merchant"];
+export type TokenInfo = RewardHistoryItem["token"];
+export type TokenAmount = RewardHistoryItem["amount"];
+export type PurchaseInfo = NonNullable<RewardHistoryItem["purchase"]>;

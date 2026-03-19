@@ -18,7 +18,11 @@ export {
     InteractionTypeSchema,
     type RecipientType,
     RecipientTypeSchema,
+    type RewardHistoryItem,
 } from "./schemas";
+export type { RewardEnrichmentData } from "./services/RewardHistoryService";
+
+export { RewardHistoryService } from "./services/RewardHistoryService";
 export {
     type AssetLogWithWallet,
     SettlementService,
@@ -26,6 +30,7 @@ export {
 
 export type {
     CreateAssetLogParams,
+    DetailedAssetLog,
     InteractionPayload,
     PurchasePayload,
     SettlementResult,

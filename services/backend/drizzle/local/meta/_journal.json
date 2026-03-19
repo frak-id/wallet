@@ -57,6 +57,13 @@
             "when": 1773426527753,
             "tag": "0007_brave_infant_terrible",
             "breakpoints": true
+        },
+        {
+            "idx": 8,
+            "version": "7",
+            "when": 1773868573206,
+            "tag": "0008_petite_ted_forrester",
+            "breakpoints": true
         }
     ]
 }

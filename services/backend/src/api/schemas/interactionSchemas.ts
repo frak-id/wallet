@@ -19,6 +19,8 @@ const ArrivalSubmissionSchema = t.Object({
 const SharingSubmissionSchema = t.Object({
     type: t.Literal("sharing"),
     merchantId: t.String({ format: "uuid" }),
+    sharingTimestamp: t.Optional(t.Number()),
+    purchaseId: t.Optional(t.String({ minLength: 1, maxLength: 255 })),
 });
 
 const CustomSubmissionSchema = t.Object({
