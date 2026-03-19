@@ -22,11 +22,11 @@
 }
 
 .size--normal {
-    padding: 24px;
+    padding: var(--frak-spacing-l);
 }
 
 .size--big {
-    padding: 32px;
+    padding: var(--frak-spacing-xl);
 }
 
 .width--auto {

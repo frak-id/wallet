@@ -4,7 +4,7 @@
     justify-content: center;
     width: 100%;
     border: var(--frak-input-border-width) solid var(--frak-input-border-color);
-    border-radius: 8px;
+    border-radius: var(--frak-radius-s);
     overflow: hidden;
     background-color: var(--frak-input-background-color);
     color: var(--frak-input-text-color);

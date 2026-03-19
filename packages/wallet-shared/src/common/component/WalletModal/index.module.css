@@ -38,7 +38,7 @@
     padding: 15px;
     animation: contentShow 250ms cubic-bezier(0.16, 1, 0.3, 1);
     overflow-y: auto;
-    border-radius: 16px;
+    border-radius: var(--frak-radius-l);
     color: #fff;
 
     & a {

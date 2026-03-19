@@ -53,7 +53,7 @@
     justify-content: space-between;
     padding: 12px;
     background-color: var(--frak-color-blue-zodiac-darker);
-    border-radius: 8px;
+    border-radius: var(--frak-radius-s);
     font-size: 12px;
     font-weight: 500;
 }

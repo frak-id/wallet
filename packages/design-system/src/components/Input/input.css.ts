@@ -1,0 +1,78 @@
+import { style, styleVariants } from "@vanilla-extract/css";
+import { vars } from "@/theme.css";
+import { alias, transition } from "@/tokens.css";
+
+const wrapperBase = style({
+    display: "flex",
+    alignItems: "center",
+    width: "100%",
+    borderRadius: alias.cornerRadius.s,
+    border: `${alias.borderWidth.xs} solid ${vars.border.default}`,
+    backgroundColor: vars.surface.background,
+    color: vars.text.primary,
+    transition: `border-color ${transition.base} ease`,
+    overflow: "hidden",
+    selectors: {
+        "&:focus-within": {
+            borderColor: vars.border.focus,
+        },
+    },
+});
+
+const wrapperError = style({
+    borderColor: vars.border.error,
+    selectors: {
+        "&:focus-within": {
+            borderColor: vars.border.error,
+        },
+    },
+});
+
+const wrapperDisabled = style({
+    backgroundColor: vars.surface.disabled,
+    cursor: "not-allowed",
+    opacity: 0.6,
+});
+
+export const lengthVariants = styleVariants({
+    small: { width: "160px" },
+    medium: { width: "320px" },
+    big: { width: "100%" },
+});
+
+const fieldBase = style({
+    width: "100%",
+    padding: `${alias.spacing.s} ${alias.spacing.m}`,
+    fontSize: "16px",
+    lineHeight: "20px",
+    fontWeight: String(400),
+    color: vars.text.primary,
+    "::placeholder": {
+        color: vars.text.tertiary,
+        opacity: 1,
+    },
+    selectors: {
+        "&:disabled": {
+            cursor: "not-allowed",
+        },
+    },
+});
+
+const section = style({
+    display: "flex",
+    alignItems: "center",
+    flexShrink: 0,
+});
+
+const leftSectionStyle = style([section, { paddingLeft: alias.spacing.m }]);
+
+const rightSectionStyle = style([section, { paddingRight: alias.spacing.m }]);
+
+export const inputStyles = {
+    wrapper: wrapperBase,
+    wrapperError,
+    wrapperDisabled,
+    field: fieldBase,
+    leftSection: leftSectionStyle,
+    rightSection: rightSectionStyle,
+};
