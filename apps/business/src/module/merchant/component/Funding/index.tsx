@@ -26,12 +26,11 @@ import {
     formatTokenBalance,
 } from "@/module/common/utils/currencyOptions";
 import { FormLayout } from "@/module/forms/Form";
+import { useBankAllowanceMutation } from "@/module/merchant/hook/useBankAllowanceMutation";
 import { useFundTestBank } from "@/module/merchant/hook/useFundTestBank";
 import { useGetMerchantBank } from "@/module/merchant/hook/useGetMerchantBank";
-import { useRevokeBankAllowance } from "@/module/merchant/hook/useRevokeBankAllowance";
 import { useSetBankOpenStatus } from "@/module/merchant/hook/useSetBankOpenStatus";
 import { useSyncMerchantBank } from "@/module/merchant/hook/useSyncMerchantBank";
-import { useUpdateBankAllowance } from "@/module/merchant/hook/useUpdateBankAllowance";
 import { useWithdrawFromBank } from "@/module/merchant/hook/useWithdrawFromBank";
 import styles from "./index.module.css";
 import { LegacyBankMigration } from "./LegacyBankMigration";
@@ -418,9 +417,17 @@ function TokenActions({
     const [inputValue, setInputValue] = useState(defaultAllowanceValue);
 
     const { mutate: updateAllowance, isPending: isUpdatingAllowance } =
-        useUpdateBankAllowance({ bankAddress, merchantId });
+        useBankAllowanceMutation({
+            bankAddress,
+            merchantId,
+            action: "update",
+        });
     const { mutate: revokeAllowance, isPending: isRevokingAllowance } =
-        useRevokeBankAllowance({ bankAddress, merchantId });
+        useBankAllowanceMutation({
+            bankAddress,
+            merchantId,
+            action: "revoke",
+        });
     const { mutate: withdraw, isPending: isWithdrawing } = useWithdrawFromBank({
         bankAddress,
         merchantId,

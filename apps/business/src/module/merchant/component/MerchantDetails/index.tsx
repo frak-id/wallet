@@ -24,8 +24,8 @@ import {
     FormMessage,
 } from "@/module/forms/Form";
 import { MerchantHead } from "@/module/merchant/component/MerchantHead";
-import { useEditMerchant } from "@/module/merchant/hook/useEditMerchant";
 import { useMerchant } from "@/module/merchant/hook/useMerchant";
+import { useMerchantUpdate } from "@/module/merchant/hook/useMerchantUpdate";
 import { ExplorerSettings } from "./ExplorerSettings";
 import styles from "./index.module.css";
 import { PurchasseTrackerSetup } from "./PurchaseTracker";
@@ -52,7 +52,7 @@ export function MerchantDetails({ merchantId }: { merchantId: string }) {
         mutate: editMerchant,
         isSuccess: editMerchantSuccess,
         isPending: editMerchantPending,
-    } = useEditMerchant({ merchantId });
+    } = useMerchantUpdate({ merchantId, target: "base" });
 
     const formValues = useMemo(
         () =>

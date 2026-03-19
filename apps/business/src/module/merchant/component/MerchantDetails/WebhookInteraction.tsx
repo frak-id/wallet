@@ -12,8 +12,7 @@ import {
 import { Badge } from "@/module/common/component/Badge";
 import { PanelAccordion } from "@/module/common/component/PanelAccordion";
 import { Title } from "@/module/common/component/Title";
-import { useWebhookInteractionDelete } from "@/module/merchant/hook/useWebhookInteractionDelete";
-import { useWebhookInteractionSetup } from "@/module/merchant/hook/useWebhookInteractionSetup";
+import { useWebhookInteractionMutation } from "@/module/merchant/hook/useWebhookInteractionMutation";
 import { useWebhookInteractionStatus } from "@/module/merchant/hook/useWebhookInteractionStatus";
 import styles from "./WebhookInteraction.module.css";
 
@@ -57,7 +56,7 @@ function WebhookInteraction({ merchantId }: { merchantId: string }) {
         isPending: pendingWebhookInteraction,
         isError: isErrorWebhookInteraction,
         reset: resetWebhookInteraction,
-    } = useWebhookInteractionSetup({ merchantId });
+    } = useWebhookInteractionMutation({ merchantId, action: "setup" });
 
     const webhookUrl = useMemo(() => {
         return `${process.env.BACKEND_URL}/ext/merchant/${merchantId}/webhook/purchases`;
@@ -152,8 +151,9 @@ function ModalDelete({
         mutateAsync: deleteWebhook,
         isPending: isDeleting,
         isError,
-    } = useWebhookInteractionDelete({
+    } = useWebhookInteractionMutation({
         merchantId,
+        action: "delete",
     });
     const [open, setOpen] = useState(false);
 
@@ -184,7 +184,7 @@ function ModalDelete({
                     disabled={isDeleting}
                     onClick={async () => {
                         resetWebhookInteraction();
-                        await deleteWebhook();
+                        await deleteWebhook(undefined);
                         setOpen(false);
                     }}
                 >
