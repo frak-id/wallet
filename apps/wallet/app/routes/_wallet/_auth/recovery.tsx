@@ -2,7 +2,6 @@ import { Accordion } from "@frak-labs/design-system/components/Accordion";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { Grid } from "@/module/common/component/Grid";
 import { Title } from "@/module/common/component/Title";
 import { Step1 } from "@/module/recovery/component/Recover/Step1";
 import { Step2 } from "@/module/recovery/component/Recover/Step2";
@@ -41,7 +40,7 @@ function RecoveryPage() {
     }, [step]);
 
     return (
-        <Grid>
+        <div>
             <Title>{t("wallet.recovery.title")}</Title>
             <Accordion type={"single"} collapsible value={`step-${step}`}>
                 <Step1 />
@@ -51,6 +50,6 @@ function RecoveryPage() {
                 <Step5 />
                 <Step6 />
             </Accordion>
-        </Grid>
+        </div>
     );
 }

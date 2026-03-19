@@ -34,7 +34,6 @@ import { SsoHeader } from "@/module/authentication/component/Sso/SsoHeader";
 import { SsoLoginComponent } from "@/module/authentication/component/Sso/SsoLogin";
 import { SsoRegisterComponent } from "@/module/authentication/component/Sso/SsoRegister";
 import { useDemoLogin } from "@/module/authentication/hook/useDemoLogin";
-import { Grid } from "@/module/common/component/Grid";
 import { Notice } from "@/module/common/component/Notice";
 
 /**
@@ -247,7 +246,7 @@ function Sso() {
         return (
             <>
                 <SsoHeader />
-                <Grid className={styles.sso__grid}>
+                <div className={styles.sso__grid}>
                     <h2>An error occurred</h2>
                     <HandleErrors error={loaderError} />
                     <button
@@ -257,7 +256,7 @@ function Sso() {
                     >
                         Close
                     </button>
-                </Grid>
+                </div>
             </>
         );
     }
@@ -269,38 +268,7 @@ function Sso() {
     return (
         <>
             <SsoHeader />
-            <Grid
-                className={styles.sso__grid}
-                footer={
-                    <>
-                        <Notice className={styles.sso__notice}>
-                            <Trans
-                                i18nKey={"authent.sso.description"}
-                                values={{
-                                    productName: currentMetadata.name,
-                                }}
-                            />
-                        </Notice>
-                        {hasRedirectUrl ? (
-                            <button
-                                onClick={cancelAndRedirect}
-                                className={styles.sso__recover}
-                                type={"button"}
-                            >
-                                {t("authent.sso.cancel")}
-                            </button>
-                        ) : (
-                            <Link
-                                to={"/recovery"}
-                                className={styles.sso__recover}
-                                viewTransition
-                            >
-                                <CloudUpload /> {t("authent.sso.recover")}
-                            </Link>
-                        )}
-                    </>
-                }
-            >
+            <div className={styles.sso__grid}>
                 <Header />
                 {!success && (
                     <>
@@ -319,7 +287,7 @@ function Sso() {
                                     productName: currentMetadata.name,
                                 }}
                             />
-                            <span className={"dotsLoading"}>...</span>
+                            <span className="dotsLoading">...</span>
                         </p>
                         <button
                             className={styles.sso__buttonLink}
@@ -330,7 +298,32 @@ function Sso() {
                         </button>
                     </>
                 )}
-            </Grid>
+            </div>
+            <Notice className={styles.sso__notice}>
+                <Trans
+                    i18nKey={"authent.sso.description"}
+                    values={{
+                        productName: currentMetadata.name,
+                    }}
+                />
+            </Notice>
+            {hasRedirectUrl ? (
+                <button
+                    onClick={cancelAndRedirect}
+                    className={styles.sso__recover}
+                    type={"button"}
+                >
+                    {t("authent.sso.cancel")}
+                </button>
+            ) : (
+                <Link
+                    to={"/recovery"}
+                    className={styles.sso__recover}
+                    viewTransition
+                >
+                    <CloudUpload /> {t("authent.sso.recover")}
+                </Link>
+            )}
         </>
     );
 }

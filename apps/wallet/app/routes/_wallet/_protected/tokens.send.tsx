@@ -18,7 +18,6 @@ import { erc20Abi, parseUnits } from "viem";
 import { useWriteContract } from "wagmi";
 import { useBiometricConfirm } from "@/module/biometrics";
 import { Back } from "@/module/common/component/Back";
-import { Grid } from "@/module/common/component/Grid";
 import { isCryptoMode } from "@/module/common/utils/walletMode";
 import { TokenMax } from "@/module/tokens/component/TokenMax";
 import { TokenModalList } from "@/module/tokens/component/TokenModalList";
@@ -254,7 +253,7 @@ function TokensSendPage() {
     return (
         <>
             <Back href={"/wallet"}>{t("wallet.tokens.backToWallet")}</Back>
-            <Grid>
+            <div>
                 <form onSubmit={handleSubmit(onSubmit)}>
                     <AddressInput register={register} errors={errors} />
 
@@ -289,7 +288,7 @@ function TokensSendPage() {
                         </>
                     )}
                 </form>
-            </Grid>
+            </div>
         </>
     );
 }

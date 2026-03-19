@@ -1,4 +1,5 @@
 import { tablet } from "@frak-labs/design-system/breakpoints";
+import { alias } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 
 const safeTop = "var(--safe-area-inset-top, env(safe-area-inset-top, 0px))";
@@ -28,6 +29,7 @@ export const shellContainer = style({
  * layout pushes the bar to the bottom.
  */
 export const mainContent = style({
+    padding: `${alias.spacing.m}`,
     height: `calc(100dvh - 60px - ${safeTop} - ${safeBottom})`,
     overflow: "auto",
     display: "flex",

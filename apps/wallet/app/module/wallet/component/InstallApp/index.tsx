@@ -1,4 +1,5 @@
 import { isTauri } from "@frak-labs/app-essentials/utils/platform";
+import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
 import {
     trackGenericEvent,
@@ -6,10 +7,7 @@ import {
 } from "@frak-labs/wallet-shared";
 import { useCallback, useEffect, useState } from "react";
 import { Trans } from "react-i18next";
-import { ButtonLabel } from "@/module/common/component/ButtonLabel";
-import { Panel } from "@/module/common/component/Panel";
 import { usePwaInstallRef } from "@/module/common/context/PwaInstallContext";
-import * as styles from "./index.css";
 
 type PwaInstallState = {
     isUnderStandaloneMode: boolean;
@@ -94,16 +92,10 @@ function InstallAppContent() {
     }
 
     return (
-        <Panel variant={"invisible"} size={"none"}>
-            <Button
-                className={styles.installButton}
-                onClick={handleInstall}
-                icon={<WebAppIcon />}
-            >
-                <ButtonLabel>
-                    <Trans i18nKey={"wallet.installWebApp"} />
-                </ButtonLabel>
-            </Button>
-        </Panel>
+        <Button onClick={handleInstall} icon={<WebAppIcon />}>
+            <Box as="span">
+                <Trans i18nKey={"wallet.installWebApp"} />
+            </Box>
+        </Button>
     );
 }

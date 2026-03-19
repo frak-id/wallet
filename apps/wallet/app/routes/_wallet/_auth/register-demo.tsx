@@ -8,7 +8,6 @@ import { generatePrivateKey } from "viem/accounts";
 import { ButtonAuth } from "@/module/authentication/component/ButtonAuth";
 import { DemoTapZone } from "@/module/authentication/component/DemoTapZone";
 import { useDemoLogin } from "@/module/authentication/hook/useDemoLogin";
-import { Grid } from "@/module/common/component/Grid";
 import * as styles from "./register-demo.css";
 
 export const Route = createFileRoute("/_wallet/_auth/register-demo")({
@@ -43,12 +42,12 @@ function RegisterDemo() {
     }, [error]);
 
     return (
-        <Grid className={styles.registerGrid}>
+        <div className={styles.registerGrid}>
             <DemoTapZone navigate={navigate} to="/register?new=true" />
             <ButtonAuth onClick={() => register()} disabled={disabled}>
                 {message}
             </ButtonAuth>
-        </Grid>
+        </div>
     );
 }
 

@@ -2,7 +2,6 @@ import { isRunningInProd } from "@frak-labs/app-essentials";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Logout } from "@/module/authentication/component/Logout";
 import { BiometricSettings } from "@/module/biometrics";
-import { Grid } from "@/module/common/component/Grid";
 import { MoneriumConnect } from "@/module/monerium/component/MoneriumConnect";
 import { useMoneriumProfile } from "@/module/monerium/hooks/useMoneriumProfile";
 import {
@@ -36,22 +35,19 @@ function MoneriumSection() {
 
 function SettingsPage() {
     return (
-        <Grid
-            footer={
-                <>
-                    {/* <EditProfile /> */}
-                    <Logout />
-                </>
-            }
-        >
-            <SessionInfo />
-            <BiometricSettings />
-            <RecoveryLink />
-            <RemoveAllNotification />
-            <PrivateKey />
-            <PairingList />
-            {!isRunningInProd && <MoneriumSection />}
-            <LegalLinks />
-        </Grid>
+        <>
+            <div>
+                <SessionInfo />
+                <BiometricSettings />
+                <RecoveryLink />
+                <RemoveAllNotification />
+                <PrivateKey />
+                <PairingList />
+                {!isRunningInProd && <MoneriumSection />}
+                <LegalLinks />
+            </div>
+            {/* <EditProfile /> */}
+            <Logout />
+        </>
     );
 }

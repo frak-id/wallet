@@ -1,17 +1,11 @@
 import { Box } from "@/components/Box";
 import { sectionHeaderStyles } from "./sectionHeader.css";
 
-type SectionHeaderAction = {
-    label: string;
-    onClick: () => void;
-};
-
 type SectionHeaderProps = {
     title: string;
-    action?: SectionHeaderAction;
 };
 
-export function SectionHeader({ title, action }: SectionHeaderProps) {
+export function SectionHeader({ title }: SectionHeaderProps) {
     return (
         <Box
             className={sectionHeaderStyles.container}
@@ -23,16 +17,6 @@ export function SectionHeader({ title, action }: SectionHeaderProps) {
             <Box as="span" className={sectionHeaderStyles.title}>
                 {title}
             </Box>
-            {action && (
-                <Box
-                    as="button"
-                    type="button"
-                    className={sectionHeaderStyles.action}
-                    onClick={action.onClick}
-                >
-                    {action.label}
-                </Box>
-            )}
         </Box>
     );
 }

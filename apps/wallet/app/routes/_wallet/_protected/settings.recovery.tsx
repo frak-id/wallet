@@ -3,7 +3,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { TriangleAlert } from "lucide-react";
 import { useEffect } from "react";
 import { Trans } from "react-i18next";
-import { Grid } from "@/module/common/component/Grid";
 import { Step1 } from "@/module/recovery-setup/component/Setup/Step1";
 import { Step2 } from "@/module/recovery-setup/component/Setup/Step2";
 import { Step3 } from "@/module/recovery-setup/component/Setup/Step3";
@@ -32,7 +31,7 @@ function SettingsRecovery() {
     }, [step]);
 
     return (
-        <Grid>
+        <div>
             <p className={styles.setupRecoveryDisclaimer}>
                 <TriangleAlert className={styles.setupRecoveryDisclaimerIcon} />{" "}
                 <Trans i18nKey={"wallet.recoverySetup.disclaimer"} />
@@ -43,6 +42,6 @@ function SettingsRecovery() {
                 <Step3 />
                 <Step4 />
             </Accordion>
-        </Grid>
+        </div>
     );
 }

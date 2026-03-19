@@ -1,7 +1,6 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { Back } from "@/module/common/component/Back";
-import { Grid } from "@/module/common/component/Grid";
 import { isCryptoMode } from "@/module/common/utils/walletMode";
 import { QRCodeWallet } from "@/module/wallet/component/QRCodeWallet";
 
@@ -19,9 +18,9 @@ function TokensReceivePage() {
     return (
         <>
             <Back href={"/wallet"}>{t("wallet.tokens.backToWallet")}</Back>
-            <Grid>
+            <div>
                 <QRCodeWallet />
-            </Grid>
+            </div>
         </>
     );
 }

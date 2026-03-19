@@ -2,7 +2,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import type { PropsWithChildren } from "react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Grid } from "@/module/common/component/Grid";
 import { Panel } from "@/module/common/component/Panel";
 import { RewardHistoryList } from "@/module/history/component/RewardHistory";
 import * as styles from "@/module/history/page/historyPage.css";
@@ -25,7 +24,7 @@ function HistoryPage() {
     const [type, setType] = useState<HistoryType>("rewards");
 
     return (
-        <Grid>
+        <div>
             <Panel variant={"invisible"} className={styles.historyPanel}>
                 <nav className={styles.historyNav}>
                     <ButtonType
@@ -38,7 +37,7 @@ function HistoryPage() {
                 </nav>
             </Panel>
             {type === "rewards" && <RewardHistoryList />}
-        </Grid>
+        </div>
     );
 }
 

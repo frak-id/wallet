@@ -11,7 +11,6 @@ import { AlertCircle } from "lucide-react";
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { useStore } from "zustand";
-import { Grid } from "@/module/common/component/Grid";
 import { Title } from "@/module/common/component/Title";
 import { PairingHeader } from "@/module/pairing/component/PairingHeader";
 import { PairingInfo } from "@/module/pairing/component/PairingInfo";
@@ -90,7 +89,7 @@ function PairingPage() {
     // No pairing info
     if (!pendingPairingInfo) {
         return (
-            <Grid>
+            <div>
                 <Title size="big" align="center">
                     {t("wallet.pairing.error.title")}
                 </Title>
@@ -98,14 +97,14 @@ function PairingPage() {
                     <AlertCircle size={24} />
                     {t("wallet.pairing.error.noCode")}
                 </p>
-            </Grid>
+            </div>
         );
     }
 
     // Error state (invalid/expired pairing ID)
     if (pairingErrorState === "not-found") {
         return (
-            <Grid>
+            <div>
                 <Title size="big" align="center">
                     {t("wallet.pairing.error.title")}
                 </Title>
@@ -113,14 +112,14 @@ function PairingPage() {
                     <AlertCircle size={24} />
                     {t("wallet.pairing.error.notFound")}
                 </p>
-            </Grid>
+            </div>
         );
     }
 
     // Transient error state (network/backend issues)
     if (pairingErrorState === "transient") {
         return (
-            <Grid>
+            <div>
                 <Title size="big" align="center">
                     {t("wallet.pairing.title")}
                 </Title>
@@ -140,22 +139,22 @@ function PairingPage() {
                         {t("wallet.pairing.refresh")}
                     </Button>
                 </div>
-            </Grid>
+            </div>
         );
     }
 
     // Loading state
     if (!pairingInfo) {
         return (
-            <Grid>
+            <div>
                 <PairingHeader />
                 <Skeleton />
-            </Grid>
+            </div>
         );
     }
 
     return (
-        <Grid>
+        <div>
             <PairingHeader />
             <PairingInfo state={pairingState} id={pendingPairingInfo.id} />
             {shouldShowCode ? (
@@ -182,6 +181,6 @@ function PairingPage() {
                     {t("wallet.pairing.confirm")}
                 </Button>
             </div>
-        </Grid>
+        </div>
     );
 }

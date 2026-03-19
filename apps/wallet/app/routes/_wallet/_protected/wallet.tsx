@@ -1,8 +1,8 @@
 import { isRunningInProd } from "@frak-labs/app-essentials";
+import { SectionHeader } from "@frak-labs/design-system/components/SectionHeader";
 import { createFileRoute } from "@tanstack/react-router";
 import { memo } from "react";
 import { useHydrated } from "remix-utils/use-hydrated";
-import { Grid } from "@/module/common/component/Grid";
 import { MoneriumStatus } from "@/module/monerium/component/MoneriumStatus";
 import { EnableNotification } from "@/module/notification/component/EnableNotification";
 import { Balance } from "@/module/tokens/component/Balance";
@@ -10,7 +10,6 @@ import { DemoAccount } from "@/module/wallet/component/DemoAccount";
 import { HomeNavigation } from "@/module/wallet/component/HomeNavigation";
 import { InstallApp } from "@/module/wallet/component/InstallApp";
 import { PendingReferral } from "@/module/wallet/component/PendingReferral";
-import { Welcome } from "@/module/wallet/component/Welcome";
 
 export const Route = createFileRoute("/_wallet/_protected/wallet")({
     component: WalletPage,
@@ -49,12 +48,12 @@ function WalletPage() {
     const isHydrated = useHydrated();
 
     return (
-        <Grid>
+        <div>
+            <SectionHeader title="Porte-monnaie" />
             <DemoAccount />
             <Balance />
             <HomeNavigation />
-            <Welcome />
             {isHydrated && <HydratedComponents />}
-        </Grid>
+        </div>
     );
 }

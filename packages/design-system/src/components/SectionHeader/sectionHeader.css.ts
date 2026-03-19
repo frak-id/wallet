@@ -10,21 +10,9 @@ export const sectionHeaderStyles = {
         width: "100%",
     }),
     title: style({
-        fontSize: "16px",
+        fontSize: "28px",
         fontWeight: 700,
         color: vars.text.primary,
         margin: "0",
-    }),
-    action: style({
-        fontSize: "14px",
-        color: vars.text.action,
-        background: "none",
-        border: "none",
-        cursor: "pointer",
-        padding: "0",
-        fontFamily: "inherit",
-        ":hover": {
-            color: vars.text.actionHover,
-        },
     }),
 };
