@@ -1,5 +1,5 @@
 import type { CSSProperties, ReactNode } from "react";
-import { Box } from "@/components/Box";
+import { Box } from "../Box";
 
 type ColumnWidth =
     | "content"

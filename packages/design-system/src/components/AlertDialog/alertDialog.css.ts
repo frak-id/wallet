@@ -1,6 +1,6 @@
 import { keyframes, style } from "@vanilla-extract/css";
-import { vars } from "@/theme.css";
-import { alias, easing, shadow, transition, zIndex } from "@/tokens.css";
+import { vars } from "../../theme.css";
+import { alias, easing, shadow, transition, zIndex } from "../../tokens.css";
 
 const fadeScaleIn = keyframes({
     from: { opacity: 0, transform: "translate(-50%, -48%) scale(0.96)" },

@@ -1,5 +1,5 @@
+import { brand, fontSize } from "@frak-labs/design-system/tokens";
 import { style, styleVariants } from "@vanilla-extract/css";
-import { brand, fontSize } from "@/tokens.css";
 
 export const title = style({
     display: "flex",

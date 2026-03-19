@@ -1,5 +1,5 @@
+import { brand } from "@frak-labs/design-system/tokens";
 import { keyframes, style } from "@vanilla-extract/css";
-import { brand } from "@/tokens.css";
 
 const slideIn = keyframes({
     from: {

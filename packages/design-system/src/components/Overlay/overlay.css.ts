@@ -1,6 +1,6 @@
 import { keyframes, style } from "@vanilla-extract/css";
-import { vars } from "@/theme.css";
-import { easing, transition, zIndex } from "@/tokens.css";
+import { vars } from "../../theme.css";
+import { easing, transition, zIndex } from "../../tokens.css";
 
 const fadeIn = keyframes({
     from: { opacity: 0 },

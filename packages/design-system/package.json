@@ -7,7 +7,6 @@
   "main": "./src/index.ts",
   "module": "./src/index.ts",
   "exports": {
-    "./*": "./src/*",
     "./components/Accordion": "./src/components/Accordion/index.tsx",
     "./components/AlertDialog": "./src/components/AlertDialog/index.tsx",
     "./components/Badge": "./src/components/Badge/index.tsx",
@@ -35,6 +34,8 @@
     "./components/TextArea": "./src/components/TextArea/index.tsx",
     "./components/Tooltip": "./src/components/Tooltip/index.tsx",
     "./breakpoints": "./src/breakpoints.ts",
+    "./global": "./src/global.ts",
+    "./theme": "./src/theme.css.ts",
     "./tokens": "./src/tokens.css.ts",
     "./utils": "./src/reset.css.ts"
   },

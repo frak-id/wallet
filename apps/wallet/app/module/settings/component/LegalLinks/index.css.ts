@@ -1,6 +1,6 @@
+import { vars } from "@frak-labs/design-system/theme";
+import { alias, easing, transition } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
-import { vars } from "@/theme.css";
-import { alias, easing, transition } from "@/tokens.css";
 
 export const legalLink = style({
     display: "flex",

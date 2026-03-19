@@ -1,6 +1,6 @@
 import { keyframes, style } from "@vanilla-extract/css";
-import { vars } from "@/theme.css";
-import { alias, fontSize, shadow, zIndex } from "@/tokens.css";
+import { vars } from "../../theme.css";
+import { alias, fontSize, shadow, zIndex } from "../../tokens.css";
 
 const fadeSlideIn = keyframes({
     from: { opacity: 0, transform: "translateY(-4px)" },

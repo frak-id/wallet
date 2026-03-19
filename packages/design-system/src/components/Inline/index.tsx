@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
-import { Box } from "@/components/Box";
-import type { ResponsiveSpace } from "@/sprinkles.css";
+import type { ResponsiveSpace } from "../../sprinkles.css";
+import { Box } from "../Box";
 
 type ValidInlineElement = "div" | "span" | "nav" | "ul" | "ol" | "li";
 

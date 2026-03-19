@@ -1,5 +1,5 @@
+import { zIndex } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
-import { zIndex } from "@/tokens.css";
 
 export const demoTap = style({
     position: "fixed",

@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import { base, element } from "@/reset.css";
+import { base, element } from "../../reset.css";
 
 import { Box } from "./index";
 

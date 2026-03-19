@@ -1,5 +1,5 @@
+import { vars } from "@frak-labs/design-system/theme";
 import { style } from "@vanilla-extract/css";
-import { vars } from "@/theme.css";
 
 export const addressValue = style({
     fontFamily: "monospace",

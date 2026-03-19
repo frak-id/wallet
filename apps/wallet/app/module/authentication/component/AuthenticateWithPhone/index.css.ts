@@ -1,5 +1,5 @@
+import { brand, easing, transition } from "@frak-labs/design-system/tokens";
 import { keyframes, style } from "@vanilla-extract/css";
-import { brand, easing, transition } from "@/tokens.css";
 
 const fadeIn = keyframes({
     from: {

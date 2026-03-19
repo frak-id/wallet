@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { Sprinkles } from "@/sprinkles.css";
+import type { Sprinkles } from "../../sprinkles.css";
 import { Box } from "../Box";
 import { textStyles } from "./text.css";
 

@@ -1,6 +1,6 @@
+import { vars } from "@frak-labs/design-system/theme";
+import { brand, fontSize, transition } from "@frak-labs/design-system/tokens";
 import { globalStyle, style } from "@vanilla-extract/css";
-import { vars } from "@/theme.css";
-import { brand, fontSize, transition } from "@/tokens.css";
 
 export const trigger = style({
     display: "flex",

@@ -1,5 +1,5 @@
 import type { TextareaHTMLAttributes } from "react";
-import { Box } from "@/components/Box";
+import { Box } from "../Box";
 import { lengthVariants, textareaStyles } from "./textarea.css";
 
 type TextAreaLength = "small" | "medium" | "big";

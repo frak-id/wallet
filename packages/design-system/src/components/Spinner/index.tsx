@@ -1,4 +1,4 @@
-import { Box } from "@/components/Box";
+import { Box } from "../Box";
 import { leafRotations, leafStyles, spinnerStyles } from "./spinner.css";
 
 type SpinnerSize = "s" | "m" | "l";

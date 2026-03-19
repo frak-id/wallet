@@ -1,6 +1,6 @@
 import { style } from "@vanilla-extract/css";
-import { vars } from "@/theme.css";
-import { alias, easing, transition } from "@/tokens.css";
+import { vars } from "../../theme.css";
+import { alias, easing, transition } from "../../tokens.css";
 
 export const switchRoot = style({
     all: "unset",

@@ -1,6 +1,6 @@
 import { style } from "@vanilla-extract/css";
-import { vars } from "@/theme.css";
-import { alias } from "@/tokens.css";
+import { vars } from "../../theme.css";
+import { alias } from "../../tokens.css";
 
 export const emptyStateStyles = {
     container: style({

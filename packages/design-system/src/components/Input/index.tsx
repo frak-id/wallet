@@ -1,5 +1,5 @@
 import type { InputHTMLAttributes, ReactNode } from "react";
-import { Box } from "@/components/Box";
+import { Box } from "../Box";
 import { inputStyles, lengthVariants } from "./input.css";
 
 type InputLength = "small" | "medium" | "big";

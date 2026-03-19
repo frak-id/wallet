@@ -1,6 +1,6 @@
+import { vars } from "@frak-labs/design-system/theme";
+import { brand } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
-import { vars } from "@/theme.css";
-import { brand } from "@/tokens.css";
 
 export const skeletonContainer = style({
     display: "flex",

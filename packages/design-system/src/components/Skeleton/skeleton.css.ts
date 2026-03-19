@@ -1,6 +1,6 @@
 import { keyframes, styleVariants } from "@vanilla-extract/css";
-import { vars } from "@/theme.css";
-import { alias } from "@/tokens.css";
+import { vars } from "../../theme.css";
+import { alias } from "../../tokens.css";
 
 const shimmer = keyframes({
     "0%": { backgroundPosition: "-200px 0" },

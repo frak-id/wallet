@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
-import { Box } from "@/components/Box";
-import { Button } from "@/components/Button";
+import { Box } from "../Box";
+import { Button } from "../Button";
 import { emptyStateStyles } from "./emptyState.css";
 
 type EmptyStateAction = {

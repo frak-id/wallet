@@ -1,6 +1,6 @@
 import { styleVariants } from "@vanilla-extract/css";
-import { vars } from "@/theme.css";
-import { alias } from "@/tokens.css";
+import { vars } from "../../theme.css";
+import { alias } from "../../tokens.css";
 
 const base = {
     display: "inline-flex",

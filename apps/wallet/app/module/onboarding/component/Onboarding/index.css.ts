@@ -1,5 +1,10 @@
+import {
+    alias,
+    brand,
+    easing,
+    transition,
+} from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
-import { alias, brand, easing, transition } from "@/tokens.css";
 
 export const onboarding = style({
     display: "flex",

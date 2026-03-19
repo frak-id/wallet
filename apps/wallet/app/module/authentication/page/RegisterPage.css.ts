@@ -1,5 +1,5 @@
+import { brand } from "@frak-labs/design-system/tokens";
 import { globalStyle, style } from "@vanilla-extract/css";
-import { brand } from "@/tokens.css";
 
 export const register__grid = style({});
 

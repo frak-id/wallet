@@ -1,9 +1,9 @@
 import type { AllHTMLAttributes, CSSProperties, ReactNode, Ref } from "react";
 import { createElement } from "react";
 
-import { base, element } from "@/reset.css";
-import type { Sprinkles } from "@/sprinkles.css";
-import { sprinkles } from "@/sprinkles.css";
+import { base, element } from "../../reset.css";
+import type { Sprinkles } from "../../sprinkles.css";
+import { sprinkles } from "../../sprinkles.css";
 
 type BoxElement =
     | "div"

@@ -14,10 +14,7 @@
         "jsx": "preserve",
         "incremental": true,
         "verbatimModuleSyntax": true,
-        "types": ["vitest/globals", "@testing-library/jest-dom"],
-        "paths": {
-            "@/*": ["./src/*"]
-        }
+        "types": ["vitest/globals", "@testing-library/jest-dom"]
     },
     "include": ["**/*.d.ts", "**/*.ts", "**/*.tsx"],
     "exclude": ["node_modules"]

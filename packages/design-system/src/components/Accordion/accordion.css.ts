@@ -1,5 +1,5 @@
 import { keyframes, style } from "@vanilla-extract/css";
-import { vars } from "@/theme.css";
+import { vars } from "../../theme.css";
 
 const easing = "cubic-bezier(0.87, 0, 0.13, 1)";
 

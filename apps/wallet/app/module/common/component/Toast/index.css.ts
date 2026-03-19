@@ -1,6 +1,6 @@
+import { vars } from "@frak-labs/design-system/theme";
+import { brand, transition, zIndex } from "@frak-labs/design-system/tokens";
 import { keyframes, style } from "@vanilla-extract/css";
-import { vars } from "@/theme.css";
-import { brand, transition, zIndex } from "@/tokens.css";
 
 const toastIn = keyframes({
     "0%": { opacity: 0, transform: "translateY(6px) scale(0.98)" },

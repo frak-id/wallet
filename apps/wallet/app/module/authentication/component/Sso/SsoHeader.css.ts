@@ -1,6 +1,6 @@
+import { vars } from "@frak-labs/design-system/theme";
+import { alias, brand } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
-import { vars } from "@/theme.css";
-import { alias, brand } from "@/tokens.css";
 
 export const ssoHeader = style({
     display: "flex",

@@ -1,4 +1,4 @@
-import { Box } from "@/components/Box";
+import { Box } from "../Box";
 import { sectionHeaderStyles } from "./sectionHeader.css";
 
 type SectionHeaderProps = {

@@ -1,6 +1,6 @@
 import { style, styleVariants } from "@vanilla-extract/css";
-import { vars } from "@/theme.css";
-import { alias, transition } from "@/tokens.css";
+import { vars } from "../../theme.css";
+import { alias, transition } from "../../tokens.css";
 
 const wrapperBase = style({
     display: "flex",

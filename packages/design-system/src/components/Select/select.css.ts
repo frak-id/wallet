@@ -1,5 +1,5 @@
 import { style, styleVariants } from "@vanilla-extract/css";
-import { vars } from "@/theme.css";
+import { vars } from "../../theme.css";
 import {
     alias,
     easing,
@@ -7,7 +7,7 @@ import {
     shadow,
     transition,
     zIndex,
-} from "@/tokens.css";
+} from "../../tokens.css";
 
 /**
  * Trigger — base + length variants

@@ -31,7 +31,7 @@ src/
 - **Semantic tokens**: `vars.text.*`, `vars.surface.*`, `vars.border.*`, `vars.icon.*`
 - **Theme switching**: `[data-theme='dark']` selector, light = default
 - **Token layers**: brand colors → scale → aliases → semantic (light/dark)
-- **Access**: `import { vars } from "@frak-labs/design-system/theme.css"`
+- **Access**: `import { vars } from "@frak-labs/design-system/theme"`
 
 ## Box Component
 
@@ -77,8 +77,8 @@ Per-component subpath exports:
 ```typescript
 import { Button } from "@frak-labs/design-system/components/Button";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { vars } from "@frak-labs/design-system/theme.css";
-import { sprinkles } from "@frak-labs/design-system/sprinkles.css";
+import { vars } from "@frak-labs/design-system/theme";
+import { brand, alias } from "@frak-labs/design-system/tokens";
 ```
 
 ## Dependencies
@@ -99,5 +99,5 @@ bun run test         # Vitest with jsdom
 
 - Replaces `packages/ui` (migration in progress — wallet app transitioning)
 - Tests co-located as `*.test.tsx`
-- Wallet tsconfig aliases `@/*` to both `./app/*` and design-system `src/*`
 - NO default exports — named exports only
+- Explicit subpath exports only — no wildcard (public API is locked down)

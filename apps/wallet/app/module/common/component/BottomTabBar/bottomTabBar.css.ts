@@ -1,6 +1,6 @@
+import { vars } from "@frak-labs/design-system/theme";
+import { alias } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
-import { vars } from "@/theme.css";
-import { alias } from "@/tokens.css";
 
 export const bottomTabBarStyles = {
     container: style({

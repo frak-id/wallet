@@ -1,5 +1,5 @@
+import { brand } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
-import { brand } from "@/tokens.css";
 
 export const stepLayout = style({
     display: "flex",

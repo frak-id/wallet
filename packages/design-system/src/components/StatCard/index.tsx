@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Box } from "@/components/Box";
+import { Box } from "../Box";
 import { statCardStyles } from "./statCard.css";
 
 type StatCardProps = {
