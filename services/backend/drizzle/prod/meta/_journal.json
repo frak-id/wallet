@@ -71,6 +71,13 @@
             "when": 1773134691754,
             "tag": "0009_nostalgic_wendell_rand",
             "breakpoints": true
+        },
+        {
+            "idx": 10,
+            "version": "7",
+            "when": 1773911185288,
+            "tag": "0010_glossy_bulldozer",
+            "breakpoints": true
         }
     ]
 }
