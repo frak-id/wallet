@@ -19,7 +19,6 @@ COPY apps/shopify/package.json ./apps/shopify/
 
 # Services
 COPY services/backend/package.json ./services/backend/
-COPY services/migration/package.json ./services/migration/
 
 # Packages (only package.json)
 COPY packages/app-essentials/package.json ./packages/app-essentials/
