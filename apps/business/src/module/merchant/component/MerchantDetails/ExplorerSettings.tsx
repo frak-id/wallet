@@ -23,6 +23,7 @@ import styles from "./index.module.css";
 type ExplorerFormValues = {
     enabled: boolean;
     heroImageUrl?: string;
+    logoUrl?: string;
     description?: string;
 };
 
@@ -40,6 +41,7 @@ export function ExplorerSettings({ merchantId }: { merchantId: string }) {
                 ? {
                       enabled: merchant.explorerEnabledAt !== null,
                       heroImageUrl: merchant.explorerConfig?.heroImageUrl ?? "",
+                      logoUrl: merchant.explorerConfig?.logoUrl ?? "",
                       description: merchant.explorerConfig?.description ?? "",
                   }
                 : undefined,
@@ -51,6 +53,7 @@ export function ExplorerSettings({ merchantId }: { merchantId: string }) {
         defaultValues: {
             enabled: false,
             heroImageUrl: "",
+            logoUrl: "",
             description: "",
         },
     });
@@ -62,9 +65,10 @@ export function ExplorerSettings({ merchantId }: { merchantId: string }) {
 
     function onSubmit(values: ExplorerFormValues) {
         const config =
-            values.heroImageUrl || values.description
+            values.heroImageUrl || values.logoUrl || values.description
                 ? {
                       heroImageUrl: values.heroImageUrl,
+                      logoUrl: values.logoUrl,
                       description: values.description,
                   }
                 : undefined;
@@ -108,6 +112,23 @@ export function ExplorerSettings({ merchantId }: { merchantId: string }) {
                             <FormLabel weight={"medium"}>
                                 Hero image URL
                             </FormLabel>
+                            <FormControl>
+                                <InputWithToggle
+                                    length={"medium"}
+                                    placeholder={"https://..."}
+                                    {...field}
+                                />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name="logoUrl"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel weight={"medium"}>Logo URL</FormLabel>
                             <FormControl>
                                 <InputWithToggle
                                     length={"medium"}
