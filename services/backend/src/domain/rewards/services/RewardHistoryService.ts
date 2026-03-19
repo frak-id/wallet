@@ -56,6 +56,7 @@ export class RewardHistoryService {
                 domain: log.merchantDomain,
                 heroImageUrl:
                     log.merchantExplorerConfig?.heroImageUrl ?? undefined,
+                logoUrl: log.merchantExplorerConfig?.logoUrl ?? undefined,
             },
             token: {
                 symbol: meta?.symbol ?? "UNKNOWN",

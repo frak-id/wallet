@@ -47,6 +47,7 @@ const MerchantInfoSchema = t.Object({
     name: t.String(),
     domain: t.String(),
     heroImageUrl: t.Optional(t.String()),
+    logoUrl: t.Optional(t.String()),
 });
 
 const TokenInfoSchema = t.Object({
