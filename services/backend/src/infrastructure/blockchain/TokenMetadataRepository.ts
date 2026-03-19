@@ -60,6 +60,82 @@ export class TokenMetadataRepository {
         this.cache.set(token, metadata);
         return metadata;
     }
+
+    async getMetadataBatch(
+        tokens: Address[]
+    ): Promise<Map<Address, TokenMetadata>> {
+        const result = new Map<Address, TokenMetadata>();
+        const uncached: Address[] = [];
+
+        for (const token of tokens) {
+            const cached = this.cache.get(token);
+            if (cached) {
+                result.set(token, cached);
+            } else {
+                uncached.push(token);
+            }
+        }
+
+        if (uncached.length === 0) return result;
+
+        const contracts = uncached.flatMap(
+            (token) =>
+                [
+                    {
+                        abi: erc20Abi,
+                        address: token,
+                        functionName: "symbol",
+                    },
+                    {
+                        abi: erc20Abi,
+                        address: token,
+                        functionName: "name",
+                    },
+                    {
+                        abi: erc20Abi,
+                        address: token,
+                        functionName: "decimals",
+                    },
+                ] as const
+        );
+
+        const rawResults = await multicall(viemClient, {
+            contracts,
+            allowFailure: true,
+        });
+
+        for (let i = 0; i < uncached.length; i++) {
+            const token = uncached[i];
+            if (!token) continue;
+
+            const symbolResult = rawResults[i * 3];
+            const nameResult = rawResults[i * 3 + 1];
+            const decimalsResult = rawResults[i * 3 + 2];
+
+            if (
+                symbolResult?.status === "success" &&
+                nameResult?.status === "success" &&
+                decimalsResult?.status === "success"
+            ) {
+                const metadata: TokenMetadata = {
+                    symbol: symbolResult.result as string,
+                    name: nameResult.result as string,
+                    decimals: decimalsResult.result as number,
+                };
+                this.cache.set(token, metadata);
+                result.set(token, metadata);
+            } else {
+                const fallback: TokenMetadata = {
+                    symbol: "UNKNOWN",
+                    name: "Unknown Token",
+                    decimals: 18,
+                };
+                result.set(token, fallback);
+            }
+        }
+
+        return result;
+    }
 }
 
 export const tokenMetadataRepository = new TokenMetadataRepository();

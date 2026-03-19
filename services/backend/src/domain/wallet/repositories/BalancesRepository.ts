@@ -87,4 +87,10 @@ export class BalancesRepository {
     }): Promise<TokenMetadata> {
         return tokenMetadataRepository.getMetadata({ token });
     }
+
+    async getTokenMetadataBatch(
+        tokens: Address[]
+    ): Promise<Map<Address, TokenMetadata>> {
+        return tokenMetadataRepository.getMetadataBatch(tokens);
+    }
 }

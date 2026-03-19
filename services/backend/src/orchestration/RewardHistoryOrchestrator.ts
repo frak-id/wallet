@@ -1,4 +1,4 @@
-import type { TokenPrice } from "@backend-infrastructure";
+import type { TokenMetadata, TokenPrice } from "@backend-infrastructure";
 import type { Address } from "viem";
 import type { TouchpointRepository } from "../domain/attribution/repositories/TouchpointRepository";
 import type { TouchpointSourceData } from "../domain/attribution/schemas";
@@ -11,7 +11,6 @@ import type {
     ReferrerPurchaseMap,
     RewardEnrichmentData,
     RewardHistoryService,
-    TokenMeta,
 } from "../domain/rewards/services/RewardHistoryService";
 import type { DetailedAssetLog } from "../domain/rewards/types";
 import type { BalancesRepository } from "../domain/wallet/repositories/BalancesRepository";
@@ -116,27 +115,20 @@ export class RewardHistoryOrchestrator {
 
     private async buildTokenMetadataMap(
         uniqueTokens: Address[]
-    ): Promise<Map<string, TokenMeta>> {
-        const results = await Promise.all(
-            uniqueTokens.map(async (token) => ({
-                token,
-                metadata: await this.fetchTokenMetadata(token),
-            }))
-        );
-
-        return new Map(results.map(({ token, metadata }) => [token, metadata]));
-    }
-
-    private async fetchTokenMetadata(
-        tokenAddress: Address
-    ): Promise<TokenMeta> {
+    ): Promise<Map<Address, TokenMetadata>> {
         try {
-            const metadata = await this.balancesRepository.getTokenMetadata({
-                token: tokenAddress,
-            });
-            return { symbol: metadata.symbol, decimals: metadata.decimals };
+            const batchResult =
+                await this.balancesRepository.getTokenMetadataBatch(
+                    uniqueTokens
+                );
+            return batchResult;
         } catch {
-            return { symbol: "UNKNOWN", decimals: 18 };
+            return new Map(
+                uniqueTokens.map((token) => [
+                    token,
+                    { symbol: "UNKNOWN", decimals: 18, name: "Unknown Token" },
+                ])
+            );
         }
     }
 

@@ -1,4 +1,5 @@
-import type { TokenPrice } from "@backend-infrastructure";
+import type { TokenMetadata, TokenPrice } from "@backend-infrastructure";
+import type { Address } from "viem";
 import type { PurchaseInfo, RewardHistoryItem } from "../schemas";
 import type {
     CreateReferralLinkPayload,
@@ -7,8 +8,6 @@ import type {
     PurchasePayload,
 } from "../types";
 
-export type TokenMeta = { symbol: string; decimals: number };
-export type TokenMetadataMap = Map<string, TokenMeta>;
 export type TokenPriceMap = Map<string, TokenPrice | undefined>;
 export type PurchaseAmountMap = Map<
     string,
@@ -20,7 +19,7 @@ export type ReferrerPurchaseMap = Map<
 >;
 
 export type RewardEnrichmentData = {
-    tokenMetadata: TokenMetadataMap;
+    tokenMetadata: Map<Address, TokenMetadata>;
     tokenPrices: TokenPriceMap;
     purchaseAmounts: PurchaseAmountMap;
     referrerPurchases: ReferrerPurchaseMap;
