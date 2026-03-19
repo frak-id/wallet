@@ -1,12 +1,12 @@
 # AGENTS.md
 
-**Generated:** 2026-03-06
-**Commit:** 03e50a956
-**Branch:** dev
+**Generated:** 2026-03-19
+**Commit:** 50035fdd0
+**Branch:** feat/vanilla-extract
 
 ## Overview
 
-Frak Wallet monorepo — Web3 referral tracking & rewards infrastructure. TypeScript/React/Bun stack with Account Abstraction (ERC-4337) + WebAuthn authentication. 3166 files, 226k TS/TSX lines.
+Frak Wallet monorepo — Web3 referral tracking & rewards infrastructure. TypeScript/React/Bun stack with Account Abstraction (ERC-4337) + WebAuthn authentication. ~1700 TS/TSX source files, ~164k lines.
 
 ## Structure
 
@@ -19,7 +19,8 @@ frak-wallet/
 │   └── shopify/       # React Router v7 embedded Shopify app (ONLY non-TanStack app)
 ├── packages/
 │   ├── wallet-shared/ # Shared code for wallet + listener ONLY (201 files, 15 domains)
-│   ├── ui/            # Radix-based component library (22 components)
+│   ├── design-system/ # Vanilla Extract design system (28 components, sprinkles, tokens)
+│   ├── ui/            # Radix-based component library (22 components) — being replaced by design-system
 │   ├── app-essentials/ # Core blockchain + WebAuthn config
 │   ├── client/        # Elysia Eden Treaty API client
 │   ├── dev-tooling/   # Vite configs, Lightning CSS (centralized for all apps)
@@ -44,7 +45,8 @@ frak-wallet/
 | Business dashboard | `apps/business/src/module/` | campaigns (29 hooks), merchant (17 hooks), product (29 hooks) |
 | SDK iframe comms | `apps/listener/app/module/hooks/` | 14 RPC message handlers |
 | Shared wallet logic | `packages/wallet-shared/src/` | 4 Zustand stores, WebAuthn, smart wallet |
-| UI components | `packages/ui/component/` | Radix-based, CSS Modules |
+| Design system | `packages/design-system/src/` | Vanilla Extract tokens, sprinkles, 28 components |
+| UI components (legacy) | `packages/ui/component/` | Radix-based, CSS Modules — migrating to design-system |
 | Blockchain config | `packages/app-essentials/src/blockchain/` | ABIs, addresses, transports, Wagmi config |
 | Core SDK actions | `sdk/core/src/actions/` | 14 actions: displayModal, sendInteraction, etc. |
 | React hooks | `sdk/react/src/hook/` | 10 hooks wrapping core-sdk via TanStack Query |
@@ -101,9 +103,15 @@ All four must pass. Do not commit or report completion with failures.
 - `useImportType` / `useExportType` enforced by Biome
 
 ### Styling
-- **CSS Modules only** — NO Tailwind
-- Lightning CSS via `packages/dev-tooling/src/vite.ts` (all Vite apps)
-- BEM naming: `block__element--modifier`
+- **Wallet app**: Migrating from CSS Modules → **Vanilla Extract** (`@frak-labs/design-system`)
+  - New styles: `.css.ts` files using `@vanilla-extract/css` + `@vanilla-extract/sprinkles`
+  - Use `Box` component with sprinkles props for layout, `vars` for theme tokens
+  - Semantic tokens: `vars.text.*`, `vars.surface.*`, `vars.border.*`, `vars.icon.*`
+  - Responsive: `{ mobile: ..., tablet: ..., desktop: ... }` via sprinkles
+  - Light/dark themes via `[data-theme='dark']` selector
+- **Other apps**: CSS Modules + Lightning CSS (unchanged)
+- NO Tailwind anywhere
+- Lightning CSS via `packages/dev-tooling/src/vite.ts` (business, listener, showcase)
 - Browser targets: Chrome 100+, Safari 14+, Firefox 91+, Edge 100+
 
 ### Formatting (Biome)
@@ -145,7 +153,7 @@ All four must pass. Do not commit or report completion with failures.
 |-----------|--------|
 | `npm`, `pnpm`, `yarn` | Bun only |
 | `bun test` | Use `bun run test` (Vitest workspace) |
-| Tailwind | CSS Modules + Lightning CSS |
+| Tailwind | Vanilla Extract (wallet) / CSS Modules (other apps) |
 | `try/catch` everywhere | Only for abstraction/translation |
 | Classes | Functional patterns preferred |
 | `as any`, `@ts-ignore`, `!` | Type safety is non-negotiable |
@@ -204,14 +212,14 @@ All SDK packages use tsdown (Rolldown-powered). Build is sequential:
 
 ## Hierarchical AGENTS.md
 
-Domain-specific context per directory (20 sub-files):
+Domain-specific context per directory (21 sub-files):
 
 | Area | Files |
 |------|-------|
 | Apps | `apps/{wallet,business,listener,shopify}/AGENTS.md` |
 | Shopify sub | `apps/shopify/app/{services.server,components,hooks,routes}/AGENTS.md`, `apps/shopify/extensions/AGENTS.md` |
 | SDK | `sdk/AGENTS.md`, `sdk/{core,react,components}/AGENTS.md` |
-| Packages | `packages/AGENTS.md`, `packages/{wallet-shared,ui,app-essentials,test-foundation}/AGENTS.md` |
+| Packages | `packages/AGENTS.md`, `packages/{wallet-shared,design-system,ui,app-essentials,test-foundation}/AGENTS.md` |
 | Backend | `services/backend/AGENTS.md` |
 | Infra | `infra/AGENTS.md` |
 
@@ -220,7 +228,9 @@ Domain-specific context per directory (20 sub-files):
 - Service worker required before wallet dev/build: `bun run build:sw`
 - TanStack Router typegen before typecheck: runs automatically
 - Drizzle schemas: `src/domain/*/db/schema.ts` pattern
-- Vite aliased to `rolldown-vite` (`npm:rolldown-vite@^7.3.1`) — Rust-based bundler
+- Vite aliased to `rolldown-vite` (v8) — Rust-based bundler
 - `@wagmi/connectors` stubbed in resolutions (avoids MetaMask SDK bloat)
 - Shopify app uses relative imports (exception to `@/...` convention)
 - Backend uses `@backend-utils`, `@backend-infrastructure/*`, `@backend-domain/*` path aliases
+- **Vanilla Extract migration** (in progress): Wallet app migrating `.module.css` → `.css.ts` files using `@frak-labs/design-system`. `packages/ui` will be superseded by `packages/design-system` once migration completes.
+- Wallet app tsconfig aliases `@/*` to both `./app/*` and `../../packages/design-system/src/*` (dual resolution for design system imports)

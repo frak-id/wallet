@@ -5,7 +5,8 @@
 | Package | Purpose |
 |---------|---------|
 | `wallet-shared` | Shared code for wallet + listener ONLY |
-| `ui` | Radix-based component library |
+| `design-system` | Vanilla Extract design system (replaces ui) |
+| `ui` | Radix-based component library (being replaced by design-system) |
 | `app-essentials` | Core blockchain + WebAuthn config |
 | `client` | Elysia Eden Treaty API client |
 | `dev-tooling` | Vite configs, Lightning CSS |
@@ -37,6 +38,24 @@ export const sessionStore = create<SessionStore>()(
 // CRITICAL: Individual selectors
 const session = sessionStore((s) => s.session);
 ```
+
+## packages/design-system/
+
+Vanilla Extract design system. 28 components, semantic tokens, sprinkles. Replaces `packages/ui`.
+
+**Key Files:**
+- `src/tokens.css.ts` — Brand colors, scale, typography, semantic light/dark
+- `src/theme.css.ts` — Theme contract (`vars.*`)
+- `src/sprinkles.css.ts` — Responsive conditions (mobile/tablet/desktop)
+- `src/components/Box/` — Core polymorphic layout primitive
+
+**Usage:**
+```typescript
+import { Box } from "@frak-labs/design-system/components/Box";
+import { vars } from "@frak-labs/design-system/theme.css";
+```
+
+See `packages/design-system/AGENTS.md` for full component list and patterns.
 
 ## packages/ui/
 
