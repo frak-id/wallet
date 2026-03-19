@@ -1,19 +1,35 @@
-import { and, count, desc, eq, inArray, sql } from "drizzle-orm";
+import {
+    and,
+    count,
+    desc,
+    eq,
+    getTableColumns,
+    inArray,
+    sql,
+} from "drizzle-orm";
 import type { Address } from "viem";
 import { db } from "../../../infrastructure/persistence/postgres";
 import {
     type NotificationSentInsert,
-    type NotificationSentSelect,
+    type NotificationSentWithStatus,
+    type NotificationStatus,
     type NotificationType,
     notificationSentTable,
 } from "../db/schema";
 
 export class NotificationSentRepository {
     async insertBatch(
-        records: Omit<NotificationSentInsert, "id" | "status" | "sentAt">[]
-    ): Promise<NotificationSentSelect[]> {
+        records: Omit<NotificationSentInsert, "id" | "sentAt">[]
+    ): Promise<NotificationSentWithStatus[]> {
         if (records.length === 0) return [];
-        return db.insert(notificationSentTable).values(records).returning();
+        const rows = await db
+            .insert(notificationSentTable)
+            .values(records)
+            .returning();
+        return rows.map((row) => ({
+            ...row,
+            status: (row.openedAt ? "opened" : "sent") as NotificationStatus,
+        }));
     }
 
     async findByWallet(
@@ -23,7 +39,7 @@ export class NotificationSentRepository {
             offset?: number;
             types?: NotificationType[];
         }
-    ): Promise<NotificationSentSelect[]> {
+    ): Promise<NotificationSentWithStatus[]> {
         const conditions = [eq(notificationSentTable.wallet, wallet)];
 
         if (options?.types && options.types.length > 0) {
@@ -31,7 +47,10 @@ export class NotificationSentRepository {
         }
 
         const query = db
-            .select()
+            .select({
+                ...getTableColumns(notificationSentTable),
+                status: sql<NotificationStatus>`CASE WHEN ${notificationSentTable.openedAt} IS NOT NULL THEN 'opened' ELSE 'sent' END`,
+            })
             .from(notificationSentTable)
             .where(and(...conditions))
             .orderBy(desc(notificationSentTable.sentAt));
@@ -50,7 +69,6 @@ export class NotificationSentRepository {
         const results = await db
             .update(notificationSentTable)
             .set({
-                status: "opened",
                 openedAt: new Date(),
             })
             .where(

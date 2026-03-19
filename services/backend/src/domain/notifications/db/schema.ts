@@ -91,10 +91,6 @@ export const notificationSentTable = pgTable(
         body: text("body").notNull(),
         payload: jsonb("payload").$type<SendNotificationPayload>().notNull(),
         broadcastId: uuid("broadcast_id"),
-        status: text("status")
-            .$type<NotificationStatus>()
-            .notNull()
-            .default("sent"),
         sentAt: timestamp("sent_at").defaultNow().notNull(),
         openedAt: timestamp("opened_at"),
     },
@@ -112,3 +108,6 @@ export const notificationSentTable = pgTable(
 
 export type NotificationSentInsert = typeof notificationSentTable.$inferInsert;
 export type NotificationSentSelect = typeof notificationSentTable.$inferSelect;
+export type NotificationSentWithStatus = NotificationSentSelect & {
+    status: NotificationStatus;
+};

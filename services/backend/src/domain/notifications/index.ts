@@ -4,6 +4,7 @@ export {
     type NotificationBroadcastSelect,
     type NotificationSentInsert,
     type NotificationSentSelect,
+    type NotificationSentWithStatus,
     type NotificationStatus,
     type NotificationType,
     notificationBroadcastsTable,
