@@ -1,4 +1,4 @@
-import { Accordion } from "@frak-labs/ui/component/Accordion";
+import { Accordion } from "@frak-labs/design-system/components/Accordion";
 import { createFileRoute } from "@tanstack/react-router";
 import { TriangleAlert } from "lucide-react";
 import { useEffect } from "react";
@@ -12,7 +12,7 @@ import {
     recoveryStore,
     selectRecoveryStep,
 } from "@/module/stores/recoveryStore";
-import styles from "./settings-recovery.module.css";
+import * as styles from "./settings-recovery.css";
 
 const MAX_STEPS = 5;
 
@@ -33,8 +33,8 @@ function SettingsRecovery() {
 
     return (
         <Grid>
-            <p className={styles.setupRecovery__disclaimer}>
-                <TriangleAlert />{" "}
+            <p className={styles.setupRecoveryDisclaimer}>
+                <TriangleAlert className={styles.setupRecoveryDisclaimerIcon} />{" "}
                 <Trans i18nKey={"wallet.recoverySetup.disclaimer"} />
             </p>
             <Accordion type={"single"} collapsible value={`step-${step}`}>

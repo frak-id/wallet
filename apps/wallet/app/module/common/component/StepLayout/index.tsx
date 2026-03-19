@@ -1,5 +1,8 @@
+import { Box } from "@frak-labs/design-system/components/Box";
+import { Stack } from "@frak-labs/design-system/components/Stack";
 import type { ReactNode } from "react";
-import styles from "./index.module.css";
+import { ContentBlock } from "@/module/common/component/ContentBlock";
+import * as styles from "./index.css";
 
 type StepLayoutProps = {
     icon: ReactNode;
@@ -9,6 +12,11 @@ type StepLayoutProps = {
     children?: ReactNode;
 };
 
+/**
+ * Full-page layout with safe-area insets, centered content, and bottom-pinned footer.
+ *
+ * Uses ContentBlock for the icon + title + description pattern.
+ */
 export function StepLayout({
     icon,
     title,
@@ -17,14 +25,20 @@ export function StepLayout({
     children,
 }: StepLayoutProps) {
     return (
-        <div className={styles.stepLayout}>
-            <div className={styles.stepLayout__content}>
-                <div className={styles.stepLayout__icon}>{icon}</div>
-                <h1 className={styles.stepLayout__title}>{title}</h1>
-                <p className={styles.stepLayout__description}>{description}</p>
-                {children}
-            </div>
-            <div className={styles.stepLayout__footer}>{footer}</div>
-        </div>
+        <Box className={styles.stepLayout}>
+            <Stack space="l" align="center" as="div">
+                <Box className={styles.stepLayoutContent}>
+                    <ContentBlock
+                        icon={icon}
+                        titleAs="h1"
+                        title={title}
+                        description={description}
+                    >
+                        {children}
+                    </ContentBlock>
+                </Box>
+            </Stack>
+            <Box className={styles.stepLayoutFooter}>{footer}</Box>
+        </Box>
     );
 }

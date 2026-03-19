@@ -38,22 +38,6 @@ vi.mock("react-i18next", () => ({
     Trans: ({ i18nKey }: { i18nKey: string }) => <span>{i18nKey}</span>,
 }));
 
-vi.mock("@/module/common/component/ButtonLabel", () => ({
-    ButtonLabel: ({ children }: { children: React.ReactNode }) => (
-        <span>{children}</span>
-    ),
-}));
-
-vi.mock("@/module/common/component/Panel", () => ({
-    Panel: ({ children }: { children: React.ReactNode }) => (
-        <div data-testid="panel">{children}</div>
-    ),
-}));
-
-vi.mock("@/module/common/component/Row", () => ({
-    Row: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-}));
-
 vi.mock("@/module/notification/queryKeys/notification", () => ({
     notificationKey: {
         push: {

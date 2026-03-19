@@ -1,14 +1,14 @@
-import type { ButtonProps } from "@frak-labs/ui/component/Button";
+import { Box } from "@frak-labs/design-system/components/Box";
 import type { OnPairingSuccessCallback } from "@frak-labs/wallet-shared";
 import { LaunchPairing, ua } from "@frak-labs/wallet-shared";
 import { type ElementType, useState } from "react";
-import styles from "./index.module.css";
+import * as styles from "./index.css";
 
 type AuthenticateWithPhoneProps = {
     as?: ElementType;
     text: string;
     className?: string;
-    width?: ButtonProps["width"];
+    width?: "auto" | "full";
     onSuccess?: OnPairingSuccessCallback;
 };
 
@@ -32,7 +32,7 @@ export function AuthenticateWithPhone({
     }
 
     return (
-        <div>
+        <Box>
             <Component
                 type={"button"}
                 className={className ?? ""}
@@ -44,10 +44,10 @@ export function AuthenticateWithPhone({
                 {text}
             </Component>
             {isPhoneAuthenticated && (
-                <div className={styles.authenticateWithPhone__fadeIn}>
+                <Box className={styles.authenticateWithPhone__fadeIn}>
                     <LaunchPairing onSuccess={onSuccess} />
-                </div>
+                </Box>
             )}
-        </div>
+        </Box>
     );
 }

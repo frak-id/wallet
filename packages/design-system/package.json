@@ -35,6 +35,7 @@
     "./components/Text": "./src/components/Text/index.tsx",
     "./components/TextArea": "./src/components/TextArea/index.tsx",
     "./components/Tooltip": "./src/components/Tooltip/index.tsx",
+    "./breakpoints": "./src/breakpoints.ts",
     "./tokens": "./src/tokens.css.ts",
     "./utils": "./src/reset.css.ts"
   },

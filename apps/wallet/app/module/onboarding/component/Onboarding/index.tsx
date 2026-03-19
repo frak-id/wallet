@@ -1,5 +1,4 @@
-import { Button } from "@frak-labs/ui/component/Button";
-import { cx } from "class-variance-authority";
+import { Button } from "@frak-labs/design-system/components/Button";
 import {
     Children,
     type ReactNode,
@@ -8,7 +7,7 @@ import {
     useRef,
     useState,
 } from "react";
-import styles from "./index.module.css";
+import * as styles from "./index.css";
 
 type OnboardingProps = {
     /** Text for the navigation button */
@@ -54,11 +53,9 @@ export function Onboarding({
             }
         );
 
-        const slideElements = container.querySelectorAll(
-            `.${styles.onboarding__slide}`
-        );
-        for (const slide of slideElements) {
-            observer.observe(slide);
+        const slideElements = container.querySelectorAll(`.${styles.slide}`);
+        for (const slideEl of slideElements) {
+            observer.observe(slideEl);
         }
 
         return () => {
@@ -76,7 +73,7 @@ export function Onboarding({
         if (!container) return;
 
         const nextSlide = container.querySelector(
-            `.${styles.onboarding__slide}[data-index="${currentIndex + 1}"]`
+            `.${styles.slide}[data-index="${currentIndex + 1}"]`
         ) as HTMLElement;
 
         if (nextSlide) {
@@ -89,32 +86,25 @@ export function Onboarding({
 
     return (
         <div className={styles.onboarding}>
-            <div ref={scrollContainerRef} className={styles.onboarding__slides}>
+            <div ref={scrollContainerRef} className={styles.slides}>
                 {Children.map(children, (child, index) => (
-                    <div
-                        className={styles.onboarding__slide}
-                        data-index={index}
-                    >
+                    <div className={styles.slide} data-index={index}>
                         {child}
                     </div>
                 ))}
             </div>
 
-            <div className={styles.onboarding__footer}>
-                <div className={styles.onboarding__dots}>
+            <div className={styles.footer}>
+                <div className={styles.dots}>
                     {Array.from({ length: slidesCount }).map((_, index) => (
                         <div
                             key={index}
-                            className={cx(
-                                styles.onboarding__dot,
-                                index === currentIndex &&
-                                    styles["onboarding__dot--active"]
-                            )}
+                            className={`${styles.dot}${index === currentIndex ? ` ${styles.dotActive}` : ""}`}
                         />
                     ))}
                 </div>
 
-                <Button width={"full"} size={"medium"} onClick={handleNext}>
+                <Button onClick={handleNext}>
                     {currentIndex === slidesCount - 1 && lastButtonLabel
                         ? lastButtonLabel
                         : buttonLabel}

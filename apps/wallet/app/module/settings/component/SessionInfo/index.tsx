@@ -1,18 +1,77 @@
-import { WalletAddress } from "@frak-labs/ui/component/HashDisplay";
+import { Box } from "@frak-labs/design-system/components/Box";
 import {
     selectEcdsaSession,
     selectWebauthnSession,
     sessionStore,
 } from "@frak-labs/wallet-shared";
 import { Fingerprint, KeyRound } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHydrated } from "remix-utils/use-hydrated";
-import { toHex } from "viem";
+import { type Address, type Hex, slice, toHex } from "viem";
 import { useAccount } from "wagmi";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
 import { isCryptoMode } from "@/module/common/utils/walletMode";
-import styles from "./index.module.css";
+import * as styles from "./index.css";
+
+function formatHash({
+    hash,
+    format = { start: 2, end: 3 },
+}: {
+    hash: Hex;
+    format?: { start: number; end: number };
+}) {
+    if (!hash) return undefined;
+    const start = slice(hash, 0, format.start);
+    const end = slice(hash, -format.end).replace("0x", "");
+    const shortenHash = `${start}...${end}`;
+    return hash ? shortenHash : undefined;
+}
+
+function WalletAddressDisplay({
+    wallet,
+    copiedText,
+}: {
+    wallet: Address;
+    copiedText?: string;
+}) {
+    const [copied, setCopied] = useState(false);
+
+    useEffect(() => {
+        if (copied) {
+            const timeoutId = setTimeout(() => {
+                setCopied(false);
+            }, 2000);
+            return () => clearTimeout(timeoutId);
+        }
+    }, [copied]);
+
+    const hashedAddress = useMemo(
+        () => formatHash({ hash: wallet, format: { start: 2, end: 3 } }),
+        [wallet]
+    );
+    const copiedMessage = copiedText ?? "Copied";
+
+    if (!wallet) return null;
+    return (
+        <button
+            type="button"
+            onClick={async () => {
+                if (!copied) {
+                    try {
+                        await navigator.clipboard.writeText(wallet);
+                        setCopied(true);
+                    } catch {
+                        // Silently fail if clipboard not available
+                    }
+                }
+            }}
+        >
+            {copied ? copiedMessage : hashedAddress}
+        </button>
+    );
+}
 
 export function SessionInfo() {
     const isHydrated = useHydrated();
@@ -31,21 +90,21 @@ export function SessionInfo() {
                 <Title icon={<Fingerprint size={32} />}>
                     {t("wallet.settings.biometryInfo")}
                 </Title>
-                <ul className={styles.settings__list}>
-                    <li>
-                        {t("common.authenticator")}{" "}
+                <ul className={styles.list}>
+                    <li className={styles.listItem}>
+                        <Box as="span">{t("common.authenticator")}</Box>
                         {isHydrated && (
-                            <WalletAddress
+                            <WalletAddressDisplay
                                 wallet={toHex(webauthnWallet.authenticatorId)}
                                 copiedText={t("common.copied")}
                             />
                         )}
                     </li>
 
-                    <li>
-                        {accountLabel}{" "}
+                    <li className={styles.listItem}>
+                        <Box as="span">{accountLabel}</Box>
                         {isHydrated && (
-                            <WalletAddress
+                            <WalletAddressDisplay
                                 wallet={address ?? "0x"}
                                 copiedText={t("common.copied")}
                             />
@@ -62,21 +121,21 @@ export function SessionInfo() {
                 <Title icon={<KeyRound size={32} />}>
                     {t("wallet.settings.ecdsaInfo")}
                 </Title>
-                <ul className={styles.settings__list}>
-                    <li>
-                        {t("wallet.settings.ecdsaWallet")}{" "}
+                <ul className={styles.list}>
+                    <li className={styles.listItem}>
+                        <Box as="span">{t("wallet.settings.ecdsaWallet")}</Box>
                         {isHydrated && (
-                            <WalletAddress
+                            <WalletAddressDisplay
                                 wallet={toHex(ecdsaWallet.publicKey)}
                                 copiedText={t("common.copied")}
                             />
                         )}
                     </li>
 
-                    <li>
-                        {accountLabel}{" "}
+                    <li className={styles.listItem}>
+                        <Box as="span">{accountLabel}</Box>
                         {isHydrated && (
-                            <WalletAddress
+                            <WalletAddressDisplay
                                 wallet={address ?? "0x"}
                                 copiedText={t("common.copied")}
                             />

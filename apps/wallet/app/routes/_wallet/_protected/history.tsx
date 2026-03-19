@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { Grid } from "@/module/common/component/Grid";
 import { Panel } from "@/module/common/component/Panel";
 import { RewardHistoryList } from "@/module/history/component/RewardHistory";
-import styles from "@/module/history/page/HistoryPage.module.css";
+import * as styles from "@/module/history/page/historyPage.css";
 
 export const Route = createFileRoute("/_wallet/_protected/history")({
     component: HistoryPage,
@@ -26,8 +26,8 @@ function HistoryPage() {
 
     return (
         <Grid>
-            <Panel variant={"invisible"} className={styles.history__panel}>
-                <nav className={styles.history__nav}>
+            <Panel variant={"invisible"} className={styles.historyPanel}>
+                <nav className={styles.historyNav}>
                     <ButtonType
                         currentType={"rewards"}
                         activeType={type}
@@ -52,13 +52,12 @@ function ButtonType({
     activeType: HistoryType;
     onTypeChange: (type: HistoryType) => void;
 }>) {
-    const classActive =
-        currentType === activeType ? styles.history__active : "";
+    const classActive = currentType === activeType ? styles.historyActive : "";
 
     return (
         <button
             type="button"
-            className={`${styles.history__button} ${classActive}`}
+            className={`${styles.historyButton} ${classActive}`}
             onClick={() => onTypeChange(currentType)}
         >
             {children}

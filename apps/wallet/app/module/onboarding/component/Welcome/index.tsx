@@ -1,4 +1,4 @@
-import { Button } from "@frak-labs/ui/component/Button";
+import { Button } from "@frak-labs/design-system/components/Button";
 import { useTranslation } from "react-i18next";
 import { StepLayout } from "@/module/common/component/StepLayout";
 
@@ -15,7 +15,7 @@ export function Welcome({ onContinue }: WelcomeProps) {
             title={t("onboarding.welcome.title")}
             description={t("onboarding.welcome.description")}
             footer={
-                <Button width={"full"} size={"medium"} onClick={onContinue}>
+                <Button onClick={onContinue}>
                     {t("onboarding.welcome.button")}
                 </Button>
             }

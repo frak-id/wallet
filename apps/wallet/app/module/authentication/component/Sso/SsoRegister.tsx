@@ -1,11 +1,13 @@
-import { ButtonAuth } from "@frak-labs/ui/component/ButtonAuth";
+import { Box } from "@frak-labs/design-system/components/Box";
+import { Button } from "@frak-labs/design-system/components/Button";
+import { Text } from "@frak-labs/design-system/components/Text";
 import { isUserCancellation } from "@frak-labs/wallet-shared";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useRegister } from "@/module/authentication/hook/useRegister";
 import { isAuthenticatorAlreadyRegistered } from "@/module/authentication/lib/isAuthenticatorAlreadyRegistered";
 import { Notice } from "@/module/common/component/Notice";
-import styles from "./index.module.css";
+import * as styles from "./index.css";
 
 /**
  * The register component
@@ -60,8 +62,8 @@ export function SsoRegisterComponent({
 
     if (isPrimary) {
         return (
-            <p className={styles.sso__primaryButtonWrapper}>
-                <ButtonAuth
+            <Box className={styles.sso__primaryButtonWrapper}>
+                <Button
                     onClick={() => {
                         // Reset the error
                         onError(null);
@@ -73,16 +75,19 @@ export function SsoRegisterComponent({
                         isPreviouslyUsedAuthenticatorError
                     }
                 >
-                    {t("authent.sso.btn.new.create")}
-                </ButtonAuth>
+                    <Text as="span" variant="bodySmall">
+                        {t("authent.sso.btn.new.create")}
+                    </Text>
+                </Button>
                 {statusComponent}
-            </p>
+            </Box>
         );
     }
 
     return (
-        <p className={styles.sso__secondaryButtonWrapper}>
-            <button
+        <Box className={styles.sso__secondaryButtonWrapper}>
+            <Box
+                as="button"
                 className={styles.sso__buttonLink}
                 disabled={
                     isRegisterInProgress || isPreviouslyUsedAuthenticatorError
@@ -96,8 +101,8 @@ export function SsoRegisterComponent({
                 type={"button"}
             >
                 {t("authent.sso.btn.existing.create")}
-            </button>
+            </Box>
             {statusComponent}
-        </p>
+        </Box>
     );
 }

@@ -1,6 +1,5 @@
 import { isRunningLocally } from "@frak-labs/app-essentials";
 import { isTauri } from "@frak-labs/app-essentials/utils/platform";
-import { PendingLoader } from "@frak-labs/ui/component/PendingLoader";
 import {
     defaultNS,
     fallbackLng,
@@ -31,7 +30,6 @@ const router = createRouter({
     // Preload routes when links render for instant navigation
     defaultPreload: "render",
     defaultPendingMinMs: 500,
-    defaultPendingComponent: PendingLoader,
 });
 
 // Subscribe to navigation events to manage root element attributes

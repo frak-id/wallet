@@ -92,10 +92,14 @@ describe("Onboarding", () => {
             </Onboarding>
         );
 
-        // Find the dots container and count its children
-        const dotsContainer = container.querySelector(
-            "[class*='onboarding__dots']"
-        );
+        // Find the dots container — VE generates hashed class names,
+        // so we locate it by structure: the first child of the footer div
+        const buttons = container.querySelectorAll("button");
+        expect(buttons).toHaveLength(1);
+
+        // The dots container is the sibling before the button's parent
+        const footerDiv = buttons[0]?.closest("div[class]")?.parentElement;
+        const dotsContainer = footerDiv?.firstElementChild;
         expect(dotsContainer?.children).toHaveLength(3);
     });
 

@@ -1,4 +1,4 @@
-import { Button } from "@frak-labs/ui/component/Button";
+import { Button } from "@frak-labs/design-system/components/Button";
 import { currentChain } from "@frak-labs/wallet-shared";
 import { Check, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -30,8 +30,6 @@ export function ButtonSetupRecovery({
     return (
         <>
             <Button
-                width={"full"}
-                isLoading={isPending}
                 disabled={isPending || isSuccess}
                 onClick={async () => {
                     if (!recoveryOptions) return;
@@ -40,7 +38,13 @@ export function ButtonSetupRecovery({
                     });
                     onSuccess();
                 }}
-                leftIcon={isSuccess ? <Check /> : isError ? <X /> : undefined}
+                icon={
+                    isSuccess ? (
+                        <Check size={16} />
+                    ) : isError ? (
+                        <X size={16} />
+                    ) : undefined
+                }
                 className={className}
             >
                 {t("wallet.recoverySetup.setupOn", {

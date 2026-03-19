@@ -1,4 +1,6 @@
-import { Button } from "@frak-labs/ui/component/Button";
+import { Box } from "@frak-labs/design-system/components/Box";
+import { Button } from "@frak-labs/design-system/components/Button";
+import { Text } from "@frak-labs/design-system/components/Text";
 import {
     pairingKey,
     selectWebauthnSession,
@@ -12,7 +14,7 @@ import { Laptop, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
-import styles from "./index.module.css";
+import * as styles from "./index.css";
 
 /**
  * List all the active pairings
@@ -28,11 +30,11 @@ export function PairingList() {
             <Title icon={<Laptop size={32} />}>
                 {t("wallet.pairing.list.title")}
             </Title>
-            <div className={styles.pairing__list}>
+            <Box className={styles.pairingList}>
                 {pairings?.map((pairing: Pairing) => (
                     <PairingItem key={pairing.pairingId} pairing={pairing} />
                 ))}
-            </div>
+            </Box>
         </Panel>
     );
 }
@@ -44,10 +46,10 @@ function PairingItem({ pairing }: { pairing: Pairing }) {
     const { t } = useTranslation();
 
     return (
-        <div key={pairing.pairingId} className={styles.pairing__item}>
-            <PairingHeader pairing={pairing} />
+        <Box className={styles.pairingItem}>
+            <PairingItemHeader pairing={pairing} />
 
-            <div className={styles.pairing__details}>
+            <Box className={styles.pairingDetails}>
                 <PairingSingleDetails
                     label={t("wallet.pairing.list.origin")}
                     value={pairing.originName}
@@ -64,30 +66,30 @@ function PairingItem({ pairing }: { pairing: Pairing }) {
                     label={t("wallet.pairing.list.lastActive")}
                     value={new Date(pairing.lastActiveAt).toLocaleString()}
                 />
-            </div>
+            </Box>
 
-            <PairingFooter pairing={pairing} />
-        </div>
+            <PairingItemFooter pairing={pairing} />
+        </Box>
     );
 }
 
 /**
  * Display the pairing header
  */
-function PairingHeader({ pairing }: { pairing: Pairing }) {
+function PairingItemHeader({ pairing }: { pairing: Pairing }) {
     return (
-        <div className={styles.pairing__header}>
-            <span className={styles.pairing__id}>
+        <Box className={styles.pairingHeader}>
+            <Text as="span" className={styles.pairingId}>
                 ID: {pairing.pairingId.substring(0, 8)}
-            </span>
-        </div>
+            </Text>
+        </Box>
     );
 }
 
 /**
  * Display the pairing footer
  */
-function PairingFooter({ pairing }: { pairing: Pairing }) {
+function PairingItemFooter({ pairing }: { pairing: Pairing }) {
     const { t } = useTranslation();
     const queryClient = useQueryClient();
     const wallet = sessionStore(selectWebauthnSession);
@@ -103,17 +105,16 @@ function PairingFooter({ pairing }: { pairing: Pairing }) {
     });
 
     return (
-        <div className={styles.pairing__footer}>
+        <Box className={styles.pairingFooter}>
             <Button
-                variant="ghost"
-                size="small"
-                className={styles.pairing__deleteButton}
+                variant="outlined"
+                className={styles.pairingDeleteButton}
                 onClick={() => deletePairing({ id: pairing.pairingId })}
             >
-                <Trash2 className={styles.pairing__icon} />
+                <Trash2 className={styles.pairingIcon} />
                 {t("wallet.pairing.list.delete")}
             </Button>
-        </div>
+        </Box>
     );
 }
 
@@ -129,8 +130,12 @@ function PairingSingleDetails({
 }) {
     return (
         <>
-            <div className={styles.pairing__label}>{label}</div>
-            <div className={styles.pairing__value}>{value}</div>
+            <Text as="span" className={styles.pairingLabel}>
+                {label}
+            </Text>
+            <Text as="span" className={styles.pairingValue}>
+                {value}
+            </Text>
         </>
     );
 }

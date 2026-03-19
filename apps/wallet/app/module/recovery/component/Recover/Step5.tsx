@@ -1,3 +1,6 @@
+import { Box } from "@frak-labs/design-system/components/Box";
+import { Button } from "@frak-labs/design-system/components/Button";
+import { Text } from "@frak-labs/design-system/components/Text";
 import type { RecoveryFileContent } from "@frak-labs/wallet-shared";
 import { SendHorizontal } from "lucide-react";
 import { sleep } from "radash";
@@ -15,7 +18,7 @@ import {
     selectRecoveryNewWallet,
 } from "@/module/stores/recoveryStore";
 import { ExplorerTxLink } from "@/module/wallet/component/ExplorerLink";
-import styles from "./Step5.module.css";
+import * as styles from "./Step5.css";
 
 const ACTUAL_STEP = 5;
 
@@ -94,10 +97,10 @@ function TriggerRecovery({
 
     if (isLoading || !recoveryAvailability) {
         return (
-            <p>
+            <Text>
                 {t("wallet.recovery.loadingRecovery")}
                 <span className={"dotsLoading"}>...</span>
-            </p>
+            </Text>
         );
     }
 
@@ -106,10 +109,9 @@ function TriggerRecovery({
             {currentStatus}
 
             {isRecoveryAvailable && (
-                <p className={styles.step5__pushPasskey}>
-                    <button
-                        type={"button"}
-                        className={`button ${styles.step5__buttonPush}`}
+                <Box className={styles.pushPasskey}>
+                    <Button
+                        className={styles.buttonPush}
                         disabled={
                             !isRecoveryAvailable || isPending || isSuccess
                         }
@@ -120,10 +122,11 @@ function TriggerRecovery({
                                 recoveryAccount: guardianAccount,
                             })
                         }
+                        icon={<SendHorizontal size={16} />}
                     >
-                        {t("wallet.recovery.pushPasskey")} <SendHorizontal />
-                    </button>
-                </p>
+                        {t("wallet.recovery.pushPasskey")}
+                    </Button>
+                </Box>
             )}
         </>
     );
@@ -143,27 +146,27 @@ function useRecoveryStatus({
     const { t } = useTranslation();
     return useMemo(() => {
         if (!recoveryAvailability) {
-            return <p>{t("wallet.recovery.status.loading")}</p>;
+            return <Text>{t("wallet.recovery.status.loading")}</Text>;
         }
 
         if (recoveryAvailability?.alreadyRecovered) {
             return (
-                <span className={styles.recoverChainStatus__success}>
+                <Text as="span" className={styles.statusSuccess}>
                     {t("wallet.recovery.status.walletAlready")}
-                </span>
+                </Text>
             );
         }
         if (status === "pending") {
             return (
-                <span className={styles.recoverChainStatus__pending}>
+                <Text as="span" className={styles.statusPending}>
                     {t("wallet.recovery.status.inProgress")}
                     <span className={"dotsLoading"}>...</span>
-                </span>
+                </Text>
             );
         }
         if (status === "success") {
             return (
-                <span className={styles.recoverChainStatus__success}>
+                <Text as="span" className={styles.statusSuccess}>
                     {t("wallet.recovery.status.done")}
                     {isCryptoMode && (
                         <>
@@ -171,24 +174,24 @@ function useRecoveryStatus({
                             <ExplorerTxLink
                                 hash={txHash ?? "0x"}
                                 icon={false}
-                                className={styles.recoverChainStatus__link}
+                                className={styles.statusLink}
                             />
                         </>
                     )}
-                </span>
+                </Text>
             );
         }
         if (status === "error") {
             return (
-                <span className={styles.recoverChainStatus__error}>
+                <Text as="span" className={styles.statusError}>
                     {t("wallet.recovery.status.error")}
-                </span>
+                </Text>
             );
         }
         return (
-            <span className={styles.recoverChainStatus__pending}>
+            <Text as="span" className={styles.statusPending}>
                 {t("wallet.recovery.status.pending")}
-            </span>
+            </Text>
         );
     }, [status, txHash, recoveryAvailability, t]);
 }

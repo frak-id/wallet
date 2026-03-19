@@ -3,7 +3,7 @@ import {
     currentStablecoinsList,
     rewarderHubAbi,
 } from "@frak-labs/app-essentials/blockchain";
-import { Button } from "@frak-labs/ui/component/Button";
+import { Button } from "@frak-labs/design-system/components/Button";
 import {
     balanceKey,
     claimableKey,
@@ -19,7 +19,7 @@ import { multicall, waitForTransactionReceipt } from "viem/actions";
 import { useAccount, useSendTransaction } from "wagmi";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
-import styles from "./index.module.css";
+import * as styles from "./index.css";
 
 export function PendingReferral() {
     const queryClient = useQueryClient();
@@ -134,7 +134,7 @@ export function PendingReferral() {
                 {t("wallet.pendingReferral.title")}
             </Title>
             {isSuccess && (
-                <p className={styles.pendingReferral__success}>
+                <p className={styles.pendingReferralSuccess}>
                     {t("wallet.pendingReferral.success")}
                 </p>
             )}
@@ -146,10 +146,7 @@ export function PendingReferral() {
                         })}
                     </p>
                     <Button
-                        className={styles.pendingReferral__button}
-                        size={"small"}
-                        width={"full"}
-                        isLoading={isPending}
+                        className={styles.pendingReferralButton}
                         disabled={isPending || isSuccess}
                         onClick={async () => {
                             await sendClaimTxs();

@@ -1,12 +1,37 @@
-import { Button } from "@frak-labs/ui/component/Button";
-import { useCopyToClipboardWithState } from "@frak-labs/ui/hook/useCopyToClipboardWithState";
+import { Button } from "@frak-labs/design-system/components/Button";
 import { Cuer } from "cuer";
 import { ArrowDownToLine, Copy } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { useAccount } from "wagmi";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
-import styles from "./index.module.css";
+import * as styles from "./index.css";
+
+function useCopyToClipboardWithState() {
+    const [copied, setCopied] = useState(false);
+
+    useEffect(() => {
+        if (copied) {
+            const timer = setTimeout(() => {
+                setCopied(false);
+            }, 2000);
+            return () => clearTimeout(timer);
+        }
+    }, [copied]);
+
+    const copy = useCallback(
+        (text: string) => {
+            if (!copied) {
+                navigator.clipboard.writeText(text);
+                setCopied(true);
+            }
+        },
+        [copied]
+    );
+
+    return { copied, copy };
+}
 
 export function QRCodeWallet() {
     const { t } = useTranslation();
@@ -21,7 +46,7 @@ export function QRCodeWallet() {
                         <Trans i18nKey={"wallet.tokens.receive.title"} />
                     </Title>
                     {address && (
-                        <div className={styles.QRCodeWallet__code}>
+                        <div className={styles.qrCodeWalletCode}>
                             <Cuer
                                 arena={"/icon.svg"}
                                 value={address}
@@ -30,13 +55,12 @@ export function QRCodeWallet() {
                             />
                         </div>
                     )}
-                    <p className={styles.QRCodeWallet__address}>{address}</p>
+                    <p className={styles.qrCodeWalletAddress}>{address}</p>
                 </Panel>
                 <Panel size={"none"} variant={"invisible"}>
                     <Button
-                        width={"full"}
+                        className={styles.qrCodeWalletButton}
                         onClick={() => copy(address)}
-                        className={styles.QRCodeWallet__button}
                     >
                         <Copy />
                         {copied ? t("common.copied") : t("common.copyAddress")}

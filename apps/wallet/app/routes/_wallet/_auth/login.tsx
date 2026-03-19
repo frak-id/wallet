@@ -1,4 +1,4 @@
-import { Button } from "@frak-labs/ui/component/Button";
+import { Button } from "@frak-labs/design-system/components/Button";
 import { HandleErrors, sessionStore } from "@frak-labs/wallet-shared";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";

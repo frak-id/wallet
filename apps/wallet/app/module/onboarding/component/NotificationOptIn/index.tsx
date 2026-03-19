@@ -1,4 +1,4 @@
-import { Button } from "@frak-labs/ui/component/Button";
+import { Button } from "@frak-labs/design-system/components/Button";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { StepLayout } from "@/module/common/component/StepLayout";
@@ -23,9 +23,7 @@ export function NotificationOptIn({
             footer={
                 <>
                     <Button
-                        width={"full"}
                         disabled={isEnabling}
-                        isLoading={isEnabling}
                         onClick={() => {
                             if (isEnabling) return;
                             setIsEnabling(true);
@@ -35,9 +33,7 @@ export function NotificationOptIn({
                         {t("onboarding.notification.enable")}
                     </Button>
                     <Button
-                        variant={"ghost"}
-                        width={"full"}
-                        size={"medium"}
+                        variant="outlined"
                         disabled={isEnabling}
                         onClick={onSkip}
                     >

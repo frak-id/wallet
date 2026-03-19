@@ -16,7 +16,7 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "paths": {
-      "@/*": ["./app/*"],
+      "@/*": ["./app/*", "../../packages/design-system/src/*"],
       "@/tests/vitest-fixtures": ["./tests/vitest-fixtures.ts"],
       "tests/*": ["./tests/*"],
       "@frak-labs/wallet-shared/*": ["../../packages/wallet-shared/src/*"],

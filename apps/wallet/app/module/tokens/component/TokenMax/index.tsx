@@ -1,13 +1,20 @@
-import styles from "./index.module.css";
+import { Box } from "@frak-labs/design-system/components/Box";
+import { Button } from "@frak-labs/design-system/components/Button";
+import { Text } from "@frak-labs/design-system/components/Text";
+import * as styles from "./index.css";
 
 export function TokenMax({ onClick }: { onClick: () => void }) {
     return (
-        <button
-            type={"button"}
-            className={styles.tokenMax__button}
-            onClick={onClick}
-        >
-            MAX
-        </button>
+        <Box display="flex" alignItems="center">
+            <Button
+                variant="outlined"
+                className={styles.tokenMaxButton}
+                onClick={onClick}
+            >
+                <Text as="span" variant="label">
+                    MAX
+                </Text>
+            </Button>
+        </Box>
     );
 }

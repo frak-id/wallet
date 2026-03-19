@@ -1,16 +1,45 @@
-import { Button } from "@frak-labs/ui/component/Button";
-import { useMediaQuery } from "@frak-labs/ui/hook/useMediaQuery";
+import { tablet } from "@frak-labs/design-system/breakpoints";
+import { Box } from "@frak-labs/design-system/components/Box";
+import { Button } from "@frak-labs/design-system/components/Button";
 import {
     Drawer,
     DrawerContent,
     DrawerDescription,
     DrawerTitle,
-    HandleErrors,
-    WalletModal,
-} from "@frak-labs/wallet-shared";
+} from "@frak-labs/design-system/components/Drawer";
+import { visuallyHidden } from "@frak-labs/design-system/utils";
+import { HandleErrors, WalletModal } from "@frak-labs/wallet-shared";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AuthenticateWithPhone } from "@/module/authentication/component/AuthenticateWithPhone";
-import styles from "./index.module.css";
+import { ContentBlock } from "@/module/common/component/ContentBlock";
+import * as styles from "./index.css";
+
+/**
+ * Inline media query hook — only used in Keypass, avoids legacy UI package dependency.
+ */
+function useMediaQuery(query: string) {
+    const mediaQueryList = useMemo(() => {
+        if (typeof window !== "undefined") {
+            return window.matchMedia(query);
+        }
+        return null;
+    }, [query]);
+
+    const [matches, setMatches] = useState(() =>
+        mediaQueryList ? mediaQueryList.matches : false
+    );
+
+    useEffect(() => {
+        if (!mediaQueryList) return;
+
+        const handleChange = () => setMatches(mediaQueryList.matches);
+        mediaQueryList.addEventListener("change", handleChange);
+        return () => mediaQueryList.removeEventListener("change", handleChange);
+    }, [mediaQueryList]);
+
+    return matches;
+}
 
 type KeypassProps = {
     open: boolean;
@@ -46,7 +75,7 @@ export function Keypass({
     onNavigateToLogin,
 }: KeypassProps) {
     const { t } = useTranslation();
-    const isDesktop = useMediaQuery("(min-width: 600px)");
+    const isDesktop = useMediaQuery(`(min-width: ${tablet}px)`);
 
     const content = (
         <KeypassContent
@@ -80,10 +109,10 @@ export function Keypass({
             modal={true}
         >
             <DrawerContent hideHandle={true}>
-                <DrawerTitle className="sr-only">
+                <DrawerTitle className={visuallyHidden}>
                     {t("onboarding.keypass.title")}
                 </DrawerTitle>
-                <DrawerDescription className="sr-only">
+                <DrawerDescription className={visuallyHidden}>
                     {t("onboarding.keypass.description")}
                 </DrawerDescription>
                 {content}
@@ -110,85 +139,64 @@ function KeypassContent({
 
     if (!webAuthNSupported) {
         return (
-            <div className={styles.keypass}>
-                <div className={styles.keypass__icon}>
-                    <span>⚠️</span>
-                </div>
-                <h2 className={styles.keypass__title}>
-                    {t("onboarding.keypass.unsupported.title")}
-                </h2>
-                <p className={styles.keypass__description}>
-                    {t("onboarding.keypass.unsupported.description")}
-                </p>
-                <div className={styles.keypass__footer}>
-                    <Button
-                        width={"full"}
-                        size={"medium"}
-                        onClick={onNavigateToLogin}
-                    >
-                        {t("onboarding.keypass.unsupported.button")}
-                    </Button>
-                </div>
-            </div>
+            <Box className={styles.keypass}>
+                <ContentBlock
+                    icon={<span>⚠️</span>}
+                    title={t("onboarding.keypass.unsupported.title")}
+                    description={t(
+                        "onboarding.keypass.unsupported.description"
+                    )}
+                    footer={
+                        <Button onClick={onNavigateToLogin}>
+                            {t("onboarding.keypass.unsupported.button")}
+                        </Button>
+                    }
+                />
+            </Box>
         );
     }
 
     if (existingAccount) {
         return (
-            <div className={styles.keypass}>
-                <div className={styles.keypass__icon}>
-                    <span>👋</span>
-                </div>
-                <h2 className={styles.keypass__title}>
-                    {t("onboarding.keypass.existingAccount.title")}
-                </h2>
-                <p className={styles.keypass__description}>
-                    {t("onboarding.keypass.existingAccount.description")}
-                </p>
-                {loginError && <HandleErrors error={loginError} />}
-                <div className={styles.keypass__footer}>
-                    <Button
-                        width={"full"}
-                        size={"medium"}
-                        onClick={onLogin}
-                        disabled={isLoginLoading}
-                        isLoading={isLoginLoading}
-                    >
-                        {t("onboarding.keypass.existingAccount.button")}
-                    </Button>
-                </div>
-            </div>
+            <Box className={styles.keypass}>
+                <ContentBlock
+                    icon={<span>👋</span>}
+                    title={t("onboarding.keypass.existingAccount.title")}
+                    description={t(
+                        "onboarding.keypass.existingAccount.description"
+                    )}
+                    footer={
+                        <Button onClick={onLogin} disabled={isLoginLoading}>
+                            {t("onboarding.keypass.existingAccount.button")}
+                        </Button>
+                    }
+                >
+                    {loginError && <HandleErrors error={loginError} />}
+                </ContentBlock>
+            </Box>
         );
     }
 
     return (
-        <div className={styles.keypass}>
-            <div className={styles.keypass__icon}>
-                <span>🔐</span>
-            </div>
-            <h2 className={styles.keypass__title}>
-                {t("onboarding.keypass.title")}
-            </h2>
-            <p className={styles.keypass__description}>
-                {t("onboarding.keypass.description")}
-            </p>
-            {error && <HandleErrors error={error} />}
-            <div className={styles.keypass__footer}>
-                <Button
-                    width={"full"}
-                    size={"medium"}
-                    onClick={onContinue}
-                    disabled={isLoading}
-                    isLoading={isLoading}
-                >
-                    {t("onboarding.continue")}
-                </Button>
-                <AuthenticateWithPhone
-                    as={Button}
-                    text={t("wallet.register.useQRCode")}
-                    width={"full"}
-                />
-            </div>
-        </div>
+        <Box className={styles.keypass}>
+            <ContentBlock
+                icon={<span>🔐</span>}
+                title={t("onboarding.keypass.title")}
+                description={t("onboarding.keypass.description")}
+                footer={
+                    <>
+                        <Button onClick={onContinue} disabled={isLoading}>
+                            {t("onboarding.continue")}
+                        </Button>
+                        <AuthenticateWithPhone
+                            as={Button}
+                            text={t("wallet.register.useQRCode")}
+                        />
+                    </>
+                }
+            >
+                {error && <HandleErrors error={error} />}
+            </ContentBlock>
+        </Box>
     );
 }

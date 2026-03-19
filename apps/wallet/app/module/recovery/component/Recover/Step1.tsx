@@ -1,6 +1,8 @@
-import { Uploader } from "@frak-labs/ui/component/Uploader";
+import { Box } from "@frak-labs/design-system/components/Box";
+import { Input } from "@frak-labs/design-system/components/Input";
+import { Text } from "@frak-labs/design-system/components/Text";
 import type { RecoveryFileContent } from "@frak-labs/wallet-shared";
-import { useCallback } from "react";
+import { type ChangeEvent, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { AccordionRecoveryItem } from "@/module/common/component/AccordionRecoveryItem";
 import {
@@ -19,7 +21,10 @@ export function Step1() {
      * Handle the upload of a file
      */
     const handleChange = useCallback(
-        async (files: File[] | null) => {
+        async (event: ChangeEvent<HTMLInputElement>) => {
+            const files = event.target.files
+                ? Array.from(event.target.files)
+                : null;
             if (!files || files.length === 0) {
                 recoveryStore.getState().setFileContent(null);
                 return null;
@@ -49,12 +54,17 @@ export function Step1() {
             actualStep={ACTUAL_STEP}
             title={t("wallet.recovery.step1")}
         >
-            <Uploader
-                onDrop={handleChange}
-                disabled={fileContent !== null}
-                accept={{ "application/json": [".json"] }}
-                text={t("wallet.recovery.uploadOrDrag")}
-            />
+            <Box as="label">
+                <Text as="span" variant="label">
+                    {t("wallet.recovery.uploadOrDrag")}
+                </Text>
+                <Input
+                    type="file"
+                    accept="application/json,.json"
+                    disabled={fileContent !== null}
+                    onChange={handleChange}
+                />
+            </Box>
         </AccordionRecoveryItem>
     );
 }

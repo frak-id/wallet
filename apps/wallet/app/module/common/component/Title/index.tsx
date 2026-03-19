@@ -1,29 +1,16 @@
-import { cva, type VariantProps } from "class-variance-authority";
+import { Box } from "@frak-labs/design-system/components/Box";
+import { Text } from "@frak-labs/design-system/components/Text";
 import type { ReactNode } from "react";
-import styles from "./index.module.css";
+import * as styles from "./index.css";
 
-export interface TitleProps extends VariantProps<typeof titleVariants> {
+export interface TitleProps {
     icon?: ReactNode;
     className?: string;
     classNameText?: string;
     children?: string | ReactNode;
+    size?: "medium" | "big";
+    align?: "left" | "center";
 }
-
-const titleVariants = cva(styles.title, {
-    variants: {
-        size: {
-            medium: styles["size--medium"],
-            big: styles["size--big"],
-        },
-        align: {
-            left: styles["align--left"],
-            center: styles["align--center"],
-        },
-    },
-    defaultVariants: {
-        size: "medium",
-    },
-});
 
 export function Title({
     icon,
@@ -34,11 +21,26 @@ export function Title({
     children,
 }: TitleProps) {
     return (
-        <h2 className={titleVariants({ size, align, className })}>
-            {icon && <span>{icon}</span>}
-            <span className={`${styles.title__text} ${classNameText}`}>
+        <Box
+            as="h2"
+            className={[
+                styles.title,
+                styles.size[size],
+                styles.align[align],
+                className,
+            ]
+                .filter(Boolean)
+                .join(" ")}
+        >
+            {icon && <Box as="span">{icon}</Box>}
+            <Text
+                as="span"
+                className={[styles.titleText, classNameText]
+                    .filter(Boolean)
+                    .join(" ")}
+            >
                 {children}
-            </span>
-        </h2>
+            </Text>
+        </Box>
     );
 }

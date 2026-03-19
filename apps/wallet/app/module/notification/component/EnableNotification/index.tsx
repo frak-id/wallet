@@ -1,10 +1,11 @@
 import { isTauri } from "@frak-labs/app-essentials/utils/platform";
-import { Button } from "@frak-labs/ui/component/Button";
-import { NotificationsMobile } from "@frak-labs/ui/icons/NotificationsMobile";
+import { Box } from "@frak-labs/design-system/components/Box";
+import { Button } from "@frak-labs/design-system/components/Button";
+import { Inline } from "@frak-labs/design-system/components/Inline";
+import { Text } from "@frak-labs/design-system/components/Text";
 import { useQueryClient } from "@tanstack/react-query";
+import { Bell } from "lucide-react";
 import { Trans } from "react-i18next";
-import { ButtonLabel } from "@/module/common/component/ButtonLabel";
-import { Panel } from "@/module/common/component/Panel";
 import { notificationAdapter } from "@/module/notification/adapter";
 import { useNotificationStatus } from "@/module/notification/hook/useNotificationSetupStatus";
 import { useSubscribeToPushNotification } from "@/module/notification/hook/useSubscribeToPushNotification";
@@ -27,25 +28,26 @@ export function EnableNotification() {
         }
 
         return (
-            <Panel variant={"invisible"} size={"none"}>
+            <Box>
                 <Button
-                    blur={"blur"}
-                    width={"full"}
-                    align={"left"}
-                    gap={"big"}
                     onClick={async () => {
                         await notificationAdapter.openSettings();
                         await queryClient.invalidateQueries({
                             queryKey: notificationKey.push.permission,
                         });
                     }}
-                    leftIcon={<NotificationsMobile />}
+                    disabled={false}
                 >
-                    <ButtonLabel>
-                        <Trans i18nKey={"wallet.openNotificationSettings"} />
-                    </ButtonLabel>
+                    <Inline space="m" alignY="center">
+                        <Bell size={20} />
+                        <Text>
+                            <Trans
+                                i18nKey={"wallet.openNotificationSettings"}
+                            />
+                        </Text>
+                    </Inline>
                 </Button>
-            </Panel>
+            </Box>
         );
     }
 
@@ -55,21 +57,15 @@ export function EnableNotification() {
             : "wallet.activateNotifications";
 
     return (
-        <Panel variant={"invisible"} size={"none"}>
-            <Button
-                blur={"blur"}
-                width={"full"}
-                align={"left"}
-                gap={"big"}
-                onClick={() => subscribeToPush()}
-                disabled={isPending}
-                isLoading={isPending}
-                leftIcon={<NotificationsMobile />}
-            >
-                <ButtonLabel>
-                    <Trans i18nKey={i18nKey} />
-                </ButtonLabel>
+        <Box>
+            <Button onClick={() => subscribeToPush()} disabled={isPending}>
+                <Inline space="m" alignY="center">
+                    <Bell size={20} />
+                    <Text>
+                        <Trans i18nKey={i18nKey} />
+                    </Text>
+                </Inline>
             </Button>
-        </Panel>
+        </Box>
     );
 }

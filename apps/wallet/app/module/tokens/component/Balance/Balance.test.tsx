@@ -19,22 +19,6 @@ vi.mock("@/module/common/utils/walletMode", () => ({
     isCryptoMode: true,
 }));
 
-vi.mock("@/module/common/component/Title", () => ({
-    Title: ({
-        size,
-        align,
-        children,
-    }: {
-        size?: string;
-        align?: string;
-        children: React.ReactNode;
-    }) => (
-        <h1 data-testid="title" data-size={size} data-align={align}>
-            {children}
-        </h1>
-    ),
-}));
-
 describe("Balance", () => {
     beforeEach(() => {
         vi.clearAllMocks();
@@ -52,23 +36,9 @@ describe("Balance", () => {
         render(<Balance />);
 
         expect(mockT).toHaveBeenCalledWith("common.balance");
-        expect(screen.getByTestId("title")).toHaveTextContent("common.balance");
-    });
-
-    it("should render title with big size and center alignment", () => {
-        mockUseGetUserBalance.mockReturnValue({
-            userBalance: {
-                total: {
-                    eurAmount: 100.5,
-                },
-            },
-        });
-
-        render(<Balance />);
-
-        const title = screen.getByTestId("title");
-        expect(title).toHaveAttribute("data-size", "big");
-        expect(title).toHaveAttribute("data-align", "center");
+        expect(
+            screen.getByRole("heading", { name: "common.balance" })
+        ).toBeInTheDocument();
     });
 
     it("should render balance amount", () => {

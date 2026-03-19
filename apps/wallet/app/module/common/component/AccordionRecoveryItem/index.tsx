@@ -2,7 +2,9 @@ import {
     AccordionContent,
     AccordionItem,
     AccordionTrigger,
-} from "@frak-labs/ui/component/Accordion";
+} from "@frak-labs/design-system/components/Accordion";
+import { Box } from "@frak-labs/design-system/components/Box";
+import { Text } from "@frak-labs/design-system/components/Text";
 import { BadgeCheck } from "lucide-react";
 import type { PropsWithChildren } from "react";
 import { Panel } from "@/module/common/component/Panel";
@@ -10,7 +12,7 @@ import {
     recoveryStore,
     selectRecoveryStep,
 } from "@/module/stores/recoveryStore";
-import styles from "./index.module.css";
+import * as styles from "./index.css";
 
 export function AccordionRecoveryItem({
     actualStep,
@@ -28,17 +30,17 @@ export function AccordionRecoveryItem({
                 value={`step-${actualStep}`}
                 disabled={status === "done" || status === "pending"}
             >
-                <AccordionTrigger
-                    className={styles.accordionRecoveryItem__trigger}
-                >
-                    {status === "done" && <BadgeCheck color={"white"} />}
-                    <span>
-                        {actualStep}. {title}
-                    </span>
+                <AccordionTrigger className={styles.trigger}>
+                    <Box className={styles.triggerContent}>
+                        {status === "done" && (
+                            <BadgeCheck className={styles.triggerIcon} />
+                        )}
+                        <Text as="span" className={styles.triggerLabel}>
+                            {actualStep}. {title}
+                        </Text>
+                    </Box>
                 </AccordionTrigger>
-                <AccordionContent
-                    className={styles.accordionRecoveryItem__content}
-                >
+                <AccordionContent className={styles.content}>
                     {children}
                 </AccordionContent>
             </AccordionItem>

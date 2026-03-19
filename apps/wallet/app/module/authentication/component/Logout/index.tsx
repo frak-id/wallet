@@ -1,12 +1,14 @@
-import { Button } from "@frak-labs/ui/component/Button";
+import { Button } from "@frak-labs/design-system/components/Button";
+import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { sessionStore, trackGenericEvent } from "@frak-labs/wallet-shared";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { LogOut } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Panel, panelDismissedPrefix } from "@/module/common/component/Panel";
+import { panelDismissedPrefix } from "@/module/common/component/Panel";
 import { notificationAdapter } from "@/module/notification/adapter";
+import * as styles from "./index.css";
 
 function cleanLocalStorage() {
     // Clear static local storage items
@@ -41,33 +43,30 @@ export function Logout() {
     const queryClient = useQueryClient();
     const [isLoggingOut, setIsLoggingOut] = useState(false);
 
+    const handleLogout = async () => {
+        setIsLoggingOut(true);
+        trackGenericEvent("logout");
+        // Unsubscribe from push notifications before clearing session (needs auth)
+        await notificationAdapter.unsubscribe().catch(() => {});
+        // Session deletion
+        sessionStore.getState().clearSession();
+        // Query cache
+        queryClient.removeQueries();
+        // Local storage cleanup
+        setTimeout(() => {
+            cleanLocalStorage();
+            navigate({ to: "/register" });
+        }, 100);
+    };
+
     return (
-        <Panel size={"none"} variant={"invisible"}>
-            <Button
-                blur={"blur"}
-                width={"full"}
-                align={"left"}
-                isLoading={isLoggingOut}
-                disabled={isLoggingOut}
-                onClick={async () => {
-                    setIsLoggingOut(true);
-                    trackGenericEvent("logout");
-                    // Unsubscribe from push notifications before clearing session (needs auth)
-                    await notificationAdapter.unsubscribe().catch(() => {});
-                    // Session deletion
-                    sessionStore.getState().clearSession();
-                    // Query cache
-                    queryClient.removeQueries();
-                    // Local storage cleanup
-                    setTimeout(() => {
-                        cleanLocalStorage();
-                        navigate({ to: "/register" });
-                    }, 100);
-                }}
-                leftIcon={<LogOut size={32} />}
-            >
-                {t("common.logout")}
-            </Button>
-        </Panel>
+        <Button
+            disabled={isLoggingOut}
+            onClick={handleLogout}
+            icon={isLoggingOut ? <Spinner size="s" /> : <LogOut size={20} />}
+            className={styles.logoutButton}
+        >
+            {t("common.logout")}
+        </Button>
     );
 }

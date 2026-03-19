@@ -1,5 +1,6 @@
+import { Box } from "@frak-labs/design-system/components/Box";
 import type { PropsWithChildren, ReactNode } from "react";
-import styles from "./index.module.css";
+import * as styles from "./index.css";
 
 export function Grid({
     children,
@@ -7,9 +8,9 @@ export function Grid({
     className = "",
 }: PropsWithChildren<{ footer?: ReactNode; className?: string }>) {
     return (
-        <div className={`${styles.grid} ${className}`}>
-            <div>{children}</div>
-            {footer && <div>{footer}</div>}
-        </div>
+        <Box className={`${styles.grid} ${className}`}>
+            <Box>{children}</Box>
+            {footer && <Box>{footer}</Box>}
+        </Box>
     );
 }

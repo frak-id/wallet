@@ -8,7 +8,7 @@ vi.mock("@frak-labs/wallet-shared", () => ({
     useGetUserBalance: () => mockUseGetUserBalance(),
 }));
 
-vi.mock("@/module/common/component/Skeleton", () => ({
+vi.mock("@frak-labs/design-system/components/Skeleton", () => ({
     Skeleton: ({ height }: { height?: number }) => (
         <div data-testid="skeleton" data-height={height}>
             Loading...

@@ -6,7 +6,7 @@ import {
     sessionStore,
 } from "@frak-labs/wallet-shared";
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
-import { GlobalLayout } from "@/module/common/component/GlobalLayout";
+import { AppShell } from "@/module/common/component/AppShell";
 import { TargetPairingState } from "@/module/pairing/component/TargetPairingState";
 
 export const Route = createFileRoute("/_wallet/_protected")({
@@ -39,9 +39,9 @@ function ProtectedLayout() {
             : TargetPairingState;
 
     return (
-        <GlobalLayout navigation={true}>
+        <AppShell navigation={true}>
             <Component type="wallet" />
             <Outlet />
-        </GlobalLayout>
+        </AppShell>
     );
 }

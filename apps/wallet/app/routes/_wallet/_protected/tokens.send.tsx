@@ -1,5 +1,5 @@
-import { Button } from "@frak-labs/ui/component/Button";
-import { Input } from "@frak-labs/ui/component/forms/Input";
+import { Button } from "@frak-labs/design-system/components/Button";
+import { Input } from "@frak-labs/design-system/components/Input";
 import type { BalanceItem } from "@frak-labs/wallet-shared";
 import { useGetUserBalance } from "@frak-labs/wallet-shared";
 import { createFileRoute, redirect } from "@tanstack/react-router";
@@ -24,7 +24,7 @@ import { TokenMax } from "@/module/tokens/component/TokenMax";
 import { TokenModalList } from "@/module/tokens/component/TokenModalList";
 import { TransactionError } from "@/module/tokens/component/TransactionError";
 import { TransactionSuccess } from "@/module/tokens/component/TransactionSuccess";
-import styles from "@/module/tokens/page/TokensSendPage.module.css";
+import * as styles from "@/module/tokens/page/tokensSendPage.css";
 import { getUpdatedToken } from "@/module/tokens/utils/getUpdatedToken";
 import { validateAmount } from "@/module/tokens/utils/validateAmount";
 
@@ -59,8 +59,8 @@ const AddressInput = function AddressInput({
     const { t } = useTranslation();
 
     return (
-        <p className={styles.tokensSend__inputWrapper}>
-            <label htmlFor="toAddress" className={styles.tokensSend__label}>
+        <p className={styles.inputWrapper}>
+            <label htmlFor="toAddress" className={styles.label}>
                 {t("common.to")}
             </label>
             <Input
@@ -116,8 +116,8 @@ const AmountInput = function AmountInput({
     );
 
     return (
-        <p className={styles.tokensSend__inputWrapper}>
-            <label htmlFor="amount" className={styles.tokensSend__label}>
+        <p className={styles.inputWrapper}>
+            <label htmlFor="amount" className={styles.label}>
                 {t("common.balance")}: {selectedToken.amount}
                 <TokenMax onClick={handleMaxClick} />
             </label>
@@ -272,15 +272,13 @@ function TokensSendPage() {
                             <p>
                                 <Button
                                     type={"submit"}
-                                    width={"full"}
                                     disabled={isPending || isConfirming}
-                                    isLoading={isPending || isConfirming}
                                 >
                                     {t("common.send")}
                                 </Button>
                             </p>
 
-                            <p className={styles.tokensSend__bottom}>
+                            <p className={styles.bottom}>
                                 <TransactionStatus
                                     isSuccess={isSuccess}
                                     isError={isError}

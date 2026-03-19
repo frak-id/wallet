@@ -4,7 +4,7 @@ import {
     pairingStore,
 } from "@frak-labs/wallet-shared";
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
-import { GlobalLayout } from "@/module/common/component/GlobalLayout";
+import { AppShell } from "@/module/common/component/AppShell";
 
 export const Route = createFileRoute("/_wallet/_auth")({
     component: AuthenticationLayout,
@@ -39,8 +39,8 @@ export const Route = createFileRoute("/_wallet/_auth")({
 
 function AuthenticationLayout() {
     return (
-        <GlobalLayout header={false}>
+        <AppShell>
             <Outlet />
-        </GlobalLayout>
+        </AppShell>
     );
 }

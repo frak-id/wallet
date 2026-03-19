@@ -1,9 +1,17 @@
+import { Box } from "@frak-labs/design-system/components/Box";
+import {
+    Dialog,
+    DialogContent,
+    DialogTitle,
+    DialogTrigger,
+} from "@frak-labs/design-system/components/Dialog";
+import { Stack } from "@frak-labs/design-system/components/Stack";
+import { Text } from "@frak-labs/design-system/components/Text";
 import type { BalanceItem } from "@frak-labs/wallet-shared";
-import { WalletModal } from "@frak-labs/wallet-shared";
 import { useState } from "react";
 import { TokenList } from "@/module/tokens/component/TokenList";
 import { TokenLogo } from "@/module/tokens/component/TokenLogo";
-import styles from "./index.module.css";
+import * as styles from "./index.css";
 
 export function TokenModalList({
     token,
@@ -15,27 +23,26 @@ export function TokenModalList({
     const [openModal, setOpenModal] = useState(false);
 
     return (
-        <WalletModal
-            title={"Select a token"}
-            text={
-                <TokenList
-                    setSelectedValue={(token) => {
-                        setSelectedToken?.(token);
-                        setOpenModal(false);
-                    }}
-                />
-            }
-            button={{
-                label: (
-                    <>
-                        <TokenLogo token={token} />
-                        <span>{token?.symbol}</span>
-                    </>
-                ),
-                className: styles.tokenModalList__trigger,
-            }}
-            open={openModal}
-            onOpenChange={(open) => setOpenModal(open)}
-        />
+        <Dialog open={openModal} onOpenChange={setOpenModal}>
+            <DialogTrigger asChild>
+                <Box as="button" type="button" className={styles.trigger}>
+                    <TokenLogo token={token} />
+                    <Text as="span" variant="label">
+                        {token?.symbol}
+                    </Text>
+                </Box>
+            </DialogTrigger>
+            <DialogContent>
+                <Stack space="m">
+                    <DialogTitle>Select a token</DialogTitle>
+                    <TokenList
+                        setSelectedValue={(token) => {
+                            setSelectedToken?.(token);
+                            setOpenModal(false);
+                        }}
+                    />
+                </Stack>
+            </DialogContent>
+        </Dialog>
     );
 }

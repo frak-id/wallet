@@ -1,10 +1,10 @@
 import { triggerDeepLinkWithFallback } from "@frak-labs/core-sdk";
-import { Spinner } from "@frak-labs/ui/component/Spinner";
+import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { pairingStore } from "@frak-labs/wallet-shared";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import styles from "./pair.module.css";
+import * as styles from "./pair.css";
 
 type NavigateFn = ReturnType<typeof useNavigate>;
 

@@ -1,8 +1,10 @@
-import { Spinner } from "@frak-labs/ui/component/Spinner";
+import { Box } from "@frak-labs/design-system/components/Box";
+import { Spinner } from "@frak-labs/design-system/components/Spinner";
+import { Text } from "@frak-labs/design-system/components/Text";
 import { X } from "lucide-react";
 import type { MouseEvent, ReactNode } from "react";
 import { Warning } from "@/module/common/component/Warning";
-import styles from "./index.module.css";
+import * as styles from "./index.css";
 
 type ToastProps = {
     text?: string | ReactNode;
@@ -23,30 +25,32 @@ export function Toast({
 }: ToastProps) {
     if (isLoading) {
         return (
-            <div className={styles.toast}>
-                <div className={styles.toast__loading}>
-                    <Spinner /> <span>{text}</span>
-                </div>
-            </div>
+            <Box className={styles.toast}>
+                <Box className={styles.toastLoading}>
+                    <Spinner />
+                    <Text as="span">{text}</Text>
+                </Box>
+            </Box>
         );
     }
 
     return (
-        <div className={styles.toast}>
+        <Box className={styles.toast}>
             <ClickableComponent onClick={onClick} ariaLabel={ariaLabel}>
-                <Warning text={text} className={styles.toast__warning} />
+                <Warning text={text} className={styles.toastWarning} />
             </ClickableComponent>
-            <div className={styles.toast__actions}>
-                <button
+            <Box className={styles.toastActions}>
+                <Box
+                    as="button"
                     type="button"
                     onClick={onDismiss}
-                    className={styles.toast__dismissButton}
+                    className={styles.toastDismissButton}
                     aria-label={ariaDismissLabel}
                 >
                     <X size={16} />
-                </button>
-            </div>
-        </div>
+                </Box>
+            </Box>
+        </Box>
     );
 }
 
@@ -68,14 +72,15 @@ function ClickableComponent({
 }) {
     if (onClick) {
         return (
-            <button
+            <Box
+                as="button"
                 type="button"
-                className={styles.toast__clickable}
+                className={styles.toastClickable}
                 onClick={onClick}
                 aria-label={ariaLabel}
             >
                 {children}
-            </button>
+            </Box>
         );
     }
     return children;

@@ -1,5 +1,7 @@
-import { Button } from "@frak-labs/ui/component/Button";
-import { WalletAddress } from "@frak-labs/ui/component/HashDisplay";
+import { Box } from "@frak-labs/design-system/components/Box";
+import { Button } from "@frak-labs/design-system/components/Button";
+import { Stack } from "@frak-labs/design-system/components/Stack";
+import { Text } from "@frak-labs/design-system/components/Text";
 import { useLogin } from "@frak-labs/wallet-shared";
 import { useNavigate } from "@tanstack/react-router";
 import { useCallback, useTransition } from "react";
@@ -10,7 +12,7 @@ import {
     recoveryStore,
     selectRecoveryFileContent,
 } from "@/module/stores/recoveryStore";
-import styles from "./Step2.module.css";
+import * as styles from "./Step2.css";
 
 const ACTUAL_STEP = 2;
 
@@ -61,32 +63,29 @@ export function Step2() {
             actualStep={ACTUAL_STEP}
             title={t("wallet.recovery.step2")}
         >
-            <p>
-                {t("common.walletAddress")}{" "}
-                <WalletAddress
-                    wallet={fileContent?.initialWallet?.address ?? "0x"}
-                    copiedText={t("common.copied")}
-                />
-                <br />
-                {t("common.authenticator")}{" "}
-                <WalletAddress
-                    wallet={toHex(
-                        fileContent?.initialWallet?.authenticatorId ?? "0"
-                    )}
-                    copiedText={t("common.copied")}
-                />
-            </p>
-            <p>
+            <Stack space="s">
+                <Box>
+                    <Text as="span">{t("common.walletAddress")} </Text>
+                    <Text as="span" className={styles.addressValue}>
+                        {fileContent?.initialWallet?.address ?? "0x"}
+                    </Text>
+                </Box>
+                <Box>
+                    <Text as="span">{t("common.authenticator")} </Text>
+                    <Text as="span" className={styles.addressValue}>
+                        {toHex(
+                            fileContent?.initialWallet?.authenticatorId ?? "0"
+                        )}
+                    </Text>
+                </Box>
                 <Button
-                    width={"full"}
-                    className={styles.step2__button}
+                    className={styles.button}
                     disabled={isLoading}
-                    isLoading={isLoading}
                     onClick={triggerContinueRecovery}
                 >
                     {t("wallet.recovery.continue")}
                 </Button>
-            </p>
+            </Stack>
         </AccordionRecoveryItem>
     );
 }

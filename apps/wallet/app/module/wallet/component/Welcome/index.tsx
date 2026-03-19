@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
-import styles from "./index.module.css";
+import * as styles from "./index.css";
 
 export function Welcome() {
     const { t } = useTranslation();

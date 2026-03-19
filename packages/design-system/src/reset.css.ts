@@ -29,9 +29,9 @@ globalStyle("sup", {
 /**
  * Per-element CSS reset — scoped classes applied by Box.
  *
- * Follows the Braid Design System pattern: resets are scoped vanilla-extract
- * classes, not global stylesheets. Box auto-applies `base` to every element
- * and composes element-specific resets from the `element` map.
+ * Resets are scoped vanilla-extract classes, not global stylesheets.
+ * Box auto-applies `base` to every element and composes element-specific
+ * resets from the `element` map.
  *
  * Import order matters: reset.css must be imported BEFORE sprinkles.css
  * so that sprinkles properties (e.g. padding) override reset defaults.

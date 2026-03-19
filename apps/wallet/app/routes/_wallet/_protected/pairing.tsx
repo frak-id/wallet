@@ -1,5 +1,5 @@
-import { Button } from "@frak-labs/ui/component/Button";
-import { Skeleton } from "@frak-labs/ui/component/Skeleton";
+import { Button } from "@frak-labs/design-system/components/Button";
+import { Skeleton } from "@frak-labs/design-system/components/Skeleton";
 import {
     getTargetPairingClient,
     isPairingNotFoundError,
@@ -16,7 +16,7 @@ import { Title } from "@/module/common/component/Title";
 import { PairingHeader } from "@/module/pairing/component/PairingHeader";
 import { PairingInfo } from "@/module/pairing/component/PairingInfo";
 import { usePendingPairingInfo } from "@/module/pairing/hook/usePendingPairingInfo";
-import styles from "./pairing.module.css";
+import * as styles from "./pairing.css";
 
 export const Route = createFileRoute("/_wallet/_protected/pairing")({
     component: PairingPage,
@@ -94,7 +94,7 @@ function PairingPage() {
                 <Title size="big" align="center">
                     {t("wallet.pairing.error.title")}
                 </Title>
-                <p className={styles.pairing__error}>
+                <p className={styles.pairingError}>
                     <AlertCircle size={24} />
                     {t("wallet.pairing.error.noCode")}
                 </p>
@@ -109,7 +109,7 @@ function PairingPage() {
                 <Title size="big" align="center">
                     {t("wallet.pairing.error.title")}
                 </Title>
-                <p className={styles.pairing__error}>
+                <p className={styles.pairingError}>
                     <AlertCircle size={24} />
                     {t("wallet.pairing.error.notFound")}
                 </p>
@@ -124,15 +124,15 @@ function PairingPage() {
                 <Title size="big" align="center">
                     {t("wallet.pairing.title")}
                 </Title>
-                <p className={styles.pairing__error}>
+                <p className={styles.pairingError}>
                     <AlertCircle size={24} />
                     {t("error.webauthn.generic")}
                 </p>
                 <div
-                    className={`${styles.pairing__buttons} ${styles["pairing__buttons--single"]}`}
+                    className={`${styles.pairingButtons} ${styles.pairingButtonsSingle}`}
                 >
                     <Button
-                        variant="secondary"
+                        variant="outlined"
                         onClick={() => {
                             void refetchPairingInfo();
                         }}
@@ -161,13 +161,13 @@ function PairingPage() {
             {shouldShowCode ? (
                 <PairingCode code={pairingInfo.pairingCode} />
             ) : (
-                <p className={styles.pairing__noCodeNotice}>
+                <p className={styles.pairingNoCodeNotice}>
                     {t("wallet.pairing.noCodeNotice")}
                 </p>
             )}
-            <div className={styles.pairing__buttons}>
+            <div className={styles.pairingButtons}>
                 <Button
-                    variant="secondary"
+                    variant="outlined"
                     onClick={() => {
                         actionPairing("cancel");
                     }}

@@ -1,0 +1,19 @@
+import { style } from "@vanilla-extract/css";
+
+export const lockScreen = style({
+    position: "fixed",
+    inset: 0,
+    zIndex: 9999,
+    background: `linear-gradient(
+        208deg,
+        #1a2a4a 0%,
+        #0f1a2e 50%,
+        #0a0f1a 100%
+    )`,
+});
+
+export const lockScreenLogo = style({
+    width: "120px",
+    height: "auto",
+    marginBottom: "16px",
+});

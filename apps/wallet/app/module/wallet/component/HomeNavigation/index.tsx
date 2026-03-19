@@ -1,10 +1,10 @@
-import { ButtonRefresh } from "@frak-labs/ui/component/ButtonRefresh";
+import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { HandCoins, RefreshCcw, Send } from "lucide-react";
-import type { ReactNode } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { isCryptoMode } from "@/module/common/utils/walletMode";
-import styles from "./index.module.css";
+import * as styles from "./index.css";
 
 export function HomeNavigation() {
     const { t } = useTranslation();
@@ -18,31 +18,68 @@ export function HomeNavigation() {
                 className={styles.button}
                 viewTransition
             >
-                <Button
+                <NavButton
                     icon={<HandCoins size={36} absoluteStrokeWidth={true} />}
                 >
                     {t("common.receive")}
-                </Button>
+                </NavButton>
             </Link>
             <Link to={"/tokens/send"} className={styles.button} viewTransition>
-                <Button icon={<Send size={26} absoluteStrokeWidth={true} />}>
+                <NavButton icon={<Send size={26} absoluteStrokeWidth={true} />}>
                     {t("common.send")}
-                </Button>
+                </NavButton>
             </Link>
-            <ButtonRefresh className={styles.button}>
-                <Button icon={<RefreshCcw size={24} />}>
+            <RefreshButton className={styles.button}>
+                <NavButton icon={<RefreshCcw size={24} />}>
                     {t("common.refresh")}
-                </Button>
-            </ButtonRefresh>
+                </NavButton>
+            </RefreshButton>
         </div>
     );
 }
 
-function Button({ icon, children }: { icon: ReactNode; children: ReactNode }) {
+function NavButton({
+    icon,
+    children,
+}: {
+    icon: ReactNode;
+    children: ReactNode;
+}) {
     return (
         <>
-            <span className={styles.button__icon}>{icon}</span>
+            <span className={styles.buttonIcon}>{icon}</span>
             {children}
         </>
+    );
+}
+
+function RefreshButton({
+    className = "",
+    children,
+}: {
+    className?: string;
+    children: ReactNode;
+}) {
+    const queryClient = useQueryClient();
+    const [isRefreshing, setIsRefreshing] = useState(false);
+
+    useEffect(() => {
+        if (!isRefreshing) return;
+        const timer = setTimeout(() => setIsRefreshing(false), 2_000);
+        return () => clearTimeout(timer);
+    }, [isRefreshing]);
+
+    return (
+        <button
+            type={"button"}
+            className={`${styles.buttonRefresh} ${isRefreshing ? styles.buttonRefreshing : ""} ${className}`}
+            title={"Force refresh"}
+            onClick={() => {
+                setIsRefreshing(true);
+                queryClient.resetQueries().then(() => setIsRefreshing(false));
+            }}
+        >
+            {children}
+        </button>
     );
 }

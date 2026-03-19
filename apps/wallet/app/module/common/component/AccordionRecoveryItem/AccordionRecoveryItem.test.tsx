@@ -1,4 +1,4 @@
-import { Accordion } from "@frak-labs/ui/component/Accordion";
+import { Accordion } from "@frak-labs/design-system/components/Accordion";
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AccordionRecoveryItem } from "./index";

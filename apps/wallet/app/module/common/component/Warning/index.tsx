@@ -1,6 +1,7 @@
-import { cx } from "class-variance-authority";
+import { Badge } from "@frak-labs/design-system/components/Badge";
+import { Text } from "@frak-labs/design-system/components/Text";
 import type { PropsWithChildren, ReactNode } from "react";
-import styles from "./index.module.css";
+import * as styles from "./index.css";
 
 export function Warning({
     text,
@@ -8,11 +9,11 @@ export function Warning({
     children,
 }: PropsWithChildren<{ text: string | ReactNode; className?: string }>) {
     return (
-        <div className={cx(styles.warning, className)}>
-            <p>
-                <span className={styles.warning__text}>&#9888;</span> {text}
-            </p>
+        <Badge variant="warning" className={`${styles.warning} ${className}`}>
+            <Text as="span" className={styles.warningText}>
+                &#9888; {text}
+            </Text>
             {children}
-        </div>
+        </Badge>
     );
 }

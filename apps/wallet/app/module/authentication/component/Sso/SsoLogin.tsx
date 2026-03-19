@@ -1,8 +1,10 @@
-import { ButtonAuth } from "@frak-labs/ui/component/ButtonAuth";
+import { Box } from "@frak-labs/design-system/components/Box";
+import { Button } from "@frak-labs/design-system/components/Button";
+import { Text } from "@frak-labs/design-system/components/Text";
 import type { PreviousAuthenticatorModel } from "@frak-labs/wallet-shared";
 import { useLogin } from "@frak-labs/wallet-shared";
 import { useTranslation } from "react-i18next";
-import styles from "./index.module.css";
+import * as styles from "./index.css";
 
 /**
  * The register component
@@ -29,8 +31,8 @@ export function SsoLoginComponent({
 
     if (isPrimary) {
         return (
-            <p className={styles.sso__primaryButtonWrapper}>
-                <ButtonAuth
+            <Box className={styles.sso__primaryButtonWrapper}>
+                <Button
                     onClick={() => {
                         // Reset the error
                         onError(null);
@@ -39,15 +41,18 @@ export function SsoLoginComponent({
                     }}
                     disabled={isLoading}
                 >
-                    {t("authent.sso.btn.existing.login")}
-                </ButtonAuth>
-            </p>
+                    <Text as="span" variant="bodySmall">
+                        {t("authent.sso.btn.existing.login")}
+                    </Text>
+                </Button>
+            </Box>
         );
     }
 
     return (
-        <p className={styles.sso__secondaryButtonWrapper}>
-            <button
+        <Box className={styles.sso__secondaryButtonWrapper}>
+            <Box
+                as="button"
                 className={styles.sso__buttonLink}
                 disabled={isLoading}
                 onClick={() => {
@@ -59,7 +64,7 @@ export function SsoLoginComponent({
                 type={"button"}
             >
                 {t("authent.sso.btn.new.login")}
-            </button>
-        </p>
+            </Box>
+        </Box>
     );
 }

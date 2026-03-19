@@ -4,10 +4,8 @@ import {
     decompressJsonFromB64,
     findIframeInOpener,
 } from "@frak-labs/core-sdk";
+import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { createRpcClient } from "@frak-labs/frame-connector";
-import { ButtonAuth } from "@frak-labs/ui/component/ButtonAuth";
-import { formatHash } from "@frak-labs/ui/component/HashDisplay";
-import { Spinner } from "@frak-labs/ui/component/Spinner";
 import type {
     OnPairingSuccessCallback,
     Session,
@@ -28,15 +26,32 @@ import i18next from "i18next";
 import { CloudUpload } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
+import { type Hex, slice } from "viem";
 import { AuthenticateWithPhone } from "@/module/authentication/component/AuthenticateWithPhone";
-import styles from "@/module/authentication/component/Sso/index.module.css";
+import { ButtonAuth } from "@/module/authentication/component/ButtonAuth";
+import * as styles from "@/module/authentication/component/Sso/index.css";
 import { SsoHeader } from "@/module/authentication/component/Sso/SsoHeader";
 import { SsoLoginComponent } from "@/module/authentication/component/Sso/SsoLogin";
 import { SsoRegisterComponent } from "@/module/authentication/component/Sso/SsoRegister";
 import { useDemoLogin } from "@/module/authentication/hook/useDemoLogin";
 import { Grid } from "@/module/common/component/Grid";
 import { Notice } from "@/module/common/component/Notice";
-import "./sso.global.css";
+
+/**
+ * Format a hex hash for display by truncating the middle.
+ */
+function formatHash({
+    hash,
+    format = { start: 2, end: 3 },
+}: {
+    hash: Hex;
+    format?: { start: number; end: number };
+}) {
+    if (!hash) return undefined;
+    const start = slice(hash, 0, format.start);
+    const end = slice(hash, -format.end).replace("0x", "");
+    return `${start}...${end}`;
+}
 
 export const Route = createFileRoute("/_wallet/_sso/sso")({
     component: Sso,

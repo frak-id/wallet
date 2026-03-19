@@ -1,3 +1,7 @@
+import { Badge } from "@frak-labs/design-system/components/Badge";
+import { Box } from "@frak-labs/design-system/components/Box";
+import { Stack } from "@frak-labs/design-system/components/Stack";
+import { Text } from "@frak-labs/design-system/components/Text";
 import type { RewardHistoryItem as RewardHistoryItemType } from "@frak-labs/wallet-shared";
 import { Gift } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -5,7 +9,7 @@ import { Panel } from "@/module/common/component/Panel";
 import { Skeleton } from "@/module/common/component/Skeleton";
 import { isCryptoMode } from "@/module/common/utils/walletMode";
 import { useGetRewardHistory } from "@/module/history/hook/useGetRewardHistory";
-import styles from "./index.module.css";
+import * as styles from "./index.css";
 
 export function RewardHistoryList() {
     const { items, isLoading } = useGetRewardHistory();
@@ -17,14 +21,16 @@ export function RewardHistoryList() {
     }
 
     return (
-        <div className={styles.list}>
-            {items.map((item, index) => (
-                <RewardHistoryItem
-                    key={`${item.createdAt}-${index}`}
-                    item={item}
-                />
-            ))}
-        </div>
+        <Box className={styles.list}>
+            <Stack space="s">
+                {items.map((item, index) => (
+                    <RewardHistoryItem
+                        key={`${item.createdAt}-${index}`}
+                        item={item}
+                    />
+                ))}
+            </Stack>
+        </Box>
     );
 }
 
@@ -32,18 +38,26 @@ function RewardHistoryEmpty() {
     const { t } = useTranslation();
 
     return (
-        <div className={styles.empty}>
-            <Gift size={48} className={styles.empty__icon} />
-            <span className={styles.empty__title}>
+        <Box
+            display="flex"
+            flexDirection="column"
+            alignItems="center"
+            justifyContent="center"
+            padding="l"
+            gap="m"
+            className={styles.empty}
+        >
+            <Gift size={48} className={styles.emptyIcon} />
+            <Text variant="heading4" className={styles.emptyTitle}>
                 {t("reward.history.empty")}
-            </span>
-            <span className={styles.empty__description}>
+            </Text>
+            <Text variant="bodySmall" className={styles.emptyDescription}>
                 {t(
                     "reward.history.emptyDescription",
                     "Your rewards will appear here once you start earning"
                 )}
-            </span>
-        </div>
+            </Text>
+        </Box>
     );
 }
 
@@ -61,28 +75,42 @@ function RewardHistoryItem({ item }: { item: RewardHistoryItemType }) {
         : `+${item.amount.eurAmount.toFixed(2)}€`;
 
     return (
-        <Panel variant={"primary"} size={"small"} className={styles.item}>
-            <div className={styles.item__header}>
-                <span className={styles.item__merchant}>
-                    {item.merchant.name}
-                </span>
-                <span className={styles.item__amount}>{displayAmount}</span>
-            </div>
-            <div className={styles.item__badges}>
-                <span className={styles.item__badge}>{statusLabel}</span>
-                <span className={styles.item__badge}>{triggerLabel}</span>
-                <span className={styles.item__badge}>{roleLabel}</span>
-            </div>
-            <div className={styles.item__footer}>
-                <span className={styles.item__date}>
-                    {new Date(item.createdAt).toLocaleString()}
-                </span>
-                {isCryptoMode && item.txHash && (
-                    <span className={styles.item__txHash}>
-                        {item.txHash.slice(0, 10)}...
-                    </span>
-                )}
-            </div>
+        <Panel variant={"primary"} size={"small"}>
+            <Stack space="s">
+                <Box
+                    display="flex"
+                    flexDirection="row"
+                    justifyContent="space-between"
+                    alignItems="center"
+                >
+                    <Text variant="body" className={styles.itemMerchant}>
+                        {item.merchant.name}
+                    </Text>
+                    <Text variant="body" className={styles.itemAmount}>
+                        {displayAmount}
+                    </Text>
+                </Box>
+                <Box display="flex" flexDirection="row" gap="s" flexWrap="wrap">
+                    <Badge variant="neutral">{statusLabel}</Badge>
+                    <Badge variant="neutral">{triggerLabel}</Badge>
+                    <Badge variant="neutral">{roleLabel}</Badge>
+                </Box>
+                <Box
+                    display="flex"
+                    flexDirection="row"
+                    justifyContent="space-between"
+                    alignItems="center"
+                >
+                    <Text variant="caption" className={styles.itemDate}>
+                        {new Date(item.createdAt).toLocaleString()}
+                    </Text>
+                    {isCryptoMode && item.txHash && (
+                        <Text variant="caption" className={styles.itemTxHash}>
+                            {item.txHash.slice(0, 10)}...
+                        </Text>
+                    )}
+                </Box>
+            </Stack>
         </Panel>
     );
 }

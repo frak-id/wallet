@@ -1,5 +1,5 @@
 import { createFileRoute, Outlet } from "@tanstack/react-router";
-import { GlobalLayout } from "@/module/common/component/GlobalLayout";
+import { AppShell } from "@/module/common/component/AppShell";
 
 export const Route = createFileRoute("/_wallet/_sso")({
     component: SsoLayout,
@@ -7,8 +7,8 @@ export const Route = createFileRoute("/_wallet/_sso")({
 
 function SsoLayout() {
     return (
-        <GlobalLayout header={false}>
+        <AppShell>
             <Outlet />
-        </GlobalLayout>
+        </AppShell>
     );
 }

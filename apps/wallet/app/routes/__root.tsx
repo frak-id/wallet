@@ -7,8 +7,7 @@ import { DetectPWA } from "@/module/wallet/component/DetectPWA";
 // Import open panel to ensure it's initialized
 import "@frak-labs/wallet-shared";
 // Import global styles
-import "@/styles/all.css";
-import "nprogress/nprogress.css";
+import "@frak-labs/design-system/global.ts";
 
 export const Route = createRootRoute({
     component: RootComponent,

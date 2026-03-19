@@ -1,4 +1,4 @@
-import { Accordion } from "@frak-labs/ui/component/Accordion";
+import { Accordion } from "@frak-labs/design-system/components/Accordion";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";

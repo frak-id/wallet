@@ -1,4 +1,5 @@
 import { globalStyle } from "@vanilla-extract/css";
+import { tablet } from "./breakpoints";
 import { brand } from "./tokens.css";
 
 globalStyle("html", {
@@ -9,7 +10,7 @@ globalStyle("body", {
     position: "relative",
     overflow: "hidden",
     "@media": {
-        "(min-width: 600px)": {
+        [`(min-width: ${tablet}px)`]: {
             display: "flex",
             flexDirection: "row",
             justifyContent: "center",

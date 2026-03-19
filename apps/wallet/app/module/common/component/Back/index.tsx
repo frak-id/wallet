@@ -1,7 +1,9 @@
+import { Box } from "@frak-labs/design-system/components/Box";
+import { Text } from "@frak-labs/design-system/components/Text";
 import { Link } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import type { PropsWithChildren } from "react";
-import styles from "./index.module.css";
+import * as styles from "./index.css";
 
 type BackProps = {
     href?: string;
@@ -16,28 +18,36 @@ export function Back({
     disabled,
 }: PropsWithChildren<BackProps>) {
     return (
-        <div
-            className={`${styles.back} ${
-                disabled ? styles["back--disabled"] : ""
-            }`}
+        <Box
+            className={`${styles.back} ${disabled ? styles.backDisabled : ""}`}
         >
             <ArrowLeft />
             {href && (
-                <Link to={href} aria-disabled={disabled} viewTransition>
-                    {children}
+                <Link
+                    to={href}
+                    aria-disabled={disabled}
+                    viewTransition
+                    className={styles.actionButton}
+                >
+                    <Text as="span" className={styles.actionText}>
+                        {children}
+                    </Text>
                 </Link>
             )}
             {onClick && (
-                <button
-                    type={"button"}
-                    className={"button"}
+                <Box
+                    as="button"
+                    type="button"
+                    className={styles.actionButton}
                     onClick={onClick}
                     disabled={disabled}
                     aria-disabled={disabled}
                 >
-                    {children}
-                </button>
+                    <Text as="span" className={styles.actionText}>
+                        {children}
+                    </Text>
+                </Box>
             )}
-        </div>
+        </Box>
     );
 }

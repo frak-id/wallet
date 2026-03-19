@@ -1,5 +1,6 @@
 import * as process from "node:process";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
+import { vanillaExtractPlugin } from "@vanilla-extract/vite-plugin";
 import viteReact from "@vitejs/plugin-react";
 import type { ConfigEnv, UserConfig } from "vite";
 import { defineConfig } from "vite";
@@ -111,8 +112,10 @@ export default defineConfig(
                     routesDirectory: "./app/routes",
                     generatedRouteTree: "./app/routeTree.gen.ts",
                     autoCodeSplitting: true,
+                    routeFileIgnorePattern: "\\.css\\.ts$",
                 }),
                 viteReact(),
+                vanillaExtractPlugin(),
                 // Skip HTTPS for Tauri dev (simulators don't trust self-signed certs) and sandbox (proxy handles TLS)
                 ...(isTauri || isSandbox ? [] : [mkcert()]),
                 ...(isProd ? [removeConsole()] : []),
@@ -210,7 +213,7 @@ export default defineConfig(
                                 // UI vendors - ALL UI libraries together
                                 {
                                     name: "ui-vendor",
-                                    test: /node_modules[\\/](@radix-ui|vaul|micromark|sonner|lucide-react|class-variance-authority|cuer|nprogress|react-hook-form|react-dropzone)/,
+                                    test: /node_modules[\\/](@radix-ui|vaul|micromark|sonner|lucide-react|class-variance-authority|cuer|react-hook-form|react-dropzone)/,
                                     priority: 30,
                                 },
 
