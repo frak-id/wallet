@@ -10,8 +10,8 @@ vi.mock("@tanstack/react-router", () => ({
     ),
 }));
 
-vi.mock("@/module/common/component/NavigationTop", () => ({
-    NavigationTop: () => <div data-testid="navigation-top">Navigation</div>,
+vi.mock("@/module/common/atoms/demoMode", () => ({
+    useIsDemoMode: () => false,
 }));
 
 describe("Header", () => {
@@ -28,11 +28,6 @@ describe("Header", () => {
         // LogoFrak renders as SVG
         const svg = logoLink.querySelector("svg");
         expect(svg).toBeInTheDocument();
-    });
-
-    it("should render NavigationTop component", () => {
-        render(<Header />);
-        expect(screen.getByTestId("navigation-top")).toBeInTheDocument();
     });
 
     it("should render as header element", () => {
