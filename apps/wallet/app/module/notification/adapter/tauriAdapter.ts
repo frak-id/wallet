@@ -15,6 +15,7 @@ import type {
     NotificationPermissionStatus,
     PushTokenPayload,
 } from "./adapter";
+import i18next from "i18next";
 
 const FCM_TOKEN_DELIVERY_TIMEOUT_MS = 10_000;
 
@@ -35,6 +36,7 @@ export function createTauriNotificationAdapter(): NotificationAdapter {
         await authenticatedWalletApi.notifications.tokens.put({
             type: "fcm" as const,
             token,
+            locale: i18next.language?.split("-")[0],
         });
     };
 

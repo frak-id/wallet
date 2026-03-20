@@ -1,9 +1,13 @@
 import { db, log } from "@backend-infrastructure";
+import type { Language } from "@frak-labs/core-sdk";
 import { inArray, lt } from "drizzle-orm";
 import type { Address } from "viem";
 import { sendNotification, setVapidDetails } from "web-push";
 import { notificationSentTable, pushTokensTable } from "../db/schema";
-import type { SendNotificationPayload } from "../dto/SendNotificationDto";
+import type {
+    LocalisedNotificationPayload,
+    SendNotificationPayload,
+} from "../dto/SendNotificationDto";
 import type { NotificationType } from "../schemas";
 import type { FcmSender } from "./FcmSender";
 
@@ -11,6 +15,10 @@ type PushToken = typeof pushTokensTable.$inferSelect;
 
 /** Web push token with guaranteed non-null crypto keys */
 type WebPushToken = PushToken & { keyP256dh: string; keyAuth: string };
+
+type NotificationPayload =
+    | SendNotificationPayload
+    | LocalisedNotificationPayload;
 
 function isValidWebPushToken(token: PushToken): token is WebPushToken {
     return token.keyP256dh !== null && token.keyAuth !== null;
@@ -21,6 +29,20 @@ function isGoneStatus(statusCode: number): boolean {
     return statusCode === 404 || statusCode === 410;
 }
 
+function isLocalisedPayload(
+    payload: NotificationPayload
+): payload is LocalisedNotificationPayload {
+    return !("title" in payload);
+}
+
+function resolvePayload(
+    payload: NotificationPayload,
+    locale: Language
+): SendNotificationPayload {
+    if (!isLocalisedPayload(payload)) return payload;
+    return payload[locale] ?? Object.values(payload)[0];
+}
+
 export class NotificationsService {
     constructor(readonly fcmSender: FcmSender) {}
 
@@ -29,11 +51,9 @@ export class NotificationsService {
         payload,
     }: {
         wallets: Address[];
-        payload: SendNotificationPayload;
+        payload: NotificationPayload;
     }) {
-        const tokens = await db.query.pushTokensTable.findMany({
-            where: inArray(pushTokensTable.wallet, wallets),
-        });
+        const tokens = await this.fetchTokens(wallets);
         if (tokens.length === 0) {
             log.debug(
                 "[NotificationsService] No push tokens found for the given wallets"
@@ -41,6 +61,77 @@ export class NotificationsService {
             return;
         }
 
+        await this.sendToTokens(tokens, payload);
+    }
+
+    async sendAndStore({
+        wallets,
+        payload,
+        type,
+        broadcastId,
+    }: {
+        wallets: Address[];
+        payload: NotificationPayload;
+        type: NotificationType;
+        broadcastId?: string;
+    }) {
+        if (wallets.length === 0) return;
+
+        const tokens = await this.fetchTokens(wallets);
+
+        if (tokens.length === 0) return;
+
+        await this.sendToTokens(tokens, payload);
+
+        const walletLocale = new Map<Address, Language>();
+        for (const token of tokens) {
+            if (!walletLocale.has(token.wallet)) {
+                walletLocale.set(token.wallet, token.locale);
+            }
+        }
+
+        const records = wallets.map((wallet) => {
+            const resolved = resolvePayload(
+                payload,
+                walletLocale.get(wallet) ?? "fr"
+            );
+            return {
+                wallet,
+                type,
+                title: resolved.title,
+                body: resolved.body,
+                payload: resolved,
+                broadcastId,
+            };
+        });
+
+        try {
+            await db.insert(notificationSentTable).values(records);
+        } catch (error) {
+            log.warn(
+                { error, count: records.length },
+                "[NotificationsService] Failed to store sent notifications"
+            );
+        }
+    }
+
+    async cleanupExpiredTokens() {
+        await db
+            .delete(pushTokensTable)
+            .where(lt(pushTokensTable.expireAt, new Date()))
+            .execute();
+    }
+
+    private async fetchTokens(wallets: Address[]): Promise<PushToken[]> {
+        return db.query.pushTokensTable.findMany({
+            where: inArray(pushTokensTable.wallet, wallets),
+        });
+    }
+
+    private async sendToTokens(
+        tokens: PushToken[],
+        payload: NotificationPayload
+    ) {
         const { webPushTokens, fcmTokens } = this.partitionByType(tokens);
 
         const results = await Promise.allSettled([
@@ -80,7 +171,7 @@ export class NotificationsService {
 
     private async sendWebPush(
         tokens: WebPushToken[],
-        payload: SendNotificationPayload
+        payload: NotificationPayload
     ) {
         if (tokens.length === 0) return;
 
@@ -104,6 +195,7 @@ export class NotificationsService {
         const chunks = this.chunk(tokens, 30);
         for (const chunk of chunks) {
             const worker = chunk.map(async (token) => {
+                const resolved = resolvePayload(payload, token.locale);
                 try {
                     await sendNotification(
                         {
@@ -113,7 +205,7 @@ export class NotificationsService {
                                 auth: token.keyAuth,
                             },
                         },
-                        JSON.stringify(payload)
+                        JSON.stringify(resolved)
                     );
                 } catch (error: unknown) {
                     const statusCode =
@@ -146,25 +238,42 @@ export class NotificationsService {
         }
     }
 
-    private async sendFcm(
-        tokens: PushToken[],
-        payload: SendNotificationPayload
-    ) {
+    private async sendFcm(tokens: PushToken[], payload: NotificationPayload) {
         if (tokens.length === 0) return;
 
-        // Build endpoint → row id map for scoped cleanup
         const endpointToId = new Map<string, number>();
         for (const token of tokens) {
             endpointToId.set(token.endpoint, token.id);
         }
 
-        const invalidEndpoints = await this.fcmSender.send({
-            tokens: tokens.map((t) => t.endpoint),
-            payload,
-        });
+        const allInvalidEndpoints: string[] = [];
 
-        if (invalidEndpoints.length > 0) {
-            const idsToDelete = invalidEndpoints
+        if (isLocalisedPayload(payload)) {
+            const byLocale = new Map<string, string[]>();
+            for (const token of tokens) {
+                const group = byLocale.get(token.locale) ?? [];
+                group.push(token.endpoint);
+                byLocale.set(token.locale, group);
+            }
+
+            for (const [locale, endpoints] of byLocale) {
+                const resolved = resolvePayload(payload, locale);
+                const invalid = await this.fcmSender.send({
+                    tokens: endpoints,
+                    payload: resolved,
+                });
+                allInvalidEndpoints.push(...invalid);
+            }
+        } else {
+            const invalid = await this.fcmSender.send({
+                tokens: tokens.map((t) => t.endpoint),
+                payload,
+            });
+            allInvalidEndpoints.push(...invalid);
+        }
+
+        if (allInvalidEndpoints.length > 0) {
+            const idsToDelete = allInvalidEndpoints
                 .map((ep) => endpointToId.get(ep))
                 .filter((id): id is number => id !== undefined);
 
@@ -172,47 +281,6 @@ export class NotificationsService {
                 await this.deleteTokensByIds(idsToDelete);
             }
         }
-    }
-
-    async sendAndStore({
-        wallets,
-        payload,
-        type,
-        broadcastId,
-    }: {
-        wallets: Address[];
-        payload: SendNotificationPayload;
-        type: NotificationType;
-        broadcastId?: string;
-    }) {
-        if (wallets.length === 0) return;
-
-        await this.sendNotification({ wallets, payload });
-
-        const records = wallets.map((wallet) => ({
-            wallet,
-            type,
-            title: payload.title,
-            body: payload.body,
-            payload,
-            broadcastId,
-        }));
-
-        try {
-            await db.insert(notificationSentTable).values(records);
-        } catch (error) {
-            log.warn(
-                { error, count: records.length },
-                "[NotificationsService] Failed to store sent notifications"
-            );
-        }
-    }
-
-    async cleanupExpiredTokens() {
-        await db
-            .delete(pushTokensTable)
-            .where(lt(pushTokensTable.expireAt, new Date()))
-            .execute();
     }
 
     private async deleteTokensByIds(ids: number[]) {

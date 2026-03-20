@@ -1,3 +1,4 @@
+import type { Language } from "@frak-labs/core-sdk";
 import {
     index,
     jsonb,
@@ -35,6 +36,10 @@ export const pushTokensTable = pgTable(
         keyP256dh: varchar("key_p256dh"),
         /** Authentication secret — null for FCM tokens */
         keyAuth: varchar("key_auth"),
+        locale: varchar("locale", { length: 8 })
+            .notNull()
+            .default("fr")
+            .$type<Language>(),
         expireAt: timestamp("expire_at"),
         createdAt: timestamp("created_at").defaultNow(),
     },

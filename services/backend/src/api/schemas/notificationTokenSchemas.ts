@@ -11,11 +11,13 @@ const WebPushSubscriptionBodySchema = t.Object({
         }),
         expirationTime: t.Optional(t.Number()),
     }),
+    locale: t.Optional(t.String()),
 });
 
 const FcmTokenBodySchema = t.Object({
     type: t.Literal("fcm"),
     token: t.String(),
+    locale: t.Optional(t.String()),
 });
 
 export const RegisterTokenBodySchema = t.Union([

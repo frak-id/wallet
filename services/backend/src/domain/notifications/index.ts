@@ -11,6 +11,7 @@ export {
     pushTokensTable,
 } from "./db/schema";
 export {
+    type LocalisedNotificationPayload,
     type SendNotificationPayload,
     SendNotificationPayloadDto,
     SendNotificationTargetsDto,

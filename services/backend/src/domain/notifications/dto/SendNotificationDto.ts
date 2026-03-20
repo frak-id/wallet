@@ -1,4 +1,5 @@
 import { t } from "@backend-utils";
+import type { Language } from "@frak-labs/core-sdk";
 
 export const SendNotificationTargetsDto = t.Union([
     t.Object({
@@ -57,3 +58,7 @@ export const SendNotificationPayloadDto = t.Object({
 });
 
 export type SendNotificationPayload = typeof SendNotificationPayloadDto.static;
+
+export type LocalisedNotificationPayload = Partial<
+    Record<Language, SendNotificationPayload>
+>;

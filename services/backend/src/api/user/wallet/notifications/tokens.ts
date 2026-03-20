@@ -1,5 +1,6 @@
 import { db, sessionContext } from "@backend-infrastructure";
 import { t } from "@backend-utils";
+import type { Language } from "@frak-labs/core-sdk";
 import { eq } from "drizzle-orm";
 import { Elysia } from "elysia";
 import {
@@ -13,6 +14,8 @@ function tokenValuesFromBody(
     body: typeof RegisterTokenBodySchema.static,
     wallet: `0x${string}`
 ) {
+    const locale = body.locale ?? "fr";
+
     if (body.type === "fcm") {
         return {
             wallet,
@@ -20,6 +23,7 @@ function tokenValuesFromBody(
             endpoint: body.token,
             keyP256dh: null,
             keyAuth: null,
+            locale: locale as Language,
         };
     }
 
@@ -32,6 +36,7 @@ function tokenValuesFromBody(
         expireAt: body.subscription.expirationTime
             ? new Date(body.subscription.expirationTime)
             : null,
+        locale: locale as Language,
     };
 }
 
