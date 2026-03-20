@@ -10,12 +10,6 @@ vi.mock("@/module/common/component/Navigation", () => ({
     Navigation: () => <nav data-testid="navigation" />,
 }));
 
-vi.mock("@/module/common/component/MainLayout", () => ({
-    MainLayout: ({ children }: { children: React.ReactNode }) => (
-        <main data-testid="main-layout">{children}</main>
-    ),
-}));
-
 // Mock Outlet
 vi.mock("@tanstack/react-router", async () => {
     const actual = await vi.importActual("@tanstack/react-router");
@@ -43,15 +37,14 @@ describe("RestrictedLayoutRoute", () => {
 
         expect(screen.getByTestId("header")).toBeInTheDocument();
         expect(screen.getByTestId("navigation")).toBeInTheDocument();
-        expect(screen.getByTestId("main-layout")).toBeInTheDocument();
     });
 
-    it("should render MainLayout which contains Outlet", () => {
-        render(<RestrictedLayoutRoute />);
+    it("should render main element wrapping Outlet", () => {
+        const { container } = render(<RestrictedLayoutRoute />);
 
-        // MainLayout is present, which wraps the Outlet
-        const mainLayouts = screen.getAllByTestId("main-layout");
-        expect(mainLayouts.length).toBeGreaterThan(0);
+        const main = container.querySelector("main");
+        expect(main).toBeInTheDocument();
+        expect(screen.getByTestId("outlet")).toBeInTheDocument();
     });
 
     it("should have requireAuth in beforeLoad", () => {

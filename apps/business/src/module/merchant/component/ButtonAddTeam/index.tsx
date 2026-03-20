@@ -20,7 +20,7 @@ import {
     FormMessage,
     FormValidMessage,
 } from "@/module/forms/Form";
-import { useAddAdmin } from "@/module/merchant/hook/useAddAdmin";
+import { useAdminMutation } from "@/module/merchant/hook/useAdminMutation";
 
 type FormAddTeamMembers = {
     wallet?: Address;
@@ -35,7 +35,7 @@ export function ButtonAddTeam({
         mutateAsync: addAdmin,
         isPending: isAddingMember,
         error,
-    } = useAddAdmin();
+    } = useAdminMutation({ action: "add" });
 
     const form = useForm<FormAddTeamMembers>();
 

@@ -9,7 +9,6 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as NotFoundRouteImport } from './routes/not-found'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as DemoRouteImport } from './routes/demo'
 import { Route as RestrictedRouteImport } from './routes/_restricted'
@@ -36,11 +35,6 @@ import { Route as RestrictedCampaignsDraftCampaignIdIndexRouteImport } from './r
 import { Route as RestrictedCampaignsDraftCampaignIdValidationRouteImport } from './routes/_restricted/campaigns/draft/$campaignId/validation'
 import { Route as RestrictedCampaignsDraftCampaignIdMetricsRouteImport } from './routes/_restricted/campaigns/draft/$campaignId/metrics'
 
-const NotFoundRoute = NotFoundRouteImport.update({
-  id: '/not-found',
-  path: '/not-found',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -181,7 +175,6 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/demo': typeof DemoRoute
   '/login': typeof LoginRoute
-  '/not-found': typeof NotFoundRoute
   '/dashboard': typeof RestrictedDashboardRoute
   '/members': typeof RestrictedMembersRoute
   '/mint': typeof RestrictedMintRoute
@@ -208,7 +201,6 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/demo': typeof DemoRoute
   '/login': typeof LoginRoute
-  '/not-found': typeof NotFoundRoute
   '/dashboard': typeof RestrictedDashboardRoute
   '/members': typeof RestrictedMembersRoute
   '/mint': typeof RestrictedMintRoute
@@ -237,7 +229,6 @@ export interface FileRoutesById {
   '/_restricted': typeof RestrictedRouteWithChildren
   '/demo': typeof DemoRoute
   '/login': typeof LoginRoute
-  '/not-found': typeof NotFoundRoute
   '/_restricted/dashboard': typeof RestrictedDashboardRoute
   '/_restricted/members': typeof RestrictedMembersRoute
   '/_restricted/mint': typeof RestrictedMintRoute
@@ -266,7 +257,6 @@ export interface FileRouteTypes {
     | '/'
     | '/demo'
     | '/login'
-    | '/not-found'
     | '/dashboard'
     | '/members'
     | '/mint'
@@ -293,7 +283,6 @@ export interface FileRouteTypes {
     | '/'
     | '/demo'
     | '/login'
-    | '/not-found'
     | '/dashboard'
     | '/members'
     | '/mint'
@@ -321,7 +310,6 @@ export interface FileRouteTypes {
     | '/_restricted'
     | '/demo'
     | '/login'
-    | '/not-found'
     | '/_restricted/dashboard'
     | '/_restricted/members'
     | '/_restricted/mint'
@@ -350,20 +338,12 @@ export interface RootRouteChildren {
   RestrictedRoute: typeof RestrictedRouteWithChildren
   DemoRoute: typeof DemoRoute
   LoginRoute: typeof LoginRoute
-  NotFoundRoute: typeof NotFoundRoute
   EmbeddedLayoutRoute: typeof EmbeddedLayoutRouteWithChildren
   EmbeddedAuthRoute: typeof EmbeddedAuthRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/not-found': {
-      id: '/not-found'
-      path: '/not-found'
-      fullPath: '/not-found'
-      preLoaderRoute: typeof NotFoundRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -609,7 +589,6 @@ const rootRouteChildren: RootRouteChildren = {
   RestrictedRoute: RestrictedRouteWithChildren,
   DemoRoute: DemoRoute,
   LoginRoute: LoginRoute,
-  NotFoundRoute: NotFoundRoute,
   EmbeddedLayoutRoute: EmbeddedLayoutRouteWithChildren,
   EmbeddedAuthRoute: EmbeddedAuthRoute,
 }

@@ -10,10 +10,4 @@ export function InputAmount({ ...props }: InputNumberProps) {
     return <InputNumber rightSection={preferredCurrency} {...props} />;
 }
 
-export function InputAmountCampaign({ ...props }: InputNumberProps) {
-    const preferredCurrency = currencyStore((state) => state.preferredCurrency);
-
-    return <InputNumber rightSection={preferredCurrency} {...props} />;
-}
-
 InputAmount.displayName = "InputAmount";

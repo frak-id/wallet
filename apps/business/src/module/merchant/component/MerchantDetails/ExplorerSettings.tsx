@@ -16,8 +16,8 @@ import {
     FormMessage,
 } from "@/module/forms/Form";
 import { Switch } from "@/module/forms/Switch";
-import { useEditExplorer } from "@/module/merchant/hook/useEditExplorer";
 import { useMerchant } from "@/module/merchant/hook/useMerchant";
+import { useMerchantUpdate } from "@/module/merchant/hook/useMerchantUpdate";
 import styles from "./index.module.css";
 
 type ExplorerFormValues = {
@@ -32,7 +32,7 @@ export function ExplorerSettings({ merchantId }: { merchantId: string }) {
         mutate: editExplorer,
         isSuccess: editExplorerSuccess,
         isPending: editExplorerPending,
-    } = useEditExplorer({ merchantId });
+    } = useMerchantUpdate({ merchantId, target: "explorer" });
 
     const formValues = useMemo(
         () =>
