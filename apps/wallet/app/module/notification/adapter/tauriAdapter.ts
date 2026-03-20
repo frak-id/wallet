@@ -1,5 +1,6 @@
 import { authenticatedWalletApi } from "@frak-labs/wallet-shared";
 import type { PluginListener } from "@tauri-apps/api/core";
+import i18next from "i18next";
 import {
     checkPermissions,
     createChannel,
@@ -15,7 +16,6 @@ import type {
     NotificationPermissionStatus,
     PushTokenPayload,
 } from "./adapter";
-import i18next from "i18next";
 
 const FCM_TOKEN_DELIVERY_TIMEOUT_MS = 10_000;
 

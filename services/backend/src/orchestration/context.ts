@@ -52,7 +52,8 @@ const interactionContextBuilder = new InteractionContextBuilder(
 );
 
 const notificationOrchestrator = new NotificationOrchestrator(
-    NotificationContext.services.notifications
+    NotificationContext.services.notifications,
+    MerchantContext.repositories.merchant
 );
 
 const batchRewardOrchestrator = new BatchRewardOrchestrator(
@@ -62,8 +63,7 @@ const batchRewardOrchestrator = new BatchRewardOrchestrator(
     AttributionContext.services.referral,
     identityOrchestrator,
     interactionContextBuilder,
-    MerchantContext.repositories.merchant,
-    notificationOrchestrator
+    MerchantContext.repositories.merchant
 );
 
 const purchaseInteractionCreator = new PurchaseInteractionCreator(
@@ -90,8 +90,7 @@ const settlementOrchestrator = new SettlementOrchestrator(
     MerchantContext.repositories.merchant,
     IdentityContext.repositories.identity,
     RewardsContext.repositories.interactionLog,
-    CampaignBankContext.repositories.campaignBank,
-    notificationOrchestrator
+    CampaignBankContext.repositories.campaignBank
 );
 
 const rewardExpirationOrchestrator = new RewardExpirationOrchestrator(

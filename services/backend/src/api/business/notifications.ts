@@ -60,18 +60,12 @@ export const notificationsRoutes = new Elysia({ prefix: "/notifications" })
                     }
                 );
 
-            await OrchestrationContext.orchestrators.notification.sendNotifications(
-                [
-                    {
-                        wallets,
-                        template: {
-                            type: "promotional",
-                            title: payload.title,
-                            body: payload.body,
-                            broadcastId: broadcast.id,
-                        },
-                    },
-                ]
+            await OrchestrationContext.orchestrators.notification.sendPromotionalNotification(
+                {
+                    wallets,
+                    payload,
+                    broadcastId: broadcast.id,
+                }
             );
         },
         {

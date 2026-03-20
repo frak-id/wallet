@@ -1,4 +1,4 @@
-import { log } from "@backend-infrastructure";
+import { eventEmitter, log } from "@backend-infrastructure";
 import type { Address } from "viem";
 import type { ReferralService } from "../domain/attribution";
 import { buildTimeContext, type CalculatedReward } from "../domain/campaign";
@@ -12,7 +12,6 @@ import type {
     RecipientType,
 } from "../domain/rewards/types";
 import type { IdentityOrchestrator } from "./identity";
-import type { NotificationOrchestrator } from "./NotificationOrchestrator";
 import type { InteractionContextBuilder } from "./reward";
 
 type BatchProcessResult = {
@@ -38,8 +37,7 @@ export class BatchRewardOrchestrator {
         private readonly referralService: ReferralService,
         private readonly identityOrchestrator: IdentityOrchestrator,
         private readonly contextBuilder: InteractionContextBuilder,
-        private readonly merchantRepository: MerchantRepository,
-        private readonly notificationOrchestrator: NotificationOrchestrator
+        private readonly merchantRepository: MerchantRepository
     ) {}
 
     async processPendingInteractions(options: {
@@ -279,9 +277,6 @@ export class BatchRewardOrchestrator {
     ) {
         if (assets.length === 0) return;
 
-        const merchant = await this.merchantRepository.findById(merchantId);
-        const merchantName = merchant?.name ?? "a merchant";
-
         const walletCounts = new Map<Address, number>();
         for (const asset of assets) {
             const wallet = await this.identityOrchestrator.getWalletForGroup(
@@ -291,17 +286,15 @@ export class BatchRewardOrchestrator {
             walletCounts.set(wallet, (walletCounts.get(wallet) ?? 0) + 1);
         }
 
-        const notifications = [...walletCounts.entries()].map(
-            ([wallet, rewardCount]) => ({
-                wallets: [wallet] as Address[],
-                template: {
-                    type: "reward_pending" as const,
-                    merchantName,
+        eventEmitter.emit("notification", {
+            type: "reward_pending",
+            notifications: [...walletCounts.entries()].map(
+                ([wallet, rewardCount]) => ({
+                    wallets: [wallet] as Address[],
+                    merchantId,
                     rewardCount,
-                },
-            })
-        );
-
-        await this.notificationOrchestrator.sendNotifications(notifications);
+                })
+            ),
+        });
     }
 }

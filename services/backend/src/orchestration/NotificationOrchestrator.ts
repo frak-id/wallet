@@ -1,9 +1,8 @@
-import { log } from "@backend-infrastructure";
+import type { SendNotificationPayload } from "@backend-domain/notifications";
+import { eventEmitter, log } from "@backend-infrastructure";
+import type { NotificationEvent, NotificationEventItem } from "@backend-utils";
 import type { Address } from "viem";
-import type {
-    LocalisedNotificationPayload,
-    SendNotificationPayload,
-} from "../domain/notifications/dto/SendNotificationDto";
+import type { MerchantRepository } from "../domain/merchant/repositories/MerchantRepository";
 import type { NotificationsService } from "../domain/notifications/services/NotificationsService";
 
 const notificationMessages = {
@@ -41,84 +40,93 @@ const notificationMessages = {
     }),
 } as const;
 
-export type NotificationTemplate =
-    | { type: "reward_pending"; merchantName: string; rewardCount: number }
-    | { type: "reward_settled"; merchantName: string; rewardCount: number }
-    | {
-          type: "promotional";
-          title: string;
-          body: string;
-          broadcastId?: string;
-      };
-
 export class NotificationOrchestrator {
-    constructor(private readonly notificationsService: NotificationsService) {}
+    constructor(
+        private readonly notificationsService: NotificationsService,
+        private readonly merchantRepository: MerchantRepository
+    ) {}
 
-    async sendNotifications(
-        notifications: {
-            wallets: Address[];
-            template: NotificationTemplate;
-        }[]
-    ) {
-        for (const { wallets, template } of notifications) {
-            if (wallets.length === 0) continue;
+    registerListeners() {
+        eventEmitter.on("notification", (event) =>
+            this.handleNotificationEvent(event)
+        );
+    }
 
-            const broadcastId =
-                template.type === "promotional"
-                    ? template.broadcastId
-                    : undefined;
+    async sendPromotionalNotification(params: {
+        wallets: Address[];
+        payload: SendNotificationPayload;
+        broadcastId?: string;
+    }) {
+        const { wallets, broadcastId, payload } = params;
+        if (wallets.length === 0) return;
 
-            const payload = this.resolvePayload(template);
+        try {
+            await this.notificationsService.sendAndStore({
+                wallets,
+                payload: {
+                    ...payload,
+                    data: { url: "https://wallet.frak.id/" },
+                },
+                type: "promotional",
+                broadcastId,
+            });
+        } catch (error) {
+            log.warn(
+                { error, walletCount: wallets.length },
+                "[NotificationOrchestrator] Failed to send promotional notification"
+            );
+        }
+    }
+
+    private async handleNotificationEvent(event: NotificationEvent) {
+        const merchantNames = await this.resolveMerchantNames(
+            event.notifications
+        );
+
+        for (const notification of event.notifications) {
+            if (notification.wallets.length === 0) continue;
+
+            const merchantName =
+                merchantNames[notification.merchantId] ?? "a merchant";
+            const payload = notificationMessages[event.type](
+                merchantName,
+                notification.rewardCount
+            );
 
             try {
                 await this.notificationsService.sendAndStore({
-                    wallets,
+                    wallets: notification.wallets,
                     payload,
-                    type: template.type,
-                    broadcastId,
+                    type: event.type,
                 });
             } catch (error) {
                 log.warn(
-                    { error, type: template.type, walletCount: wallets.length },
+                    {
+                        error,
+                        type: event.type,
+                        walletCount: notification.wallets.length,
+                    },
                     "[NotificationOrchestrator] Failed to send notification"
                 );
             }
         }
     }
 
-    private resolvePayload(
-        template: NotificationTemplate
-    ): SendNotificationPayload | LocalisedNotificationPayload {
-        if (template.type === "promotional") {
-            return {
-                title: template.title,
-                body: template.body,
-                data: { url: this.resolveUrl(template) },
-            };
-        }
+    private async resolveMerchantNames(notifications: NotificationEventItem[]) {
+        const merchantIds = [
+            ...new Set(notifications.map((n) => n.merchantId)),
+        ];
 
-        switch (template.type) {
-            case "reward_pending": {
-                return notificationMessages.reward_pending(
-                    template.merchantName,
-                    template.rewardCount
-                );
-            }
-            case "reward_settled": {
-                return notificationMessages.reward_settled(
-                    template.merchantName,
-                    template.rewardCount
-                );
-            }
-        }
-    }
+        // Find all the merchant per ids
+        const merchants = await this.merchantRepository.findByIds(merchantIds);
 
-    private resolveUrl(template: NotificationTemplate): string {
-        switch (template.type) {
-            case "reward_pending":
-            case "reward_settled":
-            case "promotional":
-                return "https://wallet.frak.id/";
-        }
+        // Map that to the record we want to use
+        return merchants.reduce(
+            (acc, current) => {
+                acc[current.id] = current.name;
+                return acc;
+            },
+            {} as Record<string, string>
+        );
     }
 }

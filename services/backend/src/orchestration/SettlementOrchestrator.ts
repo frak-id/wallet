@@ -1,4 +1,4 @@
-import { log } from "@backend-infrastructure";
+import { eventEmitter, log } from "@backend-infrastructure";
 import { currentStablecoinsList } from "@frak-labs/app-essentials";
 import { type Address, getAddress } from "viem";
 import type { CampaignBankRepository } from "../domain/campaign-bank/repositories/CampaignBankRepository";
@@ -13,7 +13,6 @@ import type {
     SettlementService,
 } from "../domain/rewards/services/SettlementService";
 import type { SettlementResult } from "../domain/rewards/types";
-import type { NotificationOrchestrator } from "./NotificationOrchestrator";
 
 const defaultSettlementResult: SettlementResult = {
     settledCount: 0,
@@ -30,8 +29,7 @@ export class SettlementOrchestrator {
         private readonly merchantRepository: MerchantRepository,
         private readonly identityRepository: IdentityRepository,
         private readonly interactionLogRepository: InteractionLogRepository,
-        private readonly campaignBankRepository: CampaignBankRepository,
-        private readonly notificationOrchestrator: NotificationOrchestrator
+        private readonly campaignBankRepository: CampaignBankRepository
     ) {}
 
     async runSettlement(): Promise<SettlementResult> {
@@ -251,17 +249,6 @@ export class SettlementOrchestrator {
     ) {
         if (rewards.length === 0) return;
 
-        const merchantIds = [...new Set(rewards.map((r) => r.merchantId))];
-        const merchantNames = new Map<string, string>();
-        await Promise.all(
-            merchantIds.map(async (id) => {
-                const merchant = await this.merchantRepository.findById(id);
-                if (merchant?.name) {
-                    merchantNames.set(id, merchant.name);
-                }
-            })
-        );
-
         const byWalletAndMerchant = new Map<`${Address}:${string}`, number>();
         for (const reward of rewards) {
             const key =
@@ -272,21 +259,18 @@ export class SettlementOrchestrator {
             );
         }
 
-        const notifications = [...byWalletAndMerchant.entries()].map(
-            ([walletAndMerchant, count]) => {
-                const [wallet, merchantId] = walletAndMerchant.split(":");
-                return {
-                    wallets: [wallet] as Address[],
-                    template: {
-                        type: "reward_settled" as const,
-                        merchantName:
-                            merchantNames.get(merchantId) ?? "a merchant",
+        eventEmitter.emit("notification", {
+            type: "reward_settled",
+            notifications: [...byWalletAndMerchant.entries()].map(
+                ([walletAndMerchant, count]) => {
+                    const [wallet, merchantId] = walletAndMerchant.split(":");
+                    return {
+                        wallets: [wallet] as Address[],
+                        merchantId,
                         rewardCount: count,
-                    },
-                };
-            }
-        );
-
-        await this.notificationOrchestrator.sendNotifications(notifications);
+                    };
+                }
+            ),
+        });
     }
 }

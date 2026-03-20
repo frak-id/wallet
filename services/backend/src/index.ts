@@ -9,6 +9,7 @@ import { externalApi } from "./api/external";
 import { userApi } from "./api/user";
 import { jobs } from "./jobs";
 import { legacyRouteMapper } from "./legacyRoutes";
+import { OrchestrationContext } from "./orchestration";
 
 // Full on service app
 const app = new Elysia({
@@ -19,6 +20,9 @@ const app = new Elysia({
         idleTimeout: 300,
     },
 })
+    .onStart(async () => {
+        OrchestrationContext.orchestrators.notification.registerListeners();
+    })
     .use(
         log.into({
             autoLogging: isRunningLocally,
