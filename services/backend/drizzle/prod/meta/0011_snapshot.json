@@ -1,5 +1,5 @@
 {
-    "id": "079fd412-60b0-4b93-add3-df5c6d298705",
+    "id": "d952f8a9-b8c1-4ffd-9dfb-76d35e54f1b5",
     "prevId": "1f34d8d3-1148-4150-8e6c-eea406c90176",
     "version": "7",
     "dialect": "postgresql",
@@ -1118,6 +1118,13 @@
                     "type": "varchar",
                     "primaryKey": false,
                     "notNull": false
+                },
+                "locale": {
+                    "name": "locale",
+                    "type": "varchar(8)",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "default": "'fr'"
                 },
                 "expire_at": {
                     "name": "expire_at",

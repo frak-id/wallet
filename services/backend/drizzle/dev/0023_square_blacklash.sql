@@ -17,6 +17,7 @@ CREATE TABLE "notification_sent" (
 	"opened_at" timestamp
 );
 --> statement-breakpoint
+ALTER TABLE "push_tokens" ADD COLUMN "locale" varchar(8) DEFAULT 'fr' NOT NULL;--> statement-breakpoint
 CREATE INDEX "notification_broadcasts_merchant_idx" ON "notification_broadcasts" USING btree ("merchant_id");--> statement-breakpoint
 CREATE INDEX "notification_broadcasts_created_at_idx" ON "notification_broadcasts" USING btree ("created_at");--> statement-breakpoint
 CREATE INDEX "notification_sent_wallet_idx" ON "notification_sent" USING btree ("wallet");--> statement-breakpoint
