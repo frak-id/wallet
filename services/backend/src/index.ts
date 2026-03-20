@@ -1,6 +1,6 @@
 import { log } from "@backend-infrastructure";
 import { cors } from "@elysiajs/cors";
-import { isRunningLocally } from "@frak-labs/app-essentials";
+import { isRunningInProd, isRunningLocally } from "@frak-labs/app-essentials";
 import { Elysia } from "elysia";
 import { businessApi } from "./api/business";
 import { commonApi } from "./api/common";
@@ -46,11 +46,27 @@ const app = new Elysia({
     // All the jobs
     .use(jobs)
     // Finally, the legacy route mapper routes
-    .use(legacyRouteMapper)
-    // Setup bun serve options
-    .listen({
-        port: Number.parseInt(process.env.PORT ?? "3030", 10),
+    .use(legacyRouteMapper);
+
+if (!isRunningInProd) {
+    app.get("/debug/memory", async () => {
+        const { heapStats } = await import("bun:jsc");
+        const mem = process.memoryUsage();
+        const jsc = heapStats();
+
+        return {
+            rss: `${(mem.rss / 1024 / 1024).toFixed(1)}MB`,
+            heapUsed: `${(mem.heapUsed / 1024 / 1024).toFixed(1)}MB`,
+            heapTotal: `${(mem.heapTotal / 1024 / 1024).toFixed(1)}MB`,
+            external: `${(mem.external / 1024 / 1024).toFixed(1)}MB`,
+            jsc,
+        };
     });
+}
+
+app.listen({
+    port: Number.parseInt(process.env.PORT ?? "3030", 10),
+});
 
 log.info(`Running at ${app.server?.hostname}:${app.server?.port}`);
 
