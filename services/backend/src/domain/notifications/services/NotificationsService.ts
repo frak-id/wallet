@@ -249,7 +249,7 @@ export class NotificationsService {
         const allInvalidEndpoints: string[] = [];
 
         if (isLocalisedPayload(payload)) {
-            const byLocale = new Map<string, string[]>();
+            const byLocale = new Map<Language, string[]>();
             for (const token of tokens) {
                 const group = byLocale.get(token.locale) ?? [];
                 group.push(token.endpoint);
