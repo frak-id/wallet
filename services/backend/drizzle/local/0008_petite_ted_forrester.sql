@@ -1,1 +1,1 @@
-CREATE INDEX "interaction_logs_sharing_timestamp_idx" ON "asset_logs" USING btree (((payload->>'sharingTimestamp')::int)) WHERE "type" = 'create_referral_link';
+CREATE INDEX "interaction_logs_sharing_timestamp_idx" ON "interaction_logs" USING btree (((payload->>'sharingTimestamp')::int)) WHERE "type" = 'create_referral_link';

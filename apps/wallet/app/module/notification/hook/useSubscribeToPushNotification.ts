@@ -1,5 +1,6 @@
 import { authenticatedWalletApi } from "@frak-labs/wallet-shared";
 import { useMutation } from "@tanstack/react-query";
+import i18next from "i18next";
 import { notificationAdapter } from "@/module/notification/adapter";
 import { notificationKey } from "@/module/notification/queryKeys/notification";
 
@@ -12,7 +13,10 @@ export function useSubscribeToPushNotification() {
         mutationKey: notificationKey.push.subscribe,
         mutationFn: async () => {
             const tokenPayload = await notificationAdapter.subscribe();
-            await authenticatedWalletApi.notifications.tokens.put(tokenPayload);
+            await authenticatedWalletApi.notifications.tokens.put({
+                ...tokenPayload,
+                locale: i18next.language?.split("-")[0],
+            });
             return tokenPayload;
         },
         onSuccess: (_tokenPayload, _variable, _onMutate, { client }) => {

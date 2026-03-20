@@ -1,4 +1,5 @@
-import { log } from "@backend-infrastructure";
+import { eventEmitter, log } from "@backend-infrastructure";
+import type { Address } from "viem";
 import type { ReferralService } from "../domain/attribution";
 import { buildTimeContext, type CalculatedReward } from "../domain/campaign";
 import type { RuleEngineService } from "../domain/campaign/services/RuleEngineService";
@@ -16,10 +17,10 @@ import type { InteractionContextBuilder } from "./reward";
 type BatchProcessResult = {
     processedCount: number;
     rewardsCreated: number;
-    errors: Array<{
+    errors: {
         interactionLogId: string;
         error: string;
-    }>;
+    }[];
 };
 
 type ProcessSingleResult = {
@@ -175,6 +176,16 @@ export class BatchRewardOrchestrator {
                 const createdAssets =
                     await this.assetLogRepository.createBatch(assetParams);
                 rewardsCreated = createdAssets.length;
+
+                this.sendRewardPendingNotifications(
+                    createdAssets,
+                    merchantId
+                ).catch((error) =>
+                    log.warn(
+                        { error },
+                        "Failed to send reward pending notifications"
+                    )
+                );
             }
 
             log.debug(
@@ -258,5 +269,32 @@ export class BatchRewardOrchestrator {
         }
 
         return params;
+    }
+
+    private async sendRewardPendingNotifications(
+        assets: { identityGroupId: string }[],
+        merchantId: string
+    ) {
+        if (assets.length === 0) return;
+
+        const walletCounts = new Map<Address, number>();
+        for (const asset of assets) {
+            const wallet = await this.identityOrchestrator.getWalletForGroup(
+                asset.identityGroupId
+            );
+            if (!wallet) continue;
+            walletCounts.set(wallet, (walletCounts.get(wallet) ?? 0) + 1);
+        }
+
+        eventEmitter.emit("notification", {
+            type: "reward_pending",
+            notifications: [...walletCounts.entries()].map(
+                ([wallet, rewardCount]) => ({
+                    wallets: [wallet] as Address[],
+                    merchantId,
+                    rewardCount,
+                })
+            ),
+        });
     }
 }

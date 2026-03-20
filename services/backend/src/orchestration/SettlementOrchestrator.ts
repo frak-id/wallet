@@ -1,4 +1,4 @@
-import { log } from "@backend-infrastructure";
+import { eventEmitter, log } from "@backend-infrastructure";
 import { currentStablecoinsList } from "@frak-labs/app-essentials";
 import { type Address, getAddress } from "viem";
 import type { CampaignBankRepository } from "../domain/campaign-bank/repositories/CampaignBankRepository";
@@ -137,6 +137,16 @@ export class SettlementOrchestrator {
             merchantBanks
         );
 
+        if (results.settledCount > 0) {
+            this.sendRewardSettledNotifications(distributableRewards).catch(
+                (error) =>
+                    log.warn(
+                        { error },
+                        "Failed to send reward settled notifications"
+                    )
+            );
+        }
+
         // Invalidate all the banks cache for the results
         for (const bank of results.banks.values()) {
             this.campaignBankRepository.clearOnChainCache(bank);
@@ -232,5 +242,35 @@ export class SettlementOrchestrator {
         }
 
         return true;
+    }
+
+    private async sendRewardSettledNotifications(
+        rewards: AssetLogWithWallet[]
+    ) {
+        if (rewards.length === 0) return;
+
+        const byWalletAndMerchant = new Map<`${Address}:${string}`, number>();
+        for (const reward of rewards) {
+            const key =
+                `${reward.walletAddress}:${reward.merchantId}` satisfies `${Address}:${string}`;
+            byWalletAndMerchant.set(
+                key,
+                (byWalletAndMerchant.get(key) ?? 0) + 1
+            );
+        }
+
+        eventEmitter.emit("notification", {
+            type: "reward_settled",
+            notifications: [...byWalletAndMerchant.entries()].map(
+                ([walletAndMerchant, count]) => {
+                    const [wallet, merchantId] = walletAndMerchant.split(":");
+                    return {
+                        wallets: [wallet] as Address[],
+                        merchantId,
+                        rewardCount: count,
+                    };
+                }
+            ),
+        });
     }
 }

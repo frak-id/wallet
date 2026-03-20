@@ -1,5 +1,6 @@
 import { authenticatedWalletApi } from "@frak-labs/wallet-shared";
 import type { PluginListener } from "@tauri-apps/api/core";
+import i18next from "i18next";
 import {
     checkPermissions,
     createChannel,
@@ -35,6 +36,7 @@ export function createTauriNotificationAdapter(): NotificationAdapter {
         await authenticatedWalletApi.notifications.tokens.put({
             type: "fcm" as const,
             token,
+            locale: i18next.language?.split("-")[0],
         });
     };
 

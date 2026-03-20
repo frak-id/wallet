@@ -11,7 +11,7 @@ type AttestationEvent = {
  * Encodes events as base64 JSON for RewardsHub contract.
  */
 export function buildAttestation(
-    events: Array<{ event: string; timestamp: Date }>
+    events: { event: string; timestamp: Date }[]
 ): string {
     const payload: AttestationEvent[] = events.map((e) => ({
         event: e.event,

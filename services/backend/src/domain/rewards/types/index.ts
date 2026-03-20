@@ -69,13 +69,13 @@ export type PurchasePayload = {
     externalCustomerId: string;
     amount: number;
     currency: string;
-    items: Array<{
+    items: {
         productId?: string;
         name: string;
         quantity: number;
         unitPrice: number;
         totalPrice: number;
-    }>;
+    }[];
     purchaseId: string;
 };
 
@@ -103,10 +103,10 @@ export type SettlementResult = {
     failedCount: number;
     txHashes: Hex[];
     banks: Set<Address>;
-    errors: Array<{
+    errors: {
         assetLogId: string;
         error: string;
-    }>;
+    }[];
 };
 
 export { buildAttestation } from "@backend-utils";

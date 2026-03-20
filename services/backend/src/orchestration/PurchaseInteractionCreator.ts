@@ -8,12 +8,12 @@ type PurchaseInteractionParams = {
     externalCustomerId: string;
     totalPrice: string;
     currencyCode: string;
-    items: Array<{
+    items: {
         externalId: string;
         name: string;
         quantity: number;
         price: string;
-    }>;
+    }[];
     identityGroupId: string;
     merchantId: string;
 };

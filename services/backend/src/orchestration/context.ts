@@ -3,6 +3,7 @@ import { CampaignContext } from "../domain/campaign/context";
 import { CampaignBankContext } from "../domain/campaign-bank/context";
 import { IdentityContext } from "../domain/identity/context";
 import { MerchantContext } from "../domain/merchant/context";
+import { NotificationContext } from "../domain/notifications/context";
 import { PurchasesContext } from "../domain/purchases/context";
 import { RewardsContext } from "../domain/rewards/context";
 import { WalletContext } from "../domain/wallet/context";
@@ -18,6 +19,7 @@ import {
 } from "./identity";
 import { InteractionSubmissionOrchestrator } from "./interaction-submission";
 import { MemberQueryOrchestrator } from "./MemberQueryOrchestrator";
+import { NotificationOrchestrator } from "./NotificationOrchestrator";
 import { PurchaseInteractionCreator } from "./PurchaseInteractionCreator";
 import { PurchaseLinkingOrchestrator } from "./PurchaseLinkingOrchestrator";
 import { PurchaseWebhookOrchestrator } from "./PurchaseWebhookOrchestrator";
@@ -47,6 +49,11 @@ const identityOrchestrator = new IdentityOrchestrator(
 const interactionContextBuilder = new InteractionContextBuilder(
     AttributionContext.services.attribution,
     IdentityContext.repositories.identity
+);
+
+const notificationOrchestrator = new NotificationOrchestrator(
+    NotificationContext.services.notifications,
+    MerchantContext.repositories.merchant
 );
 
 const batchRewardOrchestrator = new BatchRewardOrchestrator(
@@ -132,6 +139,7 @@ export namespace OrchestrationContext {
         anonymousMerge: anonymousMergeOrchestrator,
         batchReward: batchRewardOrchestrator,
         identity: identityOrchestrator,
+        notification: notificationOrchestrator,
         purchaseLinking: purchaseLinkingOrchestrator,
         purchaseWebhook: purchaseWebhookOrchestrator,
         rewardExpiration: rewardExpirationOrchestrator,

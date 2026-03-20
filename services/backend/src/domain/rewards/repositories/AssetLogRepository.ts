@@ -180,7 +180,7 @@ export class AssetLogRepository {
     }
 
     async expirePendingRewards(): Promise<
-        Array<{ campaignRuleId: string; amount: string }>
+        { campaignRuleId: string; amount: string }[]
     > {
         const now = new Date();
 
@@ -213,7 +213,7 @@ export class AssetLogRepository {
         identityGroupIds: string[],
         options?: { status?: AssetStatus[] }
     ): Promise<
-        Array<{
+        {
             id: string;
             amount: string;
             tokenAddress: Address | null;
@@ -226,7 +226,7 @@ export class AssetLogRepository {
             merchantId: string;
             merchantName: string;
             merchantDomain: string;
-        }>
+        }[]
     > {
         const whereConditions = [
             inArray(assetLogsTable.identityGroupId, identityGroupIds),
