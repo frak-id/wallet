@@ -177,15 +177,17 @@ export class BatchRewardOrchestrator {
                     await this.assetLogRepository.createBatch(assetParams);
                 rewardsCreated = createdAssets.length;
 
-                this.sendRewardPendingNotifications(
-                    createdAssets,
-                    merchantId
-                ).catch((error) =>
+                try {
+                    await this.sendRewardPendingNotifications(
+                        createdAssets,
+                        merchantId
+                    );
+                } catch (error) {
                     log.warn(
                         { error },
                         "Failed to send reward pending notifications"
-                    )
-                );
+                    );
+                }
             }
 
             log.debug(

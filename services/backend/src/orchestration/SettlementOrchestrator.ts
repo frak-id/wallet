@@ -138,13 +138,14 @@ export class SettlementOrchestrator {
         );
 
         if (results.settledCount > 0) {
-            this.sendRewardSettledNotifications(distributableRewards).catch(
-                (error) =>
-                    log.warn(
-                        { error },
-                        "Failed to send reward settled notifications"
-                    )
-            );
+            try {
+                this.sendRewardSettledNotifications(distributableRewards);
+            } catch (error) {
+                log.warn(
+                    { error },
+                    "Failed to send reward settled notifications"
+                );
+            }
         }
 
         // Invalidate all the banks cache for the results
@@ -244,9 +245,7 @@ export class SettlementOrchestrator {
         return true;
     }
 
-    private async sendRewardSettledNotifications(
-        rewards: AssetLogWithWallet[]
-    ) {
+    private sendRewardSettledNotifications(rewards: AssetLogWithWallet[]) {
         if (rewards.length === 0) return;
 
         const byWalletAndMerchant = new Map<`${Address}:${string}`, number>();

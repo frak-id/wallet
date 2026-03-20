@@ -17,7 +17,7 @@ class LastActiveTracker {
     private readonly pending = new Map<string, number>();
 
     constructor() {
-        setInterval(() => this.flush(), FLUSH_INTERVAL_MS);
+        setInterval(() => this.flush(), FLUSH_INTERVAL_MS).unref();
 
         // Flush pending writes on graceful shutdown
         const onShutdown = () => {

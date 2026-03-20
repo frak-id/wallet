@@ -25,8 +25,14 @@ export function getMongoDb({ urlKey, db }: { urlKey: string; db: string }) {
             return current.db(db);
         }
 
-        // Get the mongo client
-        const client = new MongoClient(process.env[urlKey] as string);
+        // Get the mongo client with tuned connection options
+        const client = new MongoClient(process.env[urlKey] as string, {
+            // Reduce SDAM heartbeat frequency (default 10s → 30s)
+            heartbeatFrequencyMS: 30_000,
+            maxPoolSize: 10,
+            minPoolSize: 0,
+            maxIdleTimeMS: 60_000,
+        });
         // Store the client
         currentMongoClients.set(db, client);
         await client.connect();

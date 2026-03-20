@@ -187,10 +187,12 @@ export class AirtableRepository {
         // Create the record
         const recordId = await this.createRecord(tableType, data);
 
-        // Send Slack notification (non-blocking)
-        this.sendSlackNotification(tableType, data).catch((error) => {
+        // Send Slack notification
+        try {
+            await this.sendSlackNotification(tableType, data);
+        } catch (error) {
             log.error(error, "Slack notification failed");
-        });
+        }
 
         return {
             recordId,
