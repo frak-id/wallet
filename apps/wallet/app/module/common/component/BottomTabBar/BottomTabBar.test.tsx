@@ -36,11 +36,12 @@ describe("BottomTabBar", () => {
         render(
             <BottomTabBar tabs={mockTabs} activeKey="a" onTabChange={vi.fn()} />
         );
-        const tabALabel = screen.getByText("Tab A");
-        const tabBLabel = screen.getByText("Tab B");
+        const tabAButton = screen.getByText("Tab A").closest("button");
+        const tabBButton = screen.getByText("Tab B").closest("button");
 
-        // Active and inactive labels should have different classes
-        expect(tabALabel.className).not.toBe(tabBLabel.className);
+        expect(tabAButton).not.toBeNull();
+        expect(tabBButton).not.toBeNull();
+        expect(tabAButton?.className).not.toBe(tabBButton?.className);
     });
 
     it("should mark active tab with aria-current='page'", () => {
@@ -50,5 +51,14 @@ describe("BottomTabBar", () => {
         const buttons = screen.getAllByRole("button");
         expect(buttons[0]).toHaveAttribute("aria-current", "page");
         expect(buttons[1]).not.toHaveAttribute("aria-current");
+    });
+
+    it("should render the background image", () => {
+        render(
+            <BottomTabBar tabs={mockTabs} activeKey="a" onTabChange={vi.fn()} />
+        );
+
+        const background = screen.getByRole("img", { hidden: true });
+        expect(background).toHaveAttribute("aria-hidden", "true");
     });
 });

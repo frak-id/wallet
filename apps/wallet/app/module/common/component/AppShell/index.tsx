@@ -1,7 +1,11 @@
 import { Box } from "@frak-labs/design-system/components/Box";
+import {
+    ExplorerIcon,
+    ProfileIcon,
+    WalletIcon,
+} from "@frak-labs/design-system/icons";
 import { InAppBrowserToast } from "@frak-labs/wallet-shared";
 import { Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
-import { History, Settings, Wallet } from "lucide-react";
 import type { ReactNode } from "react";
 import { useMemo } from "react";
 import {
@@ -20,9 +24,9 @@ import {
  * Tab definitions matching the existing Navigation component routes.
  */
 const tabs: TabItem[] = [
-    { key: "/wallet", label: "Wallet", icon: <Wallet size={20} /> },
-    { key: "/history", label: "History", icon: <History size={20} /> },
-    { key: "/settings", label: "Settings", icon: <Settings size={20} /> },
+    { key: "/wallet", label: "Porte-monnaie", icon: <WalletIcon /> },
+    { key: "/history", label: "Explorer", icon: <ExplorerIcon /> },
+    { key: "/settings", label: "Profil", icon: <ProfileIcon /> },
 ];
 
 /**
