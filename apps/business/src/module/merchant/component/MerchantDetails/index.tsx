@@ -29,7 +29,6 @@ import { useMerchantUpdate } from "@/module/merchant/hook/useMerchantUpdate";
 import { ExplorerSettings } from "./ExplorerSettings";
 import styles from "./index.module.css";
 import { PurchasseTrackerSetup } from "./PurchaseTracker";
-import { WebhookInteractionSetup } from "./WebhookInteraction";
 
 type FormMerchant = {
     name: string;
@@ -199,7 +198,6 @@ export function MerchantDetails({ merchantId }: { merchantId: string }) {
                 )}
             </Form>
             <ExplorerSettings merchantId={merchantId} />
-            <WebhookInteractionSetup merchantId={merchantId} />
             <PurchasseTrackerSetup merchantId={merchantId} />
         </FormLayout>
     );
