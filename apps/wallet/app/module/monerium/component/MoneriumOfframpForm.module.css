@@ -1,0 +1,63 @@
+.moneriumOfframpForm {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.moneriumOfframpForm__inputWrapper {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.moneriumOfframpForm__label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-secondary);
+}
+
+.moneriumOfframpForm__error {
+    color: var(--color-error);
+    font-size: var(--font-size-sm);
+    margin-top: var(--space-1);
+}
+
+.moneriumOfframpForm__warning {
+    color: var(--color-warning);
+    font-size: var(--font-size-sm);
+    margin-top: var(--space-1);
+    padding: var(--space-2);
+    background-color: var(--color-warning-bg);
+    border-radius: var(--radius-md);
+}
+
+.moneriumOfframpForm__bottom {
+    margin-top: var(--space-4);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-2);
+    text-align: center;
+}
+
+.moneriumOfframpForm__status {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-4);
+    padding: var(--space-6) 0;
+    text-align: center;
+}
+
+.moneriumOfframpForm__statusText {
+    font-size: var(--font-size-md);
+    color: var(--color-text-primary);
+}
+
+.moneriumOfframpForm__statusSubtext {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+}

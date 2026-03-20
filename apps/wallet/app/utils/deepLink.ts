@@ -8,6 +8,8 @@ type DeepLinkParams = {
     amount?: string;
     id?: string;
     mode?: string;
+    code?: string;
+    state?: string;
 };
 
 /**
@@ -45,6 +47,8 @@ function extractSearchParams(
         amount: searchParams.get("amount") ?? undefined,
         id: searchParams.get("id") ?? undefined,
         mode: searchParams.get("mode") ?? undefined,
+        code: searchParams.get("code") ?? undefined,
+        state: searchParams.get("state") ?? undefined,
     };
 }
 
@@ -168,6 +172,17 @@ export function routeDeepLink(navigate: NavigateFn, params: DeepLinkParams) {
                     : { mode: "embedded" },
             });
             break;
+
+        case "monerium":
+        case "monerium-callback": {
+            // Both HTTPS App Link (action: "monerium") and custom scheme (action: "monerium-callback")
+            // route to the OAuth callback handler
+            const search: Record<string, string> = {};
+            if (params.code) search.code = params.code;
+            if (params.state) search.state = params.state;
+            navigate({ to: "/monerium/callback", search });
+            break;
+        }
 
         default:
             navigate({ to: "/wallet" });

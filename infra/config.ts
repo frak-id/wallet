@@ -113,6 +113,9 @@ export const openPanelBusinessClientId = new sst.Secret(
     "OPEN_PANEL_BUSINESS_CLIENT_ID"
 );
 
+// Monerium secrets
+export const moneriumClientId = new sst.Secret("MONERIUM_CLIENT_ID");
+
 /**
  * Expose stage-dependent computed env vars as SST Linkable resources.
  *

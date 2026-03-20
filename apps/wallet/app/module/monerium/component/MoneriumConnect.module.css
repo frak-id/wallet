@@ -1,0 +1,24 @@
+.moneriumConnect__status {
+    font-size: 14px;
+    color: var(--color-text-muted, #666666);
+    margin: 0;
+}
+
+.moneriumConnect__iban {
+    font-size: 14px;
+    font-weight: 500;
+    margin: 0;
+    word-break: break-all;
+}
+
+.moneriumConnect__warning {
+    font-size: 13px;
+    color: var(--color-warning, #f5a623);
+    margin: 0;
+}
+
+.moneriumConnect__actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}

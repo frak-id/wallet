@@ -381,5 +381,54 @@
         "retry": "Réessayer",
         "appNotFound": "Application Frak Wallet introuvable",
         "appNotFoundHint": "Veuillez réinstaller l'application ou réessayer"
+    },
+    "monerium": {
+        "account": "Compte Monerium",
+        "connect": "Connecter à Monerium",
+        "connecting": "Connexion...",
+        "disconnect": "Déconnecter",
+        "completeSetup": "Terminer sur Monerium",
+        "status": {
+            "settingUp": "Configuration...",
+            "created": "Compte créé — terminez la vérification sur Monerium",
+            "pending": "Vérification en cours",
+            "approved": "Vérifié ✓",
+            "rejected": "Vérification échouée"
+        },
+        "badge": {
+            "pending": "Vérification bancaire en cours...",
+            "approved": "Banque connectée :",
+            "notLinked": "IBAN non lié à ce portefeuille",
+            "rejected": "Vérification échouée"
+        },
+        "iban": {
+            "noIban": "Aucun IBAN assigné. Complétez votre vérification Monerium.",
+            "copy": "Copier",
+            "copied": "Copié !",
+            "warning": "⚠ Cet IBAN est lié à l'adresse {{address}}, pas à votre portefeuille actuel. Le retrait peut ne pas fonctionner correctement."
+        },
+        "offramp": {
+            "title": "Retirer vers la banque",
+            "amountLabel": "Montant (EURe)",
+            "balance": "Solde :",
+            "max": "MAX",
+            "destinationIban": "IBAN de destination",
+            "ibanWarning": "Attention : Cet IBAN n'est pas lié à votre adresse de portefeuille actuelle.",
+            "submit": "Retirer vers la banque",
+            "submitting": "Envoi de l'ordre...",
+            "confirmBiometric": "Confirmer avec la biométrie...",
+            "success": "Ordre soumis ! Les fonds arriveront dans 1 à 2 jours ouvrables.",
+            "tryAgain": "Réessayer",
+            "noIban": "Aucun IBAN lié. Veuillez d'abord compléter la vérification Monerium.",
+            "amountRequired": "Le montant est requis",
+            "amountInvalid": "Le montant doit être supérieur à 0",
+            "insufficientBalance": "Solde insuffisant"
+        },
+        "callback": {
+            "noCode": "Aucun code d'autorisation reçu",
+            "sessionExpired": "Session OAuth expirée, veuillez réessayer",
+            "failed": "Échec de l'authentification",
+            "tryAgain": "Réessayer"
+        }
     }
 }

@@ -1,8 +1,17 @@
 /**
  * Convert an ArrayBuffer to a base64url-encoded string
  */
-export function bufferToBase64URLString(buffer: ArrayBuffer): string {
+export function bufferToBase64URLString(
+    buffer: ArrayBuffer | Uint8Array
+): string {
     const bytes = new Uint8Array(buffer);
+    return bytesToBase64URLString(bytes);
+}
+
+/**
+ * Convert an Uint8Array to a base64url-encoded string
+ */
+export function bytesToBase64URLString(bytes: Uint8Array): string {
     let binary = "";
     for (let i = 0; i < bytes.length; i++) {
         binary += String.fromCharCode(bytes[i]);

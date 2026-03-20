@@ -41,6 +41,7 @@
     "tauri:version": "./scripts/sync-version.sh"
   },
   "dependencies": {
+    "@choochmeque/tauri-plugin-notifications-api": "^0.4",
     "@frak-labs/app-essentials": "workspace:*",
     "@frak-labs/client": "workspace:*",
     "@frak-labs/core-sdk": "workspace:*",
@@ -48,6 +49,7 @@
     "@frak-labs/ui": "workspace:*",
     "@frak-labs/wallet-shared": "workspace:*",
     "@khmyznikov/pwa-install": "^0.6.3",
+
     "@radix-ui/react-slot": "^1.2.4",
     "@tanstack/query-async-storage-persister": "catalog:",
     "@tanstack/react-query": "catalog:",

@@ -1,0 +1,67 @@
+.moneriumIbanCard {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 24px;
+    border-radius: 16px;
+    background-color: var(--frak-panel-background, #1a1a1a);
+    border: 1px solid var(--frak-panel-border, #333);
+}
+
+.moneriumIbanCard__iban {
+    font-family: monospace;
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    word-break: break-all;
+    color: var(--frak-text-primary, #fff);
+    text-align: center;
+    padding: 16px;
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    margin: 0;
+}
+
+.moneriumIbanCard__copyButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 24px;
+    border-radius: 8px;
+    background-color: var(--frak-button-primary-bg, #fff);
+    color: var(--frak-button-primary-text, #000);
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+    font-size: 16px;
+}
+
+.moneriumIbanCard__copyButton:hover {
+    opacity: 0.9;
+}
+
+.moneriumIbanCard__warning {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+    border-radius: 8px;
+    background-color: rgba(255, 165, 0, 0.1);
+    border: 1px solid rgba(255, 165, 0, 0.3);
+    color: #ffa500;
+    font-size: 14px;
+    line-height: 1.5;
+    margin-top: 8px;
+}
+
+.moneriumIbanCard__noIban {
+    text-align: center;
+    color: var(--frak-text-secondary, #888);
+    font-size: 14px;
+    padding: 32px 0;
+    background-color: var(--frak-panel-background, #1a1a1a);
+    border: 1px solid var(--frak-panel-border, #333);
+    border-radius: 16px;
+}

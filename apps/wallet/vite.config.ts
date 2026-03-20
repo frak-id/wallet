@@ -74,6 +74,9 @@ export default defineConfig(
                 "process.env.ANDROID_SHA256_FINGERPRINT": JSON.stringify(
                     getSstResource("ANDROID_SHA256_FINGERPRINT")
                 ),
+                "process.env.MONERIUM_CLIENT_ID": JSON.stringify(
+                    getSstSecret("MONERIUM_CLIENT_ID")
+                ),
             },
         };
 
