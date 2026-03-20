@@ -21,7 +21,11 @@ export type MerchantData = {
     ownerWallet: Address;
     bankAddress: Address | null;
     defaultRewardToken: Address;
-    explorerConfig: { heroImageUrl?: string; description?: string } | null;
+    explorerConfig: {
+        heroImageUrl?: string;
+        logoUrl?: string;
+        description?: string;
+    } | null;
     explorerEnabledAt: string | null;
     verifiedAt: string | null;
     createdAt: string | null;

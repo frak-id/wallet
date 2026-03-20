@@ -4,6 +4,7 @@ import { authenticatedBackendApi } from "@/api/backendClient";
 
 type EditMerchantInput = {
     name?: string;
+    logoUrl?: string;
     defaultRewardToken?: Address;
 };
 
