@@ -12,7 +12,6 @@ export const rewardCalculationJobs = new Elysia({
         pattern: RewardConfig.cron.rewardCalculation,
         triggerKeys: ["newInteraction"],
         coolDownInMs: 15_000,
-        skipIfLocked: true,
         run: async ({ context: { logger } }) => {
             logger.debug("Starting reward calculation batch");
 

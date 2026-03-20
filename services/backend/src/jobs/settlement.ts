@@ -9,7 +9,6 @@ export const settlementJobs = new Elysia({ name: "Job.settlement" }).use(
         pattern: RewardConfig.cron.settlement,
         triggerKeys: ["newPendingRewards"],
         coolDownInMs: RewardConfig.settlement.cooldownMs,
-        skipIfLocked: true,
         run: async ({ context: { logger } }) => {
             logger.debug("Starting reward settlement batch");
 

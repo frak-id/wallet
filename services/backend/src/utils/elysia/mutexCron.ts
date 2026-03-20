@@ -1,18 +1,17 @@
 import { eventEmitter, log } from "@backend-infrastructure";
 import type { pino } from "@bogeychan/elysia-logger";
-import { Mutex } from "async-mutex";
 import { Cron, type CronOptions } from "croner";
 import { Elysia } from "elysia";
 import type { FrakEvents } from "../events";
 
-type CronContext = Cron["options"] & {
+type CronContext = {
     context: {
         logger: pino.Logger;
     };
 };
 
 interface CronConfig<Name extends string>
-    extends Omit<CronOptions, "context" | "catch" | "protect"> {
+    extends Omit<CronOptions, "context" | "catch" | "protect" | "unref"> {
     /**
      * Input pattern, input date, or input ISO 8601 time string
      *
@@ -38,11 +37,7 @@ interface CronConfig<Name extends string>
      */
     triggerKeys?: (keyof FrakEvents)[];
     /**
-     * Skip the execution if the mutex is locked?
-     */
-    skipIfLocked?: boolean;
-    /**
-     * Cooldown delay in milliseconds post mutex execution
+     * Cooldown delay in milliseconds after execution before allowing re-runs
      */
     coolDownInMs?: number;
     /**
@@ -52,20 +47,13 @@ interface CronConfig<Name extends string>
 }
 
 /**
- * Cron wrapped around an async mutex
- * @param pattern
- * @param name
- * @param run
- * @param skipIfLocked
- * @param coolDownInMs
- * @param triggerKeys
- * @param options
+ * Cron with coalescing execution guard — boolean flags (isRunning / hasPending)
+ * instead of async-mutex. At most one pending re-run, no unbounded Promise queuing.
  */
 export const mutexCron = <Name extends string = string>({
     pattern,
     name,
     run,
-    skipIfLocked,
     coolDownInMs,
     triggerKeys,
     ...options
@@ -77,67 +65,69 @@ export const mutexCron = <Name extends string = string>({
         if (!pattern) throw new Error("pattern is required");
         if (!name) throw new Error("name is required");
 
-        // Get our previous stuff
         const prevCron =
             (decorators as { cron?: Record<Name, Cron> })?.cron ?? {};
-        const prevMutex =
-            (decorators as { mutex?: Record<Name, Cron> })?.mutex ?? {};
 
-        // The mutex we will use
-        const mutex = new Mutex();
-
-        // And our logger
         const logger = log.child({ cron: name });
 
-        // Add the current app decorators to the cron context
-        const finalOptions: CronOptions = {
-            ...options,
-            context: {
-                decorators,
-                logger,
-            },
-            catch: (error, job) =>
-                logger.warn(
-                    { error, name: job.name },
-                    "[Cron] error while processing cron"
-                ),
+        const runContext: CronContext = {
+            context: { logger },
         };
 
-        // And the cron
-        const cron = new Cron(pattern, finalOptions, async (self) => {
-            if (skipIfLocked && mutex.isLocked()) {
-                logger.debug(`[Cron] Skipping cron because it's locked`);
+        let isRunning = false;
+        let hasPending = false;
+        let cooldownTimer: ReturnType<typeof setTimeout> | null = null;
+
+        async function execute() {
+            if (isRunning || cooldownTimer) {
+                hasPending = true;
                 return;
             }
-            // Run exclusively the cron
-            await mutex.runExclusive(async () => {
-                // Perform the run
-                await run(self.options as CronContext);
-                // If we got an interval, waiting for it before releasing the mutex
-                if (coolDownInMs) {
-                    logger.debug(
-                        `[Cron] Waiting ${coolDownInMs}ms before releasing the mutex`
-                    );
-                    await Bun.sleep(coolDownInMs);
-                }
-            });
-        });
 
-        // If got a trigger key, listen to it
+            isRunning = true;
+            try {
+                await run(runContext);
+            } catch (error) {
+                logger.warn({ error }, "[Cron] error while processing");
+            } finally {
+                isRunning = false;
+            }
+
+            if (coolDownInMs) {
+                cooldownTimer = setTimeout(() => {
+                    cooldownTimer = null;
+                    if (hasPending) {
+                        hasPending = false;
+                        execute();
+                    }
+                }, coolDownInMs);
+                cooldownTimer.unref();
+            } else if (hasPending) {
+                hasPending = false;
+                setTimeout(execute, 0);
+            }
+        }
+
+        const cron = new Cron(
+            pattern,
+            {
+                ...options,
+                protect: true,
+                unref: true,
+                catch: (error, job) =>
+                    logger.warn(
+                        { error, name: job.name },
+                        "[Cron] error while processing cron"
+                    ),
+            },
+            () => execute()
+        );
+
         if (triggerKeys) {
             for (const key of triggerKeys) {
                 eventEmitter.on(key, () => {
-                    // Check if we should skip when locked
-                    if (skipIfLocked && mutex.isLocked()) {
-                        logger.debug(
-                            `[Cron] Skipping event trigger ${key} because mutex is locked`
-                        );
-                        return;
-                    }
                     logger.debug(`[Cron] Event trigger: ${key}`);
-                    cron.trigger().then(() => {
-                        logger.debug(`[Cron] Event trigger end: ${key}`);
-                    });
+                    execute();
                 });
             }
         }
@@ -148,9 +138,5 @@ export const mutexCron = <Name extends string = string>({
                 ...prevCron,
                 [name]: cron,
             } as Record<Name, Cron>,
-            mutex: {
-                ...prevMutex,
-                [name]: mutex,
-            } as Record<Name, Mutex>,
         };
     });

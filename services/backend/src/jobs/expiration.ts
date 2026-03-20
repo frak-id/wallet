@@ -7,7 +7,6 @@ export const expirationJobs = new Elysia({ name: "Job.expiration" }).use(
     mutexCron({
         name: "expireRewards",
         pattern: RewardConfig.cron.expiration,
-        skipIfLocked: true,
         run: async ({ context: { logger } }) => {
             logger.debug("Starting reward expiration job");
 
