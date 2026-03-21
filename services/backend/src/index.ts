@@ -1,13 +1,13 @@
 import { log } from "@backend-infrastructure";
 import { cors } from "@elysiajs/cors";
-import { isRunningInProd, isRunningLocally } from "@frak-labs/app-essentials";
+import { isRunningLocally } from "@frak-labs/app-essentials";
 import { Elysia } from "elysia";
 import { businessApi } from "./api/business";
 import { commonApi } from "./api/common";
 import { wellKnownRoutes } from "./api/common/wellKnown";
 import { externalApi } from "./api/external";
 import { userApi } from "./api/user";
-import { jobs } from "./jobs";
+import { CronRegistry } from "./jobs";
 import { legacyRouteMapper } from "./legacyRoutes";
 import { OrchestrationContext } from "./orchestration";
 
@@ -22,6 +22,7 @@ const app = new Elysia({
 })
     .onStart(async () => {
         OrchestrationContext.orchestrators.notification.registerListeners();
+        CronRegistry.start();
     })
     .use(
         log.into({
@@ -43,8 +44,6 @@ const app = new Elysia({
     .use(businessApi)
     .use(userApi)
     .use(externalApi)
-    // All the jobs
-    .use(jobs)
     // Finally, the legacy route mapper routes
     .use(legacyRouteMapper);
 
@@ -60,6 +59,7 @@ log.info(`Running at ${app.server?.hostname}:${app.server?.port}`);
  */
 function handleShutdown(signal: string) {
     log.info(`${signal} received, starting graceful shutdown`);
+    CronRegistry.stop();
     app.server?.stop(false);
     setTimeout(() => {
         log.warn("Shutdown timeout exceeded, forcing exit");
