@@ -2,7 +2,6 @@ import * as dns from "node:dns";
 import { promisify } from "node:util";
 import { isRunningInProd } from "@frak-labs/app-essentials";
 import { type Address, concatHex, isHex, keccak256, toHex } from "viem";
-import { URL } from "whatwg-url";
 
 /**
  * Repository used to check for DNS records
