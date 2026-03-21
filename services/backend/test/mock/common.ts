@@ -543,7 +543,7 @@ const SendNotificationTargetsDto = t.Union([
     t.Object({
         filter: t.Partial(
             t.Object({
-                productIds: t.Array(t.String()),
+                merchantIds: t.Array(t.String()),
                 interactions: t.Partial(
                     t.Object({
                         min: t.Number(),
