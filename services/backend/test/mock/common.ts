@@ -310,12 +310,18 @@ export const businessSessionContextMock = new Elysia({
     .guard({
         headers: t.Object({
             "x-business-auth": t.Optional(t.String()),
+            "x-shopify-session-token": t.Optional(t.String()),
         }),
     })
     .resolve(async ({ headers }) => {
         const businessAuth = headers["x-business-auth"];
         if (!businessAuth) {
-            return { businessSession: null };
+            return {
+                businessSession: null,
+                shopifySession: null,
+                hasMerchantAccess: (_merchantId: string) =>
+                    Promise.resolve(false as boolean),
+            };
         }
 
         // biome-ignore lint/suspicious/noExplicitAny: Mock function accepts arguments at runtime
@@ -324,6 +330,9 @@ export const businessSessionContextMock = new Elysia({
         );
         return {
             businessSession: session || null,
+            shopifySession: null,
+            hasMerchantAccess: (_merchantId: string) =>
+                Promise.resolve(true as boolean),
         };
     })
     .macro({
@@ -345,6 +354,10 @@ export const businessSessionContextMock = new Elysia({
         },
     })
     .as("scoped");
+
+vi.mock("../../src/api/business/middleware/session", () => ({
+    businessSessionContext: businessSessionContextMock,
+}));
 
 vi.mock("@backend-infrastructure", () => ({
     pricingRepository: pricingRepositoryMocks,
@@ -571,12 +584,27 @@ vi.mock("../../src/domain/business/context", () => ({
 
 export const notificationOrchestratorMocks = {
     sendNotifications: vi.fn(() => Promise.resolve()),
+    sendPromotionalNotification: vi.fn(() => Promise.resolve()),
+};
+
+export const rewardHistoryOrchestratorMocks = {
+    getHistory: vi.fn(() => Promise.resolve({ items: [], totalCount: 0 })),
 };
 
 vi.mock("../../src/orchestration", () => ({
     OrchestrationContext: {
         orchestrators: {
             notification: notificationOrchestratorMocks,
+            rewardHistory: rewardHistoryOrchestratorMocks,
+        },
+    },
+}));
+
+vi.mock("../../src/orchestration/context", () => ({
+    OrchestrationContext: {
+        orchestrators: {
+            notification: notificationOrchestratorMocks,
+            rewardHistory: rewardHistoryOrchestratorMocks,
         },
     },
 }));

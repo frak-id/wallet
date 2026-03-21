@@ -1,7 +1,9 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { rewardsRoutes } from "../../../src/api/user/wallet/rewards";
-import { IdentityContext } from "../../../src/domain/identity";
-import { JwtContextMock } from "../../mock/common";
+import {
+    JwtContextMock,
+    rewardHistoryOrchestratorMocks,
+} from "../../mock/common";
 
 describe("Wallet Rewards Routes API", () => {
     const mockWalletAddress = "0x1234567890123456789012345678901234567890";
@@ -10,11 +12,7 @@ describe("Wallet Rewards Routes API", () => {
     beforeEach(() => {
         JwtContextMock.wallet.verify.mockClear();
         JwtContextMock.walletSdk.verify.mockClear();
-
-        vi.spyOn(
-            IdentityContext.repositories.identity,
-            "findAllGroupIdsByWallet"
-        ).mockResolvedValue([]);
+        rewardHistoryOrchestratorMocks.getHistory.mockClear();
     });
 
     describe("GET /rewards/history", () => {
