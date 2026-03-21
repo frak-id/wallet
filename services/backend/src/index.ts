@@ -109,6 +109,22 @@ app.listen({
 
 log.info(`Running at ${app.server?.hostname}:${app.server?.port}`);
 
+/**
+ * Global graceful shutdown — stops accepting connections and drains in-flight requests.
+ * PairingRepository's own SIGTERM handler flushes pending DB writes independently.
+ */
+function handleShutdown(signal: string) {
+    log.info(`${signal} received, starting graceful shutdown`);
+    app.server?.stop(false);
+    setTimeout(() => {
+        log.warn("Shutdown timeout exceeded, forcing exit");
+        process.exit(1);
+    }, 15_000).unref();
+}
+
+process.on("SIGTERM", () => handleShutdown("SIGTERM"));
+process.on("SIGINT", () => handleShutdown("SIGINT"));
+
 export type App = typeof app;
 
 export type BusinessApp = typeof businessApi;

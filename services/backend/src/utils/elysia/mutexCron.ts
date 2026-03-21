@@ -91,6 +91,7 @@ export const mutexCron = <Name extends string = string>({
                 logger.warn({ error }, "[Cron] error while processing");
             } finally {
                 isRunning = false;
+                Bun.gc(false);
             }
 
             if (coolDownInMs) {
