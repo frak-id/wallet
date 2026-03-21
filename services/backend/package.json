@@ -32,6 +32,7 @@
     "@elysiajs/cors": "^1.4.0",
     "@frak-labs/app-essentials": "workspace:*",
     "@frak-labs/core-sdk": "workspace:*",
+    "@libsql/client": "^0.17.2",
     "@simplewebauthn/server": "^13.2.2",
     "async-mutex": "^0.5.0",
     "croner": "^9.1.0",
