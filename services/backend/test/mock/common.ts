@@ -396,30 +396,131 @@ export const webPushMocks = {
 vi.mock("web-push", () => webPushMocks);
 
 /* -------------------------------------------------------------------------- */
-/*                          Firebase Admin FCM Mock                           */
+/*                      FCM HTTP/2 Direct API Mocks                          */
 /* -------------------------------------------------------------------------- */
 
+process.env.FCM_SERVICE_ACCOUNT_JSON = JSON.stringify({
+    project_id: "mock-project",
+    client_email: "mock@mock.iam.gserviceaccount.com",
+    private_key: "mock-private-key",
+});
+
 export const fcmMocks = {
-    sendEachForMulticast: vi.fn(() =>
-        Promise.resolve({
-            successCount: 0,
-            failureCount: 0,
-            responses: [],
-        })
-    ),
+    sendRequest: vi.fn(),
+    tokenErrors: new Map<string, object>(),
+
+    reset() {
+        this.sendRequest.mockClear();
+        this.tokenErrors.clear();
+    },
 };
 
-vi.mock("firebase-admin/app", () => ({
-    getApps: vi.fn(() => [{ name: "mock-app" }]),
-    initializeApp: vi.fn(() => ({ name: "mock-app" })),
-    cert: vi.fn((account: unknown) => account),
-}));
+vi.mock("jose", () => {
+    const builder = {
+        setProtectedHeader: vi.fn(() => builder),
+        setIssuer: vi.fn(() => builder),
+        setSubject: vi.fn(() => builder),
+        setAudience: vi.fn(() => builder),
+        setIssuedAt: vi.fn(() => builder),
+        setExpirationTime: vi.fn(() => builder),
+        sign: vi.fn(() => Promise.resolve("mock-jwt")),
+    };
+    return {
+        importPKCS8: vi.fn(() => Promise.resolve({})),
+        SignJWT: vi.fn(() => builder),
+    };
+});
 
-vi.mock("firebase-admin/messaging", () => ({
-    getMessaging: vi.fn(() => ({
-        sendEachForMulticast: fcmMocks.sendEachForMulticast,
-    })),
-}));
+vi.mock("node:http2", () => {
+    type Listener = (...args: unknown[]) => void;
+
+    function createEmitter() {
+        const listeners: Record<string, Listener[]> = {};
+        return {
+            on(event: string, fn: Listener) {
+                if (!listeners[event]) {
+                    listeners[event] = [];
+                }
+                listeners[event].push(fn);
+                return this;
+            },
+            emit(event: string, ...args: unknown[]) {
+                for (const fn of listeners[event] ?? []) fn(...args);
+            },
+            removeAllListeners() {
+                for (const key of Object.keys(listeners)) {
+                    delete listeners[key];
+                }
+                return this;
+            },
+        };
+    }
+
+    // biome-ignore lint/suspicious/noExplicitAny: Mock session with dynamic properties
+    function createSession(): any {
+        const session = createEmitter();
+        Object.assign(session, {
+            closed: false,
+            destroyed: false,
+            unref: vi.fn(),
+            close: vi.fn((cb?: () => void) => {
+                // biome-ignore lint/suspicious/noExplicitAny: Mock property assignment
+                (session as any).closed = true;
+                if (cb) queueMicrotask(cb);
+            }),
+            destroy: vi.fn(() => {
+                // biome-ignore lint/suspicious/noExplicitAny: Mock property assignment
+                (session as any).destroyed = true;
+            }),
+            request: vi.fn(() => {
+                const stream = createEmitter();
+                Object.assign(stream, {
+                    setEncoding: vi.fn(),
+                    setTimeout: vi.fn(),
+                    destroy: vi.fn(),
+                    end: vi.fn((body: string) => {
+                        try {
+                            const parsed = JSON.parse(body);
+                            const token = parsed?.message?.token as string;
+
+                            fcmMocks.sendRequest(token);
+
+                            const errorResponse =
+                                fcmMocks.tokenErrors.get(token);
+                            const responseBody = errorResponse ?? {
+                                name: `projects/mock/messages/0:${Date.now()}`,
+                            };
+
+                            queueMicrotask(() => {
+                                stream.emit(
+                                    "data",
+                                    JSON.stringify(responseBody)
+                                );
+                                stream.emit("end");
+                            });
+                        } catch {
+                            queueMicrotask(() => {
+                                stream.emit(
+                                    "error",
+                                    new Error("Mock: invalid body")
+                                );
+                            });
+                        }
+                    }),
+                });
+                return stream;
+            }),
+        });
+        return session;
+    }
+
+    const connectFn = vi.fn(() => createSession());
+
+    return {
+        connect: connectFn,
+        constants: { NGHTTP2_NO_ERROR: 0 },
+    };
+});
 
 /* -------------------------------------------------------------------------- */
 /*                            Notification Context                            */
@@ -455,7 +556,7 @@ const SendNotificationTargetsDto = t.Union([
     t.Object({
         filter: t.Partial(
             t.Object({
-                productIds: t.Array(t.String()),
+                merchantIds: t.Array(t.String()),
                 interactions: t.Partial(
                     t.Object({
                         min: t.Number(),

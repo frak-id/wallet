@@ -11,7 +11,7 @@ type MemberData = {
     totalInteractions: number;
     totalRewardsUsd: number;
     firstInteractionTimestamp: string;
-    productIds: string[];
+    merchantIds: string[];
     productNames: string[];
 };
 
@@ -20,7 +20,7 @@ function filterByMerchantIds(
     merchantIds: Hex[]
 ): MemberData[] {
     return members.filter((member) =>
-        member.productIds.some((id) => merchantIds.includes(id as Hex))
+        member.merchantIds.some((id) => merchantIds.includes(id as Hex))
     );
 }
 
@@ -137,7 +137,7 @@ function getMembersMockSync(params: GetMembersParam): GetMembersResponseDto {
 
     const mappedMembers = paginatedMembers.map((m) => ({
         ...m,
-        merchantIds: m.productIds,
+        merchantIds: m.merchantIds,
         merchantNames: m.productNames,
     }));
 

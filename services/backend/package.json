@@ -37,7 +37,6 @@
     "croner": "^9.1.0",
     "drizzle-orm": "^0.44.7",
     "elysia": "1.4.28",
-    "firebase-admin": "^13.7.0",
     "jose": "^6.1.3",
     "ky": "^1.14.3",
     "lru-cache": "^11.2.6",
