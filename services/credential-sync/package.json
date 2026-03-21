@@ -1,0 +1,22 @@
+{
+    "name": "@frak-labs/credential-sync",
+    "description": "Bidirectional MongoDB to sqld credential sync service",
+    "version": "0.0.1",
+    "private": true,
+    "type": "module",
+    "license": "GNU GPL 3.0",
+    "scripts": {
+        "build": "bun run build.ts",
+        "start": "bun dist/index.js",
+        "dev": "bun run --watch src/index.ts"
+    },
+    "dependencies": {
+        "@libsql/client": "^0.17.2",
+        "drizzle-orm": "^0.44.7",
+        "mongodb": "^6.20.0"
+    },
+    "devDependencies": {
+        "bun-types": "latest",
+        "typescript": "catalog:"
+    }
+}
