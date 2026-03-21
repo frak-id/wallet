@@ -2,7 +2,6 @@ import type {
     AuthenticatorTransportFuture,
     CredentialDeviceType,
 } from "@simplewebauthn/server";
-import type { Binary } from "mongodb";
 import type { Address, Hex } from "viem";
 
 /**
@@ -20,8 +19,8 @@ export type AuthenticatorDocument = Readonly<{
         x: Hex;
         y: Hex;
     };
-    // The authenticator stuff
-    credentialPublicKey: Binary;
+    // The credential public key (base64 encoded)
+    credentialPublicKey: string;
     counter: number;
     credentialDeviceType: CredentialDeviceType;
     credentialBackedUp: boolean;
