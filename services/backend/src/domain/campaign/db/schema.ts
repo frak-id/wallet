@@ -38,12 +38,10 @@ export const campaignRulesTable = pgTable(
         updatedAt: timestamp("updated_at").defaultNow().notNull(),
     },
     (table) => [
-        index("campaign_rules_merchant_idx").on(table.merchantId),
         index("campaign_rules_merchant_status_idx").on(
             table.merchantId,
             table.status
         ),
-        index("campaign_rules_priority_idx").on(table.priority),
     ]
 );
 

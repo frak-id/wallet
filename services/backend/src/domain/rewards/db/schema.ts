@@ -36,9 +36,7 @@ export const interactionLogsTable = pgTable(
     (table) => [
         index("interaction_logs_identity_group_idx").on(table.identityGroupId),
         index("interaction_logs_merchant_idx").on(table.merchantId),
-        index("interaction_logs_type_idx").on(table.type),
         index("interaction_logs_created_at_idx").on(table.createdAt),
-        index("interaction_logs_processed_at_idx").on(table.processedAt),
         uniqueIndex("interaction_logs_external_event_unique_idx").on(
             table.merchantId,
             table.type,
@@ -47,6 +45,11 @@ export const interactionLogsTable = pgTable(
         index("interaction_logs_sharing_timestamp_idx")
             .using("btree", sql`((payload->>'sharingTimestamp')::int)`)
             .where(sql`"type" = 'create_referral_link'`),
+        index("interaction_logs_unprocessed_idx")
+            .on(table.createdAt)
+            .where(
+                sql`"processed_at" IS NULL AND "identity_group_id" IS NOT NULL`
+            ),
     ]
 );
 
@@ -92,12 +95,6 @@ export const assetLogsTable = pgTable(
         index("asset_logs_identity_group_idx").on(table.identityGroupId),
         index("asset_logs_merchant_idx").on(table.merchantId),
         index("asset_logs_campaign_rule_idx").on(table.campaignRuleId),
-        index("asset_logs_status_idx").on(table.status),
-        index("asset_logs_status_merchant_idx").on(
-            table.status,
-            table.merchantId
-        ),
-        index("asset_logs_recipient_wallet_idx").on(table.recipientWallet),
         index("asset_logs_interaction_log_idx").on(table.interactionLogId),
         index("asset_logs_created_at_idx").on(table.createdAt),
         index("asset_logs_settlement_retry_idx").on(
@@ -111,6 +108,14 @@ export const assetLogsTable = pgTable(
             table.createdAt
         ),
         index("asset_logs_expires_at_idx").on(table.expiresAt),
+        index("asset_logs_pending_expirable_idx")
+            .on(table.expiresAt)
+            .where(
+                sql`"status" = 'pending' AND "expires_at" IS NOT NULL AND "campaign_rule_id" IS NOT NULL`
+            ),
+        index("asset_logs_processing_status_changed_idx")
+            .on(table.statusChangedAt)
+            .where(sql`"status" = 'processing'`),
     ]
 );
 

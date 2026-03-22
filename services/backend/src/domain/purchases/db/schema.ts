@@ -55,7 +55,6 @@ export const purchasesTable = pgTable(
             table.purchaseToken
         ),
         index("purchases_identity_group_idx").on(table.identityGroupId),
-        index("purchases_webhook_id_idx").on(table.webhookId),
     ]
 );
 
@@ -111,7 +110,6 @@ export const purchaseClaimsTable = pgTable(
         createdAt: timestamp("created_at").defaultNow(),
     },
     (table) => [
-        // Only one claim per purchase (prevents race conditions)
         uniqueIndex("purchase_claims_unique_purchase").on(
             table.merchantId,
             table.orderId,
@@ -120,7 +118,6 @@ export const purchaseClaimsTable = pgTable(
         index("purchase_claims_identity_group_idx").on(
             table.claimingIdentityGroupId
         ),
-        index("purchase_claims_merchant_idx").on(table.merchantId),
     ]
 );
 

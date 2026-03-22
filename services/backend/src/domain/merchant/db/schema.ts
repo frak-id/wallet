@@ -31,11 +31,7 @@ export const merchantsTable = pgTable(
         createdAt: timestamp("created_at").defaultNow(),
         updatedAt: timestamp("updated_at").defaultNow(),
     },
-    (table) => [
-        index("merchants_product_id_idx").on(table.productId),
-        index("merchants_domain_idx").on(table.domain),
-        index("merchants_owner_wallet_idx").on(table.ownerWallet),
-    ]
+    (table) => [index("merchants_owner_wallet_idx").on(table.ownerWallet)]
 );
 
 export const merchantAdminsTable = pgTable(
@@ -48,7 +44,6 @@ export const merchantAdminsTable = pgTable(
         addedAt: timestamp("added_at").defaultNow().notNull(),
     },
     (table) => [
-        index("merchant_admins_merchant_idx").on(table.merchantId),
         index("merchant_admins_wallet_idx").on(table.wallet),
         unique("merchant_admins_unique").on(table.merchantId, table.wallet),
     ]
@@ -63,8 +58,5 @@ export const merchantOwnershipTransfersTable = pgTable(
         toWallet: customHex("to_wallet").$type<Address>().notNull(),
         initiatedAt: timestamp("initiated_at").defaultNow().notNull(),
         expiresAt: timestamp("expires_at").notNull(),
-    },
-    (table) => [
-        index("merchant_ownership_transfers_to_wallet_idx").on(table.toWallet),
-    ]
+    }
 );

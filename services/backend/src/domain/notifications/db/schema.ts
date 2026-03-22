@@ -94,10 +94,6 @@ export const notificationSentTable = pgTable(
         openedAt: timestamp("opened_at"),
     },
     (table) => [
-        index("notification_sent_wallet_idx").on(table.wallet),
-        index("notification_sent_type_idx").on(table.type),
-        index("notification_sent_broadcast_idx").on(table.broadcastId),
-        index("notification_sent_sent_at_idx").on(table.sentAt),
         index("notification_sent_wallet_sent_at_idx").on(
             table.wallet,
             table.sentAt

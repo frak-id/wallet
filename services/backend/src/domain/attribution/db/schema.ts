@@ -31,8 +31,6 @@ export const touchpointsTable = pgTable(
         expiresAt: timestamp("expires_at"),
     },
     (table) => [
-        index("touchpoints_identity_group_idx").on(table.identityGroupId),
-        index("touchpoints_merchant_idx").on(table.merchantId),
         index("touchpoints_identity_merchant_idx").on(
             table.identityGroupId,
             table.merchantId
@@ -55,7 +53,6 @@ export const referralLinksTable = pgTable(
             table.merchantId,
             table.refereeIdentityGroupId
         ),
-        index("referral_links_merchant_idx").on(table.merchantId),
         index("referral_links_referrer_idx").on(table.referrerIdentityGroupId),
         index("referral_links_referee_idx").on(table.refereeIdentityGroupId),
     ]
