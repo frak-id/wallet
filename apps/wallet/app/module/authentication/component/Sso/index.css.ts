@@ -67,3 +67,7 @@ export const sso__recover = style({
 export const sso__redirect = style({
     marginTop: brand.scale[500],
 });
+
+export const errorText = style({
+    color: vars.text.error,
+});

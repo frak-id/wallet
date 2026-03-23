@@ -1,9 +1,12 @@
+import clsx from "clsx";
 import type { PropsWithChildren } from "react";
 import { useTranslation } from "react-i18next";
 import styles from "./HandleErrors.module.css";
 
 type HandleErrorsProps = {
     error: Error;
+    /** Optional class to override error text styling (e.g. design system color token) */
+    className?: string;
 };
 
 const cancellationNames = new Set(["NotAllowedError", "AbortError"]);
@@ -38,37 +41,70 @@ export function isUserCancellation(error: Error): boolean {
     return false;
 }
 
-export function HandleErrors({ error }: HandleErrorsProps) {
+export function HandleErrors({ error, className }: HandleErrorsProps) {
     if (isUserCancellation(error)) {
-        return <ErrorNotAllowed />;
+        return <ErrorNotAllowed className={className} />;
     }
 
     if (error.name === "UserOperationExecutionError") {
-        return <ErrorUserOperationExecution />;
+        return <ErrorUserOperationExecution className={className} />;
     }
 
-    return <GenericError />;
+    // Show a generic error
+    return <GenericError className={className} />;
 }
 
-function ErrorNotAllowed() {
-    const { t } = useTranslation();
-    return <ErrorWrapper>{t("error.webauthn.notAllowed")}</ErrorWrapper>;
-}
-
-function ErrorUserOperationExecution() {
+/**
+ * Error when the user cancel the authentication process
+ * @returns The error message
+ */
+function ErrorNotAllowed({ className }: { className?: string }) {
     const { t } = useTranslation();
     return (
-        <ErrorWrapper>
+        <ErrorWrapper className={className}>
+            {t("error.webauthn.notAllowed")}
+        </ErrorWrapper>
+    );
+}
+
+/**
+ * Error when the user transaction execution fails
+ * @returns The error message
+ */
+function ErrorUserOperationExecution({ className }: { className?: string }) {
+    const { t } = useTranslation();
+    return (
+        <ErrorWrapper className={className}>
             {t("error.webauthn.userOperationExecution")}
         </ErrorWrapper>
     );
 }
 
-function GenericError() {
+/**
+ * Generic error
+ * @returns The error message
+ */
+function GenericError({ className }: { className?: string }) {
     const { t } = useTranslation();
-    return <ErrorWrapper>{t("error.webauthn.generic")}</ErrorWrapper>;
+    return (
+        <ErrorWrapper className={className}>
+            {t("error.webauthn.generic")}
+        </ErrorWrapper>
+    );
 }
 
-function ErrorWrapper({ children }: PropsWithChildren) {
-    return <p className={`error ${styles.errorWrapper__error}`}>{children}</p>;
+/**
+ * Wrapper for the error message
+ * @param children - The children to render
+ * @returns The error message
+ */
+function ErrorWrapper({
+    children,
+    className,
+}: PropsWithChildren<{ className?: string }>) {
+    return (
+        <p className={clsx("error", styles.errorWrapper__error, className)}>
+            {children}
+        </p>
+    );
 }

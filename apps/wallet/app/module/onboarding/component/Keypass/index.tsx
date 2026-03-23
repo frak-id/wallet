@@ -7,6 +7,7 @@ import {
     DrawerDescription,
     DrawerTitle,
 } from "@frak-labs/design-system/components/Drawer";
+import { FaceIdIcon } from "@frak-labs/design-system/icons";
 import { visuallyHidden } from "@frak-labs/design-system/utils";
 import { HandleErrors, WalletModal } from "@frak-labs/wallet-shared";
 import { useEffect, useMemo, useState } from "react";
@@ -141,7 +142,7 @@ function KeypassContent({
         return (
             <Box className={styles.keypass}>
                 <ContentBlock
-                    icon={<span>⚠️</span>}
+                    icon={<FaceIdIcon />}
                     title={t("onboarding.keypass.unsupported.title")}
                     description={t(
                         "onboarding.keypass.unsupported.description"
@@ -160,7 +161,7 @@ function KeypassContent({
         return (
             <Box className={styles.keypass}>
                 <ContentBlock
-                    icon={<span>👋</span>}
+                    icon={<FaceIdIcon />}
                     title={t("onboarding.keypass.existingAccount.title")}
                     description={t(
                         "onboarding.keypass.existingAccount.description"
@@ -171,7 +172,12 @@ function KeypassContent({
                         </Button>
                     }
                 >
-                    {loginError && <HandleErrors error={loginError} />}
+                    {loginError && (
+                        <HandleErrors
+                            error={loginError}
+                            className={styles.errorText}
+                        />
+                    )}
                 </ContentBlock>
             </Box>
         );
@@ -180,7 +186,7 @@ function KeypassContent({
     return (
         <Box className={styles.keypass}>
             <ContentBlock
-                icon={<span>🔐</span>}
+                icon={<FaceIdIcon />}
                 title={t("onboarding.keypass.title")}
                 description={t("onboarding.keypass.description")}
                 footer={
@@ -189,13 +195,14 @@ function KeypassContent({
                             {t("onboarding.continue")}
                         </Button>
                         <AuthenticateWithPhone
-                            as={Button}
                             text={t("wallet.register.useQRCode")}
                         />
                     </>
                 }
             >
-                {error && <HandleErrors error={error} />}
+                {error && (
+                    <HandleErrors error={error} className={styles.errorText} />
+                )}
             </ContentBlock>
         </Box>
     );

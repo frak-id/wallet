@@ -248,7 +248,10 @@ function Sso() {
                 <SsoHeader />
                 <div className={styles.sso__grid}>
                     <h2>An error occurred</h2>
-                    <HandleErrors error={loaderError} />
+                    <HandleErrors
+                        error={loaderError}
+                        className={styles.errorText}
+                    />
                     <button
                         className={styles.sso__buttonLink}
                         onClick={() => window.close()}
@@ -272,7 +275,12 @@ function Sso() {
                 <Header />
                 {!success && (
                     <>
-                        {error && <HandleErrors error={error} />}
+                        {error && (
+                            <HandleErrors
+                                error={error}
+                                className={styles.errorText}
+                            />
+                        )}
                         <Actions onSuccess={onSuccess} onError={setError} />
                         <PhonePairingAction onSuccess={onSuccess} />
                     </>
@@ -492,7 +500,6 @@ function PhonePairingAction({
         <div className={styles.sso__secondaryButtonWrapper}>
             <AuthenticateWithPhone
                 text={t("authent.sso.btn.new.phone")}
-                className={styles.sso__buttonLink}
                 onSuccess={onSuccess}
             />
         </div>

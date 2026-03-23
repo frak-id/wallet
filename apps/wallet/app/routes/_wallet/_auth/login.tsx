@@ -11,6 +11,7 @@ import { StepLayout } from "@/module/common/component/StepLayout";
 import { PairingInProgress } from "@/module/pairing/component/PairingInProgress";
 import { usePendingPairingInfo } from "@/module/pairing/hook/usePendingPairingInfo";
 import { consumePendingDeepLink } from "@/utils/deepLink";
+import * as styles from "./login.css";
 
 export const Route = createFileRoute("/_wallet/_auth/login")({
     component: LoginPage,
@@ -72,7 +73,6 @@ function LoginPage() {
                             loginButtonText={t("wallet.login.button")}
                         />
                         <AuthenticateWithPhone
-                            as={Button}
                             text={t("wallet.login.useQRCode")}
                             width={"full"}
                         />
@@ -86,7 +86,9 @@ function LoginPage() {
                     </>
                 }
             >
-                {error && <HandleErrors error={error} />}
+                {error && (
+                    <HandleErrors error={error} className={styles.errorText} />
+                )}
             </StepLayout>
         </>
     );
