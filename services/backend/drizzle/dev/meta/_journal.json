@@ -169,6 +169,13 @@
             "when": 1774010514354,
             "tag": "0023_square_blacklash",
             "breakpoints": true
+        },
+        {
+            "idx": 24,
+            "version": "7",
+            "when": 1774254805739,
+            "tag": "0024_hesitant_dark_beast",
+            "breakpoints": true
         }
     ]
 }

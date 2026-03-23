@@ -78,6 +78,13 @@
             "when": 1774010368554,
             "tag": "0010_plain_pretty_boy",
             "breakpoints": true
+        },
+        {
+            "idx": 11,
+            "version": "7",
+            "when": 1774254782911,
+            "tag": "0011_motionless_naoko",
+            "breakpoints": true
         }
     ]
 }
