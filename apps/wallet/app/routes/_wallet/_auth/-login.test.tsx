@@ -60,8 +60,12 @@ vi.mock("@/module/authentication/component/LoginList", () => ({
     LoginList: () => <div>login-list</div>,
 }));
 
-vi.mock("@/module/common/component/StepLayout", () => ({
-    StepLayout: ({
+vi.mock("@/module/common/component/Back", () => ({
+    Back: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+}));
+
+vi.mock("@/module/common/component/Grid", () => ({
+    Grid: ({
         children,
         footer,
     }: {
