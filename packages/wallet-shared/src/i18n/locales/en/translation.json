@@ -383,5 +383,46 @@
         "retry": "Retry",
         "appNotFound": "Frak Wallet app not found",
         "appNotFoundHint": "Please reinstall the app or try again"
+    },
+    "monerium": {
+        "account": "Monerium Account",
+        "connect": "Connect to Monerium",
+        "connecting": "Connecting...",
+        "disconnect": "Disconnect",
+        "completeSetup": "Complete setup on Monerium",
+        "linkWallet": "Link your wallet to Monerium",
+        "status": {
+            "settingUp": "Setting up...",
+            "created": "Account created — complete verification on Monerium",
+            "pending": "Verification in progress",
+            "approved": "Verified ✓",
+            "rejected": "Verification failed"
+        },
+        "badge": {
+            "pending": "Bank verification in progress...",
+            "approved": "Bank connected:",
+            "notLinked": "IBAN not linked to this wallet",
+            "rejected": "Verification failed"
+        },
+        "offramp": {
+            "amountLabel": "Amount (EURe)",
+            "balance": "Balance:",
+            "max": "MAX",
+            "destinationIban": "Destination IBAN",
+            "ibanWarning": "Warning: This IBAN is not linked to your current wallet address.",
+            "submit": "Withdraw to bank",
+            "submitting": "Submitting order...",
+            "confirmBiometric": "Confirm with biometric...",
+            "success": "Order submitted! Funds will arrive in 1-2 business days.",
+            "tryAgain": "Try again",
+            "noIban": "No IBAN linked. Please complete Monerium verification first.",
+            "amountRequired": "Amount is required",
+            "amountInvalid": "Amount must be greater than 0"
+        },
+        "callback": {
+            "noCode": "No authorization code received",
+            "failed": "Failed to complete authentication",
+            "tryAgain": "Try again"
+        }
     }
 }

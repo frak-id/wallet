@@ -10,6 +10,7 @@ import {
     erpcUrl,
     firebaseAndroidConfigBase64,
     firebaseIosConfigBase64,
+    moneriumClientId,
     nexusRpcSecret,
     openPanelApiUrl,
     openPanelWalletClientId,
@@ -48,6 +49,7 @@ export const walletEnv = {
     OPEN_PANEL_WALLET_CLIENT_ID: openPanelWalletClientId.value,
     OPEN_PANEL_LISTENER_CLIENT_ID: openPanelWalletClientId.value,
     ANDROID_SHA256_FINGERPRINT: androidSha256Fingerprint.value,
+    MONERIUM_CLIENT_ID: moneriumClientId.value,
 };
 
 let imageRefs = {
@@ -86,6 +88,7 @@ if (!$dev) {
             VAPID_PUBLIC_KEY: walletEnv.VAPID_PUBLIC_KEY,
             OPEN_PANEL_WALLET_CLIENT_ID: walletEnv.OPEN_PANEL_WALLET_CLIENT_ID,
             ANDROID_SHA256_FINGERPRINT: walletEnv.ANDROID_SHA256_FINGERPRINT,
+            MONERIUM_CLIENT_ID: walletEnv.MONERIUM_CLIENT_ID,
         },
         platforms: ["linux/amd64"],
         push: true,
