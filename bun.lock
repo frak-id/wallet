@@ -157,7 +157,7 @@
         "@shopify/shopify-api": "^13.0.0",
         "@shopify/shopify-app-react-router": "^1.1.1",
         "@shopify/shopify-app-session-storage": "^5.0.0",
-        "@shopify/shopify-app-session-storage-memory": "^5.0.5",
+        "@shopify/shopify-app-session-storage-memory": "^6.0.0",
         "@tanstack/query-sync-storage-persister": "^5.90.24",
         "@tanstack/react-query": "catalog:",
         "@tanstack/react-query-persist-client": "catalog:",
@@ -517,6 +517,7 @@
         "@tanstack/react-query": "catalog:",
         "@wagmi/core": "catalog:",
         "class-variance-authority": "^0.7.1",
+        "clsx": "^2.1.1",
         "cuer": "^0.0.3",
         "i18next": "^26.0.3",
         "idb-keyval": "^6.2.2",
@@ -1664,7 +1665,7 @@
 
     "@shopify/shopify-app-session-storage": ["@shopify/shopify-app-session-storage@5.0.0", "", { "peerDependencies": { "@shopify/shopify-api": "^13.0.0" } }, "sha512-hFUeDGmA4NJmnsq0peYxYIhCzPtXzP9dKjoz04VwWq0XTFzmjy+6yLWY9LFNI4gSiK3Mws3FSLKaatd8TqIj2g=="],
 
-    "@shopify/shopify-app-session-storage-memory": ["@shopify/shopify-app-session-storage-memory@5.0.5", "", { "peerDependencies": { "@shopify/shopify-api": "^12.0.0", "@shopify/shopify-app-session-storage": "^4.0.0" } }, "sha512-WE0uvs+0WJn+Tw5Y0j2+zX83tfVChuzu2A62u+nSZ3F/G03kEbroA+/enjsXEZe7ViPjAAhQNu6R+e/ZDvOTMQ=="],
+    "@shopify/shopify-app-session-storage-memory": ["@shopify/shopify-app-session-storage-memory@6.0.0", "", { "peerDependencies": { "@shopify/shopify-api": "^13.0.0", "@shopify/shopify-app-session-storage": "^5.0.0" } }, "sha512-QSSbliLj0zKx6noRvANQwILaY2I/SqsP+SlnrVSi5H987tfFgyr2OLNsNsf3oqYLXDZHOx+VdPLt+uSxziYKyg=="],
 
     "@shopify/storefront-api-client": ["@shopify/storefront-api-client@1.0.10", "", { "dependencies": { "@shopify/graphql-client": "^1.4.2" } }, "sha512-A0ItFW58L5+y/jnnJDEsmt2YcQSt2BG+pNoQOYRpPBJaOLpTj7A13q1QVrE5XYVGZCA6ZQ6FqAtgosHHrkut0Q=="],
 
@@ -3974,10 +3975,6 @@
 
     "@shopify/shopify-api/jose": ["jose@5.10.0", "", {}, "sha512-s+3Al/p9g32Iq+oqXxkW//7jk2Vig6FF1CFqzVXoTUXt2qz89YWbL+OwS17NFYEvxC35n0FKeGO2LGYSxeM2Gg=="],
 
-    "@shopify/shopify-app-session-storage-memory/@shopify/shopify-api": ["@shopify/shopify-api@12.3.0", "", { "dependencies": { "@shopify/admin-api-client": "^1.1.1", "@shopify/graphql-client": "^1.4.1", "@shopify/storefront-api-client": "^1.0.9", "compare-versions": "^6.1.1", "isbot": "^5.1.32", "jose": "^5.9.6", "lossless-json": "^4.3.0", "tslib": "^2.8.1" } }, "sha512-zeMhaZq57cM/8ef9edoVgZhzJxju4pQhPLBX93FYuPbR29f4K92KLlI4QZ+JV4qFKONhQewgXrSBuA/ILp2ZRw=="],
-
-    "@shopify/shopify-app-session-storage-memory/@shopify/shopify-app-session-storage": ["@shopify/shopify-app-session-storage@4.0.5", "", { "peerDependencies": { "@shopify/shopify-api": "^12.0.0" } }, "sha512-ZL6tV8hccOO1nTLmj5rbzl++SZhgokQ73CY4v30MRTem/IhbneQag3/tUg9rPjAaDrROEyokGeJTgOq2gD+1hg=="],
-
     "@tanstack/router-generator/source-map": ["source-map@0.7.6", "", {}, "sha512-i5uvt8C3ikiWeNZSVZNWcfZPItFQOsYTUAOkcUPGd8DqDy1uOUikjt5dG+uRlwyvR108Fb9DOd4GvXfT0N2/uQ=="],
 
     "@tanstack/router-generator/zod": ["zod@3.24.2", "", {}, "sha512-lY7CDW43ECgW9u1TcT3IoXHflywfVqDYze4waEz812jR/bZ8FHDsl7pFQoSZTz5N+2NqRXs8GBwnAwo3ZNxqhQ=="],
@@ -4363,8 +4360,6 @@
     "@shopify/graphql-codegen/@graphql-codegen/typescript/@graphql-codegen/schema-ast": ["@graphql-codegen/schema-ast@4.1.0", "", { "dependencies": { "@graphql-codegen/plugin-helpers": "^5.0.3", "@graphql-tools/utils": "^10.0.0", "tslib": "~2.6.0" }, "peerDependencies": { "graphql": "^0.8.0 || ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0 || ^16.0.0" } }, "sha512-kZVn0z+th9SvqxfKYgztA6PM7mhnSZaj4fiuBWvMTqA+QqQ9BBed6Pz41KuD/jr0gJtnlr2A4++/0VlpVbCTmQ=="],
 
     "@shopify/graphql-codegen/@graphql-codegen/typescript/tslib": ["tslib@2.6.3", "", {}, "sha512-xNvxJEOUiWPGhUuUdQgAJPKOOJfGnIyKySOc09XkKsgdUV/3E2zvwZYdejjmRgPCgcym1juLH3226yA7sEFJKQ=="],
-
-    "@shopify/shopify-app-session-storage-memory/@shopify/shopify-api/jose": ["jose@5.10.0", "", {}, "sha512-s+3Al/p9g32Iq+oqXxkW//7jk2Vig6FF1CFqzVXoTUXt2qz89YWbL+OwS17NFYEvxC35n0FKeGO2LGYSxeM2Gg=="],
 
     "@vanilla-extract/integration/esbuild/@esbuild/aix-ppc64": ["@esbuild/aix-ppc64@0.27.4", "", { "os": "aix", "cpu": "ppc64" }, "sha512-cQPwL2mp2nSmHHJlCyoXgHGhbEPMrEEU5xhkcy3Hs/O7nGZqEpZ2sUtLaL9MORLtDfRvVl2/3PAuEkYZH0Ty8Q=="],
 

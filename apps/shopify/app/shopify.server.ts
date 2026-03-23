@@ -25,9 +25,6 @@ const shopify = shopifyApp({
     authPathPrefix: "/auth",
     sessionStorage: sessionStorageAdapter,
     distribution: AppDistribution.AppStore,
-    ...(process.env.SHOP_CUSTOM_DOMAIN
-        ? { customShopDomains: [process.env.SHOP_CUSTOM_DOMAIN] }
-        : {}),
 });
 
 export default shopify;

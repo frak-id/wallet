@@ -17,6 +17,13 @@ import {
     translationKeyPathToObject,
 } from "@frak-labs/wallet-shared";
 import type { i18n, TOptions } from "i18next";
+
+/**
+ * TFunction overloads expect `Omit<TOptions, "context"> & { context?: string }` rather than raw
+ * TOptions (whose $Dictionary intersection widens `context` to `any`). This alias bridges the gap.
+ */
+type TranslationOptions = Omit<TOptions, "context"> & { context?: string };
+
 import {
     createContext,
     type PropsWithChildren,
@@ -84,7 +91,7 @@ type UIContext = {
     clearRequest: () => void;
     translation: {
         lang?: "en" | "fr";
-        t: (key: string, options?: TOptions) => string;
+        t: (key: string, options?: TranslationOptions) => string;
         i18n: i18n;
     };
 };
@@ -236,13 +243,11 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
             currentRequest?.i18n?.lang ??
             backendSdkConfig?.lang ??
             (initialI18n.language as Language);
-        const context = currentRequest
-            ? {
-                  productName: currentRequest.appName,
-                  productOrigin: resolvingContext?.origin,
-                  context: currentRequest.i18n?.context,
-              }
-            : {};
+        const context = {
+            productName: currentRequest?.appName,
+            productOrigin: resolvingContext?.origin,
+            context: currentRequest?.i18n?.context,
+        };
 
         // Create the new i18n instance with the right context
         const i18n = initialI18n.cloneInstance({
@@ -265,13 +270,11 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
         populateI18nResources(i18n, lang, currentRequest);
 
         // Create the new t function with the right context
+        // Note: context variables (productName, productOrigin, estimatedReward) are already
+        // provided via defaultVariables in the cloneInstance call above
         const rawT = i18n.getFixedT(lang, null);
-        const t = (key: string, options?: TOptions): string =>
-            rawT(key, {
-                ...context,
-                estimatedReward: formattedReward,
-                ...options,
-            });
+        const t = (key: string, options?: TranslationOptions): string =>
+            rawT(key, options);
         return { lang, i18n, t };
     }, [
         backendSdkConfig?.lang,

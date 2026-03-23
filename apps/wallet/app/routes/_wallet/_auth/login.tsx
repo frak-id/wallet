@@ -1,4 +1,3 @@
-import { Button } from "@frak-labs/design-system/components/Button";
 import { HandleErrors, sessionStore } from "@frak-labs/wallet-shared";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -74,7 +73,6 @@ function LoginPage() {
                         />
                         <AuthenticateWithPhone
                             text={t("wallet.login.useQRCode")}
-                            width={"full"}
                         />
                         <Link to={"/recovery"} viewTransition>
                             {t("wallet.login.recover")}
