@@ -3,6 +3,7 @@ import { Logout } from "@/module/authentication/component/Logout";
 import { BiometricSettings } from "@/module/biometrics";
 import { Grid } from "@/module/common/component/Grid";
 import { MoneriumConnect } from "@/module/monerium/component/MoneriumConnect";
+import { MoneriumOnchainLink } from "@/module/monerium/component/MoneriumOnchainLink";
 import {
     moneriumStore,
     selectIsConnected,
@@ -50,6 +51,7 @@ function SettingsPage() {
             <PrivateKey />
             <PairingList />
             <MoneriumSection />
+            <MoneriumOnchainLink />
             <LegalLinks />
         </Grid>
     );
