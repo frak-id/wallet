@@ -39,7 +39,7 @@ export const Route = createFileRoute("/_wallet/_auth")({
 
 function AuthenticationLayout() {
     return (
-        <GlobalLayout>
+        <GlobalLayout header={false}>
             <Outlet />
         </GlobalLayout>
     );
