@@ -7,7 +7,9 @@ import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
 import { useMoneriumAuth } from "@/module/monerium/hooks/useMoneriumAuth";
 import { useMoneriumIban } from "@/module/monerium/hooks/useMoneriumIban";
-import { useMoneriumStatus } from "@/module/monerium/hooks/useMoneriumStatus";
+import { useMoneriumProfile } from "@/module/monerium/hooks/useMoneriumProfile";
+import { useMoneriumAddresses } from "../hooks/useMoneriumAddresses";
+import { useMoneriumLinkWallet } from "../hooks/useMoneriumLinkWallet";
 import styles from "./MoneriumConnect.module.css";
 
 export function MoneriumConnect() {
@@ -15,8 +17,10 @@ export function MoneriumConnect() {
     const { address } = useAccount();
     const { connect, disconnect, isConnecting, isConnected } =
         useMoneriumAuth();
-    const { profileState } = useMoneriumStatus();
+    const { profileState } = useMoneriumProfile();
     const { iban, isLinkedToWallet } = useMoneriumIban();
+    const { isWalletLinked } = useMoneriumAddresses();
+    const { linkWallet, isPending: isLinkingWallet } = useMoneriumLinkWallet();
 
     const handleConnect = () => {
         if (address) {
@@ -89,6 +93,18 @@ export function MoneriumConnect() {
                     {t("monerium.connect")}
                 </Button>
             )}
+
+            {!isWalletLinked && isConnected ? (
+                <div className={styles.moneriumConnect__actions}>
+                    <Button
+                        size={"small"}
+                        onClick={() => linkWallet()}
+                        disabled={isWalletLinked || isLinkingWallet}
+                    >
+                        {t("monerium.linkWallet")}
+                    </Button>
+                </div>
+            ) : null}
         </Panel>
     );
 }

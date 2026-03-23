@@ -1,10 +1,10 @@
 import { useTranslation } from "react-i18next";
 import { Panel } from "@/module/common/component/Panel";
 import { useMoneriumIban } from "@/module/monerium/hooks/useMoneriumIban";
-import { useMoneriumStatus } from "@/module/monerium/hooks/useMoneriumStatus";
+import { useMoneriumProfile } from "@/module/monerium/hooks/useMoneriumProfile";
 import {
+    isMoneriumConnected,
     moneriumStore,
-    selectIsConnected,
 } from "@/module/monerium/store/moneriumStore";
 import styles from "./MoneriumStatus.module.css";
 
@@ -17,8 +17,8 @@ function shortenIban(iban: string): string {
 
 export function MoneriumStatus() {
     const { t } = useTranslation();
-    const isConnected = moneriumStore(selectIsConnected);
-    const { profileState } = useMoneriumStatus();
+    const isConnected = moneriumStore(isMoneriumConnected);
+    const { profileState } = useMoneriumProfile();
     const { iban, isLinkedToWallet } = useMoneriumIban();
 
     if (!isConnected) {

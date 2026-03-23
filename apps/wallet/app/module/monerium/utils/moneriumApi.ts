@@ -1,74 +1,46 @@
+import type { Address, Hex } from "viem";
+import { moneriumStore } from "@/module/monerium/store/moneriumStore";
 import { moneriumConfig } from "@/module/monerium/utils/moneriumConfig";
 import type {
+    MoneriumAddressesResponse,
     MoneriumIbansResponse,
     MoneriumNewOrder,
     MoneriumOrder,
+    MoneriumPostAddressResponse,
     MoneriumProfilesResponse,
     MoneriumTokenResponse,
 } from "@/module/monerium/utils/moneriumTypes";
 
-function getErrorMessage(payload: unknown): string {
-    if (typeof payload === "string") {
-        return payload;
-    }
-
-    if (typeof payload === "object" && payload !== null) {
-        const json = payload as Record<string, unknown>;
-
-        if (typeof json.message === "string") {
-            return json.message;
-        }
-
-        if (typeof json.error_description === "string") {
-            return json.error_description;
-        }
-
-        if (typeof json.error === "string") {
-            return json.error;
-        }
-
-        if (typeof json.title === "string") {
-            return json.title;
-        }
-
-        if (typeof json.detail === "string") {
-            return json.detail;
-        }
-    }
-
-    return "Request failed";
-}
-
-async function readErrorMessage(response: Response): Promise<string> {
+async function throwApiError(response: Response): Promise<never> {
+    let message = response.statusText || "Request failed";
     try {
-        const payload = await response.json();
-        return getErrorMessage(payload);
-    } catch {
-        return response.statusText || "Request failed";
-    }
-}
-
-async function throwMoneriumError(response: Response): Promise<never> {
-    const message = await readErrorMessage(response);
-
-    if (response.status === 401) {
-        throw new Error(`Monerium API 401: ${message}`);
-    }
+        const body = await response.json();
+        message =
+            body?.message ?? body?.error_description ?? body?.error ?? message;
+    } catch {}
 
     throw new Error(`Monerium API ${response.status}: ${message}`);
 }
 
-export function getApiBaseUrl(): string {
+function getApiBaseUrl(): string {
     return moneriumConfig.environment === "production"
         ? "https://api.monerium.app"
         : "https://api.monerium.dev";
 }
 
+function getAccessToken(): string {
+    const token = moneriumStore.getState().accessToken;
+    if (!token) {
+        throw new Error("Monerium: no access token");
+    }
+    return token;
+}
+
 async function moneriumFetch<T>(
     path: string,
-    accessToken: string,
     options?: RequestInit
 ): Promise<T> {
+    const accessToken = getAccessToken();
     const headers = new Headers(options?.headers);
     headers.set("Authorization", `Bearer ${accessToken}`);
     headers.set("Accept", "application/vnd.monerium.api-v2+json");
@@ -80,7 +52,7 @@ async function moneriumFetch<T>(
     });
 
     if (!response.ok) {
-        return throwMoneriumError(response);
+        return throwApiError(response);
     }
 
     return (await response.json()) as T;
@@ -107,7 +79,7 @@ export async function exchangeCodeForTokens(
     });
 
     if (!response.ok) {
-        return throwMoneriumError(response);
+        return throwApiError(response);
     }
 
     return (await response.json()) as MoneriumTokenResponse;
@@ -131,33 +103,45 @@ export async function refreshAccessToken(
     });
 
     if (!response.ok) {
-        return throwMoneriumError(response);
+        return throwApiError(response);
     }
 
     return (await response.json()) as MoneriumTokenResponse;
 }
 
-export async function getProfiles(
-    accessToken: string
-): Promise<MoneriumProfilesResponse> {
-    return moneriumFetch<MoneriumProfilesResponse>("/profiles", accessToken);
+export async function getProfiles(): Promise<MoneriumProfilesResponse> {
+    return moneriumFetch<MoneriumProfilesResponse>("/profiles");
 }
 
-export async function getIbans(
-    accessToken: string
-): Promise<MoneriumIbansResponse> {
-    return moneriumFetch<MoneriumIbansResponse>("/ibans", accessToken);
+export async function getIbans(): Promise<MoneriumIbansResponse> {
+    return moneriumFetch<MoneriumIbansResponse>("/ibans");
 }
 
 export async function placeOrder(
-    accessToken: string,
     order: MoneriumNewOrder
 ): Promise<MoneriumOrder> {
-    return moneriumFetch<MoneriumOrder>("/orders", accessToken, {
+    return moneriumFetch<MoneriumOrder>("/orders", {
         method: "POST",
         body: JSON.stringify({
             kind: "redeem",
             ...order,
         }),
+    });
+}
+
+export async function getAddresses(): Promise<MoneriumAddressesResponse> {
+    return moneriumFetch<MoneriumAddressesResponse>("/addresses");
+}
+
+export async function linkAddress(params: {
+    profile: string;
+    address: Address;
+    chain: string;
+    message: string;
+    signature: Hex;
+}): Promise<MoneriumPostAddressResponse> {
+    return moneriumFetch<MoneriumPostAddressResponse>("/addresses", {
+        method: "POST",
+        body: JSON.stringify(params),
     });
 }

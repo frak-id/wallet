@@ -1,17 +1,15 @@
 import { useMutation } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
 import {
+    isMoneriumTokenExpired,
     moneriumStore,
-    selectAccessToken,
-    selectIsTokenExpired,
-    selectRefreshToken,
 } from "@/module/monerium/store/moneriumStore";
 import { refreshAccessToken } from "@/module/monerium/utils/moneriumApi";
 
 export function useMoneriumTokenRefresh() {
-    const accessToken = moneriumStore(selectAccessToken);
-    const refreshToken = moneriumStore(selectRefreshToken);
-    const isTokenExpired = moneriumStore(selectIsTokenExpired);
+    const accessToken = moneriumStore((s) => s.accessToken);
+    const refreshToken = moneriumStore((s) => s.refreshToken);
+    const isTokenExpired = moneriumStore(isMoneriumTokenExpired);
 
     const refreshAttemptedRef = useRef(false);
 
@@ -25,8 +23,7 @@ export function useMoneriumTokenRefresh() {
                 .setTokens(
                     tokens.access_token,
                     tokens.refresh_token,
-                    tokens.expires_in,
-                    tokens.profile
+                    tokens.expires_in
                 );
         },
         onError: () => {

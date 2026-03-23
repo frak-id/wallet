@@ -1,3 +1,5 @@
+import type { Address } from "viem";
+
 export type MoneriumTokenResponse = {
     access_token: string;
     refresh_token: string;
@@ -16,6 +18,22 @@ export type MoneriumProfile = {
 
 export type MoneriumProfilesResponse = {
     profiles: MoneriumProfile[];
+};
+
+export type MoneriumAddress = {
+    profile: string;
+    address: Address;
+    chains: string[];
+};
+
+export type MoneriumAddressesResponse = {
+    addresses: MoneriumAddress[];
+};
+
+export type MoneriumPostAddressResponse = {
+    address: Address;
+    profile: string;
+    state: "linked" | "pending";
 };
 
 export type MoneriumIban = {

@@ -1,9 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 import { useAccount, useSignMessage } from "wagmi";
-import {
-    moneriumStore,
-    selectAccessToken,
-} from "@/module/monerium/store/moneriumStore";
+import { moneriumStore } from "@/module/monerium/store/moneriumStore";
 import { placeOrder } from "@/module/monerium/utils/moneriumApi";
 import { moneriumConfig } from "@/module/monerium/utils/moneriumConfig";
 import { useMoneriumTokenRefresh } from "./useMoneriumClient";
@@ -78,7 +75,7 @@ function extractErrorMessage(error: unknown): string {
 export function useMoneriumOfframp() {
     const { signMessageAsync } = useSignMessage();
     const { address: walletAddress } = useAccount();
-    const accessToken = moneriumStore(selectAccessToken);
+    const accessToken = moneriumStore((s) => s.accessToken);
     const { isReady } = useMoneriumTokenRefresh();
 
     const mutation = useMutation({
@@ -96,7 +93,7 @@ export function useMoneriumOfframp() {
             try {
                 const signature = await signMessageAsync({ message });
 
-                return await placeOrder(accessToken, {
+                return await placeOrder({
                     amount,
                     signature,
                     currency: "eur",

@@ -3,15 +3,15 @@ import {
     bufferToBase64URLString,
     bytesToBase64URLString,
 } from "@frak-labs/wallet-shared/common/utils/base64url";
+import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
 import type { Address } from "viem";
-import { useSignMessage } from "wagmi";
+import { moneriumKey } from "@/module/monerium/queryKeys/monerium";
 import {
+    isMoneriumConnected,
     moneriumStore,
-    selectIsConnected,
 } from "@/module/monerium/store/moneriumStore";
 import {
-    ADDRESS_LINKING_MESSAGE,
     MONERIUM_AUTH_BASE_URL,
     moneriumConfig,
 } from "@/module/monerium/utils/moneriumConfig";
@@ -40,62 +40,52 @@ const getMoneriumAuthBaseUrl = () =>
     MONERIUM_AUTH_BASE_URL[moneriumConfig.environment];
 
 export const useMoneriumAuth = () => {
-    const { signMessageAsync } = useSignMessage();
     const [isConnecting, setIsConnecting] = useState(false);
+    const queryClient = useQueryClient();
 
-    const isConnected = moneriumStore(selectIsConnected);
+    const isConnected = moneriumStore(isMoneriumConnected);
 
-    const connect = useCallback(
-        async (walletAddress: Address) => {
-            setIsConnecting(true);
+    const connect = useCallback(async (walletAddress: Address) => {
+        setIsConnecting(true);
 
-            try {
-                const codeVerifier = createCodeVerifier();
-                const codeChallenge = await createCodeChallenge(codeVerifier);
-                const state = createStateNonce();
+        try {
+            const codeVerifier = createCodeVerifier();
+            const codeChallenge = await createCodeChallenge(codeVerifier);
+            const state = createStateNonce();
 
-                moneriumStore.getState().setPendingCodeVerifier(codeVerifier);
+            moneriumStore.getState().setPendingCodeVerifier(codeVerifier);
 
-                let signature: `0x${string}` | "0x" = "0x";
+            const searchParams = new URLSearchParams({
+                client_id: moneriumConfig.clientId,
+                redirect_uri: moneriumConfig.redirectUri,
+                response_type: "code",
+                code_challenge: codeChallenge,
+                code_challenge_method: "S256",
+                state,
+                address: walletAddress,
+                signature: "0x",
+                chain: moneriumConfig.chain,
+            });
 
-                try {
-                    signature = await signMessageAsync({
-                        message: ADDRESS_LINKING_MESSAGE,
-                    });
-                } catch {
-                    signature = "0x";
-                }
+            const authUrl = `${getMoneriumAuthBaseUrl()}?${searchParams.toString()}`;
 
-                const searchParams = new URLSearchParams({
-                    client_id: moneriumConfig.clientId,
-                    redirect_uri: moneriumConfig.redirectUri,
-                    response_type: "code",
-                    code_challenge: codeChallenge,
-                    code_challenge_method: "S256",
-                    state,
-                    address: walletAddress,
-                    signature,
-                    chain: moneriumConfig.chain,
-                });
-
-                const authUrl = `${getMoneriumAuthBaseUrl()}?${searchParams.toString()}`;
-
-                if (isTauri()) {
-                    window.open(authUrl, "_blank");
-                    return;
-                }
-
-                window.location.assign(authUrl);
-            } finally {
-                setIsConnecting(false);
+            if (isTauri()) {
+                window.open(authUrl, "_blank");
+                return;
             }
-        },
-        [signMessageAsync]
-    );
+
+            window.location.assign(authUrl);
+        } finally {
+            setIsConnecting(false);
+        }
+    }, []);
 
     const disconnect = useCallback(() => {
         moneriumStore.getState().disconnect();
-    }, []);
+        queryClient.invalidateQueries({
+            queryKey: moneriumKey.all,
+        });
+    }, [queryClient]);
 
     return {
         connect,

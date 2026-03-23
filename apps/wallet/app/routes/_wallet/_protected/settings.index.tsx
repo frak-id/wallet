@@ -3,11 +3,10 @@ import { Logout } from "@/module/authentication/component/Logout";
 import { BiometricSettings } from "@/module/biometrics";
 import { Grid } from "@/module/common/component/Grid";
 import { MoneriumConnect } from "@/module/monerium/component/MoneriumConnect";
-import { MoneriumOnchainLink } from "@/module/monerium/component/MoneriumOnchainLink";
+import { useMoneriumProfile } from "@/module/monerium/hooks/useMoneriumProfile";
 import {
+    isMoneriumConnected,
     moneriumStore,
-    selectIsConnected,
-    selectProfileState,
 } from "@/module/monerium/store/moneriumStore";
 import { RemoveAllNotification } from "@/module/notification/component/RemoveAllNotification";
 import { PairingList } from "@/module/pairing/component/PairingList";
@@ -21,8 +20,8 @@ export const Route = createFileRoute("/_wallet/_protected/settings/")({
 });
 
 function MoneriumSection() {
-    const isConnected = moneriumStore(selectIsConnected);
-    const profileState = moneriumStore(selectProfileState);
+    const isConnected = moneriumStore(isMoneriumConnected);
+    const { profileState } = useMoneriumProfile();
 
     return (
         <>
@@ -51,7 +50,6 @@ function SettingsPage() {
             <PrivateKey />
             <PairingList />
             <MoneriumSection />
-            <MoneriumOnchainLink />
             <LegalLinks />
         </Grid>
     );

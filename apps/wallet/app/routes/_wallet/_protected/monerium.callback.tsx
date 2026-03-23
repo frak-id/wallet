@@ -34,8 +34,7 @@ function MoneriumCallback() {
                 .setTokens(
                     tokens.access_token,
                     tokens.refresh_token,
-                    tokens.expires_in,
-                    tokens.profile
+                    tokens.expires_in
                 );
 
             moneriumStore.getState().setPendingCodeVerifier(null);

@@ -11,8 +11,6 @@ export const addresses = {
     p256Wrapper: "0x00e4005A00007384000000B0a8A0F300DD9fCAFA",
     webAuthNRecoveryAction: "0x000000000093c960bC9F9Dc93509E394a96c7FD9",
     webAuthNValidator: "0x0000000000Fb9604350a25E826B050D859FE7b77",
-    // TODO: Replace with deployed contract address
-    moneriumSignMsgAction: "0x0000000000000000000000000000000000000000",
 } as const;
 
 /**
