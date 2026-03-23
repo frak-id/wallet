@@ -1,3 +1,4 @@
+import { isRunningInProd } from "@frak-labs/app-essentials";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Logout } from "@/module/authentication/component/Logout";
 import { BiometricSettings } from "@/module/biometrics";
@@ -49,7 +50,7 @@ function SettingsPage() {
             <RemoveAllNotification />
             <PrivateKey />
             <PairingList />
-            <MoneriumSection />
+            {!isRunningInProd && <MoneriumSection />}
             <LegalLinks />
         </Grid>
     );

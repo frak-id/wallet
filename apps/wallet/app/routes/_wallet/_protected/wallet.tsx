@@ -1,3 +1,4 @@
+import { isRunningInProd } from "@frak-labs/app-essentials";
 import { createFileRoute } from "@tanstack/react-router";
 import { memo } from "react";
 import { useHydrated } from "remix-utils/use-hydrated";
@@ -27,7 +28,7 @@ const HydratedComponents = memo(function HydratedComponents() {
             <InstallApp />
             <EnableNotification />
             <PendingReferral />
-            <MoneriumStatus />
+            {!isRunningInProd && <MoneriumStatus />}
         </>
     );
 });

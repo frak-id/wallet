@@ -1,12 +1,18 @@
+import { isRunningInProd } from "@frak-labs/app-essentials";
 import { Spinner } from "@frak-labs/ui/component/Spinner";
 import { useMutation } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { moneriumStore } from "@/module/monerium/store/moneriumStore";
 import { exchangeCodeForTokens } from "@/module/monerium/utils/moneriumApi";
 
 export const Route = createFileRoute("/_wallet/_protected/monerium/callback")({
+    beforeLoad: () => {
+        if (isRunningInProd) {
+            throw redirect({ to: "/wallet" });
+        }
+    },
     component: MoneriumCallback,
     validateSearch: (search: Record<string, unknown>) => ({
         code: (search.code as string) || undefined,
