@@ -1,5 +1,11 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useAccount, useSignMessage } from "wagmi";
+import { isSmartAccountDeployed } from "permissionless";
+import {
+    useAccount,
+    useClient,
+    useSendTransaction,
+    useSignMessage,
+} from "wagmi";
 import { moneriumKey } from "@/module/monerium/queryKeys/monerium";
 import { getProfiles, linkAddress } from "@/module/monerium/utils/moneriumApi";
 import {
@@ -9,16 +15,27 @@ import {
 
 export function useMoneriumLinkWallet() {
     const { address } = useAccount();
+    const client = useClient();
     const { signMessageAsync } = useSignMessage();
+    const { sendTransactionAsync } = useSendTransaction();
     const queryClient = useQueryClient();
 
     const { mutate, mutateAsync, ...mutationRest } = useMutation({
         mutationFn: async () => {
             if (!address) throw new Error("No wallet connected");
+            if (!client) throw new Error("No client available");
 
             const profiles = await getProfiles();
             if (!profiles?.profiles.length) {
                 throw new Error("No profile detected");
+            }
+
+            const deployed = await isSmartAccountDeployed(client, address);
+            if (!deployed) {
+                await sendTransactionAsync({
+                    to: address,
+                    value: 0n,
+                });
             }
 
             const signature = await signMessageAsync({

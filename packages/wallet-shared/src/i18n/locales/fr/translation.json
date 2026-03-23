@@ -388,6 +388,7 @@
         "connecting": "Connexion...",
         "disconnect": "Déconnecter",
         "completeSetup": "Terminer sur Monerium",
+        "linkWallet": "Lier votre portefeuille à Monerium",
         "status": {
             "settingUp": "Configuration...",
             "created": "Compte créé — terminez la vérification sur Monerium",
@@ -401,14 +402,7 @@
             "notLinked": "IBAN non lié à ce portefeuille",
             "rejected": "Vérification échouée"
         },
-        "iban": {
-            "noIban": "Aucun IBAN assigné. Complétez votre vérification Monerium.",
-            "copy": "Copier",
-            "copied": "Copié !",
-            "warning": "⚠ Cet IBAN est lié à l'adresse {{address}}, pas à votre portefeuille actuel. Le retrait peut ne pas fonctionner correctement."
-        },
         "offramp": {
-            "title": "Retirer vers la banque",
             "amountLabel": "Montant (EURe)",
             "balance": "Solde :",
             "max": "MAX",
@@ -421,12 +415,10 @@
             "tryAgain": "Réessayer",
             "noIban": "Aucun IBAN lié. Veuillez d'abord compléter la vérification Monerium.",
             "amountRequired": "Le montant est requis",
-            "amountInvalid": "Le montant doit être supérieur à 0",
-            "insufficientBalance": "Solde insuffisant"
+            "amountInvalid": "Le montant doit être supérieur à 0"
         },
         "callback": {
             "noCode": "Aucun code d'autorisation reçu",
-            "sessionExpired": "Session OAuth expirée, veuillez réessayer",
             "failed": "Échec de l'authentification",
             "tryAgain": "Réessayer"
         }

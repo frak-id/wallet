@@ -404,14 +404,7 @@
             "notLinked": "IBAN not linked to this wallet",
             "rejected": "Verification failed"
         },
-        "iban": {
-            "noIban": "No IBAN assigned yet. Complete your Monerium verification.",
-            "copy": "Copy",
-            "copied": "Copied!",
-            "warning": "⚠ This IBAN is linked to address {{address}}, not your current wallet. Offramp may not work correctly."
-        },
         "offramp": {
-            "title": "Withdraw to bank",
             "amountLabel": "Amount (EURe)",
             "balance": "Balance:",
             "max": "MAX",
@@ -424,12 +417,10 @@
             "tryAgain": "Try again",
             "noIban": "No IBAN linked. Please complete Monerium verification first.",
             "amountRequired": "Amount is required",
-            "amountInvalid": "Amount must be greater than 0",
-            "insufficientBalance": "Insufficient balance"
+            "amountInvalid": "Amount must be greater than 0"
         },
         "callback": {
             "noCode": "No authorization code received",
-            "sessionExpired": "OAuth session expired, please try again",
             "failed": "Failed to complete authentication",
             "tryAgain": "Try again"
         }
