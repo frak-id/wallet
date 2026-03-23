@@ -99,8 +99,13 @@ function RegisterPage() {
             <PairingInProgress />
             {step === "onboarding" && (
                 <Onboarding
+                    firstButtonLabel={t("onboarding.start")}
                     buttonLabel={t("onboarding.continue")}
                     lastButtonLabel={t("onboarding.activateSecureSpace")}
+                    loginLabel={t("onboarding.alreadyHaveAccount")}
+                    onLoginClick={() =>
+                        navigate({ to: "/login", replace: true })
+                    }
                     onFinish={() => {
                         // Blur active element before opening drawer to prevent
                         // aria-hidden conflict with focused element inside #root

@@ -3,6 +3,7 @@ import { brand, fontSize } from "../../tokens.css";
 
 const base = style({
     margin: 0,
+    fontFamily: brand.typography.fontFamily.inter,
 });
 
 export const textStyles = {
@@ -10,39 +11,49 @@ export const textStyles = {
     heading1: style([
         base,
         {
-            fontSize: fontSize["3xl"],
+            fontSize: fontSize["5xl"],
             fontWeight: brand.typography.fontWeight.bold,
-            lineHeight: 1.1,
-            letterSpacing: "-0.02em",
-            fontFamily: brand.typography.fontFamily.interTight,
+            lineHeight: 1.3,
         },
     ]),
     heading2: style([
         base,
         {
-            fontSize: fontSize["2xl"],
+            fontSize: fontSize["4xl"],
             fontWeight: brand.typography.fontWeight.bold,
-            lineHeight: 1.2,
-            letterSpacing: "-0.01em",
-            fontFamily: brand.typography.fontFamily.interTight,
+            lineHeight: 1.3,
         },
     ]),
     heading3: style([
         base,
         {
-            fontSize: fontSize.xl,
-            fontWeight: brand.typography.fontWeight.semiBold,
+            fontSize: fontSize["3xl"],
+            fontWeight: brand.typography.fontWeight.bold,
             lineHeight: 1.3,
-            fontFamily: brand.typography.fontFamily.interTight,
         },
     ]),
     heading4: style([
         base,
         {
-            fontSize: fontSize.l,
-            fontWeight: brand.typography.fontWeight.semiBold,
+            fontSize: fontSize["2xl"],
+            fontWeight: brand.typography.fontWeight.bold,
             lineHeight: 1.4,
-            fontFamily: brand.typography.fontFamily.inter,
+        },
+    ]),
+    heading5: style([
+        base,
+        {
+            fontSize: fontSize.xl,
+            fontWeight: brand.typography.fontWeight.bold,
+            lineHeight: 1.4,
+        },
+    ]),
+    heading6: style([
+        base,
+        {
+            fontSize: fontSize.l,
+            fontWeight: brand.typography.fontWeight.bold,
+            lineHeight: 1.4,
         },
     ]),
     body: style([
@@ -51,7 +62,6 @@ export const textStyles = {
             fontSize: fontSize.m,
             fontWeight: brand.typography.fontWeight.regular,
             lineHeight: 1.5,
-            fontFamily: brand.typography.fontFamily.inter,
         },
     ]),
     bodySmall: style([
@@ -60,7 +70,6 @@ export const textStyles = {
             fontSize: fontSize.s,
             fontWeight: brand.typography.fontWeight.regular,
             lineHeight: 1.5,
-            fontFamily: brand.typography.fontFamily.inter,
         },
     ]),
     caption: style([
@@ -69,7 +78,6 @@ export const textStyles = {
             fontSize: fontSize.xs,
             fontWeight: brand.typography.fontWeight.regular,
             lineHeight: 1.4,
-            fontFamily: brand.typography.fontFamily.inter,
         },
     ]),
     label: style([
@@ -78,7 +86,6 @@ export const textStyles = {
             fontSize: fontSize.s,
             fontWeight: brand.typography.fontWeight.medium,
             lineHeight: 1.3,
-            fontFamily: brand.typography.fontFamily.inter,
         },
     ]),
     overline: style([
@@ -89,7 +96,6 @@ export const textStyles = {
             lineHeight: 1.4,
             letterSpacing: "0.08em",
             textTransform: "uppercase" as const,
-            fontFamily: brand.typography.fontFamily.inter,
         },
     ]),
 };

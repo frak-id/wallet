@@ -3,8 +3,6 @@ import { alias } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 
 const safeTop = "var(--safe-area-inset-top, env(safe-area-inset-top, 0px))";
-const safeBottom =
-    "var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px))";
 
 /**
  * Outer shell — fills the viewport, flex column so main + bottom bar stack.
@@ -31,7 +29,6 @@ export const shellContainer = style({
  */
 export const mainContent = style({
     padding: alias.spacing.m,
-    paddingBottom: `calc(130px + env(safe-area-inset-bottom, 0px))`,
     flex: "1 1 0",
     minHeight: 0,
     overflow: "auto",
@@ -41,30 +38,6 @@ export const mainContent = style({
         [`(min-width: ${tablet}px)`]: {
             paddingBottom: alias.spacing.m,
             maxHeight: "758px",
-        },
-    },
-});
-
-/**
- * Variant: no nav — only safe-area padding at the bottom.
- */
-export const mainNoNav = style({
-    paddingBottom: `calc(${alias.spacing.m} + ${safeBottom})`,
-    "@media": {
-        [`(min-width: ${tablet}px)`]: {
-            maxHeight: "805px",
-        },
-    },
-});
-
-/**
- * Compound override: no header AND no nav (same as mainNoNav now, kept for compatibility).
- */
-export const mainNoHeaderNoNav = style({
-    paddingBottom: `calc(${alias.spacing.m} + ${safeBottom})`,
-    "@media": {
-        [`(min-width: ${tablet}px)`]: {
-            maxHeight: "805px",
         },
     },
 });

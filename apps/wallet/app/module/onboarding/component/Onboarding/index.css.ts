@@ -11,6 +11,7 @@ export const onboarding = style({
     flexDirection: "column",
     flex: 1,
     minHeight: 0,
+    margin: `0 calc(-1 * ${alias.spacing.m})`,
     paddingTop: "var(--safe-area-inset-top, env(safe-area-inset-top, 0px))",
     paddingBottom:
         "var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px))",
@@ -44,12 +45,14 @@ export const footer = style({
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    gap: alias.spacing.l,
-    padding: `${alias.spacing.l} ${brand.scale[500]}`,
+    gap: alias.spacing.m,
+    padding: `${alias.spacing.m}`,
+    paddingBottom:0
 });
 
 export const dots = style({
     display: "flex",
+    marginTop: alias.spacing.l,
     gap: alias.spacing.s,
     justifyContent: "center",
     alignItems: "center",

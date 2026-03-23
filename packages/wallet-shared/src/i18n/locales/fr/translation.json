@@ -300,8 +300,10 @@
         }
     },
     "onboarding": {
+        "start": "Commencer",
         "continue": "Continuer",
         "activateSecureSpace": "Activer mon espace sécurisé",
+        "alreadyHaveAccount": "Déjà un compte ?",
         "slides": {
             "one": {
                 "title": "Slide 1 — Titre placeholder",

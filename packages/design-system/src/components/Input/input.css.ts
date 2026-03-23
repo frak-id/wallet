@@ -1,46 +1,58 @@
-import { style, styleVariants } from "@vanilla-extract/css";
+import { style } from "@vanilla-extract/css";
+import { recipe } from "@vanilla-extract/recipes";
 import { vars } from "../../theme.css";
 import { alias, transition } from "../../tokens.css";
 
-const wrapperBase = style({
+export const inputWrapper = recipe({
+    base: {
+        display: "flex",
+        alignItems: "center",
+        width: "100%",
+        borderRadius: alias.cornerRadius.s,
+        border: `${alias.borderWidth.xs} solid ${vars.border.default}`,
+        backgroundColor: vars.surface.background,
+        color: vars.text.primary,
+        transition: `border-color ${transition.base} ease`,
+        overflow: "hidden",
+        selectors: {
+            "&:focus-within": {
+                borderColor: vars.border.focus,
+            },
+        },
+    },
+    variants: {
+        length: {
+            small: { width: "160px" },
+            medium: { width: "320px" },
+            big: { width: "100%" },
+        },
+        error: {
+            true: {
+                borderColor: vars.border.error,
+                selectors: {
+                    "&:focus-within": {
+                        borderColor: vars.border.error,
+                    },
+                },
+            },
+        },
+        disabled: {
+            true: {
+                backgroundColor: vars.surface.disabled,
+                cursor: "not-allowed",
+                opacity: 0.6,
+            },
+        },
+    },
+});
+
+const section = style({
     display: "flex",
     alignItems: "center",
-    width: "100%",
-    borderRadius: alias.cornerRadius.s,
-    border: `${alias.borderWidth.xs} solid ${vars.border.default}`,
-    backgroundColor: vars.surface.background,
-    color: vars.text.primary,
-    transition: `border-color ${transition.base} ease`,
-    overflow: "hidden",
-    selectors: {
-        "&:focus-within": {
-            borderColor: vars.border.focus,
-        },
-    },
+    flexShrink: 0,
 });
 
-const wrapperError = style({
-    borderColor: vars.border.error,
-    selectors: {
-        "&:focus-within": {
-            borderColor: vars.border.error,
-        },
-    },
-});
-
-const wrapperDisabled = style({
-    backgroundColor: vars.surface.disabled,
-    cursor: "not-allowed",
-    opacity: 0.6,
-});
-
-export const lengthVariants = styleVariants({
-    small: { width: "160px" },
-    medium: { width: "320px" },
-    big: { width: "100%" },
-});
-
-const fieldBase = style({
+export const inputField = style({
     width: "100%",
     padding: `${alias.spacing.s} ${alias.spacing.m}`,
     fontSize: "16px",
@@ -58,21 +70,5 @@ const fieldBase = style({
     },
 });
 
-const section = style({
-    display: "flex",
-    alignItems: "center",
-    flexShrink: 0,
-});
-
-const leftSectionStyle = style([section, { paddingLeft: alias.spacing.m }]);
-
-const rightSectionStyle = style([section, { paddingRight: alias.spacing.m }]);
-
-export const inputStyles = {
-    wrapper: wrapperBase,
-    wrapperError,
-    wrapperDisabled,
-    field: fieldBase,
-    leftSection: leftSectionStyle,
-    rightSection: rightSectionStyle,
-};
+export const leftSection = style([section, { paddingLeft: alias.spacing.m }]);
+export const rightSection = style([section, { paddingRight: alias.spacing.m }]);

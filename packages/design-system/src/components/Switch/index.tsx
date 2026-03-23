@@ -1,4 +1,5 @@
 import { Root, Thumb } from "@radix-ui/react-switch";
+import clsx from "clsx";
 import type { ComponentPropsWithRef } from "react";
 import { switchRoot, switchThumb } from "./switch.css";
 
@@ -7,7 +8,7 @@ type SwitchProps = ComponentPropsWithRef<typeof Root> & {
 };
 
 export function Switch({ ref, className, ...props }: SwitchProps) {
-    const combinedClassName = [switchRoot, className].filter(Boolean).join(" ");
+    const combinedClassName = clsx(switchRoot, className);
 
     return (
         <Root className={combinedClassName} ref={ref} {...props}>

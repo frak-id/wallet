@@ -1,38 +1,26 @@
+import type { RecipeVariants } from "@vanilla-extract/recipes";
 import type { HTMLAttributes, ReactNode } from "react";
 import { Box } from "../Box";
-import { cardStyles } from "./card.css";
+import { card } from "./card.css";
 
-type CardPadding = "none" | "compact" | "default";
-type CardVariant = "elevated" | "muted";
-
-type CardProps = HTMLAttributes<HTMLDivElement> & {
-    padding?: CardPadding;
-    variant?: CardVariant;
-    children?: ReactNode;
-};
-
-const paddingMap: Record<CardPadding, string> = {
-    none: cardStyles.paddingNone,
-    compact: cardStyles.paddingCompact,
-    default: cardStyles.paddingDefault,
-};
+type CardProps = HTMLAttributes<HTMLDivElement> &
+    RecipeVariants<typeof card> & {
+        children?: ReactNode;
+    };
 
 export function Card({
-    padding = "default",
-    variant = "elevated",
+    padding,
+    variant,
     children,
     className,
     color: _color,
     ...rest
 }: CardProps) {
-    const variantClass = cardStyles[variant];
-    const paddingClass = paddingMap[padding];
-    const combinedClassName = [variantClass, paddingClass, className]
-        .filter(Boolean)
-        .join(" ");
-
     return (
-        <Box className={combinedClassName} {...rest}>
+        <Box
+            className={`${card({ variant, padding })}${className ? ` ${className}` : ""}`}
+            {...rest}
+        >
             {children}
         </Box>
     );

@@ -28,6 +28,16 @@ describe("Text", () => {
         expect(container.querySelector("h4")).toBeTruthy();
     });
 
+    it("should render heading5 as <h5>", () => {
+        const { container } = render(<Text variant="heading5">Title</Text>);
+        expect(container.querySelector("h5")).toBeTruthy();
+    });
+
+    it("should render heading6 as <h6>", () => {
+        const { container } = render(<Text variant="heading6">Title</Text>);
+        expect(container.querySelector("h6")).toBeTruthy();
+    });
+
     it("should render caption as <span>", () => {
         const { container } = render(<Text variant="caption">note</Text>);
         expect(container.querySelector("span")).toBeTruthy();

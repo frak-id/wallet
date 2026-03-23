@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import { Box } from "../Box";
 import { leafRotations, leafStyles, spinnerStyles } from "./spinner.css";
 
@@ -10,7 +11,7 @@ type SpinnerProps = {
 
 export function Spinner({ size = "m", className }: SpinnerProps) {
     const sizeClass = spinnerStyles[size];
-    const combinedClassName = [sizeClass, className].filter(Boolean).join(" ");
+    const combinedClassName = clsx(sizeClass, className);
 
     const leafRotationKeys = [
         "leaf0",

@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import type { ReactNode } from "react";
 
 import { Box } from "../Box";
@@ -19,10 +20,7 @@ export function Badge({
     return (
         <Box
             as="span"
-            className={
-                [badgeVariants[variant], className].filter(Boolean).join(" ") ||
-                undefined
-            }
+            className={clsx(badgeVariants[variant], className) || undefined}
         >
             {children}
         </Box>

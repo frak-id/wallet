@@ -37,14 +37,16 @@ describe("design-system tokens", () => {
     });
 
     describe("fontSize", () => {
-        it("should have correct font size values matching alias-fontsize-* CSS vars", () => {
+        it("should have correct font size values", () => {
             expect(fontSize.xs).toBe("12px");
             expect(fontSize.s).toBe("14px");
             expect(fontSize.m).toBe("16px");
             expect(fontSize.l).toBe("18px");
-            expect(fontSize.xl).toBe("24px");
-            expect(fontSize["2xl"]).toBe("34px");
-            expect(fontSize["3xl"]).toBe("40px");
+            expect(fontSize.xl).toBe("20px");
+            expect(fontSize["2xl"]).toBe("24px");
+            expect(fontSize["3xl"]).toBe("28px");
+            expect(fontSize["4xl"]).toBe("40px");
+            expect(fontSize["5xl"]).toBe("48px");
         });
     });
 });

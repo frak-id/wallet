@@ -302,8 +302,10 @@
         }
     },
     "onboarding": {
+        "start": "Get started",
         "continue": "Continue",
         "activateSecureSpace": "Activate my secure space",
+        "alreadyHaveAccount": "Already have an account?",
         "slides": {
             "one": {
                 "title": "Slide 1 — Title placeholder",

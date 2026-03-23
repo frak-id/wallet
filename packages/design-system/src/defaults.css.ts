@@ -15,6 +15,7 @@ globalStyle("body", {
             flexDirection: "row",
             justifyContent: "center",
             alignItems: "center",
+            minHeight: "100dvh",
         },
     },
 });

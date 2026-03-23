@@ -15,8 +15,6 @@ import {
 import {
     bottomBar,
     mainContent,
-    mainNoHeaderNoNav,
-    mainNoNav,
     shellContainer,
 } from "./appShell.css";
 
@@ -61,18 +59,10 @@ export function AppShell({ navigation = false, children }: AppShellProps) {
 
     const activeKey = useMemo(() => resolveActiveTab(pathname), [pathname]);
 
-    const mainClassName = [
-        mainContent,
-        !navigation && mainNoNav,
-        !navigation && mainNoHeaderNoNav,
-    ]
-        .filter(Boolean)
-        .join(" ");
-
     return (
         <Box className={shellContainer}>
             <InAppBrowserToast />
-            <Box as="main" className={mainClassName}>
+            <Box as="main" className={mainContent}>
                 {children ?? <Outlet />}
             </Box>
             {navigation && (

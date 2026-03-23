@@ -10,12 +10,12 @@ export const icon = style({
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontSize: fontSize["3xl"],
+    fontSize: fontSize["4xl"],
     alignSelf: "center",
 });
 
 export const title = style({
-    fontSize: fontSize.xl,
+    fontSize: fontSize["2xl"],
     fontWeight: brand.typography.fontWeight.bold,
     textAlign: "center",
     margin: 0,

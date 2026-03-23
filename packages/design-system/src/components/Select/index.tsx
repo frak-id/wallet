@@ -1,4 +1,5 @@
 import * as SelectPrimitive from "@radix-ui/react-select";
+import clsx from "clsx";
 import { Check, ChevronDown, ChevronUp } from "lucide-react";
 import type { ComponentPropsWithRef } from "react";
 import { selectStyles, triggerLength } from "./select.css";
@@ -39,7 +40,7 @@ export function SelectTrigger({
     ...props
 }: SelectTriggerProps) {
     const base = length ? triggerLength[length] : selectStyles.trigger;
-    const combined = [base, className].filter(Boolean).join(" ");
+    const combined = clsx(base, className);
 
     return (
         <SelectPrimitive.Trigger ref={ref} className={combined} {...props}>
@@ -62,11 +63,7 @@ function SelectScrollUpButton(
     return (
         <SelectPrimitive.ScrollUpButton
             ref={ref}
-            className={
-                className
-                    ? `${selectStyles.scrollButton} ${className}`
-                    : selectStyles.scrollButton
-            }
+            className={clsx(selectStyles.scrollButton, className)}
             {...rest}
         >
             <ChevronUp size={16} />
@@ -81,11 +78,7 @@ function SelectScrollDownButton(
     return (
         <SelectPrimitive.ScrollDownButton
             ref={ref}
-            className={
-                className
-                    ? `${selectStyles.scrollButton} ${className}`
-                    : selectStyles.scrollButton
-            }
+            className={clsx(selectStyles.scrollButton, className)}
             {...rest}
         >
             <ChevronDown size={16} />
@@ -104,9 +97,7 @@ export function SelectContent({
     position = "popper",
     ...props
 }: ComponentPropsWithRef<typeof SelectPrimitive.Content>) {
-    const combined = [selectStyles.content, className]
-        .filter(Boolean)
-        .join(" ");
+    const combined = clsx(selectStyles.content, className);
 
     return (
         <SelectPrimitive.Portal>
@@ -136,7 +127,7 @@ export function SelectItem({
     children,
     ...props
 }: ComponentPropsWithRef<typeof SelectPrimitive.Item>) {
-    const combined = [selectStyles.item, className].filter(Boolean).join(" ");
+    const combined = clsx(selectStyles.item, className);
 
     return (
         <SelectPrimitive.Item ref={ref} className={combined} {...props}>
@@ -159,7 +150,7 @@ export function SelectLabel({
     className,
     ...props
 }: ComponentPropsWithRef<typeof SelectPrimitive.Label>) {
-    const combined = [selectStyles.label, className].filter(Boolean).join(" ");
+    const combined = clsx(selectStyles.label, className);
 
     return <SelectPrimitive.Label ref={ref} className={combined} {...props} />;
 }
@@ -173,9 +164,7 @@ export function SelectSeparator({
     className,
     ...props
 }: ComponentPropsWithRef<typeof SelectPrimitive.Separator>) {
-    const combined = [selectStyles.separator, className]
-        .filter(Boolean)
-        .join(" ");
+    const combined = clsx(selectStyles.separator, className);
 
     return (
         <SelectPrimitive.Separator ref={ref} className={combined} {...props} />

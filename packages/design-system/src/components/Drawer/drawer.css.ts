@@ -8,7 +8,7 @@ const fadeIn = keyframes({
 });
 
 export const drawerOverlayStyle = style({
-    backgroundColor: "rgba(0, 0, 0, 0.2)",
+    backgroundColor: "rgba(0, 0, 0, 0.7)",
     position: "fixed",
     zIndex: zIndex.modal,
     inset: 0,
@@ -36,11 +36,11 @@ export const drawerContentWrapperStyle = style({
 });
 
 export const drawerContentStyle = style({
-    padding: alias.spacing.l,
+    padding: `${alias.spacing.l} ${alias.spacing.m}`,
     overflow: "auto",
     maxHeight: "91dvh",
     backgroundColor: vars.surface.elevated,
-    borderRadius: alias.cornerRadius.l,
+    borderRadius: alias.cornerRadius.xl,
 });
 
 export const drawerHandleStyle = style({

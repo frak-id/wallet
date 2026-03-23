@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import type { AllHTMLAttributes, CSSProperties, ReactNode, Ref } from "react";
 import { createElement } from "react";
 
@@ -72,9 +73,7 @@ export function Box({
     const elementReset = element[Tag as keyof typeof element];
     const resetClass = elementReset ? `${base} ${elementReset}` : base;
     const sprinklesClass = sprinkles(atomProps as Sprinkles);
-    const combinedClassName = [resetClass, sprinklesClass, className]
-        .filter(Boolean)
-        .join(" ");
+    const combinedClassName = clsx(resetClass, sprinklesClass, className);
 
     return createElement(
         Tag,

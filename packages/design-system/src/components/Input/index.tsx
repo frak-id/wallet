@@ -1,14 +1,17 @@
 import type { InputHTMLAttributes, ReactNode } from "react";
 import { Box } from "../Box";
-import { inputStyles, lengthVariants } from "./input.css";
-
-type InputLength = "small" | "medium" | "big";
+import {
+    inputField,
+    inputWrapper,
+    leftSection,
+    rightSection,
+} from "./input.css";
 
 type InputProps = Omit<
     InputHTMLAttributes<HTMLInputElement>,
     "width" | "height" | "color"
 > & {
-    length?: InputLength;
+    length?: "small" | "medium" | "big";
     leftSection?: ReactNode;
     rightSection?: ReactNode;
     error?: boolean;
@@ -17,39 +20,32 @@ type InputProps = Omit<
 
 export function Input({
     length,
-    leftSection,
-    rightSection,
+    leftSection: leftSlot,
+    rightSection: rightSlot,
     error,
     disabled,
     className,
     ...rest
 }: InputProps) {
-    const wrapperClassName = [
-        inputStyles.wrapper,
-        length ? lengthVariants[length] : undefined,
-        error ? inputStyles.wrapperError : undefined,
-        disabled ? inputStyles.wrapperDisabled : undefined,
-        className,
-    ]
-        .filter(Boolean)
-        .join(" ");
-
     return (
-        <Box as="span" className={wrapperClassName}>
-            {leftSection ? (
-                <Box as="span" className={inputStyles.leftSection}>
-                    {leftSection}
+        <Box
+            as="span"
+            className={`${inputWrapper({ length, error, disabled })}${className ? ` ${className}` : ""}`}
+        >
+            {leftSlot ? (
+                <Box as="span" className={leftSection}>
+                    {leftSlot}
                 </Box>
             ) : null}
             <Box
                 as="input"
-                className={inputStyles.field}
+                className={inputField}
                 disabled={disabled}
                 {...rest}
             />
-            {rightSection ? (
-                <Box as="span" className={inputStyles.rightSection}>
-                    {rightSection}
+            {rightSlot ? (
+                <Box as="span" className={rightSection}>
+                    {rightSlot}
                 </Box>
             ) : null}
         </Box>
