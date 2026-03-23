@@ -1,17 +1,15 @@
 import { style } from "@vanilla-extract/css";
 import { vars } from "../../theme.css";
-import { alias } from "../../tokens.css";
+import { alias, fontSize } from "../../tokens.css";
 
 const base = style({
     display: "flex",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: alias.spacing.xs,
+    gap: alias.spacing.s,
     width: "100%",
-    padding: `${alias.spacing.m} ${alias.spacing.l}`,
     borderRadius: alias.cornerRadius.full,
-    fontSize: "16px",
     cursor: "pointer",
     border: "none",
     textDecoration: "none",
@@ -19,6 +17,16 @@ const base = style({
     ":focus": {
         outline: "none",
     },
+});
+
+const small = style({
+    padding: `${alias.spacing.m}`,
+    fontSize: fontSize.s,
+});
+
+const large = style({
+    padding: `${alias.spacing.l}`,
+    fontSize: fontSize.m,
 });
 
 export const buttonStyles = {
@@ -48,4 +56,8 @@ export const buttonStyles = {
             },
         },
     ]),
+    size: {
+        small,
+        large,
+    },
 };

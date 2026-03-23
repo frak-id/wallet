@@ -3,15 +3,18 @@ import { Box } from "../Box";
 import { buttonStyles } from "./button.css";
 
 type ButtonVariant = "primary" | "outlined";
+type ButtonSize = "small" | "large";
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
     variant?: ButtonVariant;
+    size?: ButtonSize;
     children: ReactNode;
     icon?: ReactNode;
 };
 
 export function Button({
     variant = "primary",
+    size = "large",
     children,
     icon,
     className,
@@ -19,7 +22,8 @@ export function Button({
     ...rest
 }: ButtonProps) {
     const variantClass = buttonStyles[variant];
-    const combinedClassName = [variantClass, className]
+    const sizeClass = buttonStyles.size[size];
+    const combinedClassName = [variantClass, sizeClass, className]
         .filter(Boolean)
         .join(" ");
 

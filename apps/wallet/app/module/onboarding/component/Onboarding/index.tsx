@@ -104,7 +104,7 @@ export function Onboarding({
                     ))}
                 </div>
 
-                <Button onClick={handleNext}>
+                <Button onClick={handleNext} size="small">
                     {currentIndex === slidesCount - 1 && lastButtonLabel
                         ? lastButtonLabel
                         : buttonLabel}
