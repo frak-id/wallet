@@ -12,11 +12,7 @@ import {
     BottomTabBar,
     type TabItem,
 } from "@/module/common/component/BottomTabBar";
-import {
-    bottomBar,
-    mainContent,
-    shellContainer,
-} from "./appShell.css";
+import { bottomBar, mainContent, shellContainer } from "./appShell.css";
 
 /**
  * Tab definitions matching the existing Navigation component routes.

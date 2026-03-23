@@ -1,9 +1,4 @@
-import {
-    alias,
-    brand,
-    easing,
-    transition,
-} from "@frak-labs/design-system/tokens";
+import { alias, easing, transition } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 
 export const onboarding = style({
@@ -47,7 +42,6 @@ export const footer = style({
     alignItems: "center",
     gap: alias.spacing.m,
     padding: `${alias.spacing.m}`,
-    paddingBottom:0
 });
 
 export const dots = style({

@@ -322,7 +322,7 @@
         },
         "keypass": {
             "title": "Secure your account",
-            "description": "Your passkey will be saved in your password manager for fast biometric login.",
+            "description": "A passkey will be securely saved in your password manager and will allow you to log in with biometrics.",
             "unsupported": {
                 "title": "Browser not compatible",
                 "description": "Your browser does not support biometric authentication. Log in another way to access your wallet.",

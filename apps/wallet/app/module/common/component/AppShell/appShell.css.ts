@@ -17,7 +17,8 @@ export const shellContainer = style({
     "@media": {
         [`(min-width: ${tablet}px)`]: {
             width: "393px",
-            height: "100dvh",
+            minHeight: "unset",
+            height: "min(100dvh, 852px)",
         },
     },
 });

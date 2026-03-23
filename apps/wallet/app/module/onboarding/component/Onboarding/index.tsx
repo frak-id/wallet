@@ -114,7 +114,7 @@ export function Onboarding({
             </div>
 
             <div className={styles.footer}>
-                <Button onClick={handleNext} size="small">
+                <Button onClick={handleNext}>
                     {currentIndex === 0 && firstButtonLabel
                         ? firstButtonLabel
                         : currentIndex === slidesCount - 1 && lastButtonLabel
@@ -122,7 +122,7 @@ export function Onboarding({
                           : buttonLabel}
                 </Button>
                 {currentIndex === 0 && loginLabel && onLoginClick && (
-                    <Button variant="ghost" size="small" onClick={onLoginClick}>
+                    <Button variant="ghost" onClick={onLoginClick}>
                         {loginLabel}
                     </Button>
                 )}

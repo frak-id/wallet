@@ -9,10 +9,21 @@ export const slide = style({
     gap: alias.spacing.m,
 });
 
-export const slideImage = style({
+export const slideImageBase = style({
     height: "374px",
     overflow: "hidden",
 });
+
+export const slideImage = style([slideImageBase]);
+
+export const slideImageCenter = style([
+    slideImageBase,
+    {
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+    },
+]);
 
 export const slideImg = style({
     display: "block",

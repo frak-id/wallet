@@ -3,15 +3,8 @@ import { brand, fontSize } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 
 export const icon = style({
-    width: "80px",
-    height: "80px",
-    borderRadius: brand.scale.full,
-    backgroundColor: vars.surface.muted,
     display: "flex",
-    alignItems: "center",
     justifyContent: "center",
-    fontSize: fontSize["4xl"],
-    alignSelf: "center",
 });
 
 export const title = style({

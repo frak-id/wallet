@@ -320,7 +320,7 @@
         },
         "keypass": {
             "title": "Sécurisez votre compte",
-            "description": "Votre clé d'accès sera sauvegardée dans votre gestionnaire de mots de passe pour une connexion biométrique rapide.",
+            "description": "Une clé d'identification sera enregistrée en toute sécurité dans votre gestionnaire de mots de passe et vous permettra de vous connecter avec la biométrie.",
             "unsupported": {
                 "title": "Navigateur non compatible",
                 "description": "Votre navigateur ne supporte pas l'authentification biométrique. Connectez-vous autrement pour accéder à votre portefeuille.",
