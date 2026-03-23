@@ -20,13 +20,8 @@ test("should register new wallet with biometrics successfully", async ({
     // Verify registration page is ready
     await authPage.verifyRegistrationReady();
 
-    // Register wallet with biometrics (navigates onboarding slides + Keypass)
+    // Register wallet with biometrics
     await authPage.clickRegister();
-
-    // After WebAuthn succeeds: notification auto-skipped (Push API unsupported in Chromium test env)
-    // → Welcome screen appears
-    await authPage.verifyWelcomeScreen();
-    await authPage.clickContinueOnWelcome();
 
     // Ensure the user got redirected to the wallet page
     await authPage.verifyWalletPage();

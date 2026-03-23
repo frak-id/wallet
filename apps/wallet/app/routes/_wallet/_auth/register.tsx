@@ -1,23 +1,24 @@
+import { Button } from "@frak-labs/ui/component/Button";
+import { ButtonAuth } from "@frak-labs/ui/component/ButtonAuth";
 import {
     authenticatorStorage,
     isWebAuthNSupported,
-    useLogin,
 } from "@frak-labs/wallet-shared";
-import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
+import {
+    createFileRoute,
+    Link,
+    redirect,
+    useNavigate,
+} from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
+import { AuthenticateWithPhone } from "@/module/authentication/component/AuthenticateWithPhone";
 import { DemoTapZone } from "@/module/authentication/component/DemoTapZone";
 import { useRegister } from "@/module/authentication/hook/useRegister";
 import { isAuthenticatorAlreadyRegistered } from "@/module/authentication/lib/isAuthenticatorAlreadyRegistered";
-import { useNotificationStatus } from "@/module/notification/hook/useNotificationSetupStatus";
-import { useSubscribeToPushNotification } from "@/module/notification/hook/useSubscribeToPushNotification";
-import { Keypass } from "@/module/onboarding/component/Keypass";
-import { NotificationOptIn } from "@/module/onboarding/component/NotificationOptIn";
-import { Onboarding } from "@/module/onboarding/component/Onboarding";
-import { SlideOne } from "@/module/onboarding/component/slides/SlideOne";
-import { SlideThree } from "@/module/onboarding/component/slides/SlideThree";
-import { SlideTwo } from "@/module/onboarding/component/slides/SlideTwo";
-import { Welcome } from "@/module/onboarding/component/Welcome";
+import styles from "@/module/authentication/page/RegisterPage.module.css";
+import { Grid } from "@/module/common/component/Grid";
+import { Notice } from "@/module/common/component/Notice";
 import { PairingInProgress } from "@/module/pairing/component/PairingInProgress";
 import { usePendingPairingInfo } from "@/module/pairing/hook/usePendingPairingInfo";
 import { consumePendingDeepLink } from "@/utils/deepLink";
@@ -40,27 +41,24 @@ export const Route = createFileRoute("/_wallet/_auth/register")({
     },
 });
 
-type FlowStep = "onboarding" | "notification" | "welcome";
-
+/**
+ * RegisterPage
+ *
+ * Registration page that allows users to create a new wallet using:
+ * - WebAuthn passkeys
+ * - Phone authentication via QR code
+ *
+ * @returns {JSX.Element} The rendered registration page
+ */
 function RegisterPage() {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const { pairingInfo } = usePendingPairingInfo();
     const hasPendingPairing = Boolean(pairingInfo?.id);
-    const [step, setStep] = useState<FlowStep>("onboarding");
-    const [showKeypassDrawer, setShowKeypassDrawer] = useState(false);
-    const [isRegistering, setIsRegistering] = useState(false);
-    const { register, error, isSuccess } = useRegister({});
-    const {
-        login,
-        isLoading: isLoginLoading,
-        error: loginError,
-    } = useLogin({
-        onSuccess: () => {
-            setShowKeypassDrawer(false);
-            setStep("notification");
-        },
-    });
+    const [disabled, setDisabled] = useState(false);
+    const { register, error, isRegisterInProgress, isSuccess } = useRegister(
+        {}
+    );
 
     /**
      * Boolean used to know if the error is about a previously used authenticator
@@ -70,94 +68,93 @@ function RegisterPage() {
         [error]
     );
 
+    /**
+     * Get the message that will displayed inside the button
+     */
+    const message = useMemo(() => {
+        if (isPreviouslyUsedAuthenticatorError) {
+            return (
+                <Trans i18nKey={"wallet.register.button.alreadyRegistered"} />
+            );
+        }
+        if (error) {
+            return t("wallet.register.button.error");
+        }
+        if (isRegisterInProgress) {
+            return <Trans i18nKey={"wallet.register.button.inProgress"} />;
+        }
+        return (
+            <Trans
+                i18nKey={"wallet.register.button.create"}
+                components={{
+                    sup: <sup />,
+                }}
+            />
+        );
+    }, [isPreviouslyUsedAuthenticatorError, error, isRegisterInProgress, t]);
+
     useEffect(() => {
-        if (error) setIsRegistering(false);
+        if (!error) return;
+
+        setDisabled(false);
     }, [error]);
 
     useEffect(() => {
-        if (isSuccess) {
-            setShowKeypassDrawer(false);
-            setStep("notification");
-        }
-    }, [isSuccess]);
+        if (!isPreviouslyUsedAuthenticatorError) return;
 
-    const { permissionStatus, permissionGranted, hasBackendToken } =
-        useNotificationStatus();
-    const { subscribeToPushAsync } = useSubscribeToPushNotification();
+        setTimeout(() => {
+            navigate({ to: "/login" });
+        }, 3000);
+    }, [isPreviouslyUsedAuthenticatorError, navigate]);
 
+    // Redirect after successful registration: pending deep link > pairing > wallet
     useEffect(() => {
-        // Skip notification step if denied or already fully subscribed
-        if (
-            step === "notification" &&
-            (permissionStatus === "denied" ||
-                (permissionGranted && hasBackendToken))
-        ) {
-            setStep("welcome");
+        if (isSuccess) {
+            if (consumePendingDeepLink(navigate)) return;
+            navigate({
+                to: hasPendingPairing ? "/pairing" : "/wallet",
+                replace: true,
+            });
         }
-    }, [step, permissionStatus, permissionGranted, hasBackendToken]);
+    }, [isSuccess, navigate, hasPendingPairing]);
 
     return (
-        <>
+        <Grid
+            className={styles.register__grid}
+            footer={
+                <>
+                    <Link to={"/login"} viewTransition>
+                        {t("wallet.register.useExisting")}
+                    </Link>
+                    <Notice>
+                        <Trans
+                            i18nKey={"wallet.register.notice"}
+                            components={{
+                                sup: <sup />,
+                            }}
+                        />
+                    </Notice>
+                </>
+            }
+        >
             <DemoTapZone navigate={navigate} />
             <PairingInProgress />
-            {step === "onboarding" && (
-                <Onboarding
-                    buttonLabel={t("onboarding.continue")}
-                    lastButtonLabel={t("onboarding.activateSecureSpace")}
-                    onFinish={() => {
-                        // Blur active element before opening drawer to prevent
-                        // aria-hidden conflict with focused element inside #root
-                        if (document.activeElement instanceof HTMLElement) {
-                            document.activeElement.blur();
-                        }
-                        setShowKeypassDrawer(true);
-                    }}
-                >
-                    <SlideOne />
-                    <SlideTwo />
-                    <SlideThree />
-                </Onboarding>
-            )}
-            <Keypass
-                open={showKeypassDrawer}
-                onOpenChange={setShowKeypassDrawer}
-                onContinue={() => {
-                    if (isRegistering) return;
-                    setIsRegistering(true);
-                    register().catch(() => {});
-                }}
-                isLoading={isRegistering}
-                error={isPreviouslyUsedAuthenticatorError ? null : error}
-                existingAccount={isPreviouslyUsedAuthenticatorError}
-                isLoginLoading={isLoginLoading}
-                loginError={loginError}
-                onLogin={() => login()}
-                webAuthNSupported={isWebAuthNSupported}
-                onNavigateToLogin={() =>
-                    navigate({ to: "/login", replace: true })
+            <ButtonAuth
+                onClick={() => register()}
+                disabled={
+                    disabled ||
+                    isPreviouslyUsedAuthenticatorError ||
+                    !isWebAuthNSupported
                 }
+                isLoading={isRegisterInProgress}
+            >
+                {message}
+            </ButtonAuth>
+            <AuthenticateWithPhone
+                as={Button}
+                text={t("wallet.register.useQRCode")}
+                width={"full"}
             />
-            {step === "notification" && (
-                <NotificationOptIn
-                    onEnable={() =>
-                        subscribeToPushAsync()
-                            .then(() => setStep("welcome"))
-                            .catch(() => setStep("welcome"))
-                    }
-                    onSkip={() => setStep("welcome")}
-                />
-            )}
-            {step === "welcome" && (
-                <Welcome
-                    onContinue={() => {
-                        if (consumePendingDeepLink(navigate)) return;
-                        navigate({
-                            to: hasPendingPairing ? "/pairing" : "/wallet",
-                            replace: true,
-                        });
-                    }}
-                />
-            )}
-        </>
+        </Grid>
     );
 }

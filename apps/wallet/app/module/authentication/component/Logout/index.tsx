@@ -6,7 +6,7 @@ import { LogOut } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Panel, panelDismissedPrefix } from "@/module/common/component/Panel";
-import { notificationAdapter } from "@/module/notification/adapter";
+import { useNotificationContext } from "@/module/notification/context/NotificationContext";
 
 function cleanLocalStorage() {
     // Clear static local storage items
@@ -39,6 +39,7 @@ export function Logout() {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const queryClient = useQueryClient();
+    const { adapter, setIsSubscribed } = useNotificationContext();
     const [isLoggingOut, setIsLoggingOut] = useState(false);
 
     return (
@@ -53,7 +54,8 @@ export function Logout() {
                     setIsLoggingOut(true);
                     trackGenericEvent("logout");
                     // Unsubscribe from push notifications before clearing session (needs auth)
-                    await notificationAdapter.unsubscribe().catch(() => {});
+                    await adapter.unsubscribe().catch(() => {});
+                    setIsSubscribed(false);
                     // Session deletion
                     sessionStore.getState().clearSession();
                     // Query cache

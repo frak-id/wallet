@@ -22,10 +22,9 @@ test("Should be able to pair from desktop to mobile", async ({
         },
     });
 
-    // Go to registration and advance to Keypass step (where QR code button is)
+    // Got to registration
     await authPage.navigateToRegister();
     await authPage.verifyRegistrationReady();
-    await authPage.navigateToKeypass();
 
     // Startup a pairing flow
     await authPage.clickPairing();

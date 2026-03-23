@@ -36,11 +36,7 @@ test("Log with mocked webauthn", async ({ page, mockedWebAuthN, authPage }) => {
     await authPage.verifyRegistrationReady();
     await authPage.clickRegister();
 
-    // After WebAuthn: notification auto-skipped → welcome screen
-    await authPage.verifyWelcomeScreen();
-    await authPage.clickContinueOnWelcome();
-
-    // Ensure we land on the wallet page
+    // Ensure we land onthe wallet page
     await authPage.verifyWalletPage();
 
     // Save the state in storage
@@ -74,10 +70,9 @@ test("Log with paired wallet", async ({
         },
     });
 
-    // Go to registration and advance to Keypass step (where QR code button is)
+    // Got to registration
     await authPage.navigateToRegister();
     await authPage.verifyRegistrationReady();
-    await authPage.navigateToKeypass();
 
     // Startup a pairing flow
     await authPage.clickPairing();
