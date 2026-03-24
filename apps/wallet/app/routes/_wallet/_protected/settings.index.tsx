@@ -51,7 +51,7 @@ function SettingsPage() {
             <RemoveAllNotification />
             <PrivateKey />
             <PairingList />
-            <MobileOnboardingPoc />
+            {!isRunningInProd && <MobileOnboardingPoc />}
             {!isRunningInProd && <MoneriumSection />}
             <LegalLinks />
         </Grid>

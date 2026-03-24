@@ -1,49 +1,46 @@
+import { isRunningInProd } from "@frak-labs/app-essentials";
 import { authenticatedBackendApi } from "@frak-labs/wallet-shared/common/api/backendClient";
-import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-
-type RetrievedContext = {
-    merchantId: string;
-    anonymousId: string;
-};
+import { useQuery } from "@tanstack/react-query";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/connect")({
+    beforeLoad: () => {
+        if (isRunningInProd) {
+            throw redirect({ to: "/" });
+        }
+    },
     component: ConnectPage,
 });
 
 function ConnectPage() {
-    const [context, setContext] = useState<RetrievedContext | null>(null);
-    const [error, setError] = useState<string | null>(null);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        authenticatedBackendApi.common.mobile["install-context"].retrieve
-            .get()
-            .then(({ data, error }) => {
-                if (error) throw error;
-                if (data && "error" in data) {
-                    setError(data.error);
-                } else if (data) {
-                    setContext(data);
-                }
-                setLoading(false);
-            })
-            .catch((e) => {
-                setError(e instanceof Error ? e.message : String(e));
-                setLoading(false);
-            });
-    }, []);
+    const {
+        data: context,
+        isPending: isLoading,
+        error,
+    } = useQuery({
+        queryKey: ["install-context-retrieval"],
+        queryFn: async () => {
+            const { data, error } =
+                await authenticatedBackendApi.common.mobile[
+                    "install-context"
+                ].retrieve.get();
+            if (error) throw error;
+            return data;
+        },
+        gcTime: 0,
+        meta: { storable: false },
+    });
 
     const handleContinue = () => {
         if (!context) return;
         const params = new URLSearchParams({
-            merchantId: context.merchantId,
-            anonymousId: context.anonymousId,
+            merchantId: context.merchantId ?? "nop",
+            anonymousId: context.anonymousId ?? "nop",
         });
         window.location.href = `frakwallet://merge?${params.toString()}`;
     };
 
-    if (loading) {
+    if (isLoading) {
         return (
             <div
                 style={{
@@ -71,7 +68,9 @@ function ConnectPage() {
                 }}
             >
                 <h2>No Install Context</h2>
-                <p style={{ color: "#c62828" }}>Error: {error}</p>
+                <p style={{ color: "#563e3e" }}>
+                    Error: {JSON.stringify(error)}
+                </p>
             </div>
         );
     }
@@ -89,7 +88,6 @@ function ConnectPage() {
             <div
                 style={{
                     padding: "16px",
-                    background: "#e8f5e9",
                     borderRadius: "8px",
                     marginBottom: "24px",
                 }}

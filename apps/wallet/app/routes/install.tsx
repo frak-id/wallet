@@ -1,6 +1,7 @@
+import { isRunningInProd } from "@frak-labs/app-essentials";
 import { authenticatedBackendApi } from "@frak-labs/wallet-shared/common/api/backendClient";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useMemo } from "react";
 
 type InstallSearch = {
@@ -9,6 +10,11 @@ type InstallSearch = {
 };
 
 export const Route = createFileRoute("/install")({
+    beforeLoad: () => {
+        if (isRunningInProd) {
+            throw redirect({ to: "/" });
+        }
+    },
     validateSearch: (search: Record<string, unknown>): InstallSearch => ({
         m: typeof search.m === "string" ? search.m : undefined,
         a: typeof search.a === "string" ? search.a : undefined,

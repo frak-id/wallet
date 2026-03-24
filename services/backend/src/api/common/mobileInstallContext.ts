@@ -1,5 +1,5 @@
 import { isRunningLocally } from "@frak-labs/app-essentials";
-import { Elysia, t } from "elysia";
+import { Elysia, status, t } from "elysia";
 import type { ElysiaCookie } from "elysia/cookies";
 
 const COOKIE_NAME = "frak_install_context";
@@ -20,7 +20,6 @@ export const mobileInstallContextRoutes = new Elysia({
     .post(
         "/store",
         ({ body, cookie }) => {
-            console.log("test");
             cookie[COOKIE_NAME]?.set({
                 value: JSON.stringify({
                     merchantId: body.merchantId,
@@ -37,25 +36,37 @@ export const mobileInstallContextRoutes = new Elysia({
             }),
         }
     )
-    .get("/retrieve", ({ cookie }) => {
-        const raw = cookie[COOKIE_NAME]?.value as string | undefined;
-        if (!raw) {
-            return { error: "no-data" };
+    .get(
+        "/retrieve",
+        ({ cookie }) => {
+            const raw = cookie[COOKIE_NAME]?.value as string | undefined;
+            if (!raw) {
+                return status(404, "No data present in the cookie");
+            }
+
+            const context = JSON.parse(raw) as {
+                merchantId: string;
+                anonymousId: string;
+            };
+
+            cookie[COOKIE_NAME]?.set({
+                value: "",
+                ...cookieConfig,
+                maxAge: 0,
+            });
+
+            return {
+                merchantId: context.merchantId,
+                anonymousId: context.anonymousId,
+            };
+        },
+        {
+            response: {
+                404: t.String(),
+                200: t.Object({
+                    merchantId: t.String(),
+                    anonymousId: t.String(),
+                }),
+            },
         }
-
-        const context = JSON.parse(raw) as {
-            merchantId: string;
-            anonymousId: string;
-        };
-
-        cookie[COOKIE_NAME]?.set({
-            value: "",
-            ...cookieConfig,
-            maxAge: 0,
-        });
-
-        return {
-            merchantId: context.merchantId,
-            anonymousId: context.anonymousId,
-        };
-    });
+    );
