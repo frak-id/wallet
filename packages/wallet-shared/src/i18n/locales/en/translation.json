@@ -308,16 +308,16 @@
         "alreadyHaveAccount": "Already have an account?",
         "slides": {
             "one": {
-                "title": "Slide 1 — Title placeholder",
-                "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+                "title": "Your influence deserves to be rewarded",
+                "description": "Share your favorites and earn cash for every purchase you help generate."
             },
             "two": {
-                "title": "Slide 2 — Title placeholder",
-                "description": "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."
+                "title": "Your earnings in real time",
+                "description": "Track your rewards and transfer them to your bank account whenever you want."
             },
             "three": {
-                "title": "Slide 3 — Title placeholder",
-                "description": "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur."
+                "title": "Activate your secure space in 10 sec",
+                "description": "No forms, no paperwork. Your wallet is ready to receive your earnings immediately."
             }
         },
         "keypass": {

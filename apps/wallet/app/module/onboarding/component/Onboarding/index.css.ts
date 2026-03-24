@@ -1,3 +1,4 @@
+import { vars } from "@frak-labs/design-system/theme";
 import { alias, easing, transition } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 
@@ -34,6 +35,7 @@ export const slide = style({
     scrollSnapStop: "always",
     display: "flex",
     flexDirection: "column",
+    gap: alias.spacing.l,
 });
 
 export const footer = style({
@@ -46,20 +48,21 @@ export const footer = style({
 
 export const dots = style({
     display: "flex",
-    marginTop: alias.spacing.l,
     gap: alias.spacing.s,
     justifyContent: "center",
     alignItems: "center",
 });
 
 export const dot = style({
-    width: "8px",
-    height: "8px",
+    width: "6px",
+    height: "6px",
     borderRadius: alias.cornerRadius.full,
-    backgroundColor: alias.neutral[300],
-    transition: `background-color ${transition.slow} ${easing.default}`,
+    backgroundColor: vars.icon.disabled,
+    transition: `background-color ${transition.slow} ${easing.default}, width ${transition.slow} ${easing.default}, height ${transition.slow} ${easing.default}`,
 });
 
 export const dotActive = style({
-    backgroundColor: alias.neutral.default,
+    width: "8px",
+    height: "8px",
+    backgroundColor: vars.icon.primary,
 });

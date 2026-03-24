@@ -10,7 +10,7 @@ export const slide = style({
 });
 
 export const slideImageBase = style({
-    height: "374px",
+    height: "350px",
     overflow: "hidden",
 });
 
@@ -31,6 +31,12 @@ export const slideImg = style({
     height: "100%",
     objectFit: "cover",
     objectPosition: "center",
+});
+
+export const slideContent = style({
+    display: "flex",
+    flexDirection: "column",
+    gap: alias.spacing.m,
 });
 
 export const slideTitle = style({

@@ -14,9 +14,10 @@ import { useSubscribeToPushNotification } from "@/module/notification/hook/useSu
 import { Keypass } from "@/module/onboarding/component/Keypass";
 import { NotificationOptIn } from "@/module/onboarding/component/NotificationOptIn";
 import { Onboarding } from "@/module/onboarding/component/Onboarding";
-import { SlideOne } from "@/module/onboarding/component/slides/SlideOne";
-import { SlideThree } from "@/module/onboarding/component/slides/SlideThree";
-import { SlideTwo } from "@/module/onboarding/component/slides/SlideTwo";
+import {
+    onboardingSlides,
+    Slide,
+} from "@/module/onboarding/component/slides/OnboardingSlides";
 import { Welcome } from "@/module/onboarding/component/Welcome";
 import { PairingInProgress } from "@/module/pairing/component/PairingInProgress";
 import { usePendingPairingInfo } from "@/module/pairing/hook/usePendingPairingInfo";
@@ -115,9 +116,9 @@ function RegisterPage() {
                         setShowKeypassDrawer(true);
                     }}
                 >
-                    <SlideOne />
-                    <SlideTwo />
-                    <SlideThree />
+                    {onboardingSlides.map((slide) => (
+                        <Slide key={slide.translationKey} {...slide} />
+                    ))}
                 </Onboarding>
             )}
             <Keypass

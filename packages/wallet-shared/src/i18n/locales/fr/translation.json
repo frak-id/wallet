@@ -306,16 +306,16 @@
         "alreadyHaveAccount": "Déjà un compte ?",
         "slides": {
             "one": {
-                "title": "Slide 1 — Titre placeholder",
-                "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+                "title": "Votre influence mérite d'être récompensée",
+                "description": "Partagez vos coups de coeur et recevez du cash à chaque achat généré grâce à vous."
             },
             "two": {
-                "title": "Slide 2 — Titre placeholder",
-                "description": "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."
+                "title": "Vos gains en temps réel",
+                "description": "Suivez vos récompenses et transférez-les vers votre compte bancaire quand vous le souhaitez."
             },
             "three": {
-                "title": "Slide 3 — Titre placeholder",
-                "description": "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur."
+                "title": "Activez votre espace sécurisé en 10 sec",
+                "description": "Sans formulaire, sans paperasse. Votre porte-monnaie est prêt à recevoir vos gains immédiatement."
             }
         },
         "keypass": {
