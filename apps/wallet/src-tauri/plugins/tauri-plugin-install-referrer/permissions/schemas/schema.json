@@ -295,22 +295,22 @@
       "type": "string",
       "oneOf": [
         {
-          "description": "Enables the open_notification_settings command without any pre-configured scope.",
+          "description": "Enables the get_install_referrer command without any pre-configured scope.",
           "type": "string",
-          "const": "allow-open-notification-settings",
-          "markdownDescription": "Enables the open_notification_settings command without any pre-configured scope."
+          "const": "allow-get-install-referrer",
+          "markdownDescription": "Enables the get_install_referrer command without any pre-configured scope."
         },
         {
-          "description": "Denies the open_notification_settings command without any pre-configured scope.",
+          "description": "Denies the get_install_referrer command without any pre-configured scope.",
           "type": "string",
-          "const": "deny-open-notification-settings",
-          "markdownDescription": "Denies the open_notification_settings command without any pre-configured scope."
+          "const": "deny-get-install-referrer",
+          "markdownDescription": "Denies the get_install_referrer command without any pre-configured scope."
         },
         {
-          "description": "Default permissions for the app-settings plugin\n#### This default permission set includes:\n\n- `allow-open-notification-settings`",
+          "description": "Default permissions for the install-referrer plugin\n#### This default permission set includes:\n\n- `allow-get-install-referrer`",
           "type": "string",
           "const": "default",
-          "markdownDescription": "Default permissions for the app-settings plugin\n#### This default permission set includes:\n\n- `allow-open-notification-settings`"
+          "markdownDescription": "Default permissions for the install-referrer plugin\n#### This default permission set includes:\n\n- `allow-get-install-referrer`"
         }
       ]
     }

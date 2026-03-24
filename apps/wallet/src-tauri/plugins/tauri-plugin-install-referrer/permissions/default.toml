@@ -1,0 +1,3 @@
+[default]
+description = "Default permissions for the install-referrer plugin"
+permissions = ["allow-get-install-referrer"]

@@ -89,10 +89,12 @@ dependencies = [
  "tauri-plugin-deep-link",
  "tauri-plugin-fcm",
  "tauri-plugin-fs",
+ "tauri-plugin-install-referrer",
  "tauri-plugin-log",
  "tauri-plugin-opener",
  "tauri-plugin-safe-area-insets",
  "tauri-plugin-share",
+ "tauri-plugin-web-auth-session",
  "tauri-plugin-webauthn",
 ]
 
@@ -4537,6 +4539,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "tauri-plugin-install-referrer"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "tauri",
+ "tauri-plugin",
+]
+
+[[package]]
 name = "tauri-plugin-log"
 version = "2.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4602,6 +4613,15 @@ dependencies = [
  "tauri",
  "tauri-plugin",
  "thiserror 1.0.69",
+]
+
+[[package]]
+name = "tauri-plugin-web-auth-session"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "tauri",
+ "tauri-plugin",
 ]
 
 [[package]]
