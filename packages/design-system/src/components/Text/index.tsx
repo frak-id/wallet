@@ -31,6 +31,15 @@ const defaultTagMap: Record<TextVariant, string> = {
     overline: "span",
 };
 
+const tagToVariant: Partial<Record<string, TextVariant>> = {
+    h1: "heading1",
+    h2: "heading2",
+    h3: "heading3",
+    h4: "heading4",
+    h5: "heading5",
+    h6: "heading6",
+};
+
 type TextProps = {
     variant?: TextVariant;
     color?: Sprinkles["color"];
@@ -41,14 +50,15 @@ type TextProps = {
 };
 
 export function Text({
-    variant = "body",
+    variant,
     color,
     align,
     as,
     children,
     className,
 }: TextProps) {
-    const tag = (as ?? defaultTagMap[variant]) as
+    const resolvedVariant = variant ?? (as && tagToVariant[as]) ?? "body";
+    const tag = (as ?? defaultTagMap[resolvedVariant]) as
         | "h1"
         | "h2"
         | "h3"
@@ -58,7 +68,7 @@ export function Text({
         | "p"
         | "span"
         | "label";
-    const variantClass = textStyles[variant];
+    const variantClass = textStyles[resolvedVariant];
 
     return (
         <Box

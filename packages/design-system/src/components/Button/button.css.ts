@@ -18,6 +18,7 @@ export const button = recipe({
         ":focus": {
             outline: "none",
         },
+        lineHeight: "100%",
     },
     variants: {
         variant: {
@@ -53,7 +54,8 @@ export const button = recipe({
             },
             large: {
                 padding: alias.spacing.m,
-                fontSize: fontSize.s,
+                fontSize: fontSize.m,
+                fontWeight: 600,
             },
         },
     },

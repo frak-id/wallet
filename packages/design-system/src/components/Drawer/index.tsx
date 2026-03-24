@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import type { ComponentProps, ComponentPropsWithRef } from "react";
 import { Drawer as DrawerPrimitive } from "vaul";
 import {
@@ -37,14 +38,10 @@ export function DrawerOverlay({
     className,
     ...props
 }: ComponentPropsWithRef<typeof DrawerPrimitive.Overlay>) {
-    const combinedClassName = [drawerOverlayStyle, className]
-        .filter(Boolean)
-        .join(" ");
-
     return (
         <DrawerPrimitive.Overlay
             ref={ref}
-            className={combinedClassName}
+            className={clsx(drawerOverlayStyle, className)}
             {...props}
         />
     );
@@ -65,16 +62,12 @@ export function DrawerContent({
 }: ComponentPropsWithRef<typeof DrawerPrimitive.Content> & {
     hideHandle?: boolean;
 }) {
-    const combinedClassName = [drawerContentWrapperStyle, className]
-        .filter(Boolean)
-        .join(" ");
-
     return (
         <DrawerPrimitive.Portal>
             <DrawerOverlay />
             <DrawerPrimitive.Content
                 ref={ref}
-                className={combinedClassName}
+                className={clsx(drawerContentWrapperStyle, className)}
                 {...props}
             >
                 {hideHandle ? (
@@ -126,20 +119,12 @@ export function DrawerDescription({
  * Header layout for drawer content.
  */
 export function DrawerHeader({ className, ...props }: ComponentProps<"div">) {
-    const combinedClassName = [drawerHeaderStyle, className]
-        .filter(Boolean)
-        .join(" ");
-
-    return <div className={combinedClassName} {...props} />;
+    return <div className={clsx(drawerHeaderStyle, className)} {...props} />;
 }
 
 /**
  * Footer layout for drawer content.
  */
 export function DrawerFooter({ className, ...props }: ComponentProps<"div">) {
-    const combinedClassName = [drawerFooterStyle, className]
-        .filter(Boolean)
-        .join(" ");
-
-    return <div className={combinedClassName} {...props} />;
+    return <div className={clsx(drawerFooterStyle, className)} {...props} />;
 }

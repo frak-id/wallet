@@ -4,6 +4,8 @@ import { brand } from "./tokens.css";
 
 globalStyle("html", {
     fontFamily: brand.typography.fontFamily.inter,
+    WebkitFontSmoothing: "antialiased",
+    MozOsxFontSmoothing: "grayscale",
 });
 
 globalStyle("body", {

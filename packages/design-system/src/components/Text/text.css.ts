@@ -3,7 +3,6 @@ import { brand, fontSize } from "../../tokens.css";
 
 const base = style({
     margin: 0,
-    fontFamily: brand.typography.fontFamily.inter,
 });
 
 export const textStyles = {
@@ -11,49 +10,49 @@ export const textStyles = {
     heading1: style([
         base,
         {
-            fontSize: fontSize["5xl"],
+            fontSize: fontSize["3xl"],
             fontWeight: brand.typography.fontWeight.bold,
-            lineHeight: 1.3,
+            lineHeight: "38px",
         },
     ]),
     heading2: style([
         base,
         {
-            fontSize: fontSize["4xl"],
+            fontSize: fontSize.xl,
             fontWeight: brand.typography.fontWeight.bold,
-            lineHeight: 1.3,
+            lineHeight: "30px",
         },
     ]),
     heading3: style([
         base,
         {
-            fontSize: fontSize["3xl"],
+            fontSize: fontSize.l,
             fontWeight: brand.typography.fontWeight.bold,
-            lineHeight: 1.3,
+            lineHeight: "26px",
         },
     ]),
     heading4: style([
         base,
         {
-            fontSize: fontSize["2xl"],
+            fontSize: fontSize.m,
             fontWeight: brand.typography.fontWeight.bold,
-            lineHeight: 1.4,
+            lineHeight: "24px",
         },
     ]),
     heading5: style([
         base,
         {
-            fontSize: fontSize.xl,
+            fontSize: fontSize.s,
             fontWeight: brand.typography.fontWeight.bold,
-            lineHeight: 1.4,
+            lineHeight: "20px",
         },
     ]),
     heading6: style([
         base,
         {
-            fontSize: fontSize.l,
+            fontSize: fontSize.xs,
             fontWeight: brand.typography.fontWeight.bold,
-            lineHeight: 1.4,
+            lineHeight: "18px",
         },
     ]),
     body: style([
@@ -61,7 +60,7 @@ export const textStyles = {
         {
             fontSize: fontSize.m,
             fontWeight: brand.typography.fontWeight.regular,
-            lineHeight: 1.5,
+            lineHeight: "26px",
         },
     ]),
     bodySmall: style([
