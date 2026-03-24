@@ -1,12 +1,13 @@
 import { log } from "@backend-infrastructure";
 import { cors } from "@elysiajs/cors";
-import { isRunningLocally } from "@frak-labs/app-essentials";
+import { isRunningInProd, isRunningLocally } from "@frak-labs/app-essentials";
 import { Elysia } from "elysia";
 import { businessApi } from "./api/business";
 import { commonApi } from "./api/common";
 import { wellKnownRoutes } from "./api/common/wellKnown";
 import { externalApi } from "./api/external";
 import { userApi } from "./api/user";
+import { debugRoutes } from "./debug";
 import { CronRegistry } from "./jobs";
 import { legacyRouteMapper } from "./legacyRoutes";
 import { OrchestrationContext } from "./orchestration";
@@ -46,6 +47,10 @@ const app = new Elysia({
     .use(externalApi)
     // Finally, the legacy route mapper routes
     .use(legacyRouteMapper);
+
+if (!isRunningInProd) {
+    app.use(debugRoutes);
+}
 
 app.listen({
     port: Number.parseInt(process.env.PORT ?? "3030", 10),

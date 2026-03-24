@@ -50,6 +50,7 @@ const postgresDb = postgres({
     connection: {
         search_path: schemaName,
     },
+    prepare: false,
 });
 
 export const db = drizzle({
