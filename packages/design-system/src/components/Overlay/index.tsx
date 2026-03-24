@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import { overlayStyle } from "./overlay.css";
 
 type OverlayProps = {
@@ -6,13 +7,9 @@ type OverlayProps = {
 };
 
 export function Overlay({ className, onClick }: OverlayProps) {
-    const combinedClassName = [overlayStyle, className]
-        .filter(Boolean)
-        .join(" ");
-
     return (
         <div
-            className={combinedClassName}
+            className={clsx(overlayStyle, className)}
             onClick={onClick}
             onKeyDown={() => {}}
             data-testid="overlay"

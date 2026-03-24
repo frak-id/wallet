@@ -1,5 +1,6 @@
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
+import { Overlay } from "@frak-labs/design-system/components/Overlay";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -44,6 +45,7 @@ export function NotificationOptIn({
                 </>
             }
         >
+            {isEnabling && <Overlay />}
             <div className={slideStyles.slide}>
                 <HeroContent
                     image={<img src={notificationImg} alt="" />}
