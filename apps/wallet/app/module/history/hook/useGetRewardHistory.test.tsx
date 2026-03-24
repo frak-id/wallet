@@ -4,12 +4,10 @@ import { vi } from "vitest";
 import { useGetRewardHistory } from "@/module/history/hook/useGetRewardHistory";
 import { beforeEach, describe, expect, test } from "@/tests/vitest-fixtures";
 
-// Mock wagmi
 vi.mock("wagmi", () => ({
     useAccount: vi.fn(),
 }));
 
-// Mock backend client used by wallet-shared
 vi.mock("@frak-labs/wallet-shared/common/api/backendClient", () => ({
     authenticatedWalletApi: {
         rewards: {
@@ -36,16 +34,7 @@ describe("useGetRewardHistory", () => {
         };
     }
 
-    const mockReward = {
-        id: "reward-1",
-        amount: 12.5,
-        tokenAddress: "0x1111111111111111111111111111111111111111",
-        status: "pending" as const,
-        recipientType: "referee" as const,
-        createdAt: new Date("2026-01-20T10:00:00.000Z"),
-        settledAt: undefined,
-        onchainTxHash: "0xabc123",
-        trigger: "purchase" as const,
+    const mockItem = {
         merchant: {
             name: "Frak",
             domain: "frak.id",
@@ -53,8 +42,18 @@ describe("useGetRewardHistory", () => {
         token: {
             symbol: "USDC",
             decimals: 6,
-            logo: undefined,
         },
+        amount: {
+            amount: 12.5,
+            eurAmount: 11.25,
+            usdAmount: 12.5,
+            gbpAmount: 9.75,
+        },
+        status: "pending" as const,
+        role: "referee" as const,
+        trigger: "purchase" as const,
+        txHash: "0xabc123",
+        createdAt: new Date("2026-01-20T10:00:00.000Z"),
     };
 
     test("should return initial loading state", async ({
@@ -70,7 +69,7 @@ describe("useGetRewardHistory", () => {
             "@frak-labs/wallet-shared/common/api/backendClient"
         );
         vi.mocked(authenticatedWalletApi.rewards.history.get).mockResolvedValue(
-            createSuccessResponse({ rewards: [mockReward] })
+            createSuccessResponse({ items: [mockItem], totalCount: 1 })
         );
 
         const { result } = renderHook(() => useGetRewardHistory(), {
@@ -78,7 +77,7 @@ describe("useGetRewardHistory", () => {
         });
 
         expect(result.current.isLoading).toBe(true);
-        expect(result.current.rewards).toEqual([]);
+        expect(result.current.items).toEqual([]);
     });
 
     test("should return rewards when data is available", async ({
@@ -94,7 +93,7 @@ describe("useGetRewardHistory", () => {
             "@frak-labs/wallet-shared/common/api/backendClient"
         );
         vi.mocked(authenticatedWalletApi.rewards.history.get).mockResolvedValue(
-            createSuccessResponse({ rewards: [mockReward] })
+            createSuccessResponse({ items: [mockItem], totalCount: 1 })
         );
 
         const { result } = renderHook(() => useGetRewardHistory(), {
@@ -105,10 +104,10 @@ describe("useGetRewardHistory", () => {
             expect(result.current.isLoading).toBe(false);
         });
 
-        expect(result.current.rewards).toBeDefined();
-        expect(Array.isArray(result.current.rewards)).toBe(true);
-        expect(result.current.rewards[0]?.timestamp).toBe(
-            mockReward.createdAt.getTime()
+        expect(result.current.items).toBeDefined();
+        expect(Array.isArray(result.current.items)).toBe(true);
+        expect(result.current.items[0]?.createdAt).toBe(
+            mockItem.createdAt.getTime()
         );
     });
 
@@ -131,13 +130,13 @@ describe("useGetRewardHistory", () => {
             "@frak-labs/wallet-shared/common/api/backendClient"
         );
 
-        expect(result.current.rewards).toEqual([]);
+        expect(result.current.items).toEqual([]);
         expect(
             authenticatedWalletApi.rewards.history.get
         ).not.toHaveBeenCalled();
     });
 
-    test("should return correct reward structure", async ({
+    test("should return correct flat reward structure", async ({
         queryWrapper,
         mockWagmiHooks,
     }) => {
@@ -150,7 +149,7 @@ describe("useGetRewardHistory", () => {
             "@frak-labs/wallet-shared/common/api/backendClient"
         );
         vi.mocked(authenticatedWalletApi.rewards.history.get).mockResolvedValue(
-            createSuccessResponse({ rewards: [mockReward] })
+            createSuccessResponse({ items: [mockItem], totalCount: 1 })
         );
 
         const { result } = renderHook(() => useGetRewardHistory(), {
@@ -161,15 +160,15 @@ describe("useGetRewardHistory", () => {
             expect(result.current.isLoading).toBe(false);
         });
 
-        if (result.current.rewards.length > 0) {
-            const reward = result.current.rewards[0];
-            expect(reward).toHaveProperty("id");
-            expect(reward).toHaveProperty("amount");
-            expect(reward).toHaveProperty("timestamp");
-            expect(reward).toHaveProperty("status");
-            expect(reward).toHaveProperty("trigger");
-            expect(reward).toHaveProperty("merchant");
-            expect(reward).toHaveProperty("token");
+        if (result.current.items.length > 0) {
+            const item = result.current.items[0];
+            expect(item).toHaveProperty("amount");
+            expect(item).toHaveProperty("createdAt");
+            expect(item).toHaveProperty("merchant");
+            expect(item).toHaveProperty("token");
+            expect(item).toHaveProperty("status");
+            expect(item).toHaveProperty("role");
+            expect(item).toHaveProperty("trigger");
         }
     });
 
@@ -186,7 +185,7 @@ describe("useGetRewardHistory", () => {
             "@frak-labs/wallet-shared/common/api/backendClient"
         );
         vi.mocked(authenticatedWalletApi.rewards.history.get).mockResolvedValue(
-            createSuccessResponse({ rewards: [mockReward] })
+            createSuccessResponse({ items: [mockItem], totalCount: 1 })
         );
 
         const { result } = renderHook(() => useGetRewardHistory(), {
@@ -197,6 +196,6 @@ describe("useGetRewardHistory", () => {
             expect(result.current.isLoading).toBe(false);
         });
 
-        expect(result.current.total).toBe(1);
+        expect(result.current.totalCount).toBe(1);
     });
 });

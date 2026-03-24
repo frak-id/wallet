@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { tokensRoutes } from "../../../src/api/user/wallet/routes/notifications/tokens";
+import { tokensRoutes } from "../../../src/api/user/wallet/notifications/tokens";
 import { dbMock, JwtContextMock } from "../../mock/common";
 
 describe("Wallet Notifications Token Routes API", () => {

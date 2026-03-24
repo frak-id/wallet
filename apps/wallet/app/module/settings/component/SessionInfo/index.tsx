@@ -11,6 +11,7 @@ import { toHex } from "viem";
 import { useAccount } from "wagmi";
 import { Panel } from "@/module/common/component/Panel";
 import { Title } from "@/module/common/component/Title";
+import { isCryptoMode } from "@/module/common/utils/walletMode";
 import styles from "./index.module.css";
 
 export function SessionInfo() {
@@ -19,6 +20,10 @@ export function SessionInfo() {
     const { address } = useAccount();
     const webauthnWallet = sessionStore(selectWebauthnSession);
     const ecdsaWallet = sessionStore(selectEcdsaSession);
+
+    const accountLabel = isCryptoMode
+        ? t("common.wallet")
+        : t("common.accountId", "Account ID:");
 
     if (webauthnWallet) {
         return (
@@ -38,7 +43,7 @@ export function SessionInfo() {
                     </li>
 
                     <li>
-                        {t("common.wallet")}{" "}
+                        {accountLabel}{" "}
                         {isHydrated && (
                             <WalletAddress
                                 wallet={address ?? "0x"}
@@ -69,7 +74,7 @@ export function SessionInfo() {
                     </li>
 
                     <li>
-                        {t("common.wallet")}{" "}
+                        {accountLabel}{" "}
                         {isHydrated && (
                             <WalletAddress
                                 wallet={address ?? "0x"}

@@ -71,6 +71,27 @@
             "when": 1773134691754,
             "tag": "0009_nostalgic_wendell_rand",
             "breakpoints": true
+        },
+        {
+            "idx": 10,
+            "version": "7",
+            "when": 1773911185288,
+            "tag": "0010_glossy_bulldozer",
+            "breakpoints": true
+        },
+        {
+            "idx": 11,
+            "version": "7",
+            "when": 1774010478696,
+            "tag": "0011_wonderful_anita_blake",
+            "breakpoints": true
+        },
+        {
+            "idx": 12,
+            "version": "7",
+            "when": 1774254961196,
+            "tag": "0012_brainy_sebastian_shaw",
+            "breakpoints": true
         }
     ]
 }

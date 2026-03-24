@@ -9,7 +9,7 @@ import {
 } from "drizzle-orm/pg-core";
 import type { Address } from "viem";
 import { customHex } from "../../../utils/drizzle/customTypes";
-import type { MerchantConfig } from "../schemas";
+import type { ExplorerConfig } from "../schemas";
 
 export const merchantsTable = pgTable(
     "merchants",
@@ -25,16 +25,13 @@ export const merchantsTable = pgTable(
             .notNull(),
         webhookSignatureKey: text("webhook_signature_key"),
         webhookPlatform: text("webhook_platform"),
-        config: jsonb("config").$type<MerchantConfig>(),
+        explorerConfig: jsonb("explorer_config").$type<ExplorerConfig>(),
+        explorerEnabledAt: timestamp("explorer_enabled_at"),
         verifiedAt: timestamp("verified_at"),
         createdAt: timestamp("created_at").defaultNow(),
         updatedAt: timestamp("updated_at").defaultNow(),
     },
-    (table) => [
-        index("merchants_product_id_idx").on(table.productId),
-        index("merchants_domain_idx").on(table.domain),
-        index("merchants_owner_wallet_idx").on(table.ownerWallet),
-    ]
+    (table) => [index("merchants_owner_wallet_idx").on(table.ownerWallet)]
 );
 
 export const merchantAdminsTable = pgTable(
@@ -47,7 +44,6 @@ export const merchantAdminsTable = pgTable(
         addedAt: timestamp("added_at").defaultNow().notNull(),
     },
     (table) => [
-        index("merchant_admins_merchant_idx").on(table.merchantId),
         index("merchant_admins_wallet_idx").on(table.wallet),
         unique("merchant_admins_unique").on(table.merchantId, table.wallet),
     ]
@@ -62,8 +58,5 @@ export const merchantOwnershipTransfersTable = pgTable(
         toWallet: customHex("to_wallet").$type<Address>().notNull(),
         initiatedAt: timestamp("initiated_at").defaultNow().notNull(),
         expiresAt: timestamp("expires_at").notNull(),
-    },
-    (table) => [
-        index("merchant_ownership_transfers_to_wallet_idx").on(table.toWallet),
-    ]
+    }
 );

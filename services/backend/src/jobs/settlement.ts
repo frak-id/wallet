@@ -1,15 +1,14 @@
-import { mutexCron } from "@backend-utils";
-import { Elysia } from "elysia";
 import { RewardConfig } from "../domain/rewards/config";
 import { OrchestrationContext } from "../orchestration";
+import { MutexCron } from "../utils/mutexCron";
+import { CronRegistry } from "./registry";
 
-export const settlementJobs = new Elysia({ name: "Job.settlement" }).use(
-    mutexCron({
+CronRegistry.register(
+    new MutexCron({
         name: "settleRewards",
         pattern: RewardConfig.cron.settlement,
         triggerKeys: ["newPendingRewards"],
         coolDownInMs: RewardConfig.settlement.cooldownMs,
-        skipIfLocked: true,
         run: async ({ context: { logger } }) => {
             logger.debug("Starting reward settlement batch");
 

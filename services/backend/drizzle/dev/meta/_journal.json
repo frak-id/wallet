@@ -148,6 +148,34 @@
             "when": 1772804036014,
             "tag": "0020_misty_red_hulk",
             "breakpoints": true
+        },
+        {
+            "idx": 21,
+            "version": "7",
+            "when": 1773425204097,
+            "tag": "0021_merchant_explorer_columns",
+            "breakpoints": true
+        },
+        {
+            "idx": 22,
+            "version": "7",
+            "when": 1773911151471,
+            "tag": "0022_clumsy_blue_marvel",
+            "breakpoints": true
+        },
+        {
+            "idx": 23,
+            "version": "7",
+            "when": 1774010514354,
+            "tag": "0023_square_blacklash",
+            "breakpoints": true
+        },
+        {
+            "idx": 24,
+            "version": "7",
+            "when": 1774254805739,
+            "tag": "0024_hesitant_dark_beast",
+            "breakpoints": true
         }
     ]
 }

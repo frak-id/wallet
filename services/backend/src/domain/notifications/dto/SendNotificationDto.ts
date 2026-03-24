@@ -1,4 +1,5 @@
 import { t } from "@backend-utils";
+import type { Language } from "@frak-labs/core-sdk";
 
 export const SendNotificationTargetsDto = t.Union([
     t.Object({
@@ -7,7 +8,7 @@ export const SendNotificationTargetsDto = t.Union([
     t.Object({
         filter: t.Partial(
             t.Object({
-                productIds: t.Array(t.Hex()),
+                merchantIds: t.Array(t.String()),
                 interactions: t.Partial(
                     t.Object({
                         min: t.Number(),
@@ -57,3 +58,7 @@ export const SendNotificationPayloadDto = t.Object({
 });
 
 export type SendNotificationPayload = typeof SendNotificationPayloadDto.static;
+
+export type LocalisedNotificationPayload = Partial<
+    Record<Language, SendNotificationPayload>
+>;

@@ -1,18 +1,15 @@
 import { eventEmitter } from "@backend-infrastructure";
-import { mutexCron } from "@backend-utils";
-import { Elysia } from "elysia";
 import { RewardConfig } from "../domain/rewards/config";
 import { OrchestrationContext } from "../orchestration";
+import { MutexCron } from "../utils/mutexCron";
+import { CronRegistry } from "./registry";
 
-export const rewardCalculationJobs = new Elysia({
-    name: "Job.rewardCalculation",
-}).use(
-    mutexCron({
+CronRegistry.register(
+    new MutexCron({
         name: "processRewards",
         pattern: RewardConfig.cron.rewardCalculation,
         triggerKeys: ["newInteraction"],
         coolDownInMs: 15_000,
-        skipIfLocked: true,
         run: async ({ context: { logger } }) => {
             logger.debug("Starting reward calculation batch");
 

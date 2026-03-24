@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { balanceRoutes } from "../../../src/api/user/wallet/routes/balance";
+import { balanceRoutes } from "../../../src/api/user/wallet/balance";
 import { WalletContext } from "../../../src/domain/wallet";
 import { JwtContextMock, pricingRepositoryMocks } from "../../mock/common";
 

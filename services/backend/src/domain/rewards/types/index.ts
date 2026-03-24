@@ -1,3 +1,4 @@
+import type { ExplorerConfig } from "@backend-domain/merchant/schemas";
 import type { Address, Hex } from "viem";
 import type {
     AssetStatus,
@@ -8,6 +9,29 @@ import type {
 
 export type { AssetStatus, AssetType, InteractionType, RecipientType };
 export { InteractionTypeSchema } from "../schemas";
+
+// =============================================================================
+// DETAILED ASSET LOG (joined view for reward history)
+// =============================================================================
+
+export type DetailedAssetLog = {
+    id: string;
+    amount: string;
+    tokenAddress: Address | null;
+    status: AssetStatus;
+    recipientType: RecipientType;
+    createdAt: Date;
+    settledAt: Date | null;
+    onchainTxHash: Hex | null;
+    interactionType: InteractionType | null;
+    interactionPayload: InteractionPayload | null;
+    touchpointId: string | null;
+    identityGroupId: string;
+    merchantId: string;
+    merchantName: string;
+    merchantDomain: string;
+    merchantExplorerConfig: ExplorerConfig | null;
+};
 
 // =============================================================================
 // INTERACTION LOG TYPES
@@ -33,6 +57,8 @@ export type CreateReferralLinkPayload = {
     sharerWallet: Address;
     merchantId: string;
     touchpointId?: string;
+    sharingTimestamp?: number;
+    purchaseId?: string;
 };
 
 /**
@@ -43,13 +69,13 @@ export type PurchasePayload = {
     externalCustomerId: string;
     amount: number;
     currency: string;
-    items: Array<{
+    items: {
         productId?: string;
         name: string;
         quantity: number;
         unitPrice: number;
         totalPrice: number;
-    }>;
+    }[];
     purchaseId: string;
 };
 
@@ -77,10 +103,10 @@ export type SettlementResult = {
     failedCount: number;
     txHashes: Hex[];
     banks: Set<Address>;
-    errors: Array<{
+    errors: {
         assetLogId: string;
         error: string;
-    }>;
+    }[];
 };
 
 export { buildAttestation } from "@backend-utils";

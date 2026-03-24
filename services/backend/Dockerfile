@@ -23,19 +23,22 @@ COPY services/backend ./services/backend
 RUN cd services/backend && bun run build
 
 # Start a new stage for the final image
-FROM oven/bun:1.3.9
+FROM oven/bun:1.3.11
 
 WORKDIR /app
 
-# Build in a compiled way
-# COPY --from=builder /app/services/backend/server ./server
+# Security: run as non-root user (bun user ships with the official image)
+COPY --from=builder --chown=bun:bun /app/services/backend/package.json .
+COPY --from=builder --chown=bun:bun /app/services/backend/dist ./dist
 
-# Build in a bun ways
-COPY --from=builder /app/services/backend/package.json .
-COPY --from=builder /app/services/backend/dist ./dist
+USER bun
 
 # Runtime port
 EXPOSE 3030
 
 ENV NODE_ENV=production
-CMD ["bun", "run", "start"]
+# Disable transpiler cache in ephemeral containers (official recommendation)
+ENV BUN_RUNTIME_TRANSPILER_CACHE_PATH=0
+
+# Direct entrypoint — Bun is PID 1, receives SIGTERM cleanly
+CMD ["bun", "dist/index.js"]

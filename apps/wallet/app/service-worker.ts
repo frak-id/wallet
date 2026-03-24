@@ -1,4 +1,4 @@
-import { notificationStorage } from "@frak-labs/wallet-shared/common/storage/notifications";
+import { notificationStorage } from "@/module/notification/storage/notifications";
 
 declare const self: ServiceWorkerGlobalScope;
 

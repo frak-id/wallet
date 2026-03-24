@@ -2,6 +2,7 @@ import { rewardsHubRepository } from "../../infrastructure/blockchain/contracts/
 import { tokenMetadataRepository } from "../../infrastructure/blockchain/TokenMetadataRepository";
 import { AssetLogRepository } from "./repositories/AssetLogRepository";
 import { InteractionLogRepository } from "./repositories/InteractionLogRepository";
+import { RewardHistoryService } from "./services/RewardHistoryService";
 import { SettlementService } from "./services/SettlementService";
 
 const assetLogRepository = new AssetLogRepository();
@@ -11,6 +12,7 @@ const settlementService = new SettlementService(
     rewardsHubRepository,
     tokenMetadataRepository
 );
+const rewardHistoryService = new RewardHistoryService();
 
 export namespace RewardsContext {
     export const repositories = {
@@ -20,5 +22,6 @@ export namespace RewardsContext {
 
     export const services = {
         settlement: settlementService,
+        rewardHistory: rewardHistoryService,
     };
 }

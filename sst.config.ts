@@ -6,6 +6,10 @@ export default $config({
             name: "wallet",
             removal: input?.stage === "prod" ? "retain" : "remove",
             home: "aws",
+            // Only watch infra config for changes — dev commands (Vite, Bun)
+            // handle their own file watching. Avoids SST watching build outputs
+            // like src-tauri/target/ which overloads CPU/memory.
+            watch: ["infra"],
             provider: {
                 aws: {
                     region: "eu-west-1",

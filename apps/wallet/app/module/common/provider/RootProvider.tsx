@@ -1,4 +1,3 @@
-import { isTauri } from "@frak-labs/app-essentials/utils/platform";
 import {
     setProfileId,
     usePersistentPairingClient,
@@ -6,17 +5,18 @@ import {
 } from "@frak-labs/wallet-shared";
 import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
 import { QueryClient } from "@tanstack/react-query";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import type { PersistQueryClientProviderProps } from "@tanstack/react-query-persist-client";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
-import { type PropsWithChildren, useEffect } from "react";
+import { lazy, type PropsWithChildren, useEffect } from "react";
 import { useAccount } from "wagmi";
 import { PwaInstallProvider } from "@/module/common/context/PwaInstallContext";
 import { useEnforceWagmiConnection } from "@/module/common/hook/useEnforceWagmiConnection";
-import {
-    NotificationProvider,
-    useNotificationContext,
-} from "@/module/notification/context/NotificationContext";
+
+const ReactQueryDevtools = lazy(() =>
+    import("@tanstack/react-query-devtools").then((m) => ({
+        default: m.ReactQueryDevtools,
+    }))
+);
 
 /**
  * The query client that will be used by tanstack/react-query
@@ -57,16 +57,13 @@ const persistOptions: PersistQueryClientProviderProps["persistOptions"] = {
 };
 
 export function RootProvider({ children }: PropsWithChildren) {
-    const isNativeApp = isTauri();
-
     const content = (
-        <NotificationProvider>
-            <SetupNotifications />
+        <>
             <WagmiProviderWithDynamicConfig>
                 <SessionStateManager />
                 {children}
             </WagmiProviderWithDynamicConfig>
-        </NotificationProvider>
+        </>
     );
 
     return (
@@ -74,33 +71,19 @@ export function RootProvider({ children }: PropsWithChildren) {
             client={queryClient}
             persistOptions={persistOptions}
         >
-            {/* Only provide PWA install context in web mode, not in Tauri */}
-            {isNativeApp ? (
+            {process.env.IS_TAURI ? (
                 content
             ) : (
                 <PwaInstallProvider>{content}</PwaInstallProvider>
             )}
-            <ReactQueryDevtools
-                initialIsOpen={false}
-                buttonPosition={"top-right"}
-            />
+            {import.meta.env.DEV && (
+                <ReactQueryDevtools
+                    initialIsOpen={false}
+                    buttonPosition={"top-right"}
+                />
+            )}
         </PersistQueryClientProvider>
     );
-}
-
-function SetupNotifications() {
-    const { adapter, setIsSubscribed } = useNotificationContext();
-
-    useEffect(() => {
-        const setupNotifications = async () => {
-            const result = await adapter.initialize();
-            setIsSubscribed(result.isSubscribed);
-        };
-
-        setupNotifications();
-    }, [adapter, setIsSubscribed]);
-
-    return null;
 }
 
 function SessionStateManager() {

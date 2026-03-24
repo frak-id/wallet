@@ -1,6 +1,12 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { Drawer, DrawerContent, DrawerTrigger } from "./index";
+import {
+    Drawer,
+    DrawerContent,
+    DrawerDescription,
+    DrawerTitle,
+    DrawerTrigger,
+} from "./index";
 
 describe("Drawer", () => {
     beforeEach(() => {
@@ -186,5 +192,58 @@ describe("Drawer", () => {
         expect(
             screen.getByRole("button", { name: "Open" })
         ).toBeInTheDocument();
+    });
+
+    it("should render handle by default (backward compatibility)", async () => {
+        render(
+            <Drawer defaultOpen={true}>
+                <DrawerContent>Content</DrawerContent>
+            </Drawer>
+        );
+
+        await waitFor(() => {
+            expect(screen.getByText("Content")).toBeInTheDocument();
+        });
+
+        // Verify drawer is rendered with default behavior (handle + description wrapping)
+        const drawer = document.querySelector("[data-vaul-drawer]");
+        expect(drawer).toBeInTheDocument();
+        // The drawer should have the content text
+        expect(drawer?.textContent).toContain("Content");
+    });
+
+    it("should not render handle when hideHandle={true}", async () => {
+        render(
+            <Drawer defaultOpen={true}>
+                <DrawerContent hideHandle={true}>
+                    <DrawerTitle>Custom Title</DrawerTitle>
+                    <DrawerDescription>Content</DrawerDescription>
+                </DrawerContent>
+            </Drawer>
+        );
+
+        await waitFor(() => {
+            expect(screen.getByText("Content")).toBeInTheDocument();
+        });
+
+        // Custom title and description should be rendered
+        expect(screen.getByText("Custom Title")).toBeInTheDocument();
+        expect(screen.getByText("Content")).toBeInTheDocument();
+    });
+
+    it("should render children directly when hideHandle={true}", async () => {
+        render(
+            <Drawer defaultOpen={true}>
+                <DrawerContent hideHandle={true}>
+                    <div>Direct Child 1</div>
+                    <div>Direct Child 2</div>
+                </DrawerContent>
+            </Drawer>
+        );
+
+        await waitFor(() => {
+            expect(screen.getByText("Direct Child 1")).toBeInTheDocument();
+            expect(screen.getByText("Direct Child 2")).toBeInTheDocument();
+        });
     });
 });

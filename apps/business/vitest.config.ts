@@ -6,9 +6,7 @@ import { defineConfig, mergeConfig } from "vitest/config";
 export default mergeConfig(
     sharedConfig,
     defineConfig({
-        plugins: await getReactTestPlugins({
-            tsconfigProjects: ["./tsconfig.json"],
-        }),
+        plugins: await getReactTestPlugins(),
         test: {
             name: "business-unit",
             setupFiles: [

@@ -54,20 +54,38 @@ describe("NotificationsService", () => {
         },
     ];
 
+    const unregisteredError = {
+        error: {
+            code: 404,
+            message: "Requested entity was not found.",
+            status: "NOT_FOUND",
+            details: [
+                {
+                    "@type":
+                        "type.googleapis.com/google.firebase.fcm.v1.FcmError",
+                    errorCode: "UNREGISTERED",
+                },
+            ],
+        },
+    };
+
     beforeAll(() => {
         fcmSender = new FcmSender();
+
+        vi.spyOn(fcmSender, "send").mockImplementation(async ({ tokens }) => {
+            for (const t of tokens) {
+                fcmMocks.sendRequest(t);
+            }
+            return tokens.filter((t) => fcmMocks.tokenErrors.has(t));
+        });
+
         service = new NotificationsService(fcmSender);
     });
 
     beforeEach(() => {
         dbMock.__reset();
         webPushMocks.sendNotification.mockReset();
-        fcmMocks.sendEachForMulticast.mockReset();
-        fcmMocks.sendEachForMulticast.mockResolvedValue({
-            successCount: 0,
-            failureCount: 0,
-            responses: [],
-        });
+        fcmMocks.reset();
         dbMock.__setFindManyResponse(() => Promise.resolve(mockWebPushTokens));
         dbMock.__setDeleteResponse(() => Promise.resolve());
     });
@@ -119,15 +137,6 @@ describe("NotificationsService", () => {
         it("should send FCM notifications for FCM tokens", async () => {
             dbMock.__setFindManyResponse(() => Promise.resolve(mockFcmTokens));
 
-            fcmMocks.sendEachForMulticast.mockResolvedValue({
-                successCount: 2,
-                failureCount: 0,
-                responses: [
-                    { success: true, messageId: "msg-1" },
-                    { success: true, messageId: "msg-2" },
-                ],
-            });
-
             const wallets = [
                 "0x1234567890abcdef1234567890abcdef12345678",
                 "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd",
@@ -140,7 +149,7 @@ describe("NotificationsService", () => {
 
             await service.sendNotification({ wallets, payload });
 
-            expect(fcmMocks.sendEachForMulticast).toHaveBeenCalledTimes(1);
+            expect(fcmMocks.sendRequest).toHaveBeenCalledTimes(2);
             expect(webPushMocks.sendNotification).not.toHaveBeenCalled();
         });
 
@@ -148,15 +157,6 @@ describe("NotificationsService", () => {
             dbMock.__setFindManyResponse(() =>
                 Promise.resolve([...mockWebPushTokens, ...mockFcmTokens])
             );
-
-            fcmMocks.sendEachForMulticast.mockResolvedValue({
-                successCount: 2,
-                failureCount: 0,
-                responses: [
-                    { success: true, messageId: "msg-1" },
-                    { success: true, messageId: "msg-2" },
-                ],
-            });
 
             const wallets = [
                 "0x1234567890abcdef1234567890abcdef12345678",
@@ -171,26 +171,16 @@ describe("NotificationsService", () => {
             await service.sendNotification({ wallets, payload });
 
             expect(webPushMocks.sendNotification).toHaveBeenCalledTimes(2);
-            expect(fcmMocks.sendEachForMulticast).toHaveBeenCalledTimes(1);
+            expect(fcmMocks.sendRequest).toHaveBeenCalledTimes(2);
         });
 
         it("should cleanup invalid FCM tokens after send", async () => {
             dbMock.__setFindManyResponse(() => Promise.resolve(mockFcmTokens));
 
-            fcmMocks.sendEachForMulticast.mockResolvedValue({
-                successCount: 1,
-                failureCount: 1,
-                responses: [
-                    { success: true, messageId: "msg-1" },
-                    {
-                        success: false,
-                        error: {
-                            code: "messaging/registration-token-not-registered",
-                            message: "Token not registered",
-                        },
-                    },
-                ],
-            });
+            fcmMocks.tokenErrors.set(
+                "fcm-registration-token-2",
+                unregisteredError
+            );
 
             const wallets = [
                 "0x1234567890abcdef1234567890abcdef12345678",
@@ -319,20 +309,10 @@ describe("NotificationsService", () => {
         it("should scope FCM cleanup to row IDs, not raw endpoints", async () => {
             dbMock.__setFindManyResponse(() => Promise.resolve(mockFcmTokens));
 
-            fcmMocks.sendEachForMulticast.mockResolvedValue({
-                successCount: 1,
-                failureCount: 1,
-                responses: [
-                    { success: true, messageId: "msg-1" },
-                    {
-                        success: false,
-                        error: {
-                            code: "messaging/registration-token-not-registered",
-                            message: "Token not registered",
-                        },
-                    },
-                ],
-            });
+            fcmMocks.tokenErrors.set(
+                "fcm-registration-token-2",
+                unregisteredError
+            );
 
             await service.sendNotification({
                 wallets: [

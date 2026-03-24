@@ -22,15 +22,7 @@ vi.stubEnv("BACKEND_URL", "https://backend-test.frak.id");
 vi.stubEnv("FRAK_WALLET_URL", "https://wallet-test.frak.id");
 vi.stubEnv("OPEN_PANEL_API_URL", "https://openpanel-test.frak.id");
 vi.stubEnv("OPEN_PANEL_BUSINESS_CLIENT_ID", "test-client-id");
-
-// Mock OpenPanel analytics (used across all frontend apps)
-vi.mock("@openpanel/web", () => ({
-    OpenPanel: vi.fn(() => ({
-        identify: vi.fn(),
-        track: vi.fn(),
-        setProfile: vi.fn(),
-    })),
-}));
+vi.stubEnv("OPEN_PANEL_WALLET_CLIENT_ID", "test-wallet-client-id");
 
 // Mock document.cookie (used by demo mode and other cookie-based features)
 Object.defineProperty(document, "cookie", {

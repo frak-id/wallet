@@ -7,10 +7,6 @@ fileGroups: [../../src]
 configs:
   debug: debug
   release: release
-packages:
-  Firebase:
-    url: https://github.com/firebase/firebase-ios-sdk
-    from: "11.0.0"
 settingGroups:
   app:
     base:
@@ -59,8 +55,8 @@ targets:
           - UIInterfaceOrientationPortraitUpsideDown
           - UIInterfaceOrientationLandscapeLeft
           - UIInterfaceOrientationLandscapeRight
-        CFBundleShortVersionString: 1.0.12
-        CFBundleVersion: "1.0.12"
+        CFBundleShortVersionString: 1.0.18
+        CFBundleVersion: "1.0.18"
         ITSAppUsesNonExemptEncryption: false
         UIBackgroundModes:
           - remote-notification
@@ -100,8 +96,6 @@ targets:
     dependencies:
       - framework: libapp.a
         embed: false
-      - package: Firebase
-        product: FirebaseMessaging
       - sdk: CoreGraphics.framework
       - sdk: Metal.framework
       - sdk: MetalKit.framework

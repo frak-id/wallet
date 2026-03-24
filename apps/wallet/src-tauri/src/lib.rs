@@ -2,16 +2,18 @@
 pub fn run() {
     let mut builder = tauri::Builder::default()
         .plugin(tauri_plugin_safe_area_insets::init())
-        .plugin(tauri_plugin_deep_link::init());
+        .plugin(tauri_plugin_deep_link::init())
+        .plugin(tauri_plugin_opener::init());
 
     #[cfg(mobile)]
     {
         builder = builder
             .plugin(tauri_plugin_biometric::init())
-            .plugin(tauri_plugin_notifications::init());
+            .plugin(tauri_plugin_fcm::init())
+            .plugin(tauri_plugin_app_settings::init());
     }
 
-    // Android-only plugins: WebAuthn, Share, and FS
+    // Android-only plugins: WebAuthn, Share, FS
     // (iOS uses native WKWebView WebAuthn and Web Share API works natively)
     #[cfg(target_os = "android")]
     {

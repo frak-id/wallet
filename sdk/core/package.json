@@ -92,21 +92,21 @@
   },
   "dependencies": {
     "@frak-labs/frame-connector": "workspace:*",
-    "@openpanel/web": "^1.0.7"
+    "@openpanel/web": "^1.2.0"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.2",
     "@frak-labs/dev-tooling": "workspace:*",
     "@frak-labs/test-foundation": "workspace:*",
     "@rolldown/plugin-node-polyfills": "^1.0.3",
-    "@types/jsdom": "^27.0.0",
+    "@types/jsdom": "^28.0.0",
     "@types/node": "catalog:",
-    "@vitest/coverage-v8": "^4.0.18",
-    "@vitest/ui": "^4.0.18",
-    "jsdom": "^28.0.0",
+    "@vitest/coverage-v8": "^4.1.0",
+    "@vitest/ui": "^4.1.0",
+    "jsdom": "^29.0.0",
     "tsdown": "^0.20.3",
     "typescript": "catalog:",
     "viem": "catalog:",
-    "vitest": "^4.0.18"
+    "vitest": "^4.1.0"
   }
 }

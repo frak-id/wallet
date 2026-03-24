@@ -1,5 +1,6 @@
 import { isTauri } from "@frak-labs/app-essentials/utils/platform";
 import { getSafeSession, pairingStore } from "@frak-labs/wallet-shared";
+import { isCryptoMode } from "@/module/common/utils/walletMode";
 
 type DeepLinkParams = {
     action: string;
@@ -7,6 +8,8 @@ type DeepLinkParams = {
     amount?: string;
     id?: string;
     mode?: string;
+    code?: string;
+    state?: string;
 };
 
 /**
@@ -44,6 +47,8 @@ function extractSearchParams(
         amount: searchParams.get("amount") ?? undefined,
         id: searchParams.get("id") ?? undefined,
         mode: searchParams.get("mode") ?? undefined,
+        code: searchParams.get("code") ?? undefined,
+        state: searchParams.get("state") ?? undefined,
     };
 }
 
@@ -117,14 +122,22 @@ function handleDeepLinkAction(navigate: NavigateFn, params: DeepLinkParams) {
 export function routeDeepLink(navigate: NavigateFn, params: DeepLinkParams) {
     switch (params.action) {
         case "send":
-            navigate({
-                to: "/tokens/send",
-                search: params.to ? { to: params.to } : undefined,
-            });
+            if (isCryptoMode) {
+                navigate({
+                    to: "/tokens/send",
+                    search: params.to ? { to: params.to } : undefined,
+                });
+            } else {
+                navigate({ to: "/wallet" });
+            }
             break;
 
         case "receive":
-            navigate({ to: "/tokens/receive" });
+            if (isCryptoMode) {
+                navigate({ to: "/tokens/receive" });
+            } else {
+                navigate({ to: "/wallet" });
+            }
             break;
 
         case "settings":
@@ -159,6 +172,17 @@ export function routeDeepLink(navigate: NavigateFn, params: DeepLinkParams) {
                     : { mode: "embedded" },
             });
             break;
+
+        case "monerium":
+        case "monerium-callback": {
+            // Both HTTPS App Link (action: "monerium") and custom scheme (action: "monerium-callback")
+            // route to the OAuth callback handler
+            const search: Record<string, string> = {};
+            if (params.code) search.code = params.code;
+            if (params.state) search.state = params.state;
+            navigate({ to: "/monerium/callback", search });
+            break;
+        }
 
         default:
             navigate({ to: "/wallet" });

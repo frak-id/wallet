@@ -12,6 +12,7 @@ import {
 } from "drizzle-orm";
 import type { Address, Hex } from "viem";
 import { db } from "../../../infrastructure/persistence/postgres";
+
 import { merchantsTable } from "../../merchant/db/schema";
 import { RewardConfig } from "../config";
 import {
@@ -23,6 +24,7 @@ import {
 import type {
     AssetStatus,
     CreateAssetLogParams,
+    DetailedAssetLog,
     InteractionType,
     RecipientType,
 } from "../types";
@@ -178,7 +180,7 @@ export class AssetLogRepository {
     }
 
     async expirePendingRewards(): Promise<
-        Array<{ campaignRuleId: string; amount: string }>
+        { campaignRuleId: string; amount: string }[]
     > {
         const now = new Date();
 
@@ -211,7 +213,7 @@ export class AssetLogRepository {
         identityGroupIds: string[],
         options?: { status?: AssetStatus[] }
     ): Promise<
-        Array<{
+        {
             id: string;
             amount: string;
             tokenAddress: Address | null;
@@ -224,7 +226,7 @@ export class AssetLogRepository {
             merchantId: string;
             merchantName: string;
             merchantDomain: string;
-        }>
+        }[]
     > {
         const whereConditions = [
             inArray(assetLogsTable.identityGroupId, identityGroupIds),
@@ -264,6 +266,64 @@ export class AssetLogRepository {
             )
             .where(and(...whereConditions))
             .orderBy(desc(assetLogsTable.createdAt));
+    }
+
+    async findDetailedByIdentityGroup(
+        identityGroupId: string,
+        options?: { limit?: number; offset?: number }
+    ): Promise<DetailedAssetLog[]> {
+        return db
+            .select({
+                id: assetLogsTable.id,
+                amount: assetLogsTable.amount,
+                tokenAddress: assetLogsTable.tokenAddress,
+                status: assetLogsTable.status,
+                recipientType: assetLogsTable.recipientType,
+                createdAt: assetLogsTable.createdAt,
+                settledAt: assetLogsTable.settledAt,
+                onchainTxHash: assetLogsTable.onchainTxHash,
+                interactionType: interactionLogsTable.type,
+                interactionPayload: interactionLogsTable.payload,
+                touchpointId: assetLogsTable.touchpointId,
+                identityGroupId: assetLogsTable.identityGroupId,
+                merchantId: merchantsTable.id,
+                merchantName: merchantsTable.name,
+                merchantDomain: merchantsTable.domain,
+                merchantExplorerConfig: merchantsTable.explorerConfig,
+            })
+            .from(assetLogsTable)
+            .leftJoin(
+                interactionLogsTable,
+                eq(assetLogsTable.interactionLogId, interactionLogsTable.id)
+            )
+            .innerJoin(
+                merchantsTable,
+                eq(assetLogsTable.merchantId, merchantsTable.id)
+            )
+            .where(
+                and(
+                    eq(assetLogsTable.identityGroupId, identityGroupId),
+                    eq(assetLogsTable.assetType, "token"),
+                    isNotNull(assetLogsTable.tokenAddress)
+                )
+            )
+            .orderBy(desc(assetLogsTable.createdAt))
+            .limit(options?.limit ?? 500)
+            .offset(options?.offset ?? 0);
+    }
+
+    async countByIdentityGroup(identityGroupId: string): Promise<number> {
+        const [result] = await db
+            .select({ count: sql<number>`count(*)::int` })
+            .from(assetLogsTable)
+            .where(
+                and(
+                    eq(assetLogsTable.identityGroupId, identityGroupId),
+                    eq(assetLogsTable.assetType, "token"),
+                    isNotNull(assetLogsTable.tokenAddress)
+                )
+            );
+        return result?.count ?? 0;
     }
 
     async countByCampaignAndUserAsReferee(

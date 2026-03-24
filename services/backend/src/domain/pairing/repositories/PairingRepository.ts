@@ -6,20 +6,18 @@ import type { WsDirectMessageResponse } from "../dto/WebsocketDirectMessage";
 import type { WsTopicMessage } from "../dto/WebsocketTopicMessage";
 
 const FLUSH_INTERVAL_MS = 60_000;
-const MIN_UPDATE_INTERVAL_MS = 60_000;
 
 /**
  * Batches lastActiveAt writes in-memory and flushes to DB once per
  * minute, instead of issuing an UPDATE on every WebSocket message.
- * Throttles per-pairingId so the same pairing is updated at most once
- * per MIN_UPDATE_INTERVAL_MS.
+ * The pending Map naturally deduplicates — each pairingId appears at
+ * most once per flush cycle.
  */
 class LastActiveTracker {
     private readonly pending = new Map<string, number>();
-    private readonly lastFlushed = new Map<string, number>();
 
     constructor() {
-        setInterval(() => this.flush(), FLUSH_INTERVAL_MS);
+        setInterval(() => this.flush(), FLUSH_INTERVAL_MS).unref();
 
         // Flush pending writes on graceful shutdown
         const onShutdown = () => {
@@ -30,14 +28,7 @@ class LastActiveTracker {
     }
 
     touch(pairingId: string) {
-        const now = Date.now();
-        const lastFlush = this.lastFlushed.get(pairingId) ?? 0;
-
-        if (now - lastFlush < MIN_UPDATE_INTERVAL_MS) {
-            return;
-        }
-
-        this.pending.set(pairingId, now);
+        this.pending.set(pairingId, Date.now());
     }
 
     private async flush() {
@@ -51,11 +42,6 @@ class LastActiveTracker {
                 .update(pairingTable)
                 .set({ lastActiveAt: new Date() })
                 .where(inArray(pairingTable.pairingId, pairingIds));
-
-            const now = Date.now();
-            for (const id of pairingIds) {
-                this.lastFlushed.set(id, now);
-            }
         } catch (err) {
             log.error(
                 { err, count: pairingIds.length },

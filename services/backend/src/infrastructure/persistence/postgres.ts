@@ -16,7 +16,11 @@ import {
     merchantOwnershipTransfersTable,
     merchantsTable,
 } from "../../domain/merchant/db/schema";
-import { pushTokensTable } from "../../domain/notifications/db/schema";
+import {
+    notificationBroadcastsTable,
+    notificationSentTable,
+    pushTokensTable,
+} from "../../domain/notifications/db/schema";
 import {
     pairingSignatureRequestTable,
     pairingTable,
@@ -40,6 +44,9 @@ const postgresDb = postgres({
     database: process.env.POSTGRES_DB,
     username: process.env.POSTGRES_USER,
     password: process.env.POSTGRES_PASSWORD,
+    max: 10,
+    idle_timeout: 30,
+    max_lifetime: 3600,
     connection: {
         search_path: schemaName,
     },
@@ -57,6 +64,8 @@ export const db = drizzle({
         merchantAdminsTable,
         merchantOwnershipTransfersTable,
         pushTokensTable,
+        notificationBroadcastsTable,
+        notificationSentTable,
         merchantWebhooksTable,
         purchaseClaimsTable,
         purchasesTable,

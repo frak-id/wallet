@@ -3,25 +3,12 @@ import {
     FrakIFrameClientProvider,
 } from "@frak-labs/react-sdk";
 import { type PropsWithChildren, use } from "react";
+import { detectWalletUrl } from "../../../../../shared/detectWalletUrl";
 
-const walletUrlPromise: Promise<string> = (async () => {
-    const envUrl = process.env.FRAK_WALLET_URL;
-    if (!envUrl || !import.meta.env.DEV) return envUrl ?? "";
-
-    try {
-        const response = await fetch("http://localhost:3010", {
-            mode: "no-cors",
-            signal: AbortSignal.timeout(1500),
-        });
-        if (response.type === "opaque" || response.ok) {
-            return "http://localhost:3010";
-        }
-    } catch {
-        // Intentional: dev-only probe via no-cors — opaque failures expected
-    }
-
-    return envUrl;
-})();
+const walletUrlPromise: Promise<string> = detectWalletUrl(
+    import.meta.env.DEV,
+    process.env.FRAK_WALLET_URL
+);
 
 export function FrakProvider({ children }: PropsWithChildren) {
     const walletUrl = use(walletUrlPromise);

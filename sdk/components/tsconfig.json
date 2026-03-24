@@ -1,7 +1,7 @@
 {
   // This tsconfig file contains the shared config for the build (tsconfig.build.json) and type checking (tsconfig.json) config.
   "include": ["./src", "./tests/**/*.d.ts", "../../packages/ui/types/**/*.d.ts", "../../packages/ui/utils/**/*.ts"],
-  "exclude": ["../../packages/ui/utils/**/*.test.ts", "../../packages/ui/utils/**/*.spec.ts"],
+  "exclude": ["../../packages/ui/utils/**/*.test.ts", "../../packages/ui/utils/**/*.spec.ts", "**/*.test.ts", "**/*.spec.ts"],
   "compilerOptions": {
     // Output directory
     "outDir": "./dist",
@@ -29,8 +29,6 @@
     "checkJs": false,
 
     // Interop constraints
-    "esModuleInterop": false,
-    "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
     "verbatimModuleSyntax": true,
     "importHelpers": true, // This is only used for build validation. Since we do not have `tslib` installed, this will fail if we accidentally make use of anything that'd require injection of helpers.

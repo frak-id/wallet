@@ -96,6 +96,7 @@ vi.mock("react-i18next", () => ({
     useTranslation: () => ({
         t: (key: string) => key,
     }),
+    Trans: ({ i18nKey }: { i18nKey: string }) => i18nKey,
 }));
 
 import { Route } from "./login";

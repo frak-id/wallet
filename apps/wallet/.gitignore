@@ -5,6 +5,8 @@
 # Playwright
 /playwright-report/
 /test-results
+/test-results-light
+/tests-light/specs/**/*-snapshots
 /playwright/.storage
 
 # Coverage

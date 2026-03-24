@@ -32,9 +32,9 @@ jobs:
     runs-on: 'ubuntu-latest'
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: 22
 
@@ -42,7 +42,7 @@ jobs:
 
       - name: Setup SST Cache
         id: sst-caching
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             .sst/platform/
@@ -52,7 +52,7 @@ jobs:
           key: ${{ runner.os }}-sst-v2-${{ hashFiles('./sst.config.ts') }}
           restore-keys: ${{ runner.os }}-sst-v2-
 
-      - uses: dorny/paths-filter@v3
+      - uses: dorny/paths-filter@v4
         name: Check changes
         id: changes
         with:
@@ -92,14 +92,14 @@ jobs:
 
       - name: "👥 Configure AWS Credentials"
         if: steps.changes.outputs.deployRequired == 'true' || github.event.inputs.force_deploy == 'true'
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: arn:aws:iam::262732185023:role/github-action-deploy-role
           aws-region: eu-west-1
           retry-max-attempts: 5
 
       - name: "👥 Login to Google Cloud"
-        uses: 'google-github-actions/auth@v2'
+        uses: 'google-github-actions/auth@v3'
         if: steps.changes.outputs.services == 'true' || github.event.inputs.force_deploy == 'true'
         id: 'auth'
         with:
@@ -108,7 +108,7 @@ jobs:
           project_id: 'frak-main-v1'
 
       - name: 'Set up Cloud SDK'
-        uses: 'google-github-actions/setup-gcloud@v2'
+        uses: 'google-github-actions/setup-gcloud@v3'
         if: steps.changes.outputs.services == 'true' || github.event.inputs.force_deploy == 'true'
         with:
           project_id: 'frak-main-v1'

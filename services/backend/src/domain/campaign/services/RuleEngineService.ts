@@ -64,7 +64,7 @@ export class RuleEngineService {
 
         const allRewards: CalculatedReward[] = [];
         const skippedCampaigns: string[] = [];
-        const errors: Array<{ campaignRuleId: string; error: string }> = [];
+        const errors: { campaignRuleId: string; error: string }[] = [];
         let budgetExceeded = false;
 
         for (const campaign of activeCampaigns) {

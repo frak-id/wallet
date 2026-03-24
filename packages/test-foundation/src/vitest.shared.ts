@@ -33,6 +33,9 @@ import { defineConfig } from "vitest/config";
 type VitePlugin = any;
 
 export default defineConfig({
+    resolve: {
+        tsconfigPaths: true,
+    },
     test: {
         // Enable global test APIs (describe, it, expect, vi, etc.)
         globals: true,
@@ -125,49 +128,30 @@ export default defineConfig({
  */
 
 /**
- * Standard Vite plugins for React projects with TypeScript path mapping
+ * Standard Vite plugins for React projects
  *
  * Includes:
  * - @vitejs/plugin-react: JSX transformation and React Fast Refresh
- * - vite-tsconfig-paths: Resolves TypeScript path aliases from tsconfig.json
  *
  * Used by: wallet, listener, business apps
  *
  * Note: Uses dynamic imports to avoid loading dependencies for projects that don't need them.
+ * TypeScript path aliases are resolved natively via resolve.tsconfigPaths in the shared config.
  *
- * @param options - Optional configuration
- * @param options.tsconfigProjects - Custom tsconfig file paths for vite-tsconfig-paths
- * @returns Array of Vite plugins for React + TypeScript projects
+ * @returns Array of Vite plugins for React projects
  *
  * @example
  * ```typescript
- * // Standard usage (auto-discovers tsconfig.json):
  * plugins: getReactTestPlugins()
- *
- * // Custom tsconfig location:
- * plugins: getReactTestPlugins({ tsconfigProjects: ["./tsconfig.json"] })
  * ```
  */
-export async function getReactTestPlugins(options?: {
-    tsconfigProjects?: string[];
-}): Promise<VitePlugin[]> {
-    const { tsconfigProjects } = options || {};
-
-    // Dynamic imports to avoid loading these packages for projects that don't use them
+export async function getReactTestPlugins(): Promise<VitePlugin[]> {
+    // Dynamic import to avoid loading React plugin for projects that don't use it
     // Using any cast to suppress type errors - works at runtime but bypasses type-checking
-    const [{ default: react }, { default: tsconfigPaths }] = (await Promise.all(
-        [
-            import(/* @vite-ignore */ "@vitejs/plugin-react"),
-            import(/* @vite-ignore */ "vite-tsconfig-paths"),
-        ]
+    const { default: react } = (await import(
+        /* @vite-ignore */ "@vitejs/plugin-react"
     )) as any;
-
-    return [
-        react(),
-        tsconfigPaths(
-            tsconfigProjects ? { projects: tsconfigProjects } : undefined
-        ),
-    ];
+    return [react()];
 }
 
 /**

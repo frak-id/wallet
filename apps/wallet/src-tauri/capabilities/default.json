@@ -8,7 +8,9 @@
         "log:default",
         "safe-area-insets:default",
         "biometric:default",
-        "notifications:default",
-        "deep-link:default"
+        "fcm:default",
+        "deep-link:default",
+        "opener:default",
+        "app-settings:allow-open-notification-settings"
     ]
 }

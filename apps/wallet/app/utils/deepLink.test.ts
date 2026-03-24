@@ -27,6 +27,8 @@ const getSafeSessionMock = vi.fn<() => { token: string } | null | undefined>(
 );
 
 vi.mock("@frak-labs/app-essentials/utils/platform", () => ({
+    isAndroid: vi.fn(() => false),
+    isIOS: vi.fn(() => false),
     isTauri: vi.fn(() => true),
 }));
 
@@ -43,6 +45,10 @@ vi.mock("@frak-labs/wallet-shared", async (importOriginal) => {
         getSafeSession: () => getSafeSessionMock(),
     };
 });
+
+vi.mock("@/module/common/utils/walletMode", () => ({
+    isCryptoMode: true,
+}));
 
 describe("initDeepLinks", () => {
     beforeEach(async () => {
@@ -314,5 +320,119 @@ describe("deep link auth gate", () => {
 
         expect(consumed).toBe(false);
         expect(navigate).not.toHaveBeenCalled();
+    });
+});
+
+describe("monerium OAuth callback", () => {
+    beforeEach(async () => {
+        vi.clearAllMocks();
+        pairingStore.getState().clearPendingPairing();
+        openUrlHandler = null;
+        getSafeSessionMock.mockReturnValue({ token: "valid-token" });
+        const { isTauri } = await import(
+            "@frak-labs/app-essentials/utils/platform"
+        );
+        vi.mocked(isTauri).mockReturnValue(true);
+
+        const { clearPendingDeepLink } = await import("./deepLink");
+        clearPendingDeepLink();
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
+    });
+
+    test("should handle HTTPS App Link for monerium callback with code and state", async () => {
+        const { initDeepLinks } = await import("./deepLink");
+        const navigate = vi.fn();
+
+        await initDeepLinks(navigate);
+
+        if (!openUrlHandler) {
+            throw new Error("Expected openUrlHandler to be set");
+        }
+
+        openUrlHandler([
+            "https://wallet-dev.frak.id/monerium/callback?code=abc123&state=xyz",
+        ]);
+
+        expect(navigate).toHaveBeenCalledWith({
+            to: "/monerium/callback",
+            search: { code: "abc123", state: "xyz" },
+        });
+    });
+
+    test("should handle custom scheme monerium-callback with code and state", async () => {
+        const { initDeepLinks } = await import("./deepLink");
+        const navigate = vi.fn();
+
+        await initDeepLinks(navigate);
+
+        if (!openUrlHandler) {
+            throw new Error("Expected openUrlHandler to be set");
+        }
+
+        openUrlHandler([
+            "frakwallet://monerium-callback?code=abc123&state=xyz",
+        ]);
+
+        expect(navigate).toHaveBeenCalledWith({
+            to: "/monerium/callback",
+            search: { code: "abc123", state: "xyz" },
+        });
+    });
+
+    test("should handle monerium callback with only code parameter", async () => {
+        const { initDeepLinks } = await import("./deepLink");
+        const navigate = vi.fn();
+
+        await initDeepLinks(navigate);
+
+        if (!openUrlHandler) {
+            throw new Error("Expected openUrlHandler to be set");
+        }
+
+        openUrlHandler(["frakwallet://monerium-callback?code=abc123"]);
+
+        expect(navigate).toHaveBeenCalledWith({
+            to: "/monerium/callback",
+            search: { code: "abc123" },
+        });
+    });
+
+    test("should handle monerium callback with only state parameter", async () => {
+        const { initDeepLinks } = await import("./deepLink");
+        const navigate = vi.fn();
+
+        await initDeepLinks(navigate);
+
+        if (!openUrlHandler) {
+            throw new Error("Expected openUrlHandler to be set");
+        }
+
+        openUrlHandler(["frakwallet://monerium-callback?state=xyz"]);
+
+        expect(navigate).toHaveBeenCalledWith({
+            to: "/monerium/callback",
+            search: { state: "xyz" },
+        });
+    });
+
+    test("should handle monerium callback with no parameters", async () => {
+        const { initDeepLinks } = await import("./deepLink");
+        const navigate = vi.fn();
+
+        await initDeepLinks(navigate);
+
+        if (!openUrlHandler) {
+            throw new Error("Expected openUrlHandler to be set");
+        }
+
+        openUrlHandler(["frakwallet://monerium-callback"]);
+
+        expect(navigate).toHaveBeenCalledWith({
+            to: "/monerium/callback",
+            search: {},
+        });
     });
 });

@@ -1,5 +1,6 @@
 export { BatchRewardOrchestrator } from "./BatchRewardOrchestrator";
 export { OrchestrationContext } from "./context";
+export { ExplorerOrchestrator } from "./ExplorerOrchestrator";
 export { PurchaseInteractionCreator } from "./PurchaseInteractionCreator";
 export { PurchaseLinkingOrchestrator } from "./PurchaseLinkingOrchestrator";
 export { PurchaseWebhookOrchestrator } from "./PurchaseWebhookOrchestrator";

@@ -71,12 +71,18 @@
     },
     "wallet": {
         "activateNotifications": "<strong>Activer les notifications</strong><br /> pour être prévenu du versement de vos gains",
+        "activateNotificationsRationale": "<strong>Activer les notifications</strong><br /> Nous avons besoin de votre permission pour vous notifier du versement de vos gains",
+        "openNotificationSettings": "<strong>Notifications désactivées</strong><br /> Ouvrez les paramètres pour activer les notifications",
+        "manageNotifications": "<strong>Gérer les notifications</strong><br /> Ouvrez les paramètres pour contrôler vos notifications",
         "settings": {
             "biometryInfo": "Informations biométriques",
             "ecdsaInfo": "Informations de connection",
             "ecdsaWallet": "Portefeuille Ecdsa",
             "privateKey": "Clé privée",
-            "deletePrivateKey": "Supprimer la clé privée"
+            "deletePrivateKey": "Supprimer la clé privée",
+            "legal": "Légal",
+            "termsOfUse": "Conditions Générales d'Utilisation",
+            "deleteAccount": "Supprimer mon compte"
         },
         "installWebApp": "<strong>Installer le wallet sur l'écran d'accueil</strong><br /> pour retrouver vos gains à tout moment",
         "invite": {
@@ -293,6 +299,49 @@
             "generic": "Une erreur est survenue. Veuillez réessayer."
         }
     },
+    "onboarding": {
+        "continue": "Continuer",
+        "activateSecureSpace": "Activer mon espace sécurisé",
+        "slides": {
+            "one": {
+                "title": "Slide 1 — Titre placeholder",
+                "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+            },
+            "two": {
+                "title": "Slide 2 — Titre placeholder",
+                "description": "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."
+            },
+            "three": {
+                "title": "Slide 3 — Titre placeholder",
+                "description": "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur."
+            }
+        },
+        "keypass": {
+            "title": "Sécurisez votre compte",
+            "description": "Votre clé d'accès sera sauvegardée dans votre gestionnaire de mots de passe pour une connexion biométrique rapide.",
+            "unsupported": {
+                "title": "Navigateur non compatible",
+                "description": "Votre navigateur ne supporte pas l'authentification biométrique. Connectez-vous autrement pour accéder à votre portefeuille.",
+                "button": "Se connecter autrement"
+            },
+            "existingAccount": {
+                "title": "Bon retour parmi nous !",
+                "description": "Vous avez déjà un compte. Connectez-vous avec votre clé d'accès pour retrouver votre portefeuille.",
+                "button": "Se connecter"
+            }
+        },
+        "notification": {
+            "title": "Ne manquez aucun gain !",
+            "description": "Recevez des notifications pour suivre vos gains et vos récompenses en temps réel.",
+            "enable": "Oui, me prévenir",
+            "skip": "Plus tard"
+        },
+        "welcome": {
+            "title": "Bienvenue dans votre portefeuille",
+            "description": "Votre portefeuille sécurisé est prêt. Commencez à explorer et à gérer vos actifs numériques.",
+            "button": "Commencer"
+        }
+    },
     "reward": {
         "status": {
             "pending": "En attente",
@@ -332,5 +381,46 @@
         "retry": "Réessayer",
         "appNotFound": "Application Frak Wallet introuvable",
         "appNotFoundHint": "Veuillez réinstaller l'application ou réessayer"
+    },
+    "monerium": {
+        "account": "Compte Monerium",
+        "connect": "Connecter à Monerium",
+        "connecting": "Connexion...",
+        "disconnect": "Déconnecter",
+        "completeSetup": "Terminer sur Monerium",
+        "linkWallet": "Lier votre portefeuille à Monerium",
+        "status": {
+            "settingUp": "Configuration...",
+            "created": "Compte créé — terminez la vérification sur Monerium",
+            "pending": "Vérification en cours",
+            "approved": "Vérifié ✓",
+            "rejected": "Vérification échouée"
+        },
+        "badge": {
+            "pending": "Vérification bancaire en cours...",
+            "approved": "Banque connectée :",
+            "notLinked": "IBAN non lié à ce portefeuille",
+            "rejected": "Vérification échouée"
+        },
+        "offramp": {
+            "amountLabel": "Montant (EURe)",
+            "balance": "Solde :",
+            "max": "MAX",
+            "destinationIban": "IBAN de destination",
+            "ibanWarning": "Attention : Cet IBAN n'est pas lié à votre adresse de portefeuille actuelle.",
+            "submit": "Retirer vers la banque",
+            "submitting": "Envoi de l'ordre...",
+            "confirmBiometric": "Confirmer avec la biométrie...",
+            "success": "Ordre soumis ! Les fonds arriveront dans 1 à 2 jours ouvrables.",
+            "tryAgain": "Réessayer",
+            "noIban": "Aucun IBAN lié. Veuillez d'abord compléter la vérification Monerium.",
+            "amountRequired": "Le montant est requis",
+            "amountInvalid": "Le montant doit être supérieur à 0"
+        },
+        "callback": {
+            "noCode": "Aucun code d'autorisation reçu",
+            "failed": "Échec de l'authentification",
+            "tryAgain": "Réessayer"
+        }
     }
 }

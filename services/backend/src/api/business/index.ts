@@ -1,9 +1,9 @@
 import { Elysia } from "elysia";
+import { authRoutes } from "./auth";
+import { fundingRoutes } from "./funding";
+import { merchantRoutes } from "./merchant";
 import { businessSessionContext } from "./middleware/session";
-import { authRoutes } from "./routes/auth";
-import { fundingRoutes } from "./routes/funding";
-import { merchantRoutes } from "./routes/merchant";
-import { notificationsRoutes } from "./routes/notifications";
+import { notificationsRoutes } from "./notifications";
 
 export const businessApi = new Elysia({ prefix: "/business" })
     .use(authRoutes)

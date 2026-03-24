@@ -1,4 +1,3 @@
-import { isTauri } from "@frak-labs/app-essentials/utils/platform";
 import { createRootRoute, Outlet } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import { BiometricLock } from "@/module/biometrics";
@@ -23,18 +22,16 @@ export const Route = createRootRoute({
  * This component wraps the entire application with providers and global components.
  */
 function RootComponent() {
-    const isNativeApp = isTauri();
-
     return (
         <RootProvider>
-            {/* Only show PWA features in web mode */}
-            {!isNativeApp && (
+            {/* Only show PWA features in web mode — tree-shaken in Tauri builds */}
+            {!process.env.IS_TAURI && (
                 <>
                     <PwaInstall />
                     <DetectPWA />
                 </>
             )}
-            {isNativeApp && <BiometricLock />}
+            {process.env.IS_TAURI && <BiometricLock />}
             <Outlet />
             {import.meta.env.DEV && (
                 <TanStackRouterDevtools position="bottom-right" />

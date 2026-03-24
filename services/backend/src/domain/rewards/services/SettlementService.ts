@@ -22,7 +22,7 @@ export type AssetLogWithWallet = AssetLogSelect & {
 type PreparedSettlement = {
     rewards: PushRewardParams[];
     validAssetLogIds: string[];
-    errors: Array<{ assetLogId: string; error: string }>;
+    errors: { assetLogId: string; error: string }[];
 };
 
 export class SettlementService {
@@ -142,7 +142,7 @@ export class SettlementService {
     ): Promise<PreparedSettlement> {
         const preparedRewards: PushRewardParams[] = [];
         const validAssetLogIds: string[] = [];
-        const errors: Array<{ assetLogId: string; error: string }> = [];
+        const errors: { assetLogId: string; error: string }[] = [];
 
         const uniqueTokens = [
             ...new Set(

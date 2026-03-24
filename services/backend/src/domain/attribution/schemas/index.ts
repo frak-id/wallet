@@ -17,7 +17,7 @@ export type TouchpointSource = Static<typeof TouchpointSourceSchema>;
 // TOUCHPOINT SOURCE DATA SCHEMAS (Discriminated Union)
 // =============================================================================
 
-export const ReferralLinkSourceDataSchema = t.Union([
+const ReferralLinkSourceDataSchema = t.Union([
     t.Object({
         type: t.Literal("referral_link"),
         v: t.Union([t.Literal(1), t.Undefined(), t.Null()]),
@@ -31,16 +31,12 @@ export const ReferralLinkSourceDataSchema = t.Union([
         referralTimestamp: t.Optional(t.Number()),
     }),
 ]);
-export type ReferralLinkSourceData = Static<
-    typeof ReferralLinkSourceDataSchema
->;
 
-export const OrganicSourceDataSchema = t.Object({
+const OrganicSourceDataSchema = t.Object({
     type: t.Literal("organic"),
 });
-export type OrganicSourceData = Static<typeof OrganicSourceDataSchema>;
 
-export const PaidAdSourceDataSchema = t.Object({
+const PaidAdSourceDataSchema = t.Object({
     type: t.Literal("paid_ad"),
     utmSource: t.Optional(t.String()),
     utmMedium: t.Optional(t.String()),
@@ -48,12 +44,10 @@ export const PaidAdSourceDataSchema = t.Object({
     utmTerm: t.Optional(t.String()),
     utmContent: t.Optional(t.String()),
 });
-export type PaidAdSourceData = Static<typeof PaidAdSourceDataSchema>;
 
-export const DirectSourceDataSchema = t.Object({
+const DirectSourceDataSchema = t.Object({
     type: t.Literal("direct"),
 });
-export type DirectSourceData = Static<typeof DirectSourceDataSchema>;
 
 export const TouchpointSourceDataSchema = t.Union([
     ReferralLinkSourceDataSchema,

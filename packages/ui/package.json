@@ -26,10 +26,10 @@
     "@uidotdev/usehooks": "^2.4.1",
     "class-variance-authority": "^0.7.1",
     "core-js": "^3.48.0",
-    "lucide-react": "^0.563.0",
+    "lucide-react": "^0.577.0",
     "nprogress": "^0.2.0",
     "react-dropzone": "^15.0.0",
-    "react-hook-form": "^7.71.1",
+    "react-hook-form": "^7.71.2",
     "react-loading-skeleton": "^3.5.0",
     "react-scan": "^0.4.3",
     "viem": "catalog:"
@@ -42,13 +42,13 @@
     "@types/nprogress": "^0.2.3",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
-    "@vitejs/plugin-react": "^5.1.4",
-    "@vitest/coverage-v8": "^4.0.18",
-    "@vitest/ui": "^4.0.18",
-    "jsdom": "^28.0.0",
+    "@vitejs/plugin-react": "catalog:",
+    "@vitest/coverage-v8": "^4.1.0",
+    "@vitest/ui": "^4.1.0",
+    "jsdom": "^29.0.0",
     "react": "catalog:",
     "react-dom": "catalog:",
-    "typescript": "^5",
-    "vitest": "^4.0.18"
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.0"
   }
 }

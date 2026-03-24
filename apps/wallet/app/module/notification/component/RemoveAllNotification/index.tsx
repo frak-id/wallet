@@ -1,19 +1,66 @@
+import { isTauri } from "@frak-labs/app-essentials/utils/platform";
 import { Button } from "@frak-labs/ui/component/Button";
-import { BellOff } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { BellOff, Settings } from "lucide-react";
+import { Trans } from "react-i18next";
+import { ButtonLabel } from "@/module/common/component/ButtonLabel";
 import { Panel } from "@/module/common/component/Panel";
 import { Row } from "@/module/common/component/Row";
+import { notificationAdapter } from "@/module/notification/adapter";
+import { useNotificationStatus } from "@/module/notification/hook/useNotificationSetupStatus";
 import { useUnsubscribeFromPushNotification } from "@/module/notification/hook/useUnsubscribeFromPushNotification";
+import { notificationKey } from "@/module/notification/queryKeys/notification";
 
+/**
+ * Native apps: "Manage notifications" → redirect to OS settings.
+ * FCM tokens are kept alive; the OS controls permission state.
+ *
+ * Web apps: "Unsubscribe" → delete push subscription + backend token.
+ * Browser subscriptions are locally managed, so deletion is safe.
+ */
 export function RemoveAllNotification() {
-    const { hasPushToken, unsubscribeFromPush, isPending } =
-        useUnsubscribeFromPushNotification();
+    const { hasLocalCapability } = useNotificationStatus();
 
-    // If the user don't have any push token, early exit
-    if (!hasPushToken) {
+    if (!hasLocalCapability) {
         return null;
     }
 
-    // Otherwise, button to unsubscribe from all the notification
+    if (isTauri()) {
+        return <ManageNotificationsNative />;
+    }
+
+    return <UnsubscribeWeb />;
+}
+
+function ManageNotificationsNative() {
+    const queryClient = useQueryClient();
+
+    return (
+        <Panel size={"none"} variant={"empty"}>
+            <Button
+                onClick={async () => {
+                    await notificationAdapter.openSettings();
+                    await queryClient.invalidateQueries({
+                        queryKey: notificationKey.push.permission,
+                    });
+                }}
+                width={"full"}
+                align={"left"}
+                gap={"big"}
+                leftIcon={<Settings size={32} />}
+            >
+                <ButtonLabel>
+                    <Trans i18nKey={"wallet.manageNotifications"} />
+                </ButtonLabel>
+            </Button>
+        </Panel>
+    );
+}
+
+function UnsubscribeWeb() {
+    const { unsubscribeFromPush, isPending } =
+        useUnsubscribeFromPushNotification();
+
     return (
         <Panel size={"none"} variant={"empty"}>
             <Button

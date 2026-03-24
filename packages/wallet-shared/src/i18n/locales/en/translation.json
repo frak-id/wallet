@@ -73,12 +73,18 @@
     },
     "wallet": {
         "activateNotifications": "<strong>Enable notifications</strong> <br /> to be notified when your gains are paid",
+        "activateNotificationsRationale": "<strong>Enable notifications</strong> <br /> We need your permission to notify you when gains are paid",
+        "openNotificationSettings": "<strong>Notifications disabled</strong> <br /> Open settings to enable notifications",
+        "manageNotifications": "<strong>Manage notifications</strong> <br /> Open settings to control your notifications",
         "settings": {
             "biometryInfo": "Biometry informations",
             "ecdsaInfo": "Login informations",
             "ecdsaWallet": "Ecdsa wallet",
             "privateKey": "Private key",
-            "deletePrivateKey": "Delete private key"
+            "deletePrivateKey": "Delete private key",
+            "legal": "Legal",
+            "termsOfUse": "Terms of Use",
+            "deleteAccount": "Delete my account"
         },
         "installWebApp": "<strong>Install wallet on home screen</strong> <br /> to find your gains at any time",
         "invite": {
@@ -295,6 +301,49 @@
             "generic": "An error occurred. Please try again."
         }
     },
+    "onboarding": {
+        "continue": "Continue",
+        "activateSecureSpace": "Activate my secure space",
+        "slides": {
+            "one": {
+                "title": "Slide 1 — Title placeholder",
+                "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+            },
+            "two": {
+                "title": "Slide 2 — Title placeholder",
+                "description": "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."
+            },
+            "three": {
+                "title": "Slide 3 — Title placeholder",
+                "description": "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur."
+            }
+        },
+        "keypass": {
+            "title": "Secure your account",
+            "description": "Your passkey will be saved in your password manager for fast biometric login.",
+            "unsupported": {
+                "title": "Browser not compatible",
+                "description": "Your browser does not support biometric authentication. Log in another way to access your wallet.",
+                "button": "Log in another way"
+            },
+            "existingAccount": {
+                "title": "Welcome back!",
+                "description": "You already have an account. Log in with your passkey to access your wallet.",
+                "button": "Log in"
+            }
+        },
+        "notification": {
+            "title": "Don't miss any reward!",
+            "description": "Receive notifications to track your rewards in real time.",
+            "enable": "Yes, notify me",
+            "skip": "Later"
+        },
+        "welcome": {
+            "title": "Welcome to your wallet",
+            "description": "Your secure wallet is ready. Start exploring and managing your digital assets.",
+            "button": "Get started"
+        }
+    },
     "reward": {
         "status": {
             "pending": "Pending",
@@ -334,5 +383,46 @@
         "retry": "Retry",
         "appNotFound": "Frak Wallet app not found",
         "appNotFoundHint": "Please reinstall the app or try again"
+    },
+    "monerium": {
+        "account": "Monerium Account",
+        "connect": "Connect to Monerium",
+        "connecting": "Connecting...",
+        "disconnect": "Disconnect",
+        "completeSetup": "Complete setup on Monerium",
+        "linkWallet": "Link your wallet to Monerium",
+        "status": {
+            "settingUp": "Setting up...",
+            "created": "Account created — complete verification on Monerium",
+            "pending": "Verification in progress",
+            "approved": "Verified ✓",
+            "rejected": "Verification failed"
+        },
+        "badge": {
+            "pending": "Bank verification in progress...",
+            "approved": "Bank connected:",
+            "notLinked": "IBAN not linked to this wallet",
+            "rejected": "Verification failed"
+        },
+        "offramp": {
+            "amountLabel": "Amount (EURe)",
+            "balance": "Balance:",
+            "max": "MAX",
+            "destinationIban": "Destination IBAN",
+            "ibanWarning": "Warning: This IBAN is not linked to your current wallet address.",
+            "submit": "Withdraw to bank",
+            "submitting": "Submitting order...",
+            "confirmBiometric": "Confirm with biometric...",
+            "success": "Order submitted! Funds will arrive in 1-2 business days.",
+            "tryAgain": "Try again",
+            "noIban": "No IBAN linked. Please complete Monerium verification first.",
+            "amountRequired": "Amount is required",
+            "amountInvalid": "Amount must be greater than 0"
+        },
+        "callback": {
+            "noCode": "No authorization code received",
+            "failed": "Failed to complete authentication",
+            "tryAgain": "Try again"
+        }
     }
 }

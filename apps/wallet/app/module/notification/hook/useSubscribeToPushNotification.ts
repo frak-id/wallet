@@ -1,29 +1,34 @@
-import { type MutationOptions, useMutation } from "@tanstack/react-query";
-import { useNotificationContext } from "@/module/notification/context/NotificationContext";
+import { authenticatedWalletApi } from "@frak-labs/wallet-shared";
+import { useMutation } from "@tanstack/react-query";
+import i18next from "i18next";
+import { notificationAdapter } from "@/module/notification/adapter";
 import { notificationKey } from "@/module/notification/queryKeys/notification";
 
-/**
- * Register the push notification handler
- */
-export function useSubscribeToPushNotification(
-    mutationOptions?: MutationOptions
-) {
-    const { adapter, setIsSubscribed } = useNotificationContext();
-
-    /**
-     * Mutation used to subscribe to the push notification
-     */
+export function useSubscribeToPushNotification() {
     const {
         mutate: subscribeToPush,
         mutateAsync: subscribeToPushAsync,
         ...mutationState
     } = useMutation({
-        ...mutationOptions,
         mutationKey: notificationKey.push.subscribe,
         mutationFn: async () => {
-            await adapter.subscribe();
-            const subscribed = await adapter.isSubscribed();
-            setIsSubscribed(subscribed);
+            const tokenPayload = await notificationAdapter.subscribe();
+            await authenticatedWalletApi.notifications.tokens.put({
+                ...tokenPayload,
+                locale: i18next.language?.split("-")[0],
+            });
+            return tokenPayload;
+        },
+        onSuccess: (_tokenPayload, _variable, _onMutate, { client }) => {
+            client.invalidateQueries({
+                queryKey: notificationKey.push.permission,
+            });
+            client.invalidateQueries({
+                queryKey: notificationKey.push.localToken,
+            });
+            client.invalidateQueries({
+                queryKey: notificationKey.push.backendToken,
+            });
         },
     });
 

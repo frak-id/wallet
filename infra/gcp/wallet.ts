@@ -10,6 +10,7 @@ import {
     erpcUrl,
     firebaseAndroidConfigBase64,
     firebaseIosConfigBase64,
+    moneriumClientId,
     nexusRpcSecret,
     openPanelApiUrl,
     openPanelWalletClientId,
@@ -18,6 +19,12 @@ import {
     walletUrl,
 } from "../config";
 import { getLocalIp, isProd, normalizedStageName } from "../utils";
+
+/**
+ * Wallet display mode: loyalty in prod hides crypto UI, crypto in dev/staging shows full wallet.
+ */
+const walletMode = isProd ? "loyalty" : "crypto";
+
 import { baseDomainName, getRegistryPath, walletNamespace } from "./utils";
 
 // Resolve backend service name only in non-dev (avoids triggering Docker builds locally)
@@ -42,6 +49,7 @@ export const walletEnv = {
     OPEN_PANEL_WALLET_CLIENT_ID: openPanelWalletClientId.value,
     OPEN_PANEL_LISTENER_CLIENT_ID: openPanelWalletClientId.value,
     ANDROID_SHA256_FINGERPRINT: androidSha256Fingerprint.value,
+    MONERIUM_CLIENT_ID: moneriumClientId.value,
 };
 
 let imageRefs = {
@@ -70,6 +78,7 @@ if (!$dev) {
             ERPC_URL: walletEnv.ERPC_URL,
             FRAK_WALLET_URL: walletEnv.FRAK_WALLET_URL,
             OPEN_PANEL_API_URL: walletEnv.OPEN_PANEL_API_URL,
+            VITE_WALLET_MODE: walletMode,
         },
         // Secrets passed via BuildKit (not stored in layers)
         secrets: {
@@ -79,6 +88,7 @@ if (!$dev) {
             VAPID_PUBLIC_KEY: walletEnv.VAPID_PUBLIC_KEY,
             OPEN_PANEL_WALLET_CLIENT_ID: walletEnv.OPEN_PANEL_WALLET_CLIENT_ID,
             ANDROID_SHA256_FINGERPRINT: walletEnv.ANDROID_SHA256_FINGERPRINT,
+            MONERIUM_CLIENT_ID: walletEnv.MONERIUM_CLIENT_ID,
         },
         platforms: ["linux/amd64"],
         push: true,

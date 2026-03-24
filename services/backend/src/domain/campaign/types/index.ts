@@ -107,10 +107,10 @@ export type EvaluationResult = {
     rewards: CalculatedReward[];
     budgetExceeded: boolean;
     skippedCampaigns: string[];
-    errors: Array<{
+    errors: {
         campaignRuleId: string;
         error: string;
-    }>;
+    }[];
 };
 
 export type BudgetConsumptionResult = {
