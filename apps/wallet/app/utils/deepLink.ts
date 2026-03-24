@@ -10,6 +10,9 @@ type DeepLinkParams = {
     mode?: string;
     code?: string;
     state?: string;
+    merchantId?: string;
+    anonymousId?: string;
+    error?: string;
 };
 
 /**
@@ -49,6 +52,9 @@ function extractSearchParams(
         mode: searchParams.get("mode") ?? undefined,
         code: searchParams.get("code") ?? undefined,
         state: searchParams.get("state") ?? undefined,
+        merchantId: searchParams.get("merchantId") ?? undefined,
+        anonymousId: searchParams.get("anonymousId") ?? undefined,
+        error: searchParams.get("error") ?? undefined,
     };
 }
 
@@ -183,6 +189,17 @@ export function routeDeepLink(navigate: NavigateFn, params: DeepLinkParams) {
             navigate({ to: "/monerium/callback", search });
             break;
         }
+
+        case "merge":
+            if (params.error) {
+                console.warn(`[DeepLink] Merge failed: ${params.error}`);
+            } else if (params.merchantId && params.anonymousId) {
+                console.log(
+                    `[DeepLink] Merge data received: merchantId=${params.merchantId}, anonymousId=${params.anonymousId}`
+                );
+            }
+            navigate({ to: "/settings" });
+            break;
 
         default:
             navigate({ to: "/wallet" });
