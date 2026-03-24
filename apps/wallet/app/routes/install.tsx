@@ -1,7 +1,7 @@
+import { authenticatedBackendApi } from "@frak-labs/wallet-shared/common/api/backendClient";
+import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo } from "react";
-
-const INSTALL_CONTEXT_KEY = "frak_install_context";
 
 type InstallSearch = {
     m?: string;
@@ -19,25 +19,30 @@ export const Route = createFileRoute("/install")({
 function InstallPage() {
     const { m: merchantId, a: anonymousId } = Route.useSearch();
 
-    const contextStored = useMemo(() => {
-        const context = {
-            merchantId: merchantId ?? "test-merchant-123",
-            anonymousId: anonymousId ?? "anon-abc-456",
-            timestamp: Date.now(),
-        };
-        try {
-            localStorage.setItem(INSTALL_CONTEXT_KEY, JSON.stringify(context));
-            return context;
-        } catch {
-            return null;
-        }
-    }, [merchantId, anonymousId]);
+    const mId = merchantId ?? "test-merchant-123";
+    const aId = anonymousId ?? "anon-abc-456";
+
+    const {
+        error,
+        isFetched: isSaved,
+        data,
+    } = useQuery({
+        queryKey: ["install-context", mId, aId],
+        queryFn: async () => {
+            const { data, error } = await authenticatedBackendApi.common.mobile[
+                "install-context"
+            ].store.post({ merchantId: mId, anonymousId: aId });
+            if (error) throw error;
+            return data;
+        },
+        gcTime: 0,
+        meta: { storable: false },
+    });
 
     const playStoreUrl = useMemo(() => {
-        if (!contextStored) return "";
-        const referrerData = `merchantId=${contextStored.merchantId}&anonymousId=${contextStored.anonymousId}`;
+        const referrerData = `merchantId=${mId}&anonymousId=${aId}`;
         return `https://play.google.com/store/apps/details?id=id.frak.wallet&referrer=${encodeURIComponent(referrerData)}`;
-    }, [contextStored]);
+    }, [mId, aId]);
 
     const appStoreUrl = "https://apps.apple.com/app/frak-wallet/id6740261164";
 
@@ -53,27 +58,43 @@ function InstallPage() {
             <h1>Install Frak Wallet</h1>
             <p>Get the app to track your rewards and earn from referrals.</p>
 
-            {contextStored && (
+            {error && (
                 <div
                     style={{
-                        background: "#f0f9ff",
+                        padding: "12px",
+                        borderRadius: "8px",
+                        marginBottom: "16px",
+                        fontSize: "14px",
+                        background: "#ffebee",
+                        color: "#c62828",
+                    }}
+                >
+                    Failed to save context: {JSON.stringify(error)}
+                </div>
+            )}
+
+            {isSaved && (
+                <div
+                    style={{
                         padding: "12px",
                         borderRadius: "8px",
                         marginBottom: "16px",
                         fontSize: "14px",
                     }}
                 >
-                    <strong>Context saved to localStorage:</strong>
-                    <pre
-                        style={{
-                            margin: "8px 0 0",
-                            fontSize: "12px",
-                            overflow: "auto",
-                        }}
-                    >
-                        {JSON.stringify(contextStored, null, 2)}
-                    </pre>
+                    <strong>Context saved</strong>
+                    <p style={{ margin: "4px 0 0", fontSize: "12px" }}>
+                        Install the app — your referral data will be picked up
+                        automatically.
+                    </p>
+                    <p>{JSON.stringify(data)}</p>
                 </div>
+            )}
+
+            {!isSaved && !error && (
+                <p style={{ fontSize: "14px", color: "#666" }}>
+                    Saving context...
+                </p>
             )}
 
             <div
@@ -114,18 +135,6 @@ function InstallPage() {
                 >
                     Get it on Google Play
                 </a>
-            </div>
-
-            <div
-                style={{
-                    marginTop: "24px",
-                    fontSize: "12px",
-                    color: "#666",
-                    wordBreak: "break-all",
-                }}
-            >
-                <p>Play Store referrer URL:</p>
-                <code style={{ fontSize: "11px" }}>{playStoreUrl}</code>
             </div>
         </div>
     );

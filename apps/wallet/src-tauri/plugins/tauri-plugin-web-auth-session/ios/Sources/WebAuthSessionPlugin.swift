@@ -88,14 +88,22 @@ func initPlugin() -> Plugin {
 
 extension WebAuthSessionPlugin: ASWebAuthenticationPresentationContextProviding {
     func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
-        if #available(iOS 15.0, *) {
-            if let windowScene = UIApplication.shared.connectedScenes
-                .compactMap({ $0 as? UIWindowScene })
-                .first,
-               let window = windowScene.windows.first(where: { $0.isKeyWindow }) {
-                return window
-            }
+        // Tauri's PluginManager holds the VC hosting the WKWebView — always prefer this
+        if let window = manager.viewController?.view.window {
+            return window
         }
-        return UIApplication.shared.windows.first { $0.isKeyWindow } ?? UIWindow()
+
+        if let windowScene = UIApplication.shared.connectedScenes
+            .compactMap({ $0 as? UIWindowScene })
+            .first,
+           let window = windowScene.windows.first(where: { $0.isKeyWindow }) {
+            return window
+        }
+
+        // Never return a bare UIWindow() — it has no scene/rootVC and crashes start()
+        return UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .flatMap { $0.windows }
+            .first ?? ASPresentationAnchor()
     }
 }

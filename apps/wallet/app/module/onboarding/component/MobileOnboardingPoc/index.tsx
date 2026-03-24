@@ -23,7 +23,9 @@ const initialState: ResultState = {
 };
 
 function getConnectUrl() {
-    const origin = window.location.origin;
+    const origin = window.location.origin.startsWith("tauri://")
+        ? (process.env.FRAK_WALLET_URL ?? "https://wallet-dev.frak.id")
+        : window.location.origin;
     return `${origin}/connect`;
 }
 
@@ -81,8 +83,8 @@ export function MobileOnboardingPoc() {
                     <div className={styles.onboarding__section}>
                         <h3>iOS — ASWebAuthenticationSession</h3>
                         <p style={{ fontSize: "12px", margin: 0 }}>
-                            Opens a Safari sheet that reads localStorage from
-                            the install page and redirects back with the data.
+                            Opens a Safari sheet that retrieves install context
+                            from the backend and redirects back with the data.
                         </p>
                         <button
                             type="button"
