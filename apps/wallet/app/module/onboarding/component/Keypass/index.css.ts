@@ -5,7 +5,7 @@ import { style } from "@vanilla-extract/css";
 export const keypass = style({
     display: "flex",
     flexDirection: "column",
-    gap: alias.spacing.m,
+    gap: alias.spacing.l,
 });
 
 export const errorText = style({

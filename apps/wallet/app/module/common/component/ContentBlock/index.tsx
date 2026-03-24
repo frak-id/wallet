@@ -28,14 +28,16 @@ export function ContentBlock({
 }: ContentBlockProps) {
     return (
         <>
-            <Box className={styles.icon}>{icon}</Box>
-            <Text as={TitleTag} className={styles.title}>
-                {title}
-            </Text>
-            <Text as="p" className={styles.description}>
-                {description}
-            </Text>
-            {children}
+            <Box className={styles.content}>
+                <Box className={styles.icon}>{icon}</Box>
+                <Text as={TitleTag} className={styles.title}>
+                    {title}
+                </Text>
+                <Text as="p" className={styles.description}>
+                    {description}
+                </Text>
+                {children}
+            </Box>
             {footer && <Box className={styles.footer}>{footer}</Box>}
         </>
     );

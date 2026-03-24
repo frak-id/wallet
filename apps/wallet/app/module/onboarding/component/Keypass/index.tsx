@@ -10,6 +10,7 @@ import {
 import { FaceIdIcon } from "@frak-labs/design-system/icons";
 import { visuallyHidden } from "@frak-labs/design-system/utils";
 import { HandleErrors, WalletModal } from "@frak-labs/wallet-shared";
+import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AuthenticateWithPhone } from "@/module/authentication/component/AuthenticateWithPhone";
@@ -125,6 +126,34 @@ export function Keypass({
 /**
  * Shared content for all Keypass variants, rendered inside either Drawer (mobile) or WalletModal (desktop)
  */
+function KeypassBlock({
+    title,
+    description,
+    footer,
+    error,
+}: {
+    title: string;
+    description: string;
+    footer: ReactNode;
+    error?: Error | null;
+}) {
+    return (
+        <Box className={styles.keypass}>
+            <ContentBlock
+                icon={<FaceIdIcon />}
+                titleAs="h1"
+                title={title}
+                description={description}
+                footer={footer}
+            >
+                {error && (
+                    <HandleErrors error={error} className={styles.errorText} />
+                )}
+            </ContentBlock>
+        </Box>
+    );
+}
+
 function KeypassContent({
     onContinue,
     isLoading,
@@ -140,70 +169,50 @@ function KeypassContent({
 
     if (!webAuthNSupported) {
         return (
-            <Box className={styles.keypass}>
-                <ContentBlock
-                    icon={<FaceIdIcon />}
-                    title={t("onboarding.keypass.unsupported.title")}
-                    description={t(
-                        "onboarding.keypass.unsupported.description"
-                    )}
-                    footer={
-                        <Button onClick={onNavigateToLogin}>
-                            {t("onboarding.keypass.unsupported.button")}
-                        </Button>
-                    }
-                />
-            </Box>
+            <KeypassBlock
+                title={t("onboarding.keypass.unsupported.title")}
+                description={t("onboarding.keypass.unsupported.description")}
+                footer={
+                    <Button onClick={onNavigateToLogin}>
+                        {t("onboarding.keypass.unsupported.button")}
+                    </Button>
+                }
+            />
         );
     }
 
     if (existingAccount) {
         return (
-            <Box className={styles.keypass}>
-                <ContentBlock
-                    icon={<FaceIdIcon />}
-                    title={t("onboarding.keypass.existingAccount.title")}
-                    description={t(
-                        "onboarding.keypass.existingAccount.description"
-                    )}
-                    footer={
-                        <Button onClick={onLogin} disabled={isLoginLoading}>
-                            {t("onboarding.keypass.existingAccount.button")}
-                        </Button>
-                    }
-                >
-                    {loginError && (
-                        <HandleErrors
-                            error={loginError}
-                            className={styles.errorText}
-                        />
-                    )}
-                </ContentBlock>
-            </Box>
+            <KeypassBlock
+                title={t("onboarding.keypass.existingAccount.title")}
+                description={t(
+                    "onboarding.keypass.existingAccount.description"
+                )}
+                error={loginError}
+                footer={
+                    <Button onClick={onLogin} disabled={isLoginLoading}>
+                        {t("onboarding.keypass.existingAccount.button")}
+                    </Button>
+                }
+            />
         );
     }
 
     return (
-        <Box className={styles.keypass}>
-            <ContentBlock
-                icon={<FaceIdIcon />}
-                title={t("onboarding.keypass.title")}
-                description={t("onboarding.keypass.description")}
-                footer={
-                    <>
-                        <Button onClick={onContinue} disabled={isLoading}>
-                            {t("onboarding.continue")}
-                        </Button>
-                        <AuthenticateWithPhone
-                            text={t("wallet.register.useQRCode")}
-                        />
-                    </>
-                }
-            >
-                {error && (
-                    <HandleErrors error={error} className={styles.errorText} />
-                )}
-            </ContentBlock>
-        </Box>
+        <KeypassBlock
+            title={t("onboarding.keypass.title")}
+            description={t("onboarding.keypass.description")}
+            error={error}
+            footer={
+                <>
+                    <Button onClick={onContinue} disabled={isLoading}>
+                        {t("onboarding.continue")}
+                    </Button>
+                    <AuthenticateWithPhone
+                        text={t("wallet.register.useQRCode")}
+                    />
+                </>
+            }
+        />
     );
 }

@@ -1,6 +1,12 @@
 import { vars } from "@frak-labs/design-system/theme";
-import { brand, fontSize } from "@frak-labs/design-system/tokens";
+import { alias, fontSize } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
+
+export const content = style({
+    display: "flex",
+    flexDirection: "column",
+    gap: alias.spacing.m,
+});
 
 export const icon = style({
     display: "flex",
@@ -8,8 +14,6 @@ export const icon = style({
 });
 
 export const title = style({
-    fontSize: fontSize["2xl"],
-    fontWeight: brand.typography.fontWeight.bold,
     textAlign: "center",
     margin: 0,
 });
@@ -24,6 +28,6 @@ export const description = style({
 export const footer = style({
     display: "flex",
     flexDirection: "column",
-    gap: brand.scale[300],
+    gap: alias.spacing.m,
     alignItems: "center",
 });
