@@ -131,7 +131,7 @@ function PairingPage() {
                     className={`${styles.pairingButtons} ${styles.pairingButtonsSingle}`}
                 >
                     <Button
-                        variant="outlined"
+                        variant="secondary"
                         onClick={() => {
                             void refetchPairingInfo();
                         }}
@@ -166,7 +166,7 @@ function PairingPage() {
             )}
             <div className={styles.pairingButtons}>
                 <Button
-                    variant="outlined"
+                    variant="secondary"
                     onClick={() => {
                         actionPairing("cancel");
                     }}

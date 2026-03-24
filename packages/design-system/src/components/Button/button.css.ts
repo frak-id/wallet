@@ -33,12 +33,15 @@ export const button = recipe({
                     backgroundColor: vars.surface.primaryPressed,
                 },
             },
-            outlined: {
-                backgroundColor: "transparent",
+            secondary: {
+                backgroundColor: vars.surface.secondary,
                 color: vars.text.action,
-                border: `1px solid ${vars.border.default}`,
+                border: "none",
                 ":hover": {
-                    backgroundColor: vars.surface.secondary,
+                    backgroundColor: vars.surface.secondaryHover,
+                },
+                ":active": {
+                    backgroundColor: vars.surface.secondaryPressed,
                 },
             },
             ghost: {

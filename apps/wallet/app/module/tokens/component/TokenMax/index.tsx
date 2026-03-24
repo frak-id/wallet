@@ -7,7 +7,7 @@ export function TokenMax({ onClick }: { onClick: () => void }) {
     return (
         <Box display="flex" alignItems="center">
             <Button
-                variant="outlined"
+                variant="secondary"
                 className={styles.tokenMaxButton}
                 onClick={onClick}
             >

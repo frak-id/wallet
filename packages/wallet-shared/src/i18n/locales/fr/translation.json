@@ -333,8 +333,9 @@
             }
         },
         "notification": {
-            "title": "Ne manquez aucun gain !",
-            "description": "Recevez des notifications pour suivre vos gains et vos récompenses en temps réel.",
+            "title": "Ne rate aucun gain !",
+            "description": "Sois averti dès que l'argent est crédité sur ton porte-monnaie.",
+            "descriptionHighlight": "Suis tes récompenses en temps réel.",
             "enable": "Oui, me prévenir",
             "skip": "Plus tard"
         },

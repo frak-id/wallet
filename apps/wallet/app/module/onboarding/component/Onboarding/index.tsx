@@ -7,6 +7,7 @@ import {
     useRef,
     useState,
 } from "react";
+import { PageLayout } from "@/module/common/component/PageLayout";
 import * as styles from "./index.css";
 
 type OnboardingProps = {
@@ -94,7 +95,25 @@ export function Onboarding({
     }, [currentIndex, slidesCount, onFinish]);
 
     return (
-        <div className={styles.onboarding}>
+        <PageLayout
+            footer={
+                <>
+                    <Button onClick={handleNext}>
+                        {currentIndex === 0 && firstButtonLabel
+                            ? firstButtonLabel
+                            : currentIndex === slidesCount - 1 &&
+                                lastButtonLabel
+                              ? lastButtonLabel
+                              : buttonLabel}
+                    </Button>
+                    {currentIndex === 0 && loginLabel && onLoginClick && (
+                        <Button variant="ghost" onClick={onLoginClick}>
+                            {loginLabel}
+                        </Button>
+                    )}
+                </>
+            }
+        >
             <div ref={scrollContainerRef} className={styles.slides}>
                 {Children.map(children, (child, index) => (
                     <div className={styles.slide} data-index={index}>
@@ -112,21 +131,6 @@ export function Onboarding({
                     </div>
                 ))}
             </div>
-
-            <div className={styles.footer}>
-                <Button onClick={handleNext}>
-                    {currentIndex === 0 && firstButtonLabel
-                        ? firstButtonLabel
-                        : currentIndex === slidesCount - 1 && lastButtonLabel
-                          ? lastButtonLabel
-                          : buttonLabel}
-                </Button>
-                {currentIndex === 0 && loginLabel && onLoginClick && (
-                    <Button variant="ghost" onClick={onLoginClick}>
-                        {loginLabel}
-                    </Button>
-                )}
-            </div>
-        </div>
+        </PageLayout>
     );
 }

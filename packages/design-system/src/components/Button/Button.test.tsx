@@ -11,14 +11,14 @@ describe("Button", () => {
         expect(btn.tagName).toBe("BUTTON");
     });
 
-    it("should render outlined variant with different className", () => {
+    it("should render secondary variant with different className", () => {
         const { rerender } = render(<Button variant="primary">Test</Button>);
         const primaryClass = screen.getByRole("button").className;
 
-        rerender(<Button variant="outlined">Test</Button>);
-        const outlinedClass = screen.getByRole("button").className;
+        rerender(<Button variant="secondary">Test</Button>);
+        const secondaryClass = screen.getByRole("button").className;
 
-        expect(primaryClass).not.toBe(outlinedClass);
+        expect(primaryClass).not.toBe(secondaryClass);
     });
 
     it("should render icon alongside text when icon prop provided", () => {

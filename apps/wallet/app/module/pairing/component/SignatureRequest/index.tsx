@@ -211,7 +211,7 @@ function SignatureRequestActions({
     return (
         <Box className={styles.signatureRequestButtons}>
             <Button
-                variant={"outlined"}
+                variant={"secondary"}
                 className={styles.dangerButton}
                 onClick={() => declineRequest()}
                 type={"button"}

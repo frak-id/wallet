@@ -107,7 +107,7 @@ function PairingItemFooter({ pairing }: { pairing: Pairing }) {
     return (
         <Box className={styles.pairingFooter}>
             <Button
-                variant="outlined"
+                variant="secondary"
                 className={styles.pairingDeleteButton}
                 onClick={() => deletePairing({ id: pairing.pairingId })}
             >

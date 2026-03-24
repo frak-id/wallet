@@ -34,7 +34,7 @@ export function EmptyState({
             )}
             {action && (
                 <Box className={emptyStateStyles.actionWrapper}>
-                    <Button variant="outlined" onClick={action.onClick}>
+                    <Button variant="secondary" onClick={action.onClick}>
                         {action.label}
                     </Button>
                 </Box>

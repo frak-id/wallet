@@ -92,14 +92,12 @@ describe("Onboarding", () => {
             </Onboarding>
         );
 
-        // Find the dots container — VE generates hashed class names,
-        // so we locate it by structure: the first child of the footer div
-        const buttons = container.querySelectorAll("button");
-        expect(buttons).toHaveLength(1);
+        // Dots are rendered inside each slide — check the first slide
+        const firstSlide = container.querySelector("[data-index='0']");
+        expect(firstSlide).toBeTruthy();
 
-        // The dots container is the sibling before the button's parent
-        const footerDiv = buttons[0]?.closest("div[class]")?.parentElement;
-        const dotsContainer = footerDiv?.firstElementChild;
+        // The dots container is the last child of each slide
+        const dotsContainer = firstSlide?.lastElementChild;
         expect(dotsContainer?.children).toHaveLength(3);
     });
 

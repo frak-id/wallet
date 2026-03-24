@@ -1,7 +1,12 @@
+import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
+import { Text } from "@frak-labs/design-system/components/Text";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { StepLayout } from "@/module/common/component/StepLayout";
+import { PageLayout } from "@/module/common/component/PageLayout";
+import { HeroContent } from "../HeroContent";
+import * as slideStyles from "../slides/index.css";
+import notificationImg from "./notification.png";
 
 type NotificationOptInProps = {
     onEnable: () => void;
@@ -16,10 +21,7 @@ export function NotificationOptIn({
     const [isEnabling, setIsEnabling] = useState(false);
 
     return (
-        <StepLayout
-            icon={<span>🔔</span>}
-            title={t("onboarding.notification.title")}
-            description={t("onboarding.notification.description")}
+        <PageLayout
             footer={
                 <>
                     <Button
@@ -33,7 +35,7 @@ export function NotificationOptIn({
                         {t("onboarding.notification.enable")}
                     </Button>
                     <Button
-                        variant="outlined"
+                        variant="secondary"
                         disabled={isEnabling}
                         onClick={onSkip}
                     >
@@ -41,6 +43,25 @@ export function NotificationOptIn({
                     </Button>
                 </>
             }
-        />
+        >
+            <div className={slideStyles.slide}>
+                <HeroContent
+                    image={<img src={notificationImg} alt="" />}
+                    title={t("onboarding.notification.title")}
+                    description={
+                        <Box display="flex" flexDirection="column" gap="m">
+                            <Text>
+                                {t("onboarding.notification.description")}
+                            </Text>
+                            <Text>
+                                {t(
+                                    "onboarding.notification.descriptionHighlight"
+                                )}
+                            </Text>
+                        </Box>
+                    }
+                />
+            </div>
+        </PageLayout>
     );
 }
