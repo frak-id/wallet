@@ -14,14 +14,43 @@ export const walletNamespace = new kubernetes.core.v1.Namespace(
     }
 );
 
+const imageRetentionPeriod = isProd ? "30d" : "7d";
+
 let registryPath: Output<string> | undefined;
 if (!$dev) {
     const registry = new gcp.artifactregistry.Repository("wallet-gcr", {
         repositoryId: `wallet-${normalizedStageName}`,
         format: "DOCKER",
-        description: "Artifact registry for the cooking bot images",
+        description: "Artifact registry for the wallet images",
         location: "europe-west1",
         project: gcp.config.project,
+        cleanupPolicyDryRun: false,
+        cleanupPolicies: [
+            {
+                id: "keep-recent-versions",
+                action: "KEEP",
+                mostRecentVersions: {
+                    keepCount: 5,
+                },
+            },
+            {
+                id: "delete-old-commit-tags",
+                action: "DELETE",
+                condition: {
+                    tagState: "TAGGED",
+                    tagPrefixes: ["git-", "local-"],
+                    olderThan: imageRetentionPeriod,
+                },
+            },
+            {
+                id: "delete-untagged",
+                action: "DELETE",
+                condition: {
+                    tagState: "UNTAGGED",
+                    olderThan: "1d",
+                },
+            },
+        ],
     });
     registryPath = registry.location.apply(
         (location) =>
