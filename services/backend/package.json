@@ -51,6 +51,7 @@
   },
   "devDependencies": {
     "@frak-labs/test-foundation": "workspace:*",
+    "@swc/core": "^1.15.21",
     "@types/web-push": "^3.6.4",
     "bun-types": "latest",
     "drizzle-kit": "^0.31.6",
