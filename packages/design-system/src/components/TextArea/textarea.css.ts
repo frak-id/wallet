@@ -42,7 +42,7 @@ export const lengthVariants = styleVariants({
 
 const fieldBase = style({
     width: "100%",
-    padding: `${alias.spacing.s} ${alias.spacing.m}`,
+    padding: `${alias.spacing.xs} ${alias.spacing.m}`,
     fontSize: "16px",
     lineHeight: "20px",
     fontWeight: String(400),

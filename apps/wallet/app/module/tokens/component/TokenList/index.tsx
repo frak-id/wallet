@@ -30,7 +30,7 @@ export function TokenList({
     }
 
     return (
-        <Stack as="ul" space="s">
+        <Stack as="ul" space="xs">
             {userBalance.balances.map((balance: BalanceItem) => (
                 <TokenItem
                     token={balance}

@@ -19,9 +19,9 @@ const triggerBase = style({
     alignItems: "center",
     justifyContent: "space-between",
     borderRadius: alias.cornerRadius.s,
-    padding: `0 ${alias.spacing.s}`,
+    padding: `0 ${alias.spacing.xs}`,
     height: "40px",
-    gap: alias.spacing.xs,
+    gap: alias.spacing.xxs,
     backgroundColor: vars.surface.background,
     border: `1px solid ${vars.border.default}`,
     color: vars.text.primary,
@@ -65,7 +65,7 @@ export const selectStyles = {
     }),
 
     viewport: style({
-        padding: alias.spacing.xs,
+        padding: alias.spacing.xxs,
     }),
 
     item: style({
@@ -101,12 +101,12 @@ export const selectStyles = {
     separator: style({
         height: "1px",
         backgroundColor: vars.border.default,
-        margin: alias.spacing.xs,
+        margin: alias.spacing.xxs,
     }),
 
     itemIndicator: style({
         position: "absolute",
-        left: alias.spacing.xs,
+        left: alias.spacing.xxs,
         top: "50%",
         transform: "translateY(-50%)",
         height: "20px",

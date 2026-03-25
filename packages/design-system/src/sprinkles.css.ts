@@ -7,6 +7,7 @@ import { alias, brand, fontSize } from "./tokens.css";
 
 const spacingScale = {
     none: alias.spacing.none,
+    xxs: alias.spacing.xxs,
     xs: alias.spacing.xs,
     s: alias.spacing.s,
     m: alias.spacing.m,
@@ -21,6 +22,7 @@ const radiusScale = {
     m: alias.cornerRadius.m,
     l: alias.cornerRadius.l,
     xl: alias.cornerRadius.xl,
+    xxl: alias.cornerRadius.xxl,
     full: alias.cornerRadius.full,
 } as const;
 

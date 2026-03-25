@@ -23,7 +23,7 @@ export function PairingInfo({
             <Title icon={<Fingerprint size={32} />}>
                 {t("wallet.pairing.info.title")}
             </Title>
-            <Stack as={"ul"} space={"s"}>
+            <Stack as={"ul"} space={"xs"}>
                 <li>
                     <Text as="span" variant="bodySmall">
                         {t("wallet.pairing.info.status")}{" "}

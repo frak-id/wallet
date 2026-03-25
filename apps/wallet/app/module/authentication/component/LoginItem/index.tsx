@@ -47,7 +47,7 @@ export function LoginItem({
                     await login({ lastAuthentication });
                 }}
             >
-                <Stack space="xs" align="left">
+                <Stack space="xxs" align="left">
                     <Box as="span" className={styles.loginItem__name}>
                         <SquareUser size={16} />
                         <Text as="span" variant="bodySmall">

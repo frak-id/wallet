@@ -6,8 +6,8 @@ export const statCardStyles = {
     container: style({
         display: "flex",
         flexDirection: "column",
-        gap: alias.spacing.xs,
-        padding: alias.spacing.s,
+        gap: alias.spacing.xxs,
+        padding: alias.spacing.xs,
         borderRadius: alias.cornerRadius.l,
         border: `1px solid ${vars.border.subtle}`,
         backgroundColor: vars.surface.elevated,
@@ -30,7 +30,7 @@ export const statCardStyles = {
         display: "flex",
         flexDirection: "row",
         alignItems: "center",
-        gap: alias.spacing.xs,
+        gap: alias.spacing.xxs,
     }),
     label: style({
         fontSize: "13px",

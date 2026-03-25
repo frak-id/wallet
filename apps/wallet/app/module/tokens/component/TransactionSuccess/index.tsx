@@ -17,7 +17,7 @@ export function TransactionSuccess({ hash }: { hash: Hex }) {
     const { t } = useTranslation();
     const formattedHash = formatHash(hash);
     return (
-        <Stack space="s" align="center" as="div">
+        <Stack space="xs" align="center" as="div">
             <Badge variant="success">{t("common.transactionSuccess")}</Badge>
             <Text variant="bodySmall" align="center">
                 {t("common.transactionHash")} {formattedHash ?? hash}

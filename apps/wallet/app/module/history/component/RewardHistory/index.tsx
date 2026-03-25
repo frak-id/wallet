@@ -22,7 +22,7 @@ export function RewardHistoryList() {
 
     return (
         <Box className={styles.list}>
-            <Stack space="s">
+            <Stack space="xs">
                 {items.map((item, index) => (
                     <RewardHistoryItem
                         key={`${item.createdAt}-${index}`}
@@ -76,7 +76,7 @@ function RewardHistoryItem({ item }: { item: RewardHistoryItemType }) {
 
     return (
         <Panel variant={"primary"} size={"small"}>
-            <Stack space="s">
+            <Stack space="xs">
                 <Box
                     display="flex"
                     flexDirection="row"
@@ -90,7 +90,12 @@ function RewardHistoryItem({ item }: { item: RewardHistoryItemType }) {
                         {displayAmount}
                     </Text>
                 </Box>
-                <Box display="flex" flexDirection="row" gap="s" flexWrap="wrap">
+                <Box
+                    display="flex"
+                    flexDirection="row"
+                    gap="xs"
+                    flexWrap="wrap"
+                >
                     <Badge variant="neutral">{statusLabel}</Badge>
                     <Badge variant="neutral">{triggerLabel}</Badge>
                     <Badge variant="neutral">{roleLabel}</Badge>

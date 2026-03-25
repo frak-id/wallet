@@ -22,7 +22,7 @@ export function HistoryDayGroup<T>({
             <Stack space="m">
                 <Title>{day}</Title>
                 <Panel size={"small"}>
-                    <Stack space="s">
+                    <Stack space="xs">
                         {items.map((item, index) => (
                             <Box
                                 key={`${day}-${index}`}

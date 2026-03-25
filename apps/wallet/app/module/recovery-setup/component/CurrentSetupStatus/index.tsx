@@ -20,8 +20,8 @@ export function CurrentRecoverySetupStatus() {
 
     return (
         <Card>
-            <Stack space="s">
-                <Stack space="xs">
+            <Stack space="xs">
+                <Stack space="xxs">
                     <Text variant="label">
                         {t("wallet.recoverySetup.currentGuardian")}
                     </Text>

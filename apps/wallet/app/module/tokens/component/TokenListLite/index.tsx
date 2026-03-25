@@ -13,7 +13,7 @@ export function TokenListLite() {
 
     return (
         userBalance && (
-            <Stack as="ul" space="s">
+            <Stack as="ul" space="xs">
                 {userBalance.balances.map((balance: BalanceItem) => (
                     <TokenItemLite token={balance} key={balance.token} />
                 ))}

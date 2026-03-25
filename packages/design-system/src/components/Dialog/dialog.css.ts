@@ -37,7 +37,7 @@ export const dialogTitleStyle = style({
 });
 
 export const dialogDescriptionStyle = style({
-    marginTop: alias.spacing.s,
+    marginTop: alias.spacing.xs,
     fontSize: "14px",
     lineHeight: 1.5,
     color: vars.text.secondary,

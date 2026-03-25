@@ -63,7 +63,7 @@ export function Step2() {
             actualStep={ACTUAL_STEP}
             title={t("wallet.recovery.step2")}
         >
-            <Stack space="s">
+            <Stack space="xs">
                 <Box>
                     <Text as="span">{t("common.walletAddress")} </Text>
                     <Text as="span" className={styles.addressValue}>

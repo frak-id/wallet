@@ -60,5 +60,5 @@ export const drawerFooterStyle = style({
     marginTop: "auto",
     display: "flex",
     flexDirection: "column",
-    gap: alias.spacing.s,
+    gap: alias.spacing.xs,
 });

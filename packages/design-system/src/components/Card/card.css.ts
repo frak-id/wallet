@@ -19,7 +19,7 @@ export const card = recipe({
         },
         padding: {
             none: { padding: "0" },
-            compact: { padding: alias.spacing.s },
+            compact: { padding: alias.spacing.xs },
             default: { padding: alias.spacing.m },
         },
     },

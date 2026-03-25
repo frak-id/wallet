@@ -19,6 +19,7 @@ export const vars = createThemeContract({
         primary: null,
         secondary: null,
         background: null,
+        background2: null,
         elevated: null,
         muted: null,
         tertiary: null,

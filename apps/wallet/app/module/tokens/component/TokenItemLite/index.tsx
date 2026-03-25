@@ -9,7 +9,7 @@ export function TokenItemLite({ token }: { token: BalanceItem }) {
             as={"li"}
             display="flex"
             alignItems="center"
-            gap="s"
+            gap="xs"
             padding="none"
         >
             <TokenLogo token={token} size={16} />

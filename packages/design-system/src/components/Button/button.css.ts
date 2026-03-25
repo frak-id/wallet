@@ -8,7 +8,7 @@ export const button = recipe({
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "center",
-        gap: alias.spacing.s,
+        gap: alias.spacing.xs,
         width: "100%",
         borderRadius: alias.cornerRadius.full,
         cursor: "pointer",
@@ -52,7 +52,7 @@ export const button = recipe({
         },
         size: {
             small: {
-                padding: alias.spacing.s,
+                padding: alias.spacing.xs,
                 fontSize: fontSize.xs,
             },
             large: {
