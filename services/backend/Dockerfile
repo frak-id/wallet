@@ -41,4 +41,5 @@ ENV NODE_ENV=production
 ENV BUN_RUNTIME_TRANSPILER_CACHE_PATH=0
 
 # Direct entrypoint — Bun is PID 1, receives SIGTERM cleanly
-CMD ["bun", "dist/index.js"]
+# --smol: enables JSC's stopIfNecessaryTimer for aggressive GC in constrained containers
+CMD ["bun", "--smol", "dist/index.js"]

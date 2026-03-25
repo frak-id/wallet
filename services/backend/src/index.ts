@@ -12,7 +12,11 @@ import { CronRegistry } from "./jobs";
 import { legacyRouteMapper } from "./legacyRoutes";
 import { OrchestrationContext } from "./orchestration";
 
-// Full on service app
+// Mitigate Bun RSS memory growth (oven-sh/bun#21560) — liveness probe triggers restart after 24h
+const bootTime = Date.now();
+const ONE_DAY_MS = 24 * 60 * 60_000;
+const GRACE_PERIOD_MS = 10 * 60_000;
+
 const app = new Elysia({
     aot: true,
     // Websocket specific config
@@ -35,11 +39,20 @@ const app = new Elysia({
             methods: ["DELETE", "GET", "POST", "PUT", "PATCH"],
         })
     )
-    .get("/health", () => ({
-        status: "ok",
-        hostname: process.env.HOSTNAME,
-        stage: process.env.STAGE,
-    }))
+    .get("/health", ({ set }) => {
+        if (bootTime > Date.now() - GRACE_PERIOD_MS) {
+            return { status: "ok", uptime: "fresh" };
+        }
+        if (bootTime < Date.now() - ONE_DAY_MS) {
+            set.status = 500;
+            return "Service too old, requesting restart";
+        }
+        return {
+            status: "ok",
+            hostname: process.env.HOSTNAME,
+            stage: process.env.STAGE,
+        };
+    })
     .use(wellKnownRoutes)
     .use(commonApi)
     .use(businessApi)
