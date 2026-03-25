@@ -26,8 +26,12 @@ export const button = recipe({
                 backgroundColor: vars.surface.primary,
                 color: vars.text.onAction,
                 border: "none",
-                ":hover": {
-                    backgroundColor: vars.surface.primaryHover,
+                "@media": {
+                    "(hover: hover)": {
+                        ":hover": {
+                            backgroundColor: vars.surface.primaryHover,
+                        },
+                    },
                 },
                 ":active": {
                     backgroundColor: vars.surface.primaryPressed,
@@ -37,8 +41,12 @@ export const button = recipe({
                 backgroundColor: vars.surface.secondary,
                 color: vars.text.action,
                 border: "none",
-                ":hover": {
-                    backgroundColor: vars.surface.secondaryHover,
+                "@media": {
+                    "(hover: hover)": {
+                        ":hover": {
+                            backgroundColor: vars.surface.secondaryHover,
+                        },
+                    },
                 },
                 ":active": {
                     backgroundColor: vars.surface.secondaryPressed,
