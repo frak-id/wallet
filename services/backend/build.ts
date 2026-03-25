@@ -15,7 +15,7 @@ const bunResult = await build({
     splitting: false,
     target: "bun",
     define: {
-        "process.env.STAGE": JSON.stringify("production"),
+        "process.env.STAGE": JSON.stringify(stage),
         "process.env.NODE_ENV": JSON.stringify("production"),
         // Help tree-shake MongoDB debug/logging/optional features
         "process.env.MONGODB_CRYPT_DEBUG": "undefined",

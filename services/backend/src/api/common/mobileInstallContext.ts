@@ -14,6 +14,7 @@ const cookieConfig = {
 const InstallContextCookieSchema = t.Object({
     merchantId: t.String(),
     anonymousId: t.String(),
+    src: t.Optional(t.String())
 });
 
 export const mobileInstallContextRoutes = new Elysia({
@@ -27,6 +28,7 @@ export const mobileInstallContextRoutes = new Elysia({
                 value: {
                     merchantId: body.merchantId,
                     anonymousId: body.anonymousId,
+                    src: "fetch"
                 },
                 ...cookieConfig,
             });
@@ -36,6 +38,30 @@ export const mobileInstallContextRoutes = new Elysia({
             body: t.Object({
                 merchantId: t.String(),
                 anonymousId: t.String(),
+            }),
+            cookie: t.Cookie({
+                frak_install_context: t.Optional(InstallContextCookieSchema),
+            }),
+        }
+    )
+    .get(
+        "/store-redirect",
+        ({ query, cookie: { frak_install_context }, redirect }) => {
+            frak_install_context.set({
+                value: {
+                    merchantId: query.merchantId,
+                    anonymousId: query.anonymousId,
+                    src: "redirect"
+                },
+                ...cookieConfig,
+            });
+            return redirect(query.redirect);
+        },
+        {
+            query: t.Object({
+                merchantId: t.String(),
+                anonymousId: t.String(),
+                redirect: t.String(),
             }),
             cookie: t.Cookie({
                 frak_install_context: t.Optional(InstallContextCookieSchema),
@@ -54,10 +80,7 @@ export const mobileInstallContextRoutes = new Elysia({
         {
             response: {
                 404: t.String(),
-                200: t.Object({
-                    merchantId: t.String(),
-                    anonymousId: t.String(),
-                }),
+                200: InstallContextCookieSchema,
             },
             cookie: t.Cookie({
                 frak_install_context: t.Optional(InstallContextCookieSchema),
