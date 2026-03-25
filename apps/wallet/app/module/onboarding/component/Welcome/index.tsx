@@ -29,7 +29,7 @@ export function Welcome({ onContinue }: WelcomeProps) {
                                     termsLink: (
                                         // biome-ignore lint/a11y/useAnchorContent: Content provided by Trans i18n component
                                         <a
-                                            href="https://frak.id/terms"
+                                            href="https://frak.id/privacy"
                                             target="_blank"
                                             rel="noreferrer"
                                         />
