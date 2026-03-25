@@ -15,7 +15,6 @@ export const Route = createFileRoute("/connect")({
 function ConnectPage() {
     const {
         data: context,
-        isPending: isLoading,
         error,
     } = useQuery({
         queryKey: ["install-context-retrieval"],
@@ -40,7 +39,7 @@ function ConnectPage() {
         window.location.href = `frakwallet://merge?${params.toString()}`;
     };
 
-    if (isLoading) {
+    if (!context && !error) {
         return (
             <div
                 style={{

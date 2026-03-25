@@ -2,8 +2,6 @@ import { isRunningLocally } from "@frak-labs/app-essentials";
 import { Elysia, status, t } from "elysia";
 import type { ElysiaCookie } from "elysia/cookies";
 
-const COOKIE_NAME = "frak_install_context";
-
 const cookieConfig = {
     domain: isRunningLocally ? "localhost" : ".frak.id",
     path: "/",
@@ -13,18 +11,23 @@ const cookieConfig = {
     sameSite: "lax",
 } satisfies ElysiaCookie;
 
+const InstallContextCookieSchema = t.Object({
+    merchantId: t.String(),
+    anonymousId: t.String(),
+});
+
 export const mobileInstallContextRoutes = new Elysia({
     name: "Routes.mobileInstallContext",
     prefix: "/mobile/install-context",
 })
     .post(
         "/store",
-        ({ body, cookie }) => {
-            cookie[COOKIE_NAME]?.set({
-                value: JSON.stringify({
+        ({ body, cookie: { frak_install_context } }) => {
+            frak_install_context.set({
+                value: {
                     merchantId: body.merchantId,
                     anonymousId: body.anonymousId,
-                }),
+                },
                 ...cookieConfig,
             });
             return { success: true };
@@ -34,31 +37,19 @@ export const mobileInstallContextRoutes = new Elysia({
                 merchantId: t.String(),
                 anonymousId: t.String(),
             }),
+            cookie: t.Cookie({
+                frak_install_context: t.Optional(InstallContextCookieSchema),
+            }),
         }
     )
     .get(
         "/retrieve",
-        ({ cookie }) => {
-            const raw = cookie[COOKIE_NAME]?.value as string | undefined;
-            if (!raw) {
+        ({ cookie: { frak_install_context } }) => {
+            if (!frak_install_context.value) {
                 return status(404, "No data present in the cookie");
             }
 
-            const context = JSON.parse(raw) as {
-                merchantId: string;
-                anonymousId: string;
-            };
-
-            cookie[COOKIE_NAME]?.set({
-                value: "",
-                ...cookieConfig,
-                maxAge: 0,
-            });
-
-            return {
-                merchantId: context.merchantId,
-                anonymousId: context.anonymousId,
-            };
+            return frak_install_context.value;
         },
         {
             response: {
@@ -68,5 +59,8 @@ export const mobileInstallContextRoutes = new Elysia({
                     anonymousId: t.String(),
                 }),
             },
+            cookie: t.Cookie({
+                frak_install_context: t.Optional(InstallContextCookieSchema),
+            }),
         }
     );
