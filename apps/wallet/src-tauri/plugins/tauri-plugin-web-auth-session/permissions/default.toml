@@ -1,3 +1,0 @@
-[default]
-description = "Default permissions for the web-auth-session plugin"
-permissions = ["allow-start-web-auth-session"]

@@ -11,7 +11,6 @@ pub fn run() {
             .plugin(tauri_plugin_biometric::init())
             .plugin(tauri_plugin_fcm::init())
             .plugin(tauri_plugin_app_settings::init())
-            .plugin(tauri_plugin_web_auth_session::init())
             .plugin(tauri_plugin_install_referrer::init());
     }
 
