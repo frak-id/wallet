@@ -1,6 +1,6 @@
 {
   "name": "@frak-labs/nexus-wallet",
-  "version": "1.0.18",
+  "version": "1.0.19",
   "description": "The simple and cross-platform wallet to centralise your contents.",
   "private": true,
   "sideEffects": false,
@@ -49,7 +49,6 @@
     "@frak-labs/ui": "workspace:*",
     "@frak-labs/wallet-shared": "workspace:*",
     "@khmyznikov/pwa-install": "^0.6.3",
-
     "@radix-ui/react-slot": "^1.2.4",
     "@tanstack/query-async-storage-persister": "catalog:",
     "@tanstack/react-query": "catalog:",
