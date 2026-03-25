@@ -21,6 +21,7 @@
 # Tauri plugins
 src-tauri/plugins/*/ios/.build/
 src-tauri/plugins/*/android/.build/
+src-tauri/plugins/*/android/.tauri/
 
 # Tanstack temo
 .tanstack/tmp/

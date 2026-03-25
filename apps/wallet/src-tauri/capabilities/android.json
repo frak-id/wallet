@@ -4,10 +4,5 @@
     "description": "Android-specific permissions including WebAuthn, Share, and FS",
     "platforms": ["android"],
     "windows": ["main"],
-    "permissions": [
-        "webauthn:default",
-        "share:default",
-        "fs:default",
-        "fs:allow-download-write"
-    ]
+    "permissions": ["share:default", "fs:default", "fs:allow-download-write"]
 }

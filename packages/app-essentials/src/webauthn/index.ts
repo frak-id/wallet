@@ -94,19 +94,18 @@ const rpName = "Frak wallet";
 const rpId = resolveRpId();
 const rpOrigin = resolveRpOrigin(rpId);
 
-/**
- * Mobile app origins for Tauri
- * - Android: derived from ANDROID_SHA256_FINGERPRINT env var
- *   (same key used in /.well-known/assetlinks.json)
- * - iOS: tauri://localhost
- */
 const androidApkOrigins = resolveAndroidApkOrigins();
 const androidApkOrigin = androidApkOrigins[0] ?? "";
-const iosTauriOrigin = "tauri://localhost";
 
-/** All allowed origins for WebAuthn verification (web + mobile) */
+/**
+ * iOS passkeys via ASAuthorization use the RP origin (e.g. https://frak.id)
+ * as their origin — NOT tauri://localhost. This matches web credentials,
+ * making passkeys portable between the iOS app and the web.
+ */
+const iosPasskeyOrigin = `https://${rpId}`;
+
 const rpAllowedOrigins = Array.from(
-    new Set([rpOrigin, ...androidApkOrigins, iosTauriOrigin].filter(Boolean))
+    new Set([rpOrigin, ...androidApkOrigins, iosPasskeyOrigin].filter(Boolean))
 );
 
 /**
@@ -129,5 +128,5 @@ export const WebAuthN = {
     defaultUsername,
     androidApkOrigin,
     androidApkOrigins,
-    iosTauriOrigin,
+    iosPasskeyOrigin,
 };
