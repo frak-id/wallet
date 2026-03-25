@@ -114,6 +114,67 @@ function getWebAuthnOrigin(): string {
 }
 
 // ============================================================================
+// SPKI DER extraction from attestationObject (iOS fallback)
+//
+// iOS ASAuthorization doesn't expose the public key in SPKI DER format.
+// We extract P-256 coordinates from the COSE key embedded in the
+// attestationObject using the same byte-scan approach as Ox's internal
+// fallback (ox/core/internal/webauthn.ts).
+//
+// CBOR encoding reference:
+//   0x21 = CBOR negative int -2 (COSE label for x coordinate)
+//   0x22 = CBOR negative int -3 (COSE label for y coordinate)
+//   0x58 = CBOR byte string with 1-byte length prefix
+//   0x20 = 32 (coordinate byte length for P-256)
+// ============================================================================
+
+const P256_COORDINATE_LENGTH = 0x20;
+const CBOR_BSTR_1BYTE_LEN = 0x58;
+const COSE_X_LABEL = 0x21;
+const COSE_Y_LABEL = 0x22;
+
+const SPKI_P256_HEADER = new Uint8Array([
+    0x30, 0x59, 0x30, 0x13, 0x06, 0x07, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x02,
+    0x01, 0x06, 0x08, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x03, 0x01, 0x07, 0x03,
+    0x42, 0x00,
+]);
+
+function findCoseCoordinate(
+    data: Uint8Array,
+    label: number
+): Uint8Array | null {
+    const needle = [label, CBOR_BSTR_1BYTE_LEN, P256_COORDINATE_LENGTH];
+    for (let i = 0; i <= data.length - 3 - P256_COORDINATE_LENGTH; i++) {
+        if (
+            data[i] === needle[0] &&
+            data[i + 1] === needle[1] &&
+            data[i + 2] === needle[2]
+        ) {
+            return data.slice(i + 3, i + 3 + P256_COORDINATE_LENGTH);
+        }
+    }
+    return null;
+}
+
+function extractSpkiFromAttestation(
+    attestationObjectB64: string
+): ArrayBuffer | null {
+    const data = new Uint8Array(fromBase64Url(attestationObjectB64));
+    const x = findCoseCoordinate(data, COSE_X_LABEL);
+    const y = findCoseCoordinate(data, COSE_Y_LABEL);
+    if (!x || !y) return null;
+
+    const spki = new Uint8Array(
+        SPKI_P256_HEADER.length + 1 + P256_COORDINATE_LENGTH * 2
+    );
+    spki.set(SPKI_P256_HEADER);
+    spki[SPKI_P256_HEADER.length] = 0x04;
+    spki.set(x, SPKI_P256_HEADER.length + 1);
+    spki.set(y, SPKI_P256_HEADER.length + 1 + P256_COORDINATE_LENGTH);
+    return spki.buffer;
+}
+
+// ============================================================================
 // Credential Creation (Registration)
 // ============================================================================
 
@@ -167,7 +228,9 @@ function fromPluginRegistration(json: PluginRegistrationResponse) {
             getPublicKey: (): ArrayBuffer | null =>
                 json.response.publicKey
                     ? fromBase64Url(json.response.publicKey)
-                    : null,
+                    : extractSpkiFromAttestation(
+                          json.response.attestationObject
+                      ),
             getAuthenticatorData: (): ArrayBuffer =>
                 json.response.authenticatorData
                     ? fromBase64Url(json.response.authenticatorData)
