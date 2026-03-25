@@ -37,7 +37,7 @@ export const erpcUrl = isProd
 export const backendUrl = getStaticVariable({
     prod: "https://backend.frak.id",
     dev: "https://backend.gcp-dev.frak.id",
-    local: "http://localhost:3030",
+    local: "https://localhost:3030",
 });
 export const walletUrl = getStaticVariable({
     prod: "https://wallet.frak.id",

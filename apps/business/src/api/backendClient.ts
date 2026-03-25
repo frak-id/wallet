@@ -6,7 +6,7 @@ import { getSafeAuthToken, useAuthStore } from "@/stores/authStore";
  * Treaty client with authentication tokens if present
  */
 export const authenticatedBackendApi = treaty<App>(
-    process.env.BACKEND_URL ?? "http://localhost:3030",
+    process.env.BACKEND_URL ?? "https://localhost:3030",
     {
         fetch: { credentials: "include" },
         // Auto add the authentication related header if present

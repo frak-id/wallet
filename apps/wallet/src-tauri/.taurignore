@@ -1,0 +1,11 @@
+# Swift Package Manager build artifacts (iOS plugin compilation)
+# Primary cause of infinite rebuild loops during `tauri ios dev`
+.build/
+
+# Xcode build artifacts
+build/
+xcuserdata/
+
+# CocoaPods / Swift dependencies
+Externals/
+Pods/

@@ -19,7 +19,7 @@ function isLocalDevelopment(walletUrl: string): boolean {
  */
 function deriveBackendUrl(walletUrl: string): string {
     if (isLocalDevelopment(walletUrl)) {
-        return "http://localhost:3030";
+        return "https://localhost:3030";
     }
     // Dev environment
     if (

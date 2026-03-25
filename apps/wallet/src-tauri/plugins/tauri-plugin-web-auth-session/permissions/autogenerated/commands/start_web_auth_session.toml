@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-start-web-auth-session"
+description = "Enables the start_web_auth_session command without any pre-configured scope."
+commands.allow = ["start_web_auth_session"]
+
+[[permission]]
+identifier = "deny-start-web-auth-session"
+description = "Denies the start_web_auth_session command without any pre-configured scope."
+commands.deny = ["start_web_auth_session"]

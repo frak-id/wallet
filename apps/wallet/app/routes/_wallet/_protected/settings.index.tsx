@@ -10,6 +10,7 @@ import {
     moneriumStore,
 } from "@/module/monerium/store/moneriumStore";
 import { RemoveAllNotification } from "@/module/notification/component/RemoveAllNotification";
+import { MobileOnboardingPoc } from "@/module/onboarding/component/MobileOnboardingPoc";
 import { PairingList } from "@/module/pairing/component/PairingList";
 import { LegalLinks } from "@/module/settings/component/LegalLinks";
 import { PrivateKey } from "@/module/settings/component/PrivateKey";
@@ -50,6 +51,7 @@ function SettingsPage() {
             <RemoveAllNotification />
             <PrivateKey />
             <PairingList />
+            {!isRunningInProd && <MobileOnboardingPoc />}
             {!isRunningInProd && <MoneriumSection />}
             <LegalLinks />
         </Grid>

@@ -1,0 +1,12 @@
+[package]
+name = "tauri-plugin-web-auth-session"
+version = "0.1.0"
+edition = "2021"
+links = "tauri-plugin-web-auth-session"
+
+[dependencies]
+tauri = "2"
+serde = "1"
+
+[build-dependencies]
+tauri-plugin = { version = "2", features = ["build"] }

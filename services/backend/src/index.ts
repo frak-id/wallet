@@ -1,3 +1,6 @@
+import { existsSync, readFileSync } from "node:fs";
+import { homedir } from "node:os";
+import { join } from "node:path";
 import { log } from "@backend-infrastructure";
 import { cors } from "@elysiajs/cors";
 import { isRunningInProd, isRunningLocally } from "@frak-labs/app-essentials";
@@ -65,11 +68,40 @@ if (!isRunningInProd) {
     app.use(debugRoutes);
 }
 
+/**
+ * Get TLS config for local development, reusing vite-plugin-mkcert certificates.
+ *  - Guarded by `isRunningLocally` so it's tree-shaken out of non-local builds.
+ */
+const tls = isRunningLocally
+    ? (() => {
+          const certDir = join(homedir(), ".vite-plugin-mkcert");
+          const certFile = join(certDir, "cert.pem");
+          const keyFile = join(certDir, "dev.pem");
+
+          if (!existsSync(certFile) || !existsSync(keyFile)) {
+              log.warn(
+                  "Local TLS certs not found — run a Vite frontend dev server once to generate them"
+              );
+              return undefined;
+          }
+
+          log.info("Using local mkcert TLS certificates for HTTPS");
+          return {
+              cert: readFileSync(certFile),
+              key: readFileSync(keyFile),
+          };
+      })()
+    : undefined;
+
 app.listen({
     port: Number.parseInt(process.env.PORT ?? "3030", 10),
+    tls,
 });
 
-log.info(`Running at ${app.server?.hostname}:${app.server?.port}`);
+const protocol = tls ? "https" : "http";
+log.info(
+    `Running at ${protocol}://${app.server?.hostname}:${app.server?.port}`
+);
 
 /**
  * Global graceful shutdown — stops accepting connections and drains in-flight requests.
