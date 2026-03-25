@@ -340,9 +340,11 @@
             "skip": "Plus tard"
         },
         "welcome": {
-            "title": "Bienvenue dans votre portefeuille",
-            "description": "Votre portefeuille sécurisé est prêt. Commencez à explorer et à gérer vos actifs numériques.",
-            "button": "Commencer"
+            "title": "Bienvenue dans ton porte-monnaie",
+            "description": "C'est parti ! Explore nos marques partenaires, recommande tes coups de cœur et transforme ton influence en gains.",
+            "descriptionHighlight": "Tes gains sont sécurisés et accessibles à tout moment.",
+            "button": "Commencer",
+            "legal": "En continuant, tu acceptes nos <termsLink>Conditions générales</termsLink> et notre <privacyLink>Politique de confidentialité</privacyLink>"
         }
     },
     "reward": {

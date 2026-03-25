@@ -343,8 +343,10 @@
         },
         "welcome": {
             "title": "Welcome to your wallet",
-            "description": "Your secure wallet is ready. Start exploring and managing your digital assets.",
-            "button": "Get started"
+            "description": "Let's go! Explore our partner brands, recommend your favorites and turn your influence into earnings.",
+            "descriptionHighlight": "Your earnings are secure and accessible at any time.",
+            "button": "Get started",
+            "legal": "By continuing, you accept our <termsLink>Terms of Use</termsLink> and our <privacyLink>Privacy Policy</privacyLink>"
         }
     },
     "reward": {

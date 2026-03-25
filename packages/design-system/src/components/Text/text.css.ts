@@ -76,7 +76,7 @@ export const textStyles = {
         {
             fontSize: fontSize.xs,
             fontWeight: brand.typography.fontWeight.regular,
-            lineHeight: 1.4,
+            lineHeight: "20px",
         },
     ]),
     label: style([
