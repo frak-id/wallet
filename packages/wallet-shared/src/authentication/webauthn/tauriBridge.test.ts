@@ -151,9 +151,7 @@ describe("tauriBridge", () => {
             expect(typeof createFn).toBe("function");
         });
 
-        it("should return undefined when running in Tauri (iOS)", async () => {
-            // Simulate Tauri iOS environment
-            // iOS uses native WKWebView WebAuthn, not the Tauri plugin
+        it("should return a function when running in Tauri (iOS)", async () => {
             Object.defineProperty(globalThis, "window", {
                 value: {
                     location: {
@@ -167,7 +165,8 @@ describe("tauriBridge", () => {
 
             const { getTauriCreateFn } = await import("./tauriBridge");
             const createFn = getTauriCreateFn();
-            expect(createFn).toBeUndefined();
+            expect(createFn).toBeDefined();
+            expect(typeof createFn).toBe("function");
         });
     });
 

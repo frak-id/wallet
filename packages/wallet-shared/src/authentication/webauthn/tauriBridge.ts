@@ -1,78 +1,57 @@
 /**
  * Tauri WebAuthn Bridge
  *
- * This module provides adapter functions that allow the `ox` WebAuthnP256 library
- * to work with the Tauri WebAuthn plugin on mobile platforms.
+ * Adapts the frak-webauthn Tauri plugin responses to Credential-like objects
+ * that the `ox` WebAuthnP256 library expects.
  *
- * The approach is simple:
- * 1. ox calls our custom createFn/getFn with standard CredentialCreationOptions/CredentialRequestOptions
- * 2. We convert these to the simplewebauthn JSON format that the Tauri plugin expects
- * 3. We call the Tauri plugin
- * 4. We convert the JSON response back to a native Credential-like object that ox can process
- *
- * This keeps the backend unchanged (always receives ox format) and minimizes frontend complexity.
+ * Both iOS (ASAuthorization) and Android (Credential Manager) return the same
+ * JSON shape with base64url-encoded fields. This bridge decodes them to
+ * ArrayBuffers and wraps in Credential-like objects.
  */
 
 import { WebAuthN } from "@frak-labs/app-essentials";
-import { isAndroid, isIOS } from "@frak-labs/app-essentials/utils/platform";
-import type {
-    PublicKeyCredentialCreationOptionsJSON,
-    PublicKeyCredentialJSON,
-    PublicKeyCredentialRequestOptionsJSON,
-    RegistrationResponseJSON,
-} from "@simplewebauthn/types";
+import {
+    isAndroid,
+    isIOS,
+    isTauri,
+} from "@frak-labs/app-essentials/utils/platform";
 import type { WebAuthnP256 } from "ox";
 import { BaseError } from "ox/Errors";
-import { extractPublicKeyFromAttestationObject } from "./coseParser";
 
 // ============================================================================
-// Android-specific error handling
+// Types matching what the plugin returns (base64url JSON)
 // ============================================================================
 
-/**
- * Android Credential Manager error codes from Google Play Services FIDO2 API
- * @see https://developers.google.com/android/reference/com/google/android/gms/fido/fido2/api/common/ErrorCode
- */
-const AndroidCredentialErrors = {
-    /**
-     * Error 11000: SECURITY_ERR - Device security requirements not met
-     * Usually means no screen lock is configured or Google Password Manager
-     * encryption passphrase needs to be verified
-     */
-    SECURITY_ERR: "11000",
-} as const;
-
-/**
- * User-friendly error messages for Android Credential Manager errors
- */
-const AndroidErrorMessages: Record<string, string> = {
-    [AndroidCredentialErrors.SECURITY_ERR]:
-        "Device security setup required. Either: (1) Set up a screen lock (PIN, pattern, or password) in Settings → Security, or (2) Verify your Google Password Manager encryption passphrase in Settings → Google → Password Manager.",
+type PluginRegistrationResponse = {
+    id: string;
+    rawId: string;
+    type: "public-key";
+    response: {
+        clientDataJSON: string;
+        attestationObject: string;
+        publicKey?: string;
+        authenticatorData?: string;
+        transports?: string[];
+        publicKeyAlgorithm?: number;
+    };
+    authenticatorAttachment?: string | null;
+    clientExtensionResults?: Record<string, unknown>;
 };
 
-/**
- * Convert Android Credential Manager errors to user-friendly messages
- * Returns the original error if no specific handling is available
- */
-function normalizeAndroidError(error: unknown): Error {
-    const errorString = String(error);
+type PluginAuthenticationResponse = {
+    id: string;
+    rawId: string;
+    type: "public-key";
+    response: {
+        clientDataJSON: string;
+        authenticatorData: string;
+        signature: string;
+        userHandle?: string;
+    };
+    authenticatorAttachment?: string | null;
+    clientExtensionResults?: Record<string, unknown>;
+};
 
-    // Check for known Android error codes
-    for (const [code, message] of Object.entries(AndroidErrorMessages)) {
-        if (errorString.includes(code)) {
-            return new Error(message);
-        }
-    }
-
-    // Fallback: wrap non-Error values
-    return error instanceof Error ? error : new Error(errorString);
-}
-
-// ============================================================================
-// Extract ox's internal types to ensure compatibility
-// ============================================================================
-
-// Extract the createFn/getFn types from ox options
 type OxCreateFn = WebAuthnP256.createCredential.Options["createFn"];
 type OxGetFn = WebAuthnP256.sign.Options["getFn"];
 
@@ -80,9 +59,6 @@ type OxGetFn = WebAuthnP256.sign.Options["getFn"];
 // Base64URL conversion utilities
 // ============================================================================
 
-/**
- * Convert ArrayBuffer/Uint8Array to base64url string
- */
 export function toBase64Url(
     buffer: ArrayBuffer | ArrayBufferView | Uint8Array
 ): string {
@@ -92,7 +68,6 @@ export function toBase64Url(
     } else if (buffer instanceof ArrayBuffer) {
         bytes = new Uint8Array(buffer);
     } else {
-        // ArrayBufferView
         bytes = new Uint8Array(
             buffer.buffer,
             buffer.byteOffset,
@@ -109,13 +84,8 @@ export function toBase64Url(
         .replace(/=+$/, "");
 }
 
-/**
- * Convert base64url string to ArrayBuffer
- */
 export function fromBase64Url(base64url: string): ArrayBuffer {
-    // Add padding if needed
     const padded = base64url + "=".repeat((4 - (base64url.length % 4)) % 4);
-    // Replace URL-safe chars
     const base64 = padded.replace(/-/g, "+").replace(/_/g, "/");
     const binary = atob(base64);
     const bytes = new Uint8Array(binary.length);
@@ -129,45 +99,120 @@ export function fromBase64Url(base64url: string): ArrayBuffer {
 // Tauri plugin invocation
 // ============================================================================
 
-/**
- * Dynamically import and invoke Tauri plugin
- */
 async function invokeTauriPlugin<T>(
     command: string,
     args?: Record<string, unknown>
 ): Promise<T> {
     const { invoke } = await import("@tauri-apps/api/core");
-    return invoke(`plugin:webauthn|${command}`, args);
+    return invoke(`plugin:frak-webauthn|${command}`, args);
+}
+
+function getWebAuthnOrigin(): string {
+    if (isAndroid()) return WebAuthN.androidApkOrigin;
+    if (isIOS()) return WebAuthN.rpOrigin;
+    return WebAuthN.rpOrigin;
+}
+
+// ============================================================================
+// SPKI DER extraction from attestationObject (iOS fallback)
+//
+// iOS ASAuthorization doesn't expose the public key in SPKI DER format.
+// We extract P-256 coordinates from the COSE key embedded in the
+// attestationObject using the same byte-scan approach as Ox's internal
+// fallback (ox/core/internal/webauthn.ts).
+//
+// CBOR encoding reference:
+//   0x21 = CBOR negative int -2 (COSE label for x coordinate)
+//   0x22 = CBOR negative int -3 (COSE label for y coordinate)
+//   0x58 = CBOR byte string with 1-byte length prefix
+//   0x20 = 32 (coordinate byte length for P-256)
+// ============================================================================
+
+const P256_COORDINATE_LENGTH = 0x20;
+const CBOR_BSTR_1BYTE_LEN = 0x58;
+const COSE_X_LABEL = 0x21;
+const COSE_Y_LABEL = 0x22;
+
+const SPKI_P256_HEADER = new Uint8Array([
+    0x30, 0x59, 0x30, 0x13, 0x06, 0x07, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x02,
+    0x01, 0x06, 0x08, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x03, 0x01, 0x07, 0x03,
+    0x42, 0x00,
+]);
+
+function findCoseCoordinate(
+    data: Uint8Array,
+    label: number
+): Uint8Array | null {
+    const needle = [label, CBOR_BSTR_1BYTE_LEN, P256_COORDINATE_LENGTH];
+    for (let i = 0; i <= data.length - 3 - P256_COORDINATE_LENGTH; i++) {
+        if (
+            data[i] === needle[0] &&
+            data[i + 1] === needle[1] &&
+            data[i + 2] === needle[2]
+        ) {
+            return data.slice(i + 3, i + 3 + P256_COORDINATE_LENGTH);
+        }
+    }
+    return null;
+}
+
+function extractSpkiFromAttestation(
+    attestationObjectB64: string
+): ArrayBuffer | null {
+    const data = new Uint8Array(fromBase64Url(attestationObjectB64));
+    const x = findCoseCoordinate(data, COSE_X_LABEL);
+    const y = findCoseCoordinate(data, COSE_Y_LABEL);
+    if (!x || !y) return null;
+
+    const spki = new Uint8Array(
+        SPKI_P256_HEADER.length + 1 + P256_COORDINATE_LENGTH * 2
+    );
+    spki.set(SPKI_P256_HEADER);
+    spki[SPKI_P256_HEADER.length] = 0x04;
+    spki.set(x, SPKI_P256_HEADER.length + 1);
+    spki.set(y, SPKI_P256_HEADER.length + 1 + P256_COORDINATE_LENGTH);
+    return spki.buffer;
+}
+
+// ============================================================================
+// Tauri error handling
+// ============================================================================
+
+function extractTauriErrorMessage(e: unknown): string {
+    if (e instanceof Error) return e.message;
+    if (typeof e === "object" && e !== null && "message" in e) {
+        return String((e as { message: unknown }).message);
+    }
+    return String(e);
+}
+
+function tauriErrorToCause(e: unknown): Error {
+    if (e instanceof Error) return e;
+    return new Error(extractTauriErrorMessage(e));
 }
 
 /**
- * Get the appropriate origin for WebAuthn based on platform
+ * Detect user cancellation from native platforms.
+ *  - iOS: ASAuthorizationError.canceled → "NotAllowedError" or "error 1001"
+ *  - Android: CreateCredentialCancellationException → "NotAllowedError"
+ *  - Android (legacy/localized): message contains "cancel"
  */
-function getWebAuthnOrigin(): string {
-    if (isAndroid()) {
-        return WebAuthN.androidApkOrigin;
-    }
-    if (isIOS()) {
-        return WebAuthN.iosTauriOrigin;
-    }
-    return WebAuthN.rpOrigin;
+function isTauriCancellation(e: unknown): boolean {
+    const msg = extractTauriErrorMessage(e).toLowerCase();
+    return (
+        msg.includes("notallowederror") ||
+        msg.includes("error 1001") ||
+        msg.includes("cancel")
+    );
 }
 
 // ============================================================================
 // Credential Creation (Registration)
 // ============================================================================
 
-/**
- * Convert CredentialCreationOptions to Tauri plugin JSON format
- * Using `unknown` for buffer types to avoid type conflicts between ox and DOM types
- */
-function toTauriCreationOptions({
-    publicKey,
-}: ReturnType<typeof WebAuthnP256.getCredentialCreationOptions>):
-    | PublicKeyCredentialCreationOptionsJSON
-    | undefined {
-    if (!publicKey) return undefined;
-
+function toPluginCreationOptions(
+    publicKey: NonNullable<CredentialCreationOptions["publicKey"]>
+): Record<string, unknown> {
     return {
         challenge: toBase64Url(publicKey.challenge as ArrayBuffer | Uint8Array),
         rp: publicKey.rp,
@@ -186,7 +231,9 @@ function toTauriCreationOptions({
             ? {
                   authenticatorAttachment:
                       publicKey.authenticatorSelection.authenticatorAttachment,
-                  residentKey: publicKey.authenticatorSelection.residentKey,
+                  residentKey:
+                      publicKey.authenticatorSelection.residentKey ??
+                      "preferred",
                   requireResidentKey:
                       publicKey.authenticatorSelection.requireResidentKey,
                   userVerification:
@@ -202,92 +249,60 @@ function toTauriCreationOptions({
     };
 }
 
-/**
- * Convert Tauri plugin registration response to native Credential-like object
- * This object mimics the structure that ox expects from navigator.credentials.create()
- *
- * IMPORTANT: We include a toJSON() method that returns the original JSON format,
- * because when the credential is serialized with JSON.stringify(), the native
- * PublicKeyCredential.toJSON() method is automatically called. Our fake object
- * needs to behave the same way.
- */
-function fromTauriRegistrationResponse(json: RegistrationResponseJSON) {
-    const attestationObject = fromBase64Url(json.response.attestationObject);
-    const clientDataJSON = fromBase64Url(json.response.clientDataJSON);
-
-    // Build the response object with methods that ox calls
-    const response = {
-        clientDataJSON,
-        attestationObject,
-        // ox calls getPublicKey() to extract the public key
-        getPublicKey: (): ArrayBuffer | null => {
-            // First, check if the Tauri plugin returned the publicKey directly
-            if (json.response.publicKey) {
-                return fromBase64Url(json.response.publicKey);
-            }
-            // Android Tauri doesn't return publicKey, so we need to extract it
-            // from the attestationObject by parsing the COSE-encoded key
-            return extractPublicKeyFromAttestationObject(attestationObject);
-        },
-        getAuthenticatorData: (): ArrayBuffer => {
-            if (json.response.authenticatorData) {
-                return fromBase64Url(json.response.authenticatorData);
-            }
-            return new ArrayBuffer(0);
-        },
-        getTransports: (): string[] => {
-            return json.response.transports ?? [];
-        },
-        getPublicKeyAlgorithm: (): number => {
-            return json.response.publicKeyAlgorithm ?? -7; // ES256
-        },
-    };
-
-    // Return a Credential-like object that matches what ox expects
+function fromPluginRegistration(json: PluginRegistrationResponse) {
     return {
         id: json.id,
         type: "public-key" as const,
         rawId: fromBase64Url(json.rawId),
-        response,
+        response: {
+            clientDataJSON: fromBase64Url(json.response.clientDataJSON),
+            attestationObject: fromBase64Url(json.response.attestationObject),
+            getPublicKey: (): ArrayBuffer | null =>
+                json.response.publicKey
+                    ? fromBase64Url(json.response.publicKey)
+                    : extractSpkiFromAttestation(
+                          json.response.attestationObject
+                      ),
+            getAuthenticatorData: (): ArrayBuffer =>
+                json.response.authenticatorData
+                    ? fromBase64Url(json.response.authenticatorData)
+                    : new ArrayBuffer(0),
+            getTransports: (): string[] => json.response.transports ?? [],
+            getPublicKeyAlgorithm: (): number =>
+                json.response.publicKeyAlgorithm ?? -7,
+        },
         authenticatorAttachment: json.authenticatorAttachment ?? null,
         getClientExtensionResults: () => json.clientExtensionResults ?? {},
-        // toJSON() is called automatically by JSON.stringify() on native PublicKeyCredential.
-        // We need to implement it to return the proper RegistrationResponseJSON format
-        // so the backend receives base64url-encoded strings instead of empty objects.
         toJSON: () => json,
     };
 }
 
-/**
- * Get a custom createFn for ox that uses the Tauri WebAuthn plugin
- * Returns undefined if not running in Tauri (ox will use default browser API)
- */
 export function getTauriCreateFn(): OxCreateFn {
-    if (!isAndroid()) {
-        return undefined;
-    }
+    if (!isTauri()) return undefined;
 
     return async (options) => {
-        if (!options) return null;
+        if (!options?.publicKey) return null;
 
-        const tauriOptions = toTauriCreationOptions(options);
-        if (!tauriOptions) return null;
-
+        const pluginOptions = toPluginCreationOptions(options.publicKey);
         const origin = getWebAuthnOrigin();
 
         try {
-            const response = await invokeTauriPlugin<RegistrationResponseJSON>(
-                "register",
-                {
-                    origin,
-                    options: tauriOptions,
-                }
-            );
-            return fromTauriRegistrationResponse(response);
+            const response =
+                await invokeTauriPlugin<PluginRegistrationResponse>(
+                    "register",
+                    { origin, options: pluginOptions }
+                );
+            return fromPluginRegistration(response);
         } catch (e) {
+            if (isTauriCancellation(e)) {
+                const err = new Error("User cancelled the operation");
+                err.name = "NotAllowedError";
+                throw err;
+            }
+
             console.warn("Tauri create error", e);
             throw new BaseError("Tauri create credential error", {
-                cause: normalizeAndroidError(e),
+                cause: tauriErrorToCause(e),
             });
         }
     };
@@ -297,16 +312,9 @@ export function getTauriCreateFn(): OxCreateFn {
 // Credential Request (Authentication / Signing)
 // ============================================================================
 
-/**
- * Convert CredentialRequestOptions to Tauri plugin JSON format
- * Using `unknown` for buffer types to avoid type conflicts between ox and DOM types
- */
-function toTauriRequestOptions({
-    publicKey,
-}: ReturnType<typeof WebAuthnP256.getCredentialRequestOptions>):
-    | PublicKeyCredentialRequestOptionsJSON
-    | undefined {
-    if (!publicKey) return undefined;
+function toPluginRequestOptions(
+    publicKey: NonNullable<CredentialRequestOptions["publicKey"]>
+): Record<string, unknown> {
     return {
         challenge: toBase64Url(publicKey.challenge as ArrayBuffer | Uint8Array),
         rpId: publicKey.rpId,
@@ -322,77 +330,53 @@ function toTauriRequestOptions({
     };
 }
 
-/**
- * Convert Tauri plugin authentication response to native Credential-like object
- * This object mimics the structure that ox expects from navigator.credentials.get()
- *
- * IMPORTANT: We include a toJSON() method for consistency with the registration response,
- * so that JSON.stringify() returns properly formatted data.
- */
-function fromTauriAuthenticationResponse(json: PublicKeyCredentialJSON) {
-    const authenticatorData = fromBase64Url(
-        json.response.authenticatorData ?? ""
-    );
-    const clientDataJSON = fromBase64Url(json.response.clientDataJSON);
-    const signature = fromBase64Url(
-        "signature" in json.response ? (json.response.signature ?? "") : ""
-    );
-
-    // Build the response object
-    const response = {
-        clientDataJSON,
-        authenticatorData,
-        signature,
-        userHandle:
-            "userHandle" in json.response && json.response.userHandle
-                ? fromBase64Url(json.response.userHandle)
-                : null,
-    };
-
-    // Return a Credential-like object
+function fromPluginAuthentication(json: PluginAuthenticationResponse) {
     return {
         id: json.id,
         type: "public-key",
         rawId: fromBase64Url(json.rawId),
-        response,
+        response: {
+            clientDataJSON: fromBase64Url(json.response.clientDataJSON),
+            authenticatorData: fromBase64Url(json.response.authenticatorData),
+            signature: fromBase64Url(json.response.signature),
+            userHandle: json.response.userHandle
+                ? fromBase64Url(json.response.userHandle)
+                : null,
+        },
         authenticatorAttachment: json.authenticatorAttachment ?? null,
         getClientExtensionResults: () => json.clientExtensionResults ?? {},
-        // toJSON() is called automatically by JSON.stringify() on native PublicKeyCredential
         toJSON: () => json,
     };
 }
 
-/**
- * Get a custom getFn for ox that uses the Tauri WebAuthn plugin
- * Returns undefined if not running in Tauri (ox will use default browser API)
- */
 export function getTauriGetFn(): OxGetFn {
-    if (!isAndroid()) {
-        return undefined;
-    }
+    if (!isTauri()) return undefined;
 
     return async (options) => {
-        if (!options) return null;
-        const tauriOptions = toTauriRequestOptions(options);
-        if (!tauriOptions) return null;
+        if (!options?.publicKey) return null;
 
+        const pluginOptions = toPluginRequestOptions(options.publicKey);
         const origin = getWebAuthnOrigin();
-        try {
-            const response = await invokeTauriPlugin<PublicKeyCredentialJSON>(
-                "authenticate",
-                {
-                    origin,
-                    options: tauriOptions,
-                }
-            );
 
-            return fromTauriAuthenticationResponse(response) as Awaited<
+        try {
+            const response =
+                await invokeTauriPlugin<PluginAuthenticationResponse>(
+                    "authenticate",
+                    { origin, options: pluginOptions }
+                );
+            return fromPluginAuthentication(response) as Awaited<
                 ReturnType<NonNullable<OxGetFn>>
             >;
         } catch (e) {
+            if (isTauriCancellation(e)) {
+                const err = new Error("User cancelled the operation");
+                err.name = "NotAllowedError";
+                throw err;
+            }
+
             console.warn("Tauri get error", e);
             throw new BaseError("Tauri get credential error", {
-                cause: normalizeAndroidError(e),
+                cause: tauriErrorToCause(e),
             });
         }
     };

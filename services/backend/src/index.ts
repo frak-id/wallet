@@ -104,6 +104,20 @@ log.info(
 );
 
 /**
+ * When running locally with TLS, also start a plain HTTP mirror for mobile development.
+ * Mobile WebViews (Android/iOS) can't trust self-signed mkcert certificates,
+ * so Tauri dev connects to this HTTP endpoint instead of the HTTPS one.
+ */
+if (isRunningLocally && tls) {
+    const httpPort = 3031;
+    Bun.serve({
+        port: httpPort,
+        fetch: app.fetch,
+    });
+    log.info(`HTTP mirror for mobile dev at http://localhost:${httpPort}`);
+}
+
+/**
  * Global graceful shutdown — stops accepting connections and drains in-flight requests.
  * PairingRepository's own SIGTERM handler flushes pending DB writes independently.
  */
