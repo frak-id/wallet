@@ -46,7 +46,7 @@
         "pending": "en attente",
         "receive": "Recevoir",
         "refresh": "Rafraîchir",
-        "rewards": "Gains",
+        "rewards": "Total balance",
         "send": "Envoyer",
         "submit": "Envoyer",
         "to": "À",
@@ -57,7 +57,8 @@
         "walletAddress": "Adresse du porte-monnaie :",
         "walletAddressRequired": "L'adresse du porte-monnaie est requise",
         "walletInvalid": "Adresse de porte-monnaie invalide",
-        "back-to-wallet": "Retour au porte-monnaie"
+        "back-to-wallet": "Retour au porte-monnaie",
+        "close": "Fermer"
     },
     "sharing": {
         "btn": {
@@ -70,6 +71,8 @@
         "title": "Lien d'invitation {{productName}}"
     },
     "wallet": {
+        "pageTitle": "Porte-monnaie",
+        "transferToBank": "Transférer vers ma banque",
         "activateNotifications": "<strong>Activer les notifications</strong><br /> pour être prévenu du versement de vos gains",
         "activateNotificationsRationale": "<strong>Activer les notifications</strong><br /> Nous avons besoin de votre permission pour vous notifier du versement de vos gains",
         "openNotificationSettings": "<strong>Notifications désactivées</strong><br /> Ouvrez les paramètres pour activer les notifications",
@@ -180,8 +183,21 @@
             }
         },
         "welcome": {
-            "title": "Bienvenue dans votre porte-monnaie",
-            "text": "Ce porte-monnaie vous permettra de collecter toutes les récompenses et bien plus encore."
+            "title": "Bienvenue dans Frak 🎉",
+            "text": "Ce porte-monnaie vous permet de collecter toutes les récompenses et bien plus encore.",
+            "check1": "Explore les marques partenaires",
+            "check2": "Partage tes articles favoris",
+            "check3": "Collecte tes gains dans l'app"
+        },
+        "stats": {
+            "pending": "En attente",
+            "lifetime": "Depuis le début"
+        },
+        "earnings": {
+            "historyTitle": "Historique des gains",
+            "emptyTitle": "Prêt à gagner tes premiers gains ?",
+            "emptyDescription": "Explore les offres et partage tes produits coups de cœur avec tes ami·e·s pour gagner des récompenses.",
+            "discover": "Découvrir les offres"
         },
         "pairing": {
             "title": "Confirmation de l'appairage",

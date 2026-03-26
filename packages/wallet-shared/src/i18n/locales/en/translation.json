@@ -59,7 +59,8 @@
         "walletAddress": "Wallet address:",
         "walletAddressRequired": "Wallet address is required",
         "walletInvalid": "Invalid wallet address",
-        "back-to-wallet": "Back to Wallet"
+        "back-to-wallet": "Back to Wallet",
+        "close": "Close"
     },
     "sharing": {
         "btn": {
@@ -72,6 +73,8 @@
         "title": "{{productName}} invite link"
     },
     "wallet": {
+        "pageTitle": "Wallet",
+        "transferToBank": "Transfer to my bank",
         "activateNotifications": "<strong>Enable notifications</strong> <br /> to be notified when your gains are paid",
         "activateNotificationsRationale": "<strong>Enable notifications</strong> <br /> We need your permission to notify you when gains are paid",
         "openNotificationSettings": "<strong>Notifications disabled</strong> <br /> Open settings to enable notifications",
@@ -183,7 +186,20 @@
         },
         "welcome": {
             "title": "Welcome in your wallet",
-            "text": "This wallet will enable you to collect all the rewards and much more."
+            "text": "This wallet will enable you to collect all the rewards and much more.",
+            "check1": "Explore partner brands",
+            "check2": "Share your favorite products",
+            "check3": "Collect your earnings in the app"
+        },
+        "stats": {
+            "pending": "Pending",
+            "lifetime": "Lifetime"
+        },
+        "earnings": {
+            "historyTitle": "Earnings history",
+            "emptyTitle": "Ready to earn your first rewards?",
+            "emptyDescription": "Explore offers and share your favorite products with friends to earn rewards.",
+            "discover": "Discover offers"
         },
         "pairing": {
             "title": "Confirm device pairing",
