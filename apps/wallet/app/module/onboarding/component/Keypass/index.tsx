@@ -110,7 +110,10 @@ export function Keypass({
             shouldScaleBackground={false}
             modal={true}
         >
-            <DrawerContent hideHandle={true}>
+            <DrawerContent
+                hideHandle={true}
+                contentClassName={styles.drawerContent}
+            >
                 <DrawerTitle className={visuallyHidden}>
                     {t("onboarding.keypass.title")}
                 </DrawerTitle>

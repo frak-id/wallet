@@ -15,6 +15,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { isCryptoMode } from "@/module/common/utils/walletMode";
+import { EmptyTransferModal } from "@/module/tokens/component/EmptyTransferModal";
 import * as styles from "./index.css";
 
 export function Balance() {
@@ -22,11 +23,18 @@ export function Balance() {
     const { userBalance } = useGetUserBalance();
     const navigate = useNavigate();
     const [isHidden, setIsHidden] = useState(false);
+    const [isEmptyTransferModalOpen, setIsEmptyTransferModalOpen] =
+        useState(false);
 
     const amount = userBalance?.total?.eurAmount ?? 0;
     const [integerPart, decimalPart] = amount.toFixed(2).split(".");
 
     const handleTransferClick = () => {
+        if (amount <= 0) {
+            setIsEmptyTransferModalOpen(true);
+            return;
+        }
+
         navigate({ to: "/monerium/offramp" });
     };
 
@@ -91,6 +99,10 @@ export function Balance() {
             </Box>
 
             <StatCardsRow />
+            <EmptyTransferModal
+                open={isEmptyTransferModalOpen}
+                onOpenChange={setIsEmptyTransferModalOpen}
+            />
         </Card>
     );
 }

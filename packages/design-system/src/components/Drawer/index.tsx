@@ -56,11 +56,13 @@ export function DrawerOverlay({
 export function DrawerContent({
     ref,
     className,
+    contentClassName,
     children,
     hideHandle,
     ...props
 }: ComponentPropsWithRef<typeof DrawerPrimitive.Content> & {
     hideHandle?: boolean;
+    contentClassName?: string;
 }) {
     return (
         <DrawerPrimitive.Portal>
@@ -71,14 +73,23 @@ export function DrawerContent({
                 {...props}
             >
                 {hideHandle ? (
-                    <div className={drawerContentStyle}>{children}</div>
+                    <div className={clsx(drawerContentStyle, contentClassName)}>
+                        {children}
+                    </div>
                 ) : (
                     <>
                         <DrawerPrimitive.Title asChild>
                             <div className={drawerHandleStyle} />
                         </DrawerPrimitive.Title>
                         <DrawerPrimitive.Description asChild>
-                            <div className={drawerContentStyle}>{children}</div>
+                            <div
+                                className={clsx(
+                                    drawerContentStyle,
+                                    contentClassName
+                                )}
+                            >
+                                {children}
+                            </div>
                         </DrawerPrimitive.Description>
                     </>
                 )}

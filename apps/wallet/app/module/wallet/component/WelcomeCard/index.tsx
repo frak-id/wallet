@@ -1,10 +1,11 @@
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Card } from "@frak-labs/design-system/components/Card";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { CheckIcon, CloseIcon } from "@frak-labs/design-system/icons";
+import { CheckIcon } from "@frak-labs/design-system/icons";
 import { vars } from "@frak-labs/design-system/theme";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { CloseButton } from "@/module/common/component/CloseButton";
 import * as styles from "./index.css";
 import welcomeLogos from "./welcome_logos.webp";
 
@@ -60,14 +61,10 @@ export function WelcomeCard() {
                     <CheckItem text={t("wallet.welcome.check3")} />
                 </Box>
                 <Box className={styles.logosSection}>
-                    <button
-                        type="button"
-                        className={styles.closeButton}
+                    <CloseButton
                         onClick={handleDismiss}
-                        aria-label={t("common.close", "Close")}
-                    >
-                        <CloseIcon width={16} height={16} />
-                    </button>
+                        ariaLabel={t("common.close")}
+                    />
                     <img
                         src={welcomeLogos}
                         alt=""

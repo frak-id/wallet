@@ -495,6 +495,11 @@ interface Resources {
                 };
             };
             transferToBank: "Transfer to my bank";
+            transferEmpty: {
+                description: "Share products with your friends to start earning money.";
+                discover: "Discover offers";
+                title: "You don't have any money to transfer yet";
+            };
             welcome: {
                 check1: "Explore partner brands";
                 check2: "Share your favorite products";

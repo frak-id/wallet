@@ -111,4 +111,100 @@ describe("Balance", () => {
 
         expect(screen.getByText("••••")).toBeInTheDocument();
     });
+
+    it("should open empty transfer modal when amount is zero", async () => {
+        mockUseGetUserBalance.mockReturnValue({
+            userBalance: {
+                total: { eurAmount: 0 },
+            },
+        });
+
+        render(<Balance />);
+
+        fireEvent.click(
+            screen.getByRole("button", { name: "wallet.transferToBank" })
+        );
+
+        expect(mockNavigate).not.toHaveBeenCalled();
+        expect(
+            await screen.findAllByText("wallet.transferEmpty.title")
+        ).toHaveLength(2);
+        expect(
+            screen.getAllByText("wallet.transferEmpty.description")
+        ).toHaveLength(2);
+        expect(
+            screen.getByRole("button", {
+                name: "wallet.transferEmpty.discover",
+            })
+        ).toBeInTheDocument();
+    });
+
+    it("should navigate to offramp when amount is positive", () => {
+        mockUseGetUserBalance.mockReturnValue({
+            userBalance: {
+                total: { eurAmount: 100 },
+            },
+        });
+
+        render(<Balance />);
+
+        fireEvent.click(
+            screen.getByRole("button", { name: "wallet.transferToBank" })
+        );
+
+        expect(mockNavigate).toHaveBeenCalledWith({
+            to: "/monerium/offramp",
+        });
+    });
+
+    it("should navigate to explorer when discover offers is clicked", async () => {
+        const assignSpy = vi.fn();
+
+        Object.defineProperty(window, "location", {
+            value: {
+                ...window.location,
+                assign: assignSpy,
+            },
+            writable: true,
+            configurable: true,
+        });
+
+        mockUseGetUserBalance.mockReturnValue({
+            userBalance: {
+                total: { eurAmount: 0 },
+            },
+        });
+
+        render(<Balance />);
+
+        fireEvent.click(
+            screen.getByRole("button", { name: "wallet.transferToBank" })
+        );
+
+        fireEvent.click(
+            await screen.findByRole("button", {
+                name: "wallet.transferEmpty.discover",
+            })
+        );
+
+        expect(assignSpy).toHaveBeenCalledWith("/explorer");
+    });
+
+    it("should render close button in empty transfer modal", async () => {
+        mockUseGetUserBalance.mockReturnValue({
+            userBalance: {
+                total: { eurAmount: 0 },
+            },
+        });
+
+        render(<Balance />);
+
+        fireEvent.click(
+            screen.getByRole("button", { name: "wallet.transferToBank" })
+        );
+
+        expect(
+            await screen.findByRole("button", { name: "common.close" })
+        ).toBeInTheDocument();
+    });
 });

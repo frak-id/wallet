@@ -36,7 +36,7 @@ export const drawerContentWrapperStyle = style({
 });
 
 export const drawerContentStyle = style({
-    padding: `${alias.spacing.l} ${alias.spacing.m}`,
+    padding: `${alias.spacing.m} ${alias.spacing.m} ${alias.spacing.l} ${alias.spacing.m}`,
     overflow: "auto",
     maxHeight: "91dvh",
     backgroundColor: vars.surface.elevated,

@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { Keypass } from "./index";
+import * as styles from "./index.css";
 
 describe("Keypass", () => {
     it("should not render content when open={false}", () => {
@@ -102,6 +103,25 @@ describe("Keypass", () => {
         // Verify drawer exists
         const drawer = document.querySelector("[data-vaul-drawer]");
         expect(drawer).toBeInTheDocument();
+    });
+
+    it("should apply custom drawer padding class", async () => {
+        render(
+            <Keypass
+                open={true}
+                onOpenChange={vi.fn()}
+                onContinue={vi.fn()}
+                isLoading={false}
+                error={null}
+            />
+        );
+
+        await waitFor(() => {
+            const drawerContent = document.querySelector(
+                "[data-vaul-drawer] > div"
+            );
+            expect(drawerContent).toHaveClass(styles.drawerContent);
+        });
     });
 
     it("should call onContinue when Continue button clicked", async () => {

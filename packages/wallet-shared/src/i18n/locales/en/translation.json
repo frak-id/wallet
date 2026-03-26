@@ -75,6 +75,11 @@
     "wallet": {
         "pageTitle": "Wallet",
         "transferToBank": "Transfer to my bank",
+        "transferEmpty": {
+            "title": "You don't have any money to transfer yet",
+            "description": "Share products with your friends to start earning money.",
+            "discover": "Discover offers"
+        },
         "activateNotifications": "<strong>Enable notifications</strong> <br /> to be notified when your gains are paid",
         "activateNotificationsRationale": "<strong>Enable notifications</strong> <br /> We need your permission to notify you when gains are paid",
         "openNotificationSettings": "<strong>Notifications disabled</strong> <br /> Open settings to enable notifications",

@@ -1,4 +1,3 @@
-import { vars } from "@frak-labs/design-system/theme";
 import { alias } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 
@@ -48,15 +47,4 @@ export const logosImage = style({
     width: "100%",
     height: "auto",
     objectFit: "contain",
-});
-
-export const closeButton = style({
-    position: "absolute",
-    top: alias.spacing.xs,
-    right: alias.spacing.xs,
-    background: "transparent",
-    border: "none",
-    cursor: "pointer",
-    padding: alias.spacing.xxs,
-    color: vars.icon.secondary,
 });

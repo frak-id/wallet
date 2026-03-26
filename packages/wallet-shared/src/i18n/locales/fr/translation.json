@@ -73,6 +73,11 @@
     "wallet": {
         "pageTitle": "Porte-monnaie",
         "transferToBank": "Transférer vers ma banque",
+        "transferEmpty": {
+            "title": "Tu n'as pas encore d'argent à transférer",
+            "description": "Partage des produits avec tes ami·e·s pour commencer à gagner de l'argent.",
+            "discover": "Découvrir les offres"
+        },
         "activateNotifications": "<strong>Activer les notifications</strong><br /> pour être prévenu du versement de vos gains",
         "activateNotificationsRationale": "<strong>Activer les notifications</strong><br /> Nous avons besoin de votre permission pour vous notifier du versement de vos gains",
         "openNotificationSettings": "<strong>Notifications désactivées</strong><br /> Ouvrez les paramètres pour activer les notifications",
