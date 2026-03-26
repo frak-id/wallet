@@ -320,6 +320,7 @@
         "continue": "Continuer",
         "activateSecureSpace": "Activer mon espace sécurisé",
         "alreadyHaveAccount": "Déjà un compte ?",
+        "recoveryCode": "J'ai un code de récupération",
         "slides": {
             "one": {
                 "title": "Votre influence mérite d'être récompensée",

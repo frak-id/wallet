@@ -63,6 +63,7 @@ export const button = recipe({
                 paddingInline: alias.spacing.m,
                 fontSize: fontSize.s,
                 lineHeight: "21px",
+                fontWeight: 600,
             },
             large: {
                 padding: alias.spacing.m,

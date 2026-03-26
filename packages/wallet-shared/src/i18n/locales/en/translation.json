@@ -322,6 +322,7 @@
         "continue": "Continue",
         "activateSecureSpace": "Activate my secure space",
         "alreadyHaveAccount": "Already have an account?",
+        "recoveryCode": "I have a recovery code",
         "slides": {
             "one": {
                 "title": "Your influence deserves to be rewarded",

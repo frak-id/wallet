@@ -7,6 +7,7 @@ import {
     useRef,
     useState,
 } from "react";
+import { useTranslation } from "react-i18next";
 import { PageLayout } from "@/module/common/component/PageLayout";
 import * as styles from "./index.css";
 
@@ -36,6 +37,7 @@ export function Onboarding({
     onLoginClick,
     children,
 }: OnboardingProps) {
+    const { t } = useTranslation();
     const [currentIndex, setCurrentIndex] = useState(0);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const slidesCount = Children.count(children);
@@ -107,8 +109,13 @@ export function Onboarding({
                               : buttonLabel}
                     </Button>
                     {currentIndex === 0 && loginLabel && onLoginClick && (
-                        <Button variant="ghost" onClick={onLoginClick}>
+                        <Button variant="secondary" onClick={onLoginClick}>
                             {loginLabel}
+                        </Button>
+                    )}
+                    {currentIndex === 0 && (
+                        <Button size="small" variant="ghost">
+                            {t("onboarding.recoveryCode")}
                         </Button>
                     )}
                 </>
