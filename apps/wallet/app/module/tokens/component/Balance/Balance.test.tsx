@@ -139,6 +139,42 @@ describe("Balance", () => {
         ).toBeInTheDocument();
     });
 
+    it("should open empty pending gains modal when pending stat card is clicked with zero amount", async () => {
+        mockUseGetUserBalance.mockReturnValue({
+            userBalance: {
+                total: { eurAmount: 0 },
+            },
+        });
+
+        render(<Balance />);
+
+        const pendingCardButton = screen
+            .getByText("wallet.stats.pending")
+            .closest("button");
+
+        expect(pendingCardButton).toBeInTheDocument();
+
+        fireEvent.click(pendingCardButton as HTMLButtonElement);
+
+        expect(mockNavigate).not.toHaveBeenCalled();
+        expect(
+            await screen.findAllByText("wallet.pendingEmpty.title")
+        ).toHaveLength(2);
+        expect(
+            screen.getAllByText("wallet.pendingEmpty.description")
+        ).toHaveLength(2);
+        expect(
+            screen.getByRole("button", {
+                name: "wallet.pendingEmpty.confirm",
+            })
+        ).toBeInTheDocument();
+        expect(
+            screen.queryByRole("button", {
+                name: "wallet.transferEmpty.discover",
+            })
+        ).not.toBeInTheDocument();
+    });
+
     it("should navigate to offramp when amount is positive", () => {
         mockUseGetUserBalance.mockReturnValue({
             userBalance: {

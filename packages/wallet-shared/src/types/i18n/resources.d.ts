@@ -494,6 +494,11 @@ interface Resources {
                     title: "Receive assets on <strong>Testnets</strong>";
                 };
             };
+            pendingEmpty: {
+                confirm: "Got it";
+                description: "As soon as a purchase is made through your sharing link, your earnings will appear here.";
+                title: "You don't have any earnings yet";
+            };
             transferToBank: "Transfer to my bank";
             transferEmpty: {
                 description: "Share products with your friends to start earning money.";

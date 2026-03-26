@@ -66,3 +66,22 @@ export const statCardsRow = style({
     gap: alias.spacing.xs,
     width: "100%",
 });
+
+export const statCardButton = style({
+    display: "flex",
+    flex: 1,
+    minWidth: 0,
+    padding: 0,
+    border: "none",
+    background: "transparent",
+    borderRadius: alias.cornerRadius.l,
+    cursor: "pointer",
+    textAlign: "left",
+    ":focus": {
+        outline: "none",
+    },
+    ":focus-visible": {
+        outline: `2px solid ${vars.border.focus}`,
+        outlineOffset: "2px",
+    },
+});

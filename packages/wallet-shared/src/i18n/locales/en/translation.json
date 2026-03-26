@@ -80,6 +80,11 @@
             "description": "Share products with your friends to start earning money.",
             "discover": "Discover offers"
         },
+        "pendingEmpty": {
+            "title": "You don't have any earnings yet",
+            "description": "As soon as a purchase is made through your sharing link, your earnings will appear here.",
+            "confirm": "Got it"
+        },
         "activateNotifications": "<strong>Enable notifications</strong> <br /> to be notified when your gains are paid",
         "activateNotificationsRationale": "<strong>Enable notifications</strong> <br /> We need your permission to notify you when gains are paid",
         "openNotificationSettings": "<strong>Notifications disabled</strong> <br /> Open settings to enable notifications",

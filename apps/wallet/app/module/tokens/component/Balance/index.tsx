@@ -15,6 +15,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { isCryptoMode } from "@/module/common/utils/walletMode";
+import { EmptyPendingGainsModal } from "@/module/tokens/component/EmptyPendingGainsModal";
 import { EmptyTransferModal } from "@/module/tokens/component/EmptyTransferModal";
 import * as styles from "./index.css";
 
@@ -24,6 +25,8 @@ export function Balance() {
     const navigate = useNavigate();
     const [isHidden, setIsHidden] = useState(false);
     const [isEmptyTransferModalOpen, setIsEmptyTransferModalOpen] =
+        useState(false);
+    const [isEmptyPendingGainsModalOpen, setIsEmptyPendingGainsModalOpen] =
         useState(false);
 
     const amount = userBalance?.total?.eurAmount ?? 0;
@@ -40,6 +43,12 @@ export function Balance() {
 
     const toggleHidden = () => {
         setIsHidden((prev) => !prev);
+    };
+
+    const handlePendingClick = () => {
+        if (amount <= 0) {
+            setIsEmptyPendingGainsModalOpen(true);
+        }
     };
 
     return (
@@ -98,7 +107,11 @@ export function Balance() {
                 </Button>
             </Box>
 
-            <StatCardsRow />
+            <StatCardsRow onPendingClick={handlePendingClick} />
+            <EmptyPendingGainsModal
+                open={isEmptyPendingGainsModalOpen}
+                onOpenChange={setIsEmptyPendingGainsModalOpen}
+            />
             <EmptyTransferModal
                 open={isEmptyTransferModalOpen}
                 onOpenChange={setIsEmptyTransferModalOpen}
@@ -107,18 +120,29 @@ export function Balance() {
     );
 }
 
-function StatCardsRow() {
+type StatCardsRowProps = {
+    onPendingClick: () => void;
+};
+
+function StatCardsRow({ onPendingClick }: StatCardsRowProps) {
     const { t } = useTranslation();
     const { userBalance } = useGetUserBalance();
     const totalEur = userBalance?.total?.eurAmount ?? 0;
 
     return (
         <Box className={styles.statCardsRow}>
-            <StatCard
-                amount={`${totalEur.toFixed(0)}€`}
-                label={t("wallet.stats.pending")}
-                icon={<HourglassIcon width={14} height={14} />}
-            />
+            <Box
+                as="button"
+                type="button"
+                className={styles.statCardButton}
+                onClick={onPendingClick}
+            >
+                <StatCard
+                    amount={`${totalEur.toFixed(0)}€`}
+                    label={t("wallet.stats.pending")}
+                    icon={<HourglassIcon width={14} height={14} />}
+                />
+            </Box>
             <StatCard
                 amount={`${totalEur.toFixed(0)}€`}
                 label={t("wallet.stats.lifetime")}
