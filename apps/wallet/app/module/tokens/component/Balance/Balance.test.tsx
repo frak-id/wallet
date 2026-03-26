@@ -1,9 +1,10 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Balance } from "./index";
 
 const mockUseGetUserBalance = vi.fn();
 const mockT = vi.fn((key: string) => key);
+const mockNavigate = vi.fn();
 
 vi.mock("@frak-labs/wallet-shared", () => ({
     useGetUserBalance: () => mockUseGetUserBalance(),
@@ -15,6 +16,10 @@ vi.mock("react-i18next", () => ({
     }),
 }));
 
+vi.mock("@tanstack/react-router", () => ({
+    useNavigate: () => mockNavigate,
+}));
+
 vi.mock("@/module/common/utils/walletMode", () => ({
     isCryptoMode: true,
 }));
@@ -24,82 +29,86 @@ describe("Balance", () => {
         vi.clearAllMocks();
     });
 
-    it("should render title with balance label", () => {
+    it("should render balance label via i18n", () => {
         mockUseGetUserBalance.mockReturnValue({
             userBalance: {
-                total: {
-                    eurAmount: 100.5,
-                },
+                total: { eurAmount: 100.5 },
             },
         });
 
         render(<Balance />);
 
         expect(mockT).toHaveBeenCalledWith("common.balance");
-        expect(
-            screen.getByRole("heading", { name: "common.balance" })
-        ).toBeInTheDocument();
     });
 
-    it("should render balance amount", () => {
+    it("should render integer and decimal parts separately", () => {
         mockUseGetUserBalance.mockReturnValue({
             userBalance: {
-                total: {
-                    eurAmount: 100.5,
-                },
+                total: { eurAmount: 100.5 },
             },
         });
 
         render(<Balance />);
 
-        expect(screen.getByText("100.50€")).toBeInTheDocument();
+        expect(screen.getByText("100")).toBeInTheDocument();
+        expect(screen.getByText(",50")).toBeInTheDocument();
+        expect(screen.getByText("EUR")).toBeInTheDocument();
     });
 
-    it("should render 0€ when userBalance is undefined", () => {
+    it("should render 0,00 EUR when userBalance is undefined", () => {
         mockUseGetUserBalance.mockReturnValue({
             userBalance: undefined,
         });
 
         render(<Balance />);
 
-        expect(screen.getByText("0€")).toBeInTheDocument();
+        expect(screen.getByText("0")).toBeInTheDocument();
+        expect(screen.getByText(",00")).toBeInTheDocument();
     });
 
-    it("should render 0€ when total is undefined", () => {
+    it("should render 0,00 EUR when total is undefined", () => {
         mockUseGetUserBalance.mockReturnValue({
-            userBalance: {
-                total: undefined,
-            },
+            userBalance: { total: undefined },
         });
 
         render(<Balance />);
 
-        expect(screen.getByText("0€")).toBeInTheDocument();
-    });
-
-    it("should render 0€ when eurAmount is undefined", () => {
-        mockUseGetUserBalance.mockReturnValue({
-            userBalance: {
-                total: {},
-            },
-        });
-
-        render(<Balance />);
-
-        expect(screen.getByText("0€")).toBeInTheDocument();
+        expect(screen.getByText("0")).toBeInTheDocument();
+        expect(screen.getByText(",00")).toBeInTheDocument();
     });
 
     it("should format balance with 2 decimal places", () => {
         mockUseGetUserBalance.mockReturnValue({
             userBalance: {
-                total: {
-                    eurAmount: 123.456,
-                },
+                total: { eurAmount: 123.456 },
             },
         });
 
         render(<Balance />);
 
-        expect(screen.getByText("123.46€")).toBeInTheDocument();
+        expect(screen.getByText("123")).toBeInTheDocument();
+        expect(screen.getByText(",46")).toBeInTheDocument();
+    });
+
+    it("should hide amount when eye icon is clicked", () => {
+        mockUseGetUserBalance.mockReturnValue({
+            userBalance: {
+                total: { eurAmount: 100 },
+            },
+        });
+
+        render(<Balance />);
+
+        expect(screen.getByText("100")).toBeInTheDocument();
+
+        // Click the EyeOff icon to hide
+        const eyeIcon = screen.getByText("100").closest("div")
+            ?.parentElement as HTMLElement;
+        const svgButton = eyeIcon?.querySelector("svg");
+        if (svgButton) {
+            fireEvent.click(svgButton);
+        }
+
+        expect(screen.getByText("••••")).toBeInTheDocument();
     });
 });

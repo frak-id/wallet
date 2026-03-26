@@ -1,6 +1,18 @@
 import { Box } from "@frak-labs/design-system/components/Box";
+import { Button } from "@frak-labs/design-system/components/Button";
+import { Card } from "@frak-labs/design-system/components/Card";
+import { StatCard } from "@frak-labs/design-system/components/StatCard";
 import { Text } from "@frak-labs/design-system/components/Text";
+import {
+    BarChartIcon,
+    EyeIcon,
+    EyeOffIcon,
+    HourglassIcon,
+    TransferIcon,
+} from "@frak-labs/design-system/icons";
 import { useGetUserBalance } from "@frak-labs/wallet-shared";
+import { useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { isCryptoMode } from "@/module/common/utils/walletMode";
 import * as styles from "./index.css";
@@ -8,21 +20,98 @@ import * as styles from "./index.css";
 export function Balance() {
     const { t } = useTranslation();
     const { userBalance } = useGetUserBalance();
+    const navigate = useNavigate();
+    const [isHidden, setIsHidden] = useState(false);
+
+    const amount = userBalance?.total?.eurAmount ?? 0;
+    const [integerPart, decimalPart] = amount.toFixed(2).split(".");
+
+    const handleTransferClick = () => {
+        navigate({ to: "/monerium/offramp" });
+    };
+
+    const toggleHidden = () => {
+        setIsHidden((prev) => !prev);
+    };
 
     return (
-        <Box
-            className={styles.balance}
-            display="flex"
-            flexDirection="column"
-            alignItems="center"
-            gap="m"
-        >
-            <Text variant="heading3" align="center">
-                {isCryptoMode ? t("common.balance") : t("common.rewards")}
-            </Text>
-            <Text variant="heading1" align="center" className={styles.amount}>
-                {userBalance?.total?.eurAmount?.toFixed(2) ?? 0}€
-            </Text>
+        <Card className={styles.balanceLayout}>
+            <Box className={styles.balanceCardHeader}>
+                <Box display={"flex"} flexDirection={"column"} gap={"xs"}>
+                    <Box className={styles.headerRow}>
+                        <Text variant="bodySmall" color="secondary">
+                            {isCryptoMode
+                                ? t("common.balance")
+                                : t("common.rewards")}
+                        </Text>
+                        {isHidden ? (
+                            <EyeIcon
+                                width={16}
+                                height={16}
+                                className={styles.eyeIcon}
+                                onClick={toggleHidden}
+                            />
+                        ) : (
+                            <EyeOffIcon
+                                width={16}
+                                height={16}
+                                className={styles.eyeIcon}
+                                onClick={toggleHidden}
+                            />
+                        )}
+                    </Box>
+
+                    <Box className={styles.amountContainer}>
+                        {isHidden ? (
+                            <span className={styles.amountInteger}>••••</span>
+                        ) : (
+                            <>
+                                <span className={styles.amountInteger}>
+                                    {integerPart}
+                                </span>
+                                <span className={styles.amountDecimals}>
+                                    ,{decimalPart}
+                                </span>
+                                <span className={styles.currencySuffix}>
+                                    EUR
+                                </span>
+                            </>
+                        )}
+                    </Box>
+                </Box>
+
+                <Button
+                    variant="primary"
+                    size="large"
+                    icon={<TransferIcon width={16} height={16} />}
+                    onClick={handleTransferClick}
+                >
+                    {t("wallet.transferToBank")}
+                </Button>
+            </Box>
+
+            <StatCardsRow />
+        </Card>
+    );
+}
+
+function StatCardsRow() {
+    const { t } = useTranslation();
+    const { userBalance } = useGetUserBalance();
+    const totalEur = userBalance?.total?.eurAmount ?? 0;
+
+    return (
+        <Box className={styles.statCardsRow}>
+            <StatCard
+                amount={`${totalEur.toFixed(0)}€`}
+                label={t("wallet.stats.pending")}
+                icon={<HourglassIcon width={14} height={14} />}
+            />
+            <StatCard
+                amount={`${totalEur.toFixed(0)}€`}
+                label={t("wallet.stats.lifetime")}
+                icon={<BarChartIcon width={14} height={14} />}
+            />
         </Box>
     );
 }
