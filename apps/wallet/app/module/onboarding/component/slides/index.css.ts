@@ -15,3 +15,10 @@ export const slideImg = style({
     objectFit: "cover",
     objectPosition: "center",
 });
+
+export const slideImgCenter = style({
+    display: "block",
+    maxWidth: "100%",
+    maxHeight: "100%",
+    objectFit: "contain",
+});

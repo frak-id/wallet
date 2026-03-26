@@ -9,12 +9,15 @@ export type SlideProps = {
     image: string;
     /** Image layout variant */
     imageVariant?: "cover" | "center";
+    /** Optional max-width for the image (e.g. "223px") */
+    imageMaxWidth?: string;
 };
 
 export function Slide({
     translationKey,
     image,
     imageVariant = "center",
+    imageMaxWidth,
 }: SlideProps) {
     const { t } = useTranslation();
 
@@ -25,7 +28,12 @@ export function Slide({
                     src={image}
                     alt=""
                     className={
-                        imageVariant === "cover" ? styles.slideImg : undefined
+                        imageVariant === "cover"
+                            ? styles.slideImg
+                            : styles.slideImgCenter
+                    }
+                    style={
+                        imageMaxWidth ? { maxWidth: imageMaxWidth } : undefined
                     }
                 />
             }
