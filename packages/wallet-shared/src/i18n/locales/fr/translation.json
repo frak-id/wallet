@@ -352,7 +352,6 @@
         "notification": {
             "title": "Ne rate aucun gain !",
             "description": "Sois averti dès que l'argent est crédité sur ton porte-monnaie.",
-            "descriptionHighlight": "Suis tes récompenses en temps réel.",
             "enable": "Oui, me prévenir",
             "skip": "Plus tard"
         },

@@ -48,17 +48,18 @@ export function NotificationOptIn({
             {isEnabling && <Overlay />}
             <div className={slideStyles.slide}>
                 <HeroContent
-                    image={<img src={notificationImg} alt="" />}
+                    image={
+                        <img
+                            src={notificationImg}
+                            alt=""
+                            className={slideStyles.slideImgCenter}
+                        />
+                    }
                     title={t("onboarding.notification.title")}
                     description={
                         <Box display="flex" flexDirection="column" gap="m">
                             <Text>
                                 {t("onboarding.notification.description")}
-                            </Text>
-                            <Text>
-                                {t(
-                                    "onboarding.notification.descriptionHighlight"
-                                )}
                             </Text>
                         </Box>
                     }

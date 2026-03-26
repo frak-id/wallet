@@ -51,7 +51,14 @@ export function Welcome({ onContinue }: WelcomeProps) {
         >
             <div className={slideStyles.slide}>
                 <HeroContent
-                    image={<img src={welcomeImg} alt="" />}
+                    bleed
+                    image={
+                        <img
+                            src={welcomeImg}
+                            alt=""
+                            className={slideStyles.slideImgCenter}
+                        />
+                    }
                     title={t("onboarding.welcome.title")}
                     description={
                         <Box display="flex" flexDirection="column" gap="m">

@@ -9,15 +9,21 @@ const heroImageBase = style({
 
 export const heroImage = style([heroImageBase]);
 
+const heroImageCenterBase = {
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+} as const;
+
 export const heroImageCenter = style([
     heroImageBase,
     {
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
+        ...heroImageCenterBase,
         margin: `0 ${alias.spacing.m}`,
     },
 ]);
+
+export const heroImageCenterBleed = style([heroImageBase, heroImageCenterBase]);
 
 export const heroContent = style({
     display: "flex",

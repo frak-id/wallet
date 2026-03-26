@@ -8,6 +8,8 @@ type HeroContentProps = {
     image: ReactNode;
     /** Image area layout variant */
     imageVariant?: "cover" | "center";
+    /** When true, image bleeds to edges (no horizontal margin) */
+    bleed?: boolean;
     title: ReactNode;
     description: ReactNode;
 };
@@ -15,20 +17,20 @@ type HeroContentProps = {
 export function HeroContent({
     image,
     imageVariant = "center",
+    bleed = false,
     title,
     description,
 }: HeroContentProps) {
+    const imageClassName =
+        imageVariant === "cover"
+            ? styles.heroImage
+            : bleed
+              ? styles.heroImageCenterBleed
+              : styles.heroImageCenter;
+
     return (
         <>
-            <Box
-                className={
-                    imageVariant === "cover"
-                        ? styles.heroImage
-                        : styles.heroImageCenter
-                }
-            >
-                {image}
-            </Box>
+            <Box className={imageClassName}>{image}</Box>
             <Box className={styles.heroContent}>
                 <Text variant="heading1" as="h2" className={styles.heroTitle}>
                     {title}
