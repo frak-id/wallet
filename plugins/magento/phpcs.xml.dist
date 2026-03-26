@@ -8,4 +8,8 @@
     <file>Api</file>
     <exclude-pattern>Test/*</exclude-pattern>
     <exclude-pattern>vendor/*</exclude-pattern>
+    <!-- MessageQueueRetry::processRetries() is intentionally empty: the MQ consumer handles delivery -->
+    <rule ref="Magento2.CodeAnalysis.EmptyBlock">
+        <exclude-pattern>Model/Retry/MessageQueueRetry.php</exclude-pattern>
+    </rule>
 </ruleset>

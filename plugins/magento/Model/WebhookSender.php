@@ -9,12 +9,26 @@ use Psr\Log\LoggerInterface;
 
 class WebhookSender
 {
+    /**
+     * @param Config $config
+     * @param ClientFactory $clientFactory
+     * @param LoggerInterface $logger
+     */
     public function __construct(
         private readonly Config $config,
         private readonly ClientFactory $clientFactory,
         private readonly LoggerInterface $logger
-    ) {}
+    ) {
+    }
 
+    /**
+     * Send order webhook to Frak backend with HMAC signature
+     *
+     * @param OrderInterface $order
+     * @param string $status
+     * @param string|null $clientId
+     * @return void
+     */
     public function sendOrderWebhook(OrderInterface $order, string $status, ?string $clientId): void
     {
         $merchantId = $this->config->getMerchantId($order->getStoreId());
@@ -31,7 +45,7 @@ class WebhookSender
 
         $signature = base64_encode(hash_hmac("sha256", $body, $webhookSecret, true));
 
-        $url = rtrim($backendUrl, "/") . "/ext/merchant/" . $merchantId . "/webhook/magento";
+        $url = rtrim($backendUrl ?? "", "/") . "/ext/merchant/" . $merchantId . "/webhook/magento";
 
         $client = $this->clientFactory->create([
             "config" => [
@@ -57,10 +71,26 @@ class WebhookSender
         }
     }
 
+    /**
+     * Build webhook payload matching MagentoWebhookDto
+     *
+     * Uses getItems() + parent-item filter instead of getAllVisibleItems()
+     * because getAllVisibleItems() is not declared on OrderInterface.
+     *
+     * @param OrderInterface $order
+     * @param string $status
+     * @param string|null $clientId
+     * @return array<string, mixed>
+     */
     private function buildPayload(OrderInterface $order, string $status, ?string $clientId): array
     {
         $items = [];
-        foreach ($order->getAllVisibleItems() as $item) {
+        $orderItems = $order->getItems();
+        foreach ($orderItems as $item) {
+            // Skip child items (e.g., simple products under configurables/bundles)
+            if ($item->getParentItemId() !== null) {
+                continue;
+            }
             $items[] = [
                 "productId" => (string) $item->getProductId(),
                 "quantity" => (int) $item->getQtyOrdered(),
@@ -82,6 +112,12 @@ class WebhookSender
         ];
     }
 
+    /**
+     * Map internal status string to webhook status
+     *
+     * @param string $status
+     * @return string
+     */
     private function mapOrderStatus(string $status): string
     {
         return match ($status) {

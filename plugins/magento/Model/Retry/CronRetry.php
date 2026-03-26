@@ -6,9 +6,7 @@ namespace FrakLabs\Sdk\Model\Retry;
 use DateTimeImmutable;
 use FrakLabs\Sdk\Api\WebhookRetryInterface;
 use FrakLabs\Sdk\Model\WebhookSender;
-use Magento\Framework\App\ObjectManager;
 use Magento\Framework\App\ResourceConnection;
-use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Model\OrderFactory;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
@@ -20,12 +18,25 @@ class CronRetry implements WebhookRetryInterface
     private const MAX_ATTEMPTS = 5;
     private const BACKOFF_INTERVALS = [300, 900, 3600, 21600, 86400];
 
+    /**
+     * Initialize with database connection, webhook sender, order factory, and logger
+     *
+     * @param ResourceConnection $resourceConnection
+     * @param WebhookSender $webhookSender
+     * @param OrderFactory $orderFactory
+     * @param LoggerInterface $logger
+     */
     public function __construct(
         private readonly ResourceConnection $resourceConnection,
         private readonly WebhookSender $webhookSender,
+        private readonly OrderFactory $orderFactory,
         private readonly LoggerInterface $logger
-    ) {}
+    ) {
+    }
 
+    /**
+     * @inheritdoc
+     */
     public function enqueue(string $orderId, int $storeId, string $payload): void
     {
         $connection = $this->resourceConnection->getConnection();
@@ -43,6 +54,9 @@ class CronRetry implements WebhookRetryInterface
         ]);
     }
 
+    /**
+     * @inheritdoc
+     */
     public function processRetries(): void
     {
         $connection = $this->resourceConnection->getConnection();
@@ -108,6 +122,13 @@ class CronRetry implements WebhookRetryInterface
         }
     }
 
+    /**
+     * Attempt to resend a webhook from persisted payload
+     *
+     * @param string $orderId
+     * @param string $payload
+     * @return void
+     */
     private function attemptWebhook(string $orderId, string $payload): void
     {
         $decodedPayload = json_decode($payload, true, 512, JSON_THROW_ON_ERROR);
@@ -122,10 +143,15 @@ class CronRetry implements WebhookRetryInterface
         $this->webhookSender->sendOrderWebhook($order, $status, $clientId);
     }
 
-    private function loadOrderByIncrementId(string $orderId): ?OrderInterface
+    /**
+     * Load an order by its increment ID via constructor-injected factory
+     *
+     * @param string $orderId
+     * @return \Magento\Sales\Api\Data\OrderInterface|null
+     */
+    private function loadOrderByIncrementId(string $orderId): ?\Magento\Sales\Api\Data\OrderInterface
     {
-        $orderFactory = ObjectManager::getInstance()->get(OrderFactory::class);
-        $order = $orderFactory->create()->loadByIncrementId($orderId);
+        $order = $this->orderFactory->create()->loadByIncrementId($orderId);
         if (!$order->getEntityId()) {
             return null;
         }
@@ -133,11 +159,22 @@ class CronRetry implements WebhookRetryInterface
         return $order;
     }
 
+    /**
+     * Get the current timestamp formatted for database storage
+     *
+     * @return string
+     */
     private function getCurrentTimestamp(): string
     {
         return (new DateTimeImmutable())->format("Y-m-d H:i:s");
     }
 
+    /**
+     * Calculate the next retry timestamp using exponential backoff (5m, 15m, 1h, 6h, 24h)
+     *
+     * @param int $attempts
+     * @return string
+     */
     private function getNextRetryTimestamp(int $attempts): string
     {
         $index = min($attempts - 1, count(self::BACKOFF_INTERVALS) - 1);

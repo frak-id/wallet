@@ -6,7 +6,7 @@ namespace FrakLabs\Sdk\Test\Unit\Observer;
 
 use FrakLabs\Sdk\Api\WebhookRetryInterface;
 use FrakLabs\Sdk\Model\Config;
-use FrakLabs\Sdk\Model\WebhookRetryFactory;
+use FrakLabs\Sdk\Model\WebhookRetryResolver;
 use FrakLabs\Sdk\Model\WebhookSender;
 use FrakLabs\Sdk\Observer\OrderPlaceAfterObserver;
 use Magento\Framework\Event;
@@ -21,28 +21,38 @@ class OrderPlaceAfterObserverTest extends TestCase
 {
     private Config&MockObject $config;
     private WebhookSender&MockObject $webhookSender;
-    private WebhookRetryFactory&MockObject $retryFactory;
+    private WebhookRetryResolver&MockObject $retryResolver;
     private CookieReaderInterface&MockObject $cookieReader;
     private LoggerInterface&MockObject $logger;
     private OrderPlaceAfterObserver $observer;
 
+    /**
+     * Set up test fixtures
+     *
+     * @return void
+     */
     protected function setUp(): void
     {
         $this->config = $this->createMock(Config::class);
         $this->webhookSender = $this->createMock(WebhookSender::class);
-        $this->retryFactory = $this->createMock(WebhookRetryFactory::class);
+        $this->retryResolver = $this->createMock(WebhookRetryResolver::class);
         $this->cookieReader = $this->createMock(CookieReaderInterface::class);
         $this->logger = $this->createMock(LoggerInterface::class);
 
         $this->observer = new OrderPlaceAfterObserver(
             $this->config,
             $this->webhookSender,
-            $this->retryFactory,
+            $this->retryResolver,
             $this->cookieReader,
             $this->logger
         );
     }
 
+    /**
+     * Test that webhook is skipped when module is disabled
+     *
+     * @return void
+     */
     public function testSkipsWhenDisabled(): void
     {
         $order = $this->createOrderMock(1, 123, "100000123");
@@ -54,6 +64,11 @@ class OrderPlaceAfterObserverTest extends TestCase
         $this->observer->execute($observer);
     }
 
+    /**
+     * Test that webhook is sent when module is enabled
+     *
+     * @return void
+     */
     public function testSendsWebhookWhenEnabled(): void
     {
         $order = $this->createOrderMock(1, 123, "100000123");
@@ -69,6 +84,11 @@ class OrderPlaceAfterObserverTest extends TestCase
         $this->observer->execute($observer);
     }
 
+    /**
+     * Test that multiple orders are processed in multi-address checkout
+     *
+     * @return void
+     */
     public function testHandlesMultipleOrders(): void
     {
         $orderOne = $this->createOrderMock(1, 101, "100000101");
@@ -102,6 +122,11 @@ class OrderPlaceAfterObserverTest extends TestCase
         $this->observer->execute($observer);
     }
 
+    /**
+     * Test that exceptions are caught without breaking checkout flow
+     *
+     * @return void
+     */
     public function testCatchesExceptionWithoutBreakingCheckout(): void
     {
         $order = $this->createOrderMock(1, 123, "100000123");
@@ -113,13 +138,18 @@ class OrderPlaceAfterObserverTest extends TestCase
 
         $retry = $this->createMock(WebhookRetryInterface::class);
         $retry->expects(self::once())->method("enqueue");
-        $this->retryFactory->method("create")->willReturn($retry);
+        $this->retryResolver->method("create")->willReturn($retry);
         $this->logger->expects(self::once())->method("error");
 
         $this->observer->execute($observer);
         self::assertTrue(true);
     }
 
+    /**
+     * Test that frak_client_id cookie value is passed to webhook
+     *
+     * @return void
+     */
     public function testPassesClientIdFromCookie(): void
     {
         $order = $this->createOrderMock(1, 123, "100000123");
@@ -135,6 +165,11 @@ class OrderPlaceAfterObserverTest extends TestCase
         $this->observer->execute($observer);
     }
 
+    /**
+     * Test that retry is enqueued with correct payload on webhook failure
+     *
+     * @return void
+     */
     public function testEnqueuesRetryOnFailure(): void
     {
         $order = $this->createOrderMock(5, 200, "200000200");
@@ -161,14 +196,24 @@ class OrderPlaceAfterObserverTest extends TestCase
                     ];
                 })
             );
-        $this->retryFactory->method("create")->willReturn($retry);
+        $this->retryResolver->method("create")->willReturn($retry);
 
         $this->observer->execute($observer);
     }
 
+    /**
+     * Create an Observer mock with an Event containing order data
+     *
+     * @param OrderInterface|null $order
+     * @param array<OrderInterface>|null $orders
+     * @return Observer
+     */
     private function createObserverWithEvent(?OrderInterface $order, ?array $orders): Observer
     {
-        $event = $this->createMock(Event::class);
+        $event = $this->getMockBuilder(Event::class)
+            ->disableOriginalConstructor()
+            ->addMethods(["getOrder", "getOrders"])
+            ->getMock();
         $event->method("getOrder")->willReturn($order);
         $event->method("getOrders")->willReturn($orders);
 
@@ -178,11 +223,19 @@ class OrderPlaceAfterObserverTest extends TestCase
         return $observer;
     }
 
-    private function createOrderMock(int $storeId, int $id, string $incrementId): OrderInterface&MockObject
+    /**
+     * Create an OrderInterface mock with standard fields
+     *
+     * @param int $storeId
+     * @param int $entityId
+     * @param string $incrementId
+     * @return OrderInterface&MockObject
+     */
+    private function createOrderMock(int $storeId, int $entityId, string $incrementId): OrderInterface&MockObject
     {
         $order = $this->createMock(OrderInterface::class);
         $order->method("getStoreId")->willReturn($storeId);
-        $order->method("getId")->willReturn($id);
+        $order->method("getEntityId")->willReturn($entityId);
         $order->method("getIncrementId")->willReturn($incrementId);
 
         return $order;

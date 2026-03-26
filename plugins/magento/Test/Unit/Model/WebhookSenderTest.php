@@ -10,6 +10,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\ClientFactory;
 use GuzzleHttp\Psr7\Response;
 use Magento\Sales\Api\Data\OrderInterface;
+use Magento\Sales\Api\Data\OrderItemInterface;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -22,6 +23,11 @@ class WebhookSenderTest extends TestCase
     private Client&MockObject $client;
     private WebhookSender $webhookSender;
 
+    /**
+     * Set up test fixtures
+     *
+     * @return void
+     */
     protected function setUp(): void
     {
         $this->config = $this->createMock(Config::class);
@@ -32,6 +38,11 @@ class WebhookSenderTest extends TestCase
         $this->webhookSender = new WebhookSender($this->config, $this->clientFactory, $this->logger);
     }
 
+    /**
+     * Test that sendOrderWebhook builds the correct payload structure
+     *
+     * @return void
+     */
     public function testSendOrderWebhookBuildsCorrectPayload(): void
     {
         $order = $this->createOrderMock();
@@ -74,6 +85,11 @@ class WebhookSenderTest extends TestCase
         $this->webhookSender->sendOrderWebhook($order, "unknown", "client-abc");
     }
 
+    /**
+     * Test that HMAC signature is correctly base64-encoded in the request header
+     *
+     * @return void
+     */
     public function testHmacSignatureIsBase64Encoded(): void
     {
         $order = $this->createOrderMock();
@@ -99,6 +115,11 @@ class WebhookSenderTest extends TestCase
         $this->webhookSender->sendOrderWebhook($order, "confirmed", "client-abc");
     }
 
+    /**
+     * Test that webhook is skipped when merchantId is not configured
+     *
+     * @return void
+     */
     public function testSkipsWhenMerchantIdMissing(): void
     {
         $order = $this->createOrderMock();
@@ -113,6 +134,11 @@ class WebhookSenderTest extends TestCase
         $this->webhookSender->sendOrderWebhook($order, "pending", "client-abc");
     }
 
+    /**
+     * Test that webhook is skipped when webhook secret is not configured
+     *
+     * @return void
+     */
     public function testSkipsWhenWebhookSecretMissing(): void
     {
         $order = $this->createOrderMock();
@@ -127,6 +153,11 @@ class WebhookSenderTest extends TestCase
         $this->webhookSender->sendOrderWebhook($order, "pending", "client-abc");
     }
 
+    /**
+     * Test that a warning is logged when backend rejects the webhook
+     *
+     * @return void
+     */
     public function testLogsWarningOnBackendRejection(): void
     {
         $order = $this->createOrderMock();
@@ -146,16 +177,29 @@ class WebhookSenderTest extends TestCase
         $this->webhookSender->sendOrderWebhook($order, "pending", "client-abc");
     }
 
+    /**
+     * Test that order status strings are mapped correctly
+     *
+     * @return void
+     */
     public function testStatusMapping(): void
     {
         $mapOrderStatus = new \ReflectionMethod(WebhookSender::class, "mapOrderStatus");
-        $mapOrderStatus->setAccessible(true);
 
         self::assertSame("confirmed", $mapOrderStatus->invoke($this->webhookSender, "confirmed"));
         self::assertSame("refunded", $mapOrderStatus->invoke($this->webhookSender, "refunded"));
         self::assertSame("pending", $mapOrderStatus->invoke($this->webhookSender, "anything-else"));
     }
 
+    /**
+     * Mock config to return default values for a given store
+     *
+     * @param int $storeId
+     * @param string $merchantId
+     * @param string $secret
+     * @param string $backendUrl
+     * @return void
+     */
     private function mockConfigDefaults(int $storeId, string $merchantId, string $secret, string $backendUrl): void
     {
         $this->config->method("getMerchantId")->with($storeId)->willReturn($merchantId);
@@ -163,21 +207,27 @@ class WebhookSenderTest extends TestCase
         $this->config->method("getBackendUrl")->with($storeId)->willReturn($backendUrl);
     }
 
+    /**
+     * Create a mock OrderInterface with items using getItems() and getParentItemId()
+     *
+     * Uses OrderItemInterface mock with getParentItemId() returning null
+     * to match the production code's parent-item filter pattern.
+     *
+     * @return OrderInterface&MockObject
+     */
     private function createOrderMock(): OrderInterface&MockObject
     {
-        $item = $this->getMockBuilder(\stdClass::class)
-            ->addMethods(["getProductId", "getQtyOrdered", "getPrice", "getSku", "getName"])
-            ->getMock();
-
+        $item = $this->createMock(OrderItemInterface::class);
         $item->method("getProductId")->willReturn(777);
         $item->method("getQtyOrdered")->willReturn(2);
         $item->method("getPrice")->willReturn("74.995");
         $item->method("getSku")->willReturn("sku-777");
         $item->method("getName")->willReturn("Test Product");
+        $item->method("getParentItemId")->willReturn(null);
 
         $order = $this->createMock(OrderInterface::class);
         $order->method("getStoreId")->willReturn(1);
-        $order->method("getAllVisibleItems")->willReturn([$item]);
+        $order->method("getItems")->willReturn([$item]);
         $order->method("getIncrementId")->willReturn("100000123");
         $order->method("getCustomerId")->willReturn("cust-42");
         $order->method("getCustomerEmail")->willReturn("customer@example.com");

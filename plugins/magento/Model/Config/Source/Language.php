@@ -7,6 +7,9 @@ use Magento\Framework\Data\OptionSourceInterface;
 
 class Language implements OptionSourceInterface
 {
+    /**
+     * @inheritdoc
+     */
     public function toOptionArray(): array
     {
         return [

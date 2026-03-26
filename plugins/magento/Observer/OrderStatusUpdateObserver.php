@@ -1,5 +1,4 @@
 <?php
-
 declare(strict_types=1);
 
 namespace FrakLabs\Sdk\Observer;
@@ -12,12 +11,24 @@ use Psr\Log\LoggerInterface;
 
 class OrderStatusUpdateObserver implements ObserverInterface
 {
+    /**
+     * @param Config $config
+     * @param WebhookSender $webhookSender
+     * @param LoggerInterface $logger
+     */
     public function __construct(
         private readonly Config $config,
         private readonly WebhookSender $webhookSender,
         private readonly LoggerInterface $logger
-    ) {}
+    ) {
+    }
 
+    /**
+     * Handle order status update events (invoice pay + credit memo)
+     *
+     * @param Observer $observer
+     * @return void
+     */
     public function execute(Observer $observer): void
     {
         $eventName = (string) $observer->getEvent()->getName();
