@@ -1,0 +1,14 @@
+includes:
+    - vendor/bitexpert/phpstan-magento/extension.neon
+
+parameters:
+    level: 5
+    paths:
+        - Block
+        - Model
+        - Observer
+        - Api
+    excludePaths:
+        - Test
+    magento:
+        magentoRootPath: vendor

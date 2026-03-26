@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
+    <default>
+        <fraklabs_sdk>
+            <general>
+                <enabled>0</enabled>
+                <merchant_id/>
+                <webhook_secret/>
+            </general>
+            <urls>
+                <wallet_url>https://wallet.frak.id</wallet_url>
+                <components_url>https://cdn.jsdelivr.net/npm/@frak-labs/components@latest</components_url>
+                <backend_url>https://backend.frak.id</backend_url>
+            </urls>
+            <appearance>
+                <language>en</language>
+                <logo_url/>
+                <share_button_enabled>1</share_button_enabled>
+                <wallet_button_position>right</wallet_button_position>
+            </appearance>
+        </fraklabs_sdk>
+    </default>
+</config>

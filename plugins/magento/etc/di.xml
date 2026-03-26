@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <!-- Bind retry interface — runtime selection via WebhookRetryFactory -->
+    <type name="FrakLabs\Sdk\Model\WebhookRetryFactory">
+        <arguments>
+            <argument name="mqRetry" xsi:type="object">FrakLabs\Sdk\Model\Retry\MessageQueueRetry</argument>
+            <argument name="cronRetry" xsi:type="object">FrakLabs\Sdk\Model\Retry\CronRetry</argument>
+        </arguments>
+    </type>
+
+    <!-- Use virtual type for Frak-specific logger -->
+    <virtualType name="FrakLabs\Sdk\Logger\Handler" type="Magento\Framework\Logger\Handler\Base">
+        <arguments>
+            <argument name="fileName" xsi:type="string">/var/log/fraklabs_sdk.log</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="FrakLabs\Sdk\Logger" type="Magento\Framework\Logger\Monolog">
+        <arguments>
+            <argument name="name" xsi:type="string">fraklabs_sdk</argument>
+            <argument name="handlers" xsi:type="array">
+                <item name="system" xsi:type="object">FrakLabs\Sdk\Logger\Handler</item>
+            </argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Inject Frak-specific logger into our classes -->
+    <type name="FrakLabs\Sdk\Model\WebhookSender">
+        <arguments>
+            <argument name="logger" xsi:type="object">FrakLabs\Sdk\Logger</argument>
+        </arguments>
+    </type>
+    <type name="FrakLabs\Sdk\Observer\OrderPlaceAfterObserver">
+        <arguments>
+            <argument name="logger" xsi:type="object">FrakLabs\Sdk\Logger</argument>
+        </arguments>
+    </type>
+</config>

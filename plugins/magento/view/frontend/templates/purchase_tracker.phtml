@@ -1,0 +1,41 @@
+<?php
+/** @var \FrakLabs\Sdk\Block\PurchaseTracker $block */
+/** @var \Magento\Framework\View\Helper\SecureHtmlRenderer $secureRenderer */
+
+if (!$block->isEnabled()) {
+    return;
+}
+
+$orderData = $block->getOrderTrackingData();
+if (!$orderData) {
+    return;
+}
+?>
+
+<?= /* @noEscape */ $secureRenderer->renderTag(
+    'script',
+    [],
+    <<<JS
+    (function() {
+        var interactionToken = sessionStorage.getItem('frak-wallet-interaction-token');
+        var clientId = localStorage.getItem('frak-client-id');
+
+        if (!interactionToken && !clientId) return;
+
+        var headers = {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        };
+        if (interactionToken) headers['x-wallet-sdk-auth'] = interactionToken;
+        if (clientId) headers['x-frak-client-id'] = clientId;
+
+        fetch('{$block->escapeJs($block->getBackendUrl())}/user/track/purchase', {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify({$orderData}),
+            keepalive: true
+        }).catch(function() {});
+    })();
+    JS,
+    false
+) ?>
