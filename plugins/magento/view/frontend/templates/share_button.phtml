@@ -1,0 +1,13 @@
+<?php
+/** @var \FrakLabs\Sdk\Block\ShareButton $block */
+/** @var \Magento\Framework\Escaper $escaper */
+if (!$block->isEnabled() || !$block->showShareButton()) {
+    return;
+}
+?>
+<div class="fraklabs-share-button">
+    <frak-button-share
+        text="<?= $escaper->escapeHtmlAttr($block->getShareButtonText()) ?>"
+        <?= $block->useReward() ? 'use-reward' : '' ?>
+    ></frak-button-share>
+</div>

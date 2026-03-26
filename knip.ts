@@ -66,7 +66,7 @@ const config: KnipConfig = {
         },
     },
     // Ignore legacy SDK from knip
-    ignoreWorkspaces: ["sdk/legacy"],
+    ignoreWorkspaces: ["sdk/legacy", "plugins/**"],
 };
 
 export default config;

@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <body>
+        <referenceContainer name="after.body.start">
+            <block class="FrakLabs\Sdk\Block\SdkLoader"
+                   name="fraklabs_sdk_loader"
+                   template="FrakLabs_Sdk::sdk_loader.phtml"
+                   before="-"/>
+            <block class="FrakLabs\Sdk\Block\WalletButton"
+                   name="fraklabs_sdk_wallet_button"
+                   template="FrakLabs_Sdk::wallet_button.phtml"/>
+            <block class="FrakLabs\Sdk\Block\OpenInApp"
+                   name="fraklabs_sdk_open_in_app"
+                   template="FrakLabs_Sdk::open_in_app.phtml"/>
+        </referenceContainer>
+    </body>
+</page>

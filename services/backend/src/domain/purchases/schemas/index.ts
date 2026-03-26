@@ -7,6 +7,7 @@ import type { Static } from "elysia";
 export const WebhookPlatformSchema = t.Union([
     t.Literal("shopify"),
     t.Literal("woocommerce"),
+    t.Literal("magento"),
     t.Literal("custom"),
     t.Literal("internal"),
 ]);

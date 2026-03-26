@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
+    <!-- Order placed → status: pending -->
+    <event name="checkout_submit_all_after">
+        <observer name="fraklabs_sdk_order_place_after"
+                  instance="FrakLabs\Sdk\Observer\OrderPlaceAfterObserver"/>
+    </event>
+    <!-- Invoice paid → status: confirmed -->
+    <event name="sales_order_invoice_pay">
+        <observer name="fraklabs_sdk_order_invoice_pay"
+                  instance="FrakLabs\Sdk\Observer\OrderStatusUpdateObserver"/>
+    </event>
+    <!-- Credit memo → status: refunded -->
+    <event name="sales_order_creditmemo_save_after">
+        <observer name="fraklabs_sdk_order_creditmemo"
+                  instance="FrakLabs\Sdk\Observer\OrderStatusUpdateObserver"/>
+    </event>
+</config>
