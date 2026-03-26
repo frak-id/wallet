@@ -23,28 +23,48 @@ export const shellContainer = style({
     },
 });
 
-/**
- * Main content area — scrollable.
- * Mobile: bottom padding clears the fixed nav.
- * Tablet+: nav is in-flow, flex handles spacing.
- */
-export const mainContent = style({
+const mainContentBase = style({
     padding: alias.spacing.m,
-    // Clear the fixed bottom nav
-    paddingBottom: `calc(110px + env(safe-area-inset-bottom, 0px))`,
     flex: "1 1 0",
     minHeight: 0,
     overflow: "auto",
     display: "flex",
     flexDirection: "column",
-    "@media": {
-        [`(min-width: ${tablet}px)`]: {
-            // Nav is in-flow on tablet+, no extra clearance needed
-            paddingBottom: alias.spacing.m,
-            maxHeight: "758px",
+});
+
+/**
+ * Main content with bottom padding to clear the fixed nav bar.
+ * Used when `navigation` is enabled.
+ */
+export const mainContentWithNav = style([
+    mainContentBase,
+    {
+        paddingBottom: `calc(110px + env(safe-area-inset-bottom, 0px))`,
+        "@media": {
+            [`(min-width: ${tablet}px)`]: {
+                // Nav is in-flow on tablet+, no extra clearance needed
+                paddingBottom: alias.spacing.m,
+                maxHeight: "758px",
+            },
         },
     },
-});
+]);
+
+/**
+ * Main content without nav clearance.
+ * Used on auth/onboarding screens where the bottom bar is hidden.
+ */
+export const mainContentNoNav = style([
+    mainContentBase,
+    {
+        paddingBottom: alias.spacing.m,
+        "@media": {
+            [`(min-width: ${tablet}px)`]: {
+                maxHeight: "758px",
+            },
+        },
+    },
+]);
 
 /**
  * Bottom tab bar — fixed at viewport bottom on mobile, in-flow on tablet+.

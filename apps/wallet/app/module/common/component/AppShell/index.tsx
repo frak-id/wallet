@@ -12,7 +12,12 @@ import {
     BottomTabBar,
     type TabItem,
 } from "@/module/common/component/BottomTabBar";
-import { bottomBar, mainContent, shellContainer } from "./appShell.css";
+import {
+    bottomBar,
+    mainContentNoNav,
+    mainContentWithNav,
+    shellContainer,
+} from "./appShell.css";
 
 /**
  * Tab definitions matching the existing Navigation component routes.
@@ -58,7 +63,10 @@ export function AppShell({ navigation = false, children }: AppShellProps) {
     return (
         <Box className={shellContainer}>
             <InAppBrowserToast />
-            <Box as="main" className={mainContent}>
+            <Box
+                as="main"
+                className={navigation ? mainContentWithNav : mainContentNoNav}
+            >
                 {children ?? <Outlet />}
             </Box>
             {navigation && (
