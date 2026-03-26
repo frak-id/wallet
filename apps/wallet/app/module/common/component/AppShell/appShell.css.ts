@@ -30,6 +30,8 @@ export const shellContainer = style({
  */
 export const mainContent = style({
     padding: alias.spacing.m,
+    // Clear the fixed bottom nav
+    paddingBottom: `calc(110px + env(safe-area-inset-bottom, 0px))`,
     flex: "1 1 0",
     minHeight: 0,
     overflow: "auto",
@@ -37,6 +39,7 @@ export const mainContent = style({
     flexDirection: "column",
     "@media": {
         [`(min-width: ${tablet}px)`]: {
+            // Nav is in-flow on tablet+, no extra clearance needed
             paddingBottom: alias.spacing.m,
             maxHeight: "758px",
         },

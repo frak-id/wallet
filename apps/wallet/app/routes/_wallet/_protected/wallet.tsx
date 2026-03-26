@@ -1,30 +1,28 @@
 import { isRunningInProd } from "@frak-labs/app-essentials";
-import { SectionHeader } from "@frak-labs/design-system/components/SectionHeader";
+import { Box } from "@frak-labs/design-system/components/Box";
+import { Text } from "@frak-labs/design-system/components/Text";
 import { createFileRoute } from "@tanstack/react-router";
 import { memo } from "react";
+import { useTranslation } from "react-i18next";
 import { useHydrated } from "remix-utils/use-hydrated";
 import { MoneriumStatus } from "@/module/monerium/component/MoneriumStatus";
 import { EnableNotification } from "@/module/notification/component/EnableNotification";
 import { Balance } from "@/module/tokens/component/Balance";
 import { DemoAccount } from "@/module/wallet/component/DemoAccount";
-import { HomeNavigation } from "@/module/wallet/component/HomeNavigation";
-import { InstallApp } from "@/module/wallet/component/InstallApp";
+import { EarningsSection } from "@/module/wallet/component/EarningsSection";
 import { PendingReferral } from "@/module/wallet/component/PendingReferral";
+import { WelcomeCard } from "@/module/wallet/component/WelcomeCard";
 
 export const Route = createFileRoute("/_wallet/_protected/wallet")({
     component: WalletPage,
 });
 
 /**
- * HydratedComponents
- *
- * A separate component for elements that should only render after hydration
- * This improves code organization and makes the hydration boundary clear
+ * HydratedComponents — renders after hydration only
  */
 const HydratedComponents = memo(function HydratedComponents() {
     return (
         <>
-            <InstallApp />
             <EnableNotification />
             <PendingReferral />
             {!isRunningInProd && <MoneriumStatus />}
@@ -32,28 +30,18 @@ const HydratedComponents = memo(function HydratedComponents() {
     );
 });
 
-/**
- * WalletPage
- *
- * The main wallet view component that displays:
- * - User's wallet session information
- * - Account balance
- * - Navigation options
- * - Welcome message
- * - Additional components after hydration (app installation, notifications, referrals)
- *
- * @returns {JSX.Element} The rendered wallet view
- */
 function WalletPage() {
+    const { t } = useTranslation();
     const isHydrated = useHydrated();
 
     return (
-        <div>
-            <SectionHeader title="Porte-monnaie" />
+        <Box display="flex" flexDirection="column" gap="m">
+            <Text as="h1">{t("wallet.pageTitle")}</Text>
             <DemoAccount />
             <Balance />
-            <HomeNavigation />
+            <WelcomeCard />
+            <EarningsSection />
             {isHydrated && <HydratedComponents />}
-        </div>
+        </Box>
     );
 }
