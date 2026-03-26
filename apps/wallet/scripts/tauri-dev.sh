@@ -62,8 +62,9 @@ setup_adb_reverse() {
     adb reverse tcp:3013 tcp:3013
     adb reverse tcp:3014 tcp:3014
     adb reverse tcp:3030 tcp:3030
+    adb reverse tcp:3031 tcp:3031
 
-    echo "[tauri-dev] ADB reverse ports configured (3010=wallet, 3013-3014=examples, 3030=backend)"
+    echo "[tauri-dev] ADB reverse ports configured (3010=wallet, 3013-3014=examples, 3030=backend-https, 3031=backend-http)"
 }
 
 setup_android_signing() {
