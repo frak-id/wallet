@@ -2,7 +2,12 @@ import { useQuery } from "@tanstack/react-query";
 import { authenticatedBackendApi } from "@/api/backendClient";
 import { useIsDemoMode } from "@/module/common/atoms/demoMode";
 
-export type WebhookPlatform = "shopify" | "woocommerce" | "custom" | "internal";
+export type WebhookPlatform =
+    | "shopify"
+    | "woocommerce"
+    | "magento"
+    | "custom"
+    | "internal";
 
 export type WebhookStatus =
     | { setup: false }
