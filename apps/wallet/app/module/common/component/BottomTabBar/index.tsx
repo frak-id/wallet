@@ -2,7 +2,7 @@ import { Box } from "@frak-labs/design-system/components/Box";
 import type { ReactNode } from "react";
 import { useMemo } from "react";
 import { bottomTabBarStyles } from "./bottomTabBar.css";
-import tabsBg from "./tabs-bg.png";
+import tabsBg from "./tabs-bg.webp";
 
 export type TabItem = {
     key: string;

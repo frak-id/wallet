@@ -7,7 +7,7 @@ import { useTranslation } from "react-i18next";
 import { PageLayout } from "@/module/common/component/PageLayout";
 import { HeroContent } from "../HeroContent";
 import * as slideStyles from "../slides/index.css";
-import notificationImg from "./notification.png";
+import notificationImg from "./notification.webp";
 
 type NotificationOptInProps = {
     onEnable: () => void;

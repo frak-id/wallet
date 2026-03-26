@@ -6,7 +6,7 @@ import { vars } from "@frak-labs/design-system/theme";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import * as styles from "./index.css";
-import welcomeLogos from "./welcome_logos.png";
+import welcomeLogos from "./welcome_logos.webp";
 
 const STORAGE_KEY = "frak_welcome_dismissed";
 

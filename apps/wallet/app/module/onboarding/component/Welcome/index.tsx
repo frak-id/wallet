@@ -5,7 +5,7 @@ import { Trans, useTranslation } from "react-i18next";
 import { PageLayout } from "@/module/common/component/PageLayout";
 import { HeroContent } from "../HeroContent";
 import * as slideStyles from "../slides/index.css";
-import welcomeImg from "./welcome.png";
+import welcomeImg from "./welcome.webp";
 
 type WelcomeProps = {
     onContinue: () => void;
