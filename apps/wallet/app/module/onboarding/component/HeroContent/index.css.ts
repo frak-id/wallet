@@ -15,6 +15,7 @@ export const heroImageCenter = style([
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
+        margin: `0 ${alias.spacing.m}`,
     },
 ]);
 
