@@ -14,7 +14,9 @@ describe("Onboarding", () => {
         );
 
         expect(screen.getByText("Slide 1")).toBeInTheDocument();
-        expect(screen.getByRole("button")).toHaveTextContent("Next");
+        expect(
+            screen.getByRole("button", { name: "Next" })
+        ).toBeInTheDocument();
     });
 
     it("should show buttonLabel on non-last slides when lastButtonLabel is provided", () => {
@@ -30,7 +32,9 @@ describe("Onboarding", () => {
             </Onboarding>
         );
 
-        expect(screen.getByRole("button")).toHaveTextContent("Next");
+        expect(
+            screen.getByRole("button", { name: "Next" })
+        ).toBeInTheDocument();
     });
 
     it("should show lastButtonLabel on the last slide when provided", () => {
@@ -46,8 +50,9 @@ describe("Onboarding", () => {
             </Onboarding>
         );
 
-        const button = screen.getByRole("button");
-        expect(button).toHaveTextContent("Finish");
+        expect(
+            screen.getByRole("button", { name: "Finish" })
+        ).toBeInTheDocument();
     });
 
     it("should call onFinish when button is clicked on the last slide", () => {
@@ -63,8 +68,7 @@ describe("Onboarding", () => {
             </Onboarding>
         );
 
-        const button = screen.getByRole("button");
-        fireEvent.click(button);
+        fireEvent.click(screen.getByRole("button", { name: "Finish" }));
 
         expect(onFinish).toHaveBeenCalled();
     });
@@ -110,6 +114,21 @@ describe("Onboarding", () => {
             </Onboarding>
         );
 
-        expect(screen.getByRole("button")).toHaveTextContent("Continue");
+        expect(
+            screen.getByRole("button", { name: "Continue" })
+        ).toBeInTheDocument();
+    });
+
+    it("should render recovery code button on first slide", () => {
+        const onFinish = vi.fn();
+        render(
+            <Onboarding buttonLabel="Next" onFinish={onFinish}>
+                <div>Slide 1</div>
+            </Onboarding>
+        );
+
+        expect(
+            screen.getByRole("button", { name: "onboarding.recoveryCode" })
+        ).toBeInTheDocument();
     });
 });
