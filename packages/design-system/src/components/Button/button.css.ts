@@ -9,7 +9,6 @@ export const button = recipe({
         alignItems: "center",
         justifyContent: "center",
         gap: alias.spacing.xs,
-        width: "100%",
         borderRadius: alias.cornerRadius.full,
         cursor: "pointer",
         border: "none",
@@ -60,8 +59,10 @@ export const button = recipe({
         },
         size: {
             small: {
-                padding: alias.spacing.xs,
-                fontSize: fontSize.xs,
+                paddingBlock: alias.spacing.xs,
+                paddingInline: alias.spacing.m,
+                fontSize: fontSize.s,
+                lineHeight: "21px",
             },
             large: {
                 padding: alias.spacing.m,
@@ -69,9 +70,14 @@ export const button = recipe({
                 fontWeight: 600,
             },
         },
+        width: {
+            full: { width: "100%" },
+            auto: { width: "auto" },
+        },
     },
     defaultVariants: {
         variant: "primary",
         size: "large",
+        width: "full",
     },
 });

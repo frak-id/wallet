@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Box } from "../Box";
+import { Text } from "../Text";
 import { statCardStyles } from "./statCard.css";
 
 type StatCardProps = {
@@ -30,9 +31,9 @@ export function StatCard({
                         {icon}
                     </Box>
                 )}
-                <Box as="span" className={statCardStyles.label}>
+                <Text variant="bodySmall" weight="semiBold" color="secondary">
                     {label}
-                </Box>
+                </Text>
             </Box>
         </Box>
     );

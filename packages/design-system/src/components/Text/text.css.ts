@@ -1,5 +1,5 @@
 import { style } from "@vanilla-extract/css";
-import { brand, fontSize } from "../../tokens.css";
+import { fontSize } from "../../tokens.css";
 
 const base = style({
     margin: 0,
@@ -11,7 +11,6 @@ export const textStyles = {
         base,
         {
             fontSize: fontSize["3xl"],
-            fontWeight: brand.typography.fontWeight.bold,
             lineHeight: "38px",
         },
     ]),
@@ -19,7 +18,6 @@ export const textStyles = {
         base,
         {
             fontSize: fontSize.xl,
-            fontWeight: brand.typography.fontWeight.bold,
             lineHeight: "30px",
         },
     ]),
@@ -27,7 +25,6 @@ export const textStyles = {
         base,
         {
             fontSize: fontSize.l,
-            fontWeight: brand.typography.fontWeight.bold,
             lineHeight: "26px",
         },
     ]),
@@ -35,7 +32,6 @@ export const textStyles = {
         base,
         {
             fontSize: fontSize.m,
-            fontWeight: brand.typography.fontWeight.bold,
             lineHeight: "24px",
         },
     ]),
@@ -43,7 +39,6 @@ export const textStyles = {
         base,
         {
             fontSize: fontSize.s,
-            fontWeight: brand.typography.fontWeight.bold,
             lineHeight: "20px",
         },
     ]),
@@ -51,7 +46,6 @@ export const textStyles = {
         base,
         {
             fontSize: fontSize.xs,
-            fontWeight: brand.typography.fontWeight.bold,
             lineHeight: "18px",
         },
     ]),
@@ -59,7 +53,6 @@ export const textStyles = {
         base,
         {
             fontSize: fontSize.m,
-            fontWeight: brand.typography.fontWeight.regular,
             lineHeight: "26px",
         },
     ]),
@@ -67,15 +60,13 @@ export const textStyles = {
         base,
         {
             fontSize: fontSize.s,
-            fontWeight: brand.typography.fontWeight.regular,
-            lineHeight: 1.5,
+            lineHeight: "22px",
         },
     ]),
     caption: style([
         base,
         {
             fontSize: fontSize.xs,
-            fontWeight: brand.typography.fontWeight.regular,
             lineHeight: "20px",
         },
     ]),
@@ -83,7 +74,6 @@ export const textStyles = {
         base,
         {
             fontSize: fontSize.s,
-            fontWeight: brand.typography.fontWeight.medium,
             lineHeight: 1.3,
         },
     ]),
@@ -91,7 +81,6 @@ export const textStyles = {
         base,
         {
             fontSize: fontSize.xs,
-            fontWeight: brand.typography.fontWeight.semiBold,
             lineHeight: 1.4,
             letterSpacing: "0.08em",
             textTransform: "uppercase" as const,

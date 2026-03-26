@@ -21,6 +21,7 @@ globalStyle("a:hover", {
 globalStyle("body", {
     position: "relative",
     overflow: "hidden",
+    backgroundColor: vars.surface.background2,
     "@media": {
         [`(min-width: ${tablet}px)`]: {
             display: "flex",

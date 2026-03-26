@@ -12,12 +12,6 @@ export const emptyStateStyles = {
         textAlign: "center",
         width: "100%",
     }),
-    iconWrapper: style({
-        color: vars.icon.tertiary,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-    }),
     title: style({
         fontSize: "18px",
         fontWeight: 700,
