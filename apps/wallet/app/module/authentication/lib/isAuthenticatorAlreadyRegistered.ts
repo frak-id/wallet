@@ -7,6 +7,7 @@
  */
 const alreadyRegisteredPatterns = [
     "InvalidStateError",
+    "INVALID_STATE_ERROR",
     "excluded credentials exists",
 ] as const;
 

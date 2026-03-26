@@ -87,7 +87,14 @@ const androidApkOrigin = androidApkOrigins[0] ?? "";
 const iosPasskeyOrigin = `https://${rpId}`;
 
 const rpAllowedOrigins = Array.from(
-    new Set([rpOrigin, ...androidApkOrigins, iosPasskeyOrigin].filter(Boolean))
+    new Set(
+        [
+            rpOrigin,
+            ...androidApkOrigins,
+            iosPasskeyOrigin,
+            "https://frak.id",
+        ].filter(Boolean)
+    )
 );
 
 const rpAllowedIds = isRunningInProd

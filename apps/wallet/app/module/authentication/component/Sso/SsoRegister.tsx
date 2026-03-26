@@ -1,4 +1,5 @@
 import { ButtonAuth } from "@frak-labs/ui/component/ButtonAuth";
+import { isUserCancellation } from "@frak-labs/wallet-shared";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useRegister } from "@/module/authentication/hook/useRegister";
@@ -27,17 +28,16 @@ export function SsoRegisterComponent({
         onError: (error: Error) => onError(error),
     });
 
-    /**
-     * Boolean used to know if the error is about a previously used authenticator
-     */
     const isPreviouslyUsedAuthenticatorError = useMemo(
         () => !!error && isAuthenticatorAlreadyRegistered(error),
         [error]
     );
 
-    /**
-     * The status component
-     */
+    const isCancelledError = useMemo(
+        () => !!error && isUserCancellation(error),
+        [error]
+    );
+
     const statusComponent = useMemo(() => {
         if (isPreviouslyUsedAuthenticatorError) {
             return <Notice>{t("authent.create.inProgress")}</Notice>;
@@ -45,12 +45,18 @@ export function SsoRegisterComponent({
         if (isRegisterInProgress) {
             return <Notice>{t("authent.create.inProgress")}</Notice>;
         }
-        if (error) {
+        if (error && !isCancelledError) {
             return <Notice>{t("authent.create.error")}</Notice>;
         }
 
         return null;
-    }, [isPreviouslyUsedAuthenticatorError, error, isRegisterInProgress, t]);
+    }, [
+        isPreviouslyUsedAuthenticatorError,
+        isCancelledError,
+        error,
+        isRegisterInProgress,
+        t,
+    ]);
 
     if (isPrimary) {
         return (

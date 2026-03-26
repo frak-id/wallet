@@ -2,6 +2,7 @@ import { Button } from "@frak-labs/ui/component/Button";
 import { ButtonAuth } from "@frak-labs/ui/component/ButtonAuth";
 import {
     authenticatorStorage,
+    isUserCancellation,
     isWebAuthNSupported,
 } from "@frak-labs/wallet-shared";
 import {
@@ -60,24 +61,23 @@ function RegisterPage() {
         {}
     );
 
-    /**
-     * Boolean used to know if the error is about a previously used authenticator
-     */
     const isPreviouslyUsedAuthenticatorError = useMemo(
         () => !!error && isAuthenticatorAlreadyRegistered(error),
         [error]
     );
 
-    /**
-     * Get the message that will displayed inside the button
-     */
+    const isCancelledError = useMemo(
+        () => !!error && isUserCancellation(error),
+        [error]
+    );
+
     const message = useMemo(() => {
         if (isPreviouslyUsedAuthenticatorError) {
             return (
                 <Trans i18nKey={"wallet.register.button.alreadyRegistered"} />
             );
         }
-        if (error) {
+        if (error && !isCancelledError) {
             return t("wallet.register.button.error");
         }
         if (isRegisterInProgress) {
@@ -91,7 +91,13 @@ function RegisterPage() {
                 }}
             />
         );
-    }, [isPreviouslyUsedAuthenticatorError, error, isRegisterInProgress, t]);
+    }, [
+        isPreviouslyUsedAuthenticatorError,
+        isCancelledError,
+        error,
+        isRegisterInProgress,
+        t,
+    ]);
 
     useEffect(() => {
         if (!error) return;

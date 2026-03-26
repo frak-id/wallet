@@ -122,7 +122,18 @@ class FrakWebauthnPlugin: Plugin, ASAuthorizationControllerDelegate, ASAuthoriza
     }
 
     func authorizationController(controller: ASAuthorizationController, didCompleteWithError error: Error) {
-        pendingInvoke?.reject(error.localizedDescription)
+        if let authError = error as? ASAuthorizationError {
+            if authError.code == .canceled {
+                pendingInvoke?.reject("NotAllowedError")
+            } else if authError.code.rawValue == 1006 {
+                // matchedExcludedCredential (iOS 16.6+) — credential already registered
+                pendingInvoke?.reject("InvalidStateError")
+            } else {
+                pendingInvoke?.reject(error.localizedDescription)
+            }
+        } else {
+            pendingInvoke?.reject(error.localizedDescription)
+        }
         pendingInvoke = nil
     }
 

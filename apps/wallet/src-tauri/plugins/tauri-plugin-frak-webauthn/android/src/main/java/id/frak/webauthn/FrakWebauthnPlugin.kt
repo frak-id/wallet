@@ -7,6 +7,9 @@ import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.GetPublicKeyCredentialOption
 import androidx.credentials.PublicKeyCredential
+import androidx.credentials.exceptions.CreateCredentialCancellationException
+import androidx.credentials.exceptions.GetCredentialCancellationException
+import androidx.credentials.exceptions.publickeycredential.CreatePublicKeyCredentialDomException
 import app.tauri.annotation.Command
 import app.tauri.annotation.TauriPlugin
 import app.tauri.plugin.Invoke
@@ -46,6 +49,10 @@ class FrakWebauthnPlugin(activity: Activity) : Plugin(activity) {
                         invoke.resolve(JSObject(result.registrationResponseJson))
                     else -> invoke.reject("Unexpected credential type")
                 }
+            } catch (e: CreateCredentialCancellationException) {
+                invoke.reject("NotAllowedError")
+            } catch (e: CreatePublicKeyCredentialDomException) {
+                invoke.reject(e.domError.type)
             } catch (e: Exception) {
                 invoke.reject(e.message ?: "WebAuthn registration failed")
             }
@@ -72,6 +79,8 @@ class FrakWebauthnPlugin(activity: Activity) : Plugin(activity) {
                         invoke.resolve(JSObject(result.authenticationResponseJson))
                     else -> invoke.reject("Unexpected credential type")
                 }
+            } catch (e: GetCredentialCancellationException) {
+                invoke.reject("NotAllowedError")
             } catch (e: Exception) {
                 invoke.reject(e.message ?: "WebAuthn authentication failed")
             }

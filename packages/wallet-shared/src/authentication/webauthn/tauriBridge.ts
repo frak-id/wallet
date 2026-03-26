@@ -175,6 +175,38 @@ function extractSpkiFromAttestation(
 }
 
 // ============================================================================
+// Tauri error handling
+// ============================================================================
+
+function extractTauriErrorMessage(e: unknown): string {
+    if (e instanceof Error) return e.message;
+    if (typeof e === "object" && e !== null && "message" in e) {
+        return String((e as { message: unknown }).message);
+    }
+    return String(e);
+}
+
+function tauriErrorToCause(e: unknown): Error {
+    if (e instanceof Error) return e;
+    return new Error(extractTauriErrorMessage(e));
+}
+
+/**
+ * Detect user cancellation from native platforms.
+ *  - iOS: ASAuthorizationError.canceled → "NotAllowedError" or "error 1001"
+ *  - Android: CreateCredentialCancellationException → "NotAllowedError"
+ *  - Android (legacy/localized): message contains "cancel"
+ */
+function isTauriCancellation(e: unknown): boolean {
+    const msg = extractTauriErrorMessage(e).toLowerCase();
+    return (
+        msg.includes("notallowederror") ||
+        msg.includes("error 1001") ||
+        msg.includes("cancel")
+    );
+}
+
+// ============================================================================
 // Credential Creation (Registration)
 // ============================================================================
 
@@ -262,9 +294,15 @@ export function getTauriCreateFn(): OxCreateFn {
                 );
             return fromPluginRegistration(response);
         } catch (e) {
+            if (isTauriCancellation(e)) {
+                const err = new Error("User cancelled the operation");
+                err.name = "NotAllowedError";
+                throw err;
+            }
+
             console.warn("Tauri create error", e);
             throw new BaseError("Tauri create credential error", {
-                cause: e instanceof Error ? e : new Error(String(e)),
+                cause: tauriErrorToCause(e),
             });
         }
     };
@@ -330,9 +368,15 @@ export function getTauriGetFn(): OxGetFn {
                 ReturnType<NonNullable<OxGetFn>>
             >;
         } catch (e) {
+            if (isTauriCancellation(e)) {
+                const err = new Error("User cancelled the operation");
+                err.name = "NotAllowedError";
+                throw err;
+            }
+
             console.warn("Tauri get error", e);
             throw new BaseError("Tauri get credential error", {
-                cause: e instanceof Error ? e : new Error(String(e)),
+                cause: tauriErrorToCause(e),
             });
         }
     };
