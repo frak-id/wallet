@@ -3,7 +3,12 @@
     "description": "Frak SDK integration for Adobe Commerce / Magento 2",
     "type": "magento2-module",
     "license": "GPL-3.0-only",
-    "version": "1.0.0",
+    "repositories": [
+        {
+            "type": "composer",
+            "url": "https://mirror.mage-os.org/"
+        }
+    ],
     "require": {
         "php": "~8.3.0 || ~8.4.0",
         "magento/framework": "^103.0",
@@ -17,7 +22,7 @@
     "require-dev": {
         "phpunit/phpunit": "^10 || ^11",
         "phpstan/phpstan": "^2.0",
-        "bitexpert/phpstan-magento": "*",
+        "bitexpert/phpstan-magento": "^0.40",
         "phpstan/extension-installer": "^1.3",
         "magento/magento-coding-standard": "^40"
     },
@@ -41,6 +46,9 @@
         "cs-fix": "phpcbf"
     },
     "config": {
+        "platform": {
+            "php": "8.4.0"
+        },
         "allow-plugins": {
             "phpstan/extension-installer": true,
             "magento/*": true,
