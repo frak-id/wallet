@@ -31,11 +31,6 @@ export type WalletRpcContext = {
     sourceUrl: string;
 
     /**
-     * Whether this context was auto-computed or from handshake
-     */
-    isAutoContext: boolean;
-
-    /**
      * Anonymous client ID from the SDK for identity tracking
      */
     clientId?: string;

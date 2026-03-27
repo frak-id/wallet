@@ -60,7 +60,6 @@ describe("useSendInteractionListener", () => {
             source: null,
             merchantId: "merchant-id",
             sourceUrl: "https://example.com/article",
-            isAutoContext: false,
             clientId: "client-id",
         });
 

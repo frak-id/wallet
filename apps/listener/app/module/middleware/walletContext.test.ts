@@ -85,7 +85,6 @@ describe("walletContextMiddleware", () => {
             expect.objectContaining({
                 merchantId: "",
                 sourceUrl: window.origin,
-                isAutoContext: false,
                 clientId: "client-456",
             })
         );
@@ -128,7 +127,6 @@ describe("walletContextMiddleware", () => {
                 origin: "https://legit.com",
                 merchantId: "merchant-1",
                 sourceUrl: "https://legit.com/page",
-                isAutoContext: false,
                 clientId: "client-1",
             },
         } as any);
@@ -147,7 +145,6 @@ describe("walletContextMiddleware", () => {
             expect.objectContaining({
                 merchantId: "merchant-1",
                 sourceUrl: "https://legit.com/page",
-                isAutoContext: false,
                 clientId: "client-1",
             })
         );
@@ -162,7 +159,6 @@ describe("walletContextMiddleware", () => {
                 origin: "https://example.com",
                 merchantId: "merchant-abc",
                 sourceUrl: "https://example.com/shop",
-                isAutoContext: true,
                 clientId: "client-xyz",
             },
         } as any);
@@ -180,7 +176,6 @@ describe("walletContextMiddleware", () => {
                 origin: "https://example.com",
                 merchantId: "merchant-abc",
                 sourceUrl: "https://example.com/shop",
-                isAutoContext: true,
                 clientId: "client-xyz",
             })
         );
