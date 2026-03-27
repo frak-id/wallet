@@ -42,8 +42,12 @@ export {
 export {
     type MerchantDetailResponse,
     MerchantDetailResponseSchema,
+    type MerchantResolveResponse,
+    MerchantResolveResponseSchema,
     type MyMerchantsResponse,
     MyMerchantsResponseSchema,
+    type ResolvedPlacement,
+    type ResolvedSdkConfig,
 } from "./merchantApiSchemas";
 export {
     type RegisterTokenBody,

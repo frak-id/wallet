@@ -3,7 +3,7 @@ import { eq, inArray } from "drizzle-orm";
 import { LRUCache } from "lru-cache";
 import type { Address, Hex } from "viem";
 import { merchantsTable } from "../db/schema";
-import type { ExplorerConfig } from "../schemas";
+import type { ExplorerConfig, SdkConfig } from "../schemas";
 
 type MerchantInsert = typeof merchantsTable.$inferInsert;
 type MerchantSelect = typeof merchantsTable.$inferSelect;
@@ -272,6 +272,24 @@ export class MerchantRepository {
                 ...(enabled !== undefined && {
                     explorerEnabledAt: enabled ? new Date() : null,
                 }),
+                updatedAt: new Date(),
+            })
+            .where(eq(merchantsTable.id, id))
+            .returning();
+        if (result) {
+            this.invalidateCache(result);
+        }
+        return result ?? null;
+    }
+
+    async updateSdkConfig(
+        id: string,
+        config: SdkConfig
+    ): Promise<MerchantSelect | null> {
+        const [result] = await db
+            .update(merchantsTable)
+            .set({
+                sdkConfig: config,
                 updatedAt: new Date(),
             })
             .where(eq(merchantsTable.id, id))

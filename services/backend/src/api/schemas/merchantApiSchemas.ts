@@ -2,6 +2,50 @@ import { t } from "@backend-utils";
 import type { Static } from "elysia";
 import { ExplorerConfigSchema } from "../../domain/merchant/schemas";
 
+const ResolvedPlacementSchema = t.Object({
+    trigger: t.Optional(
+        t.Object({
+            text: t.Optional(t.String()),
+            noRewardText: t.Optional(t.String()),
+            position: t.Optional(
+                t.Union([t.Literal("bottom-right"), t.Literal("bottom-left")])
+            ),
+            showWallet: t.Optional(t.Boolean()),
+        })
+    ),
+    targetInteraction: t.Optional(t.String()),
+    translations: t.Optional(t.Record(t.String(), t.String())),
+    css: t.Optional(t.String()),
+});
+
+const ResolvedSdkConfigSchema = t.Object({
+    name: t.Optional(t.String()),
+    logoUrl: t.Optional(t.String()),
+    homepageLink: t.Optional(t.String()),
+    currency: t.Optional(
+        t.Union([t.Literal("eur"), t.Literal("usd"), t.Literal("gbp")])
+    ),
+    lang: t.Union([t.Literal("en"), t.Literal("fr")]),
+    css: t.Optional(t.String()),
+    translations: t.Optional(t.Record(t.String(), t.String())),
+    placements: t.Optional(t.Record(t.String(), ResolvedPlacementSchema)),
+});
+
+export type ResolvedPlacement = Static<typeof ResolvedPlacementSchema>;
+export type ResolvedSdkConfig = Static<typeof ResolvedSdkConfigSchema>;
+
+export const MerchantResolveResponseSchema = t.Object({
+    merchantId: t.String(),
+    productId: t.Hex(),
+    name: t.String(),
+    domain: t.String(),
+    allowedDomains: t.Array(t.String()),
+    sdkConfig: t.Optional(ResolvedSdkConfigSchema),
+});
+export type MerchantResolveResponse = Static<
+    typeof MerchantResolveResponseSchema
+>;
+
 export const MerchantDetailResponseSchema = t.Object({
     id: t.String(),
     domain: t.String(),
