@@ -1,12 +1,17 @@
 export { BarChartIcon } from "./BarChartIcon";
+export { BellIcon } from "./BellIcon";
 export { CheckIcon } from "./CheckIcon";
 export { CloseIcon } from "./CloseIcon";
+export { CopyIcon } from "./CopyIcon";
+export { DocumentIcon } from "./DocumentIcon";
 export { EarningsIcon } from "./EarningsIcon";
 export { ExplorerIcon } from "./ExplorerIcon";
 export { EyeIcon } from "./EyeIcon";
 export { EyeOffIcon } from "./EyeOffIcon";
 export { FaceIdIcon } from "./FaceIdIcon";
+export { HelpChatIcon } from "./HelpChatIcon";
 export { HourglassIcon } from "./HourglassIcon";
 export { ProfileIcon } from "./ProfileIcon";
+export { StarIcon } from "./StarIcon";
 export { TransferIcon } from "./TransferIcon";
 export { WalletIcon } from "./WalletIcon";
