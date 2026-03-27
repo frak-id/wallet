@@ -52,12 +52,18 @@ export function Balance() {
 
     const handlePendingClick = () => {
         if (amount <= 0) {
+            if (document.activeElement instanceof HTMLElement) {
+                document.activeElement.blur();
+            }
             setIsEmptyPendingGainsModalOpen(true);
         }
     };
 
     const handleLifetimeClick = () => {
         if (amount <= 0) {
+            if (document.activeElement instanceof HTMLElement) {
+                document.activeElement.blur();
+            }
             setIsEmptyTransferredGainsModalOpen(true);
         }
     };
