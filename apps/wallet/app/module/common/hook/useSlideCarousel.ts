@@ -35,6 +35,10 @@ function mostVisibleIndex(entries: IntersectionObserverEntry[]): number {
 
 type UseSlideCarouselOptions = {
     slideCount: number;
+    /** Starting slide index, e.g. restored from persisted storage. Defaults to 0. */
+    initialIndex?: number;
+    /** Called whenever the active slide changes (programmatic or manual swipe). */
+    onIndexChange?: (index: number) => void;
 };
 
 type UseSlideCarouselReturn = {
@@ -46,8 +50,10 @@ type UseSlideCarouselReturn = {
 
 export function useSlideCarousel({
     slideCount,
+    initialIndex = 0,
+    onIndexChange,
 }: UseSlideCarouselOptions): UseSlideCarouselReturn {
-    const [currentIndex, setCurrentIndex] = useState(0);
+    const [currentIndex, setCurrentIndex] = useState(initialIndex);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     /**
      * Suppresses IntersectionObserver updates during programmatic scrolls.
@@ -55,6 +61,27 @@ export function useSlideCarousel({
      * as intersecting before settling, causing index to skip ahead.
      */
     const isProgrammaticScrollRef = useRef(false);
+
+    useEffect(() => {
+        onIndexChange?.(currentIndex);
+    }, [currentIndex, onIndexChange]);
+
+    // Restore scroll position to initialIndex on mount.
+    // Captured in a ref so the effect dep array stays empty (mount-only).
+    const initialIndexRef = useRef(initialIndex);
+    useEffect(() => {
+        if (initialIndexRef.current <= 0) return;
+        const container = scrollContainerRef.current;
+        if (!container) return;
+        isProgrammaticScrollRef.current = true;
+        container.scrollTo({
+            left: container.clientWidth * initialIndexRef.current,
+            behavior: "instant",
+        });
+        requestAnimationFrame(() => {
+            isProgrammaticScrollRef.current = false;
+        });
+    }, []);
 
     useEffect(() => {
         const container = scrollContainerRef.current;

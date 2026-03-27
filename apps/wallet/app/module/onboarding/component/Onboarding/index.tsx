@@ -3,6 +3,12 @@ import { Children, type ReactNode, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { PageLayout } from "@/module/common/component/PageLayout";
 import { useSlideCarousel } from "@/module/common/hook/useSlideCarousel";
+import {
+    onboardingStore,
+    selectResetSlideIndex,
+    selectSetSlideIndex,
+    selectSlideIndex,
+} from "@/module/onboarding/stores/onboardingStore";
 import * as styles from "./index.css";
 
 type OnboardingProps = {
@@ -33,19 +39,26 @@ export function Onboarding({
 }: OnboardingProps) {
     const { t } = useTranslation();
     const slidesCount = Children.count(children);
+    const savedIndex = onboardingStore(selectSlideIndex);
+    const setSlideIndex = onboardingStore(selectSetSlideIndex);
+    const resetSlideIndex = onboardingStore(selectResetSlideIndex);
+
     const { currentIndex, goToIndex, goToNext, scrollContainerRef } =
         useSlideCarousel({
             slideCount: slidesCount,
+            initialIndex: savedIndex,
+            onIndexChange: setSlideIndex,
         });
 
     const handleNext = useCallback(() => {
         if (currentIndex === slidesCount - 1) {
+            resetSlideIndex();
             onFinish();
             return;
         }
 
         goToNext();
-    }, [currentIndex, goToNext, slidesCount, onFinish]);
+    }, [currentIndex, goToNext, slidesCount, onFinish, resetSlideIndex]);
 
     return (
         <PageLayout
