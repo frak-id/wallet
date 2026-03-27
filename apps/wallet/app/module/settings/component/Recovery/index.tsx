@@ -25,11 +25,7 @@ export function RecoveryLink() {
                 {t("wallet.recoverySetup.title")}
             </Title>
             <CurrentRecoverySetupStatus />
-            <Link
-                to="/settings/recovery"
-                viewTransition
-                className={styles.link}
-            >
+            <Link to="/profile/recovery" viewTransition className={styles.link}>
                 {t("wallet.recoverySetup.setupNew")}
             </Link>
         </Panel>
