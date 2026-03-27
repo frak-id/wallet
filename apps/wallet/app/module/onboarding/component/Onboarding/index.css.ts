@@ -35,6 +35,9 @@ export const dots = style({
 });
 
 export const dot = style({
+    border: "none",
+    padding: 0,
+    cursor: "pointer",
     width: "6px",
     height: "6px",
     borderRadius: alias.cornerRadius.full,

@@ -1,14 +1,8 @@
 import { Button } from "@frak-labs/design-system/components/Button";
-import {
-    Children,
-    type ReactNode,
-    useCallback,
-    useEffect,
-    useRef,
-    useState,
-} from "react";
+import { Children, type ReactNode, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { PageLayout } from "@/module/common/component/PageLayout";
+import { useSlideCarousel } from "@/module/common/hook/useSlideCarousel";
 import * as styles from "./index.css";
 
 type OnboardingProps = {
@@ -38,42 +32,11 @@ export function Onboarding({
     children,
 }: OnboardingProps) {
     const { t } = useTranslation();
-    const [currentIndex, setCurrentIndex] = useState(0);
-    const scrollContainerRef = useRef<HTMLDivElement>(null);
     const slidesCount = Children.count(children);
-
-    useEffect(() => {
-        const container = scrollContainerRef.current;
-        if (!container) return;
-
-        const observer = new IntersectionObserver(
-            (entries) => {
-                for (const entry of entries) {
-                    if (entry.isIntersecting) {
-                        const index = Number(
-                            (entry.target as HTMLElement).dataset.index
-                        );
-                        if (!Number.isNaN(index)) {
-                            setCurrentIndex(index);
-                        }
-                    }
-                }
-            },
-            {
-                root: container,
-                threshold: 0.5,
-            }
-        );
-
-        const slideElements = container.querySelectorAll(`.${styles.slide}`);
-        for (const slideEl of slideElements) {
-            observer.observe(slideEl);
-        }
-
-        return () => {
-            observer.disconnect();
-        };
-    }, [slidesCount]);
+    const { currentIndex, goToIndex, goToNext, scrollContainerRef } =
+        useSlideCarousel({
+            slideCount: slidesCount,
+        });
 
     const handleNext = useCallback(() => {
         if (currentIndex === slidesCount - 1) {
@@ -81,20 +44,8 @@ export function Onboarding({
             return;
         }
 
-        const container = scrollContainerRef.current;
-        if (!container) return;
-
-        const nextSlide = container.querySelector(
-            `.${styles.slide}[data-index="${currentIndex + 1}"]`
-        ) as HTMLElement;
-
-        if (nextSlide) {
-            container.scrollTo({
-                left: nextSlide.offsetLeft,
-                behavior: "smooth",
-            });
-        }
-    }, [currentIndex, slidesCount, onFinish]);
+        goToNext();
+    }, [currentIndex, goToNext, slidesCount, onFinish]);
 
     return (
         <PageLayout
@@ -128,9 +79,12 @@ export function Onboarding({
                         <div className={styles.dots}>
                             {Array.from({ length: slidesCount }).map(
                                 (_, index) => (
-                                    <div
+                                    <button
                                         key={index}
+                                        type="button"
                                         className={`${styles.dot}${index === currentIndex ? ` ${styles.dotActive}` : ""}`}
+                                        aria-label={`Slide ${index + 1}`}
+                                        onClick={() => goToIndex(index)}
                                     />
                                 )
                             )}

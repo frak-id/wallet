@@ -202,7 +202,11 @@
             "text": "Ce porte-monnaie vous permet de collecter toutes les récompenses et bien plus encore.",
             "check1": "Explore les marques partenaires",
             "check2": "Partage tes articles favoris",
-            "check3": "Collecte tes gains dans l'app"
+            "check3": "Collecte tes gains dans l'app",
+            "notifications": {
+                "title": "Ne rate aucun gain !",
+                "description": "Active tes notifs pour suivre tes gains en temps réel."
+            }
         },
         "stats": {
             "pending": "En attente",

@@ -1,10 +1,55 @@
 import { alias } from "@frak-labs/design-system/tokens";
-import { style } from "@vanilla-extract/css";
+import { style, styleVariants } from "@vanilla-extract/css";
 
 export const cardContainer = style({
     overflow: "hidden",
     borderRadius: alias.cornerRadius.xl,
     position: "relative",
+});
+
+export const dismissButton = style({
+    position: "absolute",
+    top: alias.spacing.xs,
+    right: alias.spacing.xs,
+    zIndex: 1,
+});
+
+export const slider = styleVariants({
+    multiple: {
+        display: "flex",
+        gap: alias.spacing.xs,
+        overflowX: "auto",
+        scrollSnapType: "x mandatory",
+        overscrollBehaviorX: "contain",
+        scrollbarWidth: "none",
+        touchAction: "pan-x",
+        WebkitOverflowScrolling: "touch",
+        selectors: {
+            "&::-webkit-scrollbar": {
+                display: "none",
+            },
+        },
+    },
+    single: {
+        display: "flex",
+        overflow: "hidden",
+        touchAction: "auto",
+    },
+});
+
+export const slide = styleVariants({
+    multiple: {
+        flex: `0 0 calc(100% - ${alias.spacing.xs})`,
+        overflow: "hidden",
+        borderRadius: alias.cornerRadius.xl,
+        scrollSnapAlign: "start",
+        scrollSnapStop: "always",
+    },
+    single: {
+        flex: "1 1 100%",
+        overflow: "hidden",
+        borderRadius: alias.cornerRadius.xl,
+    },
 });
 
 export const layoutRow = style({
@@ -47,4 +92,33 @@ export const logosImage = style({
     width: "100%",
     height: "auto",
     objectFit: "contain",
+});
+
+export const slideText = style({
+    display: "flex",
+    flexDirection: "column",
+    gap: alias.spacing.xxs,
+});
+
+export const slideDescription = style({
+    margin: 0,
+});
+
+export const featureItem = style({
+    display: "flex",
+    alignItems: "flex-start",
+    gap: alias.spacing.xxs,
+});
+
+export const notificationAction = style({
+    alignSelf: "flex-start",
+    paddingInline: 0,
+    paddingBlock: 0,
+    textAlign: "left",
+});
+
+export const featureIcon = style({
+    width: "12px",
+    height: "20px",
+    flexShrink: 0,
 });

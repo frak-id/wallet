@@ -6,7 +6,6 @@ import { memo } from "react";
 import { useTranslation } from "react-i18next";
 import { useHydrated } from "remix-utils/use-hydrated";
 import { MoneriumStatus } from "@/module/monerium/component/MoneriumStatus";
-import { EnableNotification } from "@/module/notification/component/EnableNotification";
 import { Balance } from "@/module/tokens/component/Balance";
 import { DemoAccount } from "@/module/wallet/component/DemoAccount";
 import { EarningsSection } from "@/module/wallet/component/EarningsSection";
@@ -23,7 +22,6 @@ export const Route = createFileRoute("/_wallet/_protected/wallet")({
 const HydratedComponents = memo(function HydratedComponents() {
     return (
         <>
-            <EnableNotification />
             <PendingReferral />
             {!isRunningInProd && <MoneriumStatus />}
         </>

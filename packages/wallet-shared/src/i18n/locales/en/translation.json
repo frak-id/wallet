@@ -204,7 +204,11 @@
             "text": "This wallet will enable you to collect all the rewards and much more.",
             "check1": "Explore partner brands",
             "check2": "Share your favorite products",
-            "check3": "Collect your earnings in the app"
+            "check3": "Collect your earnings in the app",
+            "notifications": {
+                "title": "Don't miss any earnings!",
+                "description": "Enable notifications to track your earnings in real time."
+            }
         },
         "stats": {
             "pending": "Pending",

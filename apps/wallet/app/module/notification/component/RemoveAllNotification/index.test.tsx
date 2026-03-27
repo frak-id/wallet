@@ -68,6 +68,7 @@ describe("RemoveAllNotification", () => {
                 hasLocalCapability: false,
                 permissionStatus: "prompt",
                 permissionGranted: false,
+                isReady: true,
                 hasBackendToken: false,
             });
 
@@ -91,6 +92,7 @@ describe("RemoveAllNotification", () => {
                 hasLocalCapability: true,
                 permissionStatus: "granted",
                 permissionGranted: true,
+                isReady: true,
                 hasBackendToken: true,
             });
         });
@@ -129,6 +131,7 @@ describe("RemoveAllNotification", () => {
                 hasLocalCapability: true,
                 permissionStatus: "granted",
                 permissionGranted: true,
+                isReady: true,
                 hasBackendToken: true,
             });
         });

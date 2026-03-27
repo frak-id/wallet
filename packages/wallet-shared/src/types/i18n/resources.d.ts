@@ -514,6 +514,10 @@ interface Resources {
                 check1: "Explore partner brands";
                 check2: "Share your favorite products";
                 check3: "Collect your earnings in the app";
+                notifications: {
+                    description: "Enable notifications to track your earnings in real time.";
+                    title: "Don't miss any earnings!";
+                };
                 text: "This wallet will enable you to collect all the rewards and much more.";
                 title: "Welcome in your wallet";
             };

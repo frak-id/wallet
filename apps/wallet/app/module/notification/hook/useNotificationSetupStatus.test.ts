@@ -87,6 +87,7 @@ describe.sequential("useNotificationStatus", () => {
             expect(result.current).toEqual({
                 permissionStatus: "granted",
                 permissionGranted: true,
+                isReady: true,
                 hasLocalCapability: false,
                 hasBackendToken: false,
             });
@@ -116,6 +117,7 @@ describe.sequential("useNotificationStatus", () => {
             expect(result.current).toEqual({
                 permissionStatus: "granted",
                 permissionGranted: true,
+                isReady: true,
                 hasLocalCapability: true,
                 hasBackendToken: true,
             });
@@ -138,6 +140,7 @@ describe.sequential("useNotificationStatus", () => {
             expect(result.current).toEqual({
                 permissionStatus: "granted",
                 permissionGranted: true,
+                isReady: true,
                 hasLocalCapability: false,
                 hasBackendToken: true,
             });
@@ -158,6 +161,7 @@ describe.sequential("useNotificationStatus", () => {
         expect(result.current).toEqual({
             permissionStatus: "prompt",
             permissionGranted: false,
+            isReady: false,
             hasLocalCapability: false,
             hasBackendToken: false,
         });
