@@ -29,6 +29,7 @@ import { useMerchantUpdate } from "@/module/merchant/hook/useMerchantUpdate";
 import { ExplorerSettings } from "./ExplorerSettings";
 import styles from "./index.module.css";
 import { PurchasseTrackerSetup } from "./PurchaseTracker";
+import { SdkSettings } from "./SdkSettings";
 
 type FormMerchant = {
     name: string;
@@ -198,6 +199,7 @@ export function MerchantDetails({ merchantId }: { merchantId: string }) {
                 )}
             </Form>
             <ExplorerSettings merchantId={merchantId} />
+            <SdkSettings merchantId={merchantId} />
             <PurchasseTrackerSetup merchantId={merchantId} />
         </FormLayout>
     );

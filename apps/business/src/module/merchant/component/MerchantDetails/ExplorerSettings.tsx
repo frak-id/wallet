@@ -1,10 +1,5 @@
-import { Button } from "@frak-labs/ui/component/Button";
-import { Column, Columns } from "@frak-labs/ui/component/Columns";
-import { Input, type InputProps } from "@frak-labs/ui/component/forms/Input";
-import { Pencil } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
-import { ActionsMessageSuccess } from "@/module/campaigns/component/Actions";
 import { Panel } from "@/module/common/component/Panel";
 import { Row } from "@/module/common/component/Row";
 import {
@@ -15,6 +10,8 @@ import {
     FormLabel,
     FormMessage,
 } from "@/module/forms/Form";
+import { FormActions } from "@/module/forms/FormActions";
+import { InputWithToggle } from "@/module/forms/InputWithToggle";
 import { Switch } from "@/module/forms/Switch";
 import { useMerchant } from "@/module/merchant/hook/useMerchant";
 import { useMerchantUpdate } from "@/module/merchant/hook/useMerchantUpdate";
@@ -157,60 +154,14 @@ export function ExplorerSettings({ merchantId }: { merchantId: string }) {
                         </FormItem>
                     )}
                 />
-                <Columns>
-                    <Column>
-                        {editExplorerSuccess && <ActionsMessageSuccess />}
-                    </Column>
-                    <Column>
-                        <Button
-                            variant={"informationOutline"}
-                            onClick={() => {
-                                form.reset(formValues);
-                            }}
-                            disabled={
-                                editExplorerPending || !form.formState.isDirty
-                            }
-                        >
-                            Discard Changes
-                        </Button>
-                        <Button
-                            variant={"submit"}
-                            onClick={() => {
-                                form.handleSubmit(onSubmit)();
-                            }}
-                            disabled={
-                                editExplorerPending || !form.formState.isDirty
-                            }
-                            isLoading={editExplorerPending}
-                        >
-                            Validate
-                        </Button>
-                    </Column>
-                </Columns>
+                <FormActions
+                    isSuccess={editExplorerSuccess}
+                    isPending={editExplorerPending}
+                    isDirty={form.formState.isDirty}
+                    onDiscard={() => form.reset(formValues)}
+                    onSubmit={() => form.handleSubmit(onSubmit)()}
+                />
             </Panel>
         </Form>
     );
 }
-
-const InputWithToggle = ({ ref, disabled, ...props }: InputProps) => {
-    const [isDisabled, setIsDisabled] = useState(true);
-    return (
-        <Row align={"center"}>
-            <Input
-                {...props}
-                ref={ref}
-                disabled={isDisabled}
-                onBlur={() => setIsDisabled(true)}
-            />
-            <button
-                type={"button"}
-                className={styles.inputWithToggle__button}
-                onClick={() => setIsDisabled(!isDisabled)}
-                disabled={disabled}
-            >
-                <Pencil size={20} />
-            </button>
-        </Row>
-    );
-};
-InputWithToggle.displayName = "InputWithToggle";
