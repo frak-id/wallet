@@ -13,7 +13,10 @@ import { getModalBuilderSteps } from "@/utils/setup";
  * @description
  * This function will open the share modal with the configuration provided in the `window.FrakSetup.modalShareConfig` object.
  */
-export function useShareModal(targetInteraction?: InteractionTypeKey) {
+export function useShareModal(
+    targetInteraction?: InteractionTypeKey,
+    placement?: string
+) {
     const [debugInfo, setDebugInfo] = useState<string | undefined>(undefined);
     const [isError, setIsError] = useState(false);
 
@@ -38,10 +41,10 @@ export function useShareModal(targetInteraction?: InteractionTypeKey) {
         try {
             await modalBuilderSteps
                 .sharing(window.FrakSetup?.modalShareConfig ?? {})
-                .display((metadata) => ({
-                    ...metadata,
-                    targetInteraction,
-                }));
+                .display(
+                    (metadata) => ({ ...metadata, targetInteraction }),
+                    placement
+                );
         } catch (e) {
             if (
                 e instanceof FrakRpcError &&
@@ -67,7 +70,7 @@ export function useShareModal(targetInteraction?: InteractionTypeKey) {
             setIsError(true);
             console.error("Error while opening the modal", e);
         }
-    }, [targetInteraction]);
+    }, [targetInteraction, placement]);
 
     return { handleShare, isError, debugInfo };
 }

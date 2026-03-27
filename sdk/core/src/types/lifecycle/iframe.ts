@@ -8,19 +8,11 @@ export type IFrameLifecycleEvent =
           data?: never;
       }
     | DoBackupEvent
-    | HandshakeRequestEvent
     | RedirectRequestEvent;
 
 type DoBackupEvent = {
     iframeLifecycle: "do-backup";
     data: { backup?: string };
-};
-
-type HandshakeRequestEvent = {
-    iframeLifecycle: "handshake";
-    data: {
-        token: string;
-    };
 };
 
 type RedirectRequestEvent = {

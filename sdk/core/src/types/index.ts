@@ -17,11 +17,15 @@ export type {
 // Utils
 export type { FrakContext, FrakContextV1, FrakContextV2 } from "./context";
 export { isV1Context, isV2Context } from "./context";
-
 export type {
     ClientLifecycleEvent,
     IFrameLifecycleEvent,
 } from "./lifecycle";
+export type {
+    ResolvedPlacement,
+    ResolvedSdkConfig,
+    SdkResolvedConfig,
+} from "./resolvedConfig";
 export type { IFrameRpcSchema } from "./rpc";
 // Modal related
 export type {

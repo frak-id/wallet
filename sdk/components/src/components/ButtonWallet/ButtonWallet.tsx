@@ -1,7 +1,8 @@
-import { trackEvent } from "@frak-labs/core-sdk";
+import { type InteractionTypeKey, trackEvent } from "@frak-labs/core-sdk";
 import { cx } from "class-variance-authority";
 import { useEffect, useMemo, useState } from "preact/hooks";
 import { useClientReady } from "@/hooks/useClientReady";
+import { usePlacement } from "@/hooks/usePlacement";
 import { useReward } from "@/hooks/useReward";
 import { GiftIcon } from "./assets/GiftIcon";
 import styles from "./ButtonWallet.module.css";
@@ -40,14 +41,31 @@ import { openWalletModal } from "./utils";
  * <frak-button-wallet use-reward target-interaction="custom.customerMeeting"></frak-button-wallet>
  * ```
  *
+ * @example
+ * Using placement:
+ * ```html
+ * <frak-button-wallet placement="hero-wallet"></frak-button-wallet>
+ * ```
+ *
  * @see {@link @frak-labs/core-sdk!actions.modalBuilder | `modalBuilder()`} for more info about the modal display
  * @see {@link @frak-labs/core-sdk!actions.getMerchantInformation | `getMerchantInformation()`} for more info about the estimated reward fetching
  */
 export function ButtonWallet({
+    placement: placementId,
     classname = "",
     useReward: rawUseReward,
     targetInteraction,
 }: ButtonWalletProps) {
+    const placement = usePlacement(placementId);
+
+    const resolvedTargetInteraction = useMemo<InteractionTypeKey | undefined>(
+        () =>
+            placement?.targetInteraction !== undefined
+                ? (placement.targetInteraction as InteractionTypeKey)
+                : targetInteraction,
+        [placement?.targetInteraction, targetInteraction]
+    );
+
     const shouldUseReward = useMemo(
         () => rawUseReward !== undefined,
         [rawUseReward]
@@ -55,7 +73,7 @@ export function ButtonWallet({
     const { isClientReady } = useClientReady();
     const { reward } = useReward(
         shouldUseReward && isClientReady,
-        targetInteraction
+        resolvedTargetInteraction
     );
     const [position, setPosition] = useState<"left" | "right">("right");
 
@@ -63,10 +81,11 @@ export function ButtonWallet({
      * Setup the position of the button
      */
     useEffect(() => {
-        const position =
+        const placementPosition = placement?.trigger?.position;
+        const configPosition =
             window.FrakSetup?.modalWalletConfig?.metadata?.position;
-        setPosition(position ?? "right");
-    }, []);
+        setPosition(placementPosition ?? configPosition ?? "right");
+    }, [placement?.trigger?.position]);
 
     return (
         <button
@@ -83,7 +102,7 @@ export function ButtonWallet({
             disabled={!isClientReady}
             onClick={() => {
                 trackEvent(window.FrakSetup.client, "wallet_button_clicked");
-                openWalletModal();
+                openWalletModal(resolvedTargetInteraction, placementId);
             }}
         >
             <GiftIcon />

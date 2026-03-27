@@ -9,8 +9,9 @@ import type { FrakLifecycleEvent } from "../types";
 import type { FrakClient } from "../types/client";
 import type { FrakWalletSdkConfig } from "../types/config";
 import type { IFrameRpcSchema } from "../types/rpc";
-import { getClientId } from "../utils";
+import { fetchMerchantConfig, getClientId } from "../utils";
 import { BACKUP_KEY } from "../utils/constants";
+import { sdkConfigStore } from "../utils/sdkConfigStore";
 import { setupSsoUrlListener } from "../utils/ssoUrlListener";
 import { DebugInfoGatherer } from "./DebugInfo";
 import {
@@ -19,12 +20,13 @@ import {
 } from "./transports/iframeLifecycleManager";
 
 type SdkRpcClient = RpcClient<IFrameRpcSchema, FrakLifecycleEvent>;
+type MerchantConfigResult = Awaited<ReturnType<typeof fetchMerchantConfig>>;
 
 /**
  * Create a new iframe Frak client
  * @param args
  * @param args.config - The configuration to use for the Frak Wallet SDK.
- *   When `config.domain` is set, it is forwarded to the iframe handshake so the listener resolves the correct merchant in tunneled/proxied environments (e.g. Shopify dev with Cloudflare tunnel).
+ *   When `config.domain` is set, it is used to resolve the correct merchant config in tunneled/proxied environments (e.g. Shopify dev with Cloudflare tunnel).
  * @param args.iframe - The iframe to use for the communication
  * @returns The created Frak Client
  *
@@ -46,11 +48,27 @@ export function createIFrameFrakClient({
 }): FrakClient {
     const frakWalletUrl = config?.walletUrl ?? "https://wallet.frak.id";
 
+    const browserLang =
+        typeof navigator !== "undefined"
+            ? navigator.language?.split("-")[0]
+            : undefined;
+    const detectedLang =
+        config.metadata.lang ??
+        (browserLang === "en" || browserLang === "fr"
+            ? browserLang
+            : undefined);
+    sdkConfigStore.reset();
+
+    const configPromise = fetchMerchantConfig(
+        config.domain,
+        config.walletUrl,
+        detectedLang
+    );
+
     // Create lifecycle manager
     const lifecycleManager = createIFrameLifecycleManager({
         iframe,
         targetOrigin: frakWalletUrl,
-        configDomain: config.domain,
     });
 
     // Create our debug info gatherer
@@ -108,14 +126,11 @@ export function createIFrameFrakClient({
     // Setup heartbeat
     const stopHeartbeat = setupHeartbeat(rpcClient, lifecycleManager);
 
-    // Build our destroy function
     const destroy = async () => {
-        // Stop heartbeat
         stopHeartbeat();
-        // Cleanup the RPC client
         rpcClient.cleanup();
-        // Remove the iframe
         iframe.remove();
+        sdkConfigStore.reset();
     };
 
     // Init open panel
@@ -161,6 +176,7 @@ export function createIFrameFrakClient({
         config,
         rpcClient,
         lifecycleManager,
+        configPromise,
     }).then(() => debugInfo.updateSetupStatus(true));
 
     return {
@@ -238,10 +254,12 @@ async function postConnectionSetup({
     config,
     rpcClient,
     lifecycleManager,
+    configPromise,
 }: {
     config: FrakWalletSdkConfig;
     rpcClient: SdkRpcClient;
     lifecycleManager: IframeLifecycleManager;
+    configPromise: Promise<MerchantConfigResult>;
 }): Promise<void> {
     // Wait for the handler to be connected
     await lifecycleManager.isConnected;
@@ -249,6 +267,62 @@ async function postConnectionSetup({
     // Setup SSO URL listener to detect and forward SSO redirects
     // This checks for ?sso= parameter and forwards compressed data to iframe
     setupSsoUrlListener(rpcClient, lifecycleManager.isConnected);
+
+    // Read pending merge token from URL (for SSO identity merge)
+    const url = new URL(window.location.href);
+    const pendingMergeToken = url.searchParams.get("fmt") ?? undefined;
+    if (pendingMergeToken) {
+        url.searchParams.delete("fmt");
+        window.history.replaceState({}, "", url.toString());
+    }
+
+    const setResolvedConfig = (merchantConfig: MerchantConfigResult) => {
+        const merchantId =
+            merchantConfig?.merchantId ?? config.metadata.merchantId ?? "";
+        const domain = merchantConfig?.domain ?? "";
+        const allowedDomains = merchantConfig?.allowedDomains ?? [];
+        const resolvedConfig = merchantConfig?.sdkConfig;
+
+        if (resolvedConfig) {
+            sdkConfigStore.setConfig({
+                isResolved: true,
+                merchantId,
+                name: resolvedConfig.name ?? config.metadata.name,
+                logoUrl: resolvedConfig.logoUrl ?? config.metadata.logoUrl,
+                homepageLink:
+                    resolvedConfig.homepageLink ?? config.metadata.homepageLink,
+                lang: resolvedConfig.lang ?? config.metadata.lang,
+                currency: resolvedConfig.currency ?? config.metadata.currency,
+                translations: resolvedConfig.translations,
+                placements: resolvedConfig.placements,
+            });
+        } else {
+            sdkConfigStore.setConfig({
+                isResolved: true,
+                merchantId,
+                name: config.metadata.name,
+                logoUrl: config.metadata.logoUrl,
+                homepageLink: config.metadata.homepageLink,
+                lang: config.metadata.lang,
+                currency: config.metadata.currency,
+            });
+        }
+
+        rpcClient.sendLifecycle({
+            clientLifecycle: "resolved-config",
+            data: {
+                merchantId,
+                domain,
+                allowedDomains,
+                sourceUrl: window.location.href,
+                ...(pendingMergeToken && { pendingMergeToken }),
+                ...(resolvedConfig && { sdkConfig: resolvedConfig }),
+            },
+        });
+    };
+
+    const merchantConfig = await configPromise;
+    setResolvedConfig(merchantConfig);
 
     // Push raw CSS if needed
     async function pushCss() {

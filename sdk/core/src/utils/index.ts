@@ -24,9 +24,11 @@ export {
 } from "./iframeHelper";
 export {
     clearMerchantIdCache,
+    fetchMerchantConfig,
     fetchMerchantId,
     resolveMerchantId,
 } from "./merchantId";
+export { sdkConfigStore } from "./sdkConfigStore";
 export {
     type AppSpecificSsoMetadata,
     type CompressedSsoData,

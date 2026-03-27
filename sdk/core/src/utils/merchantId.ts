@@ -2,25 +2,91 @@
  * Merchant ID utilities for auto-fetching from backend
  */
 
+import type { Language } from "../types/config";
+import type { ResolvedSdkConfig } from "../types/resolvedConfig";
 import { getBackendUrl } from "./backendUrl";
 
 const MERCHANT_ID_STORAGE_KEY = "frak-merchant-id";
 
 /**
- * Response from the merchant lookup endpoint
+ * Response from the merchant resolve endpoint
  */
-type MerchantLookupResponse = {
+export type MerchantConfigResponse = {
     merchantId: string;
     name: string;
     domain: string;
+    allowedDomains: string[];
+    sdkConfig?: ResolvedSdkConfig;
 };
 
+function getCacheKey(domain: string, lang?: string): string {
+    return `${domain}:${lang ?? ""}`;
+}
+
+function getTargetDomain(domain?: string): string {
+    return (
+        domain ??
+        (typeof window !== "undefined" ? window.location.hostname : "")
+    );
+}
+
 /**
- * In-memory cache for merchantId lookups
+ * In-memory cache for merchant config lookups
  * Persists for the session to avoid repeated API calls
  */
-let cachedMerchantId: string | undefined;
-let cachePromise: Promise<string | undefined> | undefined;
+const configCache = new Map<string, MerchantConfigResponse>();
+const promiseCache = new Map<
+    string,
+    Promise<MerchantConfigResponse | undefined>
+>();
+
+/**
+ * Fetch merchant config from backend by domain
+ *
+ * @param domain - The domain to lookup (defaults to current hostname)
+ * @param walletUrl - Optional wallet URL to derive backend URL
+ * @param lang - Optional language passed to the resolve endpoint for localized config
+ * @returns The merchant config if found, undefined otherwise
+ *
+ * @example
+ * ```ts
+ * const config = await fetchMerchantConfig("shop.example.com");
+ * if (config) {
+ *     // Use config.merchantId, config.sdkConfig, etc.
+ * }
+ * ```
+ */
+export async function fetchMerchantConfig(
+    domain?: string,
+    walletUrl?: string,
+    lang?: Language
+): Promise<MerchantConfigResponse | undefined> {
+    const targetDomain = getTargetDomain(domain);
+    if (!targetDomain) {
+        return undefined;
+    }
+
+    const key = getCacheKey(targetDomain, lang);
+
+    if (configCache.has(key)) {
+        return configCache.get(key);
+    }
+
+    if (promiseCache.has(key)) {
+        return promiseCache.get(key);
+    }
+
+    const promise = fetchMerchantConfigInternal(
+        targetDomain,
+        walletUrl,
+        lang
+    ).then((result) => {
+        promiseCache.delete(key);
+        return result;
+    });
+    promiseCache.set(key, promise);
+    return promise;
+}
 
 /**
  * Fetch merchantId from backend by domain
@@ -41,50 +107,35 @@ export async function fetchMerchantId(
     domain?: string,
     walletUrl?: string
 ): Promise<string | undefined> {
-    // Use in-memory cache if available
-    if (cachedMerchantId) {
-        return cachedMerchantId;
-    }
-
-    // Check sessionStorage (survives page navigations)
+    // Fast-path: return cached merchantId from sessionStorage without a network
+    // round-trip. This is safe here because callers only need the merchantId
+    // string (e.g. trackPurchaseStatus, ensureIdentity). fetchMerchantConfig()
+    // intentionally skips this path since it must return the full response
+    // (allowedDomains, sdkConfig, etc.).
     if (typeof window !== "undefined") {
         const stored = window.sessionStorage.getItem(MERCHANT_ID_STORAGE_KEY);
         if (stored) {
-            cachedMerchantId = stored;
             return stored;
         }
     }
 
-    // If a fetch is already in progress, wait for it
-    if (cachePromise) {
-        return cachePromise;
-    }
-
-    // Start the fetch and cache the promise
-    cachePromise = fetchMerchantIdInternal(domain, walletUrl);
-    const result = await cachePromise;
-    cachePromise = undefined;
-    return result;
+    const config = await fetchMerchantConfig(domain, walletUrl);
+    return config?.merchantId;
 }
 
 /**
  * Internal fetch logic
  */
-async function fetchMerchantIdInternal(
-    domain?: string,
-    walletUrl?: string
-): Promise<string | undefined> {
-    const targetDomain =
-        domain ??
-        (typeof window !== "undefined" ? window.location.hostname : "");
-    if (!targetDomain) {
-        return undefined;
-    }
-
+async function fetchMerchantConfigInternal(
+    targetDomain: string,
+    walletUrl?: string,
+    lang?: Language
+): Promise<MerchantConfigResponse | undefined> {
     try {
         const backendUrl = getBackendUrl(walletUrl);
+        const langParam = lang ? `&lang=${encodeURIComponent(lang)}` : "";
         const response = await fetch(
-            `${backendUrl}/user/merchant/resolve?domain=${encodeURIComponent(targetDomain)}`
+            `${backendUrl}/user/merchant/resolve?domain=${encodeURIComponent(targetDomain)}${langParam}`
         );
 
         if (!response.ok) {
@@ -94,29 +145,29 @@ async function fetchMerchantIdInternal(
             return undefined;
         }
 
-        const data = (await response.json()) as MerchantLookupResponse;
-        cachedMerchantId = data.merchantId;
-        // Persist to sessionStorage so it survives page navigations
+        const data = (await response.json()) as MerchantConfigResponse;
+        configCache.set(getCacheKey(targetDomain, lang), data);
+
         if (typeof window !== "undefined") {
             window.sessionStorage.setItem(
                 MERCHANT_ID_STORAGE_KEY,
                 data.merchantId
             );
         }
-        return cachedMerchantId;
+        return data;
     } catch (error) {
-        console.warn("[Frak SDK] Failed to fetch merchantId:", error);
+        console.warn("[Frak SDK] Failed to fetch merchant config:", error);
         return undefined;
     }
 }
 
 /**
- * Clear the cached merchantId
+ * Clear the cached merchant config
  * Useful for testing or when switching domains
  */
 export function clearMerchantIdCache(): void {
-    cachedMerchantId = undefined;
-    cachePromise = undefined;
+    configCache.clear();
+    promiseCache.clear();
     if (typeof window !== "undefined") {
         window.sessionStorage.removeItem(MERCHANT_ID_STORAGE_KEY);
     }
@@ -133,11 +184,11 @@ export async function resolveMerchantId(
     config: { metadata?: { merchantId?: string } },
     walletUrl?: string
 ): Promise<string | undefined> {
-    // First, check config
     if (config.metadata?.merchantId) {
         return config.metadata.merchantId;
     }
 
     // Otherwise, try to fetch from backend
-    return fetchMerchantId(undefined, walletUrl);
+    const merchantConfig = await fetchMerchantConfig(undefined, walletUrl);
+    return merchantConfig?.merchantId;
 }

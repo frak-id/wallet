@@ -127,9 +127,8 @@ export type RpcRequestContext = {
  * type WalletContext = RpcMiddlewareContext<{
  *   productId: string
  *   sourceUrl: string
- *   isAutoContext: boolean
  * }>
- * // { origin: string, source: MessageEventSource | null, productId: string, sourceUrl: string, isAutoContext: boolean }
+ * // { origin: string, source: MessageEventSource | null, productId: string, sourceUrl: string }
  * ```
  */
 export type RpcMiddlewareContext<TCustomContext = Record<string, never>> =

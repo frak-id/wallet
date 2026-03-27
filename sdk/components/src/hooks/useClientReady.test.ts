@@ -1,3 +1,4 @@
+import { sdkConfigStore } from "@frak-labs/core-sdk";
 import { renderHook, waitFor } from "@testing-library/preact";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as clientReadyUtils from "@/utils/clientReady";
@@ -28,6 +29,11 @@ vi.mock("@/utils/clientReady", async () => {
 describe("useClientReady", () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        // Mark the SDK config store as resolved so the hook can proceed
+        sdkConfigStore.setConfig({
+            isResolved: true,
+            merchantId: "test-merchant",
+        });
         // Reset window.FrakSetup.client
         window.FrakSetup.client = {
             config: {

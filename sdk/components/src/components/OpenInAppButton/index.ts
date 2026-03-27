@@ -18,6 +18,11 @@ declare global {
     }
 }
 
-registerWebComponent(OpenInAppButton, "frak-open-in-app", ["text"], {
-    shadow: false,
-});
+registerWebComponent(
+    OpenInAppButton,
+    "frak-open-in-app",
+    ["text", "placement"],
+    {
+        shadow: false,
+    }
+);

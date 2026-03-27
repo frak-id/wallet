@@ -148,7 +148,7 @@ describe("merchantId", () => {
 
             expect(result).toBeUndefined();
             expect(console.warn).toHaveBeenCalledWith(
-                "[Frak SDK] Failed to fetch merchantId:",
+                "[Frak SDK] Failed to fetch merchant config:",
                 expect.any(Error)
             );
         });
@@ -193,7 +193,7 @@ describe("merchantId", () => {
 
             expect(result).toBeUndefined();
             expect(console.warn).toHaveBeenCalledWith(
-                "[Frak SDK] Failed to fetch merchantId:",
+                "[Frak SDK] Failed to fetch merchant config:",
                 expect.any(Error)
             );
         });

@@ -5,6 +5,7 @@ import type { InteractionTypeKey } from "@frak-labs/core-sdk";
  * @inline
  */
 export type ButtonWalletProps = {
+    placement?: string;
     /**
      * Classname to apply to the button
      */

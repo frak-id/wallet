@@ -46,11 +46,13 @@ export type ModalStepBuilder<
     /**
      * Display the modal
      * @param metadataOverride - Function returning optional metadata to override the current modal metadata
+     * @param placement - Optional placement ID to associate with this modal display
      */
     display: (
         metadataOverride?: (
             current?: ModalRpcMetadata
-        ) => ModalRpcMetadata | undefined
+        ) => ModalRpcMetadata | undefined,
+        placement?: string
     ) => Promise<ModalRpcStepsResultType<Steps>>;
 };
 
@@ -177,27 +179,23 @@ function modalStepsBuilder<CurrentSteps extends ModalStepTypes[]>(
         );
     }
 
-    // Function to display it
     async function display(
         metadataOverride?: (
             current?: ModalRpcMetadata
-        ) => ModalRpcMetadata | undefined
+        ) => ModalRpcMetadata | undefined,
+        placement?: string
     ) {
-        // If we have a metadata override, apply it
         if (metadataOverride) {
             params.metadata = metadataOverride(params.metadata ?? {});
         }
-        return await displayModal(client, params);
+        return await displayModal(client, params, placement);
     }
 
     return {
-        // Access current modal params
         params,
-        // Function to add new steps
         sendTx,
         reward,
         sharing,
-        // Display the modal
         display,
     };
 }
