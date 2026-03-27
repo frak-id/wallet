@@ -18,18 +18,22 @@ export const authenticationStore = create<AuthenticationStore>()(
         (set) => ({
             // Initial state
             lastAuthenticator: null,
+            lastAuthenticationAt: null,
             lastWebAuthNAction: null,
             ssoContext: null,
 
             // Actions
             setLastAuthenticator: (lastAuthenticator) =>
                 set({ lastAuthenticator }),
+            setLastAuthenticationAt: (lastAuthenticationAt) =>
+                set({ lastAuthenticationAt }),
             setLastWebAuthNAction: (lastWebAuthNAction) =>
                 set({ lastWebAuthNAction }),
             setSsoContext: (ssoContext) => set({ ssoContext }),
             clearAuthentication: () =>
                 set({
                     lastAuthenticator: null,
+                    lastAuthenticationAt: null,
                     lastWebAuthNAction: null,
                     ssoContext: null,
                 }),
@@ -38,6 +42,7 @@ export const authenticationStore = create<AuthenticationStore>()(
             name: "frak_authentication_store",
             partialize: (state) => ({
                 lastAuthenticator: state.lastAuthenticator,
+                lastAuthenticationAt: state.lastAuthenticationAt,
                 lastWebAuthNAction: state.lastWebAuthNAction,
                 // ssoContext is not persisted (in-memory only)
             }),
@@ -52,6 +57,10 @@ export const authenticationStore = create<AuthenticationStore>()(
 // Get the last authenticator
 export const selectLastAuthenticator = (state: AuthenticationStore) =>
     state.lastAuthenticator;
+
+// Get the last authentication timestamp
+export const selectLastAuthenticationAt = (state: AuthenticationStore) =>
+    state.lastAuthenticationAt;
 
 // Get the last WebAuthN action
 export const selectLastWebAuthNAction = (state: AuthenticationStore) =>
@@ -69,6 +78,8 @@ export const selectCurrentSsoMetadata = (state: AuthenticationStore) =>
  * Helper function to add last authentication
  */
 export async function addLastAuthentication(authentication: Session) {
+    authenticationStore.getState().setLastAuthenticationAt(Date.now());
+
     // Ensure that's a webauthn one
     if (
         authentication.type !== "webauthn" &&

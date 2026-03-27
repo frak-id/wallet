@@ -77,11 +77,13 @@ export type AppSpecificSsoMetadata = SsoMetadata & {
 export type AuthenticationStore = {
     // State
     lastAuthenticator: LastAuthentication | null;
+    lastAuthenticationAt: number | null;
     lastWebAuthNAction: LastWebAuthNAction | null;
     ssoContext: SsoContext | null;
 
     // Actions
     setLastAuthenticator: (auth: LastAuthentication | null) => void;
+    setLastAuthenticationAt: (timestamp: number | null) => void;
     setLastWebAuthNAction: (action: LastWebAuthNAction | null) => void;
     setSsoContext: (context: SsoContext | null) => void;
     clearAuthentication: () => void;
