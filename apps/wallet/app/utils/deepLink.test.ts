@@ -284,7 +284,7 @@ describe("deep link auth gate", () => {
 
         openUrlHandler(["frakwallet://recovery"]);
 
-        expect(navigate).toHaveBeenCalledWith({ to: "/settings/recovery" });
+        expect(navigate).toHaveBeenCalledWith({ to: "/profile/recovery" });
     });
 
     test("should consume pending deep link after auth", async () => {
@@ -308,7 +308,7 @@ describe("deep link auth gate", () => {
         const consumed = consumePendingDeepLink(navigate);
 
         expect(consumed).toBe(true);
-        expect(navigate).toHaveBeenCalledWith({ to: "/settings" });
+        expect(navigate).toHaveBeenCalledWith({ to: "/profile" });
         expect(getPendingDeepLink()).toBeNull();
     });
 

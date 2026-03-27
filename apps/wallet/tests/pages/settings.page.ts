@@ -7,32 +7,29 @@ export class SettingsPage {
     constructor(private readonly page: Page) {}
 
     async navigateToSettings() {
-        await this.page.goto("/settings");
+        await this.page.goto("/profile");
         await this.page.waitForLoadState("networkidle");
     }
 
     //verify the settings button and click it
     async clickSettingsButton() {
-        // Ensure the settings button is visible and clickable
-        const settingsLinkLocator = this.page.locator(
-            "a:has(svg.lucide-settings)"
-        );
+        const settingsLinkLocator = this.page.getByRole("button", {
+            name: /profil/i,
+        });
         await expect(settingsLinkLocator).toBeVisible();
         await settingsLinkLocator.click();
-        await this.page.waitForURL("/settings");
+        await this.page.waitForURL("/profile");
     }
 
     async verifyBiometryInformation() {
-        // the biometry block is visible
         await expect(
-            this.page.getByText("Biometry informations")
+            this.page.getByRole("heading", { name: "Profil" })
         ).toBeVisible();
-        const authenticatorButton = this.page.getByText(
-            /Authenticator: [A-Za-z0-9.]+$/i
-        );
-        await expect(authenticatorButton).toBeVisible();
         await expect(
-            this.page.getByText(/Wallet: [A-Za-z0-9.]+$/i)
+            this.page.getByText(/Authenticator:|Authentificateur :/i)
+        ).toBeVisible();
+        await expect(
+            this.page.getByText(/Wallet:|Porte-monnaie :|Account ID:/i)
         ).toBeVisible();
     }
 
@@ -46,7 +43,7 @@ export class SettingsPage {
 
     async verifyRecoverySetupPage() {
         // Verify the recovery setup page  is visible
-        await this.page.waitForURL("settings/recovery");
+        await this.page.waitForURL("/profile/recovery");
         await expect(this.page.getByText("Warning")).toBeVisible();
     }
 
@@ -68,11 +65,12 @@ export class SettingsPage {
 
     // copy the authenticator button text
     async clickCopyAuthenticatorInformations() {
-        const authenticatorButton = this.page.getByText(
-            /Authenticator: [A-Za-z0-9.]+$/i
-        );
+        const authenticatorButton = this.page
+            .getByRole("button", {
+                name: /copy address|copier l'adresse/i,
+            })
+            .first();
         await expect(authenticatorButton).toBeVisible();
-        // click the authenticator button and copy the text
         await expect(authenticatorButton).toBeEnabled();
         await authenticatorButton.click();
     }
@@ -81,10 +79,12 @@ export class SettingsPage {
      * Click on the recovery button
      */
     async clickRecoveryButton() {
-        const recoveryButton = this.page.getByText("Setup new recovery");
+        const recoveryButton = this.page.getByRole("link", {
+            name: /setup new recovery|configurer une nouvelle récupération/i,
+        });
         await expect(recoveryButton).toBeVisible();
         await recoveryButton.click();
-        await this.page.waitForURL("/settings/recovery");
+        await this.page.waitForURL("/profile/recovery");
     }
 
     //verify logout button click

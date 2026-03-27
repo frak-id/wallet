@@ -141,11 +141,11 @@ export function routeDeepLink(navigate: NavigateFn, params: DeepLinkParams) {
             break;
 
         case "settings":
-            navigate({ to: "/settings" });
+            navigate({ to: "/profile" });
             break;
 
         case "recovery":
-            navigate({ to: "/settings/recovery" });
+            navigate({ to: "/profile/recovery" });
             break;
 
         case "notifications":

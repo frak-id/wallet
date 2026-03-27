@@ -30,7 +30,7 @@ test.describe("Wallet Dashboard", () => {
 
 test.describe("Settings", () => {
     test("should render the settings page", async ({ page }) => {
-        await page.goto("/settings");
+        await page.goto("/profile");
         await page.waitForLoadState("networkidle");
         await expect(page).toHaveScreenshot("settings.png", {
             animations: "disabled",

@@ -12,12 +12,14 @@ import {
     lightningCssConfig,
     onwarn,
 } from "../../packages/dev-tooling";
+import walletPackage from "./package.json";
 
 const DEBUG = JSON.stringify(false);
 
 const isProd = process.env.STAGE?.includes("prod") ?? false;
 const isTauri = !!process.env.TAURI_CLI_RUNNING;
 const isSandbox = !!process.env.ATELIER_SANDBOX_ID;
+const appVersion = process.env.COMMIT_HASH ?? walletPackage.version;
 
 export default defineConfig(
     async ({ mode, command }: ConfigEnv): Promise<UserConfig> => {
@@ -54,9 +56,7 @@ export default defineConfig(
                 ),
                 "process.env.DEBUG": JSON.stringify(DEBUG),
                 "process.env.IS_TAURI": JSON.stringify(isTauri),
-                "process.env.APP_VERSION": JSON.stringify(
-                    process.env.COMMIT_HASH ?? "UNKNOWN"
-                ),
+                "process.env.APP_VERSION": JSON.stringify(appVersion),
                 "process.env.FRAK_WALLET_URL": JSON.stringify(
                     sandboxEnv.walletUrl ??
                         getSstResource("FRAK_WALLET_URL") ??
