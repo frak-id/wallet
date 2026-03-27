@@ -83,6 +83,11 @@
             "description": "Dès qu'un achat sera réalisé via ton lien de partage, tes gains apparaîtront ici.",
             "confirm": "J'ai compris"
         },
+        "transferredEmpty": {
+            "title": "Tu n'as pas encore transféré de gains",
+            "description": "La somme de tes gains apparaîtront ici dès que tu effectueras un transfert vers ton compte bancaire.",
+            "confirm": "J'ai compris"
+        },
         "activateNotifications": "<strong>Activer les notifications</strong><br /> pour être prévenu du versement de vos gains",
         "activateNotificationsRationale": "<strong>Activer les notifications</strong><br /> Nous avons besoin de votre permission pour vous notifier du versement de vos gains",
         "openNotificationSettings": "<strong>Notifications désactivées</strong><br /> Ouvrez les paramètres pour activer les notifications",

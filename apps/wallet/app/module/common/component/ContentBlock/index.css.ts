@@ -1,6 +1,6 @@
 import { vars } from "@frak-labs/design-system/theme";
 import { alias, fontSize } from "@frak-labs/design-system/tokens";
-import { style } from "@vanilla-extract/css";
+import { style, styleVariants } from "@vanilla-extract/css";
 
 export const content = style({
     display: "flex",
@@ -11,6 +11,19 @@ export const content = style({
 export const icon = style({
     display: "flex",
     justifyContent: "center",
+});
+
+export const text = styleVariants({
+    xs: {
+        display: "flex",
+        flexDirection: "column",
+        gap: alias.spacing.xs,
+    },
+    m: {
+        display: "flex",
+        flexDirection: "column",
+        gap: alias.spacing.m,
+    },
 });
 
 export const title = style({

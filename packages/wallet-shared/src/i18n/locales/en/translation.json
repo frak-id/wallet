@@ -85,6 +85,11 @@
             "description": "As soon as a purchase is made through your sharing link, your earnings will appear here.",
             "confirm": "Got it"
         },
+        "transferredEmpty": {
+            "title": "You haven't transferred any earnings yet",
+            "description": "The total of your earnings will appear here once you make a transfer to your bank account.",
+            "confirm": "Got it"
+        },
         "activateNotifications": "<strong>Enable notifications</strong> <br /> to be notified when your gains are paid",
         "activateNotificationsRationale": "<strong>Enable notifications</strong> <br /> We need your permission to notify you when gains are paid",
         "openNotificationSettings": "<strong>Notifications disabled</strong> <br /> Open settings to enable notifications",

@@ -175,6 +175,37 @@ describe("Balance", () => {
         ).not.toBeInTheDocument();
     });
 
+    it("should open empty transferred gains modal when lifetime stat card is clicked with zero amount", async () => {
+        mockUseGetUserBalance.mockReturnValue({
+            userBalance: {
+                total: { eurAmount: 0 },
+            },
+        });
+
+        render(<Balance />);
+
+        const lifetimeCardButton = screen
+            .getByText("wallet.stats.lifetime")
+            .closest("button");
+
+        expect(lifetimeCardButton).toBeInTheDocument();
+
+        fireEvent.click(lifetimeCardButton as HTMLButtonElement);
+
+        expect(mockNavigate).not.toHaveBeenCalled();
+        expect(
+            await screen.findAllByText("wallet.transferredEmpty.title")
+        ).toHaveLength(2);
+        expect(
+            screen.getAllByText("wallet.transferredEmpty.description")
+        ).toHaveLength(2);
+        expect(
+            screen.getByRole("button", {
+                name: "wallet.transferredEmpty.confirm",
+            })
+        ).toBeInTheDocument();
+    });
+
     it("should navigate to offramp when amount is positive", () => {
         mockUseGetUserBalance.mockReturnValue({
             userBalance: {

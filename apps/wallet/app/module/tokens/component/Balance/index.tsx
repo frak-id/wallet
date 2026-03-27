@@ -17,6 +17,7 @@ import { useTranslation } from "react-i18next";
 import { isCryptoMode } from "@/module/common/utils/walletMode";
 import { EmptyPendingGainsModal } from "@/module/tokens/component/EmptyPendingGainsModal";
 import { EmptyTransferModal } from "@/module/tokens/component/EmptyTransferModal";
+import { EmptyTransferredGainsModal } from "@/module/tokens/component/EmptyTransferredGainsModal";
 import * as styles from "./index.css";
 
 export function Balance() {
@@ -28,6 +29,10 @@ export function Balance() {
         useState(false);
     const [isEmptyPendingGainsModalOpen, setIsEmptyPendingGainsModalOpen] =
         useState(false);
+    const [
+        isEmptyTransferredGainsModalOpen,
+        setIsEmptyTransferredGainsModalOpen,
+    ] = useState(false);
 
     const amount = userBalance?.total?.eurAmount ?? 0;
     const [integerPart, decimalPart] = amount.toFixed(2).split(".");
@@ -48,6 +53,12 @@ export function Balance() {
     const handlePendingClick = () => {
         if (amount <= 0) {
             setIsEmptyPendingGainsModalOpen(true);
+        }
+    };
+
+    const handleLifetimeClick = () => {
+        if (amount <= 0) {
+            setIsEmptyTransferredGainsModalOpen(true);
         }
     };
 
@@ -107,10 +118,17 @@ export function Balance() {
                 </Button>
             </Box>
 
-            <StatCardsRow onPendingClick={handlePendingClick} />
+            <StatCardsRow
+                onPendingClick={handlePendingClick}
+                onLifetimeClick={handleLifetimeClick}
+            />
             <EmptyPendingGainsModal
                 open={isEmptyPendingGainsModalOpen}
                 onOpenChange={setIsEmptyPendingGainsModalOpen}
+            />
+            <EmptyTransferredGainsModal
+                open={isEmptyTransferredGainsModalOpen}
+                onOpenChange={setIsEmptyTransferredGainsModalOpen}
             />
             <EmptyTransferModal
                 open={isEmptyTransferModalOpen}
@@ -122,9 +140,10 @@ export function Balance() {
 
 type StatCardsRowProps = {
     onPendingClick: () => void;
+    onLifetimeClick: () => void;
 };
 
-function StatCardsRow({ onPendingClick }: StatCardsRowProps) {
+function StatCardsRow({ onPendingClick, onLifetimeClick }: StatCardsRowProps) {
     const { t } = useTranslation();
     const { userBalance } = useGetUserBalance();
     const totalEur = userBalance?.total?.eurAmount ?? 0;
@@ -143,11 +162,18 @@ function StatCardsRow({ onPendingClick }: StatCardsRowProps) {
                     icon={<HourglassIcon width={14} height={14} />}
                 />
             </Box>
-            <StatCard
-                amount={`${totalEur.toFixed(0)}€`}
-                label={t("wallet.stats.lifetime")}
-                icon={<BarChartIcon width={14} height={14} />}
-            />
+            <Box
+                as="button"
+                type="button"
+                className={styles.statCardButton}
+                onClick={onLifetimeClick}
+            >
+                <StatCard
+                    amount={`${totalEur.toFixed(0)}€`}
+                    label={t("wallet.stats.lifetime")}
+                    icon={<BarChartIcon width={14} height={14} />}
+                />
+            </Box>
         </Box>
     );
 }

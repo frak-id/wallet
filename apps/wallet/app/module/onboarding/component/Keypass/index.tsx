@@ -147,6 +147,7 @@ function KeypassBlock({
                 titleAs="h1"
                 title={title}
                 description={description}
+                textSpacing="m"
                 footer={footer}
             >
                 {error && (

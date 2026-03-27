@@ -499,6 +499,11 @@ interface Resources {
                 description: "As soon as a purchase is made through your sharing link, your earnings will appear here.";
                 title: "You don't have any earnings yet";
             };
+            transferredEmpty: {
+                confirm: "Got it";
+                description: "The total of your earnings will appear here once you make a transfer to your bank account.";
+                title: "You haven't transferred any earnings yet";
+            };
             transferToBank: "Transfer to my bank";
             transferEmpty: {
                 description: "Share products with your friends to start earning money.";
