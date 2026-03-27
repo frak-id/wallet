@@ -33,6 +33,7 @@
         "amountRequired": "Le montant est requis",
         "added": "ajouté",
         "at": "à",
+        "accountId": "ID du compte :",
         "authenticator": "Authentificateur :",
         "balance": "Solde",
         "claim": "Réclamer",
@@ -72,6 +73,18 @@
     },
     "wallet": {
         "pageTitle": "Porte-monnaie",
+        "profile": {
+            "pageTitle": "Profil",
+            "notificationSettings": "Paramètres de notification",
+            "manageAction": "Gérer",
+            "unsubscribeNotifications": "Se désabonner",
+            "biometricPrompt": "Demander {{biometryLabel}} à chaque ouverture de l'app",
+            "recoveryConfigured": "Configurée",
+            "privacyPolicy": "Politique de confidentialité",
+            "helpSupport": "Aide & support",
+            "rateApp": "Noter l'application",
+            "lastConnection": "Dernière connexion"
+        },
         "transferToBank": "Transférer vers ma banque",
         "transferEmpty": {
             "title": "Tu n'as pas encore d'argent à transférer",

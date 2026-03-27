@@ -108,6 +108,7 @@ interface Resources {
             unlockWith: "Use {{type}} to unlock";
         };
         common: {
+            accountId: "Account ID:";
             added: "added";
             amountRequired: "Amount is required";
             at: "at";
@@ -230,6 +231,7 @@ interface Resources {
                 skip: "Later";
                 title: "Don't miss any reward!";
             };
+            recoveryCode: "I have a recovery code";
             slides: {
                 one: {
                     description: "Share your favorites and earn cash for every purchase you help generate.";
@@ -403,10 +405,27 @@ interface Resources {
                 pleaseEnter: "Please enter a password";
                 required: "Password is required";
             };
+            pendingEmpty: {
+                confirm: "Got it";
+                description: "As soon as a purchase is made through your sharing link, your earnings will appear here.";
+                title: "You don't have any earnings yet";
+            };
             pendingReferral: {
                 success: "You have claimed your reward successfully!";
                 text: "You got {{eurClaimable}} EUR pending thanks to your referral activities!";
                 title: "Pending referral reward";
+            };
+            profile: {
+                biometricPrompt: "Require {{biometryLabel}} at every app launch";
+                helpSupport: "Help & support";
+                lastConnection: "Last connection";
+                manageAction: "Manage";
+                notificationSettings: "Notification settings";
+                pageTitle: "Profil";
+                privacyPolicy: "Privacy Policy";
+                rateApp: "Rate the app";
+                recoveryConfigured: "Configured";
+                unsubscribeNotifications: "Unsubscribe";
             };
             recovery: {
                 continue: "Continue recovery";
@@ -494,21 +513,16 @@ interface Resources {
                     title: "Receive assets on <strong>Testnets</strong>";
                 };
             };
-            pendingEmpty: {
-                confirm: "Got it";
-                description: "As soon as a purchase is made through your sharing link, your earnings will appear here.";
-                title: "You don't have any earnings yet";
-            };
-            transferredEmpty: {
-                confirm: "Got it";
-                description: "The total of your earnings will appear here once you make a transfer to your bank account.";
-                title: "You haven't transferred any earnings yet";
-            };
-            transferToBank: "Transfer to my bank";
             transferEmpty: {
                 description: "Share products with your friends to start earning money.";
                 discover: "Discover offers";
                 title: "You don't have any money to transfer yet";
+            };
+            transferToBank: "Transfer to my bank";
+            transferredEmpty: {
+                confirm: "Got it";
+                description: "The total of your earnings will appear here once you make a transfer to your bank account.";
+                title: "You haven't transferred any earnings yet";
             };
             welcome: {
                 check1: "Explore partner brands";
