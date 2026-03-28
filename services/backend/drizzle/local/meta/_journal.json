@@ -85,6 +85,13 @@
             "when": 1774254782911,
             "tag": "0011_motionless_naoko",
             "breakpoints": true
+        },
+        {
+            "idx": 12,
+            "version": "7",
+            "when": 1774693761284,
+            "tag": "0012_workable_spot",
+            "breakpoints": true
         }
     ]
 }

@@ -1,3 +1,4 @@
+import { Input } from "@frak-labs/ui/component/forms/Input";
 import { useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { Panel } from "@/module/common/component/Panel";
@@ -11,7 +12,6 @@ import {
     FormMessage,
 } from "@/module/forms/Form";
 import { FormActions } from "@/module/forms/FormActions";
-import { InputWithToggle } from "@/module/forms/InputWithToggle";
 import { Switch } from "@/module/forms/Switch";
 import { useMerchant } from "@/module/merchant/hook/useMerchant";
 import { useMerchantUpdate } from "@/module/merchant/hook/useMerchantUpdate";
@@ -110,7 +110,7 @@ export function ExplorerSettings({ merchantId }: { merchantId: string }) {
                                 Hero image URL
                             </FormLabel>
                             <FormControl>
-                                <InputWithToggle
+                                <Input
                                     length={"medium"}
                                     placeholder={"https://..."}
                                     {...field}
@@ -127,7 +127,7 @@ export function ExplorerSettings({ merchantId }: { merchantId: string }) {
                         <FormItem>
                             <FormLabel weight={"medium"}>Logo URL</FormLabel>
                             <FormControl>
-                                <InputWithToggle
+                                <Input
                                     length={"medium"}
                                     placeholder={"https://..."}
                                     {...field}

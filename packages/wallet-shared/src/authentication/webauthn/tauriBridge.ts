@@ -283,7 +283,11 @@ export function getTauriCreateFn(): OxCreateFn {
     return async (options) => {
         if (!options?.publicKey) return null;
 
-        const pluginOptions = toPluginCreationOptions(options.publicKey);
+        const pluginOptions = toPluginCreationOptions(
+            options.publicKey as NonNullable<
+                CredentialCreationOptions["publicKey"]
+            >
+        );
         const origin = getWebAuthnOrigin();
 
         try {
@@ -355,7 +359,11 @@ export function getTauriGetFn(): OxGetFn {
     return async (options) => {
         if (!options?.publicKey) return null;
 
-        const pluginOptions = toPluginRequestOptions(options.publicKey);
+        const pluginOptions = toPluginRequestOptions(
+            options.publicKey as NonNullable<
+                CredentialRequestOptions["publicKey"]
+            >
+        );
         const origin = getWebAuthnOrigin();
 
         try {
