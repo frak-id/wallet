@@ -1,6 +1,8 @@
+export { ArrowLeftIcon } from "./ArrowLeftIcon";
 export { BarChartIcon } from "./BarChartIcon";
 export { BellIcon } from "./BellIcon";
 export { CheckIcon } from "./CheckIcon";
+export { CircleCheckIcon } from "./CircleCheckIcon";
 export { CloseIcon } from "./CloseIcon";
 export { CopyIcon } from "./CopyIcon";
 export { DocumentIcon } from "./DocumentIcon";

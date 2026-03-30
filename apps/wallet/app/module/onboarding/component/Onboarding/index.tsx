@@ -24,6 +24,8 @@ type OnboardingProps = {
     loginLabel?: string;
     /** Called when user clicks the login link */
     onLoginClick?: () => void;
+    /** Called when user clicks the recovery code button */
+    onRecoveryCodeClick?: () => void;
     /** The slide contents — each direct child = one slide */
     children: ReactNode;
 };
@@ -35,6 +37,7 @@ export function Onboarding({
     onFinish,
     loginLabel,
     onLoginClick,
+    onRecoveryCodeClick,
     children,
 }: OnboardingProps) {
     const { t } = useTranslation();
@@ -77,8 +80,12 @@ export function Onboarding({
                             {loginLabel}
                         </Button>
                     )}
-                    {currentIndex === 0 && (
-                        <Button size="small" variant="ghost">
+                    {currentIndex === 0 && onRecoveryCodeClick && (
+                        <Button
+                            size="small"
+                            variant="ghost"
+                            onClick={onRecoveryCodeClick}
+                        >
                             {t("onboarding.recoveryCode")}
                         </Button>
                     )}

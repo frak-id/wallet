@@ -107,6 +107,9 @@ function RegisterPage() {
                     onLoginClick={() =>
                         navigate({ to: "/login", replace: true })
                     }
+                    onRecoveryCodeClick={() =>
+                        navigate({ to: "/recovery-code" })
+                    }
                     onFinish={() => {
                         // Blur active element before opening drawer to prevent
                         // aria-hidden conflict with focused element inside #root

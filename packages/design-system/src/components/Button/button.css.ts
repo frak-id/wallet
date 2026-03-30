@@ -17,6 +17,11 @@ export const button = recipe({
         ":focus": {
             outline: "none",
         },
+        ":disabled": {
+            backgroundColor: vars.surface.disabled,
+            color: vars.text.disabled,
+            cursor: "not-allowed",
+        },
         lineHeight: "100%",
     },
     variants: {

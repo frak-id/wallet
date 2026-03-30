@@ -349,6 +349,18 @@
             "generic": "An error occurred. Please try again."
         }
     },
+    "recoveryCode": {
+        "title": "Recover your code",
+        "description": "Paste the code copied from wallet.frak.id to recover your earnings.",
+        "paste": "Paste the code",
+        "validate": "Validate the code",
+        "digitLabel": "Digit",
+        "error": "Incorrect or expired code — check the code copied from wallet.frak.id",
+        "success": {
+            "title": "Your referral link has been found!",
+            "description": "You'll receive a notification as soon as a friend purchases via your link."
+        }
+    },
     "onboarding": {
         "start": "Get started",
         "continue": "Continue",

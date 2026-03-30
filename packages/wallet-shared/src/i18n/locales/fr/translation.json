@@ -347,6 +347,18 @@
             "generic": "Une erreur est survenue. Veuillez réessayer."
         }
     },
+    "recoveryCode": {
+        "title": "R\u00e9cup\u00e9ration de ton code",
+        "description": "Colle le code copi\u00e9 depuis wallet.frak.id pour r\u00e9cup\u00e9rer tes gains.",
+        "paste": "Coller le code",
+        "validate": "Valider le code",
+        "digitLabel": "Chiffre",
+        "error": "Code incorrect ou expiré — vérifie le code copié depuis wallet.frak.id",
+        "success": {
+            "title": "Ton lien de parrainage a bien été retrouvé !",
+            "description": "Tu recevras une notification dès qu'un·e ami·e achète via ton lien."
+        }
+    },
     "onboarding": {
         "start": "Commencer",
         "continue": "Continuer",

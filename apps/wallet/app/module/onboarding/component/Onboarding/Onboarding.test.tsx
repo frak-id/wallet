@@ -119,7 +119,25 @@ describe("Onboarding", () => {
         ).toBeInTheDocument();
     });
 
-    it("should render recovery code button on first slide", () => {
+    it("should render recovery code button on first slide when handler provided", () => {
+        const onFinish = vi.fn();
+        const onRecoveryCodeClick = vi.fn();
+        render(
+            <Onboarding
+                buttonLabel="Next"
+                onFinish={onFinish}
+                onRecoveryCodeClick={onRecoveryCodeClick}
+            >
+                <div>Slide 1</div>
+            </Onboarding>
+        );
+
+        expect(
+            screen.getByRole("button", { name: "onboarding.recoveryCode" })
+        ).toBeInTheDocument();
+    });
+
+    it("should not render recovery code button when no handler provided", () => {
         const onFinish = vi.fn();
         render(
             <Onboarding buttonLabel="Next" onFinish={onFinish}>
@@ -128,7 +146,9 @@ describe("Onboarding", () => {
         );
 
         expect(
-            screen.getByRole("button", { name: "onboarding.recoveryCode" })
-        ).toBeInTheDocument();
+            screen.queryByRole("button", {
+                name: "onboarding.recoveryCode",
+            })
+        ).not.toBeInTheDocument();
     });
 });
