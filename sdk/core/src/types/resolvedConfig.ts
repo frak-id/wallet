@@ -40,7 +40,7 @@ export type ResolvedSdkConfig = {
     logoUrl?: string;
     homepageLink?: string;
     currency?: Currency;
-    lang: Language;
+    lang?: Language;
     /** When true, all SDK components should be hidden */
     hidden?: boolean;
     css?: string;
@@ -61,6 +61,15 @@ export type SdkResolvedConfig = {
     /** Merchant ID from resolution */
     merchantId: string;
 
+    /** Domain returned by the resolve endpoint */
+    domain?: string;
+
+    /** Domains allowed for this merchant (used by iframe trust check) */
+    allowedDomains?: string[];
+
+    /** Whether the resolve returned a backend sdkConfig object */
+    hasRawSdkConfig?: boolean;
+
     /** Merged metadata fields */
     name?: string;
     logoUrl?: string;
@@ -70,6 +79,9 @@ export type SdkResolvedConfig = {
 
     /** When true, all SDK components should be hidden */
     hidden?: boolean;
+
+    /** Global CSS from backend config (passed to iframe) */
+    css?: string;
 
     /** Global translations (for reference / component fallback) */
     translations?: Record<string, string>;

@@ -82,7 +82,7 @@ export function ButtonShare({
         () => componentConfig?.showWallet ?? rawShowWallet !== undefined,
         [componentConfig?.showWallet, rawShowWallet]
     );
-    const { isClientReady, isHidden } = useClientReady();
+    const { shouldRender, isHidden, isClientReady } = useClientReady();
     const { reward } = useReward(
         shouldUseReward && isClientReady,
         resolvedTargetInteraction
@@ -120,7 +120,7 @@ export function ButtonShare({
         }
     }, [showWallet, handleShare, resolvedTargetInteraction, placementId]);
 
-    if (!isClientReady || isHidden) {
+    if (!shouldRender || isHidden) {
         return null;
     }
 
@@ -128,6 +128,7 @@ export function ButtonShare({
         <>
             <button
                 type={"button"}
+                disabled={!isClientReady}
                 className={cx(
                     styles.buttonShare,
                     styles.buttonShare__fadeIn,

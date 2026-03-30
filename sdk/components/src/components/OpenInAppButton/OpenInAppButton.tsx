@@ -38,12 +38,12 @@ export function OpenInAppButton({
     classname = "",
 }: OpenInAppButtonProps) {
     const placement = usePlacement(placementId);
-    const { isClientReady, isHidden } = useClientReady();
+    const { shouldRender, isHidden, isClientReady } = useClientReady();
     const { isMobile } = useIsMobile();
 
     const resolvedText = placement?.components?.openInApp?.text ?? text;
 
-    if (!isMobile || !isClientReady || isHidden) {
+    if (!isMobile || !shouldRender || isHidden) {
         return null;
     }
 
@@ -55,6 +55,7 @@ export function OpenInAppButton({
         <button
             type="button"
             aria-label="Open in Frak Wallet app"
+            disabled={!isClientReady}
             className={cx(
                 styles.button,
                 styles.button__fadeIn,

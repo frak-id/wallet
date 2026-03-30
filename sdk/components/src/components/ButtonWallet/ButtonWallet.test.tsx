@@ -13,7 +13,11 @@ vi.mock("./utils", () => ({
 
 // Mock the hooks
 vi.mock("@/hooks/useClientReady", () => ({
-    useClientReady: vi.fn(() => ({ isClientReady: true, isHidden: false })),
+    useClientReady: vi.fn(() => ({
+        shouldRender: true,
+        isHidden: false,
+        isClientReady: true,
+    })),
 }));
 
 vi.mock("@/hooks/useReward", () => ({
@@ -24,8 +28,9 @@ describe("ButtonWallet", () => {
     beforeEach(() => {
         vi.clearAllMocks();
         vi.mocked(useClientReadyHook.useClientReady).mockReturnValue({
-            isClientReady: true,
+            shouldRender: true,
             isHidden: false,
+            isClientReady: true,
         });
         window.FrakSetup.modalWalletConfig = {
             metadata: {
@@ -46,10 +51,11 @@ describe("ButtonWallet", () => {
         expect(button).toHaveClass("custom-class");
     });
 
-    it("should render nothing when client is not ready", () => {
+    it("should render nothing when config is not resolved", () => {
         vi.mocked(useClientReadyHook.useClientReady).mockReturnValue({
-            isClientReady: false,
+            shouldRender: false,
             isHidden: false,
+            isClientReady: false,
         });
 
         const { container } = render(<ButtonWallet />);
@@ -58,8 +64,9 @@ describe("ButtonWallet", () => {
 
     it("should render nothing when SDK is hidden", () => {
         vi.mocked(useClientReadyHook.useClientReady).mockReturnValue({
-            isClientReady: true,
+            shouldRender: true,
             isHidden: true,
+            isClientReady: true,
         });
 
         const { container } = render(<ButtonWallet />);
@@ -109,10 +116,24 @@ describe("ButtonWallet", () => {
         expect(button.textContent).not.toContain("eur");
     });
 
+    it("should render disabled button when client is not ready", () => {
+        vi.mocked(useClientReadyHook.useClientReady).mockReturnValue({
+            shouldRender: true,
+            isHidden: false,
+            isClientReady: false,
+        });
+
+        const { container } = render(<ButtonWallet />);
+        const button = container.querySelector("button");
+        expect(button).toBeInTheDocument();
+        expect(button).toBeDisabled();
+    });
+
     it("should pass targetInteraction to useReward hook", () => {
         vi.mocked(useClientReadyHook.useClientReady).mockReturnValue({
-            isClientReady: true,
+            shouldRender: true,
             isHidden: false,
+            isClientReady: true,
         });
         render(
             <ButtonWallet

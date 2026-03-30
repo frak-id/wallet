@@ -1,5 +1,6 @@
+import * as coreSdkIndex from "@frak-labs/core-sdk";
 import { setupClient } from "@frak-labs/core-sdk";
-import * as coreSdk from "@frak-labs/core-sdk/bundle";
+import * as coreSdkActions from "@frak-labs/core-sdk/actions";
 import { openWalletModal } from "../components/ButtonWallet/utils";
 import { dispatchClientReadyEvent } from "./clientReady";
 import { setupModalConfig, setupReferral } from "./setup";
@@ -11,8 +12,7 @@ import { setupModalConfig, setupReferral } from "./setup";
  * @returns {Promise<void>}
  */
 export async function initFrakSdk(): Promise<void> {
-    // Export Frak core sdk
-    window.FrakSetup.core = coreSdk;
+    window.FrakSetup.core = { ...coreSdkIndex, ...coreSdkActions };
 
     // Pre-checks passed?
     if (!preChecks()) {

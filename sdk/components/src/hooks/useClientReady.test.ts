@@ -1,10 +1,10 @@
 import { sdkConfigStore } from "@frak-labs/core-sdk";
 import { renderHook, waitFor } from "@testing-library/preact";
+import { act } from "preact/test-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as clientReadyUtils from "@/utils/clientReady";
 import { useClientReady } from "./useClientReady";
 
-// Mock the clientReady utils - we need to preserve the actual implementation structure
 vi.mock("@/utils/clientReady", async () => {
     const actual = await vi.importActual<typeof import("@/utils/clientReady")>(
         "@/utils/clientReady"
@@ -12,15 +12,12 @@ vi.mock("@/utils/clientReady", async () => {
     return {
         ...actual,
         onClientReady: vi.fn((action, callback) => {
-            // If client exists and action is "add", call callback immediately
             if (window.FrakSetup?.client && action === "add") {
                 callback();
             } else if (action === "add") {
-                // Otherwise, add event listener
-                window.addEventListener("frakClientReady", callback, false);
+                window.addEventListener("frak:client", callback, false);
             } else {
-                // Remove event listener
-                window.removeEventListener("frakClientReady", callback, false);
+                window.removeEventListener("frak:client", callback, false);
             }
         }),
     };
@@ -29,113 +26,171 @@ vi.mock("@/utils/clientReady", async () => {
 describe("useClientReady", () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        // Mark the SDK config store as resolved so the hook can proceed
         sdkConfigStore.setConfig({
             isResolved: true,
             merchantId: "test-merchant",
         });
-        // Reset window.FrakSetup.client
-        window.FrakSetup.client = {
-            config: {
-                metadata: {
-                    name: "Test App",
-                    currency: "eur",
+        window.FrakSetup = {
+            ...window.FrakSetup,
+            client: {
+                config: {
+                    metadata: {
+                        name: "Test App",
+                        currency: "eur",
+                    },
                 },
-            },
-        } as any;
+            } as any,
+        };
     });
 
-    it("should return disabled state initially when client is not ready", () => {
-        window.FrakSetup.client = undefined;
-        const { result } = renderHook(() => useClientReady());
-
-        expect(result.current.isClientReady).toBe(false);
-        expect(result.current.isHidden).toBe(false);
-    });
-
-    it("should return enabled state when client is already ready", () => {
-        window.FrakSetup.client = {
-            config: {
-                metadata: {
-                    name: "Test App",
-                    currency: "eur",
-                },
-            },
-        } as any;
-
-        const { result } = renderHook(() => useClientReady());
-
-        expect(result.current.isClientReady).toBe(true);
-        expect(result.current.isHidden).toBe(false);
-    });
-
-    it("should return isHidden true when config has hidden flag", () => {
-        sdkConfigStore.setConfig({
-            isResolved: true,
-            merchantId: "test-merchant",
-            hidden: true,
+    describe("shouldRender", () => {
+        it("should be true when config is resolved", () => {
+            const { result } = renderHook(() => useClientReady());
+            expect(result.current.shouldRender).toBe(true);
         });
 
-        window.FrakSetup.client = {
-            config: {
-                metadata: {
-                    name: "Test App",
-                    currency: "eur",
-                },
-            },
-        } as any;
+        it("should be false when config is not resolved and waitForBackendConfig is true", () => {
+            sdkConfigStore.setConfig({
+                isResolved: false,
+                merchantId: "",
+            });
+            const { result } = renderHook(() => useClientReady());
+            expect(result.current.shouldRender).toBe(false);
+        });
 
-        const { result } = renderHook(() => useClientReady());
+        it("should be true when waitForBackendConfig is false regardless of config state", () => {
+            sdkConfigStore.setConfig({
+                isResolved: false,
+                merchantId: "",
+            });
+            window.FrakSetup.config = {
+                ...window.FrakSetup.config,
+                waitForBackendConfig: false,
+            } as any;
 
-        expect(result.current.isClientReady).toBe(true);
-        expect(result.current.isHidden).toBe(true);
+            const { result } = renderHook(() => useClientReady());
+            expect(result.current.shouldRender).toBe(true);
+        });
+
+        it("should become true when frak:config event fires with resolved config", async () => {
+            sdkConfigStore.setConfig({
+                isResolved: false,
+                merchantId: "",
+            });
+            const { result } = renderHook(() => useClientReady());
+            expect(result.current.shouldRender).toBe(false);
+
+            act(() => {
+                window.dispatchEvent(
+                    new CustomEvent("frak:config", {
+                        detail: { isResolved: true, merchantId: "test" },
+                    })
+                );
+            });
+
+            await waitFor(() => {
+                expect(result.current.shouldRender).toBe(true);
+            });
+        });
     });
 
-    it("should subscribe to client ready event on mount", () => {
-        window.FrakSetup.client = undefined;
-        renderHook(() => useClientReady());
+    describe("isClientReady", () => {
+        it("should be false when client is not set", () => {
+            window.FrakSetup.client = undefined;
+            const { result } = renderHook(() => useClientReady());
+            expect(result.current.isClientReady).toBe(false);
+        });
 
-        expect(clientReadyUtils.onClientReady).toHaveBeenCalledWith(
-            "add",
-            expect.any(Function)
-        );
-    });
-
-    it("should unsubscribe from client ready event on unmount", () => {
-        window.FrakSetup.client = undefined;
-        const { unmount } = renderHook(() => useClientReady());
-
-        unmount();
-
-        expect(clientReadyUtils.onClientReady).toHaveBeenCalledWith(
-            "remove",
-            expect.any(Function)
-        );
-    });
-
-    it("should update state when client ready event is dispatched", async () => {
-        window.FrakSetup.client = undefined;
-        let callback: (() => void) | undefined;
-
-        vi.mocked(clientReadyUtils.onClientReady).mockImplementation(
-            (action, cb) => {
-                if (action === "add") {
-                    callback = cb;
-                }
-            }
-        );
-
-        const { result } = renderHook(() => useClientReady());
-
-        expect(result.current.isClientReady).toBe(false);
-
-        // Simulate client ready event
-        if (callback) {
-            callback();
-        }
-
-        await waitFor(() => {
+        it("should be true when client already exists", () => {
+            const { result } = renderHook(() => useClientReady());
             expect(result.current.isClientReady).toBe(true);
+        });
+
+        it("should become true when frak:client event fires", async () => {
+            window.FrakSetup.client = undefined;
+            let callback: (() => void) | undefined;
+
+            vi.mocked(clientReadyUtils.onClientReady).mockImplementation(
+                (action, cb) => {
+                    if (action === "add") {
+                        callback = cb;
+                    }
+                }
+            );
+
+            const { result } = renderHook(() => useClientReady());
+            expect(result.current.isClientReady).toBe(false);
+
+            act(() => {
+                callback?.();
+            });
+
+            await waitFor(() => {
+                expect(result.current.isClientReady).toBe(true);
+            });
+        });
+    });
+
+    describe("isHidden", () => {
+        it("should be false by default", () => {
+            const { result } = renderHook(() => useClientReady());
+            expect(result.current.isHidden).toBe(false);
+        });
+
+        it("should be true when config has hidden flag", () => {
+            sdkConfigStore.setConfig({
+                isResolved: true,
+                merchantId: "test-merchant",
+                hidden: true,
+            });
+
+            const { result } = renderHook(() => useClientReady());
+            expect(result.current.isHidden).toBe(true);
+        });
+
+        it("should update when frak:config event changes hidden", async () => {
+            const { result } = renderHook(() => useClientReady());
+            expect(result.current.isHidden).toBe(false);
+
+            act(() => {
+                window.dispatchEvent(
+                    new CustomEvent("frak:config", {
+                        detail: {
+                            isResolved: true,
+                            merchantId: "test",
+                            hidden: true,
+                        },
+                    })
+                );
+            });
+
+            await waitFor(() => {
+                expect(result.current.isHidden).toBe(true);
+            });
+        });
+    });
+
+    describe("lifecycle", () => {
+        it("should subscribe to client ready event on mount", () => {
+            window.FrakSetup.client = undefined;
+            renderHook(() => useClientReady());
+
+            expect(clientReadyUtils.onClientReady).toHaveBeenCalledWith(
+                "add",
+                expect.any(Function)
+            );
+        });
+
+        it("should unsubscribe from client ready event on unmount", () => {
+            window.FrakSetup.client = undefined;
+            const { unmount } = renderHook(() => useClientReady());
+
+            unmount();
+
+            expect(clientReadyUtils.onClientReady).toHaveBeenCalledWith(
+                "remove",
+                expect.any(Function)
+            );
         });
     });
 });

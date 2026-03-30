@@ -70,7 +70,7 @@ export function ButtonWallet({
         () => rawUseReward !== undefined,
         [rawUseReward]
     );
-    const { isClientReady, isHidden } = useClientReady();
+    const { shouldRender, isHidden, isClientReady } = useClientReady();
     const { reward } = useReward(
         shouldUseReward && isClientReady,
         resolvedTargetInteraction
@@ -84,7 +84,7 @@ export function ButtonWallet({
         setPosition(placementPosition ?? configPosition ?? "right");
     }, [placement?.components?.buttonWallet?.position]);
 
-    if (!isClientReady || isHidden) {
+    if (!shouldRender || isHidden) {
         return null;
     }
 
@@ -92,6 +92,7 @@ export function ButtonWallet({
         <button
             type={"button"}
             aria-label="Open wallet"
+            disabled={!isClientReady}
             class={cx(
                 styles.button,
                 styles.button__fadeIn,

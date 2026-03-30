@@ -9,7 +9,11 @@ import * as useShareModalHook from "./hooks/useShareModal";
 
 // Mock the hooks
 vi.mock("@/hooks/useClientReady", () => ({
-    useClientReady: vi.fn(() => ({ isClientReady: true, isHidden: false })),
+    useClientReady: vi.fn(() => ({
+        shouldRender: true,
+        isHidden: false,
+        isClientReady: true,
+    })),
 }));
 
 vi.mock("@/hooks/useReward", () => ({
@@ -29,8 +33,9 @@ describe("ButtonShare", () => {
         vi.clearAllMocks();
         // Reset mocks to default state
         vi.mocked(useClientReadyHook.useClientReady).mockReturnValue({
-            isClientReady: true,
+            shouldRender: true,
             isHidden: false,
+            isClientReady: true,
         });
         vi.mocked(useRewardHook.useReward).mockReturnValue({
             reward: undefined,
@@ -60,10 +65,11 @@ describe("ButtonShare", () => {
         expect(button).toHaveClass("custom-class");
     });
 
-    it("should render nothing when client is not ready", () => {
+    it("should render nothing when config is not resolved", () => {
         vi.mocked(useClientReadyHook.useClientReady).mockReturnValue({
-            isClientReady: false,
+            shouldRender: false,
             isHidden: false,
+            isClientReady: false,
         });
 
         const { container } = render(<ButtonShare />);
@@ -72,8 +78,9 @@ describe("ButtonShare", () => {
 
     it("should render nothing when SDK is hidden", () => {
         vi.mocked(useClientReadyHook.useClientReady).mockReturnValue({
-            isClientReady: true,
+            shouldRender: true,
             isHidden: true,
+            isClientReady: true,
         });
 
         const { container } = render(<ButtonShare />);

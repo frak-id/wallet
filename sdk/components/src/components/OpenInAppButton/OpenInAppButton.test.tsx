@@ -6,7 +6,11 @@ import * as openInAppUtil from "@/utils/openInApp";
 import { OpenInAppButton } from "./OpenInAppButton";
 
 vi.mock("@/hooks/useClientReady", () => ({
-    useClientReady: vi.fn(() => ({ isClientReady: true, isHidden: false })),
+    useClientReady: vi.fn(() => ({
+        shouldRender: true,
+        isHidden: false,
+        isClientReady: true,
+    })),
 }));
 
 vi.mock("@/hooks/useIsMobile", () => ({
@@ -22,8 +26,9 @@ describe("OpenInAppButton", () => {
         cleanup();
         vi.clearAllMocks();
         vi.mocked(useClientReadyHook.useClientReady).mockReturnValue({
-            isClientReady: true,
+            shouldRender: true,
             isHidden: false,
+            isClientReady: true,
         });
         vi.mocked(useIsMobileHook.useIsMobile).mockReturnValue({
             isMobile: true,
@@ -74,10 +79,11 @@ describe("OpenInAppButton", () => {
         expect(button).toBeInTheDocument();
     });
 
-    it("should render nothing when client is not ready", () => {
+    it("should render nothing when config is not resolved", () => {
         vi.mocked(useClientReadyHook.useClientReady).mockReturnValue({
-            isClientReady: false,
+            shouldRender: false,
             isHidden: false,
+            isClientReady: false,
         });
 
         const { container } = render(<OpenInAppButton />);
@@ -87,8 +93,9 @@ describe("OpenInAppButton", () => {
 
     it("should render nothing when SDK is hidden", () => {
         vi.mocked(useClientReadyHook.useClientReady).mockReturnValue({
-            isClientReady: true,
+            shouldRender: true,
             isHidden: true,
+            isClientReady: true,
         });
 
         const { container } = render(<OpenInAppButton />);
@@ -96,10 +103,11 @@ describe("OpenInAppButton", () => {
         expect(button).toBeNull();
     });
 
-    it("should render when client is ready and not hidden", () => {
+    it("should render when config is resolved and not hidden", () => {
         vi.mocked(useClientReadyHook.useClientReady).mockReturnValue({
-            isClientReady: true,
+            shouldRender: true,
             isHidden: false,
+            isClientReady: true,
         });
         const { container } = render(<OpenInAppButton />);
         const button = container.querySelector("button");

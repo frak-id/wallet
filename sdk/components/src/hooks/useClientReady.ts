@@ -1,39 +1,51 @@
-import { sdkConfigStore } from "@frak-labs/core-sdk";
-import { useCallback, useEffect, useRef, useState } from "preact/hooks";
+import { type SdkResolvedConfig, sdkConfigStore } from "@frak-labs/core-sdk";
+import { useEffect, useState } from "preact/hooks";
 import { onClientReady } from "@/utils/clientReady";
 
 export function useClientReady() {
-    const [disabled, setDisabled] = useState(true);
-    const [isHidden, setIsHidden] = useState(false);
-    const unsubscribeRef = useRef<(() => void) | null>(null);
-
-    const handleClientReady = useCallback(() => {
-        const shouldWaitForBackendConfig =
+    const [shouldRender, setShouldRender] = useState(() => {
+        const mustWaitForConfig =
             window.FrakSetup?.config?.waitForBackendConfig !== false;
+        if (!mustWaitForConfig) return true;
+        return sdkConfigStore.isResolved;
+    });
 
-        if (!shouldWaitForBackendConfig || sdkConfigStore.isResolved) {
-            setDisabled(false);
-            setIsHidden(sdkConfigStore.getConfig().hidden ?? false);
-            return;
-        }
+    const [isHidden, setIsHidden] = useState(
+        () => sdkConfigStore.getConfig().hidden ?? false
+    );
 
-        unsubscribeRef.current = sdkConfigStore.subscribe((config) => {
-            if (!config.isResolved) return;
-            setDisabled(false);
-            setIsHidden(config.hidden ?? false);
-            unsubscribeRef.current?.();
-            unsubscribeRef.current = null;
-        });
-    }, []);
+    const [isClientReady, setIsClientReady] = useState(
+        () => !!window.FrakSetup?.client
+    );
 
     useEffect(() => {
-        onClientReady("add", handleClientReady);
-        return () => {
-            onClientReady("remove", handleClientReady);
-            unsubscribeRef.current?.();
-            unsubscribeRef.current = null;
-        };
-    }, [handleClientReady]);
+        // Re-check store to catch events fired between render and effect mount
+        const currentConfig = sdkConfigStore.getConfig();
+        if (currentConfig.isResolved) {
+            setShouldRender(true);
+            setIsHidden(currentConfig.hidden ?? false);
+        }
+        if (window.FrakSetup?.client) {
+            setIsClientReady(true);
+        }
 
-    return { isClientReady: !disabled, isHidden };
+        const onConfig = (e: CustomEvent<SdkResolvedConfig>) => {
+            const config = e.detail;
+            if (config.isResolved) {
+                setShouldRender(true);
+            }
+            setIsHidden(config.hidden ?? false);
+        };
+        window.addEventListener("frak:config", onConfig);
+
+        const handleReady = () => setIsClientReady(true);
+        onClientReady("add", handleReady);
+
+        return () => {
+            window.removeEventListener("frak:config", onConfig);
+            onClientReady("remove", handleReady);
+        };
+    }, []);
+
+    return { shouldRender, isHidden, isClientReady };
 }

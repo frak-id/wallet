@@ -1,5 +1,5 @@
-import * as coreSdkActions from "@frak-labs/core-sdk";
-import * as coreSdk from "@frak-labs/core-sdk/bundle";
+import * as coreSdkIndex from "@frak-labs/core-sdk";
+import * as coreSdkActions from "@frak-labs/core-sdk/actions";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as buttonWalletUtils from "../components/ButtonWallet/utils";
 import * as clientReadyUtils from "./clientReady";
@@ -7,12 +7,12 @@ import { initFrakSdk } from "./initFrakSdk";
 import * as setupUtils from "./setup";
 
 // Mock dependencies
-vi.mock("@frak-labs/core-sdk/bundle", () => ({
-    default: {},
-}));
-
 vi.mock("@frak-labs/core-sdk", () => ({
     setupClient: vi.fn(),
+}));
+
+vi.mock("@frak-labs/core-sdk/actions", () => ({
+    displayModal: vi.fn(),
 }));
 
 vi.mock("./clientReady", () => ({
@@ -57,7 +57,10 @@ describe("initFrakSdk", () => {
     it("should export core SDK to window.FrakSetup.core", async () => {
         await initFrakSdk();
 
-        expect(window.FrakSetup.core).toBe(coreSdk);
+        expect(window.FrakSetup.core).toEqual({
+            ...coreSdkIndex,
+            ...coreSdkActions,
+        });
     });
 
     it("should not initialize if setup is already in progress", async () => {
@@ -65,7 +68,7 @@ describe("initFrakSdk", () => {
 
         await initFrakSdk();
 
-        expect(coreSdkActions.setupClient).not.toHaveBeenCalled();
+        expect(coreSdkIndex.setupClient).not.toHaveBeenCalled();
     });
 
     it("should not initialize if client already exists", async () => {
@@ -75,7 +78,7 @@ describe("initFrakSdk", () => {
 
         await initFrakSdk();
 
-        expect(coreSdkActions.setupClient).not.toHaveBeenCalled();
+        expect(coreSdkIndex.setupClient).not.toHaveBeenCalled();
     });
 
     it("should not initialize if config is missing", async () => {
@@ -87,7 +90,7 @@ describe("initFrakSdk", () => {
 
         await initFrakSdk();
 
-        expect(coreSdkActions.setupClient).not.toHaveBeenCalled();
+        expect(coreSdkIndex.setupClient).not.toHaveBeenCalled();
         expect(consoleErrorSpy).toHaveBeenCalledWith(
             "[Frak SDK] Configuration not found. Please ensure window.FrakSetup.config is set."
         );
@@ -103,7 +106,7 @@ describe("initFrakSdk", () => {
             },
         } as any;
 
-        vi.mocked(coreSdkActions.setupClient).mockResolvedValue(mockClient);
+        vi.mocked(coreSdkIndex.setupClient).mockResolvedValue(mockClient);
 
         const consoleLogSpy = vi
             .spyOn(console, "log")
@@ -111,7 +114,7 @@ describe("initFrakSdk", () => {
 
         await initFrakSdk();
 
-        expect(coreSdkActions.setupClient).toHaveBeenCalledWith({
+        expect(coreSdkIndex.setupClient).toHaveBeenCalledWith({
             config: window.FrakSetup.config,
         });
         expect(window.FrakSetup.client).toBe(mockClient);
@@ -130,7 +133,7 @@ describe("initFrakSdk", () => {
     });
 
     it("should handle client creation failure", async () => {
-        vi.mocked(coreSdkActions.setupClient).mockResolvedValue(undefined);
+        vi.mocked(coreSdkIndex.setupClient).mockResolvedValue(undefined);
 
         const consoleErrorSpy = vi
             .spyOn(console, "error")
@@ -154,7 +157,7 @@ describe("initFrakSdk", () => {
             },
         } as any;
 
-        vi.mocked(coreSdkActions.setupClient).mockResolvedValue(mockClient);
+        vi.mocked(coreSdkIndex.setupClient).mockResolvedValue(mockClient);
 
         // Set up URL search params
         Object.defineProperty(window, "location", {
@@ -185,7 +188,7 @@ describe("initFrakSdk", () => {
             },
         } as any;
 
-        vi.mocked(coreSdkActions.setupClient).mockResolvedValue(mockClient);
+        vi.mocked(coreSdkIndex.setupClient).mockResolvedValue(mockClient);
 
         await initFrakSdk();
 
@@ -199,7 +202,7 @@ describe("initFrakSdk", () => {
             },
         } as any;
 
-        vi.mocked(coreSdkActions.setupClient).mockResolvedValue(mockClient);
+        vi.mocked(coreSdkIndex.setupClient).mockResolvedValue(mockClient);
 
         Object.defineProperty(window, "location", {
             value: {

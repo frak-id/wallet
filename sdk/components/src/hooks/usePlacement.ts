@@ -1,26 +1,31 @@
-import { type ResolvedPlacement, sdkConfigStore } from "@frak-labs/core-sdk";
-import { useEffect, useState } from "preact/hooks";
+import {
+    type ResolvedPlacement,
+    type SdkResolvedConfig,
+    sdkConfigStore,
+} from "@frak-labs/core-sdk";
+import { useEffect, useMemo, useState } from "preact/hooks";
+
+function getPlacement(id: string): ResolvedPlacement | undefined {
+    return sdkConfigStore.getConfig().placements?.[id];
+}
 
 export function usePlacement(
     placementId?: string
 ): ResolvedPlacement | undefined {
-    const [placement, setPlacement] = useState<ResolvedPlacement | undefined>(
-        () =>
-            placementId ? sdkConfigStore.getPlacement(placementId) : undefined
-    );
+    const [configVersion, setConfigVersion] = useState(0);
 
     useEffect(() => {
-        if (!placementId) {
-            setPlacement(undefined);
-            return;
-        }
+        const onConfig = (_e: CustomEvent<SdkResolvedConfig>) => {
+            setConfigVersion((v) => v + 1);
+        };
+        window.addEventListener("frak:config", onConfig);
+        // Re-check in case event fired between render and effect mount
+        setConfigVersion((v) => v + 1);
+        return () => window.removeEventListener("frak:config", onConfig);
+    }, []);
 
-        setPlacement(sdkConfigStore.getPlacement(placementId));
-
-        return sdkConfigStore.subscribe((config) => {
-            setPlacement(config.placements?.[placementId]);
-        });
-    }, [placementId]);
-
-    return placement;
+    return useMemo(
+        () => (placementId ? getPlacement(placementId) : undefined),
+        [placementId, configVersion]
+    );
 }

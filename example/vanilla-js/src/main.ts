@@ -53,7 +53,7 @@ function waitForClient(): Promise<FrakClient> {
     }
     return new Promise((resolve) => {
         window.addEventListener(
-            "frakClientReady",
+            "frak:client",
             () => {
                 if (window.FrakSetup?.client) {
                     resolve(window.FrakSetup.client);
@@ -232,7 +232,7 @@ async function handleModalPlacementI18n() {
     );
 
     const placement = "hero-share";
-    const resolved = sdkConfigStore.getPlacement(placement);
+    const resolved = sdkConfigStore.getConfig().placements?.[placement];
     log(
         `Placement "${placement}" resolved: ${resolved ? `components=${JSON.stringify(resolved.components)}, translations=${resolved.translations ? Object.keys(resolved.translations).length : 0} keys` : "NOT FOUND"}`,
         resolved ? "info" : "warn",
