@@ -293,6 +293,7 @@ async function postConnectionSetup({
                     resolvedConfig.homepageLink ?? config.metadata.homepageLink,
                 lang: resolvedConfig.lang ?? config.metadata.lang,
                 currency: resolvedConfig.currency ?? config.metadata.currency,
+                hidden: resolvedConfig.hidden,
                 translations: resolvedConfig.translations,
                 placements: resolvedConfig.placements,
             });

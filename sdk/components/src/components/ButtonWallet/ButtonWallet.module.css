@@ -15,6 +15,20 @@
     font-size: 24px;
 }
 
+.button__fadeIn {
+    animation: fadeIn 300ms ease-in;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
 .button__left {
     left: 20px;
 }

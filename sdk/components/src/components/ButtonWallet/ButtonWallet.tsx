@@ -70,7 +70,7 @@ export function ButtonWallet({
         () => rawUseReward !== undefined,
         [rawUseReward]
     );
-    const { isClientReady } = useClientReady();
+    const { isClientReady, isHidden } = useClientReady();
     const { reward } = useReward(
         shouldUseReward && isClientReady,
         resolvedTargetInteraction
@@ -84,19 +84,23 @@ export function ButtonWallet({
         setPosition(placementPosition ?? configPosition ?? "right");
     }, [placement?.components?.buttonWallet?.position]);
 
+    if (!isClientReady || isHidden) {
+        return null;
+    }
+
     return (
         <button
             type={"button"}
             aria-label="Open wallet"
             class={cx(
                 styles.button,
+                styles.button__fadeIn,
                 position === "left"
                     ? styles.button__left
                     : styles.button__right,
                 classname,
                 "override"
             )}
-            disabled={!isClientReady}
             onClick={() => {
                 trackEvent(window.FrakSetup.client, "wallet_button_clicked");
                 openWalletModal(resolvedTargetInteraction, placementId);

@@ -14,6 +14,7 @@ export type SdkIdentityFormValues = {
     homepageLink: string;
     currency: "" | "eur" | "usd" | "gbp";
     lang: "" | "en" | "fr";
+    hidden: boolean;
 };
 
 export type CssFormValues = {

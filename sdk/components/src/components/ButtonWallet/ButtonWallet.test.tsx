@@ -13,7 +13,7 @@ vi.mock("./utils", () => ({
 
 // Mock the hooks
 vi.mock("@/hooks/useClientReady", () => ({
-    useClientReady: vi.fn(() => ({ isClientReady: true })),
+    useClientReady: vi.fn(() => ({ isClientReady: true, isHidden: false })),
 }));
 
 vi.mock("@/hooks/useReward", () => ({
@@ -23,7 +23,10 @@ vi.mock("@/hooks/useReward", () => ({
 describe("ButtonWallet", () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        // Reset window.FrakSetup.modalWalletConfig
+        vi.mocked(useClientReadyHook.useClientReady).mockReturnValue({
+            isClientReady: true,
+            isHidden: false,
+        });
         window.FrakSetup.modalWalletConfig = {
             metadata: {
                 position: "right",
@@ -43,24 +46,24 @@ describe("ButtonWallet", () => {
         expect(button).toHaveClass("custom-class");
     });
 
-    it("should be disabled when client is not ready", () => {
+    it("should render nothing when client is not ready", () => {
         vi.mocked(useClientReadyHook.useClientReady).mockReturnValue({
             isClientReady: false,
+            isHidden: false,
         });
 
-        render(<ButtonWallet />);
-        const button = screen.getByRole("button", { name: "Open wallet" });
-        expect(button).toBeDisabled();
+        const { container } = render(<ButtonWallet />);
+        expect(container.querySelector("button")).toBeNull();
     });
 
-    it("should be enabled when client is ready", () => {
-        // Reset mock to return ready state
+    it("should render nothing when SDK is hidden", () => {
         vi.mocked(useClientReadyHook.useClientReady).mockReturnValue({
             isClientReady: true,
+            isHidden: true,
         });
-        render(<ButtonWallet />);
-        const button = screen.getByRole("button", { name: "Open wallet" });
-        expect(button).not.toBeDisabled();
+
+        const { container } = render(<ButtonWallet />);
+        expect(container.querySelector("button")).toBeNull();
     });
 
     it("should call openWalletModal on click", () => {
@@ -107,9 +110,9 @@ describe("ButtonWallet", () => {
     });
 
     it("should pass targetInteraction to useReward hook", () => {
-        // Reset mock before test
         vi.mocked(useClientReadyHook.useClientReady).mockReturnValue({
             isClientReady: true,
+            isHidden: false,
         });
         render(
             <ButtonWallet

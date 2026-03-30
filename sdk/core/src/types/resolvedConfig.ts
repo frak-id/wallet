@@ -41,6 +41,8 @@ export type ResolvedSdkConfig = {
     homepageLink?: string;
     currency?: Currency;
     lang: Language;
+    /** When true, all SDK components should be hidden */
+    hidden?: boolean;
     css?: string;
     translations?: Record<string, string>;
     placements?: Record<string, ResolvedPlacement>;
@@ -65,6 +67,9 @@ export type SdkResolvedConfig = {
     homepageLink?: string;
     lang?: Language;
     currency?: Currency;
+
+    /** When true, all SDK components should be hidden */
+    hidden?: boolean;
 
     /** Global translations (for reference / component fallback) */
     translations?: Record<string, string>;

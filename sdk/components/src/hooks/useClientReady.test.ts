@@ -50,6 +50,7 @@ describe("useClientReady", () => {
         const { result } = renderHook(() => useClientReady());
 
         expect(result.current.isClientReady).toBe(false);
+        expect(result.current.isHidden).toBe(false);
     });
 
     it("should return enabled state when client is already ready", () => {
@@ -64,8 +65,30 @@ describe("useClientReady", () => {
 
         const { result } = renderHook(() => useClientReady());
 
-        // When client exists, onClientReady should be called with "add" and callback executed immediately
         expect(result.current.isClientReady).toBe(true);
+        expect(result.current.isHidden).toBe(false);
+    });
+
+    it("should return isHidden true when config has hidden flag", () => {
+        sdkConfigStore.setConfig({
+            isResolved: true,
+            merchantId: "test-merchant",
+            hidden: true,
+        });
+
+        window.FrakSetup.client = {
+            config: {
+                metadata: {
+                    name: "Test App",
+                    currency: "eur",
+                },
+            },
+        } as any;
+
+        const { result } = renderHook(() => useClientReady());
+
+        expect(result.current.isClientReady).toBe(true);
+        expect(result.current.isHidden).toBe(true);
     });
 
     it("should subscribe to client ready event on mount", () => {

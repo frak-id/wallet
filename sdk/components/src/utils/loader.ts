@@ -1,9 +1,5 @@
 import { onDocumentReady } from "@frak-labs/ui/utils/onDocumentReady";
-import { Spinner } from "../components/Spinner";
 import { initFrakSdk } from "./initFrakSdk";
-
-// Export Spinner to ensure it's in the main chunk and avoid circular deps
-export { Spinner };
 
 /**
  * Auto-load CSS modules styles

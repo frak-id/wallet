@@ -1,7 +1,6 @@
 import { type InteractionTypeKey, trackEvent } from "@frak-labs/core-sdk";
 import { cx } from "class-variance-authority";
 import { useCallback, useMemo } from "preact/hooks";
-import { Spinner } from "@/components/Spinner";
 import { useClientReady } from "@/hooks/useClientReady";
 import { usePlacement } from "@/hooks/usePlacement";
 import { useReward } from "@/hooks/useReward";
@@ -83,7 +82,7 @@ export function ButtonShare({
         () => componentConfig?.showWallet ?? rawShowWallet !== undefined,
         [componentConfig?.showWallet, rawShowWallet]
     );
-    const { isClientReady } = useClientReady();
+    const { isClientReady, isHidden } = useClientReady();
     const { reward } = useReward(
         shouldUseReward && isClientReady,
         resolvedTargetInteraction
@@ -115,20 +114,29 @@ export function ButtonShare({
     const onClick = useCallback(async () => {
         trackEvent(window.FrakSetup.client, "share_button_clicked");
         if (showWallet) {
-            await openEmbeddedWallet(resolvedTargetInteraction, placementId);
+            openEmbeddedWallet(resolvedTargetInteraction, placementId);
         } else {
             await handleShare();
         }
     }, [showWallet, handleShare, resolvedTargetInteraction, placementId]);
 
+    if (!isClientReady || isHidden) {
+        return null;
+    }
+
     return (
         <>
             <button
                 type={"button"}
-                className={cx(styles.buttonShare, classname, "override")}
+                className={cx(
+                    styles.buttonShare,
+                    styles.buttonShare__fadeIn,
+                    classname,
+                    "override"
+                )}
                 onClick={onClick}
             >
-                {!isClientReady && <Spinner />} {btnText}
+                {btnText}
             </button>
             {isError && <ErrorMessage debugInfo={debugInfo} />}
         </>

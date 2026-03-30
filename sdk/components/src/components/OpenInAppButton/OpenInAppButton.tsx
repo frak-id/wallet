@@ -1,5 +1,4 @@
 import { cx } from "class-variance-authority";
-import { Spinner } from "@/components/Spinner";
 import { useClientReady } from "@/hooks/useClientReady";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { usePlacement } from "@/hooks/usePlacement";
@@ -39,12 +38,12 @@ export function OpenInAppButton({
     classname = "",
 }: OpenInAppButtonProps) {
     const placement = usePlacement(placementId);
-    const { isClientReady } = useClientReady();
+    const { isClientReady, isHidden } = useClientReady();
     const { isMobile } = useIsMobile();
 
     const resolvedText = placement?.components?.openInApp?.text ?? text;
 
-    if (!isMobile) {
+    if (!isMobile || !isClientReady || isHidden) {
         return null;
     }
 
@@ -56,11 +55,15 @@ export function OpenInAppButton({
         <button
             type="button"
             aria-label="Open in Frak Wallet app"
-            className={cx(styles.button, classname, "override")}
-            disabled={!isClientReady}
+            className={cx(
+                styles.button,
+                styles.button__fadeIn,
+                classname,
+                "override"
+            )}
             onClick={handleClick}
         >
-            {!isClientReady && <Spinner />} {resolvedText}
+            {resolvedText}
         </button>
     );
 }

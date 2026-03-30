@@ -6,7 +6,7 @@ import * as openInAppUtil from "@/utils/openInApp";
 import { OpenInAppButton } from "./OpenInAppButton";
 
 vi.mock("@/hooks/useClientReady", () => ({
-    useClientReady: vi.fn(() => ({ isClientReady: true })),
+    useClientReady: vi.fn(() => ({ isClientReady: true, isHidden: false })),
 }));
 
 vi.mock("@/hooks/useIsMobile", () => ({
@@ -23,6 +23,7 @@ describe("OpenInAppButton", () => {
         vi.clearAllMocks();
         vi.mocked(useClientReadyHook.useClientReady).mockReturnValue({
             isClientReady: true,
+            isHidden: false,
         });
         vi.mocked(useIsMobileHook.useIsMobile).mockReturnValue({
             isMobile: true,
@@ -73,34 +74,36 @@ describe("OpenInAppButton", () => {
         expect(button).toBeInTheDocument();
     });
 
-    it("should display spinner when client is not ready", () => {
+    it("should render nothing when client is not ready", () => {
         vi.mocked(useClientReadyHook.useClientReady).mockReturnValue({
             isClientReady: false,
+            isHidden: false,
         });
 
         const { container } = render(<OpenInAppButton />);
         const button = container.querySelector("button");
-        expect(button?.querySelector("span")).toBeInTheDocument();
+        expect(button).toBeNull();
     });
 
-    it("should be disabled when client is not ready", () => {
-        vi.mocked(useClientReadyHook.useClientReady).mockReturnValue({
-            isClientReady: false,
-        });
-
-        const { container } = render(<OpenInAppButton />);
-        const button = container.querySelector("button");
-        expect(button).toBeDisabled();
-    });
-
-    it("should be enabled when client is ready", () => {
-        // Reset mock to return ready state
+    it("should render nothing when SDK is hidden", () => {
         vi.mocked(useClientReadyHook.useClientReady).mockReturnValue({
             isClientReady: true,
+            isHidden: true,
+        });
+
+        const { container } = render(<OpenInAppButton />);
+        const button = container.querySelector("button");
+        expect(button).toBeNull();
+    });
+
+    it("should render when client is ready and not hidden", () => {
+        vi.mocked(useClientReadyHook.useClientReady).mockReturnValue({
+            isClientReady: true,
+            isHidden: false,
         });
         const { container } = render(<OpenInAppButton />);
         const button = container.querySelector("button");
-        expect(button).not.toBeDisabled();
+        expect(button).toBeInTheDocument();
     });
 
     it("should call openFrakWalletApp on click", () => {

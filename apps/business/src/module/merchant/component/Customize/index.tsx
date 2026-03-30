@@ -16,6 +16,7 @@ import {
     FormMessage,
 } from "@/module/forms/Form";
 import { FormActions } from "@/module/forms/FormActions";
+import { Switch } from "@/module/forms/Switch";
 import { MerchantHead } from "@/module/merchant/component/MerchantHead";
 import { useMerchantUpdate } from "@/module/merchant/hook/useMerchantUpdate";
 import { useSdkConfig } from "@/module/merchant/hook/useSdkConfig";
@@ -159,6 +160,7 @@ function SdkIdentityPanel({
             homepageLink: sdkConfig.homepageLink ?? "",
             currency: sdkConfig.currency ?? "",
             lang: sdkConfig.lang ?? "",
+            hidden: sdkConfig.hidden ?? false,
         }),
         [sdkConfig]
     );
@@ -171,6 +173,7 @@ function SdkIdentityPanel({
             homepageLink: "",
             currency: "",
             lang: "",
+            hidden: false,
         },
     });
 
@@ -192,6 +195,7 @@ function SdkIdentityPanel({
                 homepageLink: valueOrNull(currentValues.homepageLink),
                 currency: currentValues.currency || null,
                 lang: currentValues.lang || null,
+                hidden: currentValues.hidden,
             });
         },
         [editSdkConfig]
@@ -291,6 +295,26 @@ function SdkIdentityPanel({
                                     <option value="en">English</option>
                                     <option value="fr">French</option>
                                 </select>
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name="hidden"
+                    render={({ field }) => (
+                        <FormItem className={styles.customize__switchRow}>
+                            <FormLabel weight={"medium"}>
+                                Frak SDK displayed
+                            </FormLabel>
+                            <FormControl>
+                                <Switch
+                                    checked={!field.value}
+                                    onCheckedChange={(checked) =>
+                                        field.onChange(!checked)
+                                    }
+                                />
                             </FormControl>
                             <FormMessage />
                         </FormItem>

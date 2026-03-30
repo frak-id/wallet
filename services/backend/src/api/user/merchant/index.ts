@@ -80,6 +80,7 @@ function buildResolvedSdkConfig(
         homepageLink: sdkConfig.homepageLink ?? undefined,
         currency: sdkConfig.currency ?? undefined,
         lang,
+        ...(sdkConfig.hidden && { hidden: true }),
         css: sdkConfig.css ?? undefined,
         ...(mergedTranslations && { translations: mergedTranslations }),
         ...(resolvedPlacements && { placements: resolvedPlacements }),

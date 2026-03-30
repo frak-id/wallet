@@ -70,6 +70,7 @@ export const SdkConfigSchema = t.Object({
         ])
     ),
     lang: t.Optional(t.Union([t.Literal("fr"), t.Literal("en"), t.Null()])),
+    hidden: t.Optional(t.Boolean()),
     css: t.Optional(t.Union([t.String({ maxLength: 50000 }), t.Null()])),
     translations: t.Optional(t.Union([TranslationTieredSchema, t.Null()])),
     placements: t.Optional(

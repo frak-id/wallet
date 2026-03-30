@@ -1,7 +1,7 @@
 import type { InteractionTypeKey } from "@frak-labs/core-sdk";
 import { displayEmbeddedWallet } from "@frak-labs/core-sdk/actions";
 
-export function openEmbeddedWallet(
+export async function openEmbeddedWallet(
     targetInteraction?: InteractionTypeKey,
     placement?: string
 ) {
@@ -12,7 +12,7 @@ export function openEmbeddedWallet(
 
     const modalWalletConfig = window.FrakSetup?.modalWalletConfig ?? {};
 
-    displayEmbeddedWallet(
+    await displayEmbeddedWallet(
         window.FrakSetup.client,
         targetInteraction
             ? {

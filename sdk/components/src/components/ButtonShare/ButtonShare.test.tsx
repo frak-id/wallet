@@ -9,7 +9,7 @@ import * as useShareModalHook from "./hooks/useShareModal";
 
 // Mock the hooks
 vi.mock("@/hooks/useClientReady", () => ({
-    useClientReady: vi.fn(() => ({ isClientReady: true })),
+    useClientReady: vi.fn(() => ({ isClientReady: true, isHidden: false })),
 }));
 
 vi.mock("@/hooks/useReward", () => ({
@@ -30,6 +30,7 @@ describe("ButtonShare", () => {
         // Reset mocks to default state
         vi.mocked(useClientReadyHook.useClientReady).mockReturnValue({
             isClientReady: true,
+            isHidden: false,
         });
         vi.mocked(useRewardHook.useReward).mockReturnValue({
             reward: undefined,
@@ -59,22 +60,24 @@ describe("ButtonShare", () => {
         expect(button).toHaveClass("custom-class");
     });
 
-    it("should display spinner when client is not ready", () => {
+    it("should render nothing when client is not ready", () => {
         vi.mocked(useClientReadyHook.useClientReady).mockReturnValue({
             isClientReady: false,
+            isHidden: false,
         });
 
-        render(<ButtonShare />);
-        const button = screen.getByRole("button");
-        // Spinner should be rendered (check for spinner element)
-        expect(button.querySelector("span")).toBeInTheDocument();
+        const { container } = render(<ButtonShare />);
+        expect(container.querySelector("button")).not.toBeInTheDocument();
     });
 
-    it("should not display spinner when client is ready", () => {
-        render(<ButtonShare />);
-        const button = screen.getByRole("button");
-        // When client is ready, spinner should not be visible
-        expect(button).toHaveTextContent("Share and earn!");
+    it("should render nothing when SDK is hidden", () => {
+        vi.mocked(useClientReadyHook.useClientReady).mockReturnValue({
+            isClientReady: true,
+            isHidden: true,
+        });
+
+        const { container } = render(<ButtonShare />);
+        expect(container.querySelector("button")).not.toBeInTheDocument();
     });
 
     it("should display reward when useReward is true and reward is available", () => {
