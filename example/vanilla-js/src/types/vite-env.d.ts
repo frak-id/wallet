@@ -9,8 +9,6 @@ declare global {
             config?: FrakWalletSdkConfig;
             core?: typeof import("@frak-labs/core-sdk/bundle");
             modalWalletConfig?: unknown;
-            modalShareConfig?: unknown;
-            modalConfig?: unknown;
         };
         frakSetupInProgress?: boolean;
     }

@@ -3,15 +3,15 @@ import {
     type InteractionTypeKey,
     trackEvent,
 } from "@frak-labs/core-sdk";
+import { modalBuilder } from "@frak-labs/core-sdk/actions";
 import { FrakRpcError, RpcErrorCodes } from "@frak-labs/frame-connector";
 import { useCallback, useState } from "preact/hooks";
-import { getModalBuilderSteps } from "@/utils/setup";
 
 /**
  * Open the share modal
  *
  * @description
- * This function will open the share modal with the configuration provided in the `window.FrakSetup.modalShareConfig` object.
+ * This function will open the share modal, lazily creating a modal builder on demand.
  */
 export function useShareModal(
     targetInteraction?: InteractionTypeKey,
@@ -32,15 +32,11 @@ export function useShareModal(
             return;
         }
 
-        const modalBuilderSteps = getModalBuilderSteps();
-
-        if (!modalBuilderSteps) {
-            throw new Error("modalBuilderSteps not found");
-        }
+        const builder = modalBuilder(window.FrakSetup.client, {});
 
         try {
-            await modalBuilderSteps
-                .sharing(window.FrakSetup?.modalShareConfig ?? {})
+            await builder
+                .sharing({})
                 .display(
                     (metadata) => ({ ...metadata, targetInteraction }),
                     placement

@@ -1,27 +1,21 @@
 import * as coreSdk from "@frak-labs/core-sdk";
+import * as coreSdkActions from "@frak-labs/core-sdk/actions";
 import { FrakRpcError, RpcErrorCodes } from "@frak-labs/frame-connector";
 import { renderHook, waitFor } from "@testing-library/preact";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import * as setupUtils from "@/utils/setup";
 import { useShareModal } from "./useShareModal";
-
-// Mock setup utils
-vi.mock("@/utils/setup", () => ({
-    getModalBuilderSteps: vi.fn(),
-}));
 
 describe("useShareModal", () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        // Setup default modal builder mock
-        const mockModalBuilder = {
-            sharing: vi.fn().mockReturnValue({
-                display: vi.fn().mockResolvedValue(undefined),
-            }),
-        };
-        vi.mocked(setupUtils.getModalBuilderSteps).mockReturnValue(
-            mockModalBuilder as any
-        );
+        // Setup default modalBuilder mock
+        const mockDisplay = vi.fn().mockResolvedValue(undefined);
+        const mockSharing = vi.fn().mockReturnValue({
+            display: mockDisplay,
+        });
+        vi.mocked(coreSdkActions.modalBuilder).mockReturnValue({
+            sharing: mockSharing,
+        } as any);
     });
 
     it("should return initial state", () => {
@@ -37,7 +31,7 @@ describe("useShareModal", () => {
         const mockSharing = vi.fn().mockReturnValue({
             display: mockDisplay,
         });
-        vi.mocked(setupUtils.getModalBuilderSteps).mockReturnValue({
+        vi.mocked(coreSdkActions.modalBuilder).mockReturnValue({
             sharing: mockSharing,
         } as any);
 
@@ -45,11 +39,16 @@ describe("useShareModal", () => {
 
         await result.current.handleShare();
 
-        expect(mockSharing).toHaveBeenCalledWith(
-            window.FrakSetup.modalShareConfig ?? {}
+        expect(coreSdkActions.modalBuilder).toHaveBeenCalledWith(
+            window.FrakSetup.client,
+            {}
         );
-        // display receives a function that transforms metadata
-        expect(mockDisplay).toHaveBeenCalledWith(expect.any(Function));
+        expect(mockSharing).toHaveBeenCalledWith({});
+        // display receives a function that transforms metadata, and placement
+        expect(mockDisplay).toHaveBeenCalledWith(
+            expect.any(Function),
+            undefined
+        );
         // Call the function to verify it returns correct metadata
         const transformFn = mockDisplay.mock.calls[0][0];
         const resultMetadata = transformFn({});
@@ -58,23 +57,26 @@ describe("useShareModal", () => {
         });
     });
 
-    it("should pass targetInteraction to display", async () => {
+    it("should pass targetInteraction and placement to display", async () => {
         const mockDisplay = vi.fn().mockResolvedValue(undefined);
         const mockSharing = vi.fn().mockReturnValue({
             display: mockDisplay,
         });
-        vi.mocked(setupUtils.getModalBuilderSteps).mockReturnValue({
+        vi.mocked(coreSdkActions.modalBuilder).mockReturnValue({
             sharing: mockSharing,
         } as any);
 
         const { result } = renderHook(() =>
-            useShareModal("custom.customerMeeting")
+            useShareModal("custom.customerMeeting", "hero-section")
         );
 
         await result.current.handleShare();
 
-        // display receives a function that transforms metadata
-        expect(mockDisplay).toHaveBeenCalledWith(expect.any(Function));
+        // display receives a function that transforms metadata, and placement
+        expect(mockDisplay).toHaveBeenCalledWith(
+            expect.any(Function),
+            "hero-section"
+        );
         // Call the function to verify it returns correct metadata
         const transformFn = mockDisplay.mock.calls[0][0];
         const resultMetadata = transformFn({});
@@ -111,7 +113,7 @@ describe("useShareModal", () => {
         const mockSharing = vi.fn().mockReturnValue({
             display: mockDisplay,
         });
-        vi.mocked(setupUtils.getModalBuilderSteps).mockReturnValue({
+        vi.mocked(coreSdkActions.modalBuilder).mockReturnValue({
             sharing: mockSharing,
         } as any);
 
@@ -129,7 +131,7 @@ describe("useShareModal", () => {
         const mockSharing = vi.fn().mockReturnValue({
             display: mockDisplay,
         });
-        vi.mocked(setupUtils.getModalBuilderSteps).mockReturnValue({
+        vi.mocked(coreSdkActions.modalBuilder).mockReturnValue({
             sharing: mockSharing,
         } as any);
 
@@ -149,29 +151,6 @@ describe("useShareModal", () => {
             expect.objectContaining({
                 error: "Modal error",
             })
-        );
-    });
-
-    it("should handle error when modalBuilderSteps is not found", async () => {
-        vi.mocked(setupUtils.getModalBuilderSteps).mockImplementation(() => {
-            throw new Error("modalBuilderSteps not found");
-        });
-
-        const { result } = renderHook(() => useShareModal());
-
-        await expect(result.current.handleShare()).rejects.toThrow(
-            "modalBuilderSteps not found"
-        );
-    });
-
-    it("should handle error when modalBuilderSteps returns null", async () => {
-        // This tests the line 35 check: if (!modalBuilderSteps)
-        vi.mocked(setupUtils.getModalBuilderSteps).mockReturnValue(null as any);
-
-        const { result } = renderHook(() => useShareModal());
-
-        await expect(result.current.handleShare()).rejects.toThrow(
-            "modalBuilderSteps not found"
         );
     });
 });

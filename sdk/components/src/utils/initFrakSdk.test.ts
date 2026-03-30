@@ -20,7 +20,6 @@ vi.mock("./clientReady", () => ({
 }));
 
 vi.mock("./setup", () => ({
-    setupModalConfig: vi.fn(),
     setupReferral: vi.fn(),
 }));
 
@@ -119,7 +118,6 @@ describe("initFrakSdk", () => {
         });
         expect(window.FrakSetup.client).toBe(mockClient);
         expect(clientReadyUtils.dispatchClientReadyEvent).toHaveBeenCalled();
-        expect(setupUtils.setupModalConfig).toHaveBeenCalledWith(mockClient);
         expect(setupUtils.setupReferral).toHaveBeenCalledWith(mockClient);
         expect(window.frakSetupInProgress).toBe(false);
         expect(consoleLogSpy).toHaveBeenCalledWith(
