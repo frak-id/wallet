@@ -24,7 +24,7 @@ import {
  */
 const tabs: TabItem[] = [
     { key: "/wallet", label: "Porte-monnaie", icon: <WalletIcon /> },
-    { key: "/history", label: "Explorer", icon: <ExplorerIcon /> },
+    { key: "/explorer", label: "Explorer", icon: <ExplorerIcon /> },
     { key: "/profile", label: "Profil", icon: <ProfileIcon /> },
 ];
 
