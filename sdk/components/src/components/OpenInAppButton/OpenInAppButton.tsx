@@ -42,7 +42,7 @@ export function OpenInAppButton({
     const { isClientReady } = useClientReady();
     const { isMobile } = useIsMobile();
 
-    const resolvedText = placement?.trigger?.text ?? text;
+    const resolvedText = placement?.components?.openInApp?.text ?? text;
 
     if (!isMobile) {
         return null;

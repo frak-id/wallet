@@ -43,7 +43,9 @@ function buildResolvedPlacements(
         );
 
         resolvedPlacements[id] = {
-            ...(placement.trigger && { trigger: placement.trigger }),
+            ...(placement.components && {
+                components: placement.components,
+            }),
             ...(placement.targetInteraction && {
                 targetInteraction: placement.targetInteraction,
             }),

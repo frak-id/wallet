@@ -62,6 +62,7 @@ export function ButtonShare({
     showWallet: rawShowWallet,
 }: ButtonShareProps) {
     const placement = usePlacement(placementId);
+    const componentConfig = placement?.components?.buttonShare;
 
     const resolvedTargetInteraction = useMemo<InteractionTypeKey | undefined>(
         () =>
@@ -71,17 +72,16 @@ export function ButtonShare({
         [placement?.targetInteraction, targetInteraction]
     );
 
-    const resolvedText = placement?.trigger?.text ?? text;
-    const resolvedNoRewardText =
-        placement?.trigger?.noRewardText ?? noRewardText;
+    const resolvedText = componentConfig?.text ?? text;
+    const resolvedNoRewardText = componentConfig?.noRewardText ?? noRewardText;
 
     const shouldUseReward = useMemo(
         () => rawUseReward !== undefined,
         [rawUseReward]
     );
     const showWallet = useMemo(
-        () => placement?.trigger?.showWallet ?? rawShowWallet !== undefined,
-        [placement?.trigger?.showWallet, rawShowWallet]
+        () => componentConfig?.showWallet ?? rawShowWallet !== undefined,
+        [componentConfig?.showWallet, rawShowWallet]
     );
     const { isClientReady } = useClientReady();
     const { reward } = useReward(

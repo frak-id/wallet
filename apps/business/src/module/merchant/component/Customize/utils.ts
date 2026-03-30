@@ -20,12 +20,36 @@ export type CssFormValues = {
     css: string;
 };
 
+export type ComponentType = "buttonShare" | "buttonWallet" | "openInApp";
+
+export const COMPONENT_LABELS: Record<ComponentType, string> = {
+    buttonShare: "Share Button",
+    buttonWallet: "Wallet Button",
+    openInApp: "Open in App",
+};
+
+export type ButtonShareFormValues = {
+    text: string;
+    noRewardText: string;
+    showWallet: boolean;
+    css: string;
+};
+
+export type ButtonWalletFormValues = {
+    position: "bottom-right" | "bottom-left";
+    css: string;
+};
+
+export type OpenInAppFormValues = {
+    text: string;
+    css: string;
+};
+
 export type PlacementSettingsFormValues = {
-    triggerText: string;
-    triggerNoRewardText: string;
-    triggerPosition: "bottom-right" | "bottom-left";
-    triggerShowWallet: boolean;
     targetInteraction: string;
+    buttonShare: ButtonShareFormValues;
+    buttonWallet: ButtonWalletFormValues;
+    openInApp: OpenInAppFormValues;
 };
 
 export const TRANSLATION_GROUPS = {

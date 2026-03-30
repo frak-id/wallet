@@ -77,15 +77,12 @@ export function ButtonWallet({
     );
     const [position, setPosition] = useState<"left" | "right">("right");
 
-    /**
-     * Setup the position of the button
-     */
     useEffect(() => {
-        const placementPosition = placement?.trigger?.position;
+        const placementPosition = placement?.components?.buttonWallet?.position;
         const configPosition =
             window.FrakSetup?.modalWalletConfig?.metadata?.position;
         setPosition(placementPosition ?? configPosition ?? "right");
-    }, [placement?.trigger?.position]);
+    }, [placement?.components?.buttonWallet?.position]);
 
     return (
         <button

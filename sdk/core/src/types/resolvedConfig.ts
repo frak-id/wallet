@@ -6,15 +6,27 @@ import type { Currency, Language } from "./config";
  * @category Config
  */
 export type ResolvedPlacement = {
-    trigger?: {
-        text?: string;
-        noRewardText?: string;
-        position?: "bottom-right" | "bottom-left";
-        showWallet?: boolean;
+    /** Per-component configuration within this placement */
+    components?: {
+        buttonShare?: {
+            text?: string;
+            noRewardText?: string;
+            showWallet?: boolean;
+            css?: string;
+        };
+        buttonWallet?: {
+            position?: "bottom-right" | "bottom-left";
+            css?: string;
+        };
+        openInApp?: {
+            text?: string;
+            css?: string;
+        };
     };
     targetInteraction?: string;
     /** Already flattened: default + lang-specific merged into one record */
     translations?: Record<string, string>;
+    /** Global placement CSS (applied to modals/listener) */
     css?: string;
 };
 

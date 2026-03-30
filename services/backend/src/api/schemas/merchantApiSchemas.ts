@@ -3,14 +3,33 @@ import type { Static } from "elysia";
 import { ExplorerConfigSchema } from "../../domain/merchant/schemas";
 
 const ResolvedPlacementSchema = t.Object({
-    trigger: t.Optional(
+    components: t.Optional(
         t.Object({
-            text: t.Optional(t.String()),
-            noRewardText: t.Optional(t.String()),
-            position: t.Optional(
-                t.Union([t.Literal("bottom-right"), t.Literal("bottom-left")])
+            buttonShare: t.Optional(
+                t.Object({
+                    text: t.Optional(t.String()),
+                    noRewardText: t.Optional(t.String()),
+                    showWallet: t.Optional(t.Boolean()),
+                    css: t.Optional(t.String()),
+                })
             ),
-            showWallet: t.Optional(t.Boolean()),
+            buttonWallet: t.Optional(
+                t.Object({
+                    position: t.Optional(
+                        t.Union([
+                            t.Literal("bottom-right"),
+                            t.Literal("bottom-left"),
+                        ])
+                    ),
+                    css: t.Optional(t.String()),
+                })
+            ),
+            openInApp: t.Optional(
+                t.Object({
+                    text: t.Optional(t.String()),
+                    css: t.Optional(t.String()),
+                })
+            ),
         })
     ),
     targetInteraction: t.Optional(t.String()),

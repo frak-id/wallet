@@ -21,6 +21,8 @@ import styles from "./index.module.css";
 import { CssEditor, TranslationEditor } from "./TranslationEditor";
 import {
     buildTranslationsPayload,
+    COMPONENT_LABELS,
+    type ComponentType,
     type CssFormValues,
     getPlacementTranslationsFormValues,
     getTranslationsFormValues,
@@ -78,6 +80,12 @@ export function PlacementCustomization({
     );
 }
 
+const COMPONENT_TYPES: ComponentType[] = [
+    "buttonShare",
+    "buttonWallet",
+    "openInApp",
+];
+
 function PlacementSettingsPanel({
     merchantId,
     placementId,
@@ -95,25 +103,49 @@ function PlacementSettingsPanel({
         isSuccess,
     } = useMerchantUpdate({ merchantId, target: "sdk-config" });
 
+    const [selectedComponent, setSelectedComponent] =
+        useState<ComponentType>("buttonShare");
+
     const values = useMemo<PlacementSettingsFormValues>(() => {
         const placement = sdkConfig.placements?.[placementId];
+        const components = placement?.components;
         return {
-            triggerText: placement?.trigger?.text ?? "",
-            triggerNoRewardText: placement?.trigger?.noRewardText ?? "",
-            triggerPosition: placement?.trigger?.position ?? "bottom-right",
-            triggerShowWallet: placement?.trigger?.showWallet ?? false,
             targetInteraction: placement?.targetInteraction ?? "",
+            buttonShare: {
+                text: components?.buttonShare?.text ?? "",
+                noRewardText: components?.buttonShare?.noRewardText ?? "",
+                showWallet: components?.buttonShare?.showWallet ?? false,
+                css: components?.buttonShare?.css ?? "",
+            },
+            buttonWallet: {
+                position: components?.buttonWallet?.position ?? "bottom-right",
+                css: components?.buttonWallet?.css ?? "",
+            },
+            openInApp: {
+                text: components?.openInApp?.text ?? "",
+                css: components?.openInApp?.css ?? "",
+            },
         };
     }, [sdkConfig.placements, placementId]);
 
     const form = useForm<PlacementSettingsFormValues>({
         values,
         defaultValues: {
-            triggerText: "",
-            triggerNoRewardText: "",
-            triggerPosition: "bottom-right",
-            triggerShowWallet: false,
             targetInteraction: "",
+            buttonShare: {
+                text: "",
+                noRewardText: "",
+                showWallet: false,
+                css: "",
+            },
+            buttonWallet: {
+                position: "bottom-right",
+                css: "",
+            },
+            openInApp: {
+                text: "",
+                css: "",
+            },
         },
     });
 
@@ -132,19 +164,33 @@ function PlacementSettingsPanel({
 
     const onSubmit = useCallback(
         (currentValues: PlacementSettingsFormValues) => {
+            const buttonShare = {
+                text: valueOrUndefined(currentValues.buttonShare.text),
+                noRewardText: valueOrUndefined(
+                    currentValues.buttonShare.noRewardText
+                ),
+                showWallet: currentValues.buttonShare.showWallet,
+                css: valueOrUndefined(currentValues.buttonShare.css),
+            };
+            const buttonWallet = {
+                position: currentValues.buttonWallet.position,
+                css: valueOrUndefined(currentValues.buttonWallet.css),
+            };
+            const openInApp = {
+                text: valueOrUndefined(currentValues.openInApp.text),
+                css: valueOrUndefined(currentValues.openInApp.css),
+            };
+
             editSdkConfig({
                 placements: updatePlacement(
                     sdkConfig,
                     placementId,
                     (placement) => ({
                         ...placement,
-                        trigger: {
-                            text: valueOrUndefined(currentValues.triggerText),
-                            noRewardText: valueOrUndefined(
-                                currentValues.triggerNoRewardText
-                            ),
-                            position: currentValues.triggerPosition,
-                            showWallet: currentValues.triggerShowWallet,
+                        components: {
+                            buttonShare,
+                            buttonWallet,
+                            openInApp,
                         },
                         targetInteraction: valueOrUndefined(
                             currentValues.targetInteraction
@@ -160,88 +206,6 @@ function PlacementSettingsPanel({
         <Form {...form}>
             <Panel title={`Placement settings · ${placementId}`}>
                 <div className={styles.customize__settingsGrid}>
-                    <FormField
-                        control={form.control}
-                        name="triggerText"
-                        rules={{
-                            maxLength: {
-                                value: 500,
-                                message: "Maximum length is 500 characters",
-                            },
-                        }}
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel weight={"medium"}>
-                                    Trigger text
-                                </FormLabel>
-                                <FormControl>
-                                    <Input
-                                        length={"big"}
-                                        maxLength={500}
-                                        placeholder={"Share and earn!"}
-                                        {...field}
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    <FormField
-                        control={form.control}
-                        name="triggerNoRewardText"
-                        rules={{
-                            maxLength: {
-                                value: 500,
-                                message: "Maximum length is 500 characters",
-                            },
-                        }}
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel weight={"medium"}>
-                                    Trigger no-reward text
-                                </FormLabel>
-                                <FormControl>
-                                    <Input
-                                        length={"big"}
-                                        maxLength={500}
-                                        placeholder={
-                                            "Share even without rewards"
-                                        }
-                                        {...field}
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    <FormField
-                        control={form.control}
-                        name="triggerPosition"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel weight={"medium"}>
-                                    Trigger position
-                                </FormLabel>
-                                <FormControl>
-                                    <select
-                                        className={styles.customize__select}
-                                        {...field}
-                                    >
-                                        <option value="bottom-right">
-                                            Bottom right
-                                        </option>
-                                        <option value="bottom-left">
-                                            Bottom left
-                                        </option>
-                                    </select>
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
                     <FormField
                         control={form.control}
                         name="targetInteraction"
@@ -268,26 +232,34 @@ function PlacementSettingsPanel({
                             </FormItem>
                         )}
                     />
-
-                    <FormField
-                        control={form.control}
-                        name="triggerShowWallet"
-                        render={({ field }) => (
-                            <FormItem className={styles.customize__switchRow}>
-                                <FormLabel weight={"medium"}>
-                                    Show wallet shortcut
-                                </FormLabel>
-                                <FormControl>
-                                    <Switch
-                                        checked={field.value}
-                                        onCheckedChange={field.onChange}
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
                 </div>
+
+                <div className={styles.customize__componentSelector}>
+                    {COMPONENT_TYPES.map((componentType) => (
+                        <button
+                            key={componentType}
+                            type="button"
+                            className={`${styles.customize__tab} ${
+                                selectedComponent === componentType
+                                    ? styles["customize__tab--active"]
+                                    : ""
+                            }`}
+                            onClick={() => setSelectedComponent(componentType)}
+                        >
+                            {COMPONENT_LABELS[componentType]}
+                        </button>
+                    ))}
+                </div>
+
+                {selectedComponent === "buttonShare" && (
+                    <ButtonShareFields form={form} />
+                )}
+                {selectedComponent === "buttonWallet" && (
+                    <ButtonWalletFields form={form} />
+                )}
+                {selectedComponent === "openInApp" && (
+                    <OpenInAppFields form={form} />
+                )}
 
                 <FormActions
                     isSuccess={isSuccess}
@@ -298,6 +270,211 @@ function PlacementSettingsPanel({
                 />
             </Panel>
         </Form>
+    );
+}
+
+function ButtonShareFields({
+    form,
+}: {
+    form: ReturnType<typeof useForm<PlacementSettingsFormValues>>;
+}) {
+    return (
+        <div className={styles.customize__settingsGrid}>
+            <FormField
+                control={form.control}
+                name="buttonShare.text"
+                rules={{
+                    maxLength: {
+                        value: 500,
+                        message: "Maximum length is 500 characters",
+                    },
+                }}
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel weight={"medium"}>Button text</FormLabel>
+                        <FormControl>
+                            <Input
+                                length={"big"}
+                                maxLength={500}
+                                placeholder={"Share and earn!"}
+                                {...field}
+                            />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+
+            <FormField
+                control={form.control}
+                name="buttonShare.noRewardText"
+                rules={{
+                    maxLength: {
+                        value: 500,
+                        message: "Maximum length is 500 characters",
+                    },
+                }}
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel weight={"medium"}>
+                            No-reward fallback text
+                        </FormLabel>
+                        <FormControl>
+                            <Input
+                                length={"big"}
+                                maxLength={500}
+                                placeholder={"Share even without rewards"}
+                                {...field}
+                            />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+
+            <FormField
+                control={form.control}
+                name="buttonShare.showWallet"
+                render={({ field }) => (
+                    <FormItem className={styles.customize__switchRow}>
+                        <FormLabel weight={"medium"}>
+                            Show wallet instead of share modal
+                        </FormLabel>
+                        <FormControl>
+                            <Switch
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                            />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+
+            <FormField
+                control={form.control}
+                name="buttonShare.css"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel weight={"medium"}>Component CSS</FormLabel>
+                        <FormControl>
+                            <textarea
+                                className={styles.customize__textarea}
+                                placeholder={".frak-button-share { ... }"}
+                                rows={4}
+                                {...field}
+                            />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+        </div>
+    );
+}
+
+function ButtonWalletFields({
+    form,
+}: {
+    form: ReturnType<typeof useForm<PlacementSettingsFormValues>>;
+}) {
+    return (
+        <div className={styles.customize__settingsGrid}>
+            <FormField
+                control={form.control}
+                name="buttonWallet.position"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel weight={"medium"}>Position</FormLabel>
+                        <FormControl>
+                            <select
+                                className={styles.customize__select}
+                                {...field}
+                            >
+                                <option value="bottom-right">
+                                    Bottom right
+                                </option>
+                                <option value="bottom-left">Bottom left</option>
+                            </select>
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+
+            <FormField
+                control={form.control}
+                name="buttonWallet.css"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel weight={"medium"}>Component CSS</FormLabel>
+                        <FormControl>
+                            <textarea
+                                className={styles.customize__textarea}
+                                placeholder={".frak-button-wallet { ... }"}
+                                rows={4}
+                                {...field}
+                            />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+        </div>
+    );
+}
+
+function OpenInAppFields({
+    form,
+}: {
+    form: ReturnType<typeof useForm<PlacementSettingsFormValues>>;
+}) {
+    return (
+        <div className={styles.customize__settingsGrid}>
+            <FormField
+                control={form.control}
+                name="openInApp.text"
+                rules={{
+                    maxLength: {
+                        value: 500,
+                        message: "Maximum length is 500 characters",
+                    },
+                }}
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel weight={"medium"}>Button text</FormLabel>
+                        <FormControl>
+                            <Input
+                                length={"big"}
+                                maxLength={500}
+                                placeholder={"Open in App"}
+                                {...field}
+                            />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+
+            <FormField
+                control={form.control}
+                name="openInApp.css"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel weight={"medium"}>Component CSS</FormLabel>
+                        <FormControl>
+                            <textarea
+                                className={styles.customize__textarea}
+                                placeholder={".frak-open-in-app { ... }"}
+                                rows={4}
+                                {...field}
+                            />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+        </div>
     );
 }
 

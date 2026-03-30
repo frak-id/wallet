@@ -19,17 +19,33 @@ const TranslationTieredSchema = t.Object({
     fr: t.Optional(TranslationOverridesSchema),
 });
 
-const PlacementTriggerSchema = t.Object({
+const ButtonShareComponentSchema = t.Object({
     text: t.Optional(t.String({ maxLength: 500 })),
     noRewardText: t.Optional(t.String({ maxLength: 500 })),
+    showWallet: t.Optional(t.Boolean()),
+    css: t.Optional(t.String({ maxLength: 50000 })),
+});
+
+const ButtonWalletComponentSchema = t.Object({
     position: t.Optional(
         t.Union([t.Literal("bottom-right"), t.Literal("bottom-left")])
     ),
-    showWallet: t.Optional(t.Boolean()),
+    css: t.Optional(t.String({ maxLength: 50000 })),
+});
+
+const OpenInAppComponentSchema = t.Object({
+    text: t.Optional(t.String({ maxLength: 500 })),
+    css: t.Optional(t.String({ maxLength: 50000 })),
+});
+
+const PlacementComponentsSchema = t.Object({
+    buttonShare: t.Optional(ButtonShareComponentSchema),
+    buttonWallet: t.Optional(ButtonWalletComponentSchema),
+    openInApp: t.Optional(OpenInAppComponentSchema),
 });
 
 export const PlacementSchema = t.Object({
-    trigger: t.Optional(PlacementTriggerSchema),
+    components: t.Optional(PlacementComponentsSchema),
     targetInteraction: t.Optional(t.String({ maxLength: 200 })),
     translations: t.Optional(TranslationTieredSchema),
     css: t.Optional(t.String({ maxLength: 50000 })),

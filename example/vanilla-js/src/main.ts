@@ -234,7 +234,7 @@ async function handleModalPlacementI18n() {
     const placement = "hero-share";
     const resolved = sdkConfigStore.getPlacement(placement);
     log(
-        `Placement "${placement}" resolved: ${resolved ? `trigger=${JSON.stringify(resolved.trigger)}, translations=${resolved.translations ? Object.keys(resolved.translations).length : 0} keys` : "NOT FOUND"}`,
+        `Placement "${placement}" resolved: ${resolved ? `components=${JSON.stringify(resolved.components)}, translations=${resolved.translations ? Object.keys(resolved.translations).length : 0} keys` : "NOT FOUND"}`,
         resolved ? "info" : "warn",
         statusBoxId
     );
