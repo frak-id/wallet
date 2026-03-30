@@ -5,70 +5,39 @@ import type { UseFormReturn } from "react-hook-form";
 import { FormActions } from "@/module/forms/FormActions";
 import styles from "./index.module.css";
 import {
+    EMBEDDED_TRANSLATION_GROUPS,
     getNestedFieldError,
-    TRANSLATION_GROUPS,
+    MODAL_TRANSLATION_GROUPS,
+    TRANSLATION_KEY_META,
     TRANSLATION_LANG_FIELDS,
     type TranslationFormValues,
     type TranslationLang,
 } from "./utils";
 
-export function TranslationEditor({
+type TranslationGroups = Record<string, readonly string[]>;
+
+function TranslationGroupList({
+    groups,
+    expandedGroups,
+    onToggleGroup,
     form,
     fieldPrefix,
+    activeField,
     defaultValues,
     lang,
-    onLangChange,
 }: {
+    groups: TranslationGroups;
+    expandedGroups: Record<string, boolean>;
+    onToggleGroup: (groupName: string) => void;
     form: UseFormReturn<TranslationFormValues>;
     fieldPrefix: string;
+    activeField: keyof TranslationFormValues;
     defaultValues?: TranslationFormValues;
     lang: TranslationLang;
-    onLangChange: (lang: TranslationLang) => void;
 }) {
-    const [expandedGroups, setExpandedGroups] = useState<
-        Record<string, boolean>
-    >({});
-    const activeField = TRANSLATION_LANG_FIELDS[lang];
-
     return (
-        <div>
-            <div className={styles.customize__translationLangTabs}>
-                <button
-                    type="button"
-                    className={`${styles.customize__translationLangTab} ${
-                        lang === "default"
-                            ? styles["customize__translationLangTab--active"]
-                            : ""
-                    }`}
-                    onClick={() => onLangChange("default")}
-                >
-                    Default (all languages)
-                </button>
-                <button
-                    type="button"
-                    className={`${styles.customize__translationLangTab} ${
-                        lang === "en"
-                            ? styles["customize__translationLangTab--active"]
-                            : ""
-                    }`}
-                    onClick={() => onLangChange("en")}
-                >
-                    English (EN)
-                </button>
-                <button
-                    type="button"
-                    className={`${styles.customize__translationLangTab} ${
-                        lang === "fr"
-                            ? styles["customize__translationLangTab--active"]
-                            : ""
-                    }`}
-                    onClick={() => onLangChange("fr")}
-                >
-                    French (FR)
-                </button>
-            </div>
-
-            {Object.entries(TRANSLATION_GROUPS).map(([groupName, keys]) => {
+        <>
+            {Object.entries(groups).map(([groupName, keys]) => {
                 const isExpanded = !!expandedGroups[groupName];
 
                 return (
@@ -79,12 +48,7 @@ export function TranslationEditor({
                         <button
                             type="button"
                             className={styles.customize__translationGroupHeader}
-                            onClick={() =>
-                                setExpandedGroups((prevState) => ({
-                                    ...prevState,
-                                    [groupName]: !prevState[groupName],
-                                }))
-                            }
+                            onClick={() => onToggleGroup(groupName)}
                         >
                             {isExpanded ? (
                                 <ChevronDown size={16} />
@@ -115,6 +79,8 @@ export function TranslationEditor({
                                             | undefined,
                                         translationKey
                                     );
+                                    const meta =
+                                        TRANSLATION_KEY_META[translationKey];
 
                                     return (
                                         <div
@@ -125,12 +91,30 @@ export function TranslationEditor({
                                         >
                                             <label
                                                 className={
-                                                    styles.customize__translationKey
+                                                    styles.customize__translationLabel
                                                 }
                                                 htmlFor={`${fieldPrefix}.${fieldName}`}
                                             >
-                                                {translationKey}
+                                                {meta?.label ?? translationKey}
                                             </label>
+
+                                            {meta?.description && (
+                                                <p
+                                                    className={
+                                                        styles.customize__fieldDescription
+                                                    }
+                                                >
+                                                    {meta.description}
+                                                </p>
+                                            )}
+
+                                            <p
+                                                className={
+                                                    styles.customize__translationKeyMuted
+                                                }
+                                            >
+                                                {translationKey}
+                                            </p>
 
                                             {inheritedValue && (
                                                 <p
@@ -189,6 +173,119 @@ export function TranslationEditor({
                     </div>
                 );
             })}
+        </>
+    );
+}
+
+export function TranslationEditor({
+    form,
+    fieldPrefix,
+    defaultValues,
+    lang,
+    onLangChange,
+}: {
+    form: UseFormReturn<TranslationFormValues>;
+    fieldPrefix: string;
+    defaultValues?: TranslationFormValues;
+    lang: TranslationLang;
+    onLangChange: (lang: TranslationLang) => void;
+}) {
+    const [expandedGroups, setExpandedGroups] = useState<
+        Record<string, boolean>
+    >({});
+    const [showAdvanced, setShowAdvanced] = useState(false);
+    const activeField = TRANSLATION_LANG_FIELDS[lang];
+
+    const handleToggleGroup = (groupName: string) => {
+        setExpandedGroups((prevState) => ({
+            ...prevState,
+            [groupName]: !prevState[groupName],
+        }));
+    };
+
+    return (
+        <div>
+            <div className={styles.customize__translationLangTabs}>
+                <button
+                    type="button"
+                    className={`${styles.customize__translationLangTab} ${
+                        lang === "default"
+                            ? styles["customize__translationLangTab--active"]
+                            : ""
+                    }`}
+                    onClick={() => onLangChange("default")}
+                >
+                    Default (all languages)
+                </button>
+                <button
+                    type="button"
+                    className={`${styles.customize__translationLangTab} ${
+                        lang === "en"
+                            ? styles["customize__translationLangTab--active"]
+                            : ""
+                    }`}
+                    onClick={() => onLangChange("en")}
+                >
+                    English (EN)
+                </button>
+                <button
+                    type="button"
+                    className={`${styles.customize__translationLangTab} ${
+                        lang === "fr"
+                            ? styles["customize__translationLangTab--active"]
+                            : ""
+                    }`}
+                    onClick={() => onLangChange("fr")}
+                >
+                    French (FR)
+                </button>
+            </div>
+
+            <TranslationGroupList
+                groups={EMBEDDED_TRANSLATION_GROUPS}
+                expandedGroups={expandedGroups}
+                onToggleGroup={handleToggleGroup}
+                form={form}
+                fieldPrefix={fieldPrefix}
+                activeField={activeField}
+                defaultValues={defaultValues}
+                lang={lang}
+            />
+
+            <div className={styles.customize__advancedSection}>
+                <button
+                    type="button"
+                    className={styles.customize__advancedToggle}
+                    onClick={() => setShowAdvanced(!showAdvanced)}
+                >
+                    {showAdvanced ? (
+                        <ChevronDown size={16} />
+                    ) : (
+                        <ChevronRight size={16} />
+                    )}
+                    Advanced — Modal flow translations
+                </button>
+
+                {showAdvanced && (
+                    <div className={styles.customize__advancedBody}>
+                        <p className={styles.customize__hint}>
+                            These translations apply to the pop-up modal flow,
+                            which is used less frequently than the embedded
+                            wallet.
+                        </p>
+                        <TranslationGroupList
+                            groups={MODAL_TRANSLATION_GROUPS}
+                            expandedGroups={expandedGroups}
+                            onToggleGroup={handleToggleGroup}
+                            form={form}
+                            fieldPrefix={fieldPrefix}
+                            activeField={activeField}
+                            defaultValues={defaultValues}
+                            lang={lang}
+                        />
+                    </div>
+                )}
+            </div>
         </div>
     );
 }

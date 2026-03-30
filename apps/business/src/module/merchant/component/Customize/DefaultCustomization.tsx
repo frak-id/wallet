@@ -5,6 +5,7 @@ import { Panel } from "@/module/common/component/Panel";
 import { Form } from "@/module/forms/Form";
 import { FormActions } from "@/module/forms/FormActions";
 import { useMerchantUpdate } from "@/module/merchant/hook/useMerchantUpdate";
+import styles from "./index.module.css";
 import { CssEditor, TranslationEditor } from "./TranslationEditor";
 import {
     buildTranslationsPayload,
@@ -81,6 +82,10 @@ function GlobalCssPanel({
 
     return (
         <Panel title={"Global CSS"}>
+            <p className={styles.customize__fieldDescription}>
+                CSS styles applied to all SDK components across every placement.
+                Placement-level CSS can override these defaults.
+            </p>
             <CssEditor
                 value={form.watch("css")}
                 onChange={(value) => {

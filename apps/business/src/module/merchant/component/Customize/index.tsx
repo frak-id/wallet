@@ -9,6 +9,7 @@ import { Panel } from "@/module/common/component/Panel";
 import {
     Form,
     FormControl,
+    FormDescription,
     FormField,
     FormItem,
     FormLabel,
@@ -210,6 +211,10 @@ function SdkIdentityPanel({
                     render={({ field }) => (
                         <FormItem>
                             <FormLabel weight={"medium"}>Name</FormLabel>
+                            <FormDescription>
+                                Your brand name as shown to visitors in the SDK
+                                components
+                            </FormDescription>
                             <FormControl>
                                 <Input
                                     length={"medium"}
@@ -227,6 +232,10 @@ function SdkIdentityPanel({
                     render={({ field }) => (
                         <FormItem>
                             <FormLabel weight={"medium"}>Logo URL</FormLabel>
+                            <FormDescription>
+                                URL to your logo image, displayed alongside your
+                                name in SDK components
+                            </FormDescription>
                             <FormControl>
                                 <Input
                                     length={"medium"}
@@ -246,6 +255,10 @@ function SdkIdentityPanel({
                             <FormLabel weight={"medium"}>
                                 Homepage Link
                             </FormLabel>
+                            <FormDescription>
+                                Your website URL, used when visitors click your
+                                brand name
+                            </FormDescription>
                             <FormControl>
                                 <Input
                                     length={"medium"}
@@ -263,6 +276,9 @@ function SdkIdentityPanel({
                     render={({ field }) => (
                         <FormItem>
                             <FormLabel weight={"medium"}>Currency</FormLabel>
+                            <FormDescription>
+                                Currency used to display reward amounts
+                            </FormDescription>
                             <FormControl>
                                 <select
                                     className={styles.customize__select}
@@ -284,6 +300,10 @@ function SdkIdentityPanel({
                     render={({ field }) => (
                         <FormItem>
                             <FormLabel weight={"medium"}>Language</FormLabel>
+                            <FormDescription>
+                                Language for SDK text. Auto detects from the
+                                visitor&apos;s browser.
+                            </FormDescription>
                             <FormControl>
                                 <select
                                     className={styles.customize__select}
@@ -308,6 +328,10 @@ function SdkIdentityPanel({
                             <FormLabel weight={"medium"}>
                                 Frak SDK displayed
                             </FormLabel>
+                            <FormDescription>
+                                When off, the SDK is completely hidden from
+                                visitors
+                            </FormDescription>
                             <FormControl>
                                 <Switch
                                     checked={!field.value}

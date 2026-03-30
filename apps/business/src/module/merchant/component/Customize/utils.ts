@@ -54,12 +54,31 @@ export type PlacementSettingsFormValues = {
     openInApp: OpenInAppFormValues;
 };
 
-export const TRANSLATION_GROUPS = {
-    "modal.dismiss": [
+/**
+ * Translation groups for the embedded wallet flow (primary — always visible).
+ */
+export const EMBEDDED_TRANSLATION_GROUPS = {
+    "Login Screen": [
+        "sdk.wallet.login.text",
+        "sdk.wallet.login.text_referred",
+        "sdk.wallet.login.primaryAction",
+    ],
+    Onboarding: [
+        "sdk.wallet.loggedIn.onboarding.welcome",
+        "sdk.wallet.loggedIn.onboarding.share",
+        "sdk.wallet.loggedIn.onboarding.share_referred",
+    ],
+} as const;
+
+/**
+ * Translation groups for the modal flow (advanced — collapsed by default).
+ */
+export const MODAL_TRANSLATION_GROUPS = {
+    "Dismiss Step": [
         "sdk.modal.dismiss.primaryAction",
         "sdk.modal.dismiss.primaryAction_sharing",
     ],
-    "modal.final": [
+    "Final Step": [
         "sdk.modal.final.title",
         "sdk.modal.final.title_reward",
         "sdk.modal.final.title_sharing",
@@ -69,7 +88,7 @@ export const TRANSLATION_GROUPS = {
         "sdk.modal.final.dismissed.description",
         "sdk.modal.final.dismissed.description_sharing",
     ],
-    "modal.login": [
+    "Login Step": [
         "sdk.modal.login.description",
         "sdk.modal.login.description_sharing",
         "sdk.modal.login.description_reward",
@@ -78,28 +97,154 @@ export const TRANSLATION_GROUPS = {
         "sdk.modal.login.title",
         "sdk.modal.login.success",
     ],
-    "modal.sendTransaction": [
+    "Send Transaction Step": [
         "sdk.modal.sendTransaction.description",
         "sdk.modal.sendTransaction.primaryAction_one",
         "sdk.modal.sendTransaction.primaryAction_other",
         "sdk.modal.sendTransaction.title",
     ],
-    "modal.siweAuthenticate": [
+    "SIWE Authentication Step": [
         "sdk.modal.siweAuthenticate.description",
         "sdk.modal.siweAuthenticate.primaryAction",
         "sdk.modal.siweAuthenticate.title",
     ],
-    "wallet.login": [
-        "sdk.wallet.login.text",
-        "sdk.wallet.login.text_referred",
-        "sdk.wallet.login.primaryAction",
-    ],
-    "wallet.loggedIn": [
-        "sdk.wallet.loggedIn.onboarding.welcome",
-        "sdk.wallet.loggedIn.onboarding.share",
-        "sdk.wallet.loggedIn.onboarding.share_referred",
-    ],
 } as const;
+
+/**
+ * Combined groups for validation and payload building.
+ */
+export const ALL_TRANSLATION_GROUPS = {
+    ...EMBEDDED_TRANSLATION_GROUPS,
+    ...MODAL_TRANSLATION_GROUPS,
+} as const;
+
+export const TRANSLATION_KEY_META: Record<
+    string,
+    { label: string; description: string }
+> = {
+    "sdk.wallet.login.text": {
+        label: "Login prompt",
+        description:
+            "Message shown to visitors who haven't connected their wallet yet",
+    },
+    "sdk.wallet.login.text_referred": {
+        label: "Login prompt (referred visitor)",
+        description:
+            "Message shown to visitors who arrived via a referral link",
+    },
+    "sdk.wallet.login.primaryAction": {
+        label: "Login button",
+        description: "Text on the main login / connect button",
+    },
+    "sdk.wallet.loggedIn.onboarding.welcome": {
+        label: "Welcome message",
+        description: "Greeting shown after a user first connects their wallet",
+    },
+    "sdk.wallet.loggedIn.onboarding.share": {
+        label: "Share prompt",
+        description: "Message encouraging the user to share with friends",
+    },
+    "sdk.wallet.loggedIn.onboarding.share_referred": {
+        label: "Share prompt (referred visitor)",
+        description: "Share message for users who arrived via a referral link",
+    },
+    "sdk.modal.dismiss.primaryAction": {
+        label: "Dismiss button",
+        description: "Text on the dismiss / close button",
+    },
+    "sdk.modal.dismiss.primaryAction_sharing": {
+        label: "Dismiss button (sharing)",
+        description: "Dismiss button text during the sharing flow",
+    },
+    "sdk.modal.final.title": {
+        label: "Final step title",
+        description: "Heading shown on the last modal step",
+    },
+    "sdk.modal.final.title_reward": {
+        label: "Final step title (reward)",
+        description: "Heading when a reward is available",
+    },
+    "sdk.modal.final.title_sharing": {
+        label: "Final step title (sharing)",
+        description: "Heading during the sharing flow",
+    },
+    "sdk.modal.final.description": {
+        label: "Final step description",
+        description: "Body text on the last modal step",
+    },
+    "sdk.modal.final.description_sharing": {
+        label: "Final step description (sharing)",
+        description: "Body text during the sharing flow",
+    },
+    "sdk.modal.final.description_reward": {
+        label: "Final step description (reward)",
+        description: "Body text when a reward is available",
+    },
+    "sdk.modal.final.dismissed.description": {
+        label: "Dismissed description",
+        description: "Text shown after the user dismissed the modal",
+    },
+    "sdk.modal.final.dismissed.description_sharing": {
+        label: "Dismissed description (sharing)",
+        description: "Dismissed text during the sharing flow",
+    },
+    "sdk.modal.login.description": {
+        label: "Login description",
+        description: "Body text in the login modal",
+    },
+    "sdk.modal.login.description_sharing": {
+        label: "Login description (sharing)",
+        description: "Login body text during the sharing flow",
+    },
+    "sdk.modal.login.description_reward": {
+        label: "Login description (reward)",
+        description: "Login body text when a reward is available",
+    },
+    "sdk.modal.login.primaryAction": {
+        label: "Login button",
+        description: "Main action button in the login modal",
+    },
+    "sdk.modal.login.secondaryAction": {
+        label: "Secondary button",
+        description: "Alternative action button in the login modal",
+    },
+    "sdk.modal.login.title": {
+        label: "Login title",
+        description: "Heading of the login modal",
+    },
+    "sdk.modal.login.success": {
+        label: "Login success",
+        description: "Message shown after a successful login",
+    },
+    "sdk.modal.sendTransaction.description": {
+        label: "Transaction description",
+        description: "Body text in the transaction confirmation modal",
+    },
+    "sdk.modal.sendTransaction.primaryAction_one": {
+        label: "Confirm button (single)",
+        description: "Button text when confirming a single transaction",
+    },
+    "sdk.modal.sendTransaction.primaryAction_other": {
+        label: "Confirm button (multiple)",
+        description: "Button text when confirming multiple transactions",
+    },
+    "sdk.modal.sendTransaction.title": {
+        label: "Transaction title",
+        description: "Heading of the transaction confirmation modal",
+    },
+    "sdk.modal.siweAuthenticate.description": {
+        label: "Authentication description",
+        description: "Body text in the SIWE authentication modal",
+    },
+    "sdk.modal.siweAuthenticate.primaryAction": {
+        label: "Authentication button",
+        description: "Action button for SIWE authentication",
+    },
+    "sdk.modal.siweAuthenticate.title": {
+        label: "Authentication title",
+        description: "Heading of the SIWE authentication modal",
+    },
+};
 
 export const TRANSLATION_LANG_FIELDS = {
     default: "translationsDefault",

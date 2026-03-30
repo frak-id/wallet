@@ -9,6 +9,7 @@ import { Panel } from "@/module/common/component/Panel";
 import {
     Form,
     FormControl,
+    FormDescription,
     FormField,
     FormItem,
     FormLabel,
@@ -224,6 +225,11 @@ function PlacementSettingsPanel({
                                 <FormLabel weight={"medium"}>
                                     Target interaction
                                 </FormLabel>
+                                <FormDescription>
+                                    Event name that triggers reward calculation
+                                    for this placement (e.g. purchase_completed,
+                                    signup)
+                                </FormDescription>
                                 <FormControl>
                                     <Input
                                         length={"big"}
@@ -296,6 +302,9 @@ function ButtonShareFields({
                 render={({ field }) => (
                     <FormItem>
                         <FormLabel weight={"medium"}>Button text</FormLabel>
+                        <FormDescription>
+                            Label displayed on the share button
+                        </FormDescription>
                         <FormControl>
                             <Input
                                 length={"big"}
@@ -323,6 +332,10 @@ function ButtonShareFields({
                         <FormLabel weight={"medium"}>
                             No-reward fallback text
                         </FormLabel>
+                        <FormDescription>
+                            Shown instead when no reward is available for this
+                            campaign
+                        </FormDescription>
                         <FormControl>
                             <Input
                                 length={"big"}
@@ -342,6 +355,9 @@ function ButtonShareFields({
                 render={({ field }) => (
                     <FormItem>
                         <FormLabel weight={"medium"}>Click action</FormLabel>
+                        <FormDescription>
+                            What happens when a visitor clicks the share button
+                        </FormDescription>
                         <FormControl>
                             <select
                                 className={styles.customize__select}
@@ -367,6 +383,10 @@ function ButtonShareFields({
                         <FormLabel weight={"medium"}>
                             Display estimated reward
                         </FormLabel>
+                        <FormDescription>
+                            Show the estimated reward amount directly on the
+                            button
+                        </FormDescription>
                         <FormControl>
                             <Switch
                                 checked={field.value}
@@ -384,6 +404,9 @@ function ButtonShareFields({
                 render={({ field }) => (
                     <FormItem>
                         <FormLabel weight={"medium"}>Component CSS</FormLabel>
+                        <FormDescription>
+                            Custom styles applied to the share button
+                        </FormDescription>
                         <FormControl>
                             <textarea
                                 className={styles.customize__textarea}
@@ -413,6 +436,10 @@ function ButtonWalletFields({
                 render={({ field }) => (
                     <FormItem>
                         <FormLabel weight={"medium"}>Position</FormLabel>
+                        <FormDescription>
+                            Screen corner where the floating wallet button
+                            appears
+                        </FormDescription>
                         <FormControl>
                             <select
                                 className={styles.customize__select}
@@ -435,6 +462,9 @@ function ButtonWalletFields({
                 render={({ field }) => (
                     <FormItem>
                         <FormLabel weight={"medium"}>Component CSS</FormLabel>
+                        <FormDescription>
+                            Custom styles applied to the wallet button
+                        </FormDescription>
                         <FormControl>
                             <textarea
                                 className={styles.customize__textarea}
@@ -470,6 +500,10 @@ function OpenInAppFields({
                 render={({ field }) => (
                     <FormItem>
                         <FormLabel weight={"medium"}>Button text</FormLabel>
+                        <FormDescription>
+                            Label on the &quot;Open in App&quot; button, shown
+                            to mobile visitors
+                        </FormDescription>
                         <FormControl>
                             <Input
                                 length={"big"}
@@ -489,6 +523,9 @@ function OpenInAppFields({
                 render={({ field }) => (
                     <FormItem>
                         <FormLabel weight={"medium"}>Component CSS</FormLabel>
+                        <FormDescription>
+                            Custom styles applied to the open-in-app button
+                        </FormDescription>
                         <FormControl>
                             <textarea
                                 className={styles.customize__textarea}
@@ -548,6 +585,10 @@ function PlacementCssPanel({
 
     return (
         <Panel title={`Placement CSS · ${placementId}`}>
+            <p className={styles.customize__fieldDescription}>
+                Global CSS overrides for this placement. Styles defined here
+                apply to all SDK components within this placement.
+            </p>
             <CssEditor
                 value={form.watch("css")}
                 onChange={(value) => {
