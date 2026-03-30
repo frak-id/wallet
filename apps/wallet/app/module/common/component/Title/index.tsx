@@ -8,7 +8,7 @@ export interface TitleProps {
     className?: string;
     classNameText?: string;
     children?: string | ReactNode;
-    size?: "medium" | "big";
+    size?: "page" | "medium" | "big";
     align?: "left" | "center";
 }
 
@@ -20,9 +20,11 @@ export function Title({
     align = "left",
     children,
 }: TitleProps) {
+    const tag = size === "page" ? "h1" : "h2";
+
     return (
         <Box
-            as="h2"
+            as={tag}
             className={[
                 styles.title,
                 styles.size[size],
@@ -33,14 +35,18 @@ export function Title({
                 .join(" ")}
         >
             {icon && <Box as="span">{icon}</Box>}
-            <Text
-                as="span"
-                className={[styles.titleText, classNameText]
-                    .filter(Boolean)
-                    .join(" ")}
-            >
-                {children}
-            </Text>
+            {size === "page" ? (
+                children
+            ) : (
+                <Text
+                    as="span"
+                    className={[styles.titleText, classNameText]
+                        .filter(Boolean)
+                        .join(" ")}
+                >
+                    {children}
+                </Text>
+            )}
         </Box>
     );
 }

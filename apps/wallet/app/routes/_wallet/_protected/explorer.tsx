@@ -1,6 +1,6 @@
 import { Box } from "@frak-labs/design-system/components/Box";
-import { Text } from "@frak-labs/design-system/components/Text";
 import { createFileRoute } from "@tanstack/react-router";
+import { Title } from "@/module/common/component/Title";
 
 export const Route = createFileRoute("/_wallet/_protected/explorer")({
     component: ExplorerPage,
@@ -9,7 +9,7 @@ export const Route = createFileRoute("/_wallet/_protected/explorer")({
 function ExplorerPage() {
     return (
         <Box display="flex" flexDirection="column" gap="m">
-            <Text as="h1">Explorer</Text>
+            <Title size="page">Explorer</Title>
         </Box>
     );
 }

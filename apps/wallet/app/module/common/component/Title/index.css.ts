@@ -9,6 +9,11 @@ export const title = style({
 });
 
 export const size = styleVariants({
+    page: {
+        fontSize: fontSize["3xl"],
+        fontWeight: brand.typography.fontWeight.bold,
+        lineHeight: "38px",
+    },
     medium: {
         fontSize: fontSize.s,
         fontWeight: brand.typography.fontWeight.medium,

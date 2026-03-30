@@ -8,6 +8,7 @@ import {
 import { Link } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { Title } from "@/module/common/component/Title";
 // import { Logout } from "@/module/authentication/component/Logout";
 import { MoneriumConnect } from "@/module/monerium/component/MoneriumConnect";
 import { useMoneriumProfile } from "@/module/monerium/hooks/useMoneriumProfile";
@@ -63,9 +64,7 @@ export function ProfilePage() {
             gap="m"
             className={styles.page}
         >
-            <Text as="h1" className={styles.title}>
-                {t("wallet.profile.pageTitle")}
-            </Text>
+            <Title size="page">{t("wallet.profile.pageTitle")}</Title>
             <ProfileIdentityCard />
             <ProfilePreferencesCard />
             {/*<ProfileSecurityCard />*/}

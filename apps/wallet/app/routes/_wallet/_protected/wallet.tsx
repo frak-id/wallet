@@ -1,10 +1,10 @@
 import { isRunningInProd } from "@frak-labs/app-essentials";
 import { Box } from "@frak-labs/design-system/components/Box";
-import { Text } from "@frak-labs/design-system/components/Text";
 import { createFileRoute } from "@tanstack/react-router";
 import { memo } from "react";
 import { useTranslation } from "react-i18next";
 import { useHydrated } from "remix-utils/use-hydrated";
+import { Title } from "@/module/common/component/Title";
 import { MoneriumStatus } from "@/module/monerium/component/MoneriumStatus";
 import { Balance } from "@/module/tokens/component/Balance";
 import { DemoAccount } from "@/module/wallet/component/DemoAccount";
@@ -34,7 +34,7 @@ function WalletPage() {
 
     return (
         <Box display="flex" flexDirection="column" gap="m">
-            <Text as="h1">{t("wallet.pageTitle")}</Text>
+            <Title size="page">{t("wallet.pageTitle")}</Title>
             <DemoAccount />
             <Balance />
             <WelcomeCard />

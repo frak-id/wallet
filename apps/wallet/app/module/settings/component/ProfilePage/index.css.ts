@@ -5,10 +5,6 @@ export const page = style({
     width: "100%",
 });
 
-export const title = style({
-    letterSpacing: "-0.03em",
-});
-
 export const footer = style({
     display: "flex",
     flexDirection: "column",
