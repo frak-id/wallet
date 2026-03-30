@@ -33,8 +33,8 @@
         "amountRequired": "Le montant est requis",
         "added": "ajouté",
         "at": "à",
-        "accountId": "ID du compte :",
-        "authenticator": "Authentificateur :",
+        "accountId": "Porte-monnaie",
+        "authenticator": "Authentificateur",
         "balance": "Solde",
         "claim": "Réclamer",
         "claimed": "réclamé",
@@ -112,7 +112,7 @@
             "privateKey": "Clé privée",
             "deletePrivateKey": "Supprimer la clé privée",
             "legal": "Légal",
-            "termsOfUse": "Conditions Générales d'Utilisation",
+            "termsOfUse": "Conditions générales",
             "deleteAccount": "Supprimer mon compte"
         },
         "installWebApp": "<strong>Installer le wallet sur l'écran d'accueil</strong><br /> pour retrouver vos gains à tout moment",
@@ -214,8 +214,8 @@
             "title": "Bienvenue dans Frak 🎉",
             "text": "Ce porte-monnaie vous permet de collecter toutes les récompenses et bien plus encore.",
             "check1": "Explore les marques partenaires",
-            "check2": "Partage tes articles favoris",
-            "check3": "Collecte tes gains dans l'app",
+            "check2": "Recommande tes produits favoris",
+            "check3": "Gagne de l'argent à chaque parrainage",
             "notifications": {
                 "title": "Ne rate aucun gain !",
                 "description": "Active tes notifs pour suivre tes gains en temps réel."
@@ -227,8 +227,8 @@
         },
         "earnings": {
             "historyTitle": "Historique des gains",
-            "emptyTitle": "Prêt à gagner tes premiers gains ?",
-            "emptyDescription": "Explore les offres et partage tes produits coups de cœur avec tes ami·e·s pour gagner des récompenses.",
+            "emptyTitle": "Prêt à gagner de l'argent ?",
+            "emptyDescription": "Explore les offres et recommande tes produits coups de cœur à tes ami·e·s pour gagner de l'argent.",
             "discover": "Découvrir les offres"
         },
         "pairing": {
@@ -355,21 +355,21 @@
         "recoveryCode": "J'ai un code de récupération",
         "slides": {
             "one": {
-                "title": "Votre influence mérite d'être récompensée",
-                "description": "Partagez vos coups de coeur et recevez du cash à chaque achat généré grâce à vous."
+                "title": "Gagne de l'argent en recommandant",
+                "description": "Partage tes coups de cœur et gagne de l'argent à chaque achat généré grâce à toi."
             },
             "two": {
-                "title": "Vos gains en temps réel",
-                "description": "Suivez vos récompenses et transférez-les vers votre compte bancaire quand vous le souhaitez."
+                "title": "Tes gains en temps réel",
+                "description": "Suis tes gains et transfère-les sur ton compte bancaire quand tu veux."
             },
             "three": {
-                "title": "Activez votre espace sécurisé en 10 sec",
-                "description": "Sans formulaire, sans paperasse. Votre porte-monnaie est prêt à recevoir vos gains immédiatement."
+                "title": "Active ton espace sécurisé en 10 sec",
+                "description": "Sans formulaire, sans paperasse. Ton porte-monnaie est prêt à recevoir tes gains, instantanément."
             }
         },
         "keypass": {
-            "title": "Sécurisez votre compte",
-            "description": "Une clé d'identification sera enregistrée en toute sécurité dans votre gestionnaire de mots de passe et vous permettra de vous connecter avec la biométrie.",
+            "title": "Sécurise ton compte",
+            "description": "Une clé sécurisée est enregistrée dans ton gestionnaire de mots de passe pour te connecter rapidement via la biométrie.",
             "unsupported": {
                 "title": "Navigateur non compatible",
                 "description": "Votre navigateur ne supporte pas l'authentification biométrique. Connectez-vous autrement pour accéder à votre portefeuille.",
@@ -389,7 +389,7 @@
         },
         "welcome": {
             "title": "Bienvenue dans ton porte-monnaie",
-            "description": "C'est parti ! Explore nos marques partenaires, recommande tes coups de cœur et transforme ton influence en gains.",
+            "description": "C'est parti ! Explore nos marques partenaires, recommande tes coups de cœur et transforme ton influence en argent.",
             "descriptionHighlight": "Tes gains sont sécurisés et accessibles à tout moment.",
             "button": "Commencer",
             "legal": "En continuant, tu acceptes nos <termsLink>Conditions générales</termsLink> et notre <privacyLink>Politique de confidentialité</privacyLink>"

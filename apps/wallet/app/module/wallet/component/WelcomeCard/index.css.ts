@@ -56,7 +56,7 @@ export const layoutRow = style({
     display: "flex",
     flexDirection: "row",
     width: "100%",
-    height: "130px",
+    height: "150px",
 });
 
 export const contentArea = style({
@@ -70,7 +70,7 @@ export const contentArea = style({
 export const checkItem = style({
     display: "flex",
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     gap: alias.spacing.xxs,
 });
 
@@ -78,6 +78,8 @@ export const checkItemIcon = style({
     display: "flex",
     width: "12px",
     height: "12px",
+    flexShrink: 0,
+    marginTop: "3px",
 });
 
 export const logosSection = style({

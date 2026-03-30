@@ -108,11 +108,11 @@ interface Resources {
             unlockWith: "Use {{type}} to unlock";
         };
         common: {
-            accountId: "Account ID:";
+            accountId: "Wallet";
             added: "added";
             amountRequired: "Amount is required";
             at: "at";
-            authenticator: "Authenticator:";
+            authenticator: "Authenticator";
             "back-to-wallet": "Back to Wallet";
             balance: "Balance";
             claim: "Claim";
@@ -211,7 +211,7 @@ interface Resources {
             alreadyHaveAccount: "Already have an account?";
             continue: "Continue";
             keypass: {
-                description: "A passkey will be securely saved in your password manager and will allow you to log in with biometrics.";
+                description: "A secure key is saved in your password manager to quickly log in via biometrics.";
                 existingAccount: {
                     button: "Log in";
                     description: "You already have an account. Log in with your passkey to access your wallet.";
@@ -234,15 +234,15 @@ interface Resources {
             recoveryCode: "I have a recovery code";
             slides: {
                 one: {
-                    description: "Share your favorites and earn cash for every purchase you help generate.";
-                    title: "Your influence deserves to be rewarded";
+                    description: "Share your favorites and earn money for every purchase you help generate.";
+                    title: "Earn money by recommending";
                 };
                 three: {
-                    description: "No forms, no paperwork. Your wallet is ready to receive your earnings immediately.";
+                    description: "No forms, no paperwork. Your wallet is ready to receive your earnings, instantly.";
                     title: "Activate your secure space in 10 sec";
                 };
                 two: {
-                    description: "Track your rewards and transfer them to your bank account whenever you want.";
+                    description: "Track your earnings and transfer them to your bank account whenever you want.";
                     title: "Your earnings in real time";
                 };
             };
@@ -291,8 +291,8 @@ interface Resources {
             activateNotificationsRationale: "<strong>Enable notifications</strong> <br /> We need your permission to notify you when gains are paid";
             earnings: {
                 discover: "Discover offers";
-                emptyDescription: "Explore offers and share your favorite products with friends to earn rewards.";
-                emptyTitle: "Ready to earn your first rewards?";
+                emptyDescription: "Explore offers and recommend your favorite products to friends to earn money.";
+                emptyTitle: "Ready to earn money?";
                 historyTitle: "Earnings history";
             };
             inAppBrowser: {
@@ -493,7 +493,7 @@ interface Resources {
                 ecdsaWallet: "Ecdsa wallet";
                 legal: "Legal";
                 privateKey: "Private key";
-                termsOfUse: "Terms of Use";
+                termsOfUse: "Terms and conditions";
             };
             "share-and-earn": "Share<br />& Earn";
             stats: {
@@ -526,8 +526,8 @@ interface Resources {
             };
             welcome: {
                 check1: "Explore partner brands";
-                check2: "Share your favorite products";
-                check3: "Collect your earnings in the app";
+                check2: "Recommend your favorite products";
+                check3: "Earn money with every referral";
                 notifications: {
                     description: "Enable notifications to track your earnings in real time.";
                     title: "Don't miss any earnings!";

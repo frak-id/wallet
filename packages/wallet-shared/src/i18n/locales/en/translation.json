@@ -35,8 +35,8 @@
         "amountRequired": "Amount is required",
         "added": "added",
         "at": "at",
-        "accountId": "Account ID:",
-        "authenticator": "Authenticator:",
+        "accountId": "Wallet",
+        "authenticator": "Authenticator",
         "balance": "Balance",
         "claim": "Claim",
         "claimed": "claimed",
@@ -114,7 +114,7 @@
             "privateKey": "Private key",
             "deletePrivateKey": "Delete private key",
             "legal": "Legal",
-            "termsOfUse": "Terms of Use",
+            "termsOfUse": "Terms and conditions",
             "deleteAccount": "Delete my account"
         },
         "installWebApp": "<strong>Install wallet on home screen</strong> <br /> to find your gains at any time",
@@ -216,8 +216,8 @@
             "title": "Welcome in your wallet",
             "text": "This wallet will enable you to collect all the rewards and much more.",
             "check1": "Explore partner brands",
-            "check2": "Share your favorite products",
-            "check3": "Collect your earnings in the app",
+            "check2": "Recommend your favorite products",
+            "check3": "Earn money with every referral",
             "notifications": {
                 "title": "Don't miss any earnings!",
                 "description": "Enable notifications to track your earnings in real time."
@@ -229,8 +229,8 @@
         },
         "earnings": {
             "historyTitle": "Earnings history",
-            "emptyTitle": "Ready to earn your first rewards?",
-            "emptyDescription": "Explore offers and share your favorite products with friends to earn rewards.",
+            "emptyTitle": "Ready to earn money?",
+            "emptyDescription": "Explore offers and recommend your favorite products to friends to earn money.",
             "discover": "Discover offers"
         },
         "pairing": {
@@ -357,21 +357,21 @@
         "recoveryCode": "I have a recovery code",
         "slides": {
             "one": {
-                "title": "Your influence deserves to be rewarded",
-                "description": "Share your favorites and earn cash for every purchase you help generate."
+                "title": "Earn money by recommending",
+                "description": "Share your favorites and earn money for every purchase you help generate."
             },
             "two": {
                 "title": "Your earnings in real time",
-                "description": "Track your rewards and transfer them to your bank account whenever you want."
+                "description": "Track your earnings and transfer them to your bank account whenever you want."
             },
             "three": {
                 "title": "Activate your secure space in 10 sec",
-                "description": "No forms, no paperwork. Your wallet is ready to receive your earnings immediately."
+                "description": "No forms, no paperwork. Your wallet is ready to receive your earnings, instantly."
             }
         },
         "keypass": {
             "title": "Secure your account",
-            "description": "A passkey will be securely saved in your password manager and will allow you to log in with biometrics.",
+            "description": "A secure key is saved in your password manager to quickly log in via biometrics.",
             "unsupported": {
                 "title": "Browser not compatible",
                 "description": "Your browser does not support biometric authentication. Log in another way to access your wallet.",
