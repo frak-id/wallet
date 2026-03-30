@@ -114,7 +114,9 @@ function PlacementSettingsPanel({
             buttonShare: {
                 text: components?.buttonShare?.text ?? "",
                 noRewardText: components?.buttonShare?.noRewardText ?? "",
-                showWallet: components?.buttonShare?.showWallet ?? false,
+                clickAction:
+                    components?.buttonShare?.clickAction ?? "embedded-wallet",
+                useReward: components?.buttonShare?.useReward ?? false,
                 css: components?.buttonShare?.css ?? "",
             },
             buttonWallet: {
@@ -135,7 +137,8 @@ function PlacementSettingsPanel({
             buttonShare: {
                 text: "",
                 noRewardText: "",
-                showWallet: false,
+                clickAction: "embedded-wallet",
+                useReward: false,
                 css: "",
             },
             buttonWallet: {
@@ -169,7 +172,8 @@ function PlacementSettingsPanel({
                 noRewardText: valueOrUndefined(
                     currentValues.buttonShare.noRewardText
                 ),
-                showWallet: currentValues.buttonShare.showWallet,
+                clickAction: currentValues.buttonShare.clickAction,
+                useReward: currentValues.buttonShare.useReward,
                 css: valueOrUndefined(currentValues.buttonShare.css),
             };
             const buttonWallet = {
@@ -334,11 +338,34 @@ function ButtonShareFields({
 
             <FormField
                 control={form.control}
-                name="buttonShare.showWallet"
+                name="buttonShare.clickAction"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel weight={"medium"}>Click action</FormLabel>
+                        <FormControl>
+                            <select
+                                className={styles.customize__select}
+                                value={field.value}
+                                onChange={(e) => field.onChange(e.target.value)}
+                            >
+                                <option value="embedded-wallet">
+                                    Embedded wallet
+                                </option>
+                                <option value="share-modal">Share modal</option>
+                            </select>
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+
+            <FormField
+                control={form.control}
+                name="buttonShare.useReward"
                 render={({ field }) => (
                     <FormItem className={styles.customize__switchRow}>
                         <FormLabel weight={"medium"}>
-                            Show wallet instead of share modal
+                            Display estimated reward
                         </FormLabel>
                         <FormControl>
                             <Switch

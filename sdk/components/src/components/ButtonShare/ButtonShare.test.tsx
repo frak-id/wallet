@@ -123,26 +123,8 @@ describe("ButtonShare", () => {
         expect(button).toHaveTextContent("Share and earn! 10 eur");
     });
 
-    it("should call handleShare on click when showWallet is false", async () => {
-        const mockHandleShare = vi.fn().mockResolvedValue(undefined);
-        vi.mocked(useShareModalHook.useShareModal).mockReturnValue({
-            handleShare: mockHandleShare,
-            isError: false,
-            debugInfo: undefined,
-        });
-
+    it("should call openEmbeddedWallet on click by default", async () => {
         render(<ButtonShare />);
-        const button = screen.getByRole("button");
-
-        fireEvent.click(button);
-
-        await waitFor(() => {
-            expect(mockHandleShare).toHaveBeenCalledTimes(1);
-        });
-    });
-
-    it("should call displayEmbeddedWallet when showWallet is true", async () => {
-        render(<ButtonShare showWallet />);
         const button = screen.getByRole("button");
 
         fireEvent.click(button);
@@ -152,6 +134,24 @@ describe("ButtonShare", () => {
                 window.FrakSetup.client,
                 window.FrakSetup.modalWalletConfig ?? {}
             );
+        });
+    });
+
+    it("should call handleShare when clickAction is share-modal", async () => {
+        const mockHandleShare = vi.fn().mockResolvedValue(undefined);
+        vi.mocked(useShareModalHook.useShareModal).mockReturnValue({
+            handleShare: mockHandleShare,
+            isError: false,
+            debugInfo: undefined,
+        });
+
+        render(<ButtonShare clickAction="share-modal" />);
+        const button = screen.getByRole("button");
+
+        fireEvent.click(button);
+
+        await waitFor(() => {
+            expect(mockHandleShare).toHaveBeenCalledTimes(1);
         });
     });
 

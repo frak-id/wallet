@@ -60,7 +60,6 @@ function replaceNexusShareButton() {
         buttonShare.setAttribute("text", "PARTAGE ET GAGNE {REWARD} !");
         buttonShare.setAttribute("no-reward-text", "PARTAGE ET GAGNE");
         buttonShare.setAttribute("use-reward", "true");
-        buttonShare.setAttribute("show-wallet", "true");
         buttonShare.setAttribute("classname", "button w-full");
         button.replaceWith(buttonShare);
     }

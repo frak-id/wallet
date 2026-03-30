@@ -32,7 +32,8 @@ export const COMPONENT_LABELS: Record<ComponentType, string> = {
 export type ButtonShareFormValues = {
     text: string;
     noRewardText: string;
-    showWallet: boolean;
+    clickAction: "embedded-wallet" | "share-modal";
+    useReward: boolean;
     css: string;
 };
 

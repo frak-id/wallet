@@ -30,8 +30,8 @@ export type ButtonShareProps = {
      */
     targetInteraction?: InteractionTypeKey;
     /**
-     * Do we display the wallet modal instead of the share modal?
-     * @defaultValue `false`
+     * Which UI to open on click
+     * @defaultValue `"embedded-wallet"`
      */
-    showWallet?: boolean;
+    clickAction?: "embedded-wallet" | "share-modal";
 };

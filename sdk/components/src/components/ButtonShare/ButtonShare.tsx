@@ -58,7 +58,7 @@ export function ButtonShare({
     useReward: rawUseReward,
     noRewardText,
     targetInteraction,
-    showWallet: rawShowWallet,
+    clickAction: rawClickAction,
 }: ButtonShareProps) {
     const placement = usePlacement(placementId);
     const componentConfig = placement?.components?.buttonShare;
@@ -75,12 +75,13 @@ export function ButtonShare({
     const resolvedNoRewardText = componentConfig?.noRewardText ?? noRewardText;
 
     const shouldUseReward = useMemo(
-        () => rawUseReward !== undefined,
-        [rawUseReward]
+        () => componentConfig?.useReward ?? rawUseReward !== undefined,
+        [componentConfig?.useReward, rawUseReward]
     );
-    const showWallet = useMemo(
-        () => componentConfig?.showWallet ?? rawShowWallet !== undefined,
-        [componentConfig?.showWallet, rawShowWallet]
+    const resolvedClickAction = useMemo(
+        () =>
+            componentConfig?.clickAction ?? rawClickAction ?? "embedded-wallet",
+        [componentConfig?.clickAction, rawClickAction]
     );
     const { shouldRender, isHidden, isClientReady } = useClientReady();
     const { reward } = useReward(
@@ -92,33 +93,30 @@ export function ButtonShare({
         placementId
     );
 
-    /**
-     * Compute the text we will display
-     */
     const btnText = useMemo(() => {
         if (!shouldUseReward) return resolvedText;
         if (!reward) {
             return resolvedNoRewardText ?? resolvedText.replace("{REWARD}", "");
         }
 
-        // Here if we have a reward
-        // Check if the text contain a REWARD placeholder, otherwise, put the reward at the end
         return resolvedText.includes("{REWARD}")
             ? resolvedText.replace("{REWARD}", reward)
             : `${resolvedText} ${reward}`;
     }, [shouldUseReward, resolvedText, resolvedNoRewardText, reward]);
 
-    /**
-     * The action when the button is clicked
-     */
     const onClick = useCallback(async () => {
         trackEvent(window.FrakSetup.client, "share_button_clicked");
-        if (showWallet) {
-            openEmbeddedWallet(resolvedTargetInteraction, placementId);
-        } else {
+        if (resolvedClickAction === "share-modal") {
             await handleShare();
+        } else {
+            openEmbeddedWallet(resolvedTargetInteraction, placementId);
         }
-    }, [showWallet, handleShare, resolvedTargetInteraction, placementId]);
+    }, [
+        resolvedClickAction,
+        handleShare,
+        resolvedTargetInteraction,
+        placementId,
+    ]);
 
     if (!shouldRender || isHidden) {
         return null;

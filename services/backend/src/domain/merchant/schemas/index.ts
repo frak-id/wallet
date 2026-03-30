@@ -22,7 +22,10 @@ const TranslationTieredSchema = t.Object({
 const ButtonShareComponentSchema = t.Object({
     text: t.Optional(t.String({ maxLength: 500 })),
     noRewardText: t.Optional(t.String({ maxLength: 500 })),
-    showWallet: t.Optional(t.Boolean()),
+    clickAction: t.Optional(
+        t.Union([t.Literal("embedded-wallet"), t.Literal("share-modal")])
+    ),
+    useReward: t.Optional(t.Boolean()),
     css: t.Optional(t.String({ maxLength: 50000 })),
 });
 

@@ -7,7 +7,7 @@ type ComponentCardProps = {
     description: string;
     action: string;
     preview: ComponentType;
-    showWallet?: boolean;
+    clickAction?: "embedded-wallet" | "share-modal";
 };
 
 export function ComponentCard({
@@ -15,7 +15,7 @@ export function ComponentCard({
     description,
     action,
     preview: Preview,
-    showWallet,
+    clickAction,
 }: ComponentCardProps) {
     return (
         <div className={styles.card}>
@@ -28,7 +28,7 @@ export function ComponentCard({
             <frak-button-share
                 text={action}
                 classname="card__button"
-                {...(showWallet && { "show-wallet": "true" })}
+                {...(clickAction && { "click-action": clickAction })}
             />
         </div>
     );

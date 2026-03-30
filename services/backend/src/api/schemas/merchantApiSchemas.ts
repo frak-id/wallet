@@ -9,7 +9,13 @@ const ResolvedPlacementSchema = t.Object({
                 t.Object({
                     text: t.Optional(t.String()),
                     noRewardText: t.Optional(t.String()),
-                    showWallet: t.Optional(t.Boolean()),
+                    clickAction: t.Optional(
+                        t.Union([
+                            t.Literal("embedded-wallet"),
+                            t.Literal("share-modal"),
+                        ])
+                    ),
+                    useReward: t.Optional(t.Boolean()),
                     css: t.Optional(t.String()),
                 })
             ),
