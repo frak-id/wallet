@@ -1,5 +1,6 @@
 import {
     createRpcClient,
+    Deferred,
     FrakRpcError,
     type RpcClient,
     RpcErrorCodes,
@@ -10,7 +11,7 @@ import type { FrakClient } from "../types/client";
 import type { FrakWalletSdkConfig } from "../types/config";
 import type { SdkResolvedConfig } from "../types/resolvedConfig";
 import type { IFrameRpcSchema } from "../types/rpc";
-import { fetchMerchantConfig, getClientId } from "../utils";
+import { getClientId } from "../utils";
 import { BACKUP_KEY } from "../utils/constants";
 import { sdkConfigStore } from "../utils/sdkConfigStore";
 import { setupSsoUrlListener } from "../utils/ssoUrlListener";
@@ -21,7 +22,7 @@ import {
 } from "./transports/iframeLifecycleManager";
 
 type SdkRpcClient = RpcClient<IFrameRpcSchema, FrakLifecycleEvent>;
-type MerchantConfigResult = Awaited<ReturnType<typeof fetchMerchantConfig>>;
+type MerchantConfigResult = Awaited<ReturnType<typeof sdkConfigStore.resolve>>;
 
 /**
  * Create a new iframe Frak client
@@ -67,13 +68,16 @@ export function createIFrameFrakClient({
     // Skip fetch entirely if cache is fresh, otherwise fetch (SWR)
     const configPromise = sdkConfigStore.isCacheFresh
         ? undefined
-        : fetchMerchantConfig(config.domain, config.walletUrl, detectedLang);
+        : sdkConfigStore.resolve(config.domain, config.walletUrl, detectedLang);
 
     // Create lifecycle manager
     const lifecycleManager = createIFrameLifecycleManager({
         iframe,
         targetOrigin: frakWalletUrl,
     });
+
+    // Resolved after first resolved-config is sent to iframe (prevents RPC before context exists)
+    const contextSent = new Deferred<void>();
 
     // Create our debug info gatherer
     const debugInfo = new DebugInfoGatherer(config, iframe);
@@ -92,10 +96,9 @@ export function createIFrameFrakClient({
         listeningTransport: window,
         targetOrigin: frakWalletUrl,
         middleware: [
-            // Ensure we are connected before sending request
+            // Ensure we are connected and context is sent before sending request
             {
                 async onRequest(_message, ctx) {
-                    // Ensure the iframe is connected
                     const isConnected = await lifecycleManager.isConnected;
                     if (!isConnected) {
                         throw new FrakRpcError(
@@ -103,6 +106,7 @@ export function createIFrameFrakClient({
                             "The iframe provider isn't connected yet"
                         );
                     }
+                    await contextSent.promise;
                     return ctx;
                 },
             },
@@ -182,7 +186,13 @@ export function createIFrameFrakClient({
         rpcClient,
         lifecycleManager,
         configPromise,
-    }).then(() => debugInfo.updateSetupStatus(true));
+        contextSent,
+    })
+        .then(() => debugInfo.updateSetupStatus(true))
+        .catch((err) => {
+            contextSent.reject(err);
+            throw err;
+        });
 
     return {
         config,
@@ -260,11 +270,13 @@ async function postConnectionSetup({
     rpcClient,
     lifecycleManager,
     configPromise,
+    contextSent,
 }: {
     config: FrakWalletSdkConfig;
     rpcClient: SdkRpcClient;
     lifecycleManager: IframeLifecycleManager;
     configPromise: Promise<MerchantConfigResult> | undefined;
+    contextSent: Deferred<void>;
 }): Promise<void> {
     await lifecycleManager.isConnected;
 
@@ -355,6 +367,7 @@ async function postConnectionSetup({
     // SWR: if we have cached data, send it to the iframe immediately
     if (sdkConfigStore.isResolved) {
         sendLifecycleConfig(sdkConfigStore.getConfig());
+        contextSent.resolve();
     }
 
     // If a fetch is running (stale/missing cache), wait for fresh data and update
@@ -362,6 +375,7 @@ async function postConnectionSetup({
         const merchantConfig = await configPromise;
         mergeAndSetConfig(merchantConfig);
         sendLifecycleConfig(sdkConfigStore.getConfig());
+        contextSent.resolve();
     }
 
     // Push raw CSS if needed

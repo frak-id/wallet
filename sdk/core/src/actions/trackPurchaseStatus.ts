@@ -1,6 +1,6 @@
 import { getBackendUrl } from "../utils/backendUrl";
 import { getClientId } from "../utils/clientId";
-import { fetchMerchantId } from "../utils/merchantId";
+import { sdkConfigStore } from "../utils/sdkConfigStore";
 
 /**
  * Function used to track the status of a purchase
@@ -26,7 +26,7 @@ import { fetchMerchantId } from "../utils/merchantId";
  * }
  *
  * @remarks
- * - Merchant id is resolved in this order: explicit `args.merchantId`, `frak-merchant-id` from session storage, then `fetchMerchantId()`.
+ * - Merchant id is resolved in this order: explicit `args.merchantId`, then `sdkConfigStore.resolveMerchantId()` (config store → sessionStorage → backend fetch).
  * - This function supports anonymous users and will use the `x-frak-client-id` header when available.
  * - At least one identity source must exist (`frak-wallet-interaction-token` or `x-frak-client-id`), otherwise the tracking request is skipped.
  * - This function will print a warning if used in a non-browser environment or if no identity / merchant id can be resolved.
@@ -52,10 +52,8 @@ export async function trackPurchaseStatus(args: {
         return;
     }
 
-    const merchantIdFromStorage =
-        window.sessionStorage.getItem("frak-merchant-id");
     const merchantId =
-        args.merchantId ?? merchantIdFromStorage ?? (await fetchMerchantId());
+        args.merchantId ?? (await sdkConfigStore.resolveMerchantId());
 
     if (!merchantId) {
         console.warn("[Frak] No merchant id found, skipping purchase check");

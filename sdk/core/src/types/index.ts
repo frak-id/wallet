@@ -22,6 +22,7 @@ export type {
     IFrameLifecycleEvent,
 } from "./lifecycle";
 export type {
+    MerchantConfigResponse,
     ResolvedPlacement,
     ResolvedSdkConfig,
     SdkResolvedConfig,

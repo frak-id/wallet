@@ -1,6 +1,18 @@
 import type { Currency, Language } from "./config";
 
 /**
+ * Response from the merchant resolve endpoint
+ * @category Config
+ */
+export type MerchantConfigResponse = {
+    merchantId: string;
+    name: string;
+    domain: string;
+    allowedDomains: string[];
+    sdkConfig?: ResolvedSdkConfig;
+};
+
+/**
  * Resolved placement config from backend
  * Translations already flattened: default + lang-specific merged into one record
  * @category Config
