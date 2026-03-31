@@ -1,4 +1,4 @@
-import { transform } from "lightningcss";
+import { transform, type Url } from "lightningcss";
 
 const cssTargets = {
     chrome: 100 << 16,
@@ -12,8 +12,8 @@ const securityVisitor = {
             return [];
         },
     },
-    Url(url: { url: string }) {
-        return { ...url, url: "" };
+    Url(url: Url) {
+        return { ...url, url: "", loc: url.loc };
     },
 } as const;
 

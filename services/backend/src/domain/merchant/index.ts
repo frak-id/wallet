@@ -11,4 +11,5 @@ export type { SdkConfig } from "./schemas";
 export { ExplorerConfigSchema, SdkConfigSchema } from "./schemas";
 export { MerchantAuthorizationService } from "./services/MerchantAuthorizationService";
 export { MerchantRegistrationService } from "./services/MerchantRegistrationService";
+export { MerchantResolveService } from "./services/MerchantResolveService";
 export { OwnershipTransferService } from "./services/OwnershipTransferService";

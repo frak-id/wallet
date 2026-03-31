@@ -6,6 +6,7 @@ import { Form } from "@/module/forms/Form";
 import { FormActions } from "@/module/forms/FormActions";
 import { useMerchantUpdate } from "@/module/merchant/hook/useMerchantUpdate";
 import styles from "./index.module.css";
+import { LoginPreview } from "./ModalPreview";
 import { CssEditor, TranslationEditor } from "./TranslationEditor";
 import {
     buildTranslationsPayload,
@@ -58,9 +59,9 @@ function GlobalCssPanel({
 
     const values = useMemo<CssFormValues>(
         () => ({
-            css: sdkConfig.css ?? "",
+            css: sdkConfig.rawCss ?? "",
         }),
-        [sdkConfig.css]
+        [sdkConfig.rawCss]
     );
 
     const form = useForm<CssFormValues>({
@@ -98,7 +99,7 @@ function GlobalCssPanel({
                 onDiscard={() => form.reset(values)}
                 onSave={() =>
                     editSdkConfig({
-                        css: valueOrNull(form.getValues("css")),
+                        rawCss: valueOrNull(form.getValues("css")),
                     })
                 }
             />
@@ -149,6 +150,16 @@ function GlobalTranslationsPanel({
     return (
         <Form {...form}>
             <Panel title={"Global translations"}>
+                <p className={styles.customize__fieldDescription}>
+                    Translations applied to all SDK components across every
+                    placement.
+                </p>
+                <LoginPreview
+                    form={form}
+                    logoUrl={sdkConfig.logoUrl ?? undefined}
+                    currency={sdkConfig.currency ?? undefined}
+                    lang={lang}
+                />
                 <TranslationEditor
                     form={form}
                     fieldPrefix={"translations"}

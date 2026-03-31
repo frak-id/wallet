@@ -147,6 +147,10 @@ export const merchantRoutes = new Elysia({ prefix: "/merchant" })
                 return status(404, "Merchant not found");
             }
 
+            MerchantContext.services.resolve.invalidateForDomain(
+                updated.domain
+            );
+
             return { success: true };
         },
         {

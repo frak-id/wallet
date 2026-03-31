@@ -1,164 +1,33 @@
-import { processCss, processScopedCss } from "@backend-utils";
-import type { Language } from "@frak-labs/core-sdk";
 import { Elysia, status, t } from "elysia";
-import { keccak256, toHex } from "viem";
 import { CampaignContext } from "../../../domain/campaign/context";
 import { EstimatedRewardsResultSchema } from "../../../domain/campaign/schemas";
 import { MerchantContext } from "../../../domain/merchant/context";
-import type { SdkConfig } from "../../../domain/merchant/schemas";
-import {
-    MerchantResolveResponseSchema,
-    type ResolvedPlacement,
-    type ResolvedSdkConfig,
-} from "../../schemas";
+import { MerchantResolveResponseSchema } from "../../schemas";
 import { exploreApi } from "./explorer";
 
-function resolveLanguage(
-    sdkConfig: SdkConfig | null | undefined,
-    queryLang: string | undefined
-): Language {
-    if (sdkConfig?.lang) return sdkConfig.lang;
-    if (queryLang === "fr" || queryLang === "en") return queryLang;
-    return "en";
-}
-
-function mergeTranslations(
-    defaultTranslations: Record<string, string> | undefined,
-    langTranslations: Record<string, string> | undefined
-): Record<string, string> | undefined {
-    if (!defaultTranslations && !langTranslations) return undefined;
-    return { ...defaultTranslations, ...langTranslations };
-}
-
-function buildResolvedPlacements(
-    placements: SdkConfig["placements"],
-    lang: Language
-): Record<string, ResolvedPlacement> | undefined {
-    if (!placements) return undefined;
-
-    const resolvedPlacements: Record<string, ResolvedPlacement> = {};
-    for (const [id, placement] of Object.entries(placements)) {
-        const placementTranslations = mergeTranslations(
-            placement.translations?.default,
-            placement.translations?.[lang]
-        );
-
-        resolvedPlacements[id] = {
-            ...(placement.components && {
-                components: {
-                    ...placement.components,
-                    ...(placement.components.buttonShare && {
-                        buttonShare: {
-                            ...placement.components.buttonShare,
-                            css: placement.components.buttonShare.css
-                                ? processScopedCss(
-                                      placement.components.buttonShare.css,
-                                      `frak-button-share[placement="${id}"]`
-                                  )
-                                : undefined,
-                        },
-                    }),
-                    ...(placement.components.buttonWallet && {
-                        buttonWallet: {
-                            ...placement.components.buttonWallet,
-                            css: placement.components.buttonWallet.css
-                                ? processCss(
-                                      placement.components.buttonWallet.css
-                                  )
-                                : undefined,
-                        },
-                    }),
-                    ...(placement.components.openInApp && {
-                        openInApp: {
-                            ...placement.components.openInApp,
-                            css: placement.components.openInApp.css
-                                ? processScopedCss(
-                                      placement.components.openInApp.css,
-                                      `frak-open-in-app[placement="${id}"]`
-                                  )
-                                : undefined,
-                        },
-                    }),
-                },
-            }),
-            ...(placement.targetInteraction && {
-                targetInteraction: placement.targetInteraction,
-            }),
-            ...(placementTranslations && {
-                translations: placementTranslations,
-            }),
-            ...(placement.css && { css: processCss(placement.css) }),
-        };
-    }
-
-    return resolvedPlacements;
-}
-
-function buildResolvedSdkConfig(
-    sdkConfig: SdkConfig | null | undefined,
-    lang: Language
-): ResolvedSdkConfig | undefined {
-    if (!sdkConfig) return undefined;
-
-    const mergedTranslations = mergeTranslations(
-        sdkConfig.translations?.default,
-        sdkConfig.translations?.[lang]
-    );
-    const resolvedPlacements = buildResolvedPlacements(
-        sdkConfig.placements,
-        lang
-    );
-
-    return {
-        name: sdkConfig.name ?? undefined,
-        logoUrl: sdkConfig.logoUrl ?? undefined,
-        homepageLink: sdkConfig.homepageLink ?? undefined,
-        currency: sdkConfig.currency ?? undefined,
-        lang,
-        ...(sdkConfig.hidden && { hidden: true }),
-        css: sdkConfig.css ? processCss(sdkConfig.css) : undefined,
-        ...(mergedTranslations && { translations: mergedTranslations }),
-        ...(resolvedPlacements && { placements: resolvedPlacements }),
-    };
+function normalizeDomain(domain: string): string {
+    return domain
+        .toLowerCase()
+        .replace(/^https?:\/\//, "")
+        .replace(/:\d+$/, "")
+        .replace(/\/$/, "")
+        .replace(/^www\./, "");
 }
 
 export const userMerchantApi = new Elysia({ prefix: "/merchant" })
     .get(
         "/resolve",
         async ({ query: { domain, lang } }) => {
-            const normalizedDomain = domain
-                .toLowerCase()
-                .replace(/^https?:\/\//, "")
-                .replace(/:\d+$/, "")
-                .replace(/\/$/, "")
-                .replace(/^www\./, "");
+            const result = await MerchantContext.services.resolve.resolve(
+                normalizeDomain(domain),
+                lang
+            );
 
-            const merchant =
-                await MerchantContext.repositories.merchant.findByDomain(
-                    normalizedDomain
-                );
-
-            if (!merchant) {
+            if (!result) {
                 return status(404, "Merchant not found");
             }
 
-            const productId =
-                merchant.productId ?? keccak256(toHex(normalizedDomain));
-
-            const resolvedLang = resolveLanguage(merchant.sdkConfig, lang);
-            const resolvedSdkConfig = buildResolvedSdkConfig(
-                merchant.sdkConfig,
-                resolvedLang
-            );
-
-            return {
-                merchantId: merchant.id,
-                productId,
-                name: merchant.name,
-                domain: merchant.domain,
-                allowedDomains: [merchant.domain],
-                ...(resolvedSdkConfig && { sdkConfig: resolvedSdkConfig }),
-            };
+            return result;
         },
         {
             query: t.Object({

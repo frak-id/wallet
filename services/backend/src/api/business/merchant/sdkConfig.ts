@@ -89,9 +89,18 @@ export const merchantSdkConfigRoutes = new Elysia({
                 Object.entries(merged).filter(([_, v]) => v !== null)
             );
 
+            const processedConfig =
+                MerchantContext.services.resolve.processSdkConfigCss(
+                    cleanedConfig
+                );
+
             await MerchantContext.repositories.merchant.updateSdkConfig(
                 merchantId,
-                cleanedConfig
+                processedConfig
+            );
+
+            MerchantContext.services.resolve.invalidateForDomain(
+                merchant.domain
             );
 
             return { success: true };

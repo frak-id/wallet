@@ -19,6 +19,7 @@ import { FormActions } from "@/module/forms/FormActions";
 import { Switch } from "@/module/forms/Switch";
 import { useMerchantUpdate } from "@/module/merchant/hook/useMerchantUpdate";
 import styles from "./index.module.css";
+import { LoginPreview } from "./ModalPreview";
 import { CssEditor, TranslationEditor } from "./TranslationEditor";
 import {
     buildTranslationsPayload,
@@ -118,15 +119,15 @@ function PlacementSettingsPanel({
                 clickAction:
                     components?.buttonShare?.clickAction ?? "embedded-wallet",
                 useReward: components?.buttonShare?.useReward ?? false,
-                css: components?.buttonShare?.css ?? "",
+                css: components?.buttonShare?.rawCss ?? "",
             },
             buttonWallet: {
                 position: components?.buttonWallet?.position ?? "bottom-right",
-                css: components?.buttonWallet?.css ?? "",
+                css: components?.buttonWallet?.rawCss ?? "",
             },
             openInApp: {
                 text: components?.openInApp?.text ?? "",
-                css: components?.openInApp?.css ?? "",
+                css: components?.openInApp?.rawCss ?? "",
             },
         };
     }, [sdkConfig.placements, placementId]);
@@ -175,15 +176,15 @@ function PlacementSettingsPanel({
                 ),
                 clickAction: currentValues.buttonShare.clickAction,
                 useReward: currentValues.buttonShare.useReward,
-                css: valueOrUndefined(currentValues.buttonShare.css),
+                rawCss: valueOrUndefined(currentValues.buttonShare.css),
             };
             const buttonWallet = {
                 position: currentValues.buttonWallet.position,
-                css: valueOrUndefined(currentValues.buttonWallet.css),
+                rawCss: valueOrUndefined(currentValues.buttonWallet.css),
             };
             const openInApp = {
                 text: valueOrUndefined(currentValues.openInApp.text),
-                css: valueOrUndefined(currentValues.openInApp.css),
+                rawCss: valueOrUndefined(currentValues.openInApp.css),
             };
 
             editSdkConfig({
@@ -562,7 +563,7 @@ function PlacementCssPanel({
     const values = useMemo<CssFormValues>(() => {
         const placement = sdkConfig.placements?.[placementId];
         return {
-            css: placement?.css ?? "",
+            css: placement?.rawCss ?? "",
         };
     }, [sdkConfig.placements, placementId]);
 
@@ -594,7 +595,7 @@ function PlacementCssPanel({
                 onChange={(value) => {
                     form.setValue("css", value, { shouldDirty: true });
                 }}
-                placeholder={sdkConfig.css ?? ".frak-modal { ... }"}
+                placeholder={sdkConfig.rawCss ?? ".frak-modal { ... }"}
                 isPending={isPending}
                 isSuccess={isSuccess}
                 isDirty={form.formState.isDirty}
@@ -606,7 +607,7 @@ function PlacementCssPanel({
                             placementId,
                             (placement) => ({
                                 ...placement,
-                                css: valueOrUndefined(form.getValues("css")),
+                                rawCss: valueOrUndefined(form.getValues("css")),
                             })
                         ),
                     })
@@ -670,6 +671,13 @@ function PlacementTranslationsPanel({
     return (
         <Form {...form}>
             <Panel title={`Placement translations · ${placementId}`}>
+                <LoginPreview
+                    form={form}
+                    logoUrl={sdkConfig.logoUrl ?? undefined}
+                    currency={sdkConfig.currency ?? undefined}
+                    lang={lang}
+                    defaultValues={inheritedValues}
+                />
                 <TranslationEditor
                     form={form}
                     fieldPrefix={`placements.${placementId}.translations`}

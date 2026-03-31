@@ -26,6 +26,7 @@ const ButtonShareComponentSchema = t.Object({
         t.Union([t.Literal("embedded-wallet"), t.Literal("share-modal")])
     ),
     useReward: t.Optional(t.Boolean()),
+    rawCss: t.Optional(t.String({ maxLength: 50000 })),
     css: t.Optional(t.String({ maxLength: 50000 })),
 });
 
@@ -33,11 +34,13 @@ const ButtonWalletComponentSchema = t.Object({
     position: t.Optional(
         t.Union([t.Literal("bottom-right"), t.Literal("bottom-left")])
     ),
+    rawCss: t.Optional(t.String({ maxLength: 50000 })),
     css: t.Optional(t.String({ maxLength: 50000 })),
 });
 
 const OpenInAppComponentSchema = t.Object({
     text: t.Optional(t.String({ maxLength: 500 })),
+    rawCss: t.Optional(t.String({ maxLength: 50000 })),
     css: t.Optional(t.String({ maxLength: 50000 })),
 });
 
@@ -51,6 +54,7 @@ export const PlacementSchema = t.Object({
     components: t.Optional(PlacementComponentsSchema),
     targetInteraction: t.Optional(t.String({ maxLength: 200 })),
     translations: t.Optional(TranslationTieredSchema),
+    rawCss: t.Optional(t.String({ maxLength: 50000 })),
     css: t.Optional(t.String({ maxLength: 50000 })),
 });
 
@@ -74,6 +78,7 @@ export const SdkConfigSchema = t.Object({
     ),
     lang: t.Optional(t.Union([t.Literal("fr"), t.Literal("en"), t.Null()])),
     hidden: t.Optional(t.Boolean()),
+    rawCss: t.Optional(t.Union([t.String({ maxLength: 50000 }), t.Null()])),
     css: t.Optional(t.Union([t.String({ maxLength: 50000 }), t.Null()])),
     translations: t.Optional(t.Union([TranslationTieredSchema, t.Null()])),
     placements: t.Optional(
