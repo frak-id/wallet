@@ -41,14 +41,14 @@ export const amountContainer = style({
 });
 
 export const amountInteger = style({
-    fontSize: fontSize["4xl"],
+    fontSize: fontSize["5xl"],
     fontWeight: 700,
     color: vars.text.primary,
     lineHeight: 1,
 });
 
 export const amountDecimals = style({
-    fontSize: fontSize["4xl"],
+    fontSize: fontSize["5xl"],
     fontWeight: 700,
     color: vars.text.disabled,
     lineHeight: 1,

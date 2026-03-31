@@ -8,6 +8,32 @@ const mockNavigate = vi.fn();
 
 vi.mock("@frak-labs/wallet-shared", () => ({
     useGetUserBalance: () => mockUseGetUserBalance(),
+    claimableKey: {
+        pending: { byAddress: () => ["claimable-pending"] },
+        claim: { byAddress: () => ["claimable-claim"] },
+    },
+    balanceKey: { baseKey: ["balance"] },
+    rewardsKey: { all: ["rewards"] },
+    currentViemClient: {},
+    WalletModal: () => null,
+}));
+
+vi.mock("wagmi", () => ({
+    useAccount: () => ({ address: undefined }),
+    useSendTransaction: () => ({ sendTransactionAsync: vi.fn() }),
+}));
+
+vi.mock("@tanstack/react-query", () => ({
+    useQuery: () => ({ data: undefined, refetch: vi.fn() }),
+    useMutation: () => ({
+        mutateAsync: vi.fn(),
+        isPending: false,
+        isSuccess: false,
+    }),
+    useQueryClient: () => ({
+        setQueryData: vi.fn(),
+        invalidateQueries: vi.fn(),
+    }),
 }));
 
 vi.mock("react-i18next", () => ({

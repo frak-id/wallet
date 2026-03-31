@@ -94,6 +94,12 @@
             "description": "Share products with your friends to start earning money.",
             "discover": "Discover offers"
         },
+        "pendingGains": {
+            "subtitle": "Pending earnings",
+            "heading": "Great news!\nMoney is waiting for you.",
+            "description": "A purchase through your link earned you rewards. Collect them now into your wallet.",
+            "confirm": "Collect my earnings"
+        },
         "pendingEmpty": {
             "title": "You don't have any earnings yet",
             "description": "As soon as a purchase is made through your sharing link, your earnings will appear here.",

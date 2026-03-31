@@ -18,6 +18,7 @@ import { isCryptoMode } from "@/module/common/utils/walletMode";
 import { EmptyPendingGainsModal } from "@/module/tokens/component/EmptyPendingGainsModal";
 import { EmptyTransferModal } from "@/module/tokens/component/EmptyTransferModal";
 import { EmptyTransferredGainsModal } from "@/module/tokens/component/EmptyTransferredGainsModal";
+import { PendingGainsModal } from "@/module/tokens/component/PendingGainsModal";
 import * as styles from "./index.css";
 
 export function Balance() {
@@ -28,6 +29,8 @@ export function Balance() {
     const [isEmptyTransferModalOpen, setIsEmptyTransferModalOpen] =
         useState(false);
     const [isEmptyPendingGainsModalOpen, setIsEmptyPendingGainsModalOpen] =
+        useState(false);
+    const [isPendingGainsModalOpen, setIsPendingGainsModalOpen] =
         useState(false);
     const [
         isEmptyTransferredGainsModalOpen,
@@ -51,11 +54,13 @@ export function Balance() {
     };
 
     const handlePendingClick = () => {
+        if (document.activeElement instanceof HTMLElement) {
+            document.activeElement.blur();
+        }
         if (amount <= 0) {
-            if (document.activeElement instanceof HTMLElement) {
-                document.activeElement.blur();
-            }
             setIsEmptyPendingGainsModalOpen(true);
+        } else {
+            setIsPendingGainsModalOpen(true);
         }
     };
 
@@ -131,6 +136,10 @@ export function Balance() {
             <EmptyPendingGainsModal
                 open={isEmptyPendingGainsModalOpen}
                 onOpenChange={setIsEmptyPendingGainsModalOpen}
+            />
+            <PendingGainsModal
+                open={isPendingGainsModalOpen}
+                onOpenChange={setIsPendingGainsModalOpen}
             />
             <EmptyTransferredGainsModal
                 open={isEmptyTransferredGainsModalOpen}

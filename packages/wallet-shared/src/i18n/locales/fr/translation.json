@@ -92,6 +92,12 @@
             "description": "Partage des produits avec tes ami·e·s pour commencer à gagner de l'argent.",
             "discover": "Découvrir les offres"
         },
+        "pendingGains": {
+            "subtitle": "Gains en attente",
+            "heading": "Bonne nouvelle !\nDe l'argent t'attend.",
+            "description": "Un achat via ton lien t'a rapporté des gains. Collecte-les maintenant dans ton porte-monnaie.",
+            "confirm": "Collecter mes gains"
+        },
         "pendingEmpty": {
             "title": "Tu n'as pas encore de gains",
             "description": "Dès qu'un achat sera réalisé via ton lien de partage, tes gains apparaîtront ici.",

@@ -45,8 +45,9 @@ describe("design-system tokens", () => {
             expect(fontSize.xl).toBe("20px");
             expect(fontSize["2xl"]).toBe("24px");
             expect(fontSize["3xl"]).toBe("28px");
-            expect(fontSize["4xl"]).toBe("40px");
-            expect(fontSize["5xl"]).toBe("48px");
+            expect(fontSize["4xl"]).toBe("32px");
+            expect(fontSize["5xl"]).toBe("40px");
+            expect(fontSize["6xl"]).toBe("48px");
         });
     });
 });

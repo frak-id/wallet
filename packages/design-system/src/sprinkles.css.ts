@@ -85,6 +85,7 @@ const unresponsiveProperties = defineProperties({
             "3xl": fontSize["3xl"],
             "4xl": fontSize["4xl"],
             "5xl": fontSize["5xl"],
+            "6xl": fontSize["6xl"],
         },
         fontWeight: {
             regular: String(brand.typography.fontWeight.regular),
