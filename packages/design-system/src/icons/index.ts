@@ -14,6 +14,7 @@ export { FaceIdIcon } from "./FaceIdIcon";
 export { HelpChatIcon } from "./HelpChatIcon";
 export { HourglassIcon } from "./HourglassIcon";
 export { ProfileIcon } from "./ProfileIcon";
+export { ShareIcon } from "./ShareIcon";
 export { StarIcon } from "./StarIcon";
 export { TransferIcon } from "./TransferIcon";
 export { WalletIcon } from "./WalletIcon";
