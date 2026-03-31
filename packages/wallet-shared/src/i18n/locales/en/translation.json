@@ -61,7 +61,8 @@
         "walletAddressRequired": "Wallet address is required",
         "walletInvalid": "Invalid wallet address",
         "back-to-wallet": "Back to Wallet",
-        "close": "Close"
+        "close": "Close",
+        "share": "Share"
     },
     "sharing": {
         "btn": {
@@ -221,6 +222,17 @@
             "notifications": {
                 "title": "Don't miss any earnings!",
                 "description": "Enable notifications to track your earnings in real time."
+            },
+            "detail": {
+                "howItWorks": "How does it work?",
+                "step1Title": "Explore our partner brands",
+                "step1Description": "A personal link is automatically generated with each share.",
+                "step2Title": "Share an article with your friends",
+                "step2Description": "A personal link is automatically generated with each share.",
+                "step3Title": "Earn money",
+                "step3Description": "In one click, transfer your earnings to your bank account.",
+                "discoverOffers": "Discover offers",
+                "legal": "FRAK's <termsLink>terms and conditions</termsLink> apply."
             }
         },
         "stats": {

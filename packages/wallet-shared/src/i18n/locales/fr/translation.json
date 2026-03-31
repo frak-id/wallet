@@ -59,7 +59,8 @@
         "walletAddressRequired": "L'adresse du porte-monnaie est requise",
         "walletInvalid": "Adresse de porte-monnaie invalide",
         "back-to-wallet": "Retour au porte-monnaie",
-        "close": "Fermer"
+        "close": "Fermer",
+        "share": "Partager"
     },
     "sharing": {
         "btn": {
@@ -219,6 +220,17 @@
             "notifications": {
                 "title": "Ne rate aucun gain !",
                 "description": "Active tes notifs pour suivre tes gains en temps réel."
+            },
+            "detail": {
+                "howItWorks": "Comment ça marche ?",
+                "step1Title": "Explore nos marques partenaires",
+                "step1Description": "Un lien personnel est généré automatiquement à chaque partage.",
+                "step2Title": "Partage un article à tes ami·e·s",
+                "step2Description": "Un lien personnel est généré automatiquement à chaque partage.",
+                "step3Title": "Gagne de l'argent",
+                "step3Description": "En un clic, transfère tes gains vers ton compte bancaire.",
+                "discoverOffers": "Découvrir les offres",
+                "legal": "Les <termsLink>conditions générales</termsLink> de FRAK s'appliquent."
             }
         },
         "stats": {

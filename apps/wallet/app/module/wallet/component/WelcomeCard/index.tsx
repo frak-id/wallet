@@ -1,6 +1,7 @@
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Card } from "@frak-labs/design-system/components/Card";
-import { useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
+import { type MouseEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CloseButton } from "@/module/common/component/CloseButton";
 import { useSlideCarousel } from "@/module/common/hook/useSlideCarousel";
@@ -16,6 +17,7 @@ import type { WelcomeSlide, WelcomeSlideId } from "./utils/types";
 
 export function WelcomeCard() {
     const { t } = useTranslation();
+    const navigate = useNavigate();
     const notificationSlide = useWelcomeNotificationSlide();
     const [dismissedSlides, setDismissedSlides] =
         useState<WelcomeSlideId[]>(getDismissedSlides);
@@ -40,7 +42,8 @@ export function WelcomeCard() {
         slideCount: visibleSlides.length,
     });
 
-    const handleDismiss = () => {
+    const handleDismiss = (event: MouseEvent) => {
+        event.stopPropagation();
         const currentSlide = visibleSlides[currentIndex] ?? visibleSlides[0];
         if (!currentSlide) return;
 
@@ -52,6 +55,10 @@ export function WelcomeCard() {
             persistDismissedSlides(nextDismissedSlides);
             return nextDismissedSlides;
         });
+    };
+
+    const handleIntroClick = () => {
+        navigate({ to: "/wallet/welcome" });
     };
 
     if (visibleSlides.length === 0) {
@@ -82,6 +89,16 @@ export function WelcomeCard() {
                             variant="secondary"
                             padding="none"
                             className={styles.cardContainer}
+                            onClick={
+                                slide.kind === "intro"
+                                    ? handleIntroClick
+                                    : undefined
+                            }
+                            style={
+                                slide.kind === "intro"
+                                    ? { cursor: "pointer" }
+                                    : undefined
+                            }
                         >
                             {index === currentIndex && (
                                 <CloseButton
