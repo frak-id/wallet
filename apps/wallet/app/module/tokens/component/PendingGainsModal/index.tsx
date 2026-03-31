@@ -59,11 +59,13 @@ function useMediaQuery(query: string) {
 type PendingGainsModalProps = {
     open: boolean;
     onOpenChange: (open: boolean) => void;
+    onClaimSuccess?: () => void;
 };
 
 export function PendingGainsModal({
     open,
     onOpenChange,
+    onClaimSuccess,
 }: PendingGainsModalProps) {
     const { t } = useTranslation();
     const isDesktop = useMediaQuery(`(min-width: ${tablet}px)`);
@@ -121,11 +123,7 @@ export function PendingGainsModal({
     }, [pendingReward]);
 
     // Claim mutation
-    const {
-        mutateAsync: sendClaimTxs,
-        isPending,
-        isSuccess,
-    } = useMutation({
+    const { mutateAsync: sendClaimTxs, isPending } = useMutation({
         mutationKey: claimableKey.claim.byAddress(address),
         mutationFn: async () => {
             if (!(pendingReward?.length && address)) return;
@@ -161,6 +159,7 @@ export function PendingGainsModal({
         },
         onSuccess: () => {
             onOpenChange(false);
+            onClaimSuccess?.();
         },
     });
 
@@ -190,7 +189,7 @@ export function PendingGainsModal({
             </Box>
             <Button
                 className={styles.confirmButton}
-                disabled={isPending || isSuccess || totalClaimable <= 0}
+                disabled={isPending || totalClaimable <= 0}
                 onClick={async () => {
                     await sendClaimTxs();
                 }}

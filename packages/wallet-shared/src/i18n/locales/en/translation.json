@@ -98,7 +98,8 @@
             "subtitle": "Pending earnings",
             "heading": "Great news!\nMoney is waiting for you.",
             "description": "A purchase through your link earned you rewards. Collect them now into your wallet.",
-            "confirm": "Collect my earnings"
+            "confirm": "Collect my earnings",
+            "success": "Earnings collected!"
         },
         "pendingEmpty": {
             "title": "You don't have any earnings yet",

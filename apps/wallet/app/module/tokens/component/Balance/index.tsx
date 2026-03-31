@@ -12,8 +12,9 @@ import {
 } from "@frak-labs/design-system/icons";
 import { useGetUserBalance } from "@frak-labs/wallet-shared";
 import { useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { SuccessOverlay } from "@/module/common/component/SuccessOverlay";
 import { isCryptoMode } from "@/module/common/utils/walletMode";
 import { EmptyPendingGainsModal } from "@/module/tokens/component/EmptyPendingGainsModal";
 import { EmptyTransferModal } from "@/module/tokens/component/EmptyTransferModal";
@@ -36,6 +37,15 @@ export function Balance() {
         isEmptyTransferredGainsModalOpen,
         setIsEmptyTransferredGainsModalOpen,
     ] = useState(false);
+    const [showSuccessOverlay, setShowSuccessOverlay] = useState(false);
+
+    const handleClaimSuccess = useCallback(() => {
+        setShowSuccessOverlay(true);
+    }, []);
+
+    const handleSuccessDone = useCallback(() => {
+        setShowSuccessOverlay(false);
+    }, []);
 
     const amount = userBalance?.total?.eurAmount ?? 0;
     const [integerPart, decimalPart] = amount.toFixed(2).split(".");
@@ -140,6 +150,7 @@ export function Balance() {
             <PendingGainsModal
                 open={isPendingGainsModalOpen}
                 onOpenChange={setIsPendingGainsModalOpen}
+                onClaimSuccess={handleClaimSuccess}
             />
             <EmptyTransferredGainsModal
                 open={isEmptyTransferredGainsModalOpen}
@@ -148,6 +159,10 @@ export function Balance() {
             <EmptyTransferModal
                 open={isEmptyTransferModalOpen}
                 onOpenChange={setIsEmptyTransferModalOpen}
+            />
+            <SuccessOverlay
+                visible={showSuccessOverlay}
+                onDone={handleSuccessDone}
             />
         </Card>
     );

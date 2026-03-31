@@ -96,7 +96,8 @@
             "subtitle": "Gains en attente",
             "heading": "Bonne nouvelle !\nDe l'argent t'attend.",
             "description": "Un achat via ton lien t'a rapporté des gains. Collecte-les maintenant dans ton porte-monnaie.",
-            "confirm": "Collecter mes gains"
+            "confirm": "Collecter mes gains",
+            "success": "Gains collectés !"
         },
         "pendingEmpty": {
             "title": "Tu n'as pas encore de gains",
