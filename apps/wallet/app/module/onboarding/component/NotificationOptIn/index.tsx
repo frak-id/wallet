@@ -26,7 +26,7 @@ export function NotificationOptIn({
             footer={
                 <>
                     <Button
-                        disabled={isEnabling}
+                        loading={isEnabling}
                         onClick={() => {
                             if (isEnabling) return;
                             setIsEnabling(true);

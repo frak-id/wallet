@@ -104,9 +104,8 @@ function RegisterPage() {
                     buttonLabel={t("onboarding.continue")}
                     lastButtonLabel={t("onboarding.activateSecureSpace")}
                     loginLabel={t("onboarding.alreadyHaveAccount")}
-                    onLoginClick={() =>
-                        navigate({ to: "/login", replace: true })
-                    }
+                    onLoginClick={() => login()}
+                    isLoginLoading={isLoginLoading}
                     onRecoveryCodeClick={() =>
                         navigate({ to: "/recovery-code" })
                     }

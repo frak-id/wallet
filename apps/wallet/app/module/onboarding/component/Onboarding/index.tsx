@@ -24,6 +24,8 @@ type OnboardingProps = {
     loginLabel?: string;
     /** Called when user clicks the login link */
     onLoginClick?: () => void;
+    /** Whether the login action is in progress */
+    isLoginLoading?: boolean;
     /** Called when user clicks the recovery code button */
     onRecoveryCodeClick?: () => void;
     /** The slide contents — each direct child = one slide */
@@ -37,6 +39,7 @@ export function Onboarding({
     onFinish,
     loginLabel,
     onLoginClick,
+    isLoginLoading,
     onRecoveryCodeClick,
     children,
 }: OnboardingProps) {
@@ -76,7 +79,11 @@ export function Onboarding({
                               : buttonLabel}
                     </Button>
                     {currentIndex === 0 && loginLabel && onLoginClick && (
-                        <Button variant="secondary" onClick={onLoginClick}>
+                        <Button
+                            variant="secondary"
+                            onClick={onLoginClick}
+                            loading={isLoginLoading}
+                        >
                             {loginLabel}
                         </Button>
                     )}

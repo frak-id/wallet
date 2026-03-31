@@ -1,12 +1,15 @@
 import type { RecipeVariants } from "@vanilla-extract/recipes";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 import { Box } from "../Box";
+import { Spinner } from "../Spinner";
 import { button } from "./button.css";
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> &
     RecipeVariants<typeof button> & {
         children: ReactNode;
         icon?: ReactNode;
+        /** Show a spinner and disable the button */
+        loading?: boolean;
     };
 
 export function Button({
@@ -15,6 +18,8 @@ export function Button({
     width,
     children,
     icon,
+    loading,
+    disabled,
     className,
     color: _color,
     ...rest
@@ -24,9 +29,10 @@ export function Button({
             as="button"
             type="button"
             className={`${button({ variant, size, width })}${className ? ` ${className}` : ""}`}
+            disabled={disabled || loading}
             {...rest}
         >
-            {icon}
+            {loading ? <Spinner size="s" /> : icon}
             {children}
         </Box>
     );

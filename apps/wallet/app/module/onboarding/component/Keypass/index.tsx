@@ -194,7 +194,7 @@ function KeypassContent({
                 )}
                 error={loginError}
                 footer={
-                    <Button onClick={onLogin} disabled={isLoginLoading}>
+                    <Button onClick={onLogin} loading={isLoginLoading}>
                         {t("onboarding.keypass.existingAccount.button")}
                     </Button>
                 }
@@ -209,7 +209,7 @@ function KeypassContent({
             error={error}
             footer={
                 <>
-                    <Button onClick={onContinue} disabled={isLoading}>
+                    <Button onClick={onContinue} loading={isLoading}>
                         {t("onboarding.continue")}
                     </Button>
                     <AuthenticateWithPhone
