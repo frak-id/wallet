@@ -1,3 +1,4 @@
+import { processCss, processScopedCss } from "@backend-utils";
 import type { Language } from "@frak-labs/core-sdk";
 import { Elysia, status, t } from "elysia";
 import { keccak256, toHex } from "viem";
@@ -44,7 +45,41 @@ function buildResolvedPlacements(
 
         resolvedPlacements[id] = {
             ...(placement.components && {
-                components: placement.components,
+                components: {
+                    ...placement.components,
+                    ...(placement.components.buttonShare && {
+                        buttonShare: {
+                            ...placement.components.buttonShare,
+                            css: placement.components.buttonShare.css
+                                ? processScopedCss(
+                                      placement.components.buttonShare.css,
+                                      `frak-button-share[placement="${id}"]`
+                                  )
+                                : undefined,
+                        },
+                    }),
+                    ...(placement.components.buttonWallet && {
+                        buttonWallet: {
+                            ...placement.components.buttonWallet,
+                            css: placement.components.buttonWallet.css
+                                ? processCss(
+                                      placement.components.buttonWallet.css
+                                  )
+                                : undefined,
+                        },
+                    }),
+                    ...(placement.components.openInApp && {
+                        openInApp: {
+                            ...placement.components.openInApp,
+                            css: placement.components.openInApp.css
+                                ? processScopedCss(
+                                      placement.components.openInApp.css,
+                                      `frak-open-in-app[placement="${id}"]`
+                                  )
+                                : undefined,
+                        },
+                    }),
+                },
             }),
             ...(placement.targetInteraction && {
                 targetInteraction: placement.targetInteraction,
@@ -52,7 +87,7 @@ function buildResolvedPlacements(
             ...(placementTranslations && {
                 translations: placementTranslations,
             }),
-            ...(placement.css && { css: placement.css }),
+            ...(placement.css && { css: processCss(placement.css) }),
         };
     }
 
@@ -81,7 +116,7 @@ function buildResolvedSdkConfig(
         currency: sdkConfig.currency ?? undefined,
         lang,
         ...(sdkConfig.hidden && { hidden: true }),
-        css: sdkConfig.css ?? undefined,
+        css: sdkConfig.css ? processCss(sdkConfig.css) : undefined,
         ...(mergedTranslations && { translations: mergedTranslations }),
         ...(resolvedPlacements && { placements: resolvedPlacements }),
     };

@@ -1,9 +1,8 @@
-import { cx } from "class-variance-authority";
 import { useClientReady } from "@/hooks/useClientReady";
 import { useIsMobile } from "@/hooks/useIsMobile";
+import { useLightDomStyles } from "@/hooks/useLightDomStyles";
 import { usePlacement } from "@/hooks/usePlacement";
 import { openFrakWalletApp } from "@/utils/openInApp";
-import styles from "./OpenInAppButton.module.css";
 import type { OpenInAppButtonProps } from "./types";
 
 /**
@@ -41,6 +40,12 @@ export function OpenInAppButton({
     const { shouldRender, isHidden, isClientReady } = useClientReady();
     const { isMobile } = useIsMobile();
 
+    useLightDomStyles(
+        "frak-open-in-app",
+        placementId,
+        placement?.components?.openInApp?.css
+    );
+
     const resolvedText = placement?.components?.openInApp?.text ?? text;
 
     if (!isMobile || !shouldRender || isHidden) {
@@ -51,17 +56,16 @@ export function OpenInAppButton({
         openFrakWalletApp();
     };
 
+    const buttonClass = ["button", "button__fadeIn", classname]
+        .filter(Boolean)
+        .join(" ");
+
     return (
         <button
             type="button"
             aria-label="Open in Frak Wallet app"
             disabled={!isClientReady}
-            className={cx(
-                styles.button,
-                styles.button__fadeIn,
-                classname,
-                "override"
-            )}
+            class={buttonClass}
             onClick={handleClick}
         >
             {resolvedText}

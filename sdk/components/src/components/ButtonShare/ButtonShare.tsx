@@ -1,11 +1,10 @@
 import { type InteractionTypeKey, trackEvent } from "@frak-labs/core-sdk";
-import { cx } from "class-variance-authority";
 import { useCallback, useMemo } from "preact/hooks";
 import { useClientReady } from "@/hooks/useClientReady";
+import { useLightDomStyles } from "@/hooks/useLightDomStyles";
 import { usePlacement } from "@/hooks/usePlacement";
 import { useReward } from "@/hooks/useReward";
 import { openEmbeddedWallet } from "@/utils/embeddedWallet";
-import styles from "./ButtonShare.module.css";
 import { ErrorMessage } from "./components/ErrorMessage";
 import { useShareModal } from "./hooks/useShareModal";
 import type { ButtonShareProps } from "./types";
@@ -62,6 +61,8 @@ export function ButtonShare({
 }: ButtonShareProps) {
     const placement = usePlacement(placementId);
     const componentConfig = placement?.components?.buttonShare;
+
+    useLightDomStyles("frak-button-share", placementId, componentConfig?.css);
 
     const resolvedTargetInteraction = useMemo<InteractionTypeKey | undefined>(
         () =>
@@ -122,17 +123,16 @@ export function ButtonShare({
         return null;
     }
 
+    const buttonClass = ["button", "button__fadeIn", classname]
+        .filter(Boolean)
+        .join(" ");
+
     return (
         <>
             <button
                 type={"button"}
                 disabled={!isClientReady}
-                className={cx(
-                    styles.buttonShare,
-                    styles.buttonShare__fadeIn,
-                    classname,
-                    "override"
-                )}
+                class={buttonClass}
                 onClick={onClick}
             >
                 {btnText}

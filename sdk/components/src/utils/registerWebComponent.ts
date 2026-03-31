@@ -9,13 +9,13 @@ import { initFrakSdk } from "./initFrakSdk";
  * @param component - The Preact component to register
  * @param tagName - The custom element tag name (e.g., "frak-button-wallet")
  * @param observedAttributes - Array of attribute names to observe for changes
- * @param options - Registration options (e.g., { shadow: false })
+ * @param options - Registration options (e.g., { shadow: true })
  */
 export function registerWebComponent<P>(
     component: ComponentType<P>,
     tagName: string,
     observedAttributes: (keyof P)[] = [],
-    options: { shadow: boolean } = { shadow: false }
+    options: { shadow: boolean } = { shadow: true }
 ): void {
     if (typeof window !== "undefined") {
         // Initialize SDK when document is ready

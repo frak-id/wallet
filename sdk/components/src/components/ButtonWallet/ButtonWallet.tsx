@@ -1,13 +1,53 @@
 import { type InteractionTypeKey, trackEvent } from "@frak-labs/core-sdk";
-import { cx } from "class-variance-authority";
 import { useEffect, useMemo, useState } from "preact/hooks";
 import { useClientReady } from "@/hooks/useClientReady";
 import { usePlacement } from "@/hooks/usePlacement";
 import { useReward } from "@/hooks/useReward";
+import { buildStyleContent } from "@/utils/sharedCss";
 import { GiftIcon } from "./assets/GiftIcon";
-import styles from "./ButtonWallet.module.css";
 import type { ButtonWalletProps } from "./types";
 import { openWalletModal } from "./utils";
+
+const componentCss = `
+.button {
+    all: unset;
+    position: fixed;
+    bottom: 20px;
+    z-index: 2000000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #3e557e;
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    cursor: pointer;
+    text-align: center;
+    font-size: 24px;
+}
+
+.button__left {
+    left: 20px;
+}
+
+.button__right {
+    right: 20px;
+}
+
+.reward {
+    position: absolute;
+    top: -4px;
+    right: 27px;
+    padding: 2px 3px;
+    border-radius: 5px;
+    background: #ff3f3f;
+    font-size: 9px;
+    color: #fff;
+    font-weight: 600;
+    white-space: nowrap;
+    line-height: 9px;
+}
+`;
 
 /**
  * Button to open wallet modal
@@ -88,27 +128,40 @@ export function ButtonWallet({
         return null;
     }
 
+    const buttonClass = [
+        "button",
+        "button__fadeIn",
+        position === "left" ? "button__left" : "button__right",
+        classname,
+    ]
+        .filter(Boolean)
+        .join(" ");
+
     return (
-        <button
-            type={"button"}
-            aria-label="Open wallet"
-            disabled={!isClientReady}
-            class={cx(
-                styles.button,
-                styles.button__fadeIn,
-                position === "left"
-                    ? styles.button__left
-                    : styles.button__right,
-                classname,
-                "override"
-            )}
-            onClick={() => {
-                trackEvent(window.FrakSetup.client, "wallet_button_clicked");
-                openWalletModal(resolvedTargetInteraction, placementId);
-            }}
-        >
-            <GiftIcon />
-            {reward && <span className={styles.reward}>{reward}</span>}
-        </button>
+        <>
+            <style>
+                {buildStyleContent(
+                    componentCss,
+                    placement?.components?.buttonWallet?.css
+                )}
+            </style>
+            <button
+                type={"button"}
+                aria-label="Open wallet"
+                part="button"
+                disabled={!isClientReady}
+                class={buttonClass}
+                onClick={() => {
+                    trackEvent(
+                        window.FrakSetup.client,
+                        "wallet_button_clicked"
+                    );
+                    openWalletModal(resolvedTargetInteraction, placementId);
+                }}
+            >
+                <GiftIcon />
+                {reward && <span class="reward">{reward}</span>}
+            </button>
+        </>
     );
 }

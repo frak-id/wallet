@@ -50,7 +50,7 @@ describe("registerWebComponent", () => {
             TestComponent,
             "test-element",
             [],
-            { shadow: false }
+            { shadow: true }
         );
     });
 
@@ -74,7 +74,7 @@ describe("registerWebComponent", () => {
             TestComponent,
             "test-element",
             observedAttributes,
-            { shadow: false }
+            { shadow: true }
         );
     });
 

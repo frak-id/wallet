@@ -125,9 +125,9 @@ describe("OpenInAppButton", () => {
         expect(openInAppUtil.openFrakWalletApp).toHaveBeenCalledTimes(1);
     });
 
-    it("should have override class for styling", () => {
+    it("should include base button class", () => {
         const { container } = render(<OpenInAppButton />);
         const button = container.querySelector("button");
-        expect(button).toHaveClass("override");
+        expect(button).toHaveClass("button");
     });
 });
