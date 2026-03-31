@@ -76,7 +76,7 @@ export function ButtonShare({
     const resolvedNoRewardText = componentConfig?.noRewardText ?? noRewardText;
 
     const shouldUseReward = useMemo(
-        () => componentConfig?.useReward ?? rawUseReward !== undefined,
+        () => componentConfig?.useReward ?? rawUseReward === true,
         [componentConfig?.useReward, rawUseReward]
     );
     const resolvedClickAction = useMemo(

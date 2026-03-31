@@ -4,6 +4,10 @@ import { MerchantContext, SdkConfigSchema } from "../../../domain/merchant";
 import { MerchantIdParamSchema, SuccessResponseSchema } from "../../schemas";
 import { businessSessionContext } from "../middleware/session";
 
+const SdkConfigResponseSchema = t.Object({
+    sdkConfig: t.Record(t.String(), t.Unknown()),
+});
+
 export const merchantSdkConfigRoutes = new Elysia({
     prefix: "/:merchantId/sdk-config",
 })
@@ -40,6 +44,7 @@ export const merchantSdkConfigRoutes = new Elysia({
         {
             params: MerchantIdParamSchema,
             response: {
+                200: SdkConfigResponseSchema,
                 401: t.String(),
                 403: t.String(),
                 404: t.String(),
@@ -76,13 +81,13 @@ export const merchantSdkConfigRoutes = new Elysia({
                 ...(merchant.sdkConfig ?? {}),
                 ...body,
                 translations:
-                    body.translations ??
-                    merchant.sdkConfig?.translations ??
-                    undefined,
+                    "translations" in body
+                        ? body.translations
+                        : (merchant.sdkConfig?.translations ?? undefined),
                 placements:
-                    body.placements ??
-                    merchant.sdkConfig?.placements ??
-                    undefined,
+                    "placements" in body
+                        ? body.placements
+                        : (merchant.sdkConfig?.placements ?? undefined),
             };
 
             const cleanedConfig = Object.fromEntries(

@@ -107,7 +107,7 @@ export function ButtonWallet({
     );
 
     const shouldUseReward = useMemo(
-        () => rawUseReward !== undefined,
+        () => rawUseReward === true,
         [rawUseReward]
     );
     const { shouldRender, isHidden, isClientReady } = useClientReady();

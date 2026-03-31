@@ -6,7 +6,9 @@ import type { Language } from "../types/config";
 import type { ResolvedSdkConfig } from "../types/resolvedConfig";
 import { getBackendUrl } from "./backendUrl";
 
-const MERCHANT_ID_STORAGE_KEY = "frak-merchant-id";
+function getMerchantIdStorageKey(domain: string): string {
+    return `frak-merchant-id:${domain}`;
+}
 
 /**
  * Response from the merchant resolve endpoint
@@ -112,8 +114,11 @@ export async function fetchMerchantId(
     // string (e.g. trackPurchaseStatus, ensureIdentity). fetchMerchantConfig()
     // intentionally skips this path since it must return the full response
     // (allowedDomains, sdkConfig, etc.).
-    if (typeof window !== "undefined") {
-        const stored = window.sessionStorage.getItem(MERCHANT_ID_STORAGE_KEY);
+    const targetDomain = getTargetDomain(domain);
+    if (typeof window !== "undefined" && targetDomain) {
+        const stored = window.sessionStorage.getItem(
+            getMerchantIdStorageKey(targetDomain)
+        );
         if (stored) {
             return stored;
         }
@@ -150,7 +155,7 @@ async function fetchMerchantConfigInternal(
 
         if (typeof window !== "undefined") {
             window.sessionStorage.setItem(
-                MERCHANT_ID_STORAGE_KEY,
+                getMerchantIdStorageKey(targetDomain),
                 data.merchantId
             );
         }
@@ -165,11 +170,16 @@ async function fetchMerchantConfigInternal(
  * Clear the cached merchant config
  * Useful for testing or when switching domains
  */
-export function clearMerchantIdCache(): void {
+export function clearMerchantIdCache(domain?: string): void {
     configCache.clear();
     promiseCache.clear();
     if (typeof window !== "undefined") {
-        window.sessionStorage.removeItem(MERCHANT_ID_STORAGE_KEY);
+        const targetDomain = getTargetDomain(domain);
+        if (targetDomain) {
+            window.sessionStorage.removeItem(
+                getMerchantIdStorageKey(targetDomain)
+            );
+        }
     }
 }
 

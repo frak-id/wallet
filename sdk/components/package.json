@@ -78,12 +78,10 @@
   "dependencies": {
     "@frak-labs/core-sdk": "workspace:*",
     "@frak-labs/frame-connector": "workspace:*",
-    "class-variance-authority": "^0.7.1",
     "preact": "^10.29.0",
     "preact-custom-element": "^4.6.0"
   },
   "devDependencies": {
-    "@bosh-code/tsdown-plugin-inject-css": "^2.0.0",
     "@frak-labs/dev-tooling": "workspace:*",
     "@frak-labs/test-foundation": "workspace:*",
     "@frak-labs/ui": "workspace:*",
@@ -100,7 +98,6 @@
     "jsdom": "^29.0.0",
     "tsdown": "^0.20.3",
     "typescript": "^5.9.3",
-    "unplugin-lightningcss": "^0.4.5",
     "vitest": "^4.1.0"
   }
 }

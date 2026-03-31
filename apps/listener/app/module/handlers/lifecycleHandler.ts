@@ -18,7 +18,6 @@ import {
     resolvingContextStore,
 } from "@/module/stores/resolvingContextStore";
 import type { ResolvedSdkConfig } from "@/module/stores/types";
-import { sanitizeCss } from "@/module/utils/sanitizeCss";
 import { processSsoCompletion } from "./ssoHandler";
 
 /**
@@ -117,6 +116,25 @@ function extractDomain(origin: string): string {
     }
 }
 
+function isValidResolvedConfigPayload(data: unknown): data is {
+    merchantId: string;
+    domain: string;
+    allowedDomains: string[];
+    sourceUrl: string;
+    pendingMergeToken?: string;
+    sdkConfig?: ResolvedSdkConfig;
+} {
+    if (!data || typeof data !== "object") return false;
+    const d = data as Record<string, unknown>;
+    return (
+        typeof d.merchantId === "string" &&
+        typeof d.domain === "string" &&
+        Array.isArray(d.allowedDomains) &&
+        d.allowedDomains.every((v: unknown) => typeof v === "string") &&
+        typeof d.sourceUrl === "string"
+    );
+}
+
 async function handleResolvedConfig(
     data: {
         merchantId: string;
@@ -128,6 +146,19 @@ async function handleResolvedConfig(
     },
     context: RpcRequestContext
 ): Promise<void> {
+    if (!isValidResolvedConfigPayload(data)) {
+        console.warn("[Frak] Invalid resolved-config payload, ignoring");
+        return;
+    }
+
+    let parsedOrigin: string;
+    try {
+        parsedOrigin = new URL(data.sourceUrl).origin;
+    } catch {
+        console.warn("[Frak] Invalid sourceUrl in resolved-config, ignoring");
+        return;
+    }
+
     const originDomain = extractDomain(context.origin);
     const store = resolvingContextStore.getState();
 
@@ -150,19 +181,22 @@ async function handleResolvedConfig(
         );
     }
 
-    // Set the resolving context from this event
-    const origin = new URL(data.sourceUrl).origin;
     store.setContext({
         merchantId: data.merchantId,
-        origin,
+        origin: parsedOrigin,
         sourceUrl: data.sourceUrl,
         ...(iframeClientId && { clientId: iframeClientId }),
     });
 
     store.setBackendConfig(data.merchantId, data.sdkConfig);
 
-    // Identity merge (previously in setBackendConfig — moved here for clarity)
-    if (data.pendingMergeToken && data.merchantId) {
+    // Identity merge — only allowed for verified trust (origin in allowedDomains)
+    const currentTrust = resolvingContextStore.getState().trustLevel;
+    if (
+        data.pendingMergeToken &&
+        data.merchantId &&
+        currentTrust === "verified"
+    ) {
         const targetAnonymousId =
             iframeClientId ?? clientIdStore.getState().clientId;
         if (targetAnonymousId) {
@@ -192,7 +226,7 @@ function applyBackendCss(sdkConfig: ResolvedSdkConfig): void {
 
     const style = document.createElement("style");
     style.id = BACKEND_CSS_STYLE_ID;
-    style.textContent = sanitizeCss(sdkConfig.css);
+    style.textContent = sdkConfig.css;
     document.head.appendChild(style);
 }
 

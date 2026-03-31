@@ -279,9 +279,11 @@ describe("merchantId", () => {
 
             await fetchMerchantId("shop.example.com");
 
-            expect(window.sessionStorage.getItem("frak-merchant-id")).toBe(
-                "merchant-persisted"
-            );
+            expect(
+                window.sessionStorage.getItem(
+                    "frak-merchant-id:shop.example.com"
+                )
+            ).toBe("merchant-persisted");
         });
 
         it("should restore merchantId from sessionStorage when in-memory cache is cleared", async () => {
@@ -307,9 +309,14 @@ describe("merchantId", () => {
 
             // Manually clear in-memory but keep sessionStorage
             // We do this by calling the internal clear then restoring sessionStorage
-            const stored = window.sessionStorage.getItem("frak-merchant-id");
+            const stored = window.sessionStorage.getItem(
+                "frak-merchant-id:shop.example.com"
+            );
             clearMerchantIdCache();
-            window.sessionStorage.setItem("frak-merchant-id", stored!);
+            window.sessionStorage.setItem(
+                "frak-merchant-id:shop.example.com",
+                stored!
+            );
 
             // Second call should restore from sessionStorage without fetch
             const result2 = await fetchMerchantId("shop.example.com");
@@ -325,7 +332,9 @@ describe("merchantId", () => {
             await fetchMerchantId("shop.example.com");
 
             expect(
-                window.sessionStorage.getItem("frak-merchant-id")
+                window.sessionStorage.getItem(
+                    "frak-merchant-id:shop.example.com"
+                )
             ).toBeNull();
         });
     });
@@ -348,8 +357,8 @@ describe("merchantId", () => {
             expect(result1).toBe("merchant-clear-test");
             expect(global.fetch).toHaveBeenCalledTimes(1);
 
-            // Clear cache
-            clearMerchantIdCache();
+            // Clear cache (pass domain to clear the scoped sessionStorage key)
+            clearMerchantIdCache("shop.example.com");
 
             // Second fetch should call API again
             const result2 = await fetchMerchantId("shop.example.com");
@@ -403,14 +412,18 @@ describe("merchantId", () => {
             });
 
             await fetchMerchantId("shop.example.com");
-            expect(window.sessionStorage.getItem("frak-merchant-id")).toBe(
-                "merchant-session-clear"
-            );
+            expect(
+                window.sessionStorage.getItem(
+                    "frak-merchant-id:shop.example.com"
+                )
+            ).toBe("merchant-session-clear");
 
-            clearMerchantIdCache();
+            clearMerchantIdCache("shop.example.com");
 
             expect(
-                window.sessionStorage.getItem("frak-merchant-id")
+                window.sessionStorage.getItem(
+                    "frak-merchant-id:shop.example.com"
+                )
             ).toBeNull();
         });
     });

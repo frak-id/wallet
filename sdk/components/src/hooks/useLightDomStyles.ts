@@ -13,6 +13,6 @@ export function useLightDomStyles(
 
     useEffect(() => {
         if (!placementId || !placementCss) return;
-        styleManager.injectPlacement(placementId, placementCss);
-    }, [placementId, placementCss]);
+        styleManager.injectPlacement(tag, placementId, placementCss);
+    }, [tag, placementId, placementCss]);
 }

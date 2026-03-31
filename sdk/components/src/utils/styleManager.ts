@@ -16,8 +16,12 @@ function injectBase(tag: string, css: string): void {
     ensureStyle(`frak-base-${tag}`, css);
 }
 
-function injectPlacement(placementId: string, scopedCss: string): void {
-    ensureStyle(`frak-placement-${placementId}`, scopedCss);
+function injectPlacement(
+    tag: string,
+    placementId: string,
+    scopedCss: string
+): void {
+    ensureStyle(`frak-placement-${tag}-${placementId}`, scopedCss);
 }
 
 export const styleManager = { injectBase, injectPlacement };

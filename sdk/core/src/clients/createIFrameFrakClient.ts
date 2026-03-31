@@ -58,6 +58,10 @@ export function createIFrameFrakClient({
         (browserLang === "en" || browserLang === "fr"
             ? browserLang
             : undefined);
+    const targetDomain =
+        config.domain ??
+        (typeof window !== "undefined" ? window.location.hostname : "");
+    sdkConfigStore.setCacheScope(targetDomain, detectedLang);
     sdkConfigStore.reset();
 
     // Skip fetch entirely if cache is fresh, otherwise fetch (SWR)

@@ -63,11 +63,19 @@ export class MerchantResolveService {
         return result;
     }
 
+    private normalizeQueryLang(
+        lang: string | undefined
+    ): "en" | "fr" | undefined {
+        if (lang === "en" || lang === "fr") return lang;
+        return undefined;
+    }
+
     async resolve(
         normalizedDomain: string,
         lang: string | undefined
     ): Promise<MerchantResolveResponse | null> {
-        const cacheKey = `${normalizedDomain}:${lang ?? ""}`;
+        const safeLang = this.normalizeQueryLang(lang);
+        const cacheKey = `${normalizedDomain}:${safeLang ?? ""}`;
         const cached = this.responseCache.get(cacheKey);
         if (cached) return cached.value;
 
@@ -77,7 +85,7 @@ export class MerchantResolveService {
 
         const productId =
             merchant.productId ?? keccak256(toHex(normalizedDomain));
-        const resolvedLang = this.resolveLanguage(merchant.sdkConfig, lang);
+        const resolvedLang = this.resolveLanguage(merchant.sdkConfig, safeLang);
         const resolvedSdkConfig = this.buildResolvedSdkConfig(
             merchant.sdkConfig,
             resolvedLang

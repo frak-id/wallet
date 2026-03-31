@@ -5,14 +5,11 @@ import {
 } from "@frak-labs/app-essentials";
 import { Button } from "@frak-labs/ui/component/Button";
 import { Column, Columns } from "@frak-labs/ui/component/Columns";
-import { Input, type InputProps } from "@frak-labs/ui/component/forms/Input";
-import { Pencil } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import type { Address } from "viem";
 import { ActionsMessageSuccess } from "@/module/campaigns/component/Actions";
 import { Panel } from "@/module/common/component/Panel";
-import { Row } from "@/module/common/component/Row";
 import { CurrencySelector } from "@/module/forms/CurrencySelector";
 import {
     Form,
@@ -23,11 +20,11 @@ import {
     FormLayout,
     FormMessage,
 } from "@/module/forms/Form";
+import { InputWithToggle } from "@/module/forms/InputWithToggle";
 import { MerchantHead } from "@/module/merchant/component/MerchantHead";
 import { useMerchant } from "@/module/merchant/hook/useMerchant";
 import { useMerchantUpdate } from "@/module/merchant/hook/useMerchantUpdate";
 import { ExplorerSettings } from "./ExplorerSettings";
-import styles from "./index.module.css";
 import { PurchasseTrackerSetup } from "./PurchaseTracker";
 
 type FormMerchant = {
@@ -202,26 +199,3 @@ export function MerchantDetails({ merchantId }: { merchantId: string }) {
         </FormLayout>
     );
 }
-
-const InputWithToggle = ({ ref, disabled, ...props }: InputProps) => {
-    const [isDisabled, setIsDisabled] = useState(true);
-    return (
-        <Row align={"center"}>
-            <Input
-                {...props}
-                ref={ref}
-                disabled={isDisabled}
-                onBlur={() => setIsDisabled(true)}
-            />
-            <button
-                type={"button"}
-                className={styles.inputWithToggle__button}
-                onClick={() => setIsDisabled(!isDisabled)}
-                disabled={disabled}
-            >
-                <Pencil size={20} />
-            </button>
-        </Row>
-    );
-};
-InputWithToggle.displayName = "InputWithToggle";

@@ -32,7 +32,6 @@ import { useFormattedEstimatedReward } from "@/module/hooks/useEstimatedRewards"
 import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 import type { ResolvedSdkConfig } from "@/module/stores/types";
 import { mapDeprecatedModalMetadata } from "../utils/deprecatedModalMetadataMapper";
-import { sanitizeCss } from "../utils/sanitizeCss";
 
 export type GenericWalletUiType = {
     appName: string;
@@ -168,7 +167,7 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
 
         const style = document.createElement("style");
         style.id = styleId;
-        style.textContent = sanitizeCss(placementCss);
+        style.textContent = placementCss;
         document.head.appendChild(style);
 
         return () => {

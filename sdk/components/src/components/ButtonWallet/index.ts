@@ -17,6 +17,11 @@ declare global {
 }
 
 // Register the ButtonWallet component
-registerWebComponent(ButtonWallet, "frak-button-wallet", ["placement"], {
-    shadow: true,
-});
+registerWebComponent(
+    ButtonWallet,
+    "frak-button-wallet",
+    ["placement", "classname", "useReward", "targetInteraction"],
+    {
+        shadow: true,
+    }
+);

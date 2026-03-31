@@ -9,9 +9,10 @@
 import type { SdkResolvedConfig } from "../types/resolvedConfig";
 
 const GLOBAL_KEY = "__frakSdkConfig";
-const CACHE_KEY = "frak-config-cache";
-const LEGACY_CACHE_KEY = "frak:configCache";
 const CACHE_TTL = 30_000; // 30 seconds
+const DEFAULT_CACHE_KEY = "frak-config-cache";
+
+const cacheState = { key: DEFAULT_CACHE_KEY };
 
 const isBrowser = typeof window !== "undefined";
 
@@ -39,14 +40,7 @@ let memoryEntry: CacheEntry | null = null;
 function loadCacheEntry(): CacheEntry | null {
     if (!isBrowser) return null;
     try {
-        let raw = localStorage.getItem(CACHE_KEY);
-        if (!raw) {
-            raw = localStorage.getItem(LEGACY_CACHE_KEY);
-            if (raw) {
-                localStorage.setItem(CACHE_KEY, raw);
-                localStorage.removeItem(LEGACY_CACHE_KEY);
-            }
-        }
+        const raw = localStorage.getItem(cacheState.key);
         if (!raw) return null;
         const entry: CacheEntry = JSON.parse(raw);
         if (!entry.config?.isResolved) return null;
@@ -71,7 +65,7 @@ function writeCache(config: SdkResolvedConfig): void {
     if (!isBrowser || !config.isResolved) return;
     try {
         const entry: CacheEntry = { config, timestamp: Date.now() };
-        localStorage.setItem(CACHE_KEY, JSON.stringify(entry));
+        localStorage.setItem(cacheState.key, JSON.stringify(entry));
         memoryEntry = entry;
     } catch {}
 }
@@ -80,8 +74,7 @@ function removeCache(): void {
     if (!isBrowser) return;
     memoryEntry = null;
     try {
-        localStorage.removeItem(CACHE_KEY);
-        localStorage.removeItem(LEGACY_CACHE_KEY);
+        localStorage.removeItem(cacheState.key);
     } catch {}
 }
 
@@ -124,6 +117,12 @@ export const sdkConfigStore = {
 
     get isCacheFresh(): boolean {
         return isCacheFresh();
+    },
+
+    setCacheScope(domain: string, lang?: string): void {
+        const suffix = `${domain}:${lang ?? ""}`;
+        cacheState.key = `${DEFAULT_CACHE_KEY}:${suffix}`;
+        memoryEntry = null;
     },
 
     setConfig(config: SdkResolvedConfig): void {

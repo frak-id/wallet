@@ -21,7 +21,7 @@ declare global {
 registerWebComponent(
     OpenInAppButton,
     "frak-open-in-app",
-    ["text", "placement"],
+    ["text", "placement", "classname"],
     {
         shadow: false,
     }
