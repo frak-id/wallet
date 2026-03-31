@@ -30,30 +30,38 @@ export const button = recipe({
                 backgroundColor: vars.surface.primary,
                 color: vars.text.onAction,
                 border: "none",
-                "@media": {
-                    "(hover: hover)": {
-                        ":hover": {
-                            backgroundColor: vars.surface.primaryHover,
-                        },
+                selectors: {
+                    "&:not(:disabled):active": {
+                        backgroundColor: vars.surface.primaryPressed,
                     },
                 },
-                ":active": {
-                    backgroundColor: vars.surface.primaryPressed,
+                "@media": {
+                    "(hover: hover)": {
+                        selectors: {
+                            "&:not(:disabled):hover": {
+                                backgroundColor: vars.surface.primaryHover,
+                            },
+                        },
+                    },
                 },
             },
             secondary: {
                 backgroundColor: vars.surface.secondary,
                 color: vars.text.action,
                 border: "none",
-                "@media": {
-                    "(hover: hover)": {
-                        ":hover": {
-                            backgroundColor: vars.surface.secondaryHover,
-                        },
+                selectors: {
+                    "&:not(:disabled):active": {
+                        backgroundColor: vars.surface.secondaryPressed,
                     },
                 },
-                ":active": {
-                    backgroundColor: vars.surface.secondaryPressed,
+                "@media": {
+                    "(hover: hover)": {
+                        selectors: {
+                            "&:not(:disabled):hover": {
+                                backgroundColor: vars.surface.secondaryHover,
+                            },
+                        },
+                    },
                 },
             },
             ghost: {
