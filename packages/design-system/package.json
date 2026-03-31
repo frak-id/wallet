@@ -8,6 +8,7 @@
   "module": "./src/index.ts",
   "exports": {
     "./components/*": "./src/components/*/index.tsx",
+    "./hooks/useMediaQuery": "./src/hooks/useMediaQuery.ts",
     "./icons": "./src/icons/index.ts",
     "./breakpoints": "./src/breakpoints.ts",
     "./global": "./src/global.ts",
