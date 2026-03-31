@@ -1,9 +1,9 @@
 import * as coreSdk from "@frak-labs/core-sdk";
-import * as coreSdkActions from "@frak-labs/core-sdk/actions";
 import { fireEvent, render, screen, waitFor } from "@testing-library/preact";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as useClientReadyHook from "@/hooks/useClientReady";
 import * as useRewardHook from "@/hooks/useReward";
+import * as embeddedWalletUtils from "@/utils/embeddedWallet";
 import { ButtonShare } from "./ButtonShare";
 import * as useShareModalHook from "./hooks/useShareModal";
 
@@ -26,6 +26,10 @@ vi.mock("./hooks/useShareModal", () => ({
         isError: false,
         debugInfo: undefined,
     })),
+}));
+
+vi.mock("@/utils/embeddedWallet", () => ({
+    openEmbeddedWallet: vi.fn(),
 }));
 
 describe("ButtonShare", () => {
@@ -130,9 +134,9 @@ describe("ButtonShare", () => {
         fireEvent.click(button);
 
         await waitFor(() => {
-            expect(coreSdkActions.displayEmbeddedWallet).toHaveBeenCalledWith(
-                window.FrakSetup.client,
-                window.FrakSetup.modalWalletConfig ?? {}
+            expect(embeddedWalletUtils.openEmbeddedWallet).toHaveBeenCalledWith(
+                undefined,
+                undefined
             );
         });
     });
@@ -203,7 +207,8 @@ describe("ButtonShare", () => {
         render(<ButtonShare targetInteraction="custom.customerMeeting" />);
 
         expect(useShareModalHook.useShareModal).toHaveBeenCalledWith(
-            "custom.customerMeeting"
+            "custom.customerMeeting",
+            undefined
         );
     });
 });

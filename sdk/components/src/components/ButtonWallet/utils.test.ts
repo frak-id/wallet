@@ -1,11 +1,10 @@
-import * as coreSdkActions from "@frak-labs/core-sdk/actions";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import * as embeddedWalletUtils from "@/utils/embeddedWallet";
 import * as safeVibrateUtils from "@/utils/safeVibrate";
 import { openWalletModal } from "./utils";
 
-// Mock dependencies
-vi.mock("@frak-labs/core-sdk/actions", () => ({
-    displayEmbeddedWallet: vi.fn(),
+vi.mock("@/utils/embeddedWallet", () => ({
+    openEmbeddedWallet: vi.fn(),
 }));
 
 vi.mock("@/utils/safeVibrate", () => ({
@@ -17,53 +16,31 @@ describe("openWalletModal", () => {
         vi.clearAllMocks();
     });
 
-    it("should call safeVibrate and displayEmbeddedWallet when client exists", () => {
+    it("should call safeVibrate and openEmbeddedWallet", () => {
         openWalletModal();
 
         expect(safeVibrateUtils.safeVibrate).toHaveBeenCalledTimes(1);
-        expect(coreSdkActions.displayEmbeddedWallet).toHaveBeenCalledWith(
-            window.FrakSetup.client,
-            window.FrakSetup.modalWalletConfig ?? {}
+        expect(embeddedWalletUtils.openEmbeddedWallet).toHaveBeenCalledWith(
+            undefined,
+            undefined
         );
     });
 
-    it("should not call displayEmbeddedWallet when client does not exist", () => {
-        const originalClient = window.FrakSetup.client;
-        window.FrakSetup.client = undefined;
+    it("should pass targetInteraction to openEmbeddedWallet", () => {
+        openWalletModal("custom.customerMeeting");
 
-        openWalletModal();
-
-        expect(safeVibrateUtils.safeVibrate).not.toHaveBeenCalled();
-        expect(coreSdkActions.displayEmbeddedWallet).not.toHaveBeenCalled();
-
-        // Restore client
-        window.FrakSetup.client = originalClient;
-    });
-
-    it("should use modalWalletConfig when provided", () => {
-        const customConfig = { metadata: { position: "left" as const } };
-        window.FrakSetup.modalWalletConfig = customConfig;
-
-        openWalletModal();
-
-        expect(coreSdkActions.displayEmbeddedWallet).toHaveBeenCalledWith(
-            window.FrakSetup.client,
-            customConfig
+        expect(embeddedWalletUtils.openEmbeddedWallet).toHaveBeenCalledWith(
+            "custom.customerMeeting",
+            undefined
         );
     });
 
-    it("should use empty object when modalWalletConfig is not provided", () => {
-        const originalConfig = window.FrakSetup.modalWalletConfig;
-        window.FrakSetup.modalWalletConfig = undefined;
+    it("should pass targetInteraction and placement to openEmbeddedWallet", () => {
+        openWalletModal("custom.customerMeeting", "hero");
 
-        openWalletModal();
-
-        expect(coreSdkActions.displayEmbeddedWallet).toHaveBeenCalledWith(
-            window.FrakSetup.client,
-            {}
+        expect(embeddedWalletUtils.openEmbeddedWallet).toHaveBeenCalledWith(
+            "custom.customerMeeting",
+            "hero"
         );
-
-        // Restore config
-        window.FrakSetup.modalWalletConfig = originalConfig;
     });
 });
