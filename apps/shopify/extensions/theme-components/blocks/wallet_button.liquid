@@ -14,7 +14,11 @@
   }
 {% endstyle %}
 
-<frak-button-wallet {{ use_reward }} classname="{{ custom_class }}"></frak-button-wallet>
+<frak-button-wallet
+  {{ use_reward }}
+  classname="{{ custom_class }}"
+  {% if block.settings.target_interaction != blank %}target-interaction="{{ block.settings.target_interaction }}"{% endif %}
+></frak-button-wallet>
 
 {% schema %}
 {
@@ -26,6 +30,12 @@
       "id": "show_reward",
       "label": "Show reward",
       "default": false
+    },
+    {
+      "type": "text",
+      "id": "target_interaction",
+      "label": "Target interaction",
+      "info": "Specific interaction type for reward calculation (e.g. custom.customerMeeting)"
     },
     {
       "type": "select",
