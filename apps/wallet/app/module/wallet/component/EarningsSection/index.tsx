@@ -5,6 +5,7 @@ import { IconCircle } from "@frak-labs/design-system/components/IconCircle";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { EarningsIcon } from "@frak-labs/design-system/icons";
 import { vars } from "@frak-labs/design-system/theme";
+import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { RewardHistoryList } from "@/module/history/component/RewardHistory";
 import { useGetRewardHistory } from "@/module/history/hook/useGetRewardHistory";
@@ -27,6 +28,7 @@ export function EarningsSection() {
 
 function EarningsEmpty() {
     const { t } = useTranslation();
+    const navigate = useNavigate();
 
     return (
         <Card className={styles.emptyLayout}>
@@ -41,7 +43,12 @@ function EarningsEmpty() {
                     {t("wallet.earnings.emptyDescription")}
                 </Text>
             </Box>
-            <Button variant="secondary" size="small" width="auto">
+            <Button
+                variant="secondary"
+                size="small"
+                width="auto"
+                onClick={() => navigate({ to: "/explorer" })}
+            >
                 {t("wallet.earnings.discover")}
             </Button>
         </Card>
