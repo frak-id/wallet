@@ -266,7 +266,7 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
         populateI18nResources(i18n, lang, currentRequest);
 
         // Create the new t function with the right context
-        const rawT = i18n.getFixedT(lang, null) as typeof i18n.t;
+        const rawT = i18n.getFixedT(lang, null);
         const t = (key: string, options?: TOptions): string =>
             rawT(key, {
                 ...context,
