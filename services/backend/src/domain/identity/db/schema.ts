@@ -5,7 +5,9 @@ import {
     text,
     timestamp,
     unique,
+    uniqueIndex,
     uuid,
+    varchar,
 } from "drizzle-orm/pg-core";
 import type { IdentityType } from "../schemas";
 
@@ -43,5 +45,25 @@ export const identityNodesTable = pgTable(
             .on(table.identityType, table.identityValue, table.merchantId)
             .nullsNotDistinct(),
         index("identity_nodes_group_idx").on(table.groupId),
+    ]
+);
+
+export const installCodesTable = pgTable(
+    "install_codes",
+    {
+        id: uuid("id").primaryKey().defaultRandom(),
+        code: varchar("code", { length: 6 }).notNull(),
+        merchantId: uuid("merchant_id").notNull(),
+        anonymousId: text("anonymous_id").notNull(),
+        createdAt: timestamp("created_at").notNull().defaultNow(),
+        expiresAt: timestamp("expires_at").notNull(),
+    },
+    (table) => [
+        uniqueIndex("install_codes_code_idx").on(table.code),
+        index("install_codes_merchant_anonymous_idx").on(
+            table.merchantId,
+            table.anonymousId
+        ),
+        index("install_codes_expires_at_idx").on(table.expiresAt),
     ]
 );

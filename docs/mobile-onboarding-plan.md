@@ -150,38 +150,66 @@ This page should load and redirect as fast as possible — the user sees it only
 - Reads the referrer on first launch, caches the result
 - ~100 lines of Kotlin
 
-#### Backend — Server-Side Code Storage
+#### Backend — Install Code Service
 
-A new lightweight endpoint for the fallback code mechanism:
+Three endpoints under `/user/identity/install-code/` handle the fallback code mechanism:
 
-- `POST /user/identity/install-code/generate` — accepts `{ merchantId, anonymousId }`, returns `{ code: "ABCD12" }`, stores mapping with 72-hour TTL
-- `POST /user/identity/install-code/resolve` — accepts `{ code: "ABCD12" }`, returns `{ merchantId, anonymousId }` and calls `/merge/initiate` internally
+- `POST /generate` — **unauthenticated**. Accepts `{ merchantId, anonymousId }`. Generates a 6-char alphanumeric code, stores the mapping in PostgreSQL with 72-hour TTL. Returns `{ code: "ABCD12" }`.
+- `POST /resolve` — **unauthenticated**. Accepts `{ code }`. Validates the code, returns merchant context for app display + wallet link status: `{ merchantId, merchant: { name, domain }, hasWallet }`. Does NOT trigger any merge — purely informational.
+- `POST /consume` — **authenticated** (requires wallet session via `x-wallet-auth`). Accepts `{ code }`. Resolves the code, finds the source identity group (anonymous_fingerprint), finds the target identity group (wallet from auth session), merges the groups, marks the code as consumed. Returns `{ success, merged }`.
 
-Storage: Redis with TTL (simple key-value, no schema migration needed).
+**Why three endpoints instead of two:**
+- The app enters the code **before** the user registers/logs in (fresh app install). `resolve` provides merchant info to display ("Connect your rewards from **Acme Store**") without requiring auth.
+- `consume` runs after login, when a wallet exists. It performs the actual identity merge in one atomic operation.
+- The install page can poll `resolve` to detect when a wallet has been created (the `hasWallet` field flips to `true` after the user registers with the same `anonymousId` via `x-frak-client-id` header).
 
-#### App — Post-Registration Onboarding Step
+**Storage:** PostgreSQL (Drizzle) — `install_codes` table in the identity domain. No Redis needed — the code is a durable mapping with 72-hour TTL, not a hot cache. Expired codes filtered by queries; periodic cleanup job optional.
 
-A new screen shown after wallet registration in the mobile app:
+**Code format:** 6 characters from `ABCDEFGHJKMNPQRSTUVWXYZ23456789` (31 chars, excluding ambiguous 0/O/1/I/L). 31^6 ≈ 887M combinations. Unique DB index with retry on collision.
 
-1. **Android**: Silently check Play Install Referrer → if merge token found, auto-merge and show success.
-2. **iOS**: Show "Connect your rewards" button → triggers `ASWebAuthenticationSession` → auto-merge on success.
-3. **Fallback (both)**: "Enter your setup code" input field, shown if primary path fails or as a visible option.
-4. **Skip**: "Skip for now" link — the user can connect later from settings.
+**Merge flow in `consume`:**
+1. Look up code → `{ merchantId, anonymousId }`
+2. Find source group: `findGroupByIdentity({ type: "anonymous_fingerprint", value: anonymousId, merchantId })`
+3. Find target group: `findGroupByIdentity({ type: "wallet", value: walletAddress })` (wallet from auth session)
+4. If source not found → auto-create via `resolveAndAssociate()` (same pattern as `/track/arrival`)
+5. Merge groups via `IdentityWeightService.determineAnchor()` + `IdentityMergeService.mergeGroups()`
+6. Mark code as consumed
+7. Invalidate caches
+
+**No changes required to:** register, login, existing merge endpoints, AnonymousMergeOrchestrator, SDK, or listener. The app passes the resolved `anonymousId` as its `x-frak-client-id` header during registration (existing plumbing), and calls `consume` separately after auth.
+
+#### App — Post-Install Onboarding Step
+
+The code input can be shown **before or after registration** — the resolve endpoint is unauthenticated:
+
+1. **Pre-registration code entry (optional)**: App shows "Have a setup code?" input. User enters code → `POST /resolve` returns merchant info → app displays "Connect your rewards from **Acme Store**". App stores `{ code, merchantId, anonymousId }` locally.
+2. **Registration**: User registers with `x-frak-client-id` set to the resolved `anonymousId` and `merchantId` in body (if available). This links the anonymous identity to the new wallet via existing `resolveAndAssociate()`.
+3. **Post-registration merge**: App calls `POST /consume { code }` with wallet auth → identity groups merged, code consumed.
+4. **Android**: Silently check Play Install Referrer → if merge token found, auto-merge and show success. Falls back to code input if referrer unavailable.
+5. **iOS**: Show "Connect your rewards" button → triggers `ASWebAuthenticationSession` → auto-merge on success. Falls back to code input if cancelled/failed.
+6. **Skip**: "Skip for now" link — the user can connect later from settings.
 
 #### Merge Execution
 
-The existing `AnonymousMergeOrchestrator` handles the actual identity merge:
+Two merge paths exist depending on the mechanism:
 
-1. App receives merge token (via ASWebAuth callback, Play Referrer, or code resolution)
+**Primary paths (ASWebAuthenticationSession / Play Install Referrer):**
+1. App receives merge token (via ASWebAuth callback or Play Referrer)
 2. App registers fresh wallet (new WebAuthn credential → new wallet address)
-3. App calls `POST /user/identity/merge/execute` with the merge token and the new wallet's `anonymousId`
+3. App calls `POST /user/identity/merge/execute` with the merge token
 4. Backend merges the anonymous sharing identity group with the new wallet's identity group
-5. All referral links, sharing history, and pending rewards transfer to the wallet
 
-The merge token has a 60-minute TTL (JWT). This is sufficient because:
-- The `wallet.frak.id/connect` page generates a **fresh** merge token on each `ASWebAuthenticationSession` invocation (it has `merchantId` + `anonymousId` in localStorage, not the token itself).
-- The code fallback resolves to stored params server-side, generating a fresh token on demand.
-- The Play Install Referrer stores the token, but the referrer is available for 90 days — if the token expires, the app can call a refresh endpoint.
+**Install code path (fallback):**
+1. App resolves code via `POST /install-code/resolve` → gets merchant info (no JWT, no merge token)
+2. App registers with the resolved `anonymousId` as `x-frak-client-id` header
+3. App calls `POST /install-code/consume` with wallet auth → backend merges identity groups directly
+4. No JWT involved — the 6-char code is the only token, valid for 72 hours
+
+The install code approach is simpler than JWT-based merge because:
+- The code has a 72-hour TTL (stored server-side), avoiding JWT expiration issues
+- The merge happens in one authenticated call — no two-step initiate/execute dance
+- Works regardless of app state: fresh install, existing wallet, or returning user
+- All referral links, sharing history, and pending rewards transfer to the wallet on merge
 
 ### Flow Diagrams — Mobile Web
 
@@ -216,8 +244,8 @@ Register (fresh WebAuthn credential → new wallet)
   ├─── Fallback: Code input ─────────────────────────────────────┤
   │    (if ASWebAuth cancelled / localStorage empty)             │
   │    User enters "ABCD12"                                      │
-  │    POST /install-code/resolve → { merchantId, anonymousId }  │
-  │    POST /merge/initiate + /merge/execute                     │
+  │    POST /install-code/resolve → { merchant info, hasWallet } │
+  │    POST /install-code/consume (with wallet auth) → merged    │
   │    ✅ Done                                                    │
   │                                                              │
   └─── Passive: Safari tab still open ───────────────────────────┘
@@ -249,7 +277,9 @@ Silently read Play Install Referrer → extract merge token
   ├─── Token found: POST /merge/execute → ✅ Done (zero friction)
   │
   └─── Token not found (non-Chrome install):
-       Show code input → user enters "ABCD12" → merge → ✅ Done
+       Show code input → user enters "ABCD12"
+       POST /install-code/resolve → merchant info
+       POST /install-code/consume (with wallet auth) → merge → ✅ Done
 ```
 
 ---
@@ -617,7 +647,7 @@ This is the most consequential change in the plan. Current assumptions that need
 | `wallet.frak.id/connect` page (reads localStorage, generates token, redirects) | ~1 day | P0 |
 | Tauri plugin: ASWebAuthenticationSession (iOS, Swift) | ~1 day | P0 |
 | Tauri plugin: Play Install Referrer (Android, Kotlin) | ~1-2 days | P0 |
-| Backend: install code generation + resolution endpoints | ~0.5 days | P0 |
+| Backend: install code endpoints (generate, resolve, consume) | ~1 day | P0 |
 | App: post-registration "Connect rewards" screen | ~1 day | P0 |
 | SDK: new component or modal step for "Create wallet" CTA | ~1 day | P1 |
 | **Subtotal** | **~7-8 days** | |
@@ -652,7 +682,7 @@ Part 1 (mobile web → app) can ship independently. Part 2 (desktop → mobile +
 | ASWebAuthenticationSession cancelled by user | App shows code input fallback |
 | Safari evicted localStorage (iOS memory pressure) | `/connect` page redirects with `error=no-data` → code fallback |
 | Play Install Referrer unavailable (sideloaded APK, non-Chrome) | Code fallback |
-| Merge token expired (60-min JWT TTL) | `/connect` page generates a fresh token each time; code resolution generates fresh token on demand |
+| Merge token expired (60-min JWT TTL) | `/connect` page generates a fresh token each time; install code has no JWT — the 6-char code is valid for 72 hours |
 | User installs app days later | Server-side code persists 72 hours; localStorage persists indefinitely; Play Referrer available 90 days |
 | User skips "Connect rewards" step | Anonymous sharing data persists server-side. User can connect later from app settings. |
 | User already has the app installed | Existing deep link flow (`frakwallet://`) opens the app directly from the merchant site — no install page needed. Detection via `getInstalledRelatedApps()` on Android Chrome. |
@@ -694,8 +724,19 @@ Part 1 (mobile web → app) can ship independently. Part 2 (desktop → mobile +
 | Recovery `addPassKey` flow (reference implementation) | `apps/wallet/app/module/recovery/hook/usePerformRecovery.ts` |
 | Recovery passkey creation with `previousWallet` | `apps/wallet/app/module/recovery/hook/useCreateRecoveryPasskey.ts` |
 | Register endpoint (`previousWallet` parameter) | `services/backend/src/api/user/wallet/auth/register.ts` |
+| Login endpoint (identity resolution pattern) | `services/backend/src/api/user/wallet/auth/login.ts` |
 | Anonymous merge orchestrator | `services/backend/src/orchestration/identity/AnonymousMergeOrchestrator.ts` |
 | Anonymous merge JWT service | `services/backend/src/domain/identity/services/AnonymousMergeService.ts` |
+| Identity orchestrator (`resolveAndAssociate`) | `services/backend/src/orchestration/identity/IdentityOrchestrator.ts` |
+| Identity repository (group/wallet lookups) | `services/backend/src/domain/identity/repositories/IdentityRepository.ts` |
+| Identity DB schema (groups + nodes) | `services/backend/src/domain/identity/db/schema.ts` |
+| Merchant repository (name, domain lookup) | `services/backend/src/domain/merchant/repositories/MerchantRepository.ts` |
+| Orchestration context (singleton wiring) | `services/backend/src/orchestration/context.ts` |
+| Identity domain context | `services/backend/src/domain/identity/context.ts` |
+| Install code schema **(new)** | `services/backend/src/domain/identity/db/installCodeSchema.ts` |
+| Install code repository **(new)** | `services/backend/src/domain/identity/repositories/InstallCodeRepository.ts` |
+| Install code service **(new)** | `services/backend/src/domain/identity/services/InstallCodeService.ts` |
+| Install code API routes **(new)** | `services/backend/src/api/user/identity/installCode.ts` |
 | Existing WebSocket pairing infra | `packages/wallet-shared/src/pairing/` |
 | `LaunchPairing` component (QR + code) | `packages/wallet-shared/src/pairing/component/LaunchPairing/` |
 | SSO success screen | `apps/wallet/app/routes/_wallet/_sso/sso.tsx` |

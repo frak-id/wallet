@@ -10,6 +10,7 @@ import { campaignRulesTable } from "../../domain/campaign/db/schema";
 import {
     identityGroupsTable,
     identityNodesTable,
+    installCodesTable,
 } from "../../domain/identity/db/schema";
 import {
     merchantAdminsTable,
@@ -61,6 +62,7 @@ export const db = drizzle({
         touchpointsTable,
         identityGroupsTable,
         identityNodesTable,
+        installCodesTable,
         merchantsTable,
         merchantAdminsTable,
         merchantOwnershipTransfersTable,
