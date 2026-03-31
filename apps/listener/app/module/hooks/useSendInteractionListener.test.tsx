@@ -43,13 +43,15 @@ describe("useSendInteractionListener", () => {
         resolvingContextStore.setState({ context: undefined });
     });
 
-    test("should submit interaction from rpc context even when store context is not ready", async ({
+    test("should submit interaction from rpc context when trust level is verified", async ({
         queryWrapper,
     }) => {
         mockTrackInteractionPost.mockResolvedValue({
             data: { success: true },
             error: null,
         });
+
+        resolvingContextStore.setState({ trustLevel: "verified" });
 
         const { result } = renderHook(() => useSendInteractionListener(), {
             wrapper: queryWrapper.wrapper,

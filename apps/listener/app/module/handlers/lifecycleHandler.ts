@@ -143,11 +143,11 @@ async function handleResolvedConfig(
             `[Frak] Running on ${originDomain} with config for ${data.domain}. Register ${originDomain} in your dashboard for production use.`
         );
     } else {
-        console.error(
-            `[Frak] Domain proof failed: origin ${originDomain} not in allowedDomains`,
+        store.setTrustLevel("unverified");
+        console.warn(
+            `[Frak] Domain proof failed: origin ${originDomain} not in allowedDomains. Running in display-only mode (modals and wallet status will work, interactions are disabled).`,
             data.allowedDomains
         );
-        return;
     }
 
     // Set the resolving context from this event

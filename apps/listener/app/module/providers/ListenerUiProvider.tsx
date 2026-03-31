@@ -270,8 +270,8 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
         const t = (key: string, options?: TOptions): string =>
             rawT(key, {
                 ...context,
-                ...options,
                 estimatedReward: formattedReward,
+                ...options,
             });
         return { lang, i18n, t };
     }, [

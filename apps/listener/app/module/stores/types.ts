@@ -23,8 +23,11 @@ export type AnyModalKey = ModalStepTypes["key"];
  * - `"dev-override"` — MerchantId present but origin not in `allowedDomains`.
  *   Read-only access: modals, embedded wallet, and merchant info are allowed.
  *   Write operations (sendInteraction) are blocked to prevent fraudulent tracking.
+ * - `"unverified"` — Domain proof failed and no merchantId available (e.g. backend down).
+ *   Display-only access: modals, embedded wallet, and wallet status are allowed.
+ *   All write operations and merchant-specific queries are blocked.
  */
-export type TrustLevel = "pending" | "verified" | "dev-override";
+export type TrustLevel = "pending" | "verified" | "dev-override" | "unverified";
 
 /**
  * IFrame resolving context (from WalletRpcContext without source)

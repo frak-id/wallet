@@ -21,14 +21,13 @@ export function useSendInteractionListener(): OnSendInteraction {
 
     return useCallback(
         async (params, context) => {
-            if (trustLevel === "dev-override") {
-                console.warn(
-                    `[Frak] Interactions disabled in dev mode. Register your domain in the dashboard for production use.`
-                );
-                throw new FrakRpcError(
-                    RpcErrorCodes.configError,
-                    "Interactions disabled in dev mode. Register your domain in the dashboard for production use."
-                );
+            if (trustLevel !== "verified") {
+                const reason =
+                    trustLevel === "unverified"
+                        ? "Interactions disabled: domain not verified and no merchant config available. Check backend connectivity."
+                        : "Interactions disabled in dev mode. Register your domain in the dashboard for production use.";
+                console.warn(`[Frak] ${reason}`);
+                throw new FrakRpcError(RpcErrorCodes.configError, reason);
             }
 
             const [interaction, metadata] = params;

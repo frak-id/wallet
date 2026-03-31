@@ -50,7 +50,7 @@ const ResolvedSdkConfigSchema = t.Object({
     currency: t.Optional(
         t.Union([t.Literal("eur"), t.Literal("usd"), t.Literal("gbp")])
     ),
-    lang: t.Union([t.Literal("en"), t.Literal("fr")]),
+    lang: t.Optional(t.Union([t.Literal("en"), t.Literal("fr")])),
     hidden: t.Optional(t.Boolean()),
     css: t.Optional(t.String()),
     translations: t.Optional(t.Record(t.String(), t.String())),
