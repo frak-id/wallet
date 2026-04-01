@@ -38,6 +38,7 @@ export default $config({
         const isGcp = $app?.stage?.startsWith("gcp");
         if (isGcp) {
             await import("./infra/gcp/backend.ts");
+            await import("./infra/gcp/credential-sync.ts");
             await import("./infra/gcp/wallet.ts");
             await import("./infra/gcp/business.ts");
             return;

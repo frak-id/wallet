@@ -8,7 +8,7 @@ export type MongoAuthenticator = Readonly<{
         x: string;
         y: string;
     };
-    credentialPublicKey: Binary;
+    credentialPublicKey: Binary | Buffer | Uint8Array | string;
     counter: number;
     credentialDeviceType: string;
     credentialBackedUp: boolean;

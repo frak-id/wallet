@@ -10,6 +10,13 @@ import type { MongoAuthenticator } from "./types";
 
 const BATCH_SIZE = 100;
 
+function toBase64(value: Binary | Buffer | Uint8Array | string): string {
+    if (typeof value === "string") return value;
+    if (value instanceof Binary)
+        return Buffer.from(value.buffer).toString("base64");
+    return Buffer.from(value).toString("base64");
+}
+
 function mongoToSqld(doc: MongoAuthenticator): SqldRow {
     return {
         id: doc._id,
@@ -17,9 +24,7 @@ function mongoToSqld(doc: MongoAuthenticator): SqldRow {
         userAgent: doc.userAgent,
         publicKeyX: doc.publicKey.x,
         publicKeyY: doc.publicKey.y,
-        credentialPublicKey: Buffer.from(
-            doc.credentialPublicKey.buffer
-        ).toString("base64"),
+        credentialPublicKey: toBase64(doc.credentialPublicKey),
         counter: doc.counter,
         credentialDeviceType: doc.credentialDeviceType,
         credentialBackedUp: doc.credentialBackedUp,

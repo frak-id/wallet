@@ -62,3 +62,25 @@ export const migrationImage = new dockerbuild.Image("migration-image", {
     push: true,
     tags: getRegistryPath("db-migration"),
 });
+
+export const credentialSyncImage = new dockerbuild.Image(
+    "credential-sync-image",
+    {
+        context: {
+            location: $cli.paths.root,
+        },
+        dockerfile: {
+            location: path.join(
+                $cli.paths.root,
+                "services/credential-sync/Dockerfile"
+            ),
+        },
+        platforms: ["linux/amd64"],
+        buildArgs: {
+            NODE_ENV: "production",
+            BASE_IMAGE: baseImage.ref,
+        },
+        push: true,
+        tags: getRegistryPath("credential-sync"),
+    }
+);

@@ -47,5 +47,4 @@ function launch_sqld_tunnel() {
 # Run both tunnels in parallel, exit if either dies
 launch_pg_tunnel &
 launch_sqld_tunnel &
-wait -n
-echo "One of the tunnels exited, shutting down..."
+wait
