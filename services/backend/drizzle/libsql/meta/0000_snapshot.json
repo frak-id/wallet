@@ -1,0 +1,98 @@
+{
+    "version": "6",
+    "dialect": "sqlite",
+    "id": "cac1de15-b100-4dd5-9cd4-21316028050d",
+    "prevId": "00000000-0000-0000-0000-000000000000",
+    "tables": {
+        "authenticators": {
+            "name": "authenticators",
+            "columns": {
+                "id": {
+                    "name": "id",
+                    "type": "text",
+                    "primaryKey": true,
+                    "notNull": true,
+                    "autoincrement": false
+                },
+                "smart_wallet_address": {
+                    "name": "smart_wallet_address",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false,
+                    "autoincrement": false
+                },
+                "user_agent": {
+                    "name": "user_agent",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "autoincrement": false
+                },
+                "public_key_x": {
+                    "name": "public_key_x",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "autoincrement": false
+                },
+                "public_key_y": {
+                    "name": "public_key_y",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "autoincrement": false
+                },
+                "credential_public_key": {
+                    "name": "credential_public_key",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "autoincrement": false
+                },
+                "counter": {
+                    "name": "counter",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "autoincrement": false
+                },
+                "credential_device_type": {
+                    "name": "credential_device_type",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "autoincrement": false
+                },
+                "credential_backed_up": {
+                    "name": "credential_backed_up",
+                    "type": "integer",
+                    "primaryKey": false,
+                    "notNull": true,
+                    "autoincrement": false
+                },
+                "transports": {
+                    "name": "transports",
+                    "type": "text",
+                    "primaryKey": false,
+                    "notNull": false,
+                    "autoincrement": false
+                }
+            },
+            "indexes": {},
+            "foreignKeys": {},
+            "compositePrimaryKeys": {},
+            "uniqueConstraints": {},
+            "checkConstraints": {}
+        }
+    },
+    "views": {},
+    "enums": {},
+    "_meta": {
+        "schemas": {},
+        "tables": {},
+        "columns": {}
+    },
+    "internal": {
+        "indexes": {}
+    }
+}

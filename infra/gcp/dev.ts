@@ -1,9 +1,8 @@
 import { dbInstance, elysiaEnv, postgresEnv } from "./secrets";
 
-// Local port is a random number between 8000 and 9999
 const localPort = "8888";
+const sqldLocalPort = "8089";
 
-// DB tunnel cmd
 new sst.x.DevCommand("db-tunnel", {
     dev: {
         title: "GCP Tunnel",
@@ -16,16 +15,21 @@ new sst.x.DevCommand("db-tunnel", {
         LOCAL_PORT: localPort,
         DB_HOST: dbInstance.privateIpAddress,
         DB_PORT: "5432",
+        SQLD_LOCAL_PORT: sqldLocalPort,
+        SQLD_NAMESPACE: "db-production",
+        SQLD_SERVICE: "sqld-production-service",
+        SQLD_REMOTE_PORT: "8080",
     },
 });
 
-// Get the db parameters for local development (uses separate 'local' schema)
 export const dbEnv = {
     ...postgresEnv,
     POSTGRES_HOST: "localhost",
     POSTGRES_PORT: localPort,
     POSTGRES_SCHEMA: "local",
 };
+
+const libsqlUrl = `http://localhost:${sqldLocalPort}`;
 
 // Backend dev command
 new sst.x.DevCommand("backend", {
@@ -38,7 +42,21 @@ new sst.x.DevCommand("backend", {
     environment: {
         ...elysiaEnv,
         ...dbEnv,
+        LIBSQL_URL: libsqlUrl,
         DOMAIN_NAME: "",
         STAGE: $app.stage,
+    },
+});
+
+// Drizzle migration for libsql (authenticator)
+new sst.x.DevCommand("db-migrate-libsql", {
+    dev: {
+        title: "Migrate libsql",
+        autostart: false,
+        command: "bun db:migrate:libsql",
+        directory: "services/backend",
+    },
+    environment: {
+        LIBSQL_URL: libsqlUrl,
     },
 });

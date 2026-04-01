@@ -25,13 +25,16 @@
     "start": "NODE_ENV=production bun dist/index.js",
     "db:studio": "drizzle-kit studio",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate"
+    "db:migrate": "drizzle-kit migrate",
+    "db:generate:libsql": "drizzle-kit generate --config drizzle-libsql.config.ts",
+    "db:migrate:libsql": "drizzle-kit migrate --config drizzle-libsql.config.ts"
   },
   "dependencies": {
     "@bogeychan/elysia-logger": "^0.1.10",
     "@elysiajs/cors": "^1.4.0",
     "@frak-labs/app-essentials": "workspace:*",
     "@frak-labs/core-sdk": "workspace:*",
+    "@libsql/client": "^0.17.2",
     "@simplewebauthn/server": "^13.2.2",
     "async-mutex": "^0.5.0",
     "croner": "^9.1.0",
@@ -40,7 +43,6 @@
     "jose": "^6.1.3",
     "ky": "^1.14.3",
     "lru-cache": "^11.2.6",
-    "mongodb": "^6.20.0",
     "nanoid": "^5.1.7",
     "ox": "^0.9.14",
     "permissionless": "^0.2.57",

@@ -1,56 +1,64 @@
-import { getMongoDb } from "@backend-infrastructure";
-import type { Collection } from "mongodb";
+import { getLibsqlDb } from "@backend-infrastructure";
+import { eq } from "drizzle-orm";
+import { authenticatorsTable } from "../db/schema";
 import type { AuthenticatorDocument } from "../models/dto/AuthenticatorDocument";
 
-/**
- * Access our authenticator repository
- */
 export class AuthenticatorRepository {
-    private collection: Collection<AuthenticatorDocument> | undefined;
-
     /**
-     * Get the collection
-     */
-    private async getCollection() {
-        if (this.collection) {
-            return this.collection;
-        }
-
-        const db = await getMongoDb({
-            urlKey: "MONGODB_NEXUS_URI",
-            db: "nexus",
-        });
-        const collection =
-            db.collection<AuthenticatorDocument>("authenticators");
-        this.collection = collection;
-        return collection;
-    }
-
-    /**
-     * Get all authenticators for the given user
-     * @param credentialId
+     * Get an authenticator by credential id
      */
     public async getByCredentialId(
         credentialId: string
     ): Promise<AuthenticatorDocument | null> {
-        const collection = await this.getCollection();
-        return collection.findOne({ _id: credentialId });
+        const db = getLibsqlDb();
+        const [row] = await db
+            .select()
+            .from(authenticatorsTable)
+            .where(eq(authenticatorsTable.id, credentialId));
+
+        if (!row) return null;
+
+        return {
+            _id: row.id,
+            smartWalletAddress:
+                row.smartWalletAddress as AuthenticatorDocument["smartWalletAddress"],
+            userAgent: row.userAgent,
+            publicKey: {
+                x: row.publicKeyX as AuthenticatorDocument["publicKey"]["x"],
+                y: row.publicKeyY as AuthenticatorDocument["publicKey"]["y"],
+            },
+            credentialPublicKey: row.credentialPublicKey,
+            counter: row.counter,
+            credentialDeviceType:
+                row.credentialDeviceType as AuthenticatorDocument["credentialDeviceType"],
+            credentialBackedUp: row.credentialBackedUp,
+            transports: row.transports as AuthenticatorDocument["transports"],
+        };
     }
 
     /**
-     * Create a new authenticator for the given user
-     * @param authenticator
+     * Create a new authenticator
      */
     public async createAuthenticator(
         authenticator: AuthenticatorDocument
     ): Promise<void> {
-        // Ensure no other credential exist with the same id
         const existing = await this.getByCredentialId(authenticator._id);
         if (existing) {
             throw new Error("Credential already exists");
         }
 
-        const collection = await this.getCollection();
-        await collection.insertOne(authenticator);
+        const db = getLibsqlDb();
+        await db.insert(authenticatorsTable).values({
+            id: authenticator._id,
+            smartWalletAddress: authenticator.smartWalletAddress,
+            userAgent: authenticator.userAgent,
+            publicKeyX: authenticator.publicKey.x,
+            publicKeyY: authenticator.publicKey.y,
+            credentialPublicKey: authenticator.credentialPublicKey,
+            counter: authenticator.counter,
+            credentialDeviceType: authenticator.credentialDeviceType,
+            credentialBackedUp: authenticator.credentialBackedUp,
+            transports: authenticator.transports,
+        });
     }
 }

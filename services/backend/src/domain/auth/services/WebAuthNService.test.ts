@@ -24,11 +24,11 @@ describe("WebAuthNService", () => {
                 _id: "test-credential-id",
                 counter: 4,
                 publicKey: { x: "0x123", y: "0x456" },
-                credentialPublicKey: { buffer: new ArrayBuffer(8) },
+                credentialPublicKey: "AAAAAAAAAAA=",
                 transports: ["usb", "nfc"],
             })
         ),
-        updateCounter: vi.fn(() => Promise.resolve()),
+        createAuthenticator: vi.fn(() => Promise.resolve()),
     } as unknown as AuthenticatorRepository;
 
     const webAuthNService = new WebAuthNService(mockAuthenticatorRepository);
@@ -141,7 +141,6 @@ describe("WebAuthNService", () => {
                 authenticatorId: "test-credential-id",
                 address: "0x1234567890abcdef1234567890abcdef12345678",
                 publicKey: { x: "0x123", y: "0x456" },
-                rawPublicKey: expect.any(ArrayBuffer),
                 transports: ["usb", "nfc"],
             });
         });
