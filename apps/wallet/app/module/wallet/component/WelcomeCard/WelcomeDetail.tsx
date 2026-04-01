@@ -11,16 +11,13 @@ import {
 import { NumberedCircle } from "@frak-labs/design-system/components/NumberedCircle";
 import { Text } from "@frak-labs/design-system/components/Text";
 import { CloseIcon, ShareIcon } from "@frak-labs/design-system/icons";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
+import { createPortal } from "react-dom";
 import { Trans, useTranslation } from "react-i18next";
 import { GlassButton } from "@/module/common/component/GlassButton";
 import { Title } from "@/module/common/component/Title";
-import welcomeLogos from "@/module/wallet/component/WelcomeCard/welcome_logos_detail.webp";
-import * as styles from "@/module/wallet/component/WelcomeCard/welcomeDetail.css";
-
-export const Route = createFileRoute("/_wallet/_protected/wallet/welcome")({
-    component: WelcomeDetailPage,
-});
+import welcomeLogos from "./welcome_logos_detail.webp";
+import * as styles from "./welcomeDetail.css";
 
 const steps = [
     { titleKey: "step1Title", descKey: "step1Description" },
@@ -28,13 +25,13 @@ const steps = [
     { titleKey: "step3Title", descKey: "step3Description" },
 ] as const;
 
-function WelcomeDetailPage() {
+type WelcomeDetailProps = {
+    onClose: () => void;
+};
+
+export function WelcomeDetail({ onClose }: WelcomeDetailProps) {
     const { t } = useTranslation();
     const navigate = useNavigate();
-
-    const handleClose = () => {
-        navigate({ to: "/wallet" });
-    };
 
     const handleShare = async () => {
         if (!navigator.share) return;
@@ -48,9 +45,14 @@ function WelcomeDetailPage() {
         }
     };
 
-    return (
+    const handleDiscover = () => {
+        onClose();
+        navigate({ to: "/explorer" });
+    };
+
+    return createPortal(
         <div className={styles.overlay}>
-            <DetailSheet>
+            <DetailSheet style={{ paddingTop: 0 }}>
                 <DetailSheetHero height={280}>
                     <img
                         src={welcomeLogos}
@@ -61,7 +63,7 @@ function WelcomeDetailPage() {
                         <GlassButton
                             as="button"
                             icon={<CloseIcon width={20} height={20} />}
-                            onClick={handleClose}
+                            onClick={onClose}
                             aria-label={t("common.close")}
                         />
                         <GlassButton
@@ -137,14 +139,13 @@ function WelcomeDetailPage() {
                     <Button
                         variant="primary"
                         width="full"
-                        onClick={() => {
-                            navigate({ to: "/explorer" });
-                        }}
+                        onClick={handleDiscover}
                     >
                         {t("wallet.welcome.detail.discoverOffers")}
                     </Button>
                 </DetailSheetFooter>
             </DetailSheet>
-        </div>
+        </div>,
+        document.body
     );
 }

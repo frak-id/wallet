@@ -18,6 +18,7 @@ export const glassCircle = style({
     border: "none",
     background: "none",
     padding: 0,
+    color: "inherit",
 });
 
 export const glassCircleDisabled = style({
