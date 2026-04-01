@@ -1,23 +1,17 @@
-import { randomInt } from "node:crypto";
-import { db, log } from "@backend-infrastructure";
-import { and, eq, gt, lt } from "drizzle-orm";
+import { db } from "@backend-infrastructure";
+import { and, eq, gt, lt, sql } from "drizzle-orm";
+import { customAlphabet } from "nanoid";
 import { installCodesTable } from "../db/schema";
 
 // Excludes ambiguous characters: 0/O, 1/I/L
-const CODE_CHARS = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+const CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
 const CODE_LENGTH = 6;
 const CODE_TTL_HOURS = 72;
-const MAX_CODE_GENERATION_ATTEMPTS = 5;
+const CANDIDATE_BATCH_SIZE = 50;
+
+const generateCode = customAlphabet(CODE_ALPHABET, CODE_LENGTH);
 
 type InstallCodeSelect = typeof installCodesTable.$inferSelect;
-
-function generateRandomCode(): string {
-    let code = "";
-    for (let i = 0; i < CODE_LENGTH; i++) {
-        code += CODE_CHARS[randomInt(CODE_CHARS.length)];
-    }
-    return code;
-}
 
 export class InstallCodeRepository {
     async create(params: {
@@ -26,48 +20,50 @@ export class InstallCodeRepository {
     }): Promise<InstallCodeSelect> {
         const { merchantId, anonymousId } = params;
 
-        const expiresAt = new Date();
-        expiresAt.setHours(expiresAt.getHours() + CODE_TTL_HOURS);
+        const candidates = Array.from({ length: CANDIDATE_BATCH_SIZE }, () =>
+            generateCode()
+        );
 
-        for (
-            let attempt = 0;
-            attempt < MAX_CODE_GENERATION_ATTEMPTS;
-            attempt++
-        ) {
-            const code = generateRandomCode();
-            try {
-                const [result] = await db
-                    .insert(installCodesTable)
-                    .values({
-                        code,
-                        merchantId,
-                        anonymousId,
-                        expiresAt,
-                    })
-                    .returning();
+        const values = sql.join(
+            candidates.map((c) => sql`(${c}::text)`),
+            sql`, `
+        );
 
-                if (result) {
-                    return result;
-                }
-            } catch (err: unknown) {
-                const isUniqueViolation =
-                    err instanceof Error &&
-                    "code" in err &&
-                    (err as { code: string }).code === "23505";
-                if (isUniqueViolation) {
-                    log.debug(
-                        { attempt, code },
-                        "Install code collision, retrying"
-                    );
-                    continue;
-                }
-                throw err;
-            }
+        const result = await db.execute<{
+            id: string;
+            code: string;
+            merchant_id: string;
+            anonymous_id: string;
+            created_at: Date;
+            expires_at: Date;
+        }>(sql`
+            WITH candidates(code) AS (VALUES ${values})
+            INSERT INTO install_codes (code, merchant_id, anonymous_id, expires_at)
+            SELECT c.code, ${merchantId}::uuid, ${anonymousId}, now() + ${CODE_TTL_HOURS} * interval '1 hour'
+            FROM candidates c
+            WHERE NOT EXISTS (
+                SELECT 1 FROM install_codes ic WHERE ic.code = c.code
+            )
+            LIMIT 1
+            ON CONFLICT (code) DO NOTHING
+            RETURNING *
+        `);
+
+        const row = [...result][0];
+        if (!row) {
+            throw new Error(
+                `Failed to generate unique install code from ${CANDIDATE_BATCH_SIZE} candidates`
+            );
         }
 
-        throw new Error(
-            "Failed to generate unique install code after max attempts"
-        );
+        return {
+            id: row.id,
+            code: row.code,
+            merchantId: row.merchant_id,
+            anonymousId: row.anonymous_id,
+            createdAt: row.created_at,
+            expiresAt: row.expires_at,
+        };
     }
 
     async findByCode(code: string): Promise<InstallCodeSelect | null> {
