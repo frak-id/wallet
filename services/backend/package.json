@@ -41,6 +41,7 @@
     "ky": "^1.14.3",
     "lru-cache": "^11.2.6",
     "mongodb": "^6.20.0",
+    "nanoid": "^5.1.7",
     "ox": "^0.9.14",
     "permissionless": "^0.2.57",
     "postgres": "^3.4.7",
