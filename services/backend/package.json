@@ -25,7 +25,9 @@
     "start": "NODE_ENV=production bun dist/index.js",
     "db:studio": "drizzle-kit studio",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate"
+    "db:migrate": "drizzle-kit migrate",
+    "db:generate:libsql": "drizzle-kit generate --config drizzle-libsql.config.ts",
+    "db:migrate:libsql": "drizzle-kit migrate --config drizzle-libsql.config.ts"
   },
   "dependencies": {
     "@bogeychan/elysia-logger": "^0.1.10",
