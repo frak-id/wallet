@@ -479,6 +479,7 @@
         "class-variance-authority": "^0.7.1",
         "core-js": "^3.48.0",
         "lucide-react": "^0.577.0",
+        "nprogress": "^0.2.0",
         "react-dropzone": "^15.0.0",
         "react-hook-form": "^7.71.2",
         "react-loading-skeleton": "^3.5.0",
