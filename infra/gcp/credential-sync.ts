@@ -1,11 +1,9 @@
-import { mongoNexusUri } from "../config";
+import { mongoNexusUri, sqldUrl } from "../config";
 import { normalizedStageName } from "../utils";
 import { credentialSyncImage } from "./images";
 import { walletNamespace } from "./utils";
 
 const appLabels = { app: "credential-sync" };
-
-const sqldUrl = `http://sqld-production-service.db-production.svc.cluster.local:8080`;
 
 const credentialSyncSecrets = new kubernetes.core.v1.Secret(
     "credential-sync-secrets",

@@ -10,6 +10,7 @@ import {
     productSetupCodeSalt,
     shopifyApiSecret,
     shopifyClientId,
+    sqldUrl,
     vapidPublicKey,
 } from "../config";
 import { isProd, normalizedStageName } from "../utils";
@@ -49,6 +50,9 @@ export const elysiaEnv = {
     MASTER_KEY_SECRET: masterPkey,
     // Postgres related
     ...postgresEnv,
+
+    // Sqld database
+    LIBSQL_URL: sqldUrl,
 
     // Mongo related
     MONGODB_NEXUS_URI: mongoNexusUri.value,
