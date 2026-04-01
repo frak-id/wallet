@@ -1,4 +1,5 @@
 import { tablet } from "@frak-labs/design-system/breakpoints";
+import { vars } from "@frak-labs/design-system/theme";
 import { alias } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 
@@ -24,8 +25,15 @@ export const shellContainer = style({
     },
 });
 
+export const shellContainerAuth = style([
+    shellContainer,
+    { background: vars.surface.background },
+]);
+
 const mainContentBase = style({
     padding: alias.spacing.m,
+    flex: "1 1 0",
+    minHeight: 0,
     overflowY: "auto",
     WebkitOverflowScrolling: "touch",
 });

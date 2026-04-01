@@ -17,6 +17,7 @@ import {
     mainContentNoNav,
     mainContentWithNav,
     shellContainer,
+    shellContainerAuth,
 } from "./appShell.css";
 
 /**
@@ -44,6 +45,8 @@ function resolveActiveTab(pathname: string): string {
 type AppShellProps = Readonly<{
     /** Show the bottom tab bar navigation. Defaults to false. */
     navigation?: boolean;
+    /** Auth/onboarding screen — white background behind notch. */
+    auth?: boolean;
     /** Content to render. If omitted, renders a Router Outlet. */
     children?: ReactNode;
 }>;
@@ -52,7 +55,11 @@ type AppShellProps = Readonly<{
  * Unified app shell: sizing (safe areas, nav margin) + optional bottom tab bar.
  * No header — wallet app removed header area.
  */
-export function AppShell({ navigation = false, children }: AppShellProps) {
+export function AppShell({
+    navigation = false,
+    auth = false,
+    children,
+}: AppShellProps) {
     const navigate = useNavigate();
     const pathname = useRouterState({
         select: (state) => state.location.pathname,
@@ -61,7 +68,7 @@ export function AppShell({ navigation = false, children }: AppShellProps) {
     const activeKey = useMemo(() => resolveActiveTab(pathname), [pathname]);
 
     return (
-        <Box className={shellContainer}>
+        <Box className={auth ? shellContainerAuth : shellContainer}>
             <InAppBrowserToast />
             <Box
                 as="main"

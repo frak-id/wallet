@@ -5,11 +5,8 @@ import { style } from "@vanilla-extract/css";
 export const container = style({
     display: "flex",
     flexDirection: "column",
-    flex: 1,
-    minHeight: 0,
+    minHeight: "100%",
     margin: `calc(-1 * ${alias.spacing.m})`,
-    paddingBottom:
-        "var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px))",
     background: vars.surface.background,
 });
 
