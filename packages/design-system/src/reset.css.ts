@@ -10,6 +10,7 @@ globalStyle("*, *::after, *::before", {
 
 globalStyle("html", {
     height: "100vh",
+    scrollBehavior: "smooth",
 });
 
 globalStyle("ul", {

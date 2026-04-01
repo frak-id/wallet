@@ -1,5 +1,4 @@
 import { tablet } from "@frak-labs/design-system/breakpoints";
-import { vars } from "@frak-labs/design-system/theme";
 import { alias } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 
@@ -12,9 +11,9 @@ const safeTop = "var(--safe-area-inset-top, env(safe-area-inset-top, 0px))";
 export const shellContainer = style({
     display: "flex",
     flexDirection: "column",
-    minHeight: "100dvh",
+    height: "100dvh",
     paddingTop: safeTop,
-    background: vars.surface.background,
+    overflow: "hidden",
     width: "100%",
     "@media": {
         [`(min-width: ${tablet}px)`]: {
@@ -27,11 +26,8 @@ export const shellContainer = style({
 
 const mainContentBase = style({
     padding: alias.spacing.m,
-    flex: "1 1 0",
-    minHeight: 0,
-    overflow: "auto",
-    display: "flex",
-    flexDirection: "column",
+    overflowY: "auto",
+    WebkitOverflowScrolling: "touch",
 });
 
 /**
