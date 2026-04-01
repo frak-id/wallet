@@ -1,3 +1,4 @@
+import { mongoNexusUri } from "../config";
 import { normalizedStageName } from "../utils";
 import { credentialSyncImage } from "./images";
 import { walletNamespace } from "./utils";
@@ -15,7 +16,7 @@ const credentialSyncSecrets = new kubernetes.core.v1.Secret(
         },
         type: "Opaque",
         stringData: {
-            MONGODB_NEXUS_URI: new sst.Secret("MONGODB_NEXUS_URI").value,
+            MONGODB_NEXUS_URI: mongoNexusUri.value,
             LIBSQL_URL: sqldUrl,
         },
     }

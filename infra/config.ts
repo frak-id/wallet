@@ -65,6 +65,7 @@ export const mongoBusinessDb = new sst.Secret("MONGODB_BUSINESS_URI");
 export const onRampUrl = new sst.Secret("FUNDING_ON_RAMP_URL");
 export const jwtBusinessSecret = new sst.Secret("JWT_BUSINESS_SECRET");
 export const fcmServiceAccount = new sst.Secret("FCM_SERVICE_ACCOUNT_JSON");
+export const mongoNexusUri = new sst.Secret("MONGODB_NEXUS_URI");
 
 // Shopify
 export const shopifyClientId = new sst.Secret("SHOPIFY_CLIENT_ID");

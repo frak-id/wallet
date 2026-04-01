@@ -4,6 +4,7 @@ import {
     erpcUrl,
     fcmServiceAccount,
     jwtBusinessSecret,
+    mongoNexusUri,
     nexusRpcSecret,
     pimlicoApiKey,
     productSetupCodeSalt,
@@ -50,7 +51,7 @@ export const elysiaEnv = {
     ...postgresEnv,
 
     // Mongo related
-    MONGODB_NEXUS_URI: new sst.Secret("MONGODB_NEXUS_URI").value,
+    MONGODB_NEXUS_URI: mongoNexusUri.value,
 
     // Sessions
     JWT_SECRET: new sst.Secret("JWT_SECRET").value,
