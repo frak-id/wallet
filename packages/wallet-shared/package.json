@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "license": "GNU GPL 3.0",
-  "sideEffects": false,
+  "sideEffects": ["**/*.css", "**/*.css.ts"],
   "scripts": {
     "test": "vitest",
     "test:ui": "vitest --ui",
