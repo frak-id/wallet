@@ -16,7 +16,6 @@ import { createRoot } from "react-dom/client";
 import { I18nextProvider, initReactI18next } from "react-i18next";
 import { initDeepLinks } from "./utils/deepLink";
 import { initSafeAreaInsets } from "./utils/safeArea";
-import { closeSplashscreen } from "./utils/splashscreen";
 
 // Setup BigInt serialization polyfill
 setupBigIntSerialization();
@@ -103,8 +102,14 @@ async function main() {
         );
     });
 
-    // Dismiss the splash overlay once React is mounted
-    closeSplashscreen();
+    // Dismiss native splash screen (Android holds it via setKeepOnScreenCondition)
+    if (isTauri()) {
+        (
+            window as unknown as {
+                NativeSplash?: { dismiss(): void };
+            }
+        ).NativeSplash?.dismiss();
+    }
 }
 
 main().catch((error) => console.error(error));

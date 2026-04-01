@@ -26,7 +26,7 @@
             name="description"
             content="Frak Wallet: Your passkey-first smart wallet for a unified web identity. Earn rewards through website interactions, seamlessly integrate with partner sites, and manage your digital assets securely."
         >
-        <meta name="theme-color" content="#001432">
+        <meta name="theme-color" content="#ffffff">
         <meta
             name="keywords"
             content="frak, frak-wallet, blockchain wallet, smart wallet, web3 identity, passkey, digital rewards ,user engagement"
@@ -101,105 +101,6 @@
     </head>
 
     <body>
-        <style>
-        html {
-            height: 100vh;
-        }
-
-        /* Splash overlay styles — must be in <style> block, not inline attributes,
-           because Tauri v2 CSP blocks inline style attributes (nonce-based policy) */
-        #splash-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            z-index: 99999;
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 32px;
-            background: #001432;
-            transition: opacity 0.3s ease-out;
-        }
-        #splash-overlay .splash-logo {
-            animation: splash-fade-in 0.4s ease-out;
-        }
-        #splash-overlay .splash-bar {
-            width: 40px;
-            height: 4px;
-            border-radius: 2px;
-            background: rgba(2, 186, 240, 0.2);
-            overflow: hidden;
-            animation: splash-fade-in 0.6s ease-out 0.2s both;
-        }
-        #splash-overlay .splash-bar-inner {
-            width: 100%;
-            height: 100%;
-            border-radius: 2px;
-            background: linear-gradient(90deg, #b123b3, #02baf0, #02e6d5);
-            animation: splash-loading 1.2s ease-in-out infinite;
-            transform-origin: left;
-        }
-        @keyframes splash-fade-in {
-            from {
-                opacity: 0;
-                transform: scale(0.95);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1);
-            }
-        }
-        @keyframes splash-loading {
-            0% {
-                transform: scaleX(0);
-                transform-origin: left;
-            }
-            50% {
-                transform: scaleX(1);
-                transform-origin: left;
-            }
-            50.1% {
-                transform: scaleX(1);
-                transform-origin: right;
-            }
-            100% {
-                transform: scaleX(0);
-                transform-origin: right;
-            }
-        }
-        </style>
-
-        <!-- Splash overlay: shown while React loads, removed by main.tsx -->
-        <div id="splash-overlay">
-            <svg
-                class="splash-logo"
-                width="120"
-                height="120"
-                viewBox="0 0 120 120"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-            >
-                <title>splash overlay</title>
-                <path
-                    fill="#0043EF"
-                    d="M40.9656 92.9592L1.53047 79.6135C0.77971 79.3587 0 79.9184 0 80.7116V105.06C0 105.558 0.316516 105.998 0.78743 106.158L40.2226 119.504C40.9734 119.759 41.7531 119.199 41.7531 118.406V94.0574C41.7531 93.5594 41.4366 93.1194 40.9656 92.9592ZM81.9853 46.2654L42.5405 59.6112C42.0696 59.7714 41.7531 60.2114 41.7531 60.7094V85.0579C41.7531 85.8511 42.5328 86.4108 43.2835 86.1561L82.7283 72.8103C83.1993 72.6501 83.5158 72.2101 83.5158 71.7121V47.3636C83.5158 46.5704 82.738 46.0107 81.9853 46.2654ZM119.027 0.0367608L52.9913 21.3051C52.5127 21.4595 52.1884 21.9053 52.1884 22.409V47.3559C52.1884 47.8519 52.6806 48.2031 53.1592 48.0487L119.195 26.7804C119.674 26.626 120 26.1802 120 25.6765V0.729621C119.998 0.233617 119.506 -0.117637 119.027 0.0367608Z"
-                />
-            </svg>
-            <div class="splash-bar">
-                <div class="splash-bar-inner"></div>
-            </div>
-        </div>
-        <script>
-        // Only show splash overlay in Tauri native app
-        if (window.__TAURI_INTERNALS__) {
-            document.getElementById("splash-overlay").style.display = "flex";
-            window.__SPLASH_SHOWN_AT__ = Date.now();
-        }
-        </script>
-
         <div id="root"></div>
         <script type="module" src="/app/main.tsx"></script>
     </body>
