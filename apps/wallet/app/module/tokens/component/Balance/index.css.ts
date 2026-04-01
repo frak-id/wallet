@@ -14,6 +14,7 @@ export const balanceCardHeader = style({
     display: "flex",
     flexDirection: "column",
     gap: "18px",
+    width: "100%",
 });
 
 export const headerRow = style({
