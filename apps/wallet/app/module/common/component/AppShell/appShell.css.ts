@@ -1,4 +1,5 @@
 import { tablet } from "@frak-labs/design-system/breakpoints";
+import { vars } from "@frak-labs/design-system/theme";
 import { alias } from "@frak-labs/design-system/tokens";
 import { style } from "@vanilla-extract/css";
 
@@ -13,6 +14,7 @@ export const shellContainer = style({
     flexDirection: "column",
     minHeight: "100dvh",
     paddingTop: safeTop,
+    background: vars.surface.background,
     width: "100%",
     "@media": {
         [`(min-width: ${tablet}px)`]: {

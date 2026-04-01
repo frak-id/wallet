@@ -8,7 +8,6 @@ export const container = style({
     flex: 1,
     minHeight: 0,
     margin: `calc(-1 * ${alias.spacing.m})`,
-    paddingTop: "var(--safe-area-inset-top, env(safe-area-inset-top, 0px))",
     paddingBottom:
         "var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px))",
     background: vars.surface.background,
