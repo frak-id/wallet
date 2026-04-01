@@ -3,7 +3,6 @@ import {
     WagmiProviderWithDynamicConfig,
 } from "@frak-labs/wallet-shared";
 import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
-import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { QueryClient } from "@tanstack/react-query";
 import {
     PersistQueryClientProvider,
