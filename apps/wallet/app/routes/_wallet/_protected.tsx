@@ -1,13 +1,13 @@
 import {
     getSafeSession,
-    OriginPairingState,
+    // OriginPairingState,
     pairingStore,
-    selectDistantWebauthnSession,
-    sessionStore,
+    // selectDistantWebauthnSession,
+    // sessionStore,
 } from "@frak-labs/wallet-shared";
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { AppShell } from "@/module/common/component/AppShell";
-import { TargetPairingState } from "@/module/pairing/component/TargetPairingState";
+// import { TargetPairingState } from "@/module/pairing/component/TargetPairingState";
 
 export const Route = createFileRoute("/_wallet/_protected")({
     component: ProtectedLayout,
@@ -32,15 +32,15 @@ export const Route = createFileRoute("/_wallet/_protected")({
 });
 
 function ProtectedLayout() {
-    const session = sessionStore(selectDistantWebauthnSession);
-    const Component =
-        session?.type === "distant-webauthn"
-            ? OriginPairingState
-            : TargetPairingState;
+    // const session = sessionStore(selectDistantWebauthnSession);
+    // const Component =
+    //     session?.type === "distant-webauthn"
+    //         ? OriginPairingState
+    //         : TargetPairingState;
 
     return (
         <AppShell navigation={true}>
-            <Component type="wallet" />
+            {/*<Component type="wallet" />*/}
             <Outlet />
         </AppShell>
     );
