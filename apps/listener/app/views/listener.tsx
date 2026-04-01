@@ -4,9 +4,8 @@ import { loadPolyfills } from "@frak-labs/ui/utils/polyfills";
 import { useEffect } from "react";
 import { ListenerUiRenderer } from "@/module/component/ListenerUiRenderer";
 import {
-    checkContextAndEmitReady,
     createClientLifecycleHandler,
-    initializeResolvingContext,
+    emitConnected,
 } from "@/module/handlers/lifecycleHandler";
 import {
     handleOpenSso,
@@ -72,9 +71,8 @@ function ListenerContent() {
         let isReady = false;
         const setReadyToHandleRequest = () => {
             if (isReady) return;
-            if (checkContextAndEmitReady()) {
-                isReady = true;
-            }
+            isReady = true;
+            emitConnected();
         };
 
         // Create lifecycle handler
@@ -130,9 +128,6 @@ function ListenerContent() {
 
         // Register SSO handlers (SsoRpcSchema)
         listener.handle("sso_complete", handleSsoComplete);
-
-        // Initialize resolving context (starts handshake if needed)
-        initializeResolvingContext();
 
         // On cleanup, destroy the listener
         return () => {

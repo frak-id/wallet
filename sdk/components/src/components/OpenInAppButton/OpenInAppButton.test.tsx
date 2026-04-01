@@ -6,7 +6,11 @@ import * as openInAppUtil from "@/utils/openInApp";
 import { OpenInAppButton } from "./OpenInAppButton";
 
 vi.mock("@/hooks/useClientReady", () => ({
-    useClientReady: vi.fn(() => ({ isClientReady: true })),
+    useClientReady: vi.fn(() => ({
+        shouldRender: true,
+        isHidden: false,
+        isClientReady: true,
+    })),
 }));
 
 vi.mock("@/hooks/useIsMobile", () => ({
@@ -22,6 +26,8 @@ describe("OpenInAppButton", () => {
         cleanup();
         vi.clearAllMocks();
         vi.mocked(useClientReadyHook.useClientReady).mockReturnValue({
+            shouldRender: true,
+            isHidden: false,
             isClientReady: true,
         });
         vi.mocked(useIsMobileHook.useIsMobile).mockReturnValue({
@@ -73,34 +79,39 @@ describe("OpenInAppButton", () => {
         expect(button).toBeInTheDocument();
     });
 
-    it("should display spinner when client is not ready", () => {
+    it("should render nothing when config is not resolved", () => {
         vi.mocked(useClientReadyHook.useClientReady).mockReturnValue({
+            shouldRender: false,
+            isHidden: false,
             isClientReady: false,
         });
 
         const { container } = render(<OpenInAppButton />);
         const button = container.querySelector("button");
-        expect(button?.querySelector("span")).toBeInTheDocument();
+        expect(button).toBeNull();
     });
 
-    it("should be disabled when client is not ready", () => {
+    it("should render nothing when SDK is hidden", () => {
         vi.mocked(useClientReadyHook.useClientReady).mockReturnValue({
-            isClientReady: false,
+            shouldRender: true,
+            isHidden: true,
+            isClientReady: true,
         });
 
         const { container } = render(<OpenInAppButton />);
         const button = container.querySelector("button");
-        expect(button).toBeDisabled();
+        expect(button).toBeNull();
     });
 
-    it("should be enabled when client is ready", () => {
-        // Reset mock to return ready state
+    it("should render when config is resolved and not hidden", () => {
         vi.mocked(useClientReadyHook.useClientReady).mockReturnValue({
+            shouldRender: true,
+            isHidden: false,
             isClientReady: true,
         });
         const { container } = render(<OpenInAppButton />);
         const button = container.querySelector("button");
-        expect(button).not.toBeDisabled();
+        expect(button).toBeInTheDocument();
     });
 
     it("should call openFrakWalletApp on click", () => {
@@ -114,9 +125,9 @@ describe("OpenInAppButton", () => {
         expect(openInAppUtil.openFrakWalletApp).toHaveBeenCalledTimes(1);
     });
 
-    it("should have override class for styling", () => {
+    it("should include base button class", () => {
         const { container } = render(<OpenInAppButton />);
         const button = container.querySelector("button");
-        expect(button).toHaveClass("override");
+        expect(button).toHaveClass("button");
     });
 });

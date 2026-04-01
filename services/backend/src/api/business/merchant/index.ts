@@ -15,6 +15,7 @@ import { merchantCampaignsRoutes } from "./campaigns";
 import { merchantExplorerRoutes } from "./explorer";
 import { merchantMembersRoutes } from "./members";
 import { merchantRegistrationRoutes } from "./registration";
+import { merchantSdkConfigRoutes } from "./sdkConfig";
 import { merchantTransferRoutes } from "./transfer";
 import { merchantWebhooksRoutes } from "./webhooks";
 
@@ -146,6 +147,10 @@ export const merchantRoutes = new Elysia({ prefix: "/merchant" })
                 return status(404, "Merchant not found");
             }
 
+            MerchantContext.services.resolve.invalidateForDomain(
+                updated.domain
+            );
+
             return { success: true };
         },
         {
@@ -165,6 +170,7 @@ export const merchantRoutes = new Elysia({ prefix: "/merchant" })
     .use(merchantAdminsRoutes)
     .use(merchantBankRoutes)
     .use(merchantExplorerRoutes)
+    .use(merchantSdkConfigRoutes)
     .use(merchantTransferRoutes)
     .use(merchantCampaignsRoutes)
     .use(merchantCampaignStatsRoutes)

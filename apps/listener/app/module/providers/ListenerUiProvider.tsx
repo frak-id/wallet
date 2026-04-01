@@ -22,6 +22,7 @@ import {
     type PropsWithChildren,
     useCallback,
     useContext,
+    useEffect,
     useMemo,
     useRef,
     useState,
@@ -29,12 +30,14 @@ import {
 import { useTranslation } from "react-i18next";
 import { useFormattedEstimatedReward } from "@/module/hooks/useEstimatedRewards";
 import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
+import type { ResolvedSdkConfig } from "@/module/stores/types";
 import { mapDeprecatedModalMetadata } from "../utils/deprecatedModalMetadataMapper";
 
 export type GenericWalletUiType = {
     appName: string;
     logoUrl?: string;
     homepageLink?: string;
+    placement?: string;
     targetInteraction?: InteractionTypeKey;
     i18n?: {
         lang?: "en" | "fr";
@@ -101,6 +104,9 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
     const { i18n: initialI18n } = useTranslation();
     // We are not using the safeResolvingContext here, since this component is init before the iframe is ready
     const resolvingContext = resolvingContextStore((state) => state.context);
+    const backendSdkConfig = resolvingContextStore(
+        (state) => state.backendSdkConfig
+    );
     // The current UI request
     const [currentRequest, setCurrentRequest] = useState<UIRequest | undefined>(
         undefined
@@ -108,7 +114,9 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
 
     const { data: formattedReward } = useFormattedEstimatedReward({
         merchantId: resolvingContext?.merchantId,
-        currency: currentRequest?.configMetadata?.currency,
+        currency:
+            currentRequest?.configMetadata?.currency ??
+            backendSdkConfig?.currency,
         targetInteraction: currentRequest?.targetInteraction,
         context: currentRequest?.i18n?.context,
     });
@@ -143,14 +151,34 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
         }, 50); // 50ms delay allows new requests to cancel the clear
     }, []);
 
-    /**
-     * Populate the i18n resources for the current request
-     */
+    const placementCss = useMemo(() => {
+        const placementId = currentRequest?.placement;
+        if (!placementId) return undefined;
+        return backendSdkConfig?.placements?.[placementId]?.css;
+    }, [backendSdkConfig?.placements, currentRequest?.placement]);
+
+    useEffect(() => {
+        const styleId = "frak-placement-css";
+        document.getElementById(styleId)?.remove();
+
+        if (!placementCss) {
+            return;
+        }
+
+        const style = document.createElement("style");
+        style.id = styleId;
+        style.textContent = placementCss;
+        document.head.appendChild(style);
+
+        return () => {
+            style.remove();
+        };
+    }, [placementCss]);
+
     const populateI18nResources = useCallback(
         (i18n: i18n, lang: Language, request?: UIRequest) => {
             if (!request) return;
 
-            // Map the deprecated modal metadata
             const deprecatedModalMetadata = mapDeprecatedModalMetadata(request);
             if (
                 deprecatedModalMetadata &&
@@ -165,17 +193,36 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
                 );
             }
 
-            // Map potential custom i18n config
-            if (request?.type === "embedded" && request.params.metadata?.i18n) {
-                mapI18nConfig(request.params.metadata.i18n, i18n);
-                return;
+            const requestI18n =
+                request.type === "embedded"
+                    ? request.params.metadata?.i18n
+                    : request.metadata.i18n;
+            if (requestI18n) {
+                mapI18nConfig(requestI18n, i18n);
             }
-            if (request?.type === "modal" && request.metadata.i18n) {
-                mapI18nConfig(request.metadata.i18n, i18n);
-                return;
+
+            const globalTranslations = backendSdkConfig?.translations;
+            if (
+                globalTranslations &&
+                Object.keys(globalTranslations).length > 0
+            ) {
+                i18n.addResourceBundle(
+                    lang,
+                    "customized",
+                    translationKeyPathToObject(globalTranslations),
+                    true,
+                    true
+                );
             }
+
+            addPlacementTranslations({
+                i18n,
+                lang,
+                placement: request.placement,
+                placements: backendSdkConfig?.placements,
+            });
         },
-        []
+        [backendSdkConfig?.translations, backendSdkConfig?.placements]
     );
 
     /**
@@ -186,7 +233,9 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
     const translation = useMemo(() => {
         // Get the language from the request or the detected language from the i18n instance
         const lang =
-            currentRequest?.i18n?.lang ?? (initialI18n.language as Language);
+            currentRequest?.i18n?.lang ??
+            backendSdkConfig?.lang ??
+            (initialI18n.language as Language);
         const context = currentRequest
             ? {
                   productName: currentRequest.appName,
@@ -216,15 +265,16 @@ export function ListenerUiProvider({ children }: PropsWithChildren) {
         populateI18nResources(i18n, lang, currentRequest);
 
         // Create the new t function with the right context
-        const rawT = i18n.getFixedT(lang, null) as typeof i18n.t;
+        const rawT = i18n.getFixedT(lang, null);
         const t = (key: string, options?: TOptions): string =>
             rawT(key, {
                 ...context,
-                ...options,
                 estimatedReward: formattedReward,
+                ...options,
             });
         return { lang, i18n, t };
     }, [
+        backendSdkConfig?.lang,
         currentRequest,
         resolvingContext?.origin,
         initialI18n,
@@ -302,6 +352,32 @@ export function useEmbeddedListenerUI() {
     return uiContext as Omit<UIContext, "currentRequest"> & {
         currentRequest: EmbeddedWalletUiType & GenericWalletUiType;
     };
+}
+
+function addPlacementTranslations({
+    i18n,
+    lang,
+    placement,
+    placements,
+}: {
+    i18n: i18n;
+    lang: Language;
+    placement: string | undefined;
+    placements: ResolvedSdkConfig["placements"];
+}): void {
+    if (!placement) return;
+
+    const placementTranslations = placements?.[placement]?.translations;
+    if (!placementTranslations) return;
+    if (Object.keys(placementTranslations).length === 0) return;
+
+    i18n.addResourceBundle(
+        lang,
+        "customized",
+        translationKeyPathToObject(placementTranslations),
+        true,
+        true
+    );
 }
 
 /**

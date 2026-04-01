@@ -6,5 +6,6 @@ export type {
     NotificationEventItem,
 } from "./events";
 export { MutexCron } from "./mutexCron";
+export { processCss, processScopedCss } from "./processCss";
 
 export { type TokenAmount, t } from "./typebox/typeSystem";

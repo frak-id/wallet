@@ -19,6 +19,20 @@
                         lang: "fr",
                         currency: "eur",
                     },
+                    customizations: {
+                        i18n: {
+                            fr: {
+                                "sharing.modal.title": "Partager (SDK dev override FR)",
+                                "sharing.modal.description": "Traduction côté SDK (FR) - si ce texte apparaît, le backend n'a pas de traduction pour cette clé",
+                                "wallet.modal.title": "Portefeuille (SDK dev override FR)",
+                            },
+                            en: {
+                                "sharing.modal.title": "Share (SDK dev override EN)",
+                                "sharing.modal.description": "SDK-side translation (EN) - if you see this, backend has no translation for this key",
+                                "wallet.modal.title": "Wallet (SDK dev override EN)",
+                            },
+                        },
+                    },
                 },
                 modalWalletConfig: {
                     metadata: {
@@ -138,16 +152,222 @@
             font-family: monospace;
             font-size: 0.85rem;
         }
+
+        /* Test Section Styles */
+        .test-section {
+            background: #2d3139;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 30px;
+            max-width: 600px;
+            width: 100%;
+        }
+        .test-section h2 {
+            margin-top: 0;
+            color: #2196F3;
+        }
+        .test-section h3 {
+            color: #ccc;
+            font-size: 1rem;
+            margin: 15px 0 8px;
+        }
+        .test-section p {
+            color: #aaa;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+        .test-section .note {
+            color: #fa0;
+            font-size: 0.8rem;
+            font-style: italic;
+        }
+        .test-section button {
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 0.9rem;
+        }
+        .test-section button:hover {
+            background: #1976D2;
+        }
+        .test-section button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        .test-section .variant {
+            background: #7B1FA2;
+        }
+        .test-section .variant:hover {
+            background: #6A1B9A;
+        }
+        .test-section .alt {
+            background: #E65100;
+        }
+        .test-section .alt:hover {
+            background: #BF360C;
+        }
+        .component-row {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin: 10px 0;
+        }
+        .component-row label {
+            color: #888;
+            font-size: 0.8rem;
+            min-width: 120px;
+        }
+        .cascade-info {
+            background: #1e2127;
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 10px;
+            font-family: monospace;
+            font-size: 0.8rem;
+            color: #888;
+            line-height: 1.6;
+        }
+        .cascade-info .high { color: #4CAF50; }
+        .cascade-info .low { color: #666; }
     </style>
 </head>
 <body>
 <h1>Welcome to example Vanilla JS</h1>
-<frak-button-share classname="button" show-wallet></frak-button-share>
+<frak-button-share classname="button"></frak-button-share>
 <br />
 <frak-button-share classname="button" use-reward text="Share! You will earn {REWARD}" no-reward-text="Share and earn!"></frak-button-share>
 <br />
 <frak-open-in-app></frak-open-in-app>
 <frak-button-wallet use-reward></frak-button-wallet>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- Section 1: Placement on Components         -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="test-section">
+    <h2>1. Placement on Components</h2>
+    <p>
+        Components with a <code>placement</code> attribute read trigger config
+        (text, position, clickAction) from the backend-resolved placement.
+        Configure placements via the business dashboard's merchant sdkConfig.
+    </p>
+    <p class="note">
+        Placement IDs must match entries in the merchant's sdkConfig.placements.
+        If no match, components fall back to HTML attributes / defaults.
+    </p>
+
+    <h3>No placement (default)</h3>
+    <div class="component-row">
+        <label>Share button:</label>
+        <frak-button-share></frak-button-share>
+    </div>
+
+    <h3>placement="hero-share"</h3>
+    <div class="component-row">
+        <label>Share button:</label>
+        <frak-button-share placement="hero-share"></frak-button-share>
+    </div>
+
+    <h3>placement="sidebar-promo"</h3>
+    <div class="component-row">
+        <label>Share button:</label>
+        <frak-button-share placement="sidebar-promo"></frak-button-share>
+    </div>
+
+    <h3>placement="footer-cta"</h3>
+    <div class="component-row">
+        <label>Share (with fallback text):</label>
+        <frak-button-share placement="footer-cta" text="Fallback share text"></frak-button-share>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- Section 2: Placement on Modals             -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="test-section">
+    <h2>2. Placement on Modals</h2>
+    <p>
+        Programmatic <code>displayModal()</code> calls with an optional placement
+        parameter. The listener applies placement-scoped translations and CSS
+        on top of global config.
+    </p>
+
+    <div>
+        <button id="btn-modal-no-placement">Modal (no placement)</button>
+        <button id="btn-modal-hero" class="variant">Modal (hero-share)</button>
+        <button id="btn-modal-sidebar" class="alt">Modal (sidebar-promo)</button>
+    </div>
+
+    <div id="modal-placement-status" class="status-box">
+        <div class="info">[Ready] Click a button to trigger a modal</div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- Section 3: Backend Served Translations      -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="test-section">
+    <h2>3. Backend Served Translations</h2>
+    <p>
+        This modal relies on backend translations from the merchant's
+        <code>sdkConfig.translations</code> (resolved via <code>/resolve</code>).
+        Backend translations overwrite SDK <code>customizations.i18n</code> for
+        overlapping keys.
+    </p>
+    <p class="note">
+        Requires a backend running with a merchant configured for "localhost"
+        that has translations in its sdkConfig.
+    </p>
+
+    <div>
+        <button id="btn-modal-backend-translations">Open Modal (backend translations)</button>
+    </div>
+
+    <div class="cascade-info">
+        <div><span class="high">1. Backend placement translations</span> (highest priority)</div>
+        <div><span class="high">2. Backend global translations</span></div>
+        <div>3. Per-modal metadata.i18n</div>
+        <div>4. SDK customizations.i18n</div>
+        <div class="low">5. Built-in defaults (lowest priority)</div>
+    </div>
+
+    <div id="backend-i18n-status" class="status-box">
+        <div class="info">[Ready] Click to test backend-served translations</div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- Section 4: Backend vs Dev Translations      -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="test-section">
+    <h2>4. Backend vs Dev Translations</h2>
+    <p>
+        Compare translation sources. The SDK config above includes
+        <code>customizations.i18n</code> with dev overrides. Open each modal
+        and observe which translation source wins.
+    </p>
+
+    <div>
+        <button id="btn-modal-dev-i18n">Dev i18n (SDK config)</button>
+        <button id="btn-modal-permodal-i18n" class="variant">Per-modal i18n override</button>
+        <button id="btn-modal-placement-i18n" class="alt">Placement i18n (hero-share)</button>
+    </div>
+
+    <div class="cascade-info">
+        <div><strong>Expected behavior:</strong></div>
+        <div>&bull; "Dev i18n" &rarr; SDK translations, overwritten by backend for overlapping keys</div>
+        <div>&bull; "Per-modal" &rarr; per-call i18n wins over both SDK and backend</div>
+        <div>&bull; "Placement" &rarr; placement translations win over everything</div>
+    </div>
+
+    <div id="dev-vs-backend-status" class="status-box">
+        <div class="info">[Ready] Click to compare translation sources</div>
+    </div>
+</div>
 
 <!-- Merge Token Demo Section -->
 <div class="merge-demo">

@@ -1,22 +1,51 @@
-import { useCallback, useEffect, useState } from "preact/hooks";
+import { type SdkResolvedConfig, sdkConfigStore } from "@frak-labs/core-sdk";
+import { useEffect, useState } from "preact/hooks";
 import { onClientReady } from "@/utils/clientReady";
 
-/**
- * Hook to manage client readiness state for the wallet button
- * Handles subscription to client ready events and manages readiness state
- * @returns Object containing the readiness state of the client
- */
 export function useClientReady() {
-    const [disabled, setDisabled] = useState(true);
+    const [shouldRender, setShouldRender] = useState(() => {
+        const mustWaitForConfig =
+            window.FrakSetup?.config?.waitForBackendConfig !== false;
+        if (!mustWaitForConfig) return true;
+        return sdkConfigStore.isResolved;
+    });
 
-    const handleClientReady = useCallback(() => {
-        setDisabled(false);
-    }, []);
+    const [isHidden, setIsHidden] = useState(
+        () => sdkConfigStore.getConfig().hidden ?? false
+    );
+
+    const [isClientReady, setIsClientReady] = useState(
+        () => !!window.FrakSetup?.client
+    );
 
     useEffect(() => {
-        onClientReady("add", handleClientReady);
-        return () => onClientReady("remove", handleClientReady);
-    }, [handleClientReady]);
+        // Re-check store to catch events fired between render and effect mount
+        const currentConfig = sdkConfigStore.getConfig();
+        if (currentConfig.isResolved) {
+            setShouldRender(true);
+            setIsHidden(currentConfig.hidden ?? false);
+        }
+        if (window.FrakSetup?.client) {
+            setIsClientReady(true);
+        }
 
-    return { isClientReady: !disabled };
+        const onConfig = (e: CustomEvent<SdkResolvedConfig>) => {
+            const config = e.detail;
+            if (config.isResolved) {
+                setShouldRender(true);
+            }
+            setIsHidden(config.hidden ?? false);
+        };
+        window.addEventListener("frak:config", onConfig);
+
+        const handleReady = () => setIsClientReady(true);
+        onClientReady("add", handleReady);
+
+        return () => {
+            window.removeEventListener("frak:config", onConfig);
+            onClientReady("remove", handleReady);
+        };
+    }, []);
+
+    return { shouldRender, isHidden, isClientReady };
 }

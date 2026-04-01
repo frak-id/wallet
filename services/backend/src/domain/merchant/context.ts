@@ -4,6 +4,7 @@ import { MerchantOwnershipTransferRepository } from "./repositories/MerchantOwne
 import { MerchantRepository } from "./repositories/MerchantRepository";
 import { MerchantAuthorizationService } from "./services/MerchantAuthorizationService";
 import { MerchantRegistrationService } from "./services/MerchantRegistrationService";
+import { MerchantResolveService } from "./services/MerchantResolveService";
 import { OwnershipTransferService } from "./services/OwnershipTransferService";
 
 const dnsCheckRepository = new DnsCheckRepository();
@@ -24,6 +25,7 @@ const ownershipTransferService = new OwnershipTransferService(
     merchantRepository,
     merchantOwnershipTransferRepository
 );
+const merchantResolveService = new MerchantResolveService(merchantRepository);
 
 export namespace MerchantContext {
     export const repositories = {
@@ -37,5 +39,6 @@ export namespace MerchantContext {
         authorization: merchantAuthorizationService,
         registration: merchantRegistrationService,
         ownershipTransfer: ownershipTransferService,
+        resolve: merchantResolveService,
     };
 }

@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Pen, Users, WalletMinimal } from "lucide-react";
+import { Palette, Pen, Users, WalletMinimal } from "lucide-react";
 import type { HTMLAttributes, PropsWithChildren, ReactElement } from "react";
 import styles from "./index.module.css";
 
@@ -61,6 +61,15 @@ function MerchantActions({ merchantId }: { merchantId?: string }) {
                     title={"Manage the merchant balance"}
                 >
                     <WalletMinimal />
+                </Link>
+            </li>
+            <li>
+                <Link
+                    to="/merchant/$id/customize"
+                    params={{ id: merchantId }}
+                    title={"Customize SDK appearance"}
+                >
+                    <Palette />
                 </Link>
             </li>
             <li>

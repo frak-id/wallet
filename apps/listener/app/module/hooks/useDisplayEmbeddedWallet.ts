@@ -17,7 +17,10 @@ import {
 import { useCallback, useEffect, useRef } from "react";
 import type { Hex } from "viem";
 import { useListenerUI } from "@/module/providers/ListenerUiProvider";
+import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
 import type { WalletRpcContext } from "@/module/types/context";
+import { normalizeTargetInteraction } from "@/module/utils/normalizeTargetInteraction";
+import { resolveBackendMetadata } from "@/module/utils/resolveBackendMetadata";
 
 type OnDisplayEmbeddedWalletRequest = RpcPromiseHandler<
     IFrameRpcSchema,
@@ -29,11 +32,9 @@ type OnDisplayEmbeddedWalletRequest = RpcPromiseHandler<
  * Hook used to listen to the display embedded wallet action
  */
 export function useDisplayEmbeddedWallet(): OnDisplayEmbeddedWalletRequest {
-    // Hook used to set the requested listener UI
     const { setRequest } = useListenerUI();
-
-    // Get the session
     const session = sessionStore(selectSession);
+    const backendConfig = resolvingContextStore((s) => s.backendSdkConfig);
 
     // Store the current deferred promise for completion
     const currentDeferredRef = useRef<Deferred<{ wallet: Hex }> | null>(null);
@@ -78,6 +79,14 @@ export function useDisplayEmbeddedWallet(): OnDisplayEmbeddedWalletRequest {
     return useCallback(
         async (params) => {
             const configMetadata = params[1];
+            const placementFromParams = params.at(2);
+            const placementId =
+                typeof placementFromParams === "string"
+                    ? placementFromParams
+                    : undefined;
+            const placement = placementId
+                ? backendConfig?.placements?.[placementId]
+                : undefined;
 
             // Clean up any existing deferred
             if (currentDeferredRef.current) {
@@ -118,23 +127,29 @@ export function useDisplayEmbeddedWallet(): OnDisplayEmbeddedWalletRequest {
                 }
             };
 
+            const resolved = resolveBackendMetadata(
+                configMetadata,
+                backendConfig
+            );
+
             setRequest({
-                // Embedded ui specific
                 type: "embedded",
                 params: params[0],
                 emitter,
-                // Generic ui
-                appName: configMetadata.name,
-                logoUrl: params[0].metadata?.logo ?? configMetadata.logoUrl,
+                appName: resolved.appName,
+                logoUrl: params[0].metadata?.logo ?? resolved.logoUrl,
                 homepageLink:
-                    params[0].metadata?.homepageLink ??
-                    configMetadata.homepageLink,
-                targetInteraction: params[0].metadata?.targetInteraction,
+                    params[0].metadata?.homepageLink ?? resolved.homepageLink,
+                targetInteraction: normalizeTargetInteraction(
+                    placement?.targetInteraction ??
+                        params[0].metadata?.targetInteraction
+                ),
                 i18n: {
                     lang: configMetadata.lang,
                     context: params[0].loggedIn?.action?.key,
                 },
                 configMetadata,
+                placement: placementId,
             });
 
             trackGenericEvent("open-embedded-wallet", params[0]);
@@ -143,6 +158,6 @@ export function useDisplayEmbeddedWallet(): OnDisplayEmbeddedWalletRequest {
             // This will resolve when session + sessionStatus are available
             return await deferred.promise;
         },
-        [setRequest]
+        [setRequest, backendConfig]
     );
 }

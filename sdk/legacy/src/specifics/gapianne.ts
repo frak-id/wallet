@@ -30,17 +30,6 @@ function setConfig() {
         },
         domain: window.location.host,
     };
-    window.FrakSetup.modalConfig = {
-        login: {
-            allowSso: true,
-        },
-        metadata: {
-            isDismissible: true,
-        },
-    };
-    window.FrakSetup.modalShareConfig = {
-        link: window.location.href,
-    };
     window.FrakSetup.modalWalletConfig = {
         metadata: {
             position: "left",
@@ -60,7 +49,6 @@ function replaceNexusShareButton() {
         buttonShare.setAttribute("text", "PARTAGE ET GAGNE {REWARD} !");
         buttonShare.setAttribute("no-reward-text", "PARTAGE ET GAGNE");
         buttonShare.setAttribute("use-reward", "true");
-        buttonShare.setAttribute("show-wallet", "true");
         buttonShare.setAttribute("classname", "button w-full");
         button.replaceWith(buttonShare);
     }

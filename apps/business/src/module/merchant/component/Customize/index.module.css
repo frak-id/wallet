@@ -1,0 +1,292 @@
+.customize__tabs {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.customize__tab,
+.customize__tabAdd {
+    all: unset;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    cursor: pointer;
+    padding: 6px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    background-color: var(--frak-input-background-color);
+    border: var(--frak-input-border-width) solid var(--frak-input-border-color);
+    transition: all 0.2s;
+}
+
+.customize__tab:disabled,
+.customize__tabAdd:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.customize__tab--active {
+    background-color: var(--frak-focus-border-color);
+    color: white;
+    border-color: var(--frak-focus-border-color);
+}
+
+.customize__overflow {
+    position: relative;
+}
+
+.customize__overflowMenu {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    z-index: 10;
+    min-width: 180px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 6px;
+    border-radius: 8px;
+    border: var(--frak-input-border-width) solid var(--frak-input-border-color);
+    background: var(--frak-input-background-color);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
+}
+
+.customize__overflowItem {
+    all: unset;
+    cursor: pointer;
+    padding: 8px 10px;
+    border-radius: 6px;
+    color: var(--frak-text-color);
+    font-size: 14px;
+}
+
+.customize__overflowItem:hover {
+    background: color-mix(
+        in srgb,
+        var(--frak-focus-border-color) 12%,
+        transparent
+    );
+}
+
+.customize__createDialogBody {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.customize__textarea {
+    all: unset;
+    box-sizing: border-box;
+    padding: 9px 12px;
+    width: 100%;
+    min-height: 220px;
+    line-height: 20px;
+    font-size: 14px;
+    color: var(--frak-input-text-color);
+    font-weight: 400;
+    border: var(--frak-input-border-width) solid var(--frak-input-border-color);
+    border-radius: 8px;
+    background-color: var(--frak-input-background-color);
+    transition: border-color 0.2s;
+    resize: vertical;
+    font-family: "Fira Mono", "SF Mono", Menlo, Consolas, monospace;
+}
+
+.customize__textarea:focus,
+.customize__select:focus {
+    box-shadow: 0 0 0 1px var(--frak-focus-border-color);
+}
+
+.customize__textarea::placeholder {
+    color: var(--frak-input-placeholder-color);
+    opacity: 1;
+}
+
+.customize__select {
+    all: unset;
+    box-sizing: border-box;
+    padding: 9px 12px;
+    width: 320px;
+    line-height: 20px;
+    font-size: 16px;
+    color: var(--frak-input-text-color);
+    font-weight: 400;
+    border: var(--frak-input-border-width) solid var(--frak-input-border-color);
+    border-radius: 8px;
+    background-color: var(--frak-input-background-color);
+    transition: border-color 0.2s;
+    appearance: auto;
+}
+
+.customize__componentSelector {
+    display: flex;
+    gap: 8px;
+    margin: 16px 0;
+    flex-wrap: wrap;
+}
+
+.customize__settingsGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 12px 16px;
+}
+
+.customize__switchRow {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    padding-top: 28px;
+}
+
+.customize__switchRow > p {
+    flex-basis: 100%;
+    order: 1;
+}
+
+.customize__translationLangTabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.customize__translationLangTab {
+    all: unset;
+    cursor: pointer;
+    padding: 6px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    background-color: var(--frak-input-background-color);
+    border: var(--frak-input-border-width) solid var(--frak-input-border-color);
+    transition: all 0.2s;
+}
+
+.customize__translationLangTab--active {
+    background-color: var(--frak-focus-border-color);
+    color: white;
+    border-color: var(--frak-focus-border-color);
+}
+
+.customize__translationGroup {
+    border: var(--frak-input-border-width) solid var(--frak-input-border-color);
+    border-radius: 10px;
+    margin-bottom: 12px;
+    overflow: hidden;
+}
+
+.customize__translationGroupHeader {
+    all: unset;
+    box-sizing: border-box;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    padding: 12px 14px;
+    font-size: 14px;
+    font-weight: 600;
+    background: color-mix(
+        in srgb,
+        var(--frak-input-background-color) 88%,
+        var(--frak-focus-border-color) 12%
+    );
+}
+
+.customize__translationGroupBody {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
+}
+
+.customize__translationRow {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.customize__translationLabel {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.customize__translationKeyMuted {
+    margin: 0;
+    font-size: 11px;
+    font-family: "Fira Mono", "SF Mono", Menlo, Consolas, monospace;
+    color: var(--frak-input-placeholder-color);
+    line-height: 1;
+}
+
+.customize__fieldDescription {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.4;
+    color: var(--frak-input-placeholder-color);
+}
+
+.customize__advancedSection {
+    margin-top: 16px;
+}
+
+.customize__advancedToggle {
+    all: unset;
+    box-sizing: border-box;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    padding: 12px 14px;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 10px;
+    border: 1px dashed var(--frak-input-border-color);
+    color: var(--frak-input-placeholder-color);
+    transition: all 0.2s;
+}
+
+.customize__advancedToggle:hover {
+    border-color: var(--frak-focus-border-color);
+    color: var(--frak-text-color);
+}
+
+.customize__advancedBody {
+    margin-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.customize__hint {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.customize__deleteButton {
+    all: unset;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid #f79ea9;
+    color: #d11a2a;
+    background: #fff5f6;
+    font-weight: 600;
+}
+
+.customize__deleteButton:hover {
+    border-color: #df4151;
+    background: #ffecee;
+}

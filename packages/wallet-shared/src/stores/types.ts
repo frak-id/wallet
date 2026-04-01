@@ -70,7 +70,7 @@ export type SsoContext = {
 };
 
 export type AppSpecificSsoMetadata = SsoMetadata & {
-    name: string;
+    name?: string;
     css?: string;
 };
 

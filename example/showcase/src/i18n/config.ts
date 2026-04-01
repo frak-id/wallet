@@ -12,7 +12,7 @@ i18n.use(LanguageDetector)
             fr: { translation: fr },
         },
         fallbackLng: "en",
-        showSupportNotice: false,
+
         supportedLngs: ["en", "fr"],
         interpolation: {
             escapeValue: false,

@@ -1,44 +1,43 @@
 import { Elysia, status, t } from "elysia";
-import { keccak256, toHex } from "viem";
 import { CampaignContext } from "../../../domain/campaign/context";
 import { EstimatedRewardsResultSchema } from "../../../domain/campaign/schemas";
 import { MerchantContext } from "../../../domain/merchant/context";
+import { MerchantResolveResponseSchema } from "../../schemas";
 import { exploreApi } from "./explorer";
+
+function normalizeDomain(domain: string): string {
+    return domain
+        .toLowerCase()
+        .replace(/^https?:\/\//, "")
+        .replace(/:\d+$/, "")
+        .replace(/\/$/, "")
+        .replace(/^www\./, "");
+}
 
 export const userMerchantApi = new Elysia({ prefix: "/merchant" })
     .get(
         "/resolve",
-        async ({ query: { domain } }) => {
-            const normalizedDomain = domain
-                .toLowerCase()
-                .replace(/^https?:\/\//, "")
-                .replace(/:\d+$/, "")
-                .replace(/\/$/, "")
-                .replace(/^www\./, "");
+        async ({ query: { domain, lang } }) => {
+            const result = await MerchantContext.services.resolve.resolve(
+                normalizeDomain(domain),
+                lang
+            );
 
-            const merchant =
-                await MerchantContext.repositories.merchant.findByDomain(
-                    normalizedDomain
-                );
-
-            if (!merchant) {
-                return status(404, { error: "Merchant not found" });
+            if (!result) {
+                return status(404, "Merchant not found");
             }
 
-            const productId =
-                merchant.productId ?? keccak256(toHex(normalizedDomain));
-
-            return {
-                merchantId: merchant.id,
-                productId,
-                name: merchant.name,
-                domain: merchant.domain,
-            };
+            return result;
         },
         {
             query: t.Object({
                 domain: t.String({ minLength: 1 }),
+                lang: t.Optional(t.String()),
             }),
+            response: {
+                200: MerchantResolveResponseSchema,
+                404: t.String(),
+            },
         }
     )
     .get(

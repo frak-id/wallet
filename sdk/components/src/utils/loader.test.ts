@@ -1,4 +1,6 @@
+import * as onDocumentReady from "@frak-labs/ui/utils/onDocumentReady";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import * as initFrakSdk from "./initFrakSdk";
 
 // Mock dependencies
 vi.mock("@frak-labs/ui/utils/onDocumentReady", () => ({
@@ -24,33 +26,19 @@ describe("loader", () => {
         vi.restoreAllMocks();
     });
 
-    it("should load CSS modules styles", async () => {
-        // Import the loader module to trigger loadCssModules
+    it("should initialize SDK when document is ready", async () => {
         await import("./loader");
 
-        // Wait a bit for async operations
-        await new Promise((resolve) => setTimeout(resolve, 10));
-
-        const linkElement = document.getElementById("frak-components-styles");
-        expect(linkElement).toBeInTheDocument();
-        expect(linkElement?.tagName).toBe("LINK");
-        expect(linkElement?.getAttribute("rel")).toBe("stylesheet");
+        expect(onDocumentReady.onDocumentReady).toHaveBeenCalledWith(
+            initFrakSdk.initFrakSdk
+        );
     });
 
-    it("should not load CSS modules styles if already loaded", async () => {
-        // Create existing link element
-        const existingLink = document.createElement("link");
-        existingLink.id = "frak-components-styles";
-        document.head.appendChild(existingLink);
-
-        // Import the loader module
+    it("should not inject loader stylesheet", async () => {
         await import("./loader");
 
-        // Wait a bit for async operations
         await new Promise((resolve) => setTimeout(resolve, 10));
 
-        // Should still only have one link element
-        const links = document.querySelectorAll("#frak-components-styles");
-        expect(links).toHaveLength(1);
+        expect(document.getElementById("frak-components-styles")).toBeNull();
     });
 });

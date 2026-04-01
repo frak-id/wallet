@@ -3,7 +3,7 @@ import type { PrepareSsoParamsType, SsoMetadata } from "../types";
 import { compressJsonToB64 } from "./compression/compress";
 
 export type AppSpecificSsoMetadata = SsoMetadata & {
-    name: string;
+    name?: string;
     css?: string;
 };
 
@@ -43,7 +43,7 @@ export function generateSsoUrl(
     walletUrl: string,
     params: PrepareSsoParamsType,
     merchantId: string,
-    name: string,
+    name: string | undefined,
     clientId: string,
     css?: string
 ): string {
@@ -114,13 +114,9 @@ export type CompressedSsoData = {
     m: string;
     // metadata
     md: {
-        // merchant name
-        n: string;
-        // custom css
+        n?: string;
         css?: string;
-        // logo
         l?: string;
-        // home page link
         h?: string;
     };
 };

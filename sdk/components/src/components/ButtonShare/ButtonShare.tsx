@@ -1,30 +1,13 @@
-import { trackEvent } from "@frak-labs/core-sdk";
-import { displayEmbeddedWallet } from "@frak-labs/core-sdk/actions";
-import { cx } from "class-variance-authority";
+import { type InteractionTypeKey, trackEvent } from "@frak-labs/core-sdk";
 import { useCallback, useMemo } from "preact/hooks";
-import { Spinner } from "@/components/Spinner";
 import { useClientReady } from "@/hooks/useClientReady";
+import { useLightDomStyles } from "@/hooks/useLightDomStyles";
+import { usePlacement } from "@/hooks/usePlacement";
 import { useReward } from "@/hooks/useReward";
-import styles from "./ButtonShare.module.css";
+import { openEmbeddedWallet } from "@/utils/embeddedWallet";
 import { ErrorMessage } from "./components/ErrorMessage";
 import { useShareModal } from "./hooks/useShareModal";
 import type { ButtonShareProps } from "./types";
-
-/**
- * Open the embedded wallet modal
- *
- * @description
- * This function will open the wallet modal with the configuration provided in the `window.FrakSetup.modalWalletConfig` object.
- */
-async function modalEmbeddedWallet() {
-    if (!window.FrakSetup?.client) {
-        throw new Error("Frak client not found");
-    }
-    await displayEmbeddedWallet(
-        window.FrakSetup.client,
-        window.FrakSetup?.modalWalletConfig ?? {}
-    );
-}
 
 /**
  * Button to share the current page
@@ -68,63 +51,91 @@ async function modalEmbeddedWallet() {
  * @see {@link @frak-labs/core-sdk!actions.getMerchantInformation | `getMerchantInformation()`} for more info about the estimated reward fetching
  */
 export function ButtonShare({
+    placement: placementId,
     text = "Share and earn!",
     classname = "",
     useReward: rawUseReward,
     noRewardText,
     targetInteraction,
-    showWallet: rawShowWallet,
+    clickAction: rawClickAction,
 }: ButtonShareProps) {
+    const placement = usePlacement(placementId);
+    const componentConfig = placement?.components?.buttonShare;
+
+    useLightDomStyles("frak-button-share", placementId, componentConfig?.css);
+
+    const resolvedTargetInteraction = useMemo<InteractionTypeKey | undefined>(
+        () =>
+            placement?.targetInteraction !== undefined
+                ? (placement.targetInteraction as InteractionTypeKey)
+                : targetInteraction,
+        [placement?.targetInteraction, targetInteraction]
+    );
+
+    const resolvedText = componentConfig?.text ?? text;
+    const resolvedNoRewardText = componentConfig?.noRewardText ?? noRewardText;
+
     const shouldUseReward = useMemo(
-        () => rawUseReward !== undefined,
-        [rawUseReward]
+        () => componentConfig?.useReward ?? rawUseReward === true,
+        [componentConfig?.useReward, rawUseReward]
     );
-    const showWallet = useMemo(
-        () => rawShowWallet !== undefined,
-        [rawShowWallet]
+    const resolvedClickAction = useMemo(
+        () =>
+            componentConfig?.clickAction ?? rawClickAction ?? "embedded-wallet",
+        [componentConfig?.clickAction, rawClickAction]
     );
-    const { isClientReady } = useClientReady();
+    const { shouldRender, isHidden, isClientReady } = useClientReady();
     const { reward } = useReward(
         shouldUseReward && isClientReady,
-        targetInteraction
+        resolvedTargetInteraction
     );
-    const { handleShare, isError, debugInfo } =
-        useShareModal(targetInteraction);
+    const { handleShare, isError, debugInfo } = useShareModal(
+        resolvedTargetInteraction,
+        placementId
+    );
 
-    /**
-     * Compute the text we will display
-     */
     const btnText = useMemo(() => {
-        if (!shouldUseReward) return text;
-        if (!reward) return noRewardText ?? text.replace("{REWARD}", "");
+        if (!shouldUseReward) return resolvedText;
+        if (!reward) {
+            return resolvedNoRewardText ?? resolvedText.replace("{REWARD}", "");
+        }
 
-        // Here if we have a reward
-        // Check if the text contain a REWARD placeholder, otherwise, put the reward at the end
-        return text.includes("{REWARD}")
-            ? text.replace("{REWARD}", reward)
-            : `${text} ${reward}`;
-    }, [shouldUseReward, text, noRewardText, reward]);
+        return resolvedText.includes("{REWARD}")
+            ? resolvedText.replace("{REWARD}", reward)
+            : `${resolvedText} ${reward}`;
+    }, [shouldUseReward, resolvedText, resolvedNoRewardText, reward]);
 
-    /**
-     * The action when the button is clicked
-     */
     const onClick = useCallback(async () => {
         trackEvent(window.FrakSetup.client, "share_button_clicked");
-        if (showWallet) {
-            await modalEmbeddedWallet();
-        } else {
+        if (resolvedClickAction === "share-modal") {
             await handleShare();
+        } else {
+            openEmbeddedWallet(resolvedTargetInteraction, placementId);
         }
-    }, [showWallet, handleShare]);
+    }, [
+        resolvedClickAction,
+        handleShare,
+        resolvedTargetInteraction,
+        placementId,
+    ]);
+
+    if (!shouldRender || isHidden) {
+        return null;
+    }
+
+    const buttonClass = ["button", "button__fadeIn", classname]
+        .filter(Boolean)
+        .join(" ");
 
     return (
         <>
             <button
                 type={"button"}
-                className={cx(styles.buttonShare, classname, "override")}
+                disabled={!isClientReady}
+                class={buttonClass}
                 onClick={onClick}
             >
-                {!isClientReady && <Spinner />} {btnText}
+                {btnText}
             </button>
             {isError && <ErrorMessage debugInfo={debugInfo} />}
         </>

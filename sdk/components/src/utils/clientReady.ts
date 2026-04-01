@@ -1,4 +1,4 @@
-const CUSTOM_EVENT_NAME = "frakClientReady";
+const CUSTOM_EVENT_NAME = "frak:client";
 
 /**
  * Dispatch a custom event when the Frak client is ready

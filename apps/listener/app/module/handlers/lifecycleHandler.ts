@@ -1,28 +1,27 @@
-import type {
-    ClientLifecycleEvent,
-    FrakLifecycleEvent,
-} from "@frak-labs/core-sdk";
+import type { FrakLifecycleEvent } from "@frak-labs/core-sdk";
 import { decompressJsonFromB64 } from "@frak-labs/core-sdk";
-import type { LifecycleHandler } from "@frak-labs/frame-connector";
+import type {
+    LifecycleHandler,
+    RpcRequestContext,
+} from "@frak-labs/frame-connector";
 import type { SdkSession, Session } from "@frak-labs/wallet-shared";
 import {
+    authenticatedBackendApi,
+    clientIdStore,
     emitLifecycleEvent,
     mapI18nConfig,
     restoreBackupData,
 } from "@frak-labs/wallet-shared";
 import { getI18n } from "react-i18next";
-import { resolvingContextStore } from "@/module/stores/resolvingContextStore";
+import {
+    iframeClientId,
+    resolvingContextStore,
+} from "@/module/stores/resolvingContextStore";
+import type { ResolvedSdkConfig } from "@/module/stores/types";
 import { processSsoCompletion } from "./ssoHandler";
 
 /**
  * Create a client lifecycle handler for the RPC listener
- *
- * This handler processes lifecycle events from the SDK client:
- * - modal-css: Load external CSS
- * - modal-i18n: Load i18n overrides
- * - restore-backup: Restore wallet backup
- * - heartbeat: Signal client is ready
- * - handshake-response: Complete handshake with context
  *
  * @param setReadyToHandleRequest - Callback to signal wallet is ready
  * @returns Lifecycle handler function
@@ -31,7 +30,7 @@ export const createClientLifecycleHandler =
     (
         setReadyToHandleRequest: () => void
     ): LifecycleHandler<FrakLifecycleEvent> =>
-    async (messageEvent, _context) => {
+    async (messageEvent, context) => {
         if (!("clientLifecycle" in messageEvent)) return;
         const { clientLifecycle: event, data } = messageEvent;
 
@@ -61,21 +60,7 @@ export const createClientLifecycleHandler =
             }
 
             case "restore-backup": {
-                const resolveContext = resolvingContextStore.getState().context;
-                if (!resolveContext) {
-                    console.warn(
-                        "Can't restore a backup until we are sure of the context"
-                    );
-                    return;
-                }
-                const domain = new URL(resolveContext.sourceUrl).host.replace(
-                    "www.",
-                    ""
-                );
-                await restoreBackupData({
-                    backup: data.backup,
-                    domain,
-                });
+                await handleRestoreBackup(data.backup, context);
                 return;
             }
 
@@ -85,21 +70,8 @@ export const createClientLifecycleHandler =
                 return;
             }
 
-            case "handshake-response": {
-                const messageEvent = {
-                    data: {
-                        clientLifecycle: "handshake-response",
-                        data: data,
-                    },
-                } as MessageEvent<ClientLifecycleEvent>;
-
-                const hasContext = resolvingContextStore
-                    .getState()
-                    .handleHandshakeResponse(messageEvent);
-
-                if (hasContext) {
-                    setReadyToHandleRequest();
-                }
+            case "resolved-config": {
+                await handleResolvedConfig(data, context);
                 return;
             }
 
@@ -112,78 +84,159 @@ export const createClientLifecycleHandler =
     };
 
 /**
- * Initialize the resolving context
- * Checks if context exists and starts handshake if needed
- *
- * @returns Whether a context is present
+ * Emit the "connected" lifecycle event so the SDK knows we're alive.
+ * Context is established later by the resolved-config lifecycle message.
  */
-export function initializeResolvingContext(): boolean {
-    if (typeof window === "undefined") {
-        return false;
-    }
-
-    // Get the context
-    const currentContext = resolvingContextStore.getState().context;
-
-    // If we don't have one, initiate the handshake
-    if (!currentContext) {
-        resolvingContextStore.getState().startHandshake();
-        return false;
-    }
-
-    // We have an auto context, try to fetch a more precise one using the handshake
-    if (currentContext.isAutoContext) {
-        resolvingContextStore.getState().startHandshake();
-    }
-
-    return true;
-}
-
-/**
- * Check if we have a resolving context and emit ready event
- *
- * @returns Whether the wallet is ready to handle requests
- */
-export function checkContextAndEmitReady(): boolean {
-    if (typeof window === "undefined") {
-        return false;
-    }
-
-    // Get the context
-    const currentContext = resolvingContextStore.getState().context;
-
-    // Prevent handshake spam: each heartbeat could trigger a new handshake
-    // while waiting for the async context resolution. Only start a handshake
-    // if none is already in progress.
-    const hasPendingHandshake =
-        resolvingContextStore.getState().handshakeTokens.size > 0;
-
-    if (!currentContext) {
-        if (!hasPendingHandshake) {
-            resolvingContextStore.getState().startHandshake();
-        }
-        return false;
-    }
-
-    // Auto-context (from document.referrer) works but we prefer a precise
-    // context from the handshake. Only upgrade if no handshake pending.
-    if (currentContext.isAutoContext && !hasPendingHandshake) {
-        resolvingContextStore.getState().startHandshake();
-    }
-
-    // If we got a context, we are rdy to handle request
+export function emitConnected(): void {
+    if (typeof window === "undefined") return;
     emitLifecycleEvent({ iframeLifecycle: "connected" });
-    return true;
 }
 
-/**
- * Handle SSO redirect complete event from SDK URL listener
- * Decompresses SSO data and processes authentication
- *
- * Performance: Single decompression operation, reuses existing session logic
- *
- * @param data - Data containing compressed SSO string from URL
- */
+async function handleRestoreBackup(
+    backup: string,
+    context: RpcRequestContext
+): Promise<void> {
+    const domain = extractDomain(context.origin);
+    if (!domain) {
+        console.warn(
+            "Can't restore backup: unable to extract domain from origin"
+        );
+        return;
+    }
+    await restoreBackupData({ backup, domain });
+}
+
+const BACKEND_CSS_STYLE_ID = "frak-backend-css";
+
+function extractDomain(origin: string): string {
+    try {
+        return new URL(origin).host.replace(/^www\./, "");
+    } catch {
+        return "";
+    }
+}
+
+function isValidResolvedConfigPayload(data: unknown): data is {
+    merchantId: string;
+    domain: string;
+    allowedDomains: string[];
+    sourceUrl: string;
+    pendingMergeToken?: string;
+    sdkConfig?: ResolvedSdkConfig;
+} {
+    if (!data || typeof data !== "object") return false;
+    const d = data as Record<string, unknown>;
+    return (
+        typeof d.merchantId === "string" &&
+        typeof d.domain === "string" &&
+        Array.isArray(d.allowedDomains) &&
+        d.allowedDomains.every((v: unknown) => typeof v === "string") &&
+        typeof d.sourceUrl === "string"
+    );
+}
+
+async function handleResolvedConfig(
+    data: {
+        merchantId: string;
+        domain: string;
+        allowedDomains: string[];
+        sourceUrl: string;
+        pendingMergeToken?: string;
+        sdkConfig?: ResolvedSdkConfig;
+    },
+    context: RpcRequestContext
+): Promise<void> {
+    if (!isValidResolvedConfigPayload(data)) {
+        console.warn("[Frak] Invalid resolved-config payload, ignoring");
+        return;
+    }
+
+    let parsedOrigin: string;
+    try {
+        parsedOrigin = new URL(data.sourceUrl).origin;
+    } catch {
+        console.warn("[Frak] Invalid sourceUrl in resolved-config, ignoring");
+        return;
+    }
+
+    const originDomain = extractDomain(context.origin);
+    const store = resolvingContextStore.getState();
+
+    const isOriginAllowed = data.allowedDomains
+        .map((d) => d.replace(/^www\./, ""))
+        .some((d) => d === originDomain);
+
+    if (isOriginAllowed) {
+        store.setTrustLevel("verified");
+    } else if (data.merchantId) {
+        store.setTrustLevel("dev-override");
+        console.warn(
+            `[Frak] Running on ${originDomain} with config for ${data.domain}. Register ${originDomain} in your dashboard for production use.`
+        );
+    } else {
+        store.setTrustLevel("unverified");
+        console.warn(
+            `[Frak] Domain proof failed: origin ${originDomain} not in allowedDomains. Running in display-only mode (modals and wallet status will work, interactions are disabled).`,
+            data.allowedDomains
+        );
+    }
+
+    store.setContext({
+        merchantId: data.merchantId,
+        origin: parsedOrigin,
+        sourceUrl: data.sourceUrl,
+        ...(iframeClientId && { clientId: iframeClientId }),
+    });
+
+    store.setBackendConfig(data.merchantId, data.sdkConfig);
+
+    // Identity merge — only allowed for verified trust (origin in allowedDomains)
+    const currentTrust = resolvingContextStore.getState().trustLevel;
+    if (
+        data.pendingMergeToken &&
+        data.merchantId &&
+        currentTrust === "verified"
+    ) {
+        const targetAnonymousId =
+            iframeClientId ?? clientIdStore.getState().clientId;
+        if (targetAnonymousId) {
+            authenticatedBackendApi.user.identity.merge.execute
+                .post({
+                    mergeToken: data.pendingMergeToken,
+                    targetAnonymousId,
+                    merchantId: data.merchantId,
+                })
+                .catch((error) => {
+                    console.warn("Unable to merge client identities", error);
+                });
+        }
+    }
+
+    if (!data.sdkConfig) return;
+
+    applyBackendCss(data.sdkConfig);
+    await applyBackendLang(data.sdkConfig);
+}
+
+function applyBackendCss(sdkConfig: ResolvedSdkConfig): void {
+    if (!sdkConfig.css) return;
+
+    const existing = document.getElementById(BACKEND_CSS_STYLE_ID);
+    if (existing) existing.remove();
+
+    const style = document.createElement("style");
+    style.id = BACKEND_CSS_STYLE_ID;
+    style.textContent = sdkConfig.css;
+    document.head.appendChild(style);
+}
+
+async function applyBackendLang(sdkConfig: ResolvedSdkConfig): Promise<void> {
+    const i18n = getI18n();
+    if (sdkConfig.lang && sdkConfig.lang !== i18n.language) {
+        await i18n.changeLanguage(sdkConfig.lang);
+    }
+}
+
 async function handleSsoRedirectComplete(data: {
     compressed: string;
 }): Promise<void> {

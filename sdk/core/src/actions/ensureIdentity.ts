@@ -1,6 +1,6 @@
 import { getBackendUrl } from "../utils/backendUrl";
 import { getClientId } from "../utils/clientId";
-import { fetchMerchantId } from "../utils/merchantId";
+import { sdkConfigStore } from "../utils/sdkConfigStore";
 
 const ENSURE_STORAGE_PREFIX = "frak-identity-ensured-";
 
@@ -36,7 +36,7 @@ export async function ensureIdentity(interactionToken: string): Promise<void> {
         return;
     }
 
-    const merchantId = await fetchMerchantId();
+    const merchantId = await sdkConfigStore.resolveMerchantId();
     if (!merchantId) {
         return;
     }

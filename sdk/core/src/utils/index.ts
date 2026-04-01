@@ -22,11 +22,7 @@ export {
     createIframe,
     findIframeInOpener,
 } from "./iframeHelper";
-export {
-    clearMerchantIdCache,
-    fetchMerchantId,
-    resolveMerchantId,
-} from "./merchantId";
+export { sdkConfigStore } from "./sdkConfigStore";
 export {
     type AppSpecificSsoMetadata,
     type CompressedSsoData,

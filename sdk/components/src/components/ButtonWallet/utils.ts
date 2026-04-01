@@ -1,20 +1,11 @@
-import { displayEmbeddedWallet } from "@frak-labs/core-sdk/actions";
+import type { InteractionTypeKey } from "@frak-labs/core-sdk";
+import { openEmbeddedWallet } from "@/utils/embeddedWallet";
 import { safeVibrate } from "@/utils/safeVibrate";
 
-/**
- * Open the wallet modal
- *
- * @description
- * This function will open the wallet modal with the configuration provided in the `window.FrakSetup.modalWalletConfig` object.
- */
-export function openWalletModal() {
-    if (!window.FrakSetup?.client) {
-        console.error("Frak client not found");
-        return;
-    }
+export function openWalletModal(
+    targetInteraction?: InteractionTypeKey,
+    placement?: string
+) {
     safeVibrate();
-    displayEmbeddedWallet(
-        window.FrakSetup.client,
-        window.FrakSetup?.modalWalletConfig ?? {}
-    );
+    openEmbeddedWallet(targetInteraction, placement);
 }

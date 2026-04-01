@@ -11,6 +11,7 @@ import type {
  * @param args
  * @param args.steps - The different steps of the modal
  * @param args.metadata - The metadata for the modal (customization, etc)
+ * @param placement - Optional placement ID to associate with this modal display
  * @returns The result of each modal steps
  *
  * @description This function will display a modal to the user with the provided steps and metadata.
@@ -111,10 +112,13 @@ export async function displayModal<
     T extends ModalStepTypes[] = ModalStepTypes[],
 >(
     client: FrakClient,
-    { steps, metadata }: DisplayModalParamsType<T>
+    { steps, metadata }: DisplayModalParamsType<T>,
+    placement?: string
 ): Promise<ModalRpcStepsResultType<T>> {
     return (await client.request({
         method: "frak_displayModal",
-        params: [steps, metadata, client.config.metadata],
+        params: placement
+            ? [steps, metadata, client.config.metadata, placement]
+            : [steps, metadata, client.config.metadata],
     })) as ModalRpcStepsResultType<T>;
 }

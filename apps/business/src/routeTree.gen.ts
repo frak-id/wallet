@@ -29,6 +29,7 @@ import { Route as RestrictedMerchantIdIndexRouteImport } from './routes/_restric
 import { Route as RestrictedMerchantIdTeamRouteImport } from './routes/_restricted/merchant/$id/team'
 import { Route as RestrictedMerchantIdSetupStatusRouteImport } from './routes/_restricted/merchant/$id/setup-status'
 import { Route as RestrictedMerchantIdFundingRouteImport } from './routes/_restricted/merchant/$id/funding'
+import { Route as RestrictedMerchantIdCustomizeRouteImport } from './routes/_restricted/merchant/$id/customize'
 import { Route as RestrictedCampaignsEditCampaignIdRouteImport } from './routes/_restricted/campaigns/edit/$campaignId'
 import { Route as RestrictedCampaignsDraftNewRouteImport } from './routes/_restricted/campaigns/draft/new'
 import { Route as RestrictedCampaignsDraftCampaignIdIndexRouteImport } from './routes/_restricted/campaigns/draft/$campaignId/index'
@@ -140,6 +141,12 @@ const RestrictedMerchantIdFundingRoute =
     path: '/merchant/$id/funding',
     getParentRoute: () => RestrictedRoute,
   } as any)
+const RestrictedMerchantIdCustomizeRoute =
+  RestrictedMerchantIdCustomizeRouteImport.update({
+    id: '/merchant/$id/customize',
+    path: '/merchant/$id/customize',
+    getParentRoute: () => RestrictedRoute,
+  } as any)
 const RestrictedCampaignsEditCampaignIdRoute =
   RestrictedCampaignsEditCampaignIdRouteImport.update({
     id: '/campaigns/edit/$campaignId',
@@ -189,6 +196,7 @@ export interface FileRoutesByFullPath {
   '/embedded/mint': typeof EmbeddedLayoutMintRoute
   '/campaigns/draft/new': typeof RestrictedCampaignsDraftNewRoute
   '/campaigns/edit/$campaignId': typeof RestrictedCampaignsEditCampaignIdRoute
+  '/merchant/$id/customize': typeof RestrictedMerchantIdCustomizeRoute
   '/merchant/$id/funding': typeof RestrictedMerchantIdFundingRoute
   '/merchant/$id/setup-status': typeof RestrictedMerchantIdSetupStatusRoute
   '/merchant/$id/team': typeof RestrictedMerchantIdTeamRoute
@@ -215,6 +223,7 @@ export interface FileRoutesByTo {
   '/embedded/mint': typeof EmbeddedLayoutMintRoute
   '/campaigns/draft/new': typeof RestrictedCampaignsDraftNewRoute
   '/campaigns/edit/$campaignId': typeof RestrictedCampaignsEditCampaignIdRoute
+  '/merchant/$id/customize': typeof RestrictedMerchantIdCustomizeRoute
   '/merchant/$id/funding': typeof RestrictedMerchantIdFundingRoute
   '/merchant/$id/setup-status': typeof RestrictedMerchantIdSetupStatusRoute
   '/merchant/$id/team': typeof RestrictedMerchantIdTeamRoute
@@ -243,6 +252,7 @@ export interface FileRoutesById {
   '/embedded/_layout/mint': typeof EmbeddedLayoutMintRoute
   '/_restricted/campaigns/draft/new': typeof RestrictedCampaignsDraftNewRoute
   '/_restricted/campaigns/edit/$campaignId': typeof RestrictedCampaignsEditCampaignIdRoute
+  '/_restricted/merchant/$id/customize': typeof RestrictedMerchantIdCustomizeRoute
   '/_restricted/merchant/$id/funding': typeof RestrictedMerchantIdFundingRoute
   '/_restricted/merchant/$id/setup-status': typeof RestrictedMerchantIdSetupStatusRoute
   '/_restricted/merchant/$id/team': typeof RestrictedMerchantIdTeamRoute
@@ -271,6 +281,7 @@ export interface FileRouteTypes {
     | '/embedded/mint'
     | '/campaigns/draft/new'
     | '/campaigns/edit/$campaignId'
+    | '/merchant/$id/customize'
     | '/merchant/$id/funding'
     | '/merchant/$id/setup-status'
     | '/merchant/$id/team'
@@ -297,6 +308,7 @@ export interface FileRouteTypes {
     | '/embedded/mint'
     | '/campaigns/draft/new'
     | '/campaigns/edit/$campaignId'
+    | '/merchant/$id/customize'
     | '/merchant/$id/funding'
     | '/merchant/$id/setup-status'
     | '/merchant/$id/team'
@@ -324,6 +336,7 @@ export interface FileRouteTypes {
     | '/embedded/_layout/mint'
     | '/_restricted/campaigns/draft/new'
     | '/_restricted/campaigns/edit/$campaignId'
+    | '/_restricted/merchant/$id/customize'
     | '/_restricted/merchant/$id/funding'
     | '/_restricted/merchant/$id/setup-status'
     | '/_restricted/merchant/$id/team'
@@ -484,6 +497,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RestrictedMerchantIdFundingRouteImport
       parentRoute: typeof RestrictedRoute
     }
+    '/_restricted/merchant/$id/customize': {
+      id: '/_restricted/merchant/$id/customize'
+      path: '/merchant/$id/customize'
+      fullPath: '/merchant/$id/customize'
+      preLoaderRoute: typeof RestrictedMerchantIdCustomizeRouteImport
+      parentRoute: typeof RestrictedRoute
+    }
     '/_restricted/campaigns/edit/$campaignId': {
       id: '/_restricted/campaigns/edit/$campaignId'
       path: '/campaigns/edit/$campaignId'
@@ -534,6 +554,7 @@ interface RestrictedRouteChildren {
   RestrictedPushCreateRoute: typeof RestrictedPushCreateRoute
   RestrictedCampaignsDraftNewRoute: typeof RestrictedCampaignsDraftNewRoute
   RestrictedCampaignsEditCampaignIdRoute: typeof RestrictedCampaignsEditCampaignIdRoute
+  RestrictedMerchantIdCustomizeRoute: typeof RestrictedMerchantIdCustomizeRoute
   RestrictedMerchantIdFundingRoute: typeof RestrictedMerchantIdFundingRoute
   RestrictedMerchantIdSetupStatusRoute: typeof RestrictedMerchantIdSetupStatusRoute
   RestrictedMerchantIdTeamRoute: typeof RestrictedMerchantIdTeamRoute
@@ -556,6 +577,7 @@ const RestrictedRouteChildren: RestrictedRouteChildren = {
   RestrictedCampaignsDraftNewRoute: RestrictedCampaignsDraftNewRoute,
   RestrictedCampaignsEditCampaignIdRoute:
     RestrictedCampaignsEditCampaignIdRoute,
+  RestrictedMerchantIdCustomizeRoute: RestrictedMerchantIdCustomizeRoute,
   RestrictedMerchantIdFundingRoute: RestrictedMerchantIdFundingRoute,
   RestrictedMerchantIdSetupStatusRoute: RestrictedMerchantIdSetupStatusRoute,
   RestrictedMerchantIdTeamRoute: RestrictedMerchantIdTeamRoute,
