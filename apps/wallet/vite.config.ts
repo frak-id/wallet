@@ -185,7 +185,7 @@ export default defineConfig(
                         inlineConst: { mode: "all", pass: 3 },
                     },
                     output: {
-                        advancedChunks: {
+                        codeSplitting: {
                             // Only chunk stuff shared by at least 2 module
                             minShareCount: 2,
                             groups: [

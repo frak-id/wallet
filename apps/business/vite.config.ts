@@ -63,7 +63,7 @@ export default defineConfig(async () => {
         build: {
             rolldownOptions: {
                 output: {
-                    advancedChunks: {
+                    codeSplitting: {
                         minShareCount: 2,
                         groups: [
                             {
