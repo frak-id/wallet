@@ -1,5 +1,5 @@
 import { isRunningInProd } from "@frak-labs/app-essentials";
-import { Spinner } from "@frak-labs/ui/component/Spinner";
+import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { useMutation } from "@tanstack/react-query";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";

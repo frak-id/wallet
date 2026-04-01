@@ -1,6 +1,6 @@
-import { Button } from "@frak-labs/ui/component/Button";
-import { Input } from "@frak-labs/ui/component/forms/Input";
-import { Spinner } from "@frak-labs/ui/component/Spinner";
+import { Button } from "@frak-labs/design-system/components/Button";
+import { Input } from "@frak-labs/design-system/components/Input";
+import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import { useGetUserBalance } from "@frak-labs/wallet-shared";
 import { memo, useCallback, useMemo } from "react";
 import type { SubmitHandler } from "react-hook-form";
@@ -220,7 +220,7 @@ export function MoneriumOfframpForm() {
                     type="submit"
                     width="full"
                     disabled={isPending || !isLinkedToWallet}
-                    isLoading={isPending}
+                    loading={isPending}
                 >
                     {t("monerium.offramp.submit")}
                 </Button>

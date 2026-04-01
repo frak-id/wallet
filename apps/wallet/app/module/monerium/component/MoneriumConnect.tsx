@@ -1,5 +1,5 @@
-import { Button } from "@frak-labs/ui/component/Button";
-import { Spinner } from "@frak-labs/ui/component/Spinner";
+import { Button } from "@frak-labs/design-system/components/Button";
+import { Spinner } from "@frak-labs/design-system/components/Spinner";
 import type { TFunction } from "i18next";
 import { Building2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -110,7 +110,7 @@ function MoneriumActions({
 
     if (isConnecting) {
         return (
-            <Button disabled leftIcon={<Spinner />} size={"small"}>
+            <Button disabled icon={<Spinner size={"s"} />} size={"small"}>
                 {t("monerium.connecting")}
             </Button>
         );
@@ -143,7 +143,7 @@ function MoneriumActions({
                     {t("monerium.linkWallet")}
                 </Button>
             )}
-            <Button variant="outline" size={"small"} onClick={onDisconnect}>
+            <Button variant="ghost" size={"small"} onClick={onDisconnect}>
                 {t("monerium.disconnect")}
             </Button>
         </div>
