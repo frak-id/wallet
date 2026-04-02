@@ -9,15 +9,10 @@ vi.mock("react-i18next", () => ({
 }));
 
 describe("EmptyTransferredGainsModal", () => {
-    it("should call onOpenChange with false when confirm button is clicked", async () => {
-        const onOpenChange = vi.fn();
+    it("should call onClose when confirm button is clicked", async () => {
+        const onClose = vi.fn();
 
-        render(
-            <EmptyTransferredGainsModal
-                open={true}
-                onOpenChange={onOpenChange}
-            />
-        );
+        render(<EmptyTransferredGainsModal onClose={onClose} />);
 
         fireEvent.click(
             await screen.findByRole("button", {
@@ -25,6 +20,6 @@ describe("EmptyTransferredGainsModal", () => {
             })
         );
 
-        expect(onOpenChange).toHaveBeenCalledWith(false);
+        expect(onClose).toHaveBeenCalled();
     });
 });

@@ -3,72 +3,32 @@ import {
     currentStablecoinsList,
     rewarderHubAbi,
 } from "@frak-labs/app-essentials/blockchain";
-import { tablet } from "@frak-labs/design-system/breakpoints";
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
-import {
-    Drawer,
-    DrawerContent,
-    DrawerDescription,
-    DrawerHeader,
-    DrawerTitle,
-} from "@frak-labs/design-system/components/Drawer";
+import { ResponsiveModal } from "@frak-labs/design-system/components/ResponsiveModal";
 import { Text } from "@frak-labs/design-system/components/Text";
-import { visuallyHidden } from "@frak-labs/design-system/utils";
 import {
     balanceKey,
     claimableKey,
     currentViemClient,
     rewardsKey,
-    WalletModal,
 } from "@frak-labs/wallet-shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { encodeFunctionData, erc20Abi, formatUnits } from "viem";
 import { multicall, waitForTransactionReceipt } from "viem/actions";
 import { useAccount, useSendTransaction } from "wagmi";
 import { CloseButton } from "@/module/common/component/CloseButton";
+import { modalStore } from "@/module/stores/modalStore";
 import * as styles from "./index.css";
 
-function useMediaQuery(query: string) {
-    const mediaQueryList = useMemo(() => {
-        if (typeof window !== "undefined") {
-            return window.matchMedia(query);
-        }
-
-        return null;
-    }, [query]);
-
-    const [matches, setMatches] = useState(() =>
-        mediaQueryList ? mediaQueryList.matches : false
-    );
-
-    useEffect(() => {
-        if (!mediaQueryList) return;
-
-        const handleChange = () => setMatches(mediaQueryList.matches);
-        mediaQueryList.addEventListener("change", handleChange);
-
-        return () => mediaQueryList.removeEventListener("change", handleChange);
-    }, [mediaQueryList]);
-
-    return matches;
-}
-
 type PendingGainsModalProps = {
-    open: boolean;
-    onOpenChange: (open: boolean) => void;
-    onClaimSuccess?: () => void;
+    onClose: () => void;
 };
 
-export function PendingGainsModal({
-    open,
-    onOpenChange,
-    onClaimSuccess,
-}: PendingGainsModalProps) {
+export function PendingGainsModal({ onClose }: PendingGainsModalProps) {
     const { t } = useTranslation();
-    const isDesktop = useMediaQuery(`(min-width: ${tablet}px)`);
     const queryClient = useQueryClient();
     const { address } = useAccount();
     const { sendTransactionAsync } = useSendTransaction();
@@ -109,7 +69,7 @@ export function PendingGainsModal({
                 }))
                 .filter((item) => item.amount > 0n);
         },
-        enabled: !!address && open,
+        enabled: !!address,
         meta: { storable: false },
     });
 
@@ -158,8 +118,7 @@ export function PendingGainsModal({
             return txHash;
         },
         onSuccess: () => {
-            onOpenChange(false);
-            onClaimSuccess?.();
+            modalStore.getState().openModal({ id: "successOverlay" });
         },
     });
 
@@ -169,76 +128,50 @@ export function PendingGainsModal({
 
     const formattedAmount = `+${totalClaimable.toFixed(2).replace(".", ",")}€`;
 
-    const content = (
-        <Box className={styles.pendingGains}>
-            <Box className={styles.textGroup}>
-                <Box className={styles.amountBlock}>
-                    <Text as="p" variant="caption" color="secondary">
-                        {t("wallet.pendingGains.subtitle")}
+    return (
+        <ResponsiveModal
+            open={true}
+            onOpenChange={(open) => {
+                if (!open) onClose();
+            }}
+            title={title}
+            description={description}
+            header={
+                <CloseButton
+                    ariaLabel={closeLabel}
+                    iconSize={24}
+                    variant="inline"
+                    onClick={onClose}
+                />
+            }
+        >
+            <Box className={styles.pendingGains}>
+                <Box className={styles.textGroup}>
+                    <Box className={styles.amountBlock}>
+                        <Text as="p" variant="caption" color="secondary">
+                            {t("wallet.pendingGains.subtitle")}
+                        </Text>
+                        <Text as="p" className={styles.amount}>
+                            {formattedAmount}
+                        </Text>
+                    </Box>
+                    <Text as="h2" className={styles.heading}>
+                        {t("wallet.pendingGains.heading")}
                     </Text>
-                    <Text as="p" className={styles.amount}>
-                        {formattedAmount}
+                    <Text as="p" color="secondary">
+                        {t("wallet.pendingGains.description")}
                     </Text>
                 </Box>
-                <Text as="h2" className={styles.heading}>
-                    {t("wallet.pendingGains.heading")}
-                </Text>
-                <Text as="p" color="secondary">
-                    {t("wallet.pendingGains.description")}
-                </Text>
+                <Button
+                    className={styles.confirmButton}
+                    disabled={isPending || totalClaimable <= 0}
+                    onClick={async () => {
+                        await sendClaimTxs();
+                    }}
+                >
+                    {t("wallet.pendingGains.confirm")}
+                </Button>
             </Box>
-            <Button
-                className={styles.confirmButton}
-                disabled={isPending || totalClaimable <= 0}
-                onClick={async () => {
-                    await sendClaimTxs();
-                }}
-            >
-                {t("wallet.pendingGains.confirm")}
-            </Button>
-        </Box>
-    );
-
-    if (isDesktop) {
-        return (
-            <WalletModal
-                text={content}
-                open={open}
-                onOpenChange={onOpenChange}
-                closeButton={
-                    <CloseButton
-                        ariaLabel={closeLabel}
-                        iconSize={24}
-                        variant="inline"
-                        onClick={() => onOpenChange(false)}
-                    />
-                }
-            />
-        );
-    }
-
-    return (
-        <Drawer
-            open={open}
-            onOpenChange={onOpenChange}
-            shouldScaleBackground={false}
-            modal={true}
-        >
-            <DrawerContent hideHandle={true}>
-                <DrawerHeader className={styles.header}>
-                    <CloseButton
-                        ariaLabel={closeLabel}
-                        iconSize={24}
-                        variant="inline"
-                        onClick={() => onOpenChange(false)}
-                    />
-                </DrawerHeader>
-                <DrawerTitle className={visuallyHidden}>{title}</DrawerTitle>
-                <DrawerDescription className={visuallyHidden}>
-                    {description}
-                </DrawerDescription>
-                {content}
-            </DrawerContent>
-        </Drawer>
+        </ResponsiveModal>
     );
 }

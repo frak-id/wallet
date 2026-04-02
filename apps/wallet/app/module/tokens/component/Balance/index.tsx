@@ -12,14 +12,10 @@ import {
 } from "@frak-labs/design-system/icons";
 import { useGetUserBalance } from "@frak-labs/wallet-shared";
 import { useNavigate } from "@tanstack/react-router";
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { SuccessOverlay } from "@/module/common/component/SuccessOverlay";
 import { isCryptoMode } from "@/module/common/utils/walletMode";
-import { EmptyPendingGainsModal } from "@/module/tokens/component/EmptyPendingGainsModal";
-import { EmptyTransferModal } from "@/module/tokens/component/EmptyTransferModal";
-import { EmptyTransferredGainsModal } from "@/module/tokens/component/EmptyTransferredGainsModal";
-import { PendingGainsModal } from "@/module/tokens/component/PendingGainsModal";
+import { modalStore } from "@/module/stores/modalStore";
 import * as styles from "./index.css";
 
 export function Balance() {
@@ -27,32 +23,15 @@ export function Balance() {
     const { userBalance } = useGetUserBalance();
     const navigate = useNavigate();
     const [isHidden, setIsHidden] = useState(false);
-    const [isEmptyTransferModalOpen, setIsEmptyTransferModalOpen] =
-        useState(false);
-    const [isEmptyPendingGainsModalOpen, setIsEmptyPendingGainsModalOpen] =
-        useState(false);
-    const [isPendingGainsModalOpen, setIsPendingGainsModalOpen] =
-        useState(false);
-    const [
-        isEmptyTransferredGainsModalOpen,
-        setIsEmptyTransferredGainsModalOpen,
-    ] = useState(false);
-    const [showSuccessOverlay, setShowSuccessOverlay] = useState(false);
 
-    const handleClaimSuccess = useCallback(() => {
-        setShowSuccessOverlay(true);
-    }, []);
-
-    const handleSuccessDone = useCallback(() => {
-        setShowSuccessOverlay(false);
-    }, []);
+    const openModal = modalStore((s) => s.openModal);
 
     const amount = userBalance?.total?.eurAmount ?? 0;
     const [integerPart, decimalPart] = amount.toFixed(2).split(".");
 
     const handleTransferClick = () => {
         if (amount <= 0) {
-            setIsEmptyTransferModalOpen(true);
+            openModal({ id: "emptyTransfer" });
             return;
         }
 
@@ -68,9 +47,9 @@ export function Balance() {
             document.activeElement.blur();
         }
         if (amount <= 0) {
-            setIsEmptyPendingGainsModalOpen(true);
+            openModal({ id: "emptyPendingGains" });
         } else {
-            setIsPendingGainsModalOpen(true);
+            openModal({ id: "pendingGains" });
         }
     };
 
@@ -79,7 +58,7 @@ export function Balance() {
             if (document.activeElement instanceof HTMLElement) {
                 document.activeElement.blur();
             }
-            setIsEmptyTransferredGainsModalOpen(true);
+            openModal({ id: "emptyTransferredGains" });
         }
     };
 
@@ -142,27 +121,6 @@ export function Balance() {
             <StatCardsRow
                 onPendingClick={handlePendingClick}
                 onLifetimeClick={handleLifetimeClick}
-            />
-            <EmptyPendingGainsModal
-                open={isEmptyPendingGainsModalOpen}
-                onOpenChange={setIsEmptyPendingGainsModalOpen}
-            />
-            <PendingGainsModal
-                open={isPendingGainsModalOpen}
-                onOpenChange={setIsPendingGainsModalOpen}
-                onClaimSuccess={handleClaimSuccess}
-            />
-            <EmptyTransferredGainsModal
-                open={isEmptyTransferredGainsModalOpen}
-                onOpenChange={setIsEmptyTransferredGainsModalOpen}
-            />
-            <EmptyTransferModal
-                open={isEmptyTransferModalOpen}
-                onOpenChange={setIsEmptyTransferModalOpen}
-            />
-            <SuccessOverlay
-                visible={showSuccessOverlay}
-                onDone={handleSuccessDone}
             />
         </Card>
     );

@@ -9,15 +9,15 @@ vi.mock("react-i18next", () => ({
 }));
 
 describe("EmptyTransferModal", () => {
-    it("should call onOpenChange with false when close button is clicked", async () => {
-        const onOpenChange = vi.fn();
+    it("should call onClose when close button is clicked", async () => {
+        const onClose = vi.fn();
 
-        render(<EmptyTransferModal open={true} onOpenChange={onOpenChange} />);
+        render(<EmptyTransferModal onClose={onClose} />);
 
         fireEvent.click(
             await screen.findByRole("button", { name: "common.close" })
         );
 
-        expect(onOpenChange).toHaveBeenCalledWith(false);
+        expect(onClose).toHaveBeenCalled();
     });
 });

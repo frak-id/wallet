@@ -1,6 +1,7 @@
 import { createRootRoute, Outlet } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import { BiometricLock } from "@/module/biometrics";
+import { ModalOutlet } from "@/module/common/component/ModalOutlet";
 import { PwaInstall } from "@/module/common/component/PwaInstall";
 import { RootProvider } from "@/module/common/provider/RootProvider";
 import { DetectPWA } from "@/module/wallet/component/DetectPWA";
@@ -32,6 +33,7 @@ function RootComponent() {
             )}
             {process.env.IS_TAURI && <BiometricLock />}
             <Outlet />
+            <ModalOutlet />
             {import.meta.env.DEV && (
                 <TanStackRouterDevtools position="bottom-right" />
             )}

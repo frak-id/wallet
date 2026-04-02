@@ -6,8 +6,3 @@ export const emptyTransfer = style({
     flexDirection: "column",
     gap: alias.spacing.l,
 });
-
-export const header = style({
-    display: "flex",
-    justifyContent: "flex-end",
-});
