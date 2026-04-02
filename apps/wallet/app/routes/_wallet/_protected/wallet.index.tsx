@@ -9,7 +9,6 @@ import { MoneriumStatus } from "@/module/monerium/component/MoneriumStatus";
 import { Balance } from "@/module/tokens/component/Balance";
 import { DemoAccount } from "@/module/wallet/component/DemoAccount";
 import { EarningsSection } from "@/module/wallet/component/EarningsSection";
-import { PendingReferral } from "@/module/wallet/component/PendingReferral";
 import { WelcomeCard } from "@/module/wallet/component/WelcomeCard";
 
 export const Route = createFileRoute("/_wallet/_protected/wallet/")({
@@ -20,12 +19,7 @@ export const Route = createFileRoute("/_wallet/_protected/wallet/")({
  * HydratedComponents — renders after hydration only
  */
 const HydratedComponents = memo(function HydratedComponents() {
-    return (
-        <>
-            <PendingReferral />
-            {!isRunningInProd && <MoneriumStatus />}
-        </>
-    );
+    return <>{!isRunningInProd && <MoneriumStatus />}</>;
 });
 
 function WalletPage() {

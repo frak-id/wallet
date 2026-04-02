@@ -14,7 +14,3 @@ export const description = style({
     color: vars.text.secondary,
     lineHeight: 1.5,
 });
-
-export const successIcon = style({
-    color: vars.surface.primary,
-});

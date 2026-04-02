@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { modalStore } from "@/module/stores/modalStore";
 import { Balance } from "./index";
 
 const mockUseGetUserBalance = vi.fn();
@@ -8,32 +9,6 @@ const mockNavigate = vi.fn();
 
 vi.mock("@frak-labs/wallet-shared", () => ({
     useGetUserBalance: () => mockUseGetUserBalance(),
-    claimableKey: {
-        pending: { byAddress: () => ["claimable-pending"] },
-        claim: { byAddress: () => ["claimable-claim"] },
-    },
-    balanceKey: { baseKey: ["balance"] },
-    rewardsKey: { all: ["rewards"] },
-    currentViemClient: {},
-    WalletModal: () => null,
-}));
-
-vi.mock("wagmi", () => ({
-    useAccount: () => ({ address: undefined }),
-    useSendTransaction: () => ({ sendTransactionAsync: vi.fn() }),
-}));
-
-vi.mock("@tanstack/react-query", () => ({
-    useQuery: () => ({ data: undefined, refetch: vi.fn() }),
-    useMutation: () => ({
-        mutateAsync: vi.fn(),
-        isPending: false,
-        isSuccess: false,
-    }),
-    useQueryClient: () => ({
-        setQueryData: vi.fn(),
-        invalidateQueries: vi.fn(),
-    }),
 }));
 
 vi.mock("react-i18next", () => ({
@@ -50,9 +25,18 @@ vi.mock("@/module/common/utils/walletMode", () => ({
     isCryptoMode: true,
 }));
 
+vi.mock("@/module/tokens/hooks/useGetPendingRewards", () => ({
+    useGetPendingRewards: () => ({
+        totalClaimable: 0,
+        pendingRewards: [],
+        queryData: {},
+    }),
+}));
+
 describe("Balance", () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        modalStore.getState().closeModal();
     });
 
     it("should render balance label via i18n", () => {
@@ -138,7 +122,7 @@ describe("Balance", () => {
         expect(screen.getByText("••••")).toBeInTheDocument();
     });
 
-    it("should open empty transfer modal when amount is zero", async () => {
+    it("should open empty transfer modal when amount is zero", () => {
         mockUseGetUserBalance.mockReturnValue({
             userBalance: {
                 total: { eurAmount: 0 },
@@ -152,20 +136,12 @@ describe("Balance", () => {
         );
 
         expect(mockNavigate).not.toHaveBeenCalled();
-        expect(
-            await screen.findAllByText("wallet.transferEmpty.title")
-        ).toHaveLength(2);
-        expect(
-            screen.getAllByText("wallet.transferEmpty.description")
-        ).toHaveLength(2);
-        expect(
-            screen.getByRole("button", {
-                name: "wallet.transferEmpty.discover",
-            })
-        ).toBeInTheDocument();
+        expect(modalStore.getState().modal).toEqual({
+            id: "emptyTransfer",
+        });
     });
 
-    it("should open empty pending gains modal when pending stat card is clicked with zero amount", async () => {
+    it("should open empty pending gains modal when pending stat card is clicked with zero amount", () => {
         mockUseGetUserBalance.mockReturnValue({
             userBalance: {
                 total: { eurAmount: 0 },
@@ -183,25 +159,32 @@ describe("Balance", () => {
         fireEvent.click(pendingCardButton as HTMLButtonElement);
 
         expect(mockNavigate).not.toHaveBeenCalled();
-        expect(
-            await screen.findAllByText("wallet.pendingEmpty.title")
-        ).toHaveLength(2);
-        expect(
-            screen.getAllByText("wallet.pendingEmpty.description")
-        ).toHaveLength(2);
-        expect(
-            screen.getByRole("button", {
-                name: "wallet.pendingEmpty.confirm",
-            })
-        ).toBeInTheDocument();
-        expect(
-            screen.queryByRole("button", {
-                name: "wallet.transferEmpty.discover",
-            })
-        ).not.toBeInTheDocument();
+        expect(modalStore.getState().modal).toEqual({
+            id: "emptyPendingGains",
+        });
     });
 
-    it("should open empty transferred gains modal when lifetime stat card is clicked with zero amount", async () => {
+    it("should open pending gains modal when pending stat card is clicked with positive amount", () => {
+        mockUseGetUserBalance.mockReturnValue({
+            userBalance: {
+                total: { eurAmount: 50 },
+            },
+        });
+
+        render(<Balance />);
+
+        const pendingCardButton = screen
+            .getByText("wallet.stats.pending")
+            .closest("button");
+
+        fireEvent.click(pendingCardButton as HTMLButtonElement);
+
+        expect(modalStore.getState().modal).toEqual({
+            id: "pendingGains",
+        });
+    });
+
+    it("should open empty transferred gains modal when lifetime stat card is clicked with zero amount", () => {
         mockUseGetUserBalance.mockReturnValue({
             userBalance: {
                 total: { eurAmount: 0 },
@@ -219,17 +202,9 @@ describe("Balance", () => {
         fireEvent.click(lifetimeCardButton as HTMLButtonElement);
 
         expect(mockNavigate).not.toHaveBeenCalled();
-        expect(
-            await screen.findAllByText("wallet.transferredEmpty.title")
-        ).toHaveLength(2);
-        expect(
-            screen.getAllByText("wallet.transferredEmpty.description")
-        ).toHaveLength(2);
-        expect(
-            screen.getByRole("button", {
-                name: "wallet.transferredEmpty.confirm",
-            })
-        ).toBeInTheDocument();
+        expect(modalStore.getState().modal).toEqual({
+            id: "emptyTransferredGains",
+        });
     });
 
     it("should navigate to offramp when amount is positive", () => {
@@ -248,56 +223,5 @@ describe("Balance", () => {
         expect(mockNavigate).toHaveBeenCalledWith({
             to: "/monerium/offramp",
         });
-    });
-
-    it("should navigate to explorer when discover offers is clicked", async () => {
-        const assignSpy = vi.fn();
-
-        Object.defineProperty(window, "location", {
-            value: {
-                ...window.location,
-                assign: assignSpy,
-            },
-            writable: true,
-            configurable: true,
-        });
-
-        mockUseGetUserBalance.mockReturnValue({
-            userBalance: {
-                total: { eurAmount: 0 },
-            },
-        });
-
-        render(<Balance />);
-
-        fireEvent.click(
-            screen.getByRole("button", { name: "wallet.transferToBank" })
-        );
-
-        fireEvent.click(
-            await screen.findByRole("button", {
-                name: "wallet.transferEmpty.discover",
-            })
-        );
-
-        expect(assignSpy).toHaveBeenCalledWith("/explorer");
-    });
-
-    it("should render close button in empty transfer modal", async () => {
-        mockUseGetUserBalance.mockReturnValue({
-            userBalance: {
-                total: { eurAmount: 0 },
-            },
-        });
-
-        render(<Balance />);
-
-        fireEvent.click(
-            screen.getByRole("button", { name: "wallet.transferToBank" })
-        );
-
-        expect(
-            await screen.findByRole("button", { name: "common.close" })
-        ).toBeInTheDocument();
     });
 });

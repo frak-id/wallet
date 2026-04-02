@@ -8,10 +8,6 @@ export const keypass = style({
     gap: alias.spacing.l,
 });
 
-export const drawerContent = style({
-    padding: `${alias.spacing.l} ${alias.spacing.m}`,
-});
-
 export const errorText = style({
     color: vars.text.error,
 });

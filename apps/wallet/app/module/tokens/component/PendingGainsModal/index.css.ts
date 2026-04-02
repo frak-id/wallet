@@ -25,11 +25,6 @@ export const amountBlock = style({
     padding: alias.spacing.m,
 });
 
-export const header = style({
-    display: "flex",
-    justifyContent: "flex-end",
-});
-
 export const amount = style({
     fontSize: fontSize["4xl"],
     fontWeight: 700,

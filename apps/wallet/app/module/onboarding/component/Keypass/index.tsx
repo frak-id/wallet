@@ -1,133 +1,80 @@
-import { tablet } from "@frak-labs/design-system/breakpoints";
 import { Box } from "@frak-labs/design-system/components/Box";
 import { Button } from "@frak-labs/design-system/components/Button";
-import {
-    Drawer,
-    DrawerContent,
-    DrawerDescription,
-    DrawerTitle,
-} from "@frak-labs/design-system/components/Drawer";
+import { ResponsiveModal } from "@frak-labs/design-system/components/ResponsiveModal";
 import { FaceIdIcon } from "@frak-labs/design-system/icons";
-import { visuallyHidden } from "@frak-labs/design-system/utils";
-import { HandleErrors, WalletModal } from "@frak-labs/wallet-shared";
+import {
+    HandleErrors,
+    isWebAuthNSupported,
+    useLogin,
+} from "@frak-labs/wallet-shared";
+import { useNavigate } from "@tanstack/react-router";
 import type { ReactNode } from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AuthenticateWithPhone } from "@/module/authentication/component/AuthenticateWithPhone";
+import { useRegister } from "@/module/authentication/hook/useRegister";
+import { isAuthenticatorAlreadyRegistered } from "@/module/authentication/lib/isAuthenticatorAlreadyRegistered";
 import { ContentBlock } from "@/module/common/component/ContentBlock";
 import * as styles from "./index.css";
 
-/**
- * Inline media query hook — only used in Keypass, avoids legacy UI package dependency.
- */
-function useMediaQuery(query: string) {
-    const mediaQueryList = useMemo(() => {
-        if (typeof window !== "undefined") {
-            return window.matchMedia(query);
-        }
-        return null;
-    }, [query]);
-
-    const [matches, setMatches] = useState(() =>
-        mediaQueryList ? mediaQueryList.matches : false
-    );
-
-    useEffect(() => {
-        if (!mediaQueryList) return;
-
-        const handleChange = () => setMatches(mediaQueryList.matches);
-        mediaQueryList.addEventListener("change", handleChange);
-        return () => mediaQueryList.removeEventListener("change", handleChange);
-    }, [mediaQueryList]);
-
-    return matches;
-}
-
 type KeypassProps = {
-    open: boolean;
-    onOpenChange: (open: boolean) => void;
-    onContinue: () => void;
-    isLoading: boolean;
-    error: Error | null;
-    /** When true, shows "existing account" content with login button */
-    existingAccount?: boolean;
-    /** Loading state for the login action */
-    isLoginLoading?: boolean;
-    /** Error from the login attempt */
-    loginError?: Error | null;
-    /** Trigger login directly */
-    onLogin?: () => void;
-    /** Whether WebAuthn is supported in this browser */
-    webAuthNSupported?: boolean;
-    /** Navigate to login page (fallback when WebAuthn unsupported) */
-    onNavigateToLogin?: () => void;
+    onClose: () => void;
+    onAuthSuccess: () => void;
 };
 
-export function Keypass({
-    open,
-    onOpenChange,
-    onContinue,
-    isLoading,
-    error,
-    existingAccount,
-    isLoginLoading,
-    loginError,
-    onLogin,
-    webAuthNSupported = true,
-    onNavigateToLogin,
-}: KeypassProps) {
+export function Keypass({ onClose, onAuthSuccess }: KeypassProps) {
     const { t } = useTranslation();
-    const isDesktop = useMediaQuery(`(min-width: ${tablet}px)`);
+    const navigate = useNavigate();
+    const [isRegistering, setIsRegistering] = useState(false);
 
-    const content = (
-        <KeypassContent
-            onContinue={onContinue}
-            isLoading={isLoading}
-            error={error}
-            existingAccount={existingAccount}
-            isLoginLoading={isLoginLoading}
-            loginError={loginError}
-            onLogin={onLogin}
-            webAuthNSupported={webAuthNSupported}
-            onNavigateToLogin={onNavigateToLogin}
-        />
+    const { register, error: registerError } = useRegister({});
+    const {
+        login,
+        isLoading: isLoginLoading,
+        error: loginError,
+    } = useLogin({ onSuccess: onAuthSuccess });
+
+    const existingAccount = useMemo(
+        () =>
+            !!registerError && isAuthenticatorAlreadyRegistered(registerError),
+        [registerError]
     );
 
-    if (isDesktop) {
-        return (
-            <WalletModal
-                text={content}
-                open={open}
-                onOpenChange={onOpenChange}
-            />
-        );
-    }
+    const handleRegister = () => {
+        if (isRegistering) return;
+        setIsRegistering(true);
+        register()
+            .then(() => onAuthSuccess())
+            .catch(() => setIsRegistering(false));
+    };
 
     return (
-        <Drawer
-            open={open}
-            onOpenChange={onOpenChange}
-            shouldScaleBackground={false}
-            modal={true}
+        <ResponsiveModal
+            open={true}
+            onOpenChange={(open) => {
+                if (!open) onClose();
+            }}
+            title={t("onboarding.keypass.title")}
+            description={t("onboarding.keypass.description")}
         >
-            <DrawerContent
-                hideHandle={true}
-                contentClassName={styles.drawerContent}
-            >
-                <DrawerTitle className={visuallyHidden}>
-                    {t("onboarding.keypass.title")}
-                </DrawerTitle>
-                <DrawerDescription className={visuallyHidden}>
-                    {t("onboarding.keypass.description")}
-                </DrawerDescription>
-                {content}
-            </DrawerContent>
-        </Drawer>
+            <KeypassContent
+                onRegister={handleRegister}
+                isRegistering={isRegistering}
+                registerError={existingAccount ? null : registerError}
+                existingAccount={existingAccount}
+                isLoginLoading={isLoginLoading}
+                loginError={loginError}
+                onLogin={() => login()}
+                onNavigateToLogin={() =>
+                    navigate({ to: "/login", replace: true })
+                }
+            />
+        </ResponsiveModal>
     );
 }
 
 /**
- * Shared content for all Keypass variants, rendered inside either Drawer (mobile) or WalletModal (desktop)
+ * Shared content for all Keypass variants
  */
 function KeypassBlock({
     title,
@@ -158,20 +105,30 @@ function KeypassBlock({
     );
 }
 
+type KeypassContentProps = {
+    onRegister: () => void;
+    isRegistering: boolean;
+    registerError: Error | null;
+    existingAccount: boolean;
+    isLoginLoading: boolean;
+    loginError: Error | null;
+    onLogin: () => void;
+    onNavigateToLogin: () => void;
+};
+
 function KeypassContent({
-    onContinue,
-    isLoading,
-    error,
+    onRegister,
+    isRegistering,
+    registerError,
     existingAccount,
     isLoginLoading,
     loginError,
     onLogin,
-    webAuthNSupported = true,
     onNavigateToLogin,
-}: Omit<KeypassProps, "open" | "onOpenChange">) {
+}: KeypassContentProps) {
     const { t } = useTranslation();
 
-    if (!webAuthNSupported) {
+    if (!isWebAuthNSupported) {
         return (
             <KeypassBlock
                 title={t("onboarding.keypass.unsupported.title")}
@@ -206,10 +163,10 @@ function KeypassContent({
         <KeypassBlock
             title={t("onboarding.keypass.title")}
             description={t("onboarding.keypass.description")}
-            error={error}
+            error={registerError}
             footer={
                 <>
-                    <Button onClick={onContinue} loading={isLoading}>
+                    <Button onClick={onRegister} loading={isRegistering}>
                         {t("onboarding.continue")}
                     </Button>
                     <AuthenticateWithPhone

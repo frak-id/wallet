@@ -1,17 +1,10 @@
-import {
-    authenticatorStorage,
-    isWebAuthNSupported,
-    useLogin,
-} from "@frak-labs/wallet-shared";
+import { authenticatorStorage, useLogin } from "@frak-labs/wallet-shared";
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { DemoTapZone } from "@/module/authentication/component/DemoTapZone";
-import { useRegister } from "@/module/authentication/hook/useRegister";
-import { isAuthenticatorAlreadyRegistered } from "@/module/authentication/lib/isAuthenticatorAlreadyRegistered";
 import { useNotificationStatus } from "@/module/notification/hook/useNotificationSetupStatus";
 import { useSubscribeToPushNotification } from "@/module/notification/hook/useSubscribeToPushNotification";
-import { Keypass } from "@/module/onboarding/component/Keypass";
 import { NotificationOptIn } from "@/module/onboarding/component/NotificationOptIn";
 import { Onboarding } from "@/module/onboarding/component/Onboarding";
 import {
@@ -21,6 +14,7 @@ import {
 import { Welcome } from "@/module/onboarding/component/Welcome";
 import { PairingInProgress } from "@/module/pairing/component/PairingInProgress";
 import { usePendingPairingInfo } from "@/module/pairing/hook/usePendingPairingInfo";
+import { modalStore } from "@/module/stores/modalStore";
 import { consumePendingDeepLink } from "@/utils/deepLink";
 
 export const Route = createFileRoute("/_wallet/_auth/register")({
@@ -49,35 +43,18 @@ function RegisterPage() {
     const { pairingInfo } = usePendingPairingInfo();
     const hasPendingPairing = Boolean(pairingInfo?.id);
     const [step, setStep] = useState<FlowStep>("onboarding");
-    const [showKeypassDrawer, setShowKeypassDrawer] = useState(false);
-    const [isRegistering, setIsRegistering] = useState(false);
-    const { register, error, isSuccess } = useRegister({});
-    const {
-        login,
-        isLoading: isLoginLoading,
-        error: loginError,
-    } = useLogin({
-        onSuccess: () => {
-            setShowKeypassDrawer(false);
-            setStep("notification");
-        },
+
+    const openModal = modalStore((s) => s.openModal);
+    const closeModal = modalStore((s) => s.closeModal);
+
+    const advanceToNotification = useCallback(() => {
+        closeModal();
+        setStep("notification");
+    }, [closeModal]);
+
+    const { login, isLoading: isLoginLoading } = useLogin({
+        onSuccess: advanceToNotification,
     });
-
-    const isPreviouslyUsedAuthenticatorError = useMemo(
-        () => !!error && isAuthenticatorAlreadyRegistered(error),
-        [error]
-    );
-
-    useEffect(() => {
-        if (error) setIsRegistering(false);
-    }, [error]);
-
-    useEffect(() => {
-        if (isSuccess) {
-            setShowKeypassDrawer(false);
-            setStep("notification");
-        }
-    }, [isSuccess]);
 
     const { permissionStatus, permissionGranted, hasBackendToken } =
         useNotificationStatus();
@@ -94,6 +71,18 @@ function RegisterPage() {
         }
     }, [step, permissionStatus, permissionGranted, hasBackendToken]);
 
+    const handleOpenKeypass = useCallback(() => {
+        // Blur active element before opening drawer to prevent
+        // aria-hidden conflict with focused element inside #root
+        if (document.activeElement instanceof HTMLElement) {
+            document.activeElement.blur();
+        }
+        openModal({
+            id: "keypass",
+            onAuthSuccess: advanceToNotification,
+        });
+    }, [openModal, advanceToNotification]);
+
     return (
         <>
             <DemoTapZone navigate={navigate} />
@@ -109,39 +98,13 @@ function RegisterPage() {
                     onRecoveryCodeClick={() =>
                         navigate({ to: "/recovery-code" })
                     }
-                    onFinish={() => {
-                        // Blur active element before opening drawer to prevent
-                        // aria-hidden conflict with focused element inside #root
-                        if (document.activeElement instanceof HTMLElement) {
-                            document.activeElement.blur();
-                        }
-                        setShowKeypassDrawer(true);
-                    }}
+                    onFinish={handleOpenKeypass}
                 >
                     {onboardingSlides.map((slide) => (
                         <Slide key={slide.translationKey} {...slide} />
                     ))}
                 </Onboarding>
             )}
-            <Keypass
-                open={showKeypassDrawer}
-                onOpenChange={setShowKeypassDrawer}
-                onContinue={() => {
-                    if (isRegistering) return;
-                    setIsRegistering(true);
-                    register().catch(() => {});
-                }}
-                isLoading={isRegistering}
-                error={isPreviouslyUsedAuthenticatorError ? null : error}
-                existingAccount={isPreviouslyUsedAuthenticatorError}
-                isLoginLoading={isLoginLoading}
-                loginError={loginError}
-                onLogin={() => login()}
-                webAuthNSupported={isWebAuthNSupported}
-                onNavigateToLogin={() =>
-                    navigate({ to: "/login", replace: true })
-                }
-            />
             {step === "notification" && (
                 <NotificationOptIn
                     onEnable={() =>

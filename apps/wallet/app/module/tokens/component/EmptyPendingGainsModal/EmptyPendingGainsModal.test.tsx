@@ -9,12 +9,10 @@ vi.mock("react-i18next", () => ({
 }));
 
 describe("EmptyPendingGainsModal", () => {
-    it("should call onOpenChange with false when confirm button is clicked", async () => {
-        const onOpenChange = vi.fn();
+    it("should call onClose when confirm button is clicked", async () => {
+        const onClose = vi.fn();
 
-        render(
-            <EmptyPendingGainsModal open={true} onOpenChange={onOpenChange} />
-        );
+        render(<EmptyPendingGainsModal onClose={onClose} />);
 
         fireEvent.click(
             await screen.findByRole("button", {
@@ -22,6 +20,6 @@ describe("EmptyPendingGainsModal", () => {
             })
         );
 
-        expect(onOpenChange).toHaveBeenCalledWith(false);
+        expect(onClose).toHaveBeenCalled();
     });
 });

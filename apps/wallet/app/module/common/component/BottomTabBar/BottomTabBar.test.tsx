@@ -53,12 +53,12 @@ describe("BottomTabBar", () => {
         expect(buttons[1]).not.toHaveAttribute("aria-current");
     });
 
-    it("should render the background image", () => {
-        render(
+    it("should render the progressive blur background", () => {
+        const { container } = render(
             <BottomTabBar tabs={mockTabs} activeKey="a" onTabChange={vi.fn()} />
         );
 
-        const background = screen.getByRole("img", { hidden: true });
-        expect(background).toHaveAttribute("aria-hidden", "true");
+        const background = container.querySelector("[aria-hidden='true']");
+        expect(background).toBeInTheDocument();
     });
 });
