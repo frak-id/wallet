@@ -2,7 +2,12 @@ import type { ReactNode } from "react";
 import { tablet } from "../../breakpoints";
 import { useMediaQuery } from "../../hooks/useMediaQuery";
 import { visuallyHidden } from "../../reset.css";
-import { Dialog, DialogContent, DialogTitle } from "../Dialog";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogTitle,
+} from "../Dialog";
 import {
     Drawer,
     DrawerContent,
@@ -60,13 +65,18 @@ export function ResponsiveModal({
     if (isDesktop) {
         return (
             <Dialog open={open} onOpenChange={onOpenChange}>
-                <DialogTitle className={visuallyHidden}>{title}</DialogTitle>
                 <DialogContent>
                     {header && (
                         <div className={responsiveModalHeaderStyle}>
                             {header}
                         </div>
                     )}
+                    <DialogTitle className={visuallyHidden}>
+                        {title}
+                    </DialogTitle>
+                    <DialogDescription className={visuallyHidden}>
+                        {description}
+                    </DialogDescription>
                     {children}
                 </DialogContent>
             </Dialog>
