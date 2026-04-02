@@ -373,12 +373,29 @@
         "description": "Paste the code copied from wallet.frak.id to recover your earnings.",
         "paste": "Paste the code",
         "validate": "Validate the code",
-        "digitLabel": "Digit",
-        "error": "Incorrect or expired code — check the code copied from wallet.frak.id",
+        "digitLabel": "Character",
+        "error": {
+            "invalid": "Incorrect or expired code — check the code copied from wallet.frak.id",
+            "alreadyLinked": "This code has already been used.",
+            "generic": "Something went wrong — please try again."
+        },
         "success": {
             "title": "Your referral link has been found!",
-            "description": "You'll receive a notification as soon as a friend purchases via your link."
+            "description": "You'll receive a notification as soon as a friend purchases via your link.",
+            "merchantInfo": "Connected to {{merchantName}}"
         }
+    },
+    "installCode": {
+        "title": "Install Frak Wallet",
+        "description": "Get the app to track your rewards and earn from referrals.",
+        "codeTitle": "Your setup code",
+        "codeDescription": "Save this code — you'll need it after installing the app.",
+        "appStore": "Download on the App Store",
+        "playStore": "Get it on Google Play",
+        "loading": "Generating your code...",
+        "error": "Failed to generate code. Please refresh.",
+        "contextSaved": "Context saved",
+        "contextSavedDescription": "Install the app — your referral data will be picked up automatically."
     },
     "onboarding": {
         "start": "Get started",

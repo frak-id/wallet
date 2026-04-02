@@ -1,6 +1,13 @@
-import { isRunningInProd } from "@frak-labs/app-essentials";
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { Box } from "@frak-labs/design-system/components/Box";
+import { Spinner } from "@frak-labs/design-system/components/Spinner";
+import { Text } from "@frak-labs/design-system/components/Text";
+import { authenticatedBackendApi } from "@frak-labs/wallet-shared";
+import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { PageLayout } from "@/module/common/component/PageLayout";
+import { Title } from "@/module/common/component/Title";
+import * as styles from "./install.css";
 
 type InstallSearch = {
     m?: string;
@@ -8,13 +15,9 @@ type InstallSearch = {
 };
 
 const localStorageKey = "frak_install_context";
+const appStoreUrl = "https://apps.apple.com/app/frak-wallet/id6740261164";
 
 export const Route = createFileRoute("/install")({
-    beforeLoad: () => {
-        if (isRunningInProd) {
-            throw redirect({ to: "/" });
-        }
-    },
     validateSearch: (search: Record<string, unknown>): InstallSearch => ({
         m: typeof search.m === "string" ? search.m : undefined,
         a: typeof search.a === "string" ? search.a : undefined,
@@ -23,96 +26,132 @@ export const Route = createFileRoute("/install")({
 });
 
 function InstallPage() {
+    const { t } = useTranslation();
     const { m: merchantId, a: anonymousId } = Route.useSearch();
-    const [isSaved, setIsSaved] = useState(false);
+    const [code, setCode] = useState<string>();
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string>();
 
-    const mId = merchantId ?? "test-merchant-123";
-    const aId = anonymousId ?? "anon-abc-456";
-
+    // Store context in localStorage for ASWebAuthenticationSession
     useEffect(() => {
+        if (!merchantId || !anonymousId) return;
         localStorage.setItem(
             localStorageKey,
-            JSON.stringify({ merchantId: mId, anonymousId: aId })
+            JSON.stringify({ merchantId, anonymousId })
         );
-        setIsSaved(true);
-    }, [mId, aId]);
+    }, [merchantId, anonymousId]);
+
+    // Generate install code on mount
+    useEffect(() => {
+        if (!merchantId || !anonymousId) return;
+
+        let cancelled = false;
+        setIsLoading(true);
+
+        authenticatedBackendApi.user.identity["install-code"].generate
+            .post({ merchantId, anonymousId })
+            .then(({ data, error: apiError }) => {
+                if (cancelled) return;
+                if (apiError || !data) {
+                    setError(t("installCode.error"));
+                    return;
+                }
+                setCode(data.code);
+            })
+            .catch(() => {
+                if (!cancelled) setError(t("installCode.error"));
+            })
+            .finally(() => {
+                if (!cancelled) setIsLoading(false);
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [merchantId, anonymousId, t]);
 
     const playStoreUrl = useMemo(() => {
-        const referrerData = `merchantId=${mId}&anonymousId=${aId}`;
+        if (!merchantId || !anonymousId) return undefined;
+        const referrerData = `merchantId=${merchantId}&anonymousId=${anonymousId}`;
         return `https://play.google.com/store/apps/details?id=id.frak.wallet&referrer=${encodeURIComponent(referrerData)}`;
-    }, [mId, aId]);
-
-    const appStoreUrl = "https://apps.apple.com/app/frak-wallet/id6740261164";
+    }, [merchantId, anonymousId]);
 
     return (
-        <div
-            style={{
-                padding: "24px",
-                maxWidth: "480px",
-                margin: "0 auto",
-                fontFamily: "system-ui",
-            }}
-        >
-            <h1>Install Frak Wallet</h1>
-            <p>Get the app to track your rewards and earn from referrals.</p>
-
-            {isSaved && (
-                <div
-                    style={{
-                        padding: "12px",
-                        borderRadius: "8px",
-                        marginBottom: "16px",
-                        fontSize: "14px",
-                        background: "#e8f5e9",
-                    }}
-                >
-                    <strong>Context saved</strong>
-                    <p style={{ margin: "4px 0 0", fontSize: "12px" }}>
-                        Install the app — your referral data will be picked up
-                        automatically.
-                    </p>
+        <PageLayout
+            footer={
+                <div className={styles.storeLinks}>
+                    <Box
+                        as="a"
+                        href={appStoreUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={styles.storeLink}
+                    >
+                        {t("installCode.appStore")}
+                    </Box>
+                    {playStoreUrl && (
+                        <Box
+                            as="a"
+                            href={playStoreUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={styles.storeLinkSecondary}
+                        >
+                            {t("installCode.playStore")}
+                        </Box>
+                    )}
                 </div>
-            )}
+            }
+        >
+            <div className={styles.wrapper}>
+                <Box display={"flex"} flexDirection={"column"} gap={"m"}>
+                    <Title size="page">{t("installCode.title")}</Title>
+                    <p className={styles.description}>
+                        {t("installCode.description")}
+                    </p>
+                </Box>
 
-            <div
-                style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "12px",
-                    marginTop: "24px",
-                }}
-            >
-                <a
-                    href={appStoreUrl}
-                    style={{
-                        display: "block",
-                        padding: "16px",
-                        background: "#000",
-                        color: "#fff",
-                        borderRadius: "12px",
-                        textDecoration: "none",
-                        textAlign: "center",
-                        fontWeight: 600,
-                    }}
-                >
-                    Download on the App Store
-                </a>
-                <a
-                    href={playStoreUrl}
-                    style={{
-                        display: "block",
-                        padding: "16px",
-                        background: "#01875f",
-                        color: "#fff",
-                        borderRadius: "12px",
-                        textDecoration: "none",
-                        textAlign: "center",
-                        fontWeight: 600,
-                    }}
-                >
-                    Get it on Google Play
-                </a>
+                {isLoading && (
+                    <Box
+                        display={"flex"}
+                        flexDirection={"column"}
+                        alignItems={"center"}
+                        gap={"m"}
+                    >
+                        <Spinner />
+                        <Text variant="bodySmall" color="secondary">
+                            {t("installCode.loading")}
+                        </Text>
+                    </Box>
+                )}
+
+                {error && <p className={styles.errorText}>{error}</p>}
+
+                {code && (
+                    <div className={styles.codeSection}>
+                        <span className={styles.codeLabel}>
+                            {t("installCode.codeTitle")}
+                        </span>
+                        <div className={styles.codeDisplay}>
+                            {code.split("").map((char, index) => (
+                                <span key={index} className={styles.codeChar}>
+                                    {char}
+                                </span>
+                            ))}
+                        </div>
+                        <p className={styles.codeHint}>
+                            {t("installCode.codeDescription")}
+                        </p>
+                    </div>
+                )}
+
+                {merchantId && anonymousId && (
+                    <div className={styles.savedBanner}>
+                        <strong>{t("installCode.contextSaved")}</strong>
+                        <p>{t("installCode.contextSavedDescription")}</p>
+                    </div>
+                )}
             </div>
-        </div>
+        </PageLayout>
     );
 }

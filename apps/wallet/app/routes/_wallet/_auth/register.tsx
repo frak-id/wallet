@@ -14,6 +14,7 @@ import {
 import { Welcome } from "@/module/onboarding/component/Welcome";
 import { PairingInProgress } from "@/module/pairing/component/PairingInProgress";
 import { usePendingPairingInfo } from "@/module/pairing/hook/usePendingPairingInfo";
+import { useConsumeInstallCode } from "@/module/recovery-code/hook/useConsumeInstallCode";
 import { modalStore } from "@/module/stores/modalStore";
 import { consumePendingDeepLink } from "@/utils/deepLink";
 
@@ -47,10 +48,14 @@ function RegisterPage() {
     const openModal = modalStore((s) => s.openModal);
     const closeModal = modalStore((s) => s.closeModal);
 
+    const { consumePendingCode } = useConsumeInstallCode();
+
     const advanceToNotification = useCallback(() => {
         closeModal();
         setStep("notification");
-    }, [closeModal]);
+        // Silently consume any pending install code after auth
+        consumePendingCode();
+    }, [closeModal, consumePendingCode]);
 
     const { login, isLoading: isLoginLoading } = useLogin({
         onSuccess: advanceToNotification,

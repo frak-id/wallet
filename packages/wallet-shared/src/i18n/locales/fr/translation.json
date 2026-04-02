@@ -367,16 +367,33 @@
         }
     },
     "recoveryCode": {
-        "title": "R\u00e9cup\u00e9ration de ton code",
-        "description": "Colle le code copi\u00e9 depuis wallet.frak.id pour r\u00e9cup\u00e9rer tes gains.",
+        "title": "Récupération de ton code",
+        "description": "Colle le code copié depuis wallet.frak.id pour récupérer tes gains.",
         "paste": "Coller le code",
         "validate": "Valider le code",
-        "digitLabel": "Chiffre",
-        "error": "Code incorrect ou expiré — vérifie le code copié depuis wallet.frak.id",
+        "digitLabel": "Caractère",
+        "error": {
+            "invalid": "Code incorrect ou expiré — vérifie le code copié depuis wallet.frak.id",
+            "alreadyLinked": "Ce code a déjà été utilisé.",
+            "generic": "Une erreur est survenue — réessaie."
+        },
         "success": {
             "title": "Ton lien de parrainage a bien été retrouvé !",
-            "description": "Tu recevras une notification dès qu'un·e ami·e achète via ton lien."
+            "description": "Tu recevras une notification dès qu'un·e ami·e achète via ton lien.",
+            "merchantInfo": "Connecté à {{merchantName}}"
         }
+    },
+    "installCode": {
+        "title": "Installer Frak Wallet",
+        "description": "Télécharge l'app pour suivre tes récompenses et gagner grâce au parrainage.",
+        "codeTitle": "Ton code d'installation",
+        "codeDescription": "Note ce code — tu en auras besoin après l'installation de l'app.",
+        "appStore": "Télécharger sur l'App Store",
+        "playStore": "Disponible sur Google Play",
+        "loading": "Génération de ton code...",
+        "error": "Échec de la génération du code. Rafraîchis la page.",
+        "contextSaved": "Contexte sauvegardé",
+        "contextSavedDescription": "Installe l'app — tes données de parrainage seront récupérées automatiquement."
     },
     "onboarding": {
         "start": "Commencer",
