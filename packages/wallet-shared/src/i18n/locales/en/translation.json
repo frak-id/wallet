@@ -471,11 +471,11 @@
     },
     "monerium": {
         "account": "Monerium Account",
-        "connect": "Connect to Monerium",
+        "connect": "Connect",
         "connecting": "Connecting...",
         "disconnect": "Disconnect",
-        "completeSetup": "Complete setup on Monerium",
-        "linkWallet": "Link your wallet to Monerium",
+        "completeSetup": "Complete setup",
+        "linkWallet": "Link wallet",
         "status": {
             "settingUp": "Setting up...",
             "created": "Account created — complete verification on Monerium",

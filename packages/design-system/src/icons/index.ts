@@ -13,6 +13,7 @@ export { EyeOffIcon } from "./EyeOffIcon";
 export { FaceIdIcon } from "./FaceIdIcon";
 export { HelpChatIcon } from "./HelpChatIcon";
 export { HourglassIcon } from "./HourglassIcon";
+export { PersonIcon } from "./PersonIcon";
 export { ProfileIcon } from "./ProfileIcon";
 export { ShareIcon } from "./ShareIcon";
 export { StarIcon } from "./StarIcon";

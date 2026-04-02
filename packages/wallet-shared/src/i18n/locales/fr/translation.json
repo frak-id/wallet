@@ -116,7 +116,7 @@
         "settings": {
             "biometryInfo": "Informations biométriques",
             "ecdsaInfo": "Informations de connection",
-            "ecdsaWallet": "Portefeuille Ecdsa",
+            "ecdsaWallet": "Porte-monnaie Ecdsa",
             "privateKey": "Clé privée",
             "deletePrivateKey": "Supprimer la clé privée",
             "legal": "Légal",
@@ -403,12 +403,12 @@
             "description": "Une clé sécurisée est enregistrée dans ton gestionnaire de mots de passe pour te connecter rapidement via la biométrie.",
             "unsupported": {
                 "title": "Navigateur non compatible",
-                "description": "Votre navigateur ne supporte pas l'authentification biométrique. Connectez-vous autrement pour accéder à votre portefeuille.",
+                "description": "Votre navigateur ne supporte pas l'authentification biométrique. Connectez-vous autrement pour accéder à votre porte-monnaie.",
                 "button": "Se connecter autrement"
             },
             "existingAccount": {
                 "title": "Bon retour parmi nous !",
-                "description": "Vous avez déjà un compte. Connectez-vous avec votre clé d'accès pour retrouver votre portefeuille.",
+                "description": "Vous avez déjà un compte. Connectez-vous avec votre clé d'accès pour retrouver votre porte-monnaie.",
                 "button": "Se connecter"
             }
         },
@@ -457,10 +457,10 @@
     },
     "mobile-tx": {
         "sendTransaction": "Envoyer la transaction",
-        "explanation": "Approuvez cette transaction dans votre portefeuille",
+        "explanation": "Approuvez cette transaction dans votre porte-monnaie",
         "waiting": "En attente d'approbation...",
-        "openWallet": "Ouvrir le portefeuille pour approuver",
-        "reopenWallet": "Ré-ouvrir le portefeuille",
+        "openWallet": "Ouvrir le porte-monnaie pour approuver",
+        "reopenWallet": "Ré-ouvrir le porte-monnaie",
         "timeout": "Délai d'approbation dépassé. Réessayer ?",
         "retry": "Réessayer",
         "appNotFound": "Application Frak Wallet introuvable",
@@ -468,11 +468,11 @@
     },
     "monerium": {
         "account": "Compte Monerium",
-        "connect": "Connecter à Monerium",
+        "connect": "Se connecter",
         "connecting": "Connexion...",
         "disconnect": "Déconnecter",
-        "completeSetup": "Terminer sur Monerium",
-        "linkWallet": "Lier votre portefeuille à Monerium",
+        "completeSetup": "Finaliser",
+        "linkWallet": "Lier le porte-monnaie",
         "status": {
             "settingUp": "Configuration...",
             "created": "Compte créé — terminez la vérification sur Monerium",
@@ -483,7 +483,7 @@
         "badge": {
             "pending": "Vérification bancaire en cours...",
             "approved": "Banque connectée :",
-            "notLinked": "IBAN non lié à ce portefeuille",
+            "notLinked": "IBAN non lié à ce porte-monnaie",
             "rejected": "Vérification échouée"
         },
         "offramp": {
@@ -491,7 +491,7 @@
             "balance": "Solde :",
             "max": "MAX",
             "destinationIban": "IBAN de destination",
-            "ibanWarning": "Attention : Cet IBAN n'est pas lié à votre adresse de portefeuille actuelle.",
+            "ibanWarning": "Attention : Cet IBAN n'est pas lié à votre adresse de porte-monnaie actuelle.",
             "submit": "Retirer vers la banque",
             "submitting": "Envoi de l'ordre...",
             "confirmBiometric": "Confirmer avec la biométrie...",

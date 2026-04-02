@@ -1,36 +1,18 @@
-import { Button } from "@frak-labs/design-system/components/Button";
+import { Box } from "@frak-labs/design-system/components/Box";
 import { Spinner } from "@frak-labs/design-system/components/Spinner";
-import type { TFunction } from "i18next";
-import { Building2 } from "lucide-react";
+import { Text } from "@frak-labs/design-system/components/Text";
+import { PersonIcon } from "@frak-labs/design-system/icons";
 import { useTranslation } from "react-i18next";
 import { useAccount } from "wagmi";
-import { Panel } from "@/module/common/component/Panel";
-import { Title } from "@/module/common/component/Title";
 import { useMoneriumAddresses } from "@/module/monerium/hooks/useMoneriumAddresses";
 import { useMoneriumAuth } from "@/module/monerium/hooks/useMoneriumAuth";
-import { useMoneriumIban } from "@/module/monerium/hooks/useMoneriumIban";
 import { useMoneriumLinkWallet } from "@/module/monerium/hooks/useMoneriumLinkWallet";
 import { useMoneriumProfile } from "@/module/monerium/hooks/useMoneriumProfile";
-import styles from "./MoneriumConnect.module.css";
-
-function getStatusText(
-    profileState: string | null,
-    t: TFunction
-): string | null {
-    switch (profileState) {
-        case "created":
-            return t("monerium.status.created");
-        case "pending":
-            return t("monerium.status.pending");
-        case "approved":
-            return t("monerium.status.approved");
-        case "rejected":
-        case "blocked":
-            return t("monerium.status.rejected");
-        default:
-            return t("monerium.status.settingUp");
-    }
-}
+import {
+    SettingsCard,
+    SettingsRow,
+    settingsCardStyles,
+} from "@/module/settings/component/SettingsCard";
 
 export function MoneriumConnect() {
     const { t } = useTranslation();
@@ -38,7 +20,6 @@ export function MoneriumConnect() {
     const { connect, disconnect, isConnecting, isConnected } =
         useMoneriumAuth();
     const { profileState } = useMoneriumProfile();
-    const { iban, isLinkedToWallet } = useMoneriumIban();
     const { isWalletLinked } = useMoneriumAddresses();
     const { linkWallet, isPending: isLinkingWallet } = useMoneriumLinkWallet();
 
@@ -48,44 +29,30 @@ export function MoneriumConnect() {
         }
     };
 
-    const statusText = isConnected ? getStatusText(profileState, t) : null;
-
     return (
-        <Panel size={"small"}>
-            <Title icon={<Building2 size={32} />}>
-                {t("monerium.account")}
-            </Title>
-
-            {statusText && (
-                <p className={styles.moneriumConnect__status}>{statusText}</p>
-            )}
-
-            {isConnected && iban && (
-                <p className={styles.moneriumConnect__iban}>{iban}</p>
-            )}
-
-            {isConnected && iban && !isLinkedToWallet && (
-                <p className={styles.moneriumConnect__warning}>
-                    {t("monerium.badge.notLinked")}
-                </p>
-            )}
-
-            <MoneriumActions
-                isConnecting={isConnecting}
-                isConnected={isConnected}
-                profileState={profileState}
-                address={address}
-                isWalletLinked={isWalletLinked}
-                isLinkingWallet={isLinkingWallet}
-                onConnect={handleConnect}
-                onDisconnect={disconnect}
-                onLinkWallet={linkWallet}
+        <SettingsCard>
+            <SettingsRow
+                icon={PersonIcon}
+                label={t("monerium.account")}
+                action={
+                    <MoneriumAction
+                        isConnecting={isConnecting}
+                        isConnected={isConnected}
+                        profileState={profileState}
+                        address={address}
+                        isWalletLinked={isWalletLinked}
+                        isLinkingWallet={isLinkingWallet}
+                        onConnect={handleConnect}
+                        onDisconnect={disconnect}
+                        onLinkWallet={linkWallet}
+                    />
+                }
             />
-        </Panel>
+        </SettingsCard>
     );
 }
 
-function MoneriumActions({
+function MoneriumAction({
     isConnecting,
     isConnected,
     profileState,
@@ -110,42 +77,84 @@ function MoneriumActions({
 
     if (isConnecting) {
         return (
-            <Button disabled icon={<Spinner size={"s"} />} size={"small"}>
-                {t("monerium.connecting")}
-            </Button>
+            <Box
+                as="span"
+                display="flex"
+                alignItems="center"
+                gap="xxs"
+                className={settingsCardStyles.actionButton}
+            >
+                <Spinner size="s" />
+                <Text
+                    as="span"
+                    variant="bodySmall"
+                    color="action"
+                    weight="medium"
+                >
+                    {t("monerium.connecting")}
+                </Text>
+            </Box>
         );
     }
 
     if (!isConnected) {
         return (
-            <Button size={"small"} onClick={onConnect} disabled={!address}>
+            <ActionButton onClick={onConnect} disabled={!address}>
                 {t("monerium.connect")}
-            </Button>
+            </ActionButton>
         );
     }
 
     const needsOnboarding =
         profileState === "created" || profileState === "pending";
 
+    if (needsOnboarding) {
+        return (
+            <ActionButton onClick={onConnect} disabled={!address}>
+                {t("monerium.completeSetup")}
+            </ActionButton>
+        );
+    }
+
+    if (!isWalletLinked) {
+        return (
+            <ActionButton onClick={onLinkWallet} disabled={isLinkingWallet}>
+                {t("monerium.linkWallet")}
+            </ActionButton>
+        );
+    }
+
     return (
-        <div className={styles.moneriumConnect__actions}>
-            {needsOnboarding && (
-                <Button size={"small"} onClick={onConnect} disabled={!address}>
-                    {t("monerium.completeSetup")}
-                </Button>
-            )}
-            {!isWalletLinked && (
-                <Button
-                    size={"small"}
-                    onClick={onLinkWallet}
-                    disabled={isLinkingWallet}
-                >
-                    {t("monerium.linkWallet")}
-                </Button>
-            )}
-            <Button variant="ghost" size={"small"} onClick={onDisconnect}>
-                {t("monerium.disconnect")}
-            </Button>
-        </div>
+        <ActionButton onClick={onDisconnect}>
+            {t("monerium.disconnect")}
+        </ActionButton>
+    );
+}
+
+function ActionButton({
+    children,
+    onClick,
+    disabled,
+}: {
+    children: string;
+    onClick: () => void;
+    disabled?: boolean;
+}) {
+    return (
+        <button
+            type="button"
+            className={settingsCardStyles.actionButton}
+            onClick={onClick}
+            disabled={disabled}
+        >
+            <Text
+                as="span"
+                variant="bodySmall"
+                color={disabled ? "disabled" : "action"}
+                weight="medium"
+            >
+                {children}
+            </Text>
+        </button>
     );
 }
