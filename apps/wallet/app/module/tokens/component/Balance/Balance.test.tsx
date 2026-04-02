@@ -25,6 +25,14 @@ vi.mock("@/module/common/utils/walletMode", () => ({
     isCryptoMode: true,
 }));
 
+vi.mock("@/module/tokens/hooks/useGetPendingRewards", () => ({
+    useGetPendingRewards: () => ({
+        totalClaimable: 0,
+        pendingRewards: [],
+        queryData: {},
+    }),
+}));
+
 describe("Balance", () => {
     beforeEach(() => {
         vi.clearAllMocks();

@@ -210,9 +210,10 @@ describe("WelcomeCard", () => {
     it("should subscribe to push when tapping the notification action in prompt state", () => {
         render(<WelcomeCard />);
 
-        fireEvent.click(
-            screen.getByRole("button", { name: "wallet.activateNotifications" })
-        );
+        const notificationCard = screen
+            .getByText("wallet.activateNotifications")
+            .closest("[role='button']") as HTMLElement;
+        fireEvent.click(notificationCard);
 
         expect(mockSubscribeToPush).toHaveBeenCalledOnce();
     });
@@ -228,11 +229,10 @@ describe("WelcomeCard", () => {
 
         render(<WelcomeCard />);
 
-        fireEvent.click(
-            screen.getByRole("button", {
-                name: "wallet.openNotificationSettings",
-            })
-        );
+        const notificationCard = screen
+            .getByText("wallet.openNotificationSettings")
+            .closest("[role='button']") as HTMLElement;
+        fireEvent.click(notificationCard);
 
         expect(mockOpenSettings).toHaveBeenCalledOnce();
         await Promise.resolve();
